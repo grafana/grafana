@@ -18,9 +18,16 @@ interface Props {
   /** Placeholder for empty per-item intervals; the global interval used as fallback during playback. */
   intervalPlaceholder?: string;
   onUpdateInterval?: (idx: number, interval: string) => void;
+  onUpdateQueryParams?: (idx: number, queryParams: string) => void;
 }
 
-export const PlaylistTableRows = ({ items, onDelete, intervalPlaceholder, onUpdateInterval }: Props) => {
+export const PlaylistTableRows = ({
+  items,
+  onDelete,
+  intervalPlaceholder,
+  onUpdateInterval,
+  onUpdateQueryParams,
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   if (!items?.length) {
@@ -111,8 +118,30 @@ export const PlaylistTableRows = ({ items, onDelete, intervalPlaceholder, onUpda
               <div className={styles.actions}>
                 <Input
                   className={styles.rightMargin}
+                  width={35}
+                  type="text"
+                  addonBefore={t('playlist.playlist-table-rows.query-params-addon', 'Parameters')}
+                  value={item.queryParams ?? ''}
+                  placeholder={t(
+                    'playlist.playlist-table-rows.query-params-placeholder',
+                    'var-host=host1&from=now-6h&to=now'
+                  )}
+                  title={t(
+                    'playlist.playlist-table-rows.query-params-title',
+                    'Paste a dashboard URL or enter its query parameters'
+                  )}
+                  aria-label={t(
+                    'playlist.playlist-table-rows.aria-label-item-query-params',
+                    'URL parameters for {{itemValue}}',
+                    { itemValue: item.value }
+                  )}
+                  onChange={(e) => onUpdateQueryParams?.(index, e.currentTarget.value)}
+                />
+                <Input
+                  className={styles.rightMargin}
                   width={10}
                   type="text"
+                  addonBefore={t('playlist.playlist-table-rows.interval-addon', 'Interval')}
                   // Controlled so the value always reflects the correct item after a
                   // reorder and stays synced for submission/validation on every keystroke.
                   value={item.interval ?? ''}

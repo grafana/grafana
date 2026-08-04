@@ -9,9 +9,8 @@ import { loadDashboards } from './utils';
 export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
   const [items, setItems] = useState<PlaylistItemUI[]>(playlistItems ?? []);
 
-  // Attach dashboards to any items still missing them. Merge the loaded dashboards onto the
-  // current state (rather than replacing it) so an in-flight load can't clobber an interval the
-  // user edited while it was running.
+  // Attach dashboards to any items still missing them. Merge onto the current state so an
+  // in-flight load cannot clobber item settings edited while it was running.
   useAsync(async () => {
     if (items.every((item) => item.dashboards)) {
       return;
@@ -93,5 +92,16 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
     });
   }, []);
 
-  return { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval };
+  const updateItemQueryParams = useCallback((index: number, queryParams: string) => {
+    setItems((prev) => {
+      if (!prev[index]) {
+        return prev;
+      }
+      const copy = prev.slice();
+      copy[index] = { ...copy[index], queryParams: queryParams || undefined };
+      return copy;
+    });
+  }, []);
+
+  return { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval, updateItemQueryParams };
 }

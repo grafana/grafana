@@ -1160,6 +1160,10 @@
             "description": "Optional per-item display interval (e.g. \"30s\", \"2m\"). When unset, the\nplaylist's global spec.interval is used.",
             "type": "string"
           },
+          "queryParams": {
+            "description": "Optional dashboard URL query string applied during playback. Use var-\u003cname\u003e\nfor dashboard variables and from/to for time range overrides.",
+            "type": "string"
+          },
           "type": {
             "description": "type of the item.",
             "type": "string",

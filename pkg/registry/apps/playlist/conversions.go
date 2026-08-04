@@ -10,12 +10,19 @@ import (
 )
 
 func LegacyUpdateCommandToUnstructured(cmd UpdatePlaylistCommand) unstructured.Unstructured {
-	items := make([]map[string]string, 0, len(cmd.Items))
+	items := make([]any, 0, len(cmd.Items))
 	for _, item := range cmd.Items {
-		items = append(items, map[string]string{
+		converted := map[string]any{
 			"type":  item.Type,
 			"value": item.Value,
-		})
+		}
+		if item.Interval != nil {
+			converted["interval"] = *item.Interval
+		}
+		if item.QueryParams != nil {
+			converted["queryParams"] = *item.QueryParams
+		}
+		items = append(items, converted)
 	}
 	obj := unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -31,6 +38,46 @@ func LegacyUpdateCommandToUnstructured(cmd UpdatePlaylistCommand) unstructured.U
 	}
 	obj.SetName(cmd.UID)
 	return obj
+}
+
+func PreserveLegacyPlaylistItemOptions(obj *unstructured.Unstructured, existing *unstructured.Unstructured) {
+	items, found, err := unstructured.NestedSlice(obj.Object, "spec", "items")
+	if err != nil || !found {
+		return
+	}
+	existingItems, found, err := unstructured.NestedSlice(existing.Object, "spec", "items")
+	if err != nil || !found {
+		return
+	}
+
+	used := make([]bool, len(existingItems))
+	for _, item := range items {
+		itemMap, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		for i, existingItem := range existingItems {
+			if used[i] {
+				continue
+			}
+			existingMap, ok := existingItem.(map[string]any)
+			if !ok || itemMap["type"] != existingMap["type"] || itemMap["value"] != existingMap["value"] {
+				continue
+			}
+			used[i] = true
+			for _, field := range []string{"interval", "queryParams"} {
+				if _, supplied := itemMap[field]; supplied {
+					continue
+				}
+				if value, exists := existingMap[field]; exists {
+					itemMap[field] = value
+				}
+			}
+			break
+		}
+	}
+
+	_ = unstructured.SetNestedSlice(obj.Object, items, "spec", "items")
 }
 
 func UnstructuredToLegacyPlaylist(item unstructured.Unstructured) *Playlist {

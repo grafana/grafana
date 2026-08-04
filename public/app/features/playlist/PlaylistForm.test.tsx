@@ -54,6 +54,22 @@ const mockPerItemIntervalPlaylist: Playlist = {
   status: {},
 };
 
+const mockPerItemOptionsPlaylist: Playlist = {
+  ...mockPerItemIntervalPlaylist,
+  spec: {
+    ...mockPerItemIntervalPlaylist.spec!,
+    items: [
+      {
+        type: 'dashboard_by_uid',
+        value: 'uid_1',
+        interval: '30s',
+        queryParams: 'var-host=host1&from=now-6h&to=now',
+      },
+      { type: 'dashboard_by_uid', value: 'uid_2', queryParams: 'var-host=host2' },
+    ],
+  },
+};
+
 const mockEmptyPlaylist: Playlist = {
   apiVersion: 'playlist.grafana.app/v1',
   kind: 'Playlist',
@@ -283,6 +299,49 @@ describe('PlaylistForm', () => {
           }),
         })
       );
+    });
+  });
+
+  describe('per-dashboard URL parameters', () => {
+    it('renders the parameters stored on each playlist item', () => {
+      getTestContext(mockPerItemOptionsPlaylist);
+
+      expect(screen.getByRole('textbox', { name: /url parameters for uid_1/i })).toHaveValue(
+        'var-host=host1&from=now-6h&to=now'
+      );
+      expect(screen.getByRole('textbox', { name: /url parameters for uid_2/i })).toHaveValue('var-host=host2');
+    });
+
+    it('accepts a copied dashboard URL and stores only its query string', async () => {
+      const { onSubmitMock } = getTestContext();
+
+      await userEvent.type(
+        screen.getByRole('textbox', { name: /url parameters for uid_1/i }),
+        'https://grafana.example.com/d/uid/name?var-host=host1&from=now-6h&to=now'
+      );
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      expect(onSubmitMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          spec: expect.objectContaining({
+            items: expect.arrayContaining([
+              expect.objectContaining({
+                value: 'uid_1',
+                queryParams: 'var-host=host1&from=now-6h&to=now',
+              }),
+            ]),
+          }),
+        })
+      );
+    });
+
+    it('keeps parameters attached to the correct item when another row is removed', async () => {
+      getTestContext(mockPerItemOptionsPlaylist);
+
+      await userEvent.click(within(rows()[0]).getByRole('button', { name: /delete playlist item/i }));
+      await waitFor(() => expect(rows()).toHaveLength(1));
+
+      expect(screen.getByRole('textbox', { name: /url parameters for uid_2/i })).toHaveValue('var-host=host2');
     });
   });
 });

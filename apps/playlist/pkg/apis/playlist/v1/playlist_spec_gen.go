@@ -26,6 +26,9 @@ type PlaylistPlaylistItem struct {
 	// Optional per-item display interval (e.g. "30s", "2m"). When unset, the
 	// playlist's global spec.interval is used.
 	Interval *string `json:"interval,omitempty"`
+	// Optional dashboard URL query string applied during playback. Use var-<name>
+	// for dashboard variables and from/to for time range overrides.
+	QueryParams *string `json:"queryParams,omitempty"`
 }
 
 // NewPlaylistPlaylistItem creates a new PlaylistPlaylistItem object.

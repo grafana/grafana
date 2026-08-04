@@ -22,6 +22,20 @@ export function isValidInterval(interval: string): boolean {
   }
 }
 
+export function normalizePlaylistItemQueryParams(value?: string): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const queryStart = trimmed.indexOf('?');
+  const query = queryStart === -1 ? trimmed : trimmed.slice(queryStart + 1);
+  const fragmentStart = query.indexOf('#');
+  const normalized = (fragmentStart === -1 ? query : query.slice(0, fragmentStart)).replace(/^\?/, '');
+
+  return normalized || undefined;
+}
+
 export function canWritePlaylists(): boolean {
   return config.featureToggles.playlistsRBAC
     ? contextSrv.hasPermission(AccessControlAction.PlaylistsWrite)

@@ -13,9 +13,17 @@ interface Props {
   /** Placeholder for empty per-item intervals; the global interval used as fallback during playback. */
   intervalPlaceholder?: string;
   updateItemInterval?: (idx: number, interval: string) => void;
+  updateItemQueryParams?: (idx: number, queryParams: string) => void;
 }
 
-export const PlaylistTable = ({ items, deleteItem, moveItem, intervalPlaceholder, updateItemInterval }: Props) => {
+export const PlaylistTable = ({
+  items,
+  deleteItem,
+  moveItem,
+  intervalPlaceholder,
+  updateItemInterval,
+  updateItemQueryParams,
+}: Props) => {
   const onDragEnd = (d: DropResult) => {
     if (d.destination) {
       moveItem(d.source.index, d.destination?.index);
@@ -28,8 +36,8 @@ export const PlaylistTable = ({ items, deleteItem, moveItem, intervalPlaceholder
         <Box marginBottom={1}>
           <Text variant="bodySmall" color="secondary">
             {t(
-              'playlist-edit.form.table-interval-help',
-              'Optionally set a per-dashboard interval. Leave blank to use the interval above.'
+              'playlist-edit.form.table-item-settings-help',
+              'Each dashboard can override the interval and add URL parameters for variables or time ranges. Duplicate a dashboard to show another combination.'
             )}
           </Text>
         </Box>
@@ -44,6 +52,7 @@ export const PlaylistTable = ({ items, deleteItem, moveItem, intervalPlaceholder
                   onDelete={deleteItem}
                   intervalPlaceholder={intervalPlaceholder}
                   onUpdateInterval={updateItemInterval}
+                  onUpdateQueryParams={updateItemQueryParams}
                 />
                 {provided.placeholder}
               </div>

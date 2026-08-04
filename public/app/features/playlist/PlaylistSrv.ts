@@ -7,7 +7,7 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 
-import { isValidInterval, loadDashboards } from './utils';
+import { isValidInterval, loadDashboards, normalizePlaylistItemQueryParams } from './utils';
 
 // Fallback used when even the global interval is unparseable. Matches the '5m' form default.
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
@@ -27,15 +27,21 @@ export interface PlaylistSrvState {
   isPlaying: boolean;
 }
 
+interface PlaylistEntry {
+  url: string;
+  interval: number;
+  queryParams?: string;
+}
+
 export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   private nextTimeoutId: ReturnType<typeof setTimeout> | undefined;
-  // The dashboards we need to load, each with the interval (ms) it should stay on screen.
-  private entries: Array<{ url: string; interval: number }> = [];
+  private entries: PlaylistEntry[] = [];
   private index = 0;
   declare private startUrl: string;
   private numberOfLoops = 0;
   declare private validPlaylistUrl: string;
   private locationListenerUnsub?: () => void;
+  private startRequestId = 0;
 
   public constructor() {
     super({ isPlaying: false });
@@ -52,13 +58,20 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     const entry = this.entries[this.index];
     const queryParams = locationService.getSearchObject();
     const filteredParams = pickBy(queryParams, (value: unknown, key: string) => queryParamsToPreserve[key]);
-    const nextDashboardUrl = locationUtil.stripBaseFromUrl(entry.url);
+    const strippedUrl = locationUtil.stripBaseFromUrl(entry.url);
+    const queryStart = strippedUrl.indexOf('?');
+    const nextDashboardUrl = queryStart === -1 ? strippedUrl : strippedUrl.slice(0, queryStart);
+    const dashboardParams = queryStart === -1 ? {} : urlUtil.parseKeyValue(strippedUrl.slice(queryStart + 1));
 
     this.index++;
     this.validPlaylistUrl = nextDashboardUrl;
     this.nextTimeoutId = setTimeout(() => this.next(), entry.interval);
 
-    const urlWithParams = nextDashboardUrl + '?' + urlUtil.toUrlParams(filteredParams);
+    const urlWithParams = urlUtil.renderUrl(nextDashboardUrl, {
+      ...dashboardParams,
+      ...urlUtil.parseKeyValue(normalizePlaylistItemQueryParams(entry.queryParams) ?? ''),
+      ...filteredParams,
+    });
 
     // When starting the playlist from the PlaylistStartPage component using the playlist URL, we want to replace the
     // history entry to support the back button
@@ -102,6 +115,8 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   }
 
   async start(playlist: Playlist) {
+    const requestId = ++this.startRequestId;
+
     // Do all async work up front, before touching any instance state. This means an early return
     // can never leave the service half-playing, and the synchronous tail below can't interleave
     // with a concurrent start() (PlaylistStartPage calls start() during render).
@@ -122,14 +137,18 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
       return;
     }
 
-    const entries: Array<{ url: string; interval: number }> = [];
+    if (requestId !== this.startRequestId) {
+      return;
+    }
+
+    const entries: PlaylistEntry[] = [];
     for (const item of items) {
       if (item.dashboards) {
         // A tag item can expand to several dashboards; they all share the item's interval.
         // An invalid per-item interval falls back to the global one.
         const interval = this.toIntervalMs(item.interval, globalInterval);
         for (const dash of item.dashboards) {
-          entries.push({ url: dash.url, interval });
+          entries.push({ url: dash.url, interval, queryParams: item.queryParams });
         }
       }
     }
@@ -142,7 +161,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     // Synchronous from here on: tear down any previous run, then set up this one. With no await in
     // this tail, an overlapping start() can't interleave — the later one's stop() cleans up the
     // earlier, so there's always exactly one playback with one listener/timeout.
-    this.stop();
+    this.stopPlayback();
     this.startUrl = window.location.href;
     this.index = 0;
     this.entries = entries;
@@ -155,6 +174,11 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   }
 
   stop() {
+    this.startRequestId++;
+    this.stopPlayback();
+  }
+
+  private stopPlayback() {
     if (!this.state.isPlaying) {
       return;
     }
@@ -164,10 +188,12 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
 
     if (this.locationListenerUnsub) {
       this.locationListenerUnsub();
+      this.locationListenerUnsub = undefined;
     }
 
     if (this.nextTimeoutId) {
       clearTimeout(this.nextTimeoutId);
+      this.nextTimeoutId = undefined;
     }
 
     if (locationService.getSearchObject().kiosk) {

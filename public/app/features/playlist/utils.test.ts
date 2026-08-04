@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { canWritePlaylists } from './utils';
+import { canWritePlaylists, normalizePlaylistItemQueryParams } from './utils';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
@@ -45,5 +45,17 @@ describe('canWritePlaylists', () => {
       (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = true;
       expect(canWritePlaylists()).toBe(false);
     });
+  });
+});
+
+describe('normalizePlaylistItemQueryParams', () => {
+  it.each([
+    ['var-host=host1&from=now-6h', 'var-host=host1&from=now-6h'],
+    ['?var-host=host1&from=now-6h', 'var-host=host1&from=now-6h'],
+    ['https://grafana.example.com/d/uid/name?var-host=host1&from=now-6h#view', 'var-host=host1&from=now-6h'],
+    ['', undefined],
+    ['  ', undefined],
+  ])('normalizes %s', (value, expected) => {
+    expect(normalizePlaylistItemQueryParams(value)).toBe(expected);
   });
 });
