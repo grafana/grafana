@@ -648,7 +648,7 @@ describe('GrafanaReceiverForm', () => {
       const savedIntegrations: Array<{ settings: Record<string, unknown> }> = [];
       server.use(
         http.put(
-          '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name',
+          '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name',
           async ({ request }) => {
             const body = await request.clone().json();
             savedIntegrations.push(...body.spec.integrations);
