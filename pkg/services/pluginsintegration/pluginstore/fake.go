@@ -18,8 +18,8 @@ func NewFakePluginStore(ps ...Plugin) *FakePluginStore {
 }
 
 func (pr *FakePluginStore) Plugin(_ context.Context, pluginID string) (Plugin, bool) {
-	// Match the real registry: every plugin ID is considered before any aliasID, so a plugin
-	// that is still installed under an ID another plugin claims as an alias wins.
+	// IDs before aliases, like the real registry: a plugin installed under an ID another plugin
+	// claims as an alias wins.
 	for _, v := range pr.PluginList {
 		if v.ID == pluginID {
 			return v, true

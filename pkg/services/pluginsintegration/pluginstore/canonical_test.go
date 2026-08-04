@@ -70,9 +70,8 @@ func TestSamePlugin(t *testing.T) {
 	}
 }
 
-// The real registry indexes every plugin ID before any aliasID, so a plugin that is still
-// installed under an ID another plugin claims as an alias must win the lookup. The fake has to
-// behave the same way or tests covering renamed plugins pass for the wrong reason.
+// Without this the fake disagrees with the real registry on exactly the renamed-plugin case
+// these helpers exist for.
 func TestFakePluginStore_PrefersIDsOverAliases(t *testing.T) {
 	store := NewFakePluginStore(
 		Plugin{JSONData: plugins.JSONData{ID: "grafana-pyroscope-datasource", AliasIDs: []string{"phlare"}}},
