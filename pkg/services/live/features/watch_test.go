@@ -196,11 +196,11 @@ func TestWatcherResumesAfterStreamCloses(t *testing.T) {
 
 		cancel()
 		<-tw.stopped
-		require.True(t, tw.done)
+		require.True(t, tw.done.Load())
 	})
 }
 
-func TestWatcherRestartsFromCurrentStateWhenResourceVersionExpired(t *testing.T) {
+func TestWatcherRestartsFromNowWhenResourceVersionExpired(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		first, second := watch.NewFake(), watch.NewFake()
 		tw := newTestWatcher(t, first, second)
@@ -225,7 +225,7 @@ func TestWatcherRestartsFromCurrentStateWhenResourceVersionExpired(t *testing.T)
 		synctest.Wait()
 
 		require.Equal(t, []string{"7", ""}, tw.resumes(),
-			"should retry from the last version, then fall back to current state")
+			"should retry from the last version, then fall back to watching from now")
 
 		second.Add(testObject("8"))
 		synctest.Wait()
@@ -239,9 +239,19 @@ func TestWatcherRestartsFromCurrentStateWhenResourceVersionExpired(t *testing.T)
 
 func TestWatcherBacksOffBetweenResumes(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
+		// The wait doubles after every break and is then held at the maximum.
+		// The last two steps are what catch an unclamped doubling: it would ask
+		// for 6.4s and 12.8s, so a 5s tick would leave the watcher still asleep.
+		var waits []time.Duration
+		for d := resumeBackoffMin; d < resumeBackoffMax; d = min(d*2, resumeBackoffMax) {
+			waits = append(waits, d)
+		}
+		waits = append(waits, resumeBackoffMax, resumeBackoffMax)
+
 		// Every stream closes immediately with nothing published, which is the
-		// case that could otherwise spin the loop.
-		streams := make([]*watch.FakeWatcher, 4)
+		// case that could otherwise spin the loop. One stream to start with, one
+		// per resume, and a spare so the final resume still has one to hand out.
+		streams := make([]*watch.FakeWatcher, len(waits)+2)
 		for i := range streams {
 			streams[i] = watch.NewFake()
 		}
@@ -255,17 +265,18 @@ func TestWatcherBacksOffBetweenResumes(t *testing.T) {
 		synctest.Wait()
 		require.Len(t, tw.resumes(), 1, "the first break resumes straight away")
 
-		// Each further break is only picked up once the backoff has elapsed, and
-		// with nothing published to reset it the wait doubles every time. Virtual
-		// time makes that exact: the watcher stays put until the clock is moved.
-		for i, backoff := range []time.Duration{resumeBackoffMin, 2 * resumeBackoffMin} {
+		// Each further break is only picked up once the backoff has elapsed.
+		// Virtual time makes that exact: the watcher stays put until the clock
+		// is moved, and moving it by the expected wait is enough to free it.
+		for i, wait := range waits {
 			streams[i+1].Stop()
 			synctest.Wait()
 			require.Len(t, tw.resumes(), i+1, "must wait out the backoff before resuming again")
 
-			time.Sleep(backoff) // advances the bubble's clock
+			time.Sleep(wait) // advances the bubble's clock
 			synctest.Wait()
-			require.Len(t, tw.resumes(), i+2)
+			require.Len(t, tw.resumes(), i+2,
+				"resume %d should be released after %s", i+2, wait)
 		}
 
 		cancel()
@@ -290,7 +301,7 @@ func TestWatcherStopsOnPublishFailure(t *testing.T) {
 
 		// Publishing is the watcher's whole job; resuming cannot fix it.
 		require.Empty(t, tw.resumes(), "a publish failure should not trigger a resume")
-		require.True(t, tw.done)
+		require.True(t, tw.done.Load())
 	})
 }
 
@@ -304,6 +315,6 @@ func TestWatcherStopsWhenContextIsCancelled(t *testing.T) {
 		<-tw.stopped
 
 		require.Empty(t, tw.resumes(), "cancellation is not a broken stream")
-		require.True(t, tw.done)
+		require.True(t, tw.done.Load())
 	})
 }

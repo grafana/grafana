@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -67,7 +68,7 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 	defer b.watchingMu.Unlock()
 
 	current, ok := b.watching[e.Channel]
-	if ok && !current.done {
+	if ok && !current.done.Load() {
 		return model.SubscribeReply{
 			JoinLeave: false,
 			Presence:  false,
@@ -184,8 +185,11 @@ type watcher struct {
 	ns        string
 	channel   string
 	publisher model.ChannelPublisher
-	done      bool
 	watch     watch.Interface
+
+	// done is set by run on its way out and read by OnSubscribe under a
+	// different lock, so it has to carry its own synchronisation.
+	done atomic.Bool
 
 	// newWatch re-opens the watch at a resourceVersion; lastRV is the newest one
 	// published, so a resumed watch picks up exactly where this one left off.
@@ -216,7 +220,7 @@ func (b *watcher) run(ctx context.Context) {
 
 	defer func() {
 		b.watch.Stop()
-		b.done = true
+		b.done.Store(true)
 	}()
 
 	backoff := resumeBackoffMin
@@ -276,9 +280,15 @@ func (b *watcher) run(ctx context.Context) {
 		next, err := b.newWatch(ctx, b.lastRV)
 		if err != nil && b.lastRV != "" {
 			// Most likely the resourceVersion has aged out of the history window.
-			// Start from the current state instead: that re-sends the existing
-			// objects as ADDED, which is far better than going silent.
-			logger.Warn("watch resume failed, restarting from current state",
+			// Start from now instead. Unified storage does not replay existing
+			// objects for an unset resourceVersion -- it starts the watch at the
+			// current version unless SendInitialEvents is set, see the
+			// !SendInitialEvents && Since == 0 branch in
+			// pkg/storage/unified/resource/server.go -- so the subscriber keeps
+			// whatever it already had and only sees changes from here on: it
+			// stays stale for the gap, but the channel is alive and self-heals
+			// on the next update rather than going silent for good.
+			logger.Warn("watch resume failed, restarting from now",
 				"channel", b.channel, "resourceVersion", b.lastRV, "err", err)
 			b.lastRV = ""
 			next, err = b.newWatch(ctx, "")
@@ -294,9 +304,7 @@ func (b *watcher) run(ctx context.Context) {
 			return
 		case <-time.After(backoff):
 		}
-		if backoff < resumeBackoffMax {
-			backoff *= 2
-		}
+		backoff = min(backoff*2, resumeBackoffMax)
 	}
 }
 
