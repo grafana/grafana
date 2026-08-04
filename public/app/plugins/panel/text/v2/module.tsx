@@ -1,7 +1,7 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { CodeLanguage, defaultCodeOptions, defaultOptions, type Options, TextMode } from '../panelcfg.gen';
+import { defaultCodeOptions, defaultOptions, type Options } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
@@ -9,49 +9,24 @@ import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 export const plugin = new PanelPlugin<Options>(TextNGPanel)
   .setPanelOptions((builder) => {
     const category = [t('textng.category-text', 'Text')];
-    builder
-      .addRadio({
-        path: 'mode',
-        name: t('textng.name-mode', 'Mode'),
-        category,
-        settings: {
-          options: [
-            { value: TextMode.Markdown, label: t('textng.mode-options.label-markdown', 'Markdown') },
-            { value: TextMode.HTML, label: t('textng.mode-options.label-html', 'HTML') },
-            { value: TextMode.Code, label: t('textng.mode-options.label-code', 'Code') },
-          ],
-        },
-        defaultValue: defaultOptions.mode,
-      })
-      .addSelect({
-        path: 'code.language',
-        name: t('textng.name-language', 'Language'),
-        category,
-        settings: {
-          options: Object.values(CodeLanguage).map((v) => ({
-            value: v,
-            label: v,
-          })),
-        },
-        defaultValue: defaultCodeOptions.language,
-        showIf: (v) => v.mode === TextMode.Code,
-      })
-      .addBooleanSwitch({
-        path: 'code.showLineNumbers',
-        name: t('textng.name-show-line-numbers', 'Show line numbers'),
-        category,
-        defaultValue: defaultCodeOptions.showLineNumbers,
-        showIf: (v) => v.mode === TextMode.Code,
-      })
-      .addCustomEditor({
-        id: 'content',
-        path: 'content',
+
+    // Everything is edited in the panel itself, so options are registered here
+    // only so their defaults are applied.
+    const addHiddenOption = <T,>(path: string, defaultValue: T) =>
+      builder.addCustomEditor({
+        id: path,
+        path,
         name: '',
         category,
         editor: () => null,
-        defaultValue: defaultOptions.content,
+        defaultValue,
         showIf: () => false,
       });
+
+    addHiddenOption('mode', defaultOptions.mode);
+    addHiddenOption('content', defaultOptions.content);
+    addHiddenOption('code.language', defaultCodeOptions.language);
+    addHiddenOption('code.showLineNumbers', defaultCodeOptions.showLineNumbers);
   })
   .setMigrationHandler(textPanelMigrationHandler)
   .setSuggestionsSupplier(() => []);

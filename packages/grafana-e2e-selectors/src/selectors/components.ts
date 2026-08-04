@@ -301,6 +301,9 @@ export const versionedComponents = {
         drop: {
           [MIN_GRAFANA_VERSION]: 'TestData drop values',
         },
+        exemplarCount: {
+          '13.2.0': 'data-testid TestData exemplar count',
+        },
       },
     },
     DataSourceHttpSettings: {
