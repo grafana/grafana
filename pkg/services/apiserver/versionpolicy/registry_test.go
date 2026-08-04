@@ -87,8 +87,89 @@ func TestVersionPolicyRegistryIsVersionAllowed(t *testing.T) {
 		assert.True(t, allowed)
 		assert.Empty(t, maxAllowed)
 	})
-	t.Run("unregistered version is allowed (never ranks above the cap)", func(t *testing.T) {
-		allowed, _ := capReg("v1").IsVersionAllowed("foo.grafana.app", "v99")
-		assert.True(t, allowed)
+	t.Run("unregistered or empty version fails closed on a capped group", func(t *testing.T) {
+		allowed, maxAllowed := capReg("v1").IsVersionAllowed("foo.grafana.app", "v99")
+		assert.False(t, allowed)
+		assert.Equal(t, "v1", maxAllowed)
+
+		allowed, _ = capReg("v1").IsVersionAllowed("foo.grafana.app", "")
+		assert.False(t, allowed)
+	})
+
+	t.Run("a registered but unparseable version fails closed on a capped group", func(t *testing.T) {
+		// "weird" is in the registered set but does not parse as a Kubernetes version, so it cannot be
+		// ranked against the cap — it must fail closed rather than slip through.
+		order := map[string][]string{"foo.grafana.app": {"v1", "weird"}}
+		r := newTestRegistry(order, nil, map[string]VersionPolicy{"foo.grafana.app": {MaxAllowedVersion: "v1"}})
+		allowed, _ := r.IsVersionAllowed("foo.grafana.app", "weird")
+		assert.False(t, allowed)
+	})
+
+	t.Run("cap is major-first: v1 blocks the whole v2 line but allows lower majors", func(t *testing.T) {
+		// dashboard-style order: v0alpha1 sits above v1 in scheme priority, and CompareKubeAwareVersionStrings
+		// would rank GA v1 above v2beta1/v2alpha1 — both wrong for a persist ceiling.
+		order := map[string][]string{"foo.grafana.app": {"v2", "v2beta1", "v2alpha1", "v0alpha1", "v1", "v1beta1"}}
+		r := newTestRegistry(order, nil, map[string]VersionPolicy{"foo.grafana.app": {MaxAllowedVersion: "v1"}})
+
+		for _, blocked := range []string{"v2", "v2beta1", "v2alpha1"} {
+			allowed, _ := r.IsVersionAllowed("foo.grafana.app", blocked)
+			assert.False(t, allowed, "%s should be blocked by max=v1 (higher major)", blocked)
+		}
+		for _, ok := range []string{"v1", "v1beta1", "v0alpha1"} {
+			allowed, _ := r.IsVersionAllowed("foo.grafana.app", ok)
+			assert.True(t, allowed, "%s should be allowed under max=v1", ok)
+		}
+	})
+}
+
+func TestVersionPolicyRegistryValidate(t *testing.T) {
+	t.Run("preferred outranking max is rejected", func(t *testing.T) {
+		r := newTestRegistry(fooOrder, nil,
+			map[string]VersionPolicy{"foo.grafana.app": {PreferredVersion: "v2", MaxAllowedVersion: "v1"}})
+		err := r.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "foo.grafana.app")
+	})
+
+	t.Run("preferred at or below max is allowed", func(t *testing.T) {
+		r := newTestRegistry(fooOrder, nil,
+			map[string]VersionPolicy{"foo.grafana.app": {PreferredVersion: "v1beta1", MaxAllowedVersion: "v1"}})
+		assert.NoError(t, r.Validate())
+	})
+
+	// fooOrder's natural (highest-priority) version is v2, so it is what discovery advertises when no
+	// preferredVersion is configured.
+	t.Run("cap below the natural preferred with no preferredVersion set is rejected", func(t *testing.T) {
+		r := newTestRegistry(fooOrder, nil,
+			map[string]VersionPolicy{"foo.grafana.app": {MaxAllowedVersion: "v1"}})
+		err := r.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "discovery advertises")
+	})
+
+	t.Run("cap at or above the natural preferred with no preferredVersion set is allowed", func(t *testing.T) {
+		r := newTestRegistry(fooOrder, nil,
+			map[string]VersionPolicy{"foo.grafana.app": {MaxAllowedVersion: "v2"}})
+		assert.NoError(t, r.Validate())
+	})
+
+	t.Run("cap below the natural preferred is allowed once preferredVersion is set to the cap", func(t *testing.T) {
+		r := newTestRegistry(fooOrder, nil,
+			map[string]VersionPolicy{"foo.grafana.app": {PreferredVersion: "v1", MaxAllowedVersion: "v1"}})
+		assert.NoError(t, r.Validate())
+	})
+
+	t.Run("an unregistered version in a known group is a hard error, not a silent drop", func(t *testing.T) {
+		r := newTestRegistry(fooOrder, nil,
+			map[string]VersionPolicy{"foo.grafana.app": {MaxAllowedVersion: "vtypo"}})
+		err := r.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "vtypo")
+	})
+
+	t.Run("a policy for a group not registered on this instance is skipped, not a boot failure", func(t *testing.T) {
+		r := newTestRegistry(fooOrder, nil,
+			map[string]VersionPolicy{"not-on-this-instance.grafana.app": {PreferredVersion: "v1", MaxAllowedVersion: "v1"}})
+		assert.NoError(t, r.Validate())
 	})
 }

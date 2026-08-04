@@ -11,8 +11,7 @@ import {
   FieldType,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 
 import { useCacheFieldDisplayNames, useCellActions, useCommonTableProps, useTableSharedCrosshair } from './hooks';
@@ -66,14 +65,6 @@ function wrapperWith(context: PanelContext) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-});
-
-beforeAll(() => {
-  setTestFlags({ [FlagKeys.TableRefactorNested]: false });
-});
-
-afterAll(() => {
-  setTestFlags({});
 });
 
 describe('useCacheFieldDisplayNames', () => {
@@ -207,16 +198,8 @@ describe('useCommonTableProps', () => {
       maxRowHeight: 100,
       disableKeyboardEvents: true,
       disableSanitizeHtml: false,
-      nestedRefactorEnabled: false,
       contentAwareWidthsEnabled: false,
     });
-  });
-
-  it('reflects the nested-refactor feature flag', () => {
-    setTestFlags({ [FlagKeys.TableRefactorNested]: true });
-    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), { wrapper: FeatureFlagsProvider });
-
-    expect(result.current.nestedRefactorEnabled).toBe(true);
   });
 
   it('returns a stable reference when inputs do not change', () => {
