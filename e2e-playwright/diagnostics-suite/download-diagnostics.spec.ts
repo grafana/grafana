@@ -4,7 +4,7 @@ import { mkdtempSync } from 'fs';
 import { createServer, type Server } from 'http';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { type Page } from 'playwright-core';
+import { type APIRequestContext, type Page } from 'playwright-core';
 
 import { type BootData } from '@grafana/data';
 import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
@@ -161,11 +161,17 @@ test.describe('diagnostics: Download diagnostics drawer', { tag: ['@diagnostics'
   let successDsUid: string;
   let failureDsUid: string;
   let dashboardUid: string;
+  let apiContext: APIRequestContext;
 
-  // createDataSource is a test-scoped fixture and can't be used from beforeAll (Playwright only
-  // allows worker-scoped fixtures there), so datasources are created via the API directly, same as
-  // the dashboard below.
-  test.beforeAll(async ({ request }) => {
+  // createDataSource and the `request` fixture are both test-scoped, and Playwright only allows
+  // worker-scoped fixtures in beforeAll/afterAll -- so setup/teardown go through a manually created
+  // APIRequestContext (via the worker-scoped `playwright` fixture) instead.
+  test.beforeAll(async ({ playwright }, testInfo) => {
+    apiContext = await playwright.request.newContext({
+      baseURL: testInfo.project.use.baseURL,
+      storageState: testInfo.project.use.storageState,
+    });
+
     successUpstream = await startUpstream('success');
     failureUpstream = await startUpstream('failure');
 
@@ -173,7 +179,7 @@ test.describe('diagnostics: Download diagnostics drawer', { tag: ['@diagnostics'
     // more than once concurrently, and a fixed name would race across those runs.
     const runId = randomUUID();
 
-    const successDsResponse = await request.post('/api/datasources', {
+    const successDsResponse = await apiContext.post('/api/datasources', {
       data: {
         type: 'prometheus',
         name: `e2e-diagnostics-prometheus-success-${runId}`,
@@ -185,7 +191,7 @@ test.describe('diagnostics: Download diagnostics drawer', { tag: ['@diagnostics'
     const successDsBody = await successDsResponse.json();
     successDsUid = successDsBody.datasource.uid;
 
-    const failureDsResponse = await request.post('/api/datasources', {
+    const failureDsResponse = await apiContext.post('/api/datasources', {
       data: {
         type: 'prometheus',
         name: `e2e-diagnostics-prometheus-failure-${runId}`,
@@ -197,23 +203,24 @@ test.describe('diagnostics: Download diagnostics drawer', { tag: ['@diagnostics'
     const failureDsBody = await failureDsResponse.json();
     failureDsUid = failureDsBody.datasource.uid;
 
-    const response = await request.post('/api/dashboards/db', {
+    const response = await apiContext.post('/api/dashboards/db', {
       data: buildDashboardRequestBody('Diagnostics download e2e', successDsUid, failureDsUid),
     });
     const body = await response.json();
     dashboardUid = body.uid;
   });
 
-  test.afterAll(async ({ request }) => {
+  test.afterAll(async () => {
     if (dashboardUid) {
-      await request.delete(`/api/dashboards/uid/${dashboardUid}`);
+      await apiContext.delete(`/api/dashboards/uid/${dashboardUid}`);
     }
     if (successDsUid) {
-      await request.delete(`/api/datasources/uid/${successDsUid}`);
+      await apiContext.delete(`/api/datasources/uid/${successDsUid}`);
     }
     if (failureDsUid) {
-      await request.delete(`/api/datasources/uid/${failureDsUid}`);
+      await apiContext.delete(`/api/datasources/uid/${failureDsUid}`);
     }
+    await apiContext.dispose();
     successUpstream?.server.close();
     failureUpstream?.server.close();
   });
