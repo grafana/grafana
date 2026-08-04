@@ -6,7 +6,10 @@ import { Provider } from 'react-redux';
 
 import {
   type AbsoluteTimeRange,
+  applyFieldOverrides,
   CoreApp,
+  createTheme,
+  DataFrameType,
   type EventBus,
   EventBusSrv,
   type FieldConfigSource,
@@ -14,11 +17,13 @@ import {
   LogSortOrderChangeEvent,
   LogsSortOrder,
   type ScopedVars,
+  standardEditorsRegistry,
   toDataFrame,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { defaultTableOptions } from '@grafana/schema';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
+import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { configureStore } from 'app/store/configureStore';
@@ -26,6 +31,7 @@ import { configureStore } from 'app/store/configureStore';
 import { LOG_LINE_BODY_FIELD_NAME } from '../../../features/logs/components/fieldSelector/logFields';
 
 import { LogsTable } from './LogsTable';
+import { getLogsTableFieldConfigRegistry } from './logsTableFieldConfig';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
@@ -74,7 +80,8 @@ const setUp = (
   props?: Partial<React.ComponentProps<typeof LogsTable>>,
   options?: Partial<Options>,
   app = CoreApp.Dashboard,
-  panelContext?: Partial<PanelContext>
+  panelContext?: Partial<PanelContext>,
+  flagValueMap: Record<string, boolean> = {}
 ) => {
   const store = configureStore();
   return render(
@@ -122,7 +129,7 @@ const setUp = (
     {
       wrapper: ({ children }) => (
         <Provider store={store}>
-          <OpenFeatureTestProvider>{children}</OpenFeatureTestProvider>
+          <OpenFeatureTestProvider flagValueMap={flagValueMap}>{children}</OpenFeatureTestProvider>
         </Provider>
       ),
     }
@@ -136,6 +143,12 @@ describe('LogsTable', () => {
 
   beforeAll(() => {
     mockTransformationsRegistry([organizeFieldsTransformer, extractFieldsTransformer]);
+    try {
+      // getLogsTableFieldConfigRegistry() builds custom table options through these editors.
+      standardEditorsRegistry.setInit(getAllOptionEditors);
+    } catch {
+      // already initialized in this Jest worker
+    }
   });
 
   beforeEach(() => {
@@ -393,6 +406,62 @@ describe('LogsTable', () => {
       });
 
       expect(await screen.findByText('Data is missing a time field')).toBeInTheDocument();
+    });
+  });
+
+  describe('panel-registered extractFields transformation', () => {
+    const panelPluginTransformationsOn = { 'grafana.panelPluginTransformations': true };
+
+    // What a dashboard scene hands the panel once the transformation registered in module.tsx has
+    // run: the label columns are present, `labels` survives because extractFields is configured
+    // with `replace: false`, and VizPanel.applyFieldConfig has already run field overrides over the
+    // lot — without which fields have no `display` function and the table's cells throw.
+    const preExtractedData = () =>
+      getPanelData({
+        series: applyFieldOverrides({
+          data: [
+            toDataFrame({
+              meta: { type: DataFrameType.LogLines },
+              fields: [
+                { name: LOGS_DATAPLANE_TIMESTAMP_NAME, type: FieldType.time, values: [1, 2] },
+                { name: LOGS_DATAPLANE_BODY_NAME, type: FieldType.string, values: ['log 1', 'log 2'] },
+                {
+                  name: 'labels',
+                  type: FieldType.other,
+                  values: [
+                    { service: 'frontend', level: 'info' },
+                    { service: 'backend', level: 'error' },
+                  ],
+                },
+                { name: 'service', type: FieldType.string, values: ['frontend', 'backend'] },
+                { name: 'level', type: FieldType.string, values: ['info', 'error'] },
+              ],
+            }),
+          ],
+          fieldConfig,
+          fieldConfigRegistry: getLogsTableFieldConfigRegistry(),
+          replaceVariables: (value: string) => value,
+          theme: createTheme(),
+          timeZone: 'utc',
+        }),
+      });
+
+    it('leaves upstream-extracted label columns alone instead of extracting them a second time', async () => {
+      setUp({ data: preExtractedData() }, undefined, CoreApp.Dashboard, undefined, panelPluginTransformationsOn);
+      await waitFor(() => expect(screen.getByRole('checkbox', { name: 'service' })).toBeInTheDocument());
+
+      // A second in-panel pass appends rather than skips — extractFields renames collisions — so
+      // these are the columns a double extraction would add.
+      expect(screen.queryByRole('checkbox', { name: 'service 1' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('checkbox', { name: 'level 1' })).not.toBeInTheDocument();
+    });
+
+    it('extracts label columns itself for a host that runs no plugin transformations', async () => {
+      // Explore renders this component directly, so `data` is the raw query result: `service` can
+      // only appear if the panel extracted it.
+      setUp({ extractFieldsInPanel: true }, undefined, CoreApp.Explore, undefined, panelPluginTransformationsOn);
+
+      expect(await screen.findByRole('checkbox', { name: 'service' })).toBeInTheDocument();
     });
   });
 });
