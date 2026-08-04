@@ -92,12 +92,7 @@ export function DashboardVariablesList({
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
-        title={t('dashboard.sidebar.variables.title-top-placement', '', {
-          placement: resolvedTopPlacementLabel,
-          count: visible.length,
-          defaultValue_one: '{{placement}} ({{count}})',
-          defaultValue_other: '{{placement}} ({{count}})',
-        })}
+        title={resolvedTopPlacementLabel ?? t('dashboard.sidebar.variables.title-above-dashboard', 'Above dashboard')}
         onEditItem={onClickVariable}
         onDuplicateItem={onDuplicateVariable}
         onDeleteItem={onDeleteVariable}
@@ -107,11 +102,7 @@ export function DashboardVariablesList({
         <DraggableList
           items={controlsMenu}
           droppableId={ID_CONTROLS_MENU_LIST}
-          title={t('dashboard.sidebar.variables.title-controls-menu', '', {
-            count: controlsMenu.length,
-            defaultValue_one: 'Controls menu ({{count}})',
-            defaultValue_other: 'Controls menu ({{count}})',
-          })}
+          title={t('dashboard.sidebar.variables.title-controls-menu', 'Controls menu')}
           onEditItem={onClickVariable}
           onDuplicateItem={onDuplicateVariable}
           onDeleteItem={onDeleteVariable}
@@ -121,11 +112,7 @@ export function DashboardVariablesList({
       <DraggableList
         items={hidden}
         droppableId={ID_HIDDEN_LIST}
-        title={t('dashboard.sidebar.variables.title-hidden', '', {
-          count: hidden.length,
-          defaultValue_one: 'Hidden ({{count}})',
-          defaultValue_other: 'Hidden ({{count}})',
-        })}
+        title={t('dashboard.sidebar.variables.title-hidden', 'Hidden')}
         onEditItem={onClickVariable}
         onDuplicateItem={onDuplicateVariable}
         onDeleteItem={onDeleteVariable}
@@ -145,7 +132,7 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
 
   return (
     <SidebarAddButton
-      data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
+      dataTestId={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
       onAdd={onAddVariable}
       tooltip={t('dashboard.sidebar.variables.add-variable', 'Add variable')}
     />

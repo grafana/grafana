@@ -10,10 +10,19 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
-import { getSectionFiltersCount, AddSectionFilterButton, SectionFiltersCategoryTitle, SectionFiltersList } from '../../sidebar/SectionFiltersList';
-import { getSectionVariablesCount, AddSectionVariableButton, SectionVariablesCategoryTitle, SectionVariablesList } from '../../sidebar/SectionVariablesList';
+import {
+  getSectionFiltersCount,
+  AddSectionFilterButton,
+  SectionFiltersCategoryTitle,
+  SectionFiltersList,
+} from '../../sidebar/SectionFiltersList';
+import {
+  getSectionVariablesCount,
+  AddSectionVariableButton,
+  SectionVariablesCategoryTitle,
+  SectionVariablesList,
+} from '../../sidebar/SectionVariablesList';
 import { dashboardEditActions } from '../../sidebar/shared';
 import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/utils';
