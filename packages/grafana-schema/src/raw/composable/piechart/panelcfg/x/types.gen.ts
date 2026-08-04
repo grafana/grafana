@@ -12,7 +12,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "13.1.2";
+export const pluginVersion = "13.1.3";
 
 /**
  * Select the pie chart display style.

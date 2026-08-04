@@ -10,7 +10,7 @@
 
 // Generated from public/app/plugins/panel/nodegraph/panelcfg.cue file.
 
-export const pluginVersion = "13.1.2";
+export const pluginVersion = "13.1.3";
 
 export interface ArcOption {
   /**

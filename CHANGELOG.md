@@ -1,3 +1,14 @@
+<!-- 13.1.2 START -->
+
+# 13.1.2 (2026-08-04)
+
+### Bug fixes
+
+- **Logs Table:** Fix missing results when logs stream [#128946](https://github.com/grafana/grafana/pull/128946), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Logs Table:** Fix mixed usage of field name and display name [#128698](https://github.com/grafana/grafana/pull/128698), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **Security**: Fix CVE-2026-13438
+
+<!-- 13.1.2 END -->
 <!-- 13.1.1 START -->
 
 # 13.1.1 (2026-07-21)
