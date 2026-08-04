@@ -2,11 +2,18 @@ package vector
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+// ErrCollectionKindMismatch marks an EnsureCollection call whose
+// internal/external flag disagrees with the catalog row. Handlers map it to
+// NotFound so it stays indistinguishable from a collection that doesn't
+// exist.
+var ErrCollectionKindMismatch = errors.New("collection kind mismatch")
 
 // Collection is one row of the embedding_collections catalog: a (group,
 // resource) pair provisioned for vector storage. The catalog does two
@@ -52,9 +59,9 @@ func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource 
 	if found {
 		if c.IsExternal != isExternal {
 			if isExternal {
-				return Collection{}, fmt.Errorf("collection %s/%s is internal, not writable through the external API", group, resource)
+				return Collection{}, fmt.Errorf("collection %s/%s is internal, not writable through the external API: %w", group, resource, ErrCollectionKindMismatch)
 			}
-			return Collection{}, fmt.Errorf("collection %s/%s is external, not writable through the internal API", group, resource)
+			return Collection{}, fmt.Errorf("collection %s/%s is external, not writable through the internal API: %w", group, resource, ErrCollectionKindMismatch)
 		}
 		// Re-check on every call, not just first provision: a prior insert may
 		// have committed while the partition DDL failed transiently, which

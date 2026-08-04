@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -115,6 +116,21 @@ func writeStatusError(ctx context.Context, err error, msg string) error {
 		}
 	}
 	return status.Error(codes.Internal, msg)
+}
+
+// ensureExternalCollection provisions/returns the collection, mapping a kind
+// mismatch (catalog says internal) to the same NotFound as an allowlist miss
+// so callers can't distinguish internal collections from absent ones.
+func (s *VectorStoreServer) ensureExternalCollection(ctx context.Context, group, resource string) (vector.Collection, error) {
+	coll, err := s.store.EnsureCollection(ctx, group, resource, true)
+	if err != nil {
+		if errors.Is(err, vector.ErrCollectionKindMismatch) {
+			return vector.Collection{}, status.Errorf(codes.NotFound, "collection %s/%s not found", group, resource)
+		}
+		s.log.Error("vector store: ensure collection", "err", err, "group", group, "resource", resource)
+		return vector.Collection{}, writeStatusError(ctx, err, "provision collection")
+	}
+	return coll, nil
 }
 
 // authorize runs the common request prefix: key fields present, token
@@ -236,10 +252,9 @@ func (s *VectorStoreServer) Upsert(ctx context.Context, req *resourcepb.VectorUp
 		return nil, err
 	}
 
-	coll, err := s.store.EnsureCollection(ctx, req.Group, req.Resource, true)
+	coll, err := s.ensureExternalCollection(ctx, req.Group, req.Resource)
 	if err != nil {
-		s.log.Error("vector store: ensure collection", "err", err, "group", req.Group, "resource", req.Resource)
-		return nil, writeStatusError(ctx, err, "provision collection")
+		return nil, err
 	}
 
 	rows, err := s.embedInputs(ctx, req.Namespace, coll, "", req.Inputs)
@@ -277,10 +292,9 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 		seen[in.Subresource] = struct{}{}
 	}
 
-	coll, err := s.store.EnsureCollection(ctx, req.Group, req.Resource, true)
+	coll, err := s.ensureExternalCollection(ctx, req.Group, req.Resource)
 	if err != nil {
-		s.log.Error("vector store: ensure collection", "err", err, "group", req.Group, "resource", req.Resource)
-		return nil, writeStatusError(ctx, err, "provision collection")
+		return nil, err
 	}
 
 	resp = &resourcepb.VectorUpsertSubresourcesResponse{}

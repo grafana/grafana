@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -536,4 +537,22 @@ func TestWriteStatusError_NilErrorIsInternal(t *testing.T) {
 	err := writeStatusError(context.Background(), nil, "boom")
 	require.Error(t, err)
 	assert.Equal(t, codes.Internal, status.Code(err))
+}
+
+func TestVectorStore_InternalCollectionMismatchIsNotFound(t *testing.T) {
+	// Allowlisted name whose catalog row is internal must answer exactly
+	// like an absent collection — not Internal — so callers can't probe.
+	store := &fakeWriteStore{ensureErr: fmt.Errorf("collection g/r is internal: %w", vector.ErrCollectionKindMismatch)}
+	s := newTestVectorStoreServer(store)
+
+	_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
+	require.Error(t, err)
+	assert.Equal(t, codes.NotFound, status.Code(err))
+
+	_, err = s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Uid: "u1",
+		Inputs: []*resourcepb.EmbeddingInput{{Subresource: "c", Content: "x", Title: "t"}},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.NotFound, status.Code(err))
 }
