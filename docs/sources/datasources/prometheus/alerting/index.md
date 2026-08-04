@@ -169,7 +169,7 @@ histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="api"
 sum(rate(http_requests_total{job="api"}[$__rate_interval]))
 ```
 
-**Expression C** (Math, where both conditions must be true):
+**Expression C** (Math, combining both conditions):
 
 ```
 $A > 2 && $B > 100
@@ -183,9 +183,9 @@ $A > 2 && $B > 100
 
 ### When to use recording rules
 
-- **Dashboard panels that query the same expensive expression repeatedly:** pre-compute it once and query the result.
-- **Alert rules on complex expressions:** simplify the alert query by alerting on the pre-aggregated metric.
-- **High-cardinality aggregations:** reduce thousands of series to a handful of pre-computed series.
+- **Dashboard panels that query the same expensive expression repeatedly:** Pre-compute it once and query the result.
+- **Alert rules on complex expressions:** Simplify the alert query by alerting on the pre-aggregated metric.
+- **High-cardinality aggregations:** Reduce thousands of series to a handful of pre-computed series.
 
 ### Set up Grafana-managed recording rules for Prometheus
 

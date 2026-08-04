@@ -242,7 +242,7 @@ node_memory_MemTotal_bytes
 node_memory_MemAvailable_bytes
 ```
 
-**Expression C** (percentage available, using **+ Expression** → **Math**):
+**Expression C** (percentage available). To add it, click **+ Expression** and select **Math**:
 
 ```
 $B / $A * 100
@@ -287,7 +287,7 @@ Common debugging steps:
 
 High-cardinality metrics (those with many unique label combinations) can cause queries to timeout or exceed memory limits when queried over long time ranges. Follow these practices to query high-cardinality data effectively:
 
-- **Aggregate first, then filter:** Use `sum()`, `avg()`, or `count()` to reduce the number of series before applying other operations. For example, `sum(rate(metric[5m])) by (service)` is far cheaper than querying all individual pod-level series.
+- **Aggregate first, then filter:** Use `sum()`, `avg()`, or `count()` to reduce the number of series before applying other operations. For example, `sum(rate(metric[5m])) by (service)` is far cheaper than querying all individual Pod-level series.
 - **Use recording rules for repeated queries:** If a dashboard panel queries the same expensive expression on every load, create a [Prometheus recording rule](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/) to pre-compute the result.
 - **Scope with template variables:** Use dashboard [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/) to select a specific `namespace`, `cluster`, or `job` rather than querying all labels at once.
 - **Increase Min step for overview panels:** For panels showing trends over days or weeks, set a higher **Min step** (for example, `5m` or `15m`) to reduce the number of data points requested.
