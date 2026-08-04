@@ -51,7 +51,7 @@ You can then create alert rules that query metrics derived from traces.
 
 You can use service graph metrics to detect infrastructure issues such as network degradation or service mesh problems.
 
-For trace-based alerts, we recommend using [span metrics](https://grafana.com/docs/tempo/latest/metrics-from-traces/span-metrics/).
+For trace-based alerts, use [span metrics](https://grafana.com/docs/tempo/latest/metrics-from-traces/span-metrics/).
 
 **Span metrics** measure the total processing time of a service request: capturing what happens inside the service, not just the communication between services. They include the time spent on internal processing and waiting on downstream calls, providing an **end-to-end picture of service performance**.
 
