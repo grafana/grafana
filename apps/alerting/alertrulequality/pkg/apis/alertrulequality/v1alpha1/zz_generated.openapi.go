@@ -112,7 +112,7 @@ func schema_pkg_apis_alertrulequality_v1alpha1_AlertRuleQualityPolicySpec(ref co
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "AlertRuleQualityPolicySpec lists the fields an alert rule must carry.\n\nBoth lists are optional and an empty policy requires nothing: a required field rejects rule creation and editing, so a policy nobody configured must not enforce anything.\n\nRecording rules are exempt from the policy, since they do not notify.",
+				Description: "AlertRuleQualityPolicySpec lists the fields an alert rule must carry.\n\nBoth lists are optional and an empty policy requires nothing: a required field rejects rule creation and editing, so a policy nobody configured must not enforce anything.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"requiredAnnotations": {

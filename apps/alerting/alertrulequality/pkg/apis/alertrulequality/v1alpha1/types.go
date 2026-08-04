@@ -39,8 +39,6 @@ func (AlertRuleQualityPolicyList) OpenAPIModelName() string {
 //
 // Both lists are optional and an empty policy requires nothing: a required field rejects
 // rule creation and editing, so a policy nobody configured must not enforce anything.
-//
-// Recording rules are exempt from the policy, since they do not notify.
 type AlertRuleQualityPolicySpec struct {
 	// Annotation keys that must be present and non-empty on every alert rule,
 	// e.g. "summary", "description", "runbook_url".
