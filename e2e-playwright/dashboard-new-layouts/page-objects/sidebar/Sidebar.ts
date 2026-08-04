@@ -3,10 +3,10 @@ import { test } from '@playwright/test';
 import { PageObject, type PageObjectArgs } from '../PageObject';
 
 import { AddOptions } from './AddOptions';
-import { ConditionalRenderingOptions } from './ConditionalRenderingOptions';
 import { ContentOutline } from './ContentOutline';
 import { DashboardOptions } from './DashboardOptions';
 import { PanelOptions } from './PanelOptions';
+import { TabOptions } from './TabOptions';
 import { Toolbar } from './Toolbar';
 import { VariableOptions } from './VariableOptions';
 
@@ -19,7 +19,7 @@ export class Sidebar extends PageObject {
   public dashboardOptions: DashboardOptions;
   public variableOptions: VariableOptions;
   public panelOptions: PanelOptions;
-  public conditionalRenderingOptions: ConditionalRenderingOptions;
+  public tabOptions: TabOptions;
 
   constructor(args: PageObjectArgs) {
     super(args);
@@ -29,7 +29,7 @@ export class Sidebar extends PageObject {
     this.dashboardOptions = new DashboardOptions(args);
     this.variableOptions = new VariableOptions(args);
     this.panelOptions = new PanelOptions(args);
-    this.conditionalRenderingOptions = new ConditionalRenderingOptions(args);
+    this.tabOptions = new TabOptions(args);
   }
 
   getContainer() {
