@@ -1939,6 +1939,27 @@ describe('TableNG utils', () => {
       expect(compute(fields, 65, /* showTypeIcons */ true)).toEqual([65]);
     });
 
+    it('measures header labels with the medium-weight header context when provided', () => {
+      // Header labels render bolder than the body, so a wider (medium-weight) context is passed for
+      // them. This mock context measures every glyph 2px wider than the body's CHAR_W.
+      const headerCtx = createTypographyContext(14, 'sans-serif', 0.15);
+      jest
+        .spyOn(headerCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((text: string) => ({ width: String(text).length * (CHAR_W + 2) })) as never);
+
+      const fields: Field[] = [{ name: 'Value', type: FieldType.number, values: [9], config: {} }];
+      // body content "9" floors to MIN_WIDTH 50; header "Value" (5) at the header font => 5*10+13 = 63
+      // wins. Regular-weight measurement would give 5*8+13 = 53, so landing on 63 proves the header
+      // context was used. availWidth == 63 leaves no room to grow.
+      const widths = computeContentAwareColWidths(fields, 63, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: headerCtx,
+      });
+
+      expect(widths).toEqual([63]);
+    });
+
     it('only samples the first N rows (bounded work) rather than scanning every value', () => {
       const display = jest.fn((v) => ({ text: String(v), numeric: Number(v) }));
       const fields: Field[] = [

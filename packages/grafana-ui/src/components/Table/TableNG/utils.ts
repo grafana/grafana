@@ -198,8 +198,13 @@ function clampByMaxHeight(measurer: MeasureCellHeight, maxHeight = Infinity): Me
  * @internal creates a typography context based on a font size and family. used to measure text
  * and estimate size of text in cells.
  */
-export function createTypographyContext(fontSize: number, fontFamily: string, letterSpacing = 0.15): TypographyCtx {
-  const font = `${fontSize}px ${fontFamily}`;
+export function createTypographyContext(
+  fontSize: number,
+  fontFamily: string,
+  letterSpacing = 0.15,
+  fontWeight?: number
+): TypographyCtx {
+  const font = `${fontWeight != null ? `${fontWeight} ` : ''}${fontSize}px ${fontFamily}`;
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
 
@@ -1225,6 +1230,12 @@ const MEASURE_CANDIDATES = 3;
 
 export interface ContentAwareColWidthsOptions {
   typographyCtx: TypographyCtx;
+  /**
+   * Header labels render at `fontWeightMedium`, which is wider than the body text this measures.
+   * When provided, header widths are measured with this (medium-weight) context so a column that
+   * hugs its header doesn't ellipsize the title; falls back to `typographyCtx` when absent.
+   */
+  headerTypographyCtx?: TypographyCtx;
   showTypeIcons?: boolean;
   /** overridable for testing; otherwise derived from the auto-column count */
   sampleSize?: number;
@@ -1380,7 +1391,12 @@ const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>
 export function computeContentAwareColWidths(
   fields: Field[],
   availWidth: number,
-  { typographyCtx, showTypeIcons = false, sampleSize }: ContentAwareColWidthsOptions
+  {
+    typographyCtx,
+    headerTypographyCtx = typographyCtx,
+    showTypeIcons = false,
+    sampleSize,
+  }: ContentAwareColWidthsOptions
 ): number[] {
   const autoIdxs: number[] = [];
   let definedWidth = 0;
@@ -1417,7 +1433,7 @@ export function computeContentAwareColWidths(
 
   for (const i of autoIdxs) {
     const field = fields[i];
-    const headerWidth = measureHeaderWidth(field, typographyCtx, showTypeIcons);
+    const headerWidth = measureHeaderWidth(field, headerTypographyCtx, showTypeIcons);
 
     // Text wrapping is cross-cutting: a wrapped column grows in height, not width, so it sizes to
     // its header regardless of cell type. Otherwise the cell type's registered measurer (or the

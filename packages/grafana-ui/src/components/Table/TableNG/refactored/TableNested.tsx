@@ -230,9 +230,23 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   prevConfiguredWidthCount.current = configuredWidthCount;
 
+  const headerTypographyCtx = useMemo(
+    () =>
+      createTypographyContext(
+        theme.typography.fontSize,
+        theme.typography.fontFamily,
+        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
+        theme.typography.fontWeightMedium
+      ),
+    [theme]
+  );
+
   const contentAwareWidths = useMemo(
-    () => (contentAwareWidthsEnabled ? { typographyCtx, showTypeIcons: showTypeIcons ?? false } : undefined),
-    [contentAwareWidthsEnabled, typographyCtx, showTypeIcons]
+    () =>
+      contentAwareWidthsEnabled
+        ? { typographyCtx, headerTypographyCtx, showTypeIcons: showTypeIcons ?? false }
+        : undefined,
+    [contentAwareWidthsEnabled, typographyCtx, headerTypographyCtx, showTypeIcons]
   );
 
   const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);

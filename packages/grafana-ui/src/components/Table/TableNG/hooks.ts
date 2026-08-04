@@ -733,6 +733,8 @@ export function useDebouncedNumber(value: number, wait: number): number {
  */
 export interface ContentAwareWidths {
   typographyCtx: TypographyCtx;
+  /** medium-weight context for measuring header labels; see {@link ContentAwareColWidthsOptions} */
+  headerTypographyCtx?: TypographyCtx;
   showTypeIcons?: boolean;
 }
 
