@@ -6327,7 +6327,7 @@
         "custom-options": {
           "apply": "Apply",
           "discard": "Discard",
-          "modal-title": "Custom options"
+          "modal-title": "Custom variable: {{name}}"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -7690,7 +7690,7 @@
       "add-variable": "Add variable"
     },
     "variable-edit-actions": {
-      "edit-custom-options": "Edit options",
+      "edit-custom-values": "Edit values",
       "edit-query": "Edit query",
       "variable-settings": "Variable settings"
     },
