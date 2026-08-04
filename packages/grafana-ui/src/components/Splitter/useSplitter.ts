@@ -356,6 +356,12 @@ export function useSplitter(options: UseSplitterOptions) {
   if (pixelPrimary) {
     primaryStyles.flexGrow = 'unset';
     primaryStyles.flexBasis = `${initialSize}px`;
+    // This pane's handle sits *after* its width, so a basis wider than the container pushes the
+    // handle past the container's clipped edge — with nothing left to drag, and no size to persist
+    // but the broken one. Reachable from a width stored on a wider window, since it is absolute.
+    // Capping the pane rather than letting it shrink keeps the pinned width authoritative up to the
+    // last point where the handle still fits.
+    primaryStyles[maxDimProp] = `calc(100% - ${handleSize}px)`;
     secondaryStyles.flexGrow = 1;
   } else if (usePixels) {
     primaryStyles.flexGrow = 1;

@@ -60,6 +60,36 @@ describe('useSplitter', () => {
       expect(secondary.flexGrow).toBe(1);
       expect(secondary.flexBasis).toBeUndefined();
     });
+
+    // A primary-pixel pane's handle sits after its width, so an oversized basis would push the
+    // handle outside the container's clipped edge and leave nothing to drag it back with.
+    it('caps the primary pane so its handle stays inside the container', () => {
+      const { result } = renderHook(() =>
+        useSplitter({ direction: 'row', usePixels: true, pixelPane: 'primary', initialSize: 1800 })
+      );
+      const { style: primary } = result.current.primaryProps;
+
+      expect(primary.maxWidth).toBe('calc(100% - 16px)');
+      expect(primary.maxHeight).toBeUndefined();
+    });
+
+    it('caps along the cross axis for a column splitter', () => {
+      const { result } = renderHook(() =>
+        useSplitter({ direction: 'column', usePixels: true, pixelPane: 'primary', initialSize: 1800 })
+      );
+      const { style: primary } = result.current.primaryProps;
+
+      expect(primary.maxHeight).toBe('calc(100% - 16px)');
+      expect(primary.maxWidth).toBeUndefined();
+    });
+
+    // The secondary pane's handle sits before its width, so it stays reachable without a cap.
+    it('does not cap a secondary-pixel pane', () => {
+      const { result } = renderHook(() => useSplitter({ direction: 'row', usePixels: true, initialSize: 1800 }));
+      const { style: secondary } = result.current.secondaryProps;
+
+      expect(secondary.maxWidth).toBeUndefined();
+    });
   });
 
   // Double-click resets the panes by writing styles straight to the DOM. It has to report that reset
