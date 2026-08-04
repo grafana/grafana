@@ -2,8 +2,7 @@ name: Frontend preview check
 description: >-
   Determines whether a pull request is eligible for a frontend preview deploy:
   not from a fork, and only changing frontend code. Used by the
-  deploy-frontend-preview and ephemeral instances workflows to decide between
-  deploying a frontend preview or a full ephemeral instance.
+  deploy-frontend-preview workflow.
 
 inputs:
   pr-number:

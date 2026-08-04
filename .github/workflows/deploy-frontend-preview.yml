@@ -4,10 +4,14 @@ name: Deploy frontend preview
 # bucket, so it can be loaded in the shared preview Grafana instance via
 # /-/set-preview-assets (see pkg/services/frontend/preview_assets.go).
 #
-# Opt in by commenting `/deploy-to-hg` on a PR that only changes frontend
-# code - the same command that deploys an ephemeral instance for PRs with
-# backend changes. Once opted in (tracked with the deploy-frontend-preview
-# label), every push to the PR rebuilds and redeploys the preview.
+# Opt in by commenting `/deploy-to-fs` on a PR that only changes frontend
+# code. Once opted in (tracked with the deploy-frontend-preview label), every
+# push to the PR rebuilds and redeploys the preview.
+#
+# NOTE: the `/deploy-to-fs` command is temporary, while we test this
+# mechanism. The plan is to later fold it into `/deploy-to-hg`: that command
+# will deploy a frontend preview for frontend-only PRs, and an ephemeral
+# instance for everything else.
 
 on:
   issue_comment:
@@ -24,7 +28,7 @@ permissions: {}
 jobs:
   check:
     name: Check PR is eligible
-    # Deploys are restricted to org members commenting /deploy-to-hg on
+    # Deploys are restricted to org members commenting /deploy-to-fs on
     # non-fork PRs. Pushes to a PR that has already opted in (has the label)
     # redeploy automatically.
     if: |
@@ -32,7 +36,7 @@ jobs:
       (
         (github.event_name == 'issue_comment' &&
           github.event.issue.pull_request &&
-          startsWith(github.event.comment.body, '/deploy-to-hg') &&
+          startsWith(github.event.comment.body, '/deploy-to-fs') &&
           (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')) ||
         (github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.fork == false &&
