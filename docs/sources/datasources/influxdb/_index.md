@@ -83,6 +83,10 @@ To adjust this behavior:
 
 The standalone plugin requires Grafana 12.3.0 or later. The InfluxDB data source bundled with Grafana 13.1 and earlier continues to work as before. Those versions are unaffected by this change.
 
+{{< admonition type="caution" >}}
+Grafana recommends running plugin version 13.1.0 or later. Earlier versions could write API tokens to Grafana server logs in plain text at default log levels. If you've run an earlier version, treat your server logs as sensitive and rotate any tokens that may have been exposed.
+{{< /admonition >}}
+
 Users running Grafana 12.3.x through 13.1.x can install the standalone plugin from the plugin catalog if they want the latest features before upgrading to Grafana 13.2. To use the standalone plugin with these versions, add the following to your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/):
 
 ```ini
@@ -96,8 +100,10 @@ preinstall_sync = influxdb
 ; preinstall_sync = influxdb@<version>
 ```
 
+On self-managed Grafana, you control the plugin version. To roll back after a problematic update, pin a known-good version with `preinstall_sync = influxdb@<version>` and restart Grafana, or install a specific version from the **Administration > Plugins** page.
+
 {{< admonition type="note" >}}
-Plugins are automatically updated in Grafana Cloud.
+In Grafana Cloud, plugin updates are managed automatically. You can't pin the plugin to a specific version or roll back to a previous one yourself. If a plugin update causes problems with your dashboards or queries, contact Grafana Support.
 {{< /admonition >}}
 
 ## Related resources
