@@ -71,6 +71,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardInfinityOptions{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2_DashboardInfinityOptions(ref),
 		DashboardIntervalVariableKind{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2_DashboardIntervalVariableKind(ref),
 		DashboardIntervalVariableSpec{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2_DashboardIntervalVariableSpec(ref),
+		DashboardItemMatcherConfig{}.OpenAPIModelName():                                                                                     schema_pkg_apis_dashboard_v2_DashboardItemMatcherConfig(ref),
+		DashboardItemOverrideRule{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2_DashboardItemOverrideRule(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2.DashboardJSONCodec":                                                schema_pkg_apis_dashboard_v2_DashboardJSONCodec(ref),
 		DashboardLibraryPanelKind{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2_DashboardLibraryPanelKind(ref),
 		DashboardLibraryPanelKindSpec{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2_DashboardLibraryPanelKindSpec(ref),
@@ -2396,12 +2398,26 @@ func schema_pkg_apis_dashboard_v2_DashboardFieldConfigSource(ref common.Referenc
 							},
 						},
 					},
+					"itemOverrides": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Item overrides are the options applied to specific items (marks) within a visualization, such as a node graph node or a pie chart slice, rather than to a field.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(DashboardItemOverrideRule{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"defaults", "overrides"},
 			},
 		},
 		Dependencies: []string{
-			DashboardFieldConfig{}.OpenAPIModelName(), DashboardV2FieldConfigSourceOverrides{}.OpenAPIModelName()},
+			DashboardFieldConfig{}.OpenAPIModelName(), DashboardItemOverrideRule{}.OpenAPIModelName(), DashboardV2FieldConfigSourceOverrides{}.OpenAPIModelName()},
 	}
 }
 
@@ -2970,6 +2986,78 @@ func schema_pkg_apis_dashboard_v2_DashboardIntervalVariableSpec(ref common.Refer
 		},
 		Dependencies: []string{
 			DashboardDatasourceControlSourceRef{}.OpenAPIModelName(), DashboardVariableOption{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2_DashboardItemMatcherConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Selects the items (marks) an item override rule applies to. The analogue of MatcherConfig for visualizations whose marks are rows rather than fields, such as node graph nodes or pie chart slices.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The item matcher id. This is used to find the matcher implementation from registry.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The kind of item this matcher selects, declared by the panel plugin. For example \"node\" or \"slice\".",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The matcher options. This is specific to the matcher implementation.",
+							Type:        []string{"object"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"id", "kind"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2_DashboardItemOverrideRule(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Overrides the options applied to specific items (marks) within a visualization, overriding the defaults.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"matcher": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(DashboardItemMatcherConfig{}.OpenAPIModelName()),
+						},
+					},
+					"properties": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(DashboardDynamicConfigValue{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"matcher", "properties"},
+			},
+		},
+		Dependencies: []string{
+			DashboardDynamicConfigValue{}.OpenAPIModelName(), DashboardItemMatcherConfig{}.OpenAPIModelName()},
 	}
 }
 

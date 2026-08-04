@@ -1,6 +1,8 @@
 import { type SimulationNodeDatum, type SimulationLinkDatum } from 'd3-force';
 
-import { type DataFrame, type Field, type IconName } from '@grafana/data';
+import { type DataFrame, type Field, type FieldConfig, type IconName } from '@grafana/data';
+
+import { type EdgeItemConfig, type NodeItemConfig } from './itemConfig';
 
 export type NodeDatum = SimulationNodeDatum & {
   id: string;
@@ -16,6 +18,12 @@ export type NodeDatum = SimulationNodeDatum & {
   nodeRadius?: Field;
   highlighted: boolean;
   isInstrumented?: boolean;
+  /**
+   * Styles resolved from `fieldConfig.itemOverrides` for this node, if any rule matched.
+   * Kept separate from `color` / `nodeRadius` because those are Fields read through a display
+   * processor, whereas an override resolves to a concrete value. Takes precedence over both.
+   */
+  itemConfig?: FieldConfig<NodeItemConfig>;
 };
 
 export type NodeDatumFromEdge = NodeDatum & { mainStatNumeric?: number; secondaryStatNumeric?: number };
@@ -41,6 +49,8 @@ export type EdgeDatum = LinkDatum & {
   thickness: number;
   color?: string;
   strokeDasharray?: string;
+  /** Styles resolved from `fieldConfig.itemOverrides` for this edge. Takes precedence. */
+  itemConfig?: FieldConfig<EdgeItemConfig>;
 };
 
 // After layout is run D3 will change the string IDs for actual references to the nodes.

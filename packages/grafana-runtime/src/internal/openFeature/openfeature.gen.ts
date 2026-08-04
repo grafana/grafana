@@ -29,6 +29,8 @@ export const FlagKeys = {
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
   AzureMonitorBatchAPI: "azureMonitorBatchAPI",
+  /** Enables per-item (row) overrides in the panel editor for visualizations whose marks are rows */
+  DashboardItemOverrides: "dashboard.itemOverrides",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -247,6 +249,17 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
  */
 export const useFlagAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("azureMonitorBatchAPI", false, options).value;
+};
+
+/**
+ * Enables per-item (row) overrides in the panel editor for visualizations whose marks are rows
+ *
+ * **Details:**
+ * - flag key: `dashboard.itemOverrides`
+ * - default value: `false`
+ */
+export const useFlagDashboardItemOverrides = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.itemOverrides", false, options).value;
 };
 
 /**

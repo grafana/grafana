@@ -1,0 +1,151 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "gdev-testdata"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [],
+        "itemOverrides": [
+          {
+            "matcher": {
+              "id": "byItemIds",
+              "kind": "node",
+              "options": ["root"]
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              },
+              {
+                "id": "custom.nodeRadius",
+                "value": 60
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byItemRegexp",
+              "kind": "node",
+              "options": "/^service:[12]$/"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "purple"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byItemRegexp",
+              "kind": "edge",
+              "options": "/^root/"
+            },
+            "properties": [
+              {
+                "id": "custom.thickness",
+                "value": 6
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "layoutAlgorithm": "layered",
+        "zoomMode": "cooperative"
+      },
+      "targets": [
+        {
+          "nodes": {
+            "count": 8,
+            "seed": 1,
+            "type": "random"
+          },
+          "refId": "A",
+          "scenarioId": "node_graph"
+        }
+      ],
+      "title": "Item overrides: root is red and large, service:1/2 are purple, edges from root are thick and orange",
+      "type": "nodeGraph"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "gdev-testdata"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 2,
+      "options": {
+        "layoutAlgorithm": "layered",
+        "zoomMode": "cooperative"
+      },
+      "targets": [
+        {
+          "nodes": {
+            "count": 8,
+            "seed": 1,
+            "type": "random"
+          },
+          "refId": "A",
+          "scenarioId": "node_graph"
+        }
+      ],
+      "title": "Same query with no item overrides, for comparison",
+      "type": "nodeGraph"
+    }
+  ],
+  "preload": false,
+  "schemaVersion": 41,
+  "tags": ["gdev", "panel-tests", "nodegraph"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel Tests - Node Graph Item Overrides",
+  "uid": "nodegraph-item-overrides",
+  "version": 1
+}

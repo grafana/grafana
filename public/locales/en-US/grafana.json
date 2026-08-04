@@ -5738,6 +5738,19 @@
       "title-matcher-no-editor": "Matcher \"{{matcherName}}\" has no visual editor",
       "title-unknown-matcher": "Unknown matcher type \"{{matcherId}}\""
     },
+    "get-item-override-categories": {
+      "body-unknown-kind": "This panel does not support this kind of item. This override has no effect. Remove it, or correct the kind in the dashboard JSON.",
+      "body-unknown-matcher": "This override has no effect. Remove it, or correct the matcher id in the dashboard JSON.",
+      "label-add-item-override": "Add item override",
+      "label-add-override-property": "Add override property",
+      "override-name": "Item override {{overrideNum}}",
+      "target-items": "Target items",
+      "title": {
+        "add-button": "add item override button"
+      },
+      "title-unknown-kind": "Unknown item kind \"{{kind}}\"",
+      "title-unknown-matcher": "Unknown item matcher type \"{{matcherId}}\""
+    },
     "get-library-panel-options-category": {
       "descriptor": {
         "title": {
@@ -10357,6 +10370,15 @@
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
     },
+    "item-matchers-ui": {
+      "description-all-items": "Set properties for every item of this kind",
+      "description-items-with-id": "Set properties for specific items",
+      "description-items-with-name-matching-regex": "Set properties for items whose name matches a regular expression",
+      "name-all-items": "All items",
+      "name-items-with-id": "Items with id",
+      "name-items-with-name-matching-regex": "Items with name matching regex",
+      "placeholder-item-regexp": "Enter regular expression"
+    },
     "matchers": {
       "groups": {
         "annotation": "Annotations",
@@ -12604,6 +12626,16 @@
     "category-edges": "Edges",
     "category-node-graph": "Node graph",
     "category-nodes": "Nodes",
+    "item-config": {
+      "description-node-radius": "Radius of the node circle in pixels",
+      "description-stroke-dasharray": "SVG stroke-dasharray, e.g. \"5 5\"",
+      "description-thickness": "Stroke width of the edge line",
+      "name-node-radius": "Node radius",
+      "name-stroke-dasharray": "Dash array",
+      "name-thickness": "Thickness"
+    },
+    "item-kind-edges": "Edges",
+    "item-kind-nodes": "Nodes",
     "layout-algorithm-options": {
       "description-force": "Use a force-directed layout",
       "description-grid": "Use a grid layout",
@@ -12931,6 +12963,7 @@
     "category-pie-chart": "Pie chart",
     "description-labels": "Select the labels to be displayed in the pie chart",
     "description-pie-chart-type": "How the pie chart should be rendered",
+    "item-kind-slices": "Slices",
     "labels-options": {
       "label-name": "Name",
       "label-percent": "Percent",

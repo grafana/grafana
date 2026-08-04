@@ -1982,6 +1982,39 @@ describe('vizPanelToSchemaV2 snapshot repeat clones', () => {
   });
 });
 
+describe('vizPanelToSchemaV2 item overrides', () => {
+  const itemOverrides = [
+    {
+      matcher: { id: 'byItemIds', kind: 'node', options: ['gateway'] },
+      properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'red' } }],
+    },
+  ];
+
+  it('carries itemOverrides into the v2 viz field config', () => {
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'nodeGraph',
+      title: 'Test',
+      fieldConfig: { defaults: {}, overrides: [], itemOverrides },
+    });
+
+    const element = vizPanelToSchemaV2(panel);
+    expect((element.spec as PanelSpec).vizConfig.spec.fieldConfig.itemOverrides).toEqual(itemOverrides);
+  });
+
+  it('leaves itemOverrides absent when the panel has none', () => {
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      fieldConfig: { defaults: {}, overrides: [] },
+    });
+
+    const element = vizPanelToSchemaV2(panel);
+    expect((element.spec as PanelSpec).vizConfig.spec.fieldConfig).not.toHaveProperty('itemOverrides');
+  });
+});
+
 describe('vizPanelToSchemaV2 time range fields', () => {
   function buildPanel(timeRange?: SceneTimeRange | PanelTimeRange) {
     return new VizPanel({

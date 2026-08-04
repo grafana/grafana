@@ -13,6 +13,7 @@ import { Legend } from './Legend';
 import { Marker } from './Marker';
 import { Node } from './Node';
 import { ViewControls } from './ViewControls';
+import { type ResolvedEdgeStyles, type ResolvedNodeStyles } from './itemConfig';
 import { type Config, defaultConfig, useLayout, type LayoutCache } from './layout';
 import { LayoutAlgorithm, type ZoomMode } from './panelcfg.gen';
 import { type EdgeDatumLayout, type NodeDatum, type NodesMarker } from './types';
@@ -125,8 +126,21 @@ interface Props {
   panelId?: string;
   zoomMode?: ZoomMode;
   layoutAlgorithm?: LayoutAlgorithm;
+  /** Per-node styles resolved from fieldConfig.itemOverrides, keyed by node id. */
+  nodeStyles?: ResolvedNodeStyles;
+  /** Per-edge styles resolved from fieldConfig.itemOverrides, keyed by edge id. */
+  edgeStyles?: ResolvedEdgeStyles;
 }
-export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, layoutAlgorithm }: Props) {
+export function NodeGraph({
+  getLinks,
+  dataFrames,
+  nodeLimit,
+  panelId,
+  zoomMode,
+  layoutAlgorithm,
+  nodeStyles,
+  edgeStyles,
+}: Props) {
   const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
 
@@ -162,8 +176,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
   const processed = useMemo(
-    () => processNodes(firstNodesDataFrame, firstEdgesDataFrame),
-    [firstEdgesDataFrame, firstNodesDataFrame]
+    () => applyItemStyles(processNodes(firstNodesDataFrame, firstEdgesDataFrame), nodeStyles, edgeStyles),
+    [firstEdgesDataFrame, firstNodesDataFrame, nodeStyles, edgeStyles]
   );
 
   // We need hover state here because for nodes we also highlight edges and for edges have labels separate to make
@@ -493,6 +507,38 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
     </>
   );
 });
+
+/**
+ * Attaches the resolved item-override styles to the datums the renderers read.
+ *
+ * Kept out of processNodes so the data-shaping stays independent of panel config, and so the
+ * (usually empty) override case costs nothing.
+ */
+function applyItemStyles(
+  processed: ReturnType<typeof processNodes>,
+  nodeStyles?: ResolvedNodeStyles,
+  edgeStyles?: ResolvedEdgeStyles
+): ReturnType<typeof processNodes> {
+  if (!nodeStyles?.size && !edgeStyles?.size) {
+    return processed;
+  }
+
+  return {
+    ...processed,
+    nodes: nodeStyles?.size
+      ? processed.nodes.map((node) => {
+          const itemConfig = nodeStyles.get(node.id);
+          return itemConfig ? { ...node, itemConfig } : node;
+        })
+      : processed.nodes,
+    edges: edgeStyles?.size
+      ? processed.edges.map((edge) => {
+          const itemConfig = edgeStyles.get(edge.id);
+          return itemConfig ? { ...edge, itemConfig } : edge;
+        })
+      : processed.edges,
+  };
+}
 
 function usePanAndZoom(bounds: Bounds, focus?: { x: number; y: number }, zoomMode?: ZoomMode) {
   const { scale, onStepDown, onStepUp, ref, isMax, isMin } = useZoom({ zoomMode });

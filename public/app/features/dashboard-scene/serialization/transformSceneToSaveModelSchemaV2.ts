@@ -341,6 +341,7 @@ export function vizPanelToSchemaV2(
   const vizFieldConfig: FieldConfigSource = {
     defaults,
     overrides: vizPanel.state.fieldConfig?.overrides ?? [],
+    ...(vizPanel.state.fieldConfig?.itemOverrides ? { itemOverrides: vizPanel.state.fieldConfig.itemOverrides } : {}),
   };
 
   // Repeat clones share the same numeric panel id (parsed from `panel-<id>-clone-<n>`), and panels inside

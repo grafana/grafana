@@ -1583,6 +1583,21 @@
     },
     {
       "metadata": {
+        "name": "dashboard.itemOverrides",
+        "resourceVersion": "1785533964733",
+        "creationTimestamp": "2026-07-31T21:39:24Z"
+      },
+      "spec": {
+        "description": "Enables per-item (row) overrides in the panel editor for visualizations whose marks are rows",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.notebooks",
         "resourceVersion": "1783509818865",
         "creationTimestamp": "2026-07-08T11:23:38Z"

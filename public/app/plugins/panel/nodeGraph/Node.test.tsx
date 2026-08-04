@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { FieldType } from '@grafana/data';
+import { FieldType, createTheme } from '@grafana/data';
 
 import { Node } from './Node';
 
@@ -54,6 +54,75 @@ describe('Node', () => {
     );
 
     expect(screen.getByTestId('node-circle-1')).toHaveAttribute('r', '20');
+  });
+
+  describe('item overrides', () => {
+    it('prefers the override node radius over the data-driven column', async () => {
+      render(
+        <svg>
+          <Node
+            node={{
+              ...nodeDatum,
+              nodeRadius: { name: 'nodeRadius', values: [20], type: FieldType.number, config: {} },
+              itemConfig: { custom: { nodeRadius: 42 } },
+            }}
+            onMouseEnter={() => {}}
+            onMouseLeave={() => {}}
+            onClick={() => {}}
+            hovering={'default'}
+          />
+        </svg>
+      );
+
+      expect(screen.getByTestId('node-circle-1')).toHaveAttribute('r', '42');
+    });
+
+    it('paints the ring with the override colour, replacing arc sections', async () => {
+      const { container } = render(
+        <svg>
+          <Node
+            node={{
+              ...nodeDatum,
+              arcSections: [
+                {
+                  name: 'arc__failed',
+                  values: [1],
+                  type: FieldType.number,
+                  config: { color: { mode: 'fixed', fixedColor: 'blue' } },
+                },
+              ],
+              itemConfig: { color: { mode: 'fixed', fixedColor: 'red' } },
+            }}
+            onMouseEnter={() => {}}
+            onMouseLeave={() => {}}
+            onClick={() => {}}
+            hovering={'default'}
+          />
+        </svg>
+      );
+
+      const strokes = Array.from(container.querySelectorAll('circle'))
+        .map((c) => c.getAttribute('stroke'))
+        .filter(Boolean);
+      // The named colour is resolved through the theme's visualization palette
+      expect(strokes).toEqual([createTheme().visualization.getColorByName('red')]);
+    });
+
+    it('leaves nodes without a matching rule untouched', async () => {
+      render(
+        <svg>
+          <Node
+            node={nodeDatum}
+            onMouseEnter={() => {}}
+            onMouseLeave={() => {}}
+            onClick={() => {}}
+            hovering={'default'}
+          />
+        </svg>
+      );
+
+      expect(screen.getByTestId('node-circle-1')).toHaveAttribute('r', '40');
+    });
   });
 });
 

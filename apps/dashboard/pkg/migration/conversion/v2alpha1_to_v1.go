@@ -2032,6 +2032,12 @@ func convertFieldConfigSourceToV1(fieldConfig *dashv2alpha1.DashboardFieldConfig
 		result["overrides"] = overrides
 	}
 
+	// Convert item (mark) overrides
+	itemOverrides := convertItemOverridesToV1(fieldConfig.ItemOverrides)
+	if itemOverrides != nil {
+		result["itemOverrides"] = itemOverrides
+	}
+
 	if len(result) == 0 {
 		return nil
 	}
@@ -2145,6 +2151,39 @@ func convertFieldConfigOverridesToV1(overrides []dashv2alpha1.DashboardV2alpha1F
 					"value": prop.Value,
 				})
 			}
+		}
+		overrideMap["properties"] = properties
+
+		result = append(result, overrideMap)
+	}
+	return result
+}
+
+func itemMatcherConfigToMap(mc dashv2alpha1.DashboardItemMatcherConfig) map[string]interface{} {
+	return map[string]interface{}{
+		"id":      mc.Id,
+		"kind":    mc.Kind,
+		"options": mc.Options,
+	}
+}
+
+func convertItemOverridesToV1(itemOverrides []dashv2alpha1.DashboardItemOverrideRule) []map[string]interface{} {
+	if len(itemOverrides) == 0 {
+		return nil
+	}
+
+	result := make([]map[string]interface{}, 0, len(itemOverrides))
+	for _, override := range itemOverrides {
+		overrideMap := make(map[string]interface{})
+
+		overrideMap["matcher"] = itemMatcherConfigToMap(override.Matcher)
+
+		properties := make([]map[string]interface{}, 0, len(override.Properties))
+		for _, prop := range override.Properties {
+			properties = append(properties, map[string]interface{}{
+				"id":    prop.Id,
+				"value": prop.Value,
+			})
 		}
 		overrideMap["properties"] = properties
 

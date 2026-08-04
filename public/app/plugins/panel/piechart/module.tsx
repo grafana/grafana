@@ -7,6 +7,7 @@ import { optsWithHideZeros } from '@grafana/ui/internal';
 import { addStandardDataReduceOptions } from '../stat/common';
 
 import { PieChartPanel } from './PieChartPanel';
+import { makeSliceKind } from './itemConfig';
 import { PieChartPanelChangedHandler } from './migrations';
 import { type Options, type FieldConfig, PieChartType, PieChartLabels, PieChartLegendValues } from './panelcfg.gen';
 import { piechartSuggestionsSupplier } from './suggestions';
@@ -35,6 +36,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
       commonOptionsBuilder.addHideFrom(builder);
     },
   })
+  .useItemConfig({ kinds: [makeSliceKind()] })
   .setPanelOptions((builder) => {
     addStandardDataReduceOptions(builder);
     const category = [t('piechart.category-pie-chart', 'Pie chart')];

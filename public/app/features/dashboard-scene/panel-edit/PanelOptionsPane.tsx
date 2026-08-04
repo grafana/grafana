@@ -91,6 +91,9 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
         custom: {},
       },
       overrides: filterFieldConfigOverrides(prevFieldConfig.overrides, isStandardFieldProp),
+      // carried through as-is; getPanelOptionsWithDefaults prunes the rules the new plugin
+      // cannot express, so switching away and back keeps them
+      itemOverrides: prevFieldConfig.itemOverrides,
     };
 
     this._cachedPluginOptions[prevPluginId] = { options: prevOptions, fieldConfig: prevFieldConfig };

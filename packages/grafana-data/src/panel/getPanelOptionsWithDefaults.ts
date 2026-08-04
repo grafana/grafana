@@ -10,6 +10,7 @@ import {
   FieldConfigProperty,
   type FieldConfigSource,
 } from '../types/fieldOverrides';
+import { type ItemOverrideRule } from '../types/itemOverrides';
 import { type ThresholdsConfig, ThresholdsMode } from '../types/thresholds';
 
 import { type PanelPlugin } from './PanelPlugin';
@@ -86,6 +87,41 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
         fixThresholds(property.value);
       }
     }
+  }
+
+  const itemOverrides = filterItemOverrides(existingFieldConfig?.itemOverrides, plugin);
+  if (itemOverrides) {
+    result.itemOverrides = itemOverrides;
+  }
+
+  return result;
+}
+
+/**
+ * Keeps item override rules whose kind the plugin declares, dropping properties that kind's
+ * registry does not offer. Rules for kinds this plugin does not declare are dropped whole —
+ * this is what makes switching panel types keep the rules that still mean something.
+ */
+function filterItemOverrides(
+  itemOverrides: ItemOverrideRule[] | undefined,
+  plugin: PanelPlugin
+): ItemOverrideRule[] | undefined {
+  if (!itemOverrides?.length) {
+    return itemOverrides;
+  }
+
+  const result: ItemOverrideRule[] = [];
+
+  for (const rule of itemOverrides) {
+    const registry = plugin.getItemConfigRegistry(rule.matcher.kind);
+    if (!registry) {
+      continue;
+    }
+
+    result.push({
+      ...rule,
+      properties: rule.properties.filter((prop) => registry.getIfExists(prop.id) !== undefined),
+    });
   }
 
   return result;
@@ -202,12 +238,15 @@ function fixThresholds(thresholds: ThresholdsConfig) {
  * @internal
  */
 export function restoreCustomOverrideRules(current: FieldConfigSource, old: FieldConfigSource): FieldConfigSource {
-  const result = {
+  const result: FieldConfigSource = {
     defaults: {
       ...current.defaults,
       custom: old.defaults.custom,
     },
     overrides: [...current.overrides],
+    // Item override rules are pruned by plugin in applyFieldConfigDefaults, so there is no
+    // custom/standard split to restore here — just do not drop them.
+    ...(current.itemOverrides ? { itemOverrides: current.itemOverrides } : {}),
   };
 
   for (const override of old.overrides) {

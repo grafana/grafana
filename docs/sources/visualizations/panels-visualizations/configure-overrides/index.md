@@ -79,6 +79,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/pie-chart/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/pie-chart/
+  node-graph:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/node-graph/
   time-series:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
@@ -257,6 +262,65 @@ To add a field override, follow these steps:
 1. Select the field option that you want to apply.
 1. Continue to add overrides to this field by clicking **Add override property**.
 1. Add as many overrides as you need.
+1. When you're finished, click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
+1. Click **Back to dashboard** and then **Exit edit**.
+
+## Item overrides
+
+Field overrides target columns. Some visualizations draw their marks from rows instead, so no field matcher can pick out a single mark. Item overrides fill that gap: they target one mark, or a set of marks, rather than a field.
+
+A _mark_ is one drawn element in a visualization. Which marks a visualization has depends on the visualization:
+
+- **Node graph:** each node is a mark and each edge is a mark.
+- **Pie chart:** each slice is a mark.
+
+Item overrides are behind the `dashboard.itemOverrides` feature toggle. When the toggle is off, the panel editor doesn't show the item override UI, but rules already saved in a dashboard still apply.
+
+### Item kinds
+
+Each visualization declares its own _kinds_ of mark, and one rule targets exactly one kind. This is different from the scope of a field override, which chooses between a fixed set of field universes. Kinds come from the visualization, so a node graph offers **Nodes** and **Edges**, while a pie chart offers only **Slices**.
+
+When a visualization declares more than one kind, the rule shows a kind selector. Switching the kind repopulates the list of marks you can choose from and changes which properties the rule can set, because kinds don't all support the same properties. Any property the new kind can't set is dropped from the rule.
+
+### Item override rules
+
+You can choose from three types of item override rule:
+
+- **Items with id:** Select specific marks from a list. Properties you add to this type of rule are applied only to the marks you select.
+- **Items with name matching regex:** Specify marks with a regular expression, matched against the mark's name. Properties you add to this type of rule are applied to all marks whose name matches.
+- **All items:** Select every mark of the kind. Properties you add to this type of rule are applied to all of them.
+
+### Supported visualizations
+
+You can configure item overrides for the following visualizations:
+
+- [Node graph](ref:node-graph), for nodes and edges.
+- [Pie chart](ref:pie-chart), for slices.
+
+### How item overrides interact with your data
+
+Item overrides win over style columns in your data. If your query returns a `color` or `nodeRadius` column for a node, and an item override sets a colour for that node, the override colour is the one that's drawn. This is the same precedence field overrides have over field configuration supplied by a data source.
+
+Marks are matched by id, and ids come from your data. If an id changes between refreshes, for example because a service was renamed, the rule no longer matches. The rule isn't discarded: the id still appears in the panel editor, marked `(not found)`, so you can correct it. This is the same behaviour as the **Fields with name** matcher.
+
+### Add an item override
+
+To add an item override, follow these steps:
+
+1. Navigate to the panel to which you want to add the item override.
+1. Hover over any part of the panel to display the menu icon in the upper-right corner.
+1. Click the menu icon and select **Edit** to open the panel editor.
+1. At the bottom of the panel editor pane, click **Add item override**.
+1. Select the type of rule you want:
+   - **Items with id**
+   - **Items with name matching regex**
+   - **All items**
+1. If the visualization declares more than one kind of mark, select the kind under **Target items**.
+1. Select the marks to which the override applies.
+1. Click **Add override property**.
+1. Select the property that you want to apply.
+1. Add as many properties and rules as you need.
 1. When you're finished, click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.

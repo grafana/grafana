@@ -324,6 +324,14 @@ func convertFieldConfigSource_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFiel
 	for i, override := range in.Overrides {
 		convertFieldConfigOverride_V2alpha1_to_V2beta1(&override, &out.Overrides[i])
 	}
+
+	// Convert item (mark) overrides
+	if in.ItemOverrides != nil {
+		out.ItemOverrides = make([]dashv2beta1.DashboardItemOverrideRule, len(in.ItemOverrides))
+		for i, override := range in.ItemOverrides {
+			convertItemOverride_V2alpha1_to_V2beta1(&override, &out.ItemOverrides[i])
+		}
+	}
 }
 
 func convertFieldConfig_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardFieldConfig, out *dashv2beta1.DashboardFieldConfig) {
@@ -403,6 +411,22 @@ func convertFieldConfigOverride_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardV2
 	out.SystemRef = in.SystemRef
 
 	out.Matcher = *convertMatcherConfigPtr_V2alpha1_to_V2beta1(&in.Matcher)
+
+	out.Properties = make([]dashv2beta1.DashboardDynamicConfigValue, len(in.Properties))
+	for i, prop := range in.Properties {
+		out.Properties[i] = dashv2beta1.DashboardDynamicConfigValue{
+			Id:    prop.Id,
+			Value: prop.Value,
+		}
+	}
+}
+
+func convertItemOverride_V2alpha1_to_V2beta1(in *dashv2alpha1.DashboardItemOverrideRule, out *dashv2beta1.DashboardItemOverrideRule) {
+	out.Matcher = dashv2beta1.DashboardItemMatcherConfig{
+		Id:      in.Matcher.Id,
+		Kind:    in.Matcher.Kind,
+		Options: in.Matcher.Options,
+	}
 
 	out.Properties = make([]dashv2beta1.DashboardDynamicConfigValue, len(in.Properties))
 	for i, prop := range in.Properties {

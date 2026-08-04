@@ -1,18 +1,33 @@
 import memoizeOne from 'memoize-one';
-import { useId } from 'react';
+import { useId, useMemo } from 'react';
 
 import { type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
+import { useTheme2 } from '@grafana/ui';
 
 import { useLinks } from '../../../features/explore/utils/links';
 
 import { NodeGraph } from './NodeGraph';
+import { resolveItemStyles } from './itemConfig';
 import { type Options as NodeGraphOptions } from './panelcfg.gen';
 import { getNodeGraphDataFrames } from './utils';
 
-export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<NodeGraphOptions>) => {
+export const NodeGraphPanel = ({
+  width,
+  height,
+  data,
+  options,
+  fieldConfig,
+  replaceVariables,
+}: PanelProps<NodeGraphOptions>) => {
   const getLinks = useLinks(data.timeRange);
   const panelId = useId();
+  const theme = useTheme2();
+
+  const { nodeStyles, edgeStyles } = useMemo(
+    () => resolveItemStyles(fieldConfig, data?.series ?? [], { fieldConfig, options, replaceVariables, theme }),
+    [fieldConfig, data?.series, options, replaceVariables, theme]
+  );
 
   if (!data || !data.series.length) {
     return (
@@ -33,6 +48,8 @@ export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<Node
         panelId={panelId}
         zoomMode={options.zoomMode}
         layoutAlgorithm={options.layoutAlgorithm}
+        nodeStyles={nodeStyles}
+        edgeStyles={edgeStyles}
       />
     </div>
   );

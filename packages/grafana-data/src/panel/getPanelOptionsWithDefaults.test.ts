@@ -4,6 +4,7 @@ import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '../f
 import { type FieldConfig } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
 import { type ConfigOverrideRule, FieldConfigProperty, type FieldConfigSource } from '../types/fieldOverrides';
+import { type ItemKindDescriptor, type ItemOverrideRule } from '../types/itemOverrides';
 import { ThresholdsMode } from '../types/thresholds';
 
 import { type PanelPlugin, type StandardOptionConfig } from './PanelPlugin';
@@ -390,9 +391,92 @@ describe('restoreCustomOverrideRules', () => {
   });
 });
 
+describe('item overrides', () => {
+  const nodeKind: ItemKindDescriptor = {
+    id: 'node',
+    name: 'Nodes',
+    getItems: () => [],
+    standardOptions: { [FieldConfigProperty.Color]: {} },
+    useCustomConfig: (builder) => {
+      builder.addNumberInput({ path: 'nodeRadius', name: 'Node radius' });
+    },
+  };
+
+  const nodeGraphPlugin = getPanelPlugin({ id: 'nodeGraph' })
+    .useFieldConfig({})
+    .useItemConfig({ kinds: [nodeKind] });
+
+  const nodeRule: ItemOverrideRule = {
+    matcher: { id: 'byItemIds', kind: 'node', options: ['gateway'] },
+    properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'red' } }],
+  };
+
+  const sliceRule: ItemOverrideRule = {
+    matcher: { id: 'byItemIds', kind: 'slice', options: ['a'] },
+    properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'blue' } }],
+  };
+
+  it('carries rules through for kinds the plugin declares', () => {
+    const result = runScenario({ plugin: nodeGraphPlugin, itemOverrides: [nodeRule] });
+
+    expect(result.fieldConfig.itemOverrides).toEqual([nodeRule]);
+  });
+
+  it('drops rules whose kind the plugin does not declare, leaving defaults and overrides alone', () => {
+    const overrides: ConfigOverrideRule[] = [
+      { matcher: { id: 'byName', options: 'D' }, properties: [{ id: 'decimals', value: 2 }] },
+    ];
+
+    const result = runScenario({
+      plugin: nodeGraphPlugin,
+      defaults: { unit: 'bytes' },
+      overrides,
+      itemOverrides: [nodeRule, sliceRule],
+    });
+
+    expect(result.fieldConfig.itemOverrides).toEqual([nodeRule]);
+    expect(result.fieldConfig.defaults.unit).toBe('bytes');
+    expect(result.fieldConfig.overrides).toEqual(overrides);
+  });
+
+  it('drops every rule when the plugin declares no item kinds', () => {
+    const result = runScenario({
+      plugin: getPanelPlugin({ id: 'graph' }).useFieldConfig({}),
+      itemOverrides: [nodeRule, sliceRule],
+    });
+
+    expect(result.fieldConfig.itemOverrides).toEqual([]);
+  });
+
+  it('drops properties the kind registry does not offer, keeping the rule', () => {
+    const result = runScenario({
+      plugin: nodeGraphPlugin,
+      itemOverrides: [
+        {
+          matcher: { id: 'byItemIds', kind: 'node', options: ['gateway'] },
+          properties: [
+            { id: 'color', value: { mode: 'fixed', fixedColor: 'red' } },
+            { id: 'custom.nodeRadius', value: 12 },
+            { id: 'thresholds', value: { mode: 'absolute', steps: [] } },
+          ],
+        },
+      ],
+    });
+
+    expect(result.fieldConfig.itemOverrides?.[0].properties.map((p) => p.id)).toEqual(['color', 'custom.nodeRadius']);
+  });
+
+  it('leaves itemOverrides absent when the panel has none', () => {
+    const result = runScenario({ plugin: nodeGraphPlugin });
+
+    expect(result.fieldConfig.itemOverrides).toBeUndefined();
+  });
+});
+
 interface ScenarioOptions {
   defaults?: FieldConfig;
   overrides?: ConfigOverrideRule[];
+  itemOverrides?: ItemOverrideRule[];
   disabledStandardOptions?: FieldConfigProperty[];
   standardOptions?: Partial<Record<FieldConfigProperty, StandardOptionConfig>>;
   plugin?: PanelPlugin;
@@ -404,6 +488,7 @@ function runScenario(options: ScenarioOptions) {
   const fieldConfig: FieldConfigSource = {
     defaults: options.defaults || {},
     overrides: options.overrides || [],
+    ...(options.itemOverrides ? { itemOverrides: options.itemOverrides } : {}),
   };
 
   const plugin =

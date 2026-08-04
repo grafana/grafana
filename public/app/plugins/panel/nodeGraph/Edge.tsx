@@ -1,6 +1,7 @@
 import { type MouseEvent, memo } from 'react';
 
 import { t } from '@grafana/i18n';
+import { useTheme2 } from '@grafana/ui';
 
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
@@ -21,6 +22,7 @@ interface Props {
 
 export const Edge = memo(function Edge(props: Props) {
   const { edge, onClick, onMouseEnter, onMouseLeave, hovering, svgIdNamespace } = props;
+  const theme = useTheme2();
 
   // Not great typing but after we do layout these properties are full objects not just references
   const { source, target, sourceNodeRadius, targetNodeRadius } = edge as {
@@ -29,7 +31,14 @@ export const Edge = memo(function Edge(props: Props) {
     sourceNodeRadius: number;
     targetNodeRadius: number;
   };
-  const arrowHeadHeight = 10 + edge.thickness * 2; // resized value, just to make the UI nicer
+  // An item override beats the data-driven thickness/color/strokeDasharray columns, the same way
+  // a field override beats datasource-supplied field config.
+  const thickness = edge.itemConfig?.custom?.thickness ?? edge.thickness;
+  const overrideFixedColor = edge.itemConfig?.color?.fixedColor;
+  const resolvedOverrideColor = overrideFixedColor ? theme.visualization.getColorByName(overrideFixedColor) : undefined;
+  const strokeDasharray = edge.itemConfig?.custom?.strokeDasharray ?? edge.strokeDasharray;
+
+  const arrowHeadHeight = 10 + thickness * 2; // resized value, just to make the UI nicer
 
   // As the nodes have some radius we want edges to end outside of the node circle.
   const line = shortenLine(
@@ -44,11 +53,11 @@ export const Edge = memo(function Edge(props: Props) {
     arrowHeadHeight
   );
 
-  const edgeColor = edge.color || defaultEdgeColor;
+  const edgeColor = resolvedOverrideColor ?? edge.color ?? defaultEdgeColor;
 
   // @deprecated -- until 'highlighted' is removed we'll prioritize 'color'
   // in case both are provided
-  const highlightedEdgeColor = edge.color || defaultHighlightedEdgeColor;
+  const highlightedEdgeColor = resolvedOverrideColor ?? edge.color ?? defaultHighlightedEdgeColor;
 
   const markerId = `triangle-${svgIdNamespace}-${edge.id}`;
   const coloredMarkerId = `triangle-colored-${svgIdNamespace}-${edge.id}`;
@@ -66,13 +75,13 @@ export const Edge = memo(function Edge(props: Props) {
         })}
       >
         <line
-          strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + edge.thickness}
+          strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + thickness}
           stroke={edge.highlighted ? highlightedEdgeColor : edgeColor}
           x1={line.x1}
           y1={line.y1}
           x2={line.x2}
           y2={line.y2}
-          strokeDasharray={edge.strokeDasharray}
+          strokeDasharray={strokeDasharray}
           markerEnd={`url(#${edge.highlighted ? coloredMarkerId : markerId})`}
         />
         <line

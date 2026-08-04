@@ -1,9 +1,10 @@
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { standardFieldConfigEditorRegistry } from '../field/standardFieldConfigEditorRegistry';
 import { type FieldConfigProperty, type FieldConfigPropertyItem } from '../types/fieldOverrides';
+import { defaultItemStandardOptions, type ItemKindDescriptor } from '../types/itemOverrides';
 import { FieldConfigEditorBuilder } from '../utils/OptionsUIBuilders';
 
-import { type SetFieldConfigOptionsArgs } from './PanelPlugin';
+import { type SetFieldConfigOptionsArgs, type StandardOptionConfig } from './PanelPlugin';
 
 /**
  * Helper functionality to create a field config registry.
@@ -90,6 +91,75 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
   for (const item of registry.list()) {
     if (item.path.indexOf('[') > 0) {
       throw new Error(`[${pluginName}] Field config paths do not support arrays: ${item.id}`);
+    }
+  }
+
+  return registry;
+}
+
+/**
+ * Builds the property registry offered for one item kind.
+ *
+ * Item properties are ordinary {@link FieldConfigPropertyItem}s, so every existing property
+ * editor works unchanged. Only the standard options the kind opts into are included, and the
+ * colour editor is restricted to fixed modes — by-value and by-series colouring are field
+ * concepts that have no meaning for a single mark.
+ *
+ * @alpha
+ */
+export function createItemConfigRegistry<TItemConfig extends object>(
+  kind: ItemKindDescriptor<TItemConfig>,
+  pluginName: string
+): FieldConfigOptionsRegistry {
+  const registry = new FieldConfigOptionsRegistry();
+
+  // Custom options first, mirroring createFieldConfigRegistry
+  if (kind.useCustomConfig) {
+    const builder = new FieldConfigEditorBuilder<TItemConfig>();
+    kind.useCustomConfig(builder);
+
+    for (const customProp of builder.getRegistry().list()) {
+      customProp.isCustom = true;
+      // id is the registry index and doubles as the stored property path prefix
+      customProp.id = 'custom.' + customProp.id;
+      registry.register(customProp);
+    }
+  }
+
+  // Widening the key type lets us look options up by the registry's string ids without a cast
+  const standardOptions: Partial<Record<string, StandardOptionConfig>> = kind.standardOptions ?? {};
+  const allowed = new Set<string>(kind.standardOptions ? Object.keys(standardOptions) : defaultItemStandardOptions);
+
+  // Iterate the registry rather than the allowlist so options appear in their usual order
+  for (let standardProp of standardFieldConfigEditorRegistry.list()) {
+    const id = standardProp.id;
+    if (!allowed.has(id)) {
+      continue;
+    }
+
+    const custom = standardOptions[id];
+    let settings = standardProp.settings;
+
+    if (id === 'color') {
+      settings = { ...settings, byValueSupport: false, bySeriesSupport: false };
+    }
+    if (custom?.settings) {
+      settings = settings ? { ...settings, ...custom.settings } : custom.settings;
+    }
+
+    standardProp = {
+      ...standardProp,
+      settings,
+      ...(custom?.defaultValue !== undefined ? { defaultValue: custom.defaultValue } : {}),
+    };
+
+    registry.register(standardProp);
+  }
+
+  // assert that item configs do not use array path syntax
+  for (const item of registry.list()) {
+    if (item.path.indexOf('[') > 0) {
+      throw new Error(`[${pluginName}] Item config paths do not support arrays: ${item.id}`);
     }
   }
 

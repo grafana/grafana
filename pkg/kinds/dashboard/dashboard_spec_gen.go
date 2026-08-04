@@ -408,6 +408,9 @@ type FieldConfigSource struct {
 	Defaults FieldConfig `json:"defaults"`
 	// Overrides are the options applied to specific fields overriding the defaults.
 	Overrides []DashboardFieldConfigSourceOverrides `json:"overrides"`
+	// Item overrides are the options applied to specific items (marks) within a visualization,
+	// such as a node graph node or a pie chart slice, rather than to a field.
+	ItemOverrides []ItemOverrideRule `json:"itemOverrides,omitempty"`
 }
 
 // NewFieldConfigSource creates a new FieldConfigSource object.
@@ -803,6 +806,39 @@ type DynamicConfigValue struct {
 func NewDynamicConfigValue() *DynamicConfigValue {
 	return &DynamicConfigValue{
 		Id: "",
+	}
+}
+
+// Overrides the options applied to specific items (marks) within a visualization, overriding the defaults.
+type ItemOverrideRule struct {
+	Matcher    ItemMatcherConfig    `json:"matcher"`
+	Properties []DynamicConfigValue `json:"properties"`
+}
+
+// NewItemOverrideRule creates a new ItemOverrideRule object.
+func NewItemOverrideRule() *ItemOverrideRule {
+	return &ItemOverrideRule{
+		Matcher:    *NewItemMatcherConfig(),
+		Properties: []DynamicConfigValue{},
+	}
+}
+
+// Selects the items (marks) an item override rule applies to. The analogue of #MatcherConfig
+// for visualizations whose marks are rows rather than fields, such as node graph nodes or pie chart slices.
+type ItemMatcherConfig struct {
+	// The item matcher id. This is used to find the matcher implementation from registry.
+	Id string `json:"id"`
+	// The kind of item this matcher selects, declared by the panel plugin. For example "node" or "slice".
+	Kind string `json:"kind"`
+	// The matcher options. This is specific to the matcher implementation.
+	Options any `json:"options,omitempty"`
+}
+
+// NewItemMatcherConfig creates a new ItemMatcherConfig object.
+func NewItemMatcherConfig() *ItemMatcherConfig {
+	return &ItemMatcherConfig{
+		Id:   "",
+		Kind: "",
 	}
 }
 

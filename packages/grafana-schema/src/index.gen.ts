@@ -37,7 +37,9 @@ export type {
   SpecialValueMap,
   ValueMappingResult,
   LibraryPanelRef,
-  MatcherScope
+  MatcherScope,
+  ItemMatcherConfig,
+  ItemOverrideRule
 } from './raw/dashboard/x/types.gen';
 
 // Raw generated enums and default consts from dashboard kind.
@@ -57,7 +59,9 @@ export {
   MappingType,
   SpecialValueMatch,
   DashboardCursorSync,
-  defaultDashboardCursorSync
+  defaultDashboardCursorSync,
+  defaultItemMatcherConfig,
+  defaultItemOverrideRule
 } from './raw/dashboard/x/types.gen';
 
 // The following exported declarations correspond to types in the dashboard@0.0 kind's
