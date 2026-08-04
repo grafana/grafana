@@ -19,9 +19,10 @@ on:
   pull_request:
     types: [synchronize]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number }}
-  cancel-in-progress: true
+# Concurrency is scoped to the build and deploy jobs rather than the workflow:
+# every created comment on a PR spawns a run of this workflow, and a
+# workflow-level group is joined before job-level `if`s are evaluated, so an
+# unrelated comment could cancel an in-flight build or deploy.
 
 permissions: {}
 
@@ -117,6 +118,12 @@ jobs:
     needs: check
     if: needs.check.outputs.should-deploy == 'true'
     runs-on: ubuntu-x64-large
+    # Only runs that passed the check gate reach this job, so unrelated
+    # comments never join the group. A newer push cancels a stale in-flight
+    # build, which has no external side effects.
+    concurrency:
+      group: ${{ github.workflow }}-build-${{ needs.check.outputs.pr-number }}
+      cancel-in-progress: true
     permissions:
       contents: read
     steps:
@@ -148,6 +155,12 @@ jobs:
     # alongside code built from the PR.
     needs: [check, build]
     runs-on: ubuntu-arm64-small
+    # Never cancel an in-flight upload. Newer deploys queue behind it; GitHub
+    # keeps only the newest pending job in the group, so the last push always
+    # deploys last.
+    concurrency:
+      group: ${{ github.workflow }}-deploy-${{ needs.check.outputs.pr-number }}
+      cancel-in-progress: false
     permissions:
       contents: read
       id-token: write # required for push-to-gcs
@@ -176,7 +189,18 @@ jobs:
           PR_NUMBER: ${{ needs.check.outputs.pr-number }}
         run: echo "deploy-name=pr_grafana_${PR_NUMBER}" >> "$GITHUB_OUTPUT"
 
-      - name: Upload assets
+      # The manifest is the pointer to a build: every file it references is
+      # content-hashed and uploads never delete existing objects, so uploading
+      # chunks first and the manifest last means the preview backend (which
+      # fetches only the manifest) always sees a complete build, even if this
+      # run dies mid-upload. Files within one push-to-gcs call upload in
+      # parallel with no ordering guarantee, hence two calls.
+      - name: Stage manifests to upload last
+        run: |
+          mkdir -p preview-manifest
+          mv public/build/assets-manifest*.json preview-manifest/
+
+      - name: Upload assets (manifests excluded)
         uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:
           environment: dev
@@ -185,6 +209,16 @@ jobs:
           # the assets manifest and CDN paths expect
           bucket_path: ${{ steps.deploy-name.outputs.deploy-name }}/public/build
           path: public/build
+          service_account: github-gf-frontend-preview-dev@grafanalabs-workload-identity.iam.gserviceaccount.com
+          parent: false
+
+      - name: Upload manifests to switch the preview to this build
+        uses: grafana/shared-workflows/actions/push-to-gcs@main
+        with:
+          environment: dev
+          bucket: ${{ env.BUCKET_NAME }}
+          bucket_path: ${{ steps.deploy-name.outputs.deploy-name }}/public/build
+          path: preview-manifest
           service_account: github-gf-frontend-preview-dev@grafanalabs-workload-identity.iam.gserviceaccount.com
           parent: false
 
@@ -239,3 +273,27 @@ jobs:
             ### Frontend preview
 
             ❌ The preview deploy for commit ${{ needs.check.outputs.head-sha }} failed. See the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+
+  comment-cancelled:
+    name: Comment that the deploy was cancelled
+    needs: [check, build, deploy]
+    # failure() does not match cancelled jobs, so without this a cancelled run
+    # would leave the sticky comment saying the build is in progress forever.
+    if: |
+      always() && needs.check.outputs.should-deploy == 'true' &&
+      !contains(needs.*.result, 'failure') &&
+      contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-arm64-small
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Update comment to say the deploy was cancelled
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: frontend-preview
+          number: ${{ needs.check.outputs.pr-number }}
+          GITHUB_TOKEN: ${{ github.token }}
+          message: |
+            ### Frontend preview
+
+            ⚠️ The preview deploy for commit ${{ needs.check.outputs.head-sha }} was cancelled ([workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})). If a newer push superseded it, that run will update this comment when it finishes. Any previously deployed preview is still live.
