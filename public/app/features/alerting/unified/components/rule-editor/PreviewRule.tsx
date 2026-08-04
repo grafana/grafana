@@ -37,7 +37,13 @@ export function PreviewRule(): React.ReactElement | null {
     <div className={styles.container}>
       <Stack>
         {(isDsLoading || allDataSourcesAvailable) && (
-          <Button disabled={!isPreviewAvailable} type="button" variant="primary" onClick={onPreview}>
+          <Button
+            disabled={!isPreviewAvailable}
+            type="button"
+            variant="primary"
+            icon={isDsLoading ? 'spinner' : undefined}
+            onClick={onPreview}
+          >
             <Trans i18nKey="alerting.preview-rule.preview-alerts">Preview alerts</Trans>
           </Button>
         )}
