@@ -12969,9 +12969,11 @@
       }
     },
     "playlist-table-rows": {
+      "apply-dashboard-link": "Apply",
       "aria-label-item-dashboard-state": "Dashboard state for {{itemValue}}",
       "aria-label-item-interval": "Interval for {{itemValue}}",
       "aria-label-playlist-item": "Playlist item, {{itemType}}, {{itemValue}}",
+      "cancel-dashboard-link": "Cancel",
       "clear-view": "Clear custom view",
       "configure-view": "Configure",
       "custom-view-configured": "Configured",

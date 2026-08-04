@@ -1,7 +1,16 @@
 import { css } from '@emotion/css';
 import { Draggable, type DraggableProvided } from '@hello-pangea/dnd';
 import pluralize from 'pluralize';
-import { type ClipboardEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import {
+  type ButtonHTMLAttributes,
+  forwardRef,
+  type KeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react';
 
 import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -161,6 +170,7 @@ function PlaylistTableRow({
   const [dashboardStateError, setDashboardStateError] = useState<string>();
   const [resolvingDashboardState, setResolvingDashboardState] = useState(false);
   const [pasteLinkOpen, setPasteLinkOpen] = useState(false);
+  const [dashboardLinkDraft, setDashboardLinkDraft] = useState('');
   const [customViewToken] = useState(createPlaylistCustomViewToken);
   const customViewChannel = useRef<BroadcastChannel>();
   const optionsId = useId();
@@ -200,24 +210,35 @@ function PlaylistTableRow({
     customViewChannel.current = channel;
   };
 
-  const onDashboardStatePaste = async (event: ClipboardEvent<HTMLInputElement>) => {
-    const pastedValue = event.clipboardData.getData('text').trim();
-    if (!pastedValue) {
+  const closeDashboardLinkEditor = () => {
+    setDashboardStateError(undefined);
+    setDashboardLinkDraft('');
+    setPasteLinkOpen(false);
+  };
+
+  const applyDashboardLink = async () => {
+    const dashboardLink = dashboardLinkDraft.trim();
+    if (!dashboardLink) {
       return;
     }
 
-    event.preventDefault();
     setDashboardStateError(undefined);
 
-    const shortLinkUid = getPlaylistShortLinkUid(pastedValue);
+    const shortLinkUid = getPlaylistShortLinkUid(dashboardLink);
     if (!shortLinkUid) {
-      onUpdateQueryParams?.(index, normalizePlaylistItemQueryParams(pastedValue) ?? '');
-      setPasteLinkOpen(false);
+      const dashboardState = normalizePlaylistItemQueryParams(dashboardLink);
+      if (!dashboardState) {
+        setDashboardStateError(
+          t('playlist.playlist-table-rows.dashboard-state-empty-link', 'This link has no custom dashboard state')
+        );
+        return;
+      }
+      onUpdateQueryParams?.(index, dashboardState);
+      closeDashboardLinkEditor();
       return;
     }
 
     setResolvingDashboardState(true);
-    onUpdateQueryParams?.(index, '');
     try {
       const shortLink = await getBackendSrv().get<{ path: string }>(
         `/api/short-urls/${encodeURIComponent(shortLinkUid)}`
@@ -230,7 +251,7 @@ function PlaylistTableRow({
         return;
       }
       onUpdateQueryParams?.(index, dashboardState);
-      setPasteLinkOpen(false);
+      closeDashboardLinkEditor();
     } catch {
       setDashboardStateError(
         t(
@@ -323,7 +344,10 @@ function PlaylistTableRow({
                           content={<CustomViewTooltipContent queryParams={item.queryParams} styles={styles} />}
                         >
                           <span className={styles.configuredStatus}>
-                            {t('playlist.playlist-table-rows.custom-view-configured', 'Configured')}
+                            <Icon name="check-circle" size="sm" />
+                            <span className={styles.configuredStatusText}>
+                              {t('playlist.playlist-table-rows.custom-view-configured', 'Configured')}
+                            </span>
                           </span>
                         </Tooltip>
                       ) : (
@@ -350,7 +374,11 @@ function PlaylistTableRow({
                             <Menu.Item
                               icon="clipboard-alt"
                               label={t('playlist.playlist-table-rows.paste-dashboard-link', 'Paste link')}
-                              onClick={() => setPasteLinkOpen((open) => !open)}
+                              onClick={() => {
+                                setDashboardStateError(undefined);
+                                setDashboardLinkDraft('');
+                                setPasteLinkOpen(true);
+                              }}
                             />
                             {item.queryParams && (
                               <Menu.Item
@@ -358,6 +386,7 @@ function PlaylistTableRow({
                                 label={t('playlist.playlist-table-rows.clear-view', 'Clear custom view')}
                                 onClick={() => {
                                   setDashboardStateError(undefined);
+                                  setDashboardLinkDraft('');
                                   setPasteLinkOpen(false);
                                   onUpdateQueryParams?.(index, '');
                                 }}
@@ -366,40 +395,61 @@ function PlaylistTableRow({
                           </Menu>
                         }
                       >
-                        <IconButton
+                        <PlaylistDropdownIconButton
                           name="ellipsis-v"
-                          size="md"
-                          aria-label={t('playlist.playlist-table-rows.more-view-actions', 'More custom view actions')}
-                          tooltip={t('playlist.playlist-table-rows.more-view-actions', 'More custom view actions')}
+                          label={t('playlist.playlist-table-rows.more-view-actions', 'More custom view actions')}
+                          triggerClassName={styles.iconAction}
                         />
                       </Dropdown>
                     </div>
                   </div>
                   {pasteLinkOpen && (
-                    <Input
-                      autoFocus
-                      type="text"
-                      value={item.queryParams ?? ''}
-                      placeholder={t(
-                        'playlist.playlist-table-rows.dashboard-state-placeholder',
-                        'Paste a dashboard link'
-                      )}
-                      title={t(
-                        'playlist.playlist-table-rows.dashboard-state-title',
-                        'Paste a dashboard link or enter its URL state'
-                      )}
-                      aria-label={t(
-                        'playlist.playlist-table-rows.aria-label-item-dashboard-state',
-                        'Dashboard state for {{itemValue}}',
-                        { itemValue: item.value }
-                      )}
-                      loading={resolvingDashboardState}
-                      onPaste={onDashboardStatePaste}
-                      onChange={(e) => {
-                        setDashboardStateError(undefined);
-                        onUpdateQueryParams?.(index, e.currentTarget.value);
-                      }}
-                    />
+                    <div className={styles.dashboardLinkEditor}>
+                      <Input
+                        autoFocus
+                        type="text"
+                        value={dashboardLinkDraft}
+                        placeholder={t(
+                          'playlist.playlist-table-rows.dashboard-state-placeholder',
+                          'Paste a dashboard link'
+                        )}
+                        title={t(
+                          'playlist.playlist-table-rows.dashboard-state-title',
+                          'Paste a dashboard link or enter its URL state'
+                        )}
+                        aria-label={t(
+                          'playlist.playlist-table-rows.aria-label-item-dashboard-state',
+                          'Dashboard state for {{itemValue}}',
+                          { itemValue: item.value }
+                        )}
+                        loading={resolvingDashboardState}
+                        onChange={(event) => {
+                          setDashboardStateError(undefined);
+                          setDashboardLinkDraft(event.currentTarget.value);
+                        }}
+                        onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            void applyDashboardLink();
+                          }
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={resolvingDashboardState}
+                        onClick={closeDashboardLinkEditor}
+                      >
+                        <Trans i18nKey="playlist.playlist-table-rows.cancel-dashboard-link">Cancel</Trans>
+                      </Button>
+                      <Button
+                        size="sm"
+                        disabled={!dashboardLinkDraft.trim() || resolvingDashboardState}
+                        onClick={applyDashboardLink}
+                      >
+                        <Trans i18nKey="playlist.playlist-table-rows.apply-dashboard-link">Apply</Trans>
+                      </Button>
+                    </div>
                   )}
                 </div>
               </Field>
@@ -505,6 +555,41 @@ interface PlaylistActionIconButtonProps {
   testId?: string;
 }
 
+interface PlaylistDropdownIconButtonProps
+  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'children'> {
+  name: IconName;
+  label: string;
+  triggerClassName: string;
+}
+
+const PlaylistDropdownIconButton = forwardRef<HTMLButtonElement, PlaylistDropdownIconButtonProps>(
+  function PlaylistDropdownIconButton({ name, label, triggerClassName, onClick, ...buttonProps }, ref) {
+    const [tooltipOpen, setTooltipOpen] = useState(false);
+
+    return (
+      <div
+        className={triggerClassName}
+        onMouseEnter={() => setTooltipOpen(true)}
+        onMouseLeave={() => setTooltipOpen(false)}
+      >
+        <Tooltip content={label} placement="top" show={tooltipOpen}>
+          <IconButton
+            {...buttonProps}
+            ref={ref}
+            name={name}
+            size="md"
+            aria-label={label}
+            onClick={(event) => {
+              setTooltipOpen(false);
+              onClick?.(event);
+            }}
+          />
+        </Tooltip>
+      </div>
+    );
+  }
+);
+
 function PlaylistActionIconButton({
   name,
   label,
@@ -605,30 +690,40 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(0.5),
     }),
     customViewEditor: css({
-      background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
       display: 'grid',
       gap: theme.spacing(0.5),
-      padding: theme.spacing(0.5, 1),
     }),
     customViewControls: css({
       alignItems: 'center',
       display: 'flex',
       flexWrap: 'wrap',
-      gap: theme.spacing(0.5, 1),
-      justifyContent: 'space-between',
+      gap: theme.spacing(0.5, 1.5),
+      justifyContent: 'flex-start',
       minHeight: theme.spacing(3),
     }),
     customViewActions: css({
       alignItems: 'center',
       display: 'flex',
       flexWrap: 'wrap',
-      gap: theme.spacing(0.5),
+      gap: theme.spacing(1),
     }),
     configuredStatus: css({
-      borderBottom: `1px dotted ${theme.colors.text.secondary}`,
+      alignItems: 'center',
       cursor: 'help',
+      display: 'inline-flex',
+      gap: theme.spacing(0.5),
+    }),
+    configuredStatusText: css({
+      borderBottom: `1px dotted ${theme.colors.text.secondary}`,
+    }),
+    dashboardLinkEditor: css({
+      alignItems: 'center',
+      display: 'grid',
+      gap: theme.spacing(0.5),
+      gridTemplateColumns: 'minmax(0, 1fr) auto auto',
+      [theme.breakpoints.down('sm')]: {
+        gridTemplateColumns: 'minmax(0, 1fr) auto auto',
+      },
     }),
     customViewTooltip: css({
       display: 'grid',

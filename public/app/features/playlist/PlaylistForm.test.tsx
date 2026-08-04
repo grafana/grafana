@@ -289,6 +289,10 @@ describe('PlaylistForm', () => {
       expect(within(rowForItem('uid_1')).getByText('Configure')).toBeInTheDocument();
       const moreActions = screen.getByRole('button', { name: 'More custom view actions' });
       expect(moreActions).toBeInTheDocument();
+      expect(moreActions.querySelector('svg')).toHaveStyle({ pointerEvents: 'none' });
+      await userEvent.hover(moreActions);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('More custom view actions');
+      await userEvent.unhover(moreActions);
 
       await userEvent.click(moreActions);
       await userEvent.click(screen.getByRole('menuitem', { name: 'Paste link' }));
@@ -406,12 +410,10 @@ describe('PlaylistForm', () => {
     it('renders the state stored on each playlist item', async () => {
       getTestContext(mockPerItemOptionsPlaylist);
 
-      await openDashboardLinkPaste('uid_1');
-      await openDashboardLinkPaste('uid_2');
-      expect(screen.getByRole('textbox', { name: /dashboard state for uid_1/i })).toHaveValue(
-        'var-host=host1&from=now-6h&to=now'
-      );
-      expect(screen.getByRole('textbox', { name: /dashboard state for uid_2/i })).toHaveValue('var-host=host2');
+      await openItemOptions('uid_1');
+      await openItemOptions('uid_2');
+      expect(within(rowForItem('uid_1')).getByText('Configured')).toBeInTheDocument();
+      expect(within(rowForItem('uid_2')).getByText('Configured')).toBeInTheDocument();
     });
 
     it('summarizes the configured view on hover and keeps secondary actions in a menu', async () => {
@@ -440,6 +442,7 @@ describe('PlaylistForm', () => {
       const dashboardState = screen.getByRole('textbox', { name: /dashboard state for uid_1/i });
       dashboardState.focus();
       await userEvent.paste('https://grafana.example.com/d/uid/name?var-host=host1&from=now-6h&to=now');
+      await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
 
       expect(screen.queryByRole('textbox', { name: /dashboard state for uid_1/i })).not.toBeInTheDocument();
       expect(within(rowForItem('uid_1')).getByText('Configured')).toBeInTheDocument();
@@ -474,12 +477,9 @@ describe('PlaylistForm', () => {
       const dashboardState = screen.getByRole('textbox', { name: /dashboard state for uid_1/i });
       dashboardState.focus();
       await userEvent.paste('http://localhost:3000/goto/short123?orgId=1');
+      await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
 
       await waitFor(() => expect(within(rowForItem('uid_1')).getByText('Configured')).toBeInTheDocument());
-      await openDashboardLinkPaste('uid_1');
-      expect(screen.getByRole('textbox', { name: /dashboard state for uid_1/i })).toHaveValue(
-        'var-host=host2&from=now-12h&to=now'
-      );
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
 
       expect(onSubmitMock).toHaveBeenCalledWith(
@@ -489,6 +489,32 @@ describe('PlaylistForm', () => {
               expect.objectContaining({
                 value: 'uid_1',
                 queryParams: 'var-host=host2&from=now-12h&to=now',
+              }),
+            ]),
+          }),
+        })
+      );
+    });
+
+    it('can cancel pasting a link without changing the configured view', async () => {
+      const { onSubmitMock } = getTestContext(mockPerItemOptionsPlaylist);
+
+      await openDashboardLinkPaste('uid_1');
+      await userEvent.type(
+        screen.getByRole('textbox', { name: /dashboard state for uid_1/i }),
+        'https://grafana.example.com/d/uid/name?var-host=replacement'
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+      expect(screen.queryByRole('textbox', { name: /dashboard state for uid_1/i })).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+      expect(onSubmitMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          spec: expect.objectContaining({
+            items: expect.arrayContaining([
+              expect.objectContaining({
+                value: 'uid_1',
+                queryParams: 'var-host=host1&from=now-6h&to=now',
               }),
             ]),
           }),
@@ -542,13 +568,19 @@ describe('PlaylistForm', () => {
     });
 
     it('keeps parameters attached to the correct item when another row is removed', async () => {
-      getTestContext(mockPerItemOptionsPlaylist);
+      const { onSubmitMock } = getTestContext(mockPerItemOptionsPlaylist);
 
       await deleteItem(rows()[0]);
       await waitFor(() => expect(rows()).toHaveLength(1));
 
-      await openDashboardLinkPaste('uid_2');
-      expect(screen.getByRole('textbox', { name: /dashboard state for uid_2/i })).toHaveValue('var-host=host2');
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+      expect(onSubmitMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          spec: expect.objectContaining({
+            items: [expect.objectContaining({ value: 'uid_2', queryParams: 'var-host=host2' })],
+          }),
+        })
+      );
     });
   });
 });
