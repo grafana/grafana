@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { type InhibitionRuleList } from '@grafana/alerting/unstable';
+import { type InhibitionRuleList } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 
 const emptyInhibitionRuleList = getK8sResponse<InhibitionRuleList['items'][number]>('InhibitionRuleList', []);

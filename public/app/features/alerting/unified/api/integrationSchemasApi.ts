@@ -2,15 +2,14 @@ import {
   type GetIntegrationtypeschemasField,
   type GetIntegrationtypeschemasIntegrationTypeSchema,
   type GetIntegrationtypeschemasIntegrationTypeSchemaVersion,
-  notificationsAPI,
-} from '@grafana/alerting/unstable';
+  useGetIntegrationtypeschemasQuery,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { config } from '@grafana/runtime';
 
 import { type NotificationChannelOption, type NotifierDTO, type NotifierVersion } from '../types/alerting';
 
 import { alertmanagerApi } from './alertmanagerApi';
 
-const { useGetIntegrationtypeschemasQuery } = notificationsAPI;
 const { useGrafanaNotifiersQuery } = alertmanagerApi;
 
 /**

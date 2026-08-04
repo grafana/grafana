@@ -1,7 +1,10 @@
 import { HttpResponse } from 'msw';
 
-import { ListRoutingTreeApiResponseFactory, RoutingTreeFactory } from '../../../api/notifications/mocks/fakes/Routes';
-import { listRoutingTreeHandler } from '../../../api/notifications/mocks/handlers/RoutingTreeHandlers/listRoutingTreeHandler';
+import {
+  ListRoutingTreeApiResponseFactory,
+  RoutingTreeFactory,
+} from '../../../api/notifications/v1beta1/mocks/fakes/Routes';
+import { listRoutingTreeHandler } from '../../../api/notifications/v1beta1/mocks/handlers/RoutingTreeHandlers/listRoutingTreeHandler';
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '../../routingTrees';
 
 // A simple list with the default tree and two custom trees

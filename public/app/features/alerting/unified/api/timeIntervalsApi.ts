@@ -1,3 +1,3 @@
-import { notificationsAPI } from '@grafana/alerting/unstable';
+import { generatedAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
-export const timeIntervalsApi = notificationsAPI;
+export const timeIntervalsApi = generatedAPI;

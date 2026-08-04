@@ -8,7 +8,6 @@ import type { RulesFilter } from '../../search/rulesSearchParser';
 import { RulesFilterSidebar } from './RulesFilterSidebar';
 
 jest.mock('@grafana/alerting/unstable', () => ({
-  ...jest.requireActual('@grafana/alerting/unstable'),
   ContactPointSelector: ({
     onChange,
     value,

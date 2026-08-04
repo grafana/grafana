@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 import { type Validate } from 'react-hook-form';
 
+import { notificationsAPIv1beta1 } from '@grafana/alerting/unstable';
 import {
   API_GROUP,
   API_VERSION,
   type TemplateGroup,
   type TemplateGroupList,
   type TemplateGroupTemplateKind,
-  notificationsAPI,
-} from '@grafana/alerting/unstable';
+} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
 import { type AlertManagerCortexConfig } from '../../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -50,7 +50,7 @@ const {
   useCreateTemplateGroupMutation,
   useReplaceTemplateGroupMutation,
   useDeleteTemplateGroupMutation,
-} = notificationsAPI;
+} = notificationsAPIv1beta1;
 
 export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);

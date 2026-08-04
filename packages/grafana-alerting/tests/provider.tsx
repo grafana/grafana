@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
 import { MockBackendSrv } from '@grafana/api-clients';
-import { generatedAPI as notificationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { setBackendSrv } from '@grafana/runtime';
@@ -15,8 +14,7 @@ import { setBackendSrv } from '@grafana/runtime';
 // @ts-ignore
 setBackendSrv(new MockBackendSrv());
 
-// Both notifications API versions are registered so tests can exercise either side of the
-// `alerting.notificationsAPIV1Beta1` feature toggle.
+// create an empty store
 export const store: ReturnType<typeof configureStore> = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -24,11 +22,9 @@ export const store: ReturnType<typeof configureStore> = configureStore({
       serializableCheck: false,
       immutableCheck: false,
     })
-      .concat(notificationsAPIv0alpha1.middleware)
       .concat(notificationsAPIv1beta1.middleware)
       .concat(rulesAPIv0alpha1.middleware),
   reducer: {
-    [notificationsAPIv0alpha1.reducerPath]: notificationsAPIv0alpha1.reducer,
     [notificationsAPIv1beta1.reducerPath]: notificationsAPIv1beta1.reducer,
     [rulesAPIv0alpha1.reducerPath]: rulesAPIv0alpha1.reducer,
   },
@@ -57,7 +53,6 @@ export const getDefaultWrapper = () => {
 function useResetQueryCacheAfterUnmount() {
   useEffect(() => {
     return () => {
-      store.dispatch(notificationsAPIv0alpha1.util.resetApiState());
       store.dispatch(notificationsAPIv1beta1.util.resetApiState());
     };
   }, []);

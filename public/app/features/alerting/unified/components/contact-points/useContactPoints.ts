@@ -5,7 +5,12 @@
 
 import { useMemo } from 'react';
 
-import { API_GROUP, API_VERSION, type Receiver as K8sReceiver, notificationsAPI } from '@grafana/alerting/unstable';
+import {
+  API_GROUP,
+  API_VERSION,
+  type Receiver as K8sReceiver,
+  generatedAPI,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { useOnCallIntegration } from 'app/features/alerting/unified/components/receivers/grafanaAppReceivers/onCall/useOnCallIntegration';
 import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
 import { cloudNotifierTypes } from 'app/features/alerting/unified/utils/cloud-alertmanager-notifier-types';
@@ -48,7 +53,7 @@ const {
   useDeleteReceiverMutation,
   useCreateReceiverMutation,
   useReplaceReceiverMutation,
-} = notificationsAPI;
+} = generatedAPI;
 
 const defaultOptions = {
   refetchOnFocus: true,

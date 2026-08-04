@@ -2,9 +2,9 @@ import { chain } from 'lodash';
 
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 
-import type { ContactPoint } from '../../../api/notifications/types';
+import type { ContactPoint } from '../../../api/notifications/v1beta1/types';
 import { type CustomComboBoxProps } from '../../../common/ComboBox.types';
-import { useListContactPoints } from '../../hooks/useContactPoints';
+import { useListContactPoints } from '../../hooks/v1beta1/useContactPoints';
 import { getContactPointDescription, isUsableContactPoint } from '../../utils';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
