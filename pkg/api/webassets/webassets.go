@@ -62,7 +62,7 @@ func GetWebAssets(ctx context.Context, buildDir string, cfg *setting.Cfg, licens
 
 	cdn := "" // "https://grafana-assets.grafana.net/grafana/10.3.0-64123/"
 	if cdn != "" {
-		result, err = readWebAssetsFromCDN(ctx, buildDir, cdn)
+		result, err = ReadWebAssetsFromCDN(ctx, buildDir, cdn)
 	}
 
 	assetsFilename := "assets-manifest.json"
@@ -100,7 +100,7 @@ func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) 
 	return readWebAssets(f)
 }
 
-func readWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) (*dtos.EntryPointAssets, error) {
+func ReadWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) (*dtos.EntryPointAssets, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/"+buildDir+"/assets-manifest.json", nil)
 	if err != nil {
 		return nil, err
@@ -112,7 +112,12 @@ func readWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) 
 	defer func() {
 		_ = response.Body.Close()
 	}()
-	dto, err := readWebAssets(response.Body)
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code %d fetching assets-manifest.json from %s", response.StatusCode, baseURL)
+	}
+	// Limit the response body size to guard against oversized responses
+	const maxManifestSize = 10 * 1024 * 1024
+	dto, err := readWebAssets(io.LimitReader(response.Body, maxManifestSize))
 	if err == nil {
 		dto.SetContentDeliveryURL(baseURL)
 	}
