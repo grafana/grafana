@@ -302,17 +302,6 @@ export async function groupIntoRow(page: Page, dashboardPage: DashboardPage, sel
   await canvas.groupPanels('row');
 }
 
-export async function checkRepeatedTabTitles(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
-  title: string,
-  options: Array<string | number>
-) {
-  for (const option of options) {
-    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(`${title}${option}`))).toBeVisible();
-  }
-}
-
 export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, tabTitle: string) {
   const tab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabTitle)).first();
   const boundingBox = await tab.boundingBox();

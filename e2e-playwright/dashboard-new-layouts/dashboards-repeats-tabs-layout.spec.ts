@@ -1,4 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { test, expect, Components, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import V2DashWithTabRepeats from '../dashboards/V2DashWithTabRepeats.json';
 
@@ -8,7 +8,6 @@ import {
   saveDashboard,
   importTestDashboard,
   goToEmbeddedPanel,
-  checkRepeatedTabTitles,
   groupIntoTab,
   moveTab,
   getTabPosition,
@@ -260,7 +259,8 @@ test.describe(
 
       await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
 
-      expect(await tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(2)}`).getAttribute('aria-selected')).toBe(
+      await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(2)}`)).toHaveAttribute(
+        'aria-selected',
         'true'
       );
     });
@@ -396,3 +396,17 @@ test.describe(
     });
   }
 );
+
+async function checkRepeatedTabTitles(
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  title: string,
+  options: Array<string | number>
+) {
+  const components = new Components(dashboardPage.ctx);
+  const tabs = new Tabs({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+
+  for (const option of options) {
+    await expect(tabs.getTitle(`${title}${option}`)).toBeVisible();
+  }
+}
