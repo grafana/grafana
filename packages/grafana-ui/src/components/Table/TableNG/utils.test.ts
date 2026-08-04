@@ -1835,20 +1835,44 @@ describe('TableNG utils', () => {
       expect(compute(fields, 300)).toEqual([100, 200]);
     });
 
-    it('grows text columns more than short numeric columns when filling the panel', () => {
+    it('grows text columns far more than numeric columns, but still lets numeric grow a little', () => {
       const fields: Field[] = [
         { name: 'N', type: FieldType.number, values: [999], config: {} }, // 21 => floor 50
         { name: 'AAAA', type: FieldType.string, values: ['hello world'], config: {} }, // 11 => 101
         { name: 'B', type: FieldType.string, values: ['x'], config: {} }, // 21 => floor 50
       ];
-      // content widths [50, 101, 50] total 201; availWidth 401 => leftover 200 distributed
-      // proportionally to content width.
+      // content widths [50, 101, 50] total 201; availWidth 401 => leftover 200 split by growth share
+      // growthWeight × √(content) (numeric 0.35, string 1): N 0.35√50=2.47, AAAA √101=10.05,
+      // B √50=7.07 => total 19.60.
+      //   N: 50 + 200*(2.47/19.60) = 75; AAAA: 101 + 200*(10.05/19.60) = 204; B: 50 + 200*(7.07/19.60) = 122.
       const result = compute(fields, 401);
 
-      expect(result).toEqual([100, 201, 100]);
-      // the text column grew more than either short column
+      expect(result).toEqual([75, 204, 122]);
+      // numeric grew, but much less than either text column; and the wider text column (AAAA) grew
+      // more than the narrower one (B) since growth scales with √(content width).
+      expect(result[0] - 50).toBeGreaterThan(0);
       expect(result[1] - 101).toBeGreaterThan(result[0] - 50);
-      expect(result[0]).toBe(result[2]); // symmetric short columns grow equally
+      expect(result[1] - 101).toBeGreaterThan(result[2] - 50);
+    });
+
+    it('grows numeric and boolean columns only modestly while a string column takes most of the leftover', () => {
+      const fields: Field[] = [
+        { name: 'N', type: FieldType.number, values: [1], config: {} }, // floor 50
+        { name: 'Bool', type: FieldType.boolean, values: [true], config: {} }, // floor 50
+        { name: 'S', type: FieldType.string, values: ['x'], config: {} }, // floor 50
+      ];
+      // All three have content width 50, so √(content) is shared and only the weight differs
+      // (N/Bool 0.35, S 1 => total 1.7): N/Bool 50 + 200*(0.35/1.7) = 91; S 50 + 200*(1/1.7) = 168.
+      expect(compute(fields, 350)).toEqual([91, 91, 168]);
+    });
+
+    it('grows every auto column equally when they share a type (all-numeric table still fills the panel)', () => {
+      const fields: Field[] = [
+        { name: 'A', type: FieldType.number, values: [1], config: {} }, // floor 50
+        { name: 'B', type: FieldType.number, values: [2], config: {} }, // floor 50
+      ];
+      // The shared weight cancels out, so both numeric columns split the leftover equally: 150 each.
+      expect(compute(fields, 300)).toEqual([150, 150]);
     });
 
     it('honors a configured minWidth as the floor for an auto column', () => {
@@ -2023,6 +2047,31 @@ describe('TableNG utils', () => {
         field.display = (v) => ({ text: v === 'x' ? 'mapped' : String(v), numeric: NaN });
         const [width] = computeWithPills([field], 73);
         expect(width).toBe(73);
+      });
+
+      it('grows a pill column with more entries wider than a sparser pill column', () => {
+        const fields: Field[] = [
+          // 3 pills (4*8+12=44 each) + 2 gaps of 4 => 140; +CELL_CHROME 13 = 153
+          pillField('A', [['xxxx', 'yyyy', 'zzzz']]),
+          // 1 pill (4*8+12=44) => 44; +CELL_CHROME 13 = 57
+          pillField('D', [['wwww']]),
+        ];
+        // contentTotal 210; availWidth 410 => leftover 200. Growth share is √(content) (both weight
+        // 1): √153=12.37 vs √57=7.55 => total 19.92. The busier column takes the larger share:
+        //   A: 153 + 200*(12.37/19.92) = 277; D: 57 + 200*(7.55/19.92) = 133.
+        expect(computeWithPills(fields, 410)).toEqual([277, 133]);
+      });
+
+      it('measures wrapped pill columns by content instead of collapsing them to the header', () => {
+        const wrappedPill = (name: string, values: unknown[]): Field => ({
+          ...pillField(name, values),
+          config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Pill } } },
+        });
+        // Wrapping is on, but pills are wrap-aware so they still size to their pill content — the
+        // result matches the non-wrapped case above ([277, 133]). Before the fix, wrapText collapsed
+        // both columns to their (equal, 21px) header width, so pill count made no difference.
+        const fields = [wrappedPill('A', [['xxxx', 'yyyy', 'zzzz']]), wrappedPill('D', [['wwww']])];
+        expect(computeWithPills(fields, 410)).toEqual([277, 133]);
       });
     });
   });

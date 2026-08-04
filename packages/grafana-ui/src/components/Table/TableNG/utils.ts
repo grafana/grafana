@@ -1368,6 +1368,17 @@ const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>
   [TableCellDisplayMode.Pill]: measurePillColWidth,
 };
 
+// Per-type multiplier on a column's share of the panel's leftover space (see the grow step below).
+// Numeric and boolean columns hold short, fixed-width values, so they grow at a fraction of a
+// text-like column's rate — enough that they aren't pinned to their content width, but so
+// strings/dates/pills take most of the slack. A shared weight cancels out, so an all-numeric table
+// still fills the panel.
+const COMPACT_GROWTH_WEIGHT = 0.35;
+
+function growthWeight(type: FieldType): number {
+  return type === FieldType.number || type === FieldType.boolean ? COMPACT_GROWTH_WEIGHT : 1;
+}
+
 /**
  * @internal
  * Content-aware variant of {@link computeColWidths}. Columns with a configured `custom.width` keep
@@ -1375,8 +1386,11 @@ const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>
  *   1. its cell content (a sampled, display-formatted, measured max) or a per-type default for
  *      graphical cells, whichever applies, unioned with its header label width;
  *   2. clamped to `[max(MIN_WIDTH, custom.minWidth), MAX_AUTO_WIDTH]`;
- *   3. then, if the auto columns don't fill the available width, grown proportionally to their
- *      content width so the table fills the panel (numeric/short columns stay comparatively tight).
+ *   3. then, if the auto columns don't fill the available width, the leftover is distributed by a
+ *      growth share of `growthWeight × √(content width)`, so a column with more content still takes
+ *      more slack (a busy pill column beats a sparse one) while the √ damps the spread enough that
+ *      the widest column doesn't run away from its neighbours; numeric/boolean columns grow only
+ *      modestly (see {@link growthWeight}).
  * When content overflows the available width the content widths are kept and the grid scrolls.
  */
 export function computeContentAwareColWidths(
@@ -1419,14 +1433,15 @@ export function computeContentAwareColWidths(
     const field = fields[i];
     const headerWidth = measureHeaderWidth(field, headerTypographyCtx, showTypeIcons);
 
-    // Text wrapping is cross-cutting: a wrapped column grows in height, not width, so it sizes to
-    // its header regardless of cell type. Otherwise the cell type's registered measurer (or the
-    // default text measurement) gives the content width, which is then unioned with the header.
+    // A wrapped *free-text* column grows in height, not width, so it sizes to its header. But cell
+    // types with a dedicated measurer are wrap-aware or wrap-invariant and always measure: pills
+    // size to their average pill content (which the cap lets wrap onto a few lines — so a busy pill
+    // column stays wider than a sparse one even when wrapping), and graphical cells take a fixed
+    // default. Only the default text path collapses to the header when wrapping is on.
     const cellType = getCellOptions(field).type;
-    const measure = shouldTextWrap(field)
-      ? undefined
-      : (COL_WIDTH_MEASURERS[cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType] ??
-        measureTextColWidth);
+    const registered =
+      COL_WIDTH_MEASURERS[cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType];
+    const measure = registered ?? (shouldTextWrap(field) ? undefined : measureTextColWidth);
     const cellWidth = measure?.(field, effectiveSampleSize, measureCtx) ?? 0;
 
     const floor = Math.max(COLUMN.MIN_WIDTH, field.config.custom?.minWidth ?? 0);
@@ -1437,12 +1452,17 @@ export function computeContentAwareColWidths(
     contentTotal += clamped;
   }
 
-  // grow proportionally to fill leftover space; on overflow keep content widths (grid scrolls).
+  // Distribute leftover space by a growth share of growthWeight × √(content width): a column with
+  // more content grows more (a busy pill column beats a sparse one), but the √ damps the spread so
+  // the widest column doesn't run away from its neighbours, and the per-type weight keeps
+  // numeric/boolean columns comparatively tight. On overflow content widths are kept (grid scrolls).
+  const growShare = (i: number) => growthWeight(fields[i].type) * Math.sqrt(contentWidths.get(i)!);
+  const growTotal = autoIdxs.reduce((sum, i) => sum + growShare(i), 0);
+
   const leftover = availWidth - definedWidth - contentTotal;
   for (const i of autoIdxs) {
     const contentWidth = contentWidths.get(i)!;
-    const grown =
-      leftover > 0 && contentTotal > 0 ? contentWidth + leftover * (contentWidth / contentTotal) : contentWidth;
+    const grown = leftover > 0 && growTotal > 0 ? contentWidth + leftover * (growShare(i) / growTotal) : contentWidth;
     widths[i] = Math.round(grown);
   }
 
