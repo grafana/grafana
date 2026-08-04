@@ -159,6 +159,10 @@ const (
 	// Adds support for Kubernetes logs drilldown
 	FlagKubernetesLogsDrilldown = "kubernetesLogsDrilldown"
 
+	// FlagKubernetesQueryCaching
+	// Adds support for Kubernetes querycaching
+	FlagKubernetesQueryCaching = "kubernetesQueryCaching"
+
 	// FlagDatasourcesQueryTypes
 	// Load Query types from spec.{version}.query.{yaml|json}
 	FlagDatasourcesQueryTypes = "datasources.queryTypes"
@@ -878,6 +882,10 @@ const (
 	// Enables cache configs data migration to unified storage
 	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
 
+	// FlagQuerycachingRedirectToK8SApi
+	// Redirect caching service cache config reads from legacy storage to K8s API
+	FlagQuerycachingRedirectToK8SApi = "querycaching.redirectToK8SApi"
+
 	// FlagQuerycachingEnableConnectionsClient
 	// Use connections client instead of storage to resolve datasource plugin ID in query caching
 	FlagQuerycachingEnableConnectionsClient = "querycaching.enableConnectionsClient"
@@ -981,4 +989,8 @@ const (
 	// FlagLibraryElementsFolderTreeViaSearch
 	// Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.
 	FlagLibraryElementsFolderTreeViaSearch = "libraryElements.folderTreeViaSearch"
+
+	// FlagAlertingStateManagerRequireWarm
+	// Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.
+	FlagAlertingStateManagerRequireWarm = "alerting.stateManagerRequireWarm"
 )
