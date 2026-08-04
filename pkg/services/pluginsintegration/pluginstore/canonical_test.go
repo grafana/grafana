@@ -87,6 +87,22 @@ func TestFakePluginStore_PrefersIDsOverAliases(t *testing.T) {
 	require.Equal(t, "grafana-pyroscope-datasource", p.ID)
 }
 
+// Two plugins can declare the same aliasID — plugin JSON validation does not prevent it — and the
+// fake breaks that tie on slice order. The real registry resolves it by Add order, which PluginList
+// does not model, so neither order is "correct": tests must not depend on which plugin wins.
+func TestFakePluginStore_DuplicateAliasResolvesInSliceOrder(t *testing.T) {
+	a := Plugin{JSONData: plugins.JSONData{ID: "plugin-a", AliasIDs: []string{"shared"}}}
+	b := Plugin{JSONData: plugins.JSONData{ID: "plugin-b", AliasIDs: []string{"shared"}}}
+
+	p, exists := NewFakePluginStore(a, b).Plugin(context.Background(), "shared")
+	require.True(t, exists)
+	require.Equal(t, "plugin-a", p.ID)
+
+	p, exists = NewFakePluginStore(b, a).Plugin(context.Background(), "shared")
+	require.True(t, exists)
+	require.Equal(t, "plugin-b", p.ID)
+}
+
 func TestFakePluginStore_ResolvesAliases(t *testing.T) {
 	store := testStoreWithAliases()
 
