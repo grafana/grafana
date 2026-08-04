@@ -7,7 +7,10 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	alertstatus "github.com/grafana/grafana/pkg/services/ngalert/status"
 )
 
 // EvaluationCoordinator determines whether this instance should evaluate alert rules.
@@ -64,6 +67,27 @@ func (r *evaluationRunner) startEvaluation(ctx context.Context) {
 
 	// Start the state manager
 	g.Go(func() error { return r.ng.stateManager.Run(gCtx) })
+
+	if r.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingRuleStatusSync) {
+		if syncer, err := alertstatus.NewSyncer(
+			r.ng.store,
+			r.ng.stateManager,
+			r.ng.schedule,
+			request.GetNamespaceMapper(r.ng.Cfg),
+			r.ng.Cfg.UnifiedAlerting.RuleStatusSyncInterval,
+			r.ng.Log.New("ngalert.status.syncer"),
+			r.ng.clientGenerator,
+		); err != nil {
+			r.ng.Log.Error("Failed to initialize status syncer", "error", err)
+		} else {
+			// Best-effort: swallow the syncer's return so it can never cancel the evaluation
+			// errgroup (and thereby stop the scheduler). It still stops with gCtx on demotion.
+			g.Go(func() error {
+				_ = syncer.Run(gCtx)
+				return nil
+			})
+		}
+	}
 
 	// Wait for scheduler and state manager to finish in background.
 	// Signal errors via r.done, completion via r.stopped.
