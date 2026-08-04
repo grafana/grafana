@@ -1289,19 +1289,27 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 
 	createdBy := meta.GetCreatedBy()
 	updatedBy := createdBy // the old /api returns the same user for updated if it was never updated
-	userMeta := []string{createdBy}
+	userMeta := make([]string, 0, 2)
+	if createdBy != "" {
+		userMeta = append(userMeta, createdBy)
+	}
 	if timestamp, err := meta.GetUpdatedTimestamp(); err == nil && timestamp != nil {
 		dto.Meta.Updated = *timestamp
 		updatedBy = meta.GetUpdatedBy()
-		userMeta = append(userMeta, updatedBy)
+		if updatedBy != "" {
+			userMeta = append(userMeta, updatedBy)
+		}
 	} else {
 		// if never updated, the old /api returns the same timestamp for updated as for created
 		dto.Meta.Updated = dto.Meta.Created
 	}
 
-	users, err := apiserverclient.GetUsersFromMeta(c.Req.Context(), lk8s.userService, userMeta)
-	if err != nil {
-		return nil, err
+	users := make(map[string]*user.User, len(userMeta))
+	if len(userMeta) > 0 {
+		users, err = apiserverclient.GetUsersFromMeta(c.Req.Context(), lk8s.userService, userMeta)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if user := users[createdBy]; user != nil {
 		dto.Meta.CreatedBy = model.LibraryElementDTOMetaUser{
