@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
@@ -114,7 +116,16 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 		}
 	}
 
-	watch, err := client.Watch(ctx, opts)
+	// Re-opens the same watch at a given resourceVersion. The apiserver and the
+	// storage backend both end watches on their own schedule, so the watcher
+	// needs to be able to resume rather than treating the first close as final.
+	newWatch := func(ctx context.Context, resourceVersion string) (watch.Interface, error) {
+		resumeOpts := opts
+		resumeOpts.ResourceVersion = resourceVersion
+		return client.Watch(ctx, resumeOpts)
+	}
+
+	watch, err := newWatch(ctx, opts.ResourceVersion)
 	if err != nil {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
 	}
@@ -124,6 +135,8 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 		channel:   e.Channel,
 		publisher: b.publisher,
 		watch:     watch,
+		newWatch:  newWatch,
+		lastRV:    opts.ResourceVersion,
 	}
 
 	b.watching[e.Channel] = current
@@ -173,43 +186,116 @@ type watcher struct {
 	publisher model.ChannelPublisher
 	done      bool
 	watch     watch.Interface
+
+	// newWatch re-opens the watch at a resourceVersion; lastRV is the newest one
+	// published, so a resumed watch picks up exactly where this one left off.
+	newWatch func(ctx context.Context, resourceVersion string) (watch.Interface, error)
+	lastRV   string
+}
+
+// resumeBackoff is applied between watch resumes so a stream that closes
+// immediately and repeatedly cannot spin this loop.
+const (
+	resumeBackoffMin = 100 * time.Millisecond
+	resumeBackoffMax = 5 * time.Second
+)
+
+func resourceVersionOf(event watch.Event) string {
+	if event.Object == nil {
+		return ""
+	}
+	accessor, err := meta.Accessor(event.Object)
+	if err != nil {
+		return ""
+	}
+	return accessor.GetResourceVersion()
 }
 
 func (b *watcher) run(ctx context.Context) {
 	logger := logging.FromContext(ctx).With("channel", b.channel)
 
-	ch := b.watch.ResultChan()
+	defer func() {
+		b.watch.Stop()
+		b.done = true
+	}()
+
+	backoff := resumeBackoffMin
 	for {
-		select {
-		// This is sent when there are no longer any subscriptions
-		case <-ctx.Done():
-			logger.Info("context done", "channel", b.channel)
-			b.watch.Stop()
-			b.done = true
-			return
+		ch := b.watch.ResultChan()
+		broken := false
 
-		// Each watch event
-		case event, ok := <-ch:
-			if !ok {
-				logger.Info("watch stream broken", "channel", b.channel)
-				b.watch.Stop()
-				b.done = true // will force reconnect from the frontend
+		for !broken {
+			select {
+			// This is sent when there are no longer any subscriptions
+			case <-ctx.Done():
+				logger.Info("context done", "channel", b.channel)
 				return
-			}
 
-			data, err := marshalWatchEvent(event)
-			if err != nil {
-				logger.Error("marshal error", "channel", b.channel, "err", err)
-				continue
-			}
+			// Each watch event
+			case event, ok := <-ch:
+				if !ok {
+					// A closed stream is routine -- the apiserver and the storage
+					// backend both end watches on their own schedule. Nothing
+					// notifies subscribers when that happens, so returning here
+					// leaves the channel silently dead: the socket stays healthy,
+					// the client still believes it is subscribed, and no further
+					// event ever arrives. Resume instead.
+					logger.Info("watch stream broken, resuming", "channel", b.channel, "resourceVersion", b.lastRV)
+					broken = true
+					continue
+				}
 
-			err = b.publisher(b.ns, b.channel, data)
-			if err != nil {
-				logger.Error("publish error", "channel", b.channel, "err", err)
-				b.watch.Stop()
-				b.done = true // will force reconnect from the frontend
-				continue
+				data, err := marshalWatchEvent(event)
+				if err != nil {
+					logger.Error("marshal error", "channel", b.channel, "err", err)
+					continue
+				}
+
+				err = b.publisher(b.ns, b.channel, data)
+				if err != nil {
+					// Publishing is what this watcher exists to do; if that is
+					// broken, resuming the watch cannot help.
+					logger.Error("publish error", "channel", b.channel, "err", err)
+					return
+				}
+
+				// Only advance after a successful publish, so a resume replays
+				// anything the subscriber has not actually been sent.
+				if rv := resourceVersionOf(event); rv != "" {
+					b.lastRV = rv
+					backoff = resumeBackoffMin
+				}
 			}
+		}
+
+		if b.newWatch == nil {
+			return
+		}
+		b.watch.Stop()
+
+		next, err := b.newWatch(ctx, b.lastRV)
+		if err != nil && b.lastRV != "" {
+			// Most likely the resourceVersion has aged out of the history window.
+			// Start from the current state instead: that re-sends the existing
+			// objects as ADDED, which is far better than going silent.
+			logger.Warn("watch resume failed, restarting from current state",
+				"channel", b.channel, "resourceVersion", b.lastRV, "err", err)
+			b.lastRV = ""
+			next, err = b.newWatch(ctx, "")
+		}
+		if err != nil {
+			logger.Error("watch resume failed", "channel", b.channel, "err", err)
+			return
+		}
+		b.watch = next
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(backoff):
+		}
+		if backoff < resumeBackoffMax {
+			backoff *= 2
 		}
 	}
 }
