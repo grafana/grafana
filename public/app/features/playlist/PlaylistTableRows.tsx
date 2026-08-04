@@ -1,16 +1,7 @@
 import { css } from '@emotion/css';
 import { Draggable, type DraggableProvided } from '@hello-pangea/dnd';
 import pluralize from 'pluralize';
-import {
-  type ButtonHTMLAttributes,
-  forwardRef,
-  type KeyboardEvent,
-  type ReactNode,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-} from 'react';
+import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -18,13 +9,11 @@ import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   Button,
-  Dropdown,
   Field,
   Icon,
   IconButton,
   Input,
   LinkButton,
-  Menu,
   Spinner,
   Text,
   Tooltip,
@@ -170,6 +159,7 @@ function PlaylistTableRow({
   const [dashboardStateError, setDashboardStateError] = useState<string>();
   const [resolvingDashboardState, setResolvingDashboardState] = useState(false);
   const [pasteLinkOpen, setPasteLinkOpen] = useState(false);
+  const [clearViewConfirmationOpen, setClearViewConfirmationOpen] = useState(false);
   const [dashboardLinkDraft, setDashboardLinkDraft] = useState('');
   const [customViewToken] = useState(createPlaylistCustomViewToken);
   const customViewChannel = useRef<BroadcastChannel>();
@@ -202,6 +192,7 @@ function PlaylistTableRow({
       }
 
       setDashboardStateError(undefined);
+      setClearViewConfirmationOpen(false);
       setPasteLinkOpen(false);
       onUpdateQueryParams?.(index, event.data.queryParams);
       channel.close();
@@ -337,71 +328,85 @@ function PlaylistTableRow({
               >
                 <div className={styles.customViewEditor}>
                   <div className={styles.customViewControls}>
-                    <Text variant="bodySmall" color="secondary">
-                      {item.queryParams ? (
-                        <Tooltip
-                          placement="top-start"
-                          content={<CustomViewTooltipContent queryParams={item.queryParams} styles={styles} />}
-                        >
-                          <span className={styles.configuredStatus}>
-                            <Icon name="check-circle" size="sm" />
-                            <span className={styles.configuredStatusText}>
-                              {t('playlist.playlist-table-rows.custom-view-configured', 'Configured')}
-                            </span>
-                          </span>
-                        </Tooltip>
+                    <div className={styles.customViewStatus}>
+                      {clearViewConfirmationOpen ? (
+                        <div className={styles.clearViewConfirmation}>
+                          <Text variant="bodySmall">
+                            <Trans i18nKey="playlist.playlist-table-rows.confirm-clear-view">Clear custom view?</Trans>
+                          </Text>
+                          <Button fill="text" size="sm" onClick={() => setClearViewConfirmationOpen(false)}>
+                            <Trans i18nKey="playlist.playlist-table-rows.cancel-clear-view">Cancel</Trans>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => {
+                              setClearViewConfirmationOpen(false);
+                              setDashboardStateError(undefined);
+                              setDashboardLinkDraft('');
+                              setPasteLinkOpen(false);
+                              onUpdateQueryParams?.(index, '');
+                            }}
+                          >
+                            <Trans i18nKey="playlist.playlist-table-rows.confirm-clear-view-action">Clear</Trans>
+                          </Button>
+                        </div>
                       ) : (
-                        t('playlist.playlist-table-rows.custom-view-default', 'Uses dashboard defaults')
-                      )}
-                    </Text>
-                    <div className={styles.customViewActions}>
-                      <LinkButton
-                        size="sm"
-                        variant="secondary"
-                        icon="sliders-v-alt"
-                        href={configureCustomViewUrl ?? ''}
-                        target="_blank"
-                        rel="noreferrer"
-                        disabled={!configureCustomViewUrl}
-                        onClick={beginCustomViewConfiguration}
-                      >
-                        <Trans i18nKey="playlist.playlist-table-rows.configure-view">Configure</Trans>
-                      </LinkButton>
-                      <Dropdown
-                        placement="bottom-end"
-                        overlay={
-                          <Menu>
-                            <Menu.Item
-                              icon="clipboard-alt"
-                              label={t('playlist.playlist-table-rows.paste-dashboard-link', 'Paste link')}
-                              onClick={() => {
-                                setDashboardStateError(undefined);
-                                setDashboardLinkDraft('');
-                                setPasteLinkOpen(true);
-                              }}
-                            />
-                            {item.queryParams && (
-                              <Menu.Item
-                                icon="trash-alt"
-                                label={t('playlist.playlist-table-rows.clear-view', 'Clear custom view')}
-                                onClick={() => {
-                                  setDashboardStateError(undefined);
-                                  setDashboardLinkDraft('');
-                                  setPasteLinkOpen(false);
-                                  onUpdateQueryParams?.(index, '');
-                                }}
-                              />
+                        <>
+                          <Text variant="bodySmall" color="secondary">
+                            {item.queryParams ? (
+                              <Tooltip
+                                placement="top-start"
+                                content={<CustomViewTooltipContent queryParams={item.queryParams} styles={styles} />}
+                              >
+                                <span className={styles.configuredStatus}>
+                                  <Icon name="check-circle" size="sm" />
+                                  <span className={styles.configuredStatusText}>
+                                    {t('playlist.playlist-table-rows.custom-view-configured', 'Configured')}
+                                  </span>
+                                </span>
+                              </Tooltip>
+                            ) : (
+                              t('playlist.playlist-table-rows.custom-view-default', 'Uses dashboard defaults')
                             )}
-                          </Menu>
-                        }
-                      >
-                        <PlaylistDropdownIconButton
-                          name="ellipsis-v"
-                          label={t('playlist.playlist-table-rows.more-view-actions', 'More custom view actions')}
-                          triggerClassName={styles.iconAction}
-                        />
-                      </Dropdown>
+                          </Text>
+                          {item.queryParams && (
+                            <PlaylistActionIconButton
+                              name="times"
+                              label={t('playlist.playlist-table-rows.clear-view', 'Clear custom view')}
+                              triggerClassName={styles.iconAction}
+                              onClick={() => setClearViewConfirmationOpen(true)}
+                            />
+                          )}
+                        </>
+                      )}
                     </div>
+                    {!clearViewConfirmationOpen && (
+                      <div className={styles.customViewActions}>
+                        <LinkButton
+                          size="sm"
+                          variant="secondary"
+                          icon="sliders-v-alt"
+                          href={configureCustomViewUrl ?? ''}
+                          target="_blank"
+                          rel="noreferrer"
+                          disabled={!configureCustomViewUrl}
+                          onClick={beginCustomViewConfiguration}
+                        >
+                          <Trans i18nKey="playlist.playlist-table-rows.configure-view">Configure</Trans>
+                        </LinkButton>
+                        <PlaylistActionIconButton
+                          name="clipboard-alt"
+                          label={t('playlist.playlist-table-rows.paste-dashboard-link', 'Paste dashboard link')}
+                          triggerClassName={styles.iconAction}
+                          onClick={() => {
+                            setDashboardStateError(undefined);
+                            setDashboardLinkDraft('');
+                            setPasteLinkOpen(true);
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                   {pasteLinkOpen && (
                     <div className={styles.dashboardLinkEditor}>
@@ -555,41 +560,6 @@ interface PlaylistActionIconButtonProps {
   testId?: string;
 }
 
-interface PlaylistDropdownIconButtonProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'children'> {
-  name: IconName;
-  label: string;
-  triggerClassName: string;
-}
-
-const PlaylistDropdownIconButton = forwardRef<HTMLButtonElement, PlaylistDropdownIconButtonProps>(
-  function PlaylistDropdownIconButton({ name, label, triggerClassName, onClick, ...buttonProps }, ref) {
-    const [tooltipOpen, setTooltipOpen] = useState(false);
-
-    return (
-      <div
-        className={triggerClassName}
-        onMouseEnter={() => setTooltipOpen(true)}
-        onMouseLeave={() => setTooltipOpen(false)}
-      >
-        <Tooltip content={label} placement="top" show={tooltipOpen}>
-          <IconButton
-            {...buttonProps}
-            ref={ref}
-            name={name}
-            size="md"
-            aria-label={label}
-            onClick={(event) => {
-              setTooltipOpen(false);
-              onClick?.(event);
-            }}
-          />
-        </Tooltip>
-      </div>
-    );
-  }
-);
-
 function PlaylistActionIconButton({
   name,
   label,
@@ -707,6 +677,16 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       gap: theme.spacing(1),
     }),
+    customViewStatus: css({
+      alignItems: 'center',
+      display: 'flex',
+      gap: theme.spacing(0.5),
+    }),
+    clearViewConfirmation: css({
+      alignItems: 'center',
+      display: 'flex',
+      gap: theme.spacing(0.5),
+    }),
     configuredStatus: css({
       alignItems: 'center',
       cursor: 'help',
@@ -743,7 +723,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'grid',
       gridColumn: '1 / -1',
       gridTemplateColumns: 'minmax(0, 1fr) minmax(88px, 120px)',
-      gap: theme.spacing(1),
+      gap: theme.spacing(2),
       marginTop: theme.spacing(1),
       [theme.breakpoints.down('sm')]: {
         gridTemplateColumns: 'minmax(0, 1fr)',

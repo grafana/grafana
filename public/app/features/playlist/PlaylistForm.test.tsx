@@ -117,8 +117,7 @@ async function openDashboardLinkPaste(itemValue: string) {
   await openItemOptions(itemValue);
   const row = rowForItem(itemValue);
   if (!within(row).queryByRole('textbox', { name: new RegExp(`dashboard state for ${itemValue}`, 'i') })) {
-    await userEvent.click(within(row).getByRole('button', { name: 'More custom view actions' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Paste link' }));
+    await userEvent.click(within(row).getByRole('button', { name: 'Paste dashboard link' }));
   }
 }
 
@@ -287,15 +286,14 @@ describe('PlaylistForm', () => {
       expect(optionsButton).toHaveAttribute('aria-expanded', 'true');
       expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toBeInTheDocument();
       expect(within(rowForItem('uid_1')).getByText('Configure')).toBeInTheDocument();
-      const moreActions = screen.getByRole('button', { name: 'More custom view actions' });
-      expect(moreActions).toBeInTheDocument();
-      expect(moreActions.querySelector('svg')).toHaveStyle({ pointerEvents: 'none' });
-      await userEvent.hover(moreActions);
-      expect(await screen.findByRole('tooltip')).toHaveTextContent('More custom view actions');
-      await userEvent.unhover(moreActions);
+      const pasteLink = screen.getByRole('button', { name: 'Paste dashboard link' });
+      expect(pasteLink).toBeInTheDocument();
+      expect(pasteLink.querySelector('svg')).toHaveStyle({ pointerEvents: 'none' });
+      await userEvent.hover(pasteLink);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Paste dashboard link');
+      await userEvent.unhover(pasteLink);
 
-      await userEvent.click(moreActions);
-      await userEvent.click(screen.getByRole('menuitem', { name: 'Paste link' }));
+      await userEvent.click(pasteLink);
       expect(screen.getByRole('textbox', { name: /dashboard state for uid_1/i })).toBeInTheDocument();
     });
 
@@ -416,7 +414,7 @@ describe('PlaylistForm', () => {
       expect(within(rowForItem('uid_2')).getByText('Configured')).toBeInTheDocument();
     });
 
-    it('summarizes the configured view on hover and keeps secondary actions in a menu', async () => {
+    it('summarizes the configured view and confirms before clearing it', async () => {
       getTestContext(mockPerItemOptionsPlaylist);
 
       await openItemOptions('uid_1');
@@ -430,9 +428,27 @@ describe('PlaylistForm', () => {
       expect(tooltip).toHaveTextContent('host1');
 
       await userEvent.unhover(within(rowForItem('uid_1')).getByText('Configured'));
-      await userEvent.click(within(rowForItem('uid_1')).getByRole('button', { name: 'More custom view actions' }));
-      expect(screen.getByRole('menuitem', { name: 'Paste link' })).toBeInTheDocument();
-      expect(screen.getByRole('menuitem', { name: 'Clear custom view' })).toBeInTheDocument();
+      expect(within(rowForItem('uid_1')).getByRole('button', { name: 'Paste dashboard link' })).toBeInTheDocument();
+      await userEvent.click(within(rowForItem('uid_1')).getByRole('button', { name: 'Clear custom view' }));
+      expect(within(rowForItem('uid_1')).getByText('Clear custom view?')).toBeInTheDocument();
+      await userEvent.click(within(rowForItem('uid_1')).getByRole('button', { name: 'Cancel' }));
+      expect(within(rowForItem('uid_1')).getByText('Configured')).toBeInTheDocument();
+    });
+
+    it('clears a configured view after confirmation', async () => {
+      const { onSubmitMock } = getTestContext(mockPerItemOptionsPlaylist);
+
+      await openItemOptions('uid_1');
+      await userEvent.click(within(rowForItem('uid_1')).getByRole('button', { name: 'Clear custom view' }));
+      await userEvent.click(within(rowForItem('uid_1')).getByRole('button', { name: 'Clear' }));
+
+      expect(within(rowForItem('uid_1')).getByText('Uses dashboard defaults')).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+      expect(onSubmitMock.mock.calls[0][0].spec.items).toContainEqual({
+        type: 'dashboard_by_uid',
+        value: 'uid_1',
+        interval: '30s',
+      });
     });
 
     it('accepts a copied dashboard URL and stores only its query string', async () => {
