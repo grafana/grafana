@@ -16,7 +16,7 @@ labels:
 menuTitle: Alerting
 title: InfluxDB alerting
 weight: 550
-review_date: 2026-05-01
+review_date: 2026-08-04
 ---
 
 # InfluxDB alerting

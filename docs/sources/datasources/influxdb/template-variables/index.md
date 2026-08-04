@@ -19,7 +19,7 @@ labels:
 menuTitle: Template variables
 title: InfluxDB template variables
 weight: 450
-review_date: 2026-05-01
+review_date: 2026-08-04
 ---
 
 # InfluxDB template variables

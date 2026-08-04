@@ -23,7 +23,7 @@ labels:
 menuTitle: Configure
 title: Configure the InfluxDB data source
 weight: 300
-review_date: 2026-05-01
+review_date: 2026-08-04
 ---
 
 # Configure the InfluxDB data source

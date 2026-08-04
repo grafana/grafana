@@ -18,7 +18,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot InfluxDB data source issues
 weight: 700
-review_date: 2026-05-01
+review_date: 2026-08-04
 ---
 
 # Troubleshoot InfluxDB data source issues
@@ -551,10 +551,11 @@ If you've tried the solutions in this guide and still encounter issues:
 
 1. Check the [InfluxDB documentation](https://docs.influxdata.com/) for API-specific guidance.
 1. Review the [Grafana community forums](https://community.grafana.com/) for similar issues.
-1. Review [InfluxDB data source issues on GitHub](https://github.com/grafana/grafana/issues?q=is%3Aissue+influxdb) for known bugs.
+1. Review [InfluxDB data source issues on GitHub](https://github.com/grafana/grafana-influxdb-datasource/issues) for known bugs.
 1. Contact Grafana Support if you're an Enterprise, Cloud Pro, or Cloud Contracted user.
 1. When reporting issues, include:
    - Grafana version
+   - InfluxDB data source plugin version, found on the **Administration > Plugins** page
    - InfluxDB version and product (OSS, Cloud, Enterprise)
    - Query language (Flux, InfluxQL, or SQL)
    - Error messages (redact sensitive information)
