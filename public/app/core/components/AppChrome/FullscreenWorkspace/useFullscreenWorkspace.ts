@@ -25,8 +25,8 @@ export function useFullscreenWorkspace(): FullscreenWorkspaceState {
     const consume = (location: Location) => {
       const queryParams = locationSearchToObject(location.search);
       if (queryParams.fullscreenWorkspace === '1' || queryParams.fullscreenWorkspace === true) {
-        chrome.setFullscreenWorkspace(true);
-        locationService.partial({ fullscreenWorkspace: null });
+        locationService.partial({ fullscreenWorkspace: null }, true);
+        chrome.setFullscreenWorkspace({ fullscreenWorkspace: true, pushHistoryEntry: false });
       }
     };
     consume(locationService.getLocation());

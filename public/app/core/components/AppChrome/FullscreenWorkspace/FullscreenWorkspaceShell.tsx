@@ -34,7 +34,7 @@ export function FullscreenWorkspaceShell({ workspaceHostRef }: Props) {
     );
   }
 
-  const exitWorkspace = () => chrome.setFullscreenWorkspace(false);
+  const exitWorkspace = () => chrome.setFullscreenWorkspace({ fullscreenWorkspace: false });
 
   // No component once loading has finished means the plugin isn't available (not installed,
   // disabled, or failed to load). Show a minimal error rather than a blank page.

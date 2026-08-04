@@ -87,8 +87,11 @@ describe('useFullscreenWorkspace', () => {
 
     renderHook(() => useFullscreenWorkspace());
 
-    expect(setFullscreenWorkspace).toHaveBeenCalledWith(true);
-    expect(partialMock).toHaveBeenCalledWith({ fullscreenWorkspace: null });
+    // The navigation that landed here is already the workspace's history entry.
+    expect(setFullscreenWorkspace).toHaveBeenCalledWith({ fullscreenWorkspace: true, pushHistoryEntry: false });
+    // Replaced, not pushed: a pushed strip would leave `?fullscreenWorkspace=1` as the
+    // entry behind the workspace, so Back would re-enter instead of closing.
+    expect(partialMock).toHaveBeenCalledWith({ fullscreenWorkspace: null }, true);
   });
 
   it('does not enter fullscreen workspace when the query param is absent', () => {

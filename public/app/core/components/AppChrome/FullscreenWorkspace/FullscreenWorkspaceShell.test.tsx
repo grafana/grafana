@@ -1,5 +1,5 @@
 import { type RefCallback } from 'react';
-import { getWrapper, render, screen } from 'test/test-utils';
+import { act, getWrapper, render, screen } from 'test/test-utils';
 
 import { usePluginComponent } from '@grafana/runtime';
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
@@ -25,6 +25,8 @@ function renderShell(workspaceHostRef: RefCallback<HTMLDivElement> = jest.fn()) 
 }
 
 describe('FullscreenWorkspaceShell', () => {
+  // Entering the workspace navigates (it pushes the entry Back pops), so every enter
+  // below triggers a React update and needs `act`.
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -47,7 +49,7 @@ describe('FullscreenWorkspaceShell', () => {
     } as unknown as ReturnType<typeof usePluginComponent>);
 
     const { chrome } = renderShell();
-    chrome.setFullscreenWorkspace(true);
+    act(() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true }));
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('Workspace unavailable')).toBeInTheDocument();
@@ -75,7 +77,7 @@ describe('FullscreenWorkspaceShell', () => {
     } as unknown as ReturnType<typeof usePluginComponent>);
 
     const { chrome } = renderShell(workspaceHostRef);
-    chrome.setFullscreenWorkspace(true);
+    act(() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true }));
 
     expect(screen.getByTestId('plugin-workspace')).toBeInTheDocument();
     expect(workspaceHostRef).toHaveBeenCalledWith(null);
@@ -96,7 +98,7 @@ describe('FullscreenWorkspaceShell', () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     const { chrome } = renderShell();
-    chrome.setFullscreenWorkspace(true);
+    act(() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true }));
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('Workspace unavailable')).toBeInTheDocument();
