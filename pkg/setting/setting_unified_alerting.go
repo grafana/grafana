@@ -45,6 +45,7 @@ const (
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	remoteAlertmanagerDefaultTimeout        = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
+	schedulerDefaultRuleStatusSyncInterval  = time.Minute
 	schedulerDefaultExecuteAlerts           = true
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultInitialRetryDelay       = 1 * time.Second
@@ -137,6 +138,7 @@ type UnifiedAlertingSettings struct {
 	StatePeriodicSaveInterval      time.Duration
 	StatePeriodicSaveBatchSize     int
 	StatePeriodicSaveJitterEnabled bool
+	RuleStatusSyncInterval         time.Duration
 	RulesPerRuleGroupLimit         int64
 
 	// Retention period for Alertmanager notification log entries.
@@ -610,6 +612,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.RuleVersionRecordLimit = ua.Key("rule_version_record_limit").MustInt(0)
 	if uaCfg.RuleVersionRecordLimit < 0 {
 		return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
+	}
+
+	uaCfg.RuleStatusSyncInterval = ua.Key("rule_status_sync_interval").MustDuration(schedulerDefaultRuleStatusSyncInterval)
+	if uaCfg.RuleStatusSyncInterval <= 0 {
+		return fmt.Errorf("setting 'rule_status_sync_interval' is invalid, only a positive duration is allowed")
 	}
 
 	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(30 * 24 * time.Hour)

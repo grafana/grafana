@@ -790,6 +790,19 @@
     },
     {
       "metadata": {
+        "name": "alertingRuleStatusSync",
+        "resourceVersion": "1785534653123",
+        "creationTimestamp": "2026-07-31T21:50:53Z"
+      },
+      "spec": {
+        "description": "Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-02-17T12:25:32Z"

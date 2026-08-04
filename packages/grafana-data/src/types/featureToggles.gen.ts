@@ -119,6 +119,11 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
+  * Periodically syncs alert and recording rule status onto the k8s AlertRule/RecordingRule resources
+  * @default false
+  */
+  alertingRuleStatusSync?: boolean;
+  /**
   * Register experimental APIs with the k8s API server, including all datasources
   * @default false
   */
