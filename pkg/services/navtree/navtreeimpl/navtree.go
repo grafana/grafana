@@ -1,6 +1,7 @@
 package navtreeimpl
 
 import (
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -147,7 +148,12 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
-	if c.IsSignedIn && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardNotebooks) {
+	if c.IsSignedIn && openfeature.NewDefaultClient().Boolean(
+		c.Req.Context(),
+		featuremgmt.FlagDashboardNotebooks,
+		false,
+		openfeature.TransactionContext(c.Req.Context()),
+	) {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Notebooks",
 			Id:         navtree.NavIDNotebooks,
