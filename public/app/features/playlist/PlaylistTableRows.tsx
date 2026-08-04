@@ -285,6 +285,7 @@ function PlaylistTableRow({
               expanded={optionsOpen}
               controls={optionsId}
               triggerClassName={styles.iconAction}
+              buttonClassName={styles.settingsButton}
               onClick={() => setOptionsOpen((open) => !open)}
             />
             <div {...provided.dragHandleProps}>
@@ -645,6 +646,11 @@ function getStyles(theme: GrafanaTheme2) {
         pointerEvents: 'none',
       },
     }),
+    settingsButton: css({
+      '& svg': {
+        transform: 'translateY(1px)',
+      },
+    }),
     deleteAction: css({
       alignItems: 'center',
       borderLeft: `1px solid ${theme.colors.border.weak}`,
@@ -704,6 +710,9 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'help',
       display: 'inline-flex',
       gap: theme.spacing(0.5),
+      // The dotted tooltip affordance adds visual weight below the text.
+      // Lift this indicator slightly while keeping the surrounding controls centered.
+      transform: 'translateY(-1px)',
     }),
     configuredStatusText: css({
       borderBottom: `1px dotted ${theme.colors.text.secondary}`,
@@ -736,7 +745,7 @@ function getStyles(theme: GrafanaTheme2) {
       gridColumn: '1 / -1',
       gridTemplateColumns: 'minmax(0, 1fr) minmax(88px, 120px)',
       gap: theme.spacing(2),
-      marginTop: theme.spacing(1),
+      marginTop: theme.spacing(1.5),
       [theme.breakpoints.down('sm')]: {
         gridTemplateColumns: 'minmax(0, 1fr)',
       },
