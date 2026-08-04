@@ -596,16 +596,12 @@ func TestIsPermanentItemError(t *testing.T) {
 		{"pq constraint violation", &pq.Error{Code: "23505"}, true},
 		{"pq connection failure", &pq.Error{Code: "08006"}, false},
 		{"pq insufficient resources", &pq.Error{Code: "53100"}, false},
-		{"grpc invalid argument", grpcstatus.Error(grpccodes.InvalidArgument, "bad input"), true},
-		{"grpc out of range", grpcstatus.Error(grpccodes.OutOfRange, "too long"), true},
-		{"grpc resource exhausted", grpcstatus.Error(grpccodes.ResourceExhausted, "quota"), false},
-		{"bedrock validation", &smithy.GenericAPIError{Code: "ValidationException", Message: "bad input"}, true},
-		{"wrapped bedrock validation", fmt.Errorf("bedrock: invoke: %w", &smithy.GenericAPIError{Code: "ValidationException"}), true},
-		{"bedrock throttling", &smithy.GenericAPIError{Code: "ThrottlingException"}, false},
-		{"azure bad request", azureAPIError(http.StatusBadRequest), true},
-		{"azure payload too large", azureAPIError(http.StatusRequestEntityTooLarge), true},
-		{"azure rate limited", azureAPIError(http.StatusTooManyRequests), false},
-		{"wrapped grpc invalid argument", fmt.Errorf("embed batch: %w", grpcstatus.Error(grpccodes.InvalidArgument, "bad input")), true},
+		// Provider rejections stay retryable: the same codes fire for
+		// request-wide misconfig (bad model/deployment), where skipping
+		// would silently drain the whole job.
+		{"grpc invalid argument", grpcstatus.Error(grpccodes.InvalidArgument, "bad input"), false},
+		{"bedrock validation", &smithy.GenericAPIError{Code: "ValidationException", Message: "bad input"}, false},
+		{"azure bad request", azureAPIError(http.StatusBadRequest), false},
 		{"grpc unavailable", grpcstatus.Error(grpccodes.Unavailable, "down"), false},
 		{"plain error", errors.New("connection refused"), false},
 		{"context canceled", context.Canceled, false},
@@ -668,13 +664,15 @@ func TestRunBackfillJob_RetryableUpsertError_FailsJob(t *testing.T) {
 	assert.Empty(t, vec.completedJobIDs)
 }
 
-func TestRunBackfillJob_PermanentEmbedError_SkipsItem(t *testing.T) {
+func TestRunBackfillJob_EmbedProviderError_FailsJob(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
 
 	vec := newFakeVector()
 	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
 
+	// Even a provider "validation" rejection must fail the job — the same
+	// code fires for misconfig, and skipping would drain every item.
 	emb := newFakeEmbedder(&fakeText{dim: 4, err: grpcstatus.Error(grpccodes.InvalidArgument, "input rejected")})
 	b, err := NewVectorBackfiller(Options{
 		Storage:       storage,
@@ -686,6 +684,6 @@ func TestRunBackfillJob_PermanentEmbedError_SkipsItem(t *testing.T) {
 	b.runBackfill(context.Background())
 
 	assert.Empty(t, vec.upserts)
-	assert.Empty(t, vec.errorMarks)
-	assert.Equal(t, []int64{1}, vec.completedJobIDs)
+	require.Len(t, vec.errorMarks, 1)
+	assert.Empty(t, vec.completedJobIDs)
 }
