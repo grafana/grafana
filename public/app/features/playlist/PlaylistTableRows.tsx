@@ -122,7 +122,7 @@ export const PlaylistTableRows = ({
     <>
       {items.map((item, index) => (
         <PlaylistTableRow
-          key={`${index}/${item.value}`}
+          key={item.localId ?? `${index}/${item.type}/${item.value}`}
           item={item}
           index={index}
           styles={styles}
@@ -163,6 +163,9 @@ function PlaylistTableRow({
   const [dashboardLinkDraft, setDashboardLinkDraft] = useState('');
   const [customViewToken] = useState(createPlaylistCustomViewToken);
   const customViewChannel = useRef<BroadcastChannel>();
+  const currentIndex = useRef(index);
+  const mounted = useRef(true);
+  currentIndex.current = index;
   const optionsId = useId();
   const optionSummary = [
     item.queryParams ? t('playlist.playlist-table-rows.dashboard-state-summary', 'Custom view') : undefined,
@@ -179,22 +182,32 @@ function PlaylistTableRow({
         ...urlUtil.parseKeyValue(normalizePlaylistItemQueryParams(item.queryParams) ?? ''),
       })
     : undefined;
+  const intervalInvalid = !!item.interval && !isValidInterval(item.interval);
+  const intervalError = intervalInvalid
+    ? t('playlist.playlist-table-rows.invalid-interval-error', 'Invalid interval')
+    : undefined;
 
-  useEffect(() => () => customViewChannel.current?.close(), []);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      customViewChannel.current?.close();
+    };
+  }, []);
 
   const configureCustomViewUrl = dashboardUrl ? addPlaylistCustomViewToken(dashboardUrl, customViewToken) : undefined;
   const beginCustomViewConfiguration = () => {
     customViewChannel.current?.close();
     const channel = new BroadcastChannel(getPlaylistCustomViewChannelName(customViewToken));
     channel.onmessage = (event) => {
-      if (!isPlaylistCustomViewMessage(event.data) || event.data.token !== customViewToken) {
+      if (!mounted.current || !isPlaylistCustomViewMessage(event.data) || event.data.token !== customViewToken) {
         return;
       }
 
       setDashboardStateError(undefined);
       setClearViewConfirmationOpen(false);
       setPasteLinkOpen(false);
-      onUpdateQueryParams?.(index, event.data.queryParams);
+      onUpdateQueryParams?.(currentIndex.current, normalizePlaylistItemQueryParams(event.data.queryParams) ?? '');
       channel.close();
       window.focus();
     };
@@ -224,7 +237,7 @@ function PlaylistTableRow({
         );
         return;
       }
-      onUpdateQueryParams?.(index, dashboardState);
+      onUpdateQueryParams?.(currentIndex.current, dashboardState);
       closeDashboardLinkEditor();
       return;
     }
@@ -234,6 +247,9 @@ function PlaylistTableRow({
       const shortLink = await getBackendSrv().get<{ path: string }>(
         `/api/short-urls/${encodeURIComponent(shortLinkUid)}`
       );
+      if (!mounted.current) {
+        return;
+      }
       const dashboardState = normalizePlaylistItemQueryParams(shortLink.path);
       if (!dashboardState) {
         setDashboardStateError(
@@ -241,22 +257,26 @@ function PlaylistTableRow({
         );
         return;
       }
-      onUpdateQueryParams?.(index, dashboardState);
+      onUpdateQueryParams?.(currentIndex.current, dashboardState);
       closeDashboardLinkEditor();
     } catch {
-      setDashboardStateError(
-        t(
-          'playlist.playlist-table-rows.dashboard-state-short-link-error',
-          'Could not resolve this short link. Paste the full dashboard URL instead.'
-        )
-      );
+      if (mounted.current) {
+        setDashboardStateError(
+          t(
+            'playlist.playlist-table-rows.dashboard-state-short-link-error',
+            'Could not resolve this short link. Paste the full dashboard URL instead.'
+          )
+        );
+      }
     } finally {
-      setResolvingDashboardState(false);
+      if (mounted.current) {
+        setResolvingDashboardState(false);
+      }
     }
   };
 
   return (
-    <Draggable draggableId={`${index}`} index={index}>
+    <Draggable draggableId={item.localId ?? `${index}/${item.type}/${item.value}`} index={index}>
       {(provided: DraggableProvided) => (
         <div className={styles.row} ref={provided.innerRef} {...provided.draggableProps} role="row">
           <div
@@ -272,7 +292,7 @@ function PlaylistTableRow({
           </div>
           <div className={styles.rowActions}>
             {!optionsOpen && optionSummary && (
-              <span className={styles.optionSummary}>
+              <span className={styles.optionSummary} title={optionSummary}>
                 <Text variant="bodySmall" color="secondary">
                   {optionSummary}
                 </Text>
@@ -346,7 +366,7 @@ function PlaylistTableRow({
                               setDashboardStateError(undefined);
                               setDashboardLinkDraft('');
                               setPasteLinkOpen(false);
-                              onUpdateQueryParams?.(index, '');
+                              onUpdateQueryParams?.(currentIndex.current, '');
                             }}
                           >
                             <Trans i18nKey="playlist.playlist-table-rows.confirm-clear-view-action">Clear</Trans>
@@ -360,12 +380,19 @@ function PlaylistTableRow({
                                 placement="top-start"
                                 content={<CustomViewTooltipContent queryParams={item.queryParams} styles={styles} />}
                               >
-                                <span className={styles.configuredStatus}>
+                                <button
+                                  type="button"
+                                  className={styles.configuredStatus}
+                                  aria-label={t(
+                                    'playlist.playlist-table-rows.show-custom-view-options',
+                                    'Show custom view options'
+                                  )}
+                                >
                                   <Icon name="check-circle" size="sm" />
                                   <span className={styles.configuredStatusText}>
                                     {t('playlist.playlist-table-rows.custom-view-configured', 'Configured')}
                                   </span>
-                                </span>
+                                </button>
                               </Tooltip>
                             ) : (
                               t('playlist.playlist-table-rows.custom-view-default', 'Uses dashboard defaults')
@@ -436,6 +463,11 @@ function PlaylistTableRow({
                           setDashboardLinkDraft(event.currentTarget.value);
                         }}
                         onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+                          if (event.key === 'Escape') {
+                            event.preventDefault();
+                            closeDashboardLinkEditor();
+                            return;
+                          }
                           if (event.key === 'Enter') {
                             event.preventDefault();
                             void applyDashboardLink();
@@ -461,23 +493,24 @@ function PlaylistTableRow({
                   )}
                 </div>
               </Field>
-              <Field noMargin label={t('playlist.playlist-table-rows.interval-addon', 'Interval')}>
+              <Field
+                noMargin
+                label={t('playlist.playlist-table-rows.interval-addon', 'Interval')}
+                invalid={!!intervalError}
+                error={intervalError}
+              >
                 <Input
                   type="text"
                   // Controlled so the value always reflects the correct item after a
                   // reorder and stays synced for submission/validation on every keystroke.
                   value={item.interval ?? ''}
                   placeholder={intervalPlaceholder}
-                  invalid={!!item.interval && !isValidInterval(item.interval)}
-                  title={
-                    !!item.interval && !isValidInterval(item.interval)
-                      ? t('playlist.playlist-table-rows.invalid-interval', 'Invalid interval (e.g. 30s, 5m, 1h)')
-                      : undefined
-                  }
+                  invalid={!!intervalError}
+                  title={intervalError}
                   aria-label={t('playlist.playlist-table-rows.aria-label-item-interval', 'Interval for {{itemValue}}', {
                     itemValue: item.value,
                   })}
-                  onChange={(e) => onUpdateInterval?.(index, e.currentTarget.value.trim())}
+                  onChange={(e) => onUpdateInterval?.(currentIndex.current, e.currentTarget.value.trim())}
                 />
               </Field>
             </div>
@@ -514,10 +547,12 @@ function CustomViewTooltipContent({ queryParams, styles }: CustomViewTooltipCont
       <Text variant="bodySmall" weight="medium">
         <Trans i18nKey="playlist.playlist-table-rows.custom-view-tooltip-title">Custom view options</Trans>
       </Text>
-      {from && to && (
+      {(from || to) && (
         <CustomViewTooltipRow
           label={t('playlist.playlist-table-rows.custom-view-time-range', 'Time range')}
-          value={`${from} → ${to}`}
+          value={`${from ?? t('playlist.playlist-table-rows.custom-view-default-time', 'Dashboard default')} → ${
+            to ?? t('playlist.playlist-table-rows.custom-view-default-time', 'Dashboard default')
+          }`}
           styles={styles}
         />
       )}
@@ -635,7 +670,11 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(0.5),
     }),
     optionSummary: css({
+      display: 'inline-block',
       marginRight: theme.spacing(0.5),
+      maxWidth: 'min(240px, 40vw)',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
     iconAction: css({
@@ -708,10 +747,20 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     configuredStatus: css({
       alignItems: 'center',
+      background: 'transparent',
+      border: 0,
+      color: 'inherit',
       cursor: 'help',
       display: 'inline-flex',
+      font: 'inherit',
       gap: theme.spacing(0.5),
+      padding: 0,
       transform: 'translateY(1px)',
+      '&:focus-visible': {
+        borderRadius: theme.shape.radius.default,
+        outline: `2px solid ${theme.colors.primary.border}`,
+        outlineOffset: 2,
+      },
     }),
     configuredStatusText: css({
       borderBottom: `1px dotted ${theme.colors.text.secondary}`,

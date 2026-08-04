@@ -12981,6 +12981,7 @@
       "confirm-clear-view-action": "Clear",
       "custom-view-configured": "Configured",
       "custom-view-default": "Uses dashboard defaults",
+      "custom-view-default-time": "Dashboard default",
       "custom-view-label": "Custom view",
       "custom-view-time-range": "Time range",
       "custom-view-tooltip-title": "Custom view options",
@@ -12992,12 +12993,13 @@
       "dashboard-state-title": "Paste a dashboard link or enter its URL state",
       "interval-addon": "Interval",
       "interval-summary": "Interval: {{interval}}",
-      "invalid-interval": "Invalid interval (e.g. 30s, 5m, 1h)",
+      "invalid-interval-error": "Invalid interval",
       "multiple-dashboards-found": "Multiple items found: {{items}}",
       "no-dashboards-found": "No dashboards found",
       "not-found": "Not found: {{items}}",
       "paste-dashboard-link": "Paste dashboard link",
-      "settings": "Settings"
+      "settings": "Settings",
+      "show-custom-view-options": "Show custom view options"
     },
     "start-modal": {
       "button-start": "Start {{title}}",

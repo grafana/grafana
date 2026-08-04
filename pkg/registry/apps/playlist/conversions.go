@@ -40,6 +40,8 @@ func LegacyUpdateCommandToUnstructured(cmd UpdatePlaylistCommand) unstructured.U
 	return obj
 }
 
+// PreserveLegacyPlaylistItemOptions keeps per-item fields when an older client updates a playlist
+// without knowing about them. Duplicate dashboard entries are matched in their existing order.
 func PreserveLegacyPlaylistItemOptions(obj *unstructured.Unstructured, existing *unstructured.Unstructured) {
 	items, found, err := unstructured.NestedSlice(obj.Object, "spec", "items")
 	if err != nil || !found {

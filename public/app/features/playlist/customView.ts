@@ -13,8 +13,16 @@ export function createPlaylistCustomViewToken(): string {
 }
 
 export function addPlaylistCustomViewToken(url: string, token: string): string {
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=${encodeURIComponent(token)}`;
+  const fragmentStart = url.indexOf('#');
+  const fragment = fragmentStart === -1 ? '' : url.slice(fragmentStart);
+  const urlWithoutFragment = fragmentStart === -1 ? url : url.slice(0, fragmentStart);
+  const queryStart = urlWithoutFragment.indexOf('?');
+  const path = queryStart === -1 ? urlWithoutFragment : urlWithoutFragment.slice(0, queryStart);
+  const query = queryStart === -1 ? '' : urlWithoutFragment.slice(queryStart + 1);
+  const params = new URLSearchParams(query);
+  params.set(PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM, token);
+
+  return `${path}?${params.toString()}${fragment}`;
 }
 
 export function getPlaylistCustomViewChannelName(token: string): string {
