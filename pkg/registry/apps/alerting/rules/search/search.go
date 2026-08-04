@@ -191,6 +191,11 @@ func (h *Handler) metadata(resp *resourcepb.ResourceSearchResponse, next string)
 	if resp != nil {
 		total := resp.TotalHits
 		meta.TotalHits = &total
+		relation := model.CreateSearchRulesTotalHitsRelationLte
+		if resp.TotalHitsExact {
+			relation = model.CreateSearchRulesTotalHitsRelationEq
+		}
+		meta.TotalHitsRelation = &relation
 	}
 	return meta
 }

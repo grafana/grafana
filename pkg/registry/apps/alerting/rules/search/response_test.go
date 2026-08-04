@@ -13,8 +13,24 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// Unified search can report totalHits as an upper bound, so the relation has to
+// travel with the count instead of letting a client assume it is exact.
+func TestHandlerMetadata_totalHitsRelation(t *testing.T) {
+	h := NewHandler(nil, nil)
+
+	exact := h.metadata(&resourcepb.ResourceSearchResponse{TotalHits: 3, TotalHitsExact: true}, "")
+	require.NotNil(t, exact.TotalHitsRelation)
+	assert.Equal(t, model.CreateSearchRulesTotalHitsRelationEq, *exact.TotalHitsRelation)
+
+	bounded := h.metadata(&resourcepb.ResourceSearchResponse{TotalHits: 700}, "")
+	require.NotNil(t, bounded.TotalHitsRelation)
+	assert.Equal(t, model.CreateSearchRulesTotalHitsRelationLte, *bounded.TotalHitsRelation)
+}
 
 func TestWithAPIStatusErrorResponse(t *testing.T) {
 	call := func(handlerErr error) (*httptest.ResponseRecorder, error) {

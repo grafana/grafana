@@ -94,7 +94,9 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 			Cells: cells,
 		})
 	}
-	return &resourcepb.ResourceSearchResponse{Results: table, TotalHits: int64(total)}, nil
+	// ListAlertRules restricts the query to folders the caller can read, so total
+	// counts authorized rules exactly rather than bounding them from above.
+	return &resourcepb.ResourceSearchResponse{Results: table, TotalHits: int64(total), TotalHitsExact: true}, nil
 }
 
 func ruleKey(namespace string, r *ngmodels.AlertRule) *resourcepb.ResourceKey {
