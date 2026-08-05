@@ -2690,6 +2690,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.cmdkHybridSearch",
+        "resourceVersion": "1785839886317",
+        "creationTimestamp": "2026-08-04T10:38:06Z"
+      },
+      "spec": {
+        "description": "Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.correlationsSkipLegacy",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

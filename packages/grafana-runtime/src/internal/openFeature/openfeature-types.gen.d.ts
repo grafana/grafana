@@ -68,6 +68,7 @@ declare module "@openfeature/core" {
     | "grafana.visualDesignRefresh"
     | "dashboard.vectorSearch"
     | "grafana.vectorSearchCmdk"
+    | "grafana.cmdkHybridSearch"
     | "assistant.fullscreenWorkspace"
     | "table.protoRowParser"
     | "grafana.queryVarEditorRedesign"
