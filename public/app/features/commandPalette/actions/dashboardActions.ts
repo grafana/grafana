@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useFlagGrafanaCmdkHybridSearch, useFlagGrafanaVectorSearchCmdk } from '@grafana/runtime/internal';
+import { useFlagGrafanaCmdkHybridSearch, useFlagDashboardVectorSearch } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { isRootFolderUID } from 'app/features/search/constants';
@@ -35,8 +35,8 @@ const debouncedSearch = debounce(getSearchResultActions, 200);
  */
 export function useHybridSearchEnabled(): boolean {
   const hybridSearchFlag = useFlagGrafanaCmdkHybridSearch();
-  const vectorSearchCmdkFlag = useFlagGrafanaVectorSearchCmdk();
-  return hybridSearchFlag && vectorSearchCmdkFlag;
+  const vectorSearchFlag = useFlagDashboardVectorSearch();
+  return hybridSearchFlag && vectorSearchFlag;
 }
 
 export async function getRecentDashboardActions(): Promise<CommandPaletteAction[]> {
