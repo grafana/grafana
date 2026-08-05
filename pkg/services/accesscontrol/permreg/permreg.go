@@ -125,7 +125,8 @@ func (pr *permissionRegistry) RegisterPluginScope(scope string) {
 	kind := scopeParts[0]
 	scopePrefix := kind + ":"
 	if len(scopeParts) > 2 {
-		scopePrefix = kind + ":" + scopeParts[1] + ":"
+		attr := scopeParts[1]
+		scopePrefix = kind + ":" + attr + ":"
 	}
 
 	pr.mu.Lock()
