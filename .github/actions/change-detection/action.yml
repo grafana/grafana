@@ -133,7 +133,6 @@ runs:
             - '.github/actions/change-detection/**'
             - 'packages/**'
             - './scripts/validate-npm-packages.sh'
-            - './scripts/cli/checkUnpinnedDeps.mts'
             - '${{ inputs.self }}'
           e2e:
             - 'e2e/**'
