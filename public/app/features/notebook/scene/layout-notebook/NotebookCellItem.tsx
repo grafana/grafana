@@ -1,7 +1,6 @@
 import { SceneObjectBase, type SceneObjectState, type VizPanel } from '@grafana/scenes';
 import { type CellContentKind } from '@grafana/schema/apis/notebook/v2beta1';
-
-import { type DashboardLayoutItem } from '../types/DashboardLayoutItem';
+import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/types/DashboardLayoutItem';
 
 export interface NotebookCellItemState extends SceneObjectState {
   // Name of the element this cell references in the notebook `elements` map. Kept so

@@ -118,9 +118,16 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     // not from the library panel definition.
     // Exception: Public dashboards and scripted dashboards still need this migration
     // even when dashboardNewLayouts is enabled. This is because public and scripted dashboard migrations are still handled in the frontend.
-    const dashboard = getDashboardSceneFor(this);
-    const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
-    const isScriptedDashboard = dashboard.state.meta.fromScript === true;
+    let isPublicDashboard = false;
+    let isScriptedDashboard = false;
+    try {
+      const dashboard = getDashboardSceneFor(this);
+      isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
+      isScriptedDashboard = dashboard.state.meta.fromScript === true;
+    } catch {
+      // Not under a DashboardScene (e.g. a notebook) — repeat migration doesn't apply there.
+      // Same guard pattern as DashboardDatasourceBehaviour.
+    }
     const shouldSkipRepeatMigration =
       config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard;
 
