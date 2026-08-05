@@ -3969,6 +3969,9 @@
       "trace-id": "トレースID：{{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "認証設定"
@@ -4791,6 +4794,7 @@
       "not-found": "<0>見つかりません：</0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "Ctrl + 右マウス",
       "middle-mouse": "マウス中央ボタン",
       "pan-title": "パン：",
@@ -6137,13 +6141,10 @@
         "show-in": ""
       },
       "annotations": {
-        "add-annotation": "",
         "add-annotation-query": "",
         "name-builtin": "",
         "name-disabled": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-annotation": "",
         "title-above-dashboard-count_other": "",
         "title-controls-menu-count_other": "",
         "title-hidden-count_other": ""
@@ -6223,10 +6224,7 @@
       "links": {
         "add-link": "",
         "new-link": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-link": "",
-        "untitled": "",
         "title-above-dashboard_other": "",
         "title-controls-menu_other": ""
       },
@@ -6324,11 +6322,9 @@
       "variables": {
         "add-variable": "",
         "change-type": "",
-        "reorder": "",
         "reorder-description": "",
         "select-type": "",
         "select-type-card-tooltip": "",
-        "select-variable": "",
         "top-placement-default": "",
         "title-controls-menu_other": "",
         "title-hidden_other": "",
@@ -6761,11 +6757,6 @@
       "delete-text": "{{name}}を削除してもよろしいですか？",
       "delete-title": "注釈クエリを削除"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "注釈"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "保存されたクエリを使用"
     },
@@ -7187,11 +7178,6 @@
       "delete-text": "{{name}}を削除してもよろしいですか？",
       "delete-title": "リンクを削除",
       "unnamed": "無名のリンク"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "リンク"
-      }
     },
     "link-options": {
       "icon": "アイコン",
@@ -9203,6 +9189,7 @@
       "name-lookup-field": "ルックアップフィールド"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "デフォルトのフィールド名に基づいて位置データを自動的に識別",
         "description-coords": "緯度と経度のフィールドを指定",
@@ -15825,18 +15812,29 @@
     },
     "editor": {
       "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
       "view-preview": "",
       "view-split": "",
       "view-write": ""
-    },
-    "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
-    },
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "基本テーマ",

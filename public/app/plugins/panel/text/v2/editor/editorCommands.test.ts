@@ -1,7 +1,7 @@
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 
-import { insertAtCursor, toggleLinePrefix, toggleSurround } from './editorCommands';
+import { insertAtCursor, toggleLinePrefix, toggleOrderedList, toggleSurround } from './editorCommands';
 
 let views: EditorView[] = [];
 
@@ -256,5 +256,113 @@ describe('toggleLinePrefix', () => {
 
     // Still between `ta` and `sk`.
     expect(view.state.selection.main.head).toBe(4);
+  });
+});
+
+describe('toggleOrderedList', () => {
+  it('numbers the selected lines in sequence', () => {
+    const view = createView('one\ntwo\nthree', { anchor: 0, head: 13 });
+
+    toggleOrderedList(view);
+
+    expect(view.state.doc.toString()).toBe('1. one\n2. two\n3. three');
+  });
+
+  it('numbers the caret line on its own', () => {
+    const view = createView('one', { anchor: 0 });
+
+    toggleOrderedList(view);
+
+    expect(view.state.doc.toString()).toBe('1. one');
+  });
+
+  it('continues the numbering of an item directly above', () => {
+    const view = createView('1. one\ntwo\nthree', { anchor: 7, head: 16 });
+
+    toggleOrderedList(view);
+
+    expect(view.state.doc.toString()).toBe('1. one\n2. two\n3. three');
+  });
+
+  it('keeps the start number of the list it extends', () => {
+    const view = createView('5. five\nsix', { anchor: 8 });
+
+    toggleOrderedList(view);
+
+    expect(view.state.doc.toString()).toBe('5. five\n6. six');
+  });
+
+  it('renumbers items below so the source counts up the way the preview does', () => {
+    const view = createView('one\n1. a\n1. b', { anchor: 0 });
+
+    toggleOrderedList(view);
+
+    expect(view.state.doc.toString()).toBe('1. one\n2. a\n3. b');
+  });
+
+  it('repairs numbering that already drifted out of sequence', () => {
+    const view = createView('1. a\n9. b\nc', { anchor: 10 });
+
+    toggleOrderedList(view);
+
+    expect(view.state.doc.toString()).toBe('1. a\n2. b\n3. c');
+  });
+
+  it('stops at a blank line rather than renumbering the next block', () => {
+    const view = createView('one\n\n1. a\n2. b', { anchor: 0 });
+
+    toggleOrderedList(view);
+
+    expect(view.state.doc.toString()).toBe('1. one\n\n1. a\n2. b');
+  });
+
+  it('replaces other list markers on the selected lines', () => {
+    const view = createView('- one\n- [ ] two', { anchor: 0, head: 15 });
+
+    toggleOrderedList(view);
+
+    expect(view.state.doc.toString()).toBe('1. one\n2. two');
+  });
+
+  it('completes a partially numbered selection instead of clearing it', () => {
+    const view = createView('1. one\ntwo', { anchor: 0, head: 10 });
+
+    toggleOrderedList(view);
+
+    expect(view.state.doc.toString()).toBe('1. one\n2. two');
+  });
+
+  it('clears the markers when every selected line is numbered', () => {
+    const view = createView('1. one\n2. two', { anchor: 0, head: 13 });
+
+    toggleOrderedList(view);
+
+    expect(view.state.doc.toString()).toBe('one\ntwo');
+  });
+
+  it('clears a multi-digit marker whole', () => {
+    const view = createView('10. task', { anchor: 6 });
+
+    toggleOrderedList(view);
+
+    expect(view.state.doc.toString()).toBe('task');
+  });
+
+  it('leaves out the line a selection merely ends at the start of', () => {
+    const view = createView('one\ntwo', { anchor: 0, head: 4 });
+
+    toggleOrderedList(view);
+
+    expect(view.state.doc.toString()).toBe('1. one\ntwo');
+  });
+
+  it('keeps the caret in the text when the marker length changes', () => {
+    const view = createView('- [ ] task', { anchor: 8 });
+
+    toggleOrderedList(view);
+
+    // Still between `ta` and `sk`.
+    expect(view.state.doc.toString()).toBe('1. task');
+    expect(view.state.selection.main.head).toBe(5);
   });
 });

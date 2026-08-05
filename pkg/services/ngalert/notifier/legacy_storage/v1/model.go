@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
-	"reflect"
 	"slices"
 	"time"
 
@@ -105,10 +104,9 @@ type ExtraAlertmanagerConfig struct {
 func (c *ExtraAlertmanagerConfig) ToGrafanaReceivers() ([]*PostableApiReceiver, error) {
 	receivers := make([]*PostableApiReceiver, 0, len(c.Receivers))
 	for _, receiver := range c.Receivers {
-		def := compat.UpstreamReceiverToDefinitionReceiver(receiver)
-		grafana, err := PostableMimirReceiverToPostableGrafanaReceiver(&PostableApiReceiver{Receiver: def})
+		grafana, err := PostableMimirReceiverToPostableGrafanaReceiver(compat.UpstreamReceiverToDefinitionReceiver(receiver))
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert Mimir receiver %s to Grafana receiver: %w", def.Name, err)
+			return nil, fmt.Errorf("failed to convert Mimir receiver %s to Grafana receiver: %w", receiver.Name, err)
 		}
 		receivers = append(receivers, grafana)
 	}
@@ -131,7 +129,7 @@ func (c *ExtraAlertmanagerConfig) ToGrafanaTimeIntervals() []TimeInterval {
 func (c *ExtraAlertmanagerConfig) ReceiverNameStubs() []*PostableApiReceiver {
 	stubs := make([]*PostableApiReceiver, 0, len(c.Receivers))
 	for _, receiver := range c.Receivers {
-		stubs = append(stubs, &PostableApiReceiver{Receiver: definition.Receiver{Name: receiver.Name}})
+		stubs = append(stubs, &PostableApiReceiver{Name: receiver.Name})
 	}
 	return stubs
 }
@@ -515,25 +513,11 @@ func (mt *TimeInterval) ResourceID() string {
 }
 
 type PostableApiReceiver struct {
-	definition.Receiver
-	PostableGrafanaReceivers
-}
-
-type PostableGrafanaReceivers struct {
+	Name                    string
 	GrafanaManagedReceivers []*PostableGrafanaReceiver
 }
 
 type PostableGrafanaReceiver definition.PostableGrafanaReceiver
-
-func (r *PostableApiReceiver) HasMimirIntegrations() bool {
-	cpy := r.Receiver
-	cpy.Name = ""
-	return !reflect.ValueOf(cpy).IsZero()
-}
-
-func (r *PostableApiReceiver) HasGrafanaIntegrations() bool {
-	return len(r.GrafanaManagedReceivers) > 0
-}
 
 func (r *PostableApiReceiver) GetName() string {
 	return r.Name

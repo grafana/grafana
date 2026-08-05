@@ -160,6 +160,4 @@ export class Controls extends PageObject {
       });
     },
   };
-
-  readonly filters = {};
 }

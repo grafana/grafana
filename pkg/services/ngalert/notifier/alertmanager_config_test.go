@@ -324,9 +324,7 @@ receivers:
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "initial-receiver",
-						},
+						Name: "initial-receiver",
 					},
 				},
 			},

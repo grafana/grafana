@@ -342,12 +342,11 @@ func RegisterAPIService(
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
 ) (*APIBuilder, error) {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	if !cfg.ProvisioningEnabled {
 		return nil, nil
 	}
 
-	allowedTargets := []provisioning.SyncTargetType{}
+	allowedTargets := make([]provisioning.SyncTargetType, 0, len(cfg.ProvisioningAllowedTargets))
 	for _, target := range cfg.ProvisioningAllowedTargets {
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
