@@ -569,6 +569,20 @@ describe('APPLY_SPEC permission', () => {
     expect(applySpecCommand.permission(scene).allowed).toBe(false);
   });
 
+  // The delegation in feature 7 depends entirely on this: the permission check runs before the
+  // handler, so if the dashboard rule judged a notebook, it would refuse and the forward would never
+  // be reached. Turning the dashboard toggle off and still getting an allow is the only way to show
+  // requiresSpecWrite really routed this scene to the notebook rule.
+  it('judges a notebook by the notebook rule even with dashboardNewLayouts off', () => {
+    const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
+    config.featureToggles.dashboardNewLayouts = false;
+    const scene = buildNotebookScene(makeNotebookSpec());
+
+    expect(applySpecCommand.permission(scene)).toEqual({ allowed: true });
+
+    config.featureToggles.dashboardNewLayouts = dashboardNewLayouts;
+  });
+
   it('still applies the dashboard rule to a dashboard', () => {
     const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
     config.featureToggles.dashboardNewLayouts = false;
@@ -631,6 +645,17 @@ describe('GET_NOTEBOOK_SPEC permission', () => {
     const result = getNotebookSpecCommand.permission(scene);
     expect(result.allowed).toBe(false);
     expect(result.allowed === false && result.error).toContain('dashboard.notebooks');
+  });
+
+  // Allowed on purpose, and the opposite of the write rule. A snapshot is not readable-or-not, it is
+  // editable-or-not: no other read command gates on it, GET_SPEC included, so refusing here would
+  // invent a restriction the surface does not have.
+  it('allows a read of a notebook snapshot', () => {
+    const scene = buildNotebookScene(makeNotebookSpec());
+    scene.setState({ meta: { ...scene.state.meta, isSnapshot: true } });
+
+    expect(getNotebookSpecCommand.permission(scene)).toEqual({ allowed: true });
+    expect(applyNotebookSpecCommand.permission(scene).allowed).toBe(false);
   });
 });
 
@@ -742,6 +767,35 @@ describe('APPLY_NOTEBOOK_SPEC permission', () => {
     const result = applyNotebookSpecCommand.permission(dashboardScene);
     expect(result.allowed).toBe(false);
     expect(result.allowed === false && result.error).toContain('notebooks only');
+  });
+
+  it('refuses when the notebooks feature flag is off', () => {
+    notebooksFlagEnabled = false;
+    const scene = buildNotebookScene(makeNotebookSpec());
+
+    const result = applyNotebookSpecCommand.permission(scene);
+    expect(result.allowed).toBe(false);
+    expect(result.allowed === false && result.error).toContain('dashboard.notebooks');
+  });
+
+  it('refuses on a notebook snapshot', () => {
+    const scene = buildNotebookScene(makeNotebookSpec());
+    scene.setState({ meta: { ...scene.state.meta, isSnapshot: true } });
+
+    const result = applyNotebookSpecCommand.permission(scene);
+    expect(result.allowed).toBe(false);
+    expect(result.allowed === false && result.error).toContain('snapshot');
+  });
+
+  it('refuses when the user cannot write dashboards', () => {
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action !== AccessControlAction.DashboardsWrite);
+    const scene = buildNotebookScene(makeNotebookSpec());
+
+    const result = applyNotebookSpecCommand.permission(scene);
+    expect(result.allowed).toBe(false);
+    expect(result.allowed === false && result.error).toContain('insufficient permissions');
   });
 });
 
