@@ -1,1 +1,0 @@
-API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/alerting/alertrulequality/pkg/apis/alertrulequality/v1alpha1,AlertRuleQualityPolicyList,Items

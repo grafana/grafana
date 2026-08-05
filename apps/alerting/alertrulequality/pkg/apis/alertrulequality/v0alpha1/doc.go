@@ -1,6 +1,6 @@
 // +k8s:deepcopy-gen=package
 // +k8s:openapi-gen=true
 // +k8s:defaulter-gen=TypeMeta
-// +groupName=alertrulequality.grafana.app
+// +groupName=alertrulequality.alerting.grafana.app
 
-package v1alpha1
+package v0alpha1
