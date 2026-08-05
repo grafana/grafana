@@ -1227,6 +1227,8 @@ export interface ContentAwareColWidthsOptions {
   showTypeIcons?: boolean;
   /** Bound `(field, rowIdx) => actions`, so Actions columns can be sized to their button labels. */
   getActions?: GetActionsFunctionLocal;
+  /** Currently-sorted columns; a sorted column reserves header space for its sort arrow. */
+  sortColumns?: SortColumn[];
   /** overridable for testing; otherwise derived from the auto-column count */
   sampleSize?: number;
 }
@@ -1307,20 +1309,27 @@ function measureInlineRunWidth(
 }
 
 /**
- * Width the header label needs, including its filter/type-icon affordances.
+ * Width the header label needs, including its filter/sort/type-icon affordances.
  *
  * Unlike body content, the header is canvas-measured exactly rather than estimated from
  * `avgCharWidth`. It sets a hard lower bound the content is unioned with, so an under-estimate here
  * truncates the title outright. Exactness is affordable: it's one short string measured once per
  * column, not a value sampled across many rows.
+ *
+ * The sort arrow only appears once a column is sorted, so a tight column would otherwise ellipsize
+ * its title the moment it's sorted; reserving its space when `isSorted` keeps the label readable
+ * (the width recomputes on sort, so unsorted columns don't pay for it).
  */
-function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boolean): number {
+function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boolean, isSorted: boolean): number {
   const textWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   let iconSpace = 0;
   if (field.config?.custom?.filterable) {
     iconSpace += HEADER_ICON_SPACE;
   }
   if (showTypeIcons) {
+    iconSpace += HEADER_ICON_SPACE;
+  }
+  if (isSorted) {
     iconSpace += HEADER_ICON_SPACE;
   }
   return textWidth + iconSpace + CELL_HORIZONTAL_CHROME;
@@ -1447,6 +1456,7 @@ export function computeContentAwareColWidths(
     headerTypographyCtx = typographyCtx,
     showTypeIcons = false,
     getActions,
+    sortColumns,
     sampleSize,
   }: ContentAwareColWidthsOptions
 ): number[] {
@@ -1475,10 +1485,16 @@ export function computeContentAwareColWidths(
   let contentTotal = 0;
 
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
+  const sortedKeys = new Set(sortColumns?.map((c) => c.columnKey));
 
   for (const i of autoIdxs) {
     const field = fields[i];
-    const headerWidth = measureHeaderWidth(field, headerTypographyCtx, showTypeIcons);
+    const headerWidth = measureHeaderWidth(
+      field,
+      headerTypographyCtx,
+      showTypeIcons,
+      sortedKeys.has(getDisplayName(field))
+    );
 
     // Every column is sized to its content (unioned with the header below), including wrapped ones:
     // a wrapped column still gets a content-based width so a content-heavy column (e.g. long text)

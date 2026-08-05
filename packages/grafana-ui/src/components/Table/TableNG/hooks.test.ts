@@ -690,7 +690,8 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1, 22);
+      // colWidth 100 - chrome 13 - 3 icons (filter + sort + type) * 22 = 21, floor - 1 = 20.
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 20, modifiedFields[0], -1, 22);
     });
 
     it('does not throw if a field has been deleted but the colWidth has not yet been updated', () => {

@@ -1957,8 +1957,20 @@ describe('TableNG utils', () => {
 
     it('reserves header icon space so the label is not truncated by the type icon', () => {
       const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
-      // header "Name" (4) => 4*8 = 32, + type-icon space 20 + chrome 13 = 65.
-      expect(compute(fields, 65, /* showTypeIcons */ true)).toEqual([65]);
+      // header "Name" (4) => 4*8 = 32, + type-icon space 22 + chrome 13 = 67.
+      expect(compute(fields, 67, /* showTypeIcons */ true)).toEqual([67]);
+    });
+
+    it('reserves header space for the sort arrow on a sorted column', () => {
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      // header "Name" (4) => 4*8 = 32, + sort-arrow space 22 + chrome 13 = 67; content "a" is tiny.
+      const widths = computeContentAwareColWidths(fields, 67, {
+        typographyCtx: makeTypographyCtx(),
+        sortColumns: [{ columnKey: 'Name', direction: 'ASC' }],
+      });
+      expect(widths).toEqual([67]);
+      // an unsorted column of the same content floors to MIN_WIDTH 50 (no arrow reserved).
+      expect(compute(fields, 50)).toEqual([50]);
     });
 
     it('measures header labels with the medium-weight header context when provided', () => {

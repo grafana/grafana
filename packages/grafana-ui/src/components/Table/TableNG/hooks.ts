@@ -35,6 +35,7 @@ import { IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
   type FooterFieldState,
+  type GetActionsFunctionLocal,
   type NestedRowEntry,
   type SortByBehavior,
   type TableRow,
@@ -725,6 +726,8 @@ export interface ContentAwareWidths {
   /** medium-weight context for measuring header labels; see {@link ContentAwareColWidthsOptions} */
   headerTypographyCtx?: TypographyCtx;
   showTypeIcons?: boolean;
+  getActions?: GetActionsFunctionLocal;
+  sortColumns?: SortColumn[];
 }
 
 const pickColWidths = (fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>

@@ -32,7 +32,9 @@ export const TABLE = {
  */
 export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGHT;
 
-/** Space a single header affordance icon (filter / sort / type) reserves next to the label. */
-const HEADER_ICON_WIDTH = 16;
+// Space a single header affordance icon (filter / sort / type) reserves next to the label. Sized to
+// the widest of them — the sort arrow, rendered at Icon size "lg" (18px) — plus the flex gap, so a
+// filterable or sorted column doesn't ellipsize its title once its icon appears.
+const HEADER_ICON_WIDTH = 18;
 const HEADER_ICON_GAP = 4;
 export const HEADER_ICON_SPACE = HEADER_ICON_WIDTH + HEADER_ICON_GAP;
