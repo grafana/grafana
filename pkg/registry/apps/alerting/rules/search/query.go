@@ -209,6 +209,7 @@ var scalarFields = map[string]struct{}{
 	fieldRoutingTree:         {},
 	fieldMetric:              {},
 	fieldTargetDatasourceUID: {},
+	fieldLabels:              {},
 }
 
 // validRuleTypes are the accepted values of a "type" filter.
@@ -243,35 +244,20 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 	}
 
 	if leaf.Field == fieldLabels {
-		matchers := make([]labelMatcher, 0, len(leaf.Values))
-		for _, v := range leaf.Values {
-			// The In/NotIn operator carries negation, so a "!"-prefixed value
-			// would double-negate. Reject it rather than resolve it ambiguously.
-			if strings.HasPrefix(v, "!") {
-				return fmt.Errorf("labels filter value %q must not be negated; use the NotIn operator instead", v)
-			}
-			m := parseLabelMatcher(v)
-			if leaf.Operator == model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn {
-				// NotIn is the complement of the set, and NOT(a OR b) is
-				// NOT a AND NOT b — so the negated matchers conjoin and each
-				// needs its own requirement. Batching them would read as
-				// "any one differs", which is the wrong answer.
-				req.Options.Fields = append(req.Options.Fields, labelMatcherRequirement(negateMatcher(m)))
-				continue
-			}
-			// In disjoins its values into one requirement, which carries a single
-			// operator for all of them — so there is nowhere to record that only
-			// some values are negated, and batching would silently turn
-			// "key!=value" into "key=value". Alone it is encodable: the whole
-			// requirement becomes "notin".
-			if labelMatcherIsNegated(m) && len(leaf.Values) > 1 {
-				return fmt.Errorf("negated value %q cannot be mixed with non-negated values", v)
-			}
-			matchers = append(matchers, m)
+		// validateFilterLeaf holds labels to exactly one value (see scalarFields).
+		v := leaf.Values[0]
+		// The In/NotIn operator carries negation, so a "!"-prefixed value would
+		// double-negate. Reject it rather than resolve it ambiguously.
+		if strings.HasPrefix(v, "!") {
+			return fmt.Errorf("labels filter value %q must not be negated; use the NotIn operator instead", v)
 		}
-		if len(matchers) > 0 {
-			req.Options.Fields = append(req.Options.Fields, labelMatchersRequirement(matchers))
+		m := parseLabelMatcher(v)
+		if leaf.Operator == model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn {
+			// NotIn is the matcher's complement, which the requirement carries by
+			// flipping its operator rather than negating the term.
+			m = negateMatcher(m)
 		}
+		req.Options.Fields = append(req.Options.Fields, labelMatcherRequirement(m))
 		return nil
 	}
 
@@ -320,7 +306,7 @@ func validateFilterLeaf(leaf *model.CreateSearchRulesRequestSearchFilterLeaf) er
 		return fmt.Errorf("filtering on %q is not supported", leaf.Field)
 	}
 	// Only the labels field round-trips negation to the legacy backend
-	// (requirementToLabelMatchers reads the operator). Every other field's
+	// (requirementToLabelMatcher reads the operator). Every other field's
 	// legacy matcher ignores the operator and would apply NotIn as an inclusive
 	// match, returning the opposite of what was requested. Reject it.
 	if leaf.Operator == model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn && leaf.Field != fieldLabels {
@@ -469,10 +455,9 @@ type filters struct {
 	names          []string
 	folders        []string
 	datasourceUIDs []string
-	// labelGroups holds label matchers grouped by the requirement they came
-	// from. A rule must satisfy at least one matcher in every group: values
-	// within a requirement are a set (OR), separate requirements conjoin (AND).
-	labelGroups [][]labelMatcher
+	// labelMatchers holds one matcher per labels requirement. A rule must satisfy
+	// all of them: requirements conjoin.
+	labelMatchers []labelMatcher
 	// groupsInclude/groupsExclude come from a labelSelector on the controlled
 	// group metadata label, which the legacy backend applies through its
 	// GroupFilter rather than as an indexed field.
@@ -501,7 +486,9 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
 			case fieldFolder:
 				f.folders = r.Values
 			case fieldLabels:
-				f.labelGroups = append(f.labelGroups, requirementToLabelMatchers(r))
+				if len(r.Values) == 1 {
+					f.labelMatchers = append(f.labelMatchers, requirementToLabelMatcher(r))
+				}
 			case fieldDatasourceUIDs:
 				f.datasourceUIDs = r.Values
 			case fieldPaused:
@@ -584,28 +571,10 @@ func parseLabelMatcher(s string) labelMatcher {
 	return labelMatcher{key: s, op: matchExists}
 }
 
-// labelMatcherRequirement / requirementToLabelMatchers translate label matchers
+// labelMatcherRequirement / requirementToLabelMatcher translate a label matcher
 // to and from a requirement on the indexed "labels" field, using flattened
 // "key"/"key=value" terms and in/notin operators so a matcher survives the
 // request and resolves the same way on both backends.
-// labelMatchersRequirement encodes matchers that must be read as a set — any one
-// of them matching is enough — into a single requirement.
-//
-// A negated matcher may only be passed alone, where it becomes a "notin"
-// requirement of its own. Batching drops negation — one requirement carries one
-// operator for all its values — so applyFilter rejects a negated value that
-// shares a leaf with non-negated values.
-func labelMatchersRequirement(ms []labelMatcher) *resourcepb.Requirement {
-	if len(ms) == 1 {
-		return labelMatcherRequirement(ms[0])
-	}
-	r := &resourcepb.Requirement{Key: fieldLabels, Operator: "in", Values: make([]string, 0, len(ms))}
-	for _, m := range ms {
-		r.Values = append(r.Values, labelTerm(m))
-	}
-	return r
-}
-
 func labelMatcherRequirement(m labelMatcher) *resourcepb.Requirement {
 	operator := "in"
 	if labelMatcherIsNegated(m) {
@@ -629,46 +598,33 @@ func labelMatcherIsNegated(m labelMatcher) bool {
 	return m.op == matchNotEquals || m.op == matchNotExists
 }
 
-func requirementToLabelMatchers(r *resourcepb.Requirement) []labelMatcher {
+// requirementToLabelMatcher rebuilds the matcher a labels requirement encodes.
+// The term carries the key and value, the operator carries the polarity.
+func requirementToLabelMatcher(r *resourcepb.Requirement) labelMatcher {
 	negated := r.Operator == "notin" || r.Operator == "!="
-	out := make([]labelMatcher, 0, len(r.Values))
-	for _, term := range r.Values {
-		if k, v, ok := strings.Cut(term, "="); ok {
-			op := matchEquals
-			if negated {
-				op = matchNotEquals
-			}
-			out = append(out, labelMatcher{key: k, value: v, op: op})
-			continue
-		}
-		op := matchExists
+	if k, v, ok := strings.Cut(r.Values[0], "="); ok {
+		op := matchEquals
 		if negated {
-			op = matchNotExists
+			op = matchNotEquals
 		}
-		out = append(out, labelMatcher{key: term, op: op})
+		return labelMatcher{key: k, value: v, op: op}
 	}
-	return out
+	op := matchExists
+	if negated {
+		op = matchNotExists
+	}
+	return labelMatcher{key: r.Values[0], op: op}
 }
 
-// matchLabels returns true when every group is satisfied by at least one of its
-// matchers: a conjunction of groups, each group a disjunction of its matchers.
-func matchLabels(r *ngmodels.AlertRule, groups [][]labelMatcher) bool {
-	for _, group := range groups {
-		if !matchAnyLabel(r, group) {
+// matchLabels returns true when a rule satisfies every matcher. Each labels
+// filter leaf carries one matcher, and separate leaves conjoin.
+func matchLabels(r *ngmodels.AlertRule, matchers []labelMatcher) bool {
+	for _, m := range matchers {
+		if !matchLabel(r, m) {
 			return false
 		}
 	}
 	return true
-}
-
-func matchAnyLabel(r *ngmodels.AlertRule, group []labelMatcher) bool {
-	for _, m := range group {
-		if matchLabel(r, m) {
-			return true
-		}
-	}
-	// An empty group constrains nothing.
-	return len(group) == 0
 }
 
 func matchLabel(r *ngmodels.AlertRule, m labelMatcher) bool {

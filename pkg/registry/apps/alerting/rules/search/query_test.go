@@ -30,40 +30,34 @@ func TestParseLabelMatcher(t *testing.T) {
 	for in, want := range tests {
 		assert.Equal(t, want, parseLabelMatcher(in), in)
 		// matchers must survive the round trip through the labels-field requirement.
-		got := requirementToLabelMatchers(labelMatcherRequirement(want))
-		require.Equal(t, []labelMatcher{want}, got, in)
+		got := requirementToLabelMatcher(labelMatcherRequirement(want))
+		require.Equal(t, want, got, in)
 	}
 }
 
 func TestMatchLabels(t *testing.T) {
 	rule := &ngmodels.AlertRule{Labels: map[string]string{"team": "a", "__grafana_origin": "plugin/x"}}
 
-	// one matcher per group: the group is satisfied by its only matcher
-	group := func(vals ...string) [][]labelMatcher {
-		out := make([][]labelMatcher, 0, len(vals))
+	matchers := func(vals ...string) []labelMatcher {
+		out := make([]labelMatcher, 0, len(vals))
 		for _, v := range vals {
-			out = append(out, []labelMatcher{parseLabelMatcher(v)})
+			out = append(out, parseLabelMatcher(v))
 		}
 		return out
 	}
-	assert.True(t, matchLabels(rule, group("team=a")))
-	assert.False(t, matchLabels(rule, group("team=b")))
-	assert.True(t, matchLabels(rule, group("team!=b")))
-	assert.True(t, matchLabels(rule, group("__grafana_origin")))
-	assert.False(t, matchLabels(rule, group("!__grafana_origin")))
+	assert.True(t, matchLabels(rule, matchers("team=a")))
+	assert.False(t, matchLabels(rule, matchers("team=b")))
+	assert.True(t, matchLabels(rule, matchers("team!=b")))
+	assert.True(t, matchLabels(rule, matchers("__grafana_origin")))
+	assert.False(t, matchLabels(rule, matchers("!__grafana_origin")))
 
-	// separate groups conjoin: every group must be satisfied
-	assert.False(t, matchLabels(rule, group("team=a", "missing")))
-	assert.True(t, matchLabels(rule, group("team=a", "__grafana_origin")))
+	// matchers conjoin: every one must be satisfied
+	assert.False(t, matchLabels(rule, matchers("team=a", "missing")))
+	assert.True(t, matchLabels(rule, matchers("team=a", "__grafana_origin")))
+	assert.False(t, matchLabels(rule, matchers("team=a", "team=b")))
 
-	// one group disjoins: any matcher in it is enough. This is what a
-	// Kubernetes "in (a, b)" selector compiles to.
-	oneGroup := [][]labelMatcher{{parseLabelMatcher("team=a"), parseLabelMatcher("team=b")}}
-	assert.True(t, matchLabels(rule, oneGroup))
-	assert.False(t, matchLabels(rule, [][]labelMatcher{{parseLabelMatcher("team=x"), parseLabelMatcher("team=y")}}))
-
-	// an empty group constrains nothing
-	assert.True(t, matchLabels(rule, [][]labelMatcher{{}}))
+	// no matchers constrains nothing
+	assert.True(t, matchLabels(rule, nil))
 }
 
 func TestSortRules(t *testing.T) {
@@ -132,10 +126,10 @@ func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
 	assert.Equal(t, fieldTitle, f.sortField)
 	assert.True(t, f.sortDesc)
 	// The labels filter leaf flows into the indexed spec-labels field.
-	assert.ElementsMatch(t, [][]labelMatcher{
+	assert.ElementsMatch(t, []labelMatcher{
 		// NotIn of an existence matcher negates to a not-exists matcher.
-		{{key: "__grafana_origin", op: matchNotExists}},
-	}, f.labelGroups)
+		{key: "__grafana_origin", op: matchNotExists},
+	}, f.labelMatchers)
 	// The labelSelector on the group metadata label becomes a group filter.
 	assert.Equal(t, []string{"g1"}, f.groupsInclude)
 	assert.Empty(t, f.groupsExclude)
@@ -209,119 +203,71 @@ func TestBuildSearchRequest_labelSelector(t *testing.T) {
 	})
 }
 
-// TestBuildSearchRequest_labelsFilterLeaf covers the labels filter leaf, whose
-// operator has to mean what it means in a labelSelector: the values in one leaf
-// are a set, so In disjoins them. NotIn is that set's complement, and
-// NOT(a OR b) is NOT a AND NOT b — so its values conjoin instead, which is why
-// they cannot share a requirement.
+// TestBuildSearchRequest_labelsFilterLeaf covers the labels filter leaf. A leaf
+// carries exactly one matcher (see scalarFields): a requirement holds a single
+// operator for all its values, so matchers sharing a leaf could not each keep
+// their own polarity. In encodes the matcher as given, NotIn its complement, and
+// repeating the leaf conjoins matchers.
 func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
 	const notIn = model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn
 	gr := alertrule.ResourceInfo.GroupResource()
-	build := func(op model.CreateSearchRulesRequestSearchFilterLeafOperator, vals ...string) *resourcepb.ResourceSearchRequest {
+	leaf := func(op model.CreateSearchRulesRequestSearchFilterLeafOperator, vals ...string) model.CreateSearchRulesRequestSearchWhereNode {
+		return model.CreateSearchRulesRequestSearchWhereNode{
+			Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldLabels, Operator: op, Values: vals},
+		}
+	}
+	build := func(nodes ...model.CreateSearchRulesRequestSearchWhereNode) (*resourcepb.ResourceSearchRequest, error) {
 		req, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{
-			Where: &model.CreateSearchRulesRequestSearchWhereNode{
-				Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldLabels, Operator: op, Values: vals},
-			},
+			Where: &model.CreateSearchRulesRequestSearchWhereNode{And: nodes},
 		}, "default", gr, nil)
-		require.NoError(t, err)
-		return req
+		return req, err
 	}
 
-	teamA := &ngmodels.AlertRule{Labels: map[string]string{"team": "a"}}
-	teamB := &ngmodels.AlertRule{Labels: map[string]string{"team": "b"}}
-	other := &ngmodels.AlertRule{Labels: map[string]string{"other": "x"}}
-
-	t.Run("In disjoins its values", func(t *testing.T) {
-		req := build(opIn, "team=a", "team=b")
-		require.Len(t, req.Options.Fields, 1, "values must share one requirement to disjoin")
-		assert.Equal(t, "in", req.Options.Fields[0].Operator)
-		assert.ElementsMatch(t, []string{"team=a", "team=b"}, req.Options.Fields[0].Values)
-
-		groups := extractFilters(req).labelGroups
-		assert.True(t, matchLabels(teamA, groups))
-		assert.True(t, matchLabels(teamB, groups))
-		assert.False(t, matchLabels(other, groups))
-	})
-
-	t.Run("an existence value keeps its bare term", func(t *testing.T) {
-		req := build(opIn, "team", "other=x")
-		require.Len(t, req.Options.Fields, 1)
-		// "team=" would mean team equals the empty string, not team exists.
-		assert.ElementsMatch(t, []string{"team", "other=x"}, req.Options.Fields[0].Values)
-
-		groups := extractFilters(req).labelGroups
-		assert.True(t, matchLabels(teamA, groups), "team exists")
-		assert.True(t, matchLabels(other, groups), "other=x matches")
-	})
-
-	t.Run("NotIn conjoins, one requirement per value", func(t *testing.T) {
-		req := build(notIn, "team=a", "team=b")
-		require.Len(t, req.Options.Fields, 2, "negated values must not share a requirement")
-		for _, r := range req.Options.Fields {
-			assert.Equal(t, "notin", r.Operator, "batching these as one \"in\" inverts the filter")
-		}
-
-		groups := extractFilters(req).labelGroups
-		assert.False(t, matchLabels(teamA, groups))
-		assert.False(t, matchLabels(teamB, groups), "both values must be excluded")
-		assert.True(t, matchLabels(other, groups))
-	})
-
-	t.Run("NotIn on existence values", func(t *testing.T) {
-		req := build(notIn, "team", "other")
-		require.Len(t, req.Options.Fields, 2)
-		assert.ElementsMatch(t, []string{"team"}, req.Options.Fields[0].Values)
-		assert.ElementsMatch(t, []string{"other"}, req.Options.Fields[1].Values)
-
-		groups := extractFilters(req).labelGroups
-		assert.False(t, matchLabels(teamA, groups), "team must not exist")
-		assert.False(t, matchLabels(other, groups), "other must not exist")
-	})
-
-	t.Run("rejects a negated value sharing an In filter", func(t *testing.T) {
-		// In disjoins into one requirement carrying one operator, so "env!=prod"
-		// alongside "team=a" has nowhere to put its negation. Encoding it as "in"
-		// would silently search for env=prod — the opposite of the request.
-		_, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{
-			Where: &model.CreateSearchRulesRequestSearchWhereNode{
-				Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldLabels, Operator: opIn, Values: []string{"team=a", "env!=prod"}},
-			},
-		}, "default", gr, nil)
-		require.Error(t, err)
-	})
-
-	t.Run("NotIn splits mixed polarity per value", func(t *testing.T) {
-		// NOT(team=a OR env!=prod) is team!=a AND env=prod, so each value gets
-		// its own requirement and "env!=prod" flips to a positive term.
-		req := build(notIn, "team=a", "env!=prod")
-		require.Len(t, req.Options.Fields, 2)
-		assert.Equal(t, "notin", req.Options.Fields[0].Operator)
-		assert.Equal(t, []string{"team=a"}, req.Options.Fields[0].Values)
-		assert.Equal(t, "in", req.Options.Fields[1].Operator)
-		assert.Equal(t, []string{"env=prod"}, req.Options.Fields[1].Values)
-	})
-
-	t.Run("single values are unchanged", func(t *testing.T) {
+	t.Run("encodes one matcher per leaf", func(t *testing.T) {
 		for _, tc := range []struct {
 			op       model.CreateSearchRulesRequestSearchFilterLeafOperator
 			value    string
 			operator string
-			term     string
+			// The term stays positive whatever the polarity: negation rides on
+			// the requirement's operator, so both forms share an indexed term.
+			term string
 		}{
 			{opIn, "team=a", "in", "team=a"},
+			// "team=" would mean team equals the empty string, not team exists.
 			{opIn, "team", "in", "team"},
-			// A lone negated value is encodable: the requirement's operator
-			// carries the negation, so the term stays positive.
 			{opIn, "team!=a", "notin", "team=a"},
 			{notIn, "team=a", "notin", "team=a"},
 			{notIn, "team", "notin", "team"},
 			{notIn, "team!=a", "in", "team=a"},
 		} {
-			req := build(tc.op, tc.value)
+			req, err := build(leaf(tc.op, tc.value))
+			require.NoError(t, err, "%s %q", tc.op, tc.value)
 			require.Len(t, req.Options.Fields, 1, "%s %q", tc.op, tc.value)
 			assert.Equal(t, tc.operator, req.Options.Fields[0].Operator, "%s %q", tc.op, tc.value)
 			assert.Equal(t, []string{tc.term}, req.Options.Fields[0].Values, "%s %q", tc.op, tc.value)
 		}
+	})
+
+	t.Run("rejects more than one value", func(t *testing.T) {
+		for _, op := range []model.CreateSearchRulesRequestSearchFilterLeafOperator{opIn, notIn} {
+			_, err := build(leaf(op, "team=a", "team=b"))
+			require.Error(t, err, "%s", op)
+		}
+	})
+
+	t.Run("repeated leaves conjoin", func(t *testing.T) {
+		req, err := build(leaf(opIn, "team=a"), leaf(notIn, "env=prod"))
+		require.NoError(t, err)
+		require.Len(t, req.Options.Fields, 2, "each leaf gets its own requirement")
+		assert.Equal(t, "in", req.Options.Fields[0].Operator)
+		assert.Equal(t, "notin", req.Options.Fields[1].Operator)
+
+		// The legacy backend rebuilds the matchers from those requirements, so a
+		// rule has to satisfy both.
+		matchers := extractFilters(req).labelMatchers
+		assert.True(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "a"}}, matchers))
+		assert.False(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"team": "a", "env": "prod"}}, matchers))
+		assert.False(t, matchLabels(&ngmodels.AlertRule{Labels: map[string]string{"other": "x"}}, matchers))
 	})
 }
 
