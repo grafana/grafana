@@ -171,6 +171,11 @@ generate-openapi: openapi3-gen
 	yarn workspace @grafana/openapi process-specs
 
 ##@ Internationalisation
+# i18next-cli exits 0 after dropping a key that has a nesting conflict, so every extraction
+# pass runs through this guard to turn a dropped key into a build failure. Absolute path so
+# it also resolves for the Enterprise pass, which runs from a subdirectory.
+I18N_EXTRACT_GUARD = node $(CURDIR)/scripts/cli/runI18nExtract.mjs
+
 .PHONY: i18n-extract-enterprise
 ENTERPRISE_FE_EXT_FILE = public/app/extensions/index.ts
 ifeq ("$(wildcard $(ENTERPRISE_FE_EXT_FILE))","") ## if enterprise is not enabled
@@ -179,17 +184,17 @@ i18n-extract-enterprise:
 else
 i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
-	cd public/locales/enterprise && LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
+	cd public/locales/enterprise && LANG=en_US.UTF-8 $(I18N_EXTRACT_GUARD) yarn run i18next-cli extract --sync-primary
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
-	LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
+	LANG=en_US.UTF-8 $(I18N_EXTRACT_GUARD) yarn run i18next-cli extract --sync-primary
 	@echo "Extracting i18n strings for packages"
-	LANG=en_US.UTF-8 yarn run packages:i18n-extract
+	LANG=en_US.UTF-8 $(I18N_EXTRACT_GUARD) yarn run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
-	LANG=en_US.UTF-8 yarn run plugin:i18n-extract
+	LANG=en_US.UTF-8 $(I18N_EXTRACT_GUARD) yarn run plugin:i18n-extract
 
 ##@ Building
 .PHONY: gen-cue
