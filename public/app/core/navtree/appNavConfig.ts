@@ -18,6 +18,13 @@ export interface AppNavConfig {
    * sort above the section's app entries in their own order.
    */
   hoistPages?: { slotWeightByPath?: Record<string, number> };
+  /**
+   * The app is a single page living at the app URL (`/a/<id>`). Such a page
+   * folds into the app link, which would normally leave the app childless and
+   * unplaced; this places the link anyway, as a leaf entry of its section
+   * (grafana-auth-app under Users and access).
+   */
+  singlePage?: boolean;
   /** Drops includes the app should not show in this deployment, on top of the RBAC checks */
   filterInclude?: (include: PluginInclude) => boolean;
 }
@@ -240,15 +247,11 @@ export const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
     text: 'Advisor',
     subTitle: 'Run checks and get suggestions to fix issues',
   },
-};
-
-// Standalone plugin pages placed into core sections, keyed by include path.
-// The equivalent [navigation.app_standalone_pages] INI overrides are not
-// supported client-side at the time of writing.
-export const APP_NAV_PATH_CONFIG: Record<string, AppNavConfig> = {
-  '/a/grafana-auth-app': {
+  'grafana-auth-app': {
     sectionId: NavID.cfgAccess,
     sortWeight: 2,
+    text: 'Access policies',
     subTitle: 'Use policies to control automated access to metrics, logs, traces, and other Grafana Cloud services',
+    singlePage: true,
   },
 };

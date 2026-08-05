@@ -11,8 +11,8 @@ import {
   SLO_APP_ID,
   SLO_SERVICES_PATH,
 } from './appNavConfig';
-import { NavID, NavWeight, pluginPageId, standalonePluginPageId } from './constants';
-import { findNavById, removeNavById, updateNavById } from './utils';
+import { NavID, NavWeight } from './constants';
+import { findNavById, pluginPageId, removeNavById, standalonePluginPageId, updateNavById } from './utils';
 
 /**
  * A cross-plugin adjustment applied after all app plugins have been merged

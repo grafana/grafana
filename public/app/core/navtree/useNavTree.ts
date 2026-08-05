@@ -5,7 +5,7 @@ import { type NavModelItem } from '@grafana/data';
 import { getAppPluginMetasStrict } from '@grafana/runtime/internal';
 import { useDispatch, useSelector, type StoreState } from 'app/types/store';
 
-import { mergePluginNavIntoTree } from './buildPluginNav';
+import { carryOverRuntimeChildren, mergePluginNavIntoTree } from './buildPluginNav';
 import { isClientNavTreeEnabled } from './buildStaticNavTree';
 import { pluginNavFailed, pluginNavLoaded } from './state';
 
@@ -17,12 +17,6 @@ export interface UseNavTreeResult {
   /** True when the plugin metas fetch failed and only the static tree is shown */
   isError: boolean;
 }
-
-// Shared across hook consumers so a metas response is merged and dispatched
-// exactly once, no matter how many components use the hook. Works because the
-// pluginMeta service caches the fetch promise, so every consumer resolves to
-// the same array instance.
-const mergedResponses = new WeakSet<object>();
 
 /**
  * The data-loading source for the navigation tree. With
@@ -42,23 +36,20 @@ export function useNavTree(): UseNavTreeResult {
   const status = useSelector((state) => state.pluginNavStatus);
 
   useEffect(() => {
-    if (!enabled) {
+    // Merging once per session is enough: the metas fetch is session-cached,
+    // so a remount would just re-merge the same response. A failed fetch
+    // invalidates the service's cache entry and sets status back to 'failed',
+    // so the next mount retries.
+    if (!enabled || store.getState().pluginNavStatus === 'loaded') {
       return;
     }
     let cancelled = false;
-    // A failed fetch invalidates the service's cache entry, so the next mount
-    // retries; a successful response is cached for the rest of the session.
     getAppPluginMetasStrict().then(
       (apps) => {
-        // NOTE: an empty-but-successful metas response is indistinguishable
-        // from an instance with no app plugins, so a UI loaded seconds after a
-        // server restart (before installsync has written the Plugin objects)
-        // will miss plugin nav items until a full reload. Accepted for now.
-        if (cancelled || mergedResponses.has(apps)) {
+        if (cancelled || store.getState().pluginNavStatus === 'loaded') {
           return;
         }
-        mergedResponses.add(apps);
-        const merged = mergePluginNavIntoTree(store.getState().navBarTree, apps);
+        const merged = carryOverRuntimeChildren(mergePluginNavIntoTree(apps), store.getState().navBarTree);
         dispatch(pluginNavLoaded({ tree: merged }));
       },
       () => {
