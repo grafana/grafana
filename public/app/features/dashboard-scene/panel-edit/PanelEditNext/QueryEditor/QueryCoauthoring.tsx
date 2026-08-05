@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { createTool, openAssistant, useInlineAssistant } from '@grafana/assistant';
+import { createTool, useAssistant, useInlineAssistant } from '@grafana/assistant';
 import {
   type DataQuery,
   type GrafanaTheme2,
@@ -52,6 +52,11 @@ const VIEWPORT_MARGIN = 8;
 const ASSISTANT_FEEDBACK_URL = '/api/plugins/grafana-assistant-app/resources/api/v1/feedback';
 
 export function QueryCoauthoring({ capability, onAccept }: Props) {
+  const {
+    isLoading: isAssistantLoading,
+    isAvailable: isAssistantAvailable,
+    openAssistant: openAvailableAssistant,
+  } = useAssistant();
   const { generate, isGenerating, cancel, reset } = useInlineAssistant();
   const styles = useStyles2(getStyles);
   const [invocation, setInvocation] = useState<QueryEditorCoauthoringInvocation>();
@@ -178,7 +183,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
 
   const submit = async (nextIntent = intent) => {
     const trimmedIntent = nextIntent.trim();
-    if (!trimmedIntent || isGenerating) {
+    if (!trimmedIntent || isGenerating || !isAssistantAvailable) {
       return;
     }
 
@@ -384,10 +389,10 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
 
   const continueInAssistant = (reason?: string) => {
     const activeContext = proposal?.context ?? fallback?.context ?? context;
-    if (!activeContext) {
+    if (!activeContext || !openAvailableAssistant) {
       return;
     }
-    openAssistant({
+    openAvailableAssistant({
       origin: 'grafana/panel-edit-next/query-coauthoring',
       mode: 'dashboarding',
       autoSend: false,
@@ -442,7 +447,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
       aria-label={t('query-editor-coauthoring.dialog', 'Query coauthor')}
       style={availableHeight === undefined ? undefined : { maxHeight: availableHeight }}
     >
-      {!proposal && !fallback && !clarification && !error && (
+      {isAssistantAvailable && !proposal && !fallback && !clarification && !error && (
         <div className={styles.promptRow}>
           <TextArea
             value={intent}
@@ -473,15 +478,40 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
         </div>
       )}
 
-      {!context && !contextError && (
+      {isAssistantLoading && (
         <div className={styles.status}>
           <Spinner size="sm" />
           <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="query-editor-coauthoring.identifying">Identifying selection…</Trans>
+            <Trans i18nKey="query-editor-coauthoring.checking-assistant">Checking Assistant availability…</Trans>
           </Text>
         </div>
       )}
-      {context && !isGenerating && !proposal && !fallback && !clarification && !error && (
+      {!isAssistantLoading && !isAssistantAvailable && (
+        <Stack direction="column" gap={1}>
+          <Alert
+            severity="warning"
+            title={t('query-editor-coauthoring.assistant-unavailable', 'Assistant is not available')}
+          >
+            <Trans i18nKey="query-editor-coauthoring.assistant-unavailable-body">
+              Query coauthoring requires Grafana Assistant.
+            </Trans>
+          </Alert>
+          <Stack justifyContent="flex-end">
+            <Button size="sm" variant="secondary" onClick={dismiss}>
+              <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
+            </Button>
+          </Stack>
+        </Stack>
+      )}
+      {isAssistantAvailable && !context && !contextError && (
+        <div className={styles.status}>
+          <Spinner size="sm" />
+          <Text variant="bodySmall" color="secondary">
+            <Trans i18nKey="query-editor-coauthoring.identifying">Identifying intent…</Trans>
+          </Text>
+        </div>
+      )}
+      {isAssistantAvailable && context && !isGenerating && !proposal && !fallback && !clarification && !error && (
         <div className={styles.status}>
           <Icon name="ai-sparkle" />
           <Text variant="bodySmall" color="secondary">
@@ -489,7 +519,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           </Text>
         </div>
       )}
-      {isGenerating && (
+      {isAssistantAvailable && isGenerating && (
         <div className={styles.status}>
           <Spinner size="sm" />
           <Text variant="bodySmall" color="secondary">
@@ -497,7 +527,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           </Text>
         </div>
       )}
-      {clarification && (
+      {isAssistantAvailable && clarification && (
         <Stack direction="column" gap={1}>
           <Text variant="bodySmall" weight="medium">
             <Trans i18nKey="query-editor-coauthoring.clarification-title">Assistant needs one detail</Trans>
@@ -534,7 +564,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           </Stack>
         </Stack>
       )}
-      {contextError && (
+      {isAssistantAvailable && contextError && (
         <Stack direction="column" gap={1}>
           <Alert
             severity="error"
@@ -550,7 +580,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           </Stack>
         </Stack>
       )}
-      {error && (
+      {isAssistantAvailable && error && (
         <Stack direction="column" gap={1}>
           <Alert severity="error" title={error} />
           <Stack gap={1} justifyContent="flex-end">
@@ -563,7 +593,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           </Stack>
         </Stack>
       )}
-      {fallback && (
+      {isAssistantAvailable && fallback && (
         <Stack direction="column" gap={1}>
           <Text variant="bodySmall">{fallback.reason}</Text>
           <Text variant="bodySmall" color="secondary" italic>
@@ -599,7 +629,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           </Stack>
         </Stack>
       )}
-      {proposal && (
+      {isAssistantAvailable && proposal && (
         <div className={styles.proposal}>
           <div className={styles.proposalBody}>
             <Text variant="bodySmall" weight="medium">
@@ -667,7 +697,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           </Stack>
         </div>
       )}
-      {feedback && (
+      {isAssistantAvailable && feedback && (
         <Modal
           isOpen
           title={
@@ -682,6 +712,15 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
             <Text variant="bodySmall" color="secondary">
               <Trans i18nKey="query-editor-coauthoring.feedback-description">
                 Your feedback helps improve the query experience in Grafana.
+              </Trans>
+            </Text>
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="query-editor-coauthoring.feedback-recipient">
+                Your feedback will be sent to the teams working on querying.
+              </Trans>{' '}
+              <Trans i18nKey="query-editor-coauthoring.feedback-privacy">
+                Your rating, comment, and whether this was a proposal or handoff are sent. Your query, prompt, and
+                Assistant response are not included.
               </Trans>
             </Text>
             <TextArea
@@ -791,13 +830,12 @@ function buildAssistantHandoffPrompt(
 function selectionSummary(context: QueryEditorCoauthoringContext): string {
   const metadata = context.metricMetadata[0];
   if (metadata?.type) {
-    return t(
-      'query-editor-coauthoring.selection-with-type',
-      'Focused on the selection. {{metric}} is a {{type}} metric.',
-      { metric: metadata.name, type: metadata.type }
-    );
+    return t('query-editor-coauthoring.selection-with-type', 'Looks like: {{metric}} is a {{type}} metric.', {
+      metric: metadata.name,
+      type: metadata.type,
+    });
   }
-  return t('query-editor-coauthoring.selection-ready', 'Focused on the selection in the context of the full query.');
+  return t('query-editor-coauthoring.selection-ready', 'Looks like: the selection is part of this PromQL query.');
 }
 
 function invalidPromQLResponseMessage(): string {

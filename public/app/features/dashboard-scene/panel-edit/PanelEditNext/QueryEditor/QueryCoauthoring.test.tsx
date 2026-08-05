@@ -11,6 +11,9 @@ const mockReset = jest.fn();
 const mockOpenAssistant = jest.fn();
 const mockPost = jest.fn();
 const VIEWPORT_TEST_MARGIN = 8;
+let mockIsGenerating = false;
+let mockAssistantAvailable = true;
+let mockAssistantLoading = false;
 
 jest.mock('@grafana/assistant', () => ({
   createTool: (
@@ -24,9 +27,16 @@ jest.mock('@grafana/assistant', () => ({
     invoke: async (input: Record<string, unknown>) => invoke(options.validate(input) as Record<string, unknown>),
   }),
   openAssistant: (...args: unknown[]) => mockOpenAssistant(...args),
+  useAssistant: () => ({
+    isLoading: mockAssistantLoading,
+    isAvailable: mockAssistantAvailable,
+    openAssistant: mockAssistantAvailable ? mockOpenAssistant : undefined,
+    closeAssistant: undefined,
+    toggleAssistant: undefined,
+  }),
   useInlineAssistant: () => ({
     generate: mockGenerate,
-    isGenerating: false,
+    isGenerating: mockIsGenerating,
     content: '',
     error: null,
     cancel: mockCancel,
@@ -41,7 +51,7 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-async function setup(anchorTop = 0) {
+async function setup(anchorTop = 0, waitForPrompt = true) {
   const focus = jest.fn();
   const clearPreview = jest.fn();
   const stagePreview = jest.fn(() => ({
@@ -98,8 +108,10 @@ async function setup(anchorTop = 0) {
   document.body.append(anchorElement);
 
   const result = render(<QueryCoauthoring capability={capability} onAccept={onAccept} />);
-  act(() => invocationListener?.({ anchorElement, dismiss: dismissInvocation }));
-  await screen.findByRole('textbox', { name: 'Describe a query change' });
+  await act(async () => invocationListener?.({ anchorElement, dismiss: dismissInvocation }));
+  if (waitForPrompt) {
+    await screen.findByRole('textbox', { name: 'Describe a query change' });
+  }
 
   return {
     capability,
@@ -117,6 +129,28 @@ describe('QueryCoauthoring', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPost.mockResolvedValue({ id: 'feedback-id' });
+    mockIsGenerating = false;
+    mockAssistantAvailable = true;
+    mockAssistantLoading = false;
+  });
+
+  it('shows the selected metric context using the Figma Looks like treatment', async () => {
+    await setup();
+
+    expect(await screen.findByText('Looks like: http_requests_total is a counter metric.')).toBeInTheDocument();
+  });
+
+  it('shows an explicit dismissal path when Assistant is unavailable', async () => {
+    mockAssistantAvailable = false;
+    const { user, dismissInvocation, focus } = await setup(0, false);
+
+    expect(await screen.findByText('Assistant is not available')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Describe a query change' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }));
+
+    expect(dismissInvocation).toHaveBeenCalled();
+    expect(focus).toHaveBeenCalled();
   });
 
   it('sends only the full query, focused text, and relevant metric metadata', async () => {
@@ -167,6 +201,30 @@ describe('QueryCoauthoring', () => {
       refId: 'A',
       expr: 'increase(http_requests_total[5m])',
     });
+  });
+
+  it('cancels an in-flight build and ignores a late proposal', async () => {
+    const { user, capability, stagePreview, onAccept, rerender } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+
+    mockIsGenerating = true;
+    rerender(<QueryCoauthoring capability={capability} onAccept={onAccept} />);
+    await user.click(screen.getByRole('button', { name: 'Stop' }));
+
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      });
+      request.onComplete('');
+    });
+
+    expect(mockCancel).toHaveBeenCalled();
+    expect(stagePreview).not.toHaveBeenCalled();
+    expect(onAccept).not.toHaveBeenCalled();
   });
 
   it('constrains the popover to the viewport below its editor anchor', async () => {
@@ -313,6 +371,8 @@ describe('QueryCoauthoring', () => {
 
     await user.click(screen.getByRole('button', { name: 'Helpful' }));
     expect(screen.getByRole('dialog', { name: 'What went well?' })).toBeInTheDocument();
+    expect(screen.getByText(/feedback will be sent to the teams working on querying/i)).toBeInTheDocument();
+    expect(screen.getByText(/your query, prompt, and assistant response are not included/i)).toBeInTheDocument();
     await user.type(screen.getByRole('textbox', { name: 'Share feedback' }), 'The explanation was clear.');
     await user.click(screen.getByRole('button', { name: 'Send' }));
 
@@ -323,6 +383,31 @@ describe('QueryCoauthoring', () => {
       comment: 'The explanation was clear.',
       metadata: { outcome: 'proposal' },
     });
+  });
+
+  it('cancels negative feedback without sending anything', async () => {
+    const { user } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      });
+      request.onComplete('');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Not helpful' }));
+    expect(screen.getByRole('dialog', { name: 'What went wrong?' })).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: 'Share feedback' }), 'The change was too broad.');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(mockPost).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog', { name: 'What went wrong?' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
   });
 
   it('closes feedback on Escape without propagating or dismissing the proposal', async () => {
