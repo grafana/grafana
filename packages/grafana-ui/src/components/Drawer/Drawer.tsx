@@ -289,7 +289,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     ),
     drawerContent: css({
-      backgroundColor: theme.colors.background.primary,
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
