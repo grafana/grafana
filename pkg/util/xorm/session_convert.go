@@ -52,6 +52,14 @@ func (session *Session) str2Time(col *core.Column, data string) (outTime time.Ti
 			x, err = time.ParseInLocation("2006-01-02 15:04:05.9999999 Z07:00", sdata, parseLoc)
 			//session.engine.logger.Debugf("time(3) key[%v]: %+v | sdata: [%v]\n", col.FieldName, x, sdata)
 		}
+		if err != nil {
+			// Handle Go time.Time.String() format:
+			// "2006-01-02 15:04:05.999999999 -0700 MST"
+			// This is needed when the timezone name is a numeric offset (e.g. +0330 for Asia/Tehran),
+			// producing "2026-08-05 12:14:36.34069982 +0330 +0330" in the database.
+			x, err = time.ParseInLocation("2006-01-02 15:04:05.999999999 -0700 MST", sdata, parseLoc)
+			//session.engine.logger.Debugf("time(4) key[%v]: %+v | sdata: [%v]\n", col.FieldName, x, sdata)
+		}
 	} else if len(sdata) == 19 && strings.Contains(sdata, "-") {
 		x, err = time.ParseInLocation("2006-01-02 15:04:05", sdata, parseLoc)
 		//session.engine.logger.Debugf("time(4) key[%v]: %+v | sdata: [%v]\n", col.FieldName, x, sdata)
