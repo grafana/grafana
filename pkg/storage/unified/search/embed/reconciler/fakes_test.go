@@ -308,6 +308,9 @@ func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, ui
 func (f *fakeVector) Exists(context.Context, string, string, string, string) (bool, error) {
 	return false, nil
 }
+func (f *fakeVector) ContentVersion(context.Context, string, string, string, string) (int, bool, error) {
+	return 0, false, nil
+}
 func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()

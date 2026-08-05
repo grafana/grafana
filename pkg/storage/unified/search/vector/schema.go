@@ -206,4 +206,17 @@ END $$;`))
 			VALUES ('dashboard.grafana.app', 'dashboards', 'dashboards', false)
 			ON CONFLICT DO NOTHING;
 		`))
+
+	// content_version tracks the extractor content-shape version that produced
+	// a row, so an extractor change can trigger incremental re-embedding
+	// instead of a full backfill. ADD COLUMN on the partitioned parent
+	// propagates to every leaf.
+	mg.AddMigration("add content_version to embeddings",
+		migrator.NewRawSQLMigration("").Postgres(`
+			ALTER TABLE embeddings ADD COLUMN IF NOT EXISTS content_version INT NOT NULL DEFAULT 1;
+		`))
+	mg.AddMigration("add content_version to vector_backfill_jobs",
+		migrator.NewRawSQLMigration("").Postgres(`
+			ALTER TABLE vector_backfill_jobs ADD COLUMN IF NOT EXISTS content_version INT NOT NULL DEFAULT 1;
+		`))
 }

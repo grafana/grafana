@@ -38,6 +38,7 @@ var (
 	sqlVectorNamespaceDeletePromoted     = mustTemplate("vector_namespace_delete_promoted.sql")
 	sqlVectorCollectionGetContent        = mustTemplate("vector_collection_get_content.sql")
 	sqlVectorCollectionExists            = mustTemplate("vector_collection_exists.sql")
+	sqlVectorCollectionContentVersion    = mustTemplate("vector_collection_content_version.sql")
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
 	sqlVectorBackfillJobsList            = mustTemplate("vector_backfill_jobs_list.sql")
 	sqlVectorBackfillJobsCreate          = mustTemplate("vector_backfill_jobs_create.sql")
@@ -147,6 +148,34 @@ func (r *sqlVectorCollectionExistsRequest) Validate() error {
 }
 
 func (r *sqlVectorCollectionExistsRequest) Results() (*sqlVectorCollectionExistsResponse, error) {
+	cp := *r.Response
+	return &cp, nil
+}
+
+// sqlVectorCollectionContentVersionResponse.MinVersion is NULL (Valid=false)
+// when the uid has no rows, since MIN() over zero matching rows still
+// returns exactly one result row.
+type sqlVectorCollectionContentVersionResponse struct {
+	MinVersion sql.NullInt64
+}
+
+type sqlVectorCollectionContentVersionRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	UID       string
+	Response  *sqlVectorCollectionContentVersionResponse
+}
+
+func (r *sqlVectorCollectionContentVersionRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	return nil
+}
+
+func (r *sqlVectorCollectionContentVersionRequest) Results() (*sqlVectorCollectionContentVersionResponse, error) {
 	cp := *r.Response
 	return &cp, nil
 }

@@ -543,6 +543,50 @@ func TestIntegrationVectorExists(t *testing.T) {
 	assert.False(t, exists, "different model should be treated as not-exists")
 }
 
+// TestIntegrationVectorContentVersion pins the MIN-across-rows contract:
+// an absent uid reports exists=false, mixed content_version rows report the
+// oldest (MIN), and both Upsert and UpsertReplaceSubresources persist the
+// version so a later read reflects it.
+func TestIntegrationVectorContentVersion(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	version, exists, err := backend.ContentVersion(ctx, "integration-test", testModel, testResource, "cv-dash")
+	require.NoError(t, err)
+	assert.False(t, exists, "no rows yet")
+	assert.Equal(t, 0, version)
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		{Namespace: "integration-test", Resource: testResource, UID: "cv-dash", Title: "T",
+			Subresource: "panel/1", Content: "p1", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 2},
+		{Namespace: "integration-test", Resource: testResource, UID: "cv-dash", Title: "T",
+			Subresource: "panel/2", Content: "p2", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 5},
+	}))
+
+	version, exists, err = backend.ContentVersion(ctx, "integration-test", testModel, testResource, "cv-dash")
+	require.NoError(t, err)
+	assert.True(t, exists)
+	assert.Equal(t, 2, version, "MIN across the uid's mixed-version rows")
+
+	// UpsertReplaceSubresources round-trips content_version too: panel/1
+	// bumps to 9, panel/2 is left untouched (still 5, in desired but not
+	// changed) — the new MIN reflects the surviving older row.
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "cv-dash",
+		[]Vector{
+			{Namespace: "integration-test", Resource: testResource, UID: "cv-dash", Title: "T",
+				Subresource: "panel/1", Content: "p1 v2", Metadata: json.RawMessage(`{}`),
+				Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 9},
+		}, []string{"panel/1", "panel/2"}))
+
+	version, exists, err = backend.ContentVersion(ctx, "integration-test", testModel, testResource, "cv-dash")
+	require.NoError(t, err)
+	assert.True(t, exists)
+	assert.Equal(t, 5, version, "panel/1 now 9, panel/2 unchanged at 5, so MIN is 5")
+
+	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "cv-dash"))
+}
+
 func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 

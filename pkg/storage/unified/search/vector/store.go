@@ -71,6 +71,11 @@ type VectorBackend interface {
 	// resources that already have embeddings.
 	Exists(ctx context.Context, namespace, model, resource, uid string) (bool, error)
 
+	// ContentVersion returns the minimum stored content_version across the
+	// uid's rows; exists=false when the uid has no rows. MIN so a
+	// partially-updated uid is treated as the oldest of its rows.
+	ContentVersion(ctx context.Context, namespace, model, resource, uid string) (version int, exists bool, err error)
+
 	// GetLatestRV is the reconciler checkpoint. 0 if never advanced.
 	GetLatestRV(ctx context.Context) (int64, error)
 
@@ -154,6 +159,7 @@ type Vector struct {
 	Metadata        json.RawMessage
 	Embedding       []float32
 	Model           string
+	ContentVersion  int // extractor content-shape version; MIN across a uid's rows drives incremental re-embed backfills
 }
 
 func (v *Vector) Validate() error {

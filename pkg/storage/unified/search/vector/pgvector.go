@@ -249,6 +249,11 @@ func (b *pgvectorBackend) upsertAll(ctx context.Context, tx db.Tx, vectors []Vec
 			return fmt.Errorf("vector[%d]: %w", i, err)
 		}
 		vectors[i].Title = truncateRunes(vectors[i].Title, maxTitleLen)
+		// Zero means the caller predates content versioning; store the
+		// baseline so an explicit 0 can't undercut the column's DEFAULT 1.
+		if vectors[i].ContentVersion < 1 {
+			vectors[i].ContentVersion = 1
+		}
 		req := &sqlVectorCollectionUpsertRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Resource:    vectors[i].Resource,
@@ -420,6 +425,28 @@ func (b *pgvectorBackend) Exists(ctx context.Context, namespace, model, resource
 		return false, err
 	}
 	return len(rows) > 0, nil
+}
+
+func (b *pgvectorBackend) ContentVersion(ctx context.Context, namespace, model, resource, uid string) (int, bool, error) {
+	if err := b.validateResource(ctx, resource); err != nil {
+		return 0, false, err
+	}
+	req := &sqlVectorCollectionContentVersionRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Resource:    resource,
+		Namespace:   namespace,
+		Model:       model,
+		UID:         uid,
+		Response:    &sqlVectorCollectionContentVersionResponse{},
+	}
+	row, err := dbutil.QueryRow(ctx, b.db, sqlVectorCollectionContentVersion, req)
+	if err != nil {
+		return 0, false, err
+	}
+	if !row.MinVersion.Valid {
+		return 0, false, nil
+	}
+	return int(row.MinVersion.Int64), true, nil
 }
 
 func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource string,

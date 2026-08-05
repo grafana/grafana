@@ -274,6 +274,9 @@ func (f *fakeVector) Exists(_ context.Context, ns, model, res, uid string) (bool
 	defer f.mu.Unlock()
 	return f.existsSet[existsKey(ns, model, res, uid)], nil
 }
+func (f *fakeVector) ContentVersion(context.Context, string, string, string, string) (int, bool, error) {
+	return 0, false, nil
+}
 func (f *fakeVector) GetLatestRV(context.Context) (int64, error) { return 0, nil }
 func (f *fakeVector) SetLatestRV(context.Context, int64) error   { return nil }
 func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {

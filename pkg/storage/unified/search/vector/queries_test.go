@@ -37,6 +37,7 @@ func TestVectorQueries(t *testing.T) {
 							Metadata:        json.RawMessage(`{"datasource_uids":["ds1"]}`),
 							Embedding:       []float32{0.1, 0.2, 0.3},
 							Model:           "text-embedding-005",
+							ContentVersion:  3,
 						},
 						Embedding: pgvector.NewHalfVector([]float32{0.1, 0.2, 0.3}),
 					},
@@ -126,6 +127,19 @@ func TestVectorQueries(t *testing.T) {
 						Model:       "text-embedding-005",
 						UID:         "abc-uid",
 						Response:    &sqlVectorCollectionExistsResponse{},
+					},
+				},
+			},
+			sqlVectorCollectionContentVersion: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionContentVersionRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "dashboards",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						UID:         "abc-uid",
+						Response:    &sqlVectorCollectionContentVersionResponse{},
 					},
 				},
 			},

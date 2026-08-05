@@ -222,6 +222,54 @@ func TestPgvectorBackend_GetLatestRV_SeedRowMissing(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
+func TestPgvectorBackend_ContentVersion(t *testing.T) {
+	t.Run("returns MIN across the uid's rows", func(t *testing.T) {
+		rdb := test.NewDBProviderNopSQL(t)
+		backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+		ctx := testutil.NewDefaultTestContext(t)
+
+		rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+		rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
+			rdb.SQLMock.NewRows([]string{"min_version"}).AddRow(int64(2)))
+
+		version, exists, err := backend.ContentVersion(ctx, "ns", "m", "dashboards", "dash-1")
+		require.NoError(t, err)
+		require.True(t, exists)
+		require.Equal(t, 2, version)
+		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("absent uid returns exists=false", func(t *testing.T) {
+		rdb := test.NewDBProviderNopSQL(t)
+		backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+		ctx := testutil.NewDefaultTestContext(t)
+
+		rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(seededCatalogRows())
+		// MIN() over zero matching rows still returns one row, with NULL.
+		rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
+			rdb.SQLMock.NewRows([]string{"min_version"}).AddRow(nil))
+
+		version, exists, err := backend.ContentVersion(ctx, "ns", "m", "dashboards", "nonexistent")
+		require.NoError(t, err)
+		require.False(t, exists)
+		require.Equal(t, 0, version)
+		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+	})
+
+	t.Run("unknown resource rejected before querying embeddings", func(t *testing.T) {
+		rdb := test.NewDBProviderNopSQL(t)
+		backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+		ctx := testutil.NewDefaultTestContext(t)
+
+		rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
+
+		_, _, err := backend.ContentVersion(ctx, "ns", "m", "folders", "dash-1")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "unsupported resource")
+		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+	})
+}
+
 func TestPartialHNSWName(t *testing.T) {
 	require.Equal(t, "dashboards_stacks_123_hnsw", partialHNSWName("dashboards", "stacks-123"))
 	require.Equal(t, "dashboards_weird__name_hnsw", partialHNSWName("dashboards", "weird!!name"))
