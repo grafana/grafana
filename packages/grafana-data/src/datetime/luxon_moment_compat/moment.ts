@@ -791,9 +791,7 @@ class MomentCompat implements MomentLike {
   week(): number;
   week(value: number): MomentLike;
   week(value?: number): number | MomentLike {
-    return value == null
-      ? this._dt.weekNumber
-      : this._setDt(this._dt.plus({ weeks: value - this._dt.weekNumber }));
+    return value == null ? this._dt.weekNumber : this._setDt(this._dt.plus({ weeks: value - this._dt.weekNumber }));
   }
 
   hour(): number;

@@ -115,7 +115,9 @@ export function formatWithOrdinal(luxonDateTime: DateTime, momentFormat: string)
 
   if (hasMeridiem) {
     // Moment's `a` is lowercase meridiem while Luxon's `a` is uppercase.
-    formatted = formatted.replace(LOWER_MERIDIEM_MARKER_PATTERN, (_: string, meridiem: string) => meridiem.toLowerCase());
+    formatted = formatted.replace(LOWER_MERIDIEM_MARKER_PATTERN, (_: string, meridiem: string) =>
+      meridiem.toLowerCase()
+    );
   }
 
   return formatted;
