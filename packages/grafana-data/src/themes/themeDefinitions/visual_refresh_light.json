@@ -78,7 +78,7 @@
       "primary": "palette.neutral800",
       "secondary": "palette.neutral600",
       "disabled": "palette.neutral500",
-      "link": "palette.orange700"
+      "link": "palette.blue600"
     },
     "border": {
       "weak": "palette.neutral200",
@@ -89,7 +89,7 @@
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
       "brandVertical": "linear-gradient(0.01deg, palette.orange400 0.01%, palette.orange500 99.99%)"
     },
-    "contrastThreshold": 4.5,
+    "contrastThreshold": 3,
     "action": {
       "selected": "hsl(from palette.neutral900 h s l / 0.12)",
       "hover": "hsl(from palette.neutral900 h s l / 0.09)",

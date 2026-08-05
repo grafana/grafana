@@ -1,9 +1,5 @@
-import { useId, useMemo } from 'react';
-
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
-import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import {
@@ -11,28 +7,6 @@ import {
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
 import { partitionAnnotationsByDisplay } from '../../sidebar/dashboard/DashboardAnnotationsList';
-
-import { AnnotationList } from './AnnotationList';
-
-function useEditPaneOptions(
-  this: AnnotationSetEditableElement,
-  dataLayerSet: DashboardDataLayerSet
-): OptionsPaneCategoryDescriptor[] {
-  const annotationListId = useId();
-
-  const options = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({ title: '', id: 'annotations' }).addItem(
-      new OptionsPaneItemDescriptor({
-        title: '',
-        id: annotationListId,
-        skipField: true,
-        render: () => <AnnotationList dataLayerSet={dataLayerSet} />,
-      })
-    );
-  }, [annotationListId, dataLayerSet]);
-
-  return [options];
-}
 
 export class AnnotationSetEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -52,6 +26,4 @@ export class AnnotationSetEditableElement implements EditableDashboardElement {
     const { visible, controlsMenu, hidden } = partitionAnnotationsByDisplay(this.dataLayerSet.state.annotationLayers);
     return [...visible, ...controlsMenu, ...hidden];
   }
-
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.dataLayerSet);
 }

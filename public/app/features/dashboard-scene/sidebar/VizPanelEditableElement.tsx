@@ -30,7 +30,7 @@ import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 
-function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const panel = this.panel;
   const layoutElement = panel.parent!;
   const titleId = useId();
@@ -41,7 +41,7 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
     return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.viz-panel.options.title-option', 'Title'),
+          title: t('dashboard.sidebar.viz-panel.options.title-option', 'Title'),
           id: titleId,
           value: panel.state.title,
           popularRank: 1,
@@ -52,7 +52,7 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.viz-panel.options.description', 'Description'),
+          title: t('dashboard.sidebar.viz-panel.options.description', 'Description'),
           id: descriptionId,
           value: panel.state.description,
           render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
@@ -60,7 +60,7 @@ function useEditPaneOptions(this: VizPanelEditableElement, isNewElement: boolean
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.viz-panel.options.transparent-background', 'Transparent background'),
+          title: t('dashboard.sidebar.viz-panel.options.transparent-background', 'Transparent background'),
           id: backgroundId,
           render: (descriptor) => <PanelBackgroundSwitch id={descriptor.props.id} panel={panel} />,
         })
@@ -106,7 +106,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     return <OpenPanelEditViz panel={this.panel} />;
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
 
   public onDelete() {
     DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), 'edit_pane');
@@ -117,12 +117,12 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public onConfirmDelete() {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: t('dashboard.viz-panel.delete-panel-title', 'Delete panel?'),
+        title: t('dashboard.sidebar.viz-panel.delete-panel-title', 'Delete panel?'),
         text: t(
-          'dashboard.viz-panel.delete-panel-text',
+          'dashboard.sidebar.viz-panel.delete-panel-text',
           'Deleting this panel will also remove all queries. Are you sure you want to continue?'
         ),
-        yesText: t('dashboard.viz-panel.delete-panel-yes', 'Delete'),
+        yesText: t('dashboard.sidebar.viz-panel.delete-panel-yes', 'Delete'),
         onConfirm: () => {
           this.onDelete();
         },
@@ -170,10 +170,13 @@ const OpenPanelEditViz = ({ panel }: OpenPanelEditVizProps) => {
       icon="graph-bar"
       variant="secondary"
       fullWidth
-      tooltip={t('dashboard.viz-panel.options.configure-button-tooltip', 'Edit queries and visualization options')}
+      tooltip={t(
+        'dashboard.sidebar.viz-panel.options.configure-button-tooltip',
+        'Edit queries and visualization options'
+      )}
       data-testid={selectors.components.Sidebar.configurePanelButton}
     >
-      <Trans i18nKey="dashboard.new-panel.configure-button">Edit visualization</Trans>
+      <Trans i18nKey="dashboard.sidebar.viz-panel.configure-button">Edit visualization</Trans>
     </Button>
   );
 };

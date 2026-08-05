@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type RefObject, useMemo, useState } from 'react';
+import { type RefObject, useCallback, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
-import { getTemplateSrv, useAppPluginInstalled } from '@grafana/runtime';
+import { config, getTemplateSrv, reportInteraction, useAppPluginInstalled } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -38,6 +38,7 @@ import { type SpanBarOptionsData } from './components/settings/SpanBarSettings';
 import type TTraceTimeline from './components/types/TTraceTimeline';
 import { type SpanLinkFunc } from './components/types/links';
 import { type Trace } from './components/types/trace';
+import { isSummarySpan } from './components/utils/summary-span';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
@@ -195,6 +196,40 @@ export function TraceView(props: Props) {
     ? props.scrollElement
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
 
+  // Opening the detail of a pruned summary span is otherwise untracked; report it (only on open,
+  // only for summary spans) so summary-span engagement is observable.
+  const handleDetailToggle = useCallback(
+    (spanID: string) => {
+      const isOpening = !detailStates.has(spanID);
+      if (isOpening) {
+        const span = traceProp?.spans.find((s) => s.spanID === spanID);
+        if (span && isSummarySpan(span)) {
+          reportInteraction('grafana_traces_summary_span_detail_opened', {
+            datasourceType,
+            grafana_version: config.buildInfo.version,
+            spanCount: span.aggregation?.spanCount,
+          });
+        }
+      }
+      toggleDetail(spanID);
+    },
+    [detailStates, toggleDetail, traceProp, datasourceType]
+  );
+
+  // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
+  // report each toggle (with the resulting open state) so summary-attribute engagement is observable.
+  const handleSummaryAttributesToggle = useCallback(
+    (spanID: string) => {
+      reportInteraction('grafana_traces_summary_attributes_toggled', {
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        isOpen: !detailStates.get(spanID)?.isSummaryAttributesOpen,
+      });
+      detailSummaryAttributesToggle(spanID);
+    },
+    [detailStates, detailSummaryAttributesToggle, datasourceType]
+  );
+
   return (
     <>
       {props.dataFrames?.length && traceProp ? (
@@ -249,8 +284,8 @@ export function TraceView(props: Props) {
             detailReferenceItemToggle={detailReferenceItemToggle}
             detailProcessToggle={detailProcessToggle}
             detailTagsToggle={detailTagsToggle}
-            detailSummaryAttributesToggle={detailSummaryAttributesToggle}
-            detailToggle={toggleDetail}
+            detailSummaryAttributesToggle={handleSummaryAttributesToggle}
+            detailToggle={handleDetailToggle}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
             createSpanLink={createSpanLink}

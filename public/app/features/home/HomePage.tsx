@@ -11,7 +11,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
-import { useIrmPlugin } from '../alerting/unified/hooks/usePluginBridge';
+import { usePluginBridge } from '../alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from '../alerting/unified/types/pluginBridges';
 
 import { AlertIncidentTabs } from './AlertsIncidents/AlertIncidentTabs';
@@ -23,6 +23,7 @@ import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
+import { Overview } from './Overview/Overview';
 import { Recommendations } from './Recommendations/Recommendations';
 import { homepageViewed } from './analytics/main';
 import useHomeGreeting from './useHomeGreeting';
@@ -69,7 +70,7 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
-  const irm = useIrmPlugin(SupportedPlugin.Incident);
+  const irm = usePluginBridge(SupportedPlugin.Irm);
 
   const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
   const isWaitingForIRM = !redesignEnabled && irm.loading;
@@ -147,6 +148,7 @@ export default function HomePage() {
                   })}
 
                   <Recommendations />
+                  <Overview />
 
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}

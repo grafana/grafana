@@ -78,6 +78,11 @@
       "description-basic-logs": "Povolení této funkce zapříčiní vznik nákladů Azure Monitor na dotaz na panelech nástěnek, které dotazují tabulky nakonfigurované pro <2>základní protokoly</2>.",
       "label-enable-basic-logs": "Povolit základní protokoly"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "Další nastavení jsou volitelná nastavení, která lze nakonfigurovat pro větší kontrolu nad zdrojem dat. Patří sem zabezpečený proxy server Socks, časový limit požadavku a přeposlané soubory cookie.",
       "title-additional-settings": "Další nastavení"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Metrický jmenný prostor"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "Načítání…"
     },
@@ -204,6 +216,10 @@
       "label-by": "PODLE",
       "label-order-by": "Seřadit podle",
       "tooltip-order-by": "Seřadit výsledky podle jednoho nebo více sloupců ve vzestupném nebo sestupném pořadí."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Při požadování metadat ze služby Azure Monitor došlo k chybě"

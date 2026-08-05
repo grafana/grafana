@@ -261,6 +261,9 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 	for name, count := range tagCounts {
 		tags = append(tags, Tag{Name: name, Count: count})
 	}
+	slices.SortFunc(tags, func(a, b Tag) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
 
 	if opts.Limit > 0 && len(tags) > opts.Limit {
 		tags = tags[:opts.Limit]

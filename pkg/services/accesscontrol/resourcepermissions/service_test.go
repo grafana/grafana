@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -840,7 +841,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	cfg := setting.NewCfg()
 	tracer := tracing.InitializeTracerForTest()
 
-	teamSvc, err := teamimpl.ProvideService(sql, cfg, tracer, nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracer, nil)
 	require.NoError(t, err)
 
 	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
