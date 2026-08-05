@@ -84,7 +84,7 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 			for idx := range versions {
 				version := &versions[idx]
 				version.ID = 0
-				version.RuleUID = ""
+				version.RuleUID = version.RuleGUID
 				version.Created = TimeNow()
 				version.CreatedBy = nil
 				if user != nil {
@@ -330,7 +330,7 @@ func (st DBstore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodel
 	alertRules := make([]*ngmodels.AlertRule, 0)
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		// take only the latest versions of each rule by GUID
-		rows, err := sess.Table(alertRuleVersion{}).Where("rule_org_id = ? AND rule_uid = ''", orgID).Desc("created", "id").Rows(alertRuleVersion{})
+		rows, err := sess.Table(alertRuleVersion{}).Where("rule_org_id = ? AND rule_uid = rule_guid", orgID).Desc("created", "id").Rows(alertRuleVersion{})
 		if err != nil {
 			return err
 		}
@@ -2060,7 +2060,7 @@ func (st DBstore) CleanUpDeletedAlertRules(ctx context.Context) (int64, error) {
 	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		expire := TimeNow().Add(-st.Cfg.DeletedRuleRetention)
 		st.Logger.Debug("Permanently remove expired deleted rules", "deletedBefore", expire)
-		result, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_uid='' AND created <= ?", expire)
+		result, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_uid = rule_guid AND created <= ?", expire)
 		if err != nil {
 			return err
 		}
@@ -2088,7 +2088,7 @@ func (st DBstore) DeleteRuleFromTrashByGUID(ctx context.Context, orgID int64, ru
 	affectedRows := int64(-1)
 	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		st.Logger.FromContext(ctx).Debug("Deleting a deleted rule by GUID", "ruleGUID", ruleGUID)
-		result, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_uid='' AND rule_org_id = ? AND rule_guid = ? ", orgID, ruleGUID)
+		result, err := sess.Exec("DELETE FROM alert_rule_version WHERE rule_uid = rule_guid AND rule_org_id = ? AND rule_guid = ? ", orgID, ruleGUID)
 		if err != nil {
 			return err
 		}
