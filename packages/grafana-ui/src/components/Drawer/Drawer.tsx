@@ -165,15 +165,7 @@ export function Drawer({
             )}
             {tabs && <div className={styles.tabsWrapper}>{tabs}</div>}
           </div>
-          {!scrollableContent ? (
-            content
-          ) : (
-            <div className={styles.scrollWrapper}>
-              <ScrollContainer borderRadius="lg" showScrollIndicators>
-                {content}
-              </ScrollContainer>
-            </div>
-          )}
+          {!scrollableContent ? content : <ScrollContainer showScrollIndicators>{content}</ScrollContainer>}
         </div>
       </FloatingFocusManager>
     </RcDrawer>
@@ -252,7 +244,6 @@ function useBodyClassWhileOpen() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     container: css({
       display: 'flex',
@@ -272,22 +263,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         boxShadow: theme.shadows.z3,
       },
     }),
-    scrollWrapper: css(
-      {
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        maxHeight: '100%',
-        minHeight: 0,
-        minWidth: 0,
-      },
-      visualRefreshEnabled && {
-        borderBottomLeftRadius: theme.shape.radius.lg,
-        borderBottomRightRadius: theme.shape.radius.lg,
-        overflow: 'hidden',
-      }
-    ),
     drawerContent: css({
+      backgroundColor: theme.colors.background.primary,
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
@@ -387,27 +364,17 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 function getWrapperStyles(theme: GrafanaTheme2, size: 'sm' | 'md' | 'lg') {
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  return css(
-    {
-      backgroundColor: theme.colors.background.primary,
-      bottom: 0,
-      label: `drawer-content-wrapper-${size}`,
-      position: 'absolute',
-      right: 0,
-      top: 0,
-      zIndex: theme.zIndex.modalBackdrop,
+  return css({
+    bottom: 0,
+    label: `drawer-content-wrapper-${size}`,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: theme.zIndex.modalBackdrop,
 
-      [theme.breakpoints.down('md')]: {
-        width: `calc(100% - ${theme.spacing(2)}) !important`,
-        minWidth: '0 !important',
-      },
+    [theme.breakpoints.down('md')]: {
+      width: `calc(100% - ${theme.spacing(2)}) !important`,
+      minWidth: '0 !important',
     },
-    visualRefreshEnabled && {
-      borderRadius: theme.shape.radius.lg,
-      bottom: theme.spacing(1),
-      right: theme.spacing(1),
-      top: theme.spacing(1),
-    }
-  );
+  });
 }
