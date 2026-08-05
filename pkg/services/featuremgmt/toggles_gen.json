@@ -2171,6 +2171,21 @@
     },
     {
       "metadata": {
+        "name": "datetime.useLuxon",
+        "resourceVersion": "1785947524842",
+        "creationTimestamp": "2026-08-05T16:32:04Z"
+      },
+      "spec": {
+        "description": "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "deletedFolderResourceCleanup",
         "resourceVersion": "1783997108632",
         "creationTimestamp": "2026-07-14T02:45:08Z"
@@ -2208,6 +2223,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "disableScriptedDashboards",
+        "resourceVersion": "1785944490040",
+        "creationTimestamp": "2026-08-05T15:41:30Z"
+      },
+      "spec": {
+        "description": "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
+        "stage": "deprecated",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "true"
       }
     },
     {

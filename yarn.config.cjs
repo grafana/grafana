@@ -4,13 +4,13 @@ const { defineConfig } = require('@yarnpkg/types');
 const { coerce } = require('semver');
 
 const permittedPinnedProductionDependencies = new Set([
-  '@grafana/api-clients',     // Monorepo package
-  '@grafana/i18n',            // Monorepo package
-  '@grafana/schema',          // Monorepo package
-  '@grafana/data',            // Monorepo package
-  '@grafana/ui',              // Monorepo package
-  '@grafana/runtime',         // Monorepo package
-  '@grafana/e2e-selectors',   // Monorepo package
+  '@grafana/api-clients', // Monorepo package
+  '@grafana/i18n', // Monorepo package
+  '@grafana/schema', // Monorepo package
+  '@grafana/data', // Monorepo package
+  '@grafana/ui', // Monorepo package
+  '@grafana/runtime', // Monorepo package
+  '@grafana/e2e-selectors', // Monorepo package
   '@grafana/react-data-grid', // Forked package with beta releases
 ]);
 

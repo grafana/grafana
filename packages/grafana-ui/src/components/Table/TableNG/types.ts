@@ -126,6 +126,8 @@ interface BaseTableProps {
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
+  /** When pagination is enabled, fixes the number of rows per page instead of deriving it from the panel height. */
+  pageSize?: number;
   cellHeight?: TableCellHeight;
   maxRowHeight?: number;
   structureRev?: number;

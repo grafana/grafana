@@ -644,6 +644,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "disableScriptedDashboards",
+			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
+			Stage:       FeatureStageDeprecated,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true", // enabled by default: scripted dashboards are disabled
+		},
+		{
 			Name:        "dashboard.notebooks",
 			Description: "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
 			Stage:       FeatureStageExperimental,
@@ -3008,6 +3016,15 @@ var (
 			Description:  "Enables additional experimental color schemes for visualizations.",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "datetime.useLuxon",
+			Description:  "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
