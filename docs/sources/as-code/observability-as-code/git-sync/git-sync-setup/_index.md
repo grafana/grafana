@@ -55,7 +55,7 @@ Git Sync is available for any Git provider through a Pure Git repository type, a
 Select any of these options to proceed:
 
 - [GitHub](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-github)
-- [GitHub Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-github-enterprise)
+- [GitHub Enterprise (Server and Cloud)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-github-enterprise)
 - [GitLab](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-gitlab)
 - [Bitbucket](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-bitbucket)
 - [Pure Git](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-pure-git)
@@ -105,7 +105,7 @@ Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with GitHub Enterprise
 
-Similarly, you can connect to GitHub Enterprise Server using a **Personal Access Token** or with **GitHub App**. Refer to [Configure with GitHub](#configure-with-github) for details on the required permissions.
+Similarly, you can connect to GitHub Enterprise Server or GitHub Enterprise Cloud using a **Personal Access Token** or with **GitHub App**. Refer to [Configure with GitHub](#configure-with-github) for details on the required permissions.
 
 #### Connect with a GitHub Personal Access Token
 

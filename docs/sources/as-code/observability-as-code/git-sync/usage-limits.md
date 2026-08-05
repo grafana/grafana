@@ -138,13 +138,13 @@ This feature is available starting in Grafana 13.0.4, but not supported until Gr
 
 Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitLab and Bitbucket.
 
-| **Provider**      | **Available in**       | **Authentication**                  |
-| ----------------- | ---------------------- | ----------------------------------- |
-| Pure Git          | Cloud, OSS, Enterprise | Personal Access Token               |
-| GitHub            | Cloud, OSS, Enterprise | Personal Access Token or GitHub App |
-| GitHub Enterprise | Cloud, Enterprise      | Personal Access Token or GitHub App |
-| GitLab            | Cloud, Enterprise      | Personal Access Token               |
-| Bitbucket         | Cloud, Enterprise      | API token with scopes               |
+| **Provider**                         | **Available in**       | **Authentication**                  |
+| ------------------------------------ | ---------------------- | ----------------------------------- |
+| Pure Git                             | Cloud, OSS, Enterprise | Personal Access Token               |
+| GitHub                               | Cloud, OSS, Enterprise | Personal Access Token or GitHub App |
+| GitHub Enterprise (Server and Cloud) | Cloud, Enterprise      | Personal Access Token or GitHub App |
+| GitLab                               | Cloud, Enterprise      | Personal Access Token               |
+| Bitbucket                            | Cloud, Enterprise      | API token with scopes               |
 
 Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x or later only. Refer to [Enable Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-git-providers) to set them up.
 
@@ -166,7 +166,7 @@ However, Pure Git doesn't include any features that require provider APIs, such 
 
 ### Enhanced integrations: GitHub, GitHub Enterprise, GitLab, Bitbucket
 
-If your Git provider is GitHub, GitHub Enterprise, GitLab, or Bitbucket, use the enhanced integration. Enhanced integrations understand the platform you're using, allowing workflows that feel native: automated pull request comments with dashboard previews, instant webhook-based sync, or direct navigation from Grafana to source files in your provider's UI.
+If your Git provider is GitHub, GitHub Enterprise (Server and Cloud), GitLab, or Bitbucket, use the enhanced integration. Enhanced integrations understand the platform you're using, allowing workflows that feel native: automated pull request comments with dashboard previews, instant webhook-based sync, or direct navigation from Grafana to source files in your provider's UI.
 
 The GitHub enhanced integration is the most feature-complete experience today. It's available in Grafana OSS, Enterprise, and Cloud, and enables richer pull request workflows, deeper linking between Grafana and GitHub, and tighter integration into review processes.
 
