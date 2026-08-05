@@ -43,7 +43,7 @@ test.describe(
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
       const rows = new Rows({ page, dashboardPage, selectors, components });
 
-      await importTestDashboard(page, selectors, `Row layout repeats - add repeats - ${Date.now()}`);
+      await importTestDashboard(page, selectors, 'Row layout repeats - add repeats');
 
       await controls.enterEditMode();
 
@@ -70,7 +70,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Rows layout repeats - update on variable change - ${Date.now()}`,
+        'Rows layout repeats - update on variable change',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
@@ -94,7 +94,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Rows layout repeats - update through sidebar - ${Date.now()}`,
+        'Rows layout repeats - update through sidebar',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
@@ -122,14 +122,14 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Row layout repeats - update repeats after panel change - ${Date.now()}`,
+        'Row layout repeats - update repeats after panel change',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
       await controls.enterEditMode();
 
       await panels.selectByTitle('single panel row 1');
-      await sidebar.panelOptions.setTitle(`${getEditedName('single panel row $c4')}`);
+      await sidebar.panelOptions.setTitle(getEditedName('single panel row $c4'));
 
       // close first row to load the second row
       await rows.toggle(`${REPEAT_TITLE_BASE}1`);
@@ -157,7 +157,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Row layout repeats - update repeats after panel change in editor - ${Date.now()}`,
+        'Row layout repeats - update repeats after panel change in editor',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
@@ -204,7 +204,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Row layout repeats - hide canvas add action in repeats - ${Date.now()}`,
+        'Row layout repeats - hide canvas add action in repeats',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
@@ -226,7 +226,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Row layout repeats - view panels in repeated rows - ${Date.now()}`,
+        'Row layout repeats - view panels in repeated rows',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
@@ -273,7 +273,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Row layout repeats - view embedded panels in repeated rows - ${Date.now()}`,
+        'Row layout repeats - view embedded panels in repeated rows',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
@@ -311,7 +311,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Row layout repeats - remove row repeats - ${Date.now()}`,
+        'Row layout repeats - remove row repeats',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
@@ -349,7 +349,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Row layout repeats - add tabs in repeated rows - ${Date.now()}`,
+        'Row layout repeats - add tabs in repeated rows',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
@@ -358,9 +358,9 @@ test.describe(
       // add a tab in first row
       await canvas.groupPanels('tab', rows.getContent(`${REPEAT_TITLE_BASE}1`));
 
-      await sidebar.tabOptions.setTitle(`tab-row-$c4`);
+      await sidebar.tabOptions.setTitle('tab-row-$c4');
 
-      await expect(tabs.getTitle(`tab-row-1`)).toBeVisible();
+      await expect(tabs.getTitle('tab-row-1')).toBeVisible();
 
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
@@ -378,7 +378,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Row layout repeats - add repeat tabs in repeated rows - ${Date.now()}`,
+        'Row layout repeats - add repeat tabs in repeated rows',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
@@ -387,7 +387,7 @@ test.describe(
       // add a tab in first row
       await canvas.groupPanels('tab', rows.getContent(`${REPEAT_TITLE_BASE}1`));
 
-      await sidebar.tabOptions.setTitle(`tab-$c1-row-$c4`);
+      await sidebar.tabOptions.setTitle('tab-$c1-row-$c4');
 
       await sidebar.tabOptions.repeatOptions.repeatByVariable('c1');
 
@@ -424,7 +424,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Row layout repeats - move repeated rows - ${Date.now()}`,
+        'Row layout repeats - move repeated rows',
         JSON.stringify(dashboardWithCollapsedRows),
         // there are no panels to show, since all rows are collapsed
         { checkPanelsVisible: false }
