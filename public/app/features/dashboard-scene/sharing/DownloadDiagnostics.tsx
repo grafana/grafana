@@ -107,11 +107,10 @@ function findV1PanelSaveModel(panels: unknown, id: number): unknown {
 //
 // The v2 branch depends on an ordering invariant: getSaveModel() (called just before this) keys every
 // element through the same serializer.getElementIdForPanel(id) that this lookup uses, so the id we
-// resolve here always matches a key serialization just produced. This is why library panels and
-// repeat clones both resolve even though initializeElementMapping seeds the map only from kind:'Panel'
-// elements: getSaveModel visits every panel first and, for any id not already mapped, getElementIdForPanel
-// generates and stores a "panel-<id>" key — which this lookup then finds. Keep getSaveModel ahead of
-// this call or the v2 mapping may be empty.
+// resolve here always matches a key serialization just produced. This is why repeat clones resolve even
+// though initializeElementMapping never seeds them: getSaveModel visits every panel first and, for any id
+// not already mapped, getElementIdForPanel generates and stores a "panel-<id>" key — which this lookup
+// then finds. Keep getSaveModel ahead of this call or the v2 mapping may be empty.
 function findPanelSaveModel(dashboardModel: unknown, panel: VizPanel, dashboard: DashboardScene): unknown {
   if (!isRecord(dashboardModel)) {
     return undefined;

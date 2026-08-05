@@ -37,7 +37,7 @@ interface NotebookLayoutManagerState extends SceneObjectState {
 
 export class NotebookLayoutManager
   extends SceneObjectBase<NotebookLayoutManagerState>
-  implements DashboardLayoutManager<{}, NotebookLayoutKind, CellKind>
+  implements DashboardLayoutManager<{}, NotebookLayoutKind>
 {
   public static Component = NotebookLayoutManagerRenderer;
   public readonly isDashboardLayoutManager = true;
@@ -80,9 +80,12 @@ export class NotebookLayoutManager
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
   }
 
-  // Narrative cells are exactly the elements getVizPanels() cannot report. Without this the
-  // serializer builds `elements` from viz panels alone and every markdown/code cell disappears
-  // while `layout.spec.cells` still references it — a spec with dangling ElementReferences.
+  // Narrative cells are exactly the elements getVizPanels() cannot report, so the notebook
+  // serializer asks for them separately and merges the two. Without them a spec carries
+  // `layout.spec.cells` entries pointing at elements that are not there.
+  //
+  // Notebook-specific on purpose: the dashboard layout contract knows nothing about this, because a
+  // dashboard has no elements that are not panels.
   public getNonPanelElements(): Record<string, CellKind> {
     const elements: Record<string, CellKind> = {};
     for (const cell of this.state.cells) {

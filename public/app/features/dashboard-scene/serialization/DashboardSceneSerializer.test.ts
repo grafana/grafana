@@ -1306,6 +1306,29 @@ describe('DashboardSceneSerializer', () => {
         // Should return default panel key for non-existent panel
         expect(serializer.getElementIdForPanel(3)).toBe('panel-3');
       });
+
+      // A library panel is returned by getVizPanels() like any other panel, so its element name has
+      // to be in the map. While it was not, serialization rekeyed it to panel-<id> and the layout
+      // kept referencing the name it was saved under, leaving the reference pointing at nothing.
+      it('should map a library panel element under its own name', () => {
+        serializer.initializeElementMapping({
+          ...saveModel,
+          elements: {
+            ...saveModel.elements,
+            'saved-view': {
+              kind: 'LibraryPanel',
+              spec: {
+                id: 3,
+                title: 'Checkout overview',
+                libraryPanel: { uid: 'lib-uid-1', name: 'Checkout overview' },
+              },
+            },
+          },
+        });
+
+        expect(serializer.getElementPanelMapping().get('saved-view')).toBe(3);
+        expect(serializer.getElementIdForPanel(3)).toBe('saved-view');
+      });
     });
   });
 

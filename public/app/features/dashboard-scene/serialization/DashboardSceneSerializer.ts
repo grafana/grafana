@@ -319,7 +319,10 @@ export class V2DashboardSerializer
     const elementKeys = Object.keys(saveModel.elements);
     elementKeys.forEach((key) => {
       const elementPanel = saveModel.elements[key];
-      if (elementPanel.kind === 'Panel') {
+      // Library panels belong here too: they are returned by `getVizPanels()`, so their element key
+      // is derived through the same lookup, and leaving them out meant serialization rekeyed them to
+      // `panel-<id>` while the layout kept referencing the name they were saved under.
+      if (elementPanel.kind === 'Panel' || elementPanel.kind === 'LibraryPanel') {
         this.elementPanelMap.set(key, elementPanel.spec.id);
       }
     });

@@ -10,10 +10,12 @@ import { addPanelCommand } from './addPanel';
 import { addRowCommand } from './addRow';
 import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
+import { applyNotebookSpecCommand } from './applyNotebookSpec';
 import { applySpecCommand } from './applySpec';
 import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
+import { getNotebookSpecCommand } from './getNotebookSpec';
 import { getSpecCommand } from './getSpec';
 import { listAnnotationsCommand } from './listAnnotations';
 import { listPanelsCommand } from './listPanels';
@@ -65,6 +67,8 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   updateDashboardSettingsCommand,
   getSpecCommand,
   applySpecCommand,
+  getNotebookSpecCommand,
+  applyNotebookSpecCommand,
 ];
 
 /** Lookup command by name (case-insensitive). */

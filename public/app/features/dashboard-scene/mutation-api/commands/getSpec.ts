@@ -1,25 +1,23 @@
 /**
- * GET_SPEC — return the whole document as a single spec, the read half of the
- * full-spec surface (paired with APPLY_SPEC). A thin wrapper over
+ * GET_SPEC — return the whole dashboard as a single v2 `DashboardSpec`, the read
+ * half of the full-spec surface (paired with APPLY_SPEC). A thin wrapper over
  * `transformSceneToSaveModelSchemaV2`, so it always reflects the canonical save
  * model.
  *
- * The command is resource-polymorphic: on a dashboard scene it returns a v2
- * `DashboardSpec`, on a notebook scene a v2beta1 `NotebookSpec`, reported via
- * `resource`. The scene serializer is dashboard-typed and always emits the full
- * dashboard shape, so a notebook is projected back down to its own fields before
- * it leaves here — a caller that echoed the dashboard shape back through
- * APPLY_SPEC would be writing `variables`, `annotations` and `cursorSync` into a
- * resource that has no such fields.
+ * A notebook is answered too, by forwarding to GET_NOTEBOOK_SPEC. That is
+ * compatibility rather than design: the assistant plugin is released on its own
+ * schedule and looks for this command by name when it decides whether a page can
+ * be read at all, so refusing a notebook here would break notebook pages for
+ * every plugin version already out there.
  */
 
 import * as z from 'zod';
 
-import { dashboardSpecToNotebookSpec, isNotebookScene } from '../../serialization/notebookSpecTransform';
+import { isNotebookScene } from '../../serialization/notebookSpecTransform';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
-import { validateNotebookSpec } from '../../v2schema/notebookSpecSchema';
 
+import { getNotebookSpecCommand } from './getNotebookSpec';
 import { readOnly, type MutationCommand } from './types';
 
 const getSpecPayloadSchema = z
@@ -37,8 +35,10 @@ export type GetSpecPayload = z.infer<typeof getSpecPayloadSchema>;
 export const getSpecCommand: MutationCommand<GetSpecPayload> = {
   name: 'GET_SPEC',
   description:
-    'Return the entire document as one spec JSON object: a v2 DashboardSpec on a dashboard, ' +
-    'a v2beta1 NotebookSpec on a notebook. The response reports which one in `resource`.',
+    'Return the entire dashboard as one v2 DashboardSpec JSON object: settings, variables, ' +
+    'annotations, panels and the nested rows/tabs layout. Also accepted on a notebook, where it ' +
+    'returns a v2beta1 NotebookSpec and GET_NOTEBOOK_SPEC is the command to prefer. The response ' +
+    'reports which one it returned in `resource`.',
 
   payloadSchema: getSpecPayloadSchema,
   permission: readOnly,
@@ -47,24 +47,13 @@ export const getSpecCommand: MutationCommand<GetSpecPayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     try {
-      const spec = transformSceneToSaveModelSchemaV2(scene);
-
+      // Compatibility forward, see the docstring for why it cannot simply refuse. This branch goes
+      // when no released assistant plugin version still asks for GET_SPEC on a notebook page.
       if (isNotebookScene(scene)) {
-        const notebook = dashboardSpecToNotebookSpec(spec);
-
-        // Opt-in structural + referential validation (default off to avoid breaking reads).
-        // Worth requesting on a notebook: a read that comes back with dangling cell references
-        // means the scene lost elements on the way out, which is precisely what this command
-        // used to do silently for markdown and code cells.
-        if (payload.validate) {
-          const result = validateNotebookSpec(notebook);
-          if (!result.success) {
-            return { success: false, error: `Validation failed: ${result.errors.join(', ')}`, changes: [] };
-          }
-        }
-
-        return { success: true, data: { spec: notebook, resource: 'notebook' }, changes: [] };
+        return getNotebookSpecCommand.handler(payload, context);
       }
+
+      const spec = transformSceneToSaveModelSchemaV2(scene);
 
       // Opt-in structural validation (default off to avoid breaking reads).
       if (payload.validate) {
