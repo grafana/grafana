@@ -136,9 +136,9 @@ describe('<ControlActionsPopover />', () => {
         />
       );
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Variable settings' }));
+      fireEvent.pointerDown(screen.getByRole('button', { name: 'Settings' }));
 
-      expect(screen.getByRole('button', { name: 'Variable settings' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
     });
 
     test('clicking Duplicate keeps the popover open', async () => {
@@ -210,7 +210,7 @@ describe('<VariableEditActions />', () => {
   test('renders variable settings, edit values, duplicate, and delete controls for a custom variable', () => {
     renderVariableEditActions(buildVariable());
 
-    expect(screen.getByRole('button', { name: 'Variable settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit values' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit query' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
@@ -229,7 +229,7 @@ describe('<VariableEditActions />', () => {
     test('calls onClickEdit and the event does not bubble to ancestors', () => {
       const { onClickEdit, onClickDelete, onAncestorPointerDown } = renderVariableEditActions(buildVariable());
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Variable settings' }));
+      fireEvent.pointerDown(screen.getByRole('button', { name: 'Settings' }));
 
       expect(onClickEdit).toHaveBeenCalledTimes(1);
       expect(onClickDelete).not.toHaveBeenCalled();
@@ -335,7 +335,7 @@ describe('<LinkEditActions />', () => {
   test('renders link settings, duplicate, and delete controls', () => {
     renderLinkEditActions();
 
-    expect(screen.getByRole('button', { name: 'Link settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
@@ -344,7 +344,7 @@ describe('<LinkEditActions />', () => {
     test('calls onClickEdit and the event does not bubble to ancestors', () => {
       const { onClickEdit, onClickDelete, onAncestorPointerDown } = renderLinkEditActions();
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Link settings' }));
+      fireEvent.pointerDown(screen.getByRole('button', { name: 'Settings' }));
 
       expect(onClickEdit).toHaveBeenCalledTimes(1);
       expect(onClickDelete).not.toHaveBeenCalled();
@@ -426,7 +426,7 @@ describe('<AnnotationEditActions />', () => {
   test('renders annotation settings, edit query, duplicate, and delete controls', () => {
     renderAnnotationEditActions();
 
-    expect(screen.getByRole('button', { name: 'Annotation settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit query' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
@@ -436,7 +436,7 @@ describe('<AnnotationEditActions />', () => {
     test('calls onClickEdit and the event does not bubble to ancestors', () => {
       const { onClickEdit, onClickDelete, onAncestorPointerDown } = renderAnnotationEditActions();
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Annotation settings' }));
+      fireEvent.pointerDown(screen.getByRole('button', { name: 'Settings' }));
 
       expect(onClickEdit).toHaveBeenCalledTimes(1);
       expect(onClickDelete).not.toHaveBeenCalled();

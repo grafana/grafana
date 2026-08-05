@@ -127,7 +127,7 @@ export function VariableEditActions({
         className={cx(styles.action, styles.editAction, styles.textAction)}
         onPointerDown={onClickEdit}
       >
-        {t('dashboard-scene.variable-edit-actions.variable-settings', 'Variable settings')}
+        {t('dashboard-scene.variable-edit-actions.settings', 'Settings')}
       </Button>
       {hasQueryEditor && (
         <>
@@ -228,7 +228,7 @@ export function AnnotationEditActions({
         className={cx(styles.action, styles.editAction, styles.textAction)}
         onPointerDown={onClickEdit}
       >
-        {t('dashboard-scene.annotation-edit-actions.annotation-settings', 'Annotation settings')}
+        {t('dashboard-scene.annotation-edit-actions.settings', 'Settings')}
       </Button>
       <div className={styles.actionsDivider} />
       <Button
@@ -313,7 +313,7 @@ export function LinkEditActions({
         className={cx(styles.action, styles.editAction, styles.textAction)}
         onPointerDown={onClickEdit}
       >
-        {t('dashboard-scene.link-edit-actions.link-settings', 'Link settings')}
+        {t('dashboard-scene.link-edit-actions.settings', 'Settings')}
       </Button>
       <div className={styles.actionsDivider} />
       <IconButton
