@@ -72,6 +72,7 @@ interface HeaderCellProps {
   onTogglePin?: () => void;
   onGroupByColumn?: () => void;
   onUngroup?: () => void;
+  ungroupDisabledReason?: string;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -93,6 +94,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   onTogglePin,
   onGroupByColumn,
   onUngroup,
+  ungroupDisabledReason,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -166,7 +168,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
         </Stack>
       </div>
 
-      {(filterable || onHideColumn || onTogglePin || onGroupByColumn || onUngroup) && (
+      {(filterable || onHideColumn || onTogglePin || onGroupByColumn || onUngroup || ungroupDisabledReason) && (
         <div className={styles.headerCellActions}>
           {filterable && (
             <Filter
@@ -192,16 +194,19 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               onGroupByColumn={onGroupByColumn}
             />
           )}
-          {onUngroup && (
+          {(onUngroup || ungroupDisabledReason) && (
             <IconButton
               className={styles.ungroupButton}
               name="layers-slash"
               size="sm"
-              tooltip={t('grafana-ui.table.ungroup-column', 'Ungroup {{name}}', { name: displayName })}
-              aria-label={t('grafana-ui.table.ungroup-column', 'Ungroup {{name}}', { name: displayName })}
+              tooltip={
+                ungroupDisabledReason ??
+                t('grafana-ui.table.ungroup-column', 'Ungroup {{name}}', { name: displayName })
+              }
+              disabled={Boolean(ungroupDisabledReason)}
               onClick={(event) => {
                 event.stopPropagation();
-                onUngroup();
+                onUngroup?.();
               }}
               onMouseDown={(event) => event.stopPropagation()}
             />

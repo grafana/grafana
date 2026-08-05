@@ -91,6 +91,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     sortByBehavior = 'initial',
     groupedFieldName,
     onUngroup,
+    ungroupDisabledReason,
   } = props;
 
   const uniqueId = useId();
@@ -400,6 +401,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       timeRange,
       groupedFieldName,
       onUngroup,
+      ungroupDisabledReason,
     }),
     [
       applyToRowBgFn,
@@ -413,6 +415,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       maxRowHeight,
       onCellFilterAdded,
       onUngroup,
+      ungroupDisabledReason,
       rowHeight,
       rowHeightFn,
       setFilter,

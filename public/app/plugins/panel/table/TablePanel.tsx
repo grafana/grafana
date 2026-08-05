@@ -6,6 +6,8 @@ import {
   type DataFrame,
   type DataTransformerConfig,
   FieldMatcherID,
+  FieldType,
+  getFieldDisplayName,
   getFrameDisplayName,
   type PanelProps,
   type SelectableValue,
@@ -87,6 +89,12 @@ export function TablePanel(props: Props) {
   const [groupBy, setGroupBy] = useState<{ fieldName: string; frameIndex: number }>();
   const [groupedFrame, setGroupedFrame] = useState<EphemeralGroupedFrame>();
   const activeGroupBy = groupBy?.frameIndex === currentIndex ? groupBy.fieldName : undefined;
+  const transformationGroupedField =
+    !activeGroupBy && main?.fields.some((field) => field.type === FieldType.nestedFrames)
+      ? main.fields.find((field) => field.type !== FieldType.nestedFrames)
+      : undefined;
+  const transformationGroupedFieldName =
+    transformationGroupedField && main ? getFieldDisplayName(transformationGroupedField, main, [main]) : undefined;
 
   useEffect(() => {
     if (!main || !activeGroupBy) {
@@ -146,8 +154,16 @@ export function TablePanel(props: Props) {
       fieldConfig={fieldConfig}
       getActions={getActions}
       onGroupByColumn={(fieldName) => setGroupBy({ fieldName, frameIndex: currentIndex })}
-      groupedFieldName={activeGroupBy}
+      groupedFieldName={activeGroupBy ?? transformationGroupedFieldName}
       onUngroup={activeGroupBy ? () => setGroupBy(undefined) : undefined}
+      ungroupDisabledReason={
+        transformationGroupedFieldName
+          ? t(
+              'table.panel.transformation-grouping-cannot-be-removed',
+              'This table was grouped by a data transformation.'
+            )
+          : undefined
+      }
       structureRev={data.structureRev}
       transparent={transparent}
     />

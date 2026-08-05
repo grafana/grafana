@@ -126,6 +126,7 @@ interface BaseTableProps {
   onGroupByColumn?: TableGroupByActionCallback;
   groupedFieldName?: string;
   onUngroup?: () => void;
+  ungroupDisabledReason?: string;
   onCellFilterAdded?: TableFilterActionCallback;
   footerValues?: FooterItem[];
   frozenColumns?: number;

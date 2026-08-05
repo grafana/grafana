@@ -19,6 +19,7 @@ jest.mock('@grafana/ui/unstable', () => ({
     onGroupByColumn,
     groupedFieldName,
     onUngroup,
+    ungroupDisabledReason,
   }: {
     data: {
       fields: Array<{
@@ -30,6 +31,7 @@ jest.mock('@grafana/ui/unstable', () => ({
     onGroupByColumn?: (fieldName: string) => void;
     groupedFieldName?: string;
     onUngroup?: () => void;
+    ungroupDisabledReason?: string;
   }) => {
     const nestedFrame = data.fields.find((field) => field.type === FieldType.nestedFrames)?.values[0]?.[0];
     const firstNestedField = nestedFrame?.fields[0];
@@ -43,6 +45,7 @@ jest.mock('@grafana/ui/unstable', () => ({
           data-first-nested-value={String(firstNestedField?.values[0])}
           data-first-nested-display={typeof firstNestedField?.display}
           data-grouped-field-name={groupedFieldName}
+          data-ungroup-disabled-reason={ungroupDisabledReason}
           onClick={() => onGroupByColumn?.('Category')}
         >
           Group
@@ -101,5 +104,31 @@ describe('TablePanel ephemeral grouping', () => {
       expect(screen.getByTestId('table-ng')).not.toHaveAttribute('data-last-field-type', FieldType.nestedFrames);
       expect(screen.queryByRole('button', { name: 'Ungroup' })).not.toBeInTheDocument();
     });
+  });
+
+  it('marks grouping from the transformation pipeline as non-removable', () => {
+    const props = getPanelProps<TableOptions>(
+      { frameIndex: 0, showHeader: true },
+      { fieldConfig: { defaults: {}, overrides: [] } }
+    );
+    const nestedFrame = toDataFrame({
+      fields: [{ name: 'Sales', values: [10, 20] }],
+    });
+    const transformedFrame = toDataFrame({
+      fields: [
+        { name: 'Category', values: ['Hardware'] },
+        { name: 'Sales (sum)', values: [30] },
+        { name: '__nestedFrames', type: FieldType.nestedFrames, values: [[nestedFrame]] },
+      ],
+    });
+
+    render(<TablePanel {...props} data={{ ...props.data, series: [transformedFrame] }} />);
+
+    expect(screen.getByTestId('table-ng')).toHaveAttribute('data-grouped-field-name', 'Category');
+    expect(screen.getByTestId('table-ng')).toHaveAttribute(
+      'data-ungroup-disabled-reason',
+      'This table was grouped by a data transformation.'
+    );
+    expect(screen.queryByRole('button', { name: 'Ungroup' })).not.toBeInTheDocument();
   });
 });

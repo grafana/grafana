@@ -603,6 +603,25 @@ describe('TableNG', () => {
       expect(onUngroup).toHaveBeenCalledTimes(1);
     });
 
+    it('explains when transformation grouping cannot be removed directly', async () => {
+      const reason = 'This table was grouped by a data transformation.';
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createNestedDataFrame()}
+          width={800}
+          height={600}
+          groupedFieldName="Column A"
+          ungroupDisabledReason={reason}
+        />
+      );
+
+      const ungroupButton = screen.getByRole('button', { name: reason });
+      expect(ungroupButton).toBeDisabled();
+      await user.hover(ungroupButton);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(reason);
+    });
+
     it('auto-expands all rows when expandAllRows is set in frame meta', () => {
       const { container } = render(
         <TableNG

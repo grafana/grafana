@@ -159,6 +159,7 @@ export interface ColumnBuildConfig {
   groupedFieldName?: string;
   onGroupByColumn?: (displayName: string) => void;
   onUngroup?: () => void;
+  ungroupDisabledReason?: string;
   onHideColumn?: (displayName: string) => void;
   onCellFilterAdded?: TableFilterActionCallback;
   onTogglePin?: (displayName: string) => void;
@@ -220,6 +221,7 @@ function buildColumnsFromFields(
     groupedFieldName,
     onGroupByColumn,
     onUngroup,
+    ungroupDisabledReason,
     onHideColumn,
     onTogglePin,
     pinnedColumns,
@@ -551,6 +553,7 @@ function buildColumnsFromFields(
             onTogglePin={onTogglePin ? () => onTogglePin(displayName) : undefined}
             onGroupByColumn={onGroupByColumn ? () => onGroupByColumn(displayName) : undefined}
             onUngroup={displayName === groupedFieldName ? onUngroup : undefined}
+            ungroupDisabledReason={displayName === groupedFieldName ? ungroupDisabledReason : undefined}
           />
         </HeaderCellContainer>
       ),
