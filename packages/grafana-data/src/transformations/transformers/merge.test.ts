@@ -1,7 +1,7 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { type Field, FieldType } from '../../types/dataFrame';
 import { type DisplayProcessor } from '../../types/displayValue';
-import { type DataTransformerConfig, TransformationApplicabilityLevels } from '../../types/transformations';
+import { type DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
@@ -583,29 +583,6 @@ describe('Merge multiple to single', () => {
       expect(fields).toEqual(expected);
       expect(result.length).toEqual(1);
     });
-  });
-});
-
-describe('Merge isApplicable', () => {
-  const frame = (name: string) =>
-    toDataFrame({
-      name,
-      fields: [
-        { name: 'Time', type: FieldType.time, values: [1000] },
-        { name: 'Temp', type: FieldType.number, values: [1] },
-      ],
-    });
-
-  it('is applicable with a single serie, where merging is a no-op', () => {
-    expect(mergeTransformer.isApplicable!([frame('A')])).toBe(TransformationApplicabilityLevels.Applicable);
-  });
-
-  it('is applicable with multiple series', () => {
-    expect(mergeTransformer.isApplicable!([frame('A'), frame('B')])).toBe(TransformationApplicabilityLevels.Applicable);
-  });
-
-  it('is not applicable without any series', () => {
-    expect(mergeTransformer.isApplicable!([])).toBe(TransformationApplicabilityLevels.NotApplicable);
   });
 });
 

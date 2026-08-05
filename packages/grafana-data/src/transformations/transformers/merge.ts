@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators';
 
 import { MutableDataFrame } from '../../dataframe/MutableDataFrame';
 import { type DataFrame, type Field } from '../../types/dataFrame';
-import { type DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
+import { type DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
@@ -19,16 +19,9 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   name: 'Merge series/tables',
   description: 'Merges multiple series/tables into a single serie/table',
   defaultOptions: {},
-  // Merging a single series is a no-op rather than an error, so the transformation stays
-  // available for inputs that are temporarily down to one frame (a failing or hidden query).
-  isApplicable: (data: DataFrame[]) => {
-    return data.length > 0
-      ? TransformationApplicabilityLevels.Applicable
-      : TransformationApplicabilityLevels.NotApplicable;
-  },
-  isApplicableDescription: (data: DataFrame[]) => {
-    return `The merge transformation requires at least 1 data series to work. There is currently ${data.length} data series.`;
-  },
+  // No isApplicable gate on purpose: merging a single frame is a no-op rather than an
+  // error, so the transformation stays pickable for inputs that are temporarily down to
+  // one frame (a failing or hidden query).
   operator: (options) => (source) =>
     source.pipe(
       map((dataFrames) => {
