@@ -2056,15 +2056,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "alertingAlertsActivityBanner",
-			Description:  "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "graphiteBackendMode",
 			Description: "Enables the Graphite data source full backend mode",
 			Stage:       FeatureStagePrivatePreview,

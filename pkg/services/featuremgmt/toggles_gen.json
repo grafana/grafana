@@ -293,7 +293,8 @@
       "metadata": {
         "name": "alertingAlertsActivityBanner",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-05T11:22:32Z"
       },
       "spec": {
         "description": "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
