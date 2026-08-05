@@ -120,7 +120,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       visualRefreshEnabled && {
         borderRadius: theme.shape.radius.lg,
         margin: theme.spacing(0, 0.5, 0.5, 0.5),
-        border: `1px solid ${theme.colors.border.weak}`,
+        border: `1px solid ${theme.colors.border.faint}`,
       }
     ),
     wrapperPrimary: css({
