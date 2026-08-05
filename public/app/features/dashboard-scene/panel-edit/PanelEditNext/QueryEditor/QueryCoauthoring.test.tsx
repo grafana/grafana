@@ -8,10 +8,15 @@ import { QueryCoauthoring } from './QueryCoauthoring';
 const mockGenerate = jest.fn().mockResolvedValue(undefined);
 const mockCancel = jest.fn();
 const mockReset = jest.fn();
+const mockIdentifySelection = jest.fn().mockResolvedValue(undefined);
+const mockCancelIdentification = jest.fn();
+const mockResetIdentification = jest.fn();
 const mockOpenAssistant = jest.fn();
 const mockPost = jest.fn();
 const VIEWPORT_TEST_MARGIN = 8;
 let mockIsGenerating = false;
+let mockIsIdentifying = false;
+let mockInlineAssistantHookCall = 0;
 let mockAssistantAvailable = true;
 let mockAssistantLoading = false;
 
@@ -34,14 +39,26 @@ jest.mock('@grafana/assistant', () => ({
     closeAssistant: undefined,
     toggleAssistant: undefined,
   }),
-  useInlineAssistant: () => ({
-    generate: mockGenerate,
-    isGenerating: mockIsGenerating,
-    content: '',
-    error: null,
-    cancel: mockCancel,
-    reset: mockReset,
-  }),
+  useInlineAssistant: () => {
+    const isIdentificationHook = mockInlineAssistantHookCall++ % 2 === 0;
+    return isIdentificationHook
+      ? {
+          generate: mockIdentifySelection,
+          isGenerating: mockIsIdentifying,
+          content: '',
+          error: null,
+          cancel: mockCancelIdentification,
+          reset: mockResetIdentification,
+        }
+      : {
+          generate: mockGenerate,
+          isGenerating: mockIsGenerating,
+          content: '',
+          error: null,
+          cancel: mockCancel,
+          reset: mockReset,
+        };
+  },
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -130,6 +147,8 @@ describe('QueryCoauthoring', () => {
     jest.clearAllMocks();
     mockPost.mockResolvedValue({ id: 'feedback-id' });
     mockIsGenerating = false;
+    mockIsIdentifying = false;
+    mockInlineAssistantHookCall = 0;
     mockAssistantAvailable = true;
     mockAssistantLoading = false;
   });
@@ -138,6 +157,44 @@ describe('QueryCoauthoring', () => {
     await setup();
 
     expect(await screen.findByText('Looks like: http_requests_total is a counter metric.')).toBeInTheDocument();
+  });
+
+  it('requests and renders a privacy-bounded semantic explanation of the focused query text', async () => {
+    const { capability } = await setup();
+
+    expect(mockIdentifySelection).toHaveBeenCalledTimes(1);
+    const request = mockIdentifySelection.mock.calls[0][0];
+    expect(request).toMatchObject({
+      origin: 'grafana/panel-edit-next/query-coauthoring/identify',
+      agentName: 'promql-coauthor-intent',
+      agentId: 'grafana.query.coauthor.identify.v1',
+      prompt: 'Explain the focused part of this existing PromQL query.',
+    });
+    expect(request.systemPrompt).toContain(JSON.stringify(capability.getValue()));
+    expect(request.systemPrompt).toContain('Focused text: ["rate"]');
+    expect(request.systemPrompt).toContain('http_requests_total');
+    expect(request.systemPrompt).not.toContain('dashboardTitle');
+
+    act(() => request.onComplete('Looks like: Calculates the per-second request rate.'));
+
+    expect(screen.getByText(/Calculates the per-second request rate\./)).toBeInTheDocument();
+    expect(screen.getByText(/Looks like:/)).toBeInTheDocument();
+  });
+
+  it('allows prompt entry while identifying and ignores a late explanation after submission', async () => {
+    mockIsIdentifying = true;
+    const { user } = await setup();
+    const identificationRequest = mockIdentifySelection.mock.calls[0][0];
+
+    expect(screen.getByText('Identifying intent…')).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    expect(mockCancelIdentification).toHaveBeenCalled();
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+
+    act(() => identificationRequest.onComplete('This late explanation should be ignored.'));
+    expect(screen.queryByText(/late explanation/i)).not.toBeInTheDocument();
   });
 
   it('shows an explicit dismissal path when Assistant is unavailable', async () => {
