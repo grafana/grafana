@@ -25,7 +25,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-14,awsAssumeRolePerDatasourceExternalId,experimental,@grafana/data-sources-plugins,false,false,false
 2023-07-13,mlExpressions,experimental,@grafana/alerting-squad,false,false,false
 2023-10-06,grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
-2024-11-22,provisioning,GA,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,provisioningFolderMetadata,GA,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,provisioning.readmes,preview,@grafana/grafana-app-platform-squad,false,false,true
@@ -337,6 +336,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,grafana.logLevelInference,deprecated,@grafana/observability-logs,false,false,true
 2026-05-26,plugins.initDataSourcesAsync,experimental,@grafana/grafana-catalog,false,false,true
 2026-05-22,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-07-30,paneledit.buttonLabels,experimental,@grafana/datapro,false,false,true
 2026-05-27,grafana.panelEditNextFeedbackEvent,experimental,@grafana/datapro,false,false,true
 2026-06-12,grafana.visualDesignRefresh,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-06-09,dashboard.vectorSearch,experimental,@grafana/search-and-storage,false,false,false

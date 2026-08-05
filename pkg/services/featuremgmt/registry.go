@@ -236,15 +236,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "provisioning",
-			Description:     "Enables Git Sync and as-code provisioning for Grafana resources",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "provisioningFolderMetadata",
 			Description:     "Allow setting folder metadata for provisioned folders",
 			Stage:           FeatureStageGeneralAvailability,
@@ -2907,6 +2898,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "paneledit.buttonLabels",
+			Description:  "Shows text labels on the add and stacked view buttons in PanelEditNext",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:         "grafana.panelEditNextFeedbackEvent",
