@@ -3021,6 +3021,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "datetime.useLuxon",
+			Description:  "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:        "grafana.customizableMegaMenu",
 			Description: "Allows users to customise the mega menu by hiding top-level navigation items they are not interested in",
 			Stage:       FeatureStageExperimental,

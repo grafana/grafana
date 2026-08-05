@@ -2171,6 +2171,21 @@
     },
     {
       "metadata": {
+        "name": "datetime.useLuxon",
+        "resourceVersion": "1785947524842",
+        "creationTimestamp": "2026-08-05T16:32:04Z"
+      },
+      "spec": {
+        "description": "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "deletedFolderResourceCleanup",
         "resourceVersion": "1783997108632",
         "creationTimestamp": "2026-07-14T02:45:08Z"
