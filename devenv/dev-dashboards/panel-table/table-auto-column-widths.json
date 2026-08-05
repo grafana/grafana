@@ -514,7 +514,8 @@
                     },
                     "filterable": true,
                     "inspect": false,
-                    "wrapText": false
+                    "wrapText": false,
+                    "width": null
                   },
                   "fieldMinMax": true
                 },
@@ -587,27 +588,6 @@
                   {
                     "matcher": {
                       "id": "byName",
-                      "options": "Min"
-                    },
-                    "properties": []
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Max"
-                    },
-                    "properties": []
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "State"
-                    },
-                    "properties": []
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
                       "options": "Time"
                     },
                     "properties": [
@@ -639,18 +619,6 @@
                           "alt": "Grafana icon",
                           "type": "image"
                         }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byRegexp",
-                      "options": "/(Time|Min|Max|Info|State|Image)/"
-                    },
-                    "properties": [
-                      {
-                        "id": "custom.width",
-                        "value": 110
                       }
                     ]
                   },
@@ -773,10 +741,6 @@
                         "value": true
                       },
                       {
-                        "id": "custom.width",
-                        "value": 255
-                      },
-                      {
                         "id": "custom.tooltip.field",
                         "value": "State"
                       },
@@ -805,10 +769,6 @@
                       {
                         "id": "custom.wrapText",
                         "value": true
-                      },
-                      {
-                        "id": "custom.width",
-                        "value": 120
                       }
                     ]
                   },
@@ -844,21 +804,10 @@
                         ]
                       },
                       {
-                        "id": "custom.width",
-                        "value": 139
-                      },
-                      {
                         "id": "custom.styleField",
                         "value": "Styling"
                       }
                     ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Gauge"
-                    },
-                    "properties": []
                   },
                   {
                     "matcher": {
@@ -888,10 +837,6 @@
                             "type": "fetch"
                           }
                         ]
-                      },
-                      {
-                        "id": "custom.width",
-                        "value": 142
                       }
                     ]
                   },
