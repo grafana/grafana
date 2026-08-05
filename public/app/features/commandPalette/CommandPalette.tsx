@@ -10,7 +10,11 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagDashboardVectorSearch, useFlagGrafanaVectorSearchCmdk } from '@grafana/runtime/internal';
+import {
+  useFlagDashboardVectorSearch,
+  useFlagGrafanaCmdkHybridSearch,
+  useFlagGrafanaVectorSearchCmdk,
+} from '@grafana/runtime/internal';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 
 import { AskAssistantPill } from './AskAssistantPill';
@@ -65,11 +69,14 @@ function CommandPaletteContents() {
   // time.
   const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
 
-  // Call both hooks unconditionally (rules-of-hooks), then require both: the backend
-  // vector-search endpoint flag and the command-palette flag
+  // Call all hooks unconditionally (rules-of-hooks), then require both: the backend
+  // vector-search endpoint flag and the command-palette flag. Hybrid search
+  // supersedes the deep search column — its results already cover the semantic
+  // matches, so showing both would duplicate them.
   const dashboardVectorSearchEnabled = useFlagDashboardVectorSearch();
   const vectorSearchCmdkEnabled = useFlagGrafanaVectorSearchCmdk();
-  const deepSearchEnabled = dashboardVectorSearchEnabled && vectorSearchCmdkEnabled;
+  const hybridSearchEnabled = useFlagGrafanaCmdkHybridSearch();
+  const deepSearchEnabled = dashboardVectorSearchEnabled && vectorSearchCmdkEnabled && !hybridSearchEnabled;
   const { deepSearchResults, isFetchingDeepSearchResults } = useDeepSearchResults({
     searchQuery,
     show: !currentRootActionId,
@@ -148,7 +155,7 @@ function CommandPaletteContents() {
                 defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                 className={styles.search}
               />
-              {deepSearchEnabled && <AskAssistantPill />}
+              {(deepSearchEnabled || hybridSearchEnabled) && <AskAssistantPill />}
               <div className={styles.loadingBarContainer}>
                 {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
               </div>
