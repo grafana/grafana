@@ -12,7 +12,7 @@ type VersionedSelector = Record<string, SelectorValue>;
 type SelectorGroup = { [key: string]: VersionedSelector | SelectorGroup };
 
 type TemplateDescriptor = {
-  $tpl: string | { whenPresent: string; whenAbsent: string };
+  $template: string | { whenPresent: string; whenAbsent: string };
   params: string[];
 };
 type SerializedValue = string | TemplateDescriptor;
@@ -45,7 +45,7 @@ function serializeFunction(fn: (...args: string[]) => string): TemplateDescripto
   const params = parseParamNames(fn);
 
   if (params.length === 0) {
-    return { $tpl: fn(), params: [] };
+    return { $template: fn(), params: [] };
   }
 
   const sentinels = params.map((_, index) => ARG_SENTINELS[index]);
@@ -62,11 +62,11 @@ function serializeFunction(fn: (...args: string[]) => string): TemplateDescripto
     const absent = fn('');
     const presentWithEmptyArg = present.split(sentinels[0]).join('');
     if (absent !== presentWithEmptyArg) {
-      return { $tpl: { whenPresent: template, whenAbsent: absent }, params };
+      return { $template: { whenPresent: template, whenAbsent: absent }, params };
     }
   }
 
-  return { $tpl: template, params };
+  return { $template: template, params };
 }
 
 function serializeValue(value: SelectorValue): SerializedValue {
