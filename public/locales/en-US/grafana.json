@@ -5401,6 +5401,7 @@
           }
         }
       },
+      "layout-indicator": "Auto layout – panel sizes are managed automatically",
       "name": "Auto",
       "options": {
         "custom-min-height": {
@@ -5418,6 +5419,11 @@
         "min-width-custom": "Custom min width",
         "min-width-custom-clear": "Back to standard min column width",
         "min-width-error": "A number between 50 and 2000 is required"
+      },
+      "resize-intercept": {
+        "edit": "Edit auto layout",
+        "header": "Panel sizes are managed by auto layout",
+        "switch": "Switch to custom layout"
       }
     },
     "canvas-actions": {
@@ -5565,6 +5571,7 @@
           }
         }
       },
+      "layout-indicator": "Custom layout",
       "name": "Custom",
       "row-actions": {
         "delete": "Delete row",
