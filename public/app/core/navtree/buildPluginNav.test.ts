@@ -183,6 +183,34 @@ describe('mergePluginNavIntoTree', () => {
     expect(findById(merged, 'plugin-page-grafana-k8s-app')?.text).toBe('Kubernetes');
   });
 
+  it('applies [navigation.app_sections] overrides from frontend settings over the built-in placement', async () => {
+    setup({
+      config: {
+        navigationAppSections: {
+          // Moves a built-in Observability app; zero weight keeps the built-in one
+          'grafana-k8s-app': { sectionId: NavID.apps, sortWeight: 0 },
+          // Places an app with no built-in config
+          'myorg-custom-app': { sectionId: NavID.observability, sortWeight: 1 },
+        },
+      },
+    });
+
+    const merged = await mergeFromMetas([
+      appMeta('grafana-k8s-app', 'Kubernetes App', [page('Clusters', '/a/grafana-k8s-app/clusters')]),
+      appMeta('myorg-custom-app', 'Custom App', [page('Home', '/a/myorg-custom-app/home')]),
+    ]);
+
+    const k8s = findById(merged, 'plugin-page-grafana-k8s-app');
+    expect(findById(findById(merged, NavID.apps)?.children ?? [], 'plugin-page-grafana-k8s-app')).toBeDefined();
+    // Display overrides and the built-in weight survive the placement override
+    expect(k8s?.text).toBe('Kubernetes');
+    expect(k8s?.sortWeight).toBe(6);
+
+    const custom = findById(findById(merged, NavID.observability)?.children ?? [], 'plugin-page-myorg-custom-app');
+    expect(custom).toBeDefined();
+    expect(custom?.sortWeight).toBe(1);
+  });
+
   it('hoists asserts pages into the Observability section as standalone pages', async () => {
     const merged = await mergeFromMetas([
       appMeta('grafana-asserts-app', 'Asserts', [

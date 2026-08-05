@@ -151,6 +151,12 @@ export interface UnifiedAlertingConfig {
   alertStateHistoryPrimary?: string;
 }
 
+/** A [navigation.app_sections] override for an app plugin's nav placement */
+export interface NavigationAppSectionConfig {
+  sectionId: string;
+  sortWeight?: number;
+}
+
 /** Supported OAuth services
  *
  * @public
@@ -306,6 +312,8 @@ export interface GrafanaConfig {
   geomapDisableCustomBaseLayer: boolean;
   unifiedAlertingEnabled: boolean;
   unifiedAlerting: UnifiedAlertingConfig;
+  /** [navigation.app_sections] overrides for app plugin placement in the client-built nav tree */
+  navigationAppSections: Record<string, NavigationAppSectionConfig>;
   feedbackLinksEnabled: boolean;
   supportBundlesEnabled: boolean;
   secureSocksDSProxyEnabled: boolean;

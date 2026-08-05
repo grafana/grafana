@@ -27,6 +27,7 @@ export interface NavTestState {
       | 'disableLoginForm'
       | 'publicDashboardAccessToken'
       | 'provisioningEnabled'
+      | 'navigationAppSections'
     >
   >;
 }
@@ -71,6 +72,7 @@ export function setupNavTestState({
     disableLoginForm: false,
     publicDashboardAccessToken: undefined,
     provisioningEnabled: false,
+    navigationAppSections: {},
     featureToggles,
     ...configOverrides,
   });
