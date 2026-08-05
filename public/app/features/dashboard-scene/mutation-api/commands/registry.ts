@@ -12,6 +12,7 @@ import { addTabCommand } from './addTab';
 import { addVariableCommand } from './addVariable';
 import { applyNotebookSpecCommand } from './applyNotebookSpec';
 import { applySpecCommand } from './applySpec';
+import { createNotebookSpecCommand } from './createNotebookSpec';
 import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
@@ -69,6 +70,7 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   applySpecCommand,
   getNotebookSpecCommand,
   applyNotebookSpecCommand,
+  createNotebookSpecCommand,
 ];
 
 /** Lookup command by name (case-insensitive). */

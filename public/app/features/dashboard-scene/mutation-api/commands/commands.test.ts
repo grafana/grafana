@@ -60,6 +60,9 @@ describe('Command consistency', () => {
       GET_NOTEBOOK_SPEC: true,
       APPLY_SPEC: false,
       APPLY_NOTEBOOK_SPEC: false,
+      // Not read-only despite leaving the open scene alone: readOnly also decides whether the client
+      // clones the payload before handing it over, and this one passes the spec into a request.
+      CREATE_NOTEBOOK_SPEC: false,
     });
   });
 
@@ -73,6 +76,7 @@ describe('Command consistency', () => {
       'ADD_VARIABLE',
       'APPLY_NOTEBOOK_SPEC',
       'APPLY_SPEC',
+      'CREATE_NOTEBOOK_SPEC',
       'ENTER_EDIT_MODE',
       'GET_DASHBOARD_INFO',
       'GET_LAYOUT',
