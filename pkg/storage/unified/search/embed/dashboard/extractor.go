@@ -34,6 +34,11 @@ const maxItemContentBytes = 4 * 1024
 // maxDescriptionBytes cap the panel desc at 2Kib to leave room for queries
 const maxDescriptionBytes = 2 * 1024
 
+// extractorVersion identifies the shape of content this extractor produces.
+// Bump when Extract output changes shape or content so backfill re-embeds
+// existing rows; never reuse a value.
+const extractorVersion = 1
+
 // Extractor produces one embed.Item per panel.
 type Extractor struct {
 	logger    *slog.Logger
@@ -54,6 +59,10 @@ func (e *Extractor) Resource() string { return "dashboards" }
 // MaxItemsPerResource returns the per-dashboard panel cap; satisfies the
 // embed.Builder interface.
 func (e *Extractor) MaxItemsPerResource() int { return e.maxPanels }
+
+// Version returns the content-format version; satisfies the embed.Builder
+// interface.
+func (e *Extractor) Version() int { return extractorVersion }
 
 func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte) ([]embed.Item, error) {
 	ctx, span := tracer.Start(ctx, "unified.embed.dashboard.Extract")

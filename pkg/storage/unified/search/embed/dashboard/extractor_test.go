@@ -18,6 +18,10 @@ func TestExtractor_Resource(t *testing.T) {
 	require.Equal(t, "dashboards", New().Resource())
 }
 
+func TestExtractor_Version(t *testing.T) {
+	require.Equal(t, 1, New().Version())
+}
+
 func TestExtractor_Classic(t *testing.T) {
 	// Classic v1 dashboard with two panels and one row marker. The shared
 	// parser doesn't associate flat-row panels with their row marker, so

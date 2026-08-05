@@ -179,6 +179,25 @@ func TestRunBackfillJob_HappyPath_EmbedsAndCompletes(t *testing.T) {
 	}
 }
 
+func TestRunBackfillJob_StampsBuilderVersion(t *testing.T) {
+	// Upserted vectors carry the builder's content-format version, not
+	// whatever the RV or an arbitrary literal happens to be.
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns-1", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1)
+	require.NotEmpty(t, vec.upserts[0])
+	for _, v := range vec.upserts[0] {
+		assert.Equal(t, dashboard.New().Version(), v.ContentVersion)
+	}
+}
+
 func TestRunBackfillJob_SkipsExistingEmbeddings(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{
@@ -523,6 +542,7 @@ type fakeNonDashboardBuilder struct{}
 func (fakeNonDashboardBuilder) Group() string            { return "folder.grafana.app" }
 func (fakeNonDashboardBuilder) Resource() string         { return "folders" }
 func (fakeNonDashboardBuilder) MaxItemsPerResource() int { return 0 }
+func (fakeNonDashboardBuilder) Version() int             { return 1 }
 func (fakeNonDashboardBuilder) Extract(context.Context, *resourcepb.ResourceKey, []byte) ([]embed.Item, error) {
 	return nil, nil
 }

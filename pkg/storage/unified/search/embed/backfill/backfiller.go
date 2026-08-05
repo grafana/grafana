@@ -414,7 +414,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return nil
 	}
 
-	vectors, err := b.batchEmbedder.Embed(ctx, namespace, res, rv, items)
+	vectors, err := b.batchEmbedder.Embed(ctx, namespace, res, rv, builder.Version(), items)
 	if err != nil {
 		return fmt.Errorf("embed %s/%s: %w", namespace, name, err)
 	}

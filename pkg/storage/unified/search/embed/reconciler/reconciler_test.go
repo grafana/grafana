@@ -174,6 +174,22 @@ func TestReconciler_HappyPath_PerDashboardEmbed(t *testing.T) {
 	assert.Equal(t, int64(200), vec.latestRV)
 }
 
+func TestReconciler_HappyPath_StampsBuilderVersion(t *testing.T) {
+	// Upserted vectors carry the builder's content-format version, not
+	// whatever the RV or an arbitrary literal happens to be.
+	vec := newFakeVector()
+	s, _ := newReconciler(t, &fakeStorage{}, vec)
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1)
+	require.NotEmpty(t, vec.upserts[0])
+	for _, v := range vec.upserts[0] {
+		assert.Equal(t, dashboard.New().Version(), v.ContentVersion)
+	}
+}
+
 func TestReconciler_MultiPanelDashboard_SingleEmbedCall(t *testing.T) {
 	// All panels of one dashboard go through BatchEmbedder.Embed in
 	// a single call (provider-side chunking handles panel count).
