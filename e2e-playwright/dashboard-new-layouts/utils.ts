@@ -143,10 +143,12 @@ export async function verifyChanges(
   selectors: E2ESelectorGroups,
   changeText: string
 ) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
-  await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
-  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
+  await test.step('Verify JSON diff in save drawer', async () => {
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
+    await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
+    await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
+  });
 }
 interface ImportTestDashboardOptions {
   checkPanelsVisible?: boolean;
@@ -298,17 +300,6 @@ export async function groupIntoRow(page: Page, dashboardPage: DashboardPage, sel
   const components = new Components(dashboardPage.ctx);
   const canvas = new Canvas({ page, dashboardPage, selectors, components });
   await canvas.groupPanels('row');
-}
-
-export async function checkRepeatedTabTitles(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
-  title: string,
-  options: Array<string | number>
-) {
-  for (const option of options) {
-    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(`${title}${option}`))).toBeVisible();
-  }
 }
 
 export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, tabTitle: string) {
