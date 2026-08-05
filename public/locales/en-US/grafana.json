@@ -10975,6 +10975,10 @@
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
     },
+    "header-actions": {
+      "active-incidents": "Active incidents",
+      "firing-alerts": "Firing alerts"
+    },
     "home-page": {
       "edition": {
         "cloud": "Grafana Cloud",
