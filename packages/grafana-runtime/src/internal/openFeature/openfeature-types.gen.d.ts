@@ -45,6 +45,7 @@ declare module "@openfeature/core" {
     | "grafana.newTextPanel"
     | "plugins.useMTPlugins"
     | "globalDashboardVariables"
+    | "grafana.dashboardGlobalVariables"
     | "queryEditorNext"
     | "managedPluginsV2"
     | "analyticsFramework"

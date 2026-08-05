@@ -4,7 +4,7 @@ import { Components, type DashboardPage, type E2ESelectorGroups, expect, test } 
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-import { Canvas, Controls, Panels, Sidebar } from './page-objects';
+import { Canvas, Controls, Panels, Rows, Sidebar, type Tabs } from './page-objects';
 
 export const flows = {
   async addNewGenericVariable(
@@ -143,10 +143,12 @@ export async function verifyChanges(
   selectors: E2ESelectorGroups,
   changeText: string
 ) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
-  await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
-  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
+  await test.step('Verify JSON diff in save drawer', async () => {
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
+    await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
+    await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
+  });
 }
 interface ImportTestDashboardOptions {
   checkPanelsVisible?: boolean;
@@ -266,22 +268,21 @@ export async function moveRow(
   sourceRow: string,
   targetRow: string
 ) {
-  const targetRowElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.DashboardRow.wrapper(targetRow))
-    .first();
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const rows = new Rows({ page, dashboardPage, selectors, components });
 
-  const sourceRowElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.DashboardRow.title(sourceRow))
-    .first();
+  const targetBox = await getRowBox(dashboardPage, selectors, targetRow);
 
-  const targetBox = await targetRowElement.boundingBox();
-
-  // Perform drag and drop (dragTo() did not work in this case)
-  await sourceRowElement.hover();
-  await page.mouse.down();
-  // move to adjusted target position (relative to top left)
-  await page.mouse.move(targetBox?.x || 0, (targetBox?.y || 0) + (targetBox?.height || 0), { steps: 5 });
-  await page.mouse.up();
+  // drop below the target row (relative to top left)
+  await dragTo(
+    page,
+    `row "${sourceRow}"`,
+    rows.getTitle(sourceRow).first(),
+    targetBox.x,
+    targetBox.y + targetBox.height
+  );
 }
 
 export async function groupIntoTab(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
@@ -300,21 +301,18 @@ export async function groupIntoRow(page: Page, dashboardPage: DashboardPage, sel
   await canvas.groupPanels('row');
 }
 
-export async function checkRepeatedTabTitles(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
-  title: string,
-  options: Array<string | number>
-) {
-  for (const option of options) {
-    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(`${title}${option}`))).toBeVisible();
-  }
-}
-
 export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, tabTitle: string) {
   const tab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabTitle)).first();
   const boundingBox = await tab.boundingBox();
   return boundingBox;
+}
+
+export async function checkRepeatedTabTitles(tabs: Tabs, title: string, options: Array<string | number>) {
+  await test.step('Checking repeated tab titles', async () => {
+    for (const option of options) {
+      await expect(tabs.getTitle(`${title}${option}`)).toBeVisible();
+    }
+  });
 }
 
 export async function getRowBox(
@@ -329,16 +327,21 @@ export async function getRowBox(
 }
 
 export async function checkRepeatedRowTitles(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
+  rows: Rows,
   title: string,
-  options: Array<string | number>
+  options: Array<string | number>,
+  state: 'visible' | 'hidden' = 'visible'
 ) {
-  for (const option of options) {
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(`${title}${option}`))
-    ).toBeVisible();
-  }
+  await test.step(`Checking repeated row titles are ${state}`, async () => {
+    for (const option of options) {
+      const rowTitle = rows.getTitle(`${title}${option}`);
+      if (state === 'visible') {
+        await expect(rowTitle).toBeVisible();
+      } else {
+        await expect(rowTitle).toBeHidden();
+      }
+    }
+  });
 }
 
 export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage, confirm = true) {
@@ -350,24 +353,18 @@ export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage,
 }
 
 export async function selectRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).click();
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const rows = new Rows({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+  await rows.select(rowTitle);
 }
 export async function toggleRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.toggle(rowTitle)).click();
-}
-
-export function getPanelByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, panelTitle: string) {
-  return dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle))
-    .getByTestId(selectors.components.Panels.Panel.headerContainer);
-}
-
-export function getRowByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).first();
-}
-
-export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper(rowTitle)).first();
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const rows = new Rows({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+  await rows.toggle(rowTitle);
 }
 
 export async function fillVariableValue(

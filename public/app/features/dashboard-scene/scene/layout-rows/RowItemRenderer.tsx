@@ -14,6 +14,8 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { SectionVariableControls } from '../VariableControls';
+import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
+import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 
@@ -56,6 +58,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const [selectableHighlight, setSelectableHighlight] = useState(false);
   const onHeaderEnter = useCallback(() => setSelectableHighlight(true), []);
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
+  const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
   const isDraggable = !isClone && isEditing;
 
@@ -159,6 +162,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 {!isEditing && titleElement}
               </button>
               {isEditing && titleElement}
+              {isEditing && layoutType && <LayoutModeIndicator layoutType={layoutType} className="layout-indicator" />}
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}
@@ -182,15 +186,20 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       padding: theme.spacing(0.5, 0.5, 0.5, 0),
       alignItems: 'center',
-      justifyContent: 'space-between',
+      justifyContent: 'flex-start',
       marginBottom: theme.spacing(1),
 
       '& .dashboard-row-header-drag-handle': css({
         opacity: 0,
+        // Keep the drag handle at the far right now that the header is left-aligned.
+        marginLeft: 'auto',
 
         [theme.transitions.handleMotion('no-preference', 'reduce')]: {
           transition: 'opacity 0.25s',
         },
+      }),
+      '& .layout-indicator': css({
+        display: 'none',
       }),
 
       '&:hover': css({
@@ -218,7 +227,8 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       maxWidth: '100%',
-      flexGrow: 1,
+      flexGrow: 0,
+      flexShrink: 1,
       minWidth: 0,
     }),
     rowTitleHidden: css({
@@ -255,6 +265,10 @@ function getStyles(theme: GrafanaTheme2) {
       // Re-enable for the specific nested row being hovered
       '&:hover .dashboard-row-wrapper:hover .dashboard-canvas-controls': {
         opacity: 1,
+      },
+      // Reveal this row's layout indicator when hovering or focusing anywhere on the row
+      '&:hover > .dashboard-row-header .layout-indicator, &:focus-within > .dashboard-row-header .layout-indicator': {
+        display: 'inline-block',
       },
     }),
     wrapperNotCollapsed: css({

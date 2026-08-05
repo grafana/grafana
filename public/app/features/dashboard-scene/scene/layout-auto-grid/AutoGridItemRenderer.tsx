@@ -15,6 +15,7 @@ import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
 import { type AutoGridItem } from './AutoGridItem';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
+import { AutoGridResizeIntercept } from './AutoGridResizeIntercept';
 import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_WIDTH } from './const';
 
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
@@ -40,6 +41,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged,
           showDropTarget,
           isRepeat = false,
+          isLastPanel = false,
           isSelected = false,
         }: {
           item: VizPanel;
@@ -48,10 +50,30 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged: boolean;
           showDropTarget: boolean;
           isRepeat?: boolean;
+          isLastPanel?: boolean;
           isSelected?: boolean;
         }) => {
           const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
             useIsConditionallyHidden(conditionalRendering);
+
+          // Only the last panel gets the intercept, so a repeat shows one handle for the group.
+          const showResizeIntercept = isEditing && isLastPanel && !isDragged;
+
+          const wrapperClass = cx(
+            conditionalRenderingClass,
+            styles.wrapper,
+            isDragged && !isRepeat && styles.draggedWrapper,
+            isDragged && isRepeat && styles.draggedRepeatWrapper,
+            isSelected && 'dashboard-selected-element'
+          );
+
+          const wrapperContent = (
+            <>
+              <item.Component model={item} />
+              {conditionalRenderingOverlay}
+              {showResizeIntercept && <AutoGridResizeIntercept item={model} />}
+            </>
+          );
 
           return isConditionallyHidden && !isEditing && !renderHidden ? null : (
             <div
@@ -64,33 +86,11 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
               {
                 // The lazy loader causes issues when used with conditional rendering
                 isLazy && (!isConditionallyHidden || !renderHidden) ? (
-                  <LazyLoader
-                    key={item.state.key!}
-                    mode="query"
-                    className={cx(
-                      conditionalRenderingClass,
-                      styles.wrapper,
-                      isDragged && !isRepeat && styles.draggedWrapper,
-                      isDragged && isRepeat && styles.draggedRepeatWrapper,
-                      isSelected && 'dashboard-selected-element'
-                    )}
-                  >
-                    <item.Component model={item} />
-                    {conditionalRenderingOverlay}
+                  <LazyLoader key={item.state.key!} mode="query" className={wrapperClass}>
+                    {wrapperContent}
                   </LazyLoader>
                 ) : (
-                  <div
-                    className={cx(
-                      conditionalRenderingClass,
-                      styles.wrapper,
-                      isDragged && !isRepeat && styles.draggedWrapper,
-                      isDragged && isRepeat && styles.draggedRepeatWrapper,
-                      isSelected && 'dashboard-selected-element'
-                    )}
-                  >
-                    <item.Component model={item} />
-                    {conditionalRenderingOverlay}
-                  </div>
+                  <div className={wrapperClass}>{wrapperContent}</div>
                 )
               }
             </div>
@@ -124,6 +124,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
         key={body.state.key!}
         isDragged={isDragged}
         showDropTarget={showDropTarget}
+        isLastPanel={repeatedPanels.length === 0}
       />
       {repeatedPanels.map((item, idx) => (
         <Wrapper
@@ -134,6 +135,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged={isDragged}
           showDropTarget={showDropTarget}
           isRepeat={true}
+          isLastPanel={idx === repeatedPanels.length - 1}
           isSelected={isSourceSelected}
         />
       ))}
