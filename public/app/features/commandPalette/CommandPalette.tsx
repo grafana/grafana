@@ -10,11 +10,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  useFlagDashboardVectorSearch,
-  useFlagGrafanaCmdkHybridSearch,
-  useFlagGrafanaVectorSearchCmdk,
-} from '@grafana/runtime/internal';
+import { useFlagDashboardVectorSearch, useFlagGrafanaVectorSearchCmdk } from '@grafana/runtime/internal';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 
 import { AskAssistantPill } from './AskAssistantPill';
@@ -22,7 +18,7 @@ import { type DeepSearchNavHandle, DeepSearchResults } from './DeepSearchResults
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
-import { useSearchResults } from './actions/dashboardActions';
+import { useHybridSearchEnabled, useSearchResults } from './actions/dashboardActions';
 import { type DeepSearchDashboardResult, useDeepSearchResults } from './actions/deepSearchActions';
 import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
 import { bucketQueryLength } from './bucketQueryLength';
@@ -70,12 +66,12 @@ function CommandPaletteContents() {
   const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
 
   // Call all hooks unconditionally (rules-of-hooks), then require both: the backend
-  // vector-search endpoint flag and the command-palette flag. Hybrid search
-  // supersedes the deep search column — its results already cover the semantic
-  // matches, so showing both would duplicate them.
+  // vector-search endpoint flag and the command-palette flag. Hybrid search (also
+  // gated on the command-palette flag) supersedes the deep search column — its
+  // results already cover the semantic matches, so showing both would duplicate them.
   const dashboardVectorSearchEnabled = useFlagDashboardVectorSearch();
   const vectorSearchCmdkEnabled = useFlagGrafanaVectorSearchCmdk();
-  const hybridSearchEnabled = useFlagGrafanaCmdkHybridSearch();
+  const hybridSearchEnabled = useHybridSearchEnabled();
   const deepSearchEnabled = dashboardVectorSearchEnabled && vectorSearchCmdkEnabled && !hybridSearchEnabled;
   const { deepSearchResults, isFetchingDeepSearchResults } = useDeepSearchResults({
     searchQuery,

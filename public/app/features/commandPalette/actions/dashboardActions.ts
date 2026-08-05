@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useFlagGrafanaCmdkHybridSearch } from '@grafana/runtime/internal';
+import { useFlagGrafanaCmdkHybridSearch, useFlagGrafanaVectorSearchCmdk } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { isRootFolderUID } from 'app/features/search/constants';
@@ -28,6 +28,15 @@ const MAX_HYBRID_SEARCH_RESULTS = 20;
 const MAX_RECENT_DASHBOARDS = 5;
 
 const debouncedSearch = debounce(getSearchResultActions, 200);
+
+/**
+ * Same as deep search, hybrid search needs vectorSearch flag for the backend.
+ */
+export function useHybridSearchEnabled(): boolean {
+  const hybridSearchFlag = useFlagGrafanaCmdkHybridSearch();
+  const vectorSearchCmdkFlag = useFlagGrafanaVectorSearchCmdk();
+  return hybridSearchFlag && vectorSearchCmdkFlag;
+}
 
 export async function getRecentDashboardActions(): Promise<CommandPaletteAction[]> {
   if (!contextSrv.user.isSignedIn) {
@@ -146,7 +155,7 @@ export function useSearchResults({ searchQuery, show }: { searchQuery: string; s
   const [searchResults, setSearchResults] = useState<CommandPaletteAction[]>([]);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
   const lastSearchTimestamp = useRef<number>(0);
-  const hybridSearchEnabled = useFlagGrafanaCmdkHybridSearch();
+  const hybridSearchEnabled = useHybridSearchEnabled();
 
   // Hit dashboards API
   useEffect(() => {

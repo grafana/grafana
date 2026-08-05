@@ -239,7 +239,7 @@ describe('dashboardActions', () => {
   });
 
   describe('useSearchResults', () => {
-    // The hook evaluates the grafana.cmdkHybridSearch flag, so it needs an OpenFeature provider
+    // The hook evaluates the hybrid search feature flags, so it needs an OpenFeature provider
     const wrapper = ({ children }: { children: ReactNode }) =>
       createElement(OpenFeatureProvider, { client: getTestFeatureFlagClient() }, children);
 
@@ -300,9 +300,9 @@ describe('dashboardActions', () => {
       });
     });
 
-    it('returns hybrid dashboard actions when the grafana.cmdkHybridSearch flag is on', async () => {
+    it('returns hybrid dashboard actions when both the cmdkHybridSearch and vectorSearchCmdk flags are on', async () => {
       mockContextSrv.user.isSignedIn = true;
-      setTestFlags({ 'grafana.cmdkHybridSearch': true });
+      setTestFlags({ 'grafana.cmdkHybridSearch': true, 'grafana.vectorSearchCmdk': true });
       server.use(getHybridSearchHandler([{ name: 'hybrid-dashboard-1', title: 'Hybrid dashboard 1', score: 0.9 }]));
 
       const { result } = renderHook(
@@ -322,6 +322,27 @@ describe('dashboardActions', () => {
             subtitle: 'Dashboards',
             url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
           },
+        ]);
+      });
+    });
+
+    it('does not use hybrid search when the vectorSearchCmdk flag is off', async () => {
+      mockContextSrv.user.isSignedIn = true;
+      setTestFlags({ 'grafana.cmdkHybridSearch': true, 'grafana.vectorSearchCmdk': false });
+      server.use(getHybridSearchHandler([{ name: 'hybrid-dashboard-1', title: 'Hybrid dashboard 1', score: 0.9 }]));
+
+      const { result } = renderHook(
+        () => {
+          return useSearchResults({ searchQuery: 'mySearchQuery', show: true });
+        },
+        { wrapper }
+      );
+      await waitFor(() => {
+        expect(result.current.searchResults).toEqual([
+          expect.objectContaining({
+            name: 'My dashboard 1',
+            sectionId: 'dashboards',
+          }),
         ]);
       });
     });
