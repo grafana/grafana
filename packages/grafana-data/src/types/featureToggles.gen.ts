@@ -124,11 +124,6 @@ export interface FeatureToggles {
   */
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   /**
-  * Enables Git Sync and as-code provisioning for Grafana resources
-  * @default true
-  */
-  provisioning?: boolean;
-  /**
   * Enable export functionality for provisioned resources
   * @default false
   */
@@ -303,6 +298,12 @@ export interface FeatureToggles {
   * @default true
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.
+  * @deprecated
+  * @default true
+  */
+  disableScriptedDashboards?: boolean;
   /**
   * Enables undo/redo in dynamic dashboards
   * @default false
