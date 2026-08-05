@@ -149,7 +149,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		export.ExportAllWithNewUIDs,
 		stageIfPossible,
 		metrics,
-		exportEnabled,
 	)
 
 	// Migration export preserves original names so the takeover
@@ -161,7 +160,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		export.ExportAll,
 		stageIfPossible,
 		metrics,
-		exportEnabled,
 	)
 	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
