@@ -23,7 +23,7 @@ describe('serializeSelectorGroup', () => {
     });
 
     expect(result).toEqual({
-      Group: { css: { [MIN]: { $tpl: '.some-class', params: [] } } },
+      Group: { css: { [MIN]: { $template: '.some-class', params: [] } } },
     });
   });
 
@@ -33,7 +33,7 @@ describe('serializeSelectorGroup', () => {
     });
 
     expect(result).toEqual({
-      Group: { one: { [MIN]: { $tpl: 'data-testid option {0}', params: ['value'] } } },
+      Group: { one: { [MIN]: { $template: 'data-testid option {0}', params: ['value'] } } },
     });
   });
 
@@ -43,7 +43,7 @@ describe('serializeSelectorGroup', () => {
     });
 
     expect(result).toEqual({
-      Group: { two: { '13.2.0': { $tpl: 'range {0} to {1}', params: ['from', 'to'] } } },
+      Group: { two: { '13.2.0': { $template: 'range {0} to {1}', params: ['from', 'to'] } } },
     });
   });
 
@@ -53,7 +53,7 @@ describe('serializeSelectorGroup', () => {
     });
 
     expect(result).toEqual({
-      Group: { ignores: { [MIN]: { $tpl: 'Panel status', params: ['_'] } } },
+      Group: { ignores: { [MIN]: { $template: 'Panel status', params: ['_'] } } },
     });
   });
 
@@ -70,7 +70,7 @@ describe('serializeSelectorGroup', () => {
       Group: {
         cond: {
           '11.1.0': {
-            $tpl: { whenPresent: 'Options group {0}', whenAbsent: 'Options group' },
+            $template: { whenPresent: 'Options group {0}', whenAbsent: 'Options group' },
             params: ['title'],
           },
         },
@@ -84,7 +84,7 @@ describe('serializeSelectorGroup', () => {
     });
 
     expect(result).toEqual({
-      Outer: { Inner: { deep: { [MIN]: { $tpl: 'x {0}', params: ['id'] } } } },
+      Outer: { Inner: { deep: { [MIN]: { $template: 'x {0}', params: ['id'] } } } },
     });
   });
 });
