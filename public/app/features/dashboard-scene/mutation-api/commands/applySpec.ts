@@ -10,30 +10,22 @@
  * resets transient runtime state (in-flight queries, variable selections,
  * scroll position).
  *
- * The command is resource-polymorphic, mirroring GET_SPEC: on a dashboard scene
- * the payload is a v2 `DashboardSpec`, on a notebook scene a v2beta1
- * `NotebookSpec`. The notebook path widens the spec to the dashboard shape for
- * the transformer, validates against the notebook schema rather than the
- * dashboard one, and skips dashboard edit mode — a notebook has no dashboard
- * edit chrome to enter, and entering it would mount the edit pane over a page
- * that is deliberately read-only to hand editing.
+ * A notebook is accepted too, by forwarding to APPLY_NOTEBOOK_SPEC. That is
+ * compatibility rather than design: the assistant plugin is released on its own
+ * schedule and looks for this command by name when it decides whether a page can
+ * be edited at all, so refusing a notebook here would break notebook pages for
+ * every plugin version already out there.
  */
 
 import * as z from 'zod';
 
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 
-import {
-  isNotebookScene,
-  notebookSpecToDashboardSpec,
-  setNotebookDocumentHeader,
-} from '../../serialization/notebookSpecTransform';
-import { transformSceneToNotebookSaveModel } from '../../serialization/transformSceneToNotebookSaveModel';
+import { isNotebookScene } from '../../serialization/notebookSpecTransform';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
-import { validateNotebookSpec } from '../../v2schema/notebookSpecSchema';
 
+import { applyNotebookSpecCommand } from './applyNotebookSpec';
 import { rebuildSceneFromSpec } from './specRebuild';
 import { enterEditModeIfNeeded, requiresSpecWrite, type MutationCommand } from './types';
 
@@ -53,10 +45,10 @@ export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
 export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   name: 'APPLY_SPEC',
   description:
-    'Replace the document with a complete spec. On a dashboard this is a v2 DashboardSpec ' +
-    '(settings, variables, annotations, panels, and nested rows/tabs layout); on a notebook a ' +
-    'v2beta1 NotebookSpec (settings, elements including markdown/code cells, and the ordered ' +
-    'NotebookLayout). The scene is rebuilt from the spec.',
+    'Replace the dashboard with a complete v2 DashboardSpec: settings, variables, annotations, ' +
+    'panels and the nested rows/tabs layout. The scene is rebuilt from the spec. Also accepted on ' +
+    'a notebook, where the payload is a v2beta1 NotebookSpec and APPLY_NOTEBOOK_SPEC is the ' +
+    'command to prefer.',
 
   payloadSchema: applySpecPayloadSchema,
   // Rebuilds the layout tree, so a dashboard gates on the same toggle as the layout commands;
@@ -67,45 +59,10 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     try {
+      // Compatibility forward, see the docstring for why it cannot simply refuse. This branch goes
+      // when no released assistant plugin version still asks for APPLY_SPEC on a notebook page.
       if (isNotebookScene(scene)) {
-        // Opt-in validation, same contract as the dashboard path below: reject before mutating
-        // and hand back field-scoped messages the caller can self-correct on. The notebook check
-        // also covers referential integrity, which zod alone cannot express — a cell pointing at
-        // a missing element is structurally valid and renders as a silently absent cell.
-        let notebookSpec: NotebookSpec;
-        if (payload.validate) {
-          const result = validateNotebookSpec(payload.spec);
-          if (!result.success || !result.data) {
-            return { success: false, error: `Validation failed: ${result.errors.join(', ')}`, changes: [] };
-          }
-          // Apply the PARSED spec: the schema normalizes Go's `null` slices to `[]`,
-          // `elements: null` to `{}`, and fills CUE `*` defaults, so the scene is rebuilt from
-          // the same shape validation saw.
-          notebookSpec = result.data;
-        } else {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unvalidated path: caller-supplied spec is checked by the transform
-          notebookSpec = payload.spec as unknown as NotebookSpec;
-        }
-
-        // A notebook has no dashboard edit mode to enter — deliberately no enterEditModeIfNeeded.
-        rebuildSceneFromSpec(scene, notebookSpecToDashboardSpec(notebookSpec), {
-          isEmbedded: scene.state.meta.isEmbedded,
-        });
-        // The rebuild replaces the layout manager, which holds the document header on its own
-        // state, so restore it from the spec that was just applied.
-        setNotebookDocumentHeader(scene.state.body, notebookSpec.title, notebookSpec.tags);
-
-        // Echo the re-serialized spec so the caller sees the post-apply element names without a
-        // follow-up GET_SPEC. Best effort: a serialization failure still reports success, since
-        // the write itself already landed.
-        let appliedNotebook: NotebookSpec | undefined;
-        try {
-          appliedNotebook = transformSceneToNotebookSaveModel(scene);
-        } catch {
-          appliedNotebook = undefined;
-        }
-
-        return { success: true, data: { applied: true, spec: appliedNotebook, resource: 'notebook' }, changes: [] };
+        return applyNotebookSpecCommand.handler(payload, context);
       }
 
       // Opt-in structural validation (default off to avoid breaking existing
