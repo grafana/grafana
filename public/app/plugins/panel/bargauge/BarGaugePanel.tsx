@@ -168,4 +168,3 @@ export function getLegend(options: Options, data: BarGaugePanelProps['data']) {
 
   return null;
 }
-
