@@ -52,7 +52,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
 
   const queries = useSelector(getQueries);
   const datasourceUid = useSelector(getDatasourceUid);
-  const { settings: dsSettings, isLoading: isDsSettingsLoading } = useDataSourceInstanceSettings(datasourceUid);
+  const { settings: dsSettings } = useDataSourceInstanceSettings(datasourceUid);
   const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
@@ -116,8 +116,10 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   };
 
   // QueryEditorRows dereferences dsSettings unconditionally, so it cannot mount without them.
-  // Resolution reads the in-memory cache, so this gap is a microtask — too short for a spinner.
-  if (isDsSettingsLoading || !dsSettings) {
+  // Only the first resolution can leave us with nothing to render: a later datasource switch keeps
+  // serving the previous settings while the next lookup is in flight, so the editors stay mounted
+  // instead of being torn down and rebuilt. Both windows are a microtask — too short for a spinner.
+  if (!dsSettings) {
     return null;
   }
 

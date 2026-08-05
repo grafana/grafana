@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 
 import { type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
@@ -12,6 +12,7 @@ import { type ExploreState } from 'app/types/explore';
 import { type UserState } from '../profile/state/reducers';
 
 import { QueryRows } from './QueryRows';
+import { updateDatasourceInstanceAction } from './state/datasource';
 import { makeExplorePaneState } from './state/utils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -132,6 +133,34 @@ describe('Explore QueryRows', () => {
       </Provider>
     );
 
+    expect(await screen.findAllByText('newDs query editor')).toHaveLength(1);
+  });
+
+  // Settings now resolve asynchronously, so a switch leaves a window where the next lookup is
+  // in flight. Bailing out during that window would tear down every editor and rebuild it.
+  it('keeps the editors mounted while the next datasource settings resolve', async () => {
+    const { store, datasources } = setup([{ refId: 'A' }]);
+
+    render(
+      <Provider store={store}>
+        <QueryRows exploreId={'left'} changeCompactMode={jest.fn()} />
+      </Provider>
+    );
+    await screen.findAllByText('someDs query editor');
+    const rowsBeforeSwitch = screen.getByTestId('query-editor-rows');
+
+    await act(async () => {
+      store.dispatch(
+        updateDatasourceInstanceAction({
+          exploreId: 'left',
+          datasourceInstance: datasources['newDs-uid'],
+          history: [],
+        })
+      );
+    });
+
+    // A remount would replace the container, so node identity is what proves it survived.
+    expect(screen.getByTestId('query-editor-rows')).toBe(rowsBeforeSwitch);
     expect(await screen.findAllByText('newDs query editor')).toHaveLength(1);
   });
 });
