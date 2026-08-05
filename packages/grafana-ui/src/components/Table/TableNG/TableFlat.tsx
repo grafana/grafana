@@ -149,12 +149,12 @@ export function TableFlat(props: TableNGProps) {
   );
   const hasHeader = !noHeader;
   const hasFooter = useMemo(
-    () => displayedFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
-    [displayedFields]
+    () => visibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
+    [visibleFields]
   );
   const footerHeight = useMemo(
-    () => (hasFooter ? calculateFooterHeight(displayedFields) : 0),
-    [hasFooter, displayedFields]
+    () => (hasFooter ? calculateFooterHeight(visibleFields) : 0),
+    [hasFooter, visibleFields]
   );
 
   const resizeHandler = useColumnResize(onColumnResize);

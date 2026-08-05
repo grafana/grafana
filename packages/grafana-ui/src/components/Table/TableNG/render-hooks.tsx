@@ -40,7 +40,7 @@ import {
 import { type PanelContext } from '../../PanelChrome';
 
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
-import { HeaderCell } from './components/HeaderCell';
+import { HeaderCell, HeaderCellContainer } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
@@ -523,26 +523,28 @@ function buildColumnsFromFields(
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
-        <HeaderCell
-          column={column}
-          rows={rawRows}
-          field={field}
-          filter={filter}
-          setFilter={setFilter}
-          disableKeyboardEvents={disableKeyboardEvents}
-          direction={sortDirection}
-          showTypeIcons={showTypeIcons}
-          parentIndex={parentIndex}
-          crossFilterRows={crossFilterRows}
-          crossFilterTailRows={crossFilterTailRows}
-          selectFirstCell={() => {
-            gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
-          }}
-          onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
-          canHideColumn={fields.length > 1}
-          isPinned={pinnedColumns?.has(displayName)}
-          onTogglePin={onTogglePin ? () => onTogglePin(displayName) : undefined}
-        />
+        <HeaderCellContainer column={column} field={field}>
+          <HeaderCell
+            column={column}
+            rows={rawRows}
+            field={field}
+            filter={filter}
+            setFilter={setFilter}
+            disableKeyboardEvents={disableKeyboardEvents}
+            direction={sortDirection}
+            showTypeIcons={showTypeIcons}
+            parentIndex={parentIndex}
+            crossFilterRows={crossFilterRows}
+            crossFilterTailRows={crossFilterTailRows}
+            selectFirstCell={() => {
+              gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
+            }}
+            onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
+            canHideColumn={fields.length > 1}
+            isPinned={pinnedColumns?.has(displayName)}
+            onTogglePin={onTogglePin ? () => onTogglePin(displayName) : undefined}
+          />
+        </HeaderCellContainer>
       ),
       renderSummaryCell: () => (
         <SummaryCell
