@@ -228,9 +228,14 @@ describe('NewActionsButton', () => {
       mockUseDashboardGenerationAvailable.mockReturnValue(true);
     });
 
-    it('shows the item in the dashboards group when generation is available', async () => {
+    it('shows the item directly after `New dashboard`, matching the QuickAdd menu', async () => {
       await renderAndOpen();
-      expect(screen.getByRole('menuitem', { name: 'Generate dashboard' })).toBeInTheDocument();
+
+      const dashboardGroup = screen.getByRole('group', { name: 'Dashboard' });
+      const items = within(dashboardGroup)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent);
+      expect(items.slice(0, 2)).toEqual(['New dashboard', 'Generate dashboard']);
     });
 
     it('opens the prompt on click, and closes it again on dismiss', async () => {

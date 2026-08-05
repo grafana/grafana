@@ -124,6 +124,14 @@ export default function CreateNewButton({
             url={buildUrl('/dashboard/new', parentFolder?.uid)}
             testId={selectors.components.CreateNewButton.newDashboardLink}
           />
+          {renderGenerateDashboardAction && (
+            <Menu.Item
+              label={t('browse-dashboards.create-new-button.generate-dashboard', 'Generate dashboard')}
+              icon="ai-sparkle"
+              iconColor={dashboardIconColor}
+              onClick={() => setShowGenerateDashboardPrompt(true)}
+            />
+          )}
           <Menu.Item
             label={getImportPhrase()}
             icon={ITEM_ICONS['dashboards/import']}
@@ -160,14 +168,6 @@ export default function CreateNewButton({
               }
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
               testId={selectors.components.CreateNewButton.newTemplateDashboardLink}
-            />
-          )}
-          {renderGenerateDashboardAction && (
-            <Menu.Item
-              label={t('browse-dashboards.create-new-button.generate-dashboard', 'Generate dashboard')}
-              icon="ai-sparkle"
-              iconColor={dashboardIconColor}
-              onClick={() => setShowGenerateDashboardPrompt(true)}
             />
           )}
         </Menu.Group>
