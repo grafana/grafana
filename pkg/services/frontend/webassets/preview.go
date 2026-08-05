@@ -21,22 +21,15 @@ var validPreviewAssetsFolder = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 
 const (
 	maxPreviewAssetsFolderLength = 128
-
-	// Applies to failures too: without negative caching, every page load with a
-	// stale preview cookie would pay a blocking remote fetch.
-	previewCacheTTL = 30 * time.Second
-
-	// The shared HTTP client has no timeout of its own, and the fetch runs
-	// detached from the caller's context.
-	previewFetchTimeout = 10 * time.Second
+	previewCacheTTL              = 30 * time.Second
+	previewFetchTimeout          = 10 * time.Second
 )
 
 // PreviewAssetsConfig configures serving frontend assets from a CI-uploaded
-// preview build instead of the release assets. Never enable in production.
+// preview build instead of the release assets.
+// Should NEVER be enabled in production.
 type PreviewAssetsConfig struct {
 	Enabled bool
-
-	// The only origin previews can load from; folder names are appended server-side.
 	BaseURL string
 }
 
@@ -93,7 +86,7 @@ var (
 	previewFlights singleflight.Group
 )
 
-// ResetPreviewAssetsCache clears the preview manifest cache. Exported for tests.
+// Clears the cache, exported just for tests.
 func ResetPreviewAssetsCache() {
 	previewCacheMu.Lock()
 	previewCache = map[string]cachedPreviewAssets{}
