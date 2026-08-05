@@ -581,7 +581,7 @@ func (am *Alertmanager) PutAlerts(ctx context.Context, alerts apimodels.Postable
 		for k, v := range a.Labels {
 			// The Grafana Alertmanager skips empty-name, empty-value, and namespace UID labels.
 			// To get the same alert fingerprint we need to remove these labels too.
-			// https://github.com/grafana/alerting/blob/2dda1c67ec02625ac9fc8607157b3d5825d47919/notify/grafana_alertmanager.go#L722-L724
+			// https://github.com/grafana/alerting/blob/d7fe949135639051472a18db58b764467fa8859b/notify/grafana_alertmanager.go#L966-L968
 			if len(k) == 0 || len(v) == 0 || k == alertingModels.NamespaceUIDLabel {
 				delete(a.Labels, k)
 			}
