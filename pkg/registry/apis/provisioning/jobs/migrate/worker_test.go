@@ -191,7 +191,6 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 				featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 			}
 
-			// as in test
 			// Create migration worker
 			worker := NewMigrationWorker(mockMigrator)
 
