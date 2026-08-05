@@ -84,14 +84,8 @@ type DeepPartial<T> = T extends object
  */
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): DashboardV2Spec {
   const sceneDash = scene.state;
-  const timeRange = sceneDash.$timeRange!.state;
-
-  const controlsState = sceneDash.controls?.state;
-  const refreshPicker = controlsState?.refreshPicker;
 
   const dsReferencesMapping = scene.serializer.getDSReferencesMapping();
-
-  const timeSettingsDefaults = defaultTimeSettingsSpec();
 
   let preferences: Preferences | undefined = undefined;
 
@@ -135,18 +129,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF dashboard settings
 
     // time settings
-    timeSettings: {
-      timezone: timeRange.timeZone || timeSettingsDefaults.timezone,
-      from: timeRange.from,
-      to: timeRange.to,
-      autoRefresh: refreshPicker?.state.refresh || timeSettingsDefaults.autoRefresh,
-      autoRefreshIntervals: refreshPicker?.state.intervals || timeSettingsDefaults.autoRefreshIntervals,
-      hideTimepicker: controlsState?.hideTimeControls || timeSettingsDefaults.hideTimepicker,
-      weekStart: timeRange.weekStart,
-      fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
-      nowDelay: timeRange.UNSAFE_nowDelay,
-      quickRanges: controlsState?.timePicker.state.quickRanges,
-    },
+    timeSettings: buildTimeSettings(scene),
     // EOF time settings
 
     // variables
@@ -202,7 +185,41 @@ function getLiveNow(state: DashboardSceneState) {
   return Boolean(liveNow);
 }
 
-function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMapping, isSnapshot = false) {
+/**
+ * The document's time settings, read off the scene's time range and time controls.
+ *
+ * Exported because a sibling resource whose spec carries the same `timeSettings` block builds it from
+ * here rather than repeating it. Two functions deriving time settings that nothing forces to agree is
+ * how they drift.
+ */
+export function buildTimeSettings(scene: DashboardScene): DeepPartial<DashboardV2Spec>['timeSettings'] {
+  const timeRange = scene.state.$timeRange!.state;
+  const controlsState = scene.state.controls?.state;
+  const refreshPicker = controlsState?.refreshPicker;
+  const timeSettingsDefaults = defaultTimeSettingsSpec();
+
+  return {
+    timezone: timeRange.timeZone || timeSettingsDefaults.timezone,
+    from: timeRange.from,
+    to: timeRange.to,
+    autoRefresh: refreshPicker?.state.refresh || timeSettingsDefaults.autoRefresh,
+    autoRefreshIntervals: refreshPicker?.state.intervals || timeSettingsDefaults.autoRefreshIntervals,
+    hideTimepicker: controlsState?.hideTimeControls || timeSettingsDefaults.hideTimepicker,
+    weekStart: timeRange.weekStart,
+    fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
+    nowDelay: timeRange.UNSAFE_nowDelay,
+    quickRanges: controlsState?.timePicker.state.quickRanges,
+  };
+}
+
+/**
+ * The spec's `elements` map, built from the layout's viz panels.
+ *
+ * Exported for the notebook serializer, which needs exactly these elements plus its own narrative
+ * cells. It calls this rather than deriving panels or their element identifiers again: two functions
+ * computing an element key that nothing forces to agree is the bug class this whole change came from.
+ */
+export function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMapping, isSnapshot = false) {
   const panels = scene.state.body.getVizPanels() ?? [];
 
   // For snapshot serialization we must also include repeated panel clones (panel repeaters store clones in state,

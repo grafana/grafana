@@ -156,18 +156,28 @@ export function notebookSpecToDashboardSpec(notebook: NotebookSpec): DashboardV2
  * `description` is dropped when empty: it is optional on a notebook, and the widening above
  * substitutes '' for absent, so an empty string round-trips back to absent.
  */
+/**
+ * Downgrade panel transformations in an elements map back to the notebook's v2beta1 wire shape.
+ *
+ * `normalizeTransformation` runs first so the downgrade is total: it is a no-op on the v2 shape the
+ * serializer emits, and idempotent if a spec somehow already carries the v2beta1 shape.
+ *
+ * Exported so the notebook serializer, which builds its elements itself, applies the same downgrade
+ * as the spec-to-spec projection instead of a second copy of it.
+ */
+export function downgradeElementsToNotebookWire(elements: Record<string, unknown>): Record<string, unknown> {
+  return mapPanelTransformations(elements, (transformation) =>
+    toWireTransformation(normalizeTransformation(transformation), NOTEBOOK_WIRE_VERSION)
+  );
+}
+
 export function dashboardSpecToNotebookSpec(spec: DashboardV2Spec): NotebookSpec {
   const notebook = {
     title: spec.title,
     ...(spec.description ? { description: spec.description } : {}),
     tags: spec.tags,
     timeSettings: spec.timeSettings,
-    // Downgrade panel transformations back to the notebook's v2beta1 wire shape.
-    // normalizeTransformation first so the downgrade is total: it is a no-op on the v2 shape the
-    // serializer emits, and idempotent if a spec somehow already carries the v2beta1 shape.
-    elements: mapPanelTransformations(spec.elements, (transformation) =>
-      toWireTransformation(normalizeTransformation(transformation), NOTEBOOK_WIRE_VERSION)
-    ),
+    elements: downgradeElementsToNotebookWire(spec.elements),
     layout: spec.layout,
   };
 
@@ -183,6 +193,7 @@ export function dashboardSpecToNotebookSpec(spec: DashboardV2Spec): NotebookSpec
 type NotebookLayoutLike = {
   descriptor: { id: string };
   setState: (state: { title?: string; tags?: string[] }) => void;
+  getNonPanelElements: () => Record<string, unknown>;
 };
 
 function hasNotebookDescriptor(body: unknown): body is NotebookLayoutLike {
@@ -204,6 +215,17 @@ function hasNotebookDescriptor(body: unknown): body is NotebookLayoutLike {
  * are reached before a handler has touched the scene, and answering "not a notebook" is the safe
  * reading — it routes to the dashboard rules the caller had before notebooks existed.
  */
+/**
+ * The notebook's narrative cells: the elements a notebook references that are not viz panels.
+ *
+ * Asked of the notebook layout directly rather than through a hook on the dashboard layout contract,
+ * which is what keeps the dashboard serializer free of any notebook knowledge. Anything that is not a
+ * notebook layout has none, and returning `{}` for it is what the optional hook resolved to before.
+ */
+export function getNotebookCellElements(body: unknown): Record<string, unknown> {
+  return hasNotebookDescriptor(body) ? body.getNonPanelElements() : {};
+}
+
 export function isNotebookScene(scene: { state?: { body?: unknown } } | undefined): boolean {
   return hasNotebookDescriptor(scene?.state?.body);
 }

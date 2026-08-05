@@ -1,25 +1,41 @@
 /**
  * Serialize an open notebook scene into a `NotebookSpec`.
  *
- * Everything that reads a scene is dashboard-typed: the scene serializer always emits the full
- * dashboard shape, so a notebook has to be projected back down to its own fields before it leaves.
- * Without that, a caller echoing what it read straight back through a write would be sending
- * `variables`, `annotations` and `cursorSync` into a resource that has no such fields.
+ * Built field by field rather than by serializing a dashboard and projecting the result down. The
+ * projection worked, but it meant the dashboard serializer had to know that some layouts own elements
+ * it cannot see, which is a notebook concern living in dashboard code.
  *
- * Step 1 of two, and the body is deliberately just the two calls the commands used to make
- * themselves. What it buys today is a name and a single home for the operation. Step 2 replaces the
- * body with a composition that builds a `NotebookSpec` directly instead of routing through the
- * dashboard serializer, which is what lets the dashboard side stop knowing about notebooks. The
- * equivalence test next to this file is what makes that swap safe, so it is not optional.
+ * What is shared is shared by calling it, not by copying it. Panel elements and their identifiers come
+ * from the dashboard serializer's own `getElements`, and `timeSettings` from its `buildTimeSettings`.
+ * Deriving either again here is the failure this whole change came from: two functions computing an
+ * element key that nothing forces to agree.
+ *
+ * What is the notebook's own: its narrative cells, its layout, and the v2beta1 downgrade of panel
+ * transformations, which the resource is still served on.
  */
 
 import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { dashboardSpecToNotebookSpec } from './notebookSpecTransform';
-import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import { downgradeElementsToNotebookWire, getNotebookCellElements } from './notebookSpecTransform';
+import { buildTimeSettings, getElements } from './transformSceneToSaveModelSchemaV2';
 
 export function transformSceneToNotebookSaveModel(scene: DashboardScene): NotebookSpec {
-  return dashboardSpecToNotebookSpec(transformSceneToSaveModelSchemaV2(scene));
+  const sceneState = scene.state;
+
+  const notebook = {
+    title: sceneState.title,
+    ...(sceneState.description ? { description: sceneState.description } : {}),
+    tags: sceneState.tags,
+    timeSettings: buildTimeSettings(scene),
+    elements: downgradeElementsToNotebookWire({
+      ...getNotebookCellElements(sceneState.body),
+      ...getElements(scene, scene.serializer.getDSReferencesMapping()),
+    }),
+    layout: sceneState.body.serialize(),
+  };
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- elements/layout are the notebook's sibling kinds, built by the dashboard-typed serializer
+  return notebook as unknown as NotebookSpec;
 }
