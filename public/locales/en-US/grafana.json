@@ -613,12 +613,6 @@
       "title-restore-version": "Restore version",
       "title-restoring-alertmanager-configuration": "Restoring Alertmanager configuration"
     },
-    "alerts-activity-banner": {
-      "description": "A brand new page is now available to handle operational work for your Grafana-managed alert rules. Find out what alerts are firing, explore historical information, filter and group to enhance your triage and root cause analysis.",
-      "open-button": "See Alert Activity",
-      "open-button-aria": "Open Alerts Activity",
-      "title": "Alert Activity is now available!"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "Sort",
       "label-filter-placeholder-search-alerts-by-labels": "Search alerts by labels",
@@ -5401,6 +5395,7 @@
           }
         }
       },
+      "layout-indicator": "Auto layout – panel sizes are managed automatically",
       "name": "Auto",
       "options": {
         "custom-min-height": {
@@ -5418,6 +5413,11 @@
         "min-width-custom": "Custom min width",
         "min-width-custom-clear": "Back to standard min column width",
         "min-width-error": "A number between 50 and 2000 is required"
+      },
+      "resize-intercept": {
+        "edit": "Edit auto layout",
+        "header": "Panel sizes are managed by auto layout",
+        "switch": "Switch to custom layout"
       }
     },
     "canvas-actions": {
@@ -5565,6 +5565,7 @@
           }
         }
       },
+      "layout-indicator": "Custom layout",
       "name": "Custom",
       "row-actions": {
         "delete": "Delete row",
@@ -12420,7 +12421,7 @@
       "title": "Reporting"
     },
     "saved-queries": {
-      "subtitle": "Reusable queries you can use across panels and Explore",
+      "subtitle": "Reusable queries across Grafana",
       "title": "Saved queries"
     },
     "scenes": {

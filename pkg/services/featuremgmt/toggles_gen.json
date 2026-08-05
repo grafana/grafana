@@ -293,7 +293,8 @@
       "metadata": {
         "name": "alertingAlertsActivityBanner",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-05T11:22:32Z"
       },
       "spec": {
         "description": "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
@@ -2740,6 +2741,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.dashboardGlobalVariables",
+        "resourceVersion": "1785434853665",
+        "creationTimestamp": "2026-07-30T18:07:33Z"
+      },
+      "spec": {
+        "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },

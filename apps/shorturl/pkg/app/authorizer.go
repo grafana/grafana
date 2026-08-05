@@ -27,20 +27,14 @@ func GetAuthorizer() authorizer.Authorizer {
 		// role None, matching the traditional /api/short-urls behaviour.
 		case "create", "get":
 			return authorizer.DecisionAllow, "", nil
-		case "update", "patch":
-			// lastSeenAt lives in the status subresource and is bumped whenever
-			// a short URL is resolved, so it is part of the read flow and must
-			// stay available to any authenticated user. Updating the short URL
-			// resource itself (e.g. its path) remains editor+.
-			if attr.GetSubresource() == "status" {
-				return authorizer.DecisionAllow, "", nil
-			}
 		}
 
 		// Every other operation (list, watch, delete, deletecollection, and
-		// updating the short URL resource itself) is restricted to admins:
-		// listing exposes every short URL in the org and the mutating verbs can
-		// change or remove short URLs owned by other users.
+		// updating the short URL resource or its status) is restricted to
+		// admins: listing exposes every short URL in the org and the mutating
+		// verbs can change or remove short URLs owned by other users. The goto
+		// redirect bumps lastSeenAt on the status subresource under a
+		// provisioning identity, so it does not rely on this grant.
 		if user.GetOrgRole() == identity.RoleAdmin {
 			return authorizer.DecisionAllow, "", nil
 		}

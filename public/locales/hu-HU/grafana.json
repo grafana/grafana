@@ -4832,6 +4832,7 @@
       "not-found": "<0>Nem található: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + jobb egérgomb",
       "middle-mouse": "Középső egérgomb",
       "pan-title": "Pásztázás:",
@@ -9249,6 +9250,7 @@
       "name-lookup-field": "Keresőmező"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Helyadatok automatikus felismerése az alapértelmezett mezőnevek alapján",
         "description-coords": "Szélességi és hosszúsági mezők megadása",

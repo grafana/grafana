@@ -4832,6 +4832,7 @@
       "not-found": "<0>Niet gevonden: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + rechtermuisknop",
       "middle-mouse": "Middelste muisknop",
       "pan-title": "Pan:",
@@ -9249,6 +9250,7 @@
       "name-lookup-field": "Opzoekveld"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Identificeer automatisch locatiegegevens op basis van standaard veldnamen",
         "description-coords": "Geef breedte- en lengtegraadvelden op",
