@@ -433,7 +433,10 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelAccess(ctx context.Context, a
 	if obj == nil {
 		return fmt.Errorf("library panel object is required for %s authorization", verb)
 	}
+	return b.authorizeLibraryPanel(ctx, obj, verb, a.GetNamespace())
+}
 
+func (b *DashboardsAPIBuilder) authorizeLibraryPanel(ctx context.Context, obj runtime.Object, verb, namespace string) error {
 	accessor, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return fmt.Errorf("get library panel metadata for authorization: %w", err)
@@ -452,7 +455,7 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelAccess(ctx context.Context, a
 		Verb:      verb,
 		Group:     gvr.Group,
 		Resource:  gvr.Resource,
-		Namespace: a.GetNamespace(),
+		Namespace: namespace,
 		Name:      accessor.GetName(),
 	}, folderUID)
 	if err != nil {
@@ -1104,10 +1107,11 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		// unified storage directly (no dual writer).
 		if libraryPanels != nil {
 			// status.missing preserves legacy model fields that have no typed spec field.
-			storage[libraryPanels.StoragePath()], err = grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
-			if err != nil {
-				return err
+			unifiedLibraryStore, storeErr := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+			if storeErr != nil {
+				return storeErr
 			}
+			storage[libraryPanels.StoragePath()] = newLibraryPanelAccessStorage(unifiedLibraryStore, b.authorizeLibraryPanel)
 		}
 
 		return nil
@@ -1147,9 +1151,10 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		if err != nil {
 			return err
 		}
+		unifiedLibraryStorage := newLibraryPanelAccessStorage(unifiedLibraryStore, b.authorizeLibraryPanel)
 
 		libraryGr := libraryPanels.GroupResource()
-		storage[libraryPanels.StoragePath()], err = opts.DualWriteBuilder(libraryGr, legacyLibraryStore, unifiedLibraryStore)
+		storage[libraryPanels.StoragePath()], err = opts.DualWriteBuilder(libraryGr, legacyLibraryStore, unifiedLibraryStorage)
 		if err != nil {
 			return err
 		}
