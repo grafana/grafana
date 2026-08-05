@@ -21,6 +21,7 @@ import { NewsCard } from './AlertsIncidents/NewsCard';
 import { canViewFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
+import { HeaderActions } from './HeaderActions';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import { HomeSection } from './HomeSection';
 import { Overview } from './Overview/Overview';
@@ -124,6 +125,7 @@ export default function HomePage() {
         subTitle: t('home.home-page.placeholder', 'Welcome to {{edition}}.', { edition: getEdition() }),
         hideFromBreadcrumbs: true,
       }}
+      actions={redesignEnabled ? <HeaderActions /> : undefined}
       layout={PageLayoutType.Home}
     >
       <Page.Contents>
