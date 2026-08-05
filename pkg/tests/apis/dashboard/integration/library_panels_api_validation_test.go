@@ -8,9 +8,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -490,6 +492,133 @@ func TestIntegrationLibraryPanelPreservesStatusMissingInUnifiedStorage(t *testin
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, int64(100), missing["maxDataPoints"])
+}
+
+func TestIntegrationLibraryPanelMode5EnforcesWritePermissions(t *testing.T) {
+	// Regression guard for the authorization bypass reproduced on the combined
+	// hosted POC: https://github.com/grafana/grafana/pull/130108#issuecomment-5189622165
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"librarypanels.dashboard.grafana.app": {DualWriterMode: grafanarest.Mode5},
+		},
+	})
+	ctx := createTestContext(t, helper, helper.Org1)
+	adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getLibraryElementGVR())
+	editorClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getLibraryElementGVR())
+	viewerClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, getLibraryElementGVR())
+
+	panel := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": dashboardV0.APIGroup + "/" + dashboardV0.VERSION,
+		"kind":       "LibraryPanel",
+		"metadata": map[string]interface{}{
+			"name": "viewer-write-probe",
+		},
+		"spec": map[string]interface{}{
+			"type":        "text",
+			"title":       "Viewer write probe",
+			"panelTitle":  "Viewer write probe",
+			"options":     map[string]interface{}{},
+			"fieldConfig": map[string]interface{}{},
+		},
+	}}
+
+	created, err := adminClient.Resource.Create(context.Background(), panel, v1.CreateOptions{})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = adminClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
+	})
+	_, err = viewerClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+	require.NoError(t, err, "Viewer should retain read access")
+
+	viewerUpdate := created.DeepCopy()
+	require.NoError(t, unstructured.SetNestedField(viewerUpdate.Object, "Viewer must not update this", "spec", "description"))
+	_, err = viewerClient.Resource.Update(context.Background(), viewerUpdate, v1.UpdateOptions{})
+	require.True(t, apierrors.IsForbidden(err), "Viewer update must be forbidden, got %v", err)
+
+	err = viewerClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
+	require.True(t, apierrors.IsForbidden(err), "Viewer delete must be forbidden, got %v", err)
+
+	unchanged, err := adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+	require.NoError(t, err)
+	_, found, err := unstructured.NestedString(unchanged.Object, "spec", "description")
+	require.NoError(t, err)
+	require.False(t, found, "Viewer update unexpectedly persisted")
+
+	editorUpdate := unchanged.DeepCopy()
+	require.NoError(t, unstructured.SetNestedField(editorUpdate.Object, "Editor may update this", "spec", "description"))
+	updated, err := editorClient.Resource.Update(context.Background(), editorUpdate, v1.UpdateOptions{})
+	require.NoError(t, err)
+	description, found, err := unstructured.NestedString(updated.Object, "spec", "description")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "Editor may update this", description)
+
+	require.NoError(t, editorClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{}))
+	_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "Editor delete did not remove the panel: %v", err)
+}
+
+func TestIntegrationLibraryPanelMode5SupportsAdvertisedPatchTypes(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"librarypanels.dashboard.grafana.app": {DualWriterMode: grafanarest.Mode5},
+		},
+	})
+	ctx := createTestContext(t, helper, helper.Org1)
+	client := getResourceClient(t, ctx.Helper, ctx.AdminUser, getLibraryElementGVR())
+
+	panel := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": dashboardV0.APIGroup + "/" + dashboardV0.VERSION,
+		"kind":       "LibraryPanel",
+		"metadata": map[string]interface{}{
+			"name": "merge-patch-probe",
+		},
+		"spec": map[string]interface{}{
+			"type":        "text",
+			"title":       "Merge patch probe",
+			"panelTitle":  "Merge patch probe",
+			"options":     map[string]interface{}{},
+			"fieldConfig": map[string]interface{}{},
+		},
+	}}
+
+	_, err := client.Resource.Create(context.Background(), panel, v1.CreateOptions{})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = client.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
+	})
+
+	patched, err := client.Resource.Patch(
+		context.Background(),
+		panel.GetName(),
+		types.MergePatchType,
+		[]byte(`{"spec":{"description":"Patched through the Kubernetes API"}}`),
+		v1.PatchOptions{},
+	)
+	require.NoError(t, err)
+	description, found, err := unstructured.NestedString(patched.Object, "spec", "description")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "Patched through the Kubernetes API", description)
+
+	patched, err = client.Resource.Patch(
+		context.Background(),
+		panel.GetName(),
+		types.JSONPatchType,
+		[]byte(`[{"op":"replace","path":"/spec/description","value":"JSON patched through the Kubernetes API"}]`),
+		v1.PatchOptions{},
+	)
+	require.NoError(t, err)
+	description, found, err = unstructured.NestedString(patched.Object, "spec", "description")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "JSON patched through the Kubernetes API", description)
 }
 
 func getLibraryElementGVR() schema.GroupVersionResource {
