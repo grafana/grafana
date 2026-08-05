@@ -3969,6 +3969,9 @@
       "trace-id": "跟踪 ID：{{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "身份验证设置"
@@ -4791,6 +4794,7 @@
       "not-found": "<0>未找到：</0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + 鼠标右键",
       "middle-mouse": "鼠标中键",
       "pan-title": "平移：",
@@ -6137,13 +6141,10 @@
         "show-in": ""
       },
       "annotations": {
-        "add-annotation": "",
         "add-annotation-query": "",
         "name-builtin": "",
         "name-disabled": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-annotation": "",
         "title-above-dashboard-count_other": "",
         "title-controls-menu-count_other": "",
         "title-hidden-count_other": ""
@@ -6223,10 +6224,7 @@
       "links": {
         "add-link": "",
         "new-link": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-link": "",
-        "untitled": "",
         "title-above-dashboard_other": "",
         "title-controls-menu_other": ""
       },
@@ -6324,11 +6322,9 @@
       "variables": {
         "add-variable": "",
         "change-type": "",
-        "reorder": "",
         "reorder-description": "",
         "select-type": "",
         "select-type-card-tooltip": "",
-        "select-variable": "",
         "top-placement-default": "",
         "title-controls-menu_other": "",
         "title-hidden_other": "",
@@ -6761,11 +6757,6 @@
       "delete-text": "您确定要删除{{name}}吗？",
       "delete-title": "删除注释查询"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "注释"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "使用已保存的查询"
     },
@@ -7187,11 +7178,6 @@
       "delete-text": "您确定要删除{{name}}吗？",
       "delete-title": "删除链接",
       "unnamed": "未命名链接"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "链接"
-      }
     },
     "link-options": {
       "icon": "图标",
@@ -9203,6 +9189,7 @@
       "name-lookup-field": "查找字段"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "根据默认字段名称自动识别位置数据",
         "description-coords": "指定纬度和经度字段",
@@ -15825,18 +15812,29 @@
     },
     "editor": {
       "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
       "view-preview": "",
       "view-split": "",
       "view-write": ""
-    },
-    "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
-    },
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "基本主题",
