@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"unicode/utf8"
 
 	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
@@ -184,9 +185,9 @@ func validateInputs(inputs []*resourcepb.EmbeddingInput, requireUID string) erro
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: empty", i)
 		case requireUID == "" && in.Uid == "":
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid is required", i)
-		case len(in.Uid) > maxKeyFieldLen:
+		case utf8.RuneCountInString(in.Uid) > maxKeyFieldLen:
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid exceeds %d chars", i, maxKeyFieldLen)
-		case len(in.Subresource) > maxKeyFieldLen:
+		case utf8.RuneCountInString(in.Subresource) > maxKeyFieldLen:
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: subresource exceeds %d chars", i, maxKeyFieldLen)
 		case requireUID != "" && in.Uid != "" && in.Uid != requireUID:
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid %q does not match request uid %q", i, in.Uid, requireUID)
@@ -281,7 +282,7 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 	if req.Uid == "" {
 		return nil, status.Error(codes.InvalidArgument, "uid is required")
 	}
-	if len(req.Uid) > maxKeyFieldLen {
+	if utf8.RuneCountInString(req.Uid) > maxKeyFieldLen {
 		return nil, status.Errorf(codes.InvalidArgument, "uid exceeds %d chars", maxKeyFieldLen)
 	}
 	if err := validateInputs(req.Inputs, req.Uid); err != nil {

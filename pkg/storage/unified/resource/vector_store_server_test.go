@@ -273,6 +273,7 @@ func TestVectorStore_UpsertValidation(t *testing.T) {
 		}},
 		{"invalid metadata json", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Metadata = []byte(`{not json`) }},
 		{"oversized uid", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Uid = strings.Repeat("u", 257) }},
+		{"oversized multibyte uid", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Uid = strings.Repeat("ü", 257) }},
 		{"oversized subresource", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Subresource = strings.Repeat("s", 257) }},
 	}
 	for _, tc := range cases {
@@ -359,6 +360,12 @@ func TestVectorStore_UpsertSubresourcesValidation(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	// 256 multibyte chars fit VARCHAR(256): char count governs, not bytes.
+	okReq := validUpsertReq()
+	okReq.Inputs[0].Uid = strings.Repeat("ü", 256)
+	_, err = s.Upsert(vsAuthedCtx(), okReq)
+	require.NoError(t, err)
 
 	// Oversized request uid.
 	_, err = s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
