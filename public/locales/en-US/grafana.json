@@ -613,12 +613,6 @@
       "title-restore-version": "Restore version",
       "title-restoring-alertmanager-configuration": "Restoring Alertmanager configuration"
     },
-    "alerts-activity-banner": {
-      "description": "A brand new page is now available to handle operational work for your Grafana-managed alert rules. Find out what alerts are firing, explore historical information, filter and group to enhance your triage and root cause analysis.",
-      "open-button": "See Alert Activity",
-      "open-button-aria": "Open Alerts Activity",
-      "title": "Alert Activity is now available!"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "Sort",
       "label-filter-placeholder-search-alerts-by-labels": "Search alerts by labels",
