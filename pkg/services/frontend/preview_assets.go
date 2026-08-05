@@ -18,9 +18,7 @@ import (
 const (
 	previewAssetsPath = "/-/set-preview-assets"
 
-	// previewAssetsCookieName stores only the preview folder name, never a URL.
-	// The full asset URL is always constructed server-side from the configured
-	// base URL.
+	// Stores only the folder name; asset URLs are always built server-side.
 	previewAssetsCookieName = "grafana_preview_assets"
 	previewCSRFCookieName   = "grafana_preview_assets_csrf"
 
@@ -51,13 +49,7 @@ func newPreviewAssetsHandler(cfg *setting.Cfg, previewCfg fswebassets.PreviewAss
 }
 
 // handleGet serves the whole opt-in flow. The frontend service only receives
-// GET requests (everything else is routed to the backend), so the confirmation
-// step is also a GET, protected by a CSRF token transmitted as a query
-// parameter and validated against a short-lived cookie:
-//
-//	GET ?assets=<folder>                  confirmation page, sets CSRF cookie
-//	GET ?assets=<folder>&confirm=<token>  sets the preview cookie, redirects to /
-//	GET ?clear=1                          removes the preview cookie, redirects to /
+// GETs, so the confirm step is a CSRF-token-guarded GET rather than a POST.
 func (h *previewAssetsHandler) handleGet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := contexthandler.FromContext(ctx).Logger
@@ -109,8 +101,7 @@ func (h *previewAssetsHandler) handleGet(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// The CSRF token is single-use: clear it together with setting the
-	// preview cookie.
+	// The CSRF token is single-use: clear it together with setting the preview cookie.
 	h.clearCSRFCookie(w)
 	h.setCookie(w, previewAssetsCookieName, folder, int(previewCookieMaxAge.Seconds()))
 
@@ -141,8 +132,7 @@ func (h *previewAssetsHandler) renderConfirmationPage(w http.ResponseWriter, log
 
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	w.Header().Set("Cache-Control", "no-store")
-	// The confirmation token travels in the query string; make sure it never
-	// leaks through the Referer header.
+	// The confirmation token travels in the query string; keep it out of Referer.
 	w.Header().Set("Referrer-Policy", "no-referrer")
 
 	err = previewAssetsConfirmTemplate.Execute(w, struct {

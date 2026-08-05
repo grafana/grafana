@@ -133,7 +133,6 @@ func ReadWebAssetsFromCDN(ctx context.Context, buildDir string, baseURL string) 
 	if response.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code %d fetching assets-manifest.json from %s", response.StatusCode, baseURL)
 	}
-	// Limit the response body size to guard against oversized responses
 	const maxManifestSize = 10 * 1024 * 1024
 	dto, err := readWebAssets(io.LimitReader(response.Body, maxManifestSize))
 	if err == nil {
