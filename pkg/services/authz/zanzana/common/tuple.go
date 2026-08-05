@@ -57,15 +57,17 @@ const (
 	RelationSetEdit  string = "edit"
 	RelationSetAdmin string = "admin"
 
-	RelationGet    string = "get"
-	RelationUpdate string = "update"
-	RelationCreate string = "create"
-	RelationDelete string = "delete"
+	RelationGet     string = "get"
+	RelationGetSelf string = "get_self"
+	RelationUpdate  string = "update"
+	RelationCreate  string = "create"
+	RelationDelete  string = "delete"
 
 	RelationGetPermissions string = "get_permissions"
 	RelationSetPermissions string = "set_permissions"
 
 	RelationCanGet            string = "can_get"
+	RelationCanGetSelf        string = "can_get_self"
 	RelationCanCreate         string = "can_create"
 	RelationCanUpdate         string = "can_update"
 	RelationCanDelete         string = "can_delete"
@@ -125,6 +127,7 @@ var RelationsSubresource = []string{
 var RelationsFolder = append(
 	RelationsSubresource,
 	RelationGet,
+	RelationGetSelf,
 	RelationUpdate,
 	RelationCreate,
 	RelationDelete,
@@ -186,7 +189,11 @@ var VerbMapping = map[string]string{
 
 // RelationToVerbMapping is mapping a zanzana relation to k8s verb.
 var RelationToVerbMapping = map[string]string{
-	RelationGet:            utils.VerbGet,
+	RelationGet: utils.VerbGet,
+	// get_self is a grant-time distinction only; reading a folder is still
+	// verb "get" at check time (get_self feeds can_get_self, see schema_folder.fga
+	// and FolderDirectPermissionRelation).
+	RelationGetSelf:        utils.VerbGet,
 	RelationCreate:         utils.VerbCreate,
 	RelationUpdate:         utils.VerbUpdate,
 	RelationDelete:         utils.VerbDelete,
@@ -195,6 +202,11 @@ var RelationToVerbMapping = map[string]string{
 }
 
 // FolderPermissionRelation returns the optimized folder relation for permission management.
+//
+// This is used both when checking the folder object itself AND when checking whether a resource
+// (e.g. a dashboard) inherits access from its containing folder. Deliberately does NOT include
+// get_self: a self-only grant on a folder must not let its contents (or subfolders) inherit read.
+// Use FolderDirectPermissionRelation instead for "is the folder itself accessible" checks.
 func FolderPermissionRelation(relation string) string {
 	switch relation {
 	case RelationGet:
@@ -212,6 +224,23 @@ func FolderPermissionRelation(relation string) string {
 	default:
 		return relation
 	}
+}
+
+// FolderDirectPermissionRelation returns the relation to use when checking (or listing) access to
+// a folder object itself, as opposed to a resource that inherits permissions from a folder. For
+// "get" this additionally includes get_self, so a self-only grant makes the folder itself visible
+// -- without granting anything that recurses to its subtree or lets its direct content inherit
+// read (that would defeat the point of a self-only grant; see identity-access-team#2285 open
+// question #2). Every other verb behaves the same as FolderPermissionRelation.
+//
+// Do NOT use this for the "does this resource inherit from its folder" branches (checkGeneric,
+// listGeneric, collectFolderPermissionChecks) -- those must keep using FolderPermissionRelation /
+// can_get so self-only grants cannot leak folder content.
+func FolderDirectPermissionRelation(relation string) string {
+	if relation == RelationGet {
+		return RelationCanGetSelf
+	}
+	return FolderPermissionRelation(relation)
 }
 
 // SubresourcePermissionRelation returns computed subresource relations that include escalation.

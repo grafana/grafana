@@ -91,8 +91,35 @@ func FolderFixedRoleRegistrations(wildcardSeed bool) []accesscontrol.RoleRegistr
 	return []accesscontrol.RoleRegistration{viewer, editor, admin}
 }
 
+// FolderSelfReadRoleRegistration registers folders.self:read for permission validation without
+// granting it to any built-in role. It exists purely so the permission registry knows the action
+// and its valid scope prefix (folders:uid:): DeclareFixedRoles only calls RegisterPermission for
+// actions that appear in a *declared* fixed role's permission list, and folders.self:read is
+// deliberately excluded from FolderViewActions/FolderEditActions/FolderAdminActions -- bundling it
+// there would grant it to every Viewer by default, defeating the point of a self-only,
+// individually assignable action. The only supported way a user gets this action is an explicit
+// custom-role assignment naming a specific folder (identity-access-team#2285, Phase 1).
+//
+// Without this registration, enterprise custom-role validation (ValidateProvidedPermissions, when
+// cfg.RBAC.PermissionValidationEnabled) rejects folders.self:read as an unknown action -- see
+// permreg.TestPermissionRegistry_FolderSelfReadRegistrationGap for the empirical demonstration.
+func FolderSelfReadRoleRegistration() accesscontrol.RoleRegistration {
+	return accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        "fixed:folders:self-reader",
+			DisplayName: "Folder self-reader (internal)",
+			Description: "Registers folders.self:read for custom-role permission validation. Not granted to any basic role.",
+			Group:       "Folders",
+			Permissions: accesscontrol.PermissionsForActions([]string{folder.ActionFoldersReadSelf}, folder.ScopeFoldersAll),
+			Hidden:      true,
+		},
+		Grants: []string{},
+	}
+}
+
 func registerFolderRoles(cfg *setting.Cfg, _ featuremgmt.FeatureToggles, service accesscontrol.Service) error {
-	return service.DeclareFixedRoles(FolderFixedRoleRegistrations(cfg.RBAC.PermissionsWildcardSeed("folder"))...)
+	registrations := append(FolderFixedRoleRegistrations(cfg.RBAC.PermissionsWildcardSeed("folder")), FolderSelfReadRoleRegistration())
+	return service.DeclareFixedRoles(registrations...)
 }
 
 // FolderPermissionsRoleRegistrations returns the templated reader/writer fixed

@@ -124,10 +124,14 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 
 	// List all resources the subject has direct access to via the base relation.
 	if resource.IsValidRelation(relation) {
-		// Use optimized folder permission relations for permission management
+		// Use optimized folder permission relations for permission management. Folder-typed
+		// listing is the "which folders are themselves accessible" path, so it must use the
+		// get_self-aware relation (see FolderDirectPermissionRelation doc comment) -- unlike
+		// listGeneric below, which resolves folder-content inheritance and must stay
+		// get_self-blind.
 		listRelation := relation
 		if resource.Type() == common.TypeFolder {
-			listRelation = common.FolderPermissionRelation(relation)
+			listRelation = common.FolderDirectPermissionRelation(relation)
 		}
 
 		res, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{

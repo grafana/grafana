@@ -145,10 +145,13 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation string, resou
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
-	// Use optimized folder permission relations for permission management
+	// Use optimized folder permission relations for permission management. This is the
+	// "is the folder object itself accessible" path, so it uses FolderDirectPermissionRelation
+	// (get_self-aware) rather than FolderPermissionRelation (used by checkGeneric below for the
+	// "does this resource inherit from its folder" path, which must stay get_self-blind).
 	checkRelation := relation
 	if resource.Type() == common.TypeFolder {
-		checkRelation = common.FolderPermissionRelation(relation)
+		checkRelation = common.FolderDirectPermissionRelation(relation)
 	}
 
 	// Check if subject has direct access to resource

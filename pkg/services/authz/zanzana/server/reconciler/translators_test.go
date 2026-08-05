@@ -698,6 +698,46 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 	})
 }
 
+// TestTranslateRoleToTuples_FolderSelfRead is a spike test for identity-access-team#2285, Phase 1,
+// open questions #3 (role write path) and #5 (reconciler rebuild survival).
+//
+//   - #3: a Role CRD carrying folders.self:read translates to a get_self tuple end to end,
+//     through the exact same TranslateRoleToTuples/RoleToTuples path production reconciliation
+//     uses, and that tuple is valid against the real compiled schema.
+//   - #5: TranslateRoleToTuples is a pure function of the Role spec (no hidden state), so
+//     translating it again -- exactly what a full reconciler rebuild does -- reproduces the
+//     identical tuple. There is no drift risk from a rebuild dropping or mutating a self-only
+//     grant.
+func TestTranslateRoleToTuples_FolderSelfRead(t *testing.T) {
+	ts := loadTypesystem(t)
+
+	role := &iamv0.Role{
+		ObjectMeta: metav1.ObjectMeta{Name: "folder-self-reader"},
+		Spec: iamv0.RoleSpec{
+			Permissions: []iamv0.RolespecPermission{
+				{Action: "folders.self:read", Scope: "folders:uid:AABBCC"},
+			},
+		},
+	}
+
+	tuples, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
+	require.NoError(t, err)
+
+	require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+		{User: "role:folder-self-reader#assignee", Relation: "get_self", Object: "folder:AABBCC"},
+	}), tupleKeyStrings(tuples))
+
+	for _, tuple := range tuples {
+		validateTupleAgainstSchema(t, ts, tuple)
+	}
+
+	// Rebuild survival: re-translating the same Role spec (what a full reconciler rebuild does)
+	// must reproduce the exact same tuple, not drop it or produce a different one.
+	rebuiltTuples, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
+	require.NoError(t, err)
+	require.ElementsMatch(t, tupleKeyStrings(tuples), tupleKeyStrings(rebuiltTuples))
+}
+
 // TestTranslateRoleToTuples_RoleManagementPermissions verifies the reconciler
 // end-to-end (Role CRD → tuples) for the three legacy role-management actions:
 //
