@@ -179,40 +179,42 @@ export async function importTestDashboard(
   dashInput?: string,
   options: ImportTestDashboardOptions = {}
 ): Promise<string> {
-  options = { checkPanelsVisible: true, requiresDataSourceSelection: true, ...options };
+  return test.step(`Import test dashboard "${title}"`, async () => {
+    options = { checkPanelsVisible: true, requiresDataSourceSelection: true, ...options };
 
-  await page.goto(selectors.pages.ImportDashboard.url);
+    await page.goto(selectors.pages.ImportDashboard.url);
 
-  const importJson = stripMetadataNameFromImportJson(dashInput || JSON.stringify(testV2Dashboard));
-  await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(importJson);
-  await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
+    const importJson = stripMetadataNameFromImportJson(dashInput || JSON.stringify(testV2Dashboard));
+    await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(importJson);
+    await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
 
-  // we always append a timestamp so every import gets a unique title. Collisions happen on test retries
-  // and when parallel workers import dashboards sharing the same title (several specs reuse titles like "Paste tab")
-  // a collision does not fail the test (the import overwrites the existing dashboard),
-  // but Playwright traces show a validation error in the UI and tests may run against a stale dashboard
-  const uniqueTitle = `${title} [${Date.now().toString(36)}]`;
-  await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(uniqueTitle);
+    // we always append a timestamp so every import gets a unique title. Collisions happen on test retries
+    // and when parallel workers import dashboards sharing the same title (several specs reuse titles like "Paste tab")
+    // a collision does not fail the test (the import overwrites the existing dashboard),
+    // but Playwright traces show a validation error in the UI and tests may run against a stale dashboard
+    const uniqueTitle = `${title} [${Date.now().toString(36)}]`;
+    await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(uniqueTitle);
 
-  if (options.requiresDataSourceSelection) {
-    await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-    await page.locator('div[data-testid^="data-testid data source card"]').first().click();
-  }
+    if (options.requiresDataSourceSelection) {
+      await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
+      await page.locator('div[data-testid^="data-testid data source card"]').first().click();
+    }
 
-  await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
+    await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
 
-  const undockMenuButton = page.locator('[aria-label="Undock menu"]');
-  const undockMenuVisible = await undockMenuButton.isVisible();
-  if (undockMenuVisible) {
-    await undockMenuButton.click();
-  }
+    const undockMenuButton = page.locator('[aria-label="Undock menu"]');
+    const undockMenuVisible = await undockMenuButton.isVisible();
+    if (undockMenuVisible) {
+      await undockMenuButton.click();
+    }
 
-  if (options.checkPanelsVisible) {
-    // wait for the 1st panel to render
-    await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
-  }
+    if (options.checkPanelsVisible) {
+      // wait for the 1st panel to render
+      await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
+    }
 
-  return uniqueTitle;
+    return uniqueTitle;
+  });
 }
 
 export async function goToEmbeddedPanel(page: Page) {
