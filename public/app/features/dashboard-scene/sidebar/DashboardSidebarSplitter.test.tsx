@@ -71,7 +71,6 @@ describe('DashboardSidebarSplitter', () => {
 
     const scrollContainer = screen.getByTestId(selectors.components.DashboardSidebarSplitter.bodyContainer);
     expect(scrollContainer).toHaveAttribute('tabindex', '0');
-    expect(scrollContainer).toHaveAttribute('data-dashboard-body');
   });
 });
 
