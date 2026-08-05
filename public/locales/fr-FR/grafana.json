@@ -4832,6 +4832,7 @@
       "not-found": "<0>Introuvable : </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + bouton droit de la souris",
       "middle-mouse": "Molette de la souris",
       "pan-title": "Panoramique :",
@@ -9249,6 +9250,7 @@
       "name-lookup-field": "Champ de correspondance"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Identifier automatiquement les données de localisation à partir des noms de champ par défaut",
         "description-coords": "Spécifier les champs de latitude et de longitude",

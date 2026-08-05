@@ -4794,6 +4794,7 @@
       "not-found": "<0>見つかりません：</0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "Ctrl + 右マウス",
       "middle-mouse": "マウス中央ボタン",
       "pan-title": "パン：",
@@ -9188,6 +9189,7 @@
       "name-lookup-field": "ルックアップフィールド"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "デフォルトのフィールド名に基づいて位置データを自動的に識別",
         "description-coords": "緯度と経度のフィールドを指定",
