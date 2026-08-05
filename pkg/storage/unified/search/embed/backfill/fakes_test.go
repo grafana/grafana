@@ -236,13 +236,6 @@ func rowsKey(ns, model, res, uid string) string {
 	return ns + "|" + model + "|" + res + "|" + uid
 }
 
-// markExists seeds a single-row embedding at content_version 1, simulating
-// a uid already embedded by a version-1 builder (the common case in tests
-// that don't care about versioning).
-func (f *fakeVector) markExists(ns, model, res, uid string) {
-	f.seedEmbeddedRows(ns, model, res, uid, 1, "panel/1")
-}
-
 // seedEmbeddedRows preloads rows for (ns, model, res, uid), one per
 // subresource, all at the given content_version — simulating embeddings
 // left over from an earlier backfill/reconcile run.

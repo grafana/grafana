@@ -31,8 +31,9 @@ type Builder interface {
 	// when Extract output changes shape or content so existing embeddings
 	// re-embed via backfill; never reuse a value.
 	Version() int
-	// Extract turns a stored value into embeddable items. Folder display
-	// titles are deliberately absent: HybridSearch resolves them fresh at
-	// query time, so stored copies would only go stale.
-	Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte) ([]Item, error)
+	// Extract turns a stored value into embeddable items. folderTitle is
+	// resolved by the caller at embed time and prefixes the breadcrumb; it
+	// goes stale on folder rename until re-embed — display titles come from
+	// query-time resolution, not stored content.
+	Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]Item, error)
 }

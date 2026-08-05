@@ -37,7 +37,9 @@ const maxDescriptionBytes = 2 * 1024
 // extractorVersion identifies the shape of content this extractor produces.
 // Bump when Extract output changes shape or content so backfill re-embeds
 // existing rows; never reuse a value.
-const extractorVersion = 1
+//
+// v2 prefixes the breadcrumb with the folder title (see buildEmbeddableItem).
+const extractorVersion = 2
 
 // Extractor produces one embed.Item per panel.
 type Extractor struct {
@@ -64,7 +66,7 @@ func (e *Extractor) MaxItemsPerResource() int { return e.maxPanels }
 // interface.
 func (e *Extractor) Version() int { return extractorVersion }
 
-func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte) ([]embed.Item, error) {
+func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]embed.Item, error) {
 	ctx, span := tracer.Start(ctx, "unified.embed.dashboard.Extract")
 	defer span.End()
 	span.SetAttributes(
@@ -81,6 +83,8 @@ func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, va
 	if err != nil {
 		return nil, err
 	}
+	content.FolderUID = embed.FolderUIDFromValue(value)
+	content.FolderTitle = folderTitle
 
 	uid := content.DashboardUID
 	if uid == "" {
@@ -101,7 +105,10 @@ func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, va
 }
 
 func buildEmbeddableItem(content *dashboardContent, p panelContent, uid string, idx int) (embed.Item, bool) {
-	parts := make([]string, 0, 4)
+	parts := make([]string, 0, 5)
+	if content.FolderTitle != "" {
+		parts = append(parts, content.FolderTitle)
+	}
 	if content.DashboardTitle != "" {
 		parts = append(parts, content.DashboardTitle)
 	}
@@ -211,6 +218,7 @@ type dashboardContent struct {
 	DashboardUID   string
 	DashboardTitle string
 	Description    string
+	FolderTitle    string
 	FolderUID      string
 	Tags           []string
 	Panels         []panelContent
@@ -263,22 +271,6 @@ func extractMap(path string, data any) map[string]any {
 	return nil
 }
 
-// extractFolderUID reads the folder UID from the k8s annotation. The
-// folder's display title is deliberately not stored with embeddings —
-// HybridSearch resolves it fresh at query time from the folder index.
-func extractFolderUID(dashboardJSON map[string]any) string {
-	metadata, ok := dashboardJSON["metadata"].(map[string]any)
-	if !ok {
-		return ""
-	}
-	annotations, ok := metadata["annotations"].(map[string]any)
-	if !ok {
-		return ""
-	}
-	uid, _ := annotations["grafana.app/folder"].(string)
-	return uid
-}
-
 // unwrapDashboard returns the dashboard body. Handles the Grafana API
 // response wrapper {"dashboard": {...}} but leaves k8s {"spec": {...}}
 // alone — JSONPath callers handle that explicitly.
@@ -297,8 +289,7 @@ func extractDashboardContent(ctx context.Context, dashboardJSON map[string]any, 
 	isV2 := isDashboardV2(dashboardJSON)
 
 	content := &dashboardContent{
-		Panels:    []panelContent{},
-		FolderUID: extractFolderUID(dashboardJSON),
+		Panels: []panelContent{},
 	}
 
 	if isV2 {

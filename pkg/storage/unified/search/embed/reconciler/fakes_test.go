@@ -2,8 +2,10 @@ package reconciler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"iter"
+	"net/http"
 	"sync"
 	"time"
 
@@ -26,6 +28,22 @@ type fakeStorage struct {
 	watchCh  chan *resource.WrittenEvent
 	itemErr  error // returned from the iterator partway through
 	itemErrI int   // index after which to inject itemErr
+
+	// folders backs ReadResource for FolderTitleResolver: namespace+"/"+uid
+	// -> title. An unset entry reads as NotFound.
+	folders map[string]string
+	readErr error
+}
+
+// setFolderTitle makes ReadResource resolve namespace/uid to title, so the
+// reconciler's (uncached) FolderTitleResolver can look it up.
+func (f *fakeStorage) setFolderTitle(namespace, uid, title string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.folders == nil {
+		f.folders = map[string]string{}
+	}
+	f.folders[namespace+"/"+uid] = title
 }
 
 // emit synchronously delivers a watch event on the channel set up by
@@ -43,8 +61,22 @@ func (f *fakeStorage) emit(ev *resource.WrittenEvent) {
 func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, error) {
 	panic("not implemented")
 }
-func (f *fakeStorage) ReadResource(context.Context, *resourcepb.ReadRequest) *resource.BackendReadResponse {
-	panic("not implemented")
+
+// ReadResource backs FolderTitleResolver.Title. Titles are seeded via
+// setFolderTitle; anything else reads as NotFound, matching a folder that
+// doesn't exist rather than a real storage fault (use readErr for that).
+func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.readErr != nil {
+		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: f.readErr.Error()}}
+	}
+	title, ok := f.folders[req.Key.Namespace+"/"+req.Key.Name]
+	if !ok {
+		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
+	}
+	value, _ := json.Marshal(map[string]any{"spec": map[string]any{"title": title}})
+	return &resource.BackendReadResponse{Value: value}
 }
 func (f *fakeStorage) ListIterator(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
 	panic("not implemented")

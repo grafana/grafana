@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/foldertitle"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -110,6 +111,11 @@ type Reconciler struct {
 	log               log.Logger
 	metrics           *resource.VectorMetrics
 
+	// folderTitleResolver resolves the current folder title at embed time.
+	// Deliberately uncached here: event rate is low, and correctness (fresh
+	// title) beats the staleness a cache would introduce.
+	folderTitleResolver *foldertitle.Resolver
+
 	// broadcaster is attached after construction by the resource server,
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
 
@@ -142,17 +148,18 @@ func New(opts Options) (*Reconciler, error) {
 		opts.LockRetryInterval = defaultLockRetryInterval
 	}
 	return &Reconciler{
-		storage:           opts.Storage,
-		vectorBackend:     opts.VectorBackend,
-		batchEmbedder:     opts.BatchEmbedder,
-		builders:          builders,
-		backfiller:        opts.Backfiller,
-		interval:          opts.Interval,
-		lockRetryInterval: opts.LockRetryInterval,
-		log:               log.New("embeddings_reconciler"),
-		metrics:           opts.Metrics,
-		pending:           make(map[string]*pendingEvent),
-		ensuredResources:  make(map[string]struct{}),
+		storage:             opts.Storage,
+		vectorBackend:       opts.VectorBackend,
+		batchEmbedder:       opts.BatchEmbedder,
+		builders:            builders,
+		backfiller:          opts.Backfiller,
+		interval:            opts.Interval,
+		lockRetryInterval:   opts.LockRetryInterval,
+		log:                 log.New("embeddings_reconciler"),
+		metrics:             opts.Metrics,
+		pending:             make(map[string]*pendingEvent),
+		ensuredResources:    make(map[string]struct{}),
+		folderTitleResolver: foldertitle.NewResolver(opts.Storage),
 	}, nil
 }
 
@@ -683,7 +690,13 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		Name:      ev.name,
 	}
 
-	items, err := builder.Extract(ctx, key, ev.value)
+	folderTitle, err := s.folderTitleResolver.Title(ctx, ev.namespace, embed.FolderUIDFromValue(ev.value))
+	if err != nil {
+		statusLabel = "folder_title_error"
+		return fmt.Errorf("resolve folder title: %w", err)
+	}
+
+	items, err := builder.Extract(ctx, key, ev.value, folderTitle)
 	if err != nil {
 		statusLabel = "extract_error"
 		return fmt.Errorf("extract: %w", err)

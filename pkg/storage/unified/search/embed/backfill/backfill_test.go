@@ -58,6 +58,44 @@ func makeListItem(ns, name string, rv int64) listItem {
 	}
 }
 
+// dashboardJSONWithFolder is minimalDashboardJSON annotated with a folder UID.
+func dashboardJSONWithFolder(uid, title, folderUID string) []byte {
+	body, _ := json.Marshal(map[string]any{
+		"uid":   uid,
+		"title": title,
+		"panels": []any{
+			map[string]any{
+				"id":          1,
+				"title":       "CPU",
+				"description": "CPU usage",
+			},
+		},
+		"metadata": map[string]any{
+			"annotations": map[string]any{
+				"grafana.app/folder": folderUID,
+			},
+		},
+	})
+	return body
+}
+
+// makeListItemWithFolder is makeListItem plus a folder annotation.
+func makeListItemWithFolder(ns, name string, rv int64, folderUID string) listItem {
+	return listItem{
+		Namespace: ns,
+		Name:      name,
+		RV:        rv,
+		Value:     dashboardJSONWithFolder(name, name+"-title", folderUID),
+	}
+}
+
+// seedFolder makes a folder resource readable by fakeStorage.ReadResource so
+// FolderTitleResolver.Title can resolve it.
+func (f *fakeStorage) seedFolder(ns, uid, title string) {
+	value, _ := json.Marshal(map[string]any{"spec": map[string]any{"title": title}})
+	f.resources[storeKey(ns, "folder.grafana.app", "folders", uid)] = storedResource{Value: value}
+}
+
 func newBackfiller(t *testing.T, storage *fakeStorage, vec *fakeVector) *VectorBackfiller {
 	t.Helper()
 	return newBackfillerWithBuilders(t, storage, vec, dashboard.New())
@@ -164,6 +202,68 @@ func TestBackfill_ObservesItemDuration(t *testing.T) {
 	// One successful observation under the (group, resource, status) labels
 	// the production code uses.
 	require.Equal(t, 1, testutil.CollectAndCount(m.BackfillItemDuration, "vector_storage_backfill_item_duration_seconds"))
+}
+
+// TestRunBackfillJob_FolderTitle_PrefixesBreadcrumb covers the wiring: the
+// backfiller resolves the folder title via storage and passes it to Extract,
+// which prefixes the breadcrumb.
+func TestRunBackfillJob_FolderTitle_PrefixesBreadcrumb(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItemWithFolder("ns-1", "dash-a", 50, "folder-uid")}
+	storage.seedFolder("ns-1", "folder-uid", "Production")
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1)
+	require.NotEmpty(t, vec.upserts[0])
+	assert.Contains(t, vec.upserts[0][0].Content, "Production → dash-a-title")
+}
+
+// TestRunBackfillJob_FolderTitleCache_ScopedToJobRun covers the per-job-run
+// cache: two dashboards sharing a folder within one job run resolve it once.
+func TestRunBackfillJob_FolderTitleCache_ScopedToJobRun(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeListItemWithFolder("ns-1", "dash-a", 50, "folder-uid"),
+		makeListItemWithFolder("ns-1", "dash-b", 60, "folder-uid"),
+	}
+	storage.seedFolder("ns-1", "folder-uid", "Production")
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 2)
+	assert.Contains(t, vec.upserts[0][0].Content, "Production →")
+	assert.Contains(t, vec.upserts[1][0].Content, "Production →")
+	assert.Len(t, o.folderTitleCache, 1, "one cache entry shared across both dashboards in the same folder")
+	assert.Equal(t, "Production", o.folderTitleCache["ns-1/folder-uid"])
+}
+
+// TestRunBackfillJob_FolderTitleResolveError_FailsJob covers the retry
+// contract: a folder-title storage error is a transient item error, so the
+// whole job is marked errored for the next tick — not skipped like a
+// deterministic Extract failure.
+func TestRunBackfillJob_FolderTitleResolveError_FailsJob(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItemWithFolder("ns-1", "dash-a", 50, "folder-uid")}
+	storage.readErr = errors.New("connection refused")
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts)
+	require.Len(t, vec.errorMarks, 1, "resolver error must fail the job for retry, not skip the item")
+	assert.Empty(t, vec.completedJobIDs)
 }
 
 func TestRunBackfillJob_HappyPath_EmbedsAndCompletes(t *testing.T) {
@@ -341,8 +441,12 @@ func TestRunBackfillJob_SkipsExistingEmbeddings(t *testing.T) {
 	vec.jobs = []vector.BackfillJob{{
 		ID: 1, Model: "test-model", StoppingRV: 100,
 	}}
-	// dash-a already has an embedding — backfill should skip it.
-	vec.markExists("ns-1", "test-model", "dashboards", "dash-a")
+	// dash-a already has an embedding at the builder's current version —
+	// backfill should skip it. Version() must match dashboard.New(), or
+	// ReopenStaleBackfillJobs treats the job itself as stale and resets its
+	// cursor/stopping_rv, which is not what this test is about.
+	vec.seedEmbeddedRows("ns-1", "test-model", "dashboards", "dash-a", dashboard.New().Version(), "panel/1")
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
 
 	o := newBackfiller(t, storage, vec)
 	o.runBackfill(context.Background())
@@ -363,6 +467,9 @@ func TestRunBackfillJob_SkipsItemsAboveStoppingRV(t *testing.T) {
 	vec.jobs = []vector.BackfillJob{{
 		ID: 1, Model: "test-model", StoppingRV: 100,
 	}}
+	// Job already at the builder's current version, so ReopenStaleBackfillJobs
+	// doesn't reset stopping_rv out from under this test's assertion.
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
 
 	o := newBackfiller(t, storage, vec)
 	o.runBackfill(context.Background())
@@ -387,6 +494,9 @@ func TestRunBackfillJob_ResumesFromLastSeenKey(t *testing.T) {
 		ID: 1, Model: "test-model", StoppingRV: 100,
 		LastSeenKey: encodeCursor("dashboards", "tok-2"),
 	}}
+	// Job already at the builder's current version, so ReopenStaleBackfillJobs
+	// doesn't clear the checkpoint this test is resuming from.
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
 
 	o := newBackfiller(t, storage, vec)
 	o.runBackfill(context.Background())
@@ -598,7 +708,10 @@ func TestRunBackfillJob_ViewsFilter_ExistsShortCircuitSkipsStats(t *testing.T) {
 
 	vec := newFakeVector()
 	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
-	vec.markExists("ns", "test-model", "dashboards", "already-indexed")
+	// Seed at the builder's current version so the ContentVersion
+	// short-circuit actually fires; a stale version 1 would make this
+	// dashboard eligible for re-embedding and reach the stats lookup below.
+	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "already-indexed", dashboard.New().Version(), "panel/1")
 
 	stats := newFakeDashboardStats()
 	stats.set("ns", "already-indexed", map[string]int64{"views_last_30_days": 0})
@@ -675,7 +788,7 @@ func (fakeNonDashboardBuilder) Group() string            { return "folder.grafan
 func (fakeNonDashboardBuilder) Resource() string         { return "folders" }
 func (fakeNonDashboardBuilder) MaxItemsPerResource() int { return 0 }
 func (fakeNonDashboardBuilder) Version() int             { return 1 }
-func (fakeNonDashboardBuilder) Extract(context.Context, *resourcepb.ResourceKey, []byte) ([]embed.Item, error) {
+func (fakeNonDashboardBuilder) Extract(context.Context, *resourcepb.ResourceKey, []byte, string) ([]embed.Item, error) {
 	return nil, nil
 }
 

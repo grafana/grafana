@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/foldertitle"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -66,6 +67,13 @@ type VectorBackfiller struct {
 	log            log.Logger
 	metrics        *resource.VectorMetrics
 	interval       time.Duration
+
+	folderTitleResolver *foldertitle.Resolver
+	// folderTitleCache caches namespace+"/"+folderUID -> title for the
+	// duration of a single job run. Folders repeat heavily across a scan
+	// (many dashboards share a folder), and staleness within one run is
+	// harmless since the job re-runs periodically anyway.
+	folderTitleCache map[string]string
 }
 
 const defaultBackfillInterval = time.Minute
@@ -108,15 +116,16 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	}
 
 	return &VectorBackfiller{
-		storage:        opts.Storage,
-		vectorBackend:  opts.VectorBackend,
-		batchEmbedder:  opts.BatchEmbedder,
-		builders:       builders,
-		sortedBuilders: sorted,
-		dashboardStats: opts.DashboardStats,
-		log:            log.New("backfill"),
-		metrics:        opts.Metrics,
-		interval:       interval,
+		storage:             opts.Storage,
+		vectorBackend:       opts.VectorBackend,
+		batchEmbedder:       opts.BatchEmbedder,
+		builders:            builders,
+		sortedBuilders:      sorted,
+		dashboardStats:      opts.DashboardStats,
+		log:                 log.New("backfill"),
+		metrics:             opts.Metrics,
+		interval:            interval,
+		folderTitleResolver: foldertitle.NewResolver(opts.Storage),
 	}, nil
 }
 
@@ -210,6 +219,11 @@ func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger) 
 // Builders are processed in deterministic resource-name order; each one gets its own paginated cross-namespace scan.
 // last_seen_key contains the continue token and the resource name so we know which builder to resume from.
 func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.BackfillJob) error {
+	// Fresh cache per job run: folders repeat heavily within a single scan,
+	// but a job run can span a long time, so we don't carry titles forward
+	// into the next run.
+	b.folderTitleCache = make(map[string]string)
+
 	// Decode cursor to see if we need to resume
 	cursor, err := decodeCursor(job.LastSeenKey)
 	if err != nil {
@@ -420,7 +434,15 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		Name:      name,
 	}
 
-	items, err := builder.Extract(ctx, key, iter.Value())
+	// Unlike Extract, a folder title lookup hits storage and can fail
+	// transiently — treat it as a retryable item error rather than a
+	// permanent one.
+	folderTitle, err := b.resolveFolderTitle(ctx, namespace, iter.Value())
+	if err != nil {
+		return fmt.Errorf("resolve folder title %s/%s: %w", namespace, name, err)
+	}
+
+	items, err := builder.Extract(ctx, key, iter.Value(), folderTitle)
 	if err != nil {
 		// Extract is deterministic over stored bytes; failures are permanent.
 		b.skipPermanentItem("extract", namespace, group, res, name, err)
@@ -459,6 +481,25 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
 	}
 	return nil
+}
+
+// resolveFolderTitle resolves the display title for the folder referenced by
+// value's k8s annotation, caching per job run (see folderTitleCache).
+func (b *VectorBackfiller) resolveFolderTitle(ctx context.Context, namespace string, value []byte) (string, error) {
+	folderUID := embed.FolderUIDFromValue(value)
+	if folderUID == "" {
+		return "", nil
+	}
+	cacheKey := namespace + "/" + folderUID
+	if title, ok := b.folderTitleCache[cacheKey]; ok {
+		return title, nil
+	}
+	title, err := b.folderTitleResolver.Title(ctx, namespace, folderUID)
+	if err != nil {
+		return "", err
+	}
+	b.folderTitleCache[cacheKey] = title
+	return title, nil
 }
 
 // shouldSkipForZeroViews returns true only when the stats provider
