@@ -23,7 +23,6 @@ import { DashboardRoutes } from 'app/types/dashboard';
 import { deleteNotebook, duplicateNotebook, fetchNotebook, notebookEditUrl } from '../api/notebookAPI';
 
 import { getNotebookScenePageStateManager } from './NotebookScenePageStateManager';
-import { NotebookSceneTimePicker } from './NotebookSceneTimePicker';
 
 // Fetch a notebook, wrap it into the scene envelope, hand it to the existing transformer
 // via the notebook state manager, and render the resulting scene body read-only.
@@ -202,7 +201,7 @@ function NotebookControls({ controls, uid, title }: { controls: DashboardControl
         )}
         {!hideTimeControls && (
           <>
-            <NotebookSceneTimePicker model={timePicker} />
+            <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </>
         )}

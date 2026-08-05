@@ -103,9 +103,6 @@ export const {
   useDeleteVariableMutation,
   useReplaceVariableMutation,
   useListNotebookQuery,
-  useGetNotebookQuery,
-  useCreateNotebookMutation,
-  useReplaceNotebookMutation,
   useDeleteNotebookMutation,
 } = dashboardAPIv2beta1;
 
@@ -118,6 +115,4 @@ export type {
   CreateVariableApiArg,
   UpdateVariableApiArg,
   Notebook,
-  NotebookList,
-  NotebookSpec,
 } from '@grafana/api-clients/rtkq/dashboard/v2beta1';

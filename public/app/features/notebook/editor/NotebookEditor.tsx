@@ -428,7 +428,6 @@ export function NotebookEditor({ uid }: Props) {
         onMoveBackward={() => shiftTimeRange(-1)}
         onMoveForward={() => shiftTimeRange(1)}
         onZoom={() => zoomTimeRange(2)}
-        onZoomIn={() => zoomTimeRange(0.5)}
       />
       <RefreshPicker
         value={spec.timeSettings.autoRefresh}

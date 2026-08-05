@@ -12684,11 +12684,7 @@
     "duplicate": "Duplicate notebook",
     "edit-button": "Edit",
     "link-copied": "Notebook link copied",
-    "more-actions": "More actions",
-    "time-picker": {
-      "move-backward-tooltip": "Move {{duration}} backward",
-      "move-forward-tooltip": "Move {{duration}} forward"
-    }
+    "more-actions": "More actions"
   },
   "notebooks": {
     "activity": {
@@ -16175,8 +16171,6 @@
       "current-time-selected": "Time range selected: {{currentTimeRange}}",
       "forwards-time-aria-label": "Move time range forwards",
       "to": "to",
-      "zoom-in-button": "Zoom in time range",
-      "zoom-in-tooltip": "Time range zoom in <br/> t +",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
     },

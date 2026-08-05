@@ -59,8 +59,6 @@ export interface TimeRangePickerProps {
   moveForwardTooltip?: string;
   moveBackwardTooltip?: string;
   onZoom: () => void;
-  /** Optional zoom-in control (shown next to zoom-out when provided). */
-  onZoomIn?: () => void;
   onError?: (error?: string) => void;
   history?: TimeRange[];
   quickRanges?: TimeOption[];
@@ -85,7 +83,6 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     moveForwardTooltip,
     moveBackwardTooltip,
     onZoom,
-    onZoomIn,
     onError,
     timeZone,
     fiscalYearStartMonth,
@@ -240,32 +237,11 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           variant={variant}
         />
       </Tooltip>
-
-      {onZoomIn && (
-        <Tooltip content={ZoomInTooltip} placement="bottom">
-          <ToolbarButton
-            aria-label={t('time-picker.range-picker.zoom-in-button', 'Zoom in time range')}
-            onClick={onZoomIn}
-            icon="search-plus"
-            type="button"
-            data-testid={selectors.components.TimePicker.zoomIn}
-            variant={variant}
-          />
-        </Tooltip>
-      )}
     </ButtonGroup>
   );
 }
 
 TimeRangePicker.displayName = 'TimeRangePicker';
-
-const ZoomInTooltip = () => {
-  return (
-    <Trans i18nKey="time-picker.range-picker.zoom-in-tooltip">
-      Time range zoom in <br /> t +
-    </Trans>
-  );
-};
 
 const ZoomOutTooltip = () => {
   return (
