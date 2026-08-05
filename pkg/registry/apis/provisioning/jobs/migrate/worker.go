@@ -40,7 +40,7 @@ func (w *MigrationWorker) IsSupported(ctx context.Context, job provisioning.Job)
 
 func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
 	enabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningExport, false, openfeature.TransactionContext(ctx))
-	if enabled {
+	if !enabled {
 		return errors.New("migrate functionality is disabled by configuration")
 	}
 

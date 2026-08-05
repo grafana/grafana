@@ -61,7 +61,7 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 // Process will start a job
 func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
 	enabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningExport, false, openfeature.TransactionContext(ctx))
-	if enabled {
+	if !enabled {
 		return fmt.Errorf("export functionality is disabled by feature flag")
 	}
 
