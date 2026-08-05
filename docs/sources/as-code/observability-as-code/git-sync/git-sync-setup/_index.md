@@ -65,6 +65,8 @@ Select any of these options to proceed:
 If you want to configure Git Sync for public cloud GitHub, you can connect using a **Personal Access Token** or with **GitHub App**. Whichever you choose, make sure you have the following permissions:
 
 - **Administration**: Read-only permission
+  - This enables validation of branch protection rules against the configured branch when users can push directly to it
+  - In the future, it might be used to check other repository settings and make the setup process smoother
 - **Contents**: Read and write permission
 - **Metadata**: Read-only permission
 - **Pull requests**: Read and write permission
