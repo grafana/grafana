@@ -130,9 +130,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgb(54, 57, 64)`,
-    medium: `rgb(68, 70, 78)`,
-    strong: `rgb(85, 87, 96)`,
+    weak: `rgba(${this.whiteBase}, 0.12)`,
+    medium: `rgba(${this.whiteBase}, 0.2)`,
+    strong: `rgba(${this.whiteBase}, 0.30)`,
   };
 
   text = {
