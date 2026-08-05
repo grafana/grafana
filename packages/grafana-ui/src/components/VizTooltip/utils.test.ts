@@ -524,7 +524,7 @@ describe('utils', () => {
     };
 
     it.each([FieldType.nestedFrames, FieldType.frame] as const)('omits %s fields from series rows', (type) => {
-      const rows = getFieldDisplayItems(
+      const rows = getContentItems(
         [xField, durationField, makeFrameValuedField(type)],
         xField,
         [0, 0, 0],
@@ -537,7 +537,7 @@ describe('utils', () => {
     });
 
     it.each([FieldType.nestedFrames, FieldType.frame] as const)('omits %s fields from extraFields', (type) => {
-      const rows = getFieldDisplayItems(
+      const rows = getContentItems(
         [xField, durationField],
         xField,
         [0, 0],
