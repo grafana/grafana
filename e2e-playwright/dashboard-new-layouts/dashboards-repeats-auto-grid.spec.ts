@@ -8,7 +8,7 @@ import {
   saveDashboard,
   verifyChanges,
   movePanel,
-  getPanelPosition,
+  getPanelBox,
   importTestDashboard,
   goToEmbeddedPanel,
 } from './utils';
@@ -44,7 +44,7 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm: true });
 
         await panels.selectByIndex(0);
         await sidebar.panelOptions.setTitle(`${REPEAT_TITLE_BASE}$c1`);
@@ -72,7 +72,7 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm: true });
         await saveDashboard(dashboardPage, page, selectors);
         await page.reload();
 
@@ -113,7 +113,7 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm: true });
 
         await saveDashboard(dashboardPage, page, selectors);
         await page.reload();
@@ -142,7 +142,7 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm: true });
 
         // select first/original repeat panel to activate sidebar
         await panels.selectByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
@@ -172,7 +172,7 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm: true });
         await saveDashboard(dashboardPage, page, selectors);
         await page.reload();
 
@@ -230,7 +230,7 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm: true });
         await saveDashboard(dashboardPage, page, selectors);
 
         // loading directly into panel editor
@@ -278,7 +278,7 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm: true });
 
         // this moving repeated panel between two normal panels
         await movePanel(dashboardPage, selectors, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New panel');
@@ -288,26 +288,21 @@ test.describe(
         await expect(panels.getHeaders().last()).toHaveText('New panel');
 
         // verify move by panel position
-        let repeatedPanel = await getPanelPosition(
+        let repeatedPanelBox = await getPanelBox(
           dashboardPage,
           selectors,
           `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`
         );
-        let normalPanel = await getPanelPosition(dashboardPage, selectors, 'New panel');
-        expect(normalPanel?.x).toBeLessThan(repeatedPanel?.x || 0);
+        let normalPanelBox = await getPanelBox(dashboardPage, selectors, 'New panel');
+        expect(normalPanelBox.x).toBeLessThan(repeatedPanelBox.x);
 
         await saveDashboard(dashboardPage, page, selectors);
         await page.reload();
 
-        const repeatedPanel2 = await getPanelPosition(
-          dashboardPage,
-          selectors,
-          `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`
-        );
+        repeatedPanelBox = await getPanelBox(dashboardPage, selectors, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
+        normalPanelBox = await getPanelBox(dashboardPage, selectors, 'New panel');
+        expect(normalPanelBox.x).toBeLessThan(repeatedPanelBox.x);
 
-        const normalPanel2 = await getPanelPosition(dashboardPage, selectors, 'New panel');
-
-        expect(normalPanel2?.x).toBeLessThan(repeatedPanel2?.x || 0);
         await expect(panels.getHeaders().first()).toHaveText('New panel');
         await expect(panels.getHeaders().last()).toHaveText('New panel');
       });
@@ -328,7 +323,7 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm: true });
         await saveDashboard(dashboardPage, page, selectors);
         await page.reload();
 
@@ -368,7 +363,7 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm: true });
         await saveDashboard(dashboardPage, page, selectors);
         await page.reload();
 

@@ -104,7 +104,7 @@ test.describe(
       // Convert layout to auto grid and persist it, then snapshot.
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Options');
-      await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+      await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm: true });
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 

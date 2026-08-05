@@ -123,18 +123,20 @@ export async function movePanel(
   });
 }
 
-export async function getPanelPosition(
+export async function getPanelBox(
   dashboardPage: DashboardPage,
   selectors: E2ESelectorGroups,
-  panelTitle: string | RegExp
-) {
-  // Keep the signature unchanged for unmigrated callers: build the
-  // `components` fixture equivalent from the page context
+  panelTitle: string
+): Promise<{ x: number; y: number; width: number; height: number }> {
   const components = new Components(dashboardPage.ctx);
   const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
 
-  // boundingBox() is a point-in-time snapshot and stays out of page objects
-  return panels.getHeader(panelTitle).boundingBox();
+  // boundingBox() is a point-in-time snapshot and stays out of page objects;
+  // measures the whole panel <section>, matched exactly by testid
+  const boundingBox = await panels.getPanel(panelTitle).boundingBox();
+  expect(boundingBox, `Panel "${panelTitle}" should have a bounding box`).not.toBeNull();
+
+  return boundingBox!;
 }
 
 export async function verifyChanges(
@@ -366,7 +368,7 @@ export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage,
   // `components` fixture equivalent from the page context
   const components = new Components(dashboardPage.ctx);
   const sidebar = new Sidebar({ page, dashboardPage, selectors: dashboardPage.ctx.selectors, components });
-  await sidebar.dashboardOptions.switchLayout('auto', { confirm });
+  await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm });
 }
 
 export async function selectRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
