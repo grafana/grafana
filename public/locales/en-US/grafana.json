@@ -13456,7 +13456,7 @@
         "repository-label": "Repositories",
         "repository-read-write-admin": "Read, and write",
         "webhooks-label": "Webhooks",
-        "webhooks-read-write": "Read and write"
+        "webhooks-read-write-delete": "Read, write, and delete"
       },
       "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
       "pr-workflow-label": "Enable pull request option when saving",
