@@ -1,10 +1,22 @@
 import { test } from '@playwright/test';
 
-import { PageObject } from '../../PageObject';
+import { PageObject, type PageObjectArgs } from '../../PageObject';
 
 // The collapsible "Repeat options" group in the sidebar options pane —
 // shared by panels, rows, and tabs to repeat the element by a template variable
 export class RepeatOptions extends PageObject {
+  constructor(
+    args: PageObjectArgs,
+    // Options-group id, prefixes both the group's toggle testid and the 'Repeat by
+    // variable' field label. Set by the editors in public/app/features/dashboard-scene/scene/:
+    // 'repeat-options' in layout-default/DashboardGridItemEditor.tsx,
+    // layout-auto-grid/AutoGridItemEditor.tsx and layout-tabs/TabItemEditor.tsx;
+    // 'dash-row-repeat' in layout-rows/RowItemEditor.tsx
+    private readonly groupId: 'repeat-options' | 'dash-row-repeat'
+  ) {
+    super(args);
+  }
+
   async repeatByVariable(variableName: string) {
     await test.step(`Repeat by variable "${variableName}"`, async () => {
       await this.selectOption(variableName);
@@ -19,7 +31,7 @@ export class RepeatOptions extends PageObject {
 
   private async selectOption(optionLabel: string) {
     const toggle = this.dashboardPage.getByGrafanaSelector(
-      this.selectors.components.OptionsGroup.toggle('repeat-options'),
+      this.selectors.components.OptionsGroup.toggle(this.groupId),
       {
         root: this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.container),
       }
@@ -34,7 +46,7 @@ export class RepeatOptions extends PageObject {
 
     await this.dashboardPage
       .getByGrafanaSelector(
-        this.selectors.components.PanelEditor.OptionsPane.fieldLabel('repeat-options Repeat by variable')
+        this.selectors.components.PanelEditor.OptionsPane.fieldLabel(`${this.groupId} Repeat by variable`)
       )
       .getByRole('combobox')
       .click();
