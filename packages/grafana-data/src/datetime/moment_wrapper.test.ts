@@ -13,9 +13,12 @@ describe('datetime.useLuxon', () => {
     featureToggles['datetime.useLuxon'] = useLuxon;
 
     await jest.isolateModulesAsync(async () => {
+      const { default: moment } = await import('./moment_implementation');
       const { dateTime } = await import('./moment_wrapper');
 
       expect(Object.getPrototypeOf(dateTime()).constructor.name).toBe(constructorName);
+      expect(moment.tz.zone('America/New_York')).not.toBeNull();
+      expect(moment.tz.zone('not/a-zone')).toBeNull();
     });
   });
 });

@@ -102,10 +102,11 @@ export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) => {
 // for parity with moment's deprecated `z` token, which rendered '' on plain (non-moment-timezone)
 // instances; 'utc' isn't in the easy-tz list and falls back to the shim's own `z` formatting ("UTC").
 const zoneAbbreviation = (time: Moment, timeZone: TimeZone): string => {
-  if (!moment.tz.isValidZone(timeZone)) {
+  const zone = moment.tz.zone(timeZone);
+  if (!zone) {
     return '';
   }
-  return findTimeZoneAt(timeZone, time.valueOf())?.abbr ?? time.format('z');
+  return findTimeZoneAt(zone.name, time.valueOf())?.abbr ?? time.format('z');
 };
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {
@@ -120,9 +121,10 @@ const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => 
 // zone. Built as a single shim instance; the zone mutations don't reallocate.
 const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): Moment => {
   const inUtc = moment.utc(toMomentInput(dateInUtc));
+  const zone = moment.tz.zone(timeZone);
 
-  if (moment.tz.isValidZone(timeZone)) {
-    return inUtc.tz(timeZone);
+  if (zone) {
+    return inUtc.tz(zone.name);
   }
 
   switch (timeZone) {

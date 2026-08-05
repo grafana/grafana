@@ -101,7 +101,6 @@ interface MomentTzFactory {
   (input?: MomentInput, format?: MomentFormat, zone?: string): MomentLike;
   guess(ignoreCache?: boolean): string;
   zone(name: string): MomentTimeZoneInfo | null;
-  isValidZone(name: string): boolean;
 }
 
 // deliberately narrower than moment's real API: it only carries the methods Grafana's own code
@@ -243,7 +242,7 @@ let currentLocale = DEFAULT_LOCALE;
 Settings.defaultLocale = currentLocale;
 const localeWeekStart: Record<string, number> = {};
 const intlFormatterCache = new Map<string, Intl.DateTimeFormat>();
-const zoneValidityCache = new Map<string, boolean>();
+const timeZoneInfoCache = new Map<string, MomentTimeZoneInfo | null>();
 const normalizedLocaleCache = new Map<string, string | undefined>();
 let cachedGuessedZone: string | null = null;
 
@@ -513,12 +512,16 @@ function getLocaleFirstDayOfWeek(locale = currentLocale): number {
 }
 
 function createTimeZoneInfo(name: string): MomentTimeZoneInfo | null {
-  const nowInZone = DateTime.now().setZone(name);
-  if (!nowInZone.isValid) {
+  if (timeZoneInfoCache.has(name)) {
+    return timeZoneInfoCache.get(name) ?? null;
+  }
+
+  if (!IANAZone.isValidZone(name)) {
+    timeZoneInfoCache.set(name, null);
     return null;
   }
 
-  return {
+  const zone = {
     name,
     abbr(timestamp: number) {
       const dt = DateTime.fromMillis(timestamp, { zone: name, locale: currentLocale });
@@ -530,6 +533,8 @@ function createTimeZoneInfo(name: string): MomentTimeZoneInfo | null {
       return -dt.offset;
     },
   };
+  timeZoneInfoCache.set(name, zone);
+  return zone;
 }
 
 function normalizeInput(input: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): DateTime {
@@ -1019,19 +1024,6 @@ const momentTz: MomentTzFactory = Object.assign(
     },
 
     zone: (name: string): MomentTimeZoneInfo | null => createTimeZoneInfo(name),
-
-    // cached because callers use this as a per-format-call gate (see formatter.ts/parser.ts) and
-    // luxon's IANAZone.isValidZone constructs a throwaway Intl.DateTimeFormat on every call
-    isValidZone: (name: string): boolean => {
-      let valid = zoneValidityCache.get(name);
-
-      if (valid === undefined) {
-        valid = IANAZone.isValidZone(name);
-        zoneValidityCache.set(name, valid);
-      }
-
-      return valid;
-    },
   }
 );
 

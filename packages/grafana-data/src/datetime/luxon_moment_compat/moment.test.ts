@@ -138,13 +138,13 @@ describe('year/month/date accessors', () => {
   });
 });
 
-describe('tz.isValidZone', () => {
-  it('accepts IANA zone names and rejects everything else', () => {
-    expect(moment.tz.isValidZone('America/New_York')).toBe(true);
-    expect(moment.tz.isValidZone('UTC')).toBe(true);
-    expect(moment.tz.isValidZone('browser')).toBe(false);
-    expect(moment.tz.isValidZone('not/a-zone')).toBe(false);
-    expect(moment.tz.isValidZone('')).toBe(false);
+describe('tz.zone', () => {
+  it('returns zone information for IANA names and null for everything else', () => {
+    expect(moment.tz.zone('America/New_York')?.name).toBe('America/New_York');
+    expect(moment.tz.zone('UTC')?.name).toBe('UTC');
+    expect(moment.tz.zone('browser')).toBeNull();
+    expect(moment.tz.zone('not/a-zone')).toBeNull();
+    expect(moment.tz.zone('')).toBeNull();
   });
 });
 
