@@ -15,6 +15,11 @@ describe('Placename lookup from worldmap format', () => {
     } as unknown as Response);
   });
 
+  // Jest is not configured to restore mocks between tests, so the fetch spy has to be undone here.
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('unified worldmap config', async () => {
     const gaz = await getGazetteer('countries');
     expect(gaz.error).toBeUndefined();

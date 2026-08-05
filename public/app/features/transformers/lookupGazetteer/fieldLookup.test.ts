@@ -7,9 +7,21 @@ import countriesJSON from '../../../../gazetteer/countries.json';
 
 import { addFieldsFromGazetteer, fieldLookupTransformer } from './fieldLookup';
 
+// Jest is not configured to restore mocks between tests, so each spy below has to be undone
+// here or it leaks into the following describe blocks.
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('Lookup gazetteer from the worldmap format', () => {
+  const publicPath = window.__grafana_public_path__;
+
   beforeAll(() => {
     window.__grafana_public_path__ = 'https://grafana.fake/public/';
+  });
+
+  afterAll(() => {
+    window.__grafana_public_path__ = publicPath;
   });
 
   beforeEach(() => {
