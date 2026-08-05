@@ -21,6 +21,8 @@ export const FlagKeys = {
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
+  /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
+  AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
   /** Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar */
@@ -47,6 +49,8 @@ export const FlagKeys = {
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
   FaroSessionReplay: "faroSessionReplay",
+  /** Enables the feedback button in the dashboard edit sidebar */
+  FeedbackButton: "feedbackButton",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
@@ -55,6 +59,8 @@ export const FlagKeys = {
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
+  /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
+  GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Check for the existence of logs when linking from the Trace View */
@@ -115,6 +121,8 @@ export const FlagKeys = {
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
+  /** Shows text labels on the add and stacked view buttons in PanelEditNext */
+  PaneleditButtonLabels: "paneledit.buttonLabels",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
@@ -203,6 +211,17 @@ export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvalu
  */
 export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("analyticsFramework", false, options).value;
+};
+
+/**
+ * Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built
+ *
+ * **Details:**
+ * - flag key: `assistant.dashboardPlanning`
+ * - default value: `false`
+ */
+export const useFlagAssistantDashboardPlanning = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.dashboardPlanning", false, options).value;
 };
 
 /**
@@ -349,6 +368,17 @@ export const useFlagFaroSessionReplay = (options?: ReactFlagEvaluationOptions): 
 };
 
 /**
+ * Enables the feedback button in the dashboard edit sidebar
+ *
+ * **Details:**
+ * - flag key: `feedbackButton`
+ * - default value: `true`
+ */
+export const useFlagFeedbackButton = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("feedbackButton", true, options).value;
+};
+
+/**
  * Enables the new Flame Graph UI containing the Call Tree view
  *
  * **Details:**
@@ -390,6 +420,17 @@ export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.customizableMegaMenu", false, options).value;
+};
+
+/**
+ * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardGlobalVariables`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardGlobalVariables", false, options).value;
 };
 
 /**
@@ -720,6 +761,17 @@ export const useFlagNewSavedQueriesExperience = (options?: ReactFlagEvaluationOp
  */
 export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("otelLogsFormatting", false, options).value;
+};
+
+/**
+ * Shows text labels on the add and stacked view buttons in PanelEditNext
+ *
+ * **Details:**
+ * - flag key: `paneledit.buttonLabels`
+ * - default value: `false`
+ */
+export const useFlagPaneleditButtonLabels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("paneledit.buttonLabels", false, options).value;
 };
 
 /**

@@ -279,7 +279,7 @@ async function importDashboardWithTabs(
   components: Components,
   title: string
 ) {
-  await importTestDashboard(page, selectors, `${title} - ${Date.now()}`, JSON.stringify(V2DashboardWithTabs), {
+  await importTestDashboard(page, selectors, title, JSON.stringify(V2DashboardWithTabs), {
     requiresDataSourceSelection: false,
   });
 

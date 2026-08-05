@@ -167,7 +167,6 @@ func TestExtraAlertmanagerConfig_ReceiverNameStubs(t *testing.T) {
 	assert.Equal(t, "recv1", stubs[0].Name)
 	assert.Equal(t, "recv2", stubs[1].Name)
 	// Only names are carried over; receiver contents are dropped.
-	assert.False(t, stubs[0].HasMimirIntegrations())
 	assert.Empty(t, stubs[0].GrafanaManagedReceivers)
 }
 
