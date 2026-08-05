@@ -96,7 +96,6 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
                 className={styles.stackedModeButton}
                 data-active={stackedMode.enabled}
                 onClick={handleStackedModeToggle}
-                aria-label={stackedModeLabel}
                 aria-pressed={stackedMode.enabled}
                 tooltip={stackedModeLabel}
               >

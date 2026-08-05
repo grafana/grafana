@@ -50,7 +50,7 @@ describe('QueryEditorSidebar', () => {
 
       expect(screen.getByRole('button', { name: 'Add query or expression' })).toHaveTextContent('Add');
       expect(screen.getByRole('button', { name: 'Add transformation' })).toHaveTextContent('Add');
-      expect(screen.getByRole('button', { name: 'Enter stacked view' })).toHaveTextContent(/^Stack$/);
+      expect(screen.getByRole('button', { name: 'Stack' })).toHaveTextContent(/^Stack$/);
     });
   });
 
