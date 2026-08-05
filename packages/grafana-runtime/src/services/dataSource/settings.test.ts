@@ -264,6 +264,13 @@ describe('instanceSettings', () => {
         const result = await getDataSourceInstanceSettings({ type: '-100' });
         expect(result?.uid).toBe('__expr__');
       });
+
+      it('resolves a DataSourceRef with the expression uid but no type', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
+        const result = await getDataSourceInstanceSettings({ uid: '__expr__' });
+        expect(result?.uid).toBe('__expr__');
+      });
     });
 
     describe('template variables', () => {
@@ -293,6 +300,20 @@ describe('instanceSettings', () => {
         initDataSourceInstanceSettings(fixtures, 'Bravo');
 
         const result = await getDataSourceInstanceSettings('${multi}');
+        expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-alpha' });
+
+        setTemplateSrv(templateSrv);
+      });
+
+      it('interpolates a variable that is not at the start of the ref', async () => {
+        setTemplateSrv({
+          ...templateSrv,
+          replace: (value?: string) => (value === 'logs-${stage}-loki' ? 'Alpha' : (value ?? '')),
+        } as unknown as TemplateSrv);
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+        const result = await getDataSourceInstanceSettings('logs-${stage}-loki');
+        expect(result?.uid).toBe('logs-${stage}-loki');
         expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-alpha' });
 
         setTemplateSrv(templateSrv);

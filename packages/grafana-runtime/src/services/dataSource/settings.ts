@@ -241,11 +241,14 @@ function lookupFromMaps(
   ref: DataSourceRef | string | null | undefined,
   scopedVars: ScopedVars | undefined
 ): DataSourceInstanceSettings | undefined {
-  if (isExpressionReference(ref)) {
+  const nameOrUid = getNameOrUid(ref);
+
+  // Check the uid as well as the full ref: dashboards exist with refs like
+  // `{uid: '__expr__'}` that carry no type, which the legacy DataSourceSrv
+  // recognises as expression refs by uid alone.
+  if (isExpressionReference(ref) || isExpressionReference(nameOrUid)) {
     return getExpressionDataSourceSettings();
   }
-
-  const nameOrUid = getNameOrUid(ref);
 
   if (nameOrUid == null || nameOrUid === 'default') {
     if (isDataSourceRef(ref) && ref.type) {
@@ -257,20 +260,25 @@ function lookupFromMaps(
     return byUid[defaultName] ?? byName[defaultName];
   }
 
-  // Template variable reference — interpolate and preserve the raw ref.
-  if (nameOrUid[0] === '$') {
+  // Template variable reference — interpolate and preserve the raw ref. The variable can
+  // sit anywhere in the string (e.g. `logs-${stage}-loki`), not only at the start; legacy
+  // DataSourceSrv.get() interpolates unconditionally. When interpolation changes nothing
+  // (a datasource name that merely contains `$`), fall through to the plain lookup.
+  if (nameOrUid.includes('$')) {
     const interpolated = getTemplateSrv().replace(nameOrUid, scopedVars, variableInterpolation);
-    const resolved = interpolated === 'default' ? byName[defaultName] : (byUid[interpolated] ?? byName[interpolated]);
-    if (!resolved) {
-      return undefined;
+    if (interpolated !== nameOrUid) {
+      const resolved = interpolated === 'default' ? byName[defaultName] : (byUid[interpolated] ?? byName[interpolated]);
+      if (!resolved) {
+        return undefined;
+      }
+      return {
+        ...resolved,
+        isDefault: false,
+        name: nameOrUid,
+        uid: nameOrUid,
+        rawRef: { type: resolved.type, uid: resolved.uid },
+      };
     }
-    return {
-      ...resolved,
-      isDefault: false,
-      name: nameOrUid,
-      uid: nameOrUid,
-      rawRef: { type: resolved.type, uid: resolved.uid },
-    };
   }
 
   return byUid[nameOrUid] ?? byName[nameOrUid] ?? byId[nameOrUid];
@@ -388,7 +396,10 @@ function applyFilters(filters: GetDataSourceListFilters = {}): DataSourceInstanc
   return results;
 }
 
-function getNameOrUid(ref: DataSourceRef | string | null | undefined): string | undefined {
+/**
+ * @internal
+ */
+export function getNameOrUid(ref: DataSourceRef | string | null | undefined): string | undefined {
   if (ref == null) {
     return undefined;
   }
