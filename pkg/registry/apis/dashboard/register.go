@@ -1106,11 +1106,10 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		// unified storage directly (no dual writer).
 		if libraryPanels != nil {
 			// status.missing preserves legacy model fields that have no typed spec field.
-			unifiedLibraryStore, storeErr := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
-			if storeErr != nil {
-				return storeErr
+			storage[libraryPanels.StoragePath()], err = grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+			if err != nil {
+				return err
 			}
-			storage[libraryPanels.StoragePath()] = newLibraryPanelAccessStorage(unifiedLibraryStore, b.authorizeLibraryPanel)
 		}
 
 		return nil
@@ -1150,10 +1149,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		if err != nil {
 			return err
 		}
-		unifiedLibraryStorage := newLibraryPanelAccessStorage(unifiedLibraryStore, b.authorizeLibraryPanel)
-
 		libraryGr := libraryPanels.GroupResource()
-		storage[libraryPanels.StoragePath()], err = opts.DualWriteBuilder(libraryGr, legacyLibraryStore, unifiedLibraryStorage)
+		storage[libraryPanels.StoragePath()], err = opts.DualWriteBuilder(libraryGr, legacyLibraryStore, unifiedLibraryStore)
 		if err != nil {
 			return err
 		}
