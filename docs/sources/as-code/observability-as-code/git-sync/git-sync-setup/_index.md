@@ -150,12 +150,6 @@ If you want to configure Git Sync for Bitbucket, you need a Bitbucket API token 
 - **Pull requests**: Read and write permission
 - **Webhooks**: Read, write, and delete permission
 
-{{< admonition type="note" >}}
-
-Unlike GitHub, Bitbucket uses granular API token scopes that separate webhook read, write, and delete. Git Sync removes the repository's webhook when you delete or reconnect the repository, so the token must include the delete-webhook scope. Without it, removal fails with a `permission denied` error on the delete-webhook call.
-
-{{< /admonition >}}
-
 Return to Grafana and fill in the following fields:
 
 1. Paste the token into the **API Token** text box.
