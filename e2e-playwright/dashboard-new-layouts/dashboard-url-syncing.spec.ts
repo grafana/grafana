@@ -1,9 +1,8 @@
 import { selectors } from '@grafana/e2e-selectors';
-import { test, expect } from '@grafana/plugin-e2e';
 
 import v2DashboardWithTabsForSlug from '../dashboards/V2DashboardWithTabsForSlugTest.json';
 
-import { Rows, Tabs } from './page-objects';
+import { test, expect } from './fixtures';
 import { importTestDashboard } from './utils';
 
 test.use({
@@ -107,10 +106,7 @@ test.describe(
     });
 
     for (const testCase of testCases) {
-      test(testCase.description, async ({ dashboardPage, selectors, page, components }) => {
-        const tabs = new Tabs({ page, dashboardPage, selectors, components });
-        const rows = new Rows({ page, dashboardPage, selectors, components });
-
+      test(testCase.description, async ({ dashboardPage, page, rows, tabs }) => {
         await page.goto(buildDashboardPathWithSearch(dashboardUid, testCase.searchParams));
 
         const tabLocator = testCase.rowTitle

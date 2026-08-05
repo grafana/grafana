@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panels, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 
 test.use({
   featureToggles: {
@@ -16,13 +14,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can toggle transparent background switch', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: '5SdHCadmz/panel-tests-graph' });
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+    test('can toggle transparent background switch', async ({ gotoDashboardPage, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: '5SdHCadmz/panel-tests-graph' });
       await controls.enterEditMode();
 
       const panelTitle = 'No Data Points Warning';

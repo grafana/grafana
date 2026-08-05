@@ -39,39 +39,39 @@ export class Sidebar extends PageObject {
 
   /** Returns the sidebar container */
   getContainer() {
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.container);
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container);
   }
 
   /** Goes back to the previous pane by clicking the sidebar's back button */
   async clickGoBackButton() {
     await test.step('Click go back button in sidebar', async () => {
-      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.goBack).click();
+      await this.getByGrafanaSelector(this.selectors.components.Sidebar.goBack).click();
     });
   }
 
   /** Returns the dock/undock toggle */
   getDockToggle() {
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.dockToggle);
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.dockToggle);
   }
 
   /** Closes the open pane */
   async clickCloseButton() {
     await test.step('Click close button in sidebar', async () => {
-      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.closePane).click();
+      await this.getByGrafanaSelector(this.selectors.components.Sidebar.closePane).click();
     });
   }
 
   /** Duplicates the selected element via the edit pane header */
   async clickDuplicateButton() {
     await test.step('Duplicate selected element', async () => {
-      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.EditPaneHeader.duplicate).click();
+      await this.getByGrafanaSelector(this.selectors.components.EditPaneHeader.duplicate).click();
     });
   }
 
   /** Copies the selected element via the edit pane header */
   async clickCopyButton() {
     await test.step('Copy selected element', async () => {
-      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.EditPaneHeader.copy).click();
+      await this.getByGrafanaSelector(this.selectors.components.EditPaneHeader.copy).click();
     });
   }
 
@@ -83,10 +83,10 @@ export class Sidebar extends PageObject {
     const stepTitle = confirm ? 'Delete selected element(s) (with confirmation)' : 'Click delete button in sidebar';
 
     await test.step(stepTitle, async () => {
-      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.EditPaneHeader.deleteButton).click();
+      await this.getByGrafanaSelector(this.selectors.components.EditPaneHeader.deleteButton).click();
 
       if (confirm) {
-        await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.ConfirmModal.delete).click();
+        await this.getByGrafanaSelector(this.selectors.pages.ConfirmModal.delete).click();
       }
     });
   }
