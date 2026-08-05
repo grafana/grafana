@@ -1,3 +1,4 @@
+import { convertMomentToLuxonWithOrdinal, formatWithOrdinal } from './format';
 import {
   type DateTimeUnit,
   type DurationUnit,
@@ -7,8 +8,6 @@ import {
   IANAZone,
   Settings,
 } from './luxon';
-
-import { convertMomentToLuxonWithOrdinal, formatWithOrdinal } from './format';
 
 export type MomentUnit =
   | 'years'
@@ -91,7 +90,7 @@ interface ParseOptions {
   format?: MomentFormat;
 }
 
-export interface MomentTimeZoneInfo {
+interface MomentTimeZoneInfo {
   name: string;
   abbr(timestamp: number): string;
   utcOffset(timestamp: number): number;
