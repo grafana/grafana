@@ -1298,18 +1298,9 @@ describe('DashboardSceneSerializer', () => {
         expect(serializer.getPanelIdForElement('non-existent')).toBeUndefined();
       });
 
-      it('should get element id for panel correctly', () => {
-        serializer.initializeElementMapping(saveModel);
-
-        expect(serializer.getElementIdForPanel(1)).toBe('element-panel-a');
-        expect(serializer.getElementIdForPanel(2)).toBe('element-panel-b');
-        // Should return default panel key for non-existent panel
-        expect(serializer.getElementIdForPanel(3)).toBe('panel-3');
-      });
-
       // A library panel is returned by getVizPanels() like any other panel, so its element name has
-      // to be in the map. While it was not, serialization rekeyed it to panel-<id> and the layout
-      // kept referencing the name it was saved under, leaving the reference pointing at nothing.
+      // to be in the map. While it was not, serialization rekeyed it to panel-<id> instead of the name
+      // the dashboard was saved under.
       it('should map a library panel element under its own name', () => {
         serializer.initializeElementMapping({
           ...saveModel,
@@ -1328,6 +1319,15 @@ describe('DashboardSceneSerializer', () => {
 
         expect(serializer.getElementPanelMapping().get('saved-view')).toBe(3);
         expect(serializer.getElementIdForPanel(3)).toBe('saved-view');
+      });
+
+      it('should get element id for panel correctly', () => {
+        serializer.initializeElementMapping(saveModel);
+
+        expect(serializer.getElementIdForPanel(1)).toBe('element-panel-a');
+        expect(serializer.getElementIdForPanel(2)).toBe('element-panel-b');
+        // Should return default panel key for non-existent panel
+        expect(serializer.getElementIdForPanel(3)).toBe('panel-3');
       });
     });
   });

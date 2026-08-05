@@ -77,8 +77,6 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting-list.title', 'Alert rules');
     case 'alert-list-legacy':
       return t('nav.alert-list-legacy.title', 'Alert rules');
-    case 'standalone-plugin-page-assistant-watchers':
-      return t('nav.alerting-watchers.title', 'Watchers');
     case 'receivers':
       return t('nav.alerting-receivers.title', 'Contact points');
     case 'am-routes':
@@ -237,7 +235,7 @@ export function getNavSubTitle(navId: string | undefined) {
         'Deleted dashboards are kept for up to 12 months or until the history limit of 1000 dashboards is reached.'
       );
     case 'saved-queries':
-      return t('nav.saved-queries.subtitle', 'Reusable queries you can use across panels and Explore');
+      return t('nav.saved-queries.subtitle', 'Reusable queries across Grafana');
     case 'alerting':
       return t('nav.alerting.subtitle', 'Learn about problems in your systems moments after they occur');
     case 'alerting-upgrade':
@@ -252,11 +250,6 @@ export function getNavSubTitle(navId: string | undefined) {
       );
     case 'alert-list':
       return t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire');
-    case 'standalone-plugin-page-assistant-watchers':
-      return t(
-        'nav.alerting-watchers.subtitle',
-        'Let the Assistant watch your data and notify you when something needs attention'
-      );
     case 'receivers':
       return t(
         'nav.alerting-receivers.subtitle',

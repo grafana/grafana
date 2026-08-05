@@ -19,9 +19,6 @@ interface Props {
   onStarChange?: (id: string, isStarred: boolean) => void;
   // Row density for list mode. 'compact' gives denser rows for the redesigned homepage
   density?: 'default' | 'compact';
-  // Show an info icon with the dashboard description in list mode, when one exists.
-  // Defaults to false so shared consumers (homepage tabs, recently viewed) are unchanged.
-  showDescription?: boolean;
 }
 export function DashListItem({
   dashboard,
@@ -33,7 +30,6 @@ export function DashListItem({
   onStarChange,
   source,
   density = 'default',
-  showDescription = false,
 }: Props) {
   const css = useStyles2(getStyles);
   const isCompact = density === 'compact';
@@ -67,7 +63,7 @@ export function DashListItem({
           href={url}
           onClick={onCardLinkClick}
           trailing={
-            showDescription && dashboard.description ? (
+            dashboard.description ? (
               <Stack gap={0.5} alignItems="center">
                 <DescriptionTooltip description={dashboard.description} />
                 {starButton}

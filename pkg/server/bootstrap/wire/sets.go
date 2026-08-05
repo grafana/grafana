@@ -190,7 +190,6 @@ import (
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb"
 )
 
 var withOTelSet = wire.NewSet(
@@ -299,7 +298,6 @@ var Basic = wire.NewSet(
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
 	socialimpl.ProvideService,
-	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
 	graphite.ProvideService,
 	datasourceservice.ProvideCacheService,
