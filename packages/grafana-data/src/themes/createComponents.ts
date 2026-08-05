@@ -163,7 +163,7 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       padding: 1,
       headerHeight: 5,
       background: colors.background.primary,
-      borderColor: colors.border.weak,
+      borderColor: colors.border.faint,
       boxShadow: 'none',
     },
     dropdown: {
