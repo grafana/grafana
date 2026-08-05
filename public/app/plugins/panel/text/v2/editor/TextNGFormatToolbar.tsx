@@ -7,7 +7,7 @@ import { Stack, ToolbarButton } from '@grafana/ui';
 
 import { TextMode } from '../../panelcfg.gen';
 
-import { insertAtCursor, prefixSelectedLines, surroundSelection } from './editorCommands';
+import { insertAtCursor, toggleLinePrefix, toggleOrderedList, toggleSurround } from './editorCommands';
 
 const TABLE_SNIPPET = '\n| Column | Column |\n| ------ | ------ |\n| Value  | Value  |\n';
 
@@ -21,7 +21,7 @@ interface FormatAction {
   run: (view: EditorView) => void;
 }
 
-/** Spread into `surroundSelection`. */
+/** Spread into `toggleSurround`. */
 type Markers = readonly [before: string, after?: string];
 
 interface InlineMarkers {
@@ -55,19 +55,19 @@ function getFormatActions(mode: TextMode): FormatAction[] {
       key: 'bold',
       tooltip: t('textng.editor.tooltip-bold', 'Bold'),
       label: <strong>{t('textng.editor.format-bold', 'B')}</strong>,
-      run: (view) => surroundSelection(view, ...markers.bold),
+      run: (view) => toggleSurround(view, ...markers.bold),
     },
     {
       key: 'italic',
       tooltip: t('textng.editor.tooltip-italic', 'Italic'),
       label: <em>{t('textng.editor.format-italic', 'I')}</em>,
-      run: (view) => surroundSelection(view, ...markers.italic),
+      run: (view) => toggleSurround(view, ...markers.italic),
     },
     {
       key: 'link',
       tooltip: t('textng.editor.tooltip-link', 'Link'),
       icon: 'link',
-      run: (view) => surroundSelection(view, ...markers.link),
+      run: (view) => toggleSurround(view, ...markers.link),
     },
   ];
 
@@ -82,32 +82,32 @@ function getFormatActions(mode: TextMode): FormatAction[] {
     return [...inlineActions, insertVariable];
   }
 
-  // Markdown only: the HTML equivalents are too verbose for a one-click insert.
+  // Markdown only
   return [
     {
       key: 'heading',
       tooltip: t('textng.editor.tooltip-heading', 'Heading'),
       label: t('textng.editor.format-heading', 'H'),
-      run: (view) => prefixSelectedLines(view, '# '),
+      run: (view) => toggleLinePrefix(view, '# '),
     },
     ...inlineActions,
     {
       key: 'bullet-list',
       tooltip: t('textng.editor.tooltip-bullet-list', 'Bullet list'),
       icon: 'list-ul',
-      run: (view) => prefixSelectedLines(view, '- '),
+      run: (view) => toggleLinePrefix(view, '- '),
     },
     {
       key: 'numbered-list',
       tooltip: t('textng.editor.tooltip-numbered-list', 'Numbered list'),
       icon: 'list-ol',
-      run: (view) => prefixSelectedLines(view, '1. '),
+      run: (view) => toggleOrderedList(view),
     },
     {
       key: 'checklist',
       tooltip: t('textng.editor.tooltip-checklist', 'Checklist'),
       icon: 'check-square',
-      run: (view) => prefixSelectedLines(view, '- [ ] '),
+      run: (view) => toggleLinePrefix(view, '- [ ] '),
     },
     {
       key: 'table',

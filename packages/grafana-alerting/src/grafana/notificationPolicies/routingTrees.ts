@@ -1,4 +1,4 @@
-import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
 /** The name the backend emits for the default (root) routing tree and the name the frontend SENDS. */
 export const USER_DEFINED_TREE_NAME = 'user-defined';

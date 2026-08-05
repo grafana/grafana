@@ -11,12 +11,13 @@ import { type NewsItem } from '../types';
 
 interface NewsItemProps {
   showImage?: boolean;
+  onClick?: () => void;
   index: number;
   data: DataFrameView<NewsItem>;
   className?: string;
 }
 
-function NewsComponent({ showImage, data, index, className }: NewsItemProps) {
+function NewsComponent({ showImage, onClick, data, index, className }: NewsItemProps) {
   const titleId = useId();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
@@ -32,6 +33,7 @@ function NewsComponent({ showImage, data, index, className }: NewsItemProps) {
           rel="noopener noreferrer"
           className={styles.socialImage}
           aria-hidden
+          onClick={onClick}
         >
           <img src={newsItem.ogImage} alt={newsItem.title} />
         </a>
@@ -42,7 +44,7 @@ function NewsComponent({ showImage, data, index, className }: NewsItemProps) {
         </time>
 
         <h1 className={styles.title} id={titleId}>
-          <TextLink href={textUtil.sanitizeUrl(newsItem.link)} external inline={false}>
+          <TextLink href={textUtil.sanitizeUrl(newsItem.link)} external inline={false} onClick={onClick}>
             {newsItem.title}
           </TextLink>
         </h1>

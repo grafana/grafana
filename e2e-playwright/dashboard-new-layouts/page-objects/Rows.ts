@@ -1,4 +1,4 @@
-import { type Locator } from '@playwright/test';
+import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from './PageObject';
 
@@ -16,5 +16,18 @@ export class Rows extends PageObject {
     return this.page
       .getByTestId(this.selectors.components.DashboardRow.wrapper(rowTitle))
       .locator('> .dashboard-row-header + div');
+  }
+
+  async select(rowTitle: string) {
+    await test.step(`Select row "${rowTitle}"`, async () => {
+      await this.getTitle(rowTitle).click();
+    });
+  }
+
+  // Collapses an expanded row, expands a collapsed one
+  async toggle(rowTitle: string) {
+    await test.step(`Toggle row "${rowTitle}"`, async () => {
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardRow.toggle(rowTitle)).click();
+    });
   }
 }

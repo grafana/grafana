@@ -14,7 +14,7 @@ export class PanelOptions extends PageObject {
   constructor(args: PageObjectArgs) {
     super(args);
     this.conditionalRenderingOptions = new ConditionalRenderingOptions(args);
-    this.repeatOptions = new RepeatOptions(args);
+    this.repeatOptions = new RepeatOptions(args, 'repeat-options');
   }
 
   getTitleInput() {
@@ -39,7 +39,10 @@ export class PanelOptions extends PageObject {
 
   async toggleTransparentBackground() {
     await test.step('Toggle transparent background', async () => {
-      await this.page.getByRole('switch', { name: 'Transparent background' }).click({ force: true });
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.components.Sidebar.container)
+        .getByRole('switch', { name: 'Transparent background' })
+        .click({ force: true });
     });
   }
 }

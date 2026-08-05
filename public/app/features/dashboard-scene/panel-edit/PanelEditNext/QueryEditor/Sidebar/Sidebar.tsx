@@ -1,9 +1,10 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { memo, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { useFlagPaneleditButtonLabels } from '@grafana/runtime/internal';
+import { Button, IconButton, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { SegmentedToggle, type SegmentedToggleProps } from '../../SegmentedToggle';
 import { QueryEditorType, type SidebarSize } from '../../constants';
@@ -24,7 +25,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: SidebarProps) {
-  const styles = useStyles2(getStyles);
+  const showButtonLabels = useFlagPaneleditButtonLabels();
   const {
     setSelectedAlert,
     cardType,
@@ -35,6 +36,7 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
     selectedTransformation,
   } = useQueryEditorUIContext();
   const { alertRules, loading } = useAlertingContext();
+  const styles = useStyles2(getStyles);
 
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -85,16 +87,32 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
         contentKey={alertsLabel}
         trailing={
           showStackedModeAction ? (
-            <IconButton
-              name="layer-group"
-              size="sm"
-              variant="secondary"
-              className={cx({ [styles.stackedModeActionButtonActive]: stackedMode.enabled })}
-              onClick={handleStackedModeToggle}
-              aria-label={stackedModeLabel}
-              aria-pressed={stackedMode.enabled}
-              tooltip={stackedModeLabel}
-            />
+            showButtonLabels ? (
+              <Button
+                icon="layer-group"
+                size="sm"
+                fill="text"
+                variant="secondary"
+                className={styles.stackedModeButton}
+                data-active={stackedMode.enabled}
+                onClick={handleStackedModeToggle}
+                aria-pressed={stackedMode.enabled}
+                tooltip={stackedModeLabel}
+              >
+                {t('query-editor-next.sidebar.stacked', 'Stack')}
+              </Button>
+            ) : (
+              <span className={styles.stackedModeIconButton} data-active={stackedMode.enabled}>
+                <IconButton
+                  name="layer-group"
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleStackedModeToggle}
+                  aria-pressed={stackedMode.enabled}
+                  tooltip={stackedModeLabel}
+                />
+              </span>
+            )
           ) : undefined
         }
       >
@@ -115,7 +133,7 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
           {cardType === QueryEditorType.Alert ? (
             <AlertsView alertRules={alertRules} />
           ) : (
-            <QueriesAndTransformationsView />
+            <QueriesAndTransformationsView showButtonLabels={showButtonLabels} />
           )}
         </div>
       </ScrollContainer>
@@ -139,11 +157,20 @@ function getStyles(theme: GrafanaTheme2) {
       paddingLeft: theme.spacing(1),
       paddingRight: theme.spacing(1),
     }),
-    stackedModeActionButtonActive: css({
-      color: theme.colors.primary.text,
-      '&::before, &:hover::before': {
+    stackedModeButton: css({
+      '&[data-active="true"]': {
+        color: theme.colors.primary.text,
         backgroundColor: theme.colors.primary.transparent,
-        opacity: 1,
+      },
+    }),
+    stackedModeIconButton: css({
+      display: 'inline-flex',
+      '&[data-active="true"] button': {
+        color: theme.colors.primary.text,
+        '&::before, &:hover::before': {
+          backgroundColor: theme.colors.primary.transparent,
+          opacity: 1,
+        },
       },
     }),
   };

@@ -79,7 +79,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       width: '100%',
       gap: theme.spacing(2),
       overflow: 'hidden',
-      paddingBottom: theme.spacing(2),
+      paddingBottom: theme.spacing(1),
     }),
     versionToggle: css({
       gridArea: 'version-toggle',
