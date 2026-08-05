@@ -50,12 +50,15 @@ export const QueryOptions = ({
     
     let validatedMaxDataPoints = queryOptions.maxDataPoints;
     let validatedMinInterval = queryOptions.minInterval;
+    let newLocalMaxDataPoints = localMaxDataPoints;
+    let newLocalMinInterval = localMinInterval;
 
     const maxDataPointsNumber = parseInt(localMaxDataPoints, 10);
     if (!isNaN(maxDataPointsNumber) && maxDataPointsNumber !== 0) {
       validatedMaxDataPoints = maxDataPointsNumber;
-    } else if (localMaxDataPoints === '') {
+    } else {
       validatedMaxDataPoints = undefined;
+      newLocalMaxDataPoints = '';
     }
 
     if (localMinInterval !== '') {
@@ -64,11 +67,20 @@ export const QueryOptions = ({
         validatedMinInterval = localMinInterval;
       } catch (e) {
         // Invalid interval, revert input to last valid value
-        setLocalMinInterval(queryOptions.minInterval ?? '');
+        newLocalMinInterval = queryOptions.minInterval ?? '';
         validatedMinInterval = queryOptions.minInterval;
       }
     } else {
       validatedMinInterval = undefined;
+      newLocalMinInterval = '';
+    }
+
+    if (newLocalMaxDataPoints !== localMaxDataPoints) {
+      setLocalMaxDataPoints(newLocalMaxDataPoints);
+    }
+    
+    if (newLocalMinInterval !== localMinInterval) {
+      setLocalMinInterval(newLocalMinInterval);
     }
 
     if (validatedMaxDataPoints !== queryOptions.maxDataPoints || validatedMinInterval !== queryOptions.minInterval) {

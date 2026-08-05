@@ -85,4 +85,17 @@ describe('QueryOptions', () => {
     // onChangeQueryOptions should not be called with an invalid value because it falls back to '1m' which is unchanged
     expect(onChangeQueryOptions).not.toHaveBeenCalled();
   });
+
+  it('should treat zero or invalid maxDataPoints as cleared (undefined) and reset input state', () => {
+    const { onChangeQueryOptions, maxDataPointsInput, closeButton } = setup();
+
+    // Simulate user typing 0 (invalid max data points)
+    fireEvent.change(maxDataPointsInput, { target: { value: '0' } });
+    
+    fireEvent.click(closeButton);
+
+    // onChangeQueryOptions should be called with maxDataPoints as undefined
+    expect(onChangeQueryOptions).toHaveBeenCalledTimes(1);
+    expect(onChangeQueryOptions).toHaveBeenCalledWith({ maxDataPoints: undefined, minInterval: '1m' }, 0);
+  });
 });
