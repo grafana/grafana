@@ -4,7 +4,7 @@ import { lowerCase } from 'lodash';
 import { type DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
 import { systemDateFormats } from './formats';
-import moment from './luxon_moment_compat/moment';
+import moment from './moment_implementation';
 import { type DateTimeInput, type DateTime, isDateTime, dateTime, toUtc, dateTimeForTimeZone } from './moment_wrapper';
 
 /**

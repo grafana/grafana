@@ -5,7 +5,7 @@ import { type TimeZone } from '../types/time';
 import { type DateTimeOptions, getTimeZone } from './common';
 import { findTimeZoneAt } from './easytz_lookup';
 import { systemDateFormats } from './formats';
-import moment from './luxon_moment_compat/moment';
+import moment from './moment_implementation';
 import { type DateTimeInput, type Moment, toMomentInput } from './moment_wrapper';
 
 /**

@@ -4,7 +4,8 @@ import { type TimeZone } from '@grafana/schema';
 
 import { getTimeZone } from './common';
 import { findTimeZoneAt } from './easytz_lookup';
-import moment, { type MomentTimeZoneInfo } from './luxon_moment_compat/moment';
+import { type MomentTimeZoneInfo } from './luxon_moment_compat/moment';
+import moment from './moment_implementation';
 import { zonesByCountry } from './timezone_countries';
 
 export enum InternalTimeZones {
