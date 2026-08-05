@@ -97,42 +97,44 @@ func ProvideService(
 	pluginContextProvider *plugincontext.Provider,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
 	routeResourcePermissions accesscontrol.RoutePermissionsService,
+	folderResourcePermissions accesscontrol.FolderPermissionsService,
 	userService user.Service,
 	orgService org.Service,
 	clientGenerator resource.ClientGenerator,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
-		Cfg:                      cfg,
-		FeatureToggles:           featureToggles,
-		DataSourceCache:          dataSourceCache,
-		DataSourceService:        dataSourceService,
-		RouteRegister:            routeRegister,
-		SQLStore:                 sqlStore,
-		KVStore:                  kvStore,
-		ExpressionService:        expressionService,
-		DataProxy:                dataProxy,
-		QuotaService:             quotaService,
-		SecretsService:           secretsService,
-		Metrics:                  m,
-		Log:                      log.New("ngalert"),
-		NotificationService:      notificationService,
-		folderService:            folderService,
-		accesscontrol:            ac,
-		dashboardService:         dashboardService,
-		renderService:            renderService,
-		bus:                      bus,
-		AccesscontrolService:     accesscontrolService,
-		annotationsRepo:          annotationsRepo,
-		pluginsStore:             pluginsStore,
-		tracer:                   tracer,
-		store:                    ruleStore,
-		httpClientProvider:       httpClientProvider,
-		pluginContextProvider:    pluginContextProvider,
-		clientGenerator:          clientGenerator,
-		ResourcePermissions:      resourcePermissions,
-		RouteResourcePermissions: routeResourcePermissions,
-		userService:              userService,
-		orgService:               orgService,
+		Cfg:                       cfg,
+		FeatureToggles:            featureToggles,
+		DataSourceCache:           dataSourceCache,
+		DataSourceService:         dataSourceService,
+		RouteRegister:             routeRegister,
+		SQLStore:                  sqlStore,
+		KVStore:                   kvStore,
+		ExpressionService:         expressionService,
+		DataProxy:                 dataProxy,
+		QuotaService:              quotaService,
+		SecretsService:            secretsService,
+		Metrics:                   m,
+		Log:                       log.New("ngalert"),
+		NotificationService:       notificationService,
+		folderService:             folderService,
+		accesscontrol:             ac,
+		dashboardService:          dashboardService,
+		renderService:             renderService,
+		bus:                       bus,
+		AccesscontrolService:      accesscontrolService,
+		annotationsRepo:           annotationsRepo,
+		pluginsStore:              pluginsStore,
+		tracer:                    tracer,
+		store:                     ruleStore,
+		httpClientProvider:        httpClientProvider,
+		pluginContextProvider:     pluginContextProvider,
+		clientGenerator:           clientGenerator,
+		ResourcePermissions:       resourcePermissions,
+		RouteResourcePermissions:  routeResourcePermissions,
+		FolderResourcePermissions: folderResourcePermissions,
+		userService:               userService,
+		orgService:                orgService,
 	}
 
 	if ng.IsDisabled() {
@@ -177,17 +179,18 @@ type AlertNG struct {
 	StartupInstanceReader state.InstanceReader
 
 	// Alerting notification services
-	MultiOrgAlertmanager     *notifier.MultiOrgAlertmanager
-	AlertsRouter             *sender.AlertsRouter
-	externalRulerSyncer      *rulesync.ExternalRulerSyncer
-	accesscontrol            accesscontrol.AccessControl
-	AccesscontrolService     accesscontrol.Service
-	ResourcePermissions      accesscontrol.ReceiverPermissionsService
-	RouteResourcePermissions accesscontrol.RoutePermissionsService
-	annotationsRepo          annotations.Repository
-	store                    *store.DBstore
-	userService              user.Service
-	orgService               org.Service
+	MultiOrgAlertmanager      *notifier.MultiOrgAlertmanager
+	AlertsRouter              *sender.AlertsRouter
+	externalRulerSyncer       *rulesync.ExternalRulerSyncer
+	accesscontrol             accesscontrol.AccessControl
+	AccesscontrolService      accesscontrol.Service
+	ResourcePermissions       accesscontrol.ReceiverPermissionsService
+	RouteResourcePermissions  accesscontrol.RoutePermissionsService
+	FolderResourcePermissions accesscontrol.FolderPermissionsService
+	annotationsRepo           annotations.Repository
+	store                     *store.DBstore
+	userService               user.Service
+	orgService                org.Service
 
 	bus             bus.Bus
 	pluginsStore    pluginstore.Store
@@ -603,6 +606,7 @@ func (ng *AlertNG) init() error {
 		alertRuleService,
 		ng.store,
 		ng.store,
+		ng.FolderResourcePermissions,
 	)
 
 	ng.Api = &api.API{

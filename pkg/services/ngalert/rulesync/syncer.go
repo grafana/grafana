@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -78,6 +80,8 @@ type ExternalRulerSyncer struct {
 	ruleService    ruleService
 	namespaceStore namespaceStore
 	orgStore       orgStore
+	// folderPermissions restricts the sync folder to admin-only modification.
+	folderPermissions accesscontrol.FolderPermissionsService
 
 	lastSyncHashMu sync.RWMutex
 	lastSyncHash   map[int64]uint64
@@ -96,17 +100,19 @@ func NewExternalRulerSyncer(
 	ruleSvc ruleService,
 	namespaceStore namespaceStore,
 	orgStore orgStore,
+	folderPermissions accesscontrol.FolderPermissionsService,
 ) *ExternalRulerSyncer {
 	return &ExternalRulerSyncer{
-		settings:       settings,
-		logger:         logger,
-		metrics:        m,
-		datasources:    datasourceService,
-		fetcher:        NewRulerFetcher(proxy, logger),
-		ruleService:    ruleSvc,
-		namespaceStore: namespaceStore,
-		orgStore:       orgStore,
-		lastSyncHash:   make(map[int64]uint64),
+		settings:          settings,
+		logger:            logger,
+		metrics:           m,
+		datasources:       datasourceService,
+		fetcher:           NewRulerFetcher(proxy, logger),
+		ruleService:       ruleSvc,
+		namespaceStore:    namespaceStore,
+		orgStore:          orgStore,
+		folderPermissions: folderPermissions,
+		lastSyncHash:      make(map[int64]uint64),
 	}
 }
 
@@ -266,9 +272,12 @@ type groupKey struct {
 // them, and prunes previously-synced groups that vanished upstream. Returns a
 // classified *SyncError on failure.
 func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester, orgID int64, ds *datasources.DataSource, targetDS *datasources.DataSource, cfg RulerConfig) *SyncError {
-	root, _, err := s.namespaceStore.GetOrCreateNamespaceByTitle(ctx, rootFolderTitle(ds.UID), orgID, user, "")
+	root, created, err := s.namespaceStore.GetOrCreateNamespaceByTitle(ctx, rootFolderTitle(ds.UID), orgID, user, "")
 	if err != nil {
 		return &SyncError{Reason: ReasonSave, Cause: fmt.Errorf("get-or-create root folder: %w", err)}
+	}
+	if created {
+		s.restrictFolderToAdmins(ctx, orgID, root.UID)
 	}
 
 	groups := make([]*models.AlertRuleGroup, 0)
@@ -302,6 +311,21 @@ func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester
 		return &SyncError{Reason: ReasonPrune, Cause: err}
 	}
 	return nil
+}
+
+// restrictFolderToAdmins locks a freshly-created sync folder to admin-only
+// modification: editors and viewers get view-only, so operators can see the
+// synced rules but not change what the sync owns. Admins keep full access, the
+// sync itself runs as a service identity so it is unaffected, and namespace
+// subfolders inherit these permissions. Best-effort: a permissions failure is
+// logged, not fatal, so it never blocks the rule sync.
+func (s *ExternalRulerSyncer) restrictFolderToAdmins(ctx context.Context, orgID int64, folderUID string) {
+	if _, err := s.folderPermissions.SetPermissions(ctx, orgID, folderUID,
+		accesscontrol.SetResourcePermissionCommand{BuiltinRole: string(org.RoleEditor), Permission: "View"},
+		accesscontrol.SetResourcePermissionCommand{BuiltinRole: string(org.RoleViewer), Permission: "View"},
+	); err != nil {
+		s.logger.Warn("Failed to restrict external ruler sync folder to admin-only access", "org_id", orgID, "folder_uid", folderUID, "error", err)
+	}
 }
 
 // prune deletes converted-Prometheus rule groups that live under the sync's
