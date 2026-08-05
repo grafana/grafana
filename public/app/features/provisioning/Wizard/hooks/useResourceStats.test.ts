@@ -134,5 +134,30 @@ describe('useResourceStats', () => {
 
       expect(result.current.shouldSkipSync).toBe(true);
     });
+
+    it('does not skip sync for folder target when instance resources exist', () => {
+      mockStats({ instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 3 }] });
+
+      const { result } = renderHook(() => useResourceStats('repo', 'folder', false, { isHealthy: true }));
+
+      expect(result.current.resourceCount).toBe(3);
+      expect(result.current.fileCount).toBe(0);
+      expect(result.current.shouldSkipSync).toBe(false);
+    });
+
+    it('does not skip sync for folderless (root level) when instance resources exist', () => {
+      mockStats({ instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 }] });
+
+      const { result } = renderHook(() => useResourceStats('repo', 'folderless', false, { isHealthy: true }));
+
+      expect(result.current.shouldSkipSync).toBe(false);
+      expect(result.current.requiresMigration).toBe(false);
+    });
+
+    it('skips sync for folderless only when both resources and files are empty', () => {
+      const { result } = renderHook(() => useResourceStats('repo', 'folderless', false, { isHealthy: true }));
+
+      expect(result.current.shouldSkipSync).toBe(true);
+    });
   });
 });
