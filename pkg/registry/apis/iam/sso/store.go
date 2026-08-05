@@ -26,6 +26,7 @@ var (
 	_ rest.Scoper               = (*LegacyStore)(nil)
 	_ rest.Getter               = (*LegacyStore)(nil)
 	_ rest.Lister               = (*LegacyStore)(nil)
+	_ rest.Creater              = (*LegacyStore)(nil)
 	_ rest.Updater              = (*LegacyStore)(nil)
 	_ rest.SingularNameProvider = (*LegacyStore)(nil)
 	_ rest.GracefulDeleter      = (*LegacyStore)(nil)
@@ -108,6 +109,32 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 
 	object := mapToObject(ns.Value, setting)
 	return &object, nil
+}
+
+// Create implements rest.Creater. SSO settings are upsert-by-provider, so it
+// delegates to the same Upsert as Update; it exists so the kind can ride the
+// dual-writer composite, which requires rest.CreaterUpdater.
+func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
+	ctx, span := s.tracer.Start(ctx, "sso.Create")
+	defer span.End()
+
+	ident, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	setting, ok := obj.(*iamv0.SSOSetting)
+	if !ok {
+		return nil, errors.New("expected ssosetting on create")
+	}
+	if createValidation != nil {
+		if err := createValidation(ctx, obj); err != nil {
+			return nil, err
+		}
+	}
+	if err := s.service.Upsert(ctx, mapToModel(setting), ident); err != nil {
+		return nil, err
+	}
+	return s.Get(ctx, setting.Name, nil)
 }
 
 // Update implements rest.Updater.
