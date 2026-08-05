@@ -192,7 +192,7 @@ export async function importTestDashboard(
     // and when parallel workers import dashboards sharing the same title (several specs reuse titles like "Paste tab")
     // a collision does not fail the test (the import overwrites the existing dashboard),
     // but Playwright traces show a validation error in the UI and tests may run against a stale dashboard
-    const uniqueTitle = `${title} [${Date.now().toString(36)}]`;
+    const uniqueTitle = `${title} [${Date.now().toString(36)}-${test.info().workerIndex}]`;
     await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(uniqueTitle);
 
     if (options.requiresDataSourceSelection) {
