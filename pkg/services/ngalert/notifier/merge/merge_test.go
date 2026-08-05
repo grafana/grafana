@@ -20,9 +20,7 @@ import (
 func TestReceivers(t *testing.T) {
 	r := func(name string) *v1.PostableApiReceiver {
 		return &v1.PostableApiReceiver{
-			Receiver: definition.Receiver{
-				Name: name,
-			},
+			Name: name,
 		}
 	}
 
@@ -163,38 +161,29 @@ func TestTimeIntervals(t *testing.T) {
 			Name: name,
 		}
 	}
-	mti := func(name string) v1.MuteTimeInterval {
-		return v1.MuteTimeInterval{
-			Name: name,
-		}
-	}
 
 	identifier := "dupe"
 	suffix := getDedupSuffix(identifier)
 
+	// Mute and time intervals are already folded into a single ordered list at the model
+	// boundary (mute intervals first), so these fixtures reflect that combined ordering.
 	testCases := []struct {
-		name                  string
-		existingMuteIntervals []v1.MuteTimeInterval
-		existingTimeIntervals []v1.TimeInterval
-		incomingMuteIntervals []v1.MuteTimeInterval
-		incomingTimeIntervals []v1.TimeInterval
-		expected              []v1.TimeInterval
-		expectedRenames       map[string]string
-		expectedAdded         []string
+		name            string
+		existing        []v1.TimeInterval
+		incoming        []v1.TimeInterval
+		expected        []v1.TimeInterval
+		expectedRenames map[string]string
+		expectedAdded   []string
 	}{
 		{
 			name: "should append copies of incoming to existing time intervals",
-			existingMuteIntervals: []v1.MuteTimeInterval{
-				mti("mti1"),
-			},
-			existingTimeIntervals: []v1.TimeInterval{
+			existing: []v1.TimeInterval{
+				ti("mti1"),
 				ti("ti2"),
 			},
-			incomingTimeIntervals: []v1.TimeInterval{
+			incoming: []v1.TimeInterval{
+				ti("mti3"),
 				ti("ti4"),
-			},
-			incomingMuteIntervals: []v1.MuteTimeInterval{
-				mti("mti3"),
 			},
 			expected: []v1.TimeInterval{
 				ti("mti1"),
@@ -207,17 +196,13 @@ func TestTimeIntervals(t *testing.T) {
 		},
 		{
 			name: "should rename incoming if there is existing",
-			existingMuteIntervals: []v1.MuteTimeInterval{
-				mti("mti1"),
-			},
-			existingTimeIntervals: []v1.TimeInterval{
+			existing: []v1.TimeInterval{
+				ti("mti1"),
 				ti("ti2"),
 			},
-			incomingTimeIntervals: []v1.TimeInterval{
+			incoming: []v1.TimeInterval{
+				ti("ti2"),
 				ti("mti1"),
-			},
-			incomingMuteIntervals: []v1.MuteTimeInterval{
-				mti("ti2"),
 			},
 			expected: []v1.TimeInterval{
 				ti("mti1"),
@@ -233,17 +218,13 @@ func TestTimeIntervals(t *testing.T) {
 		},
 		{
 			name: "should rename incoming if there is existing after dedup",
-			existingMuteIntervals: []v1.MuteTimeInterval{
-				mti("ti1"),
-			},
-			existingTimeIntervals: []v1.TimeInterval{
+			existing: []v1.TimeInterval{
+				ti("ti1"),
 				ti("ti1" + suffix),
 			},
-			incomingTimeIntervals: []v1.TimeInterval{
+			incoming: []v1.TimeInterval{
+				ti("ti1"),
 				ti("ti1" + suffix),
-			},
-			incomingMuteIntervals: []v1.MuteTimeInterval{
-				mti("ti1"),
 			},
 			expected: []v1.TimeInterval{
 				ti("ti1"),
@@ -259,16 +240,14 @@ func TestTimeIntervals(t *testing.T) {
 		},
 		{
 			name: "should rename dupe among incoming",
-			existingTimeIntervals: []v1.TimeInterval{
+			existing: []v1.TimeInterval{
 				ti("ti2"),
 			},
-			incomingTimeIntervals: []v1.TimeInterval{
+			incoming: []v1.TimeInterval{
+				ti("ti2"),
 				ti("ti2"),
 			},
-			incomingMuteIntervals: []v1.MuteTimeInterval{
-				mti("ti2"),
-			},
-			expected: []v1.TimeInterval{ // mute intervals have precedence over time intervals in the case of duplicates (see https://github.com/grafana/alerting/blob/85dab908dcb43f7718a638b4c3cf9c214f7e48da/notify/grafana_alertmanager.go#L676-L685)
+			expected: []v1.TimeInterval{
 				ti("ti2"),
 				ti("ti2" + suffix),
 				ti("ti2" + suffix + "_01"),
@@ -280,18 +259,14 @@ func TestTimeIntervals(t *testing.T) {
 		},
 		{
 			name: "should ensure uniqueness across existing and incoming",
-			existingMuteIntervals: []v1.MuteTimeInterval{
-				mti("ti1"),
-			},
-			existingTimeIntervals: []v1.TimeInterval{
+			existing: []v1.TimeInterval{
+				ti("ti1"),
 				ti("ti1" + suffix),
 			},
-			incomingTimeIntervals: []v1.TimeInterval{
+			incoming: []v1.TimeInterval{
+				ti("ti1" + suffix + "_01"),
 				ti("ti1"),
 				ti("ti2"),
-			},
-			incomingMuteIntervals: []v1.MuteTimeInterval{
-				mti("ti1" + suffix + "_01"),
 			},
 			expected: []v1.TimeInterval{
 				ti("ti1"),
@@ -309,38 +284,26 @@ func TestTimeIntervals(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var existingNames, incomingNames []string
-			for _, r := range tc.existingMuteIntervals {
+			for _, r := range tc.existing {
 				existingNames = append(existingNames, r.Name)
 			}
-			for _, r := range tc.existingTimeIntervals {
-				existingNames = append(existingNames, r.Name)
-			}
-			for _, r := range tc.incomingTimeIntervals {
-				incomingNames = append(incomingNames, r.Name)
-			}
-			for _, r := range tc.incomingMuteIntervals {
+			for _, r := range tc.incoming {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actualTimeIntervals, actualRenames, actualAdded := TimeIntervals(tc.existingMuteIntervals, tc.existingTimeIntervals, tc.incomingMuteIntervals, tc.incomingTimeIntervals, identifier)
+			actualTimeIntervals, actualRenames, actualAdded := TimeIntervals(tc.existing, tc.incoming, identifier)
 			assert.Equal(t, tc.expected, actualTimeIntervals)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			assert.Equal(t, tc.expectedAdded, actualAdded)
 
 			// check that existing and incoming lists are not changed
 			var names []string
-			for _, r := range tc.existingMuteIntervals {
-				names = append(names, r.Name)
-			}
-			for _, r := range tc.existingTimeIntervals {
+			for _, r := range tc.existing {
 				names = append(names, r.Name)
 			}
 			assert.Equal(t, existingNames, names)
 			names = nil
-			for _, r := range tc.incomingTimeIntervals {
-				names = append(names, r.Name)
-			}
-			for _, r := range tc.incomingMuteIntervals {
+			for _, r := range tc.incoming {
 				names = append(names, r.Name)
 			}
 			assert.Equal(t, incomingNames, names)
@@ -451,7 +414,7 @@ func TestMergeExtraConfig(t *testing.T) {
 	t.Run("should append index suffix if rename still collides", func(t *testing.T) {
 		grafana := load(t, fullGrafanaConfig, func(p *v1.PostableApiAlertingConfig) {
 			p.Receivers = append(p.Receivers, &v1.PostableApiReceiver{
-				Receiver: definition.Receiver{Name: "grafana-default-email" + getDedupSuffix(identifier)},
+				Name: "grafana-default-email" + getDedupSuffix(identifier),
 			})
 		})
 		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)

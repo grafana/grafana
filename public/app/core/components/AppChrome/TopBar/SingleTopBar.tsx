@@ -20,6 +20,7 @@ import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { FeatureControlButton } from '../FeatureControl/FeatureControlButton';
+import { AssistantToolbarButtons } from '../FullscreenWorkspace/AssistantToolbarButtons';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 
@@ -73,6 +74,7 @@ export const SingleTopBar = memo(function SingleTopBar({
             <ToolbarButton
               narrow
               id={MEGA_MENU_TOGGLE_ID}
+              data-testid={Components.NavBar.Toggle.button}
               onClick={onToggleMegaMenu}
               tooltip={t('navigation.megamenu.open', 'Main menu')}
               aria-expanded={state.megaMenuOpen}
@@ -105,6 +107,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           {!showToolbarLevel && actions}
           {!contextSrv.user.isSignedIn && <SignInLink />}
           <NavRightButton />
+          <AssistantToolbarButtons />
           {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
         </Stack>
       </div>

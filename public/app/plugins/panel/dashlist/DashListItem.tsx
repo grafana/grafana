@@ -1,5 +1,6 @@
 import { reportInteraction } from '@grafana/runtime';
 import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
+import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
 import { type LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 
@@ -33,6 +34,16 @@ export function DashListItem({
   const css = useStyles2(getStyles);
   const isCompact = density === 'compact';
 
+  const starButton = (
+    <StarToolbarButton
+      title={dashboard.name}
+      group="dashboard.grafana.app"
+      kind="Dashboard"
+      id={dashboard.uid}
+      onStarChange={onStarChange}
+    />
+  );
+
   const onCardLinkClick = () => {
     reportInteraction('grafana_browse_dashboards_page_click_list_item', {
       itemKind: dashboard.kind,
@@ -52,13 +63,14 @@ export function DashListItem({
           href={url}
           onClick={onCardLinkClick}
           trailing={
-            <StarToolbarButton
-              title={dashboard.name}
-              group="dashboard.grafana.app"
-              kind="Dashboard"
-              id={dashboard.uid}
-              onStarChange={onStarChange}
-            />
+            dashboard.description ? (
+              <Stack gap={0.5} alignItems="center">
+                <DescriptionTooltip description={dashboard.description} />
+                {starButton}
+              </Stack>
+            ) : (
+              starButton
+            )
           }
         />
       ) : (
@@ -91,13 +103,7 @@ export function DashListItem({
               )}
             </Link>
 
-            <StarToolbarButton
-              title={dashboard.name}
-              group="dashboard.grafana.app"
-              kind="Dashboard"
-              id={dashboard.uid}
-              onStarChange={onStarChange}
-            />
+            {starButton}
           </Stack>
         </Card>
       )}

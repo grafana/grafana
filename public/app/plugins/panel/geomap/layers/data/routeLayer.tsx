@@ -71,7 +71,12 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<RouteConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<RouteConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => {
     // Assert default values
     const config = {
       ...defaultOptions,

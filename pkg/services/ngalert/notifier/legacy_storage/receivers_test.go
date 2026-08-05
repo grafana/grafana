@@ -490,47 +490,37 @@ func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
 					Route: &v1.Route{Receiver: "receiver1"},
 					TimeIntervals: []v1.TimeInterval{
 						{Name: "time-interval-1"},
-					},
-					MuteTimeIntervals: []v1.MuteTimeInterval{
 						{Name: "mute-interval-1"},
 					},
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definition.Receiver{
-							Name: "receiver1",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:      "integration-uid-1",
-									Type:     "webhook",
-									Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
-								},
+						Name: "receiver1",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:      "integration-uid-1",
+								Type:     "webhook",
+								Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
 							},
 						},
 					},
 					{
-						Receiver: definition.Receiver{Name: "dupe-receiver"},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:      "integration-uid-2",
-									Type:     "webhook",
-									Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
-								},
+						Name: "dupe-receiver",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:      "integration-uid-2",
+								Type:     "webhook",
+								Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["webhook"].Config),
 							},
 						},
 					},
 					{
-						Receiver: definition.Receiver{Name: "dupe-receiver"},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:      "integration-uid-3",
-									Type:     "email",
-									Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["email"].Config),
-								},
+						Name: "dupe-receiver",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:      "integration-uid-3",
+								Type:     "email",
+								Settings: definition.RawMessage(notifytest.AllKnownV1ConfigsForTesting["email"].Config),
 							},
 						},
 					},

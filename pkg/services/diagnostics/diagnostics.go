@@ -1,6 +1,7 @@
 // Package diagnostics assembles on-demand datasource diagnostic bundles: captured HTTP traffic
-// (HAR) and the panel/dashboard JSON. The HTTP handler in pkg/api runs the queries with capture
-// active and delegates bundle assembly here.
+// (HAR), QueryData request/results, the panel/dashboard JSON, and the Grafana build and plugin
+// versions that produced them. The HTTP handler in pkg/api runs the queries with capture active and
+// delegates bundle assembly here.
 package diagnostics
 
 import (
@@ -13,6 +14,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -20,21 +22,131 @@ import (
 )
 
 // Bundler assembles diagnostic bundles.
-type Bundler struct{}
+type Bundler struct {
+	// Written as environment.json by both bundle shapes; nil omits the artifact.
+	env *Environment
+}
 
-// NewBundler returns a Bundler.
-func NewBundler() *Bundler {
-	return &Bundler{}
+// Query responses can contain substantially more data than the diagnostic traffic itself. Keep
+// their uncompressed JSON bounded independently so adding querydata.json cannot multiply a large
+// panel/dashboard archive without an explicit truncation marker.
+const (
+	maxQueryDataArtifactBytes  = 8 << 20
+	maxDashboardQueryDataBytes = 32 << 20
+	// minQueryDataArtifactBytes is the smallest budget worth attempting: below it not even a truncated
+	// artifact (version + omission markers) fits, so the panel's query data is skipped up front.
+	minQueryDataArtifactBytes = 256
+)
+
+// queryDataArtifactVersion is the schema version stamped into every querydata.json (including its
+// truncated fallbacks) so a reader can tell how to interpret the artifact.
+const queryDataArtifactVersion = 1
+
+// NewBundler returns a Bundler that writes env as environment.json into the bundles it assembles.
+func NewBundler(env *Environment) *Bundler {
+	return &Bundler{env: env}
+}
+
+// addEnvironment writes environment.json, if there is one. A marshal failure drops this artifact
+// alone rather than the captured traffic with it, as for manifest.json.
+func (b *Bundler) addEnvironment(files map[string][]byte) {
+	if b == nil || b.env == nil {
+		return
+	}
+	if data, err := json.MarshalIndent(b.env, "", "  "); err == nil {
+		files["environment.json"] = data
+	}
+}
+
+// BuildOption sets optional bundle contents. An option, rather than another parameter on Build, because
+// only some callers can supply these artifacts -- paneldata.json needs a browser. BuildDashboard accepts
+// none of these: paneldata.json is single-panel-only for now.
+type BuildOption func(*buildConfig)
+
+type buildConfig struct {
+	panelData json.RawMessage
+}
+
+// WithPanelData bundles paneldata.json: the data frames the user's browser was holding for the panel,
+// serialized client-side from already-resolved scene state -- or, when that serialization failed, the
+// {version, captureError} record the frontend sends in their place, so a capture that broke on the way
+// out stays distinguishable from a browser that had no frames to give (which sends nothing at all).
+//
+// This is the frontend counterpart to querydata.json, which holds what the datasource's *backend*
+// returned. Diffing the two is the point: a datasource plugin's frontend code also processes the
+// response, so frames present in querydata.json but missing or altered here pin the loss on the
+// plugin's frontend rather than on its backend or the upstream.
+//
+// Unlike panel.json it is data, not a definition: reading it re-runs no queries and re-applies no
+// transformations.
+//
+// The payload is stored as the client sent it, outer whitespace aside: deliberately unvalidated and,
+// unlike the other JSON artifacts, not pretty-printed. Nothing here parses it, so a malformed payload
+// yields a malformed artifact rather than a failed bundle, and indenting would hold a second, larger
+// copy of an unbounded input. That containment is for direct callers: through the HTTP endpoint
+// web.Bind rejects a syntactically malformed payload before Build runs, so the worst that reaches here
+// is a well-formed payload of the wrong shape. This is an experimental, admin-only, on-prem-gated
+// feature.
+//
+// Size is the one failure this does NOT contain, and it is the client's to bound: web.MaxBindBodyBytes
+// caps the whole REQUEST (at 100MiB) rather than this field, so a payload past it fails web.Bind before
+// Build runs and costs the caller the entire bundle instead of just this artifact. Bounding it is
+// intentionally postponed.
+//
+// Leaving it uncapped is also deliberately asymmetric with querydata.json, which IS capped
+// (maxQueryDataArtifactBytes) and degrades to a frame summary above it. Matching that cap would cost
+// the common case a complete diff to make the rare oversized one symmetric.
+//
+// Note for whoever adds the client-side bound: that reasoning only holds BELOW
+// maxQueryDataArtifactBytes. Past it querydata.json is already a frame summary, so a complete
+// paneldata.json has no fields left to be diffed against -- only frame and row counts -- and the
+// uncapped side stops buying a complete diff exactly where the payload is heaviest. Pick the two caps
+// together rather than independently.
+func WithPanelData(panelData json.RawMessage) BuildOption {
+	return func(cfg *buildConfig) {
+		cfg.panelData = panelData
+	}
 }
 
 // Build assembles a .tar.gz bundle from the query response, the captured HAR buffer, and the
 // optional panel/dashboard JSON the client supplied. traffic.har is omitted when nothing was
-// captured.
+// captured. Artifacts only some callers can supply arrive through opts; see BuildOption.
 //
 // Server logs are intentionally omitted because they are not scoped to this request and would leak
 // unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
-func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON json.RawMessage, queryErr error) ([]byte, error) {
+func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, queryRequestErr, queryErr error, opts ...BuildOption) ([]byte, error) {
 	files := map[string][]byte{}
+	b.addEnvironment(files)
+
+	cfg := buildConfig{}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
+	// queryRequestErr is the caller's failure to serialize the request into queryRequestJSON. Record it
+	// so a support engineer can tell the request JSON was omitted because serialization failed rather
+	// than silently dropped, mirroring how the per-panel dashboard path records manifest.queryDataError.
+	var queryDataErr error
+	if queryRequestErr != nil {
+		queryDataErr = fmt.Errorf("serialize query request: %w", queryRequestErr)
+	}
+	if resp != nil || len(queryRequestJSON) > 0 {
+		queryData, err := marshalQueryDataArtifact(queryRequestJSON, resp)
+		if err != nil {
+			// A query-data artifact that cannot be fully JSON-encoded must not sink the whole bundle:
+			// record the failure and still ship HAR and the other artifacts, mirroring how the dashboard
+			// path degrades per panel via manifest.queryDataError.
+			queryDataErr = errors.Join(queryDataErr, err)
+		}
+		// An unencodable response still leaves a degraded artifact (request plus frame summary), so ship
+		// whatever survived rather than discarding it along with the error.
+		if len(queryData) > 0 {
+			files["querydata.json"] = queryData
+		}
+	}
+	if queryDataErr != nil {
+		files["querydata-error.txt"] = []byte(queryDataErr.Error() + "\n")
+	}
 
 	har, err := collectHAR(resp, harBuffer)
 	if err != nil {
@@ -42,6 +154,15 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	}
 	if len(har) > 0 {
 		files["traffic.har"] = har
+	}
+
+	// A bare "null" is 4 bytes of valid JSON, so it clears a length check: treat it as not supplied
+	// rather than bundling an artifact whose whole content reads as "the frontend was holding no
+	// frames". A real capture of zero frames ({"version":1,"frames":[]}) still ships -- that one IS a
+	// frontend loss worth seeing, and it must not collapse into "the client had nothing to send".
+	if panelData := bytes.TrimSpace(cfg.panelData); len(panelData) > 0 && !bytes.Equal(panelData, []byte("null")) {
+		// Stored as sent, not indented -- see WithPanelData for why.
+		files["paneldata.json"] = panelData
 	}
 
 	if len(panelJSON) > 0 {
@@ -60,18 +181,206 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	return buildTarGz(files)
 }
 
+type queryDataArtifact struct {
+	Version         int                                 `json:"version"`
+	Request         json.RawMessage                     `json:"request,omitempty"`
+	Response        json.RawMessage                     `json:"response,omitempty"`
+	ResponseSummary map[string]queryDataResponseSummary `json:"responseSummary,omitempty"`
+	// ResponseError records why the full response is missing when it could not be JSON-encoded, so a
+	// reader can tell an unencodable response from one that was dropped to fit the size cap.
+	ResponseError   string `json:"responseError,omitempty"`
+	Truncated       bool   `json:"truncated,omitempty"`
+	LimitBytes      int    `json:"limitBytes,omitempty"`
+	OriginalBytes   int    `json:"originalBytes,omitempty"`
+	RequestOmitted  bool   `json:"requestOmitted,omitempty"`
+	ResponseOmitted bool   `json:"responseOmitted,omitempty"`
+}
+
+type queryDataResponseSummary struct {
+	RefID       string                  `json:"refId"`
+	Status      backend.Status          `json:"status"`
+	Error       string                  `json:"error,omitempty"`
+	ErrorSource backend.ErrorSource     `json:"errorSource,omitempty"`
+	Frames      []queryDataFrameSummary `json:"frames,omitempty"`
+}
+
+type queryDataFrameSummary struct {
+	Name   string `json:"name,omitempty"`
+	RefID  string `json:"refId,omitempty"`
+	Rows   int    `json:"rows"`
+	Fields int    `json:"fields"`
+}
+
+func marshalQueryDataArtifact(request json.RawMessage, resp *backend.QueryDataResponse) ([]byte, error) {
+	data, _, err := marshalQueryDataArtifactWithLimit(request, resp, maxQueryDataArtifactBytes)
+	return data, err
+}
+
+// marshalQueryDataArtifactWithLimit returns the encoded querydata.json plus whether it had to drop
+// content to fit maxBytes, so callers don't have to re-parse the result to learn that.
+func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.QueryDataResponse, maxBytes int) ([]byte, bool, error) {
+	artifact := queryDataArtifact{Version: queryDataArtifactVersion, Request: request}
+	if resp != nil {
+		// The SDK encoder returns a complete byte slice. The artifact/archive is bounded below, but
+		// serializing an oversized response can still temporarily allocate its full JSON size.
+		responseJSON, err := queryDataResponseWithoutCaptureFrames(resp).MarshalJSON()
+		if err != nil {
+			// A response that cannot be encoded (e.g. an unserializable value in a frame's Meta.Custom)
+			// usually still has a serializable request beside it. Degrade to the same request + summary
+			// shape the size cap uses instead of dropping both -- losing the submitted query in exactly
+			// the hard-to-encode cases this artifact exists to capture defeats its purpose.
+			//
+			// The error is returned as well, so both callers record it outside the artifact
+			// (querydata-error.txt, manifest.queryDataError). That makes the embedded copy a convenience:
+			// bound it by the budget so a verbose plugin error cannot crowd out the request, which is
+			// recorded nowhere else.
+			out, fallbackErr := fitQueryDataArtifact(queryDataArtifact{
+				Version:         queryDataArtifactVersion,
+				ResponseSummary: summarizeQueryDataResponse(resp),
+				ResponseError:   truncateDiagnosticString(err.Error(), min(1024, maxBytes/4)),
+				ResponseOmitted: true,
+			}, request, maxBytes)
+			if fallbackErr != nil {
+				return nil, false, errors.Join(err, fallbackErr)
+			}
+			return out, false, err
+		}
+		artifact.Response = responseJSON
+	}
+	full, err := json.MarshalIndent(artifact, "", "  ")
+	if err != nil || len(full) <= maxBytes {
+		return full, false, err
+	}
+
+	out, err := fitQueryDataArtifact(queryDataArtifact{
+		Version:         queryDataArtifactVersion,
+		ResponseSummary: summarizeQueryDataResponse(resp),
+		Truncated:       true,
+		LimitBytes:      maxBytes,
+		OriginalBytes:   len(full),
+		ResponseOmitted: resp != nil,
+	}, request, maxBytes)
+	return out, true, err
+}
+
+// fitQueryDataArtifact encodes artifact with progressively less content -- request kept, request
+// omitted, summary dropped, then markers only -- and returns the first encoding within maxBytes. The
+// last rung holds only fixed-size markers, which keeps it under minQueryDataArtifactBytes so the
+// budget gate in BuildDashboard stays meaningful; it is returned even when it somehow still doesn't
+// fit, because there is nothing further to drop, and callers enforcing a hard budget re-check length.
+func fitQueryDataArtifact(artifact queryDataArtifact, request json.RawMessage, maxBytes int) ([]byte, error) {
+	artifact.Request = request
+	out, err := json.MarshalIndent(artifact, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	if len(out) <= maxBytes {
+		return out, nil
+	}
+
+	artifact.Request = nil
+	artifact.RequestOmitted = len(request) > 0
+	out, err = json.MarshalIndent(artifact, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	if len(out) <= maxBytes {
+		return out, nil
+	}
+
+	artifact.ResponseSummary = nil
+	out, err = json.MarshalIndent(artifact, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	if len(out) <= maxBytes {
+		return out, nil
+	}
+
+	// ResponseError goes last: it is the only remaining field without a fixed size, and the same failure
+	// is recorded outside the artifact, so dropping it leaves markers a reader can still act on.
+	artifact.ResponseError = ""
+	return json.MarshalIndent(artifact, "", "  ")
+}
+
+func summarizeQueryDataResponse(resp *backend.QueryDataResponse) map[string]queryDataResponseSummary {
+	if resp == nil {
+		return nil
+	}
+	summaries := make(map[string]queryDataResponseSummary, len(resp.Responses))
+	for refID, response := range resp.Responses {
+		if isHARResponse(refID) {
+			continue
+		}
+		status := response.Status
+		if !status.IsValid() {
+			// Core datasources run in-process, so nothing normalizes their status the way the SDK does on
+			// the gRPC boundary, and several return a bare DataResponse{Error: ...} with status unset.
+			// Assume OK only when the response carries no error, otherwise the summary reports success
+			// next to an error string.
+			status = backend.StatusOK
+			if response.Error != nil {
+				status = backend.StatusUnknown
+			}
+		}
+		summary := queryDataResponseSummary{
+			RefID:       refID,
+			Status:      status,
+			ErrorSource: response.ErrorSource,
+		}
+		if response.Error != nil {
+			summary.Error = truncateDiagnosticString(response.Error.Error(), 1024)
+		}
+		for _, frame := range response.Frames {
+			if frame == nil {
+				continue
+			}
+			rows, err := frame.RowLen()
+			if err != nil {
+				rows = -1
+			}
+			summary.Frames = append(summary.Frames, queryDataFrameSummary{
+				Name:   truncateDiagnosticString(frame.Name, 256),
+				RefID:  truncateDiagnosticString(frame.RefID, 256),
+				Rows:   rows,
+				Fields: len(frame.Fields),
+			})
+		}
+		summaries[refID] = summary
+	}
+	return summaries
+}
+
+func truncateDiagnosticString(value string, maxBytes int) string {
+	if len(value) <= maxBytes {
+		return value
+	}
+	// Back off to a rune boundary so a multi-byte name/refId/error isn't cut mid-rune and land in the
+	// summary with a mangled final character once JSON-encoded.
+	end := maxBytes
+	for end > 0 && !utf8.RuneStart(value[end]) {
+		end--
+	}
+	return value[:end] + "…"
+}
+
 // DashboardPanel is one panel's captured input for a whole-dashboard diagnostics archive. The
 // caller runs each panel's queries with an independent HAR capture buffer and hands the results
 // here for assembly.
 type DashboardPanel struct {
-	ID          int64
-	Title       string
-	PanelJSON   json.RawMessage
-	Datasources []string                   // datasource UIDs the panel references (for the manifest)
-	Resp        *backend.QueryDataResponse // query response, carries external plugins' __har__ frames
-	HARBuffer   *harcapture.Buffer         // in-process capture buffer for this panel's queries
-	QueryErr    error                      // top-level error running the panel's queries, if any
-	Skipped     string                     // non-empty => panel was not executed (e.g. non-data panel)
+	ID           int64
+	Title        string
+	PanelJSON    json.RawMessage
+	QueryRequest json.RawMessage // MetricRequest submitted for this panel
+	// QueryRequestErr records a failure to serialize this panel's MetricRequest. Kept separate so one
+	// unserializable request only costs this panel its request JSON, not the whole multi-panel bundle.
+	QueryRequestErr error
+	Datasources     []string                   // datasource UIDs the panel references (for the manifest)
+	PluginIDs       []string                   // plugin IDs the panel references (datasource + viz), for the manifest
+	Resp            *backend.QueryDataResponse // query response, carries external plugins' __har__ frames
+	HARBuffer       *harcapture.Buffer         // in-process capture buffer for this panel's queries
+	QueryErr        error                      // top-level error running the panel's queries, if any
+	Skipped         string                     // non-empty => panel was not executed (e.g. non-data panel)
 }
 
 // dashboardManifest is manifest.json: a machine-readable summary of what the whole-dashboard bundle
@@ -88,9 +397,14 @@ type manifestPanelEntry struct {
 	Title       string   `json:"title"`
 	Dir         string   `json:"dir,omitempty"`
 	Datasources []string `json:"datasources,omitempty"`
-	HARBytes    int      `json:"harBytes,omitempty"`
-	Skipped     string   `json:"skipped,omitempty"`
-	Error       string   `json:"error,omitempty"`
+	// The plugins this panel used, keying into environment.json (which holds the versions).
+	PluginIDs          []string `json:"pluginIds,omitempty"`
+	HARBytes           int      `json:"harBytes,omitempty"`
+	QueryDataBytes     int      `json:"queryDataBytes,omitempty"`
+	QueryDataTruncated bool     `json:"queryDataTruncated,omitempty"`
+	QueryDataError     string   `json:"queryDataError,omitempty"`
+	Skipped            string   `json:"skipped,omitempty"`
+	Error              string   `json:"error,omitempty"`
 	// CaptureError records a failure to serialize this panel's captured traffic. It's kept separate
 	// from Error (a query failure) so one unserializable buffer only loses this panel's traffic.har,
 	// not the whole multi-panel bundle.
@@ -98,7 +412,7 @@ type manifestPanelEntry struct {
 }
 
 // BuildDashboard assembles a whole-dashboard .tar.gz: a shared dashboard.json and manifest.json plus
-// per-panel panels/<id>-<slug>/{panel.json, traffic.har, query-error.txt}.
+// per-panel panels/<id>-<slug>/{panel.json, querydata.json, traffic.har, query-error.txt}.
 //
 // Like Build, captured traffic and error text are recorded VERBATIM -- redaction is intentionally
 // deferred (see the harcapture package doc) -- and server logs are omitted (not request-scoped).
@@ -109,14 +423,16 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 	}
 
 	files := map[string][]byte{}
+	b.addEnvironment(files)
 	if len(dashboardJSON) > 0 {
 		files["dashboard.json"] = indentJSON(dashboardJSON)
 	}
 
 	usedDirs := map[string]bool{}
+	queryDataBytesRemaining := maxDashboardQueryDataBytes
 	panelJSONByID := indexPanelJSON(dashboardJSON)
 	for _, p := range panels {
-		entry := manifestPanelEntry{ID: p.ID, Title: p.Title, Datasources: p.Datasources}
+		entry := manifestPanelEntry{ID: p.ID, Title: p.Title, Datasources: p.Datasources, PluginIDs: p.PluginIDs}
 
 		if p.Skipped != "" {
 			entry.Skipped = p.Skipped
@@ -135,6 +451,43 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		if len(panelJSON) > 0 {
 			files[dir+"/panel.json"] = indentJSON(panelJSON)
 		}
+		// A panel can hit more than one query-data problem: an unserializable request still leaves a
+		// response to encode, which can itself fail or exhaust the dashboard budget. Collect them all so
+		// a later failure doesn't hide the request-serialize failure that explains the missing request --
+		// the single-panel Build path joins the same combination into querydata-error.txt.
+		var queryDataErrs []string
+		if p.QueryRequestErr != nil {
+			queryDataErrs = append(queryDataErrs, "serialize query request: "+p.QueryRequestErr.Error())
+		}
+		if p.Resp != nil || len(p.QueryRequest) > 0 {
+			queryDataLimit := min(maxQueryDataArtifactBytes, queryDataBytesRemaining)
+			if queryDataLimit < minQueryDataArtifactBytes {
+				entry.QueryDataTruncated = true
+				queryDataErrs = append(queryDataErrs, fmt.Sprintf("remaining dashboard query-data budget (%d bytes) below the %d-byte minimum artifact size", queryDataBytesRemaining, minQueryDataArtifactBytes))
+			} else {
+				queryData, truncated, err := marshalQueryDataArtifactWithLimit(p.QueryRequest, p.Resp, queryDataLimit)
+				if err != nil {
+					queryDataErrs = append(queryDataErrs, err.Error())
+				}
+				// An unencodable response still leaves a degraded artifact (request plus frame summary),
+				// so write whatever survived instead of discarding it along with the error.
+				switch {
+				case len(queryData) == 0:
+					// Nothing survived the failure; the error above is the whole record.
+				case len(queryData) > queryDataLimit:
+					entry.QueryDataTruncated = true
+					queryDataErrs = append(queryDataErrs, "query-data artifact exceeded its assigned dashboard budget")
+				default:
+					files[dir+"/querydata.json"] = queryData
+					entry.QueryDataBytes = len(queryData)
+					queryDataBytesRemaining -= len(queryData)
+					entry.QueryDataTruncated = truncated
+				}
+			}
+		}
+		// Joined with "; " rather than errors.Join's newline so the manifest keeps one readable line per
+		// panel instead of embedded \n escapes.
+		entry.QueryDataError = strings.Join(queryDataErrs, "; ")
 
 		// A single panel's capture that fails to serialize must not sink the whole multi-panel bundle:
 		// record it against this panel in the manifest and keep everything else (dashboard.json, the
@@ -276,6 +629,19 @@ func isHARResponse(refID string) bool {
 	return strings.HasPrefix(refID, harResponseRefIDPrefix)
 }
 
+func queryDataResponseWithoutCaptureFrames(resp *backend.QueryDataResponse) *backend.QueryDataResponse {
+	filtered := backend.NewQueryDataResponse()
+	if resp == nil {
+		return filtered
+	}
+	for refID, dataResponse := range resp.Responses {
+		if !isHARResponse(refID) {
+			filtered.Responses[refID] = dataResponse
+		}
+	}
+	return filtered
+}
+
 // forEachHARFrameCustom calls fn with the Custom map of every frame across all synthetic capture
 // responses (__har__-prefixed) in resp. No-op when resp is nil. Centralizes the nil-checks and type
 // assertion so collectHAR / HasCapturedHAR / PluginCaptureError don't each re-implement them.
@@ -373,16 +739,7 @@ func HasCapturedHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffe
 	return captured
 }
 
-// collectHAR returns the captured HTTP traffic as HAR 1.2 JSON. It merges two sources: the
-// in-process buffer (core plugins) and the __har__ response frame(s) returned by externalized gRPC
-// plugins. Returns (nil, nil) when nothing was captured, and a non-nil error if traffic was
-// captured but could not be serialized (so the caller can fail rather than return an empty bundle).
-//
-// NOTE: the __har__ frame path is inert until the SDK-side HTTP capture middleware that emits those
-// frames ships and Grafana is bumped to that SDK version — until then external (out-of-process)
-// plugin traffic is NOT captured. Externally-sourced frames are merged VERBATIM: redaction is
-// intentionally deferred (see the harcapture package doc), so — exactly like in-process capture —
-// the recorded headers/cookies/query/URLs/bodies are not sanitized.
+// collectHAR returns the captured HTTP traffic as HAR 1.2 JSON.
 func collectHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer) ([]byte, error) {
 	var bufferDoc []byte
 	if harBuffer != nil && harBuffer.Len() > 0 {

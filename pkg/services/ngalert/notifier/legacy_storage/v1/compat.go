@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	"github.com/grafana/alerting/definition"
+	"github.com/grafana/alerting/definition/compat"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -41,41 +42,29 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 func PostableApiAlertingConfigToModel(in definition.PostableApiAlertingConfig) PostableApiAlertingConfig {
 	return PostableApiAlertingConfig{
 		Config: Config{
-			Global:            in.Global,
-			Route:             RouteToModel(in.Route),
-			InhibitRules:      slices.Clone(in.InhibitRules),
-			Templates:         slices.Clone(in.Templates),
-			MuteTimeIntervals: MuteTimeIntervalsToModel(in.MuteTimeIntervals),
-			TimeIntervals:     TimeIntervalsToModel(in.TimeIntervals),
+			Global:        in.Global,
+			Route:         RouteToModel(in.Route),
+			InhibitRules:  slices.Clone(in.InhibitRules),
+			Templates:     slices.Clone(in.Templates),
+			TimeIntervals: TimeIntervalsToModel(in.MuteTimeIntervals, in.TimeIntervals),
 		},
 		Receivers: ReceiversToModel(in.Receivers),
 	}
 }
 
-func MuteTimeIntervalsToModel(in []config.MuteTimeInterval) []MuteTimeInterval {
-	if in == nil {
+func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals []config.TimeInterval) []TimeInterval {
+	if muteIntervals == nil && timeIntervals == nil {
 		return nil
 	}
-	out := make([]MuteTimeInterval, 0, len(in))
-	for _, interval := range in {
-		out = append(out, MuteTimeInterval{
-			Name:          interval.Name,
-			TimeIntervals: interval.TimeIntervals,
-		})
+	// Fold mute time intervals into time intervals, mute first. A name cannot appear in both lists
+	// because Config rejects duplicates across them at unmarshal time, so the order only needs to be
+	// stable; mute-first matches what the config was previously flattened to when applied.
+	out := make([]TimeInterval, 0, len(muteIntervals)+len(timeIntervals))
+	for _, interval := range muteIntervals {
+		out = append(out, TimeInterval(interval))
 	}
-	return out
-}
-
-func TimeIntervalsToModel(in []config.TimeInterval) []TimeInterval {
-	if in == nil {
-		return nil
-	}
-	out := make([]TimeInterval, 0, len(in))
-	for _, interval := range in {
-		out = append(out, TimeInterval{
-			Name:          interval.Name,
-			TimeIntervals: interval.TimeIntervals,
-		})
+	for _, interval := range timeIntervals {
+		out = append(out, TimeInterval(interval))
 	}
 	return out
 }
@@ -96,10 +85,8 @@ func PostableApiReceiverToModel(in *definition.PostableApiReceiver) *PostableApi
 		return nil
 	}
 	return &PostableApiReceiver{
-		Receiver: in.Receiver,
-		PostableGrafanaReceivers: PostableGrafanaReceivers{
-			GrafanaManagedReceivers: PostableGrafanaReceiversToModel(in.GrafanaManagedReceivers),
-		},
+		Name:                    in.Name,
+		GrafanaManagedReceivers: PostableGrafanaReceiversToModel(in.GrafanaManagedReceivers),
 	}
 }
 
@@ -239,29 +226,14 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig) definition.PostableApiAlertingConfig {
 	return definition.PostableApiAlertingConfig{
 		Config: definition.Config{
-			Global:            in.Global,
-			Route:             RouteToDB(in.Route),
-			InhibitRules:      slices.Clone(in.InhibitRules),
-			Templates:         slices.Clone(in.Templates),
-			MuteTimeIntervals: MuteTimeIntervalsToDB(in.MuteTimeIntervals),
-			TimeIntervals:     TimeIntervalsToDB(in.TimeIntervals),
+			Global:        in.Global,
+			Route:         RouteToDB(in.Route),
+			InhibitRules:  slices.Clone(in.InhibitRules),
+			Templates:     slices.Clone(in.Templates),
+			TimeIntervals: TimeIntervalsToDB(in.TimeIntervals),
 		},
 		Receivers: ReceiversToDB(in.Receivers),
 	}
-}
-
-func MuteTimeIntervalsToDB(in []MuteTimeInterval) []config.MuteTimeInterval {
-	if in == nil {
-		return nil
-	}
-	out := make([]config.MuteTimeInterval, 0, len(in))
-	for _, interval := range in {
-		out = append(out, config.MuteTimeInterval{
-			Name:          interval.Name,
-			TimeIntervals: interval.TimeIntervals,
-		})
-	}
-	return out
 }
 
 func TimeIntervalsToDB(in []TimeInterval) []config.TimeInterval {
@@ -294,7 +266,7 @@ func PostableApiReceiverToDB(in *PostableApiReceiver) *definition.PostableApiRec
 		return nil
 	}
 	return &definition.PostableApiReceiver{
-		Receiver: in.Receiver,
+		Name: in.Name,
 		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
 			GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.GrafanaManagedReceivers),
 		},
@@ -461,26 +433,18 @@ func ExtraConfigToDB(in ExtraConfiguration) definitions.ExtraConfiguration {
 	}
 }
 
-// PostableMimirReceiverToPostableGrafanaReceiver converts all legacy models to PostableGrafanaReceiver.
-// If receiver does not have any legacy receivers, returns the original receiver.
-// Otherwise, returns a copy that contains converted integrations (and shallow copy of existing Grafana integrations).
-func PostableMimirReceiverToPostableGrafanaReceiver(r *PostableApiReceiver) (*PostableApiReceiver, error) {
-	if !r.HasMimirIntegrations() {
-		return r, nil
-	}
-	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r.Receiver)
+// PostableMimirReceiverToPostableGrafanaReceiver converts an upstream (Mimir) receiver into a
+// receiver that carries the equivalent Grafana integrations. The result never contains legacy
+// models, so callers do not need to convert again.
+func PostableMimirReceiverToPostableGrafanaReceiver(r compat.Receiver) (*PostableApiReceiver, error) {
+	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
 	}
 	result := &PostableApiReceiver{
-		Receiver: definition.Receiver{
-			Name: r.Name,
-		},
-		PostableGrafanaReceivers: PostableGrafanaReceivers{
-			GrafanaManagedReceivers: make([]*PostableGrafanaReceiver, 0, len(v0)+len(r.GrafanaManagedReceivers)),
-		},
+		Name:                    r.Name,
+		GrafanaManagedReceivers: make([]*PostableGrafanaReceiver, 0, len(v0)),
 	}
-	result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, r.GrafanaManagedReceivers...)
 	typeCount := make(map[string]int)
 	for _, cfg := range v0 {
 		integrationType := string(cfg.Schema.Type())

@@ -5,9 +5,9 @@ import { memo, forwardRef, useId } from 'react';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Icon, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, Text, useStyles2, Button } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
@@ -27,8 +27,8 @@ export interface Props extends DOMAttributes {
 
 export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
-    const styles = useStyles2(getStyles);
     const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+    const styles = useStyles2(getStyles, visualRefreshEnabled);
     const { chrome } = useGrafana();
     const state = chrome.useState();
     const { isLoading: starredItemsLoading, isError: starredItemsError } = useSyncStarredItemsInNav();
@@ -101,7 +101,7 @@ export const MegaMenu = memo(
     );
 
     const navLabel = t('navigation.megamenu.list-label', 'Navigation');
-    const pinnedListLabel = t('navigation.megamenu.pinned-list-label', 'Pinned');
+    const pinnedListLabel = t('navigation.megamenu.pinned-list-label', 'Pinned items');
     // The pinned list is named by its visible heading (aria-labelledby) rather than repeating the
     // label as an aria-label, so screen readers don't announce "Pinned" twice.
     const pinnedHeadingId = useId();
@@ -154,10 +154,10 @@ export const MegaMenu = memo(
         <>
           <div className={styles.pinnedBox}>
             <div className={styles.pinnedHeading} id={pinnedHeadingId}>
-              <Icon className={styles.pinnedHeadingIcon} name="gf-pin-filled" size="md" />
               <Text variant="bodySmall" color="secondary" weight="medium">
                 {pinnedListLabel}
               </Text>
+              <div className={styles.pinnedHeadingLine} />
             </div>
             {editMode ? (
               <DragDropContext onDragEnd={onPinnedDragEnd}>
@@ -190,7 +190,7 @@ export const MegaMenu = memo(
               </ul>
             )}
           </div>
-          <hr className={styles.pinnedDivider} />
+          <hr className={styles.dividerLine} />
         </>
       );
 
@@ -254,22 +254,26 @@ export const MegaMenu = memo(
           </div>
           {/* Hidden until preferences have loaded: entering edit mode early would start from an empty
               pinned list and pressing Done before the pins arrive would overwrite them with []. */}
-          {canCustomise && !editMode && !isLoading && (
-            <button type="button" className={styles.customiseButton} onClick={onEnterEditMode}>
-              <Icon name="sliders-v-alt" size="lg" />
-              <Text color="secondary">{t('navigation.megamenu.customise', 'Customise navigation')}</Text>
-            </button>
-          )}
-          {editMode && (
-            <div className={styles.editFooter}>
-              <MegaMenuCustomiseControls
-                canReset={canReset}
-                onResetToDefault={onResetToDefault}
-                onCancelEdit={onCancelEdit}
-                onSaveEdit={onSaveEdit}
-                saving={isSaving}
-              />
-            </div>
+          {canCustomise && !isLoading && (
+            <>
+              <hr className={styles.dividerLine} />
+              <div className={styles.editFooter}>
+                {editMode && (
+                  <MegaMenuCustomiseControls
+                    canReset={canReset}
+                    onResetToDefault={onResetToDefault}
+                    onCancelEdit={onCancelEdit}
+                    onSaveEdit={onSaveEdit}
+                    saving={isSaving}
+                  />
+                )}
+                {!editMode && (
+                  <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
+                    <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
+                  </Button>
+                )}
+              </div>
+            </>
           )}
         </nav>
       </div>
@@ -279,7 +283,7 @@ export const MegaMenu = memo(
 
 MegaMenu.displayName = 'MegaMenu';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   return {
     content: css({
       display: 'flex',
@@ -297,9 +301,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       listStyleType: 'none',
-      // Left padding is tuned so the nav row icons line up with the pinned box's content (which is
-      // inset by the box margin + its own padding).
-      padding: theme.spacing(1, 1, 2, 1.5),
+      padding: theme.spacing(1, 1, 2, 1),
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },
@@ -315,11 +317,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     // the nav row icon inset (itemList padding-left 1 + label padding-left 0.5) so the breadcrumb leaf
     // icons line up with the nav section icons. No bottom margin — the divider owns the gap below.
     pinnedBox: css({
-      backgroundColor: theme.colors.background.secondary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
-      margin: theme.spacing(1, 1, 0, 1),
-      padding: theme.spacing(1),
+      margin: visualRefreshEnabled ? theme.spacing(0, 1, 1, 1) : theme.spacing(1, 1, 0, 1),
     }),
     // "Pinned" heading row — a small section label (the medium-weight secondary Text below reads as
     // a heading, distinct from the pinned item rows). The icon column matches the item rows so it
@@ -328,49 +326,32 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       color: theme.colors.text.secondary,
       display: 'flex',
-      gap: theme.spacing(0.5),
+      gap: theme.spacing(1),
       height: theme.spacing(3.5),
       // Matches the item rows' label inset so the heading icon lines up with the pinned item icons.
-      paddingLeft: theme.spacing(0.5),
+      paddingLeft: theme.spacing(1),
+      marginBottom: theme.spacing(0.5),
     }),
-    pinnedHeadingIcon: css({
-      flexShrink: 0,
-      width: theme.spacing(3),
+    pinnedHeadingLine: css({
+      flexGrow: 1,
+      height: '1px',
+      background: `linear-gradient(90deg, ${theme.colors.border.weak} 65%, transparent 100%)`,
     }),
-    // Divider separating the pinned box from the rest of the nav, with a 16px gap above it.
-    pinnedDivider: css({
+    // Divider separating the pinned box from the rest of the nav, and nav from footer
+    dividerLine: css({
       border: 'none',
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      margin: theme.spacing(2, 2, 0, 2),
-    }),
-    // Customise entry point, pinned to the bottom of the menu as a footer button.
-    customiseButton: css({
-      alignItems: 'center',
-      background: 'none',
-      border: 'none',
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      cursor: 'pointer',
-      display: 'flex',
       flexShrink: 0,
-      gap: theme.spacing(1),
-      padding: theme.spacing(1.5, 2),
-      width: '100%',
-      '&:hover': {
-        background: theme.colors.action.hover,
-      },
-      '&:focus-visible': {
-        outline: `2px solid ${theme.colors.primary.main}`,
-        outlineOffset: '-2px',
-      },
+      height: 1,
+      background: `linear-gradient(90deg, transparent 0%, ${theme.colors.border.weak} 20%, ${theme.colors.border.weak} 80%, transparent 100%)`,
+      margin: theme.spacing(1),
     }),
-    // Edit-mode footer: the Reset/Cancel/Done controls, right-aligned.
+    // Edit-mode footer: the Reset/Cancel/Done controls
     editFooter: css({
       alignItems: 'center',
-      borderTop: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexShrink: 0,
-      justifyContent: 'flex-end',
-      padding: theme.spacing(1.5, 2),
+      justifyContent: 'center',
+      padding: theme.spacing(0.5, 2, 1.5, 2),
     }),
   };
 };

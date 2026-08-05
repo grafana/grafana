@@ -5,6 +5,10 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -52,9 +56,6 @@ jobs:
               - '!public/app/plugins/datasource/azuremonitor/**'
               - '!public/app/plugins/datasource/grafana-testdata-datasource/**'
               - '!public/app/plugins/datasource/graphite/**'
-              - '!public/app/plugins/datasource/influxdb/**'
-              - '!public/app/plugins/datasource/loki/**'
-              - '!public/app/plugins/datasource/mysql/**'
             backend_strict:
               - 'pkg/**'
               - 'go.mod'
@@ -75,9 +76,6 @@ jobs:
               - 'public/app/plugins/datasource/azuremonitor/**'
               - 'public/app/plugins/datasource/grafana-testdata-datasource/**'
               - 'public/app/plugins/datasource/graphite/**'
-              - 'public/app/plugins/datasource/influxdb/**'
-              - 'public/app/plugins/datasource/loki/**'
-              - 'public/app/plugins/datasource/mysql/**'
 
       - name: Check for exception label
         if: steps.changed-files.outputs.frontend_strict_any_changed == 'true' && steps.changed-files.outputs.backend_strict_any_changed == 'true'

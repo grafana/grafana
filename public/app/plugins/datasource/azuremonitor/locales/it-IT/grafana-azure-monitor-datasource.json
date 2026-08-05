@@ -78,6 +78,11 @@
       "description-basic-logs": "L'abilitazione di questa funzione comporta i costi per query di Azure Monitor sui pannelli della dashboard che eseguono query su tabelle configurate per <2>Registri di base</2>.",
       "label-enable-basic-logs": "Abilita registri di base"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "Le impostazioni aggiuntive sono opzionali e possono essere configurate per un maggiore controllo sull'origine dei dati. Ciò include Proxy Socks sicuro, timeout della richiesta e cookie inoltrati.",
       "title-additional-settings": "Impostazioni aggiuntive"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Spazio dei nomi metrico"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "Caricamento in corso..."
     },
@@ -204,6 +216,10 @@
       "label-by": "PER",
       "label-order-by": "Ordina per",
       "tooltip-order-by": "Ordina i risultati in base a una o più colonne in ordine crescente o decrescente."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Si è verificato un errore durante la richiesta di metadati da Azure Monitor"

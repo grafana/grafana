@@ -85,12 +85,12 @@ export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => 
       a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0;
   }
 
-  if (sortOrder === SortOrder.DatasourceZA) {
+  if (sortOrder === SortOrder.DatasourceAZ) {
     sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
       a.datasourceName < b.datasourceName ? -1 : a.datasourceName > b.datasourceName ? 1 : 0;
   }
 
-  if (sortOrder === SortOrder.DatasourceAZ) {
+  if (sortOrder === SortOrder.DatasourceZA) {
     sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
       a.datasourceName < b.datasourceName ? 1 : a.datasourceName > b.datasourceName ? -1 : 0;
   }

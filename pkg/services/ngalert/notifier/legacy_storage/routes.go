@@ -296,16 +296,11 @@ func (rev *ConfigRevision) ValidateRoute(route v1.Route) error {
 }
 
 func (rev *ConfigRevision) validateReceiverReferences(route v1.Route) error {
-	receivers := rev.GetReceiversNames()
-	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
-	return route.ValidateReceivers(receivers)
+	return route.ValidateReceivers(rev.GetReceiversNames())
 }
 
 func (rev *ConfigRevision) validateTimeIntervalReferences(route v1.Route) error {
 	timeIntervals := map[string]struct{}{}
-	for _, mt := range rev.Config.AlertmanagerConfig.MuteTimeIntervals {
-		timeIntervals[mt.Name] = struct{}{}
-	}
 	for _, mt := range rev.Config.AlertmanagerConfig.TimeIntervals {
 		timeIntervals[mt.Name] = struct{}{}
 	}
@@ -339,6 +334,38 @@ func renameReceiverInRoute(oldName, newName string, routes ...*v1.Route) int {
 		updated += renameReceiverInRoute(oldName, newName, route.Routes...)
 	}
 	return updated
+}
+
+// TimeIntervalUsedByRoutes checks if a time interval is used in any routes.
+func (rev *ConfigRevision) TimeIntervalUsedByRoutes(name string) bool {
+	if isTimeIntervalInUse(name, []*v1.Route{rev.Config.AlertmanagerConfig.Route}) {
+		return true
+	}
+	for _, r := range rev.Config.ManagedRoutes {
+		if isTimeIntervalInUse(name, []*v1.Route{r}) {
+			return true
+		}
+	}
+	return false
+}
+
+// isTimeIntervalInUse checks if a time interval is used in a route or any of its sub-routes.
+func isTimeIntervalInUse(name string, routes []*v1.Route) bool {
+	for _, route := range routes {
+		if route == nil {
+			continue
+		}
+		if slices.Contains(route.MuteTimeIntervals, name) {
+			return true
+		}
+		if slices.Contains(route.ActiveTimeIntervals, name) {
+			return true
+		}
+		if isTimeIntervalInUse(name, route.Routes) {
+			return true
+		}
+	}
+	return false
 }
 
 // RenameTimeIntervalInRoutes renames all references to a time interval in all routes. Returns number of routes that were updated

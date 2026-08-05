@@ -15,6 +15,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
+import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { useStyles2, DataLinkButton, Menu } from '@grafana/ui';
@@ -123,6 +124,15 @@ function useHasLogs(spanLinkModel: SpanLinkModel): LogsPresence {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryKey, timeRangeKey]);
 
+  useEffect(() => {
+    if (presence === 'loading' || !dynamicTraceToLogsEnabled) {
+      return;
+    }
+    reportInteraction('grafana_traces_trace_view_span_logs_checked', {
+      logs: presence === 'present',
+    });
+  }, [dynamicTraceToLogsEnabled, presence]);
+
   return presence;
 }
 
@@ -189,7 +199,7 @@ export function getLogsButtonTooltip(
       );
     }
     return t(
-      'explore.span-detail-link-buttons.related-logs.no-logs-tooltip',
+      'explore.span-detail-link-buttons.related-logs-no-logs-tooltip',
       'No related logs found using the trace data source configuration.'
     );
   }
