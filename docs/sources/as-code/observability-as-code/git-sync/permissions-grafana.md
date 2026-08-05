@@ -45,7 +45,7 @@ refs:
 
 # Git Sync permissions and access control
 
-For Git Sync you need to configure permissions at two layers to function correctly:
+For Git Sync to work correctly you need to configure permissions at two layers:
 
 - At the Grafana level for repository management and resource access, as described in this document.
 - At your Git provider level, to protect your repository. Refer to [Repository protection for Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-git) for more information.
@@ -88,21 +88,6 @@ As an Admin you can:
 - View sync status, logs, and statistics
 - Access the Provisioning admin UI at **Administration > General > Provisioning**
 
-### Viewer users
-
-Users with the `Viewer` role can view provisioned resources. Their access to specific dashboards and folders depends on the permissions assigned to them.
-
-**Organization-level capabilities**:
-
-- Read Git Sync settings, via the `provisioning.settings:read` permission
-- View dashboard preview links in pull requests
-
-**Resource access** depends on folder and dashboard permissions:
-
-- **Folder Viewer**: View all dashboards and subfolders within that folder
-- **Dashboard Viewer**: View specific dashboards (even if they don't have folder access)
-- Cannot edit dashboards or manage Git Sync repositories
-
 ### Editor users
 
 Users with the `Editor` role can work with provisioned dashboards and folders. Their specific capabilities depend on the folder-level and dashboard-level permissions assigned to them.
@@ -124,6 +109,21 @@ Users with the `Editor` role can work with provisioned dashboards and folders. T
 - **Dashboard Viewer**: View specific dashboards only
 
 Editors don't need access to the Provisioning admin UI or repository configuration. Refer to [Configure folder and dashboard permissions](#configure-folder-and-dashboard-permissions) and [Configure fine-grained access control (RBAC)](#configure-fine-grained-access-control-rbac) for details.
+
+### Viewer users
+
+Users with the `Viewer` role can view provisioned resources. Their access to specific dashboards and folders depends on the permissions assigned to them.
+
+**Organization-level capabilities**:
+
+- Read Git Sync settings, via the `provisioning.settings:read` permission
+- View dashboard preview links in pull requests
+
+**Resource access** depends on folder and dashboard permissions:
+
+- **Folder Viewer**: View all dashboards and subfolders within that folder
+- **Dashboard Viewer**: View specific dashboards (even if they don't have folder access)
+- Cannot edit dashboards or manage Git Sync repositories
 
 ## Configure folder and dashboard permissions
 
@@ -273,9 +273,9 @@ Provisioned dashboards and folders use the Grafana standard permission model. To
 
 The following applies for Git Sync:
 
-- Users need standard `dashboards:*` and `folders:*` permissions to work with provisioned resources
+- You need standard `dashboards:*` and `folders:*` permissions to work with provisioned resources
 - `Editors` and `Viewers` need `provisioning.settings:read` and `provisioning.repositories:read` to view Git Sync configuration
-- Users do **not** need repository write/delete or connection permissions to edit dashboards
+- You do **not** need repository write/delete or connection permissions to edit dashboards
 - Dashboard-level permissions override folder-level permissions
 - Changes made by users with appropriate permissions automatically sync to Git
 
