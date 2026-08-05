@@ -285,6 +285,32 @@ describe('ProvisioningWizard', () => {
       const nextButton = screen.getByRole('button', { name: /Choose additional settings/i });
       expect(nextButton).toBeInTheDocument();
     });
+
+    it('should keep the sync step when instance resources exist and the repository is empty', async () => {
+      // Resources to migrate with an empty remote — folder/folderless must not skip
+      // the synchronize step (otherwise the migrate option is never shown).
+      server.use(
+        http.get(`${BASE}/stats`, () =>
+          HttpResponse.json({
+            instance: [{ group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 }],
+          })
+        ),
+        http.get(`${BASE}/repositories/:name/files/`, () => HttpResponse.json({ items: [] }))
+      );
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      await fillConnectionForm(user, 'github', {
+        token: 'test-token',
+        url: 'https://github.com/test/repo',
+      });
+
+      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+
+      expect(await screen.findByRole('heading', { name: /3\. Choose what to synchronize/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Synchronize with external storage/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Choose additional settings/i })).not.toBeInTheDocument();
+    });
   });
 
   describe('Error Handling', () => {
