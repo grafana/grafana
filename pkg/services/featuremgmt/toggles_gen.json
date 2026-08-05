@@ -2212,6 +2212,20 @@
     },
     {
       "metadata": {
+        "name": "disableScriptedDashboards",
+        "resourceVersion": "1785944490040",
+        "creationTimestamp": "2026-08-05T15:41:30Z"
+      },
+      "spec": {
+        "description": "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
+        "stage": "deprecated",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "drilldownRecommendations",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-12-17T12:52:59Z",

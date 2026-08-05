@@ -1,5 +1,5 @@
 import { AppEvents, dateMath, type UrlQueryMap, type UrlQueryValue } from '@grafana/data';
-import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -16,6 +16,9 @@ import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
 
 type ScriptedDashboardExecution = { data: DashboardDataDTO };
+
+export const SCRIPTED_DASHBOARDS_DEPRECATION_URL = 'https://github.com/grafana/grafana/issues/24059';
+export const SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID = 'scripted-dashboards-disabled';
 
 // Scripted dashboards are arbitrary user code, so nothing has validated what they return.
 // Accept any object and let the rest of the loading pipeline deal with the details.
@@ -43,6 +46,20 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
   abstract loadSnapshot(slug: string): Promise<T>;
 
   protected loadScriptedDashboard(file: string): Promise<DashboardDTO> {
+    // Scripted dashboards are deprecated and disabled by default (feature toggle enabled). Admins can
+    // set `disableScriptedDashboards` to false to temporarily restore them until they are removed in Grafana 14.
+    if (config.featureToggles.disableScriptedDashboards) {
+      // Reject with a plain object (not an Error) so the messageId propagates through
+      // getMessageIdFromError and the scene page can render a dedicated notice with a link.
+      return Promise.reject({
+        status: 410,
+        messageId: SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID,
+        message:
+          'Scripted dashboards are deprecated and have been disabled. They will be removed in Grafana 14. ' +
+          'To temporarily restore them, set the "disableScriptedDashboards" feature toggle to false.',
+      });
+    }
+
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return getBackendSrv()
