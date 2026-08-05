@@ -615,16 +615,72 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 func TestIntegrationVectorCreateBackfillJob(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
-	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 100))
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 100, 1))
 
 	// Second insert for the same (model, resource) is a no-op (ON CONFLICT
 	// DO NOTHING): the original row is preserved, not overwritten with 200.
-	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 200))
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 200, 1))
 
 	jobs, err := backend.ListIncompleteBackfillJobs(ctx, testModel)
 	require.NoError(t, err)
 	require.Len(t, jobs, 1, "exactly one job exists after the conflicting insert")
 	assert.Equal(t, int64(100), jobs[0].StoppingRV, "original stopping_rv preserved")
+}
+
+func TestIntegrationVectorReopenStaleBackfillJobs(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 100, 1))
+	jobs, err := backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Len(t, jobs, 1)
+	require.NoError(t, backend.CompleteBackfillJob(ctx, jobs[0].ID))
+
+	// Completed job is invisible to the lister until a version bump reopens it.
+	jobs, err = backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Empty(t, jobs)
+
+	// Same content_version: no-op, job stays completed.
+	reopened, err := backend.ReopenStaleBackfillJobs(ctx, testModel, testResource, 1, 999)
+	require.NoError(t, err)
+	assert.False(t, reopened, "same content_version must not reopen")
+	jobs, err = backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Empty(t, jobs)
+
+	// Version bump: reopens, resets the cursor/error, advances stopping_rv.
+	reopened, err = backend.ReopenStaleBackfillJobs(ctx, testModel, testResource, 2, 999)
+	require.NoError(t, err)
+	assert.True(t, reopened)
+	jobs, err = backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Len(t, jobs, 1)
+	assert.False(t, jobs[0].IsComplete)
+	assert.Equal(t, int64(999), jobs[0].StoppingRV)
+	assert.Empty(t, jobs[0].LastSeenKey)
+	assert.Empty(t, jobs[0].LastError)
+}
+
+func TestIntegrationVectorReopenStaleBackfillJobs_CoversCatchAllJob(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	// A ''-catch-all job (created before "dashboards" had its own row) must
+	// also be reopened by a builder-scoped call.
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, "", 100, 1))
+	jobs, err := backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Len(t, jobs, 1)
+	require.NoError(t, backend.CompleteBackfillJob(ctx, jobs[0].ID))
+
+	reopened, err := backend.ReopenStaleBackfillJobs(ctx, testModel, testResource, 2, 999)
+	require.NoError(t, err)
+	assert.True(t, reopened, "the ''-catch-all job must be reopened by a resource-scoped call")
+
+	jobs, err = backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Len(t, jobs, 1)
+	assert.Equal(t, "", jobs[0].Resource)
 }
 
 func TestIntegrationVectorReconcilerLock(t *testing.T) {

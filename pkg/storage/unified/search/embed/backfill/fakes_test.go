@@ -164,29 +164,48 @@ func (f *fakeStorage) GetResourceLastImportTimes(context.Context) iter.Seq2[reso
 	panic("not implemented")
 }
 
-// fakeVector records calls and lets tests preload Exists / GetSubresourceContent.
+// fakeVector records calls and lets tests preload GetSubresourceContent /
+// stored rows. rows simulates the `embeddings` table (ns|model|resource|uid
+// -> subresource -> stored row) so ContentVersion and the
+// UpsertReplaceSubresources replace-semantics (stale rows dropped when not
+// in `desired`) can be exercised honestly instead of just recording calls.
 type fakeVector struct {
 	mu                 sync.Mutex
 	upserts            [][]vector.Vector
+	replaceCalls       []replaceCall
 	deletes            []deleteCall
 	subresourceDeletes []deleteSubsCall
-	existing           map[string]map[string]string // uid → subresource → content
-	existsSet          map[string]bool              // ns|model|resource|uid → true
+	existing           map[string]map[string]string        // uid → subresource → content
+	rows               map[string]map[string]vector.Vector // ns|model|resource|uid -> subresource -> row
 	upsertErr          error
 
 	// Backfill bookkeeping:
-	jobs            []vector.BackfillJob
-	checkpoints     []checkpointCall
-	errorMarks      []errorMarkCall
-	completedJobIDs []int64
-	updateErr       error
-	markErrErr      error
-	completeErr     error
+	jobs              []vector.BackfillJob
+	jobContentVersion map[int64]int // job ID -> content_version; absent = DB DEFAULT 1
+	reopenCalls       []reopenCall
+	checkpoints       []checkpointCall
+	errorMarks        []errorMarkCall
+	completedJobIDs   []int64
+	updateErr         error
+	markErrErr        error
+	completeErr       error
 
 	// Advisory-lock simulation:
 	lockUnavailable bool
 	lockAttempts    int
 	lockReleases    int
+}
+
+type replaceCall struct {
+	Namespace, Model, Resource, UID string
+	Changed                         []vector.Vector
+	Desired                         []string
+}
+
+type reopenCall struct {
+	Model, Resource string
+	Version         int
+	StoppingRV      int64
 }
 
 type checkpointCall struct {
@@ -208,19 +227,39 @@ type deleteSubsCall struct {
 
 func newFakeVector() *fakeVector {
 	return &fakeVector{
-		existing:  map[string]map[string]string{},
-		existsSet: map[string]bool{},
+		existing: map[string]map[string]string{},
+		rows:     map[string]map[string]vector.Vector{},
 	}
 }
 
-func existsKey(ns, model, res, uid string) string {
+func rowsKey(ns, model, res, uid string) string {
 	return ns + "|" + model + "|" + res + "|" + uid
 }
 
+// markExists seeds a single-row embedding at content_version 1, simulating
+// a uid already embedded by a version-1 builder (the common case in tests
+// that don't care about versioning).
 func (f *fakeVector) markExists(ns, model, res, uid string) {
+	f.seedEmbeddedRows(ns, model, res, uid, 1, "panel/1")
+}
+
+// seedEmbeddedRows preloads rows for (ns, model, res, uid), one per
+// subresource, all at the given content_version — simulating embeddings
+// left over from an earlier backfill/reconcile run.
+func (f *fakeVector) seedEmbeddedRows(ns, model, res, uid string, version int, subresources ...string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.existsSet[existsKey(ns, model, res, uid)] = true
+	if f.rows == nil {
+		f.rows = map[string]map[string]vector.Vector{}
+	}
+	rows := make(map[string]vector.Vector, len(subresources))
+	for _, sub := range subresources {
+		rows[sub] = vector.Vector{
+			Namespace: ns, Model: model, Resource: res, UID: uid,
+			Subresource: sub, ContentVersion: version, Title: "seed",
+		}
+	}
+	f.rows[rowsKey(ns, model, res, uid)] = rows
 }
 
 func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
@@ -230,8 +269,37 @@ func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }
-func (f *fakeVector) UpsertReplaceSubresources(ctx context.Context, _, _, _, _ string, changed []vector.Vector, _ []string) error {
-	return f.Upsert(ctx, changed)
+func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, desired []string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.replaceCalls = append(f.replaceCalls, replaceCall{ns, model, res, uid, changed, desired})
+	if f.upsertErr != nil {
+		return f.upsertErr
+	}
+	f.upserts = append(f.upserts, changed)
+
+	if f.rows == nil {
+		f.rows = map[string]map[string]vector.Vector{}
+	}
+	key := rowsKey(ns, model, res, uid)
+	rows := f.rows[key]
+	if rows == nil {
+		rows = map[string]vector.Vector{}
+	}
+	keep := make(map[string]struct{}, len(desired))
+	for _, s := range desired {
+		keep[s] = struct{}{}
+	}
+	for sub := range rows {
+		if _, ok := keep[sub]; !ok {
+			delete(rows, sub)
+		}
+	}
+	for _, v := range changed {
+		rows[v.Subresource] = v
+	}
+	f.rows[key] = rows
+	return nil
 }
 func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	f.mu.Lock()
@@ -272,10 +340,25 @@ func (f *fakeVector) GetSubresourceContent(_ context.Context, _, _, _, uid strin
 func (f *fakeVector) Exists(_ context.Context, ns, model, res, uid string) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	return f.existsSet[existsKey(ns, model, res, uid)], nil
+	rows, ok := f.rows[rowsKey(ns, model, res, uid)]
+	return ok && len(rows) > 0, nil
 }
-func (f *fakeVector) ContentVersion(context.Context, string, string, string, string) (int, bool, error) {
-	return 0, false, nil
+func (f *fakeVector) ContentVersion(_ context.Context, ns, model, res, uid string) (int, bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	rows, ok := f.rows[rowsKey(ns, model, res, uid)]
+	if !ok || len(rows) == 0 {
+		return 0, false, nil
+	}
+	minVersion := 0
+	first := true
+	for _, v := range rows {
+		if first || v.ContentVersion < minVersion {
+			minVersion = v.ContentVersion
+			first = false
+		}
+	}
+	return minVersion, true, nil
 }
 func (f *fakeVector) GetLatestRV(context.Context) (int64, error) { return 0, nil }
 func (f *fakeVector) SetLatestRV(context.Context, int64) error   { return nil }
@@ -283,15 +366,53 @@ func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, er
 	return func() {}, true, nil
 }
 func (f *fakeVector) EnsureResourcePartition(context.Context, string) error { return nil }
-func (f *fakeVector) CreateBackfillJob(_ context.Context, _, _ string, _ int64) error {
+func (f *fakeVector) CreateBackfillJob(_ context.Context, _, _ string, _ int64, _ int) error {
 	return nil
 }
+
+// ReopenStaleBackfillJobs mirrors the real SQL: matches jobs for `model`
+// whose Resource is either `res` or the ”-catch-all, reopens (resets
+// is_complete/cursor/error, bumps stopping_rv) only those still below
+// `version`. Jobs not preloaded with a content version default to 1,
+// matching the DB column's DEFAULT.
+func (f *fakeVector) ReopenStaleBackfillJobs(_ context.Context, model, res string, version int, stoppingRV int64) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.reopenCalls = append(f.reopenCalls, reopenCall{Model: model, Resource: res, Version: version, StoppingRV: stoppingRV})
+	reopened := false
+	for i := range f.jobs {
+		j := &f.jobs[i]
+		if j.Model != model || (j.Resource != res && j.Resource != "") {
+			continue
+		}
+		cv := 1
+		if v, ok := f.jobContentVersion[j.ID]; ok {
+			cv = v
+		}
+		if cv >= version {
+			continue
+		}
+		j.IsComplete = false
+		j.LastSeenKey = ""
+		j.LastError = ""
+		j.StoppingRV = stoppingRV
+		if f.jobContentVersion == nil {
+			f.jobContentVersion = map[int64]int{}
+		}
+		f.jobContentVersion[j.ID] = version
+		reopened = true
+	}
+	return reopened, nil
+}
+
+// ListIncompleteBackfillJobs mirrors the real SQL's `is_complete = FALSE`
+// filter so tests can prove a completed job is invisible until reopened.
 func (f *fakeVector) ListIncompleteBackfillJobs(_ context.Context, model string) ([]vector.BackfillJob, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	out := make([]vector.BackfillJob, 0, len(f.jobs))
 	for _, j := range f.jobs {
-		if j.Model == model {
+		if j.Model == model && !j.IsComplete {
 			out = append(out, j)
 		}
 	}

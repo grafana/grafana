@@ -60,16 +60,33 @@ func makeListItem(ns, name string, rv int64) listItem {
 
 func newBackfiller(t *testing.T, storage *fakeStorage, vec *fakeVector) *VectorBackfiller {
 	t.Helper()
+	return newBackfillerWithBuilders(t, storage, vec, dashboard.New())
+}
+
+// newBackfillerWithBuilders lets version-aware tests swap in a builder that
+// reports a different Version() than the real dashboard extractor.
+func newBackfillerWithBuilders(t *testing.T, storage *fakeStorage, vec *fakeVector, builders ...embed.Builder) *VectorBackfiller {
+	t.Helper()
 	emb := newFakeEmbedder(&fakeText{dim: 4})
 	b, err := NewVectorBackfiller(Options{
 		Storage:       storage,
 		VectorBackend: vec,
 		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
-		Builders:      []embed.Builder{dashboard.New()},
+		Builders:      builders,
 	})
 	require.NoError(t, err)
 	return b
 }
+
+// versionedBuilder wraps a real Builder but reports a different Version(),
+// so tests can simulate an extractor content-shape bump without a second
+// real extractor implementation.
+type versionedBuilder struct {
+	embed.Builder
+	version int
+}
+
+func (v versionedBuilder) Version() int { return v.version }
 
 func TestRunBackfill_NoIncompleteJobs_NoOp(t *testing.T) {
 	vec := newFakeVector()
@@ -196,6 +213,121 @@ func TestRunBackfillJob_StampsBuilderVersion(t *testing.T) {
 	for _, v := range vec.upserts[0] {
 		assert.Equal(t, dashboard.New().Version(), v.ContentVersion)
 	}
+}
+
+// TestRunBackfillJob_VersionBump_ReEmbedsAtNewVersion covers the incremental
+// re-embed case: a uid embedded under an older extractor version is not
+// skipped, and the rewritten rows carry the current builder version.
+func TestRunBackfillJob_VersionBump_ReEmbedsAtNewVersion(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "dash-a", 1, "panel/1")
+
+	builder := versionedBuilder{dashboard.New(), 2}
+	o := newBackfillerWithBuilders(t, storage, vec, builder)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "version bump must re-embed, not skip")
+	for _, v := range vec.upserts[0] {
+		assert.Equal(t, 2, v.ContentVersion, "re-embedded rows carry the builder's current version")
+	}
+}
+
+// TestRunBackfillJob_SameVersion_Skips is the ContentVersion analogue of the
+// old Exists-based skip: a uid already at the builder's version is left alone.
+func TestRunBackfillJob_SameVersion_Skips(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "dash-a", 2, "panel/1")
+
+	builder := versionedBuilder{dashboard.New(), 2}
+	o := newBackfillerWithBuilders(t, storage, vec, builder)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts, "same version must skip re-embedding")
+}
+
+// TestRunBackfillJob_StoredVersionAheadOfBuilder_Skips covers a builder
+// rollback: stored rows are ahead of the (rolled-back) builder version. The
+// >= rule in the skip check means this still counts as already embedded.
+func TestRunBackfillJob_StoredVersionAheadOfBuilder_Skips(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "dash-a", 3, "panel/1")
+
+	builder := versionedBuilder{dashboard.New(), 2}
+	o := newBackfillerWithBuilders(t, storage, vec, builder)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts, "stored version ahead of the builder must still skip")
+}
+
+// TestRunBackfillJob_ReEmbedDropsStalePanel_DeletesStaleSubresource proves
+// the backfiller's write path uses UpsertReplaceSubresources (not a plain
+// Upsert): when a re-embed's extractor output no longer includes a panel
+// that was previously stored, that stale row is gone afterward.
+func TestRunBackfillJob_ReEmbedDropsStalePanel_DeletesStaleSubresource(t *testing.T) {
+	storage := newFakeStorage()
+	// minimalDashboardJSON only ever emits panel/1; panel/2 below is stale
+	// content left over from a previous version of this dashboard.
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "dash-a", 1, "panel/1", "panel/2")
+
+	builder := versionedBuilder{dashboard.New(), 2}
+	o := newBackfillerWithBuilders(t, storage, vec, builder)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.replaceCalls, 1)
+	assert.Equal(t, []string{"panel/1"}, vec.replaceCalls[0].Desired, "extractor no longer emits panel/2")
+
+	_, stillThere := vec.rows[rowsKey("ns", "test-model", "dashboards", "dash-a")]["panel/2"]
+	assert.False(t, stillThere, "stale subresource row must be gone after the replace")
+}
+
+// TestRunBackfill_CompletedJobStaleVersion_ReopensAndProcesses covers job
+// reopening: a job that finished under an older content_version is reopened
+// (is_complete=false, cursor/error reset) and drained on the same tick.
+func TestRunBackfill_CompletedJobStaleVersion_ReopensAndProcesses(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{
+		ID:          1,
+		Model:       "test-model",
+		StoppingRV:  100,
+		IsComplete:  true,
+		LastSeenKey: encodeCursor("dashboards", "tok-stale"),
+		LastError:   "old error",
+	}}
+	// Job's content_version defaults to 1 (the fake's DB-default stand-in);
+	// the builder below has since bumped to 2.
+
+	builder := versionedBuilder{dashboard.New(), 2}
+	o := newBackfillerWithBuilders(t, storage, vec, builder)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.reopenCalls, 1)
+	assert.Equal(t, 2, vec.reopenCalls[0].Version)
+	// Assert the reset directly: a dangling cursor happens to behave like a
+	// cleared one against this fake's token parsing, so the upsert count
+	// alone can't catch a missing reset.
+	assert.Empty(t, vec.jobs[0].LastSeenKey, "reopen must clear the cursor")
+	assert.Empty(t, vec.jobs[0].LastError, "reopen must clear the last error")
+	require.Len(t, vec.upserts, 1, "reopened job must be processed on the same tick")
+	require.Len(t, vec.completedJobIDs, 1, "job completes again after reprocessing")
 }
 
 func TestRunBackfillJob_SkipsExistingEmbeddings(t *testing.T) {

@@ -151,6 +151,8 @@ func (b *VectorBackfiller) Run(ctx context.Context) error {
 func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	log := b.log.FromContext(ctx)
 
+	b.reopenStaleJobs(ctx, log)
+
 	jobs, err := b.vectorBackend.ListIncompleteBackfillJobs(ctx, b.batchEmbedder.Model())
 	if err != nil {
 		log.Error("backfill: list jobs", "err", err)
@@ -181,6 +183,25 @@ func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 			log.Error("backfill: complete job", "job_id", job.ID, "err", err)
 		} else {
 			log.Info("backfill: job complete", "job_id", job.ID, "model", job.Model)
+		}
+	}
+}
+
+// reopenStaleJobs runs once per tick, before the incomplete-jobs list is
+// read, so a job a builder's version bump just reopened is picked up on the
+// same tick rather than waiting for the next one. Best-effort per builder: a
+// failure for one builder doesn't block the others or the rest of the tick.
+func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger) {
+	stoppingRV := resource.ToSnowflakeRV(time.Now().UnixMicro())
+	for _, builder := range b.sortedBuilders {
+		reopened, err := b.vectorBackend.ReopenStaleBackfillJobs(ctx, b.batchEmbedder.Model(), builder.Resource(), builder.Version(), stoppingRV)
+		if err != nil {
+			log.Error("backfill: reopen stale jobs", "resource", builder.Resource(), "err", err)
+			continue
+		}
+		if reopened {
+			log.Info("backfill: reopened stale job for content version bump",
+				"resource", builder.Resource(), "version", builder.Version())
 		}
 	}
 }
@@ -370,12 +391,14 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return nil
 	}
 
-	// if the embedding exists, then we don't need to backfill it
-	exists, err := b.vectorBackend.Exists(ctx, namespace, job.Model, res, name)
+	// if a same-or-newer version is already embedded, skip; a lower stored
+	// version means the builder's content shape moved on and this uid needs
+	// re-embedding.
+	version, exists, err := b.vectorBackend.ContentVersion(ctx, namespace, job.Model, res, name)
 	if err != nil {
-		return fmt.Errorf("exists check: %w", err)
+		return fmt.Errorf("content version check: %w", err)
 	}
-	if exists {
+	if exists && version >= builder.Version() {
 		statusLabel = "skipped_already_embedded"
 		return nil
 	}
@@ -419,7 +442,15 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return fmt.Errorf("embed %s/%s: %w", namespace, name, err)
 	}
 
-	if err := b.vectorBackend.Upsert(ctx, vectors); err != nil {
+	// desired is the full subresource set the extractor produced this time;
+	// UpsertReplaceSubresources deletes any stored row not in this list, so a
+	// re-embed after e.g. a dropped panel doesn't leave a stale row behind.
+	desired := make([]string, 0, len(items))
+	for _, it := range items {
+		desired = append(desired, it.Subresource)
+	}
+
+	if err := b.vectorBackend.UpsertReplaceSubresources(ctx, namespace, job.Model, res, name, vectors, desired); err != nil {
 		if isPermanentItemError(err) {
 			b.skipPermanentItem("upsert", namespace, group, res, name, err)
 			statusLabel = "skipped_permanent_error"

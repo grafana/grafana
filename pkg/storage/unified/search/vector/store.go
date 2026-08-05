@@ -99,9 +99,19 @@ type VectorBackend interface {
 	// EnsureResourcePartition creates the embeddings_<resource> partition leaf (idempotent).
 	EnsureResourcePartition(ctx context.Context, resource string) error
 
-	// CreateBackfillJob creates a backfill job for (model, resource, stoppingRV).
-	// No-op if a job already exists for (model, resource).
-	CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64) error
+	// CreateBackfillJob creates a backfill job for (model, resource,
+	// stoppingRV), stamping the builder's contentVersion so a later
+	// ReopenStaleBackfillJobs call can tell this job apart from one created
+	// under an older extractor version. No-op if a job already exists for
+	// (model, resource).
+	CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64, contentVersion int) error
+
+	// ReopenStaleBackfillJobs reopens (is_complete=false, cursor reset) any
+	// job for `model` whose content_version trails `version`, targeting both
+	// the resource-specific job and the ''-catch-all job. Lets an extractor
+	// version bump trigger an incremental re-embed without a manual backfill
+	// row. reopened=false when no job matched.
+	ReopenStaleBackfillJobs(ctx context.Context, model, resource string, version int, stoppingRV int64) (reopened bool, err error)
 
 	// UpdateBackfillJobCheckpoint writes the cursor + optional error after
 	// each processed resource. Best-effort — race with another writer is

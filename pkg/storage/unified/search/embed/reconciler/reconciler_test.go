@@ -1321,6 +1321,7 @@ func TestReconciler_EnsureResourceInitialized_UsesEventRV(t *testing.T) {
 	assert.Equal(t, dashRes, vec.backfillJobs[0].Resource)
 	assert.Equal(t, testModel, vec.backfillJobs[0].Model)
 	assert.Equal(t, snowflakeRV(777), vec.backfillJobs[0].StoppingRV)
+	assert.Equal(t, b.Version(), vec.backfillJobs[0].ContentVersion, "job is stamped with the builder's content version")
 
 	// Second event for the same resource: no-op (no new partition or job).
 	require.NoError(t, s.ensureResourceInitialized(context.Background(), b, snowflakeRV(999)))

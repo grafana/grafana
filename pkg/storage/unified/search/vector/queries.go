@@ -42,6 +42,7 @@ var (
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
 	sqlVectorBackfillJobsList            = mustTemplate("vector_backfill_jobs_list.sql")
 	sqlVectorBackfillJobsCreate          = mustTemplate("vector_backfill_jobs_create.sql")
+	sqlVectorBackfillJobsReopen          = mustTemplate("vector_backfill_jobs_reopen.sql")
 	sqlVectorBackfillJobsUpdate          = mustTemplate("vector_backfill_jobs_update.sql")
 	sqlVectorBackfillJobsSetError        = mustTemplate("vector_backfill_jobs_set_error.sql")
 	sqlVectorBackfillJobsComplete        = mustTemplate("vector_backfill_jobs_complete.sql")
@@ -229,9 +230,10 @@ type sqlVectorCatalogListResponse struct {
 
 type sqlVectorBackfillJobsCreateRequest struct {
 	sqltemplate.SQLTemplate
-	Model      string
-	Resource   string
-	StoppingRV int64
+	Model          string
+	Resource       string
+	StoppingRV     int64
+	ContentVersion int
 }
 
 func (r *sqlVectorBackfillJobsCreateRequest) Validate() error {
@@ -240,6 +242,36 @@ func (r *sqlVectorBackfillJobsCreateRequest) Validate() error {
 	}
 	if r.Resource == "" {
 		return fmt.Errorf("missing resource")
+	}
+	if r.StoppingRV <= 0 {
+		return fmt.Errorf("stopping_rv must be positive")
+	}
+	if r.ContentVersion < 1 {
+		return fmt.Errorf("content_version must be at least 1")
+	}
+	return nil
+}
+
+// sqlVectorBackfillJobsReopenRequest reopens jobs whose content_version
+// trails Version. Resource is the builder's resource; the template's IN
+// clause also matches the ”-catch-all job for the same model.
+type sqlVectorBackfillJobsReopenRequest struct {
+	sqltemplate.SQLTemplate
+	Model      string
+	Resource   string
+	Version    int
+	StoppingRV int64
+}
+
+func (r *sqlVectorBackfillJobsReopenRequest) Validate() error {
+	if r.Model == "" {
+		return fmt.Errorf("missing model")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.Version < 1 {
+		return fmt.Errorf("version must be at least 1")
 	}
 	if r.StoppingRV <= 0 {
 		return fmt.Errorf("stopping_rv must be positive")

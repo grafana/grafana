@@ -187,9 +187,10 @@ type fakeVector struct {
 }
 
 type backfillJobCall struct {
-	Model      string
-	Resource   string
-	StoppingRV int64
+	Model          string
+	Resource       string
+	StoppingRV     int64
+	ContentVersion int
 }
 
 type deleteCall struct{ Namespace, Model, Resource, UID string }
@@ -343,14 +344,18 @@ func (f *fakeVector) EnsureResourcePartition(_ context.Context, res string) erro
 	f.ensuredPartitions = append(f.ensuredPartitions, res)
 	return nil
 }
-func (f *fakeVector) CreateBackfillJob(_ context.Context, model, res string, stoppingRV int64) error {
+func (f *fakeVector) CreateBackfillJob(_ context.Context, model, res string, stoppingRV int64, contentVersion int) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.createBackfillErr != nil {
 		return f.createBackfillErr
 	}
-	f.backfillJobs = append(f.backfillJobs, backfillJobCall{Model: model, Resource: res, StoppingRV: stoppingRV})
+	f.backfillJobs = append(f.backfillJobs, backfillJobCall{Model: model, Resource: res, StoppingRV: stoppingRV, ContentVersion: contentVersion})
 	return nil
+}
+
+func (f *fakeVector) ReopenStaleBackfillJobs(context.Context, string, string, int, int64) (bool, error) {
+	return false, nil
 }
 func (f *fakeVector) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
 	return nil

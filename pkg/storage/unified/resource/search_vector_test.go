@@ -130,8 +130,11 @@ func (f *fakeVectorBackend) ListIncompleteBackfillJobs(context.Context, string) 
 	return nil, nil
 }
 func (f *fakeVectorBackend) EnsureResourcePartition(context.Context, string) error { return nil }
-func (f *fakeVectorBackend) CreateBackfillJob(_ context.Context, _, _ string, _ int64) error {
+func (f *fakeVectorBackend) CreateBackfillJob(_ context.Context, _, _ string, _ int64, _ int) error {
 	return nil
+}
+func (f *fakeVectorBackend) ReopenStaleBackfillJobs(context.Context, string, string, int, int64) (bool, error) {
+	return false, nil
 }
 func (f *fakeVectorBackend) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
 	return nil

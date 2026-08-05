@@ -630,17 +630,45 @@ func (b *pgvectorBackend) resourcePartitionReady(ctx context.Context, leaf, idx 
 	return ready, nil
 }
 
-func (b *pgvectorBackend) CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64) error {
+func (b *pgvectorBackend) CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64, contentVersion int) error {
+	// Zero means the caller predates content versioning; store the baseline
+	// so an explicit 0 can't undercut the column's DEFAULT 1.
+	if contentVersion < 1 {
+		contentVersion = 1
+	}
 	req := &sqlVectorBackfillJobsCreateRequest{
-		SQLTemplate: sqltemplate.New(b.dialect),
-		Model:       model,
-		Resource:    resource,
-		StoppingRV:  stoppingRV,
+		SQLTemplate:    sqltemplate.New(b.dialect),
+		Model:          model,
+		Resource:       resource,
+		StoppingRV:     stoppingRV,
+		ContentVersion: contentVersion,
 	}
 	if _, err := dbutil.Exec(ctx, b.db, sqlVectorBackfillJobsCreate, req); err != nil {
 		return fmt.Errorf("create backfill job (%s,%s): %w", model, resource, err)
 	}
 	return nil
+}
+
+// ReopenStaleBackfillJobs resets the cursor rather than resuming it: a
+// mid-flight version bump means whatever the previous run already scanned
+// may now be stale too, so correctness wins over avoiding a rescan.
+func (b *pgvectorBackend) ReopenStaleBackfillJobs(ctx context.Context, model, resource string, version int, stoppingRV int64) (bool, error) {
+	req := &sqlVectorBackfillJobsReopenRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Model:       model,
+		Resource:    resource,
+		Version:     version,
+		StoppingRV:  stoppingRV,
+	}
+	res, err := dbutil.Exec(ctx, b.db, sqlVectorBackfillJobsReopen, req)
+	if err != nil {
+		return false, fmt.Errorf("reopen stale backfill jobs (%s,%s): %w", model, resource, err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("reopen stale backfill jobs (%s,%s) rows affected: %w", model, resource, err)
+	}
+	return n > 0, nil
 }
 
 func (b *pgvectorBackend) UpdateBackfillJobCheckpoint(ctx context.Context, id int64, lastSeenKey string, lastErr string) error {

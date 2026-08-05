@@ -341,7 +341,7 @@ func (s *Reconciler) ensureResourceInitialized(ctx context.Context, b embed.Buil
 		return fmt.Errorf("ensure partition for %q: %w", r, err)
 	}
 
-	if err := s.vectorBackend.CreateBackfillJob(ctx, s.batchEmbedder.Model(), r, stoppingRV); err != nil {
+	if err := s.vectorBackend.CreateBackfillJob(ctx, s.batchEmbedder.Model(), r, stoppingRV, b.Version()); err != nil {
 		return fmt.Errorf("create backfill job for %q: %w", r, err)
 	}
 	s.ensuredResources[r] = struct{}{}

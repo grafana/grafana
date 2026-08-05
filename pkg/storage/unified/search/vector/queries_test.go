@@ -157,9 +157,22 @@ func TestVectorQueries(t *testing.T) {
 				{
 					Name: "simple",
 					Data: &sqlVectorBackfillJobsCreateRequest{
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						Model:          "text-embedding-005",
+						Resource:       "dashboards",
+						StoppingRV:     12345,
+						ContentVersion: 1,
+					},
+				},
+			},
+			sqlVectorBackfillJobsReopen: {
+				{
+					Name: "simple",
+					Data: &sqlVectorBackfillJobsReopenRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Model:       "text-embedding-005",
 						Resource:    "dashboards",
+						Version:     2,
 						StoppingRV:  12345,
 					},
 				},
