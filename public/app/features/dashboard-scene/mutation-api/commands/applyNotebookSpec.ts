@@ -24,7 +24,7 @@ import {
 } from 'app/features/notebook/serialization/notebookSpecTransform';
 import { transformSceneToNotebookSaveModel } from 'app/features/notebook/serialization/transformSceneToNotebookSaveModel';
 
-import { rebuildSceneFromSpec } from './specRebuild';
+import { rebuildSceneFromSpec } from './shared/specRebuild';
 import { requiresNotebookEdit, type MutationCommand } from './types';
 
 /**
@@ -117,7 +117,7 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload>
 
       return {
         success: true,
-        data: { applied: true, spec: appliedNotebook, resource: 'notebook' },
+        data: { applied: true, spec: appliedNotebook },
         changes: [],
         ...(warnings.length > 0 ? { warnings } : {}),
       };

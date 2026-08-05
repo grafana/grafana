@@ -1,9 +1,10 @@
 /**
  * The rebuild-and-swap shared by the full-spec write commands.
  *
- * Its own module because both resources go through it. The notebook widens its spec to the dashboard
- * shape before calling, rather than having a rebuild of its own, so there is exactly one place where
- * a document is replaced and the two cannot drift.
+ * In `shared/` because both resources go through it, and that is the point: the notebook widens its
+ * spec to the dashboard shape before calling rather than having a rebuild of its own, so there is
+ * exactly one place where a document is replaced and the two cannot drift. Anything else both
+ * resources come to share belongs here beside it.
  */
 
 import { sceneUtils } from '@grafana/scenes';
@@ -12,8 +13,8 @@ import { type ObjectMeta } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
-import type { DashboardScene } from '../../scene/DashboardScene';
-import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
+import type { DashboardScene } from '../../../scene/DashboardScene';
+import { transformSaveModelSchemaV2ToScene } from '../../../serialization/transformSaveModelSchemaV2ToScene';
 
 // The parts of DashboardScene a rebuild actually touches. Naming them keeps the module honest about
 // its reach, and is what lets a caller's test drive this with a small stub instead of a real scene.

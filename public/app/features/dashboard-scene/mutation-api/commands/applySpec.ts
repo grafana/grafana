@@ -26,7 +26,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
-import { rebuildSceneFromSpec } from './specRebuild';
+import { rebuildSceneFromSpec } from './shared/specRebuild';
 import { enterEditModeIfNeeded, requiresDashboardSpecWrite, type MutationCommand } from './types';
 
 const applySpecPayloadSchema = z.object({
@@ -93,7 +93,7 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
         appliedSpec = undefined;
       }
 
-      return { success: true, data: { applied: true, spec: appliedSpec, resource: 'dashboard' }, changes: [] };
+      return { success: true, data: { applied: true, spec: appliedSpec }, changes: [] };
     } catch (error) {
       return {
         success: false,

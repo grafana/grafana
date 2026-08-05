@@ -65,10 +65,12 @@ describe('NotebookLayoutManager', () => {
     expect(result.kind).toBe('NotebookLayout');
   });
 
+  // Still the notebook's own source of narrative elements, even though the notebook now has its own
+  // transformer: `transformSceneToNotebookSaveModel` asks the layout for these (through
+  // `getNotebookCellElements`) rather than deriving them, because `getVizPanels()` cannot report a
+  // markdown or code cell and only the manager knows what it holds. Where it moved to is the
+  // dashboard serializer no longer needing to know that some layouts own elements it cannot see.
   describe('getNonPanelElements', () => {
-    // getVizPanels() cannot report narrative cells, so without this the v2 serializer builds
-    // `elements` from viz panels alone and every markdown/code cell disappears while the layout
-    // keeps referencing it by name.
     it('reports markdown and code cells keyed by element name', () => {
       const manager = new NotebookLayoutManager({
         cells: [
@@ -91,7 +93,7 @@ describe('NotebookLayoutManager', () => {
       });
     });
 
-    it('skips panel cells, which the serializer already gets from getVizPanels', () => {
+    it('skips panel cells, which the transformer already gets from getVizPanels', () => {
       const manager = new NotebookLayoutManager({
         cells: [new NotebookCellItem({ elementName: 'panel-1', source: 'assistant' })],
       });

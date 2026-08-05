@@ -83,7 +83,7 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
         locationService.push(created.url);
       }
 
-      return { success: true, data: { created: true, ...created, resource: 'notebook' }, changes: [] };
+      return { success: true, data: { created: true, ...created }, changes: [] };
     } catch (error) {
       return {
         success: false,

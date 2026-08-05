@@ -57,7 +57,7 @@ export const getSpecCommand: MutationCommand<GetSpecPayload> = {
         }
       }
 
-      return { success: true, data: { spec, resource: 'dashboard' }, changes: [] };
+      return { success: true, data: { spec }, changes: [] };
     } catch (error) {
       return {
         success: false,

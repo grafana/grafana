@@ -53,7 +53,7 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload> = {
         }
       }
 
-      return { success: true, data: { spec: notebook, resource: 'notebook' }, changes: [] };
+      return { success: true, data: { spec: notebook }, changes: [] };
     } catch (error) {
       return {
         success: false,
