@@ -4,7 +4,7 @@ import {
   API_GROUP,
   API_VERSION,
   type UpdateReceiverApiResponse,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
 import { getAPIBaseURLForMocks } from '../../../../../../mocks/util';
 
