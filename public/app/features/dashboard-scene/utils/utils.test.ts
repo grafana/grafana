@@ -10,7 +10,13 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 
-import { isValidLibraryPanelRef, hasLibraryPanelsInV1Dashboard, getLayoutForObject } from './utils';
+import {
+  isValidLibraryPanelRef,
+  hasLibraryPanelsInV1Dashboard,
+  getLayoutForObject,
+  getDashboardSceneFor,
+  tryGetDashboardSceneFor,
+} from './utils';
 
 describe('utils', () => {
   describe('isValidLibraryPanelRef', () => {
@@ -452,6 +458,22 @@ describe('utils', () => {
 
       expect(layout).toBe(autoGrid);
       expect(layout).toBeInstanceOf(AutoGridLayoutManager);
+    });
+  });
+
+  describe('tryGetDashboardSceneFor', () => {
+    it('returns the dashboard for an object inside a DashboardScene', () => {
+      const { grid, panel } = getDefaultGrid();
+      const dashboard = getDashboardWithGrid(grid);
+
+      expect(tryGetDashboardSceneFor(panel)).toBe(dashboard);
+    });
+
+    it('returns undefined when the root is not a DashboardScene, where getDashboardSceneFor throws', () => {
+      const { panel } = getDefaultGrid();
+
+      expect(tryGetDashboardSceneFor(panel)).toBeUndefined();
+      expect(() => getDashboardSceneFor(panel)).toThrow('SceneObject root is not a DashboardScene');
     });
   });
 });
