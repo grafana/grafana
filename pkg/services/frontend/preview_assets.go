@@ -101,7 +101,6 @@ func (h *previewAssetsHandler) handleGet(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// The CSRF token is single-use: clear it together with setting the preview cookie.
 	h.clearCSRFCookie(w)
 	h.setCookie(w, previewAssetsCookieName, folder, int(previewCookieMaxAge.Seconds()))
 

@@ -206,7 +206,7 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 	// uses cache busting to ensure requests aren't cached.
 	s.routeGet(m, "/-/fe-boot-error", s.handleBootError)
 
-	// Preview assets opt-in flow; not registered when the feature is disabled.
+	// Preview assets MUST NOT be configured unless explicitly enabled.
 	if s.previewCfg.Active() {
 		s.routeGet(m, previewAssetsPath, s.previewAssetsHandler.handleGet)
 	}
