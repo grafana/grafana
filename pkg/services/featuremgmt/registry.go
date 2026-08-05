@@ -236,15 +236,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "provisioning",
-			Description:     "Enables Git Sync and as-code provisioning for Grafana resources",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "provisioningFolderMetadata",
 			Description:     "Allow setting folder metadata for provisioned folders",
 			Stage:           FeatureStageGeneralAvailability,
@@ -653,6 +644,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "disableScriptedDashboards",
+			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
+			Stage:       FeatureStageDeprecated,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true", // enabled by default: scripted dashboards are disabled
+		},
+		{
 			Name:        "dashboard.notebooks",
 			Description: "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
 			Stage:       FeatureStageExperimental,
@@ -680,7 +679,7 @@ var (
 			Name:        "feedbackButton",
 			Description: "Enables the feedback button in the dashboard edit sidebar",
 			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
 		},
@@ -825,14 +824,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "alertingSaveStateCompressed",
-			Description: "Enables the compressed protobuf-based alert state storage. Default is enabled.",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "scopeApi",
@@ -2064,15 +2055,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "alertingAlertsActivityBanner",
-			Description:  "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "graphiteBackendMode",
 			Description: "Enables the Graphite data source full backend mode",
 			Stage:       FeatureStagePrivatePreview,
@@ -2265,6 +2247,9 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		// Deprecated: prefer grafana.dashboardGlobalVariables. Kept registered so
+		// cloud enablement via the legacy wave remains valid until that flag is
+		// removed in a follow-up after all consumers read the new key.
 		{
 			Name:            "globalDashboardVariables",
 			Description:     "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
@@ -2273,6 +2258,14 @@ var (
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: true,
 			Expression:      "false",
+		},
+		{
+			Name:        "grafana.dashboardGlobalVariables",
+			Description: "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "smoothingTransformation",
@@ -2915,6 +2908,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "paneledit.buttonLabels",
+			Description:  "Shows text labels on the add and stacked view buttons in PanelEditNext",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "grafana.panelEditNextFeedbackEvent",
 			Description:  "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
 			Stage:        FeatureStageExperimental,
@@ -3019,6 +3021,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "datetime.useLuxon",
+			Description:  "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:        "grafana.customizableMegaMenu",
 			Description: "Allows users to customise the mega menu by hiding top-level navigation items they are not interested in",
 			Stage:       FeatureStageExperimental,
@@ -3092,6 +3103,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:        "assistant.dashboardPlanning",
+			Description: "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "features.bulkFlagEvalFiltering",

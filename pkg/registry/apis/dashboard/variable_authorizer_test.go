@@ -4,9 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -16,8 +20,9 @@ import (
 )
 
 func TestVariableAuthorizer(t *testing.T) {
+	setGlobalVariablesToggle(t, true)
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
-	authz := NewVariableAuthorizer(ac)
+	authz := newVariableAuthorizer(ac)
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 	folderAScope := folder.ScopeFoldersProvider.GetResourceScopeUID("folder-a")
 
@@ -124,13 +129,14 @@ func TestVariableAuthorizer_OrphanedFolderScopedUpdate(t *testing.T) {
 	// Regression: scoped update/delete used to resolve variables:uid via
 	// GetInheritedScopes; when the parent folder was gone the resolver erred and
 	// the authorizer denied before admission allowMissingFolder could run.
+	setGlobalVariablesToggle(t, true)
 	acSvc := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	folderSvc := foldertest.NewFakeService()
 	folderSvc.ExpectedError = folder.ErrFolderNotFound
 	prefix, resolver := VariableUIDScopeResolver(folderSvc)
 	acSvc.RegisterScopeAttributeResolver(prefix, resolver)
 
-	authz := NewVariableAuthorizer(acSvc)
+	authz := newVariableAuthorizer(acSvc)
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
@@ -161,4 +167,64 @@ func TestFolderUIDFromVariableMetadataName(t *testing.T) {
 func TestVariableFolderScope(t *testing.T) {
 	require.Equal(t, folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID), variableFolderScope(""))
 	require.Equal(t, folder.ScopeFoldersProvider.GetResourceScopeUID("folder-a"), variableFolderScope("folder-a"))
+}
+
+func setGlobalVariablesToggle(t *testing.T, enabled bool) {
+	t.Helper()
+	variant := "disabled"
+	if enabled {
+		variant = "enabled"
+	}
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagGrafanaDashboardGlobalVariables: {
+			Key:            featuremgmt.FlagGrafanaDashboardGlobalVariables,
+			DefaultVariant: variant,
+			Variants: map[string]any{
+				"enabled":  true,
+				"disabled": false,
+			},
+		},
+	})))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+	})
+}
+
+// TestDashboardsAPIBuilderVariableAuthorizer verifies that the global variables
+// feature is gated per request in the authorizer: variable storage is always
+// registered, so enablement is enforced here rather than at route-registration time.
+func TestDashboardsAPIBuilderVariableAuthorizer(t *testing.T) {
+	ctx := context.Background()
+	authz := (&DashboardsAPIBuilder{
+		accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+	}).GetAuthorizer()
+
+	t.Run("denies variable requests for every verb when disabled", func(t *testing.T) {
+		setGlobalVariablesToggle(t, false)
+		for _, verb := range []string{"get", "list", "watch", "create", "update", "delete", "deletecollection"} {
+			t.Run(verb, func(t *testing.T) {
+				decision, reason, err := authz.Authorize(ctx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
+				require.NoError(t, err)
+				require.Equal(t, authorizer.DecisionDeny, decision)
+				require.Equal(t, "global dashboard variables feature is not enabled", reason)
+			})
+		}
+	})
+
+	t.Run("checks RBAC when the feature is enabled", func(t *testing.T) {
+		setGlobalVariablesToggle(t, true)
+		// With the flag on, the authorizer proceeds past the feature gate and
+		// requires a requester for the variables:* permission check.
+		_, reason, err := authz.Authorize(ctx, authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), "get"))
+		require.ErrorContains(t, err, "Requester was not found")
+		require.Equal(t, "valid user is required", reason)
+	})
+
+	t.Run("does not gate other resources on the global variables flag", func(t *testing.T) {
+		setGlobalVariablesToggle(t, false)
+		// Dashboards must reach the service authorizer regardless of the global
+		// variables flag being off.
+		_, _, err := authz.Authorize(ctx, authzAttributes(dashv0.DashboardResourceInfo.GetName(), "get"))
+		require.ErrorContains(t, err, "no identity found")
+	})
 }
