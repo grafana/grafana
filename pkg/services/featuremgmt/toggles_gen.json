@@ -4670,6 +4670,21 @@
     },
     {
       "metadata": {
+        "name": "paneledit.buttonLabels",
+        "resourceVersion": "1785381918358",
+        "creationTimestamp": "2026-07-30T03:25:18Z"
+      },
+      "spec": {
+        "description": "Shows text labels on the add and stacked view buttons in PanelEditNext",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pdfTables",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-11-06T13:39:22Z"

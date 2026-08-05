@@ -105,6 +105,9 @@
     "checkbox": {
       "activeBackgroundHover": "palette.orange400"
     },
+    "overlay": {
+      "background": "hsl(from palette.ink700 h s l / 0.6)"
+    },
     "switch": {
       "activeBackgroundHover": "palette.orange400"
     },
