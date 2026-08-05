@@ -26,14 +26,4 @@ export class TabOptions extends PageObject {
       await titleInput.blur();
     });
   }
-
-  async setTitle(tabTitle: string) {
-    await test.step(`Set tab title to "${tabTitle}"`, async () => {
-      const titleInput = this.dashboardPage.getByGrafanaSelector(
-        this.selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput
-      );
-      await titleInput.fill(tabTitle);
-      await titleInput.blur();
-    });
-  }
 }

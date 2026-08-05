@@ -51,7 +51,7 @@ test.describe(
 
       await sidebar.rowOptions.setTitle(`${REPEAT_TITLE_BASE}$c1`);
 
-      await expect(rows.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`).first()).toBeVisible();
+      await expect(rows.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
 
       await sidebar.rowOptions.repeatOptions.repeatByVariable('c1');
 

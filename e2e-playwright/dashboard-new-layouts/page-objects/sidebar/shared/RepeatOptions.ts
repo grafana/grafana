@@ -12,7 +12,7 @@ export class RepeatOptions extends PageObject {
     // 'repeat-options' in layout-default/DashboardGridItemEditor.tsx,
     // layout-auto-grid/AutoGridItemEditor.tsx and layout-tabs/TabItemEditor.tsx;
     // 'dash-row-repeat' in layout-rows/RowItemEditor.tsx
-    private readonly groupId: string
+    private readonly groupId: 'repeat-options' | 'dash-row-repeat'
   ) {
     super(args);
   }
