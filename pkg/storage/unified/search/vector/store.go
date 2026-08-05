@@ -67,8 +67,8 @@ type VectorBackend interface {
 	GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (content map[string]string, folder string, err error)
 
 	// Exists returns true if any row exists for the (namespace, model,
-	// resource, uid). Cheap indexed lookup; backfill uses it to skip
-	// resources that already have embeddings.
+	// resource, uid). Cheap indexed lookup. No production callers since
+	// the backfiller moved to ContentVersion; kept for tooling/tests.
 	Exists(ctx context.Context, namespace, model, resource, uid string) (bool, error)
 
 	// ContentVersion returns the minimum stored content_version across the

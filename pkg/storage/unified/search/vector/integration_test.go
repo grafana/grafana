@@ -663,21 +663,21 @@ func TestIntegrationVectorReopenStaleBackfillJobs(t *testing.T) {
 }
 
 func TestIntegrationVectorReopenStaleBackfillJobs_CoversCatchAllJob(t *testing.T) {
-	backend, _, ctx := setupIntegrationTest(t)
+	backend, engine, ctx := setupIntegrationTest(t)
 
-	// A ''-catch-all job (created before "dashboards" had its own row) must
-	// also be reopened by a builder-scoped call.
-	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, "", 100, 1))
-	jobs, err := backend.ListIncompleteBackfillJobs(ctx, testModel)
+	// A ''-catch-all job must also be reopened by a builder-scoped call.
+	// Seeded with raw SQL: catch-all rows are operator-created by design —
+	// CreateBackfillJob validates resource as non-empty.
+	_, err := engine.Exec(
+		`INSERT INTO vector_backfill_jobs (model, resource, stopping_rv, is_complete, content_version)
+		 VALUES ($1, '', 100, TRUE, 1)`, testModel)
 	require.NoError(t, err)
-	require.Len(t, jobs, 1)
-	require.NoError(t, backend.CompleteBackfillJob(ctx, jobs[0].ID))
 
 	reopened, err := backend.ReopenStaleBackfillJobs(ctx, testModel, testResource, 2, 999)
 	require.NoError(t, err)
 	assert.True(t, reopened, "the ''-catch-all job must be reopened by a resource-scoped call")
 
-	jobs, err = backend.ListIncompleteBackfillJobs(ctx, testModel)
+	jobs, err := backend.ListIncompleteBackfillJobs(ctx, testModel)
 	require.NoError(t, err)
 	require.Len(t, jobs, 1)
 	assert.Equal(t, "", jobs[0].Resource)
