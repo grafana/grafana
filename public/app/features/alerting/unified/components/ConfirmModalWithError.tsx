@@ -22,6 +22,12 @@ interface ConfirmModalWithErrorProps {
   onClose: () => void;
 }
 
+/**
+ * `owner` identifies the hook instance that put the modal in the modal root, so that instance can tell
+ * whether it still owns the slot. It is slot bookkeeping rather than something the modal renders.
+ */
+type ModalSlotProps = ConfirmModalWithErrorProps & { owner: object };
+
 const ConfirmModalWithError = ({
   title,
   body,
@@ -70,24 +76,40 @@ export const useConfirmModalWithError = ({
   onConfirm,
   ...modalProps
 }: UseConfirmModalWithErrorProps): UseConfirmModalWithError => {
-  const { showModal, hideModal } = useContext(ModalsContext);
-  const [isOpen, setIsOpen] = useState(false);
+  const { showModal, hideModal, component, props } = useContext(ModalsContext);
+  const owner = useRef({}).current;
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<unknown>();
 
+  // The modal root holds a single modal, so a route change or any other caller can take the slot from
+  // us at any time. Ownership is therefore read back from the context instead of tracked separately,
+  // which would leave the hook believing it still has a modal on screen.
+  const ownsModalSlot = component === ConfirmModalWithError && props.owner === owner;
+
   // ModalsContextProvider hands out new showModal/hideModal identities on every modal state change, so
   // pushing props into the modal slot from an effect that depends on them would loop forever.
-  const latest = useRef({ showModal, hideModal, modalProps, onConfirm });
+  const latest = useRef({ showModal, hideModal, modalProps, onConfirm, isPending, ownsModalSlot });
   useEffect(() => {
-    latest.current = { showModal, hideModal, modalProps, onConfirm };
+    latest.current = { showModal, hideModal, modalProps, onConfirm, isPending, ownsModalSlot };
   });
+
+  const handleClose = useCallback(() => {
+    if (latest.current.isPending) {
+      return;
+    }
+
+    setError(undefined);
+    latest.current.hideModal();
+  }, []);
 
   const handleConfirm = useCallback(async () => {
     setIsPending(true);
 
     try {
       await latest.current.onConfirm();
-      setIsOpen(false);
+      if (latest.current.ownsModalSlot) {
+        latest.current.hideModal();
+      }
     } catch (error) {
       setError(error);
     } finally {
@@ -95,37 +117,42 @@ export const useConfirmModalWithError = ({
     }
   }, []);
 
+  const putInModalSlot = useCallback(
+    (state: Pick<ConfirmModalWithErrorProps, 'isPending' | 'error'>) => {
+      latest.current.showModal<ModalSlotProps>(ConfirmModalWithError, {
+        ...latest.current.modalProps,
+        ...state,
+        owner,
+        onConfirm: handleConfirm,
+        onClose: handleClose,
+      });
+    },
+    [owner, handleConfirm, handleClose]
+  );
+
+  // Once the slot belongs to somebody else the confirmation is gone from the screen, so its outcome is
+  // dropped rather than pushed back over whatever replaced it.
   useEffect(() => {
-    if (!isOpen) {
+    if (!latest.current.ownsModalSlot) {
       return;
     }
 
-    latest.current.showModal(ConfirmModalWithError, {
-      ...latest.current.modalProps,
-      isPending,
-      error,
-      onConfirm: handleConfirm,
-      onClose: () => {
-        if (!isPending) {
-          setError(undefined);
-          setIsOpen(false);
-        }
-      },
-    });
-  }, [isOpen, isPending, error, handleConfirm]);
+    putInModalSlot({ isPending, error });
+  }, [isPending, error, putInModalSlot]);
 
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    return () => latest.current.hideModal();
-  }, [isOpen]);
+  useEffect(
+    () => () => {
+      if (latest.current.ownsModalSlot) {
+        latest.current.hideModal();
+      }
+    },
+    []
+  );
 
   const showConfirmModal = useCallback(() => {
     setError(undefined);
-    setIsOpen(true);
-  }, []);
+    putInModalSlot({ isPending: false, error: undefined });
+  }, [putInModalSlot]);
 
   return [showConfirmModal, isPending];
 };

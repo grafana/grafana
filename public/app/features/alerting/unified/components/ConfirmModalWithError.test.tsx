@@ -1,5 +1,9 @@
-import { useState } from 'react';
+import { act, useState } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
+
+import { locationService } from '@grafana/runtime';
+import { appEvents } from 'app/core/app_events';
+import { ShowModalReactEvent } from 'app/types/events';
 
 import { useConfirmModalWithError } from './ConfirmModalWithError';
 
@@ -53,6 +57,13 @@ function TestComponent({ onConfirm }: TestProps) {
 
 const renderTestComponent = (onConfirm: () => Promise<unknown>) =>
   render(<TestComponent onConfirm={onConfirm} />, { withModalRoot: true });
+
+function UnrelatedModal() {
+  return <div>Unrelated modal</div>;
+}
+
+const showUnrelatedModal = () =>
+  act(() => appEvents.publish(new ShowModalReactEvent({ component: UnrelatedModal, props: {} })));
 
 describe('useConfirmModalWithError', () => {
   it('opens the confirmation modal from the trigger', async () => {
@@ -111,6 +122,65 @@ describe('useConfirmModalWithError', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open modal' }));
     expect(await screen.findByRole('dialog', { name: 'Test modal' })).toBeInTheDocument();
+  });
+
+  it('reopens after another modal has taken over the modal root', async () => {
+    const { user } = renderTestComponent(jest.fn().mockResolvedValue(undefined));
+
+    await user.click(screen.getByRole('button', { name: 'Open modal' }));
+    expect(await screen.findByRole('dialog', { name: 'Test modal' })).toBeInTheDocument();
+
+    showUnrelatedModal();
+    expect(await screen.findByText('Unrelated modal')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Test modal' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open modal' }));
+    expect(await screen.findByRole('dialog', { name: 'Test modal' })).toBeInTheDocument();
+  });
+
+  it('reopens after a route change has cleared the modal root', async () => {
+    const { user } = renderTestComponent(jest.fn().mockResolvedValue(undefined));
+
+    await user.click(screen.getByRole('button', { name: 'Open modal' }));
+    expect(await screen.findByRole('dialog', { name: 'Test modal' })).toBeInTheDocument();
+
+    act(() => locationService.push('/some-other-page'));
+    expect(screen.queryByRole('dialog', { name: 'Test modal' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open modal' }));
+    expect(await screen.findByRole('dialog', { name: 'Test modal' })).toBeInTheDocument();
+  });
+
+  it('drops a failure that lands after another modal has taken over the modal root', async () => {
+    const { promise, reject } = createDeferredPromise();
+    const { user } = renderTestComponent(() => promise);
+
+    await user.click(screen.getByRole('button', { name: 'Open modal' }));
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    showUnrelatedModal();
+    reject(new Error('delete failed'));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Open modal' })).toBeEnabled());
+    expect(screen.getByText('Unrelated modal')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Something went wrong' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Open modal' }));
+    expect(await screen.findByRole('dialog', { name: 'Test modal' })).toBeInTheDocument();
+  });
+
+  it('leaves a modal owned by something else alone when the calling component unmounts', async () => {
+    const { user } = renderTestComponent(jest.fn().mockResolvedValue(undefined));
+
+    await user.click(screen.getByRole('button', { name: 'Open modal' }));
+    expect(await screen.findByRole('dialog', { name: 'Test modal' })).toBeInTheDocument();
+
+    showUnrelatedModal();
+    expect(await screen.findByText('Unrelated modal')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Unmount trigger' }));
+
+    expect(screen.getByText('Unrelated modal')).toBeInTheDocument();
   });
 
   it('hides the modal when the calling component unmounts', async () => {
