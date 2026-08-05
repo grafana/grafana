@@ -110,10 +110,6 @@ func ToSpecConfig(orig CorrelationConfig) (*correlationsV0.CorrelationConfigSpec
 		out.Target = nil
 	}
 
-	if out.TimeRange.Field == nil && out.TimeRange.Range == nil {
-		out.TimeRange = nil
-	}
-
 	if out.TimeRange == nil || (out.TimeRange.Field == nil && out.TimeRange.Range == nil) {
 		out.TimeRange = nil
 	}

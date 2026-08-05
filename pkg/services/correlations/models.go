@@ -107,15 +107,15 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 		target = map[string]any{}
 	}
 	return json.Marshal(struct {
-		Field           string               `json:"field"`
-		Target          map[string]any       `json:"target"`
-		Transformations Transformations      `json:"transformations,omitempty"`
-		TimeRange       CorrelationTimeRange `json:"timeRange,omitempty"`
+		Field           string                `json:"field"`
+		Target          map[string]any        `json:"target"`
+		Transformations Transformations       `json:"transformations,omitempty"`
+		TimeRange       *CorrelationTimeRange `json:"timeRange,omitempty"`
 	}{
 		Field:           c.Field,
 		Target:          target,
 		Transformations: transformations,
-		TimeRange:       c.TimeRange,
+		TimeRange:       &c.TimeRange,
 	})
 }
 
