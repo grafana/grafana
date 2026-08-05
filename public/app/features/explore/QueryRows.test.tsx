@@ -1,9 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 
-import { type DataSourceApi } from '@grafana/data';
+import { type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { initDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
 import { type ExploreState } from 'app/types/explore';
@@ -37,12 +38,33 @@ function setup(queries: DataQuery[]) {
     } as unknown as DataSourceApi,
   };
 
+  // QueryRows resolves its group settings through the new async datasource API, which reads
+  // the in-memory instance-settings cache. Seed it so the lookup never falls back to legacy.
+  const dsSettings: Record<string, DataSourceInstanceSettings> = {
+    'newDs-uid': {
+      name: 'newDs',
+      uid: 'newDs-uid',
+      type: 'newDs',
+      isDefault: true,
+      meta: { id: 'newDs', mixed: false },
+    } as DataSourceInstanceSettings,
+    'someDs-uid': {
+      name: 'someDs',
+      uid: 'someDs-uid',
+      type: 'someDs',
+      meta: { id: 'someDs', mixed: false },
+    } as DataSourceInstanceSettings,
+  };
+  initDataSourceInstanceSettings(dsSettings, 'newDs');
+
+  // QueryEditorRow still loads the plugin through the legacy service, so it stays seeded
+  // until that call site is migrated.
   setDataSourceSrv({
     getList() {
       return Object.values(datasources).map((d) => ({ name: d.name }));
     },
     getInstanceSettings(uid: string) {
-      return datasources[uid] || defaultDs;
+      return dsSettings[uid] || dsSettings['newDs-uid'];
     },
     get(uid?: string) {
       return Promise.resolve(uid ? datasources[uid] || defaultDs : defaultDs);
