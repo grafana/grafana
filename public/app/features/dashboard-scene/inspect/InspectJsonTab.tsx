@@ -407,7 +407,7 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
         // Get raw untransformed data
         const untransformed = getUntransformedDataProvider(dataProvider);
 
-        objToStringify = getPanelDataFrames(untransformed?.state.data ?? dataProvider.state.data);
+        objToStringify = getPanelDataFrames(untransformed.state.data ?? dataProvider.state.data);
       }
       break;
     }

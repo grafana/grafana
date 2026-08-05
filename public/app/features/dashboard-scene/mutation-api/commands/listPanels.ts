@@ -75,8 +75,7 @@ function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefin
     return undefined;
   }
 
-  const innerProvider = getUntransformedDataProvider(dataProvider);
-  const panelData = (innerProvider ?? dataProvider)?.state?.data;
+  const panelData = getUntransformedDataProvider(dataProvider).state.data;
 
   if (!panelData) {
     return { loadingState: LoadingState.Loading, hasError: false, hasNoData: false };
@@ -142,8 +141,7 @@ function getDataFrameSchema(vizPanel: VizPanel): FrameSchema[] | undefined {
     return undefined;
   }
 
-  const innerProvider = getUntransformedDataProvider(dataProvider);
-  const panelData = (innerProvider ?? dataProvider)?.state?.data;
+  const panelData = getUntransformedDataProvider(dataProvider).state.data;
 
   if (!panelData?.series || !Array.isArray(panelData.series)) {
     return undefined;

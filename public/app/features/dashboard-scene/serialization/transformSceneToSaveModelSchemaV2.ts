@@ -466,8 +466,8 @@ export function getVizPanelQueries(
       return queries;
     }
 
-    const untransformed = getUntransformedDataProvider(dataProvider);
-    const snapshotData = getPanelDataFrames(untransformed?.state.data ?? dataProvider.state.data);
+    // For transformations the non-transformed data is snapshoted
+    const snapshotData = getPanelDataFrames(getUntransformedDataProvider(dataProvider).state.data);
 
     const snapshotQuery: DataQueryKind = {
       kind: 'DataQuery',

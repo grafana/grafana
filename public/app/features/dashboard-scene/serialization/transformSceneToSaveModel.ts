@@ -344,8 +344,7 @@ function vizPanelDataToPanel(
     panel.datasource = GRAFANA_DATASOURCE_REF;
 
     // For transformations the non-transformed data is snapshoted
-    const untransformed = getUntransformedDataProvider(dataProvider);
-    const data = getPanelDataFrames(untransformed?.state.data ?? dataProvider.state.data);
+    const data = getPanelDataFrames(getUntransformedDataProvider(dataProvider).state.data);
 
     panel.targets = [
       {

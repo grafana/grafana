@@ -12,6 +12,11 @@ import { type SceneDataProvider, SceneDataTransformer } from '@grafana/scenes';
  * scene objects, which need this function — the same import cycle that made `getVizSuggestionForQuery`
  * and `DownloadDiagnostics` inline their own copies of `getQueryRunnerFor`.
  */
+export function getUntransformedDataProvider(dataProvider: SceneDataProvider): SceneDataProvider;
+/** Overload for callers that may not have a provider yet, so they keep having to handle that. */
+export function getUntransformedDataProvider(
+  dataProvider: SceneDataProvider | undefined
+): SceneDataProvider | undefined;
 export function getUntransformedDataProvider(
   dataProvider: SceneDataProvider | undefined
 ): SceneDataProvider | undefined {
