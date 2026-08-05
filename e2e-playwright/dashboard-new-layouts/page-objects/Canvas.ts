@@ -2,21 +2,31 @@ import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from './PageObject';
 
-// The dashboard edit canvas (the area left of the sidebar) — hosts the grid
-// add actions: add panel/tab/row and group panels into a row or tab
+/**
+ * The dashboard edit canvas (the area left of the sidebar) — hosts the grid
+ * add actions: add panel/tab/row, paste tab/row, group panels into a row
+ * or tab, and ungroup them
+ */
 export class Canvas extends PageObject {
+  /** Returns the edit canvas body (the area left of the sidebar) */
   getContainer() {
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardSidebarSplitter.primaryBody);
   }
 
-  // Each nested grid (per row/tab) renders its own "Add panel" button —
-  // pass the grid's container (e.g. rows.getContent(...)) to target a specific one
+  /**
+   * Returns the "Add panel" button
+   * @param panelsContainer grid container the lookup is scoped to (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
   getAddPanelButton(panelsContainer?: Locator): Locator {
     return (panelsContainer ?? this.getContainer()).getByTestId(
       this.selectors.components.CanvasGridAddActions.addPanel
     );
   }
 
+  /**
+   * Adds a panel by clicking the "Add panel" button, scrolling to the bottom of the canvas first
+   * @param panelsContainer grid container the lookup is scoped to (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
   async addPanel(panelsContainer?: Locator) {
     await test.step('Add panel from canvas', async () => {
       // The edit canvas scrolls via the first child of primaryBody — neither
@@ -30,15 +40,20 @@ export class Canvas extends PageObject {
     });
   }
 
-  // Each nested grid (per row/tab) renders its own add actions strip, so a
-  // page-level lookup can match several "Group panels" buttons — pass the grid's
-  // container (e.g. rows.getContent(...)) to target a specific one
+  /**
+   * Returns the "Group panels" button
+   * @param panelsContainer grid container the lookup is scoped to (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
   getGroupPanelsButton(panelsContainer?: Locator): Locator {
     return (panelsContainer ?? this.getContainer()).getByTestId(
       this.selectors.components.CanvasGridAddActions.groupPanels
     );
   }
 
+  /**
+   * Groups the grid's panels into a row or tab via the "Group panels" menu
+   * @param panelsContainer grid container the lookup is scoped to (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
   async groupPanels(targetLayout: 'row' | 'tab', panelsContainer?: Locator) {
     await test.step(`Group panels into ${targetLayout}`, async () => {
       // The add actions are revealed by hovering the layout container that hosts them
@@ -63,18 +78,28 @@ export class Canvas extends PageObject {
     });
   }
 
-  // Scoped to the canvas container: the "Group into tab" menu item reuses the
-  // same testid in a portalled menu, which a page-wide lookup could match
+  /**
+   * Returns the "Add tab" button
+   * @param panelsContainer grid container the lookup is scoped to (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
   getAddTabButton(panelsContainer?: Locator): Locator {
     return (panelsContainer ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.addTab);
   }
 
+  /**
+   * Adds a tab by clicking the "Add tab" button
+   * @param panelsContainer grid container the lookup is scoped to (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
   async addTab(panelsContainer?: Locator) {
     await test.step('Add tab from canvas', async () => {
       await this.getAddTabButton(panelsContainer).click();
     });
   }
 
+  /**
+   * Pastes a copied tab via the "Paste tab" add action
+   * @param panelsContainer grid container the lookup is scoped to (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
   async pasteTab(panelsContainer?: Locator) {
     await test.step('Paste tab from canvas', async () => {
       await (panelsContainer ?? this.getContainer())
@@ -83,8 +108,10 @@ export class Canvas extends PageObject {
     });
   }
 
-  // The "ungroup" testid is only rendered for tabs layouts (rows have their own
-  // "ungroupRows" testid), hence the more explicit method name
+  /**
+   * Ungroups a tabs layout via the "Ungroup" add action
+   * @param panelsContainer grid container the lookup is scoped to (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
   async ungroupTabs(panelsContainer?: Locator) {
     await test.step('Ungroup tabs', async () => {
       await (panelsContainer ?? this.getContainer())
@@ -93,18 +120,28 @@ export class Canvas extends PageObject {
     });
   }
 
-  // Scoped to the canvas container: the "Group into row" menu item reuses the
-  // same testid in a portalled menu, which a page-wide lookup could match
+  /**
+   * Returns the "Add row" button
+   * @param panelsContainer grid container the lookup is scoped to (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
   getAddRowButton(panelsContainer?: Locator): Locator {
     return (panelsContainer ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.addRow);
   }
 
+  /**
+   * Adds a row by clicking the "Add row" button
+   * @param panelsContainer grid container the lookup is scoped to (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
   async addRow(panelsContainer?: Locator) {
     await test.step('Add row from canvas', async () => {
       await this.getAddRowButton(panelsContainer).click();
     });
   }
 
+  /**
+   * Pastes a copied row via the "Paste row" add action
+   * @param panelsContainer grid container the lookup is scoped to (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
   async pasteRow(panelsContainer?: Locator) {
     await test.step('Paste row from canvas', async () => {
       await (panelsContainer ?? this.getContainer())
@@ -113,6 +150,10 @@ export class Canvas extends PageObject {
     });
   }
 
+  /**
+   * Ungroups a rows layout via the "Ungroup rows" add action
+   * @param panelsContainer grid container the lookup is scoped to (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
   async ungroupRows(panelsContainer?: Locator) {
     await test.step('Ungroup rows', async () => {
       await (panelsContainer ?? this.getContainer())
