@@ -189,12 +189,12 @@ func permissionsTypeResolverFunc(scope string) (string, error) {
 	}
 }
 
-// delegationImpliesWildcard reports whether a permissions:type:delegate grant
-// on the action also implies the wildcard scope. Role management is the only
-// family where that holds: holding the delegate scope must allow operating on
-// any role or role binding. Expanding it for other actions would turn a
-// delegation-only grant into global access to the resource itself.
-func delegationImpliesWildcard(action string) bool {
+// isRoleManagementAction reports whether the action manages roles or role
+// bindings. Role management is the only family where a permissions:type:delegate
+// grant also implies the wildcard scope: holding the delegate scope must allow
+// operating on any role or role binding. Expanding it for other actions would
+// turn a delegation-only grant into global access to the resource itself.
+func isRoleManagementAction(action string) bool {
 	switch action {
 	case "roles:read", "roles:write", "roles:delete",
 		"users.roles:read", "users.roles:add", "users.roles:remove":
@@ -209,7 +209,7 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, acti
 	}
 
 	if scopePrefix == "permissions:type:" {
-		if delegationImpliesWildcard(action) {
+		if isRoleManagementAction(action) {
 			return permissionsTypeResolverFunc, nil
 		}
 		// The literal alone gates delegation checks; deriving a wildcard here
