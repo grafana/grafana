@@ -154,6 +154,17 @@ func TestVectorStore_ServiceIdentityGate(t *testing.T) {
 	s.allowedServices = nil
 	_, err = s.Upsert(vsAuthedCtx(), validUpsertReq())
 	require.NoError(t, err)
+
+	// A stray comma in the config (empty entry) must not admit
+	// identity-less tokens.
+	s = newTestVectorStoreServer(&fakeWriteStore{})
+	s2 := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, []string{"", "assistant"}, nil)
+	s2.store = s.store
+	_, err = s2.Upsert(vsAuthedCtx(), validUpsertReq())
+	require.Error(t, err)
+	assert.Equal(t, codes.PermissionDenied, status.Code(err))
+	_, err = s2.Upsert(vsAuthedCtxAs("assistant"), validUpsertReq())
+	require.NoError(t, err)
 }
 
 func validUpsertReq() *resourcepb.VectorUpsertRequest {

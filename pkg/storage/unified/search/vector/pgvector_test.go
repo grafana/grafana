@@ -228,6 +228,15 @@ func TestPartialHNSWName(t *testing.T) {
 	require.Equal(t, "dashboards_stacks_123_hnsw", partialHNSWName("dashboards", "stacks-123"))
 	require.Equal(t, "dashboards_weird__name_hnsw", partialHNSWName("dashboards", "weird!!name"))
 	require.Equal(t, "dashboards_upper_ns_hnsw", partialHNSWName("dashboards", "UPPER-NS"))
+
+	// Names past Postgres's 63-char identifier limit collapse the namespace
+	// to a bounded hash — still deterministic, still unique per namespace.
+	longRes := strings.Repeat("r", maxPartitionKeyLen)
+	a := partialHNSWName(longRes, "stacks-111111111111111111")
+	b := partialHNSWName(longRes, "stacks-111111111111111112")
+	require.LessOrEqual(t, len(a), pgMaxIdentifierLen)
+	require.Equal(t, a, partialHNSWName(longRes, "stacks-111111111111111111"))
+	require.NotEqual(t, a, b)
 }
 
 func TestFitEmbedding(t *testing.T) {

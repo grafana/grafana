@@ -64,7 +64,10 @@ var _ resourcepb.VectorStoreServer = (*VectorStoreServer)(nil)
 func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, externalAllowlist, allowedServices []string, metrics *VectorMetrics) *VectorStoreServer {
 	services := make(map[string]struct{}, len(allowedServices))
 	for _, s := range allowedServices {
-		services[s] = struct{}{}
+		// A stray comma in the config must not admit identity-less tokens.
+		if s != "" {
+			services[s] = struct{}{}
+		}
 	}
 	return &VectorStoreServer{
 		store:           store,
