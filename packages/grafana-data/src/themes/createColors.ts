@@ -233,9 +233,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   border = {
-    weak: `rgb(229, 229, 230)`,
-    medium: `rgb(189, 191, 192)`,
-    strong: `rgb(167, 169, 171)`,
+    weak: `rgba(${this.blackBase}, 0.12)`,
+    medium: `rgba(${this.blackBase}, 0.3)`,
+    strong: `rgba(${this.blackBase}, 0.4)`,
   };
 
   secondary = {
