@@ -7,22 +7,32 @@ import { PageObject } from '../PageObject';
 // stay unambiguous. Add a button = one member of this union.
 type ButtonNames = 'Add' | 'Options' | 'Code' | 'Undo' | 'Redo' | 'Outline' | 'Filters';
 
-// Right side toolbar with icon buttons: Add new element (+), Dashboard options (cog), Content outline, etc.
+/** Right side toolbar with icon buttons: Add new element (+), Dashboard options (cog), Content outline, etc. */
 export class Toolbar extends PageObject {
-  getButton(name: ButtonNames): Locator {
+  /**
+   * Returns a toolbar button
+   * @param buttonName the button's accessible name (aria-label), one of the `ButtonNames` union
+   */
+  getButton(buttonName: ButtonNames): Locator {
     return this.dashboardPage
       .getByGrafanaSelector(this.selectors.components.Sidebar.container)
-      .getByRole('button', { name, exact: true });
+      .getByRole('button', { name: buttonName, exact: true });
   }
 
-  async clickButton(name: ButtonNames) {
-    await test.step(`Click toolbar button "${name}"`, async () => {
-      await this.getButton(name).click();
+  /**
+   * Clicks a toolbar button
+   * @param buttonName the button's accessible name (aria-label), one of the `ButtonNames` union
+   */
+  async clickButton(buttonName: ButtonNames) {
+    await test.step(`Click toolbar button "${buttonName}"`, async () => {
+      await this.getButton(buttonName).click();
     });
   }
 
-  // Special case: the show/hide toggle's accessible name flips (Hide/Show) and the "Show"
-  // button renders outside the container when hidden — so it's keyed on its stable testid
+  /**
+   * Returns the sidebar show/hide toggle. Special case: its accessible name flips (Hide/Show)
+   * and the "Show" button renders outside the container when hidden, so it's keyed on its stable testid
+   */
   getVisibilityToggle(): Locator {
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.showHideToggle);
   }
