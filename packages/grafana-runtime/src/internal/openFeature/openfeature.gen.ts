@@ -21,6 +21,8 @@ export const FlagKeys = {
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
+  /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
+  AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
   /** Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar */
@@ -29,8 +31,6 @@ export const FlagKeys = {
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
   AzureMonitorBatchAPI: "azureMonitorBatchAPI",
-  /** Enables the assistant-powered Generate dashboard prompt */
-  DashboardGeneration: "dashboard.generation",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -208,6 +208,17 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
+ * Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built
+ *
+ * **Details:**
+ * - flag key: `assistant.dashboardPlanning`
+ * - default value: `false`
+ */
+export const useFlagAssistantDashboardPlanning = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.dashboardPlanning", false, options).value;
+};
+
+/**
  * Enables the template dashboard assistant
  *
  * **Details:**
@@ -249,17 +260,6 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
  */
 export const useFlagAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("azureMonitorBatchAPI", false, options).value;
-};
-
-/**
- * Enables the assistant-powered Generate dashboard prompt
- *
- * **Details:**
- * - flag key: `dashboard.generation`
- * - default value: `false`
- */
-export const useFlagDashboardGeneration = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboard.generation", false, options).value;
 };
 
 /**

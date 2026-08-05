@@ -1043,6 +1043,20 @@
     },
     {
       "metadata": {
+        "name": "assistant.dashboardPlanning",
+        "resourceVersion": "1785916087451",
+        "creationTimestamp": "2026-08-05T07:48:07Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "assistant.frontend.tools.dashboardTemplates",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -1585,7 +1599,8 @@
       "metadata": {
         "name": "dashboard.generation",
         "resourceVersion": "1785840164813",
-        "creationTimestamp": "2026-08-04T10:42:44Z"
+        "creationTimestamp": "2026-08-04T10:42:44Z",
+        "deletionTimestamp": "2026-08-05T07:48:07Z"
       },
       "spec": {
         "description": "Enables the assistant-powered Generate dashboard prompt",

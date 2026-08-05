@@ -3094,8 +3094,8 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:        "dashboard.generation",
-			Description: "Enables the assistant-powered Generate dashboard prompt",
+			Name:        "assistant.dashboardPlanning",
+			Description: "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",

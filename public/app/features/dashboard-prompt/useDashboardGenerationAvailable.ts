@@ -1,5 +1,5 @@
 import { useAssistant } from '@grafana/assistant';
-import { useFlagDashboardGeneration } from '@grafana/runtime/internal';
+import { useFlagAssistantDashboardPlanning } from '@grafana/runtime/internal';
 
 /**
  * Whether the assistant-backed dashboard generation feature can be offered:
@@ -8,7 +8,7 @@ import { useFlagDashboardGeneration } from '@grafana/runtime/internal';
  * (create for the dashboard prompt, edit for "improve this dashboard").
  */
 export function useDashboardGenerationAvailable(): boolean {
-  const isFlagEnabled = useFlagDashboardGeneration();
+  const isFlagEnabled = useFlagAssistantDashboardPlanning();
   const { isAvailable } = useAssistant();
   return isFlagEnabled && isAvailable;
 }

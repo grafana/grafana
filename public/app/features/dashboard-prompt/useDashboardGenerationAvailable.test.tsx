@@ -18,7 +18,7 @@ function Probe() {
 
 /** `render` from test-utils supplies the OpenFeatureProvider the flag hook needs. */
 function setup({ flag, assistant }: { flag: boolean; assistant: boolean }) {
-  setTestFlags({ 'dashboard.generation': flag });
+  setTestFlags({ 'assistant.dashboardPlanning': flag });
   mockUseAssistant.mockReturnValue({ isAvailable: assistant } as ReturnType<typeof useAssistant>);
   render(<Probe />);
 }
