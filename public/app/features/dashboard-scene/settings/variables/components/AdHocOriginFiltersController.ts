@@ -65,6 +65,10 @@ export class AdHocOriginFiltersController implements AdHocFiltersController {
     }
   }
 
+  updateFilters(filters: AdHocFilterWithLabels[]): void {
+    this.setFilters(filters);
+  }
+
   updateToMatchAll(filter: AdHocFilterWithLabels): void {
     this.removeFilter(filter);
   }
