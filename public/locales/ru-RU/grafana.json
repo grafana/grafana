@@ -4908,6 +4908,7 @@
       "not-found": "<0>Не найдено: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + правая кнопка мыши",
       "middle-mouse": "Средняя кнопка мыши",
       "pan-title": "Панорамирование:",
@@ -9371,6 +9372,7 @@
       "name-lookup-field": "Поле подстановки"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Автоматически определять данные о местоположении на основе имен полей по умолчанию",
         "description-coords": "Укажите поля широты и долготы",

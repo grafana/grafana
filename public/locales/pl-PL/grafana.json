@@ -4908,6 +4908,7 @@
       "not-found": "<0>Nie znaleziono: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + prawy przycisk myszy",
       "middle-mouse": "Środkowy przycisk myszy",
       "pan-title": "Przesuwanie:",
@@ -9371,6 +9372,7 @@
       "name-lookup-field": "Pole wyszukiwania"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Automatycznie identyfikuj dane o lokalizacji na podstawie domyślnych nazw pól",
         "description-coords": "Określ pola szerokości i długości geograficznej",

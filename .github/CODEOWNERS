@@ -371,7 +371,6 @@
 /pkg/tsdb/azuremonitor/ @grafana/data-sources-plugins
 
 # Partner Datasources backend code
-/pkg/tsdb/influxdb/ @grafana/data-sources-plugins
 /pkg/tsdb/graphite/ @grafana/data-sources-plugins
 
 # Grafana search and storage
@@ -1167,7 +1166,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/grafana-catalog
 /public/app/plugins/datasource/azuremonitor/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/graphite/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/influxdb/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 

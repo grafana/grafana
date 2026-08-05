@@ -49,6 +49,8 @@ export const FlagKeys = {
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
   FaroSessionReplay: "faroSessionReplay",
+  /** Enables the feedback button in the dashboard edit sidebar */
+  FeedbackButton: "feedbackButton",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
@@ -57,6 +59,8 @@ export const FlagKeys = {
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
+  /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
+  GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Check for the existence of logs when linking from the Trace View */
@@ -362,6 +366,17 @@ export const useFlagFaroSessionReplay = (options?: ReactFlagEvaluationOptions): 
 };
 
 /**
+ * Enables the feedback button in the dashboard edit sidebar
+ *
+ * **Details:**
+ * - flag key: `feedbackButton`
+ * - default value: `true`
+ */
+export const useFlagFeedbackButton = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("feedbackButton", true, options).value;
+};
+
+/**
  * Enables the new Flame Graph UI containing the Call Tree view
  *
  * **Details:**
@@ -403,6 +418,17 @@ export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.customizableMegaMenu", false, options).value;
+};
+
+/**
+ * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardGlobalVariables`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardGlobalVariables", false, options).value;
 };
 
 /**

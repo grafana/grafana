@@ -15,6 +15,7 @@ import {
   dateMath,
   type DateTime,
   dateTime,
+  getFieldDisplayName,
   getSearchFilterScopedVar,
   type MetricFindValue,
   type QueryResultMetaStat,
@@ -552,6 +553,9 @@ export class GraphiteDatasource
 
             for (let i = 0; i < result.data.length; i++) {
               const target = result.data[i];
+              // backend mode builds frames with an empty name and carries the series name in
+              // the value field's displayNameFromDS instead, so fall back to the field display name
+              const title = target.name || getFieldDisplayName(target.fields[1], target);
 
               for (let y = 0; y < target.length; y++) {
                 const time = target.fields[0].values[y];
@@ -564,7 +568,7 @@ export class GraphiteDatasource
                 list.push({
                   annotation: target,
                   time,
-                  title: target.name,
+                  title,
                 });
               }
             }
