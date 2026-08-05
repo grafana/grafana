@@ -48,8 +48,7 @@ type IndexViewData struct {
 	Assets      dtos.EntryPointAssets // Includes CDN info
 	DefaultUser dtos.CurrentUser
 
-	// PreviewAssetsFolder is set to the preview folder name when the assets
-	// above were loaded from a preview build (see preview_assets.go).
+	// Set when Assets come from a preview build (see preview_assets.go).
 	PreviewAssetsFolder string
 
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
@@ -225,12 +224,8 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	}
 }
 
-// resolveAssets returns the entrypoint assets for the request. When the
-// preview assets feature is enabled and the request carries a valid preview
-// cookie, the assets come from the preview build and the returned folder is
-// non-empty. If the preview build cannot be loaded, we fall back to the
-// default assets rather than failing the request, so a stale cookie can never
-// take a browser session down with it.
+// resolveAssets returns the preview build's assets when a valid preview cookie is
+// present, falling back to the default assets so a stale cookie can't break the page.
 func (p *IndexProvider) resolveAssets(ctx context.Context, request *http.Request) (dtos.EntryPointAssets, string, error) {
 	if p.previewCfg.Active() {
 		if cookie, err := request.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
