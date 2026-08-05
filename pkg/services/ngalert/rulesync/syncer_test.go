@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -81,10 +82,13 @@ type fakeNamespaceStore struct {
 	children []*folder.FolderReference
 	// byTitle resolves GetNamespaceByTitle; a missing title yields ErrFolderNotFound.
 	byTitle map[string]*folder.FolderReference
+	// created is the "newly created" flag GetOrCreateNamespaceByTitle returns,
+	// which drives the admin-only permission set on the sync root folder.
+	created bool
 }
 
-func (fakeNamespaceStore) GetOrCreateNamespaceByTitle(_ context.Context, title string, _ int64, _ identity.Requester, _ string) (*folder.FolderReference, bool, error) {
-	return &folder.FolderReference{UID: "folder-" + title, Title: title}, false, nil
+func (f fakeNamespaceStore) GetOrCreateNamespaceByTitle(_ context.Context, title string, _ int64, _ identity.Requester, _ string) (*folder.FolderReference, bool, error) {
+	return &folder.FolderReference{UID: "folder-" + title, Title: title}, f.created, nil
 }
 
 func (f fakeNamespaceStore) GetNamespaceByTitle(_ context.Context, title string, _ int64, _ identity.Requester, _ string) (*folder.FolderReference, error) {
@@ -107,17 +111,34 @@ func (f fakeDatasourceGetter) GetDataSource(_ context.Context, q *datasources.Ge
 	return &datasources.DataSource{UID: q.UID, OrgID: q.OrgID, Type: f.ds.Type, URL: f.ds.URL}, nil
 }
 
+// recordingFolderPermissions captures the SetPermissions calls the syncer makes
+// to lock its folder to admin-only access. It embeds the interface so only the
+// one method the syncer actually uses needs implementing.
+type recordingFolderPermissions struct {
+	accesscontrol.FolderPermissionsService
+	got map[string][]accesscontrol.SetResourcePermissionCommand
+}
+
+func (f *recordingFolderPermissions) SetPermissions(_ context.Context, _ int64, resourceID string, cmds ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
+	if f.got == nil {
+		f.got = map[string][]accesscontrol.SetResourcePermissionCommand{}
+	}
+	f.got[resourceID] = cmds
+	return nil, nil
+}
+
 func newTestSyncer(t *testing.T, fetch *fakeFetcher, rs *fakeRuleService) *ExternalRulerSyncer {
 	t.Helper()
 	return &ExternalRulerSyncer{
-		settings:       &setting.UnifiedAlertingSettings{DefaultRuleEvaluationInterval: time.Minute},
-		logger:         log.NewNopLogger(),
-		metrics:        NewMetrics(nil),
-		datasources:    fakeDatasourceGetter{ds: &datasources.DataSource{UID: "ds1", OrgID: 1, Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}},
-		fetcher:        fetch,
-		ruleService:    rs,
-		namespaceStore: fakeNamespaceStore{},
-		lastSyncHash:   make(map[int64]uint64),
+		settings:          &setting.UnifiedAlertingSettings{DefaultRuleEvaluationInterval: time.Minute},
+		logger:            log.NewNopLogger(),
+		metrics:           NewMetrics(nil),
+		datasources:       fakeDatasourceGetter{ds: &datasources.DataSource{UID: "ds1", OrgID: 1, Type: datasources.DS_PROMETHEUS, URL: "http://mimir/prometheus"}},
+		fetcher:           fetch,
+		ruleService:       rs,
+		namespaceStore:    fakeNamespaceStore{},
+		folderPermissions: &recordingFolderPermissions{},
+		lastSyncHash:      make(map[int64]uint64),
 	}
 }
 
@@ -304,4 +325,36 @@ func TestRun_NoOpWhenUnconfigured(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("Run did not return; missing gate on external_ruler_uid")
 	}
+}
+
+func TestSyncOrg_RestrictsNewFolderToAdmins(t *testing.T) {
+	perms := &recordingFolderPermissions{}
+	s := newTestSyncer(t, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, &fakeRuleService{})
+	s.settings.ExternalRulerUID = "ds1"
+	s.namespaceStore = fakeNamespaceStore{created: true}
+	s.folderPermissions = perms
+
+	s.SyncOrg(context.Background(), 1)
+
+	root := "folder-" + rootFolderTitle("ds1")
+	require.Contains(t, perms.got, root, "permissions set on the newly-created sync root folder")
+	byRole := map[string]string{}
+	for _, c := range perms.got[root] {
+		byRole[c.BuiltinRole] = c.Permission
+	}
+	// Editors and viewers are view-only; admins keep full access implicitly.
+	assert.Equal(t, "View", byRole["Editor"])
+	assert.Equal(t, "View", byRole["Viewer"])
+}
+
+func TestSyncOrg_DoesNotResetPermissionsOnExistingFolder(t *testing.T) {
+	perms := &recordingFolderPermissions{}
+	s := newTestSyncer(t, &fakeFetcher{cfg: upstreamGroup("g1", "A"), hash: 1}, &fakeRuleService{})
+	s.settings.ExternalRulerUID = "ds1"
+	s.namespaceStore = fakeNamespaceStore{} // created == false
+	s.folderPermissions = perms
+
+	s.SyncOrg(context.Background(), 1)
+
+	assert.Empty(t, perms.got, "permissions are only set when the folder is first created")
 }
