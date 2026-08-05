@@ -78,7 +78,7 @@
       "primary": "palette.neutral800",
       "secondary": "palette.neutral600",
       "disabled": "palette.neutral500",
-      "link": "palette.orange700"
+      "link": "palette.blue600"
     },
     "border": {
       "weak": "palette.neutral200",

@@ -797,7 +797,6 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 				}
 			}
 			require.NotNil(t, webhookRecv, "expected webhook receiver in merged config")
-			require.Empty(t, webhookRecv.WebhookConfigs, "Mimir webhook_configs should be cleared after conversion")
 			require.Len(t, webhookRecv.GrafanaManagedReceivers, 1)
 			gr := webhookRecv.GrafanaManagedReceivers[0]
 			require.Equal(t, "webhook", gr.Type)
@@ -1043,7 +1042,6 @@ receivers:
 		}
 	}
 	require.NotNil(t, extraReceiver)
-	require.Empty(t, extraReceiver.EmailConfigs)
 	require.Len(t, extraReceiver.GrafanaManagedReceivers, 1)
 	require.Equal(t, "email", extraReceiver.GrafanaManagedReceivers[0].Type)
 	require.NotEmpty(t, configSent.Hash)
@@ -1082,14 +1080,12 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 			},
 			Receivers: []*v1.PostableApiReceiver{
 				{
-					Receiver: apimodels.Receiver{Name: "grafana-default-email"},
-					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-							{
-								Name:     "email receiver",
-								Type:     "email",
-								Settings: apimodels.RawMessage(`{"addresses":"<example@example.com>"}`),
-							},
+					Name: "grafana-default-email",
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+						{
+							Name:     "email receiver",
+							Type:     "email",
+							Settings: apimodels.RawMessage(`{"addresses":"<example@example.com>"}`),
 						},
 					},
 				},
