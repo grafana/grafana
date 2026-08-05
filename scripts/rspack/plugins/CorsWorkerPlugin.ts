@@ -37,9 +37,11 @@ export default class CorsWorkerRspackPlugin {
         .tap('CorsWorkerRspackPlugin', (chunk: Chunk) => {
           if (getChunkLoading(chunk) === 'import-scripts') {
             const publicPath = compilation.outputOptions.publicPath;
+
             if (publicPath !== 'auto') {
               const module = new CorsWorkerPublicPathRuntimeModule(String(publicPath));
               compilation.addRuntimeModule(chunk, module);
+              return true;
             }
           }
           return undefined;
