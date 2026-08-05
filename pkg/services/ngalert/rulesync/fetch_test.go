@@ -103,6 +103,18 @@ func TestRulerFetcher_Fetch(t *testing.T) {
 		assert.Empty(t, got)
 	})
 
+	t.Run("200 with an empty body is ErrNotARuler (a ruler returns at least {})", func(t *testing.T) {
+		// A truly empty body (unlike {}) would unmarshal to a nil map and prune
+		// everything; a real ruler never returns that, so reject it.
+		for _, body := range [][]byte{[]byte(""), []byte("  \n")} {
+			proxy := &fakeDatasourceProxy{status: http.StatusOK, body: body}
+
+			_, _, err := NewRulerFetcher(proxy, log.NewNopLogger()).Fetch(ctx, testDS())
+			require.Error(t, err)
+			assert.ErrorIs(t, err, ErrNotARuler)
+		}
+	})
+
 	t.Run("a 404 is a fetch error, never empty (list API returns 200 when empty)", func(t *testing.T) {
 		// A 404 is always an error here (e.g. the proxy can't find the
 		// datasource/plugin). Treating it as an empty ruler would prune every synced
