@@ -66,7 +66,20 @@ describe('useFullscreenWorkspace', () => {
     expect(result.current.fullscreenWorkspaceActive).toBe(false);
     // No location subscription is created while the flag is off.
     expect(getLocationObservableMock).not.toHaveBeenCalled();
-    expect(setFullscreenWorkspace).not.toHaveBeenCalled();
+  });
+
+  it('clears workspace state when the flag is revoked while the workspace is active', () => {
+    // Otherwise the app stays in single-entry history mode with a POP listener attached, so every
+    // navigation in Grafana silently replaces instead of pushing.
+    useFlagMock.mockReturnValue(true);
+    mockChrome(true);
+    const { rerender } = renderHook(() => useFullscreenWorkspace());
+    expect(setFullscreenWorkspace).not.toHaveBeenCalledWith({ fullscreenWorkspace: false });
+
+    useFlagMock.mockReturnValue(false);
+    rerender();
+
+    expect(setFullscreenWorkspace).toHaveBeenCalledWith({ fullscreenWorkspace: false });
   });
 
   it('is active when the flag is on and chrome state has fullscreen workspace enabled', () => {

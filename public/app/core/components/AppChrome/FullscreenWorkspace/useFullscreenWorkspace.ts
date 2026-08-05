@@ -20,6 +20,7 @@ export function useFullscreenWorkspace(): FullscreenWorkspaceState {
   // location subscription when the flag is off, so it doesn't re-render on every SPA navigation.
   useEffect(() => {
     if (!fullscreenWorkspaceFeatureFlagEnabled) {
+      chrome.setFullscreenWorkspace({ fullscreenWorkspace: false });
       return;
     }
     const consume = (location: Location) => {
