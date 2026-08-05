@@ -143,6 +143,19 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlVectorCollectionUpdateVersion: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionUpdateVersionRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "dashboards",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						UID:         "abc-uid",
+						Version:     2,
+					},
+				},
+			},
 			sqlVectorBackfillJobsList: {
 				{
 					Name: "simple",

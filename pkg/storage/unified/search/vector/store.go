@@ -76,6 +76,12 @@ type VectorBackend interface {
 	// partially-updated uid is treated as the oldest of its rows.
 	ContentVersion(ctx context.Context, namespace, model, resource, uid string) (version int, exists bool, err error)
 
+	// UpdateContentVersion stamps rows whose content is already current so
+	// version-stale scans stop revisiting them; used when a version bump did
+	// not change a resource's extracted content. Updates every subresource
+	// row of (namespace, model, resource, uid).
+	UpdateContentVersion(ctx context.Context, namespace, model, resource, uid string, version int) error
+
 	// GetLatestRV is the reconciler checkpoint. 0 if never advanced.
 	GetLatestRV(ctx context.Context) (int64, error)
 

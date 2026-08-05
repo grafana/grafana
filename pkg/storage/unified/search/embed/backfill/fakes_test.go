@@ -175,7 +175,6 @@ type fakeVector struct {
 	replaceCalls       []replaceCall
 	deletes            []deleteCall
 	subresourceDeletes []deleteSubsCall
-	existing           map[string]map[string]string        // uid → subresource → content
 	rows               map[string]map[string]vector.Vector // ns|model|resource|uid -> subresource -> row
 	upsertErr          error
 
@@ -186,7 +185,9 @@ type fakeVector struct {
 	checkpoints       []checkpointCall
 	errorMarks        []errorMarkCall
 	completedJobIDs   []int64
+	updateCalls       []updateCall
 	updateErr         error
+	getContentErr     error
 	markErrErr        error
 	completeErr       error
 
@@ -225,10 +226,14 @@ type deleteSubsCall struct {
 	Subresources                    []string
 }
 
+type updateCall struct {
+	Namespace, Model, Resource, UID string
+	Version                         int
+}
+
 func newFakeVector() *fakeVector {
 	return &fakeVector{
-		existing: map[string]map[string]string{},
-		rows:     map[string]map[string]vector.Vector{},
+		rows: map[string]map[string]vector.Vector{},
 	}
 }
 
@@ -253,6 +258,27 @@ func (f *fakeVector) seedEmbeddedRows(ns, model, res, uid string, version int, s
 		}
 	}
 	f.rows[rowsKey(ns, model, res, uid)] = rows
+}
+
+// seedStoredContent preloads a single stored subresource's content (and
+// content_version), simulating a row left over from an earlier embed —
+// used to exercise the content-identity check in GetSubresourceContent.
+func (f *fakeVector) seedStoredContent(ns, model, res, uid, subresource, content string, version int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.rows == nil {
+		f.rows = map[string]map[string]vector.Vector{}
+	}
+	key := rowsKey(ns, model, res, uid)
+	rows := f.rows[key]
+	if rows == nil {
+		rows = map[string]vector.Vector{}
+	}
+	rows[subresource] = vector.Vector{
+		Namespace: ns, Model: model, Resource: res, UID: uid,
+		Subresource: subresource, Content: content, ContentVersion: version, Title: "seed",
+	}
+	f.rows[key] = rows
 }
 
 func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
@@ -318,17 +344,23 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, namespace, model, res
 func (f *fakeVector) DeleteNamespace(_ context.Context, _ string) (int64, error) {
 	return 0, nil
 }
-func (f *fakeVector) GetSubresourceContent(_ context.Context, _, _, _, uid string) (map[string]string, string, error) {
+func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, uid string) (map[string]string, string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if existing, ok := f.existing[uid]; ok {
-		out := make(map[string]string, len(existing))
-		for k, v := range existing {
-			out[k] = v
-		}
-		return out, "", nil
+	if f.getContentErr != nil {
+		return nil, "", f.getContentErr
 	}
-	return nil, "", nil
+	rows := f.rows[rowsKey(ns, model, res, uid)]
+	if len(rows) == 0 {
+		return nil, "", nil
+	}
+	out := make(map[string]string, len(rows))
+	var folder string
+	for sub, v := range rows {
+		out[sub] = v.Content
+		folder = v.Folder
+	}
+	return out, folder, nil
 }
 func (f *fakeVector) Exists(_ context.Context, ns, model, res, uid string) (bool, error) {
 	f.mu.Lock()
@@ -352,6 +384,19 @@ func (f *fakeVector) ContentVersion(_ context.Context, ns, model, res, uid strin
 		}
 	}
 	return minVersion, true, nil
+}
+func (f *fakeVector) UpdateContentVersion(_ context.Context, ns, model, res, uid string, version int) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.updateErr != nil {
+		return f.updateErr
+	}
+	f.updateCalls = append(f.updateCalls, updateCall{ns, model, res, uid, version})
+	for sub, v := range f.rows[rowsKey(ns, model, res, uid)] {
+		v.ContentVersion = version
+		f.rows[rowsKey(ns, model, res, uid)][sub] = v
+	}
+	return nil
 }
 func (f *fakeVector) GetLatestRV(context.Context) (int64, error) { return 0, nil }
 func (f *fakeVector) SetLatestRV(context.Context, int64) error   { return nil }
@@ -454,11 +499,13 @@ func (f *fakeVector) TryAcquireBackfillLock(context.Context) (func(), bool, erro
 
 // fakeText is a deterministic embedder: returns one fixed-dim vector per text.
 type fakeText struct {
-	dim int
-	err error
+	dim   int
+	err   error
+	calls int // number of EmbedText invocations; proves the skip-identical path never reaches the provider
 }
 
 func (f *fakeText) EmbedText(_ context.Context, in embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
+	f.calls++
 	if f.err != nil {
 		return embedder.EmbedTextOutput{}, f.err
 	}

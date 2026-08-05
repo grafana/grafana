@@ -587,6 +587,42 @@ func TestIntegrationVectorContentVersion(t *testing.T) {
 	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "cv-dash"))
 }
 
+// TestIntegrationVectorUpdateContentVersion pins the round-trip contract:
+// UpdateContentVersion stamps every subresource row of a uid, regardless of
+// their prior (possibly mixed) content_version, and ContentVersion reflects
+// the new MIN afterward.
+func TestIntegrationVectorUpdateContentVersion(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		{Namespace: "integration-test", Resource: testResource, UID: "uv-dash", Title: "T",
+			Subresource: "panel/1", Content: "p1", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 1},
+		{Namespace: "integration-test", Resource: testResource, UID: "uv-dash", Title: "T",
+			Subresource: "panel/2", Content: "p2", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 2},
+	}))
+
+	version, exists, err := backend.ContentVersion(ctx, "integration-test", testModel, testResource, "uv-dash")
+	require.NoError(t, err)
+	require.True(t, exists)
+	assert.Equal(t, 1, version, "MIN across the mixed-version rows before the touch")
+
+	require.NoError(t, backend.UpdateContentVersion(ctx, "integration-test", testModel, testResource, "uv-dash", 5))
+
+	version, exists, err = backend.ContentVersion(ctx, "integration-test", testModel, testResource, "uv-dash")
+	require.NoError(t, err)
+	require.True(t, exists)
+	assert.Equal(t, 5, version, "every row (both panel/1 and panel/2) stamped to the new version")
+
+	// Content itself is untouched — this is a version-only stamp, not a re-embed.
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "uv-dash")
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"panel/1": "p1", "panel/2": "p2"}, stored)
+
+	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "uv-dash"))
+}
+
 func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 

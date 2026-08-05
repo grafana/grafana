@@ -39,6 +39,7 @@ var (
 	sqlVectorCollectionGetContent        = mustTemplate("vector_collection_get_content.sql")
 	sqlVectorCollectionExists            = mustTemplate("vector_collection_exists.sql")
 	sqlVectorCollectionContentVersion    = mustTemplate("vector_collection_content_version.sql")
+	sqlVectorCollectionUpdateVersion     = mustTemplate("vector_collection_update_version.sql")
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
 	sqlVectorBackfillJobsList            = mustTemplate("vector_backfill_jobs_list.sql")
 	sqlVectorBackfillJobsCreate          = mustTemplate("vector_backfill_jobs_create.sql")
@@ -179,6 +180,25 @@ func (r *sqlVectorCollectionContentVersionRequest) Validate() error {
 func (r *sqlVectorCollectionContentVersionRequest) Results() (*sqlVectorCollectionContentVersionResponse, error) {
 	cp := *r.Response
 	return &cp, nil
+}
+
+type sqlVectorCollectionUpdateVersionRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	UID       string
+	Version   int
+}
+
+func (r *sqlVectorCollectionUpdateVersionRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	if r.Version < 1 {
+		return fmt.Errorf("version must be at least 1")
+	}
+	return nil
 }
 
 type sqlVectorBackfillJobsListResponse struct {

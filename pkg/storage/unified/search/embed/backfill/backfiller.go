@@ -416,6 +416,10 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		statusLabel = "skipped_already_embedded"
 		return nil
 	}
+	// isVersionStale gates the identical-content check below: a brand-new
+	// uid (exists=false) has no stored rows to compare against, so it
+	// always takes the normal extract+embed path.
+	isVersionStale := exists && version < builder.Version()
 
 	if embed.HasPendingDeleteLabel(iter.Value()) {
 		statusLabel = "skipped_pending_delete"
@@ -459,6 +463,31 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return nil
 	}
 
+	if isVersionStale {
+		stored, _, err := b.vectorBackend.GetSubresourceContent(ctx, namespace, job.Model, res, name)
+		if err != nil {
+			return fmt.Errorf("get stored content %s/%s: %w", namespace, name, err)
+		}
+		// Folder is deliberately not compared here (unlike the reconciler,
+		// which force-differs on a folder move): under v2 a folder move
+		// changes content anyway (the breadcrumb gets the folder-title
+		// prefix), so content equality already subsumes that case for this
+		// extractor version.
+		if identicalContent(stored, items) {
+			if err := b.vectorBackend.UpdateContentVersion(ctx, namespace, job.Model, res, name, builder.Version()); err != nil {
+				return fmt.Errorf("update content version %s/%s: %w", namespace, name, err)
+			}
+			statusLabel = "skipped_identical_content"
+			return nil
+		}
+		// Not identical: fall through to the full re-embed below. Per-panel
+		// diffing is deliberately not done — under v2 the folder-prefix
+		// touches every panel, so diffing would leave some rows re-embedded
+		// at the new version and others stranded at the old one, and the
+		// stranded rows would be rescanned forever. Re-embedding every item
+		// keeps a uid's rows version-uniform.
+	}
+
 	vectors, err := b.batchEmbedder.Embed(ctx, namespace, res, rv, builder.Version(), items)
 	if err != nil {
 		return fmt.Errorf("embed %s/%s: %w", namespace, name, err)
@@ -481,6 +510,21 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
 	}
 	return nil
+}
+
+// identicalContent reports whether extracted matches stored exactly: same
+// subresource key set, and equal content per key.
+func identicalContent(stored map[string]string, extracted []embed.Item) bool {
+	if len(stored) != len(extracted) {
+		return false
+	}
+	for _, it := range extracted {
+		v, ok := stored[it.Subresource]
+		if !ok || v != it.Content {
+			return false
+		}
+	}
+	return true
 }
 
 // resolveFolderTitle resolves the display title for the folder referenced by

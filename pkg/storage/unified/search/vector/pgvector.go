@@ -449,6 +449,25 @@ func (b *pgvectorBackend) ContentVersion(ctx context.Context, namespace, model, 
 	return int(row.MinVersion.Int64), true, nil
 }
 
+func (b *pgvectorBackend) UpdateContentVersion(ctx context.Context, namespace, model, resource, uid string, version int) error {
+	if model == "" {
+		return fmt.Errorf("model must not be empty")
+	}
+	if err := b.validateResource(ctx, resource); err != nil {
+		return err
+	}
+	req := &sqlVectorCollectionUpdateVersionRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Resource:    resource,
+		Namespace:   namespace,
+		Model:       model,
+		UID:         uid,
+		Version:     version,
+	}
+	_, err := dbutil.Exec(ctx, b.db, sqlVectorCollectionUpdateVersion, req)
+	return err
+}
+
 func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource string,
 	embedding []float32, limit int, filters ...SearchFilter) (results []VectorSearchResult, retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.Search")

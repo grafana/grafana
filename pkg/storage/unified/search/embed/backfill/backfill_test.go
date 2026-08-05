@@ -16,6 +16,7 @@ import (
 	"github.com/openai/openai-go/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	grpccodes "google.golang.org/grpc/codes"
@@ -394,6 +395,189 @@ func TestRunBackfillJob_ReEmbedDropsStalePanel_DeletesStaleSubresource(t *testin
 
 	_, stillThere := vec.rows[rowsKey("ns", "test-model", "dashboards", "dash-a")]["panel/2"]
 	assert.False(t, stillThere, "stale subresource row must be gone after the replace")
+}
+
+// extractDashboardItems runs the real dashboard extractor so tests can seed
+// a fakeVector with ground-truth content instead of guessing the breadcrumb
+// string by hand.
+func extractDashboardItems(t *testing.T, ns, name string, value []byte, folderTitle string) []embed.Item {
+	t.Helper()
+	key := &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Namespace: ns, Name: name}
+	items, err := dashboard.New().Extract(context.Background(), key, value, folderTitle)
+	require.NoError(t, err)
+	return items
+}
+
+// TestRunBackfillJob_VersionStale_IdenticalContent_SkipsEmbedAndTouchesVersion
+// covers the version-bump short-circuit this task adds: a root-folder
+// dashboard's v1 and v2 extracted content are byte-identical (root-folder
+// dashboards have no folder title to prefix onto the breadcrumb), so the
+// backfiller must not pay a provider call — it just stamps the row at the
+// builder's current version.
+// The identical-content path adds two new failure modes; both must be item
+// errors that fail the job (retry path), never silent skips — a swallowed
+// UpdateContentVersion error would leave the uid version-stale and rescanned
+// on every tick forever.
+func TestRunBackfillJob_GetSubresourceContentError_FailsJob(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "dash-a", 1, "panel/1")
+	vec.getContentErr = errors.New("pg connection reset")
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.errorMarks, 1, "stored-content read failure must mark the job errored")
+	assert.Empty(t, vec.completedJobIDs, "job must not complete on the same tick")
+	assert.Empty(t, vec.updateCalls)
+	assert.Empty(t, vec.upserts)
+}
+
+func TestRunBackfillJob_UpdateContentVersionError_FailsJob(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+
+	items := extractDashboardItems(t, "ns", "dash-a", minimalDashboardJSON("dash-a", "dash-a-title"), "")
+	require.Len(t, items, 1)
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+	vec.seedStoredContent("ns", "test-model", "dashboards", "dash-a", items[0].Subresource, items[0].Content, 1)
+	vec.updateErr = errors.New("pg connection reset")
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.errorMarks, 1, "version-stamp failure must mark the job errored, not skip silently")
+	assert.Empty(t, vec.completedJobIDs)
+	assert.Empty(t, vec.upserts, "identical content must still not re-embed on the error path")
+}
+
+func TestRunBackfillJob_VersionStale_IdenticalContent_SkipsEmbedAndTouchesVersion(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+
+	items := extractDashboardItems(t, "ns", "dash-a", minimalDashboardJSON("dash-a", "dash-a-title"), "")
+	require.Len(t, items, 1)
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	// Job already at the builder's current version, so ReopenStaleBackfillJobs
+	// doesn't reset stopping_rv/cursor out from under this test.
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+	// Stored row is at content_version 1 (stale) but its content is exactly
+	// what the current (v2) extractor produces for this root-folder dashboard.
+	vec.seedStoredContent("ns", "test-model", "dashboards", "dash-a", items[0].Subresource, items[0].Content, 1)
+
+	reg := prometheus.NewPedanticRegistry()
+	m := resource.ProvideVectorMetrics(reg)
+	text := &fakeText{dim: 4}
+	emb := newFakeEmbedder(text)
+	o, err := NewVectorBackfiller(Options{
+		Storage:       storage,
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
+		Builders:      []embed.Builder{dashboard.New()},
+		Metrics:       m,
+	})
+	require.NoError(t, err)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts, "identical content must not be re-embedded")
+	assert.Empty(t, vec.replaceCalls)
+	assert.Equal(t, 0, text.calls, "embedder must not be called when content is identical")
+	require.Len(t, vec.updateCalls, 1)
+	assert.Equal(t, updateCall{"ns", "test-model", "dashboards", "dash-a", dashboard.New().Version()}, vec.updateCalls[0])
+	require.Len(t, vec.completedJobIDs, 1)
+
+	var got dto.Metric
+	obs := m.BackfillItemDuration.WithLabelValues("dashboard.grafana.app", "dashboards", "skipped_identical_content")
+	require.NoError(t, obs.(prometheus.Metric).Write(&got))
+	assert.Equal(t, uint64(1), got.GetHistogram().GetSampleCount(), "the skipped_identical_content status label must be observed")
+}
+
+// TestRunBackfillJob_VersionStale_FolderedDashboard_ContentDiffers_FullReEmbed
+// covers the case the identity check must NOT short-circuit: a foldered
+// dashboard's v2 content gets the folder-title breadcrumb prefix, so it
+// differs from the stored v1 content and the full re-embed path still runs.
+func TestRunBackfillJob_VersionStale_FolderedDashboard_ContentDiffers_FullReEmbed(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItemWithFolder("ns", "dash-a", 50, "folder-uid")}
+	storage.seedFolder("ns", "folder-uid", "Production")
+
+	// Simulate the old (pre-breadcrumb) v1 shape: extracted with an empty
+	// folder title, so it lacks the prefix the live run will add via the
+	// real folder title resolved above.
+	oldItems := extractDashboardItems(t, "ns", "dash-a", dashboardJSONWithFolder("dash-a", "dash-a-title", "folder-uid"), "")
+	require.Len(t, oldItems, 1)
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+	vec.seedStoredContent("ns", "test-model", "dashboards", "dash-a", oldItems[0].Subresource, oldItems[0].Content, 1)
+
+	text := &fakeText{dim: 4}
+	emb := newFakeEmbedder(text)
+	o, err := NewVectorBackfiller(Options{
+		Storage:       storage,
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
+		Builders:      []embed.Builder{dashboard.New()},
+	})
+	require.NoError(t, err)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "folder-title prefix makes the content differ, so the full re-embed path must run")
+	assert.Equal(t, 1, text.calls, "embedder must be called on the full re-embed path")
+	assert.Empty(t, vec.updateCalls, "content differs, so UpdateContentVersion must not be called")
+	for _, v := range vec.upserts[0] {
+		assert.Equal(t, dashboard.New().Version(), v.ContentVersion)
+	}
+	require.Len(t, vec.completedJobIDs, 1)
+}
+
+// TestRunBackfillJob_VersionStale_SubresourceSetDiffers_FullReEmbed covers
+// the other non-identical case: the surviving panel's content is unchanged,
+// but a stored panel no longer exists in the extractor's output (e.g. a
+// deleted panel). The key-set mismatch alone must force the full path.
+func TestRunBackfillJob_VersionStale_SubresourceSetDiffers_FullReEmbed(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+
+	items := extractDashboardItems(t, "ns", "dash-a", minimalDashboardJSON("dash-a", "dash-a-title"), "")
+	require.Len(t, items, 1)
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+	vec.seedStoredContent("ns", "test-model", "dashboards", "dash-a", items[0].Subresource, items[0].Content, 1)
+	// panel/2 is stale content the extractor no longer produces (e.g. a
+	// removed panel); its content is irrelevant, only its presence matters.
+	vec.seedStoredContent("ns", "test-model", "dashboards", "dash-a", "panel/2", "stale content", 1)
+
+	text := &fakeText{dim: 4}
+	emb := newFakeEmbedder(text)
+	o, err := NewVectorBackfiller(Options{
+		Storage:       storage,
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
+		Builders:      []embed.Builder{dashboard.New()},
+	})
+	require.NoError(t, err)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.replaceCalls, 1, "subresource-set drift must force the full re-embed path")
+	assert.Equal(t, []string{items[0].Subresource}, vec.replaceCalls[0].Desired)
+	assert.Equal(t, 1, text.calls)
+	assert.Empty(t, vec.updateCalls)
+
+	_, stillThere := vec.rows[rowsKey("ns", "test-model", "dashboards", "dash-a")]["panel/2"]
+	assert.False(t, stillThere, "stale subresource must be dropped by the replace")
 }
 
 // TestRunBackfill_CompletedJobStaleVersion_ReopensAndProcesses covers job

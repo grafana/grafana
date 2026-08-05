@@ -344,6 +344,9 @@ func (f *fakeVector) Exists(context.Context, string, string, string, string) (bo
 func (f *fakeVector) ContentVersion(context.Context, string, string, string, string) (int, bool, error) {
 	return 0, false, nil
 }
+func (f *fakeVector) UpdateContentVersion(context.Context, string, string, string, string, int) error {
+	return nil
+}
 func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
