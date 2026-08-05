@@ -13,6 +13,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch } from 'app/store/store';
 
 import { VariableEditorView } from './VariableEditorView';
@@ -20,12 +21,14 @@ import {
   bulkDeleteVariables,
   bulkMoveVariables,
   type BulkOperationResult,
+  invalidatePredefinedVariableCaches,
   useFolderCanEdit,
   useFolderTitles,
   useListAllVariablesQuery,
 } from './api';
 import { MoveVariablesModal } from './components/MoveVariablesModal';
 import { VariablesTable } from './components/VariablesTable';
+import { getPromoteSharedVariables } from './enterprise-components/PromoteSharedVariablesExtension';
 import {
   buildVariablesTree,
   canManageGlobalVariables,
@@ -45,6 +48,13 @@ export default function VariablesManagementPage() {
   const styles = useStyles2(getStyles);
   const { name: editName } = useParams<{ name?: string }>();
   const location = useLocation();
+  // Bulk promote is org-admin only (matches API middleware.ReqOrgAdmin).
+  const canPromoteShared = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+  const PromoteSharedVariables = canPromoteShared ? getPromoteSharedVariables() : null;
+  const promoteClusterId = useMemo(
+    () => new URLSearchParams(location.search).get('promote') ?? undefined,
+    [location.search]
+  );
   // The edit route (/edit/:name) always carries a name param, so a variable
   // named "new" (URL /edit/new) is never mistaken for the create route.
   const isNew = !editName && location.pathname.endsWith('/new');
@@ -58,6 +68,7 @@ export default function VariablesManagementPage() {
     isLoading,
     isError,
     error,
+    refetch,
   } = useListAllVariablesQuery(undefined, {
     skip: !globalVariablesEnabled,
   });
@@ -244,10 +255,26 @@ export default function VariablesManagementPage() {
     <Page
       navId="dashboards/variables"
       actions={
-        !isEmpty && (
-          <Button icon="plus" onClick={() => locationService.push(`${LIST_URL}/new`)}>
-            <Trans i18nKey="variables-management.page.new-variable">New variable</Trans>
-          </Button>
+        (!isEmpty || PromoteSharedVariables) && (
+          <Stack gap={1}>
+            {PromoteSharedVariables && (
+              <PromoteSharedVariables
+                initialClusterId={promoteClusterId}
+                onCompleted={() => {
+                  void refetch();
+                  invalidatePredefinedVariableCaches();
+                  if (promoteClusterId) {
+                    locationService.partial({ promote: undefined });
+                  }
+                }}
+              />
+            )}
+            {!isEmpty && (
+              <Button icon="plus" onClick={() => locationService.push(`${LIST_URL}/new`)}>
+                <Trans i18nKey="variables-management.page.new-variable">New variable</Trans>
+              </Button>
+            )}
+          </Stack>
         )
       }
     >
