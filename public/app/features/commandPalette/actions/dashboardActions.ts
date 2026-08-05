@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { isRootFolderUID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { type LocationInfo } from 'app/features/search/service/types';
 import { toURL } from 'app/features/search/service/unified';
 import { extractManagerKind } from 'app/features/search/service/utils';
 
@@ -128,8 +129,14 @@ async function getHybridDashboardActions(searchQuery: string): Promise<CommandPa
   }
 
   // The hybrid endpoint returns the folder UID only; resolve display names
-  // through the searcher's cached folder lookup
-  const locationInfo = await getGrafanaSearcher().getLocationInfo();
+  // through the searcher's cached folder lookup. The folder subtitle is just
+  // nice to have, so if the lookup fails show the results without it.
+  let locationInfo: Record<string, LocationInfo> = {};
+  try {
+    locationInfo = await getGrafanaSearcher().getLocationInfo();
+  } catch (error) {
+    console.error('Failed to load folder info for hybrid search results.', error);
+  }
 
   return hits.map((hit) => {
     const url = toURL(hit.resource, hit.name, hit.title);

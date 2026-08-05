@@ -11,6 +11,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { type ContextSrv, contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import { getRecentDashboardActions, getSearchResultActions, useSearchResults } from './dashboardActions';
 
@@ -233,6 +234,34 @@ describe('dashboardActions', () => {
           }),
         ]);
         expect(consoleErrorSpy).toHaveBeenCalled();
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('shows hybrid results without the folder subtitle when the folder lookup fails', async () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const locationInfoSpy = jest
+          .spyOn(getGrafanaSearcher(), 'getLocationInfo')
+          .mockRejectedValueOnce(new Error('folder lookup failed'));
+
+        const results = await getSearchResultActions('mySearchQuery', true);
+
+        expect(results).toEqual([
+          {
+            id: 'go/dashboard/d/hybrid-dashboard-1/hybrid-dashboard-1',
+            name: 'Hybrid dashboard 1',
+            priority: 1,
+            section: 'Dashboards',
+            sectionId: 'dashboards',
+            subtitle: undefined,
+            url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
+          },
+          expect.objectContaining({
+            name: 'My folder 1',
+            sectionId: 'folders',
+          }),
+        ]);
+        expect(consoleErrorSpy).toHaveBeenCalled();
+        locationInfoSpy.mockRestore();
         consoleErrorSpy.mockRestore();
       });
     });
