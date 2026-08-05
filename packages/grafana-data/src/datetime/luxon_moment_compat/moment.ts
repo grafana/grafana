@@ -1,4 +1,12 @@
-import { type DateTimeUnit, type DurationUnit, type TokenParser, DateTime, Duration, IANAZone, Settings } from 'luxon';
+import {
+  type DateTimeUnit,
+  type DurationUnit,
+  type TokenParser,
+  DateTime,
+  Duration,
+  IANAZone,
+  Settings,
+} from './luxon';
 
 import { convertMomentToLuxonWithOrdinal, formatWithOrdinal } from './format';
 

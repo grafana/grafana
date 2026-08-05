@@ -1,4 +1,4 @@
-import type { DateTime } from 'luxon';
+import type { DateTime } from './luxon';
 
 const TOKEN_MAP: Record<string, string> = {
   // moment's L* tokens are locale-aware (word order changes per locale), so map them to luxon's

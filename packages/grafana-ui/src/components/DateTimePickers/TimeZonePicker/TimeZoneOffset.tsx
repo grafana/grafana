@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2, type TimeZone } from '@grafana/data';
-import { findTimeZoneAt } from '@grafana/data/unstable';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 
-import { resolveIanaName } from './timeZoneUtils';
+import { getTimeZoneDisplayInfo } from './timeZoneUtils';
 
 interface Props {
   /** preformatted display string, e.g. 'UTC+05:30' (see formatUtcOffset) */
@@ -24,8 +23,7 @@ export const TimeZoneOffset = ({ offset, className }: Props) => {
 };
 
 export const formatUtcOffset = (timestamp: number, timeZone: TimeZone): string => {
-  const tz = findTimeZoneAt(resolveIanaName(timeZone), timestamp);
-  return `UTC${tz?.offset ?? '+00:00'}`;
+  return `UTC${getTimeZoneDisplayInfo(timeZone, timestamp)?.offset ?? '+00:00'}`;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {

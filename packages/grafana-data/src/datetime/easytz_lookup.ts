@@ -1,6 +1,6 @@
-import { getTimeZonesAt, type TimeZoneInfo as EasyTzInfo } from './easytz';
+import { formatOffset, getTimeZonesAt, type TimeZoneInfo as EasyTzInfo } from './easytz';
 
-export { getTimeZonesAt };
+export { formatOffset, getTimeZonesAt };
 export type { EasyTzInfo };
 
 // getTimeZonesAt memoizes per hour bucket and returns the same array by

@@ -135,7 +135,11 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
 
       const delimiter = tz.name.indexOf('/');
       const group = delimiter === -1 ? '' : tz.name.slice(0, delimiter);
-      pushOption(group, tz.name, { name: tz.name, abbreviation: tz.abbr, offset: tz.offset }, legacyNames.get(tz.name));
+      const info = getTimeZoneDisplayInfo(tz.name, now);
+
+      if (info) {
+        pushOption(group, tz.name, info, legacyNames.get(tz.name));
+      }
     }
 
     return Array.from(groups, ([label, options]) => ({ label, options }));
