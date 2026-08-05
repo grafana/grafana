@@ -110,6 +110,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gridAutoFlow: 'row',
       background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.lg,
+      border: `1px solid ${theme.colors.border.weak}`,
       padding: theme.spacing(3),
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {

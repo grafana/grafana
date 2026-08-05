@@ -109,7 +109,12 @@
       "activeBackgroundHover": "palette.orange400"
     },
     "input": {
-      "background": "palette.ink850"
+      "background": "palette.ink800",
+      "borderColor": "palette.ink650",
+      "borderHover": "palette.ink550"
+    },
+    "panel": {
+      "background": "palette.ink800"
     },
     "tag": {
       "colors": [

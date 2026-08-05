@@ -154,7 +154,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     },
 
     '&:active': {
-      ...getActiveButtonStyles(theme.colors.secondary, 'solid', theme.flags.visualDesignRefresh),
+      ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
     },
   });
 
@@ -212,7 +212,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:active': {
-        ...getActiveButtonStyles(theme.colors.secondary, 'solid', theme.flags.visualDesignRefresh),
+        ...getActiveButtonStyles(theme.colors.secondary, 'solid'),
       },
     }),
     canvas: defaultOld,
