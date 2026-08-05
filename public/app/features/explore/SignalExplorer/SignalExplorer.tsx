@@ -5,7 +5,7 @@ import { type DataSourceApi, type GrafanaTheme2, type TimeRange } from '@grafana
 import { t } from '@grafana/i18n';
 import { useDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
-import { type DataQuery } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
@@ -82,7 +82,11 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
     const paneRef = paneDatasource?.uid ? { uid: paneDatasource.uid, type: paneDatasource.type } : undefined;
 
     return queries.map((query) => {
-      const ref = query.datasource ?? paneRef;
+      // Widened past the declared type because legacy Explore URLs still carry a query's
+      // `datasource` as a plain uid-or-name string, and a Mixed pane keeps that form in state
+      // rather than rewriting it to a ref. The settings lookup this replaced accepted it.
+      const rawRef: DataSourceRef | string | null | undefined = query.datasource ?? paneRef;
+      const ref = typeof rawRef === 'string' ? { uid: rawRef } : rawRef;
       // Matched on name as well as uid: a ref can name its datasource rather than carry its uid,
       // and the settings lookup this replaced resolved either form.
       const item = ref?.uid ? dataSourceItems.find((ds) => ds.uid === ref.uid || ds.name === ref.uid) : undefined;

@@ -147,6 +147,15 @@ describe('<SignalExplorer />', () => {
     expect(screen.getByRole('button', { name: 'Jump to query A (gdev-loki)' })).toBeInTheDocument();
   });
 
+  it('resolves a query whose datasource is a legacy string rather than a ref', async () => {
+    // Legacy Explore URLs still produce this form, and a Mixed pane keeps it in state.
+    await setup([{ refId: 'A', datasource: 'gdev-prometheus' } as unknown as DataQuery]);
+
+    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
+    expect(screen.getByTestId('signal-card-A').querySelector('img')).toHaveAttribute('src', 'prometheus.svg');
+  });
+
   it('labels a card with its datasource type until the datasource list resolves', async () => {
     seedDataSources();
     render(explorer([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]));
