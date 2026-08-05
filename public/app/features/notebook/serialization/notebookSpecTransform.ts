@@ -15,6 +15,7 @@
  * (the notebook page loader, the full-spec mutation commands) share one implementation.
  */
 
+import { type VizPanel } from '@grafana/scenes';
 import {
   defaultSpec as defaultDashboardV2Spec,
   type Spec as DashboardV2Spec,
@@ -203,6 +204,7 @@ type NotebookLayoutLike = {
   descriptor: { id: string };
   setState: (state: { title?: string; tags?: string[] }) => void;
   getNonPanelElements: () => Record<string, unknown>;
+  getPanelCells: () => Record<string, VizPanel>;
 };
 
 function hasNotebookDescriptor(body: unknown): body is NotebookLayoutLike {
@@ -226,6 +228,16 @@ function hasNotebookDescriptor(body: unknown): body is NotebookLayoutLike {
  */
 export function getNotebookCellElements(body: unknown): Record<string, unknown> {
   return hasNotebookDescriptor(body) ? body.getNonPanelElements() : {};
+}
+
+/**
+ * The notebook's panel cells: element name currently held by the layout, to the panel it places.
+ *
+ * Asked for so a reference can be resolved through the same lookup that keys the elements map, rather
+ * than trusting the name the layout happens to hold. Anything that is not a notebook layout has none.
+ */
+export function getNotebookPanelCells(body: unknown): Record<string, VizPanel> {
+  return hasNotebookDescriptor(body) ? body.getPanelCells() : {};
 }
 
 /**

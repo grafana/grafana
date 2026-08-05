@@ -80,8 +80,25 @@ export class NotebookLayoutManager
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
   }
 
+  // The panels this layout places, keyed by the element name it currently holds for each.
+  //
+  // The notebook transformer uses this to resolve a panel cell's reference through the same lookup
+  // that keys the elements map, instead of trusting the name held here. The two agree for whatever
+  // was loaded and nothing keeps them agreeing afterwards: a name the serializer's element map does
+  // not know falls back to `panel-<id>` on the elements side while this side keeps the original, and
+  // the cell ends up referencing an element that is not in the spec.
+  public getPanelCells(): Record<string, VizPanel> {
+    const panels: Record<string, VizPanel> = {};
+    for (const cell of this.state.cells) {
+      if (cell.state.body) {
+        panels[cell.state.elementName] = cell.state.body;
+      }
+    }
+    return panels;
+  }
+
   // Narrative cells are exactly the elements getVizPanels() cannot report, so the notebook
-  // serializer asks for them separately and merges the two. Without them a spec carries
+  // transformer asks for them separately and merges the two. Without them a spec carries
   // `layout.spec.cells` entries pointing at elements that are not there.
   //
   // Notebook-specific on purpose: the dashboard layout contract knows nothing about this, because a

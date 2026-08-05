@@ -22,6 +22,7 @@ import {
   makeNotebookSpecWithPanel,
   markdown,
   panelIdOf,
+  referencedNames,
   specOf,
   stubDashboardScene,
 } from './test-utils';
@@ -121,6 +122,20 @@ describe('GET_NOTEBOOK_SPEC on panel cells', () => {
     expect(Object.keys(spec.elements).sort()).toEqual(['intro', 'saved-view']);
     expect(panelIdOf(spec, 'saved-view')).toBe(2);
     expect(danglingReferences(spec)).toEqual([]);
+  });
+
+  // The invariant the rename above is a consequence of: whatever the elements map ends up keyed by, a
+  // cell points at a key that is in it. Pinned by clearing the serializer's element map, which is what
+  // a name it does not know looks like from here, and is how a panel cell used to disappear: the
+  // elements side fell back to `panel-<id>` while the layout kept the name it was loaded with.
+  it('resolves a panel cell even when the serializer cannot name its panel', async () => {
+    const scene = buildNotebookScene(makeNotebookSpecWithPanel());
+    scene.serializer.initializeElementMapping(undefined);
+
+    const spec = specOf(await getNotebookSpec(scene));
+
+    expect(danglingReferences(spec)).toEqual([]);
+    expect(referencedNames(spec)).toEqual(['intro', 'panel-1', 'repro']);
   });
 });
 
