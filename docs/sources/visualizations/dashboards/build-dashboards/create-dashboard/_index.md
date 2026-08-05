@@ -515,11 +515,4 @@ In most cases, yes.
 Building effective dashboards requires understanding how to query your data source so you can retrieve the information you want to visualize.
 Grafana provides visualization and editing tools, but the query syntax depends on the data source you're using.
 {{< /qa >}}
-{{< qa question="How do I organize panels in a dashboard?" >}}
-Grafana lets you organize panels by arranging them on the dashboard canvas, grouping them into rows or tabs, and resizing or repositioning them as needed.
-These layout options help you create dashboards that are easier to scan and navigate.
-{{< /qa >}}
-{{< qa question="How do I keep a dashboard organized as it grows?" >}}
-As dashboards become more complex, you can improve organization by grouping related content into rows or tabs, arranging panels into a logical layout, and using dashboard features such as variables and annotations to make dashboards easier to navigate and use.
-{{< /qa >}}
 {{< /qa-list >}}
