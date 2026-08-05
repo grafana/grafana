@@ -3997,6 +3997,9 @@
       "trace-id": "Spårnings-ID: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Autentiseringsinställningar"
@@ -4829,6 +4832,7 @@
       "not-found": "<0>Hittades inte: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + höger mus",
       "middle-mouse": "Mellanhjul",
       "pan-title": "Panorera:",
@@ -6177,13 +6181,10 @@
         "show-in": ""
       },
       "annotations": {
-        "add-annotation": "",
         "add-annotation-query": "",
         "name-builtin": "",
         "name-disabled": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-annotation": "",
         "title-above-dashboard-count_one": "",
         "title-above-dashboard-count_other": "",
         "title-controls-menu-count_one": "",
@@ -6269,10 +6270,7 @@
       "links": {
         "add-link": "",
         "new-link": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-link": "",
-        "untitled": "",
         "title-above-dashboard_one": "",
         "title-above-dashboard_other": "",
         "title-controls-menu_one": "",
@@ -6372,11 +6370,9 @@
       "variables": {
         "add-variable": "",
         "change-type": "",
-        "reorder": "",
         "reorder-description": "",
         "select-type": "",
         "select-type-card-tooltip": "",
-        "select-variable": "",
         "top-placement-default": "",
         "title-controls-menu_one": "",
         "title-controls-menu_other": "",
@@ -6814,11 +6810,6 @@
       "delete-text": "Är du säker på att du vill radera: {{name}}?",
       "delete-title": "Radera kommenteringsfråga"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Kommentar"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Använd sparad fråga"
     },
@@ -7241,11 +7232,6 @@
       "delete-text": "Är du säker på att du vill radera: {{name}}?",
       "delete-title": "Radera länk",
       "unnamed": "Namnlös länk"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Länk"
-      }
     },
     "link-options": {
       "icon": "Ikon",
@@ -9264,6 +9250,7 @@
       "name-lookup-field": "Sökfält"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Identifiera platsdata automatiskt baserat på standardfältnamn",
         "description-coords": "Ange fält för latitud och longitud",
@@ -15952,18 +15939,29 @@
     },
     "editor": {
       "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
       "view-preview": "",
       "view-split": "",
       "view-write": ""
-    },
-    "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
-    },
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "Bastema",

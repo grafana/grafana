@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -34,6 +35,15 @@ type RESTOptionsGetter struct {
 
 	// Each group+resource may need custom options
 	options map[string]StorageOptions
+
+	// versionPolicy is shared across every resource this getter serves; nil disables maxAllowedVersion enforcement.
+	versionPolicy *versionpolicy.VersionPolicyRegistry
+}
+
+// SetVersionPolicy sets the shared registry consulted by apistore.encode, so every resource served by
+// this getter enforces the cap against the same instance.
+func (r *RESTOptionsGetter) SetVersionPolicy(vp *versionpolicy.VersionPolicyRegistry) {
+	r.versionPolicy = vp
 }
 
 func NewRESTOptionsGetterForClient(
@@ -167,6 +177,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 		) (storage.Interface, factory.DestroyFunc, error) {
 			opts := r.options[resource.String()]
 			opts.SecureValues = r.secrets
+			opts.VersionPolicy = r.versionPolicy
 			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
 				trigger, indexers, r.configProvider, opts)
 		},

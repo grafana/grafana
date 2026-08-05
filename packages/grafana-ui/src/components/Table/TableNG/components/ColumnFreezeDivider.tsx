@@ -9,7 +9,7 @@ import { useStyles2 } from '../../../../themes/ThemeContext';
 import { TABLE } from '../constants';
 
 interface ColumnFreezeDividerProps {
-  gridRef: RefObject<HTMLDivElement>;
+  gridRef: RefObject<HTMLDivElement | null>;
   columnCount: number;
   pinnedColumnCount: number;
   pinnedWidth: number;

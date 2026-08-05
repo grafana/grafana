@@ -160,8 +160,21 @@ const ATTRIBUTE_CATEGORY_CONFIG: AttributeCategoryConfig[] = [
   },
 ];
 
+/** Resource categories ordered by "gravity" (user-facing → infrastructure → telemetry). */
 const SECTION_CATEGORY_PRIORITY: Record<AttributeSectionType, string[]> = {
-  resource: [SERVICE_CATEGORY_ID],
+  resource: [
+    'frontend',
+    SERVICE_CATEGORY_ID,
+    'deployment',
+    'database',
+    'process',
+    'runtime',
+    'container',
+    'kubernetes',
+    'host-os',
+    'cloud',
+    'telemetry-sdk',
+  ],
   span: ['http', 'url'],
 };
 

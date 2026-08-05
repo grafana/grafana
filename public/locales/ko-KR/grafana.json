@@ -3969,6 +3969,9 @@
       "trace-id": "추적 ID: {{traceId}} "
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "인증 설정"
@@ -4791,6 +4794,7 @@
       "not-found": "<0>찾을 수 없음: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + 마우스 오른쪽 버튼",
       "middle-mouse": "마우스 가운데 버튼",
       "pan-title": "이동:",
@@ -6137,13 +6141,10 @@
         "show-in": ""
       },
       "annotations": {
-        "add-annotation": "",
         "add-annotation-query": "",
         "name-builtin": "",
         "name-disabled": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-annotation": "",
         "title-above-dashboard-count_other": "",
         "title-controls-menu-count_other": "",
         "title-hidden-count_other": ""
@@ -6223,10 +6224,7 @@
       "links": {
         "add-link": "",
         "new-link": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-link": "",
-        "untitled": "",
         "title-above-dashboard_other": "",
         "title-controls-menu_other": ""
       },
@@ -6324,11 +6322,9 @@
       "variables": {
         "add-variable": "",
         "change-type": "",
-        "reorder": "",
         "reorder-description": "",
         "select-type": "",
         "select-type-card-tooltip": "",
-        "select-variable": "",
         "top-placement-default": "",
         "title-controls-menu_other": "",
         "title-hidden_other": "",
@@ -6761,11 +6757,6 @@
       "delete-text": "정말 {{name}}을(를) 삭제하시겠어요?",
       "delete-title": "주석 쿼리 삭제"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "주석"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "저장된 쿼리 사용"
     },
@@ -7187,11 +7178,6 @@
       "delete-text": "정말 {{name}}을(를) 삭제하시겠어요?",
       "delete-title": "링크 삭제",
       "unnamed": "이름 없는 링크"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "링크"
-      }
     },
     "link-options": {
       "icon": "아이콘",
@@ -9203,6 +9189,7 @@
       "name-lookup-field": "조회 필드"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "기본 필드 이름을 토대로 위치 데이터를 자동으로 식별합니다",
         "description-coords": "위도 및 경도 필드 지정",
@@ -15825,18 +15812,29 @@
     },
     "editor": {
       "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
       "view-preview": "",
       "view-split": "",
       "view-write": ""
-    },
-    "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
-    },
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "기본 테마",

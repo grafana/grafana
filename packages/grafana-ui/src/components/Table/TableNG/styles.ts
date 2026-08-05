@@ -61,7 +61,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
 
   return {
     interactionToolbar: css({
-      minHeight: 36,
+      minHeight: TABLE.INTERACTION_TOOLBAR_HEIGHT,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -75,7 +75,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       minBlockSize: 0,
     }),
     gridViewportWithToolbar: css({
-      blockSize: 'calc(100% - 36px)',
+      blockSize: `calc(100% - ${TABLE.INTERACTION_TOOLBAR_HEIGHT}px)`,
     }),
     grid: css({
       '--rdg-background-color': bgColor,
@@ -268,7 +268,6 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       padding: theme.spacing(0, 1, 0, 2),
     }),
     menuItem: css({ maxWidth: '200px' }),
-    safariWrapper: css({ contain: 'strict', height: '100%' }),
   };
 });
 
