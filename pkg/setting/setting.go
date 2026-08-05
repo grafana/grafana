@@ -1191,18 +1191,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	}
 
 	alertingAnnotations := cfg.Raw.Section("unified_alerting.state_history.annotations")
-	if alertingAnnotations.Key("max_age").Value() == "" && section.Key("max_annotations_to_keep").Value() == "" {
-		// Although this section is not documented anymore, we decided to keep it to avoid potential data-loss when user upgrades Grafana and does not change the setting.
-		// TODO delete some time after Grafana 11.
-		alertingSection := cfg.Raw.Section("alerting")
-		cleanup := newAnnotationCleanupSettings(alertingSection, "max_annotation_age")
-		if cleanup.MaxCount > 0 || cleanup.MaxAge > 0 {
-			cfg.Logger.Warn("settings 'max_annotations_to_keep' and 'max_annotation_age' in section [alerting] are deprecated. Please use settings 'max_annotations_to_keep' and 'max_age' in section [unified_alerting.state_history.annotations]")
-		}
-		cfg.AlertingAnnotationCleanupSetting = cleanup
-	} else {
-		cfg.AlertingAnnotationCleanupSetting = newAnnotationCleanupSettings(alertingAnnotations, "max_age")
-	}
+	cfg.AlertingAnnotationCleanupSetting = newAnnotationCleanupSettings(alertingAnnotations, "max_age")
 
 	cfg.DashboardAnnotationCleanupSettings = newAnnotationCleanupSettings(dashboardAnnotation, "max_age")
 	cfg.APIAnnotationCleanupSettings = newAnnotationCleanupSettings(apiIAnnotation, "max_age")
@@ -1681,10 +1670,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		if len(kv) == 2 {
 			cfg.ReportingStaticContext[strings.TrimSpace("_static_context_"+kv[0])] = strings.TrimSpace(kv[1])
 		}
-	}
-
-	if err := cfg.readAlertingSettings(iniFile); err != nil {
-		return err
 	}
 
 	explore := iniFile.Section("explore")
@@ -2268,17 +2253,6 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 	cfg.PDFsDir = filepath.Join(cfg.DataPath, "pdf")
-}
-
-func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
-	// This check is kept to prevent users that upgrade to Grafana 11 with the legacy alerting enabled. This should prevent them from accidentally upgrading without migration to Unified Alerting.
-	alerting := iniFile.Section("alerting")
-	enabled, err := alerting.Key("enabled").Bool()
-	if err == nil && enabled {
-		cfg.Logger.Error("Option '[alerting].enabled' cannot be true. Legacy Alerting is removed. It is no longer deployed, enhanced, or supported. Delete '[alerting].enabled' and use '[unified_alerting].enabled' to enable Grafana Alerting. For more information, refer to the documentation on upgrading to Grafana Alerting (https://grafana.com/docs/grafana/v10.4/alerting/set-up/migrating-alerts)")
-		return fmt.Errorf("invalid setting [alerting].enabled")
-	}
-	return nil
 }
 
 func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {

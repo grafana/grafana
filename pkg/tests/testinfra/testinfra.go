@@ -431,13 +431,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	_, err = anonSect.NewKey("enabled", "true")
 	require.NoError(t, err)
 
-	alertingSect, err := cfg.NewSection("alerting")
-	require.NoError(t, err)
-	_, err = alertingSect.NewKey("notification_timeout_seconds", "1")
-	require.NoError(t, err)
-	_, err = alertingSect.NewKey("max_attempts", "3")
-	require.NoError(t, err)
-
 	if opts.EnableRecordingRules {
 		recordingRulesSect, err := cfg.NewSection("recording_rules")
 		require.NoError(t, err)
