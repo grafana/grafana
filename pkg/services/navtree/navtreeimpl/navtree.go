@@ -1,6 +1,7 @@
 package navtreeimpl
 
 import (
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -340,8 +341,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Icon:     "library-panel",
 		})
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagGlobalDashboardVariables) &&
+		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagGrafanaDashboardGlobalVariables, false, openfeature.TransactionContext(c.Req.Context())) &&
 			hasAccess(ac.EvalAny(
 				ac.EvalPermission(dashboards.ActionDashboardsCreate),
 				ac.EvalPermission(dashboards.ActionDashboardsWrite),

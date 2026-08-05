@@ -991,6 +991,13 @@ export const versionedComponents = {
     },
     active: { [MIN_GRAFANA_VERSION]: () => '[class*="-activeTabStyle"]' },
   },
+  TabbedContainer: {
+    // Shared by every TabbedContainer, so scope it to the surrounding container
+    // (for example pages.Explore.QueryHistory.container) to address one panel's close button.
+    closeButton: {
+      '13.2.0': 'data-testid tabbed-container-close-button',
+    },
+  },
   RefreshPicker: {
     runButtonV2: {
       [MIN_GRAFANA_VERSION]: 'data-testid RefreshPicker run button',

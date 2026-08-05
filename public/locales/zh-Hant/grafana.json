@@ -4794,6 +4794,7 @@
       "not-found": "<0>未找到：<config /></0>"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + 滑鼠右鍵",
       "middle-mouse": "滑鼠中鍵",
       "pan-title": "平移：",
@@ -9188,6 +9189,7 @@
       "name-lookup-field": "查找欄位"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "根據預設欄位名稱自動識別位置資料",
         "description-coords": "指定緯度和經度欄位",

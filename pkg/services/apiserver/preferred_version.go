@@ -28,7 +28,7 @@ func applyPreferredAPIVersions(logger log.Logger, cfg *setting.Cfg, scheme *runt
 		if part == "" {
 			continue
 		}
-		gv, err := ParseGroupVersionSetting(part)
+		gv, err := ParseGroupVersionSetting(part, "preferred_api_version")
 		if err != nil {
 			return err
 		}
@@ -41,12 +41,17 @@ func applyPreferredAPIVersions(logger log.Logger, cfg *setting.Cfg, scheme *runt
 
 // ParseGroupVersionSetting parses a "group/version" string (e.g.
 // "dashboard.grafana.app/v1") into a GroupVersion. It requires both
-// group and version to be present and non-empty.
-func ParseGroupVersionSetting(s string) (schema.GroupVersion, error) {
+// group and version to be present and non-empty. The optional settingName names
+// the offending config key in the error so a bad value points at the right setting.
+func ParseGroupVersionSetting(s string, settingName ...string) (schema.GroupVersion, error) {
+	key := "group/version"
+	if len(settingName) > 0 && settingName[0] != "" {
+		key = settingName[0]
+	}
 	parts := strings.Split(s, "/")
 	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
 		return schema.GroupVersion{}, fmt.Errorf(
-			"invalid preferred_api_version entry %q (expected format is group/version, e.g. dashboard.grafana.app/v1)", s)
+			"invalid %s entry %q (expected format is group/version, e.g. dashboard.grafana.app/v1)", key, s)
 	}
 	return schema.GroupVersion{Group: parts[0], Version: parts[1]}, nil
 }
@@ -117,7 +122,7 @@ func ReorderGroupVersionsForLegacyCodec(logger log.Logger, cfg *setting.Cfg, sch
 		if part == "" {
 			continue
 		}
-		gv, err := ParseGroupVersionSetting(part)
+		gv, err := ParseGroupVersionSetting(part, "preferred_api_version")
 		if err != nil {
 			return nil, err
 		}

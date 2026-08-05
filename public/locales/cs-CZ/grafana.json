@@ -4908,6 +4908,7 @@
       "not-found": "<0>Nenalezeno: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + pravé tlačítko myši",
       "middle-mouse": "Prostřední tlačítko myši",
       "pan-title": "Posouvání:",
@@ -9371,6 +9372,7 @@
       "name-lookup-field": "Pole vyhledávání"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Automaticky identifikovat údaje o umístění na základě výchozích názvů polí",
         "description-coords": "Zadejte pole pro zeměpisnou šířku a délku",
