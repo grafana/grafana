@@ -6,7 +6,6 @@ import { t } from '@grafana/i18n';
 import { type SceneObject, sceneGraph } from '@grafana/scenes';
 import { Menu, Popover, Text, useStyles2 } from '@grafana/ui';
 
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { type AutoLayoutScope, DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -287,7 +286,12 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
 }
 
 function getLayoutContainer(manager: DashboardLayoutManager): SceneObject {
-  return dashboardSceneGraph.findSectionOwner(manager) ?? getDashboardSceneFor(manager);
+  for (let current: SceneObject | undefined = manager; current; current = current.parent) {
+    if (current instanceof RowItem || current instanceof TabItem) {
+      return current;
+    }
+  }
+  return getDashboardSceneFor(manager);
 }
 
 function getLayoutScope(container: SceneObject): AutoLayoutScope {
