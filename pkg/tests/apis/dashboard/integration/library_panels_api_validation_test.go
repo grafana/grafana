@@ -509,6 +509,8 @@ func TestIntegrationLibraryPanelMode5EnforcesWritePermissions(t *testing.T) {
 	adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getLibraryElementGVR())
 	editorClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getLibraryElementGVR())
 	viewerClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, getLibraryElementGVR())
+	// Hosted storage-boundary regression: https://github.com/grafana/grafana/pull/130108#issuecomment-5192500857
+	viewerServiceAccountClient := getServiceAccountResourceClient(t, ctx.Helper, ctx.ViewerServiceAccountToken, ctx.OrgID, getLibraryElementGVR())
 
 	panel := &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": dashboardV0.APIGroup + "/" + dashboardV0.VERSION,
@@ -540,6 +542,14 @@ func TestIntegrationLibraryPanelMode5EnforcesWritePermissions(t *testing.T) {
 
 	err = viewerClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
 	require.True(t, apierrors.IsForbidden(err), "Viewer delete must be forbidden, got %v", err)
+
+	serviceAccountUpdate := created.DeepCopy()
+	require.NoError(t, unstructured.SetNestedField(serviceAccountUpdate.Object, "Viewer service account must not update this", "spec", "description"))
+	_, err = viewerServiceAccountClient.Resource.Update(context.Background(), serviceAccountUpdate, v1.UpdateOptions{})
+	require.True(t, apierrors.IsForbidden(err), "Viewer service account update must be forbidden, got %v", err)
+
+	err = viewerServiceAccountClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
+	require.True(t, apierrors.IsForbidden(err), "Viewer service account delete must be forbidden, got %v", err)
 
 	unchanged, err := adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
 	require.NoError(t, err)
