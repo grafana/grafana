@@ -304,11 +304,6 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
-  * Enables default layout selector in dashboard settings
-  * @default true
-  */
-  dashboardDefaultLayoutSelector?: boolean;
-  /**
   * Enables undo/redo in dynamic dashboards
   * @default false
   */
@@ -394,11 +389,6 @@ export interface FeatureToggles {
   */
   alertingSaveStatePeriodic?: boolean;
   /**
-  * Enables the compressed protobuf-based alert state storage. Default is enabled.
-  * @default true
-  */
-  alertingSaveStateCompressed?: boolean;
-  /**
   * In-development feature flag for the scope api using the app platform.
   * @default false
   */
@@ -480,7 +470,7 @@ export interface FeatureToggles {
   grafanaManagedRecordingRules?: boolean;
   /**
   * Enables Saved queries (query library) feature
-  * @default false
+  * @default true
   */
   queryLibrary?: boolean;
   /**
@@ -490,12 +480,12 @@ export interface FeatureToggles {
   playlistsRBAC?: boolean;
   /**
   * Enables Saved queries (query library) RBAC permissions
-  * @default false
+  * @default true
   */
   savedQueriesRBAC?: boolean;
   /**
   * Enables the new Saved queries (query library) modal experience
-  * @default false
+  * @default true
   */
   newSavedQueriesExperience?: boolean;
   /**
@@ -815,7 +805,7 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
-  *
+  * 
   * @default true
   */
   alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
@@ -1106,11 +1096,6 @@ export interface FeatureToggles {
   */
   prometheusTypeMigration?: boolean;
   /**
-  * Enables running plugins in containers
-  * @default false
-  */
-  pluginContainers?: boolean;
-  /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
   */
@@ -1190,11 +1175,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAlertingHistorian?: boolean;
-  /**
-  * Enables support for section level variables (rows and tabs)
-  * @default true
-  */
-  dashboardSectionVariables?: boolean;
   /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false

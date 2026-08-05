@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/reconciler"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -38,6 +39,7 @@ type ServerOptions struct {
 	Backend          resource.StorageBackend
 	VectorBackend    vector.VectorBackend
 	Embedder         *embedder.Embedder
+	Reranker         *rerank.Reranker
 	OverridesService *resource.OverridesService
 	Cfg              *setting.Cfg
 	Tracer           trace.Tracer
@@ -74,6 +76,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
+		withReranker,
 		withVectorMetrics,
 		withVectorIndexers,
 		withQOSQueue,
@@ -112,6 +115,7 @@ func NewUninitializedSearchServer(opts ServerOptions) (resource.SearchServer, er
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
+		withReranker,
 		withVectorMetrics,
 		withSearch,
 	)
@@ -159,10 +163,16 @@ func withSecureValueService(opts *ServerOptions, resourceOpts *resource.Resource
 }
 
 func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	authzOpts := resource.AuthzOptions{
+		Registry:         opts.Reg,
+		ExemptionEnabled: opts.Cfg.UnifiedStorageAuthzExemptionEnabled,
+		ExemptResources:  opts.Cfg.UnifiedStorageAuthzExemptResources,
+	}
+	if err := resource.ValidateAuthzOptions(authzOpts); err != nil {
+		return err
+	}
 	if opts.AccessClient != nil {
-		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{
-			Registry: opts.Reg,
-		})
+		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, authzOpts)
 	}
 	return nil
 }
@@ -221,6 +231,13 @@ func withVectorBackend(opts *ServerOptions, resourceOpts *resource.ResourceServe
 // the VectorSearch handler returns Unimplemented when it's absent.
 func withEmbedder(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.Embedder = opts.Embedder
+	return nil
+}
+
+// withReranker propagates the optional Reranker through. nil is allowed;
+// HybridSearch then returns RRF ordering and min_relevance is a no-op.
+func withReranker(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.Reranker = opts.Reranker
 	return nil
 }
 

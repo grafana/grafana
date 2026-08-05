@@ -3,6 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Box, FilterInput, Icon, Label, Stack, useStyles2 } from '@grafana/ui';
 
@@ -88,7 +89,7 @@ export default function RulesFilter({ viewMode, onViewModeChange }: RulesFilterP
               render={({ field }) => (
                 <FilterInput
                   id="rulesSearchInput"
-                  data-testid="search-query-input"
+                  data-testid={selectors.pages.Alerting.searchInput}
                   placeholder={t(
                     'alerting.rules-filter.filter-options.placeholder-search-input',
                     'Search by name or enter filter query...'

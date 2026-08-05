@@ -15,8 +15,13 @@ import { DashboardVersionError, type DashboardWithAccessInfo } from '../api/type
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
 
-// scripts return arbitrary user-authored data; it is trusted to be a dashboard spec downstream
 type ScriptedDashboardExecution = { data: DashboardDataDTO };
+
+// Scripted dashboards are arbitrary user code, so nothing has validated what they return.
+// Accept any object and let the rest of the loading pipeline deal with the details.
+function isDashboardData(value: unknown): value is DashboardDataDTO {
+  return typeof value === 'object' && value !== null;
+}
 
 interface DashboardLoaderSrvLike<T> {
   loadDashboard(
@@ -37,7 +42,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
 
   abstract loadSnapshot(slug: string): Promise<T>;
 
-  protected loadScriptedDashboard(file: string) {
+  protected loadScriptedDashboard(file: string): Promise<DashboardDTO> {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return getBackendSrv()
@@ -67,9 +72,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
   }
 
   private async executeScript(result: string): Promise<ScriptedDashboardExecution> {
-    // Async-load dependencies used only in scripted dashboards to avoid them being in the main
-    // bundle if not needed. They are a public contract with user-authored scripts, so the real
-    // moment API (not the luxon-backed compat shim) must be provided here.
+    // Async-load dependencies used only in scripted dashboards to avoid them being in the main bundle, if not needed
     const [{ default: jQuery }, { default: moment }, { default: lodash }, { default: kbn }] = await Promise.all([
       import('jquery'),
       import('moment'),
@@ -81,7 +84,6 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       dashboardSrv: getDashboardSrv(),
       datasourceSrv: getDatasourceSrv(),
     };
-
     const scriptFunc = new Function(
       'ARGS',
       'kbn',
@@ -95,7 +97,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       'services',
       result
     );
-    const scriptResult = scriptFunc(
+    const scriptResult: unknown = scriptFunc(
       locationService.getSearchObject(),
       kbn,
       dateMath,
@@ -108,14 +110,22 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
       services
     );
 
-    // Handle async dashboard scripts. `typeof` check instead of lodash's isFunction so this
-    // module needs no static lodash import.
+    // Handle async dashboard scripts
     if (typeof scriptResult === 'function') {
-      return new Promise((resolve) => {
-        scriptResult((dashboard: DashboardDataDTO) => {
+      return new Promise((resolve, reject) => {
+        scriptResult((dashboard: unknown) => {
+          if (!isDashboardData(dashboard)) {
+            reject(new Error('Scripted dashboard did not return a dashboard'));
+            return;
+          }
+
           resolve({ data: dashboard });
         });
       });
+    }
+
+    if (!isDashboardData(scriptResult)) {
+      throw new Error('Scripted dashboard did not return a dashboard');
     }
 
     return { data: scriptResult };

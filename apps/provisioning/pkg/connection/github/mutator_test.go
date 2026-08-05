@@ -1,7 +1,6 @@
 package github_test
 
 import (
-	"context"
 	"encoding/base64"
 	"testing"
 
@@ -113,7 +112,7 @@ func TestMutate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GitlabConnectionType,
-					Gitlab: &provisioning.GitlabConnectionConfig{
+					OAuth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "client-id",
 					},
 				},
@@ -199,7 +198,7 @@ func TestMutate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 
 			err := github.Mutate(ctx, tt.obj)
 
@@ -220,7 +219,7 @@ func TestMutate(t *testing.T) {
 
 func TestMutate_MultipleCallsIdempotent(t *testing.T) {
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
-	ctx := context.Background()
+	ctx := t.Context()
 
 	conn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},

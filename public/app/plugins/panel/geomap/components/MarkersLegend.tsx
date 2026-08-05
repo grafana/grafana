@@ -7,8 +7,7 @@ import {
   type GrafanaTheme2,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { useStyles2, type VizLegendItem } from '@grafana/ui';
+import { useStyles2, useTheme2, type VizLegendItem } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getThresholdItems } from 'app/core/components/TimelineChart/utils';
@@ -22,6 +21,7 @@ export interface MarkersLegendProps {
 
 export function MarkersLegend({ layerName, styleConfig }: MarkersLegendProps) {
   const style = useStyles2(getStyles);
+  const theme = useTheme2();
 
   if (!styleConfig) {
     return <></>;
@@ -54,7 +54,7 @@ export function MarkersLegend({ layerName, styleConfig }: MarkersLegendProps) {
   const colorMode = getFieldColorModeForField(colorField);
 
   if (colorMode.isContinuous && colorMode.getColors) {
-    const colors = colorMode.getColors(config.theme2);
+    const colors = colorMode.getColors(theme);
     const colorRange = getMinMaxAndDelta(colorField);
     // TODO: explore showing mean on the gradient scale
     // const stats = reduceField({
@@ -89,7 +89,7 @@ export function MarkersLegend({ layerName, styleConfig }: MarkersLegendProps) {
     return <div></div>; // don't show anything in the legend
   }
 
-  const items = getThresholdItems(colorField!.config, config.theme2);
+  const items = getThresholdItems(colorField!.config, theme);
   return (
     <div className={style.infoWrap}>
       <div className={style.layerName}>{layerName}</div>

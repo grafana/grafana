@@ -55,7 +55,7 @@ export class NotebookScenePageStateManager extends DashboardScenePageStateManage
   ): DashboardScene | null {
     const scene = super.transformResponseToScene(rsp, options);
     // The POC notebook is read-only. Marking the scene as embedded hides the dashboard
-    // edit/share/export toolbar actions and the outline/edit pane (canEditDashboard() and
+    // edit/share/export toolbar actions and the outline/sidebar (canEditDashboard() and
     // the share button both require !isEmbedded) while the page + title still render.
     scene?.setState({ meta: { ...scene.state.meta, isEmbedded: true } });
 

@@ -13,20 +13,29 @@ export function FooterActions({ children }: { children: ReactNode }) {
   );
 }
 
-interface FooterActionProps {
-  /** Renders a TextLink when set; a text Button otherwise, for actions that mutate instead of navigate. */
-  href?: string;
-  onClick: () => void;
+/** Renders a TextLink when href set; a text Button otherwise, for actions that mutate instead of navigate. */
+type FooterActionProps = {
   icon?: IconName;
   children: ReactNode;
-}
+} & (
+  | {
+      href: string;
+      external?: boolean;
+      onClick?: () => void;
+    }
+  | {
+      href?: never;
+      external?: never;
+      onClick: () => void;
+    }
+);
 
 /**
  * Single source of the homepage card footer-action treatment. Semantics follow behavior —
  * navigation renders a real link, everything else a <button>.
  */
-export function FooterAction({ href, onClick, icon, children }: FooterActionProps) {
-  const styles = useStyles2(getStyles);
+export function FooterAction({ href, external, onClick, icon, children }: FooterActionProps) {
+  const styles = useStyles2(getStyles, external);
 
   // Flex centering aligns the icon with the text line — no pixel-nudge margins needed.
   const content = icon ? (
@@ -40,9 +49,18 @@ export function FooterAction({ href, onClick, icon, children }: FooterActionProp
 
   if (href) {
     return (
-      <TextLink inline={false} color="secondary" variant="bodySmall" href={href} onClick={onClick}>
-        {content}
-      </TextLink>
+      <div className={styles.link}>
+        <TextLink
+          inline={false}
+          color="secondary"
+          variant="bodySmall"
+          href={href}
+          external={external}
+          onClick={onClick}
+        >
+          {content}
+        </TextLink>
+      </div>
     );
   }
 
@@ -53,7 +71,15 @@ export function FooterAction({ href, onClick, icon, children }: FooterActionProp
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, external?: boolean) => ({
+  // Remove default external icon from TextLink
+  link: css({
+    lineHeight: 1,
+
+    '& > a > svg:last-child': {
+      display: external ? 'none' : undefined,
+    },
+  }),
   // Visually align the button with the TextLink footer actions
   button: css({
     '&&': {

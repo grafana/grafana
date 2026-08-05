@@ -4,6 +4,10 @@ import { PageObject } from './PageObject';
 
 // Controls above the dashboard: timepicker, refresh button, edit button, save button
 export class Controls extends PageObject {
+  getContainer(): Locator {
+    return this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.Controls);
+  }
+
   private getEditButton(label: RegExp): Locator {
     return this.dashboardPage
       .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.editButton)
@@ -38,11 +42,54 @@ export class Controls extends PageObject {
     });
   }
 
+  async openShareSnapshotDrawer() {
+    await test.step('Open share snapshot drawer', async () => {
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu)
+        .click();
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.pages.Dashboard.DashNav.newShareButton.menu.shareSnapshot)
+        .click();
+    });
+  }
+
+  async clickBackToDashboard() {
+    await test.step('Click back to dashboard', async () => {
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+        .click();
+    });
+  }
+
   async openControlsMenu() {
     await test.step('Open controls menu', async () => {
       await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.ControlsButton).click();
     });
   }
+
+  readonly timeRange = {
+    set: async (from: string, to: string) => {
+      await test.step(`Set time range from "${from}" to "${to}"`, async () => {
+        await this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.openButton).click();
+        const fromField = this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.fromField);
+        await fromField.click();
+        await fromField.fill(from);
+        const toField = this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.toField);
+        await toField.click();
+        await toField.fill(to);
+        await this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.applyTimeRange).click();
+      });
+    },
+    selectPreset: async (presetLabel: string) => {
+      await test.step(`Select time range preset "${presetLabel}"`, async () => {
+        await this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.openButton).click();
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.components.TimePicker.overlayContent)
+          .getByText(presetLabel)
+          .click();
+      });
+    },
+  };
 
   readonly variables = {
     getLabel: (variableLabel: string): Locator =>
@@ -51,16 +98,56 @@ export class Controls extends PageObject {
       // the trigger is the next sibling of its label
       return this.variables.getLabel(variableLabel).locator('+ *');
     },
-    openDropdown: async (variableLabel: string) => {
-      await test.step(`Open dropdown of variable "${variableLabel}"`, async () => {
-        await this.variables.getDropdownTrigger(variableLabel).click();
-      });
+    getInput: (variableLabel: string): Locator => {
+      // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
+      return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
     },
     getOption: (optionLabel: string): Locator => this.page.getByRole('option', { name: optionLabel, exact: true }),
+    openDropdown: async (variableLabel: string) => {
+      await test.step(`Open dropdown of variable "${variableLabel}"`, async () => {
+        // clicking the input itself and not the trigger avoids the value chips and clear icon
+        await this.variables.getInput(variableLabel).click();
+      });
+    },
     selectOption: async (variableLabel: string, optionLabel: string) => {
       await test.step(`Select option "${optionLabel}" of variable "${variableLabel}"`, async () => {
         await this.variables.openDropdown(variableLabel);
-        await this.variables.getOption(optionLabel).click();
+        const option = this.variables.getOption(optionLabel);
+
+        // ensure options are rendered before inspecting the checkbox (locator.count below does not wait)
+        await option.waitFor();
+
+        // multi-value options render a checkbox, we throw if already selected so we don't toggle it off
+        const checkbox = option.getByRole('checkbox');
+        if ((await checkbox.count()) > 0 && (await checkbox.isChecked())) {
+          throw new Error(
+            `Cannot select option "${optionLabel}" of variable "${variableLabel}": it is already selected`
+          );
+        }
+
+        await option.click();
+      });
+    },
+    // multi-value variables only (options rendered as checkboxes)
+    deselectOption: async (variableLabel: string, optionLabel: string) => {
+      await test.step(`Deselect option "${optionLabel}" of variable "${variableLabel}"`, async () => {
+        await this.variables.openDropdown(variableLabel);
+
+        const option = this.variables.getOption(optionLabel);
+        if (!(await option.getByRole('checkbox').isChecked())) {
+          throw new Error(`Cannot deselect option "${optionLabel}" of variable "${variableLabel}": it is not selected`);
+        }
+
+        await option.click();
+      });
+    },
+    setValue: async (variableLabel: string, text: string) => {
+      await test.step(`Set value of variable "${variableLabel}" to "${text}"`, async () => {
+        const input = this.variables.getInput(variableLabel);
+        await input.click();
+        await input.clear();
+        await input.fill(text);
+        await input.press('Enter');
       });
     },
     addFilter: async (variableLabel: string, filter: [string, string, string]) => {
@@ -72,9 +159,7 @@ export class Controls extends PageObject {
         await this.page.getByRole('option', { name: filter[2], exact: true }).click();
       });
     },
-    getInput: (variableLabel: string): Locator => {
-      // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
-      return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
-    },
   };
+
+  readonly filters = {};
 }
