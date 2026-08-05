@@ -298,7 +298,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     drawerMotion: css({
       '&-appear': {
         [theme.transitions.handleMotion('no-preference')]: {
-          transform: 'translateX(100%)',
+          transform: visualRefreshEnabled ? `translateX(calc(100% + ${theme.spacing(1)}))` : 'translateX(100%)',
           transition: 'none',
         },
         [theme.transitions.handleMotion('reduce')]: {
