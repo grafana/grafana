@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, type RelativeTimeRange, getDefaultRelativeTimeRange, rangeUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -32,15 +32,10 @@ export const QueryOptions = ({
   const [localMinInterval, setLocalMinInterval] = useState(queryOptions.minInterval ?? '');
 
   // Keep local state in sync when external props change
-  const prevQueryOptionsRef = useRef(queryOptions);
-  if (
-    prevQueryOptionsRef.current.maxDataPoints !== queryOptions.maxDataPoints ||
-    prevQueryOptionsRef.current.minInterval !== queryOptions.minInterval
-  ) {
+  useEffect(() => {
     setLocalMaxDataPoints(queryOptions.maxDataPoints?.toString() ?? '');
     setLocalMinInterval(queryOptions.minInterval ?? '');
-    prevQueryOptionsRef.current = queryOptions;
-  }
+  }, [queryOptions.maxDataPoints, queryOptions.minInterval]);
 
   const stateRef = useRef({ localMaxDataPoints, localMinInterval, queryOptions, onChangeQueryOptions, index });
   stateRef.current = { localMaxDataPoints, localMinInterval, queryOptions, onChangeQueryOptions, index };
@@ -57,6 +52,7 @@ export const QueryOptions = ({
     if (!isNaN(maxDataPointsNumber) && maxDataPointsNumber !== 0) {
       validatedMaxDataPoints = maxDataPointsNumber;
     } else {
+      // Clear the value if the input is intentionally empty, or if an invalid number/zero was entered
       validatedMaxDataPoints = undefined;
       newLocalMaxDataPoints = '';
     }

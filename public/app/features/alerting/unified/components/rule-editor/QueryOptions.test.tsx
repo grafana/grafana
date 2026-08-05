@@ -98,4 +98,41 @@ describe('QueryOptions', () => {
     expect(onChangeQueryOptions).toHaveBeenCalledTimes(1);
     expect(onChangeQueryOptions).toHaveBeenCalledWith({ maxDataPoints: undefined, minInterval: '1m' }, 0);
   });
+
+  it('should reset local state when external props change after a local edit', () => {
+    const onChangeQueryOptions = jest.fn();
+    const queryOptions = { maxDataPoints: 100, minInterval: '1m' };
+
+    const { rerender } = render(
+      <QueryOptions
+        query={defaultQuery}
+        queryOptions={queryOptions}
+        onChangeQueryOptions={onChangeQueryOptions}
+        index={0}
+      />
+    );
+
+    // Open the toggletip
+    const button = screen.getByRole('button', { name: /Options/i });
+    fireEvent.click(button);
+
+    const maxDataPointsInput = screen.getByRole('spinbutton', { name: /Max data points/i });
+
+    // User types a local edit
+    fireEvent.change(maxDataPointsInput, { target: { value: '999' } });
+    expect(maxDataPointsInput).toHaveValue(999);
+
+    // External prop change comes in (e.g. from another part of the UI)
+    rerender(
+      <QueryOptions
+        query={defaultQuery}
+        queryOptions={{ maxDataPoints: 500, minInterval: '10s' }}
+        onChangeQueryOptions={onChangeQueryOptions}
+        index={0}
+      />
+    );
+
+    // Local state should be reset to the new external values
+    expect(maxDataPointsInput).toHaveValue(500);
+  });
 });
