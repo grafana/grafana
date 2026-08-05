@@ -212,6 +212,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       },
     }),
     cellNested: css({
+      overflow: 'visible',
       '&[aria-selected=true]': { outline: 'none' },
       '&:hover': { backgroundColor: 'transparent' },
     }),

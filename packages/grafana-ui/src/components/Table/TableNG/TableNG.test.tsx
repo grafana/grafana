@@ -549,6 +549,60 @@ describe('TableNG', () => {
       }
     });
 
+    it('lets nested content use the full viewport when the group column has a fixed width', async () => {
+      const nestedFrame = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            { name: 'Server', type: FieldType.string, values: ['server-1'], config: { custom: {} } },
+            { name: 'Priority', type: FieldType.string, values: ['high'], config: { custom: {} } },
+          ],
+        })
+      );
+      const groupedFrame = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'Status',
+              type: FieldType.string,
+              values: ['Running'],
+              config: { custom: { width: 188 } },
+            },
+            {
+              name: '__nestedFrames',
+              type: FieldType.nestedFrames,
+              values: [[nestedFrame]],
+              config: { custom: {} },
+            },
+          ],
+        })
+      );
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={groupedFrame} width={800} height={600} />
+      );
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      const nestedGrid = screen.getByText('server-1').closest('[role="grid"]');
+      expect(nestedGrid?.parentElement).toHaveStyle({ width: '800px' });
+    });
+
+    it('shows an ungroup action on the grouped column header', async () => {
+      const onUngroup = jest.fn();
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createNestedDataFrame()}
+          width={800}
+          height={600}
+          groupedFieldName="Column A"
+          onUngroup={onUngroup}
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Ungroup Column A' }));
+      expect(onUngroup).toHaveBeenCalledTimes(1);
+    });
+
     it('auto-expands all rows when expandAllRows is set in frame meta', () => {
       const { container } = render(
         <TableNG
@@ -848,6 +902,24 @@ describe('TableNG', () => {
       await user.click(screen.getByRole('button', { name: 'Columns (1 hidden)' }));
       await user.click(screen.getByRole('checkbox', { name: 'Column A' }));
       expect(container.querySelectorAll('[role="columnheader"]')).toHaveLength(2);
+    });
+
+    it('requests ephemeral grouping from a column header menu', async () => {
+      const user = userEvent.setup();
+      const onGroupByColumn = jest.fn();
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          onGroupByColumn={onGroupByColumn}
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Column menu for Column A' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Group by this column' }));
+      expect(onGroupByColumn).toHaveBeenCalledWith('Column A');
     });
   });
 

@@ -156,6 +156,9 @@ export interface ColumnBuildConfig {
   gridRef: RefObject<DataGridHandle | null>;
   maxRowHeight?: number;
   numFrozenColsFullyInView: number;
+  groupedFieldName?: string;
+  onGroupByColumn?: (displayName: string) => void;
+  onUngroup?: () => void;
   onHideColumn?: (displayName: string) => void;
   onCellFilterAdded?: TableFilterActionCallback;
   onTogglePin?: (displayName: string) => void;
@@ -214,6 +217,9 @@ function buildColumnsFromFields(
     enableColumnReorder,
     showTypeIcons,
     timeRange,
+    groupedFieldName,
+    onGroupByColumn,
+    onUngroup,
     onHideColumn,
     onTogglePin,
     pinnedColumns,
@@ -543,6 +549,8 @@ function buildColumnsFromFields(
             canHideColumn={fields.length > 1}
             isPinned={pinnedColumns?.has(displayName)}
             onTogglePin={onTogglePin ? () => onTogglePin(displayName) : undefined}
+            onGroupByColumn={onGroupByColumn ? () => onGroupByColumn(displayName) : undefined}
+            onUngroup={displayName === groupedFieldName ? onUngroup : undefined}
           />
         </HeaderCellContainer>
       ),

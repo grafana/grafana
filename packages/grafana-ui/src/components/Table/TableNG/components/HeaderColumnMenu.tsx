@@ -13,10 +13,11 @@ import { MenuItem } from '../../../Menu/MenuItem';
 
 interface HeaderColumnMenuProps {
   displayName: string;
-  onHideColumn: () => void;
+  onHideColumn?: () => void;
   canHideColumn: boolean;
   isPinned: boolean;
   onTogglePin?: () => void;
+  onGroupByColumn?: () => void;
 }
 
 export function HeaderColumnMenu({
@@ -25,6 +26,7 @@ export function HeaderColumnMenu({
   canHideColumn,
   isPinned,
   onTogglePin,
+  onGroupByColumn,
 }: HeaderColumnMenuProps) {
   const styles = useStyles2(getStyles);
 
@@ -42,15 +44,23 @@ export function HeaderColumnMenu({
             onClick={() => onTogglePin()}
           />
         )}
-        <MenuItem
-          label={t('grafana-ui.table.hide-column', 'Hide column')}
-          icon="eye-slash"
-          disabled={!canHideColumn}
-          onClick={() => onHideColumn()}
-        />
+        {onGroupByColumn && (
+          <MenuItem
+            label={t('grafana-ui.table.group-by-column', 'Group by this column')}
+            onClick={() => onGroupByColumn()}
+          />
+        )}
+        {onHideColumn && (
+          <MenuItem
+            label={t('grafana-ui.table.hide-column', 'Hide column')}
+            icon="eye-slash"
+            disabled={!canHideColumn}
+            onClick={() => onHideColumn()}
+          />
+        )}
       </Menu>
     ),
-    [canHideColumn, displayName, isPinned, onHideColumn, onTogglePin]
+    [canHideColumn, displayName, isPinned, onGroupByColumn, onHideColumn, onTogglePin]
   );
 
   return (

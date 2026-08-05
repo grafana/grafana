@@ -1,4 +1,17 @@
-import { getFrameDisplayName, type PanelProps, type SelectableValue } from '@grafana/data';
+import { useEffect, useState } from 'react';
+
+import {
+  applyFieldOverrides,
+  DataTransformerID,
+  type DataFrame,
+  type DataTransformerConfig,
+  FieldMatcherID,
+  getFrameDisplayName,
+  type PanelProps,
+  type SelectableValue,
+  transformDataFrame,
+} from '@grafana/data';
+import { GroupByOperationID, type GroupToNestedTableTransformerOptionsV2 } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { type TableOptions } from '@grafana/schema';
@@ -17,6 +30,29 @@ import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } 
 interface Props extends PanelProps<TableOptions> {
   initialRowIndex?: number;
   sortByBehavior?: 'initial' | 'managed';
+}
+
+interface EphemeralGroupedFrame {
+  fieldName: string;
+  source: DataFrame;
+  frame: DataFrame;
+}
+
+export function createEphemeralGroupTransformation(
+  fieldName: string
+): DataTransformerConfig<GroupToNestedTableTransformerOptionsV2> {
+  return {
+    id: DataTransformerID.groupToNestedTable,
+    options: {
+      rules: [
+        {
+          matcher: { id: FieldMatcherID.byName, options: fieldName },
+          operation: GroupByOperationID.groupBy,
+          aggregations: [],
+        },
+      ],
+    },
+  };
 }
 
 export function TablePanel(props: Props) {
@@ -48,6 +84,36 @@ export function TablePanel(props: Props) {
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
+  const [groupBy, setGroupBy] = useState<{ fieldName: string; frameIndex: number }>();
+  const [groupedFrame, setGroupedFrame] = useState<EphemeralGroupedFrame>();
+  const activeGroupBy = groupBy?.frameIndex === currentIndex ? groupBy.fieldName : undefined;
+
+  useEffect(() => {
+    if (!main || !activeGroupBy) {
+      setGroupedFrame(undefined);
+      return;
+    }
+
+    const transformation = createEphemeralGroupTransformation(activeGroupBy);
+    const subscription = transformDataFrame([transformation], [main]).subscribe((result) => {
+      const processedResult = applyFieldOverrides({
+        data: result,
+        fieldConfig,
+        replaceVariables,
+        theme,
+      });
+      setGroupedFrame({
+        fieldName: activeGroupBy,
+        source: main,
+        frame: processedResult[0] ?? main,
+      });
+    });
+    return () => subscription.unsubscribe();
+  }, [activeGroupBy, fieldConfig, main, replaceVariables, theme]);
+
+  const hasCurrentGroupedFrame =
+    groupedFrame != null && groupedFrame.fieldName === activeGroupBy && groupedFrame.source === main;
+  const displayedFrame = hasCurrentGroupedFrame ? groupedFrame.frame : main;
 
   let tableHeight = height;
 
@@ -68,7 +134,7 @@ export function TablePanel(props: Props) {
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}
-      data={main}
+      data={displayedFrame}
       sortByBehavior={sortByBehavior}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth, fieldScope) =>
@@ -79,6 +145,9 @@ export function TablePanel(props: Props) {
       enableSharedCrosshair={enableSharedCrosshair}
       fieldConfig={fieldConfig}
       getActions={getActions}
+      onGroupByColumn={(fieldName) => setGroupBy({ fieldName, frameIndex: currentIndex })}
+      groupedFieldName={activeGroupBy}
+      onUngroup={activeGroupBy ? () => setGroupBy(undefined) : undefined}
       structureRev={data.structureRev}
       transparent={transparent}
     />

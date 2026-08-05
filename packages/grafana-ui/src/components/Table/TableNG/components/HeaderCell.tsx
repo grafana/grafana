@@ -4,11 +4,13 @@ import memoize from 'micro-memoize';
 import React, { useEffect, useRef } from 'react';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { type Column, type SortDirection } from '@grafana/react-data-grid';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
+import { IconButton } from '../../../IconButton/IconButton';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Filter } from '../Filter/Filter';
 import { getJustifyContent } from '../styles';
@@ -68,6 +70,8 @@ interface HeaderCellProps {
   canHideColumn?: boolean;
   isPinned?: boolean;
   onTogglePin?: () => void;
+  onGroupByColumn?: () => void;
+  onUngroup?: () => void;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -87,6 +91,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   canHideColumn = true,
   isPinned = false,
   onTogglePin,
+  onGroupByColumn,
+  onUngroup,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -160,7 +166,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
         </Stack>
       </div>
 
-      {(filterable || onHideColumn || onTogglePin) && (
+      {(filterable || onHideColumn || onTogglePin || onGroupByColumn || onUngroup) && (
         <div className={styles.headerCellActions}>
           {filterable && (
             <Filter
@@ -176,13 +182,28 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
             />
           )}
 
-          {onHideColumn && (
+          {(onHideColumn || onGroupByColumn) && (
             <HeaderColumnMenu
               displayName={displayName}
               onHideColumn={onHideColumn}
               canHideColumn={canHideColumn}
               isPinned={isPinned}
               onTogglePin={onTogglePin}
+              onGroupByColumn={onGroupByColumn}
+            />
+          )}
+          {onUngroup && (
+            <IconButton
+              className={styles.ungroupButton}
+              name="layers-slash"
+              size="sm"
+              tooltip={t('grafana-ui.table.ungroup-column', 'Ungroup {{name}}', { name: displayName })}
+              aria-label={t('grafana-ui.table.ungroup-column', 'Ungroup {{name}}', { name: displayName })}
+              onClick={(event) => {
+                event.stopPropagation();
+                onUngroup();
+              }}
+              onMouseDown={(event) => event.stopPropagation()}
             />
           )}
         </div>
@@ -214,6 +235,9 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
     flexShrink: 0,
     marginLeft: 'auto',
     pointerEvents: 'auto',
+  }),
+  ungroupButton: css({
+    marginRight: 6,
   }),
   headerCellLabel: css({
     label: 'headerCellLabel',
