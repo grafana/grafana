@@ -161,6 +161,8 @@ export const FlagKeys = {
   TableProtoRowParser: "table.protoRowParser",
   /** Enables the refactored TableNG nested-table implementation */
   TableRefactorNested: "table.refactorNested",
+  /** Enables a rows-as-fields (pivoted) rendering mode for the table panel */
+  TableRowsAsFields: "table.rowsAsFields",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -977,6 +979,17 @@ export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagTableRefactorNested = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.refactorNested", false, options).value;
+};
+
+/**
+ * Enables a rows-as-fields (pivoted) rendering mode for the table panel
+ *
+ * **Details:**
+ * - flag key: `table.rowsAsFields`
+ * - default value: `false`
+ */
+export const useFlagTableRowsAsFields = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.rowsAsFields", false, options).value;
 };
 
 /**

@@ -348,6 +348,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-25,table.refactorNested,experimental,@grafana/dataviz-squad,false,false,true
 2026-07-29,table.paginationPageSize,experimental,@grafana/dataviz-squad,false,false,true
 2026-07-24,table.autoColumnWidths,experimental,@grafana/dataviz-squad,false,false,true
+2026-08-03,table.rowsAsFields,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-23,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-25,grafana.customizableMegaMenu,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-04-20,cujTracking,experimental,@grafana/dashboards-squad,false,false,true

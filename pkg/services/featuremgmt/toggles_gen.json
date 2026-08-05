@@ -5986,6 +5986,21 @@
     },
     {
       "metadata": {
+        "name": "table.rowsAsFields",
+        "resourceVersion": "1785777632172",
+        "creationTimestamp": "2026-08-03T17:20:32Z"
+      },
+      "spec": {
+        "description": "Enables a rows-as-fields (pivoted) rendering mode for the table panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "tableSharedCrosshair",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-12-13T09:33:14Z"
