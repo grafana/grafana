@@ -445,3 +445,53 @@ func TestFixUnionTypeSchemas_TopLevelBareOneOf(t *testing.T) {
 	require.True(t, val, "kind should use x-kubernetes-preserve-unknown-fields when enums differ across branches")
 	require.Empty(t, kindProp.Enum, "enum should be removed from merged kind property")
 }
+
+func TestFixOneOfSchema_RequiredFields(t *testing.T) {
+	defs := map[string]k8scommon.OpenAPIDefinition{
+		"TypeA": {
+			Schema: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"object"},
+					Properties: map[string]spec.Schema{
+						"always_present": {SchemaProps: spec.SchemaProps{Type: []string{"string"}}},
+						"only_in_a":      {SchemaProps: spec.SchemaProps{Type: []string{"string"}}},
+					},
+					Required: []string{"always_present", "only_in_a"},
+				},
+			},
+		},
+		"TypeB": {
+			Schema: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"object"},
+					Properties: map[string]spec.Schema{
+						"always_present": {SchemaProps: spec.SchemaProps{Type: []string{"string"}}},
+					},
+					Required: []string{"always_present"},
+				},
+			},
+		},
+	}
+
+	schema := &spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			OneOf: []spec.Schema{
+				{SchemaProps: spec.SchemaProps{Ref: spec.MustCreateRef("#/definitions/TypeA")}},
+				{SchemaProps: spec.SchemaProps{Ref: spec.MustCreateRef("#/definitions/TypeB")}},
+			},
+		},
+	}
+
+	modified := fixOneOfSchema(schema, defs)
+	require.True(t, modified)
+	
+	// "always_present" is required in both, so it should be required in merged schema.
+	// "only_in_a" is only required in TypeA, so it should NOT be required in merged schema.
+	require.Equal(t, []string{"always_present"}, schema.Required)
+	
+	// Properties should have both fields
+	_, hasAlwaysPresent := schema.Properties["always_present"]
+	require.True(t, hasAlwaysPresent)
+	_, hasOnlyInA := schema.Properties["only_in_a"]
+	require.True(t, hasOnlyInA)
+}

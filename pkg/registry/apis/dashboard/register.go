@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"sort"
 	"strconv"
 	"sync"
 
@@ -1373,6 +1374,9 @@ func fixUnionTypeSchemas(defs map[string]common.OpenAPIDefinition) {
 	// Pass 2: Fix properties within schemas that contain inline oneOf references.
 	// For example, DashboardSpec.layout has an inline oneOf referencing layout kind types,
 	// and DashboardPreferences.layout has an inline oneOf referencing layout kind types.
+	// Note: This pass deliberately skips schemas that already declare a Type (e.g. Type: object).
+	// If a parent schema declares Type: object and has an inline oneOf for a sub-property,
+	// that nested oneOf won't be fixed.
 	for key, def := range defs {
 		modified := false
 		for propName, propSchema := range def.Schema.Properties {
@@ -1417,7 +1421,6 @@ func fixOneOfSchema(schema *spec.Schema, defs map[string]common.OpenAPIDefinitio
 				if !schemasEqualType(&existing, &propSchema) {
 					mergedProps[propName] = spec.Schema{
 						SchemaProps: spec.SchemaProps{
-							Type:        propSchema.Type,
 							Description: propSchema.Description,
 						},
 						VendorExtensible: spec.VendorExtensible{
@@ -1449,10 +1452,14 @@ func fixOneOfSchema(schema *spec.Schema, defs map[string]common.OpenAPIDefinitio
 			schema.Required = append(schema.Required, req)
 		}
 	}
+	sort.Strings(schema.Required)
 	return true
 }
 
 // resolveSchemaRef follows a $ref to find the referenced definition, resolving one level deep.
+// If a oneOf branch is itself a nested union (union-of-unions), its Properties will be empty
+// and the merge silently drops that branch's fields. For Grafana's dashboard schema today
+// this is fine, but if CUE output changes, this may need to be expanded to a loop.
 func resolveSchemaRef(ref *spec.Schema, defs map[string]common.OpenAPIDefinition) *spec.Schema {
 	if ref.Ref.String() == "" {
 		return ref
