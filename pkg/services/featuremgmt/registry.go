@@ -236,15 +236,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "provisioning",
-			Description:     "Enables Git Sync and as-code provisioning for Grafana resources",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "provisioningFolderMetadata",
 			Description:     "Allow setting folder metadata for provisioned folders",
 			Stage:           FeatureStageGeneralAvailability,
@@ -680,7 +671,7 @@ var (
 			Name:        "feedbackButton",
 			Description: "Enables the feedback button in the dashboard edit sidebar",
 			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
 		},
@@ -825,14 +816,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "alertingSaveStateCompressed",
-			Description: "Enables the compressed protobuf-based alert state storage. Default is enabled.",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "scopeApi",
@@ -2064,15 +2047,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "alertingAlertsActivityBanner",
-			Description:  "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "graphiteBackendMode",
 			Description: "Enables the Graphite data source full backend mode",
 			Stage:       FeatureStagePrivatePreview,
@@ -2265,6 +2239,9 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		// Deprecated: prefer grafana.dashboardGlobalVariables. Kept registered so
+		// cloud enablement via the legacy wave remains valid until that flag is
+		// removed in a follow-up after all consumers read the new key.
 		{
 			Name:            "globalDashboardVariables",
 			Description:     "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
@@ -2273,6 +2250,14 @@ var (
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: true,
 			Expression:      "false",
+		},
+		{
+			Name:        "grafana.dashboardGlobalVariables",
+			Description: "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "smoothingTransformation",
@@ -2915,6 +2900,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "paneledit.buttonLabels",
+			Description:  "Shows text labels on the add and stacked view buttons in PanelEditNext",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "grafana.panelEditNextFeedbackEvent",
 			Description:  "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
 			Stage:        FeatureStageExperimental,
@@ -3094,6 +3088,14 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:        "assistant.dashboardPlanning",
+			Description: "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "features.bulkFlagEvalFiltering",
 			Description:  "Filters bulk OFREP flag evaluations to public-metadata flags only",
 			Stage:        FeatureStageExperimental,
@@ -3149,6 +3151,15 @@ var (
 			Description:  "Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "alerting.stateManagerRequireWarm",
+			Description:  "Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},

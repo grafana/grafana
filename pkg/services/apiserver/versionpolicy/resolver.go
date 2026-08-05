@@ -1,19 +1,33 @@
 package versionpolicy
 
 import (
+	"regexp"
+	"strconv"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 var logger = log.New("versionpolicy")
 
-// Resolver merges policy layers and ranks versions against an immutable snapshot of each group's
-// natural (registration) order — highest priority first. The snapshot is captured at construction, so
-// a later preferred-version change to the live scheme cannot move the enforcement ceiling.
+// versionRE parses a Kubernetes version string into (major, stage, stageNumber).
+var versionRE = regexp.MustCompile(`^v(\d+)(?:(alpha|beta)(\d+))?$`)
+
+// Resolver merges policy layers and ranks versions for the maxAllowedVersion ceiling. Ranking is
+// major-first, then maturity within the major (ga > beta > alpha), then stage number — so a higher
+// major always outranks (a v1 cap rejects v2, v2beta1 and v2alpha1 alike) while a lower major is below
+// the cap (v0alpha1 stays writable under a v1 cap). This is deliberately not scheme priority (which can
+// place v0alpha1 above v1) nor CompareKubeAwareVersionStrings (which ranks GA above every pre-release of
+// any major, letting v2beta1 slip under a v1 cap). Cap ranking does not use the per-group slice, but the
+// slice is still ordered and significant in two other ways: membership validates config and fails writes
+// at unknown versions closed, and its head (highest priority) is the group's natural preferred version —
+// what discovery advertises when no preferredVersion is configured (see naturalPreferred).
 type Resolver struct {
+	// order maps a group to its registered versions in scheme priority order, highest first.
 	order map[string][]string
 }
 
-// NewResolver captures an immutable snapshot of group -> versions (highest priority first).
+// NewResolver snapshots each group's registered versions in priority order (highest first); order[0] is
+// the group's natural preferred version.
 func NewResolver(order map[string][]string) *Resolver {
 	snapshot := make(map[string][]string, len(order))
 	for group, versions := range order {
@@ -78,28 +92,64 @@ func (r *Resolver) resolveField(group, field string, layers ...string) string {
 	return result
 }
 
-func (r *Resolver) isRegistered(group, version string) bool {
-	_, ok := r.rank(group, version)
-	return ok
+// hasGroup reports whether the group is registered (served) on this instance.
+func (r *Resolver) hasGroup(group string) bool {
+	return len(r.order[group]) > 0
 }
 
-// rank returns version's priority index (lower = higher priority) and whether it is registered,
-// against the immutable snapshot.
-func (r *Resolver) rank(group, version string) (int, bool) {
-	for i, v := range r.order[group] {
+// naturalPreferred returns the group's highest-priority registered version — what discovery advertises
+// as preferred when no preferredVersion is configured. "" if the group is unknown.
+func (r *Resolver) naturalPreferred(group string) string {
+	if o := r.order[group]; len(o) > 0 {
+		return o[0]
+	}
+	return ""
+}
+
+func (r *Resolver) isRegistered(group, version string) bool {
+	for _, v := range r.order[group] {
 		if v == version {
-			return i, true
+			return true
 		}
 	}
-	return 0, false
+	return false
 }
 
-// Outranks reports whether a ranks strictly higher than b; false if equal or either is unregistered.
+// Outranks reports whether version a is strictly above b for a persist ceiling (major, then maturity,
+// then stage number); false if equal or either is not a registered, parseable version for the group.
 func (r *Resolver) Outranks(group, a, b string) bool {
-	rankA, okA := r.rank(group, a)
-	rankB, okB := r.rank(group, b)
-	if !okA || !okB {
+	if !r.isRegistered(group, a) || !r.isRegistered(group, b) {
 		return false
 	}
-	return rankA < rankB
+	ra, oka := capRank(a)
+	rb, okb := capRank(b)
+	if !oka || !okb {
+		return false
+	}
+	for i := range ra {
+		if ra[i] != rb[i] {
+			return ra[i] > rb[i]
+		}
+	}
+	return false
+}
+
+// capRank turns a version string into a comparable [major, stage, stageNumber] tuple, stage being
+// alpha=0, beta=1, ga=2. ok is false when the string is not a recognized Kubernetes version.
+func capRank(version string) ([3]int, bool) {
+	m := versionRE.FindStringSubmatch(version)
+	if m == nil {
+		return [3]int{}, false
+	}
+	major, _ := strconv.Atoi(m[1])
+	switch m[2] {
+	case "": // no pre-release suffix: GA
+		return [3]int{major, 2, 0}, true
+	case "beta":
+		n, _ := strconv.Atoi(m[3])
+		return [3]int{major, 1, n}, true
+	default: // alpha
+		n, _ := strconv.Atoi(m[3])
+		return [3]int{major, 0, n}, true
+	}
 }

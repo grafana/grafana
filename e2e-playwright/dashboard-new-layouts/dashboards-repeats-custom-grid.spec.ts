@@ -8,7 +8,7 @@ import {
   checkRepeatedPanelTitles,
   verifyChanges,
   movePanel,
-  getPanelPosition,
+  getPanelBox,
   saveDashboard,
   importTestDashboard,
   goToEmbeddedPanel,
@@ -258,26 +258,21 @@ test.describe(
         await expect(panels.getHeaders().last()).toHaveText(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`);
 
         // verify move by panel position
-        let repeatedPanel = await getPanelPosition(
+        let repeatedPanelBox = await getPanelBox(
           dashboardPage,
           selectors,
           `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`
         );
-        let normalPanel = await getPanelPosition(dashboardPage, selectors, 'New panel');
-        expect(normalPanel?.y).toBeLessThan(repeatedPanel?.y || 0);
+        let normalPanelBox = await getPanelBox(dashboardPage, selectors, 'New panel');
+        expect(normalPanelBox.y).toBeLessThan(repeatedPanelBox.y);
 
         await saveDashboard(dashboardPage, page, selectors);
         await page.reload();
 
-        const repeatedPanel2 = await getPanelPosition(
-          dashboardPage,
-          selectors,
-          `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`
-        );
+        repeatedPanelBox = await getPanelBox(dashboardPage, selectors, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
+        normalPanelBox = await getPanelBox(dashboardPage, selectors, 'New panel');
 
-        const normalPanel2 = await getPanelPosition(dashboardPage, selectors, 'New panel');
-
-        expect(normalPanel2?.y).toBeLessThan(repeatedPanel2?.y || 0);
+        expect(normalPanelBox.y).toBeLessThan(repeatedPanelBox.y);
         await expect(panels.getHeaders().first()).toHaveText('New panel');
         await expect(panels.getHeaders().last()).toHaveText(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`);
       });
