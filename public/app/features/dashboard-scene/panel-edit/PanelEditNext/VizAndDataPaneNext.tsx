@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { useRef } from 'react';
+import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { PanelEditPanelWrapper } from '../PanelEditPanelWrapper';
 import { type PanelEditor } from '../PanelEditor';
@@ -16,132 +17,329 @@ import { SidebarSize } from './constants';
 import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
 
 export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const { showBanner, dismissBanner } = useQueryEditorBanner();
-  const { scene, layout } = useVizAndDataPaneLayout(model, containerRef, showBanner);
-  const styles = useStyles2(getStyles, layout.sidebarSize);
+  const { scene, sidebarSize, setSidebarSize, isScrollingLayout, vizDataSplitter, sidebarSplitter } =
+    useVizAndDataPaneLayout(model);
+  const styles = useStyles2(getStyles, sidebarSize);
 
   const nextDataPane = scene.dataPane instanceof PanelDataPaneNext ? scene.dataPane : null;
+  const isFull = sidebarSize === SidebarSize.Full;
+
+  // No data pane (e.g. text panels): render the viz on its own.
+  if (!nextDataPane) {
+    return (
+      <div className={styles.pageContainer}>
+        <div className={cx(styles.vizPane, styles.soloVizPane, { [styles.fixedSizeViz]: isScrollingLayout })}>
+          <div className={styles.vizContent}>
+            <PanelEditPanelWrapper panel={scene.panel} tableView={scene.tableView} dashboard={scene.dashboard} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const viz = (
+    <div
+      {...vizDataSplitter.primaryProps}
+      className={cx(vizDataSplitter.primaryProps.className, styles.vizPane, {
+        [styles.fixedSizeViz]: isScrollingLayout,
+      })}
+    >
+      <div className={styles.vizContent}>
+        <PanelEditPanelWrapper panel={scene.panel} tableView={scene.tableView} dashboard={scene.dashboard} />
+      </div>
+    </div>
+  );
+
+  const dataPane = (
+    <div className={styles.dataPaneContent}>
+      <nextDataPane.Component model={nextDataPane} />
+    </div>
+  );
+
+  // Sits between the viz and the lower panel in both layouts.
+  const banner = showBanner ? (
+    <QueryEditorBanner
+      useQueryExperienceNext={model.state.useQueryExperienceNext ?? false}
+      onToggle={model.onToggleQueryEditorVersion}
+      onDismiss={dismissBanner}
+      className={styles.banner}
+    />
+  ) : null;
+
+  const sidebarPane = (
+    <div {...sidebarSplitter.primaryProps} className={cx(sidebarSplitter.primaryProps.className, styles.sidebar)}>
+      {sidebarSplitter.splitterState.collapsed ? (
+        <ExpandButton
+          className={styles.expandSidebar}
+          onClick={sidebarSplitter.onToggleCollapse}
+          label={t('dashboard-scene.viz-and-data-pane.open-sidebar', 'Open sidebar')}
+        />
+      ) : (
+        <div className={styles.sidebarContent}>
+          <Sidebar sidebarSize={sidebarSize} setSidebarSize={setSidebarSize} />
+        </div>
+      )}
+    </div>
+  );
+
+  const sidebarHandle = (
+    <div
+      {...sidebarSplitter.splitterProps}
+      className={cx(sidebarSplitter.splitterProps.className, styles.sidebarHandle)}
+    />
+  );
+
+  // Mini: viz on top; sidebar + data pane nested in the collapsible bottom pane.
+  const miniLayout = (
+    <VizDataSplit
+      splitter={vizDataSplitter}
+      viz={viz}
+      banner={banner}
+      secondaryClassName={styles.bottom}
+      expandClassName={styles.expandQueryPaneMini}
+    >
+      <div {...sidebarSplitter.containerProps}>
+        {sidebarPane}
+        {sidebarHandle}
+        <div
+          {...sidebarSplitter.secondaryProps}
+          className={cx(sidebarSplitter.secondaryProps.className, styles.dataPane)}
+        >
+          {dataPane}
+        </div>
+      </div>
+    </VizDataSplit>
+  );
+
+  // Full: full-height sidebar on the left; the viz/data split on the right.
+  const fullLayout = (
+    <div {...sidebarSplitter.containerProps}>
+      {sidebarPane}
+      {sidebarHandle}
+      <div
+        {...sidebarSplitter.secondaryProps}
+        className={cx(sidebarSplitter.secondaryProps.className, styles.rightStack)}
+      >
+        <VizDataSplit
+          splitter={vizDataSplitter}
+          viz={viz}
+          banner={banner}
+          secondaryClassName={styles.dataPane}
+          expandClassName={styles.expandQueryPane}
+        >
+          {dataPane}
+        </VizDataSplit>
+      </div>
+    </div>
+  );
 
   return (
-    <div ref={containerRef} className={styles.pageContainer} style={layout.gridStyles}>
-      <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
-        <PanelEditPanelWrapper panel={scene.panel} tableView={scene.tableView} dashboard={scene.dashboard} />
-        {nextDataPane && (
-          <div className={styles.vizResizeHandle}>
-            <div
-              ref={layout.vizResizeHandle.ref}
-              className={layout.vizResizeHandle.className}
-              data-testid="viz-resizer"
-            />
-          </div>
-        )}
-      </div>
-      {nextDataPane && (
-        <QueryEditorContextWrapper
-          dataPane={nextDataPane}
-          onSwitchToClassic={model.onToggleQueryEditorVersion}
-          showVersionBanner={showBanner}
-        >
-          {showBanner && (
-            <QueryEditorBanner
-              useQueryExperienceNext={model.state.useQueryExperienceNext ?? false}
-              onToggle={model.onToggleQueryEditorVersion}
-              onDismiss={dismissBanner}
-              className={styles.versionToggle}
-            />
-          )}
-          <div className={styles.sidebar}>
-            <div className={styles.sidebarContent}>
-              <Sidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
-            </div>
-            <div className={styles.sidebarResizeHandle}>
-              <div
-                ref={layout.sidebarResizeHandle.ref}
-                className={cx(layout.sidebarResizeHandle.className, styles.resizeHandlePill)}
-                data-testid="sidebar-resizer"
-              />
-            </div>
-          </div>
-          <div className={styles.dataPane}>
-            <nextDataPane.Component model={nextDataPane} />
-          </div>
-        </QueryEditorContextWrapper>
-      )}
+    <div className={styles.pageContainer}>
+      <QueryEditorContextWrapper
+        dataPane={nextDataPane}
+        onSwitchToClassic={model.onToggleQueryEditorVersion}
+        showVersionBanner={showBanner}
+      >
+        {isFull ? fullLayout : miniLayout}
+      </QueryEditorContextWrapper>
     </div>
   );
 }
 
+type SnappingSplitter = ReturnType<typeof useVizAndDataPaneLayout>['vizDataSplitter'];
+
+interface VizDataSplitProps {
+  splitter: SnappingSplitter;
+  viz: ReactNode;
+  banner: ReactNode;
+  /** Rendered below the banner when the bottom pane is open. */
+  children: ReactNode;
+  /** Class for the bottom (secondary) pane. */
+  secondaryClassName: string;
+  /** Class for the collapsed-state expand bar. */
+  expandClassName: string;
+}
+
+// Vertical viz/data split shared by both layouts. Only the bottom pane's contents and class names
+// differ between Mini and Full, so they're passed in.
+function VizDataSplit({ splitter, viz, banner, children, secondaryClassName, expandClassName }: VizDataSplitProps) {
+  return (
+    <div {...splitter.containerProps}>
+      {viz}
+      <div {...splitter.splitterProps} />
+      <div {...splitter.secondaryProps} className={cx(splitter.secondaryProps.className, secondaryClassName)}>
+        {splitter.splitterState.collapsed ? (
+          <ExpandQueryPane onClick={splitter.onToggleCollapse} className={expandClassName} />
+        ) : (
+          <>
+            {banner}
+            {children}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Sidebar expand affordance — mirrors the options pane collapse (canvas ToolbarButton on its edge).
+function ExpandButton({ onClick, label, className }: { onClick: () => void; label: string; className: string }) {
+  return (
+    <div className={className}>
+      <ToolbarButton icon="arrow-to-right" variant="canvas" onClick={onClick} tooltip={label} aria-label={label} />
+    </div>
+  );
+}
+
+// Query pane expand affordance — mirrors the v1 collapsed data pane (wider secondary Button bar).
+function ExpandQueryPane({ onClick, className }: { onClick: () => void; className: string }) {
+  const styles = useStyles2(getExpandQueryPaneButtonStyles);
+  const label = t('dashboard-scene.viz-and-data-pane.open-query-pane', 'Open query pane');
+
+  return (
+    <div className={className}>
+      <Button
+        icon="arrow-to-right"
+        variant="secondary"
+        size="sm"
+        onClick={onClick}
+        tooltip={label}
+        aria-label={label}
+        className={styles.button}
+      />
+    </div>
+  );
+}
+
+const getExpandQueryPaneButtonStyles = (theme: GrafanaTheme2) => ({
+  button: css({
+    width: theme.spacing(8),
+    justifyContent: 'center',
+    // arrow-to-right rotated to point up, matching the v1 collapsed data pane button.
+    svg: {
+      rotate: '-90deg',
+    },
+  }),
+});
+
 function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
+  const isMini = sidebarSize === SidebarSize.Mini;
+
+  // Collapsed query pane bar: bottom-anchored, so only the top corners are rounded.
+  const expandQueryPaneBar = {
+    display: 'flex',
+    justifyContent: 'center',
+    padding: theme.spacing(1),
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    flexGrow: 1,
+    borderTopLeftRadius: theme.shape.radius.default,
+    borderTopRightRadius: theme.shape.radius.default,
+  } as const;
+
   return {
     pageContainer: css({
-      display: 'grid',
+      display: 'flex',
+      flexDirection: 'column',
       width: '100%',
-      gap: theme.spacing(2),
-      overflow: 'hidden',
-      paddingBottom: theme.spacing(1),
-    }),
-    versionToggle: css({
-      gridArea: 'version-toggle',
-      minWidth: 0,
-      overflow: 'hidden',
-      ...(sidebarSize === SidebarSize.Mini && {
-        marginLeft: theme.spacing(2),
-      }),
-    }),
-    sidebar: css({
-      gridArea: 'sidebar',
-      position: 'relative',
-      paddingLeft: theme.spacing(2),
-      minWidth: 0,
-      minHeight: 0,
-      containerType: 'size',
-    }),
-    sidebarContent: css({
       height: '100%',
       overflow: 'hidden',
+      gap: theme.spacing(2),
+      paddingBottom: theme.spacing(1),
     }),
-    viz: css({
-      gridArea: 'viz',
-      overflow: 'visible',
+    banner: css({
+      minWidth: 0,
+      overflow: 'hidden',
+      ...(isMini && { marginLeft: theme.spacing(2) }),
+    }),
+    vizPane: css({
       position: 'relative',
       minHeight: 0,
-      ...(sidebarSize === SidebarSize.Mini && {
-        paddingLeft: theme.spacing(2),
-      }),
+      overflow: 'visible',
     }),
-    dataPane: css({
-      gridArea: 'data-pane',
-      overflow: 'hidden',
-      minHeight: 0,
+    // Panels with no data pane (text, news) render the viz without a splitter, so nothing supplies
+    // a flex size and the pane would collapse to its content — which for a scene panel is zero.
+    soloVizPane: css({
+      flexGrow: 1,
+    }),
+    vizContent: css({
+      height: '100%',
+      width: '100%',
+      ...(isMini && { paddingLeft: theme.spacing(2) }),
     }),
     fixedSizeViz: css({
       height: '100vh',
     }),
-    vizResizeHandle: css({
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
+    rightStack: css({
+      display: 'flex',
+      flexDirection: 'column',
+      minWidth: 0,
+      minHeight: 0,
+      gap: theme.spacing(2),
     }),
-    sidebarResizeHandle: css({
-      position: 'absolute',
-      top: 0,
-      bottom: 0,
-      // Sit inside the grid gap between the sidebar and the data pane (width matches the
-      // gap) so the handle and its pill never overlap the sidebar's vertical scrollbar,
-      // which renders at the inner right edge of the sidebar box.
-      right: `-${theme.spacing(2)}`,
-      width: theme.spacing(2),
+    bottom: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(2),
+      position: 'relative',
+      minHeight: 0,
     }),
-    resizeHandlePill: css({
+    sidebar: css({
+      position: 'relative',
+      minWidth: 0,
+      minHeight: 0,
+      overflow: 'hidden',
+      ...(isMini && { paddingLeft: theme.spacing(2) }),
+    }),
+    sidebarContent: css({
       height: '100%',
-      // Pill (::after) is 200px by default. Shrink to half when sidebar is tight.
-      '@container (max-height: 250px)': {
-        '&::after': {
-          height: 100,
-        },
+      width: '100%',
+    }),
+    // The shared drag handle draws a fixed 200px pill, which the splitter container clips once the
+    // pane is shorter than that — the rounded ends disappear and it reads as a full-height bar.
+    // Scaling by percentage keeps it a pill at any height (40% matches 100px at a 250px pane).
+    sidebarHandle: css({
+      '&::after': {
+        height: 'min(200px, 40%)',
       },
+    }),
+    dataPane: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(2),
+      minWidth: 0,
+      minHeight: 0,
+      overflow: 'hidden',
+    }),
+    dataPaneContent: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      minWidth: 0,
+      minHeight: 0,
+      overflow: 'hidden',
+    }),
+    expandSidebar: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      // Fill the pane so the bordered container tracks the drag, matching the options pane collapse.
+      width: '100%',
+      padding: theme.spacing(2, 1),
+      background: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      // Flush to the bottom in both layouts, and flush left in full-height mode.
+      borderBottomLeftRadius: 'unset',
+      borderBottomRightRadius: 'unset',
+      ...(!isMini && {
+        borderTopLeftRadius: 'unset',
+      }),
+    }),
+    expandQueryPane: css(expandQueryPaneBar),
+    expandQueryPaneMini: css({
+      ...expandQueryPaneBar,
+      marginLeft: theme.spacing(2),
     }),
   };
 }

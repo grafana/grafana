@@ -28,8 +28,25 @@ export enum SidebarSize {
 }
 
 export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
+export const QUERY_EDITOR_SIDEBAR_WIDTH_KEY = 'grafana.dashboard.query-editor-next.sidebar-width';
+export const QUERY_EDITOR_SIDEBAR_COLLAPSED_KEY = 'grafana.dashboard.query-editor-next.sidebar-collapsed';
 export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor-next.banner-dismissed';
 export const QUERY_EDITOR_V2_PREFERENCE_KEY = 'grafana.dashboard.query-editor-next.v2-preference';
+
+/** Default sidebar width. Persisted as an absolute value so it's independent of window size. */
+export const DEFAULT_SIDEBAR_WIDTH = 350;
+/** Below this width the sidebar snaps fully closed. */
+export const SIDEBAR_COLLAPSE_BELOW_PIXELS = 260;
+/**
+ * Width the data pane keeps for itself. The sidebar holds its own width against a shrinking
+ * container right up to this point, then yields instead — a pinned sidebar that squeezes the query
+ * editor down to its footer chrome is worse than a narrower one.
+ */
+export const MIN_DATA_PANE_WIDTH = 400;
+/** Share of the editor height given to the viz before the user drags the viz/data splitter. */
+export const DEFAULT_VIZ_RATIO = 0.5;
+/** Below this height the bottom data pane snaps fully closed. */
+export const DATA_PANE_COLLAPSE_BELOW_PIXELS = 150;
 
 export interface QueryEditorTypeConfig {
   icon: IconName;

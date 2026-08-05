@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { IconButton, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { SegmentedToggle, type SegmentedToggleProps } from '../../SegmentedToggle';
-import { QueryEditorType, type SidebarSize } from '../../constants';
+import { QueryEditorType, SidebarSize } from '../../constants';
 import { trackSidebarViewChange, trackStackedViewToggle } from '../../tracking';
 import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { getSelectedStackedItem } from '../StackedEditor/utils';
@@ -24,7 +24,7 @@ interface SidebarProps {
 }
 
 export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: SidebarProps) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, sidebarSize);
   const {
     setSelectedAlert,
     cardType,
@@ -124,7 +124,9 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
   );
 });
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
+  const isFull = sidebarSize === SidebarSize.Full;
+
   return {
     container: css({
       height: '100%',
@@ -133,6 +135,12 @@ function getStyles(theme: GrafanaTheme2) {
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
+      // Flush to the bottom in both layouts, and flush left in full-height mode.
+      borderBottomLeftRadius: 'unset',
+      borderBottomRightRadius: 'unset',
+      ...(isFull && {
+        borderTopLeftRadius: 'unset',
+      }),
     }),
     content: css({
       background: theme.colors.background.primary,

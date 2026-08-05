@@ -1,9 +1,8 @@
-import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
-import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useSidebarCollapsed } from '../../sidebar/shared';
@@ -12,113 +11,18 @@ import { type PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
-import { QUERY_EDITOR_BANNER_DISMISSED_KEY, QUERY_EDITOR_SIDEBAR_SIZE_KEY, SidebarSize } from './constants';
-
-const MIN_SIDEBAR_RATIO = 0.1;
-const MAX_SIDEBAR_RATIO = 0.5;
-const MIN_SIDEBAR_PIXELS = 200;
-const vizResizerClassName = css({ height: 2, width: '100%' });
-// Pre-mount placeholder — useLayoutEffect replaces this with the responsive default before the first paint.
-const FALLBACK_SIDEBAR_RATIO = 0.25;
-
-type UseRatioResizeOptions = {
-  direction: 'horizontal' | 'vertical';
-  initialRatio: number;
-  containerRef: RefObject<HTMLElement>;
-  /**
-   * If provided, called once at mount with the container's measured size to compute a
-   * responsive initial ratio (e.g. different defaults for small vs large screens).
-   * Runs in useLayoutEffect so there is no visible flash before the first paint.
-   */
-  getDefaultRatio?: (containerSize: number) => number;
-  minRatio?: number;
-  maxRatio?: number;
-  className?: string;
-};
-
-export function useRatioResize({
-  direction,
-  initialRatio,
-  containerRef,
-  getDefaultRatio,
-  minRatio = 0,
-  maxRatio = 1,
-  className,
-}: UseRatioResizeOptions) {
-  const [ratio, setRatio] = useState(initialRatio);
-  const styles = useStyles2(getDragStyles, 'middle');
-
-  const ratioRef = useRef(ratio);
-  const minRatioRef = useRef(minRatio);
-  const maxRatioRef = useRef(maxRatio);
-
-  ratioRef.current = ratio;
-  minRatioRef.current = minRatio;
-  maxRatioRef.current = maxRatio;
-
-  // Override the initial ratio once with a responsive value read from the DOM.
-  // All three deps are stable for the lifetime of the hook, so this runs exactly once.
-  useLayoutEffect(() => {
-    if (!getDefaultRatio) {
-      return;
-    }
-    const rect = containerRef.current?.getBoundingClientRect();
-    const size = direction === 'horizontal' ? (rect?.width ?? 0) : (rect?.height ?? 0);
-    if (size > 0) {
-      setRatio(getDefaultRatio(size));
-    }
-  }, [containerRef, direction, getDefaultRatio]);
-
-  const handleRef = useCallback(
-    (handle: HTMLElement | null) => {
-      let startPos = 0;
-      let startRatio = 0;
-      let totalSize = 0;
-
-      const onPointerMove = (e: PointerEvent) => {
-        const delta = (direction === 'horizontal' ? e.clientX : e.clientY) - startPos;
-        const newRatio = Math.min(maxRatioRef.current, Math.max(minRatioRef.current, startRatio + delta / totalSize));
-        setRatio(newRatio);
-      };
-
-      const onPointerUp = (e: PointerEvent) => {
-        handle?.releasePointerCapture(e.pointerId);
-        handle?.removeEventListener('pointermove', onPointerMove);
-        handle?.removeEventListener('pointerup', onPointerUp);
-      };
-
-      const onPointerDown = (e: PointerEvent) => {
-        e.preventDefault();
-        startPos = direction === 'horizontal' ? e.clientX : e.clientY;
-        startRatio = ratioRef.current;
-        // Read exact dimensions at the moment of interaction — no continuous measurement needed.
-        const rect = containerRef.current?.getBoundingClientRect();
-        totalSize = direction === 'horizontal' ? (rect?.width ?? 0) : (rect?.height ?? 0);
-        // Pointer capture keeps move/up events on this element regardless of where the pointer travels.
-        handle?.setPointerCapture(e.pointerId);
-        handle?.addEventListener('pointermove', onPointerMove);
-        handle?.addEventListener('pointerup', onPointerUp);
-      };
-
-      if (handle) {
-        handle.addEventListener('pointerdown', onPointerDown);
-      }
-
-      return () => {
-        if (handle) {
-          handle.removeEventListener('pointerdown', onPointerDown);
-        }
-      };
-    },
-    [containerRef, direction]
-  );
-
-  // dragHandleVertical = a vertical bar the user drags horizontally (col-resize cursor)
-  // dragHandleHorizontal = a horizontal bar the user drags vertically (row-resize cursor)
-  const dragClass = direction === 'horizontal' ? styles.dragHandleVertical : styles.dragHandleHorizontal;
-
-  return { handleRef, ratio, setRatio, className: cx(dragClass, className) };
-}
+import {
+  DATA_PANE_COLLAPSE_BELOW_PIXELS,
+  DEFAULT_SIDEBAR_WIDTH,
+  DEFAULT_VIZ_RATIO,
+  MIN_DATA_PANE_WIDTH,
+  QUERY_EDITOR_BANNER_DISMISSED_KEY,
+  QUERY_EDITOR_SIDEBAR_COLLAPSED_KEY,
+  QUERY_EDITOR_SIDEBAR_SIZE_KEY,
+  QUERY_EDITOR_SIDEBAR_WIDTH_KEY,
+  SIDEBAR_COLLAPSE_BELOW_PIXELS,
+  SidebarSize,
+} from './constants';
 
 export function useQueryEditorBanner() {
   const [dismissed = false, setDismissed] = useLocalStorage(QUERY_EDITOR_BANNER_DISMISSED_KEY, false);
@@ -163,67 +67,86 @@ export function usePanelEditorShell(model: PanelEditor) {
 }
 
 /**
- * Returns an initial sidebar ratio based on the container width measured once at mount.
- * After that, only a manual drag updates the ratio.
+ * The two snapping splitters that drive the query editor v2 layout:
+ *  - `vizDataSplitter` (vertical, flex): viz on top, query/data below; bottom snaps fully closed.
+ *  - `sidebarSplitter` (horizontal, primary-pixel): sidebar with a persisted absolute width that
+ *    snaps fully closed.
  *
- * Breakpoints (containerWidth ≈ window width minus Grafana nav sidebar):
- *   >= 2200px  → large monitor full-screen (e.g. 27" 4K)   → 0.15
- *   >= 1800px  → medium-large (e.g. 24" FHD full-screen)   → 0.20
- *   below      → 16" laptop or smaller / partial window     → 0.25
+ * Both hooks are called unconditionally so their React state survives the Mini/Full toggle, which
+ * nests them in opposite order (see `VizAndDataPaneNext`). Pane *sizes* need more than that: the
+ * toggle remounts the splitter DOM, so each size is held outside it — the sidebar width in local
+ * storage, the viz/data ratio in `vizRatio` below.
+ *
+ * Surviving a reload is a separate problem, since none of the splitter's own state does: the sidebar
+ * width, collapse and Mini/Full mode are all read from and written back to local storage here.
  */
-export function getDefaultSidebarRatio(containerWidth: number): number {
-  if (containerWidth >= 2200) {
-    return 0.15;
-  }
-  if (containerWidth >= 1800) {
-    return 0.2;
-  }
-  return 0.25;
-}
-
-export function useVizAndDataPaneLayout(
-  model: PanelEditor,
-  containerRef: RefObject<HTMLDivElement>,
-  showBanner = false
-) {
+export function useVizAndDataPaneLayout(model: PanelEditor) {
   const dashboard = getDashboardSceneFor(model);
   const { dataPane, tableView } = model.useState();
   const [sidebarSize = SidebarSize.Mini, setSidebarSize] = useLocalStorage<SidebarSize>(
     QUERY_EDITOR_SIDEBAR_SIZE_KEY,
     SidebarSize.Mini
   );
+  const [storedSidebarWidth, setSidebarWidth] = useLocalStorage<number>(
+    QUERY_EDITOR_SIDEBAR_WIDTH_KEY,
+    DEFAULT_SIDEBAR_WIDTH
+  );
+  // Anything other than a positive number yields an invalid flex-basis, which drops out and leaves
+  // the sidebar the width of its drag handle with the content clipped. Values that fail to parse
+  // already fall back to the default, but valid JSON of the wrong shape (null, {}, -5) does not.
+  const sidebarWidth =
+    typeof storedSidebarWidth === 'number' && Number.isFinite(storedSidebarWidth) && storedSidebarWidth > 0
+      ? storedSidebarWidth
+      : DEFAULT_SIDEBAR_WIDTH;
+
+  const [storedSidebarCollapsed, setSidebarCollapsed] = useLocalStorage<boolean>(
+    QUERY_EDITOR_SIDEBAR_COLLAPSED_KEY,
+    false
+  );
+  // Only an exact `true` collapses. Valid JSON of the wrong shape ({}, "yes") would otherwise read as
+  // truthy and hide the sidebar with nothing in the UI to explain it.
+  const isInitiallyCollapsed = storedSidebarCollapsed === true;
 
   const isScrollingLayout = useScrollReflowLimit();
 
-  const sidebarResize = useRatioResize({
-    direction: 'horizontal',
-    initialRatio: FALLBACK_SIDEBAR_RATIO,
-    getDefaultRatio: getDefaultSidebarRatio,
-    containerRef,
-    minRatio: MIN_SIDEBAR_RATIO,
-    maxRatio: MAX_SIDEBAR_RATIO,
+  // `useSplitter` keeps a flex-sized pane's ratio on the DOM node only. Mini and Full nest the two
+  // splitters in opposite orders, so switching remounts this one — holding the ratio here (this hook
+  // is not remounted by the toggle) is what carries it across.
+  const [vizRatio, setVizRatio] = useState(DEFAULT_VIZ_RATIO);
+
+  // Disabled on short screens: the viz is pinned to 100vh there and the panes stack so the editor
+  // scrolls, which a flex ratio splitting a fixed height cannot express.
+  const vizDataSplitter = useSnappingSplitter({
+    direction: 'column',
+    dragPosition: 'start',
+    initialSize: vizRatio,
+    collapseBelowPixels: DATA_PANE_COLLAPSE_BELOW_PIXELS,
+    disabled: isScrollingLayout,
+    onPaneSizeChanged: (_sizePixels, flexSize) => setVizRatio(flexSize),
   });
 
-  const vizResize = useRatioResize({
-    direction: 'vertical',
-    initialRatio: 0.55,
-    containerRef,
-    minRatio: 0.1,
-    maxRatio: 0.9,
-    className: vizResizerClassName,
+  // Stays enabled on short screens, unlike the splitter above. Disabling strips the flex container,
+  // and the sidebar has no CSS fallback to stack against — it would land above the data pane instead
+  // of beside it. A fixed pixel width beside a filling pane is the arrangement those screens want
+  // anyway, so there is nothing to disable.
+  const sidebarSplitter = useSnappingSplitter({
+    direction: 'row',
+    // The sidebar is the primary (left) pane, so the handle indicator sits on its right border.
+    dragPosition: 'start',
+    usePixels: true,
+    pixelPane: 'primary',
+    initialSize: sidebarWidth,
+    collapsed: isInitiallyCollapsed,
+    collapseBelowPixels: SIDEBAR_COLLAPSE_BELOW_PIXELS,
+    minFillingPixels: MIN_DATA_PANE_WIDTH,
+    onPaneSizeChanged: setSidebarWidth,
   });
 
-  const gridStyles = useMemo(
-    () =>
-      buildVizAndDataPaneGrid({
-        hasDataPane: Boolean(dataPane),
-        isSidebarFullWidth: sidebarSize === SidebarSize.Full,
-        showBanner,
-        vizRatio: vizResize.ratio,
-        sidebarRatio: sidebarResize.ratio,
-      }),
-    [dataPane, sidebarSize, showBanner, vizResize.ratio, sidebarResize.ratio]
-  );
+  // `collapsed` only seeds the splitter's initial state, so the current value has to be written back
+  // for a reload to pick it up. Matches how the options pane persists its own collapse.
+  useEffect(() => {
+    setSidebarCollapsed(sidebarSplitter.splitterState.collapsed);
+  }, [sidebarSplitter.splitterState.collapsed, setSidebarCollapsed]);
 
   return {
     scene: {
@@ -232,73 +155,10 @@ export function useVizAndDataPaneLayout(
       tableView,
       dashboard,
     },
-    layout: {
-      sidebarSize,
-      setSidebarSize,
-      isScrollingLayout,
-      gridStyles,
-      sidebarResizeHandle: {
-        ref: sidebarResize.handleRef,
-        className: sidebarResize.className,
-      },
-      vizResizeHandle: {
-        ref: vizResize.handleRef,
-        className: vizResize.className,
-      },
-    },
-  };
-}
-
-type VizAndDataPaneGridInput = {
-  hasDataPane: boolean;
-  isSidebarFullWidth: boolean;
-  showBanner: boolean;
-  vizRatio: number;
-  sidebarRatio: number;
-};
-
-export function buildVizAndDataPaneGrid({
-  hasDataPane,
-  isSidebarFullWidth,
-  showBanner,
-  vizRatio,
-  sidebarRatio,
-}: VizAndDataPaneGridInput) {
-  const rows: string[] = [];
-  const grid: Array<[string, string]> = [];
-
-  // Convert ratio to fractional units (e.g. 0.5 → 1fr:1fr, 0.6 → 1.5fr:1fr).
-  // vizRatio is clamped to [0.1, 0.9] so 0 and 1 are unreachable.
-  const vizFr = vizRatio / (1 - vizRatio);
-  rows.push(`${vizFr}fr`);
-  grid.push(['viz', 'viz']);
-
-  if (hasDataPane) {
-    if (showBanner) {
-      rows.push('auto');
-      grid.push([isSidebarFullWidth ? 'sidebar' : 'version-toggle', 'version-toggle']);
-    }
-
-    rows.push('1fr');
-    grid.push(['sidebar', 'data-pane']);
-  }
-
-  if (hasDataPane && isSidebarFullWidth) {
-    for (let i = 0; i < grid.length; i++) {
-      grid[i][0] = 'sidebar';
-    }
-  }
-
-  // Convert sidebar ratio to fractional units (ratio is clamped to [0.1, 0.5] so 0 and 1 are unreachable).
-  // minmax() enforces the pixel floor at the CSS level so window resizes can't push the sidebar
-  // below MIN_SIDEBAR_PIXELS — consistent with the same floor applied in the drag handler.
-  const sidebarFr = sidebarRatio / (1 - sidebarRatio);
-  const columns = `minmax(${MIN_SIDEBAR_PIXELS}px, ${sidebarFr}fr) 1fr`;
-
-  return {
-    height: '100%',
-    gridTemplateAreas: grid.map((row) => `"${row.join(' ')}"`).join('\n'),
-    gridTemplateRows: rows.join(' '),
-    gridTemplateColumns: columns,
+    sidebarSize,
+    setSidebarSize,
+    isScrollingLayout,
+    vizDataSplitter,
+    sidebarSplitter,
   };
 }
