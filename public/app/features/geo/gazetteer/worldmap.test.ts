@@ -34,7 +34,9 @@ describe('Placename lookup from worldmap format', () => {
   });
 
   it('exposes a frame and row index so fields can be looked up', async () => {
-    const gaz = await getGazetteer('countries-frame');
+    // getGazetteer caches by path in a module-level registry, so this is the same instance the
+    // test above loaded rather than a second fetch.
+    const gaz = await getGazetteer('countries');
     expect(gaz.error).toBeUndefined();
 
     const frame = gaz.frame?.();
