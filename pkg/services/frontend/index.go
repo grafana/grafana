@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"syscall"
 
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -226,15 +228,18 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 
 // resolveAssets returns the preview build's assets when a valid preview cookie is
 // present, falling back to the default assets so a stale cookie can't break the page.
-func (p *IndexProvider) resolveAssets(ctx context.Context, request *http.Request) (dtos.EntryPointAssets, string, error) {
+func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request) (dtos.EntryPointAssets, string, error) {
 	if p.previewCfg.Active() {
-		if cookie, err := request.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
-			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value)
-			if err == nil {
-				p.log.Info("resolved preview assets", "folder", cookie.Value)
-				return assets, cookie.Value, nil
+		if cookie, err := req.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
+			// Second lock: the cookie only takes effect on stacks that opted in.
+			if namespace, _ := k8srequest.NamespaceFrom(ctx); p.previewCfg.NamespaceAllowed(namespace) {
+				assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value)
+				if err == nil {
+					p.log.Info("resolved preview assets", "folder", cookie.Value)
+					return assets, cookie.Value, nil
+				}
+				p.log.Warn("unable to load preview assets, falling back to default assets", "folder", cookie.Value, "err", err)
 			}
-			p.log.Warn("unable to load preview assets, falling back to default assets", "folder", cookie.Value, "err", err)
 		}
 	}
 

@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"time"
 
+	"k8s.io/apiserver/pkg/endpoints/request"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
@@ -53,6 +55,14 @@ func newPreviewAssetsHandler(cfg *setting.Cfg, previewCfg fswebassets.PreviewAss
 func (h *previewAssetsHandler) handleGet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := contexthandler.FromContext(ctx).Logger
+
+	// Stacks that haven't opted in see an unknown route.
+	namespace, _ := request.NamespaceFrom(ctx)
+	if !h.previewCfg.NamespaceAllowed(namespace) {
+		logger.Debug("preview assets requested by a namespace that has not opted in", "namespace", namespace)
+		http.NotFound(w, r)
+		return
+	}
 
 	query := r.URL.Query()
 

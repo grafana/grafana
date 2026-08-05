@@ -15,6 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// previewTestNamespace is allowlisted in setupPreviewTestMux.
+const previewTestNamespace = "stacks-123456"
+
 // previewTestManifest is served by the mock bucket server in preview assets tests.
 const previewTestManifest = `{
 	"entrypoints": {
@@ -52,6 +55,7 @@ func setupPreviewTestMux(t *testing.T, previewBaseURL string) *web.Mux {
 	raw := ini.Empty()
 	raw.Section("frontend_service").Key("preview_assets_enabled").SetValue("true")
 	raw.Section("frontend_service").Key("preview_assets_base_url").SetValue(previewBaseURL)
+	raw.Section("frontend_service").Key("preview_assets_allowed_namespaces").SetValue(previewTestNamespace)
 
 	cfg := &setting.Cfg{
 		Raw:            raw,
@@ -65,6 +69,14 @@ func setupPreviewTestMux(t *testing.T, previewBaseURL string) *web.Mux {
 	service.addMiddlewares(mux)
 	service.registerRoutes(mux)
 	return mux
+}
+
+// newPreviewRequest makes a request from a namespace that has opted in to
+// preview assets.
+func newPreviewRequest(target string) *http.Request {
+	req := httptest.NewRequest("GET", target, nil)
+	req.Header.Set("baggage", "namespace="+previewTestNamespace)
+	return req
 }
 
 func getCookie(t *testing.T, resp *http.Response, name string) *http.Cookie {
@@ -91,7 +103,7 @@ func TestPreviewAssets_RouteNotRegisteredWhenDisabled(t *testing.T) {
 	service.addMiddlewares(mux)
 	service.registerRoutes(mux)
 
-	req := httptest.NewRequest("GET", "/-/set-preview-assets?assets=pr_grafana_123", nil)
+	req := newPreviewRequest("/-/set-preview-assets?assets=pr_grafana_123")
 	recorder := httptest.NewRecorder()
 	mux.ServeHTTP(recorder, req)
 
@@ -106,7 +118,7 @@ func TestPreviewAssets_ConfirmationPage(t *testing.T) {
 	mux := setupPreviewTestMux(t, "https://storage.example.com/bucket/")
 
 	t.Run("should render confirmation page with resolved URL and CSRF cookie", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/-/set-preview-assets?assets=pr_grafana_123456", nil)
+		req := newPreviewRequest("/-/set-preview-assets?assets=pr_grafana_123456")
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, req)
 
@@ -126,7 +138,7 @@ func TestPreviewAssets_ConfirmationPage(t *testing.T) {
 	})
 
 	t.Run("should reject missing assets parameter", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/-/set-preview-assets", nil)
+		req := newPreviewRequest("/-/set-preview-assets")
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, req)
 
@@ -135,7 +147,7 @@ func TestPreviewAssets_ConfirmationPage(t *testing.T) {
 
 	t.Run("should reject invalid folder names", func(t *testing.T) {
 		for _, folder := range []string{"../etc/passwd", "foo bar", "a?b=c", "<script>", "foo/bar", "foo.bar"} {
-			req := httptest.NewRequest("GET", "/-/set-preview-assets?assets="+url.QueryEscape(folder), nil)
+			req := newPreviewRequest("/-/set-preview-assets?assets=" + url.QueryEscape(folder))
 			recorder := httptest.NewRecorder()
 			mux.ServeHTTP(recorder, req)
 
@@ -158,7 +170,7 @@ func TestPreviewAssets_Confirm(t *testing.T) {
 		mux := setupPreviewTestMux(t, bucket.URL+"/")
 
 		// Fetch the confirmation page to obtain a CSRF token
-		req := httptest.NewRequest("GET", "/-/set-preview-assets?assets="+folder, nil)
+		req := newPreviewRequest("/-/set-preview-assets?assets=" + folder)
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, req)
 		require.Equal(t, 200, recorder.Code)
@@ -171,7 +183,7 @@ func TestPreviewAssets_Confirm(t *testing.T) {
 	t.Run("should set the preview cookie for a valid confirmation", func(t *testing.T) {
 		mux, token := setup(t)
 
-		req := httptest.NewRequest("GET", confirmURL(token), nil)
+		req := newPreviewRequest(confirmURL(token))
 		req.AddCookie(&http.Cookie{Name: previewCSRFCookieName, Value: token})
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, req)
@@ -194,7 +206,7 @@ func TestPreviewAssets_Confirm(t *testing.T) {
 	t.Run("should reject a confirmation without the CSRF cookie", func(t *testing.T) {
 		mux, token := setup(t)
 
-		req := httptest.NewRequest("GET", confirmURL(token), nil)
+		req := newPreviewRequest(confirmURL(token))
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, req)
 
@@ -205,7 +217,7 @@ func TestPreviewAssets_Confirm(t *testing.T) {
 	t.Run("should reject a mismatched confirmation token", func(t *testing.T) {
 		mux, token := setup(t)
 
-		req := httptest.NewRequest("GET", confirmURL("not-the-right-token"), nil)
+		req := newPreviewRequest(confirmURL("not-the-right-token"))
 		req.AddCookie(&http.Cookie{Name: previewCSRFCookieName, Value: token})
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, req)
@@ -220,13 +232,13 @@ func TestPreviewAssets_Confirm(t *testing.T) {
 		t.Cleanup(bucket.Close)
 		mux := setupPreviewTestMux(t, bucket.URL+"/")
 
-		req := httptest.NewRequest("GET", "/-/set-preview-assets?assets="+folder, nil)
+		req := newPreviewRequest("/-/set-preview-assets?assets=" + folder)
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, req)
 		require.Equal(t, 200, recorder.Code)
 		token := getCookie(t, recorder.Result(), previewCSRFCookieName).Value
 
-		req = httptest.NewRequest("GET", confirmURL(token), nil)
+		req = newPreviewRequest(confirmURL(token))
 		req.AddCookie(&http.Cookie{Name: previewCSRFCookieName, Value: token})
 		recorder = httptest.NewRecorder()
 		mux.ServeHTTP(recorder, req)
@@ -239,7 +251,7 @@ func TestPreviewAssets_Confirm(t *testing.T) {
 func TestPreviewAssets_Clear(t *testing.T) {
 	mux := setupPreviewTestMux(t, "https://storage.example.com/bucket/")
 
-	req := httptest.NewRequest("GET", "/-/set-preview-assets?clear=1", nil)
+	req := newPreviewRequest("/-/set-preview-assets?clear=1")
 	req.AddCookie(&http.Cookie{Name: previewAssetsCookieName, Value: "pr_grafana_123456"})
 	recorder := httptest.NewRecorder()
 	mux.ServeHTTP(recorder, req)
@@ -251,4 +263,27 @@ func TestPreviewAssets_Clear(t *testing.T) {
 	require.NotNil(t, previewCookie)
 	assert.Equal(t, "", previewCookie.Value)
 	assert.Equal(t, -1, previewCookie.MaxAge)
+}
+
+func TestPreviewAssets_NamespaceLock(t *testing.T) {
+	mux := setupPreviewTestMux(t, "https://storage.example.com/bucket/")
+
+	t.Run("should 404 for a namespace that has not opted in", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/-/set-preview-assets?assets=pr_grafana_123456", nil)
+		req.Header.Set("baggage", "namespace=stacks-other")
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 404, recorder.Code)
+		assert.Nil(t, getCookie(t, recorder.Result(), previewCSRFCookieName))
+	})
+
+	t.Run("should 404 for a request without a namespace", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/-/set-preview-assets?assets=pr_grafana_123456", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 404, recorder.Code)
+		assert.Nil(t, getCookie(t, recorder.Result(), previewCSRFCookieName))
+	})
 }
