@@ -3,10 +3,10 @@ import { buildNotebookEnvelope } from 'app/features/notebook/scene/buildNotebook
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
-import { dashboardSpecToNotebookSpec } from './notebookSpecTransform';
+import { downgradeElementsToNotebookWire } from './notebookSpecTransform';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSceneToNotebookSaveModel } from './transformSceneToNotebookSaveModel';
-import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import { getElements } from './transformSceneToSaveModelSchemaV2';
 
 const timeSettings = {
   from: 'now-6h',
@@ -105,16 +105,43 @@ function buildNotebookScene(): DashboardScene {
 }
 
 describe('transformSceneToNotebookSaveModel', () => {
-  // Step 1 is a wrapper, so this compares the new entry point against the two calls the commands
-  // used to make. It is nearly a tautology today on purpose: its job is to be the reference when
-  // step 2 replaces the body with a composition that no longer routes through the dashboard
-  // serializer. Do not delete it as redundant, it is the only thing pinning that swap.
-  it('returns exactly what the dashboard serializer plus the notebook projection returns', () => {
+  // What replaced the equivalence check this file used to carry.
+  //
+  // That one compared the notebook spec against
+  // `dashboardSpecToNotebookSpec(transformSceneToSaveModelSchemaV2(scene))`, and it did its job: it
+  // passed at the exact moment the body stopped routing through the dashboard serializer, which is
+  // what made the swap safe. It could not survive the second half of the change, because the
+  // dashboard serializer deliberately stopped emitting narrative cells, so the reference side lost
+  // every markdown and code cell and no longer described a notebook.
+  //
+  // This is the invariant that outlives it, and the one that would actually catch a regression: the
+  // panel elements in a notebook spec are the ones the shared builder produced, not a second
+  // derivation. Two functions computing an element key that nothing forces to agree is the bug this
+  // whole change came from, so it is worth an assertion rather than a comment.
+  it('takes its panel elements from the shared element builder rather than deriving them again', () => {
     const scene = buildNotebookScene();
 
-    const reference = dashboardSpecToNotebookSpec(transformSceneToSaveModelSchemaV2(scene));
+    const spec = transformSceneToNotebookSaveModel(scene);
+    const shared = getElements(scene, scene.serializer.getDSReferencesMapping());
 
-    expect(transformSceneToNotebookSaveModel(scene)).toEqual(reference);
+    const panelNames = Object.keys(shared);
+    expect(panelNames).toEqual(['latency-panel']);
+    for (const name of panelNames) {
+      // Compared after the notebook's wire downgrade, which is the one transformation applied on top.
+      expect(spec.elements[name]).toEqual(downgradeElementsToNotebookWire(shared)[name]);
+    }
+  });
+
+  // The cells the shared builder cannot see. Together with the case above this says the elements map
+  // is exactly panels-from-the-shared-builder plus the notebook's own cells, and nothing else.
+  it('adds the narrative cells the shared element builder cannot see', () => {
+    const scene = buildNotebookScene();
+
+    const spec = transformSceneToNotebookSaveModel(scene);
+    const sharedPanelNames = Object.keys(getElements(scene, scene.serializer.getDSReferencesMapping()));
+    const cellNames = Object.keys(spec.elements).filter((name) => !sharedPanelNames.includes(name));
+
+    expect(cellNames.sort()).toEqual(['intro', 'repro']);
   });
 
   // The scene speaks the v2 stable transformation shape, the notebook resource stores the v2beta1
