@@ -1,7 +1,7 @@
 import { createAssistantContextItem, openAssistant } from '@grafana/assistant';
 import { locationService } from '@grafana/runtime';
 
-import { PROMPT_ORIGIN, formatDatasources } from './prompts';
+import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES, formatDatasources } from './prompts';
 import { type PromptDatasource } from './types';
 
 /**
@@ -78,10 +78,19 @@ export function startPlanningInAssistant(args: StartPlanningArgs): boolean {
  * and the datasource scope the user arrived with.
  */
 export function buildPlanningInstructions(args: StartPlanningArgs): string {
+  // Only a complete list can back a "no others exist" claim. Once truncated,
+  // that claim would hide real, queryable datasources from the assistant
+  // instead of just trimming the prompt, so point it at list_datasources for
+  // anything the user's request implies isn't in this preview.
+  const isTruncated = args.datasources.length > MAX_LISTED_DATASOURCES;
+  const datasourceScopeInstruction = isTruncated
+    ? `A preview of the datasources available (this instance has ${args.datasources.length}; only the first ${MAX_LISTED_DATASOURCES} are listed here by uid). Query the listed ones by these exact uids. If the request implies a datasource not shown here, use your datasource discovery tool to look up its uid before assuming it doesn't exist:\n${formatDatasources(args.datasources)}`
+    : `The available datasources (query them by these exact uids — no others exist):\n${formatDatasources(args.datasources)}`;
+
   const parts: string[] = [
     'The user clicked "Generate dashboard" and is starting from a brand-new dashboard (the new-dashboard editor is open). Follow your plan-first workflow: ground the plan in verified data with your datasource tools, ask at most one round of clarifying questions, present the plan with propose_dashboard_plan, and only build after the plan is accepted.',
     `The user's full request:\n${args.request}`,
-    `The available datasources (query them by these exact uids — no others exist):\n${formatDatasources(args.datasources)}`,
+    datasourceScopeInstruction,
   ];
 
   parts.push(

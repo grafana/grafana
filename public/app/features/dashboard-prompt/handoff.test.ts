@@ -2,7 +2,7 @@ import { openAssistant } from '@grafana/assistant';
 import { locationService } from '@grafana/runtime';
 
 import { buildPlanningInstructions, startPlanningInAssistant } from './handoff';
-import { PROMPT_ORIGIN } from './prompts';
+import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES } from './prompts';
 
 // The repo-wide jest mapping stubs @grafana/assistant with no-op fns, so give
 // createAssistantContextItem a fake that mirrors the real factory's shape.
@@ -129,5 +129,22 @@ describe('buildPlanningInstructions', () => {
     expect(instructions).toContain('Prometheus (type: prometheus, uid: prom-1)');
     expect(instructions).toContain('no others exist');
     expect(instructions).toContain('Do NOT save the dashboard');
+  });
+
+  it('does not claim completeness when the datasource scope is truncated', () => {
+    const manyDatasources = Array.from({ length: MAX_LISTED_DATASOURCES + 10 }, (_, i) => ({
+      uid: `ds-${i}`,
+      type: 'prometheus',
+      name: `Datasource ${i}`,
+    }));
+
+    const instructions = buildPlanningInstructions({ ...args, datasources: manyDatasources });
+
+    expect(instructions).not.toContain('no others exist');
+    expect(instructions).toContain('this instance has 60');
+    expect(instructions).toContain('datasource discovery tool');
+    // The listed uids are still exact and queryable.
+    expect(instructions).toContain('uid: ds-0');
+    expect(instructions).toContain(`…and 10 more not shown here`);
   });
 });
