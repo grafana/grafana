@@ -68,6 +68,6 @@
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "react": ">=19"
   }
 }
