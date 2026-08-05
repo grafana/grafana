@@ -18,35 +18,65 @@ import (
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 )
 
-// fakeReader embeds Service so only List needs an implementation; the store
-// never exercises the other methods.
-type fakeReader struct {
+// fakeSettings is a stateful in-memory MT-Settings double implementing both the
+// reader (List) and writer (Upsert/Delete) surfaces. Writes mutate the us layer
+// and List returns it merged with the immutable seeded layers (defaults/hgapi),
+// so a re-read after a write observes that write — which the store's responses
+// now rely on.
+type fakeSettings struct {
 	settingsvc.Service
-	rows []*settingsvc.Setting
+	us       map[string]*settingsvc.Setting // section|key -> us row
+	seeded   []*settingsvc.Setting          // immutable non-us rows
+	upserts  map[string]string              // key -> value, for write assertions
+	sections map[string]string              // key -> section, for write assertions
+	deleted  []string                       // deleted keys, in call order
 }
 
-func (f *fakeReader) List(context.Context, metav1.LabelSelector) ([]*settingsvc.Setting, error) {
-	return f.rows, nil
+func newFakeSettings(seed []*settingsvc.Setting) *fakeSettings {
+	f := &fakeSettings{
+		us:       map[string]*settingsvc.Setting{},
+		upserts:  map[string]string{},
+		sections: map[string]string{},
+	}
+	for _, r := range seed {
+		if r.Labels["source"] == "us" {
+			f.us[r.Section+"|"+r.Key] = r
+		} else {
+			f.seeded = append(f.seeded, r)
+		}
+	}
+	return f
 }
 
-type fakeWriter struct {
-	upserts  map[string]string // key -> value
-	sections map[string]string // key -> section
-	deleted  []string          // deleted keys, in call order
+func (f *fakeSettings) List(_ context.Context, sel metav1.LabelSelector) ([]*settingsvc.Setting, error) {
+	section := sel.MatchLabels["section"]
+	var out []*settingsvc.Setting
+	for _, r := range f.seeded {
+		if r.Section == section {
+			out = append(out, r)
+		}
+	}
+	for _, r := range f.us {
+		if r.Section == section {
+			out = append(out, r)
+		}
+	}
+	return out, nil
 }
 
-func newFakeWriter() *fakeWriter {
-	return &fakeWriter{upserts: map[string]string{}, sections: map[string]string{}}
-}
-
-func (f *fakeWriter) Upsert(_ context.Context, s *settingsvc.Setting) error {
+func (f *fakeSettings) Upsert(_ context.Context, s *settingsvc.Setting) error {
 	f.upserts[s.Key] = s.Value
 	f.sections[s.Key] = s.Section
+	f.us[s.Section+"|"+s.Key] = &settingsvc.Setting{
+		Section: s.Section, Key: s.Key, Value: s.Value,
+		Labels: map[string]string{"source": "us"},
+	}
 	return nil
 }
 
-func (f *fakeWriter) Delete(_ context.Context, _, key string) error {
+func (f *fakeSettings) Delete(_ context.Context, section, key string) error {
 	f.deleted = append(f.deleted, key)
+	delete(f.us, section+"|"+key)
 	return nil
 }
 
@@ -72,15 +102,18 @@ func defaultRow(section, key, value string) *settingsvc.Setting {
 func TestMTSettingsStore(t *testing.T) {
 	tests := []struct {
 		name   string
-		rows   []*settingsvc.Setting // seeds the reader
+		rows   []*settingsvc.Setting // seeds the store
 		op     func(s *MTSettingsStore) (runtime.Object, bool, error)
-		assert func(t *testing.T, sso *iamv0.SSOSetting, ok bool, err error, w *fakeWriter)
+		assert func(t *testing.T, sso *iamv0.SSOSetting, ok bool, err error, f *fakeSettings)
 	}{
 		{
 			name: "Get assembles rows into a blob; source=db when a us row is present",
 			rows: []*settingsvc.Setting{usRow("auth.saml", "enabled", "true"), defaultRow("auth.saml", "name", "SAML")},
-			op:   func(s *MTSettingsStore) (runtime.Object, bool, error) { o, e := s.Get(nsCtx(), "saml", &metav1.GetOptions{}); return o, false, e },
-			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeWriter) {
+			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
+				o, e := s.Get(nsCtx(), "saml", &metav1.GetOptions{})
+				return o, false, e
+			},
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeSettings) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
 				assert.Equal(t, "saml", sso.Name)
@@ -92,8 +125,11 @@ func TestMTSettingsStore(t *testing.T) {
 		{
 			name: "Get returns source=system when no us row is present",
 			rows: []*settingsvc.Setting{defaultRow("auth.saml", "name", "SAML")},
-			op:   func(s *MTSettingsStore) (runtime.Object, bool, error) { o, e := s.Get(nsCtx(), "saml", &metav1.GetOptions{}); return o, false, e },
-			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeWriter) {
+			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
+				o, e := s.Get(nsCtx(), "saml", &metav1.GetOptions{})
+				return o, false, e
+			},
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeSettings) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
 				assert.Equal(t, iamv0.SourceSystem, sso.Spec.Source)
@@ -102,30 +138,37 @@ func TestMTSettingsStore(t *testing.T) {
 		{
 			name: "Get returns NotFound when the provider has no rows",
 			rows: nil,
-			op:   func(s *MTSettingsStore) (runtime.Object, bool, error) { o, e := s.Get(nsCtx(), "saml", &metav1.GetOptions{}); return o, false, e },
-			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeWriter) {
+			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
+				o, e := s.Get(nsCtx(), "saml", &metav1.GetOptions{})
+				return o, false, e
+			},
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeSettings) {
 				assert.True(t, apierrors.IsNotFound(err))
 				assert.Nil(t, sso)
 			},
 		},
 		{
-			name: "Create upserts every blob key under auth.<provider>",
-			rows: nil,
+			name: "Create upserts every blob key and returns the stored projection, not the request",
+			rows: []*settingsvc.Setting{defaultRow("auth.generic_oauth", "auto_login", "false")},
 			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
 				o, e := s.Create(nsCtx(), ssoObj("generic_oauth", map[string]any{"enabled": "true", "client_id": "abc"}), nil, &metav1.CreateOptions{})
 				return o, false, e
 			},
-			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, w *fakeWriter) {
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, f *fakeSettings) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
-				assert.Equal(t, map[string]string{"enabled": "true", "client_id": "abc"}, w.upserts)
-				assert.Equal(t, "auth.generic_oauth", w.sections["client_id"])
+				assert.Equal(t, map[string]string{"enabled": "true", "client_id": "abc"}, f.upserts)
+				assert.Equal(t, "auth.generic_oauth", f.sections["client_id"])
 				assert.Equal(t, "stacks-11", sso.Namespace)
 				assert.NotEmpty(t, sso.ResourceVersion)
+				// Projection, not echo: Spec.Source is resolved and the seeded
+				// default-layer key is merged in — neither is in the request.
+				assert.Equal(t, iamv0.SourceDB, sso.Spec.Source)
+				assert.Equal(t, map[string]any{"enabled": "true", "client_id": "abc", "auto_login": "false"}, sso.Spec.Settings.Object)
 			},
 		},
 		{
-			name: "Update upserts desired keys and prunes only stale unified-storage (us) rows",
+			name: "Update upserts desired keys, prunes only stale us rows, and returns the merged projection",
 			rows: []*settingsvc.Setting{
 				usRow("auth.saml", "enabled", "true"),   // kept (in desired)
 				usRow("auth.saml", "stale", "x"),        // pruned (us, not in desired)
@@ -136,13 +179,15 @@ func TestMTSettingsStore(t *testing.T) {
 					rest.DefaultUpdatedObjectInfo(ssoObj("saml", map[string]any{"enabled": "false", "new_key": "y"})),
 					nil, nil, false, &metav1.UpdateOptions{})
 			},
-			assert: func(t *testing.T, sso *iamv0.SSOSetting, created bool, err error, w *fakeWriter) {
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, created bool, err error, f *fakeSettings) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
 				assert.False(t, created)
-				assert.Equal(t, map[string]string{"enabled": "false", "new_key": "y"}, w.upserts)
-				assert.Equal(t, []string{"stale"}, w.deleted)
+				assert.Equal(t, map[string]string{"enabled": "false", "new_key": "y"}, f.upserts)
+				assert.Equal(t, []string{"stale"}, f.deleted)
 				assert.Equal(t, "stacks-11", sso.Namespace)
+				assert.Equal(t, iamv0.SourceDB, sso.Spec.Source)
+				assert.Equal(t, map[string]any{"enabled": "false", "new_key": "y", "name": "SAML"}, sso.Spec.Settings.Object)
 			},
 		},
 		{
@@ -153,11 +198,12 @@ func TestMTSettingsStore(t *testing.T) {
 					rest.DefaultUpdatedObjectInfo(ssoObj("saml", map[string]any{"enabled": "true"})),
 					nil, nil, true, &metav1.UpdateOptions{})
 			},
-			assert: func(t *testing.T, sso *iamv0.SSOSetting, created bool, err error, w *fakeWriter) {
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, created bool, err error, f *fakeSettings) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
 				assert.True(t, created)
-				assert.Equal(t, map[string]string{"enabled": "true"}, w.upserts)
+				assert.Equal(t, map[string]string{"enabled": "true"}, f.upserts)
+				assert.Equal(t, iamv0.SourceDB, sso.Spec.Source)
 			},
 		},
 		{
@@ -168,7 +214,7 @@ func TestMTSettingsStore(t *testing.T) {
 					rest.DefaultUpdatedObjectInfo(ssoObj("saml", map[string]any{"enabled": "true"})),
 					nil, nil, false, &metav1.UpdateOptions{})
 			},
-			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeWriter) {
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeSettings) {
 				assert.True(t, apierrors.IsNotFound(err))
 				assert.Nil(t, sso)
 			},
@@ -176,19 +222,24 @@ func TestMTSettingsStore(t *testing.T) {
 		{
 			name: "Delete removes only the unified-storage (us) rows",
 			rows: []*settingsvc.Setting{usRow("auth.saml", "enabled", "true"), defaultRow("auth.saml", "name", "SAML")},
-			op:   func(s *MTSettingsStore) (runtime.Object, bool, error) { return s.Delete(nsCtx(), "saml", nil, &metav1.DeleteOptions{}) },
-			assert: func(t *testing.T, sso *iamv0.SSOSetting, deleted bool, err error, w *fakeWriter) {
+			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
+				return s.Delete(nsCtx(), "saml", nil, &metav1.DeleteOptions{})
+			},
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, deleted bool, err error, f *fakeSettings) {
 				require.NoError(t, err)
 				require.NotNil(t, sso)
 				assert.True(t, deleted)
-				assert.Equal(t, []string{"enabled"}, w.deleted)
+				assert.Equal(t, []string{"enabled"}, f.deleted)
 			},
 		},
 		{
 			name: "List is not implemented",
 			rows: nil,
-			op:   func(s *MTSettingsStore) (runtime.Object, bool, error) { o, e := s.List(nsCtx(), nil); return o, false, e },
-			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeWriter) {
+			op: func(s *MTSettingsStore) (runtime.Object, bool, error) {
+				o, e := s.List(nsCtx(), nil)
+				return o, false, e
+			},
+			assert: func(t *testing.T, sso *iamv0.SSOSetting, _ bool, err error, _ *fakeSettings) {
 				require.Error(t, err)
 				status, ok := err.(apierrors.APIStatus)
 				require.True(t, ok)
@@ -200,10 +251,10 @@ func TestMTSettingsStore(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			w := newFakeWriter()
-			obj, ok, err := tc.op(NewMTSettingsStore(&fakeReader{rows: tc.rows}, w))
+			f := newFakeSettings(tc.rows)
+			obj, ok, err := tc.op(NewMTSettingsStore(f, f))
 			sso, _ := obj.(*iamv0.SSOSetting) // may be nil; each assert decides what "valid" means
-			tc.assert(t, sso, ok, err, w)
+			tc.assert(t, sso, ok, err, f)
 		})
 	}
 }
