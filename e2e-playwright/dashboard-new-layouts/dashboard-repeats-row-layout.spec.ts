@@ -1,8 +1,6 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
 import V2DashWithRowRepeats from '../dashboards/V2DashWithRowRepeats.json';
 
-import { Canvas, Controls, Panels, Rows, Sidebar, Tabs } from './page-objects';
+import { test, expect } from './fixtures';
 import {
   verifyChanges,
   saveDashboardAndCloseToast,
@@ -37,12 +35,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('enables row repeats', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-      const canvas = new Canvas({ page, dashboardPage, selectors, components });
-
+    test('enables row repeats', async ({ dashboardPage, selectors, page, controls, sidebar, rows, canvas }) => {
       await importTestDashboard(page, selectors, 'Row layout repeats - add repeats');
 
       await controls.enterEditMode();
@@ -63,10 +56,7 @@ test.describe(
       await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
     });
 
-    test('updates row repeats with variable change', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-
+    test('updates row repeats with variable change', async ({ dashboardPage, selectors, page, controls, rows }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -86,11 +76,14 @@ test.describe(
       await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS.slice(0, 1), 'hidden');
     });
 
-    test('updates title for repeat rows in sidebar', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-
+    test('updates title for repeat rows in sidebar', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      rows,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -113,12 +106,15 @@ test.describe(
       await checkRepeatedRowTitles(rows, getEditedName(REPEAT_TITLE_BASE), REPEAT_OPTIONS);
     });
 
-    test('updates repeats after panel change', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-
+    test('updates repeats after panel change', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      panels,
+      rows,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -147,13 +143,16 @@ test.describe(
       await expect(panels.getHeader(getEditedName('single panel row 2'))).toBeVisible();
     });
 
-    test('updates repeats after panel change in editor', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-      const canvas = new Canvas({ page, dashboardPage, selectors, components });
-
+    test('updates repeats after panel change in editor', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      panels,
+      rows,
+      canvas,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -196,11 +195,14 @@ test.describe(
       await expect(panels.getHeader(editedSinglePanelName('2'))).toBeVisible();
     });
 
-    test('hides add panel action in repeated rows', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-      const canvas = new Canvas({ page, dashboardPage, selectors, components });
-
+    test('hides add panel action in repeated rows', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      rows,
+      canvas,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -220,9 +222,7 @@ test.describe(
       await expect(canvas.getAddPanelButton(secondRowContent)).toBeHidden();
     });
 
-    test('views panels in repeated row', async ({ dashboardPage, selectors, page, components }) => {
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
+    test('views panels in repeated row', async ({ dashboardPage, selectors, page, panels }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -266,10 +266,7 @@ test.describe(
       await expect(panels.getPanel(getRepeatedPanelTitle(2, 2))).toBeVisible();
     });
 
-    test('views embedded panels in repeated rows', async ({ dashboardPage, selectors, page, components }) => {
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-
+    test('views embedded panels in repeated rows', async ({ dashboardPage, selectors, page, panels, rows }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -302,12 +299,7 @@ test.describe(
       await expect(panels.getPanel(getRepeatedPanelTitle(2, 2))).toBeVisible();
     });
 
-    test('removes repeats', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-
+    test('removes repeats', async ({ dashboardPage, selectors, page, controls, sidebar, panels, rows }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -339,13 +331,16 @@ test.describe(
       await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS, 'hidden');
     });
 
-    test('adds tabs in repeated rows', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-      const canvas = new Canvas({ page, dashboardPage, selectors, components });
-
+    test('adds tabs in repeated rows', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      rows,
+      tabs,
+      canvas,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -368,13 +363,16 @@ test.describe(
       await checkRepeatedTabTitles(tabs, 'tab-row-', [1, 2]);
     });
 
-    test('adds repeat tabs in repeated rows', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-      const canvas = new Canvas({ page, dashboardPage, selectors, components });
-
+    test('adds repeat tabs in repeated rows', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      rows,
+      tabs,
+      canvas,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -413,10 +411,7 @@ test.describe(
     // bypassing CSP to ensure the Save button is correctly updated
     test.use({ contextOptions: { bypassCSP: true } });
 
-    test('moves repeated rows', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-
+    test('moves repeated rows', async ({ dashboardPage, selectors, page, components, controls, rows }) => {
       // collapse rows so it's easier to move them without simulating scrolling
       // clone to avoid mutating V2DashWithRowRepeats, which is shared with the other tests in this file
       const dashboardWithCollapsedRows = structuredClone(V2DashWithRowRepeats);

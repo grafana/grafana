@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panels, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 import { flows, saveDashboardAndCloseToast, type Variable } from './utils';
 
 test.use({
@@ -28,14 +26,9 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new constant variable', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can add a new constant variable', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
       const variable = variableWithDefaults({ type: 'constant' });
       await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
@@ -48,14 +41,9 @@ test.describe(
       await expect(markdownContent).toContainText(`VariableUnderTest: ${variable.value}`);
     });
 
-    test('can add a new textbox variable', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can add a new textbox variable', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
       const variable = variableWithDefaults();
       await flows.addNewTextBoxVariable(page, sidebar, controls, variable);
 
@@ -77,14 +65,9 @@ test.describe(
       await expect(markdownContent).toContainText(`VariableUnderTest: bar`);
     });
 
-    test('can add a new interval variable', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can add a new interval variable', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
       const variable = variableWithDefaults({ type: 'interval', value: '1m' });
       await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
@@ -105,10 +88,7 @@ test.describe(
       await expect(markdownContent).toContainText('VariableUnderTest: 10m');
     });
 
-    test('can make a hidden variable visible', async ({ dashboardPage, selectors, page, components }) => {
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-
+    test('can make a hidden variable visible', async ({ dashboardPage, page, controls, sidebar }) => {
       await saveDashboardAndCloseToast(page, controls, `can make a hidden variable visible (${Math.random()})`);
 
       const variable = variableWithDefaults({ display: 'Hidden' });
@@ -137,10 +117,7 @@ test.describe(
       await expect(variableLabel).toBeVisible();
     });
 
-    test('can hide variable under the controls menu', async ({ dashboardPage, selectors, page, components }) => {
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-
+    test('can hide variable under the controls menu', async ({ dashboardPage, page, controls, sidebar }) => {
       await saveDashboardAndCloseToast(page, controls, `can hide a variable in controls menu - (${Math.random()})`);
 
       const variable = variableWithDefaults();

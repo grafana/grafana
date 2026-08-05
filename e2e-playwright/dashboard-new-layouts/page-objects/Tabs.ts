@@ -19,7 +19,7 @@ export class Tabs extends PageObject {
 
   /** Returns the layout container holding the tab's content */
   getContent(tabTitle: string): Locator {
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.LayoutContainer(`tab ${tabTitle}`));
+    return this.getByGrafanaSelector(this.selectors.components.LayoutContainer(`tab ${tabTitle}`));
   }
 
   /** Selects the tab by clicking its title */

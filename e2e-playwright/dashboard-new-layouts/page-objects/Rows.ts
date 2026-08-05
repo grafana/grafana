@@ -6,7 +6,7 @@ import { PageObject } from './PageObject';
 export class Rows extends PageObject {
   /** Returns the row's title element in the row header */
   getTitle(rowTitle: string): Locator {
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardRow.title(rowTitle));
+    return this.getByGrafanaSelector(this.selectors.components.DashboardRow.title(rowTitle));
   }
 
   /** Returns the row's content wrapper (grid or nested tabs) right after the row header */
@@ -30,7 +30,7 @@ export class Rows extends PageObject {
   /** Collapses an expanded row, expands a collapsed one */
   async toggle(rowTitle: string) {
     await test.step(`Toggle row "${rowTitle}"`, async () => {
-      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardRow.toggle(rowTitle)).click();
+      await this.getByGrafanaSelector(this.selectors.components.DashboardRow.toggle(rowTitle)).click();
     });
   }
 }
