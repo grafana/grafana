@@ -21,6 +21,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { setNotebookDocumentHeader } from '../../serialization/notebookSpecTransform';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
+import { DashboardMutationClient } from '../DashboardMutationClient';
 
 import { applyNotebookSpecCommand } from './applyNotebookSpec';
 import { applySpecCommand } from './applySpec';
@@ -197,6 +198,13 @@ function specOf(result: Awaited<ReturnType<typeof getSpec>>): NotebookSpec {
 function echoedSpecOf(result: Awaited<ReturnType<typeof applySpec>>): NotebookSpec {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- handler data is untyped by the MutationResult contract
   return (result.data as { spec: NotebookSpec }).spec;
+}
+
+/** The document header, which the notebook layout manager holds on its own state. */
+function headerOf(scene: DashboardScene): { title?: string; tags?: string[] } {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the header lives on the layout manager, not the scene
+  const body = scene.state.body as unknown as { state: { title?: string; tags?: string[] } };
+  return { title: body.state.title, tags: body.state.tags };
 }
 
 function referencedNames(spec: NotebookSpec): string[] {
@@ -734,5 +742,82 @@ describe('APPLY_NOTEBOOK_SPEC permission', () => {
     const result = applyNotebookSpecCommand.permission(dashboardScene);
     expect(result.allowed).toBe(false);
     expect(result.allowed === false && result.error).toContain('notebooks only');
+  });
+});
+
+/**
+ * The compatibility promise: on a notebook, the dashboard commands do exactly what the notebook
+ * commands do. GET_SPEC and APPLY_SPEC forward, so these cases are near-tautological today, and that
+ * is the point rather than a weakness. They are what fails the day someone edits that branch, which
+ * is the only warning that an assistant version already released has stopped working.
+ *
+ * Do not replace them with a check that the forward was called. A forward that runs and returns the
+ * wrong thing is the failure worth catching, and only the caller-visible result shows it.
+ */
+describe('the dashboard spec commands on a notebook', () => {
+  it('GET_SPEC returns exactly what GET_NOTEBOOK_SPEC returns', async () => {
+    const scene = buildNotebookScene(makeNotebookSpecWithPanel());
+
+    // The whole result, not just the spec, so `resource` and `success` are covered too.
+    expect(await getSpec(scene, true)).toEqual(await getNotebookSpec(scene, true));
+  });
+
+  it('both write commands echo the same spec', async () => {
+    const viaDashboardCommand = buildNotebookScene(makeNotebookSpecWithPanel());
+    const viaNotebookCommand = buildNotebookScene(makeNotebookSpecWithPanel());
+    const edit = (current: NotebookSpec) => ({
+      ...current,
+      title: 'Renamed',
+      elements: { ...current.elements, finding: markdown('Deploy at 14:00 lines up with the spike.') },
+      layout: {
+        kind: 'NotebookLayout',
+        spec: { cells: [...current.layout.spec.cells, cell('finding', 'assistant')] },
+      },
+    });
+
+    const echoedByDashboardCommand = echoedSpecOf(
+      await applySpec(viaDashboardCommand, edit(specOf(await getSpec(viaDashboardCommand))), true)
+    );
+    const echoedByNotebookCommand = echoedSpecOf(
+      await applyNotebookSpec(viaNotebookCommand, edit(specOf(await getNotebookSpec(viaNotebookCommand))), true)
+    );
+
+    expect(echoedByDashboardCommand).toEqual(echoedByNotebookCommand);
+  });
+
+  it('both write commands leave the scene in the same state', async () => {
+    const viaDashboardCommand = buildNotebookScene(makeNotebookSpecWithPanel());
+    const viaNotebookCommand = buildNotebookScene(makeNotebookSpecWithPanel());
+    const renamed = (current: NotebookSpec) => ({ ...current, title: 'Renamed', tags: ['resolved'] });
+
+    await applySpec(viaDashboardCommand, renamed(specOf(await getSpec(viaDashboardCommand))), true);
+    await applyNotebookSpec(viaNotebookCommand, renamed(specOf(await getNotebookSpec(viaNotebookCommand))), true);
+
+    expect(specOf(await getNotebookSpec(viaDashboardCommand))).toEqual(
+      specOf(await getNotebookSpec(viaNotebookCommand))
+    );
+
+    // The header is a second copy of title and tags, held by the layout manager and not read back
+    // through the spec, so comparing specs alone would miss a missing restore.
+    expect(headerOf(viaDashboardCommand)).toEqual(headerOf(viaNotebookCommand));
+    expect(headerOf(viaDashboardCommand)).toEqual({ title: 'Renamed', tags: ['resolved'] });
+
+    // The two the rebuild is most likely to get wrong.
+    expect(viaDashboardCommand.state.meta.isEmbedded).toBe(viaNotebookCommand.state.meta.isEmbedded);
+    expect(viaDashboardCommand.state.isEditing).toBeFalsy();
+    expect(viaNotebookCommand.state.isEditing).toBeFalsy();
+  });
+
+  // Looks like testing the obvious, and is not. The assistant plugin decides whether a page can be
+  // read or edited by looking for GET_SPEC and APPLY_SPEC in this list by name, and reports the
+  // notebook as an unsupported surface if either is missing. Registration is deliberately not
+  // filtered by resource; this case is what stops that filter being added back as a tidy-up.
+  // The list is not scene-dependent today, so what this asserts is the decision, not a behaviour.
+  it('still advertises the dashboard pair alongside the notebook pair', () => {
+    const client = new DashboardMutationClient(buildNotebookScene(makeNotebookSpec()));
+
+    expect(client.getAvailableCommands()).toEqual(
+      expect.arrayContaining(['GET_SPEC', 'APPLY_SPEC', 'GET_NOTEBOOK_SPEC', 'APPLY_NOTEBOOK_SPEC'])
+    );
   });
 });
