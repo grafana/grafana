@@ -14,7 +14,7 @@ import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { usePluginBridge } from '../alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from '../alerting/unified/types/pluginBridges';
 
-import { AlertIncidentTabs } from './AlertsIncidents/AlertIncidentTabs';
+import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncidents/AlertIncidentTabs';
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { NewsCard } from './AlertsIncidents/NewsCard';
@@ -71,6 +71,7 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
+  const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
   const irm = usePluginBridge(SupportedPlugin.Irm);
 
   const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
@@ -125,7 +126,7 @@ export default function HomePage() {
         subTitle: t('home.home-page.placeholder', 'Welcome to {{edition}}.', { edition: getEdition() }),
         hideFromBreadcrumbs: true,
       }}
-      actions={redesignEnabled ? <HeaderActions /> : undefined}
+      actions={redesignEnabled ? <HeaderActions alertIncidentRef={alertIncidentRef} /> : undefined}
       layout={PageLayoutType.Home}
     >
       <Page.Contents>
@@ -155,7 +156,7 @@ export default function HomePage() {
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}
                     <DashboardTabs extensionComponents={[]} />
-                    <AlertIncidentTabs />
+                    <AlertIncidentTabs switchRef={alertIncidentRef} />
                   </Grid>
                 </>
               ) : (
