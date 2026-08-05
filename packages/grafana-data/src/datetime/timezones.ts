@@ -27,7 +27,7 @@ export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
   }
 };
 
-export const getZone = (timeZone: string): MomentTimeZoneInfo => {
+export const getZone = (timeZone: string): MomentTimeZoneInfo | null => {
   return moment.tz.zone(timeZone);
 };
 
