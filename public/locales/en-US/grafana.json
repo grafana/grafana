@@ -3287,6 +3287,8 @@
         "title": "Auto-sync configuration"
       },
       "import": {
+        "any": "any",
+        "collapse-all": "Collapse all",
         "empty-body": "Import an Alertmanager configuration to stage it here as a safe, reversible copy. Review what it contains, then promote it into your live Grafana Alertmanager when you're ready.",
         "empty-cta": "Import Alertmanager configuration",
         "empty-learn-more": "Learn more about importing configurations",
@@ -3294,9 +3296,26 @@
         "error-body": "The request to the Alerting API failed. Check your connection and try again.",
         "error-retry": "Retry",
         "error-title": "Couldn't load imported configurations",
+        "expand-all": "Expand all",
+        "inhibition-equal": "equal: {{labels}}",
         "loading": "Loading imported configurations…",
+        "no-matchers": "(no matchers)",
+        "parse-error-body": "The imported Alertmanager configuration could not be parsed.",
+        "parse-error-title": "Couldn't read the staged configuration",
+        "policy-tree-routes_one": "{{count}} route",
+        "policy-tree-routes_other": "{{count}} routes",
+        "resources": "Resources",
+        "section": {
+          "contact-points": "Contact points",
+          "inhibition-rules": "Inhibition rules",
+          "notification-policy": "Notification policy",
+          "templates": "Templates",
+          "time-intervals": "Time intervals"
+        },
+        "staged-badge": "Staged · read-only",
         "staged-description": "A read-only, reversible copy of an imported Alertmanager config. Promote it to merge into your live config, or revert to remove it.",
-        "staged-title": "Staged configuration"
+        "staged-title": "Staged configuration",
+        "view": "View"
       },
       "tabs": {
         "alert-managers": "Alert managers",
