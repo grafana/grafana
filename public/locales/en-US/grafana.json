@@ -12420,7 +12420,7 @@
       "title": "Reporting"
     },
     "saved-queries": {
-      "subtitle": "Reusable queries you can use across panels and Explore",
+      "subtitle": "Reusable queries across Grafana",
       "title": "Saved queries"
     },
     "scenes": {
