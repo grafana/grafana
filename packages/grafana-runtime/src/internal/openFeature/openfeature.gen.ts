@@ -57,6 +57,8 @@ export const FlagKeys = {
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
+  /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
+  GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Check for the existence of logs when linking from the Trace View */
@@ -403,6 +405,17 @@ export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.customizableMegaMenu", false, options).value;
+};
+
+/**
+ * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardGlobalVariables`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardGlobalVariables", false, options).value;
 };
 
 /**

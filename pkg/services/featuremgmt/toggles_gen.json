@@ -2745,6 +2745,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardGlobalVariables",
+        "resourceVersion": "1785434853665",
+        "creationTimestamp": "2026-07-30T18:07:33Z"
+      },
+      "spec": {
+        "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardSettingsRedesign",
         "resourceVersion": "1782823244633",
         "creationTimestamp": "2026-06-30T12:40:44Z"
