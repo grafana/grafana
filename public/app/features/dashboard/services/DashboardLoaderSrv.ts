@@ -46,11 +46,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
   abstract loadSnapshot(slug: string): Promise<T>;
 
   protected loadScriptedDashboard(file: string): Promise<DashboardDTO> {
-    // Scripted dashboards are deprecated and disabled by default (feature toggle enabled). Admins can
-    // set `disableScriptedDashboards` to false to temporarily restore them until they are removed in Grafana 14.
     if (config.featureToggles.disableScriptedDashboards) {
-      // Reject with a plain object (not an Error) so the messageId propagates through
-      // getMessageIdFromError and the scene page can render a dedicated notice with a link.
       return Promise.reject({
         status: 410,
         messageId: SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID,

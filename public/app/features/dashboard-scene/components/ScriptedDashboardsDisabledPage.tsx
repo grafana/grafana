@@ -9,7 +9,7 @@ export function ScriptedDashboardsDisabledPage() {
 
   return (
     <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} pageNav={{ text: title }}>
-      <Box paddingY={4} display="flex" direction="column" alignItems="center">
+      <Box display="flex" direction="column" alignItems="center">
         <Alert severity="info" title={title}>
           <Trans i18nKey="dashboard-scene.scripted-dashboards-disabled.body">
             Scripted dashboards are deprecated and will be removed in Grafana 14.{' '}
