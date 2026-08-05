@@ -39,27 +39,6 @@ env:
   TESTCONTAINERS_RYUK_DISABLED: 'true'
 
 jobs:
-  detect-changes:
-    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    name: Detect whether code changed
-    runs-on: ubuntu-arm64-small
-    permissions:
-      contents: read
-    outputs:
-      changed: ${{ steps.detect-changes.outputs.backend }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 0
-          filter: blob:none
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/pr-test-integration.yml
-
   #### OSS
   sqlite:
     # Run this workflow only for PRs from forks
@@ -224,10 +203,12 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      # Enterprise must be cloned before setup-go so that enterprise
-      # modules are visible when the Go cache key is computed.
+      - name: Set up remote Go cache
+        uses: ./.github/actions/setup-go-remote-cache
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache: 'false'
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -274,10 +255,12 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      # Enterprise must be cloned before setup-go so that enterprise
-      # modules are visible when the Go cache key is computed.
+      - name: Set up remote Go cache
+        uses: ./.github/actions/setup-go-remote-cache
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache: 'false'
       - name: Wait for MySQL
         run: |
           for _ in $(seq 1 60); do
@@ -339,10 +322,12 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      # Enterprise must be cloned before setup-go so that enterprise
-      # modules are visible when the Go cache key is computed.
+      - name: Set up remote Go cache
+        uses: ./.github/actions/setup-go-remote-cache
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache: 'false'
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests

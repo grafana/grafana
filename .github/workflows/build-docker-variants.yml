@@ -5,7 +5,7 @@ name: Build Docker Variants
 # tarball for a single OS/arch combination.
 #
 # Called from release-build.yml (once per arch, tarball from build-targz) and
-# from pr-test-docker.yml (amd64 only, tarball built from source in the PR).
+# from pr-build-grafana.yml (amd64 only, tarball built from source in the PR).
 
 on:
   workflow_call:
@@ -109,6 +109,7 @@ jobs:
           name: ${{ inputs.targz-artifact-name }}
           path: dist
       - name: Set up QEMU
+        if: inputs.os != 'linux' || inputs.arch != 'amd64'
         uses: docker/setup-qemu-action@7e10951aea186e886cef2f1a25a7bbf4e593d710
         with:
           image: docker.io/tonistiigi/binfmt:qemu-v10.2.1-65

@@ -41,7 +41,6 @@ policy:
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
             - Workflow .github/workflows/pr-unified-storage-compatibility.yml succeeded or skipped
             - Workflow .github/workflows/reject-gh-secrets.yml succeeded or skipped
-            - Workflow .github/workflows/run-schema-v2-e2e.yml succeeded or skipped
             - Workflow .github/workflows/shellcheck.yml succeeded or skipped
             - Workflow .github/workflows/storybook-a11y.yml succeeded or skipped
             - Workflow .github/workflows/swagger-gen.yml succeeded or skipped
@@ -547,32 +546,8 @@ approval_rules:
         paths:
           - ^Makefile$
           - ^Dockerfile$
-          - ^public\/(?:(?:[^/]*(?:/|$))*)$
-          - ^packages\/(?:(?:[^/]*(?:/|$))*)$
-          - ^apps\/(?:(?:[^/]*(?:/|$))*)$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.work$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
-          - ^(?:(?:[^/]*(?:/|$))*)package\.json$
-          - ^(?:(?:[^/]*(?:/|$))*)nx\.json$
-          - ^(?:(?:[^/]*(?:/|$))*)project\.json$
-          - ^(?:(?:[^/]*(?:/|$))*)yarn\.lock$
-          - ^conf\/(?:(?:[^/]*(?:/|$))*)$
-          - ^\.yarnrc\.yml$
-          - ^\.yarn\/(?:(?:[^/]*(?:/|$))*)$
-          - ^tsconfig\.json$
-          - ^(?:[^/]*)\.js$
-          - ^(?:[^/]*)\.ts$
-          - ^(?:[^/]*)\.config\.ts$
-          - ^scripts\/(?:(?:[^/]*(?:/|$))*)$
-          - ^emails\/(?:(?:[^/]*(?:/|$))*)$
-          - ^\.citools\/(?:(?:[^/]*(?:/|$))*)$
-          - ^kinds\/(?:(?:[^/]*(?:/|$))*)$
-          - ^embed\.go$
           - ^packaging\/docker\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.github\/workflows\/pr-test-docker\.yml$
-          - ^\.github\/workflows\/build-docker-variants\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/pr-test-docker\.yml$
@@ -666,21 +641,6 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/reject-gh-secrets.yml
-  - name: Workflow .github/workflows/run-schema-v2-e2e.yml succeeded or skipped
-    if:
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/run-schema-v2-e2e\.yml$
-      targets_branch:
-        pattern: (^(?:(?:[^/]*(?:/|$))*)$)
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/run-schema-v2-e2e.yml
   - name: Workflow .github/workflows/shellcheck.yml succeeded or skipped
     if:
       file_not_deleted:

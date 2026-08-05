@@ -59,13 +59,13 @@ fi
 
 readarray -t PACKAGES <<< "$(go list -f '{{.Dir}}' -e "${dirs[@]}")"
 
+declare -A HAS_MATCH=()
+while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    HAS_MATCH["${f%/*}"]=1
+done < <(find "${PACKAGES[@]}" -maxdepth 1 -type f -name '*_test.go' -print0 | xargs -0 -r grep -l "^func $beginningWith" || true)
 for i in "${!PACKAGES[@]}"; do
-    readarray -t PKG_FILES <<< "$(find "${PACKAGES[$i]}" -maxdepth 1 -type f -name '*_test.go')"
-    if [ ${#PKG_FILES[@]} -eq 0 ] || [ ${#PKG_FILES[@]} -eq 1 ] && [ -z "${PKG_FILES[0]}" ]; then
-        unset "PACKAGES[$i]"
-        continue
-    fi
-    if ! grep -q "^func $beginningWith" "${PKG_FILES[@]}"; then
+    if [[ -z "${HAS_MATCH[${PACKAGES[$i]}]:-}" ]]; then
         unset "PACKAGES[$i]"
     fi
 done

@@ -20,7 +20,7 @@ runs:
         for i in $(seq 1 $RETRIES); do
           echo "Attempt $i to clone..."
 
-          if git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise; then
+          if git clone --filter=blob:none --no-tags https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-enterprise.git ../grafana-enterprise; then
             echo "Clone succeeded on attempt $i"
             break
           fi

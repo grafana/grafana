@@ -242,7 +242,7 @@ jobs:
       - name: Run coverage for main branch
         if: steps.check-affected.outputs.affected == 'true'
         working-directory: './main'
-        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
+        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=4
         env:
           SHOULD_OPEN_COVERAGE_REPORT: 'false'
           CI: 'true'
@@ -255,7 +255,7 @@ jobs:
       - name: Run coverage for PR branch
         if: steps.check-affected.outputs.affected == 'true'
         working-directory: './pr'
-        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
+        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=4
         env:
           SHOULD_OPEN_COVERAGE_REPORT: 'false'
           CI: 'true'

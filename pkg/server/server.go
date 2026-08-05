@@ -224,3 +224,5 @@ func (s *Server) notifySystemd(state string) {
 		s.log.Warn("Failed to write notification to systemd", "err", err)
 	}
 }
+
+// CI evaluation touch; drop before merge
