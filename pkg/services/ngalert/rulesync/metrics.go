@@ -27,6 +27,12 @@ type Metrics struct {
 	// per org (masked to 53 bits), so operators can correlate sync state with
 	// what's applied.
 	SyncHash *prometheus.GaugeVec
+	// SyncGroups exposes the number of rule groups applied in the most recent
+	// successful sync, per org.
+	SyncGroups *prometheus.GaugeVec
+	// SyncRules exposes the number of rules applied in the most recent successful
+	// sync, per org.
+	SyncRules *prometheus.GaugeVec
 }
 
 // NewMetrics constructs the external ruler sync metrics against r. Pass nil to
@@ -57,6 +63,18 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			Subsystem: metrics.Subsystem,
 			Name:      "external_ruler_sync_hash",
 			Help:      "FNV-1a hash of the most recently synced external ruler configuration per org, masked to 53 bits to fit Prometheus float64 storage.",
+		}, []string{"org_id"}),
+		SyncGroups: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: metrics.Namespace,
+			Subsystem: metrics.Subsystem,
+			Name:      "external_ruler_sync_groups",
+			Help:      "Number of rule groups applied in the most recent successful external ruler sync, partitioned by org.",
+		}, []string{"org_id"}),
+		SyncRules: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: metrics.Namespace,
+			Subsystem: metrics.Subsystem,
+			Name:      "external_ruler_sync_rules",
+			Help:      "Number of rules applied in the most recent successful external ruler sync, partitioned by org.",
 		}, []string{"org_id"}),
 	}
 }

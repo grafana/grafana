@@ -307,6 +307,14 @@ func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester
 		return &SyncError{Reason: ReasonSave, Cause: err}
 	}
 
+	orgIDStr := strconv.FormatInt(orgID, 10)
+	ruleCount := 0
+	for _, g := range groups {
+		ruleCount += len(g.Rules)
+	}
+	s.metrics.SyncGroups.WithLabelValues(orgIDStr).Set(float64(len(groups)))
+	s.metrics.SyncRules.WithLabelValues(orgIDStr).Set(float64(ruleCount))
+
 	if err := s.prune(ctx, user, orgID, root.UID, desired); err != nil {
 		return &SyncError{Reason: ReasonPrune, Cause: err}
 	}
