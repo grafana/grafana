@@ -12,8 +12,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
 	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestResolvePreviewAssetsURL(t *testing.T) {
@@ -201,4 +203,33 @@ func TestGetPreviewWebAssets(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), requests.Load(), "the cancelled caller's fetch should be reused, not retried")
 	})
+}
+
+func TestNamespaceAllowed(t *testing.T) {
+	cfg := fswebassets.PreviewAssetsConfig{
+		Enabled:           true,
+		BaseURL:           "https://storage.example.com/bucket/",
+		AllowedNamespaces: []string{"stacks-123", "stacks-456"},
+	}
+
+	assert.True(t, cfg.NamespaceAllowed("stacks-123"))
+	assert.True(t, cfg.NamespaceAllowed("stacks-456"))
+	assert.False(t, cfg.NamespaceAllowed("stacks-789"))
+	assert.False(t, cfg.NamespaceAllowed(""), "requests without a namespace must fail closed")
+
+	empty := fswebassets.PreviewAssetsConfig{Enabled: true, BaseURL: "https://storage.example.com/"}
+	assert.False(t, empty.NamespaceAllowed("stacks-123"), "an empty allowlist must not allow any namespace")
+}
+
+func TestReadPreviewAssetsConfig(t *testing.T) {
+	raw := ini.Empty()
+	sec := raw.Section("frontend_service")
+	sec.Key("preview_assets_enabled").SetValue("true")
+	sec.Key("preview_assets_base_url").SetValue("https://storage.example.com/bucket/")
+	sec.Key("preview_assets_allowed_namespaces").SetValue("stacks-123, stacks-456")
+
+	cfg := fswebassets.ReadPreviewAssetsConfig(&setting.Cfg{Raw: raw})
+	assert.True(t, cfg.Enabled)
+	assert.Equal(t, "https://storage.example.com/bucket/", cfg.BaseURL)
+	assert.Equal(t, []string{"stacks-123", "stacks-456"}, cfg.AllowedNamespaces)
 }

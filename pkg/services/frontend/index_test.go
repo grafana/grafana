@@ -116,7 +116,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		mux := setupPreviewTestMux(t, bucket.URL+"/")
 		previewURL := bucket.URL + "/" + folder + "/"
 
-		req := httptest.NewRequest("GET", "/", nil)
+		req := newPreviewRequest("/")
 		req.AddCookie(&http.Cookie{Name: previewAssetsCookieName, Value: folder})
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, req)
@@ -139,8 +139,25 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		t.Cleanup(bucket.Close)
 		mux := setupPreviewTestMux(t, bucket.URL+"/")
 
-		req := httptest.NewRequest("GET", "/", nil)
+		req := newPreviewRequest("/")
 		req.AddCookie(&http.Cookie{Name: previewAssetsCookieName, Value: "pr_grafana_does_not_exist"})
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		body := recorder.Body.String()
+		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
+		assert.NotContains(t, body, "window.__grafanaPreviewAssets")
+	})
+
+	t.Run("should ignore the preview cookie for a namespace that has not opted in", func(t *testing.T) {
+		const folder = "pr_grafana_123456"
+		bucket := newPreviewBucketServer(t, folder)
+		mux := setupPreviewTestMux(t, bucket.URL+"/")
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("baggage", "namespace=stacks-other")
+		req.AddCookie(&http.Cookie{Name: previewAssetsCookieName, Value: folder})
 		recorder := httptest.NewRecorder()
 		mux.ServeHTTP(recorder, req)
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // Deploy IDs like pr_grafana_123456. Deliberately strict so a folder can never
@@ -31,10 +33,20 @@ const (
 type PreviewAssetsConfig struct {
 	Enabled bool
 	BaseURL string
+
+	// Second lock: even with the feature enabled, only these namespaces serve
+	// preview assets. Empty means no namespace is allowed.
+	AllowedNamespaces []string
 }
 
 func (c PreviewAssetsConfig) Active() bool {
 	return c.Enabled && c.BaseURL != ""
+}
+
+// NamespaceAllowed reports whether a stack has opted in. Fails closed: requests
+// without a namespace never see preview assets.
+func (c PreviewAssetsConfig) NamespaceAllowed(namespace string) bool {
+	return namespace != "" && slices.Contains(c.AllowedNamespaces, namespace)
 }
 
 // ReadPreviewAssetsConfig reads startup-time, cluster-wide configuration;
@@ -42,8 +54,9 @@ func (c PreviewAssetsConfig) Active() bool {
 func ReadPreviewAssetsConfig(cfg *setting.Cfg) PreviewAssetsConfig {
 	sec := cfg.SectionWithEnvOverrides("frontend_service")
 	return PreviewAssetsConfig{
-		Enabled: sec.Key("preview_assets_enabled").MustBool(false),
-		BaseURL: sec.Key("preview_assets_base_url").String(),
+		Enabled:           sec.Key("preview_assets_enabled").MustBool(false),
+		BaseURL:           sec.Key("preview_assets_base_url").String(),
+		AllowedNamespaces: util.SplitString(sec.Key("preview_assets_allowed_namespaces").String()),
 	}
 }
 
