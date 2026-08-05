@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -41,6 +42,9 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 		return embedder.EmbedTextOutput{}, nil
 	}
 
+	// BatchProcess runs chunks concurrently, so tokens is accumulated with
+	// an atomic rather than a plain int sum.
+	var tokens atomic.Int64
 	results, err := embedder.BatchProcess(ctx, input.Texts, e.batchSize, func(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 		callCtx, cancel := context.WithTimeoutCause(ctx, callTimeout, ErrCallTimeout)
 		defer cancel()
@@ -55,6 +59,7 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 		if len(res.Vectors) != len(texts) {
 			return nil, fmt.Errorf("azure: got %d vectors for %d inputs", len(res.Vectors), len(texts))
 		}
+		tokens.Add(int64(res.InputTokens))
 		if input.Normalize {
 			embedder.NormalizeDenseBatch(res.Vectors)
 		}
@@ -67,5 +72,5 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 	if err != nil {
 		return embedder.EmbedTextOutput{}, err
 	}
-	return embedder.EmbedTextOutput{Embeddings: results}, nil
+	return embedder.EmbedTextOutput{Embeddings: results, InputTokens: int(tokens.Load())}, nil
 }

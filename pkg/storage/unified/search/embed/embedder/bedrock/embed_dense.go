@@ -3,6 +3,7 @@ package bedrock
 import (
 	"context"
 	"errors"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -43,6 +44,9 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 	}
 	inputType := cohereInputType(input.Task)
 
+	// BatchProcess runs chunks concurrently, so tokens is accumulated with
+	// an atomic rather than a plain int sum.
+	var tokens atomic.Int64
 	results, err := embedder.BatchProcess(ctx, input.Texts, e.batchSize, func(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 		callCtx, cancel := context.WithTimeoutCause(ctx, callTimeout, ErrCallTimeout)
 		defer cancel()
@@ -54,6 +58,7 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 			}
 			return nil, err
 		}
+		tokens.Add(int64(res.InputTokens))
 		if input.Normalize {
 			embedder.NormalizeDenseBatch(res.Vectors)
 		}
@@ -66,7 +71,7 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 	if err != nil {
 		return embedder.EmbedTextOutput{}, err
 	}
-	return embedder.EmbedTextOutput{Embeddings: results}, nil
+	return embedder.EmbedTextOutput{Embeddings: results, InputTokens: int(tokens.Load())}, nil
 }
 
 // cohereInputType maps generic task names to Cohere's input_type values.
