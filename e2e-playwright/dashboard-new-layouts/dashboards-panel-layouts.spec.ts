@@ -37,7 +37,7 @@ test.describe(
 
         await sidebar.toolbar.clickButton('Options');
 
-        await gridLayoutOptions.switchLayout('auto', { confirm: true });
+        await gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
@@ -70,7 +70,7 @@ test.describe(
 
         await sidebar.toolbar.clickButton('Options');
 
-        await gridLayoutOptions.switchLayout('auto', { confirm: true });
+        await gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         // At Standard width all 3 panels fit on one row at this viewport, so start from
         // Wide: only 2 columns fit, which forces the last panel onto a second row
@@ -129,7 +129,7 @@ test.describe(
 
         await sidebar.toolbar.clickButton('Options');
 
-        await gridLayoutOptions.switchLayout('auto', { confirm: true });
+        await gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         await gridLayoutOptions.selectMinColumnWidth('Custom', 1100);
 
@@ -166,7 +166,7 @@ test.describe(
 
         await sidebar.toolbar.clickButton('Options');
 
-        await gridLayoutOptions.switchLayout('auto', { confirm: true });
+        await gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         await gridLayoutOptions.selectMaxColumns('1');
 
@@ -202,7 +202,7 @@ test.describe(
 
         await sidebar.toolbar.clickButton('Options');
 
-        await gridLayoutOptions.switchLayout('auto', { confirm: true });
+        await gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         const regularRowHeight = (await getPanelBox(dashboardPage, selectors, 'New panel')).height;
 
@@ -259,7 +259,7 @@ test.describe(
 
         await sidebar.toolbar.clickButton('Options');
 
-        await gridLayoutOptions.switchLayout('auto', { confirm: true });
+        await gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         const regularRowHeight = (await getPanelBox(dashboardPage, selectors, 'New panel')).height;
 
@@ -304,7 +304,7 @@ test.describe(
 
         await sidebar.toolbar.clickButton('Options');
 
-        await gridLayoutOptions.switchLayout('auto', { confirm: true });
+        await gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         // Set narrow column width first to ensure panels fit horizontally
         await gridLayoutOptions.selectMinColumnWidth('Narrow');
