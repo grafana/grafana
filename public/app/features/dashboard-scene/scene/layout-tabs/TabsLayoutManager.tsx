@@ -32,7 +32,13 @@ import {
   showUngroupConfirmation,
   showUngroupGroupsModal,
 } from '../layouts-shared/ungroupConfirmation';
-import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
+import {
+  deduplicateTitles,
+  generateUniqueTitle,
+  ungroupLayout,
+  GridLayoutType,
+  mapIdToGridLayoutType,
+} from '../layouts-shared/utils';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import {
@@ -486,6 +492,7 @@ export class TabsLayoutManager
         }
       }
 
+      deduplicateTitles(rows);
       ungroupLayout(this, new RowsLayoutManager({ rows }), true);
       return;
     }
@@ -517,6 +524,7 @@ export class TabsLayoutManager
       }
     }
 
+    deduplicateTitles(tabs);
     this.setState({ tabs, currentTabSlug: undefined });
   }
 

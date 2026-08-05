@@ -372,6 +372,38 @@ describe('RowsLayoutManager', () => {
       expect(rowsLayoutManager.state.rows[1]).toBe(innerRow2);
       expect(rowsLayoutManager.state.rows[3]).toBe(gridRow);
     });
+
+    it('should make tab titles unique when hoisting to tabs produces clashing titles', () => {
+      const rowsLayoutManager = buildRowsLayoutManager([
+        new RowItem({ title: 'Row 1', layout: new TabsLayoutManager({ tabs: [new TabItem({ title: 'Overview' })] }) }),
+        new RowItem({ title: 'Row 2', layout: new TabsLayoutManager({ tabs: [new TabItem({ title: 'Overview' })] }) }),
+        new RowItem({ title: 'Overview' }),
+      ]);
+
+      rowsLayoutManager.hoistNestedGroups('tabs');
+
+      const newLayout = (ungroupLayout as jest.Mock).mock.calls[0][1] as TabsLayoutManager;
+      expect(newLayout.state.tabs.map((tab) => tab.state.title)).toEqual(['Overview', 'Overview 1', 'Overview 2']);
+    });
+
+    it('should make row titles unique when hoisting to rows produces clashing titles', () => {
+      const rowsLayoutManager = buildRowsLayoutManager([
+        new RowItem({ title: 'Outer', layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Overview' })] }) }),
+        new RowItem({
+          title: 'Tabs row',
+          layout: new TabsLayoutManager({ tabs: [new TabItem({ title: 'Overview' })] }),
+        }),
+        new RowItem({ title: 'Overview' }),
+      ]);
+
+      rowsLayoutManager.hoistNestedGroups('rows');
+
+      expect(rowsLayoutManager.state.rows.map((row) => row.state.title)).toEqual([
+        'Overview',
+        'Overview 1',
+        'Overview 2',
+      ]);
+    });
   });
 
   describe('ungroupRows', () => {

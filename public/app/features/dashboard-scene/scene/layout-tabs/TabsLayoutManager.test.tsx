@@ -629,6 +629,31 @@ describe('TabsLayoutManager', () => {
       expect(tabsLayoutManager.state.tabs[1]).toBe(innerTab2);
       expect(tabsLayoutManager.state.tabs[3]).toBe(gridTab);
     });
+
+    it('should make row titles unique when hoisting to rows produces clashing titles', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Tab 1', layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Overview' })] }) }),
+        new TabItem({ title: 'Tab 2', layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Overview' })] }) }),
+        new TabItem({ title: 'Overview' }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.hoistNestedGroups('rows');
+
+      const newLayout = scene.state.body as RowsLayoutManager;
+      expect(newLayout.state.rows.map((row) => row.state.title)).toEqual(['Overview', 'Overview 1', 'Overview 2']);
+    });
+
+    it('should make tab titles unique when hoisting to tabs produces clashing titles', () => {
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({ title: 'Group', layout: new TabsLayoutManager({ tabs: [new TabItem({ title: 'Overview' })] }) }),
+        new TabItem({ title: 'Overview' }),
+      ]);
+
+      tabsLayoutManager.hoistNestedGroups('tabs');
+
+      expect(tabsLayoutManager.state.tabs.map((tab) => tab.state.title)).toEqual(['Overview', 'Overview 1']);
+    });
   });
 
   describe('ungroup', () => {
