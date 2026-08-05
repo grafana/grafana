@@ -10,6 +10,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -17,8 +20,6 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 
 	prom_model "github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
@@ -75,8 +76,8 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
-			NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-			ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 		},
 	}
 
@@ -173,8 +174,8 @@ func TestIntegrationAccessControl(t *testing.T) {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
-			NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-			ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 		},
 	}
 
@@ -258,8 +259,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -312,8 +313,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -373,8 +374,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -424,8 +425,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -462,8 +463,8 @@ func TestIntegrationCRUD(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -516,8 +517,8 @@ func TestIntegrationPatch(t *testing.T) {
 			Trigger: v0alpha1.AlertRuleIntervalTrigger{
 				Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 			},
-			NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-			ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+			NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+			ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 		},
 	}
 
@@ -618,8 +619,8 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 
@@ -721,11 +722,7 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertingMultiplePolicies,
-		},
-	})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
 
 	common.CreateTestFolder(t, helper, "test-folder")
@@ -786,8 +783,8 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:          v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState:         v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:          common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState:         common.ToK8sExecErrState(rule.ExecErrState),
 				NotificationSettings: ns,
 			},
 		}
@@ -803,6 +800,9 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		alertRule := newAlertRule(t, ns)
 
 		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -817,6 +817,74 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		require.NoError(t, client.Delete(ctx, created.Name, v1.DeleteOptions{}))
 	})
 
+	t.Run("should default to SimplifiedRouting if type is unspecified using unstructured object", func(t *testing.T) {
+		rule := baseGen.Generate()
+		unstructuredRule := &unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"namespace": "default",
+					"annotations": map[string]string{
+						"grafana.app/folder": "test-folder",
+					},
+				},
+				"spec": map[string]any{
+					"title": rule.Title,
+					"expressions": map[string]any{
+						"A": map[string]any{
+							"queryType":     new(rule.Data[0].QueryType),
+							"datasourceUID": new(v0alpha1.AlertRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+							"model":         rule.Data[0].Model,
+							"source":        new(true),
+							"relativeTimeRange": map[string]any{
+								"from": v0alpha1.AlertRulePromDurationWMillis("5m"),
+								"to":   v0alpha1.AlertRulePromDurationWMillis("0s"),
+							},
+						},
+					},
+					"trigger": map[string]any{
+						"interval": v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
+					},
+					"noDataState":  common.ToK8sNoDataState(rule.NoDataState),
+					"execErrState": common.ToK8sExecErrState(rule.ExecErrState),
+					"notificationSettings": map[string]any{
+						"receiver": "empty",
+					},
+				},
+			},
+		}
+
+		unstructuredClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: "default",
+			GVR: schema.GroupVersionResource{
+				Group:    "rules.alerting.grafana.app",
+				Version:  "v0alpha1",
+				Resource: "alertrules",
+			},
+		})
+
+		created, err := unstructuredClient.Resource.Create(ctx, unstructuredRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
+
+		require.NoError(t, err)
+		require.NotNil(t, created)
+
+		createdRule := new(v0alpha1.AlertRule)
+
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(created.Object, createdRule)
+		require.NoError(t, err)
+
+		got, err := client.Get(ctx, createdRule.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, got.Spec.NotificationSettings)
+		require.NotNil(t, got.Spec.NotificationSettings.SimplifiedRouting)
+		require.Nil(t, got.Spec.NotificationSettings.NamedRoutingTree)
+		require.Equal(t, v0alpha1.AlertRuleNotificationSettingsTypeSimplifiedRouting, got.Spec.NotificationSettings.SimplifiedRouting.Type)
+		require.Equal(t, "empty", got.Spec.NotificationSettings.SimplifiedRouting.Receiver)
+	})
+
 	t.Run("should create and read rule with NamedRoutingTree notification settings", func(t *testing.T) {
 		ns := &v0alpha1.AlertRuleNotificationSettings{
 			NamedRoutingTree: &v0alpha1.AlertRuleNamedRoutingTree{
@@ -827,6 +895,9 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		alertRule := newAlertRule(t, ns)
 
 		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -851,6 +922,9 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		alertRule := newAlertRule(t, ns)
 
 		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -886,6 +960,9 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		alertRule := newAlertRule(t, ns)
 
 		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -921,6 +998,9 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		alertRule := newAlertRule(t, ns)
 
 		created, err := client.Create(ctx, alertRule, v1.CreateOptions{})
+		defer func() {
+			_ = client.Delete(ctx, created.GetName(), v1.DeleteOptions{})
+		}()
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -979,8 +1059,8 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 	}
@@ -1063,8 +1143,8 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 	}
@@ -1369,11 +1449,7 @@ func TestIntegrationListWithNamedRoutingTreeFieldSelectors(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertingMultiplePolicies,
-		},
-	})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 	client := common.NewAlertRuleClient(t, helper.Org1.Admin)
 
 	common.CreateTestFolder(t, helper, "rt-fs-folder")
@@ -1438,8 +1514,8 @@ func TestIntegrationListWithNamedRoutingTreeFieldSelectors(t *testing.T) {
 				Trigger: v0alpha1.AlertRuleIntervalTrigger{
 					Interval: v0alpha1.AlertRulePromDuration(fmt.Sprintf("%ds", rule.IntervalSeconds)),
 				},
-				NoDataState:  v0alpha1.AlertRuleNoDataState(rule.NoDataState),
-				ExecErrState: v0alpha1.AlertRuleExecErrState(rule.ExecErrState),
+				NoDataState:  common.ToK8sNoDataState(rule.NoDataState),
+				ExecErrState: common.ToK8sExecErrState(rule.ExecErrState),
 			},
 		}
 	}

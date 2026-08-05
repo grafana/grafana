@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
@@ -116,6 +117,11 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 
 	res, err := ecp.receiverService.GetReceivers(ctx, receiverQuery, u)
 	if err != nil {
+		// New orgs have no Alertmanager config yet. Listing contact points is a
+		// valid empty state (GET-before-POST reconcilers depend on this).
+		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) || legacy_storage.ErrNoAlertmanagerConfiguration.Is(err) {
+			return []apimodels.EmbeddedContactPoint{}, nil
+		}
 		return nil, convertRecSvcErr(err)
 	}
 	if q.Name != "" && len(res) > 0 {
@@ -244,12 +250,8 @@ func (ecp *ContactPointService) CreateContactPoint(
 			return apimodels.EmbeddedContactPoint{}, err
 		}
 		revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
-			Receiver: apimodels.Receiver{
-				Name: grafanaReceiver.Name,
-			},
-			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{grafanaReceiver},
-			},
+			Name:                    grafanaReceiver.Name,
+			GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{grafanaReceiver},
 		})
 	}
 
@@ -311,7 +313,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-		return fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
+		return validation.MakeErrProvenanceChangeNotAllowed(storedProvenance, provenance)
 	}
 
 	// Check protected fields authorization
@@ -634,13 +636,9 @@ groupLoop:
 
 				// Doesn't exist? Create a new group just for the receiver.
 				newGroup := &v1.PostableApiReceiver{
-					Receiver: apimodels.Receiver{
-						Name: target.Name,
-					},
-					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-							target,
-						},
+					Name: target.Name,
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+						target,
 					},
 				}
 				cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, newGroup)
@@ -682,11 +680,48 @@ func ValidateContactPoint(ctx context.Context, e *apimodels.EmbeddedContactPoint
 		}
 	}
 	e.Type = string(iType)
+	if err := validateSecretFields(e); err != nil {
+		return err
+	}
 	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(e)
 	if err != nil {
 		return err
 	}
 	return models.ValidateIntegration(ctx, integration, decryptFunc)
+}
+
+// validateSecretFields rejects duplicate keys that differ only by case in secret fields to avoid ambiguity in secret redaction
+func validateSecretFields(e *apimodels.EmbeddedContactPoint) error {
+	typeSchema, ok := alertingNotify.GetSchemaVersionForIntegration(schema.IntegrationType(e.Type), schema.V1)
+	if !ok {
+		return fmt.Errorf("failed to get schema for contact point type %s", e.Type)
+	}
+	for _, secretPath := range typeSchema.GetSecretFieldsPaths() {
+		node := e.Settings
+		for _, segment := range secretPath {
+			if node == nil {
+				break
+			}
+			m, err := node.Map()
+			if err != nil {
+				break
+			}
+			var matches []string
+			for k := range m {
+				if strings.EqualFold(k, segment) {
+					matches = append(matches, k)
+				}
+			}
+			if len(matches) == 0 {
+				break
+			}
+			if len(matches) > 1 {
+				return fmt.Errorf("duplicate keys found for secret field %s", secretPath.String())
+			}
+			node = node.Get(matches[0])
+		}
+	}
+	return nil
 }
 
 // RemoveSecretsForContactPoint removes all secrets from the contact point's settings and returns them as a map. Returns error if contact point type is not known.
@@ -739,7 +774,7 @@ func extractCaseInsensitive(jsonObj *simplejson.Json, key string) (string, error
 
 	node := jsonObj
 	for idx, segment := range path {
-		_, value, err := getNodeCaseInsensitive(node, segment)
+		k, value, err := getNodeCaseInsensitive(node, segment)
 		if err != nil {
 			return "", err
 		}
@@ -748,7 +783,7 @@ func extractCaseInsensitive(jsonObj *simplejson.Json, key string) (string, error
 		}
 		if idx == len(path)-1 {
 			resultValue := value.MustString()
-			node.Del(segment)
+			node.Del(k)
 			return resultValue, nil
 		}
 		node = value

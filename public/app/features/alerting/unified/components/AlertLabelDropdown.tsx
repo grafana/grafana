@@ -7,7 +7,7 @@ import { Combobox, type ComboboxOption, Field, useStyles2 } from '@grafana/ui';
 
 export type AsyncOptionsLoader = (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
 
-export interface AlertLabelDropdownProps {
+interface AlertLabelDropdownProps {
   onChange: (newValue: SelectableValue<string>) => void;
   onOpenMenu?: () => void;
   options: ComboboxOption[] | AsyncOptionsLoader;

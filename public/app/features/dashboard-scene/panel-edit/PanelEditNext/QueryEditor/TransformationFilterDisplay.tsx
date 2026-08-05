@@ -1,19 +1,21 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import { type DataTransformerConfig, type GrafanaTheme2 } from '@grafana/data';
+import { type DataTransformerConfig, type GrafanaTheme2, type PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
 import { Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
-import {
-  useActionsContext,
-  usePanelContext,
-  useQueryEditorUIContext,
-  useQueryRunnerContext,
-} from './QueryEditorContext';
 import { usePreviousTransformationOutput } from './hooks/usePreviousTransformationOutput';
+import { type Transformation } from './types';
+
+interface TransformationFilterEditorProps {
+  transformation: Transformation | null;
+  transformations: Transformation[];
+  queryData?: PanelData;
+  onUpdate: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
+}
 
 /**
  * Displays transformation filter options to control which data frames
@@ -22,32 +24,32 @@ import { usePreviousTransformationOutput } from './hooks/usePreviousTransformati
  *
  * Shows the output of the previous transformation (or raw query data if this is the first transformation).
  */
-export function TransformationFilterDisplay() {
-  const { selectedTransformation } = useQueryEditorUIContext();
-  const { data } = useQueryRunnerContext();
-  const { transformations } = usePanelContext();
-  const { updateTransformation } = useActionsContext();
-
+export function TransformationFilterEditor({
+  transformation,
+  transformations,
+  queryData,
+  onUpdate,
+}: TransformationFilterEditorProps) {
   const styles = useStyles2(getStyles);
 
   const prevOutput = usePreviousTransformationOutput({
-    selectedTransformation,
+    selectedTransformation: transformation,
     transformations,
-    queryData: data?.series ?? [],
-    queryTargets: data?.request?.targets,
+    queryData: queryData?.series ?? [],
+    queryTargets: queryData?.request?.targets,
   });
 
   const onChange = useCallback(
     (newConfig: DataTransformerConfig) => {
-      if (selectedTransformation) {
-        updateTransformation(selectedTransformation.transformConfig, newConfig);
+      if (transformation) {
+        onUpdate(transformation.transformConfig, newConfig);
       }
     },
-    [selectedTransformation, updateTransformation]
+    [transformation, onUpdate]
   );
 
   const filterOptions = useMemo(() => {
-    const config = selectedTransformation?.transformConfig;
+    const config = transformation?.transformConfig;
 
     return {
       context: { data: prevOutput },
@@ -64,13 +66,13 @@ export function TransformationFilterDisplay() {
         },
       ],
     };
-  }, [selectedTransformation, prevOutput]);
+  }, [transformation, prevOutput]);
 
-  if (!selectedTransformation) {
+  if (!transformation) {
     return null;
   }
 
-  const config = selectedTransformation.transformConfig;
+  const config = transformation.transformConfig;
 
   // Only show filter if it's configured on the transformation
   // Note: `topic` is a related filter property for annotation filtering

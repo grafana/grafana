@@ -7,11 +7,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -35,10 +35,6 @@ type DocumentBuilderInfo struct {
 	// The target resource (empty will be used to match anything)
 	GroupResource schema.GroupResource
 
-	// Defines the searchable fields
-	// NOTE: this does not include the root/common fields, only values specific to the the builder
-	Fields SearchableDocumentFields
-
 	// simple/static builders that do not depend on the environment can be declared once
 	Builder DocumentBuilder
 
@@ -46,8 +42,24 @@ type DocumentBuilderInfo struct {
 	Namespaced NamespacedDocumentSupplier
 }
 
+// SearchableFieldsFromProvider returns the column-definition view of a kind's
+// custom search fields for the given group and resource, derived from the
+// provider. The provider is the single source of truth; the search backend
+// uses this view for result column metadata and sort-field prefixing. Returns
+// nil when the provider is nil.
+func SearchableFieldsFromProvider(p SearchFieldsProvider, group, resource string) (SearchableDocumentFields, error) {
+	if p == nil {
+		return nil, nil
+	}
+	sfds := p.Fields(schema.GroupVersionResource{
+		Group:    group,
+		Resource: resource,
+	})
+	return NewSearchableDocumentFields(SearchFieldDefinitionsToTableColumns(sfds))
+}
+
 type DocumentBuilderSupplier interface {
-	GetDocumentBuilders() ([]DocumentBuilderInfo, error)
+	GetDocumentBuilders(registry *SearchFieldsRegistry) ([]DocumentBuilderInfo, error)
 }
 
 // IndexableDocument can be written to a ResourceIndex
@@ -122,11 +134,39 @@ type IndexableDocument struct {
 	// When the resource is managed by an upstream repository
 	Manager *utils.ManagerProperties `json:"manager,omitempty"`
 
-	// indexed only field for faceting manager info
+	// keyword-indexed and stored field for faceting manager info
 	ManagedBy string `json:"managedBy,omitempty"`
 
 	// When the manager knows about file paths
 	Source *utils.SourceProperties `json:"source,omitempty"`
+
+	// Marks a document as deleted, so trash searches find it and ordinary ones
+	// leave it out. A pointer because bleve indexes struct fields by reflection
+	// and ignores omitempty, so a plain bool would write "not deleted" into every
+	// live document for nothing to read. Nil means live, which is also what every
+	// document written before this field looks like.
+	IsDeleted *bool `json:"_deleted,omitempty"`
+
+	// Set on a deleted document that was provisioned when it was deleted. Trash
+	// never returns those, and a deleted document keeps no manager fields to work
+	// it out later. Pointer for the same reason as IsDeleted.
+	IsProvisioned *bool `json:"_provisioned,omitempty"`
+
+	// Fields below are only ever set by buildDeletedDocument, the one place a
+	// deleted document is built. Nothing else enforces that.
+	//
+	// Pointers for the same reason as the markers above: a value would be added to
+	// every live document for nothing to read.
+
+	// Who deleted the object, in the same form as CreatedBy.
+	DeletedBy *string `json:"deleted_by,omitempty"`
+
+	// When the object was deleted (unix millis).
+	DeletionTime *int64 `json:"deletion_time,omitempty"`
+
+	// Resource version of the delete, as a string because it does not survive a
+	// float64 (see TrashSearchFieldDefinitions).
+	DeletedRV *string `json:"deleted_rv,omitempty"`
 }
 
 func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
@@ -240,13 +280,21 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 	return doc.UpdateCopyFields()
 }
 
-func StandardDocumentBuilder(manifests []app.Manifest) DocumentBuilder {
-	return &standardDocumentBuilder{selectableFields: SelectableFieldsForManifests(manifests)}
+// StandardDocumentBuilder returns the standard document builder backed by the
+// shared registry, so a runtime manifest reload is reflected without rebuilding
+// the builder.
+func StandardDocumentBuilder(registry *SearchFieldsRegistry) DocumentBuilder {
+	return &standardDocumentBuilder{
+		registry: registry,
+		log:      log.New("resource.document-builder"),
+	}
 }
 
 type standardDocumentBuilder struct {
-	// Maps "group/resource" (in lowercase) to list of selectable fields.
-	selectableFields map[string][]string
+	// registry is the shared source for selectable fields and search-field
+	// providers; may be nil (then the builder extracts neither).
+	registry *SearchFieldsRegistry
+	log      log.Logger
 }
 
 func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
@@ -263,10 +311,129 @@ func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resour
 
 	doc := NewIndexableDocument(key, rv, obj, "")
 
-	sfKey := strings.ToLower(key.GetGroup() + "/" + key.GetResource())
-	doc.SelectableFields = getSelectableFieldsFromObject(tmp, s.selectableFields[sfKey])
+	if s.registry == nil {
+		return doc, nil
+	}
+
+	sfKey := NewLowerGroupResource(key.GetGroup(), key.GetResource())
+	selectable, _, provider := s.registry.For(sfKey)
+	doc.SelectableFields = getSelectableFieldsFromObject(tmp, selectable)
+
+	if provider != nil {
+		s.extractDeclaredFields(provider, tmp, key, doc)
+	}
 
 	return doc, nil
+}
+
+// extractDeclaredFields populates doc.Fields from SearchFieldDefinitions
+// declared via the provider. The lookup is strict on apiVersion: a manifest
+// must declare every served version of a kind if it expects all stored
+// resources to be indexed against the same field set. Cross-version
+// fallback can silently extract an old document with a newer version's path
+// declarations when the schema diverges, so the builder leaves that
+// decision to manifest authors.
+func (s *standardDocumentBuilder) extractDeclaredFields(provider SearchFieldsProvider, tmp *unstructured.Unstructured, key *resourcepb.ResourceKey, doc *IndexableDocument) {
+	gvr := gvrForLookup(tmp, key, provider)
+	if gvr.Resource == "" {
+		return
+	}
+	defs := provider.Fields(gvr)
+	if len(defs) == 0 {
+		return
+	}
+	for _, def := range defs {
+		if def.Path == "" {
+			continue
+		}
+		raw, err := extractPath(tmp.Object, def.Path)
+		if err != nil {
+			s.log.Warn("declared search field path failed to evaluate",
+				"group", gvr.Group, "version", gvr.Version, "resource", gvr.Resource,
+				"field", def.Name, "path", def.Path, "err", err)
+			continue
+		}
+		if raw == nil {
+			if !def.EmitZeroIfAbsent {
+				continue
+			}
+			if doc.Fields == nil {
+				doc.Fields = make(map[string]any)
+			}
+			doc.Fields[def.Name] = zeroValueForFieldDefinition(def)
+			continue
+		}
+		coerced, ok := coerceToFieldShape(raw, def.Type, def.Array)
+		if !ok {
+			s.log.Warn("declared search field value does not match declared type",
+				"group", gvr.Group, "version", gvr.Version, "resource", gvr.Resource,
+				"field", def.Name, "type", def.Type, "array", def.Array,
+				"value_type", fmt.Sprintf("%T", raw))
+			continue
+		}
+		if doc.Fields == nil {
+			doc.Fields = make(map[string]any)
+		}
+		doc.Fields[def.Name] = coerced
+	}
+}
+
+// zeroValueForFieldDefinition returns the type-appropriate zero value for a
+// declared field. Used when Path resolves to nil and EmitZeroIfAbsent is set,
+// so the indexed document still carries the field. Returns nil for unknown
+// types so the caller drops the field instead of indexing a typeless value.
+func zeroValueForFieldDefinition(def SearchFieldDefinition) any {
+	if def.Array {
+		return []any{}
+	}
+	switch def.Type {
+	case SearchFieldTypeBoolean:
+		return false
+	case SearchFieldTypeInt64:
+		return int64(0)
+	case SearchFieldTypeDouble:
+		return float64(0)
+	case SearchFieldTypeString, SearchFieldTypeDate:
+		return ""
+	case SearchFieldTypeUnknown:
+		return nil
+	}
+	return nil
+}
+
+// gvrForLookup resolves the GroupVersionResource the provider should be
+// queried with. The lookup is strict on a declared apiVersion: if the
+// document carries one and the manifest does not cover that exact version,
+// no extraction happens. (Falling back across versions could silently
+// extract via a diverged schema, so manifest authors are expected to
+// declare every served version.) Only when the document has no apiVersion
+// at all do we fall back to the provider's PreferredVersion as the only
+// sane guess.
+func gvrForLookup(tmp *unstructured.Unstructured, key *resourcepb.ResourceKey, provider SearchFieldsProvider) schema.GroupVersionResource {
+	group := key.GetGroup()
+	resource := key.GetResource()
+	if version := apiVersionOf(tmp); version != "" {
+		return schema.GroupVersionResource{Group: group, Version: version, Resource: resource}
+	}
+	pref := provider.PreferredVersion(group, resource)
+	if pref == "" {
+		return schema.GroupVersionResource{}
+	}
+	return schema.GroupVersionResource{Group: group, Version: pref, Resource: resource}
+}
+
+func apiVersionOf(tmp *unstructured.Unstructured) string {
+	av := tmp.GetAPIVersion()
+	if av == "" {
+		return ""
+	}
+	// apiVersion is "<group>/<version>" for non-core resources and just
+	// "<version>" for core. The Group is authoritative from the key; we
+	// only need the version segment.
+	if i := strings.IndexByte(av, '/'); i >= 0 {
+		return av[i+1:]
+	}
+	return av
 }
 
 func getSelectableFieldsFromObject(tmp *unstructured.Unstructured, fields []string) map[string]string {
@@ -363,6 +530,19 @@ const (
 	SEARCH_FIELD_EXPLAIN            = "_explain"          // score explanation as JSON object
 	SEARCH_FIELD_ALL_FIELDS         = "_all_columns"      // sentinel: return all known columns in search results (deliberately distinct from bleve's "_all" composite field)
 	SEARCH_SELECTABLE_FIELDS_PREFIX = "selectableFields." // Prefix for searching selectable fields.
+
+	// Internal markers on deleted documents. Kept out of
+	// StandardSearchFieldDefinitions so they do not change IndexAffectingHash for
+	// every kind, and so live search callers cannot filter on them themselves.
+	SEARCH_FIELD_IS_DELETED     = "_deleted"
+	SEARCH_FIELD_IS_PROVISIONED = "_provisioned"
+
+	// Fields only a deleted document carries, declared in
+	// TrashSearchFieldDefinitions rather than the standard set for the same reasons
+	// as the markers above.
+	SEARCH_FIELD_DELETED_BY    = "deleted_by"
+	SEARCH_FIELD_DELETION_TIME = "deletion_time"
+	SEARCH_FIELD_DELETED_RV    = "deleted_rv"
 )
 
 var standardSearchFieldsInit sync.Once
@@ -439,7 +619,12 @@ func StandardSearchFields() SearchableDocumentFields {
 			{
 				Name:        SEARCH_FIELD_CREATED,
 				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-				Description: "created timestamp", // date?
+				Description: "created timestamp (unix millis)",
+			},
+			{
+				Name:        SEARCH_FIELD_UPDATED,
+				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+				Description: "updated timestamp (unix millis)",
 			},
 			{
 				Name:        SEARCH_FIELD_CREATED_BY,
@@ -488,6 +673,23 @@ func StandardSearchFields() SearchableDocumentFields {
 				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				IsArray:     true,
 				Description: "Owner references in format {Group}/{Kind}/{Name}",
+			},
+			// Trash columns. A response can only carry a column defined here, so
+			// without these /trash could not return them at all (see hitsToTable).
+			{
+				Name:        SEARCH_FIELD_DELETED_BY,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+				Description: "Who deleted the resource (format: user:<uid>)",
+			},
+			{
+				Name:        SEARCH_FIELD_DELETION_TIME,
+				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+				Description: "When the resource was deleted (unix millis)",
+			},
+			{
+				Name:        SEARCH_FIELD_DELETED_RV,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+				Description: "Resource version of the delete",
 			},
 		})
 

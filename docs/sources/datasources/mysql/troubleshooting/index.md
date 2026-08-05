@@ -15,6 +15,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot MySQL data source issues
 weight: 400
+review_date: 2026-05-11
 ---
 
 # Troubleshoot MySQL data source issues
@@ -54,17 +55,43 @@ These errors occur when Grafana cannot establish or maintain a connection to the
 
 ### TLS/SSL connection failures
 
-**Error message:** "TLS handshake failed" or "x509: certificate verify failed"
+TLS errors occur when the MySQL server requires or expects encrypted connections but the Grafana data source isn't configured to match. Common error messages include:
 
-**Cause:** There is a mismatch between the TLS settings in Grafana and what the MySQL server supports or requires.
+- "TLS handshake failed" or "x509: certificate verify failed"
+- "Connection refused" or connection drops immediately
+- "Error 3159: Connections using insecure transport are prohibited while --require_secure_transport=ON"
 
-**Solution:**
+**Possible causes and solutions:**
 
-1. Verify that the MySQL server has a valid SSL certificate if encryption is enabled.
-1. Check that the certificate is trusted by the Grafana server.
-1. If using a self-signed certificate, enable **With CA Cert** and provide the root certificate under **TLS/SSL Root Certificate**.
-1. To bypass certificate validation (not recommended for production), enable **Skip TLS Verification** in the data source configuration.
-1. Ensure the SSL certificate hasn't expired.
+| Cause                                                                      | Solution                                                                                                                                                                                     |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MySQL has `require_secure_transport` enabled or AWS RDS Proxy enforces TLS | Enable **With CA Cert** or **Skip TLS Verification** in the data source configuration. Either option establishes a TLS connection.                                                           |
+| Self-signed or private CA certificate isn't trusted                        | Enable **With CA Cert** and provide the root certificate under **TLS/SSL Root Certificate**.                                                                                                 |
+| Certificate has expired or doesn't match the hostname                      | Renew the certificate, or enable **Skip TLS Verification** for development environments only.                                                                                                |
+| TLS handshake fails against AWS RDS or RDS Proxy                           | Provide the [Amazon RDS root CA certificate](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html) under **TLS/SSL Root Certificate** with **With CA Cert** enabled. |
+| Organization requires mutual TLS (mTLS)                                    | Enable **Use TLS Client Auth** and provide both a client certificate and key in addition to the CA certificate.                                                                              |
+
+{{< admonition type="note" >}}
+**Skip TLS Verification** and **With CA Cert** both establish encrypted connections. You don't need **Use TLS Client Auth** unless your setup requires mutual TLS. For most AWS RDS and RDS Proxy connections, **With CA Cert** with the Amazon root CA is sufficient.
+{{< /admonition >}}
+
+For provisioned data sources, enable TLS in `jsonData`:
+
+```yaml
+jsonData:
+  tlsAuthWithCACert: true
+secureJsonData:
+  tlsCACert: ${CA_CERT}
+```
+
+To skip certificate validation instead, use:
+
+```yaml
+jsonData:
+  tlsSkipVerify: true
+```
+
+For all available TLS provisioning options, refer to the [TLS provisioning examples](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/configure/#mysql-provisioning-examples).
 
 ### Connection reset by peer
 
@@ -171,6 +198,17 @@ These errors occur when there are issues with query syntax or configuration.
 1. View the expanded query by clicking **Generated SQL** after running the query to debug macro expansion.
 1. Ensure backticks are used for reserved words or special characters in column names: `$__timeFilter(\`time-column\`)`.
 
+### Hash character in quoted strings causes query errors
+
+**Error message:** Query returns unexpected results or errors when string values contain `#`
+
+**Cause:** In versions before Grafana 13.0, the SQL comment stripping logic incorrectly treated `#` inside quoted strings (for example, `WHERE color = '#FF0000'`) as a comment delimiter, which stripped the rest of the line.
+
+**Solution:**
+
+1. Upgrade to Grafana 13.0 or later, which preserves `#` inside quoted strings.
+1. As a workaround on older versions, use the `CONCAT` function or a hexadecimal literal to avoid the `#` character in string literals.
+
 ### Timezone and time shift issues
 
 **Cause:** Time series data appears shifted or doesn't align with expected times.
@@ -227,6 +265,24 @@ These errors occur when there are issues with query syntax or configuration.
 1. Check that the column exists in the specified table.
 1. If the column name contains special characters or spaces, enclose it in backticks: `` `column-name` ``.
 1. Ensure the correct database is selected if you're referencing columns without the full table path.
+
+### `CASE` expression fails on non-standard string column types
+
+**Error message:** Query with `CASE WHEN` returns an error or unexpected results in Grafana, but works in other MySQL clients
+
+**Cause:** The Grafana MySQL driver doesn't handle all MySQL string subtypes (such as `ENUM`, `SET`, `TINYTEXT`, or `MEDIUMTEXT`) in `CASE` expressions. The driver may fail to infer the result type correctly.
+
+**Solution:**
+
+1. Use `CAST()` to normalize the column to `CHAR` before using it in a `CASE` expression:
+
+   ```sql
+   SELECT
+     CASE WHEN CAST(status_column AS CHAR) = 'active' THEN 1 ELSE 0 END AS is_active
+   FROM my_table
+   ```
+
+1. This is a known limitation of the Go MySQL driver used by Grafana. Explicitly casting to `CHAR` ensures consistent type handling.
 
 ## Performance issues
 
@@ -320,6 +376,34 @@ The following issues don't produce specific error messages but are commonly enco
 1. Enclose identifiers with special characters in backticks: `` `my-database`.`my-table` ``.
 1. The query editor automatically handles this for selections, but manual queries require backticks.
 1. Avoid using reserved words as identifiers when possible.
+
+### Query caching can't be enabled on a provisioned data source
+
+**Cause:** When a MySQL data source is provisioned via YAML, the query caching toggle in the UI is greyed out. YAML provisioning doesn't currently support setting caching configuration.
+
+**Solution:**
+
+1. Use the Grafana HTTP API to enable query caching on the provisioned data source. Send a `PUT` request to update the data source with caching enabled:
+
+   ```sh
+   curl -X PUT -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <API_TOKEN>" \
+     "https://<GRAFANA_URL>/api/datasources/<DATASOURCE_ID>" \
+     -d '{
+       "jsonData": {
+         "queryCachingTTL": 300
+       }
+     }'
+   ```
+
+   Replace `<API_TOKEN>` with a valid Grafana API token, `<GRAFANA_URL>` with your Grafana instance URL, and `<DATASOURCE_ID>` with the numeric ID of the data source. Set `queryCachingTTL` to the desired cache duration in seconds.
+
+1. Retrieve the data source ID by calling `GET /api/datasources/name/<DATA_SOURCE_NAME>`.
+1. YAML-based caching configuration is an open feature request. Check [Grafana GitHub issues](https://github.com/grafana/grafana/issues) for current status.
+
+{{< admonition type="note" >}}
+Query caching is available in Grafana Enterprise and Grafana Cloud. For more information, refer to [Query and resource caching](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching).
+{{< /admonition >}}
 
 ### An unexpected error happened
 

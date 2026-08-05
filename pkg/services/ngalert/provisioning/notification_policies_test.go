@@ -296,7 +296,7 @@ func TestResetPolicyTree(t *testing.T) {
 		Receiver: "receiver",
 	}
 	currentRevision.Config.Templates = map[v1.ResourceUID]v1.TemplateGroup{
-		v1.TemplateUID(v1.TemplateKindGrafana, "test"): v1.NewTemplateGroup("test", "test", v1.TemplateKindGrafana, models.ProvenanceNone),
+		v1.TemplateUID(v1.TemplateKindGrafana, "test"): v1.NewTemplateGroup("", "test", "test", v1.TemplateKindGrafana, models.ProvenanceNone),
 	}
 	currentRevision.Config.AlertmanagerConfig.TimeIntervals = []v1.TimeInterval{
 		{
@@ -305,12 +305,10 @@ func TestResetPolicyTree(t *testing.T) {
 	}
 	currentRevision.Config.AlertmanagerConfig.Receivers = []*v1.PostableApiReceiver{
 		{
-			Receiver: definitions.Receiver{Name: "receiver"},
-			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-					{
-						UID: "test", Name: "test", Type: "email", Settings: []byte("{}"),
-					},
+			Name: "receiver",
+			GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+				{
+					UID: "test", Name: "test", Type: "email", Settings: []byte("{}"),
 				},
 			},
 		},
@@ -543,9 +541,7 @@ func getDefaultConfigRevision() legacy_storage.ConfigRevision {
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "test-receiver",
-						},
+						Name: "test-receiver",
 					},
 				},
 			},

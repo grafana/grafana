@@ -38,7 +38,6 @@ type SignedInUser struct {
 	IsGrafanaAdmin   bool
 	IsAnonymous      bool
 	IsDisabled       bool
-	HelpFlags1       HelpFlags1
 	LastSeenAt       time.Time
 	// Deprecated: use TeamUIDs instead
 	TeamIDs  []int64

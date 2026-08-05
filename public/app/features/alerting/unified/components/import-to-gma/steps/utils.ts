@@ -6,7 +6,7 @@
 const POLICY_TREE_NAME_PATTERN = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/;
 
 /** Maximum length for a policy tree name, enforced by the backend (k8s DNS-1123 subdomain) */
-export const POLICY_TREE_NAME_MAX_LENGTH = 40;
+const POLICY_TREE_NAME_MAX_LENGTH = 40;
 
 /**
  * Validates a policy tree name against RFC 1123 subdomain rules.
@@ -40,20 +40,46 @@ export function hasValidSourceSelection(
   return true;
 }
 
+/**
+ * Returns the first template file name that occurs more than once, or undefined if all names are unique.
+ * Template files are keyed by file name when combined into the convert payload, so duplicate names are
+ * ambiguous and must be rejected.
+ */
+export function findDuplicateTemplateFileName(files: File[] = []): string | undefined {
+  const seen = new Set<string>();
+  for (const file of files) {
+    if (seen.has(file.name)) {
+      return file.name;
+    }
+    seen.add(file.name);
+  }
+  return undefined;
+}
+
 export interface Step1ValidationParams {
   policyTreeName: string | null;
   notificationsSource: 'yaml' | 'datasource';
   notificationsYamlFile: File | null;
   notificationsDatasourceUID: string | null | undefined;
+  notificationsTemplateFiles: File[];
 }
 
 /**
  * Validates that Step 1 form is complete and valid
  */
 export function isStep1Valid(params: Step1ValidationParams): boolean {
-  const { policyTreeName, notificationsSource, notificationsYamlFile, notificationsDatasourceUID } = params;
+  const {
+    policyTreeName,
+    notificationsSource,
+    notificationsYamlFile,
+    notificationsDatasourceUID,
+    notificationsTemplateFiles,
+  } = params;
 
-  if (!policyTreeName) {
+  if (!policyTreeName || validatePolicyTreeName(policyTreeName) !== true) {
+    return false;
+  }
+  if (findDuplicateTemplateFileName(notificationsTemplateFiles)) {
     return false;
   }
   return hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID);

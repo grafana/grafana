@@ -17,7 +17,6 @@ import {
   type EventBus,
   type DataFrame,
 } from '@grafana/data';
-import { ComparisonOperation } from '@grafana/schema';
 import { findField } from 'app/features/dimensions/utils';
 
 import { StyleEditor } from '../../editor/StyleEditor';
@@ -28,7 +27,6 @@ import { type FeatureRuleConfig, type FeatureStyleConfig } from '../../types';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getStyleDimension, getPublicGeoJSONFiles } from '../../utils/utils';
-
 
 export interface DynamicGeoJSONMapperConfig {
   // URL for a geojson file
@@ -57,23 +55,6 @@ interface StyleCheckerState {
   rule?: FeatureRuleConfig;
 }
 
-export const DEFAULT_STYLE_RULE: FeatureStyleConfig = {
-  style: defaultStyleConfig,
-  check: {
-    property: '',
-    operation: ComparisonOperation.EQ,
-    value: '',
-  },
-};
-
-// Default configuration with tooltip support enabled
-export const defaultDynamicGeoJSONConfig: MapLayerOptions<DynamicGeoJSONMapperConfig> = {
-  type: 'dynamic-geojson',
-  name: 'Dynamic GeoJSON',
-  config: defaultOptions,
-  tooltip: true,
-};
-
 export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfig> = {
   id: 'dynamic-geojson',
   name: 'Dynamic GeoJSON',
@@ -87,7 +68,12 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<DynamicGeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<DynamicGeoJSONMapperConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => {
     const config = { ...defaultOptions, ...options.config };
 
     const source = new VectorSource({
@@ -131,7 +117,6 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
     styles.push({
       state: s,
     });
-
 
     const style = await getStyleConfigState(config.style);
     const idToIdx = new Map<string, number>();
@@ -195,10 +180,10 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
         const frame = data.series[0];
         if (frame) {
           currentFrame = frame;
-          
+
           // Update feature properties for tooltip support
           updateFeatureProperties(frame);
-          
+
           // Update style dimensions for data-driven styling
           style.dims = getStyleDimension(frame, style, theme, config.dataStyle);
         }
@@ -246,7 +231,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
               layerInfo,
             },
             defaultValue: defaultOptions.style,
-          })
+          });
       },
     };
   },
@@ -269,12 +254,12 @@ export function updateFeaturePropertiesForTooltip(
   if (!frame || !idField) {
     return;
   }
-  
+
   const field = findField(frame, idField);
   if (field) {
     idToIdx.clear();
     field.values.forEach((v, i) => idToIdx.set(String(v), i));
-    
+
     source.forEachFeature((feature) => {
       const featureId = feature.getId();
       if (featureId != null) {

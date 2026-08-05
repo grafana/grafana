@@ -1,108 +1,57 @@
-import { type Page } from '@playwright/test';
+import { type Locator, type Page } from '@playwright/test';
 
-import { selectors } from '@grafana/e2e-selectors';
-import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
+import { Components, type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-const deselectPanels = async (dashboardPage: DashboardPage, selectors: E2ESelectorGroups) => {
-  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls).click({
-    position: { x: 0, y: 0 },
-  });
-};
+import { Canvas, Controls, Panels, Rows, Sidebar, type Tabs } from './page-objects';
 
 export const flows = {
-  deselectPanels,
-  async changePanelTitle(
+  async addNewGenericVariable(
+    page: Page,
     dashboardPage: DashboardPage,
     selectors: E2ESelectorGroups,
-    oldPanelTitle: string,
-    newPanelTitle: string
+    variable: Variable,
+    skipEnterEditMode = false
   ) {
-    await deselectPanels(dashboardPage, selectors);
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-      .filter({ hasText: oldPanelTitle })
-      .first()
-      .click();
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
-      .fill(newPanelTitle);
-  },
-  async changePanelDescription(
-    dashboardPage: DashboardPage,
-    selectors: E2ESelectorGroups,
-    panelTitle: string,
-    newDescription: string
-  ) {
-    await deselectPanels(dashboardPage, selectors);
-    const panelTitleRegex = new RegExp(`^${panelTitle}$`);
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-      .filter({ hasText: panelTitleRegex })
-      .first()
-      .click();
-    const descriptionTextArea = dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description'))
-      .locator('textarea');
-    await descriptionTextArea.fill(newDescription);
-  },
-  async newEditPaneVariableClick(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-    await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
-    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.dockToggle).click();
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
-      .click();
-  },
-  async newEditPanelCommonVariableInputs(
-    dashboardPage: DashboardPage,
-    selectors: E2ESelectorGroups,
-    variable: Variable
-  ) {
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
-      .click();
+    // Keep the flows signature unchanged for unmigrated callers: build the
+    // `components` fixture equivalent from the page context
+    const components = new Components(dashboardPage.ctx);
+    const controls = new Controls({ page, dashboardPage, selectors, components });
+    const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+
+    if (!skipEnterEditMode) {
+      await controls.enterEditMode();
+    }
+
+    await sidebar.toolbar.clickButton('Add');
+    await sidebar.addOptions.clickNewVariableButton();
+
+    await sidebar.variableOptions.selectVariableType(variable.type);
 
     // New variable creation schedules a delayed autofocus to name input
     // Let that timer finish before we interact to prevent focus on the wrong input
     await dashboardPage.ctx.page.waitForTimeout(250);
 
-    const variableNameInput = dashboardPage.getByGrafanaSelector(
-      selectors.components.PanelEditor.ElementEditPane.variableNameInput
-    );
-    await variableNameInput.click();
-    await variableNameInput.fill(variable.name);
-    await variableNameInput.blur();
+    await sidebar.variableOptions.setName(variable.name);
     if (variable.label) {
-      const variableLabelInput = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.ElementEditPane.variableLabelInput
-      );
-      await variableLabelInput.click();
-      await variableLabelInput.fill(variable.label);
-      await variableLabelInput.blur();
+      await sidebar.variableOptions.setLabel(variable.label);
     }
   },
-  async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
-    await flows.newEditPaneVariableClick(dashboardPage, selectors);
-    await flows.newEditPanelCommonVariableInputs(dashboardPage, selectors, variable);
-    // set the textbox variable value
-    const type = 'variable-type Value';
-    const fieldLabel = dashboardPage.getByGrafanaSelector(
-      selectors.components.PanelEditor.OptionsPane.fieldLabel(type)
-    );
-    await expect(fieldLabel).toBeVisible();
-    const inputField = fieldLabel.locator('input');
-    await expect(inputField).toBeVisible();
-    await inputField.fill(variable.value);
-    await inputField.blur();
+  async addNewTextBoxVariable(
+    page: Page,
+    dashboardPage: DashboardPage,
+    selectors: E2ESelectorGroups,
+    variable: Variable
+  ) {
+    await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
+    const components = new Components(dashboardPage.ctx);
+    const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+
+    await sidebar.variableOptions.textbox.setValue(variable.value);
     if (variable.display) {
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect)
-        .click();
-      await dashboardPage.ctx.page.getByText(variable.display, { exact: true }).click();
+      await sidebar.variableOptions.selectDisplay(variable.display);
     }
   },
 };
@@ -122,11 +71,12 @@ export async function saveDashboard(
   selectors: E2ESelectorGroups,
   title?: string
 ) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
-  if (title) {
-    await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
-  }
-  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
+  // Keep the flows signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const controls = new Controls({ page, dashboardPage, selectors, components });
+
+  await controls.saveDashboard(title);
 
   // wait for the toast
   const toast = page.getByRole('status', { name: 'Dashboard saved' });
@@ -142,14 +92,16 @@ export async function checkRepeatedPanelTitles(
   options: Array<string | number>,
   expectHidden = false
 ) {
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+
   for (const option of options) {
-    const titleLocator = dashboardPage.getByGrafanaSelector(
-      selectors.components.Panels.Panel.title(`${title}${option}`)
-    );
     if (expectHidden) {
-      await expect(titleLocator).toBeHidden();
+      await expect(panels.getPanel(`${title}${option}`)).toBeHidden();
     } else {
-      await expect(titleLocator).toBeVisible();
+      await expect(panels.getPanel(`${title}${option}`)).toBeVisible();
     }
   }
 }
@@ -160,32 +112,31 @@ export async function movePanel(
   sourcePanel: string | RegExp,
   targetPanel: string | RegExp
 ) {
-  // Get target panel position
-  const targetPanelElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-    .filter({ hasText: targetPanel })
-    .first();
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
 
-  // Get source panel element
-  const sourcePanelElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-    .filter({ hasText: sourcePanel });
-
-  // Perform drag and drop
-  await sourcePanelElement.dragTo(targetPanelElement);
+  await test.step(`Move panel "${sourcePanel}" onto "${targetPanel}"`, async () => {
+    // Perform drag and drop; pixel-sensitive mechanics stay out of page objects
+    await panels.getHeader(sourcePanel).dragTo(panels.getHeader(targetPanel));
+  });
 }
 
-export async function getPanelPosition(
+export async function getPanelBox(
   dashboardPage: DashboardPage,
   selectors: E2ESelectorGroups,
-  panelTitle: string | RegExp
-) {
-  const panel = dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-    .filter({ hasText: panelTitle })
-    .first();
-  const boundingBox = await panel.boundingBox();
-  return boundingBox;
+  panelTitle: string
+): Promise<{ x: number; y: number; width: number; height: number }> {
+  const components = new Components(dashboardPage.ctx);
+  const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+
+  // boundingBox() is a point-in-time snapshot and stays out of page objects;
+  // measures the whole panel <section>, matched exactly by testid
+  const boundingBox = await panels.getPanel(panelTitle).boundingBox();
+  expect(boundingBox, `Panel "${panelTitle}" should have a bounding box`).not.toBeNull();
+
+  return boundingBox!;
 }
 
 export async function verifyChanges(
@@ -194,17 +145,19 @@ export async function verifyChanges(
   selectors: E2ESelectorGroups,
   changeText: string
 ) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
-  await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
-  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
+  await test.step('Verify JSON diff in save drawer', async () => {
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
+    await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
+    await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
+  });
 }
 interface ImportTestDashboardOptions {
   checkPanelsVisible?: boolean;
   requiresDataSourceSelection?: boolean;
 }
 
-export function stripMetadataNameFromImportJson(input: string): string {
+function stripMetadataNameFromImportJson(input: string): string {
   // Keep fixture JSON intact, but remove a fixed resource name at import time so
   // each test creates an isolated dashboard via generateName in parallel runs.
   try {
@@ -227,26 +180,43 @@ export async function importTestDashboard(
   title: string,
   dashInput?: string,
   options: ImportTestDashboardOptions = {}
-) {
-  options = { checkPanelsVisible: true, requiresDataSourceSelection: true, ...options };
-  const importJson = stripMetadataNameFromImportJson(dashInput || JSON.stringify(testV2Dashboard));
-  await page.goto(selectors.pages.ImportDashboard.url);
-  await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(importJson);
-  await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
-  await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
-  if (options.requiresDataSourceSelection) {
-    await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-    await page.locator('div[data-testid="data-source-card"]').first().click();
-  }
-  await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
-  const undockMenuButton = page.locator('[aria-label="Undock menu"]');
-  const undockMenuVisible = await undockMenuButton.isVisible();
-  if (undockMenuVisible) {
-    undockMenuButton.click();
-  }
-  if (options.checkPanelsVisible) {
-    await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
-  }
+): Promise<string> {
+  return test.step(`Import test dashboard "${title}"`, async () => {
+    options = { checkPanelsVisible: true, requiresDataSourceSelection: true, ...options };
+
+    await page.goto(selectors.pages.ImportDashboard.url);
+
+    const importJson = stripMetadataNameFromImportJson(dashInput || JSON.stringify(testV2Dashboard));
+    await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(importJson);
+    await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
+
+    // we always append a timestamp so every import gets a unique title. Collisions happen on test retries
+    // and when parallel workers import dashboards sharing the same title (several specs reuse titles like "Paste tab")
+    // a collision does not fail the test (the import overwrites the existing dashboard),
+    // but Playwright traces show a validation error in the UI and tests may run against a stale dashboard
+    const uniqueTitle = `${title} [${Date.now().toString(36)}-${test.info().workerIndex}]`;
+    await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(uniqueTitle);
+
+    if (options.requiresDataSourceSelection) {
+      await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
+      await page.locator('div[data-testid^="data-testid data source card"]').first().click();
+    }
+
+    await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
+
+    const undockMenuButton = page.locator('[aria-label="Undock menu"]');
+    const undockMenuVisible = await undockMenuButton.isVisible();
+    if (undockMenuVisible) {
+      await undockMenuButton.click();
+    }
+
+    if (options.checkPanelsVisible) {
+      // wait for the 1st panel to render
+      await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
+    }
+
+    return uniqueTitle;
+  });
 }
 
 export async function goToEmbeddedPanel(page: Page) {
@@ -266,13 +236,25 @@ export async function goToEmbeddedPanel(page: Page) {
   await page.goto(soloPanelUrl!);
 }
 
-export async function goToPanelSnapshot(page: Page) {
-  // extracting snapshot url from clipboard
-  const snapshotUrl = await page.evaluate(() => navigator.clipboard.readText());
-
-  expect(snapshotUrl).toBeDefined();
-
-  await page.goto(snapshotUrl);
+/**
+ * Coordinate-based drag: hover the source, press, move in steps, release.
+ * Playwright's locator.dragTo() does not trigger the dnd library (pangea) used by
+ * tabs/rows, which requires intermediate mousemove events.
+ */
+export async function dragTo(
+  page: Page,
+  sourceName: string,
+  source: Locator,
+  toX: number,
+  toY: number,
+  options?: { steps?: number }
+) {
+  await test.step(`Drag ${sourceName} to (${toX}, ${toY})`, async () => {
+    await source.hover();
+    await page.mouse.down();
+    await page.mouse.move(toX, toY, { steps: options?.steps ?? 5 });
+    await page.mouse.up();
+  });
 }
 
 export async function moveTab(
@@ -305,49 +287,51 @@ export async function moveRow(
   sourceRow: string,
   targetRow: string
 ) {
-  const targetRowElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.DashboardRow.wrapper(targetRow))
-    .first();
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const rows = new Rows({ page, dashboardPage, selectors, components });
 
-  const sourceRowElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.DashboardRow.title(sourceRow))
-    .first();
+  const targetBox = await getRowBox(dashboardPage, selectors, targetRow);
 
-  const targetBox = await targetRowElement.boundingBox();
-
-  // Perform drag and drop (dragTo() did not work in this case)
-  await sourceRowElement.hover();
-  await page.mouse.down();
-  // move to adjusted target position (relative to top left)
-  await page.mouse.move(targetBox?.x || 0, (targetBox?.y || 0) + (targetBox?.height || 0), { steps: 5 });
-  await page.mouse.up();
+  // drop below the target row (relative to top left)
+  await dragTo(
+    page,
+    `row "${sourceRow}"`,
+    rows.getTitle(sourceRow).first(),
+    targetBox.x,
+    targetBox.y + targetBox.height
+  );
 }
 
 export async function groupIntoTab(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addTab).click();
+  // Keep the flows signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const canvas = new Canvas({ page, dashboardPage, selectors, components });
+  await canvas.groupPanels('tab');
 }
 
 export async function groupIntoRow(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow).click();
-}
-
-export async function checkRepeatedTabTitles(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
-  title: string,
-  options: Array<string | number>
-) {
-  for (const option of options) {
-    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(`${title}${option}`))).toBeVisible();
-  }
+  // Keep the flows signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const canvas = new Canvas({ page, dashboardPage, selectors, components });
+  await canvas.groupPanels('row');
 }
 
 export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, tabTitle: string) {
   const tab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabTitle)).first();
   const boundingBox = await tab.boundingBox();
   return boundingBox;
+}
+
+export async function checkRepeatedTabTitles(tabs: Tabs, title: string, options: Array<string | number>) {
+  await test.step('Checking repeated tab titles', async () => {
+    for (const option of options) {
+      await expect(tabs.getTitle(`${title}${option}`)).toBeVisible();
+    }
+  });
 }
 
 export async function getRowBox(
@@ -362,51 +346,36 @@ export async function getRowBox(
 }
 
 export async function checkRepeatedRowTitles(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
+  rows: Rows,
   title: string,
-  options: Array<string | number>
+  options: Array<string | number>,
+  state: 'visible' | 'hidden' = 'visible'
 ) {
-  for (const option of options) {
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(`${title}${option}`))
-    ).toBeVisible();
-  }
-}
-
-export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage) {
-  await page.getByLabel('layout-selection-option-Auto').click();
-  // confirm layout change if applicable
-  const confirmModal = dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete);
-  if (confirmModal) {
-    await confirmModal.click();
-  }
+  await test.step(`Checking repeated row titles are ${state}`, async () => {
+    for (const option of options) {
+      const rowTitle = rows.getTitle(`${title}${option}`);
+      if (state === 'visible') {
+        await expect(rowTitle).toBeVisible();
+      } else {
+        await expect(rowTitle).toBeHidden();
+      }
+    }
+  });
 }
 
 export async function selectRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).click();
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const rows = new Rows({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+  await rows.select(rowTitle);
 }
 export async function toggleRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.toggle(rowTitle)).click();
-}
-
-export function getPanelByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, panelTitle: string) {
-  return dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle))
-    .getByTestId(selectors.components.Panels.Panel.headerContainer);
-}
-
-export function getRowByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).first();
-}
-
-export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper(rowTitle)).first();
-}
-
-export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const rows = new Rows({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+  await rows.toggle(rowTitle);
 }
 
 export async function fillVariableValue(
@@ -416,13 +385,11 @@ export async function fillVariableValue(
   varName: string,
   text: string
 ) {
-  const variable = dashboardPage
-    .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(varName))
-    .locator('..')
-    .locator('input');
-  await variable.click();
-  await variable.clear();
-  await variable.fill(text);
-  await variable.press('Enter');
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const controls = new Controls({ page, dashboardPage, selectors, components });
+
+  await controls.variables.setValue(varName, text);
   await page.waitForLoadState('networkidle');
 }

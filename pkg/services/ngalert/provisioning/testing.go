@@ -38,7 +38,7 @@ const defaultAlertmanagerConfigJSON = `
 				"type": "email",
 				"disableResolveMessage": false,
 				"settings": {
-					"addresses": "\u003cexample@email.com\u003e"
+					"addresses": "\u003cexample@example.com\u003e"
 				},
 				"secureFields": {}
 			}]
@@ -74,11 +74,14 @@ func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx
 func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockProvisioningStore_Expecter {
 	m.GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(p, nil)
 	m.GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+	m.GetManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceToManagerProperties(p), nil)
+	m.GetManagerPropertiesByUIDs(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 	return m
 }
 
 func (m *MockProvisioningStore_Expecter) SaveSucceeds() *MockProvisioningStore_Expecter {
 	m.SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	m.SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	m.DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	return m
 }

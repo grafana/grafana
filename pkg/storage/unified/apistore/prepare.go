@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -84,27 +84,60 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 	return nil
 }
 
-// verifyFolder enforces the folder-annotation contract on write. When folder
-// support is disabled, any folder annotation is a validation error (422): the
-// resource does not live in the folder tree at all. When folder support is
-// enabled, the annotation is accepted as-is.
+// verifyFolder enforces the folder-annotation contract on write.
+//
+//   - EnableFolderSupport=false: the resource does not live in the folder tree
+//     at all; reject any write that sets the folder annotation.
+//   - EnableFolderSupport=true and RequireFolder=false: any folder value is
+//     accepted (including empty / root).
+//   - EnableFolderSupport=true and RequireFolder=true: the folder annotation
+//     must be present and non-root; resources of this kind must live in a real
+//     folder.
 func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
-	if s.opts.EnableFolderSupport {
+	folderUID := obj.GetFolder()
+	if !s.opts.EnableFolderSupport {
+		if folderUID == "" {
+			return nil
+		}
+		return apierrors.NewInvalid(
+			obj.GetGroupVersionKind().GroupKind(),
+			obj.GetName(),
+			field.ErrorList{
+				field.Forbidden(
+					field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+					fmt.Sprintf("folders are not supported for %s", s.gr.String()),
+				),
+			},
+		)
+	}
+	if !s.opts.RequireFolder {
 		return nil
 	}
-	if obj.GetFolder() == "" {
-		return nil
+	if folderUID == "" {
+		return apierrors.NewInvalid(
+			obj.GetGroupVersionKind().GroupKind(),
+			obj.GetName(),
+			field.ErrorList{
+				field.Required(
+					field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+					fmt.Sprintf("folder is required for %s", s.gr.String()),
+				),
+			},
+		)
 	}
-	return apierrors.NewInvalid(
-		obj.GetGroupVersionKind().GroupKind(),
-		obj.GetName(),
-		field.ErrorList{
-			field.Forbidden(
-				field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
-				fmt.Sprintf("folders are not supported for %s", s.gr.String()),
-			),
-		},
-	)
+	if folder.IsRootFolderUID(folderUID) {
+		return apierrors.NewInvalid(
+			obj.GetGroupVersionKind().GroupKind(),
+			obj.GetName(),
+			field.ErrorList{
+				field.Forbidden(
+					field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+					fmt.Sprintf("%s cannot be created in the root folder", s.gr.String()),
+				),
+			},
+		)
+	}
+	return nil
 }
 
 // Called on create
@@ -187,7 +220,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return v, err
 	}
 
-	err = s.encode(newObject, &v.raw)
+	err = s.encode(newObject, &v.raw, true)
 	return v, err
 }
 
@@ -332,7 +365,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		obj.SetAnnotation(utils.AnnoKeyUpdatedTimestamp, previous.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	}
 
-	err = s.encode(updateObject, &v.raw)
+	// Enforce the cap on updates too, so an object stored above the cap cannot keep being mutated — except
+	// for deletion. A soft delete sets the deletionTimestamp (and finalizer/status writes run while it is
+	// set); exempt those so an already-over-cap object stays removable. Net: over-cap objects are drain-only.
+	deleting := obj.GetDeletionTimestamp() != nil || previous.GetDeletionTimestamp() != nil
+	err = s.encode(updateObject, &v.raw, !deleting)
 	return v, err
 }
 
@@ -402,17 +439,80 @@ func (s *Storage) checkGVK(obj runtime.Object) error {
 	return nil
 }
 
-func (s *Storage) encode(obj runtime.Object, w io.Writer) error {
-	// The standard encoder is fine when only one type maps to a group
+// encode serializes obj into buf. enforceCap applies the group's maxAllowedVersion ceiling. Callers pass
+// true on create and on non-deletion updates; deletion-related updates pass false so an object already
+// stored above the cap stays removable (its deletion, finalizer and status writes all go through here).
+func (s *Storage) encode(obj runtime.Object, buf *bytes.Buffer, enforceCap bool) error {
 	if s.opts.Scheme == nil {
-		return s.codec.Encode(obj, w)
+		return s.encodeViaCodec(obj, buf, enforceCap)
 	}
 	if err := s.checkGVK(obj); err != nil {
 		return err
 	}
-
-	// This will always write the saved GVK, unlike:
+	// The JSON encoder writes obj's own (checkGVK-resolved) GVK, so the checked version is the persisted version.
+	// This always writes the saved GVK, unlike:
 	// https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
 	// that picks an arbitrary GVK that may not match the same group!
-	return json.NewEncoder(w).Encode(obj)
+	if enforceCap {
+		if err := s.enforceMaxAllowedVersion(obj.GetObjectKind().GroupVersionKind().Version); err != nil {
+			return err
+		}
+	}
+	return json.NewEncoder(buf).Encode(obj)
+}
+
+// encodeViaCodec serializes through the versioning codec (no scheme). That codec may convert the object
+// to a higher-priority storage version, so the cap is enforced against the persisted apiVersion read back
+// from the encoded bytes, not the declared version. Encoding goes straight into the destination buffer;
+// a rejected write resets it so no rejected payload is retained.
+func (s *Storage) encodeViaCodec(obj runtime.Object, buf *bytes.Buffer, enforceCap bool) error {
+	if err := s.codec.Encode(obj, buf); err != nil {
+		return err
+	}
+	if !enforceCap || s.opts.VersionPolicy == nil || !s.opts.VersionPolicy.HasMaxAllowed(s.gr.Group) {
+		return nil
+	}
+	gv := persistedVersion(buf.Bytes(), obj)
+	// The versioning codec may pick a GVK outside this resource's group. Such a version cannot be ranked
+	// against the group's cap (it would look unregistered and slip through), so reject rather than store it.
+	if gv.Group != s.gr.Group {
+		buf.Reset()
+		return apierrors.NewBadRequest(fmt.Sprintf(
+			"%s: encoded apiVersion group %q does not match resource group %q", s.gr.String(), gv.Group, s.gr.Group))
+	}
+	if err := s.enforceMaxAllowedVersion(gv.Version); err != nil {
+		buf.Reset()
+		return err
+	}
+	return nil
+}
+
+// enforceMaxAllowedVersion rejects (never rewrites) a write whose version outranks the group's configured maxAllowedVersion.
+// This is a REST-write-path check in apistore.encode: it does not cover writes that bypass apistore (bulk
+// import via BulkStore, direct ResourceClient callers, migrations), and under legacy-primary dual-write an
+// over-cap write still lands in legacy while only the background unified copy is rejected.
+func (s *Storage) enforceMaxAllowedVersion(version string) error {
+	if s.opts.VersionPolicy == nil {
+		return nil
+	}
+	allowed, maxAllowed := s.opts.VersionPolicy.IsVersionAllowed(s.gr.Group, version)
+	if allowed {
+		return nil
+	}
+	return apierrors.NewBadRequest(fmt.Sprintf(
+		"%s: version %s exceeds the configured maximum version %s for group %s",
+		s.gr.String(), version, maxAllowed, s.gr.Group))
+}
+
+// persistedVersion reads the group/version actually written by the codec, so the cap is enforced against
+// the stored version. It falls back to the object's declared GVK if the encoded form has no parseable
+// TypeMeta, so it never silently skips the cap.
+func persistedVersion(encoded []byte, obj runtime.Object) schema.GroupVersion {
+	var tm metav1.TypeMeta
+	if json.Unmarshal(encoded, &tm) == nil && tm.APIVersion != "" {
+		if gv, err := schema.ParseGroupVersion(tm.APIVersion); err == nil {
+			return gv
+		}
+	}
+	return obj.GetObjectKind().GroupVersionKind().GroupVersion()
 }

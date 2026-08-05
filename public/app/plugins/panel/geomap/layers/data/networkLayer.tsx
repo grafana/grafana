@@ -14,7 +14,6 @@ import {
   type MapLayerOptions,
   type PanelData,
   type GrafanaTheme2,
-  FrameGeometrySourceMode,
   type EventBus,
   type DataFrame,
   type Field,
@@ -46,17 +45,7 @@ const defaultOptions: NetworkConfig = {
   arrow: 0,
 };
 
-export const NETWORK_LAYER_ID = 'network';
-
-// Used by default when nothing is configured
-export const defaultMarkersConfig: MapLayerOptions<NetworkConfig> = {
-  type: NETWORK_LAYER_ID,
-  name: '', // will get replaced
-  config: defaultOptions,
-  location: {
-    mode: FrameGeometrySourceMode.Auto,
-  },
-};
+const NETWORK_LAYER_ID = 'network';
 
 /**
  * Map layer configuration for network overlay
@@ -75,7 +64,12 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<NetworkConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<NetworkConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -87,7 +81,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
     const vectorLayer = new VectorImage({
-      source
+      source,
     });
     const hasArrows = config.arrow === 1 || config.arrow === -1 || config.arrow === 2;
 
@@ -210,9 +204,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
         if (legend) {
           legendProps.next({
             styleConfig: style,
-            size: style.dims?.size,
             layerName: options.name,
-            layer: vectorLayer,
           });
         }
         const graphFrames = getGraphFrame(data.series);

@@ -68,7 +68,7 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
-	csch, err := checkscheduler.New(cfg, log)
+	csch, err := checkscheduler.New(cfg, log, ctr)
 	if err != nil {
 		return nil, err
 	}

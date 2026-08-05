@@ -2,10 +2,14 @@ package backfill
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -44,6 +48,9 @@ type Options struct {
 	// Metrics is optional; when nil the backfiller runs without
 	// observability instrumentation (handy for unit tests).
 	Metrics *resource.VectorMetrics
+	// Interval is how often Run re-scans for incomplete jobs (jobs are
+	// created lazily by the reconciler's write path). Defaults to 1m.
+	Interval time.Duration
 }
 
 type VectorBackfiller struct {
@@ -58,7 +65,10 @@ type VectorBackfiller struct {
 	dashboardStats builders.DashboardStats
 	log            log.Logger
 	metrics        *resource.VectorMetrics
+	interval       time.Duration
 }
+
+const defaultBackfillInterval = time.Minute
 
 func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	if opts.Storage == nil {
@@ -92,6 +102,11 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 		sorted = append(sorted, builders[k])
 	}
 
+	interval := opts.Interval
+	if interval <= 0 {
+		interval = defaultBackfillInterval
+	}
+
 	return &VectorBackfiller{
 		storage:        opts.Storage,
 		vectorBackend:  opts.VectorBackend,
@@ -101,11 +116,13 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 		dashboardStats: opts.DashboardStats,
 		log:            log.New("backfill"),
 		metrics:        opts.Metrics,
+		interval:       interval,
 	}, nil
 }
 
-// Run first acquires a Postgres advisory lock so that only one process runs the
-// backfiller at a time.
+// Run acquires a Postgres advisory lock so only one process backfills, then
+// drains incomplete jobs immediately and on every interval tick. The periodic
+// re-scan picks up new jobs from the reconciler.
 func (b *VectorBackfiller) Run(ctx context.Context) error {
 	release, acquired, err := b.vectorBackend.TryAcquireBackfillLock(ctx)
 	if err != nil {
@@ -118,7 +135,16 @@ func (b *VectorBackfiller) Run(ctx context.Context) error {
 	defer release()
 
 	b.runBackfill(ctx)
-	return ctx.Err()
+	t := time.NewTicker(b.interval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-t.C:
+			b.runBackfill(ctx)
+		}
+	}
 }
 
 // runBackfill processes every incomplete vector_backfill_jobs row serially.
@@ -276,6 +302,32 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 	return nextToken, nil
 }
 
+// isPermanentItemError reports whether the item's own content caused the
+// failure, so retrying can never succeed. Provider rejections stay retryable
+// because misconfig produces the same codes.
+func isPermanentItemError(err error) bool {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	// SQLSTATE class 22 = data exception, e.g. NUL byte in text. Class 23
+	// is excluded: missing partitions surface as 23514 check_violation.
+	var pgxErr *pgconn.PgError
+	if errors.As(err, &pgxErr) {
+		return strings.HasPrefix(pgxErr.Code, "22")
+	}
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
+		return pqErr.Code.Class() == "22"
+	}
+	return false
+}
+
+// skipPermanentItem logs an unfixable item being skipped so it can't wedge the job.
+func (b *VectorBackfiller) skipPermanentItem(stage, namespace, group, res, name string, err error) {
+	b.log.Warn("backfill: permanent error; skipping item",
+		"stage", stage, "namespace", namespace, "group", group, "resource", res, "name", name, "err", err)
+}
+
 // processBackfillItem runs the per-resource pipeline: skip if RV>stopping_rv
 // or already embedded, else extract → embed → upsert.
 func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder embed.Builder, iter resource.ListIterator) (retErr error) {
@@ -310,7 +362,10 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	}()
 
 	rv := iter.ResourceVersion()
-	if rv > job.StoppingRV {
+	// Compare in snowflake space so the bound holds whether the item RV and
+	// the stored stopping_rv came from the kv (snowflake) or legacy sql
+	// (microsecond) backend — e.g. after a SQL<->KV backend swap.
+	if resource.ToSnowflakeRV(rv) > resource.ToSnowflakeRV(job.StoppingRV) {
 		statusLabel = "skipped_rv_past_stopping"
 		return nil
 	}
@@ -322,6 +377,11 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	}
 	if exists {
 		statusLabel = "skipped_already_embedded"
+		return nil
+	}
+
+	if embed.HasPendingDeleteLabel(iter.Value()) {
+		statusLabel = "skipped_pending_delete"
 		return nil
 	}
 
@@ -337,15 +397,20 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		Name:      name,
 	}
 
-	items, err := builder.Extract(ctx, key, iter.Value(), "")
+	items, err := builder.Extract(ctx, key, iter.Value())
 	if err != nil {
-		return fmt.Errorf("extract %s/%s: %w", namespace, name, err)
+		// Extract is deterministic over stored bytes; failures are permanent.
+		b.skipPermanentItem("extract", namespace, group, res, name, err)
+		statusLabel = "skipped_permanent_error"
+		return nil
 	}
 	if resCap := builder.MaxItemsPerResource(); resCap > 0 && len(items) > resCap {
 		items = items[:resCap]
 	}
 	if len(items) == 0 {
 		statusLabel = "skipped_empty_extract"
+		// this shouldn't happen that often. If it does, use this to look up the dashboard json and understand why nothing was extracted.
+		b.log.Info("skipping empty extract", "namespace", namespace, "group", group, "resource", res, "name", name)
 		return nil
 	}
 
@@ -355,6 +420,11 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	}
 
 	if err := b.vectorBackend.Upsert(ctx, vectors); err != nil {
+		if isPermanentItemError(err) {
+			b.skipPermanentItem("upsert", namespace, group, res, name, err)
+			statusLabel = "skipped_permanent_error"
+			return nil
+		}
 		return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
 	}
 	return nil

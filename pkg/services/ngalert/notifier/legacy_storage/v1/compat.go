@@ -1,73 +1,70 @@
 package v1
 
 import (
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"maps"
 	"slices"
-	"strings"
 
 	"github.com/grafana/alerting/definition"
+	"github.com/grafana/alerting/definition/compat"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
-	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
+	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 	if in == nil {
 		return nil
 	}
+	// Merge legacy TemplateFiles and new ManagedTemplates into the internal model.
+	// ManagedTemplates entries overwrite TemplateFiles entries with the same UID (same name+kind).
+	templates := TemplateFilesToTemplates(in.TemplateFiles, TemplateKindGrafana)
+	if len(in.ManagedTemplates) > 0 {
+		if templates == nil {
+			templates = make(map[ResourceUID]TemplateGroup, len(in.ManagedTemplates))
+		}
+		maps.Copy(templates, ManagedTemplatesToTemplates(in.ManagedTemplates))
+	}
 	return &AMConfigV1{
-		Templates:              TemplateFilesToTemplates(in.TemplateFiles, TemplateKindGrafana),
-		AlertmanagerConfig:     PostableApiAlertingConfigToModel(in.AlertmanagerConfig),
-		ExtraConfigs:           ExtraConfigsToModel(in.ExtraConfigs),
-		ManagedRoutes:          ManagedRoutesToModel(in.ManagedRoutes),
-		ManagedInhibitionRules: ManagedInhibitionRulesToModel(in.ManagedInhibitionRules),
+		Templates:          templates,
+		InhibitionRules:    InhibitionRulesToModel(in.ManagedInhibitionRules),
+		AlertmanagerConfig: PostableApiAlertingConfigToModel(in.AlertmanagerConfig),
+		ExtraConfigs:       ExtraConfigsToModel(in.ExtraConfigs),
+		ManagedRoutes:      ManagedRoutesToModel(in.ManagedRoutes),
 	}
 }
 
 func PostableApiAlertingConfigToModel(in definition.PostableApiAlertingConfig) PostableApiAlertingConfig {
 	return PostableApiAlertingConfig{
 		Config: Config{
-			Global:            in.Global,
-			Route:             RouteToModel(in.Route),
-			InhibitRules:      slices.Clone(in.InhibitRules),
-			Templates:         slices.Clone(in.Templates),
-			MuteTimeIntervals: MuteTimeIntervalsToModel(in.MuteTimeIntervals),
-			TimeIntervals:     TimeIntervalsToModel(in.TimeIntervals),
+			Global:        in.Global,
+			Route:         RouteToModel(in.Route),
+			InhibitRules:  slices.Clone(in.InhibitRules),
+			Templates:     slices.Clone(in.Templates),
+			TimeIntervals: TimeIntervalsToModel(in.MuteTimeIntervals, in.TimeIntervals),
 		},
 		Receivers: ReceiversToModel(in.Receivers),
 	}
 }
 
-func MuteTimeIntervalsToModel(in []config.MuteTimeInterval) []MuteTimeInterval {
-	if in == nil {
+func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals []config.TimeInterval) []TimeInterval {
+	if muteIntervals == nil && timeIntervals == nil {
 		return nil
 	}
-	out := make([]MuteTimeInterval, 0, len(in))
-	for _, interval := range in {
-		out = append(out, MuteTimeInterval{
-			Name:          interval.Name,
-			TimeIntervals: interval.TimeIntervals,
-		})
+	// Fold mute time intervals into time intervals, mute first. A name cannot appear in both lists
+	// because Config rejects duplicates across them at unmarshal time, so the order only needs to be
+	// stable; mute-first matches what the config was previously flattened to when applied.
+	out := make([]TimeInterval, 0, len(muteIntervals)+len(timeIntervals))
+	for _, interval := range muteIntervals {
+		out = append(out, TimeInterval(interval))
 	}
-	return out
-}
-
-func TimeIntervalsToModel(in []config.TimeInterval) []TimeInterval {
-	if in == nil {
-		return nil
-	}
-	out := make([]TimeInterval, 0, len(in))
-	for _, interval := range in {
-		out = append(out, TimeInterval{
-			Name:          interval.Name,
-			TimeIntervals: interval.TimeIntervals,
-		})
+	for _, interval := range timeIntervals {
+		out = append(out, TimeInterval(interval))
 	}
 	return out
 }
@@ -88,10 +85,8 @@ func PostableApiReceiverToModel(in *definition.PostableApiReceiver) *PostableApi
 		return nil
 	}
 	return &PostableApiReceiver{
-		Receiver: in.Receiver,
-		PostableGrafanaReceivers: PostableGrafanaReceivers{
-			GrafanaManagedReceivers: PostableGrafanaReceiversToModel(in.GrafanaManagedReceivers),
-		},
+		Name:                    in.Name,
+		GrafanaManagedReceivers: PostableGrafanaReceiversToModel(in.GrafanaManagedReceivers),
 	}
 }
 
@@ -156,26 +151,34 @@ func ObjectMatchersToModel(in definitions.ObjectMatchers) ObjectMatchers {
 	return ObjectMatchers(slices.Clone(in))
 }
 
-func ManagedInhibitionRulesToModel(in definitions.ManagedInhibitionRules) ManagedInhibitionRules {
+func InhibitionRulesToModel(in definitions.ManagedInhibitionRules) map[ResourceUID]InhibitionRule {
 	if in == nil {
 		return nil
 	}
-	out := make(ManagedInhibitionRules, len(in))
-	for k, ir := range in {
-		out[k] = InhibitionRuleToModel(ir)
+	out := make(map[ResourceUID]InhibitionRule, len(in))
+	for _, ir := range in {
+		if ir == nil {
+			continue
+		}
+		m := InhibitionRuleToModel(*ir)
+		out[m.UID] = m
 	}
 	return out
 }
 
-func InhibitionRuleToModel(in *definitions.InhibitionRule) *InhibitionRule {
-	if in == nil {
-		return nil
+func InhibitionRuleToModel(in definitions.InhibitionRule) InhibitionRule {
+	return NewInhibitionRule(in.Name, MatchersToModel(in.SourceMatchers), MatchersToModel(in.TargetMatchers), in.Equal, models.Provenance(in.Provenance))
+}
+
+func MatchersToModel(in config.Matchers) []Matcher {
+	out := make([]Matcher, 0, len(in))
+	for _, m := range in {
+		if m == nil {
+			continue
+		}
+		out = append(out, Matcher{Type: MatcherType(m.Type.String()), Label: m.Name, Value: m.Value})
 	}
-	return &InhibitionRule{
-		Name:        in.Name,
-		InhibitRule: in.InhibitRule,
-		Provenance:  Provenance(in.Provenance),
-	}
+	return out
 }
 
 func ExtraConfigsToModel(in []definitions.ExtraConfiguration) []ExtraConfiguration {
@@ -199,45 +202,38 @@ func ExtraConfigToModel(in definitions.ExtraConfiguration) ExtraConfiguration {
 
 // -----------------
 
-func ToDBModel(in *AMConfigV1) *AMConfigDB {
+func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 	if in == nil {
-		return nil
+		return nil, nil
 	}
-	return &AMConfigDB{
-		TemplateFiles:          TemplatesToTemplateFiles(in.Templates),
-		AlertmanagerConfig:     PostableApiAlertingConfigToDB(in.AlertmanagerConfig),
-		ExtraConfigs:           ExtraConfigsToDB(in.ExtraConfigs),
-		ManagedRoutes:          ManagedRoutesToDB(in.ManagedRoutes),
-		ManagedInhibitionRules: ManagedInhibitionRulesToDB(in.ManagedInhibitionRules),
+	dbModel := AMConfigDB{
+		ManagedTemplates:   TemplatesToManagedTemplates(in.Templates),
+		AlertmanagerConfig: PostableApiAlertingConfigToDB(in.AlertmanagerConfig),
+		ExtraConfigs:       ExtraConfigsToDB(in.ExtraConfigs),
+		ManagedRoutes:      ManagedRoutesToDB(in.ManagedRoutes),
 	}
+
+	var errs []error
+	var err error
+	dbModel.ManagedInhibitionRules, err = InhibitionRulesToDB(in.InhibitionRules)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	return &dbModel, errors.Join(errs...)
 }
 
 func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig) definition.PostableApiAlertingConfig {
 	return definition.PostableApiAlertingConfig{
 		Config: definition.Config{
-			Global:            in.Global,
-			Route:             RouteToDB(in.Route),
-			InhibitRules:      slices.Clone(in.InhibitRules),
-			Templates:         slices.Clone(in.Templates),
-			MuteTimeIntervals: MuteTimeIntervalsToDB(in.MuteTimeIntervals),
-			TimeIntervals:     TimeIntervalsToDB(in.TimeIntervals),
+			Global:        in.Global,
+			Route:         RouteToDB(in.Route),
+			InhibitRules:  slices.Clone(in.InhibitRules),
+			Templates:     slices.Clone(in.Templates),
+			TimeIntervals: TimeIntervalsToDB(in.TimeIntervals),
 		},
 		Receivers: ReceiversToDB(in.Receivers),
 	}
-}
-
-func MuteTimeIntervalsToDB(in []MuteTimeInterval) []config.MuteTimeInterval {
-	if in == nil {
-		return nil
-	}
-	out := make([]config.MuteTimeInterval, 0, len(in))
-	for _, interval := range in {
-		out = append(out, config.MuteTimeInterval{
-			Name:          interval.Name,
-			TimeIntervals: interval.TimeIntervals,
-		})
-	}
-	return out
 }
 
 func TimeIntervalsToDB(in []TimeInterval) []config.TimeInterval {
@@ -270,7 +266,7 @@ func PostableApiReceiverToDB(in *PostableApiReceiver) *definition.PostableApiRec
 		return nil
 	}
 	return &definition.PostableApiReceiver{
-		Receiver: in.Receiver,
+		Name: in.Name,
 		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
 			GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.GrafanaManagedReceivers),
 		},
@@ -338,25 +334,83 @@ func ObjectMatchersToDB(in ObjectMatchers) definitions.ObjectMatchers {
 	return definitions.ObjectMatchers(slices.Clone(in))
 }
 
-func ManagedInhibitionRulesToDB(in ManagedInhibitionRules) definitions.ManagedInhibitionRules {
+func InhibitionRulesToDB(in map[ResourceUID]InhibitionRule) (definitions.ManagedInhibitionRules, error) {
 	if in == nil {
-		return nil
+		return nil, nil
 	}
+	var errs []error
 	out := make(definitions.ManagedInhibitionRules, len(in))
-	for k, ir := range in {
-		out[k] = InhibitionRuleToDB(ir)
+	for _, ir := range in {
+		m, err := InhibitionRuleToDB(ir)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		out[m.Name] = m
 	}
-	return out
+	return out, errors.Join(errs...)
 }
 
-func InhibitionRuleToDB(in *InhibitionRule) *definitions.InhibitionRule {
-	if in == nil {
-		return nil
+func InhibitionRuleToDB(in InhibitionRule) (*definitions.InhibitionRule, error) {
+	var errs []error
+
+	sourceMatchers, err := MatchersToDB(in.SourceMatchers)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("invalid source matchers: %w", err))
+	}
+	targetMatchers, err := MatchersToDB(in.TargetMatchers)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("invalid target matchers: %w", err))
 	}
 	return &definitions.InhibitionRule{
-		Name:        in.Name,
-		InhibitRule: in.InhibitRule,
-		Provenance:  definition.Provenance(in.Provenance),
+		Name: string(in.UID),
+		InhibitRule: definitions.InhibitRule{
+			SourceMatchers: sourceMatchers,
+			TargetMatchers: targetMatchers,
+			Equal:          slices.Clone(in.Equal),
+		},
+		Provenance: definition.Provenance(in.Provenance),
+	}, errors.Join(errs...)
+}
+
+func MatchersToDB(in []Matcher) (config.Matchers, error) {
+	if len(in) == 0 {
+		return nil, nil
+	}
+
+	var errs []error
+	result := make(config.Matchers, 0, len(in))
+	for _, m := range in {
+		matchType, err := MatcherTypeToDB(m.Type)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("invalid matcher (label=%s, type=%s, value=%s): %w", m.Label, m.Type, m.Value, err))
+		}
+		matcher, err := labels.NewMatcher(matchType, m.Label, m.Value)
+		if err != nil {
+			// Try to recover by using the default match type, could be useful in the future if we want to ignore certain compat errors without losing data.
+			matcher = &labels.Matcher{
+				Type:  matchType,
+				Name:  m.Label,
+				Value: m.Value,
+			}
+			errs = append(errs, fmt.Errorf("invalid matcher (label=%s, type=%s, value=%s): %w", m.Label, m.Type, m.Value, err))
+		}
+		result = append(result, matcher)
+	}
+	return result, errors.Join(errs...)
+}
+
+func MatcherTypeToDB(mType MatcherType) (labels.MatchType, error) {
+	switch mType {
+	case MatcherEqual:
+		return labels.MatchEqual, nil
+	case MatcherNotEqual:
+		return labels.MatchNotEqual, nil
+	case MatcherEqualRegex:
+		return labels.MatchRegexp, nil
+	case MatcherNotEqualRegex:
+		return labels.MatchNotRegexp, nil
+	default:
+		return labels.MatchEqual, models.MakeErrInhibitionRuleInvalid(fmt.Errorf("unknown matcher type: %s", mType))
 	}
 }
 
@@ -379,51 +433,18 @@ func ExtraConfigToDB(in ExtraConfiguration) definitions.ExtraConfiguration {
 	}
 }
 
-func InhibitRuleToInhibitionRule(name string, rule config.InhibitRule, provenance Provenance) (*InhibitionRule, error) {
-	if name = strings.TrimSpace(name); name == "" {
-		return nil, fmt.Errorf("inhibition rule name must not be empty")
-	}
-
-	if strings.Contains(name, ":") {
-		return nil, fmt.Errorf("inhibition rule name cannot contain invalid character ':'")
-	}
-
-	if errs := k8svalidation.IsDNS1123Subdomain(name); len(errs) > 0 {
-		return nil, fmt.Errorf("inhibition rule name must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
-	}
-
-	// imported inhibition rules have purposefully long names to ensure no conflict with non-imported ones
-	if models.Provenance(provenance) != models.ProvenanceConvertedPrometheus && len(name) > util.MaxUIDLength {
-		return nil, fmt.Errorf("inhibition rule name is too long (exceeds %d characters)", util.MaxUIDLength)
-	}
-
-	return &InhibitionRule{
-		Name:        name,
-		InhibitRule: rule,
-		Provenance:  provenance,
-	}, nil
-}
-
-// PostableMimirReceiverToPostableGrafanaReceiver converts all legacy models to PostableGrafanaReceiver.
-// If receiver does not have any legacy receivers, returns the original receiver.
-// Otherwise, returns a copy that contains converted integrations (and shallow copy of existing Grafana integrations).
-func PostableMimirReceiverToPostableGrafanaReceiver(r *PostableApiReceiver) (*PostableApiReceiver, error) {
-	if !r.HasMimirIntegrations() {
-		return r, nil
-	}
-	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r.Receiver)
+// PostableMimirReceiverToPostableGrafanaReceiver converts an upstream (Mimir) receiver into a
+// receiver that carries the equivalent Grafana integrations. The result never contains legacy
+// models, so callers do not need to convert again.
+func PostableMimirReceiverToPostableGrafanaReceiver(r compat.Receiver) (*PostableApiReceiver, error) {
+	v0, err := alertingNotify.ConfigReceiverToMimirIntegrations(r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
 	}
 	result := &PostableApiReceiver{
-		Receiver: definition.Receiver{
-			Name: r.Name,
-		},
-		PostableGrafanaReceivers: PostableGrafanaReceivers{
-			GrafanaManagedReceivers: make([]*PostableGrafanaReceiver, 0, len(v0)+len(r.GrafanaManagedReceivers)),
-		},
+		Name:                    r.Name,
+		GrafanaManagedReceivers: make([]*PostableGrafanaReceiver, 0, len(v0)),
 	}
-	result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, r.GrafanaManagedReceivers...)
 	typeCount := make(map[string]int)
 	for _, cfg := range v0 {
 		integrationType := string(cfg.Schema.Type())

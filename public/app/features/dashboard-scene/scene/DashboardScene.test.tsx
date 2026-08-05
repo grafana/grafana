@@ -21,12 +21,20 @@ import {
   behaviors,
   SceneDataTransformer,
   LocalValueVariable,
+  MultiValueVariable,
 } from '@grafana/scenes';
 import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import {
+  AnnoKeyIgnorePredefinedVariables,
+  AnnoKeyManagerKind,
+  DENY_ALL_GLOBAL_PREDEFINED,
+  DENY_ALL_PREDEFINED,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -42,11 +50,13 @@ import * as DashboardTemplateExtensionModule from '../settings/enterprise-compon
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
+import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
+import { toControlSourceRef } from '../utils/predefinedVariables';
 import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
-import { DashboardScene, type DashboardSceneState } from './DashboardScene';
+import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
@@ -55,6 +65,7 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+import { type DashboardSceneState } from './types/dashboard';
 
 const mockRestoreDashboardVersion = jest.fn();
 
@@ -100,6 +111,16 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
   },
 }));
 
+const mockFetchPredefinedVariables = jest.fn();
+jest.mock('../utils/predefinedVariables', () => ({
+  ...jest.requireActual('../utils/predefinedVariables'),
+  fetchPredefinedVariables: (...args: unknown[]) => {
+    const result = mockFetchPredefinedVariables(...args);
+    // Preserve null (fetch failure); only default when the mock is unset.
+    return result === undefined ? Promise.resolve([]) : result;
+  },
+}));
+
 locationUtil.initialize({
   config: { appSubUrl: '/subUrl' } as GrafanaConfig,
   getVariablesUrlParams: jest.fn(),
@@ -134,6 +155,77 @@ describe('DashboardScene', () => {
 
         // @ts-expect-error it is a private property
         expect(scene._changesWorker).toBeUndefined();
+      });
+    });
+
+    describe('Edit session start tracking', () => {
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      it('reports edit_session_started with source "user" when entering edit mode manually', () => {
+        const scene = buildTestScene();
+        scene.activate();
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.onEnterEditMode();
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
+      });
+
+      it('reports source "assistant" when the assistant enters edit mode', () => {
+        const scene = buildTestScene();
+        scene.activate();
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.onEnterEditMode('assistant');
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'assistant' }));
+      });
+
+      it('does not report again when already in edit mode', () => {
+        const scene = buildTestScene();
+        scene.activate();
+        scene.onEnterEditMode();
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.onEnterEditMode();
+
+        expect(spy).not.toHaveBeenCalled();
+      });
+
+      it('exposes the edit session source', () => {
+        const scene = buildTestScene();
+        scene.activate();
+
+        expect(scene.getEditSessionSource()).toBeUndefined();
+
+        scene.onEnterEditMode('assistant');
+
+        expect(scene.getEditSessionSource()).toBe('assistant');
+      });
+
+      it('tags the session from the editSource url param when a new dashboard auto-enters edit mode', () => {
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new?editSource=assistant');
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.activate();
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'assistant' }));
+        expect(scene.getEditSessionSource()).toBe('assistant');
+      });
+
+      it('defaults to source "user" when a new dashboard auto-enters edit mode without the param', () => {
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new');
+        const spy = jest.spyOn(DashboardInteractions, 'editSessionStarted');
+
+        scene.activate();
+
+        expect(spy).toHaveBeenCalledWith(expect.objectContaining({ source: 'user' }));
+        expect(scene.getEditSessionSource()).toBe('user');
       });
     });
 
@@ -186,7 +278,7 @@ describe('DashboardScene', () => {
         // Restored state from when edit mode started
         expect(scene.state.title).toBe('hello');
 
-        // Clears edit-panel related state
+        // Clears sidebar related state
         expect(scene.state.editPanel).toBeUndefined();
         expect(scene.state.overlay).toBeUndefined();
 
@@ -195,11 +287,47 @@ describe('DashboardScene', () => {
         expect(startSpy).toHaveBeenCalled();
       });
 
-      it('Exiting already saved dashboard should not restore initial state', () => {
+      it('activateSidebar activates an inactive sidebar and releases it on exit', () => {
+        const sidebar = scene.state.sidebar;
+        expect(sidebar.isActive).toBe(false);
+
+        scene.activateSidebar();
+        expect(sidebar.isActive).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect(sidebar.isActive).toBe(false);
+      });
+
+      it('activateSidebar is a no-op when the sidebar is already active', () => {
+        const sidebar = scene.state.sidebar;
+        const activateSpy = jest.spyOn(sidebar, 'activate');
+        sidebar.activate();
+
+        scene.activateSidebar();
+
+        expect(activateSpy).toHaveBeenCalledTimes(1);
+      });
+
+      it('re-activates the swapped-in sidebar when discarding and keeping edit', () => {
+        const sidebar = scene.state.sidebar;
+        scene.activateSidebar();
+        expect(sidebar.isActive).toBe(true);
+
+        scene.discardChangesAndKeepEditing();
+
+        // The original pane is released, but a fresh clone is swapped in and re-activated so
+        // programmatic mutations keep working while we stay in edit mode.
+        expect(sidebar.isActive).toBe(false);
+        const newSidebar = scene.state.sidebar;
+        expect(newSidebar).not.toBe(sidebar);
+        expect(newSidebar.isActive).toBe(true);
+      });
+
+      it('Exiting already saved dashboard should not restore initial state', async () => {
         scene.setState({ title: 'Updated title' });
         expect(scene.state.isDirty).toBe(true);
 
-        scene.saveCompleted({} as Dashboard, {
+        await scene.saveCompleted({} as Dashboard, {
           slug: 'slug',
           uid: 'dash-1',
           url: 'sss',
@@ -352,6 +480,30 @@ describe('DashboardScene', () => {
             ...prevMeta,
             folderUid: 'new-folder-uid',
             folderTitle: 'new-folder-title',
+          },
+        });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.meta).toEqual(prevMeta);
+      });
+
+      it('A change to predefined variables denylist should set isDirty true', () => {
+        const prevMeta = { ...scene.state.meta };
+        mockResultsOfDetectChangesWorker({ hasChanges: false });
+
+        const annotation = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+        scene.setState({
+          meta: {
+            ...prevMeta,
+            k8s: {
+              ...prevMeta.k8s,
+              annotations: {
+                ...prevMeta.k8s?.annotations,
+                [AnnoKeyIgnorePredefinedVariables]: annotation,
+              },
+            },
           },
         });
 
@@ -574,10 +726,10 @@ describe('DashboardScene', () => {
       });
 
       it('Should select new row', () => {
-        scene.state.editPane.activate();
+        scene.state.sidebar.activate();
 
         const row = scene.onCreateNewRow();
-        expect(scene.state.editPane.getSelectedObject()).toBe(row);
+        expect(scene.state.sidebar.getSelectedObject()).toBe(row);
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
@@ -667,6 +819,13 @@ describe('DashboardScene', () => {
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
+      it('Should do nothing when pasting with an empty clipboard', () => {
+        store.delete(LS_PANEL_COPY_KEY);
+
+        expect(() => scene.pastePanel()).not.toThrow();
+        expect(buildGridItemForPanel).not.toHaveBeenCalled();
+      });
+
       describe('Copy/Paste panel styles', () => {
         const createTimeseriesPanel = () => {
           return new VizPanel({
@@ -688,11 +847,6 @@ describe('DashboardScene', () => {
 
         beforeEach(() => {
           store.delete(LS_STYLES_COPY_KEY);
-          config.featureToggles.panelStyleActions = true;
-        });
-
-        afterEach(() => {
-          config.featureToggles.panelStyleActions = false;
         });
 
         it('Should copy panel styles when feature flag is enabled', () => {
@@ -706,15 +860,6 @@ describe('DashboardScene', () => {
           expect(stored.panelType).toBe('timeseries');
           expect(stored.styles).toBeDefined();
           expect(spy).not.toHaveBeenCalled(); // Analytics only called from menu
-        });
-
-        it('Should not copy panel styles when feature flag is disabled', () => {
-          config.featureToggles.panelStyleActions = false;
-          const timeseriesPanel = createTimeseriesPanel();
-
-          scene.copyPanelStyles(timeseriesPanel);
-
-          expect(store.exists(LS_STYLES_COPY_KEY)).toBe(false);
         });
 
         it('Should not copy styles for unsupported panel types', () => {
@@ -1381,13 +1526,6 @@ describe('DashboardScene', () => {
           expect(DashboardScene.hasPanelStylesToPaste('timeseries')).toBe(false);
         });
 
-        it('Should return false for hasPanelStylesToPaste when feature flag is disabled', () => {
-          store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
-          config.featureToggles.panelStyleActions = false;
-
-          expect(DashboardScene.hasPanelStylesToPaste('timeseries')).toBe(false);
-        });
-
         it('Should return true for hasPanelStylesToPaste when styles exist for matching panel type', () => {
           store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
 
@@ -1427,23 +1565,6 @@ describe('DashboardScene', () => {
           expect(mockOnFieldConfigChange).toHaveBeenCalled();
           expect(store.exists(LS_STYLES_COPY_KEY)).toBe(true);
           expect(spy).not.toHaveBeenCalled();
-        });
-
-        it('Should not paste panel styles when feature flag is disabled', () => {
-          config.featureToggles.panelStyleActions = false;
-          const timeseriesPanel = createTimeseriesPanel();
-          const mockOnFieldConfigChange = jest.fn();
-          timeseriesPanel.onFieldConfigChange = mockOnFieldConfigChange;
-
-          const styles = {
-            panelType: 'timeseries',
-            styles: { fieldConfig: { defaults: {} } },
-          };
-          store.set(LS_STYLES_COPY_KEY, JSON.stringify(styles));
-
-          scene.pastePanelStyles(timeseriesPanel);
-
-          expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
         });
 
         it('Should not paste styles when no styles are copied', () => {
@@ -1805,7 +1926,7 @@ describe('DashboardScene', () => {
 
       dashboardWatcher.editing = false;
       const dash = { uid: 'dash-1', hasUnsavedChanges: () => true };
-      jest
+      const getDashboardSrvSpy = jest
         .spyOn(require('app/features/dashboard/services/DashboardSrv'), 'getDashboardSrv')
         .mockReturnValue({ getCurrent: () => dash });
 
@@ -1822,6 +1943,7 @@ describe('DashboardScene', () => {
 
       expect(reloadSpy).toHaveBeenCalled();
       reloadSpy.mockRestore();
+      getDashboardSrvSpy.mockRestore();
     });
 
     it('should return early if API does not return a valid version number', () => {
@@ -1895,11 +2017,11 @@ describe('DashboardScene', () => {
 
   describe('When checking dashboard managed by an external system', () => {
     beforeEach(() => {
-      config.featureToggles.provisioning = true;
+      config.provisioningEnabled = true;
     });
 
     afterEach(() => {
-      config.featureToggles.provisioning = false;
+      config.provisioningEnabled = false;
     });
 
     it('should return true if the dashboard is managed', () => {
@@ -2520,6 +2642,369 @@ describe('DashboardScene', () => {
       expect(variables.length).toBe(existingVarCount + 1);
       expect(variables[0].state.name).toBe('varFromDs2');
     });
+
+    it('should preserve predefined-origin variables while replacing datasource defaults', () => {
+      const predefinedVar = new TestVariable({
+        name: 'globalVar',
+        origin: toControlSourceRef({ type: 'global' }),
+      });
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [predefinedVar] }) });
+
+      scene.setDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'varFromDs',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[]);
+
+      const names = sceneGraph
+        .getVariables(scene)
+        .state.variables.map((v) => v.state.name)
+        .filter((name) => name === 'globalVar' || name === 'varFromDs');
+      expect(names).toEqual(['varFromDs', 'globalVar']);
+
+      scene.clearDefaultControls();
+
+      const remaining = sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name);
+      expect(remaining).toContain('globalVar');
+      expect(remaining).not.toContain('varFromDs');
+    });
+
+    it('should skip default variables shadowed by an existing variable of the same name', () => {
+      const userVar = new TestVariable({ name: 'shadowed' });
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [userVar] }) });
+
+      scene.setDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'shadowed',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[]);
+
+      const shadowed = sceneGraph.getVariables(scene).state.variables.filter((v) => v.state.name === 'shadowed');
+      expect(shadowed).toHaveLength(1);
+      expect(shadowed[0].state.origin).toBeUndefined();
+    });
+  });
+
+  describe('refreshPredefinedVariables', () => {
+    beforeEach(() => {
+      setTestFlags({ 'grafana.dashboardGlobalVariables': true });
+      mockFetchPredefinedVariables.mockReset();
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('should ignore stale fetch results when a newer refresh has started', async () => {
+      const globalVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'globalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: toControlSourceRef({ type: 'global' }),
+        },
+      } as VariableKind;
+
+      let resolveFirstFetch!: (value: VariableKind[]) => void;
+      const firstFetch = new Promise<VariableKind[]>((resolve) => {
+        resolveFirstFetch = resolve;
+      });
+      mockFetchPredefinedVariables.mockReturnValueOnce(firstFetch).mockResolvedValueOnce([globalVar]);
+
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [] }),
+        meta: { folderUid: 'folder-1', k8s: { annotations: {} } },
+      });
+
+      // First refresh: inject all (no denylist). Fetch stays pending.
+      const staleRefresh = scene.refreshPredefinedVariables();
+
+      // Second refresh: deny all — applies immediately and invalidates the in-flight fetch.
+      scene.setState({
+        meta: {
+          ...scene.state.meta,
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]),
+            },
+          },
+        },
+      });
+      await scene.refreshPredefinedVariables();
+
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
+
+      // Stale fetch completes after the newer selection; must not re-inject variables.
+      resolveFirstFetch([globalVar]);
+      await staleRefresh;
+
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
+    });
+
+    it('should apply the latest denylist when overlapping fetches finish out of order', async () => {
+      const globalVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'globalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: toControlSourceRef({ type: 'global' }),
+        },
+      } as VariableKind;
+      const folderVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'folderVar',
+          current: { text: 'x', value: 'x' },
+          query: 'x,y',
+          origin: toControlSourceRef({ type: 'folder', folderUid: 'folder-1' }),
+        },
+      } as VariableKind;
+
+      let resolveFirstFetch!: (value: VariableKind[]) => void;
+      let resolveSecondFetch!: (value: VariableKind[]) => void;
+      const firstFetch = new Promise<VariableKind[]>((resolve) => {
+        resolveFirstFetch = resolve;
+      });
+      const secondFetch = new Promise<VariableKind[]>((resolve) => {
+        resolveSecondFetch = resolve;
+      });
+      mockFetchPredefinedVariables.mockReturnValueOnce(firstFetch).mockReturnValueOnce(secondFetch);
+
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [] }),
+        meta: { folderUid: 'folder-1', k8s: { annotations: {} } },
+      });
+
+      // First: All (no denylist)
+      const firstRefresh = scene.refreshPredefinedVariables();
+
+      // Second: Folder only (deny globals) — starts while first fetch is still pending.
+      scene.setState({
+        meta: {
+          ...scene.state.meta,
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_GLOBAL_PREDEFINED]),
+            },
+          },
+        },
+      });
+      const secondRefresh = scene.refreshPredefinedVariables();
+
+      // Newer fetch finishes first with the folder-only denylist applied.
+      resolveSecondFetch([globalVar, folderVar]);
+      await secondRefresh;
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toEqual(['folderVar']);
+
+      // Older fetch finishes later; must not overwrite with the stale "all" resolution.
+      resolveFirstFetch([globalVar, folderVar]);
+      await firstRefresh;
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toEqual(['folderVar']);
+    });
+
+    it('should keep existing predefined variables when the fetch fails', async () => {
+      const globalVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'globalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: toControlSourceRef({ type: 'global' }),
+        },
+      } as VariableKind;
+
+      mockFetchPredefinedVariables.mockResolvedValueOnce([globalVar]).mockResolvedValueOnce(null);
+
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [] }),
+        meta: { folderUid: 'folder-1', k8s: { annotations: {} } },
+      });
+
+      await scene.refreshPredefinedVariables();
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toContain('globalVar');
+
+      await scene.refreshPredefinedVariables();
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toContain('globalVar');
+    });
+
+    it('should ignore in-flight refresh results after discard restores the denylist', async () => {
+      const globalVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'globalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: toControlSourceRef({ type: 'global' }),
+        },
+      } as VariableKind;
+
+      let resolveFetch!: (value: VariableKind[]) => void;
+      const pendingFetch = new Promise<VariableKind[]>((resolve) => {
+        resolveFetch = resolve;
+      });
+      mockFetchPredefinedVariables.mockReturnValueOnce(pendingFetch);
+
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [] }),
+        meta: {
+          folderUid: 'folder-1',
+          // Baseline: deny all predefined variables.
+          k8s: {
+            annotations: {
+              [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]),
+            },
+          },
+        },
+      });
+      // Skip activate(): this path only needs edit/discard, and activation calls
+      // getDashboardSrv().setCurrent which earlier suite spies may leave incomplete.
+      scene.onEnterEditMode();
+
+      // User opts into All — refresh starts but stays in flight.
+      scene.setState({
+        meta: {
+          ...scene.state.meta,
+          k8s: { annotations: {} },
+        },
+      });
+      const staleRefresh = scene.refreshPredefinedVariables();
+
+      // Discard restores the deny-all baseline (and serializer annotations).
+      scene.exitEditMode({ skipConfirm: true });
+      expect(scene.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables]).toBe(
+        serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED])
+      );
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
+
+      // Stale All fetch must not re-inject after discard.
+      resolveFetch([globalVar]);
+      await staleRefresh;
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).not.toContain('globalVar');
+    });
+  });
+
+  describe('setPredefinedVariables', () => {
+    it('should replace previous predefined variables on subsequent calls', () => {
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+      const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'x', value: 'x' },
+            query: 'x,y,z',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      const variables = sceneGraph.getVariables(scene).state.variables;
+      expect(variables.length).toBe(existingVarCount + 1);
+      expect(variables[0].state.name).toBe('globalVar');
+      expect(variables[0].state).toMatchObject({ query: 'x,y,z' });
+    });
+
+    it('should preserve the current selection when refreshing a predefined variable', () => {
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      const existing = sceneGraph.getVariables(scene).state.variables.find((v) => v.state.name === 'globalVar');
+      expect(existing).toBeInstanceOf(MultiValueVariable);
+      (existing as MultiValueVariable).setState({ value: 'b', text: 'b' });
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c,d',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      const refreshed = sceneGraph.getVariables(scene).state.variables.find((v) => v.state.name === 'globalVar');
+      expect(refreshed?.state).toMatchObject({ query: 'a,b,c,d', value: 'b', text: 'b' });
+    });
+
+    it('should keep datasource defaults and local variables while replacing predefined ones', () => {
+      const localVar = new TestVariable({ name: 'localVar' });
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [localVar] }) });
+
+      scene.setDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'dsVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[]);
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'globalVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: toControlSourceRef({ type: 'global' }),
+          },
+        },
+      ] as VariableKind[]);
+
+      const names = sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name);
+      expect(names).toEqual(expect.arrayContaining(['globalVar', 'dsVar', 'localVar']));
+
+      scene.setPredefinedVariables([]);
+
+      const remaining = sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name);
+      expect(remaining).toContain('dsVar');
+      expect(remaining).toContain('localVar');
+      expect(remaining).not.toContain('globalVar');
+    });
   });
 
   describe('setDefaultLinks', () => {
@@ -2736,6 +3221,27 @@ describe('DashboardScene', () => {
 
         expect(pageNav.parentItem?.url).toBe('/subUrl/dashboard/provisioning/my-repo/preview/path/to/dash.json');
       });
+    });
+
+    it('prefixes the dashboard crumb url with the app sub url', () => {
+      const scene = buildTestScene({ meta: { slug: 'dash-1-slug' } });
+      const location = { pathname: '/d/dash-1/dash-1-slug', search: '', hash: '', state: null, key: '' };
+
+      const pageNav = scene.getPageNav(location, {} as NavIndex);
+
+      expect(pageNav.url).toBe('/subUrl/d/dash-1/dash-1-slug');
+    });
+
+    it('prefixes the dashboard parent crumb url with the app sub url when editing a panel', () => {
+      const scene = buildTestScene({ meta: { slug: 'dash-1-slug' } });
+      const panel = findVizPanelByKey(scene, 'panel-1')!;
+      scene.setState({ editPanel: buildPanelEditScene(panel) });
+      const location = { pathname: '/d/dash-1/dash-1-slug', search: '?editPanel=1', hash: '', state: null, key: '' };
+
+      const pageNav = scene.getPageNav(location, {} as NavIndex);
+
+      expect(pageNav.text).toBe('Edit panel');
+      expect(pageNav.parentItem?.url).toBe('/subUrl/d/dash-1/dash-1-slug');
     });
   });
 });

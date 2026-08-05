@@ -17,7 +17,7 @@ export interface CartoConfig {
   showLabels?: boolean;
 }
 
-export const defaultCartoConfig: CartoConfig = {
+const defaultCartoConfig: CartoConfig = {
   theme: LayerTheme.Auto,
   showLabels: true,
 };
@@ -27,6 +27,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
   name: 'CARTO basemap',
   description: 'Add layer CARTO Raster basemaps',
   isBaseMap: true,
+  requiresAttribution: true,
   defaultOptions: defaultCartoConfig,
 
   /**

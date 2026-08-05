@@ -5,12 +5,6 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { CustomVariableForm } from './CustomVariableForm';
 
-jest.mock('@grafana/runtime', () => {
-  const actual = jest.requireActual('@grafana/runtime');
-  actual.config.featureToggles = { multiPropsVariables: true };
-  return actual;
-});
-
 describe('CustomVariableForm', () => {
   const onQueryChange = jest.fn();
   const onMultiChange = jest.fn();

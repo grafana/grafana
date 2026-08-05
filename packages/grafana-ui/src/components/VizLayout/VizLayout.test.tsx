@@ -120,6 +120,16 @@ describe('VizLayout', () => {
       expect(screen.getByTestId(selectors.components.VizLayout.legend)).toHaveStyle({ maxHeight: '20%' });
     });
 
+    it('does not force full height on the scroll container', () => {
+      render(
+        <VizLayout width={800} height={600} legend={legend}>
+          {() => null}
+        </VizLayout>
+      );
+      const scrollBox = screen.getByTestId(selectors.components.VizLayout.legend).firstElementChild;
+      expect(scrollBox).not.toHaveStyle({ height: '100%' });
+    });
+
     it('does not call children before the legend height is measured', () => {
       const children = jest.fn().mockReturnValue(null);
       render(
@@ -224,6 +234,27 @@ describe('VizLayout', () => {
       expect(children).toHaveBeenCalledWith(600, 600);
     });
 
+    it('prefers the measured legend width over the width prop once measured', () => {
+      // maxWidth can clamp the legend below the requested width. Sizing the chart from the
+      // raw prop would then leave a dead gap between the chart and the legend.
+      mockUseMeasure.mockReturnValue([jest.fn(), { ...noMeasure, width: 480 }]);
+      const children = jest.fn().mockReturnValue(null);
+      render(
+        <VizLayout
+          width={800}
+          height={600}
+          legend={
+            <VizLayout.Legend placement="right" width={600} maxWidth="60%">
+              <div />
+            </VizLayout.Legend>
+          }
+        >
+          {children}
+        </VizLayout>
+      );
+      expect(children).toHaveBeenCalledWith(320, 600);
+    });
+
     it('sets the legend width style when an explicit width prop is provided', () => {
       render(
         <VizLayout
@@ -241,6 +272,16 @@ describe('VizLayout', () => {
       expect(screen.getByTestId(selectors.components.VizLayout.legend)).toHaveStyle({ width: '200px' });
     });
 
+    it('gives the scroll container full height so legend content can use percentage heights', () => {
+      render(
+        <VizLayout width={800} height={600} legend={legend}>
+          {() => null}
+        </VizLayout>
+      );
+      const scrollBox = screen.getByTestId(selectors.components.VizLayout.legend).firstElementChild;
+      expect(scrollBox).toHaveStyle({ height: '100%' });
+    });
+
     it('preserves full width when legend width equals container width', () => {
       mockUseMeasure.mockReturnValue([jest.fn(), { ...noMeasure, width: 800 }]);
       const children = jest.fn().mockReturnValue(null);
@@ -250,6 +291,81 @@ describe('VizLayout', () => {
         </VizLayout>
       );
       expect(children).toHaveBeenCalledWith(800, 600);
+    });
+
+    describe('with a string (css) legend width', () => {
+      it('applies the string width as-is to the legend element', () => {
+        render(
+          <VizLayout
+            width={800}
+            height={600}
+            legend={
+              <VizLayout.Legend placement="right" width="35%">
+                <div />
+              </VizLayout.Legend>
+            }
+          >
+            {() => null}
+          </VizLayout>
+        );
+        expect(screen.getByTestId(selectors.components.VizLayout.legend)).toHaveStyle({ width: '35%' });
+      });
+
+      it('does not apply maxWidth when a string width is set', () => {
+        render(
+          <VizLayout
+            width={800}
+            height={600}
+            legend={
+              <VizLayout.Legend placement="right" width="35%" maxWidth="50%">
+                <div />
+              </VizLayout.Legend>
+            }
+          >
+            {() => null}
+          </VizLayout>
+        );
+        expect(screen.getByTestId(selectors.components.VizLayout.legend)).not.toHaveStyle({ maxWidth: '50%' });
+      });
+
+      it('does not subtract a fixed pixel amount from the chart width for a string width', () => {
+        // With a css width the legend size is not known up-front, so the chart
+        // width comes solely from the measured legend, not from the width prop.
+        mockUseMeasure.mockReturnValue([jest.fn(), { ...noMeasure, width: 150 }]);
+        const children = jest.fn().mockReturnValue(null);
+        render(
+          <VizLayout
+            width={800}
+            height={600}
+            legend={
+              <VizLayout.Legend placement="right" width="35%">
+                <div />
+              </VizLayout.Legend>
+            }
+          >
+            {children}
+          </VizLayout>
+        );
+        expect(children).toHaveBeenCalledWith(650, 600);
+      });
+
+      it('still applies maxWidth when width is a number', () => {
+        render(
+          <VizLayout
+            width={800}
+            height={600}
+            legend={
+              <VizLayout.Legend placement="right" width={200} maxWidth="50%">
+                <div />
+              </VizLayout.Legend>
+            }
+          >
+            {() => null}
+          </VizLayout>
+        );
+        const el = screen.getByTestId(selectors.components.VizLayout.legend);
+        expect(el).toHaveStyle({ width: '200px', maxWidth: '50%' });
+      });
     });
   });
 

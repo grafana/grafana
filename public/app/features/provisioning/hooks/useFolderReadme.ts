@@ -1,8 +1,13 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
+import { useEffect, useRef } from 'react';
 
 import { isFetchError } from '@grafana/runtime';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
-import { type RepositoryView, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type RepositoryView,
+  useGetRepositoryFilesWithPathQuery,
+  useListRepositoryQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
 import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
@@ -15,6 +20,8 @@ export interface UseFolderReadmeResult {
   /** Path of the README relative to the repository's configured root. */
   readmePath: string;
   status: FolderReadmeStatus;
+  /** True while fetching, unlike `status === 'loading'` which a non-provisioned folder reports forever. */
+  isLoading: boolean;
   /** Markdown body of the README, or undefined when not loaded successfully. */
   markdownContent: string | undefined;
   refetch: () => void;
@@ -52,8 +59,38 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
       : skipToken
   );
 
+  const isLoading = isRepoLoading || isFileLoading;
+
+  // Watch repo sync, not the Job: the Job is deleted on completion so its
+  // terminal state is never observed (#1223).
+  const { data: repoData } = useListRepositoryQuery(
+    repository?.name ? { fieldSelector: `metadata.name=${repository.name}`, watch: true } : skipToken
+  );
+  const repo = repoData?.items?.[0];
+  const sync = repo?.status?.sync;
+  const syncFinished = sync?.finished;
+
+  // `finished` advances once per completed sync; dedupes repeat watch events and
+  // seeds a baseline so mount-loaded content isn't refetched.
+  const lastFinishedRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (!repo) {
+      return;
+    }
+    const finished = syncFinished ?? 0;
+    if (lastFinishedRef.current === undefined) {
+      lastFinishedRef.current = finished;
+      return;
+    }
+    // sync only advances on pull, so push/pr/move/delete never reach here.
+    if (finished > lastFinishedRef.current && (sync?.state === 'success' || sync?.state === 'warning')) {
+      lastFinishedRef.current = finished;
+      refetch();
+    }
+  }, [repo, sync, syncFinished, refetch]);
+
   let status: FolderReadmeStatus;
-  if (isRepoLoading || isFileLoading) {
+  if (isLoading) {
     status = 'loading';
   } else if (error && isFetchError(error) && error.status === 404) {
     status = 'missing';
@@ -85,6 +122,7 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
     folder,
     readmePath,
     status,
+    isLoading,
     markdownContent,
     refetch,
   };

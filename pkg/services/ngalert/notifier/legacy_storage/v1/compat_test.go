@@ -2,28 +2,56 @@ package v1
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/alerting/definition"
+	"github.com/grafana/alerting/definition/compat"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
 	emailV0 "github.com/grafana/alerting/receivers/email/v0mimir1"
+	"github.com/grafana/alerting/receivers/schema"
+	"github.com/grafana/alerting/receivers/teams"
 	webhookV0 "github.com/grafana/alerting/receivers/webhook/v0mimir1"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestRoundTripConversion(t *testing.T) {
-	configJSON := `{
-		"template_files": {
-			"template1.tmpl": "{{ define \"test\" }}Hello {{ .CommonLabels.alertname }}{{ end }}",
-			"template2.tmpl": "{{ define \"test2\" }}Alert: {{ .Status }}{{ end }}"
+	extraConfig := `
+route:
+  receiver: imported-receiver-1
+receivers:
+  - name: imported-receiver-1
+    webhook_configs:
+      - url: "http://localhost/"
+  - name: imported-receiver-2
+    webhook_configs:
+      - url: "http://localhost/"
+inhibit_rules:
+  - source_matchers:
+      - alertname = SourceAlert
+    target_matchers:
+      - alertname = TargetAlert
+    equal:
+      - cluster
+  - source_matchers:
+      - severity = critical
+    target_matchers:
+      - severity = warning
+    equal:
+      - instance
+`
+	configJSON := fmt.Sprintf(`{
+		"managed_templates": {
+			"template1.tmpl": {"name":"template1.tmpl","content":"{{ define \"test\" }}Hello {{ .CommonLabels.alertname }}{{ end }}","kind":"grafana"},
+			"template2.tmpl": {"name":"template2.tmpl","content":"{{ define \"test2\" }}Alert: {{ .Status }}{{ end }}","kind":"grafana"}
 		},
 		"alertmanager_config": {
 			"route": {
@@ -106,8 +134,13 @@ func TestRoundTripConversion(t *testing.T) {
 			],
 			"inhibit_rules": [
 				{
-					"source_matchers": ["severity=\"critical\""],
+					"source_matchers": ["severity=\"warning\""],
 					"target_matchers": ["alertname=~\".*\"", "severity=\"warning\""],
+					"equal": ["namespace", "alertname"]
+				},
+				{
+					"source_matchers": ["severity=\"critical\""],
+					"target_matchers": ["alertname=~\".*\"", "severity=\"critical\""],
 					"equal": ["namespace", "alertname"]
 				}
 			],
@@ -143,18 +176,28 @@ func TestRoundTripConversion(t *testing.T) {
 			"managed-route-1": {
 				"receiver": "critical-receiver",
 				"group_by": ["alertname"],
-				"matchers": ["team=\"platform\""],
 				"group_wait": "15s",
 				"repeat_interval": "2h",
-				"provenance": "file"
+				"provenance": "file",
+				"routes": [
+					{
+						"receiver": "warning-receiver",
+						"matchers": ["team=\"platform\""]
+					}
+				]
 			},
 			"managed-route-2": {
 				"receiver": "warning-receiver",
 				"group_by": ["namespace"],
-				"matchers": ["environment=~\"prod|staging\""],
 				"continue": true,
-				"active_time_intervals": ["business-hours"],
-				"provenance": "api"
+				"provenance": "api",
+				"routes": [
+					{
+						"receiver": "critical-receiver",
+						"matchers": ["environment=~\"prod|staging\""],
+						"active_time_intervals": ["business-hours"]
+					}
+				]
 			}
 		},
 		"managed_inhibition_rules": {
@@ -179,10 +222,10 @@ func TestRoundTripConversion(t *testing.T) {
 				"template_files": {
 					"remote-template.tmpl": "{{ define \"remote\" }}Remote alert{{ end }}"
 				},
-				"alertmanager_config": "route:\n  receiver: remote-default\nreceivers:\n  - name: remote-default\n"
+				"alertmanager_config": %q
 			}
 		]
-	}`
+	}`, extraConfig)
 
 	originalDB := &AMConfigDB{}
 	err := json.Unmarshal([]byte(configJSON), originalDB)
@@ -192,137 +235,119 @@ func TestRoundTripConversion(t *testing.T) {
 	model := ToModel(originalDB)
 	require.NotNil(t, model)
 
+	// Ensure passes validation.
+	require.NoError(t, model.Validate())
+
 	// Convert Model -> DB
-	convertedDB := ToDBModel(model)
+	convertedDB, err := ToDBModel(model)
+	require.NoError(t, err)
 	require.NotNil(t, convertedDB)
+
+	// The round-trip is lossless except that deprecated mute_time_intervals are folded into
+	// time_intervals (mute first) by design, so build the expectation from the same fold.
+	folderIntervals := make([]config.TimeInterval, 0, len(originalDB.AlertmanagerConfig.MuteTimeIntervals)+len(originalDB.AlertmanagerConfig.TimeIntervals))
+	for _, mt := range originalDB.AlertmanagerConfig.MuteTimeIntervals {
+		folderIntervals = append(folderIntervals, config.TimeInterval(mt))
+	}
+	originalDB.AlertmanagerConfig.TimeIntervals = append(folderIntervals, originalDB.AlertmanagerConfig.TimeIntervals...)
+	originalDB.AlertmanagerConfig.MuteTimeIntervals = nil
 
 	diff := cmp.Diff(originalDB, convertedDB, cmpopts.IgnoreUnexported(AMConfigDB{}, definition.Route{}, labels.Matcher{}))
 	if diff != "" {
 		t.Errorf("Unexpected change in converted DB: %v", diff)
 	}
 
+	expectedJSON, err := json.Marshal(originalDB)
+	require.NoError(t, err)
 	convertedJSON, err := json.Marshal(convertedDB)
 	require.NoError(t, err)
 
-	require.JSONEq(t, configJSON, string(convertedJSON),
+	require.JSONEq(t, string(expectedJSON), string(convertedJSON),
 		"Round-trip conversion should be lossless")
 }
 
-func Test_InhibitRuleToInhibitionRule(t *testing.T) {
-	testRule := config.InhibitRule{
-		SourceMatchers: config.Matchers{
-			{
-				Type:  labels.MatchEqual,
-				Name:  "instance",
-				Value: "alertmanager-1",
-			},
+func TestMigrationFromTemplateFiles(t *testing.T) {
+	// Old configs stored templates in template_files. Verify they load correctly
+	// and are converted to managed_templates on save.
+	input := &AMConfigDB{}
+	require.NoError(t, json.Unmarshal([]byte(`{
+		"template_files": {
+			"tmpl.tmpl": "{{ define \"alert\" }}hello{{ end }}"
 		},
-		TargetMatchers: config.Matchers{
-			{
-				Type:  labels.MatchEqual,
-				Name:  "instance",
-				Value: "alertmanager-2",
-			},
-		},
-		Equal: []string{
-			"service",
-		},
-	}
+		"alertmanager_config": {
+			"route": {"receiver": "recv"},
+			"receivers": [{"name": "recv"}]
+		}
+	}`), input))
 
-	tt := []struct {
-		name        string
-		ruleName    string
-		provenance  Provenance
-		inhibitRule config.InhibitRule
-		origin      models.ResourceOrigin
-		exp         *InhibitionRule
-		expErr      error
-	}{
-		{
-			name:     "fails when name is empty",
-			ruleName: "  ",
-			expErr:   errors.New("inhibition rule name must not be empty"),
-		},
-		{
-			name:     "fails when name contains ':'",
-			ruleName: "a:b",
-			expErr:   errors.New("inhibition rule name cannot contain invalid character ':'"),
-		},
-		{
-			name:     "fails when name is not a valid dns 1123 subdomain",
-			ruleName: "_some_name",
-			expErr:   errors.New("inhibition rule name must be a valid DNS subdomain: a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')"),
-		},
-		{
-			name:     "fails when length of non-imported rule name is over UIDMaxLength limit",
-			ruleName: "some-really-long-inhibition-rule-name-001",
-			origin:   models.ResourceOriginGrafana,
-			expErr:   errors.New("inhibition rule name is too long (exceeds 40 characters)"),
-		},
-		{
-			name:        "allows length of imported rule name to be over UIDMaxLength limit",
-			ruleName:    "some-really-long-inhibition-rule-name-001",
-			provenance:  Provenance(models.ProvenanceConvertedPrometheus),
-			origin:      models.ResourceOriginImported,
-			inhibitRule: testRule,
-			exp: &InhibitionRule{
-				Name:        "some-really-long-inhibition-rule-name-001",
-				InhibitRule: testRule,
-				Provenance:  Provenance(models.ProvenanceConvertedPrometheus),
-			},
-		},
-		{
-			name:        "converts model correctly when all validations passes",
-			ruleName:    "inhibition-rule-1",
-			origin:      models.ResourceOriginGrafana,
-			provenance:  Provenance(models.ProvenanceNone),
-			inhibitRule: testRule,
-			exp: &InhibitionRule{
-				Name:        "inhibition-rule-1",
-				InhibitRule: testRule,
-				Provenance:  Provenance(models.ProvenanceNone),
-			},
-		},
-	}
+	model := ToModel(input)
+	require.NotNil(t, model)
+	require.Len(t, model.Templates, 1)
 
-	for _, tc := range tt {
-		t.Run(tc.name, func(t *testing.T) {
-			got, gotErr := InhibitRuleToInhibitionRule(tc.ruleName, tc.inhibitRule, tc.provenance)
-			if tc.expErr != nil {
-				require.EqualError(t, gotErr, tc.expErr.Error())
-			} else {
-				require.Nil(t, gotErr)
-			}
-			require.Equal(t, tc.exp, got)
-		})
-	}
+	output, err := ToDBModel(model)
+	require.NoError(t, err)
+	require.Nil(t, output.TemplateFiles, "TemplateFiles must be wiped on write")
+	require.Len(t, output.ManagedTemplates, 1)
+
+	expectedUID := string(TemplateUID(TemplateKindGrafana, "tmpl.tmpl"))
+	mt, ok := output.ManagedTemplates[expectedUID]
+	require.True(t, ok)
+	assert.Equal(t, "tmpl.tmpl", mt.Name)
+	assert.Equal(t, definition.GrafanaTemplateKind, mt.Kind)
+}
+
+func TestToModel_TemplateConflicts(t *testing.T) {
+	minimalAMConfig := `{"route":{"receiver":"recv"},"receivers":[{"name":"recv"}]}`
+
+	t.Run("managed_templates_wins_on_uid_conflict", func(t *testing.T) {
+		// A template present in both fields with the same UID: ManagedTemplates must win.
+		conflictUID := string(TemplateUID(TemplateKindGrafana, "tmpl.tmpl"))
+		input := &AMConfigDB{}
+		require.NoError(t, json.Unmarshal([]byte(`{
+			"template_files": {"tmpl.tmpl": "{{ define \"alert\" }}old{{ end }}"},
+			"managed_templates": {"`+conflictUID+`": {"name":"tmpl.tmpl","content":"{{ define \"alert\" }}new{{ end }}","kind":"grafana"}},
+			"alertmanager_config": `+minimalAMConfig+`
+		}`), input))
+
+		model := ToModel(input)
+		require.Len(t, model.Templates, 1)
+		assert.Equal(t, `{{ define "alert" }}new{{ end }}`, model.Templates[ResourceUID(conflictUID)].Content)
+	})
+
+	t.Run("no_conflict_both_templates_present", func(t *testing.T) {
+		// Different UIDs: both templates should be in the merged result.
+		input := &AMConfigDB{}
+		require.NoError(t, json.Unmarshal([]byte(`{
+			"template_files": {"a.tmpl": "{{ define \"a\" }}A{{ end }}"},
+			"managed_templates": {"`+string(TemplateUID(TemplateKindGrafana, "b.tmpl"))+`": {"name":"b.tmpl","content":"{{ define \"b\" }}B{{ end }}","kind":"grafana"}},
+			"alertmanager_config": `+minimalAMConfig+`
+		}`), input))
+
+		model := ToModel(input)
+		require.Len(t, model.Templates, 2)
+		assert.Contains(t, model.Templates, TemplateUID(TemplateKindGrafana, "a.tmpl"))
+		assert.Contains(t, model.Templates, TemplateUID(TemplateKindGrafana, "b.tmpl"))
+	})
 }
 
 func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
-	t.Run("returns original pointer when receiver has only Grafana integrations", func(t *testing.T) {
-		receiver := &PostableApiReceiver{
-			Receiver: definition.Receiver{Name: "test"},
-			PostableGrafanaReceivers: PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*PostableGrafanaReceiver{
-					{UID: "grafana-uid", Name: "test", Type: "email"},
-				},
-			},
-		}
+	t.Run("returns receiver with no integrations when legacy receiver has none", func(t *testing.T) {
+		receiver := compat.Receiver{Name: "test"}
 		result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
 		require.NoError(t, err)
-		assert.Same(t, receiver, result)
+		require.NotNil(t, result)
+		assert.Equal(t, "test", result.Name)
+		assert.Empty(t, result.GrafanaManagedReceivers)
 	})
 
 	t.Run("converts Mimir integrations to Grafana integrations", func(t *testing.T) {
 		wh := webhookV0.GetFullValidConfig()
-		receiver := &PostableApiReceiver{
-			Receiver: definition.Receiver{
-				Name:           "test-receiver",
-				WebhookConfigs: []*webhookV0.Config{&wh},
-			},
+		receiver := compat.Receiver{
+			Name:           "test-receiver",
+			WebhookConfigs: []*webhookV0.Config{&wh},
 		}
 
-		mimirConfigs, err := alertingNotify.ConfigReceiverToMimirIntegrations(receiver.Receiver)
+		mimirConfigs, err := alertingNotify.ConfigReceiverToMimirIntegrations(receiver)
 		require.NoError(t, err)
 		require.Len(t, mimirConfigs, 1)
 		expectedJSON, err := mimirConfigs[0].ConfigJSON()
@@ -331,7 +356,6 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.NotSame(t, receiver, result)
 		require.Len(t, result.GrafanaManagedReceivers, 1)
 
 		converted := result.GrafanaManagedReceivers[0]
@@ -341,43 +365,16 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		assert.JSONEq(t, string(expectedJSON), string(converted.Settings))
 		assert.False(t, converted.DisableResolveMessage)
 		assert.Nil(t, converted.SecureSettings)
-		assert.False(t, result.HasMimirIntegrations())
-	})
-
-	t.Run("existing Grafana integrations appear before converted Mimir ones", func(t *testing.T) {
-		wh := webhookV0.GetFullValidConfig()
-		grafanaRecv := &PostableGrafanaReceiver{
-			UID:  "existing-uid",
-			Name: "existing",
-			Type: "email",
-		}
-		receiver := &PostableApiReceiver{
-			Receiver: definition.Receiver{
-				Name:           "mixed-receiver",
-				WebhookConfigs: []*webhookV0.Config{&wh},
-			},
-			PostableGrafanaReceivers: PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*PostableGrafanaReceiver{grafanaRecv},
-			},
-		}
-
-		result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
-		require.NoError(t, err)
-		require.Len(t, result.GrafanaManagedReceivers, 2)
-		assert.Same(t, grafanaRecv, result.GrafanaManagedReceivers[0])
-		assert.Equal(t, "webhook", result.GrafanaManagedReceivers[1].Type)
 	})
 
 	t.Run("assigns per-type UIDs to converted Mimir integrations", func(t *testing.T) {
 		// UIDs are indexed per integration type, so each type starts at 0.
 		em := emailV0.GetFullValidConfig()
 		wh := webhookV0.GetFullValidConfig()
-		receiver := &PostableApiReceiver{
-			Receiver: definition.Receiver{
-				Name:           "multi-receiver",
-				EmailConfigs:   []*emailV0.Config{&em},
-				WebhookConfigs: []*webhookV0.Config{&wh},
-			},
+		receiver := compat.Receiver{
+			Name:           "multi-receiver",
+			EmailConfigs:   []*emailV0.Config{&em},
+			WebhookConfigs: []*webhookV0.Config{&wh},
 		}
 
 		result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
@@ -386,5 +383,39 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 
 		assert.Equal(t, mimirIntegrationUID("multi-receiver", "email", 0), result.GrafanaManagedReceivers[0].UID)
 		assert.Equal(t, mimirIntegrationUID("multi-receiver", "webhook", 0), result.GrafanaManagedReceivers[1].UID)
+	})
+
+	t.Run("can convert all known types", func(t *testing.T) {
+		notifytest.ForEachIntegrationTypeReceiver(t, func(configType reflect.Type, receiver compat.Receiver, rawConfig string) {
+			expectedType, err := alertingNotify.IntegrationTypeFromMimirTypeReflect(configType)
+			assert.NoError(t, err)
+			expectedVersion := schema.V0mimir1
+			if strings.Contains(configType.PkgPath(), "/teams/v0mimir1") {
+				expectedType = teams.Type
+			}
+			if strings.Contains(configType.PkgPath(), "/teams/v0mimir2") {
+				expectedType = teams.Type
+				expectedVersion = schema.V0mimir2
+			}
+			t.Run(fmt.Sprintf("%s as %s %s", configType.PkgPath(), expectedType, expectedVersion), func(t *testing.T) {
+				result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
+				require.NoError(t, err)
+				require.Len(t, result.GrafanaManagedReceivers, 1)
+				converted := result.GrafanaManagedReceivers[0]
+
+				assert.EqualValues(t, expectedVersion, converted.Version)
+				assert.EqualValues(t, expectedType, converted.Type)
+				assert.JSONEq(t, rawConfig, string(converted.Settings))
+				assert.Empty(t, converted.SecureSettings)
+			})
+		})
+	})
+
+	t.Run("can convert receiver with all integrations", func(t *testing.T) {
+		recv, err := notifytest.GetMimirReceiverWithAllIntegrations()
+		require.NoError(t, err)
+		result, err := PostableMimirReceiverToPostableGrafanaReceiver(recv)
+		require.NoError(t, err)
+		require.Len(t, result.GrafanaManagedReceivers, len(notifytest.AllValidMimirConfigs))
 	})
 }

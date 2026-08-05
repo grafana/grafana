@@ -180,12 +180,6 @@ test.describe('Panels test: Heatmap', { tag: ['@panels', '@heatmap'] }, () => {
   });
 });
 
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: false,
-  },
-});
-
 test.describe('Panels test: Heatmap X-axis panning', { tag: ['@panels', '@heatmap'] }, () => {
   test('x-axis panning functionality', async ({ gotoDashboardPage, page, selectors }) => {
     let centerX: number;

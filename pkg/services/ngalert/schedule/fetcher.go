@@ -18,11 +18,11 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) (diff, err
 			time.Since(start).Seconds())
 	}()
 
-	ruleChains, err := sch.ruleChainStore.GetRuleChainForScheduling(ctx)
+	ruleSequences, err := sch.ruleSequenceStore.GetRuleSequencesForScheduling(ctx)
 	if err != nil {
-		return diff{}, fmt.Errorf("failed to get rule chains: %w", err)
+		return diff{}, fmt.Errorf("failed to get rule sequences: %w", err)
 	}
-	chainsUpdated := sch.schedulableAlertRules.ruleChainsNeedUpdate(ruleChains)
+	sequencesUpdated := sch.schedulableAlertRules.ruleSequencesNeedUpdate(ruleSequences)
 
 	if !sch.schedulableAlertRules.isEmpty() {
 		keys, err := sch.ruleStore.GetAlertRulesKeysForScheduling(ctx)
@@ -31,7 +31,7 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) (diff, err
 		}
 		rulesUpdated := sch.schedulableAlertRules.rulesNeedUpdate(keys)
 
-		if !chainsUpdated && !rulesUpdated {
+		if !sequencesUpdated && !rulesUpdated {
 			sch.log.Debug("No changes detected. Skip updating")
 			return diff{}, nil
 		}
@@ -44,7 +44,7 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) (diff, err
 		return diff{}, fmt.Errorf("failed to get alert rules: %w", err)
 	}
 
-	d := sch.schedulableAlertRules.set(q.ResultRules, q.ResultFoldersTitles, ruleChains)
+	d := sch.schedulableAlertRules.set(q.ResultRules, q.ResultFoldersTitles, ruleSequences)
 	sch.log.Debug("Alert rules fetched", "rulesCount", len(q.ResultRules), "foldersCount", len(q.ResultFoldersTitles), "updatedRules", len(d.updated))
 	return d, nil
 }

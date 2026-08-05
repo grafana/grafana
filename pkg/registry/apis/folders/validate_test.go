@@ -3,8 +3,10 @@ package folders
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -15,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -24,11 +27,12 @@ import (
 
 func TestValidateCreate(t *testing.T) {
 	tests := []struct {
-		name        string
-		folder      *folders.Folder
-		mockFolders map[string]*folders.Folder
-		expectedErr error
-		maxDepth    int // defaults to 5 unless set
+		name           string
+		folder         *folders.Folder
+		mockFolders    map[string]*folders.Folder
+		expectedErr    error
+		maxDepth       int  // defaults to 5 unless set
+		serviceAccount bool // the requester is a service account
 	}{
 		{
 			name: "ok",
@@ -145,6 +149,127 @@ func TestValidateCreate(t *testing.T) {
 				},
 			},
 			expectedErr: folder.ErrFolderCannotBeParentOfItself,
+		},
+		{
+			name: "error to create a folder inside the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			expectedErr: folder.ErrFolderCannotBeCreatedInK6,
+		},
+		{
+			name: "error to create a folder under an existing descendant of the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: "legacy-k6-child"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				"legacy-k6-child": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "legacy-k6-child",
+						Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "created before k6 was restricted",
+					},
+				},
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			expectedErr: folder.ErrFolderCannotBeCreatedInK6,
+		},
+		{
+			name: "service account can create a folder inside the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			serviceAccount: true,
+		},
+		{
+			name: "service account can create a folder deeper in the k6 tree",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: "k6-child"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				"k6-child": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "k6-child",
+						Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6 child",
+					},
+				},
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			serviceAccount: true,
+		},
+		{
+			name: "the k6 folder itself can be created at root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: accesscontrol.K6FolderUID,
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
 		},
 		{
 			name: "can not create a tree that is too deep",
@@ -342,15 +467,20 @@ func TestValidateCreate(t *testing.T) {
 				maxDepth = 5
 			}
 
+			ctx := context.Background()
+			if tt.serviceAccount {
+				ctx = identity.WithRequester(ctx, &user.SignedInUser{UserID: 1, OrgID: 1, IsServiceAccount: true})
+			}
+
 			mockStorage := grafanarest.NewMockStorage(t)
 			for name, f := range tt.mockFolders {
 				f.Name = name
-				mockStorage.On("Get", context.Background(), name, &metav1.GetOptions{}).Return(f, nil).Maybe()
+				mockStorage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(f, nil).Maybe()
 			}
 
 			getter := newParentsGetter(mockStorage, maxDepth)
 
-			err := validateOnCreate(context.Background(), tt.folder, getter, maxDepth)
+			err := validateOnCreate(ctx, tt.folder, getter, maxDepth)
 
 			if tt.expectedErr == nil {
 				require.NoError(t, err)
@@ -554,6 +684,68 @@ func TestValidateUpdate(t *testing.T) {
 				},
 			},
 			expectedErr: "k6 project may not be moved",
+		},
+		{
+			name: "error to move into an existing descendant of the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "legacy-k6-child",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: accesscontrol.K6FolderUID, Title: "k6"},
+					{Name: "legacy-k6-child", Title: "created before k6 was restricted", Parent: accesscontrol.K6FolderUID},
+				},
+			},
+			expectedErr: "[folder.cannot-be-moved-to-k6] k6 project may not be moved",
+		},
+		{
+			name: "error to move a folder out of the k6 tree",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: folder.GeneralFolderUID,
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "legacy-k6-child",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			// resolved for the source chain, which still runs through k6
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: accesscontrol.K6FolderUID, Title: "k6"},
+					{Name: "legacy-k6-child", Title: "created before k6 was restricted", Parent: accesscontrol.K6FolderUID},
+				},
+			},
+			expectedErr: "[folder.bad-request] k6 project may not be moved",
 		},
 		{
 			name: "error to move the k6 folder itself",
@@ -932,7 +1124,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2,
 					},
@@ -952,7 +1144,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2,
 					},
@@ -1030,7 +1222,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2, // not empty
 					},
@@ -1072,7 +1264,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    10, // now validated
 					},
@@ -1546,6 +1738,7 @@ func TestCheckMoveAccess(t *testing.T) {
 			// All access checks must be batched into one BatchCheck round-trip.
 			if mock != nil {
 				require.Equal(t, 1, mock.batchCheckCall, "expected exactly one BatchCheck call")
+				require.Empty(t, mock.badCorrelationID, "correlation IDs must satisfy OpenFGA's regex")
 			}
 		})
 	}
@@ -1570,17 +1763,21 @@ func TestCheckMoveAccess(t *testing.T) {
 	t.Run("fails closed when BatchCheck omits an escalation verb result", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
 		mock := newMockAccessClient([]allow{canCreateFolderInNew})
-		mock.dropResultFor = "newFolder|" + utils.VerbGet
+		mock.dropResultFor = "newFolder-" + utils.VerbGet
 		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
 		require.ErrorContains(t, err, "no result for verb")
 	})
 }
 
+// correlationIDPattern is the CorrelationId regex enforced by OpenFGA
+var correlationIDPattern = regexp.MustCompile(`^[\w\d-]{1,36}$`)
+
 type mockAccessClient struct {
-	allowed        map[allow]struct{}
-	batchCheckCall int
-	batchCheckErr  error
-	dropResultFor  string // CorrelationID to omit from BatchCheckResponse, simulating a bad server
+	allowed          map[allow]struct{}
+	batchCheckCall   int
+	batchCheckErr    error
+	dropResultFor    string // CorrelationID to omit from BatchCheckResponse, simulating a bad server
+	badCorrelationID string // first CorrelationID seen that OpenFGA would reject
 }
 
 func newMockAccessClient(allows []allow) *mockAccessClient {
@@ -1603,6 +1800,9 @@ func (m *mockAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req
 	}
 	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 	for _, c := range req.Checks {
+		if m.badCorrelationID == "" && !correlationIDPattern.MatchString(c.CorrelationID) {
+			m.badCorrelationID = c.CorrelationID
+		}
 		if c.CorrelationID == m.dropResultFor {
 			continue
 		}
@@ -1623,5 +1823,10 @@ func (m *mockSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.Re
 
 // VectorSearch implements resourcepb.ResourceIndexClient.
 func (m *mockSearchClient) VectorSearch(ctx context.Context, in *resourcepb.VectorSearchRequest, opts ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+// HybridSearch implements resourcepb.ResourceIndexClient.
+func (m *mockSearchClient) HybridSearch(ctx context.Context, in *resourcepb.HybridSearchRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }

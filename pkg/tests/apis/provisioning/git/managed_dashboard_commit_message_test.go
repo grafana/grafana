@@ -1,14 +1,11 @@
 package git
 
 import (
-	"context"
-	"strings"
 	"testing"
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/nanogit/gittest"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -31,7 +28,6 @@ import (
 
 func TestIntegrationGit_ManagedDashboardUpdate_CommitMessage(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const (
 		repoName     = "managed-msg-update"
@@ -43,10 +39,10 @@ func TestIntegrationGit_ManagedDashboardUpdate_CommitMessage(t *testing.T) {
 		dashboardFn: common.DashboardJSON(dashboardUID, "Managed Dashboard", 1),
 	})
 	helper.SyncAndWait(t, repoName)
-	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, ctx, dashboardUID, repoName, dashboardFn)
+	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, dashboardUID, repoName, dashboardFn)
 
 	t.Run("fallback message", func(t *testing.T) {
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
@@ -54,15 +50,15 @@ func TestIntegrationGit_ManagedDashboardUpdate_CommitMessage(t *testing.T) {
 		fresh.SetAnnotations(annotations)
 		require.NoError(t, unstructured.SetNestedField(fresh.Object, "Updated (fallback)", "spec", "title"))
 
-		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		_, err = helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.NoError(t, err, "PUT must not fail with empty commit message")
 
-		require.Equal(t, "Update "+dashboardUID, latestCommitSubject(t, local))
+		require.Equal(t, "Update "+dashboardUID, common.LatestCommitSubject(t, local, "main"))
 	})
 
 	t.Run("annotation message", func(t *testing.T) {
 		const msg = "Updated dashboard from integration test"
-		fresh, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		fresh, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
 		require.NoError(t, err)
 
 		annotations := fresh.GetAnnotations()
@@ -73,16 +69,16 @@ func TestIntegrationGit_ManagedDashboardUpdate_CommitMessage(t *testing.T) {
 		fresh.SetAnnotations(annotations)
 		require.NoError(t, unstructured.SetNestedField(fresh.Object, "Updated (annotated)", "spec", "title"))
 
-		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		_, err = helper.DashboardsV1.Resource.Update(t.Context(), fresh, metav1.UpdateOptions{})
 		require.NoError(t, err)
 
-		require.Equal(t, msg, latestCommitSubject(t, local))
+		require.Equal(t, msg, common.LatestCommitSubject(t, local, "main"))
 	})
 }
 
 func TestIntegrationGit_ManagedDashboardCreate_CommitMessage(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
+
 	dashboardAPIVersion := dashboardV1.DashboardResourceInfo.GroupVersion().String()
 
 	const repoName = "managed-msg-create"
@@ -98,10 +94,10 @@ func TestIntegrationGit_ManagedDashboardCreate_CommitMessage(t *testing.T) {
 		)
 		dash := common.NewManagedDashboard(dashboardAPIVersion, newUID, repoName, newFn, msg)
 
-		_, err := helper.DashboardsV1.Resource.Create(ctx, dash, metav1.CreateOptions{})
+		_, err := helper.DashboardsV1.Resource.Create(t.Context(), dash, metav1.CreateOptions{})
 		require.NoError(t, err, "POST must not fail with empty commit message")
 
-		require.Equal(t, msg, latestCommitSubject(t, local))
+		require.Equal(t, msg, common.LatestCommitSubject(t, local, "main"))
 	})
 
 	t.Run("fallback message", func(t *testing.T) {
@@ -111,16 +107,15 @@ func TestIntegrationGit_ManagedDashboardCreate_CommitMessage(t *testing.T) {
 		)
 		dash := common.NewManagedDashboard(dashboardAPIVersion, newUID, repoName, newFn, "")
 
-		_, err := helper.DashboardsV1.Resource.Create(ctx, dash, metav1.CreateOptions{})
+		_, err := helper.DashboardsV1.Resource.Create(t.Context(), dash, metav1.CreateOptions{})
 		require.NoError(t, err, "POST must not fail with empty commit message")
 
-		require.Equal(t, "Create "+newUID, latestCommitSubject(t, local))
+		require.Equal(t, "Create "+newUID, common.LatestCommitSubject(t, local, "main"))
 	})
 }
 
 func TestIntegrationGit_ManagedDashboardDelete_CommitMessage(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const (
 		repoName     = "managed-msg-delete"
@@ -132,21 +127,10 @@ func TestIntegrationGit_ManagedDashboardDelete_CommitMessage(t *testing.T) {
 		dashboardFn: common.DashboardJSON(dashboardUID, "Managed Dashboard", 1),
 	})
 	helper.SyncAndWait(t, repoName)
-	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, ctx, dashboardUID, repoName, dashboardFn)
+	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, dashboardUID, repoName, dashboardFn)
 
-	require.NoError(t, helper.DashboardsV1.Resource.Delete(ctx, dashboardUID, metav1.DeleteOptions{}),
+	require.NoError(t, helper.DashboardsV1.Resource.Delete(t.Context(), dashboardUID, metav1.DeleteOptions{}),
 		"DELETE must not fail with empty commit message")
 
-	require.Equal(t, "Delete "+dashboardUID, latestCommitSubject(t, local))
-}
-
-// latestCommitSubject fetches origin/main and returns the subject line of the
-// HEAD commit on that branch.
-func latestCommitSubject(t *testing.T, local *gittest.LocalRepo) string {
-	t.Helper()
-	_, err := local.Git("fetch", "origin", "main")
-	require.NoError(t, err, "git fetch origin main should succeed")
-	out, err := local.Git("log", "-1", "--format=%s", "origin/main")
-	require.NoError(t, err, "git log should succeed")
-	return strings.TrimSpace(out)
+	require.Equal(t, "Delete "+dashboardUID, common.LatestCommitSubject(t, local, "main"))
 }

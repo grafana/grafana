@@ -6,6 +6,9 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
 func TestTupleStringWithoutCondition(t *testing.T) {
@@ -17,7 +20,7 @@ func TestTupleStringWithoutCondition(t *testing.T) {
 			Name: "group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"group_resource": structpb.NewStringValue("dashboards.grafana.app/dashboards"),
+					"group_resource": structpb.NewStringValue("dashboard.grafana.app/dashboards"),
 				},
 			},
 		},
@@ -34,6 +37,161 @@ func TestTupleStringWithoutCondition(t *testing.T) {
 	require.Contains(t, result, "user:123")
 	require.Contains(t, result, "view")
 	require.Contains(t, result, "folder:abc")
+}
+
+func TestResourcePermissionWriteTuples(t *testing.T) {
+	const group = "loki.datasource.grafana.app"
+	const resource = "datasources"
+	const uid = "ds-1"
+
+	cases := []struct {
+		name         string
+		verb         string
+		kind         iamv0.ResourcePermissionSpecPermissionKind
+		subject      string
+		baseRelation string
+	}{
+		{"query user", "Query", iamv0.ResourcePermissionSpecPermissionKindUser, "user:u1", "view"},
+		{"query service account", "query", iamv0.ResourcePermissionSpecPermissionKindServiceAccount, "service-account:sa1", "view"},
+		{"query team", "QUERY", iamv0.ResourcePermissionSpecPermissionKindTeam, "team:team1#member", "view"},
+		{"query basic role", "query", iamv0.ResourcePermissionSpecPermissionKindBasicRole, "role:basic_editor#assignee", "view"},
+		{"edit user", "Edit", iamv0.ResourcePermissionSpecPermissionKindUser, "user:u1", "edit"},
+		{"edit service account", "edit", iamv0.ResourcePermissionSpecPermissionKindServiceAccount, "service-account:sa1", "edit"},
+		{"edit team", "EDIT", iamv0.ResourcePermissionSpecPermissionKindTeam, "team:team1#member", "edit"},
+		{"edit basic role", "edit", iamv0.ResourcePermissionSpecPermissionKindBasicRole, "role:basic_editor#assignee", "edit"},
+		{"admin user", "Admin", iamv0.ResourcePermissionSpecPermissionKindUser, "user:u1", "admin"},
+		{"admin service account", "admin", iamv0.ResourcePermissionSpecPermissionKindServiceAccount, "service-account:sa1", "admin"},
+		{"admin team", "ADMIN", iamv0.ResourcePermissionSpecPermissionKindTeam, "team:team1#member", "admin"},
+		{"admin basic role", "admin", iamv0.ResourcePermissionSpecPermissionKindBasicRole, "role:basic_editor#assignee", "admin"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tuple, err := GetResourcePermissionWriteTuples(&authzextv1.CreatePermissionOperation{
+				Resource: &authzextv1.Resource{Group: group, Resource: resource, Name: uid},
+				Permission: &authzextv1.Permission{
+					Kind: string(tc.kind),
+					Name: permissionSubjectName(tc.kind),
+					Verb: tc.verb,
+				},
+			})
+			require.NoError(t, err)
+			require.Len(t, tuple, 2)
+
+			base := findTuple(tuple, tc.baseRelation, "resource:"+group+"/"+resource+"/"+uid)
+			require.NotNil(t, base)
+			require.Equal(t, tc.subject, base.User)
+			requireGroupFilter(t, base, group+"/"+resource)
+
+			query := findTuple(tuple, "create", "resource:"+group+"/"+resource+"/query/"+uid)
+			require.NotNil(t, query)
+			require.Equal(t, tc.subject, query.User)
+			requireGroupFilter(t, query, group+"/"+resource+"/query")
+		})
+	}
+}
+
+func TestResourcePermissionDeleteTuples(t *testing.T) {
+	const group = "loki.datasource.grafana.app"
+	const resource = "datasources"
+
+	target := &authzextv1.Resource{Group: group, Resource: resource, Name: "ds-1"}
+	permission := &authzextv1.Permission{
+		Kind: string(iamv0.ResourcePermissionSpecPermissionKindTeam),
+		Name: "team1",
+		Verb: "Admin",
+	}
+	writes, err := GetResourcePermissionWriteTuples(&authzextv1.CreatePermissionOperation{
+		Resource: target, Permission: permission,
+	})
+	require.NoError(t, err)
+	deletes, err := GetResourcePermissionDeleteTuples(&authzextv1.DeletePermissionOperation{
+		Resource: target, Permission: permission,
+	})
+	require.NoError(t, err)
+	require.Len(t, deletes, 2)
+	require.ElementsMatch(t, []string{
+		"team:team1#member|admin|resource:" + group + "/" + resource + "/ds-1",
+		"team:team1#member|create|resource:" + group + "/" + resource + "/query/ds-1",
+	}, deleteTupleKeys(deletes))
+	for i, key := range deletes {
+		require.Equal(t, writes[i].GetUser(), key.GetUser())
+		require.Equal(t, writes[i].GetRelation(), key.GetRelation())
+		require.Equal(t, writes[i].GetObject(), key.GetObject())
+		require.NotContains(t, key.String(), "condition")
+	}
+}
+
+func TestResourcePermissionTupleRegressionCases(t *testing.T) {
+	tests := []struct {
+		name  string
+		group string
+		res   string
+		verb  string
+		count int
+	}{
+		{"dashboard remains singular", "dashboard.grafana.app", "dashboards", "View", 1},
+		{"folder remains singular", "folder.grafana.app", "folders", "View", 1},
+		{"wrong datasource resource remains singular", "loki.datasource.grafana.app", "queries", "Query", 1},
+		{"unrelated group remains singular", "loki", "datasources", "View", 1},
+		{"granular dashboard get remains singular", "dashboard.grafana.app", "dashboards", "Get", 1},
+		{"granular datasource get remains singular", "loki.datasource.grafana.app", "datasources", "Get", 1},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tuple, err := GetResourcePermissionWriteTuples(&authzextv1.CreatePermissionOperation{
+				Resource: &authzextv1.Resource{Group: tc.group, Resource: tc.res, Name: "obj-1"},
+				Permission: &authzextv1.Permission{
+					Kind: string(iamv0.ResourcePermissionSpecPermissionKindUser),
+					Name: "u1",
+					Verb: tc.verb,
+				},
+			})
+			require.NoError(t, err)
+			require.Len(t, tuple, tc.count)
+		})
+	}
+}
+
+func permissionSubjectName(kind iamv0.ResourcePermissionSpecPermissionKind) string {
+	switch kind {
+	case iamv0.ResourcePermissionSpecPermissionKindUser:
+		return "u1"
+	case iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
+		return "sa1"
+	case iamv0.ResourcePermissionSpecPermissionKindTeam:
+		return "team1"
+	case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
+		return "Editor"
+	default:
+		panic("unknown permission kind")
+	}
+}
+
+func findTuple(tuples []*openfgav1.TupleKey, relation, object string) *openfgav1.TupleKey {
+	for _, tuple := range tuples {
+		if tuple.Relation == relation && tuple.Object == object {
+			return tuple
+		}
+	}
+	return nil
+}
+
+func requireGroupFilter(t *testing.T, tuple *openfgav1.TupleKey, groupFilter string) {
+	t.Helper()
+	require.NotNil(t, tuple)
+	require.NotNil(t, tuple.Condition)
+	require.Equal(t, "group_filter", tuple.Condition.Name)
+	require.Equal(t, groupFilter, tuple.Condition.Context.Fields["group_resource"].GetStringValue())
+}
+
+func deleteTupleKeys(tuples []*openfgav1.TupleKeyWithoutCondition) []string {
+	keys := make([]string, 0, len(tuples))
+	for _, tuple := range tuples {
+		keys = append(keys, tuple.User+"|"+tuple.Relation+"|"+tuple.Object)
+	}
+	return keys
 }
 
 func TestConvertRolePermissionsToTuples(t *testing.T) {
@@ -180,6 +338,331 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 		tuples, err := ConvertRolePermissionsToTuples("role-scoped", permissions)
 		require.NoError(t, err)
 		require.Empty(t, tuples)
+	})
+
+	t.Run("should reconcile global users-writer permissions", func(t *testing.T) {
+		// A "global users writer" (Grafana Admin) set: the users:* family plus the
+		// permissions sub-actions, mapping to full CRUD + permission relations.
+		permissions := []RolePermission{
+			{Action: "users:create", Kind: "", Identifier: ""},
+			{Action: "users:read", Kind: "global.users", Identifier: "*"},
+			{Action: "users:write", Kind: "global.users", Identifier: "*"},
+			{Action: "users:delete", Kind: "global.users", Identifier: "*"},
+			{Action: "users.permissions:read", Kind: "users", Identifier: "*"},
+			{Action: "users.permissions:write", Kind: "global.users", Identifier: "*"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-users-writer", permissions)
+		require.NoError(t, err)
+
+		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+			{User: "role:role-users-writer#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/users"},
+			{User: "role:role-users-writer#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/users"},
+			{User: "role:role-users-writer#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/users"},
+			{User: "role:role-users-writer#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/users"},
+			{User: "role:role-users-writer#assignee", Relation: "get_permissions", Object: "group_resource:iam.grafana.app/users"},
+			{User: "role:role-users-writer#assignee", Relation: "set_permissions", Object: "group_resource:iam.grafana.app/users"},
+		}), tupleKeyStrings(tuples))
+	})
+
+	t.Run("should reconcile org-admin (org.users) permissions", func(t *testing.T) {
+		// basic_admin (Org Admin) carries only the org.users:* family plus
+		// users.permissions:read. Under the union model these reach the same users
+		// relations as the global family, so the Org Admin is functional.
+		permissions := []RolePermission{
+			{Action: "org.users:read", Kind: "users", Identifier: "*"},
+			{Action: "org.users:write", Kind: "users", Identifier: "*"},
+			{Action: "org.users:add", Kind: "users", Identifier: "*"},
+			{Action: "org.users:remove", Kind: "users", Identifier: "*"},
+			{Action: "users.permissions:read", Kind: "users", Identifier: "*"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-org-admin", permissions)
+		require.NoError(t, err)
+
+		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+			{User: "role:role-org-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/users"},
+			{User: "role:role-org-admin#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/users"},
+			{User: "role:role-org-admin#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/users"},
+			{User: "role:role-org-admin#assignee", Relation: "get_permissions", Object: "group_resource:iam.grafana.app/users"},
+		}), tupleKeyStrings(tuples))
+	})
+
+	t.Run("global and org families dedupe to the same tuples", func(t *testing.T) {
+		// users:read and org.users:read both grant `get` on the users resource;
+		// the resulting tuples are identical and collapse to one.
+		permissions := []RolePermission{
+			{Action: "users:read", Kind: "global.users", Identifier: "*"},
+			{Action: "org.users:read", Kind: "users", Identifier: "*"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-dedup-users", permissions)
+		require.NoError(t, err)
+		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+			{User: "role:role-dedup-users#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/users"},
+		}), tupleKeyStrings(tuples))
+	})
+
+	t.Run("should reconcile role-assignment permissions to rolebindings", func(t *testing.T) {
+		// users.roles:* gate iam.grafana.app/rolebindings, not users. read is
+		// scoped users:*; add/remove are scoped permissions:type:delegate.
+		permissions := []RolePermission{
+			{Action: "users.roles:read", Kind: "users", Identifier: "*"},
+			{Action: "users.roles:add", Kind: "permissions", Identifier: "delegate"},
+			{Action: "users.roles:remove", Kind: "permissions", Identifier: "delegate"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-assigner", permissions)
+		require.NoError(t, err)
+
+		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+			{User: "role:role-assigner#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/rolebindings"},
+			{User: "role:role-assigner#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/rolebindings"},
+			{User: "role:role-assigner#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/rolebindings"},
+			{User: "role:role-assigner#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/rolebindings"},
+		}), tupleKeyStrings(tuples))
+	})
+
+	t.Run("actions with no iam verb are dropped", func(t *testing.T) {
+		// These gate only legacy HTTP endpoints — no iam verb maps to them, so there
+		// is no relation to grant.
+		permissions := []RolePermission{
+			{Action: "users:enable", Kind: "global.users", Identifier: "*"},
+			{Action: "users:disable", Kind: "global.users", Identifier: "*"},
+			{Action: "users:logout", Kind: "global.users", Identifier: "*"},
+			{Action: "users.authtoken:read", Kind: "global.users", Identifier: "*"},
+			{Action: "users.password:write", Kind: "global.users", Identifier: "*"},
+			{Action: "users.quotas:write", Kind: "global.users", Identifier: "*"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-noop", permissions)
+		require.NoError(t, err)
+		require.Empty(t, tuples)
+	})
+
+	t.Run("scoped user-management permissions are dropped", func(t *testing.T) {
+		// Specific-instance scopes can't be expressed (users is uid-based in FGA
+		// while the scope is id-based; rolebindings is wildcard-only). Create is
+		// the exception — it carries no scope and always translates.
+		permissions := []RolePermission{
+			{Action: "users:read", Kind: "users", Identifier: "1"},
+			{Action: "org.users:write", Kind: "users", Identifier: "abc"},
+			{Action: "users.roles:read", Kind: "users", Identifier: "5"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-user-scoped", permissions)
+		require.NoError(t, err)
+		require.Empty(t, tuples)
+	})
+
+	t.Run("should combine folder and user permissions", func(t *testing.T) {
+		permissions := []RolePermission{
+			{Action: "folders:read", Kind: "folders", Identifier: "folder1"},
+			{Action: "users.permissions:read", Kind: "users", Identifier: "*"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-mixed", permissions)
+		require.NoError(t, err)
+
+		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+			{User: "role:role-mixed#assignee", Relation: "get", Object: "folder:folder1"},
+			{User: "role:role-mixed#assignee", Relation: "get_permissions", Object: "group_resource:iam.grafana.app/users"},
+		}), tupleKeyStrings(tuples))
+	})
+
+	t.Run("should reconcile team-management permissions", func(t *testing.T) {
+		// A role that can fully manage teams: read/write/create/delete plus team
+		// permissions. Each maps to a single relation on iam.grafana.app/teams.
+		permissions := []RolePermission{
+			{Action: "teams:read", Kind: "teams", Identifier: "*"},
+			{Action: "teams:write", Kind: "teams", Identifier: "*"},
+			{Action: "teams:create", Kind: "", Identifier: ""},
+			{Action: "teams:delete", Kind: "teams", Identifier: "*"},
+			{Action: "teams.permissions:read", Kind: "teams", Identifier: "*"},
+			{Action: "teams.permissions:write", Kind: "teams", Identifier: "*"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-team-admin", permissions)
+		require.NoError(t, err)
+
+		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+			{User: "role:role-team-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/teams"},
+			{User: "role:role-team-admin#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/teams"},
+			{User: "role:role-team-admin#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/teams"},
+			{User: "role:role-team-admin#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/teams"},
+			{User: "role:role-team-admin#assignee", Relation: "get_permissions", Object: "group_resource:iam.grafana.app/teams"},
+			{User: "role:role-team-admin#assignee", Relation: "set_permissions", Object: "group_resource:iam.grafana.app/teams"},
+		}), tupleKeyStrings(tuples))
+	})
+
+	t.Run("should reconcile team and user role-assignment permissions to the same rolebindings", func(t *testing.T) {
+		// teams.roles:* and users.roles:* both gate iam.grafana.app/rolebindings —
+		// team and user role-assignments are not distinguished at the group_resource
+		// level — so their tuples dedupe onto the same object.
+		permissions := []RolePermission{
+			{Action: "teams.roles:read", Kind: "teams", Identifier: "*"},
+			{Action: "teams.roles:add", Kind: "permissions", Identifier: "delegate"},
+			{Action: "teams.roles:remove", Kind: "permissions", Identifier: "delegate"},
+			{Action: "users.roles:read", Kind: "users", Identifier: "*"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-assigner", permissions)
+		require.NoError(t, err)
+
+		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+			{User: "role:role-assigner#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/rolebindings"},
+			{User: "role:role-assigner#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/rolebindings"},
+			{User: "role:role-assigner#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/rolebindings"},
+			{User: "role:role-assigner#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/rolebindings"},
+		}), tupleKeyStrings(tuples))
+	})
+
+	t.Run("scoped team-management permissions are translated to team tuples", func(t *testing.T) {
+		// Specific-team scopes (teams:id:<n>) cannot be expressed: the FGA teams
+		// type is uid-based while the legacy scope is id-based, so they are dropped.
+		// teams:create is exempt because the mapper authorizes it without a scope.
+		permissions := []RolePermission{
+			{Action: "teams:read", Kind: "teams", Identifier: "t5"},
+			{Action: "teams:write", Kind: "teams", Identifier: "t5"},
+			{Action: "teams.permissions:write", Kind: "teams", Identifier: "t5"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-team-scoped", permissions)
+		require.NoError(t, err)
+
+		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+			{User: "role:role-team-scoped#assignee", Relation: "get", Object: "team:t5"},
+			{User: "role:role-team-scoped#assignee", Relation: "update", Object: "team:t5"},
+			{User: "role:role-team-scoped#assignee", Relation: "set_permissions", Object: "team:t5"},
+		}), tupleKeyStrings(tuples))
+	})
+}
+
+func TestUserManagementToTuples(t *testing.T) {
+	const subject = "role:role-1#assignee"
+	const usersObject = "group_resource:iam.grafana.app/users"
+	const roleBindingsObject = "group_resource:iam.grafana.app/rolebindings"
+
+	t.Run("maps each action to its tuples under an all-scope", func(t *testing.T) {
+		cases := []struct {
+			action     string
+			kind       string
+			identifier string
+			expected   []*openfgav1.TupleKey
+		}{
+			// users:create carries no scope (skipScope) and always translates.
+			{"users:create", "", "", []*openfgav1.TupleKey{
+				{User: subject, Relation: "create", Object: usersObject},
+			}},
+			// The global (users:*) and org (org.users:*) families converge on the
+			// same users relations.
+			{"users:read", "global.users", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "get", Object: usersObject},
+			}},
+			{"org.users:read", "users", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "get", Object: usersObject},
+			}},
+			{"users:write", "global.users", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "update", Object: usersObject},
+			}},
+			{"org.users:write", "users", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "update", Object: usersObject},
+			}},
+			{"users:delete", "global.users", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "delete", Object: usersObject},
+			}},
+			{"org.users:remove", "users", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "delete", Object: usersObject},
+			}},
+			{"users.permissions:read", "users", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "get_permissions", Object: usersObject},
+			}},
+			{"users.permissions:write", "global.users", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "set_permissions", Object: usersObject},
+			}},
+			{"users.roles:read", "users", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "get", Object: roleBindingsObject},
+			}},
+			// add maps to both create and update on rolebindings.
+			{"users.roles:add", "permissions", "delegate", []*openfgav1.TupleKey{
+				{User: subject, Relation: "create", Object: roleBindingsObject},
+				{User: subject, Relation: "update", Object: roleBindingsObject},
+			}},
+			{"users.roles:remove", "permissions", "delegate", []*openfgav1.TupleKey{
+				{User: subject, Relation: "delete", Object: roleBindingsObject},
+			}},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.action, func(t *testing.T) {
+				tuples := UserManagementToTuples(subject, RolePermission{
+					Action: tc.action, Kind: tc.kind, Identifier: tc.identifier,
+				})
+				require.ElementsMatch(t, tupleKeyStrings(tc.expected), tupleKeyStrings(tuples))
+			})
+		}
+	})
+
+	t.Run("drops non-all scopes (except create)", func(t *testing.T) {
+		require.Nil(t, UserManagementToTuples(subject, RolePermission{
+			Action: "org.users:write", Kind: "users", Identifier: "1",
+		}))
+		require.Nil(t, UserManagementToTuples(subject, RolePermission{
+			Action: "users.roles:read", Kind: "users", Identifier: "5",
+		}))
+	})
+
+	t.Run("drops actions with no iam verb", func(t *testing.T) {
+		for _, action := range []string{"users:enable", "users:disable", "users:logout", "users.authtoken:read", "users.password:write", "users.quotas:write"} {
+			require.Nil(t, UserManagementToTuples(subject, RolePermission{
+				Action: action, Kind: "global.users", Identifier: "*",
+			}), "action %q should not translate", action)
+		}
+	})
+}
+
+func TestTeamRoleBindingManagementToTuples(t *testing.T) {
+	const subject = "role:role-1#assignee"
+	const roleBindingsObject = "group_resource:iam.grafana.app/rolebindings"
+
+	t.Run("maps each action to its tuples under an all-scope", func(t *testing.T) {
+		cases := []struct {
+			action     string
+			kind       string
+			identifier string
+			expected   []*openfgav1.TupleKey
+		}{
+			{"teams.roles:read", "teams", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "get", Object: roleBindingsObject},
+			}},
+			{"teams.roles:add", "permissions", "delegate", []*openfgav1.TupleKey{
+				{User: subject, Relation: "create", Object: roleBindingsObject},
+				{User: subject, Relation: "update", Object: roleBindingsObject},
+			}},
+			{"teams.roles:remove", "permissions", "delegate", []*openfgav1.TupleKey{
+				{User: subject, Relation: "delete", Object: roleBindingsObject},
+			}},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.action, func(t *testing.T) {
+				tuples := TeamRoleBindingManagementToTuples(subject, RolePermission{
+					Action: tc.action, Kind: tc.kind, Identifier: tc.identifier,
+				})
+				require.ElementsMatch(t, tupleKeyStrings(tc.expected), tupleKeyStrings(tuples))
+			})
+		}
+	})
+
+	t.Run("drops instance specific rolebinding permissions", func(t *testing.T) {
+		require.Nil(t, TeamRoleBindingManagementToTuples(subject, RolePermission{Action: "teams.roles:add", Kind: "teams", Identifier: "t5"}))
+		require.Nil(t, TeamRoleBindingManagementToTuples(subject, RolePermission{Action: "teams.roles:remove", Kind: "teams", Identifier: "t5"}))
+		require.Nil(t, TeamRoleBindingManagementToTuples(subject, RolePermission{Action: "teams.roles:read", Kind: "teams", Identifier: "t5"}))
+	})
+
+	t.Run("returns nil for non-team-rolebinding actions", func(t *testing.T) {
+		require.Nil(t, TeamRoleBindingManagementToTuples(subject, RolePermission{Action: "users:read", Kind: "users", Identifier: "*"}))
+		require.Nil(t, TeamRoleBindingManagementToTuples(subject, RolePermission{Action: "teams:enable", Kind: "teams", Identifier: "*"}))
 	})
 }
 

@@ -241,6 +241,66 @@ describe('histogram frames frames', () => {
       ]
     `);
 
+    // NaN and Infinity filtering test: buildHistogram should ignore NaN/Infinity
+    // values instead of letting them poison the bucket size auto-detection.
+    // A single NaN in the values array causes Array.sort and Math.min to propagate
+    // NaN through the bucket size calculation, collapsing the entire histogram.
+    const seriesWithNaN = toDataFrame({
+      fields: [{ name: 'F', type: FieldType.number, values: [1, 2, NaN, 3, Infinity, 4, -Infinity, 5] }],
+    });
+
+    const outNaN = buildHistogram([seriesWithNaN]);
+    expect(outNaN).not.toBeNull();
+    const outNaNFrame = histogramFieldsToFrame(outNaN!);
+    expect(
+      outNaNFrame.fields.map((f) => ({
+        name: f.name,
+        values: f.values,
+      }))
+    ).toMatchInlineSnapshot(`
+      [
+        {
+          "name": "xMin",
+          "values": [
+            1,
+            2,
+            3,
+            4,
+            5,
+          ],
+        },
+        {
+          "name": "xMax",
+          "values": [
+            2,
+            3,
+            4,
+            5,
+            6,
+          ],
+        },
+        {
+          "name": "F",
+          "values": [
+            1,
+            1,
+            1,
+            1,
+            1,
+          ],
+        },
+      ]
+    `);
+
+    // NaN-only series produces an empty histogram (all values filtered out)
+    const seriesAllNaN = toDataFrame({
+      fields: [{ name: 'G', type: FieldType.number, values: [NaN, NaN, NaN] }],
+    });
+    const outAllNaN = buildHistogram([seriesAllNaN]);
+    expect(outAllNaN).not.toBeNull();
+    expect(outAllNaN!.xMin.values).toEqual([]);
+    expect(outAllNaN!.xMax.values).toEqual([]);
+
     // noValue nulls test
     const out4 = histogramFieldsToFrame(buildHistogram([series4])!);
     expect(

@@ -84,6 +84,54 @@ func (_c *MockService_NewStorage_Call) RunAndReturn(run func(schema.GroupResourc
 	return _c
 }
 
+// ValidateServedVersions provides a mock function with given fields: ctx, gr, served
+func (_m *MockService) ValidateServedVersions(ctx context.Context, gr schema.GroupResource, served []schema.GroupVersion) error {
+	ret := _m.Called(ctx, gr, served)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ValidateServedVersions")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, schema.GroupResource, []schema.GroupVersion) error); ok {
+		r0 = rf(ctx, gr, served)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockService_ValidateServedVersions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidateServedVersions'
+type MockService_ValidateServedVersions_Call struct {
+	*mock.Call
+}
+
+// ValidateServedVersions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - gr schema.GroupResource
+//   - served []schema.GroupVersion
+func (_e *MockService_Expecter) ValidateServedVersions(ctx interface{}, gr interface{}, served interface{}) *MockService_ValidateServedVersions_Call {
+	return &MockService_ValidateServedVersions_Call{Call: _e.mock.On("ValidateServedVersions", ctx, gr, served)}
+}
+
+func (_c *MockService_ValidateServedVersions_Call) Run(run func(ctx context.Context, gr schema.GroupResource, served []schema.GroupVersion)) *MockService_ValidateServedVersions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(schema.GroupResource), args[2].([]schema.GroupVersion))
+	})
+	return _c
+}
+
+func (_c *MockService_ValidateServedVersions_Call) Return(_a0 error) *MockService_ValidateServedVersions_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockService_ValidateServedVersions_Call) RunAndReturn(run func(context.Context, schema.GroupResource, []schema.GroupVersion) error) *MockService_ValidateServedVersions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ReadFromUnified provides a mock function with given fields: ctx, gr
 func (_m *MockService) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
 	ret := _m.Called(ctx, gr)

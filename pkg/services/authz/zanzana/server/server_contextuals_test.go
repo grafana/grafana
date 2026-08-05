@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,8 +16,8 @@ import (
 func TestGetContextuals(t *testing.T) {
 	srv := &Server{}
 
-	t.Run("render service gets dashboard and folder contextual tuples", func(t *testing.T) {
-		contextuals, err := srv.getContextuals("render:0")
+	t.Run("render service gets dashboard and folder contextual base tuples", func(t *testing.T) {
+		contextuals, err := srv.getContextuals("render:0", nil)
 		require.NoError(t, err)
 		require.NotNil(t, contextuals)
 		require.Len(t, contextuals.TupleKeys, 3)
@@ -46,9 +47,44 @@ func TestGetContextuals(t *testing.T) {
 		}
 	})
 
-	t.Run("non-render subject returns nil contextuals", func(t *testing.T) {
-		contextuals, err := srv.getContextuals("user:123")
+	t.Run("non-render subject without groups returns no tuples", func(t *testing.T) {
+		contextuals, err := srv.getContextuals("user:123", nil)
 		require.NoError(t, err)
 		assert.Nil(t, contextuals)
+	})
+
+	t.Run("request teams add team member tuples", func(t *testing.T) {
+		contextuals, err := srv.getContextuals("user:1", []string{"aa", "bb"})
+		require.NoError(t, err)
+		require.NotNil(t, contextuals)
+		require.Len(t, contextuals.TupleKeys, 2)
+		assert.Equal(t, "user:1", contextuals.TupleKeys[0].User)
+		assert.Equal(t, "user:1", contextuals.TupleKeys[1].User)
+		assert.Equal(t, common.RelationTeamMember, contextuals.TupleKeys[0].Relation)
+		assert.Equal(t, common.NewTypedIdent(common.TypeTeam, "aa"), contextuals.TupleKeys[0].Object)
+		assert.Equal(t, common.NewTypedIdent(common.TypeTeam, "bb"), contextuals.TupleKeys[1].Object)
+	})
+
+	t.Run("request teams support one thousand teams", func(t *testing.T) {
+		groups := make([]string, 1000)
+		for i := range groups {
+			groups[i] = fmt.Sprintf("team-%04d", i)
+		}
+
+		contextuals, err := srv.getContextuals("user:1", groups)
+		require.NoError(t, err)
+		require.NotNil(t, contextuals)
+		require.Len(t, contextuals.TupleKeys, len(groups))
+
+		seen := make(map[string]struct{}, len(contextuals.TupleKeys))
+		for _, tuple := range contextuals.TupleKeys {
+			assert.Equal(t, "user:1", tuple.User)
+			assert.Equal(t, common.RelationTeamMember, tuple.Relation)
+			seen[tuple.Object] = struct{}{}
+		}
+
+		for _, group := range groups {
+			assert.Contains(t, seen, common.NewTypedIdent(common.TypeTeam, group))
+		}
 	})
 }

@@ -7,8 +7,9 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
-import { Authorize } from '../../components/Authorize';
-import { AlertmanagerAction } from '../../hooks/useAbilities';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
+import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { getAlertTableStyles } from '../../styles/table';
 import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
@@ -53,6 +54,16 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
     setTemplateToDelete(undefined);
   };
 
+  const canCreate = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Create }));
+  // For Update/Delete the relevant check is whether the user can act on at least one non-provisioned
+  // template. We use the context-free ability here (same RBAC, no provisioning check) together with
+  // whether any template is not provisioned, to match what TemplateRow renders per row.
+  const canUpdateAny = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Update }));
+  const canDeleteAny = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Delete }));
+  const hasEditableTemplates = templates.some((t) => !isProvisionedResource(t.provenance));
+  const showActionsColumn =
+    canCreate || (canUpdateAny && hasEditableTemplates) || (canDeleteAny && hasEditableTemplates);
+
   return (
     <>
       <table className={tableStyles.table} data-testid="templates-table">
@@ -67,17 +78,11 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
             <th>
               <Trans i18nKey="alerting.templates-table.template-group">Template group</Trans>
             </th>
-            <Authorize
-              actions={[
-                AlertmanagerAction.CreateNotificationTemplate,
-                AlertmanagerAction.UpdateNotificationTemplate,
-                AlertmanagerAction.DeleteNotificationTemplate,
-              ]}
-            >
+            {showActionsColumn && (
               <th>
                 <Trans i18nKey="alerting.templates-table.actions">Actions</Trans>
               </th>
-            </Authorize>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -132,6 +137,13 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
   const [isExpanded, setIsExpanded] = useState(false);
   const { provenance } = useNotificationTemplateMetadata(notificationTemplate);
   const isProvisioned = isProvisionedResource(provenance);
+  const canUpdate = isGranted(
+    useNotificationTemplateAbility({ action: NotificationTemplateAction.Update, context: notificationTemplate })
+  );
+  const canCreate = isGranted(useNotificationTemplateAbility({ action: NotificationTemplateAction.Create }));
+  const canDelete = isGranted(
+    useNotificationTemplateAbility({ action: NotificationTemplateAction.Delete, context: notificationTemplate })
+  );
 
   const { uid, title: name, content: template, missing } = notificationTemplate;
   const misconfiguredBadgeText = t('alerting.templates.misconfigured-badge-text', 'Misconfigured');
@@ -182,16 +194,14 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
               icon="file-alt"
             />
           )}
-          {!isProvisioned && (
-            <Authorize actions={[AlertmanagerAction.UpdateNotificationTemplate]}>
-              <ActionIcon
-                to={makeAMLink(`/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`, alertManagerName)}
-                tooltip={t('alerting.template-row.tooltip-edit-template-group', 'Edit template group')}
-                icon="pen"
-              />
-            </Authorize>
+          {canUpdate && (
+            <ActionIcon
+              to={makeAMLink(`/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`, alertManagerName)}
+              tooltip={t('alerting.template-row.tooltip-edit-template-group', 'Edit template group')}
+              icon="pen"
+            />
           )}
-          <Authorize actions={[AlertmanagerAction.CreateNotificationTemplate]}>
+          {canCreate && (
             <ActionIcon
               to={makeAMLink(
                 `/alerting/notifications/templates/${encodeURIComponent(uid)}/duplicate`,
@@ -200,15 +210,13 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
               tooltip={t('alerting.template-row.tooltip-copy-template-group', 'Copy template group')}
               icon="copy"
             />
-          </Authorize>
-          {!isProvisioned && (
-            <Authorize actions={[AlertmanagerAction.DeleteNotificationTemplate]}>
-              <ActionIcon
-                onClick={() => onDeleteClick(notificationTemplate)}
-                tooltip={t('alerting.template-row.tooltip-delete-template-group', 'Delete template group')}
-                icon="trash-alt"
-              />
-            </Authorize>
+          )}
+          {canDelete && (
+            <ActionIcon
+              onClick={() => onDeleteClick(notificationTemplate)}
+              tooltip={t('alerting.template-row.tooltip-delete-template-group', 'Delete template group')}
+              icon="trash-alt"
+            />
           )}
         </td>
       </tr>

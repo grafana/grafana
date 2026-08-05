@@ -10,7 +10,6 @@ import { optionPickerFactory } from '../pickers/OptionsPicker/OptionsPicker';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
 
-import { CustomVariableEditor } from './CustomVariableEditor';
 import { updateCustomVariableOptions } from './actions';
 import { customVariableReducer, initialCustomVariableModelState } from './reducer';
 
@@ -25,7 +24,6 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
     initialState: initialCustomVariableModelState,
     reducer: customVariableReducer,
     picker: optionPickerFactory<CustomVariableModel>(),
-    editor: CustomVariableEditor,
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variableToTest.name);
     },

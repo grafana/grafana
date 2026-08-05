@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	"fmt"
+	"maps"
 	"net/http"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -8,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -24,7 +27,7 @@ import (
 // - Stores final configuration in context
 //
 // Otherwise, uses base configuration for all requests.
-func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, settingsService settingservice.Service) web.Middleware {
+func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, settingsService settingservice.Service, pluginsCDN *pluginscdn.Service) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx, span := tracing.Start(r.Context(), "frontend.RequestConfigMiddleware")
@@ -33,15 +36,45 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 			reqCtx := contexthandler.FromContext(ctx)
 			logger := reqCtx.Logger
 
+			ofClient := openfeature.NewDefaultClient()
+			fullFrontendSettingsEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceReducedBootDataAPI, false, openfeature.TransactionContext(ctx))
+
 			// Create base request config from global settings
 			// This is the default configuration that will be used for all requests
-			requestConfig := NewFSRequestConfig(cfg, license)
+			requestConfig, err := NewFSRequestConfig(ctx, cfg, license, pluginsCDN, fullFrontendSettingsEnabled)
 
-			// Fetch tenant-specific configuration if the feature toggle is enabled and namespace is present
-			ofClient := openfeature.NewDefaultClient()
-			settingsEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceUseSettingsService, false, openfeature.TransactionContext(ctx))
+			if err != nil {
+				logger.Error("failed to create request config", "err", err)
+				span.RecordError(err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
 
-			if settingsService != nil && settingsEnabled {
+			if fullFrontendSettingsEnabled && requestConfig.FullFrontendSettings != nil {
+				namespace := request.NamespaceValue(ctx)
+				requestConfig.FullFrontendSettings.Namespace = namespace
+
+				// Merge the per-request OpenFeature evaluation context into the base
+				// context already on the settings, so the frontend can evaluate feature
+				// flags with the same context. Per-request values take precedence.
+				evalCtx := openfeature.TransactionContext(ctx)
+				openFeatureContext := make(map[string]string, len(requestConfig.FullFrontendSettings.OpenFeatureContext)+len(evalCtx.Attributes())+1)
+				maps.Copy(openFeatureContext, requestConfig.FullFrontendSettings.OpenFeatureContext)
+				for key, value := range evalCtx.Attributes() {
+					if str, ok := value.(string); ok {
+						openFeatureContext[key] = str
+					} else {
+						openFeatureContext[key] = fmt.Sprintf("%v", value)
+					}
+				}
+
+				// Explicitly set namespace
+				openFeatureContext["namespace"] = namespace
+				requestConfig.FullFrontendSettings.OpenFeatureContext = openFeatureContext
+			}
+
+			// Fetch tenant-specific configuration if the settings service is configured and namespace is present
+			if settingsService != nil {
 				namespace, ok := request.NamespaceFrom(ctx)
 
 				if ok && namespace != "" {
@@ -80,7 +113,7 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 					} else {
 						settingsFetchMetric.WithLabelValues("success").Inc()
 						// Merge tenant overrides with base config
-						requestConfig.ApplyOverrides(settings, logger)
+						requestConfig.ApplyOverrides(settings, logger, fullFrontendSettingsEnabled)
 					}
 				}
 			}

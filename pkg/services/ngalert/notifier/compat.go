@@ -3,6 +3,9 @@ package notifier
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
+	"slices"
+	"strings"
 
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
@@ -57,19 +60,25 @@ func IntegrationToIntegrationConfig(i models.Integration) (alertingModels.Integr
 	}, nil
 }
 
-func PostableAPIConfigToNotificationsConfiguration(c *v1.AMConfigV1, limits alertingNotify.DynamicLimits) (alertingNotify.NotificationsConfiguration, error) {
-	receivers, err := ModelToAPIReceivers(c.AlertmanagerConfig.Receivers)
+func PostableAPIConfigToNotificationsConfiguration(
+	cfg v1.AMConfigV1,
+	limits alertingNotify.DynamicLimits,
+) (alertingNotify.NotificationsConfiguration, error) {
+	receivers, err := ModelToAPIReceivers(cfg.AlertmanagerConfig.Receivers)
+	if err != nil {
+		return alertingNotify.NotificationsConfiguration{}, err
+	}
+	inhibitionRules, err := ModelToInhibitionRules(cfg.InhibitionRules)
 	if err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
 	}
 	return alertingNotify.NotificationsConfiguration{
-		RoutingTree:       RouteToAPI(c.AlertmanagerConfig.Route),
-		InhibitRules:      c.AlertmanagerConfig.InhibitRules,
-		MuteTimeIntervals: ModelToMuteTimeIntervals(c.AlertmanagerConfig.MuteTimeIntervals),
-		TimeIntervals:     ModelToTimeIntervals(c.AlertmanagerConfig.TimeIntervals),
-		Templates:         ModelToTemplateDefinitions(c.SortedTemplates(true)),
-		Receivers:         receivers,
-		Limits:            limits,
+		RoutingTree:   RouteToAPI(cfg.AlertmanagerConfig.Route),
+		InhibitRules:  append(inhibitionRules, cfg.AlertmanagerConfig.InhibitRules...),
+		TimeIntervals: ModelToTimeIntervals(cfg.AlertmanagerConfig.TimeIntervals),
+		Templates:     ModelToTemplateDefinitions(cfg.SortedTemplates()), // templates are already merged.
+		Receivers:     receivers,
+		Limits:        limits,
 	}, nil
 }
 
@@ -111,17 +120,6 @@ func ModelToTimeIntervals(in []v1.TimeInterval) []alertingNotify.TimeInterval {
 	return out
 }
 
-func ModelToMuteTimeIntervals(in []v1.MuteTimeInterval) []alertingNotify.MuteTimeInterval {
-	out := make([]alertingNotify.MuteTimeInterval, 0, len(in))
-	for _, m := range in {
-		out = append(out, config.MuteTimeInterval{
-			Name:          m.Name,
-			TimeIntervals: m.TimeIntervals,
-		})
-	}
-	return out
-}
-
 func ModelToTemplateDefinitions(ts []v1.TemplateGroup) []templates.TemplateDefinition {
 	defs := make([]templates.TemplateDefinition, 0, len(ts))
 	for _, t := range ts {
@@ -141,20 +139,40 @@ func ModelToTemplateDefinitions(ts []v1.TemplateGroup) []templates.TemplateDefin
 	return defs
 }
 
+// ModelToInhibitionRules Converts inhibition rules to a consistently ordered slice of upstream inhibit rules.
+func ModelToInhibitionRules(inhibitionRules map[v1.ResourceUID]v1.InhibitionRule) ([]config.InhibitRule, error) {
+	if len(inhibitionRules) == 0 {
+		return make([]config.InhibitRule, 0), nil
+	}
+
+	res := make([]config.InhibitRule, 0, len(inhibitionRules))
+	for _, ir := range slices.SortedFunc(maps.Values(inhibitionRules), func(a v1.InhibitionRule, b v1.InhibitionRule) int {
+		return strings.Compare(string(a.UID), string(b.UID))
+	}) {
+		apiDef, err := InhibitionRuleToAPI(ir)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, apiDef.InhibitRule)
+	}
+
+	return res, nil
+}
+
 // TODO: Temporary until DB model and API model separate. Doing it this way makes caller intent clearer.
 var RouteToAPI = v1.RouteToDB
 var PostableApiAlertingConfigToAPI = v1.PostableApiAlertingConfigToDB
 var ExtraConfigsToAPI = v1.ExtraConfigsToDB
+var InhibitionRuleToAPI = v1.InhibitionRuleToDB
 
 func NotificationsConfigurationToPostableAPIConfig(config alertingNotify.NotificationsConfiguration) apimodels.PostableApiAlertingConfig {
 	return apimodels.PostableApiAlertingConfig{
 		Config: apimodels.Config{
-			Global:            nil, // Grafana does not have global.
-			Route:             config.RoutingTree,
-			InhibitRules:      config.InhibitRules,
-			TimeIntervals:     config.TimeIntervals,
-			MuteTimeIntervals: config.MuteTimeIntervals,
-			Templates:         nil, // we do not use this.
+			Global:        nil, // Grafana does not have global.
+			Route:         config.RoutingTree,
+			InhibitRules:  config.InhibitRules,
+			TimeIntervals: config.TimeIntervals,
+			Templates:     nil, // we do not use this.
 		},
 		Receivers: APIReceiversToPostableAPIReceivers(config.Receivers),
 	}
@@ -175,7 +193,7 @@ func APIReceiverToPostableAPIReceiver(r alertingModels.ReceiverConfig) *definiti
 	}
 
 	return &definition.PostableApiReceiver{
-		Receiver: definition.Receiver{Name: r.Name},
+		Name: r.Name,
 		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
 			GrafanaManagedReceivers: receivers,
 		},

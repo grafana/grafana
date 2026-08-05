@@ -7,10 +7,10 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill, Tooltip } from '@grafana/ui';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { AddNewEditPane } from 'app/features/dashboard-scene/edit-pane/add-new/AddNewEditPane';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
+import { AddNewPane } from 'app/features/dashboard-scene/sidebar/add-new/AddNewPane';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -64,30 +64,32 @@ interface NewLayoutEmptyProps {
 }
 
 const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
-  const { uid, isEditing, editPane, body } = dashboard.useState();
+  const { uid, isEditing, sidebar, body } = dashboard.useState();
   const isEditingNewDashboard = isEditing && !uid;
   const isAutoGrid = body instanceof AutoGridLayoutManager;
 
-  // open the edit pane when the dashboard is new and in editing mode
+  // open the sidebar when the dashboard is new and in editing mode
   // will only happen when the default empty state is shown (not overridden by extension point)
+  // skipped when the assistant started the edit session — it drives the build itself,
+  // so the pane would only take space away from the assistant sidebar
   useEffect(() => {
-    if (isEditingNewDashboard && editPane.state.openPane?.getId() !== 'add') {
-      editPane.openPane(new AddNewEditPane({}));
+    if (
+      isEditingNewDashboard &&
+      dashboard.getEditSessionSource() !== 'assistant' &&
+      sidebar.state.openPane?.getId() !== 'add'
+    ) {
+      sidebar.openPane(new AddNewPane({}));
     }
-  }, [isEditingNewDashboard, editPane]);
+  }, [isEditingNewDashboard, dashboard, sidebar]);
 
   const onSelectAutoGrid = () => {
     dashboard.switchLayout(AutoGridLayoutManager.createEmpty());
-    if (config.featureToggles.dashboardDefaultLayoutSelector) {
-      dashboard.updateDefaultLayoutTemplate(AutoGridLayoutManager.createEmpty());
-    }
+    dashboard.updateDefaultLayoutTemplate(AutoGridLayoutManager.createEmpty());
   };
 
   const onSelectCustomGrid = () => {
     dashboard.switchLayout(DefaultGridLayoutManager.createEmpty());
-    if (config.featureToggles.dashboardDefaultLayoutSelector) {
-      dashboard.updateDefaultLayoutTemplate(DefaultGridLayoutManager.createEmpty());
-    }
+    dashboard.updateDefaultLayoutTemplate(DefaultGridLayoutManager.createEmpty());
   };
 
   return (
@@ -104,47 +106,43 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
             <Trans i18nKey="dashboard.empty.description">Add a panel to visualize your data</Trans>
           </Text>
         </Box>
-        {config.featureToggles.dashboardDefaultLayoutSelector && (
-          <>
-            <Box marginTop={3} paddingX={4} display="flex" justifyContent="center" alignItems="center" gap={1}>
-              <Text element="p" textAlignment="center" color="secondary">
-                <Trans i18nKey="dashboard.empty.select-layout-header">Select layout</Trans>
-              </Text>
-              <Tooltip
-                placement="top"
-                content={
-                  <Trans i18nKey="dashboard.empty.layout-default-hint">
-                    The selected layout will also be used as the default for all new tabs and rows. You can change this
-                    later in Dashboard Settings &gt; General.
-                  </Trans>
-                }
-              >
-                <Icon name="info-circle" size="sm" />
-              </Tooltip>
-            </Box>
-            <Box marginTop={1} display="flex" justifyContent="center">
-              <Stack gap={1}>
-                <FilterPill
-                  label={t('dashboard.empty.auto-grid', 'Auto grid')}
-                  selected={isAutoGrid}
-                  onClick={onSelectAutoGrid}
-                />
-                <FilterPill
-                  label={t('dashboard.empty.custom-grid', 'Custom grid')}
-                  selected={!isAutoGrid}
-                  onClick={onSelectCustomGrid}
-                />
-              </Stack>
-            </Box>
-            <Box marginTop={1} paddingX={4}>
-              <Text element="p" textAlignment="center" color="secondary">
-                {isAutoGrid
-                  ? t('dashboard.empty.auto-grid-description', 'Panels resize to fit and form uniform grids')
-                  : t('dashboard.empty.custom-grid-description', 'Position and size each panel individually')}
-              </Text>
-            </Box>
-          </>
-        )}
+        <Box marginTop={3} paddingX={4} display="flex" justifyContent="center" alignItems="center" gap={1}>
+          <Text element="p" textAlignment="center" color="secondary">
+            <Trans i18nKey="dashboard.empty.select-layout-header">Select layout</Trans>
+          </Text>
+          <Tooltip
+            placement="top"
+            content={
+              <Trans i18nKey="dashboard.empty.layout-default-hint">
+                The selected layout will also be used as the default for all new tabs and rows. You can change this
+                later in Dashboard Settings &gt; General.
+              </Trans>
+            }
+          >
+            <Icon name="info-circle" size="sm" />
+          </Tooltip>
+        </Box>
+        <Box marginTop={1} display="flex" justifyContent="center">
+          <Stack gap={1}>
+            <FilterPill
+              label={t('dashboard.empty.auto-grid', 'Auto grid')}
+              selected={isAutoGrid}
+              onClick={onSelectAutoGrid}
+            />
+            <FilterPill
+              label={t('dashboard.empty.custom-grid', 'Custom grid')}
+              selected={!isAutoGrid}
+              onClick={onSelectCustomGrid}
+            />
+          </Stack>
+        </Box>
+        <Box marginTop={1} paddingX={4}>
+          <Text element="p" textAlignment="center" color="secondary">
+            {isAutoGrid
+              ? t('dashboard.empty.auto-grid-description', 'Panels resize to fit and form uniform grids')
+              : t('dashboard.empty.custom-grid-description', 'Position and size each panel individually')}
+          </Text>
+        </Box>
       </Box>
     </Stack>
   );

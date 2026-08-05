@@ -54,8 +54,6 @@ type Identity struct {
 	Namespace string
 	// IsDisabled is true if the entity is disabled.
 	IsDisabled bool
-	// HelpFlags1 is the help flags for the entity.
-	HelpFlags1 user.HelpFlags1
 	// LastSeenAt is the time when the entity was last seen.
 	LastSeenAt time.Time
 	// Deprecated: Teams is the list of teams the entity is a member of.
@@ -312,7 +310,6 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IsGrafanaAdmin:    i.GetIsGrafanaAdmin(),
 		IsAnonymous:       i.IsIdentityType(claims.TypeAnonymous),
 		IsDisabled:        i.IsDisabled,
-		HelpFlags1:        i.HelpFlags1,
 		LastSeenAt:        i.LastSeenAt,
 		TeamIDs:           i.TeamIDs,
 		TeamUIDs:          i.Groups,

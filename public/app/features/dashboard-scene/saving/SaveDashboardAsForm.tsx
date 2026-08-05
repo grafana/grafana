@@ -5,8 +5,14 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import {
+  AnnoKeyIgnorePredefinedVariables,
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+} from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
@@ -24,9 +30,44 @@ interface SaveDashboardAsFormDTO {
 export interface Props {
   dashboard: DashboardScene;
   changeInfo: DashboardChangeInfo;
+  /** Prefer drawer.onClose so Save As folder/meta mutations are restored on cancel. */
+  onCancel?: () => void;
 }
 
-export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
+/**
+ * Merges folder/provisioning overlay into dashboard meta for Save As without dropping
+ * existing k8s identity fields (name, resourceVersion, etc.). Canceling Save As after a
+ * folder change must leave the live scene able to save as an update.
+ */
+export function nextMetaAfterSaveAsFolderChange(
+  currentMeta: DashboardMeta,
+  folderUid: string | undefined,
+  provisionedMeta: Awaited<ReturnType<typeof getProvisionedMeta>>
+): DashboardMeta {
+  const currentAnnotations = currentMeta.k8s?.annotations ?? {};
+  const ignoreValue = currentAnnotations[AnnoKeyIgnorePredefinedVariables];
+
+  // Drop previous folder's manager annotations; keep everything else (including denylist).
+  const preservedAnnotations = Object.fromEntries(
+    Object.entries(currentAnnotations).filter(([key]) => key !== AnnoKeyManagerIdentity && key !== AnnoKeyManagerKind)
+  );
+
+  return {
+    ...currentMeta,
+    folderUid,
+    k8s: {
+      ...currentMeta.k8s,
+      ...provisionedMeta.k8s,
+      annotations: {
+        ...preservedAnnotations,
+        ...provisionedMeta.k8s?.annotations,
+        ...(ignoreValue !== undefined ? { [AnnoKeyIgnorePredefinedVariables]: ignoreValue } : {}),
+      },
+    },
+  };
+}
+
+export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) {
   const { changedSaveModel } = changeInfo;
 
   const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
@@ -92,6 +133,12 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
     const data = getValues();
 
+    // Only forward the denylist annotation. Spreading full getK8SMetadata() would include
+    // name/resourceVersion and turn Save As into an update of the source dashboard.
+    const ignoreValue =
+      dashboard.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables] ??
+      dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+
     const result = await onSaveDashboard(dashboard, {
       overwrite,
       folderUid: data.folder.uid,
@@ -103,6 +150,15 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
       copyTags: data.copyTags,
       title: data.title,
       description: data.description,
+      ...(ignoreValue !== undefined
+        ? {
+            k8s: {
+              annotations: {
+                [AnnoKeyIgnorePredefinedVariables]: ignoreValue,
+              },
+            },
+          }
+        : {}),
     });
 
     if (result.status === 'success') {
@@ -116,7 +172,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   };
 
   const cancelButton = (
-    <Button variant="secondary" onClick={() => dashboard.closeModal()} fill="outline">
+    <Button variant="secondary" onClick={() => (onCancel ? onCancel() : dashboard.closeModal())} fill="outline">
       <Trans i18nKey="dashboard-scene.save-dashboard-as-form.cancel-button.cancel">Cancel</Trans>
     </Button>
   );
@@ -193,12 +249,9 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
           <FolderPicker
             onChange={async (uid: string | undefined, title: string | undefined) => {
               setValue('folder', { uid, title });
-              const meta = await getProvisionedMeta(uid);
+              const provisionedMeta = await getProvisionedMeta(uid);
               dashboard.setState({
-                meta: {
-                  ...meta,
-                  folderUid: uid,
-                },
+                meta: nextMetaAfterSaveAsFolderChange(dashboard.state.meta, uid, provisionedMeta),
               });
               // Re-validate title when folder changes to check for duplicates in new folder
               trigger('title');
@@ -217,42 +270,30 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 }
 
-export interface TitleLabelProps {
+interface TitleLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
-export function TitleFieldLabel(props: TitleLabelProps) {
+function TitleFieldLabel(props: TitleLabelProps) {
   return (
     <Stack justifyContent="space-between">
       <Label htmlFor="description">
         <Trans i18nKey="dashboard-scene.title-field-label.title">Title</Trans>
       </Label>
-      {/* {config.featureToggles.dashgpt && isNew && (
-                <GenAIDashDescriptionButton
-                  onGenerate={(description) => field.onChange(description)}
-                  dashboard={dashboard}
-                />
-              )} */}
     </Stack>
   );
 }
 
-export interface DescriptionLabelProps {
+interface DescriptionLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
-export function DescriptionLabel(props: DescriptionLabelProps) {
+function DescriptionLabel(props: DescriptionLabelProps) {
   return (
     <Stack justifyContent="space-between">
       <Label htmlFor="description">
         <Trans i18nKey="dashboard-scene.description-label.description">Description</Trans>
       </Label>
-      {/* {config.featureToggles.dashgpt && isNew && (
-                <GenAIDashDescriptionButton
-                  onGenerate={(description) => field.onChange(description)}
-                  dashboard={dashboard}
-                />
-              )} */}
     </Stack>
   );
 }

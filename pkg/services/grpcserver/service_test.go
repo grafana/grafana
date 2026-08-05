@@ -2,6 +2,7 @@ package grpcserver
 
 import (
 	"context"
+	"net"
 	"testing"
 	"time"
 
@@ -502,4 +503,49 @@ func BenchmarkGracefulShutdown(b *testing.B) {
 		cancel()
 		<-serverDone
 	}
+}
+
+func TestRunUsesProvidedListener(t *testing.T) {
+	// Reserve a port and hand the live listener to the server, mirroring how the
+	// integration test harness avoids a close/re-bind race on the reserved port.
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	reservedAddr := listener.Addr().String()
+
+	service := &gPRCServerService{
+		cfg: setting.GRPCServerSettings{
+			Network:                 "tcp",
+			Address:                 "127.0.0.1:0",
+			GracefulShutdownTimeout: 5 * time.Second,
+		},
+		logger:      log.NewNopLogger(),
+		enabled:     true,
+		startedChan: make(chan struct{}),
+		server:      grpc.NewServer(),
+		listener:    listener,
+	}
+	grpc_health_v1.RegisterHealthServer(service.server, &testHealthServer{})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	serverDone := make(chan error, 1)
+	go func() {
+		serverDone <- service.Run(ctx)
+	}()
+
+	<-service.startedChan
+
+	// The server must serve on the reserved listener, not dial cfg.Address.
+	assert.Equal(t, reservedAddr, service.GetAddress())
+
+	conn, err := grpc.NewClient(reservedAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	defer func() { _ = conn.Close() }()
+
+	_, err = grpc_health_v1.NewHealthClient(conn).Check(context.Background(), &grpc_health_v1.HealthCheckRequest{})
+	require.NoError(t, err)
+
+	cancel()
+	require.NoError(t, <-serverDone)
 }

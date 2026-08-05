@@ -32,6 +32,7 @@ export interface AzureMonitorDataSourceJsonData extends AzureDataSourceJsonData 
   subscriptionId?: string;
   basicLogsEnabled?: boolean;
   auxiliaryLogsEnabled?: boolean;
+  batchAPIEnabled?: boolean;
 
   // logs
   /** @deprecated Azure Logs credentials */
@@ -272,6 +273,7 @@ export interface AzureAPIResponse<T> {
   };
   status?: number;
   statusText?: string;
+  nextLink?: string;
 }
 
 export interface Location {

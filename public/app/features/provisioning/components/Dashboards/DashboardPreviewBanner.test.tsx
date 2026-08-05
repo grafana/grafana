@@ -16,7 +16,7 @@ jest.mock('@grafana/runtime', () => {
     ...actual,
     config: {
       ...actual.config,
-      featureToggles: { provisioning: true },
+      provisioningEnabled: true,
     },
   };
 });
@@ -112,6 +112,7 @@ function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: Setu
     ...overrides.pullRequestParam,
     resourcePushedTo: 'abc',
     action: 'create',
+    prTitle: undefined,
   });
 
   mockUseGetResourceRepositoryView.mockReturnValue({
@@ -121,6 +122,7 @@ function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: Setu
     isLoading: false,
     isInstanceManaged: false,
     isReadOnlyRepo: false,
+    isMissingRepo: false,
   });
 
   mockUseGetRepositoryFilesWithPathQuery.mockReturnValue({

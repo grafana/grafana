@@ -1,7 +1,6 @@
 import { DashboardCursorSync } from '@grafana/data';
 import {
   AdHocFiltersVariable,
-  GroupByVariable,
   SceneControlsSpacer,
   SceneFlexLayout,
   SceneReactObject,
@@ -56,22 +55,14 @@ export const triageScene = new EmbeddedSceneWithContext({
         allowCustomValue: true,
         useQueriesAsFilterForOptions: true,
         supportsMultiValueOperators: true,
+        enableGroupBy: true,
+        groupByInputPlaceholder: 'Group by',
         filters: [],
         baseFilters: [],
         expressionBuilder: prometheusExpressionBuilder,
         getTagKeysProvider: getAdHocTagKeysProvider,
         getTagValuesProvider: getAdHocTagValuesProvider,
-      }),
-      new GroupByVariable({
-        name: 'groupBy',
-        label: 'Group by',
-        datasource: {
-          type: 'prometheus',
-          uid: DATASOURCE_UID,
-        },
-        allowCustomValue: true,
-        applyMode: 'manual',
-        getTagKeysProvider: getGroupByTagKeysProvider,
+        getGroupByKeysProvider: getGroupByTagKeysProvider,
       }),
     ],
   }),

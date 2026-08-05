@@ -5,6 +5,7 @@
     "mode": "dark",
     "background": {
       "canvas": "#000000",
+      "page": "#010101",
       "primary": "#020202",
       "secondary": "#080808",
       "elevated": "#080808"
@@ -27,13 +28,18 @@
     "secondary": {
       "text": "#008910"
     },
+    "accent": {
+      "main": "#008910"
+    },
     "gradients": {
       "brandVertical": "linear-gradient(0deg, #008910 0%, #00ff41 100%)",
       "brandHorizontal": "linear-gradient(90deg, #008910 0%, #00ff41 100%)"
     }
   },
   "shape": {
-    "borderRadius": 0
+    "borderRadiusSm": 0,
+    "borderRadius": 0,
+    "borderRadiusLg": 0
   },
   "typography": {
     "fontFamily": "monospace"

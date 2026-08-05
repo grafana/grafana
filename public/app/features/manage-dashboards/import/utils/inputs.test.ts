@@ -7,7 +7,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type Dashboard, type Panel, type VariableModel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { ExportFormat } from 'app/features/dashboard/api/types';
-import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
+import { ExportDatasourceName, ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
 import {
   type DashboardInputs,
@@ -349,6 +349,132 @@ describe('extractV2Inputs', () => {
     expect(result).toEqual(emptyInputs);
   });
 
+  it('surfaces the original datasource name on the input label', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'var1',
+            query: {
+              group: 'mysql',
+              labels: { [ExportLabel]: 'mysql-1', [ExportDatasourceName]: 'Production MySQL' },
+            },
+          },
+        },
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'var2',
+            query: {
+              group: 'mysql',
+              labels: { [ExportLabel]: 'mysql-2', [ExportDatasourceName]: 'Reports MySQL' },
+            },
+          },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(2);
+    expect(result.dataSources[0].name).toBe('mysql-1');
+    expect(result.dataSources[0].label).toBe('mysql-1 (Production MySQL)');
+    expect(result.dataSources[0].description).toBe('Select a mysql data source');
+    expect(result.dataSources[1].name).toBe('mysql-2');
+    expect(result.dataSources[1].label).toBe('mysql-2 (Reports MySQL)');
+  });
+
+  it('pre-selects the datasource when its name matches an existing one of the same plugin type', async () => {
+    mockGetDataSourceSrv.getList.mockReturnValueOnce([
+      { uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' },
+      { uid: 'ds-stage', name: 'Staging MySQL', type: 'mysql' },
+    ]);
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'var1',
+            query: {
+              group: 'mysql',
+              labels: { [ExportLabel]: 'mysql-1', [ExportDatasourceName]: 'Production MySQL' },
+            },
+          },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources[0].matchedDatasource).toEqual({
+      uid: 'ds-prod',
+      name: 'Production MySQL',
+      type: 'mysql',
+    });
+  });
+
+  it('does not pre-select a datasource when no name matches', async () => {
+    mockGetDataSourceSrv.getList.mockReturnValueOnce([{ uid: 'ds-stage', name: 'Staging MySQL', type: 'mysql' }]);
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'var1',
+            query: {
+              group: 'mysql',
+              labels: { [ExportLabel]: 'mysql-1', [ExportDatasourceName]: 'Production MySQL' },
+            },
+          },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources[0].matchedDatasource).toBeUndefined();
+  });
+
+  it('does not pre-select when no original name is present', async () => {
+    mockGetDataSourceSrv.getList.mockReturnValueOnce([{ uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' }]);
+
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var1', query: { group: 'mysql', labels: { [ExportLabel]: 'mysql-1' } } },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources[0].matchedDatasource).toBeUndefined();
+  });
+
+  it('falls back to the export label when no datasource name is present', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: { name: 'var1', query: { group: 'mysql', labels: { [ExportLabel]: 'mysql-1' } } },
+        },
+      ],
+    };
+
+    const result = await extractV2Inputs(dashboard);
+    expect(result.dataSources[0].label).toBe('mysql-1');
+    expect(result.dataSources[0].description).toBe('Select a mysql data source');
+  });
+
   it('should keep distinct datasource labels', async () => {
     const dashboard = {
       elements: {},
@@ -530,6 +656,224 @@ describe('extractV2Inputs', () => {
     expect(result.dataSources).toHaveLength(1);
     expect(result.constants).toHaveLength(1);
     expect(result.constants[0].name).toBe('namespace');
+  });
+
+  it('extracts datasource inputs from row QueryVariable and tab AdhocVariable', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [],
+      layout: {
+        kind: 'TabsLayout',
+        spec: {
+          tabs: [
+            {
+              kind: 'TabsLayoutTab',
+              spec: {
+                title: 'Tab 1',
+                layout: {
+                  kind: 'RowsLayout',
+                  spec: {
+                    rows: [
+                      {
+                        kind: 'RowsLayoutRow',
+                        spec: {
+                          title: 'Row 1',
+                          layout: { kind: 'GridLayout', spec: { items: [] } },
+                          variables: [
+                            {
+                              kind: 'QueryVariable',
+                              spec: {
+                                name: 'rowQuery',
+                                query: {
+                                  group: 'prometheus',
+                                  labels: { [ExportLabel]: 'prom-1', [ExportDatasourceName]: 'Prod Prom' },
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                variables: [
+                  {
+                    kind: 'AdhocVariable',
+                    group: 'loki',
+                    labels: { [ExportLabel]: 'loki-1', [ExportDatasourceName]: 'Prod Loki' },
+                    spec: { name: 'tabAdhoc' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    mockGetDataSourceSrv.getList.mockImplementation(({ pluginId }: { pluginId: string }) => {
+      if (pluginId === 'prometheus') {
+        return [{ uid: 'p1', name: 'Prod Prom', type: 'prometheus' }];
+      }
+      if (pluginId === 'loki') {
+        return [{ uid: 'l1', name: 'Prod Loki', type: 'loki' }];
+      }
+      return [];
+    });
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(2);
+    expect(result.dataSources.map((ds) => ds.pluginId).sort()).toEqual(['loki', 'prometheus']);
+  });
+
+  it('extracts datasources from $dsVar panel queries only when export-labeled (external share)', async () => {
+    const dashboard = {
+      elements: {
+        labeledVarPanel: {
+          kind: 'Panel',
+          spec: {
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: {
+                        group: 'loki',
+                        datasource: { name: '${rowLoki}' },
+                        labels: { [ExportLabel]: 'loki-1', [ExportDatasourceName]: 'Prod Loki' },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+        unlabeledSameInstancePanel: {
+          kind: 'Panel',
+          spec: {
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [
+                  {
+                    kind: 'PanelQuery',
+                    spec: {
+                      query: {
+                        group: 'grafana-sqlite-datasource',
+                        // Same-instance export keeps $var without labels — no picker
+                        datasource: { name: '$rowSqlite' },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      variables: [],
+    };
+
+    mockGetDataSourceSrv.getList.mockImplementation(({ pluginId }: { pluginId: string }) => {
+      if (pluginId === 'loki') {
+        return [{ uid: 'l1', name: 'Prod Loki', type: 'loki' }];
+      }
+      if (pluginId === 'grafana-sqlite-datasource') {
+        return [{ uid: 's1', name: 'SQLite', type: 'grafana-sqlite-datasource' }];
+      }
+      return [];
+    });
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.dataSources).toHaveLength(1);
+    expect(result.dataSources[0]).toMatchObject({
+      name: 'loki-1',
+      pluginId: 'loki',
+    });
+  });
+
+  it('extracts section constants separately when names collide with dashboard-level', async () => {
+    const dashboard = {
+      elements: {},
+      variables: [
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'environment',
+            label: 'Environment',
+            query: 'production',
+            description: 'Dashboard env',
+            current: { text: 'production', value: 'production' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+      layout: {
+        kind: 'RowsLayout',
+        spec: {
+          rows: [
+            {
+              kind: 'RowsLayoutRow',
+              spec: {
+                title: 'Servers',
+                layout: { kind: 'GridLayout', spec: { items: [] } },
+                variables: [
+                  {
+                    kind: 'ConstantVariable',
+                    spec: {
+                      name: 'environment',
+                      query: 'staging',
+                      current: { text: 'staging', value: 'staging' },
+                      hide: 'dontHide',
+                      skipUrlSync: false,
+                    },
+                  },
+                  {
+                    kind: 'ConstantVariable',
+                    spec: {
+                      name: 'region',
+                      label: 'Region',
+                      query: 'us-east-1',
+                      current: { text: 'us-east-1', value: 'us-east-1' },
+                      hide: 'dontHide',
+                      skipUrlSync: false,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    const result = await extractV2Inputs(dashboard);
+
+    expect(result.constants).toHaveLength(3);
+    expect(result.constants[0]).toMatchObject({
+      name: 'environment',
+      value: 'production',
+      info: 'Dashboard env',
+    });
+    expect(result.constants[0].path).toBeUndefined();
+    expect(result.constants[1]).toMatchObject({
+      name: 'environment',
+      value: 'staging',
+      path: '/rows/0',
+      scopeLabel: 'Row: Servers',
+    });
+    expect(result.constants[2]).toMatchObject({
+      name: 'region',
+      value: 'us-east-1',
+      path: '/rows/0',
+      scopeLabel: 'Row: Servers',
+    });
   });
 });
 
@@ -981,7 +1325,7 @@ describe('applyV2Inputs', () => {
                     spec: {
                       query: {
                         group: 'prometheus',
-                        labels: { [ExportLabel]: 'prometheus-1' },
+                        labels: { [ExportLabel]: 'prometheus-1', [ExportDatasourceName]: 'Original Prometheus' },
                         datasource: { name: 'old-ds' },
                       },
                     },
@@ -998,7 +1342,7 @@ describe('applyV2Inputs', () => {
           spec: {
             query: {
               group: 'prometheus',
-              labels: { [ExportLabel]: 'prometheus-1' },
+              labels: { [ExportLabel]: 'prometheus-1', [ExportDatasourceName]: 'Original Prometheus' },
               datasource: { name: 'old-ds' },
             },
           },
@@ -1010,7 +1354,7 @@ describe('applyV2Inputs', () => {
           spec: {
             query: {
               group: 'prometheus',
-              labels: { [ExportLabel]: 'prometheus-1' },
+              labels: { [ExportLabel]: 'prometheus-1', [ExportDatasourceName]: 'Original Prometheus' },
               datasource: { name: 'old-ds' },
             },
           },
@@ -1039,6 +1383,14 @@ describe('applyV2Inputs', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const querySpec = updatedQuery?.spec as any;
     expect(querySpec?.query?.datasource?.name).toBe('ds-uid');
+
+    // export-only labels must be stripped after applying inputs
+    expect(updatedAnnotation.spec.query?.labels?.[ExportLabel]).toBeUndefined();
+    expect(updatedAnnotation.spec.query?.labels?.[ExportDatasourceName]).toBeUndefined();
+    expect(updatedVariable.spec.query?.labels?.[ExportLabel]).toBeUndefined();
+    expect(updatedVariable.spec.query?.labels?.[ExportDatasourceName]).toBeUndefined();
+    expect(querySpec?.query?.labels?.[ExportLabel]).toBeUndefined();
+    expect(querySpec?.query?.labels?.[ExportDatasourceName]).toBeUndefined();
   });
 
   it('uses datasource labels to keep selections independent', () => {
@@ -1137,8 +1489,8 @@ describe('applyV2Inputs', () => {
       dashboard,
       folderUid: 'folder',
       message: '',
-      'constant-environment': 'staging',
-      'constant-region': 'eu-west-1',
+      'constant-dashboard-environment': 'staging',
+      'constant-dashboard-region': 'eu-west-1',
     };
 
     const result = applyV2Inputs(dashboard, form);
@@ -1183,6 +1535,223 @@ describe('applyV2Inputs', () => {
 
     const envVar = result.variables?.find((v) => v.kind === 'ConstantVariable' && v.spec.name === 'environment');
     expect(envVar?.kind === 'ConstantVariable' && envVar.spec.query).toBe('production');
+  });
+
+  it('applies constant form values to section ConstantVariables', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [],
+      variables: [],
+      layout: {
+        kind: 'RowsLayout',
+        spec: {
+          rows: [
+            {
+              kind: 'RowsLayoutRow',
+              spec: {
+                title: 'Row 1',
+                layout: { kind: 'GridLayout', spec: { items: [] } },
+                variables: [
+                  {
+                    kind: 'ConstantVariable',
+                    spec: {
+                      name: 'environment',
+                      query: 'production',
+                      current: { text: 'production', value: 'production' },
+                      hide: 'dontHide',
+                      skipUrlSync: false,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'constant-_rows_0-environment': 'staging',
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    expect(result.layout.kind).toBe('RowsLayout');
+    if (result.layout.kind !== 'RowsLayout') {
+      return;
+    }
+    const sectionConst = result.layout.spec.rows[0].spec.variables?.[0];
+    expect(sectionConst?.kind).toBe('ConstantVariable');
+    if (sectionConst?.kind !== 'ConstantVariable') {
+      return;
+    }
+    expect(sectionConst.spec.query).toBe('staging');
+    expect(sectionConst.spec.current).toEqual({ text: 'staging', value: 'staging' });
+  });
+
+  it('applies distinct values to same-named dashboard and section constants', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [],
+      variables: [
+        {
+          kind: 'ConstantVariable',
+          spec: {
+            name: 'environment',
+            query: 'production',
+            current: { text: 'production', value: 'production' },
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+      layout: {
+        kind: 'RowsLayout',
+        spec: {
+          rows: [
+            {
+              kind: 'RowsLayoutRow',
+              spec: {
+                title: 'Servers',
+                layout: { kind: 'GridLayout', spec: { items: [] } },
+                variables: [
+                  {
+                    kind: 'ConstantVariable',
+                    spec: {
+                      name: 'environment',
+                      query: 'row-default',
+                      current: { text: 'row-default', value: 'row-default' },
+                      hide: 'dontHide',
+                      skipUrlSync: false,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'constant-dashboard-environment': 'dash-staging',
+      'constant-_rows_0-environment': 'row-staging',
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    const dashConst = result.variables?.find((v) => v.kind === 'ConstantVariable' && v.spec.name === 'environment');
+    expect(dashConst?.kind === 'ConstantVariable' && dashConst.spec.query).toBe('dash-staging');
+
+    expect(result.layout.kind).toBe('RowsLayout');
+    if (result.layout.kind !== 'RowsLayout') {
+      return;
+    }
+    const sectionConst = result.layout.spec.rows[0].spec.variables?.[0];
+    expect(sectionConst?.kind === 'ConstantVariable' && sectionConst.spec.query).toBe('row-staging');
+  });
+
+  it('remaps datasources on section QueryVariables and clears export labels', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [],
+      variables: [],
+      layout: {
+        kind: 'TabsLayout',
+        spec: {
+          tabs: [
+            {
+              kind: 'TabsLayoutTab',
+              spec: {
+                title: 'Tab 1',
+                layout: {
+                  kind: 'RowsLayout',
+                  spec: {
+                    rows: [
+                      {
+                        kind: 'RowsLayoutRow',
+                        spec: {
+                          title: 'Row 1',
+                          layout: { kind: 'GridLayout', spec: { items: [] } },
+                          variables: [
+                            {
+                              kind: 'QueryVariable',
+                              spec: {
+                                name: 'nestedQuery',
+                                query: {
+                                  group: 'prometheus',
+                                  labels: {
+                                    [ExportLabel]: 'prometheus-1',
+                                    [ExportDatasourceName]: 'Original Prometheus',
+                                  },
+                                  datasource: { name: 'old-ds' },
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                variables: [
+                  {
+                    kind: 'QueryVariable',
+                    spec: {
+                      name: 'tabQuery',
+                      query: {
+                        group: 'prometheus',
+                        labels: {
+                          [ExportLabel]: 'prometheus-1',
+                          [ExportDatasourceName]: 'Original Prometheus',
+                        },
+                        datasource: { name: 'old-ds' },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'datasource-prometheus-1': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+
+    expect(result.layout.kind).toBe('TabsLayout');
+    if (result.layout.kind !== 'TabsLayout') {
+      return;
+    }
+    const tabQuery = result.layout.spec.tabs[0].spec.variables?.[0] as QueryVariableKind;
+    expect(tabQuery.spec.query?.datasource?.name).toBe('ds-uid');
+    expect(tabQuery.spec.query?.labels?.[ExportLabel]).toBeUndefined();
+    expect(tabQuery.spec.query?.labels?.[ExportDatasourceName]).toBeUndefined();
+
+    const nestedRows = result.layout.spec.tabs[0].spec.layout;
+    expect(nestedRows.kind).toBe('RowsLayout');
+    if (nestedRows.kind !== 'RowsLayout') {
+      return;
+    }
+    const nestedQuery = nestedRows.spec.rows[0].spec.variables?.[0] as QueryVariableKind;
+    expect(nestedQuery.spec.query?.datasource?.name).toBe('ds-uid');
+    expect(nestedQuery.spec.query?.labels?.[ExportLabel]).toBeUndefined();
   });
 
   it('preserves variable references and does not replace them', () => {
@@ -1260,7 +1829,7 @@ describe('replaceDatasourcesInDashboard', () => {
     prometheus: { uid: 'new-prom-uid', type: 'prometheus', name: 'New Prometheus' },
   };
 
-  const createPanelWithQuery = (group: string, datasourceName: string) => ({
+  const createPanelWithQuery = (group: string, datasourceName: string, labels?: Record<string, string>) => ({
     kind: 'Panel' as const,
     spec: {
       id: 1,
@@ -1287,6 +1856,7 @@ describe('replaceDatasourcesInDashboard', () => {
                   group,
                   version: 'v0',
                   datasource: { name: datasourceName },
+                  ...(labels && { labels }),
                   spec: {},
                 },
               },
@@ -1386,7 +1956,7 @@ describe('replaceDatasourcesInDashboard', () => {
   });
 
   describe('query variable', () => {
-    const createQueryVariable = (group: string, datasourceName: string) => ({
+    const createQueryVariable = (group: string, datasourceName: string, labels?: Record<string, string>) => ({
       kind: 'QueryVariable' as const,
       spec: {
         name: 'test_var',
@@ -1405,6 +1975,7 @@ describe('replaceDatasourcesInDashboard', () => {
           group,
           version: 'v0',
           datasource: { name: datasourceName },
+          ...(labels && { labels }),
           spec: {},
         },
       },
@@ -1440,6 +2011,28 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(variable?.spec.query?.datasource?.name).toBe('${ds}');
       expect(variable?.spec.options).toEqual([{ text: 'All', value: '$__all' }]);
     });
+
+    it('strips export-only labels while preserving a $dsVar reference', () => {
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          createQueryVariable('prometheus', '${ds}', {
+            [ExportLabel]: 'prometheus-1',
+            [ExportDatasourceName]: 'Original Prometheus',
+          }),
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, {
+        'prometheus-1': { uid: 'new-prom-uid', type: 'prometheus', name: 'New Prometheus' },
+      });
+      const updated = getQueryVariable(result);
+
+      expect(updated?.spec.query?.datasource?.name).toBe('${ds}');
+      expect(updated?.spec.query?.labels).toBeUndefined();
+      expect(updated?.spec.options).toEqual([{ text: 'All', value: '$__all' }]);
+    });
   });
 
   describe('datasource variable', () => {
@@ -1473,6 +2066,84 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(variable).toBeDefined();
       expect(variable?.spec.current?.value).toBe('new-prom-uid');
       expect(variable?.spec.current?.text).toBe('New Prometheus');
+    });
+
+    it('uses the sole export-label mapping of the same type when pluginId key is absent', () => {
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [createDatasourceVariable('prometheus', 'old-prom-uid', 'Old Prometheus')],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, {
+        'prometheus-1': { uid: 'mapped-prom-uid', type: 'prometheus', name: 'Mapped Prometheus' },
+      });
+      const variable = getDatasourceVariable(result);
+
+      expect(variable?.spec.current?.value).toBe('mapped-prom-uid');
+      expect(variable?.spec.current?.text).toBe('Mapped Prometheus');
+    });
+
+    it('does not assign an arbitrary same-type mapping when multiple pickers exist', () => {
+      const dsA = createDatasourceVariable('prometheus', 'old-a', 'Old A');
+      dsA.spec.name = 'dsA';
+      const dsB = createDatasourceVariable('prometheus', 'old-b', 'Old B');
+      dsB.spec.name = 'dsB';
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [dsA, dsB],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, {
+        'prometheus-1': { uid: 'prom-uid-1', type: 'prometheus', name: 'Prometheus 1' },
+        'prometheus-2': { uid: 'prom-uid-2', type: 'prometheus', name: 'Prometheus 2' },
+      });
+
+      expect(getDatasourceVariable(result, 0)?.spec.current).toEqual({ text: 'Old A', value: 'old-a' });
+      expect(getDatasourceVariable(result, 1)?.spec.current).toEqual({ text: 'Old B', value: 'old-b' });
+    });
+
+    it('maps DatasourceVariable via export label on a labeled $dsVar query ref', () => {
+      const dsA = createDatasourceVariable('prometheus', '', '');
+      dsA.spec.name = 'dsA';
+      const dsB = createDatasourceVariable('prometheus', '', '');
+      dsB.spec.name = 'dsB';
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [dsA, dsB],
+        elements: {
+          'panel-a': createPanelWithQuery('prometheus', '${dsA}', {
+            [ExportLabel]: 'prometheus-1',
+            [ExportDatasourceName]: 'Prod A',
+          }),
+          'panel-b': createPanelWithQuery('prometheus', '$dsB', {
+            [ExportLabel]: 'prometheus-2',
+            [ExportDatasourceName]: 'Prod B',
+          }),
+        },
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, {
+        'prometheus-1': { uid: 'prom-uid-1', type: 'prometheus', name: 'Prometheus 1' },
+        'prometheus-2': { uid: 'prom-uid-2', type: 'prometheus', name: 'Prometheus 2' },
+      });
+
+      expect(getDatasourceVariable(result, 0)?.spec.current).toEqual({ text: 'Prometheus 1', value: 'prom-uid-1' });
+      expect(getDatasourceVariable(result, 1)?.spec.current).toEqual({ text: 'Prometheus 2', value: 'prom-uid-2' });
+      // $dsVar refs keep their datasource; export labels are stripped
+      expect(getPanelQueryDatasourceName(result, 'panel-a')).toBe('${dsA}');
+      expect(getPanelQueryDatasourceName(result, 'panel-b')).toBe('$dsB');
+      const panelA = result.elements['panel-a'];
+      const panelB = result.elements['panel-b'];
+      if (panelA.kind === 'Panel' && panelA.spec.data?.kind === 'QueryGroup') {
+        expect(panelA.spec.data.spec.queries[0].spec.query?.labels?.[ExportLabel]).toBeUndefined();
+        expect(panelA.spec.data.spec.queries[0].spec.query?.labels?.[ExportDatasourceName]).toBeUndefined();
+      }
+      if (panelB.kind === 'Panel' && panelB.spec.data?.kind === 'QueryGroup') {
+        expect(panelB.spec.data.spec.queries[0].spec.query?.labels?.[ExportLabel]).toBeUndefined();
+      }
     });
   });
 
@@ -1508,6 +2179,63 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(variable).toBeDefined();
       expect(variable?.datasource?.name).toBe(expectedDs);
     });
+
+    it('strips export-only labels after replacing the datasource', () => {
+      const variable = createAdhocVariable('loki', 'old-loki-uid');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [{ ...variable, labels: { [ExportLabel]: 'loki', [ExportDatasourceName]: 'Original Loki' } }],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+      const updated = getAdhocVariable(result);
+
+      expect(updated?.datasource?.name).toBe('new-loki-uid');
+      // labels held only export-only keys, so the object is omitted entirely
+      expect(updated?.labels).toBeUndefined();
+    });
+
+    it('keeps non-export labels while stripping export-only ones', () => {
+      const variable = createAdhocVariable('loki', 'old-loki-uid');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          {
+            ...variable,
+            labels: { [ExportLabel]: 'loki', [ExportDatasourceName]: 'Original Loki', custom: 'keep-me' },
+          },
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+      const updated = getAdhocVariable(result);
+
+      expect(updated?.labels).toEqual({ custom: 'keep-me' });
+    });
+
+    it('strips export-only labels while preserving a $dsVar reference', () => {
+      const variable = createAdhocVariable('loki', '${ds}');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          {
+            ...variable,
+            labels: { [ExportLabel]: 'loki-1', [ExportDatasourceName]: 'Original Loki' },
+          },
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, {
+        'loki-1': { uid: 'new-loki-uid', type: 'loki', name: 'New Loki' },
+      });
+      const updated = getAdhocVariable(result);
+
+      expect(updated?.datasource?.name).toBe('${ds}');
+      expect(updated?.labels).toBeUndefined();
+    });
   });
 
   describe('GroupBy variable', () => {
@@ -1541,6 +2269,24 @@ describe('replaceDatasourcesInDashboard', () => {
 
       expect(variable).toBeDefined();
       expect(variable?.datasource?.name).toBe(expectedDs);
+    });
+
+    it('strips export-only labels after replacing the datasource', () => {
+      const variable = createGroupByVariable('prometheus', 'old-prom-uid');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          { ...variable, labels: { [ExportLabel]: 'prometheus', [ExportDatasourceName]: 'Original Prometheus' } },
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+      const updated = getGroupByVariable(result);
+
+      expect(updated?.datasource?.name).toBe('new-prom-uid');
+      // labels held only export-only keys, so the object is omitted entirely
+      expect(updated?.labels).toBeUndefined();
     });
   });
 

@@ -134,7 +134,7 @@ func (p *AlertingProxy) withReq(
 	extractor func(*response.NormalResponse) (any, error),
 	headers map[string]string,
 ) response.Response {
-	req, err := http.NewRequest(method, u.String(), body)
+	req, err := http.NewRequestWithContext(ctx.Req.Context(), method, u.String(), body)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}

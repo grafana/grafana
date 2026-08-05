@@ -3,10 +3,12 @@ package reconciler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -23,6 +25,12 @@ import (
 const dashGroup = "dashboard.grafana.app"
 const dashRes = "dashboards"
 const testModel = "test-model"
+
+// testRVBase anchors test RVs to a "now" snowflake RV
+var testRVBase = resource.ToSnowflakeRV(time.Now().UnixMicro())
+
+// snowflakeRV returns a snowflake-format RV offset from testRVBase
+func snowflakeRV(offset int64) int64 { return testRVBase + offset }
 
 // minimalDashboard returns a single-panel dashboard payload that the
 // dashboard extractor will turn into one embed.Item.
@@ -243,6 +251,156 @@ func TestReconciler_StaleSubresources_AreDeletedBeforeUpsert(t *testing.T) {
 	require.Len(t, vec.upserts, 1)
 }
 
+// threePanelDashboard builds a 3-panel dashboard with distinct per-panel content.
+func threePanelDashboard(panel2Title string) []byte {
+	body, _ := json.Marshal(map[string]any{
+		"uid": "dash-1", "title": "Dash",
+		"panels": []any{
+			map[string]any{"id": 1, "title": "CPU", "description": "cpu"},
+			map[string]any{"id": 2, "title": panel2Title, "description": "mem"},
+			map[string]any{"id": 3, "title": "Disk", "description": "disk"},
+		},
+	})
+	return body
+}
+
+// Re-processing with one panel changed re-embeds only that panel.
+func TestReconciler_PartialReembed_OnlyChangedPanel(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, threePanelDashboard("Mem")))
+	s.processPending(context.Background())
+	require.Len(t, vec.upserts, 1)
+	require.Len(t, vec.upserts[0], 3, "first write embeds all three panels")
+	require.Equal(t, 1, text.calls)
+
+	// Only panel/2's title changes.
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, threePanelDashboard("Memory")))
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 2, "second write happened")
+	require.Len(t, vec.upserts[1], 1, "only the changed panel is re-embedded")
+	assert.Equal(t, "panel/2", vec.upserts[1][0].Subresource)
+	assert.Equal(t, 2, text.calls)
+	assert.Equal(t, []int{1}, text.textSets[1], "embedder called with exactly one text")
+	assert.Empty(t, vec.delsubs, "nothing deleted; every panel is still desired")
+	assert.Equal(t, int64(200), vec.latestRV)
+}
+
+// Re-processing identical content writes nothing but still advances the checkpoint.
+func TestReconciler_PartialReembed_NoChangeSkipsWrite(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
+	s.processPending(context.Background())
+	require.Len(t, vec.upserts, 1)
+	require.Equal(t, 1, text.calls)
+
+	// Re-process byte-identical content at a higher RV.
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, minimalDashboard("dash-1", "Dash 1")))
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1, "no re-embed when content is unchanged")
+	assert.Equal(t, 1, text.calls, "embedder not called again")
+	assert.Empty(t, vec.delsubs, "nothing deleted")
+	assert.Equal(t, int64(200), vec.latestRV, "cursor still advances on a no-op write")
+}
+
+// dashboardInFolder sets the folder UID via the grafana.app/folder annotation.
+func dashboardInFolder(uid, title, folderUID string) []byte {
+	body, _ := json.Marshal(map[string]any{
+		"uid": uid, "title": title,
+		"metadata": map[string]any{
+			"annotations": map[string]any{"grafana.app/folder": folderUID},
+		},
+		"panels": []any{
+			map[string]any{"id": 1, "title": "CPU", "description": "CPU usage"},
+		},
+	})
+	return body
+}
+
+// A folder move doesn't change content but must refresh the authz
+// folder, so it forces a re-embed.
+func TestReconciler_PartialReembed_FolderMoveReembeds(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, dashboardInFolder("dash-1", "Dash", "folder-a")))
+	s.processPending(context.Background())
+	require.Len(t, vec.upserts, 1)
+	require.Equal(t, "folder-a", vec.upserts[0][0].Folder)
+	require.Equal(t, 1, text.calls)
+
+	// Move to folder-b; panel content is identical.
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, dashboardInFolder("dash-1", "Dash", "folder-b")))
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 2, "folder move re-embeds despite unchanged content")
+	assert.Equal(t, "folder-b", vec.upserts[1][0].Folder, "stored folder refreshed to the new folder")
+	assert.Equal(t, 2, text.calls)
+}
+
+// A panel removed with no other change must delete the stale row without
+// embedding anything (empty changed, non-empty desired).
+func TestReconciler_PartialReembed_DeleteOnly(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, threePanelDashboard("Mem")))
+	s.processPending(context.Background())
+	require.Len(t, vec.upserts[0], 3)
+	require.Equal(t, 1, text.calls)
+
+	// Drop panel/3 (Disk); panels 1 and 2 are byte-identical.
+	twoPanel, _ := json.Marshal(map[string]any{
+		"uid": "dash-1", "title": "Dash",
+		"panels": []any{
+			map[string]any{"id": 1, "title": "CPU", "description": "cpu"},
+			map[string]any{"id": 2, "title": "Mem", "description": "mem"},
+		},
+	})
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, twoPanel))
+	s.processPending(context.Background())
+
+	assert.Equal(t, 1, text.calls, "no embed; surviving panels unchanged")
+	require.Len(t, vec.delsubs, 1, "the removed panel is deleted")
+	assert.ElementsMatch(t, []string{"panel/3"}, vec.delsubs[0].Subresources)
+	assert.Equal(t, int64(200), vec.latestRV)
+}
+
+// Two panels can map to the same subresource (explicit id N and an
+// id-less panel at positional index N both yield panel/N). A stale row
+// must still be detected and deleted — a per-item match count would
+// double-count the collision and wrongly skip the cleanup.
+func TestReconciler_PartialReembed_SubresourceCollision_DeletesStale(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	collide, _ := json.Marshal(map[string]any{
+		"uid": "dash-1", "title": "Dash",
+		"panels": []any{
+			map[string]any{"id": 1, "title": "X", "description": "d"}, // panel/1
+			map[string]any{"title": "X", "description": "d"},          // no id, idx 1 → panel/1
+		},
+	})
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, collide))
+	s.processPending(context.Background())
+	require.Equal(t, 1, text.calls)
+
+	// A stale subresource that no longer exists in the dashboard.
+	vec.storedSubs[subsKey("ns", testModel, dashRes, "dash-1")]["panel/9"] = "stale"
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, collide))
+	s.processPending(context.Background())
+
+	require.Len(t, vec.delsubs, 1, "stale row deleted despite the subresource collision")
+	assert.ElementsMatch(t, []string{"panel/9"}, vec.delsubs[0].Subresources)
+}
+
 func TestReconciler_MonotonicCheckpoint(t *testing.T) {
 	vec := newFakeVector()
 	s, text := newReconciler(t, &fakeStorage{}, vec)
@@ -303,11 +461,11 @@ func TestReconciler_Bootstrap_PullsCrossNamespaceEvents(t *testing.T) {
 	// them per-dashboard.
 	st := &fakeStorage{}
 	st.changes = []*resource.ModifiedResource{
-		dashChange(resourcepb.WatchEvent_ADDED, "ns-a", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")),
-		dashChange(resourcepb.WatchEvent_ADDED, "ns-b", "dash-2", 200, minimalDashboard("dash-2", "Dash 2")),
+		dashChange(resourcepb.WatchEvent_ADDED, "ns-a", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")),
+		dashChange(resourcepb.WatchEvent_ADDED, "ns-b", "dash-2", snowflakeRV(200), minimalDashboard("dash-2", "Dash 2")),
 	}
 	vec := newFakeVector()
-	vec.latestRV = 50 // anything below the change RVs
+	vec.latestRV = snowflakeRV(50) // anything below the change RVs
 	s, text := newReconciler(t, st, vec)
 
 	s.startupReconcile(context.Background())
@@ -315,17 +473,17 @@ func TestReconciler_Bootstrap_PullsCrossNamespaceEvents(t *testing.T) {
 
 	require.Len(t, vec.upserts, 2)
 	assert.Equal(t, 2, text.calls)
-	assert.Equal(t, int64(200), vec.latestRV)
+	assert.Equal(t, snowflakeRV(200), vec.latestRV)
 }
 
 func TestReconciler_Bootstrap_FiltersBelowCursor(t *testing.T) {
 	st := &fakeStorage{}
 	st.changes = []*resource.ModifiedResource{
-		dashChange(resourcepb.WatchEvent_ADDED, "ns", "old", 100, minimalDashboard("old", "Old")),
-		dashChange(resourcepb.WatchEvent_ADDED, "ns", "new", 200, minimalDashboard("new", "New")),
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "old", snowflakeRV(100), minimalDashboard("old", "Old")),
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "new", snowflakeRV(200), minimalDashboard("new", "New")),
 	}
 	vec := newFakeVector()
-	vec.latestRV = 150
+	vec.latestRV = snowflakeRV(150)
 	s, _ := newReconciler(t, st, vec)
 
 	s.startupReconcile(context.Background())
@@ -333,7 +491,7 @@ func TestReconciler_Bootstrap_FiltersBelowCursor(t *testing.T) {
 
 	require.Len(t, vec.upserts, 1)
 	assert.Equal(t, "new", vec.upserts[0][0].UID)
-	assert.Equal(t, int64(200), vec.latestRV)
+	assert.Equal(t, snowflakeRV(200), vec.latestRV)
 }
 
 // ---------- Watch path ----------
@@ -427,20 +585,22 @@ func TestReconciler_EnqueueDedup_DeleteOverridesOlderUpsert(t *testing.T) {
 	assert.Equal(t, int64(200), vec.latestRV)
 }
 
-func TestReconciler_CursorFiltersAlreadyProcessedEvents(t *testing.T) {
+// Events at or below the cursor were already processed; they're filtered
+// out and only newer ones embed. The cursor advances to the max.
+func TestReconciler_FiltersEventsAtOrBelowCursor(t *testing.T) {
 	vec := newFakeVector()
-	vec.latestRV = 150
+	vec.latestRV = snowflakeRV(150)
 	s, text := newReconciler(t, &fakeStorage{}, vec)
 
-	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "old", 100, minimalDashboard("old", "Old")))
-	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "new", 200, minimalDashboard("new", "New")))
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "old", snowflakeRV(100), minimalDashboard("old", "Old")))
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "new", snowflakeRV(200), minimalDashboard("new", "New")))
 
 	s.processPending(context.Background())
 
 	assert.Equal(t, 1, text.calls)
 	require.Len(t, vec.upserts, 1)
 	assert.Equal(t, "new", vec.upserts[0][0].UID)
-	assert.Equal(t, int64(200), vec.latestRV)
+	assert.Equal(t, snowflakeRV(200), vec.latestRV)
 }
 
 // ---------- Retry cap ----------
@@ -581,20 +741,20 @@ func TestReconciler_StartupReconcile_FlushesAtBatchSize(t *testing.T) {
 	st := &fakeStorage{}
 	// Emit in DESC order to mirror the real SQL backend.
 	for i := 6; i >= 0; i-- {
-		rv := int64(100 + i*10)
+		rv := snowflakeRV(int64(100 + i*10))
 		name := fmt.Sprintf("dash-%d", i)
 		st.changes = append(st.changes,
 			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
 	}
 
 	vec := newFakeVector()
-	vec.latestRV = 50
+	vec.latestRV = snowflakeRV(50)
 	s, _ := newReconciler(t, st, vec)
 
 	s.startupReconcile(context.Background())
 
 	require.Len(t, vec.upserts, 7, "every event must be processed across batched flushes")
-	assert.Equal(t, int64(160), vec.latestRV, "cursor advances to highest RV")
+	assert.Equal(t, snowflakeRV(160), vec.latestRV, "cursor advances to highest RV")
 	assert.Equal(t, 0, s.pendingLen(), "queue is empty after startup")
 	assert.Equal(t, 1, vec.setLatestRVCalls, "cursor advances exactly once at end of startup")
 }
@@ -614,20 +774,20 @@ func TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents(t *testing.T) {
 	st := &fakeStorage{}
 	// Strictly descending RV order, mirroring the real SQL backend.
 	for i := 5; i >= 0; i-- {
-		rv := int64(100 + i*10)
+		rv := snowflakeRV(int64(100 + i*10))
 		name := fmt.Sprintf("dash-%d", i)
 		st.changes = append(st.changes,
 			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
 	}
 
 	vec := newFakeVector()
-	vec.latestRV = 50
+	vec.latestRV = snowflakeRV(50)
 	s, _ := newReconciler(t, st, vec)
 
 	s.startupReconcile(context.Background())
 
 	assert.Len(t, vec.upserts, 6, "every event embedded even though batches arrive in DESC order")
-	assert.Equal(t, int64(150), vec.latestRV)
+	assert.Equal(t, snowflakeRV(150), vec.latestRV)
 }
 
 // TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure
@@ -639,21 +799,21 @@ func TestReconciler_StartupReconcile_DescOrderDoesNotDropEvents(t *testing.T) {
 func TestReconciler_StartupReconcile_RequeuesOnCheckpointWriteFailure(t *testing.T) {
 	st := &fakeStorage{}
 	for i := 0; i < 3; i++ {
-		rv := int64(100 + i*10)
+		rv := snowflakeRV(int64(100 + i*10))
 		name := fmt.Sprintf("dash-%d", i)
 		st.changes = append(st.changes,
 			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
 	}
 
 	vec := newFakeVector()
-	vec.latestRV = 50
+	vec.latestRV = snowflakeRV(50)
 	vec.setLatestRVErr = fmt.Errorf("transient checkpoint write failure")
 	s, _ := newReconciler(t, st, vec)
 
 	s.startupReconcile(context.Background())
 
 	assert.Len(t, vec.upserts, 3, "embeds succeeded even though the cursor write failed")
-	assert.Equal(t, int64(50), vec.latestRV, "cursor stays at old value when SetLatestRV errors")
+	assert.Equal(t, snowflakeRV(50), vec.latestRV, "cursor stays at old value when SetLatestRV errors")
 	assert.Equal(t, 3, s.pendingLen(), "all processed events re-enqueued for the next cycle to retry the advance")
 }
 
@@ -669,21 +829,21 @@ func TestReconciler_StartupReconcile_DoesNotProcessWatchEvents(t *testing.T) {
 
 	st := &fakeStorage{}
 	for i := 0; i < 4; i++ {
-		rv := int64(100 + i*10)
+		rv := snowflakeRV(int64(100 + i*10))
 		name := fmt.Sprintf("iter-%d", i)
 		st.changes = append(st.changes,
 			dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name)))
 	}
 
 	vec := newFakeVector()
-	vec.latestRV = 50
+	vec.latestRV = snowflakeRV(50)
 	s, _ := newReconciler(t, st, vec)
 
 	// Pre-seed the global queue with a watch event at a much higher RV
 	// for an unrelated dashboard. If bootstrap incorrectly drained the
 	// global queue, this RV (9999) would become the new cursor and the
 	// remaining iter events would be filtered out.
-	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "watch-only", 9999,
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "watch-only", snowflakeRV(9999),
 		minimalDashboard("watch-only", "Watch Only")))
 
 	s.startupReconcile(context.Background())
@@ -694,14 +854,14 @@ func TestReconciler_StartupReconcile_DoesNotProcessWatchEvents(t *testing.T) {
 		require.NotEmpty(t, batch)
 		assert.NotEqual(t, "watch-only", batch[0].UID, "watch event must not be processed during bootstrap")
 	}
-	assert.Equal(t, int64(130), vec.latestRV, "cursor stays within iter range during bootstrap")
+	assert.Equal(t, snowflakeRV(130), vec.latestRV, "cursor stays within iter range during bootstrap")
 	assert.Equal(t, 1, s.pendingLen(), "watch event remains in global queue for the next cycle")
 
 	// A subsequent processPending (Run's first cycle) drains the watch event.
 	s.processPending(context.Background())
 	require.Len(t, vec.upserts, 5)
 	assert.Equal(t, "watch-only", vec.upserts[4][0].UID)
-	assert.Equal(t, int64(9999), vec.latestRV)
+	assert.Equal(t, snowflakeRV(9999), vec.latestRV)
 }
 
 // TestReconciler_StartupReconcile_SkipsIterEventsSupersededByWatch
@@ -711,15 +871,15 @@ func TestReconciler_StartupReconcile_DoesNotProcessWatchEvents(t *testing.T) {
 func TestReconciler_StartupReconcile_SkipsIterEventsSupersededByWatch(t *testing.T) {
 	st := &fakeStorage{}
 	st.changes = []*resource.ModifiedResource{
-		dashChange(resourcepb.WatchEvent_ADDED, "ns", "shared", 100, minimalDashboard("shared", "v1")),
-		dashChange(resourcepb.WatchEvent_ADDED, "ns", "other", 110, minimalDashboard("other", "Other")),
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "shared", snowflakeRV(100), minimalDashboard("shared", "v1")),
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "other", snowflakeRV(110), minimalDashboard("other", "Other")),
 	}
 	vec := newFakeVector()
-	vec.latestRV = 50
+	vec.latestRV = snowflakeRV(50)
 	s, _ := newReconciler(t, st, vec)
 
 	// Watch already saw a newer write for "shared".
-	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "shared", 500,
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "shared", snowflakeRV(500),
 		minimalDashboard("shared", "v2")))
 
 	s.startupReconcile(context.Background())
@@ -886,10 +1046,10 @@ func TestReconciler_Run_ContextCancelDuringLockWait(t *testing.T) {
 func TestReconciler_Run_RunsStartupAndCycles(t *testing.T) {
 	st := &fakeStorage{}
 	st.changes = []*resource.ModifiedResource{
-		dashChange(resourcepb.WatchEvent_ADDED, "ns", "startup-1", 100, minimalDashboard("startup-1", "Startup 1")),
+		dashChange(resourcepb.WatchEvent_ADDED, "ns", "startup-1", snowflakeRV(100), minimalDashboard("startup-1", "Startup 1")),
 	}
 	vec := newFakeVector()
-	vec.latestRV = 50 // > 0 so startupReconcile actually runs
+	vec.latestRV = snowflakeRV(50) // > 0 so startupReconcile actually runs
 	s, _ := newRunnable(t, st, vec)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -905,7 +1065,7 @@ func TestReconciler_Run_RunsStartupAndCycles(t *testing.T) {
 	}, time.Second, time.Millisecond, "startupReconcile should run before the first tick")
 
 	// Now enqueue a tick-driven event and wait for the next cycle.
-	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "live-1", 200, minimalDashboard("live-1", "Live 1")))
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "live-1", snowflakeRV(200), minimalDashboard("live-1", "Live 1")))
 	require.Eventually(t, func() bool {
 		vec.mu.Lock()
 		defer vec.mu.Unlock()
@@ -961,6 +1121,56 @@ func TestReconciler_ProcessBatch_RequeuesOnSetLatestRVFailure(t *testing.T) {
 	assert.Equal(t, 2, s.pendingLen(), "both events re-enqueued so the next cycle retries the advance")
 }
 
+func labeledDashboard(uid, title string) []byte {
+	body, _ := json.Marshal(map[string]any{
+		"metadata": map[string]any{
+			"name":   uid,
+			"labels": map[string]any{controller.LabelPendingDelete: "true"},
+		},
+		"spec": map[string]any{"uid": uid, "title": title},
+	})
+	return body
+}
+
+func TestReconciler_PendingDeleteLabel_SkipsUpsertAndAdvancesCursor(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 100, labeledDashboard("dash-1", "Dash 1")))
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-2", 200, minimalDashboard("dash-2", "Dash 2")))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1, "only the unlabeled resource should be embedded")
+	assert.Equal(t, 1, text.calls, "skipped event must not call the embedder")
+	assert.Equal(t, int64(200), vec.latestRV, "skips count as processed so the cursor advances")
+	assert.Equal(t, 0, s.pendingLen(), "skipped events are not retried")
+}
+
+func TestReconciler_PendingDeleteLabel_DeleteEventStillProcessed(t *testing.T) {
+	vec := newFakeVector()
+	s, _ := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_DELETED, "ns", "dash-x", 50, nil))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.deletes, 1, "deletes must still drop vectors regardless of labels")
+}
+
+func TestReconciler_PendingDeleteLabel_RestoreReembeds(t *testing.T) {
+	vec := newFakeVector()
+	s, _ := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 100, labeledDashboard("dash-1", "Dash 1")))
+	s.processPending(context.Background())
+	require.Empty(t, vec.upserts, "labeled resource is skipped")
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, minimalDashboard("dash-1", "Dash 1")))
+	s.processPending(context.Background())
+	require.Len(t, vec.upserts, 1, "unlabeled (restored) resource embeds again")
+}
+
 // TestReconciler_Run_BroadcasterDeliversWatchEvents pins the watch
 // path: Subscribe is called, events pushed onto the channel reach the
 // queue, and the next cycle drains them.
@@ -991,7 +1201,7 @@ func TestReconciler_Run_BroadcasterDeliversWatchEvents(t *testing.T) {
 			Name:      "watched",
 		},
 		Value:           minimalDashboard("watched", "Watched"),
-		ResourceVersion: 500,
+		ResourceVersion: snowflakeRV(500),
 	})
 
 	require.Eventually(t, func() bool {
@@ -1047,4 +1257,70 @@ func TestReconciler_Run_BroadcasterSubscribeErrorContinues(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("Run did not exit after ctx cancel")
 	}
+}
+
+func TestReconciler_Run_LaunchesBackfiller(t *testing.T) {
+	// Run drives the backfiller and waits for it on shutdown.
+	vec := newFakeVector()
+	bf := &fakeBackfiller{blocked: true}
+	text := &fakeText{dim: 4}
+	s, err := New(Options{
+		Storage:           &fakeStorage{},
+		VectorBackend:     vec,
+		BatchEmbedder:     embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+		Builders:          []embed.Builder{dashboard.New()},
+		Backfiller:        bf,
+		Interval:          5 * time.Millisecond,
+		LockRetryInterval: 1 * time.Millisecond,
+	})
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- s.Run(ctx) }()
+
+	require.Eventually(t, func() bool {
+		return bf.runCount() == 1
+	}, time.Second, time.Millisecond, "Run should launch the backfiller")
+
+	cancel()
+	select {
+	case err := <-done:
+		require.ErrorIs(t, err, context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("Run did not exit after ctx cancel")
+	}
+}
+
+func TestReconciler_EnsureResourceInitialized_UsesEventRV(t *testing.T) {
+	// Bounds the job by the triggering event's RV; idempotent per process.
+	vec := newFakeVector()
+	s, _ := newReconciler(t, &fakeStorage{}, vec)
+	b := dashboard.New()
+
+	require.NoError(t, s.ensureResourceInitialized(context.Background(), b, snowflakeRV(777)))
+
+	assert.Equal(t, []string{dashRes}, vec.ensuredPartitions)
+	require.Len(t, vec.backfillJobs, 1)
+	assert.Equal(t, dashRes, vec.backfillJobs[0].Resource)
+	assert.Equal(t, testModel, vec.backfillJobs[0].Model)
+	assert.Equal(t, snowflakeRV(777), vec.backfillJobs[0].StoppingRV)
+
+	// Second event for the same resource: no-op (no new partition or job).
+	require.NoError(t, s.ensureResourceInitialized(context.Background(), b, snowflakeRV(999)))
+	assert.Len(t, vec.ensuredPartitions, 1)
+	assert.Len(t, vec.backfillJobs, 1)
+	assert.Equal(t, snowflakeRV(777), vec.backfillJobs[0].StoppingRV)
+}
+
+func TestReconciler_EnsureResourceInitialized_CreateError(t *testing.T) {
+	// A CreateBackfillJob failure surfaces (and leaves the resource unmarked,
+	// so the next event retries).
+	vec := newFakeVector()
+	vec.createBackfillErr = errors.New("db unavailable")
+	s, _ := newReconciler(t, &fakeStorage{}, vec)
+
+	err := s.ensureResourceInitialized(context.Background(), dashboard.New(), snowflakeRV(1))
+	require.Error(t, err)
+	assert.Empty(t, vec.backfillJobs)
 }

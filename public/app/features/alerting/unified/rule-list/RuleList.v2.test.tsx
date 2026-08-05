@@ -3,6 +3,7 @@ import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -10,6 +11,7 @@ import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, grantUserRole, mockDataSource } from '../mocks';
 import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
+import { setupAutoSyncConfig } from '../mocks/server/handlers/k8s/config.k8s';
 import { type RulesFilter } from '../search/rulesSearchParser';
 import { setupDataSources } from '../testSetup/datasources';
 
@@ -57,7 +59,7 @@ const ui = {
     grouped: byRole('radio', { name: /grouped/i }),
     list: byRole('radio', { name: /list/i }),
   },
-  searchInput: byTestId('search-query-input'),
+  searchInput: byTestId(selectors.pages.Alerting.searchInput),
 };
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
@@ -66,7 +68,7 @@ setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 testWithFeatureToggles({ enable: ['alertingListViewV2'] });
 
-setupMswServer();
+const server = setupMswServer();
 
 alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
 alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
@@ -330,9 +332,9 @@ describe('RuleListActions', () => {
   describe('Import to Grafana Alerting Wizard', () => {
     testWithFeatureToggles({ enable: ['alertingMigrationWizardUI'] });
 
-    it('should show "Import to Grafana Alerting" option when user is admin with required permissions', async () => {
-      grantUserRole(OrgRole.Admin);
-      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
+    it('shows "Import to Grafana Alerting" for a non-admin with import permissions', async () => {
+      grantUserRole(OrgRole.Editor);
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingProvisioningSetStatus]);
 
       const { user } = render(<RuleListActions />);
       await user.click(ui.moreButton.get());
@@ -341,8 +343,7 @@ describe('RuleListActions', () => {
       expect(ui.menuOptions.importToGma.query(menu)).toBeInTheDocument();
     });
 
-    it('should not show "Import to Grafana Alerting" option when user is not admin', async () => {
-      grantUserRole(OrgRole.Viewer);
+    it('does not show "Import to Grafana Alerting" without import permissions', async () => {
       grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
 
       const { user } = render(<RuleListActions />);
@@ -438,6 +439,90 @@ describe('RuleListActions', () => {
       const menu = await ui.moreMenu.find();
 
       expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
+    });
+  });
+
+  describe('Auto-sync Mimir Alertmanager — disables Alertmanager import menu items', () => {
+    testWithFeatureToggles({
+      enable: ['alerting.syncExternalAlertmanager', 'alertingMigrationUI', 'alertingMigrationWizardUI'],
+    });
+
+    // Drive auto-sync state via the Config resource: useIsAutoSyncActive reads
+    // spec.externalAlertmanagerSync.datasourceUid, so specUid is the active-sync signal.
+    function mockAutoSync(uid?: string) {
+      setupAutoSyncConfig(server, uid ? { specUid: uid } : {});
+    }
+
+    async function findDisabledWizardItem(menu: HTMLElement) {
+      // The menu item renders the disabled reason in its `description` slot, so the accessible
+      // name expands beyond the original label — match via a name regex that ignores the suffix.
+      return await byRole('menuitem', { name: /import to grafana alerting/i }).find(menu);
+    }
+
+    // Auto-sync only mirrors the Alertmanager configuration, and the rule convert endpoints have no
+    // sync check, so the rules-only import stays available to admins and non-admins alike.
+    it.each([OrgRole.Admin, OrgRole.Editor])(
+      'keeps "Import alert rules" enabled for %s when sync is configured for the org',
+      async (role) => {
+        grantUserRole(role);
+        grantUserPermissions([
+          AccessControlAction.AlertingRuleRead,
+          AccessControlAction.AlertingRuleCreate,
+          AccessControlAction.AlertingProvisioningSetStatus,
+          AccessControlAction.ActionAlertingNotificationsConfigRead,
+        ]);
+        mockAutoSync('mimir-uid');
+
+        const { user } = render(<RuleListActions />);
+        await user.click(ui.moreButton.get());
+        const menu = await ui.moreMenu.find();
+
+        const item = ui.menuOptions.importAlertRules.get(menu);
+        expect(item).toHaveAttribute('href', '/alerting/import-datasource-managed-rules');
+        expect(item).not.toHaveAttribute('aria-disabled', 'true');
+      }
+    );
+
+    it('disables "Import to Grafana Alerting" with a reason when sync is configured for the org', async () => {
+      grantUserRole(OrgRole.Editor);
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+        AccessControlAction.ActionAlertingNotificationsConfigRead,
+      ]);
+      mockAutoSync('mimir-uid');
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      const item = await findDisabledWizardItem(menu);
+      expect(item).toHaveAttribute('aria-disabled', 'true');
+      expect(item).not.toHaveAttribute('href');
+      expect(item).toHaveTextContent(/auto-sync/i);
+    });
+
+    it('leaves import items enabled when sync is not configured', async () => {
+      grantUserRole(OrgRole.Admin);
+      grantUserPermissions([
+        AccessControlAction.AlertingRuleRead,
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+        AccessControlAction.AlertingNotificationsWrite,
+        AccessControlAction.ActionAlertingNotificationsConfigRead,
+      ]);
+      mockAutoSync();
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      const importItem = ui.menuOptions.importAlertRules.get(menu);
+      const wizardItem = ui.menuOptions.importToGma.get(menu);
+      expect(importItem).toHaveAttribute('href', '/alerting/import-datasource-managed-rules');
+      expect(importItem).not.toHaveAttribute('aria-disabled', 'true');
+      expect(wizardItem).toHaveAttribute('href', '/alerting/import-to-gma');
+      expect(wizardItem).not.toHaveAttribute('aria-disabled', 'true');
     });
   });
 

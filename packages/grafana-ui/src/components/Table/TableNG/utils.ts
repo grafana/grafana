@@ -1,4 +1,3 @@
-import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
@@ -32,9 +31,9 @@ import { TableCellInspectorMode } from '../TableCellInspector';
 import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
-import { inferPills } from './Cells/PillCell';
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
+import { type TextAlign } from './styles';
 import {
   type TableRow,
   type ColumnTypes,
@@ -45,6 +44,103 @@ import {
   type MeasureCellHeightEntry,
   type FilterType,
 } from './types';
+
+// inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
+// styles.ts → utils.tsx → renderers.tsx → PillCell.tsx → styles.ts
+/* ---------------------------- Pill inference ----------------------------- */
+const SPLIT_RE = /\s*,\s*/;
+
+function inferPillsImpl(rawValue: unknown): unknown[] {
+  if (rawValue === '' || rawValue == null) {
+    return [];
+  }
+
+  if (Array.isArray(rawValue)) {
+    return rawValue.filter((v) => v != null).map((v) => String(v).trim());
+  }
+
+  const value = String(rawValue);
+
+  if (value[0] === '[') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value.trim().split(SPLIT_RE);
+    }
+  }
+
+  return value.trim().split(SPLIT_RE);
+}
+
+/**
+ * @internal
+ * A bounded cache with O(1) inserts and no per-insert eviction scan. It keeps two generations:
+ * writes go to `primary`; when `primary` fills, it becomes `secondary` (whatever was in the old
+ * `secondary` is dropped) and a fresh `primary` starts. Reads check both generations and promote a
+ * survivor back into `primary`, which approximates LRU. Total live entries stay within ~2x maxSize.
+ */
+export function createBoundedCache<K, V>(maxSize: number) {
+  let primary = new Map<K, V>();
+  let secondary = new Map<K, V>();
+
+  // Every write to `primary` — whether a fresh `set` or a promotion from `secondary` in `get` — goes
+  // through here so the rotation check runs on all growth paths. (Rotating only in `set` let `get`'s
+  // promotions grow `primary` past `maxSize` between writes, breaking the ~2x bound.)
+  const put = (key: K, value: V): void => {
+    primary.set(key, value);
+    if (primary.size >= maxSize) {
+      secondary = primary;
+      primary = new Map<K, V>();
+    }
+  };
+
+  return {
+    get(key: K): V | undefined {
+      const fromPrimary = primary.get(key);
+      if (fromPrimary !== undefined) {
+        return fromPrimary;
+      }
+      const fromSecondary = secondary.get(key);
+      if (fromSecondary !== undefined) {
+        put(key, fromSecondary); // promote into the current generation, keeping the size bound
+      }
+      return fromSecondary;
+    },
+    set: put,
+  };
+}
+
+// inferPills is pure and its inputs are stable across resizes, so we cache results. Array/object
+// values are cached by reference in a WeakMap (unbounded-safe, auto-GC'd). Primitive (string) values
+// persist for the whole app lifetime across every table, so they use a generational bounded cache
+// (see createBoundedCache) sized generously enough that a large table mostly hits.
+const arrayPillCache = new WeakMap<object, unknown[]>();
+const primitivePillCache = createBoundedCache<string, unknown[]>(15000);
+
+// Accepts an arbitrary raw cell value: pill columns hold string arrays (not in TableCellValue), and
+// values can be null, so this is deliberately typed `unknown` and narrowed at runtime.
+export function inferPills(rawValue: unknown): unknown[] {
+  if (rawValue == null || rawValue === '') {
+    return [];
+  }
+
+  if (typeof rawValue === 'object') {
+    let cached = arrayPillCache.get(rawValue);
+    if (cached === undefined) {
+      cached = inferPillsImpl(rawValue);
+      arrayPillCache.set(rawValue, cached);
+    }
+    return cached;
+  }
+
+  const key = String(rawValue);
+  let cached = primitivePillCache.get(key);
+  if (cached === undefined) {
+    cached = inferPillsImpl(rawValue);
+    primitivePillCache.set(key, cached);
+  }
+  return cached;
+}
 
 /* ---------------------------- Cell calculations --------------------------- */
 /**
@@ -194,30 +290,45 @@ const PILLS_SPACING = 12; // 6px horizontal padding on each side
 const PILLS_GAP = 4; // gap between pills
 
 export function getPillCellHeightMeasurer(measureWidth: (value: string) => number): MeasureCellHeight {
-  const widthCache: Record<string, number> = {};
+  // Per-pill intrinsic width, keyed by the pill string — shared across values (e.g. an actor who
+  // appears in many rows) and across column widths, so a resize never re-measures pill text.
+  const pillWidthCache: Record<string, number> = {};
+  // Per-value laid-out pill widths (intrinsic width + chip padding), keyed by the cell value and
+  // therefore width-independent: on a resize we reuse these and skip both inferPills and text
+  // measurement, redoing only the cheap wrap arithmetic below. Neither cache needs eviction: the
+  // whole closure is rebuilt when fields/typography/maxHeight change, so they live only as long as
+  // the current table structure and are bounded by its distinct values.
+  const pillWidthsByValue = new Map<string, number[]>();
 
   return (value, width, _field, _rowIdx, lineHeight) => {
     if (value == null) {
       return 0;
     }
 
-    const pillValues = inferPills(String(value));
-    if (pillValues.length === 0) {
+    const strValue = String(value);
+    let pillWidths = pillWidthsByValue.get(strValue);
+    if (pillWidths === undefined) {
+      pillWidths = inferPills(strValue).map((pill) => {
+        const strPill = String(pill);
+        let rawWidth = pillWidthCache[strPill];
+        if (rawWidth === undefined) {
+          rawWidth = measureWidth(strPill);
+          pillWidthCache[strPill] = rawWidth;
+        }
+        return rawWidth + PILLS_SPACING;
+      });
+      pillWidthsByValue.set(strValue, pillWidths);
+    }
+
+    if (pillWidths.length === 0) {
       return 0;
     }
 
+    // wrap arithmetic over the (cached) pill widths. This is cheap enough to run per cell; the
+    // expensive parts — parsing and text measurement — are what the caches above eliminate.
     let lines = 0;
     let currentLineUse = width;
-
-    for (const pillValue of pillValues) {
-      const strPill = String(pillValue);
-      let rawWidth = widthCache[strPill];
-      if (rawWidth === undefined) {
-        rawWidth = measureWidth(strPill);
-        widthCache[strPill] = rawWidth;
-      }
-      const pillWidth = rawWidth + PILLS_SPACING;
-
+    for (const pillWidth of pillWidths) {
       if (currentLineUse + pillWidth + PILLS_GAP > width) {
         lines++;
         currentLineUse = pillWidth;
@@ -283,10 +394,7 @@ export function buildCellHeightMeasurers(
         typographyCtx.fontFamily,
         typographyCtx.letterSpacing
       );
-      return [
-        getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width),
-        getPillCellHeightMeasurer((value) => value.length * pillTypographyCtx.avgCharWidth),
-      ];
+      return [getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width), undefined];
     },
   } as const;
 
@@ -358,6 +466,11 @@ export function getRowHeight(
   let maxWidth = 0;
   let maxField: Field | undefined;
   let preciseMeasurer: MeasureCellHeight | undefined;
+  // Tallest height from measurers that already ran precisely (pills, data links). The estimated
+  // winner is remeasured below and can shrink beneath one of these, so we clamp back up to it —
+  // otherwise an over-estimating Auto column could beat a precise pill height and then discard it,
+  // sizing the row too short and clipping the pills.
+  let maxPreciseHeight = -1;
 
   for (const { estimate, measure, fieldIdxs } of measurers) {
     // for some of the cell height measurers, getting the precise height is expensive. those entries set
@@ -381,6 +494,9 @@ export function getRowHeight(
             : cellValueRaw;
         const colWidth = columnWidths[fieldIdx];
         const estimatedHeight = measurer(cellValueForMeasuring, colWidth, field, row.__index, lineHeight);
+        if (!isEstimating && estimatedHeight > maxPreciseHeight) {
+          maxPreciseHeight = estimatedHeight;
+        }
         if (estimatedHeight > maxHeight) {
           maxHeight = estimatedHeight;
           maxValue = cellValueForMeasuring;
@@ -399,9 +515,10 @@ export function getRowHeight(
   }
 
   // if we finished this row height loop with an estimate, we need to call
-  // the `preciseMeasurer` method to get the exact line count.
+  // the `preciseMeasurer` method to get the exact line count. the remeasured winner can come back
+  // shorter than a column we already measured precisely, so never drop below that height.
   if (preciseMeasurer !== undefined) {
-    maxHeight = preciseMeasurer(maxValue, maxWidth, maxField, row.__index, lineHeight);
+    maxHeight = Math.max(preciseMeasurer(maxValue, maxWidth, maxField, row.__index, lineHeight), maxPreciseHeight);
   }
 
   // adjust for vertical padding, and clamp to a minimum default height
@@ -431,8 +548,6 @@ const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
   TableCellDisplayMode.ColorBackground,
 ]);
 
-export type TextAlign = 'left' | 'right' | 'center';
-
 /**
  * @internal
  * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
@@ -448,14 +563,6 @@ export function getAlignment(field: Field): TextAlign {
   }
 
   return align;
-}
-
-/**
- * @internal
- * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
- */
-export function getJustifyContent(textAlign: TextAlign): Property.JustifyContent {
-  return textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start';
 }
 
 const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
@@ -776,44 +883,97 @@ export function applyFilter(
 }
 
 /* ----------------------------- Data grid mapping ---------------------------- */
+// Row metadata keys that must never be shadowed by a same-named data column when
+// building rows via prototype getters (a column named e.g. "__index" would otherwise
+// override the metadata that every cell lookup depends on).
+const RESERVED_ROW_KEYS = new Set(['__depth', '__index', '__parentIndex']);
+
 /**
  * @internal
+ * Builds a converter that maps a DataFrame (struct-of-arrays) into an array of
+ * TableRows (array-of-structs) without eval/`unsafe-eval`.
+ *
+ * Rather than copying every cell value into each row (which forces V8 to use
+ * slow computed-key stores and dominates conversion time on wide frames), each
+ * data row is created from a per-frame prototype that exposes one getter per
+ * column. The getter reads `frame.fields[col].values[this.__index]` on demand,
+ * so construction is O(rows) tiny objects instead of O(rows * cols) writes.
+ *
+ * The `row[displayName]` access contract is preserved for all consumers (sort,
+ * filter, row-height measuring). Note that columns are exposed via the prototype
+ * rather than as own properties, so they do not appear in `Object.keys(row)` /
+ * `JSON.stringify(row)`; no consumer relies on enumerating row own-keys.
+ *
+ * @param displayNames The display names of the frame's fields, in the order they are stored in the frame.
+ * @param nestedFramesFieldName name of the field that contains nested frames. If provided, an expander placeholder row will be emitted for each non-empty nested frame.
  */
-export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
-  const fnBody = `
-    const values = frame.fields.map(f => f.values);
-    const hasNestedFrames = '${nestedFramesFieldName ?? ''}'.length > 0;
+export function compileFrameToRecords(displayNames: string[], nestedFramesFieldName?: string): FrameToRowsConverter {
+  const nestedColIdx = nestedFramesFieldName ? displayNames.indexOf(nestedFramesFieldName) : -1;
+
+  return (frame: DataFrame, nestedRowIndex?: number): TableRow[] => {
+    const values = frame.fields.map((f) => f.values);
     const frameLength = frame.length ?? values[0]?.length ?? 0;
-    const rows = Array(frameLength);
 
-    let rowCount = 0;
-    for (let i = 0; i < frameLength; i++) {
-      rows[rowCount] = {
-        __depth: 0,
-        __index: i,
-        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
-      };
-      if (nestedRowIndex != null) {
-        rows[rowCount].__parentIndex = nestedRowIndex;
+    // Build a prototype carrying one getter per column. The nested-frames column
+    // is intentionally not exposed (it is replaced by an expander placeholder row),
+    // and the reserved meta keys are never shadowed by a same-named column so the
+    // true row metadata (notably __index, used to resolve every cell) always wins.
+    const proto = {
+      __depth: -1,
+      __index: -1,
+      __parentIndex: undefined,
+    };
+    const descriptors: PropertyDescriptorMap = {};
+    for (let j = 0; j < displayNames.length; j++) {
+      const name = displayNames[j];
+      if (j === nestedColIdx || RESERVED_ROW_KEYS.has(name)) {
+        continue;
       }
-      rowCount++;
+      const col = values[j];
+      descriptors[name] = {
+        enumerable: true,
+        get(this: TableRow) {
+          return col[this.__index];
+        },
+      };
+    }
+    Object.defineProperties(proto, descriptors);
 
-      if (hasNestedFrames) {
-        const childFrame = rows[rowCount-1][${JSON.stringify(nestedFramesFieldName)}];
-        if (childFrame) {
-          delete rows[rowCount - 1][${JSON.stringify(nestedFramesFieldName)}];
-          rows[rowCount] = { __depth: 1, __index: i };
-          rowCount++;
-        }
+    const hasParent = nestedRowIndex != null;
+    const nestedValues = nestedColIdx === -1 ? undefined : values[nestedColIdx];
+
+    const createRow = (index: number, depth: number): TableRow => {
+      const row: TableRow = Object.create(proto);
+      row.__depth = depth;
+      row.__index = index;
+      if (hasParent) {
+        row.__parentIndex = nestedRowIndex;
+      }
+      return row;
+    };
+
+    // Fast path: without a nested-frames column the output is exactly one row
+    // per frame entry, so it can be sized up front and written by index.
+    if (nestedValues === undefined) {
+      const result = Array(frameLength);
+      for (let i = 0; i < frameLength; i++) {
+        result[i] = createRow(i, 0);
+      }
+      return result;
+    }
+
+    // Nested path: each entry may emit an extra expander placeholder row, so the
+    // final length isn't known without inspecting the nested column.
+    const rows: TableRow[] = [];
+    for (let i = 0; i < frameLength; i++) {
+      rows.push(createRow(i, 0));
+      if (nestedValues[i]) {
+        rows.push({ __depth: 1, __index: i });
       }
     }
-    return rows;
-  `;
 
-  // Creates a function that converts a DataFrame into an array of TableRows
-  // Uses new Function() for performance as it's faster than creating rows using loops
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return new Function('frame', 'nestedRowIndex', fnBody) as FrameToRowsConverter;
+    return rows;
+  };
 }
 
 /* ----------------------------- Data grid comparator ---------------------------- */
@@ -926,13 +1086,6 @@ export function rowKeyGetter(row: TableRow): string {
 
 /**
  * @internal
- * Returns true if the DataFrame contains nested frames
- */
-export const getIsNestedTable = (fields: Field[]): boolean =>
-  fields.some(({ type }) => type === FieldType.nestedFrames);
-
-/**
- * @internal
  * Calculate the footer height based on the maximum reducer count
  */
 export const calculateFooterHeight = (fields: Field[]): number => {
@@ -1016,6 +1169,40 @@ export function computeColWidths(fields: Field[], availWidth: number) {
           Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
       )
   );
+}
+
+// cells which have to re-measure or re-draw themselves when their column width changes. pills
+// re-wrap, sparklines and gauges re-render their viz against the new width. every other cell type
+// just re-flows text, which the browser handles without us recomputing anything.
+// the legacy basic/gradient/lcd gauge modes aren't listed: getCellOptions migrates them to Gauge.
+const WIDTH_SENSITIVE_CELL_TYPES = new Set<TableCellOptions['type']>([
+  TableCellDisplayMode.Pill,
+  TableCellDisplayMode.Sparkline,
+  TableCellDisplayMode.Gauge,
+]);
+
+/**
+ * @internal
+ * Whether panel width changes should be debounced before they drive the column layout. Debouncing
+ * trades a moment of staleness for fewer layout passes, so it only pays off when applying a width
+ * is actually expensive: some column has to be both auto-sized (a configured width doesn't move
+ * with the panel) and width-sensitive - either a cell which redraws itself against the new width,
+ * or wrapped text, which makes us re-measure every row height.
+ */
+export function shouldDebounceWidth(fields: Field[]): boolean {
+  return fields.some((field) => {
+    if (field.config.custom?.width) {
+      return false;
+    }
+    if (shouldTextWrap(field)) {
+      return true;
+    }
+    const cellType = getCellOptions(field).type;
+    return WIDTH_SENSITIVE_CELL_TYPES.has(
+      // auto cells resolve to a sparkline when the field holds time series frames.
+      cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType
+    );
+  });
 }
 
 export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {
@@ -1192,22 +1379,6 @@ export function parseStyleJson(rawValue: unknown): CSSProperties | void {
     }
   }
 }
-
-// Safari 26.0 introduced rendering bugs which require us to disable several features of the table.
-// The bugs were later fixed in Safari 26.2.
-export const IS_SAFARI_26 = (() => {
-  if (navigator == null) {
-    return false;
-  }
-  const userAgent = navigator.userAgent;
-  const safariVersionMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
-  if (!safariVersionMatch) {
-    return false;
-  }
-  const majorVersion = +safariVersionMatch[1];
-  const minorVersion = +safariVersionMatch[2];
-  return majorVersion === 26 && minorVersion <= 1;
-})();
 
 export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => {
   const key = frame?.meta?.custom?.stableRowKey;

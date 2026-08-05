@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { Controls, Sidebar, Toolbar } from './page-objects';
+import { Controls, Sidebar } from './page-objects';
 
 test.use({
   featureToggles: {
@@ -16,15 +16,14 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can change dashboard description and title', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can change dashboard description and title', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: 'ed155665/annotation-filtering' });
 
-      const controls = new Controls(page, dashboardPage, selectors);
-      const toolbar = new Toolbar(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
-      await toolbar.openDashboardOptions();
+      await sidebar.toolbar.clickButton('Options');
 
       const titleInput = sidebar.dashboardOptions.getTitleInput();
       await expect(titleInput).toHaveValue('Annotation filtering');

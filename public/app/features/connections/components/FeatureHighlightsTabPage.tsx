@@ -38,6 +38,7 @@ export function FeatureHighlightsTabPage({
   const info = useDataSourceInfo({
     dataSourcePluginName: pageNav.dataSourcePluginName,
     alertingSupported: dataSourceHeader.alertingSupported,
+    alertingLoading: dataSourceHeader.alertingLoading,
   });
 
   return (

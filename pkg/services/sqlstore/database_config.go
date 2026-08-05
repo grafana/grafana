@@ -124,7 +124,7 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	dbCfg.MigrationLockAttemptTimeout = sec.Key("locking_attempt_timeout_sec").MustInt()
 
 	dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
-	dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
+	dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(10)
 
 	dbCfg.LogQueries = sec.Key("log_queries").MustBool(false)
 	dbCfg.DeleteAutoGenIDs = sec.Key("delete_auto_gen_ids").MustBool(false)

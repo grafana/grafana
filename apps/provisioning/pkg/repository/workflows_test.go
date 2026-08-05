@@ -56,6 +56,111 @@ func TestIsWriteAllowed(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			// Writing to the configured branch is a direct write; with only the write
+			// workflow it must be allowed. Regression: the configured branch was
+			// previously only resolved for github/git, so GHE repos were rejected here.
+			name: "write allowed for configured branch of github enterprise repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitHubEnterpriseRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHubEnterprise: &provisioning.GitHubEnterpriseRepositoryConfig{
+						Branch: "feature-branch",
+					},
+				},
+			},
+			ref:     "feature-branch",
+			wantErr: false,
+		},
+		{
+			name: "write not allowed for configured branch of github enterprise repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitHubEnterpriseRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					GitHubEnterprise: &provisioning.GitHubEnterpriseRepositoryConfig{
+						Branch: "feature-branch",
+					},
+				},
+			},
+			ref:         "feature-branch",
+			wantErr:     true,
+			expectedErr: "repositories.provisioning.grafana.app is forbidden: write operations are not allowed for this repository",
+			statusCode:  http.StatusForbidden,
+		},
+		{
+			name: "branch workflow allowed on github enterprise repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitHubEnterpriseRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					GitHubEnterprise: &provisioning.GitHubEnterpriseRepositoryConfig{
+						Branch: "main",
+					},
+				},
+			},
+			ref:     "feature-branch",
+			wantErr: false,
+		},
+		{
+			// Regression: the configured branch is resolved via Branch() for every git
+			// provider, so a direct write to it is allowed with only the write workflow.
+			name: "write allowed for configured branch of bitbucket repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.BitbucketRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					Bitbucket: &provisioning.BitbucketRepositoryConfig{
+						Branch: "feature-branch",
+					},
+				},
+			},
+			ref:     "feature-branch",
+			wantErr: false,
+		},
+		{
+			name: "branch workflow allowed on bitbucket repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.BitbucketRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					Bitbucket: &provisioning.BitbucketRepositoryConfig{
+						Branch: "main",
+					},
+				},
+			},
+			ref:     "feature-branch",
+			wantErr: false,
+		},
+		{
+			name: "write allowed for configured branch of gitlab repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitLabRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitLab: &provisioning.GitLabRepositoryConfig{
+						Branch: "feature-branch",
+					},
+				},
+			},
+			ref:     "feature-branch",
+			wantErr: false,
+		},
+		{
+			name: "branch workflow allowed on gitlab repository",
+			repository: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitLabRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					GitLab: &provisioning.GitLabRepositoryConfig{
+						Branch: "main",
+					},
+				},
+			},
+			ref:     "feature-branch",
+			wantErr: false,
+		},
+		{
 			name: "write not allowed for configured branch of github repository",
 			repository: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { t } from '@grafana/i18n';
-import { ToolbarButton } from '@grafana/ui';
+import { type IconName, ToolbarButton } from '@grafana/ui';
 
 interface ToolbarItemButtonProps {
   isOpen: boolean;
@@ -10,7 +10,7 @@ interface ToolbarItemButtonProps {
   pluginId?: string;
 }
 
-function getPluginIcon(pluginId?: string): string {
+function getPluginIcon(pluginId?: string): IconName {
   switch (pluginId) {
     // The docs plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
     // Support both until that migration is complete.

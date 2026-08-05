@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 
 import { createDataFrame, type DataFrame, DataFrameType, EventBusSrv, FieldType, type PanelProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { PanelContextProvider } from '@grafana/ui';
 
@@ -150,17 +149,6 @@ describe('TimeSeriesPanel', () => {
   });
 
   describe('faceted filter pin-to-sidebar persistence', () => {
-    let originalVizLegendFacetedFilter: boolean | undefined;
-
-    beforeEach(() => {
-      originalVizLegendFacetedFilter = config.featureToggles.vizLegendFacetedFilter;
-      config.featureToggles.vizLegendFacetedFilter = true;
-    });
-
-    afterEach(() => {
-      config.featureToggles.vizLegendFacetedFilter = originalVizLegendFacetedFilter;
-    });
-
     it('calls onOptionsChange with facetedFilterPinned: true when "Pin to sidebar" is clicked', async () => {
       const { onOptionsChange, props } = renderPanelWithFacetedFilter();
 
@@ -191,6 +179,54 @@ describe('TimeSeriesPanel', () => {
         ...props.options,
         legend: { ...props.options.legend, facetedFilterPinned: false },
       });
+    });
+  });
+
+  describe('TimeComparison high cardinality (#126181)', () => {
+    function makePodFrame(pod: string, opts: { compare?: boolean } = {}) {
+      return createDataFrame({
+        refId: opts.compare ? 'A-compare' : 'A',
+        meta: opts.compare ? { timeCompare: { isTimeShiftQuery: true, diffMs: -86400000 } } : undefined,
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000], config: {} },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [1, 2, 3],
+            labels: { pod },
+            config: { custom: {} },
+          },
+        ],
+      });
+    }
+
+    it('renders compare legend names for reordered high-cardinality series', () => {
+      // Current: a, b. Compare window: b, a (reordered) — the #126181 mismatch scenario.
+      // Color pairing is covered in utils.test.ts; here we lock the visible legend contract:
+      // names stay tied to labels (with " (comparison)"), and compare series use dashed icons.
+      renderPanel(undefined, [
+        makePodFrame('a'),
+        makePodFrame('b'),
+        makePodFrame('b', { compare: true }),
+        makePodFrame('a', { compare: true }),
+      ]);
+
+      expect(screen.getByTestId(selectors.components.VizLayout.legend)).toBeInTheDocument();
+
+      for (const label of ['a', 'b', 'a (comparison)', 'b (comparison)']) {
+        expect(screen.getByTestId(selectors.components.VizLegend.seriesName(label))).toBeInTheDocument();
+      }
+
+      const currentIcon = within(screen.getByTestId(selectors.components.VizLegend.seriesName('a'))).getByTestId(
+        'series-icon'
+      );
+      const compareIcon = within(
+        screen.getByTestId(selectors.components.VizLegend.seriesName('a (comparison)'))
+      ).getByTestId('series-icon');
+
+      // Solid current-period icon vs dashed compare icon (lineStyle from alignTimeRangeCompareData).
+      expect(currentIcon.style.borderRadius).toBeTruthy();
+      expect(compareIcon.style.backgroundSize).toBe('6px 4px');
     });
   });
 });

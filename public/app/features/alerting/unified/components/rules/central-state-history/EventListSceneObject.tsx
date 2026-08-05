@@ -16,7 +16,7 @@ import {
   type VariableValue,
   sceneGraph,
 } from '@grafana/scenes';
-import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import {
   type GrafanaAlertStateWithReason,
   isAlertStateWithReason,
@@ -444,9 +444,7 @@ const Timestamp = ({ time }: TimestampProps) => {
   );
 };
 
-export default withErrorBoundary(HistoryEventsList, { style: 'page' });
-
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css({
       display: 'flex',
@@ -564,7 +562,7 @@ export class HistoryEventsListObject extends SceneObjectBase<HistoryEventsListOb
 
 export type FilterType = 'label' | 'stateFrom' | 'stateTo';
 
-export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
+function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
   // This make sure the component is re-rendered when the variables change
   const { hideAlertRuleColumn } = model.useState();
 

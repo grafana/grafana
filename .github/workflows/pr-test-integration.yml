@@ -31,6 +31,13 @@ concurrency:
 
 permissions: {}
 
+env:
+  # Parallel test binaries share one testcontainers session; Ryuk prunes all
+  # session containers 10s after its last client disconnects, which races with
+  # binaries that are still using their containers. Runners are ephemeral, so
+  # container cleanup is unnecessary here anyway.
+  TESTCONTAINERS_RYUK_DISABLED: 'true'
+
 jobs:
   detect-changes:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
@@ -83,7 +90,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -vet=off -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql:
     # Run this workflow only for PRs from forks
@@ -105,26 +112,23 @@ jobs:
     env:
       GRAFANA_TEST_DB: mysql
       MYSQL_HOST: 127.0.0.1
-    services:
-      mysql:
-        image: mysql:8.0.43
-        env:
-          MYSQL_ROOT_PASSWORD: rootpass
-          MYSQL_DATABASE: grafana_tests
-          MYSQL_USER: grafana
-          MYSQL_PASSWORD: password
-        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
-        ports:
-          - 3306:3306
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - name: Start MySQL via docker compose
+        run: make devenv sources=mysql_tests mysql_version=8.0.43
       - name: Setup Go
         uses: ./.github/actions/setup-go
-      - name: Setup MySQL devenv
-        run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
+      - name: Wait for MySQL
+        run: |
+          for _ in $(seq 1 60); do
+            mysql -h 127.0.0.1 -P 3306 -uroot -prootpass -e 'SELECT 1' >/dev/null 2>&1 && exit 0
+            sleep 1
+          done
+          echo "MySQL did not become ready in time" >&2
+          exit 1
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -132,9 +136,12 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           echo "Precompiling, no tests will be run"
-          CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Cleanup MySQL
+        if: always()
+        run: make devenv-down sources=mysql_tests
 
   postgres:
     # Run this workflow only for PRs from forks
@@ -176,9 +183,9 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           echo "Precompiling, no tests will be run"
-          CGO_ENABLED=0 go test -run='^$' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |
@@ -186,8 +193,8 @@ jobs:
 
   #### Enterprise
   sqlite-enterprise:
-    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
       matrix:
         shard: [
@@ -228,11 +235,11 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql-enterprise:
-    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
       matrix:
         shard: [
@@ -251,22 +258,13 @@ jobs:
     env:
       GRAFANA_TEST_DB: mysql
       MYSQL_HOST: 127.0.0.1
-    services:
-      mysql:
-        image: mysql:8.0.43
-        env:
-          MYSQL_ROOT_PASSWORD: rootpass
-          MYSQL_DATABASE: grafana_tests
-          MYSQL_USER: grafana
-          MYSQL_PASSWORD: password
-        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
-        ports:
-          - 3306:3306
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - name: Start MySQL via docker compose
+        run: make devenv sources=mysql_tests mysql_version=8.0.43
       - name: Get GitHub App token
         id: get-github-app-token
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
@@ -280,8 +278,14 @@ jobs:
       # modules are visible when the Go cache key is computed.
       - name: Setup Go
         uses: ./.github/actions/setup-go
-      - name: Setup MySQL devenv
-        run: mysql -h 127.0.0.1 -P 3306 -u root -prootpass < devenv/docker/blocks/mysql_tests/setup.sql
+      - name: Wait for MySQL
+        run: |
+          for _ in $(seq 1 60); do
+            mysql -h 127.0.0.1 -P 3306 -uroot -prootpass -e 'SELECT 1' >/dev/null 2>&1 && exit 0
+            sleep 1
+          done
+          echo "MySQL did not become ready in time" >&2
+          exit 1
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -289,13 +293,16 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           echo "Precompiling, no tests will be run"
-          CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+      - name: Cleanup MySQL
+        if: always()
+        run: make devenv-down sources=mysql_tests
 
   postgres-enterprise:
-    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
       matrix:
         shard: [
@@ -345,9 +352,9 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           echo "Precompiling, no tests will be run"
-          CGO_ENABLED=0 go test -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
-          CGO_ENABLED=0 go test -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup Postgres
         if: always()
         run: |

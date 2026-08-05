@@ -730,7 +730,7 @@
         "name": "d2ViaG9vaw",
         "namespace": "default",
         "uid": "Tb4lHkct27YZEAVtmU6UtYo31OKxl3aSZhvHUteYgQkX",
-        "resourceVersion": "45c922bee67f8fe5",
+        "resourceVersion": "bddcdf192a64cd03",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -759,8 +759,7 @@
               },
               "max_alerts": 10,
               "send_resolved": true,
-              "timeout": "0s",
-              "url_file": ""
+              "timeout": "0s"
             },
             "secureFields": {
               "url": true

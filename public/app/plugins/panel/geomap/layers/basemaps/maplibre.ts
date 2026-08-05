@@ -8,14 +8,14 @@ import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, ty
 const LAYER_TYPE_BACKGROUND = 'background';
 const PAINT_BACKGROUND_OPACITY = 'background-opacity';
 
-export interface MaplibreConfig {
+interface MaplibreConfig {
   url: string;
   accessToken?: string;
 }
 
 const sampleURL = 'https://tiles.stadiamaps.com/styles/alidade_smooth.json';
 
-export const defaultMaplibreConfig: MaplibreConfig = {
+const defaultMaplibreConfig: MaplibreConfig = {
   url: sampleURL,
 };
 
@@ -23,11 +23,13 @@ interface ExtendedMapLayerOptions<T> extends MapLayerOptions<T> {
   noRepeat?: boolean;
 }
 
-export const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
+const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
   id: 'maplibre',
   name: 'MapLibre layer',
   description: 'Add layer using MapLibre style.json URL',
   isBaseMap: true,
+  // Attribution comes from the style, so the tile provider terms are unknown here
+  requiresAttribution: true,
 
   create: async (
     map: Map,

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type TeamPermissionsService struct {
@@ -36,14 +37,36 @@ var (
 	}
 )
 
+// TeamPermissionsRoleRegistrations returns the templated reader/writer fixed
+// roles for team resource permissions (fixed:teams.permissions:reader and
+// :writer). These mirror the roles declared by ProvideTeamPermissions through
+// resourcepermissions.New; the identity fields below must match the Options
+// passed there.
+func TeamPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
+	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       teamPermissionsResource,
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      teamPermissionsRoleGroup,
+	})
+}
+
 func ProvideTeamPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB,
 	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 	directRestConfigProvider apiserver.DirectRestConfigProvider,
 ) (*TeamPermissionsService, error) {
+	// The hooks below run inside transactions that resourcepermissions opens on sql,
+	// so their table names must resolve for that same database. Deriving the helper
+	// from sql keeps the two in step.
+	dbHelper, err := legacysql.NewDatabaseProvider(sql)(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
 	options := resourcepermissions.Options{
-		Resource:           "teams",
+		Resource:           teamPermissionsResource,
 		ResourceAttribute:  "id",
 		OnlyManaged:        true,
 		ResourceTranslator: team.UIDToIDHandler(teamService),
@@ -75,9 +98,9 @@ func ProvideTeamPermissions(
 			"Member": TeamMemberActions,
 			"Admin":  TeamAdminActions,
 		},
-		ReaderRoleName: "Permission reader",
-		WriterRoleName: "Permission writer",
-		RoleGroup:      "Teams",
+		ReaderRoleName: permissionReaderRoleName,
+		WriterRoleName: permissionWriterRoleName,
+		RoleGroup:      teamPermissionsRoleGroup,
 		OnSetUser: func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 			teamId, err := strconv.ParseInt(resourceID, 10, 64)
 			if err != nil {
@@ -85,11 +108,11 @@ func ProvideTeamPermissions(
 			}
 			switch permission {
 			case "Member":
-				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeMember)
+				return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeMember)
 			case "Admin":
-				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeAdmin)
+				return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeAdmin)
 			case "":
-				return teamimpl.RemoveTeamMemberHook(session, &team.RemoveTeamMemberCommand{
+				return teamimpl.RemoveTeamMemberHook(dbHelper, session, &team.RemoveTeamMemberCommand{
 					OrgID:  orgID,
 					UserID: user.ID,
 					TeamID: teamId,

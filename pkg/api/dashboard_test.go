@@ -519,119 +519,9 @@ func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
 		dashTwo.HasACL = false
 	})
 
-	t.Run("Post dashboard response tests", func(t *testing.T) {
-		// This tests that a valid request returns correct response
-		t.Run("Given a correct request for creating a dashboard", func(t *testing.T) {
-			folderUID := "Folder"
-			const dashID int64 = 2
-
-			cmd := dashboards.SaveDashboardCommand{
-				OrgID:  1,
-				UserID: 5,
-				Dashboard: simplejson.NewFromAny(map[string]any{
-					"title": "Dash",
-				}),
-				Overwrite: true,
-				FolderUID: folderUID,
-				IsFolder:  false,
-				Message:   "msg",
-			}
-
-			dashboardService := dashboards.NewFakeDashboardService(t)
-			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
-				Return(&dashboards.Dashboard{ID: dashID, UID: "uid", Title: "Dash", Slug: "dash", Version: 2, FolderUID: folderUID}, nil)
-			mockFolderService := &foldertest.FakeService{
-				ExpectedFolder: &folder.Folder{UID: folderUID, Title: "Folder"},
-			}
-
-			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", cmd, dashboardService, mockFolderService, func(sc *scenarioContext) {
-				callPostDashboardShouldReturnSuccess(sc)
-
-				result := sc.ToJSON()
-				assert.Equal(t, "success", result.Get("status").MustString())
-				assert.Equal(t, dashID, result.Get("id").MustInt64())
-				assert.Equal(t, "uid", result.Get("uid").MustString())
-				assert.Equal(t, "dash", result.Get("slug").MustString())
-				assert.Equal(t, "/d/uid/dash", result.Get("url").MustString())
-			})
-		})
-
-		t.Run("Given a correct request for creating a dashboard with folder uid", func(t *testing.T) {
-			const folderUid string = "folderUID"
-			const dashID int64 = 2
-
-			cmd := dashboards.SaveDashboardCommand{
-				OrgID:  1,
-				UserID: 5,
-				Dashboard: simplejson.NewFromAny(map[string]any{
-					"title": "Dash",
-				}),
-				Overwrite: true,
-				FolderUID: folderUid,
-				IsFolder:  false,
-				Message:   "msg",
-			}
-
-			dashboardService := dashboards.NewFakeDashboardService(t)
-			dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).
-				Return(&dashboards.Dashboard{ID: dashID, UID: "uid", Title: "Dash", Slug: "dash", Version: 2}, nil)
-
-			mockFolder := &foldertest.FakeService{
-				ExpectedFolder: &folder.Folder{UID: "folderUID", Title: "Folder"},
-			}
-
-			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", cmd, dashboardService, mockFolder, func(sc *scenarioContext) {
-				callPostDashboardShouldReturnSuccess(sc)
-
-				result := sc.ToJSON()
-				assert.Equal(t, "success", result.Get("status").MustString())
-				assert.Equal(t, dashID, result.Get("id").MustInt64())
-				assert.Equal(t, "uid", result.Get("uid").MustString())
-				assert.Equal(t, "dash", result.Get("slug").MustString())
-				assert.Equal(t, "/d/uid/dash", result.Get("url").MustString())
-			})
-		})
-
-		// This tests that invalid requests returns expected error responses
-		t.Run("Given incorrect requests for creating a dashboard", func(t *testing.T) {
-			testCases := []struct {
-				SaveError          error
-				ExpectedStatusCode int
-			}{
-				{SaveError: dashboards.ErrDashboardNotFound, ExpectedStatusCode: http.StatusNotFound},
-				{SaveError: dashboards.ErrFolderNotFound, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardWithSameUIDExists, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardVersionMismatch, ExpectedStatusCode: http.StatusPreconditionFailed},
-				{SaveError: dashboards.ErrDashboardTitleEmpty, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardTypeMismatch, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: folder.ErrNameExists, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: http.StatusForbidden},
-				{SaveError: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: http.StatusPreconditionFailed},
-			}
-
-			cmd := dashboards.SaveDashboardCommand{
-				OrgID: 1,
-				Dashboard: simplejson.NewFromAny(map[string]any{
-					"title": "",
-				}),
-			}
-
-			for _, tc := range testCases {
-				dashboardService := dashboards.NewFakeDashboardService(t)
-				dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).Return(nil, tc.SaveError)
-
-				postDashboardScenario(t, fmt.Sprintf("Expect '%s' error when calling POST on", tc.SaveError.Error()),
-					"/api/dashboards", "/api/dashboards", cmd, dashboardService, nil, func(sc *scenarioContext) {
-						callPostDashboard(sc)
-						assert.Equal(t, tc.ExpectedStatusCode, sc.resp.Code, sc.resp.Body.String())
-					})
-			}
-		})
-	})
+	// NOTE: Post dashboard response tests were removed because POST /api/dashboards now
+	// goes through the K8s apiserver via saveDashboardViaK8s rather than DashboardService.
+	// The K8s flow is covered by integration tests in pkg/tests/apis/dashboard/.
 
 	t.Run("Given two dashboards being compared", func(t *testing.T) {
 		fakeDashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
@@ -1232,52 +1122,8 @@ func (hs *HTTPServer) callGetDashboardVersionsWithParams(sc *scenarioContext, qu
 	sc.fakeReqWithParams("GET", sc.url, queryParams).exec()
 }
 
-func callPostDashboard(sc *scenarioContext) {
-	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-}
-
 func callRestoreDashboardVersion(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-}
-
-func callPostDashboardShouldReturnSuccess(sc *scenarioContext) {
-	callPostDashboard(sc)
-
-	assert.Equal(sc.t, 200, sc.resp.Code)
-}
-
-func postDashboardScenario(t *testing.T, desc string, url string, routePattern string, cmd dashboards.SaveDashboardCommand, dashboardService dashboards.DashboardService, folderService folder.Service, fn scenarioFunc) {
-	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		cfg := setting.NewCfg()
-		hs := HTTPServer{
-			Cfg:                   cfg,
-			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
-			Live:                  newTestLive(t),
-			QuotaService:          quotatest.New(false, nil),
-			pluginStore:           &pluginstore.FakePluginStore{},
-			LibraryElementService: &libraryelementsfake.LibraryElementService{},
-			DashboardService:      dashboardService,
-			folderService:         folderService,
-			Features:              featuremgmt.WithFeatures(),
-			accesscontrolService:  actest.FakeService{},
-			log:                   log.New("test-logger"),
-			tracer:                tracing.InitializeTracerForTest(),
-		}
-
-		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-			c.Req.Body = mockRequestBody(cmd)
-			c.Req.Header.Add("Content-Type", "application/json")
-			sc.context = c
-			sc.context.SignedInUser = &user.SignedInUser{OrgID: cmd.OrgID, UserID: cmd.UserID}
-
-			return hs.PostDashboard(c)
-		})
-
-		sc.m.Post(routePattern, sc.defaultHandler)
-
-		fn(sc)
-	})
 }
 
 func restoreDashboardVersionScenario(t *testing.T, desc string, url string, routePattern string,

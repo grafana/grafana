@@ -138,7 +138,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
                 if (colorByValue) {
                   if (pointColors[i] !== curColorIdx) {
                     curColorIdx = pointColors[i];
-                    let c = curColorIdx === -1 ? FALLBACK_COLOR : pointPalette[curColorIdx];
+                    let c =
+                      curColorIdx === undefined || curColorIdx === -1 ? FALLBACK_COLOR : pointPalette[curColorIdx];
                     u.ctx.fillStyle = paletteHasAlpha ? c : colorManipulator.alpha(c as string, pointAlpha);
                     u.ctx.strokeStyle = colorManipulator.alpha(c as string, 1);
                   }
@@ -555,7 +556,7 @@ function getHex8Color(color: string, theme: GrafanaTheme2) {
   return tinycolor(theme.visualization.getColorByName(color)).toHex8String();
 }
 
-interface FieldColorValues {
+export interface FieldColorValues {
   index: unknown[];
   getOne: GetOneValue;
   getAll: GetAllValues;
@@ -568,7 +569,9 @@ type GetAllValues = (values: unknown[], min?: number, max?: number) => number[];
 type GetOneValue = (value: unknown, min?: number, max?: number) => number;
 
 /** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
-function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
+// exported for golden tests that freeze its palette+index output ahead of the
+// field.display.colors() migration
+export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
   let index: unknown[] = [];
   let getAll: GetAllValues = () => [];
   let getOne: GetOneValue = () => -1;

@@ -18,7 +18,7 @@ interface PublicServiceItem extends RegistryItem {
 const CUSTOM_SERVICE = 'custom';
 const DEFAULT_SERVICE = 'streets';
 
-export const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
+const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
   {
     id: DEFAULT_SERVICE,
     name: 'World Street Map',
@@ -57,15 +57,17 @@ export const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
   },
 ]);
 
-export interface ESRIXYZConfig extends XYZConfig {
+interface ESRIXYZConfig extends XYZConfig {
   server: string;
 }
 
-export const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
+const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   id: 'esri-xyz',
   name: 'ArcGIS MapServer',
   description: 'Add layer from an ESRI ArcGIS MapServer',
   isBaseMap: true,
+  // The public services are attributed to ArcGIS, a custom server is attributed by the user
+  requiresAttribution: (options) => (options.config?.server ?? DEFAULT_SERVICE) !== CUSTOM_SERVICE,
 
   create: async (
     map: OpenLayersMap,

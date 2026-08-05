@@ -751,11 +751,14 @@ function getStyles(theme: GrafanaTheme2) {
 
     horizontalGraphContainer: css({
       flexBasis: '50%',
+      minWidth: 0,
     }),
 
     horizontalTableContainer: css({
       flexBasis: '50%',
+      minWidth: 0,
       maxHeight: FLAMEGRAPH_CONTAINER_HEIGHT,
+      overflow: 'auto',
     }),
 
     verticalGraphContainer: css({

@@ -32,10 +32,15 @@ var (
 	sqlVectorCollectionUpsert            = mustTemplate("vector_collection_upsert.sql")
 	sqlVectorCollectionDelete            = mustTemplate("vector_collection_delete.sql")
 	sqlVectorCollectionDeleteSubresource = mustTemplate("vector_collection_delete_subresources.sql")
+	sqlVectorNamespaceDeleteEmbeddings   = mustTemplate("vector_namespace_delete_embeddings.sql")
+	sqlVectorNamespaceDeleteQueryCache   = mustTemplate("vector_namespace_delete_query_cache.sql")
+	sqlVectorNamespaceDeleteRateBuckets  = mustTemplate("vector_namespace_delete_rate_buckets.sql")
+	sqlVectorNamespaceDeletePromoted     = mustTemplate("vector_namespace_delete_promoted.sql")
 	sqlVectorCollectionGetContent        = mustTemplate("vector_collection_get_content.sql")
 	sqlVectorCollectionExists            = mustTemplate("vector_collection_exists.sql")
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
 	sqlVectorBackfillJobsList            = mustTemplate("vector_backfill_jobs_list.sql")
+	sqlVectorBackfillJobsCreate          = mustTemplate("vector_backfill_jobs_create.sql")
 	sqlVectorBackfillJobsUpdate          = mustTemplate("vector_backfill_jobs_update.sql")
 	sqlVectorBackfillJobsSetError        = mustTemplate("vector_backfill_jobs_set_error.sql")
 	sqlVectorBackfillJobsComplete        = mustTemplate("vector_backfill_jobs_complete.sql")
@@ -45,6 +50,7 @@ var (
 	sqlQueryCacheInsert                  = mustTemplate("query_cache_insert.sql")
 	sqlRateBucketIncrement               = mustTemplate("rate_bucket_increment.sql")
 	sqlRateBucketSweep                   = mustTemplate("rate_bucket_sweep.sql")
+	sqlVectorCatalogList                 = mustTemplate("vector_catalog_list.sql")
 )
 
 // All queries target `embeddings` and include `resource = $1 AND
@@ -105,6 +111,21 @@ func (r *sqlVectorCollectionDeleteSubresourcesRequest) SubresourcesSlice() refle
 	return reflect.ValueOf(r.Subresources)
 }
 
+// sqlVectorNamespaceDeleteRequest deletes every row for a namespace across all
+// resources/models. Shared by the four namespace-scoped delete templates
+// (embeddings, query_embedding_cache, vector_search_rate_buckets, vector_promoted).
+type sqlVectorNamespaceDeleteRequest struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+}
+
+func (r *sqlVectorNamespaceDeleteRequest) Validate() error {
+	if r.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	return nil
+}
+
 type sqlVectorCollectionExistsResponse struct {
 	Exists int
 }
@@ -158,6 +179,45 @@ func (r *sqlVectorBackfillJobsListRequest) Results() (*sqlVectorBackfillJobsList
 	return &cp, nil
 }
 
+type sqlVectorCatalogListRequest struct {
+	sqltemplate.SQLTemplate
+	Response *sqlVectorCatalogListResponse
+}
+
+func (r *sqlVectorCatalogListRequest) Validate() error { return nil }
+
+func (r *sqlVectorCatalogListRequest) Results() (*sqlVectorCatalogListResponse, error) {
+	cp := *r.Response
+	return &cp, nil
+}
+
+type sqlVectorCatalogListResponse struct {
+	GroupName    string
+	Resource     string
+	PartitionKey string
+	IsExternal   bool
+}
+
+type sqlVectorBackfillJobsCreateRequest struct {
+	sqltemplate.SQLTemplate
+	Model      string
+	Resource   string
+	StoppingRV int64
+}
+
+func (r *sqlVectorBackfillJobsCreateRequest) Validate() error {
+	if r.Model == "" {
+		return fmt.Errorf("missing model")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.StoppingRV <= 0 {
+		return fmt.Errorf("stopping_rv must be positive")
+	}
+	return nil
+}
+
 type sqlVectorBackfillJobsUpdateRequest struct {
 	sqltemplate.SQLTemplate
 	ID          int64
@@ -200,6 +260,7 @@ func (r *sqlVectorBackfillJobsCompleteRequest) Validate() error {
 type sqlVectorCollectionGetContentResponse struct {
 	Subresource string
 	Content     string
+	Folder      string
 }
 
 type sqlVectorCollectionGetContentRequest struct {
@@ -233,9 +294,10 @@ type sqlVectorCollectionSearchResponse struct {
 	Metadata    json.RawMessage
 }
 
-// MetadataFilterEntry is a pre-built JSONB containment filter.
-type MetadataFilterEntry struct {
-	JSON string // e.g. `{"datasource_uids":["ds1"]}`
+// MetadataFilterGroup is one filter rendered as OR-ed JSONB containments:
+// ( metadata @> j1 OR metadata @> j2 ... ) — IN semantics across values.
+type MetadataFilterGroup struct {
+	JSONs []string // e.g. `{"datasource_uids":["ds1"]}`
 }
 
 type sqlVectorCollectionSearchRequest struct {
@@ -248,9 +310,9 @@ type sqlVectorCollectionSearchRequest struct {
 	Response       *sqlVectorCollectionSearchResponse
 
 	// nil/empty means no filter on that field.
-	UIDValues       []string
-	FolderValues    []string
-	MetadataFilters []MetadataFilterEntry
+	UIDValues            []string
+	FolderValues         []string
+	MetadataFilterGroups []MetadataFilterGroup
 }
 
 func (r *sqlVectorCollectionSearchRequest) Validate() error {

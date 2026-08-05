@@ -134,7 +134,7 @@ export const useDeleteTeam = () => {
 /**
  * Transform a legacy TeamDto to the IAM Team (k8s) shape.
  */
-export function teamDtoToTeam(dto: TeamDto): Team {
+function teamDtoToTeam(dto: TeamDto): Team {
   return {
     apiVersion: `${API_GROUP}/${API_VERSION}`,
     kind: 'Team',
@@ -156,7 +156,7 @@ export function teamDtoToTeam(dto: TeamDto): Team {
 /**
  * Transform legacy TeamDto[] to IAM search hit shape.
  */
-export function legacySearchToIamSearchHits(teams: TeamDto[]): Array<{ title: string; name: string }> {
+function legacySearchToIamSearchHits(teams: TeamDto[]): Array<{ title: string; name: string }> {
   return teams.map((t) => ({ title: t.name, name: t.uid }));
 }
 

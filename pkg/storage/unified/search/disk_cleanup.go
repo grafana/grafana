@@ -271,7 +271,15 @@ func splitResourceGroup(name string) (string, string, bool) {
 // sweepResource dispatches each timestamp directory inside one resource
 // folder into one of three buckets:
 //
-//   - active index (owned + currently cached): always kept, no gate.
+//   - active index (currently cached): always kept, no gate. Ownership is
+//     deliberately not consulted here: the cache can hold an index this pod
+//     no longer owns (the ring reshuffled but runEvictExpiredOrUnownedIndexes
+//     has not yet evicted it, e.g. because traffic keeps refreshing
+//     lastFetchedFromCache). Deleting that directory while bleve still has
+//     it open causes the live scorch persister to fail on its next segment
+//     write with "persist err: ... no such file or directory". Unowned
+//     cached indexes are closed by runEvictExpiredOrUnownedIndexes once
+//     they go idle past IndexCacheTTL.
 //   - newest sibling we own but haven't opened: gated with the longer
 //     unopened-grace so a later BuildIndex can reuse it on cold start.
 //   - everything else (older siblings, anything under an unowned resource):
@@ -318,7 +326,10 @@ func (b *bleveBackend) sweepResource(ctx context.Context, root *os.Root, resourc
 
 		// Active index: the directory we currently have open. Keep
 		// unconditionally — deleting it would close-and-lose the live index.
-		if owned && cachedName != "" && name == cachedName {
+		// Intentionally not gated on `owned`: see the comment block on
+		// sweepResource for why an unowned index can still be cached and in
+		// use.
+		if cachedName != "" && name == cachedName {
 			stats.keptActive++
 			continue
 		}

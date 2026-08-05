@@ -6,7 +6,7 @@
  * to match the target layout (warning emitted if converted).
  */
 
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -21,7 +21,7 @@ import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
-export const addPanelPayloadSchema = payloads.addPanel;
+const addPanelPayloadSchema = payloads.addPanel;
 
 export type AddPanelPayload = z.infer<typeof addPanelPayloadSchema>;
 

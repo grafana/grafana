@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 type subAccessREST struct {
@@ -148,6 +149,19 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 		return nil, err
 	}
 
+	// sharedwithme is a virtual aggregation view with no RBAC scope and nothing
+	// to act on, so report no access instead of probing for a missing object.
+	if name == folder.SharedWithMeFolderUID {
+		return &foldersV1.FolderAccessInfo{}, nil
+	}
+
+	// The root folder has no stored object to Get and no parent. Normalise the
+	// legacy empty UID to "general" so authz resolves the folders:uid:general
+	// scope, matching legacy /api/folders/general?accesscontrol=true.
+	if folder.IsRootFolderUID(name) {
+		return r.checkAccess(ctx, ns.Value, user, folder.GeneralFolderUID, "")
+	}
+
 	f, err := r.getter.Get(ctx, name, &v1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -158,6 +172,13 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	}
 	parent := obj.GetFolder()
 
+	return r.checkAccess(ctx, ns.Value, user, name, parent)
+}
+
+// checkAccess runs the folder-tier probes for folder `name` (with `parent` as
+// the folder hint) and assembles the FolderAccessInfo, mirroring legacy
+// newToFolderDto in pkg/api/folder.go.
+func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user identity.Requester, name, parent string) (*foldersV1.FolderAccessInfo, error) {
 	checks := make([]authlib.BatchCheckItem, len(folderTierChecks))
 	for i, c := range folderTierChecks {
 		checks[i] = authlib.BatchCheckItem{
@@ -171,7 +192,7 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	}
 
 	batchResp, err := r.accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
-		Namespace: ns.Value,
+		Namespace: namespace,
 		Checks:    checks,
 	})
 	if err != nil {

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, type ComponentSize, Dropdown, Icon, LinkButton, Menu, useStyles2 } from '@grafana/ui';
@@ -67,6 +68,7 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
           overlay={
             <Menu>
               <Menu.Item
+                testId={selectors.components.BuildDashboardButton.fromSuggestionsButton}
                 label={t('datasources.build-a-dashboard-button.from-suggestions', 'From suggestions')}
                 icon={fetchStatus === 'loading' ? 'spinner' : 'lightbulb-alt'}
                 disabled={fetchStatus === 'loading' || (fetchStatus === 'done' && !hasDashboards)}
@@ -83,6 +85,7 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
                         ? SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON
                         : SOURCE_ENTRY_POINTS.DATASOURCE_LIST_BUILD_BUTTON,
                     contentKind: CONTENT_KINDS.SUGGESTED_DASHBOARDS,
+                    contentKinds: [CONTENT_KINDS.SUGGESTED_DASHBOARDS],
                   });
                   openModal();
                 }}
@@ -115,7 +118,12 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
             }
           }}
         >
-          <Button size={size} variant="secondary" fill={fill}>
+          <Button
+            size={size}
+            variant="secondary"
+            fill={fill}
+            data-testid={selectors.components.BuildDashboardButton.triggerButton}
+          >
             <Trans i18nKey="datasources.build-a-dashboard-button.build-a-dashboard">Build a dashboard</Trans>
             <Icon name="angle-down" />
           </Button>

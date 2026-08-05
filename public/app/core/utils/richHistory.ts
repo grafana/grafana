@@ -9,7 +9,6 @@ import {
   serializeStateToUrlParam,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { createErrorNotification, createWarningNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 import { type RichHistoryQuery } from 'app/types/explore';
@@ -238,11 +237,11 @@ export const mapNumbertoTimeInSlider = (num: number) => {
 
 export function createDateStringFromTs(ts: number) {
   return dateTimeFormat(ts, {
-    format: 'MMMM D',
+    format: 'MMMM D, YYYY',
   });
 }
 
-export function getQueryDisplayText(query: DataQuery): string {
+function getQueryDisplayText(query: DataQuery): string {
   /* If datasource doesn't have getQueryDisplayText, create query display text by
    * stringifying query that was stripped of key, refId and datasource for nicer
    * formatting and improved readability
@@ -273,32 +272,18 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
   let mappedQueriesToHeadings: Record<string, RichHistoryQuery[]> = {};
 
   query.forEach((q) => {
-    let heading = createQueryHeading(q, sortOrder);
+    const heading = createQueryHeading(q, sortOrder);
     if (!(heading in mappedQueriesToHeadings)) {
       mappedQueriesToHeadings[heading] = [q];
     } else {
-      mappedQueriesToHeadings[heading] = [...mappedQueriesToHeadings[heading], q];
+      mappedQueriesToHeadings[heading].push(q);
     }
   });
 
   return mappedQueriesToHeadings;
 }
 
-/*
- * Create a list of all available data sources
- */
-export function createDatasourcesList() {
-  return getDataSourceSrv()
-    .getList({ mixed: true })
-    .map((dsSettings) => {
-      return {
-        name: dsSettings.name,
-        uid: dsSettings.uid,
-      };
-    });
-}
-
-export function notEmptyQuery(query: DataQuery) {
+function notEmptyQuery(query: DataQuery) {
   /* Check if query has any other properties besides key, refId and datasource.
    * If not, then we consider it empty query.
    */

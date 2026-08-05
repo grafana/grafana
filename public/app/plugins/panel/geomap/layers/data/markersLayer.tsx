@@ -69,7 +69,12 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<MarkersConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<MarkersConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -113,9 +118,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           if (legend) {
             legendProps.next({
               styleConfig: style,
-              size: style.dims?.size,
               layerName: options.name,
-              layer: symbolLayer,
             });
           }
 

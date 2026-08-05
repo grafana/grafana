@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -38,6 +39,7 @@ import (
 )
 
 const cacheCleanInterval = 2 * time.Minute
+const maxContextualTuplesPerRequest = 100
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
 var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
@@ -151,6 +153,12 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				"iam.grafana.app":    cfg.ZanzanaReconciler.IAMAPIServerURL,
 			}
 
+			// The setting apiserver is optional: only wire it when configured. When set,
+			// the reconciler reads per-namespace anonymous-access config from it.
+			if cfg.ZanzanaReconciler.SettingAPIServerURL != "" {
+				apiServerURLs["setting.grafana.app"] = cfg.ZanzanaReconciler.SettingAPIServerURL
+			}
+
 			for group, url := range apiServerURLs {
 				// Each API group gets its own audience for proper token scoping
 				audienceProvider := clientauth.NewStaticAudienceProvider(group)
@@ -230,12 +238,12 @@ func (s *Server) Close() {
 	s.store.Close()
 }
 
-func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys, error) {
-	contextuals := make([]*openfgav1.TupleKey, 0)
-
+// getContextuals returns contextual tuples for the request subject.
+func (s *Server) getContextuals(subject string, teams []string) (*openfgav1.ContextualTupleKeys, error) {
+	var keys []*openfgav1.TupleKey
 	if strings.HasPrefix(subject, common.TypeRenderService+":") {
-		contextuals = append(
-			contextuals,
+		keys = append(
+			keys,
 			&openfgav1.TupleKey{
 				User:     subject,
 				Relation: common.RelationSetView,
@@ -245,10 +253,6 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 					"",
 				),
 			},
-		)
-
-		contextuals = append(
-			contextuals,
 			&openfgav1.TupleKey{
 				User:     subject,
 				Relation: common.RelationSetView,
@@ -258,10 +262,6 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 					"",
 				),
 			},
-		)
-
-		contextuals = append(
-			contextuals,
 			&openfgav1.TupleKey{
 				User:     subject,
 				Relation: common.RelationSetView,
@@ -274,9 +274,44 @@ func (s *Server) getContextuals(subject string) (*openfgav1.ContextualTupleKeys,
 		)
 	}
 
-	if len(contextuals) > 0 {
-		return &openfgav1.ContextualTupleKeys{TupleKeys: contextuals}, nil
+	seen := make(map[string]struct{})
+	var teamNames []string
+	for _, g := range teams {
+		if g == "" {
+			continue
+		}
+		if _, dup := seen[g]; !dup {
+			seen[g] = struct{}{}
+			teamNames = append(teamNames, g)
+		}
+	}
+	sort.Strings(teamNames)
+	for _, n := range teamNames {
+		keys = append(keys, common.NewTypedTuple(common.TypeTeam, subject, common.RelationTeamMember, n))
+	}
+	if len(keys) == 0 {
+		return nil, nil
+	}
+	return &openfgav1.ContextualTupleKeys{TupleKeys: keys}, nil
+}
+
+func contextualTupleChunks(contextuals *openfgav1.ContextualTupleKeys) []*openfgav1.ContextualTupleKeys {
+	if contextuals == nil || len(contextuals.GetTupleKeys()) == 0 {
+		return nil
 	}
 
-	return nil, nil
+	tuples := contextuals.GetTupleKeys()
+	if len(tuples) <= maxContextualTuplesPerRequest {
+		return []*openfgav1.ContextualTupleKeys{contextuals}
+	}
+
+	chunks := make([]*openfgav1.ContextualTupleKeys, 0, (len(tuples)+maxContextualTuplesPerRequest-1)/maxContextualTuplesPerRequest)
+	for i := 0; i < len(tuples); i += maxContextualTuplesPerRequest {
+		end := i + maxContextualTuplesPerRequest
+		if end > len(tuples) {
+			end = len(tuples)
+		}
+		chunks = append(chunks, &openfgav1.ContextualTupleKeys{TupleKeys: tuples[i:end]})
+	}
+	return chunks
 }

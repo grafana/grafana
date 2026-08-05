@@ -13,10 +13,7 @@ export function getScalarDimension(
 ): DimensionSupplier<number> {
   return getScalarDimensionForField(findField(frame, config?.field), config);
 }
-export function getScalarDimensionForField(
-  field: Field | undefined,
-  cfg: ScalarDimensionConfig
-): DimensionSupplier<number> {
+function getScalarDimensionForField(field: Field | undefined, cfg: ScalarDimensionConfig): DimensionSupplier<number> {
   if (!field) {
     const v = cfg.fixed ?? 0;
     return {

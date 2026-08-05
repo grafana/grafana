@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/PaesslerAG/jsonpath"
 	"go.opentelemetry.io/otel"
@@ -26,6 +27,12 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/
 // panels is unlikely to be human-authored; the cap saves provider
 // tokens on those outliers without affecting normal dashboards.
 const defaultMaxPanels = 200
+
+// maxItemContentBytes caps a panel's embeddable text so we keep our token count per batch reasonable
+const maxItemContentBytes = 4 * 1024
+
+// maxDescriptionBytes cap the panel desc at 2Kib to leave room for queries
+const maxDescriptionBytes = 2 * 1024
 
 // Extractor produces one embed.Item per panel.
 type Extractor struct {
@@ -48,8 +55,7 @@ func (e *Extractor) Resource() string { return "dashboards" }
 // embed.Builder interface.
 func (e *Extractor) MaxItemsPerResource() int { return e.maxPanels }
 
-// Extract folder title doesn't exist on unified storage resources - so need to provide that
-func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]embed.Item, error) {
+func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte) ([]embed.Item, error) {
 	ctx, span := tracer.Start(ctx, "unified.embed.dashboard.Extract")
 	defer span.End()
 	span.SetAttributes(
@@ -65,9 +71,6 @@ func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, va
 	content, err := extractDashboardContent(ctx, dashboardJSON, e.logger)
 	if err != nil {
 		return nil, err
-	}
-	if folderTitle != "" {
-		content.FolderTitle = folderTitle
 	}
 
 	uid := content.DashboardUID
@@ -89,10 +92,7 @@ func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, va
 }
 
 func buildEmbeddableItem(content *dashboardContent, p panelContent, uid string, idx int) (embed.Item, bool) {
-	parts := make([]string, 0, 5)
-	if content.FolderTitle != "" {
-		parts = append(parts, content.FolderTitle)
-	}
+	parts := make([]string, 0, 4)
 	if content.DashboardTitle != "" {
 		parts = append(parts, content.DashboardTitle)
 	}
@@ -103,7 +103,7 @@ func buildEmbeddableItem(content *dashboardContent, p panelContent, uid string, 
 		parts = append(parts, p.Title)
 	}
 	if p.Description != "" {
-		parts = append(parts, p.Description)
+		parts = append(parts, truncateUTF8(p.Description, maxDescriptionBytes))
 	}
 	breadcrumb := strings.Join(parts, " → ")
 
@@ -141,9 +141,6 @@ func buildEmbeddableItem(content *dashboardContent, p panelContent, uid string, 
 		"dashboardTitle": content.DashboardTitle,
 		"panelIds":       []int{p.PanelID},
 	}
-	if content.FolderTitle != "" {
-		md["folderTitle"] = content.FolderTitle
-	}
 	if p.RowName != "" {
 		md["rowName"] = p.RowName
 	}
@@ -159,10 +156,21 @@ func buildEmbeddableItem(content *dashboardContent, p panelContent, uid string, 
 		UID:         uid,
 		Title:       displayTitle(content.DashboardTitle, p.Title, uid),
 		Subresource: subresource(p.PanelID, idx),
-		Content:     strings.Join(sections, "\n"),
+		Content:     truncateUTF8(strings.Join(sections, "\n"), maxItemContentBytes),
 		Metadata:    mdJSON,
 		Folder:      content.FolderUID,
 	}, true
+}
+
+// truncateUTF8 caps s to at most n bytes without splitting a rune.
+func truncateUTF8(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
 }
 
 // subresource is the unique sub-identifier for a panel within its dashboard.
@@ -194,7 +202,6 @@ type dashboardContent struct {
 	DashboardUID   string
 	DashboardTitle string
 	Description    string
-	FolderTitle    string
 	FolderUID      string
 	Tags           []string
 	Panels         []panelContent
@@ -247,10 +254,9 @@ func extractMap(path string, data any) map[string]any {
 	return nil
 }
 
-// extractFolderUID reads the folder UID from the k8s annotation. Folder
-// title is no longer extracted from JSON — it's passed in by the caller,
-// which resolves it against the folder service (unified-storage values
-// don't carry the title inline).
+// extractFolderUID reads the folder UID from the k8s annotation. The
+// folder's display title is deliberately not stored with embeddings —
+// HybridSearch resolves it fresh at query time from the folder index.
 func extractFolderUID(dashboardJSON map[string]any) string {
 	metadata, ok := dashboardJSON["metadata"].(map[string]any)
 	if !ok {

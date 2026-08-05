@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -80,7 +81,7 @@ export const MatcherFilter = ({ onFilterChange, defaultQueryString }: Props) => 
         placeholder={t('alerting.matcher-filter.search-query-input-placeholder-search', 'Search')}
         value={filterQuery}
         onChange={(e) => setFilterQuery(e.currentTarget.value)}
-        data-testid="search-query-input"
+        data-testid={selectors.pages.Alerting.searchInput}
         prefix={searchIcon}
         className={styles.inputWidth}
       />

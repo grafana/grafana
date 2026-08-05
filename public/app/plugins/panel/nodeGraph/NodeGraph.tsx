@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import { memo, type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 

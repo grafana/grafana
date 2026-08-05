@@ -11,19 +11,20 @@ import {
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import {
+  type AdHocFilterModel,
+  type FilterByGroupedLabelsModel,
+  type VizTooltipItem,
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
-  getContentItems,
-  type VizTooltipItem,
-  type AdHocFilterModel,
-  type FilterByGroupedLabelsModel,
-} from '@grafana/ui/internal';
+  getFieldDisplayItems,
+  isTooltipScrollable,
+} from '@grafana/ui';
+import { AssistantTooltipButton } from 'app/core/components/AssistantTooltip/AssistantTooltipButton';
+import { type AssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 
 import { getFieldActions } from '../status-history/utils';
-
-import { isTooltipScrollable } from './utils';
 
 // exemplar / annotation / time region hovering?
 // add annotation UI / alert dismiss UI?
@@ -54,6 +55,8 @@ export interface TimeSeriesTooltipProps {
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
   canExecuteActions?: boolean;
   compareDiffMs?: number[];
+  /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
+  assistantContext?: AssistantTooltipContext;
 }
 
 export const TimeSeriesTooltip = ({
@@ -73,6 +76,7 @@ export const TimeSeriesTooltip = ({
   canExecuteActions,
   compareDiffMs,
   filterByGroupedLabels,
+  assistantContext,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -85,7 +89,7 @@ export const TimeSeriesTooltip = ({
 
   const xDisp = formattedValueToString(xField.display!(xVal));
 
-  const contentItems = getContentItems(
+  const contentItems = getFieldDisplayItems(
     series.fields,
     xField,
     dataIdxs,
@@ -117,6 +121,18 @@ export const TimeSeriesTooltip = ({
           annotate={annotate}
           adHocFilters={adHocFilters}
           filterByGroupedLabels={filterByGroupedLabels}
+          additionalContent={
+            isPinned && assistantContext != null ? (
+              <AssistantTooltipButton
+                series={series}
+                seriesIdx={seriesIdx}
+                dataIdxs={dataIdxs}
+                replaceVariables={replaceVariables}
+                context={assistantContext}
+                xVal={xVal}
+              />
+            ) : undefined
+          }
         />
       );
     }
