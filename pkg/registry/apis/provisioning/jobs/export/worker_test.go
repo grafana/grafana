@@ -82,7 +82,11 @@ func TestExportWorker_IsSupported(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+<<<<<<< HEAD
 
+=======
+			
+>>>>>>> f5ed8045a06 (update worker test)
 			r := NewExportWorker(nil, nil, nil, nil, nil, metrics)
 			got := r.IsSupported(context.Background(), tt.job)
 			require.Equal(t, tt.want, got)
@@ -98,7 +102,11 @@ func TestExportWorker_ProcessNoExportSettings(t *testing.T) {
 	}
 
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> f5ed8045a06 (update worker test)
 	r := NewExportWorker(nil, nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	err := r.Process(context.Background(), nil, job, nil)
 	require.EqualError(t, err, "missing export settings")
@@ -123,7 +131,11 @@ func TestExportWorker_ProcessWriteNotAllowed(t *testing.T) {
 	})
 
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> f5ed8045a06 (update worker test)
 	r := NewExportWorker(nil, nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	err := r.Process(context.Background(), mockRepo, job, nil)
 	require.EqualError(t, err, "repositories.provisioning.grafana.app is forbidden: write operations are not allowed for this repository")
@@ -149,7 +161,11 @@ func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
 	})
 
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> f5ed8045a06 (update worker test)
 	r := NewExportWorker(nil, nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	err := r.Process(context.Background(), mockRepo, job, nil)
 	require.EqualError(t, err, "repositories.provisioning.grafana.app is forbidden: branch workflow is not allowed for this repository")
@@ -216,7 +232,11 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 	})
 
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> f5ed8045a06 (update worker test)
 	r := NewExportWorker(mockClients, nil, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "export job submitted targeting repository that is not a ReaderWriter")
@@ -254,7 +274,11 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 		return fn(repo, true)
 	})
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> f5ed8045a06 (update worker test)
 	r := NewExportWorker(mockClients, mockRepoResources, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "create repository resource client: failed to create repository resources client")
@@ -308,7 +332,11 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 	})
 
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> f5ed8045a06 (update worker test)
 	r := NewExportWorker(mockClients, mockRepoResources, nil, mockExportFn.Execute, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
@@ -392,7 +420,11 @@ func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 			})
 
 			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+<<<<<<< HEAD
 
+=======
+			
+>>>>>>> f5ed8045a06 (update worker test)
 			r := NewExportWorker(mockClients, mockRepoResources, nil, mockExportFn.Execute, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 			err := r.Process(context.Background(), mockRepo, job, mockProgress)
 			require.NoError(t, err)
