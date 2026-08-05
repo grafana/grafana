@@ -420,6 +420,37 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
       expect(result.success).toBe(true);
       expect(specOf(await getNotebookSpec(scene)).layout.spec.cells).toHaveLength(2);
     });
+
+    // A write can lose a cell and still succeed, and `validate` cannot be the whole answer because it
+    // judges the request, not what the scene did with it. So the result names what did not survive.
+    it('warns about a cell that did not survive the write', async () => {
+      const scene = buildNotebookScene(makeNotebookSpec());
+      const current = specOf(await getNotebookSpec(scene));
+
+      const result = await applyNotebookSpec(scene, {
+        ...current,
+        layout: { kind: 'NotebookLayout', spec: { cells: [...current.layout.spec.cells, cell('ghost', 'assistant')] } },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.warnings?.join(' ')).toContain('ghost');
+    });
+
+    it('reports no warnings when every cell landed', async () => {
+      const scene = buildNotebookScene(makeNotebookSpec());
+      const current = specOf(await getNotebookSpec(scene));
+
+      const result = await applyNotebookSpec(scene, {
+        ...current,
+        elements: { ...current.elements, finding: markdown('Deploy at 14:00 lines up with the spike.') },
+        layout: {
+          kind: 'NotebookLayout',
+          spec: { cells: [...current.layout.spec.cells, cell('finding', 'assistant')] },
+        },
+      });
+
+      expect(result.warnings).toBeUndefined();
+    });
   });
 });
 

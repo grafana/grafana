@@ -129,11 +129,12 @@ export function notebookSpecToDashboardSpec(notebook: NotebookSpec): DashboardV2
   const spec = {
     ...defaultDashboardV2Spec(),
     title: notebook.title,
-    // `description` is optional on a notebook but a required string on the dashboard spec; keep
-    // the default '' rather than writing undefined over it.
+    // Every optional field keeps the dashboard default rather than writing `undefined` over it: the
+    // spec arrives from a caller that may have left any of them out, and the transformer reads them
+    // unguarded, so an absent one would surface as an unrelated crash rather than as a bad field.
     description: notebook.description ?? '',
-    tags: notebook.tags,
-    timeSettings: notebook.timeSettings,
+    tags: notebook.tags ?? [],
+    timeSettings: notebook.timeSettings ?? defaultDashboardV2Spec().timeSettings,
     // Upgrade panel transformations from the notebook's v2beta1 wire shape to the v2 stable shape
     // the scene and its serializer speak, so the result really is a valid DashboardV2Spec.
     elements: mapPanelTransformations(notebook.elements, normalizeTransformation),
@@ -144,18 +145,6 @@ export function notebookSpecToDashboardSpec(notebook: NotebookSpec): DashboardV2
   return spec as unknown as DashboardV2Spec;
 }
 
-/**
- * Narrow a serialized dashboard spec back down to a `NotebookSpec`.
- *
- * The scene serializer always emits the full dashboard shape, so a notebook round-tripped
- * through a scene comes back carrying `variables: []`, `annotations: []`, `cursorSync`,
- * `liveNow`, `preload`, `editable` and `links` — fields a `NotebookSpec` must not contain.
- * This drops them by construction (it names the notebook's fields rather than deleting the
- * dashboard's), so a field added to the dashboard spec later cannot leak through.
- *
- * `description` is dropped when empty: it is optional on a notebook, and the widening above
- * substitutes '' for absent, so an empty string round-trips back to absent.
- */
 /**
  * Downgrade panel transformations in an elements map back to the notebook's v2beta1 wire shape.
  *
@@ -171,6 +160,23 @@ export function downgradeElementsToNotebookWire(elements: Record<string, unknown
   );
 }
 
+/**
+ * Narrow a serialized dashboard spec back down to a `NotebookSpec`.
+ *
+ * The scene serializer always emits the full dashboard shape, so a notebook round-tripped through a
+ * scene comes back carrying `variables: []`, `annotations: []`, `cursorSync`, `liveNow`, `preload`,
+ * `editable` and `links` — fields a `NotebookSpec` must not contain. This drops them by construction
+ * (it names the notebook's fields rather than deleting the dashboard's), so a field added to the
+ * dashboard spec later cannot leak through.
+ *
+ * `description` is dropped when empty: it is optional on a notebook, and the widening above
+ * substitutes '' for absent, so an empty string round-trips back to absent.
+ *
+ * The notebook read does NOT go through here — {@link transformSceneToNotebookSaveModel} builds the
+ * spec field by field instead, because a projection cannot see the elements only the notebook layout
+ * owns. This stays as the spec-to-spec direction of the pair, and is what the round-trip tests hold
+ * the widening honest with.
+ */
 export function dashboardSpecToNotebookSpec(spec: DashboardV2Spec): NotebookSpec {
   const notebook = {
     title: spec.title,
@@ -209,13 +215,6 @@ function hasNotebookDescriptor(body: unknown): body is NotebookLayoutLike {
 }
 
 /**
- * Whether this scene renders a notebook rather than a dashboard.
- *
- * Tolerates a scene without state: this runs from permission checks and command dispatch, which
- * are reached before a handler has touched the scene, and answering "not a notebook" is the safe
- * reading — it routes to the dashboard rules the caller had before notebooks existed.
- */
-/**
  * The notebook's narrative cells: the elements a notebook references that are not viz panels.
  *
  * Asked of the notebook layout directly rather than through a hook on the dashboard layout contract,
@@ -226,6 +225,13 @@ export function getNotebookCellElements(body: unknown): Record<string, unknown> 
   return hasNotebookDescriptor(body) ? body.getNonPanelElements() : {};
 }
 
+/**
+ * Whether this scene renders a notebook rather than a dashboard.
+ *
+ * Tolerates a scene without state: this runs from permission checks and command dispatch, which are
+ * reached before a handler has touched the scene, and answering "not a notebook" is the safe reading
+ * — it routes to the dashboard rules the caller had before notebooks existed.
+ */
 export function isNotebookScene(scene: { state?: { body?: unknown } } | undefined): boolean {
   return hasNotebookDescriptor(scene?.state?.body);
 }

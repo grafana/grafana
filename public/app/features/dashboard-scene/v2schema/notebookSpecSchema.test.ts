@@ -200,15 +200,20 @@ describe('validateNotebookSpec', () => {
     ]);
   });
 
-  it('reports an element no cell references', () => {
+  // A warning, not an error, and the spec still comes back. An orphan costs the reader nothing, it is
+  // what a spec looks like halfway through an edit that removes a cell, and failing on it would mean
+  // a notebook someone else saved could not be read with `validate: true` at all.
+  it('warns about an element no cell references, and still returns the spec', () => {
     const result = validateNotebookSpec(
       notebook({ elements: { intro: markdownCell('a'), orphan: markdownCell('b') } })
     );
 
-    expect(result.success).toBe(false);
-    expect(result.errors).toEqual([
+    expect(result.success).toBe(true);
+    expect(result.errors).toEqual([]);
+    expect(result.warnings).toEqual([
       'elements.orphan: not referenced by any cell in layout.spec.cells, so it will not render',
     ]);
+    expect(result.data).toBeDefined();
   });
 
   it('does not run referential checks when the spec is structurally invalid', () => {

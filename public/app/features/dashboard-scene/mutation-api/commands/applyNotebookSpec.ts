@@ -25,6 +25,28 @@ import { validateNotebookSpec } from '../../v2schema/notebookSpecSchema';
 import { rebuildSceneFromSpec } from './specRebuild';
 import { requiresNotebookEdit, type MutationCommand } from './types';
 
+/**
+ * Cells that were asked for and are not in the notebook that came back.
+ *
+ * A write can lose a cell and still succeed: the deserializer skips a reference it cannot resolve
+ * rather than failing, so a spec whose layout names an element that is not in `elements` renders one
+ * cell short. `validate: true` catches that particular case, but it checks the REQUEST, and only the
+ * OUTCOME shows which cells actually survived. So the result says so rather than leaving the caller
+ * to notice on its next read — or not notice, and write the loss back.
+ */
+function droppedCellWarnings(requested: NotebookSpec, applied: NotebookSpec | undefined): string[] {
+  if (!applied) {
+    return [];
+  }
+  const cellNames = (spec: NotebookSpec) => spec.layout.spec.cells.map((cell) => cell.spec.element.name);
+  const survived = new Set(cellNames(applied));
+  const dropped = [...new Set(cellNames(requested))].filter((name) => !survived.has(name));
+
+  return dropped.length > 0
+    ? [`These cells were not applied and are missing from the notebook: ${dropped.join(', ')}.`]
+    : [];
+}
+
 const applyNotebookSpecPayloadSchema = z.object({
   spec: z
     .record(z.string(), z.unknown())
@@ -89,7 +111,14 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload>
         appliedNotebook = undefined;
       }
 
-      return { success: true, data: { applied: true, spec: appliedNotebook, resource: 'notebook' }, changes: [] };
+      const warnings = droppedCellWarnings(notebookSpec, appliedNotebook);
+
+      return {
+        success: true,
+        data: { applied: true, spec: appliedNotebook, resource: 'notebook' },
+        changes: [],
+        ...(warnings.length > 0 ? { warnings } : {}),
+      };
     } catch (error) {
       return {
         success: false,

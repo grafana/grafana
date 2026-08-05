@@ -178,6 +178,8 @@ export interface NotebookSpecValidationResult {
   success: boolean;
   /** Field-scoped messages, `<path>: <message>`, in the shape callers surface to a user or agent. */
   errors: string[];
+  /** Field-scoped messages for things that are wrong but not fatal. Present whether or not it passed. */
+  warnings: string[];
   /** The parsed spec (defaults filled, nil slices normalized) — present only on success. */
   data?: NotebookSpec;
 }
@@ -187,9 +189,14 @@ export interface NotebookSpecValidationResult {
  *
  * Zod alone cannot catch the notebook's most damaging malformation: a layout cell that
  * references an element name absent from `elements`. Such a spec is structurally valid, saves
- * cleanly, and renders as a silently missing cell. The reverse (an element no cell references)
- * is an orphan that never renders, which is worth reporting for the same reason. Both are
- * checked here rather than in the schema so the schema stays a pure shape definition that
+ * cleanly, and renders as a silently missing cell. So that one is an error.
+ *
+ * The reverse — an element no cell references — is an orphan that never renders, and it is a
+ * warning rather than an error. It costs the reader nothing, it is what a spec looks like halfway
+ * through an edit that removes a cell, and failing on it would mean a *read* of a notebook someone
+ * else saved could not be validated at all.
+ *
+ * Both are checked here rather than in the schema, so the schema stays a pure shape definition that
  * composes into other schemas.
  */
 export function validateNotebookSpec(spec: unknown): NotebookSpecValidationResult {
@@ -197,6 +204,7 @@ export function validateNotebookSpec(spec: unknown): NotebookSpecValidationResul
   if (!parsed.success) {
     return {
       success: false,
+      warnings: [],
       errors: parsed.error.issues.map((issue) => {
         const path = issue.path.join('.');
         return path ? `${path}: ${issue.message}` : issue.message;
@@ -207,6 +215,7 @@ export function validateNotebookSpec(spec: unknown): NotebookSpecValidationResul
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- parsed output matches the notebook spec
   const data = parsed.data as unknown as NotebookSpec;
   const errors: string[] = [];
+  const warnings: string[] = [];
   const elementNames = new Set(Object.keys(data.elements));
   const referenced = new Set<string>();
 
@@ -220,9 +229,9 @@ export function validateNotebookSpec(spec: unknown): NotebookSpecValidationResul
 
   for (const name of elementNames) {
     if (!referenced.has(name)) {
-      errors.push(`elements.${name}: not referenced by any cell in layout.spec.cells, so it will not render`);
+      warnings.push(`elements.${name}: not referenced by any cell in layout.spec.cells, so it will not render`);
     }
   }
 
-  return errors.length > 0 ? { success: false, errors } : { success: true, errors: [], data };
+  return errors.length > 0 ? { success: false, errors, warnings } : { success: true, errors: [], warnings, data };
 }
