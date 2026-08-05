@@ -23,7 +23,7 @@ const NOTEBOOK_NAME_PREFIX = 'n';
 const NOTEBOOK_KIND = 'Notebook';
 
 /** Where a notebook renders, matching the `/notebook/:uid/:slug?` route. */
-export function notebookPageUrl(uid: string): string {
+function notebookPageUrl(uid: string): string {
   return `/notebook/${encodeURIComponent(uid)}`;
 }
 

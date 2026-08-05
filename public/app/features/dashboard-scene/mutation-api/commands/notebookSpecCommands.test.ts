@@ -35,7 +35,6 @@ import { type MutationContext } from './types';
 
 jest.mock('app/features/notebook/api/notebookResource', () => ({
   createNotebook: jest.fn(),
-  notebookPageUrl: (uid: string) => `/notebook/${uid}`,
 }));
 
 let notebooksFlagEnabled = true;
