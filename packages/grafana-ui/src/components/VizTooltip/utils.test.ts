@@ -463,5 +463,93 @@ describe('utils', () => {
       expect(result.text).toBe('[[1,2],[3,4]]');
       expect(result.numeric).toBeNaN();
     });
+
+    it('falls back and warns instead of throwing on an unserializable value', () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      const value: Record<string, unknown> = { spanID: '123' };
+      value.self = value;
+
+      const result = getTooltipDisplayValue(value, mockField);
+      expect(result.text).toBe('[object Object]');
+      expect(result.numeric).toBeNaN();
+      expect(warn).toHaveBeenCalledWith('Cannot render tooltip value', expect.objectContaining({ value }));
+
+      warn.mockRestore();
+    });
+  });
+
+  // repro for hovering a panel whose data carries sub-frames (Tempo traces with tableType: traces),
+  // where the frames are circular and used to crash the whole panel on JSON.stringify
+  describe('getFieldDisplayItems with frame-valued fields', () => {
+    // mirrors what applyFieldOverrides() produces: each field gets a __dataContext back-reference
+    // to the frame that owns it, so the frame cannot be serialized
+    const makeCircularFrame = (): DataFrame => {
+      const frame: DataFrame = {
+        name: 'spans',
+        length: 1,
+        fields: [{ name: 'spanID', type: FieldType.string, values: ['abc'], config: {} }],
+      };
+
+      frame.fields[0].state = {
+        scopedVars: {
+          __dataContext: { value: { data: [frame], frame, frameIndex: 0, field: frame.fields[0] } },
+        },
+      };
+
+      return frame;
+    };
+
+    // Tempo names this field "nested"; nestedFrames values are DataFrame[], frame values a single frame
+    const makeFrameValuedField = (type: FieldType.frame | FieldType.nestedFrames): Field => ({
+      name: 'nested',
+      type,
+      values: [type === FieldType.nestedFrames ? [makeCircularFrame()] : makeCircularFrame()],
+      config: {},
+    });
+
+    const xField: Field = {
+      name: 'traceService',
+      type: FieldType.string,
+      values: ['frontend'],
+      config: {},
+      display: (value: unknown) => ({ text: String(value), numeric: NaN }),
+    };
+
+    const durationField: Field = {
+      name: 'duration',
+      type: FieldType.number,
+      values: [42],
+      config: {},
+      display: (value: unknown) => ({ text: String(value), numeric: Number(value) }),
+    };
+
+    it.each([FieldType.nestedFrames, FieldType.frame] as const)('omits %s fields from series rows', (type) => {
+      const rows = getContentItems(
+        [xField, durationField, makeFrameValuedField(type)],
+        xField,
+        [0, 0, 0],
+        null,
+        TooltipDisplayMode.Multi,
+        SortOrder.None
+      );
+
+      expect(rows.map((row) => row.label)).toEqual(['duration']);
+    });
+
+    it.each([FieldType.nestedFrames, FieldType.frame] as const)('omits %s fields from extraFields', (type) => {
+      const rows = getContentItems(
+        [xField, durationField],
+        xField,
+        [0, 0],
+        null,
+        TooltipDisplayMode.Multi,
+        SortOrder.None,
+        undefined,
+        false,
+        [makeFrameValuedField(type)]
+      );
+
+      expect(rows.map((row) => row.label)).toEqual(['duration']);
+    });
   });
 });
