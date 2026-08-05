@@ -1,9 +1,12 @@
 /**
- * End-to-end cover for the full-spec surface on a notebook: a real notebook scene, built the way
- * the notebook page builds one, driven through the real command handlers and the real serializer,
- * both the notebook pair and the dashboard commands that still answer on a notebook. Deliberately unmocked — the bugs this replaces were all in the seams between
- * those pieces (elements derived from viz panels only, a dashboard-shaped spec handed back for a
- * notebook resource, a permission rule that refused every notebook write).
+ * End-to-end cover for the notebook full-spec surface: a real notebook scene, built the way the
+ * notebook page builds one, driven through the real command handlers and the real serializer.
+ * Deliberately unmocked — the bugs this replaces were all in the seams between those pieces
+ * (elements derived from viz panels only, a dashboard-shaped spec handed back for a notebook
+ * resource, a permission rule that refused every notebook write).
+ *
+ * The last section is the other half of the contract: the dashboard commands refuse a notebook, so
+ * the resource a command answers for is decided by its name and not by what happens to be open.
  */
 
 import { config } from '@grafana/runtime';
@@ -24,7 +27,6 @@ import { transformSaveModelSchemaV2ToScene } from '../../serialization/transform
 import { DashboardMutationClient } from '../DashboardMutationClient';
 
 import { applyNotebookSpecCommand } from './applyNotebookSpec';
-import { applySpecCommand } from './applySpec';
 import { getNotebookSpecCommand } from './getNotebookSpec';
 import { getSpecCommand } from './getSpec';
 import { type MutationContext } from './types';
@@ -172,14 +174,6 @@ function contextFor(scene: DashboardScene): MutationContext {
   return { scene };
 }
 
-async function getSpec(scene: DashboardScene, validate = false) {
-  return getSpecCommand.handler({ validate }, contextFor(scene));
-}
-
-async function applySpec(scene: DashboardScene, spec: unknown, validate = false) {
-  return applySpecCommand.handler({ spec: spec as Record<string, unknown>, validate }, contextFor(scene));
-}
-
 async function getNotebookSpec(scene: DashboardScene, validate = false) {
   return getNotebookSpecCommand.handler({ validate }, contextFor(scene));
 }
@@ -188,23 +182,19 @@ async function applyNotebookSpec(scene: DashboardScene, spec: unknown, validate 
   return applyNotebookSpecCommand.handler({ spec: spec as Record<string, unknown>, validate }, contextFor(scene));
 }
 
-/** The notebook spec carried by a GET_SPEC result. */
-function specOf(result: Awaited<ReturnType<typeof getSpec>>): NotebookSpec {
+/** The notebook spec carried by a GET_NOTEBOOK_SPEC result. */
+function specOf(result: Awaited<ReturnType<typeof getNotebookSpec>>): NotebookSpec {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- handler data is untyped by the MutationResult contract
   return (result.data as { spec: NotebookSpec }).spec;
 }
 
-/** The notebook spec APPLY_SPEC echoes back, which is what a caller feeds into its next write. */
-function echoedSpecOf(result: Awaited<ReturnType<typeof applySpec>>): NotebookSpec {
+/**
+ * The notebook spec APPLY_NOTEBOOK_SPEC echoes back, which is what a caller feeds into its next
+ * write.
+ */
+function echoedSpecOf(result: Awaited<ReturnType<typeof applyNotebookSpec>>): NotebookSpec {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- handler data is untyped by the MutationResult contract
   return (result.data as { spec: NotebookSpec }).spec;
-}
-
-/** The document header, which the notebook layout manager holds on its own state. */
-function headerOf(scene: DashboardScene): { title?: string; tags?: string[] } {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the header lives on the layout manager, not the scene
-  const body = scene.state.body as unknown as { state: { title?: string; tags?: string[] } };
-  return { title: body.state.title, tags: body.state.tags };
 }
 
 function referencedNames(spec: NotebookSpec): string[] {
@@ -231,9 +221,9 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('GET_SPEC on a notebook', () => {
+describe('GET_NOTEBOOK_SPEC', () => {
   it('reports the notebook resource', async () => {
-    const result = await getSpec(buildNotebookScene(makeNotebookSpec()));
+    const result = await getNotebookSpec(buildNotebookScene(makeNotebookSpec()));
 
     expect(result.success).toBe(true);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- handler data is untyped
@@ -243,7 +233,7 @@ describe('GET_SPEC on a notebook', () => {
   // The regression this whole change exists for: elements used to be derived from getVizPanels(),
   // so every markdown and code cell vanished while the layout kept referencing it by name.
   it('keeps narrative cells instead of dropping them', async () => {
-    const spec = specOf(await getSpec(buildNotebookScene(makeNotebookSpec())));
+    const spec = specOf(await getNotebookSpec(buildNotebookScene(makeNotebookSpec())));
 
     expect(Object.keys(spec.elements).sort()).toEqual(['intro', 'repro']);
     expect(spec.elements.intro).toEqual(markdown('## What we know\n\np99 jumped at 14:02.'));
@@ -253,7 +243,7 @@ describe('GET_SPEC on a notebook', () => {
   });
 
   it('leaves no cell pointing at a missing element', async () => {
-    const spec = specOf(await getSpec(buildNotebookScene(makeNotebookSpec())));
+    const spec = specOf(await getNotebookSpec(buildNotebookScene(makeNotebookSpec())));
 
     const referenced = spec.layout.spec.cells.map((c) => c.spec.element.name);
     expect(referenced).toEqual(['intro', 'repro']);
@@ -263,13 +253,13 @@ describe('GET_SPEC on a notebook', () => {
   });
 
   it('preserves per-cell assistant attribution and cell order', async () => {
-    const spec = specOf(await getSpec(buildNotebookScene(makeNotebookSpec())));
+    const spec = specOf(await getNotebookSpec(buildNotebookScene(makeNotebookSpec())));
 
     expect(spec.layout.spec.cells.map((c) => c.spec.source)).toEqual(['user', 'assistant']);
   });
 
   it('returns a NotebookSpec, not the dashboard shape the serializer emits', async () => {
-    const spec = specOf(await getSpec(buildNotebookScene(makeNotebookSpec())));
+    const spec = specOf(await getNotebookSpec(buildNotebookScene(makeNotebookSpec())));
 
     expect(Object.keys(spec).sort()).toEqual(['description', 'elements', 'layout', 'tags', 'timeSettings', 'title']);
     for (const dashboardOnly of ['variables', 'annotations', 'links', 'cursorSync', 'liveNow', 'preload', 'editable']) {
@@ -278,17 +268,17 @@ describe('GET_SPEC on a notebook', () => {
   });
 
   it('passes notebook validation when asked to validate', async () => {
-    const result = await getSpec(buildNotebookScene(makeNotebookSpec()), true);
+    const result = await getNotebookSpec(buildNotebookScene(makeNotebookSpec()), true);
 
     expect(result.error).toBeUndefined();
     expect(result.success).toBe(true);
   });
 });
 
-describe('APPLY_SPEC on a notebook', () => {
+describe('APPLY_NOTEBOOK_SPEC', () => {
   it('appends an assistant cell to an open notebook', async () => {
     const scene = buildNotebookScene(makeNotebookSpec());
-    const current = specOf(await getSpec(scene));
+    const current = specOf(await getNotebookSpec(scene));
 
     const next = {
       ...current,
@@ -299,11 +289,11 @@ describe('APPLY_SPEC on a notebook', () => {
       },
     };
 
-    const applied = await applySpec(scene, next, true);
+    const applied = await applyNotebookSpec(scene, next, true);
     expect(applied.error).toBeUndefined();
     expect(applied.success).toBe(true);
 
-    const after = specOf(await getSpec(scene));
+    const after = specOf(await getNotebookSpec(scene));
     expect(after.layout.spec.cells.map((c) => c.spec.element.name)).toEqual(['intro', 'repro', 'finding']);
     expect(after.elements.finding).toEqual(markdown('The spike correlates with a deploy at 14:00.'));
     expect(after.layout.spec.cells[2].spec.source).toBe('assistant');
@@ -311,20 +301,24 @@ describe('APPLY_SPEC on a notebook', () => {
 
   it('edits an existing cell in place', async () => {
     const scene = buildNotebookScene(makeNotebookSpec());
-    const current = specOf(await getSpec(scene));
+    const current = specOf(await getNotebookSpec(scene));
 
-    await applySpec(scene, { ...current, elements: { ...current.elements, intro: markdown('## Resolved') } }, true);
+    await applyNotebookSpec(
+      scene,
+      { ...current, elements: { ...current.elements, intro: markdown('## Resolved') } },
+      true
+    );
 
-    const after = specOf(await getSpec(scene));
+    const after = specOf(await getNotebookSpec(scene));
     expect(after.elements.intro).toEqual(markdown('## Resolved'));
     expect(Object.keys(after.elements).sort()).toEqual(['intro', 'repro']);
   });
 
   it('echoes the applied notebook spec so the caller needs no follow-up read', async () => {
     const scene = buildNotebookScene(makeNotebookSpec());
-    const current = specOf(await getSpec(scene));
+    const current = specOf(await getNotebookSpec(scene));
 
-    const result = await applySpec(scene, { ...current, title: 'Renamed' });
+    const result = await applyNotebookSpec(scene, { ...current, title: 'Renamed' });
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- handler data is untyped
     const data = result.data as { applied: boolean; resource: string; spec: NotebookSpec };
@@ -336,9 +330,9 @@ describe('APPLY_SPEC on a notebook', () => {
 
   it('keeps the page read-only to hand editing after the rebuild', async () => {
     const scene = buildNotebookScene(makeNotebookSpec());
-    const current = specOf(await getSpec(scene));
+    const current = specOf(await getNotebookSpec(scene));
 
-    await applySpec(scene, current);
+    await applyNotebookSpec(scene, current);
 
     // The rebuild replaces scene state wholesale; isEmbedded is set by the notebook page, not by
     // the save model, so it has to be carried across or the dashboard edit chrome reappears.
@@ -349,9 +343,9 @@ describe('APPLY_SPEC on a notebook', () => {
   it('does not enter dashboard edit mode', async () => {
     const scene = buildNotebookScene(makeNotebookSpec());
     const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
-    const current = specOf(await getSpec(scene));
+    const current = specOf(await getNotebookSpec(scene));
 
-    await applySpec(scene, current);
+    await applyNotebookSpec(scene, current);
 
     expect(onEnterEditMode).not.toHaveBeenCalled();
     expect(scene.state.isEditing).toBeFalsy();
@@ -359,9 +353,9 @@ describe('APPLY_SPEC on a notebook', () => {
 
   it('restores the document header the rebuild would otherwise blank', async () => {
     const scene = buildNotebookScene(makeNotebookSpec());
-    const current = specOf(await getSpec(scene));
+    const current = specOf(await getNotebookSpec(scene));
 
-    await applySpec(scene, { ...current, title: 'Renamed', tags: ['resolved'] });
+    await applyNotebookSpec(scene, { ...current, title: 'Renamed', tags: ['resolved'] });
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the notebook layout manager holds the header on its own state
     const body = scene.state.body as unknown as { state: { title?: string; tags?: string[] } };
@@ -372,9 +366,9 @@ describe('APPLY_SPEC on a notebook', () => {
   describe('validation', () => {
     it('rejects a cell that references a missing element, without mutating', async () => {
       const scene = buildNotebookScene(makeNotebookSpec());
-      const current = specOf(await getSpec(scene));
+      const current = specOf(await getNotebookSpec(scene));
 
-      const result = await applySpec(
+      const result = await applyNotebookSpec(
         scene,
         {
           ...current,
@@ -388,14 +382,18 @@ describe('APPLY_SPEC on a notebook', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('no element named "ghost"');
-      expect(specOf(await getSpec(scene)).layout.spec.cells).toHaveLength(2);
+      expect(specOf(await getNotebookSpec(scene)).layout.spec.cells).toHaveLength(2);
     });
 
     it('rejects a dashboard layout with a field-scoped message', async () => {
       const scene = buildNotebookScene(makeNotebookSpec());
-      const current = specOf(await getSpec(scene));
+      const current = specOf(await getNotebookSpec(scene));
 
-      const result = await applySpec(scene, { ...current, layout: { kind: 'GridLayout', spec: { items: [] } } }, true);
+      const result = await applyNotebookSpec(
+        scene,
+        { ...current, layout: { kind: 'GridLayout', spec: { items: [] } } },
+        true
+      );
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('layout');
@@ -403,9 +401,9 @@ describe('APPLY_SPEC on a notebook', () => {
 
     it('does not validate when not asked to', async () => {
       const scene = buildNotebookScene(makeNotebookSpec());
-      const current = specOf(await getSpec(scene));
+      const current = specOf(await getNotebookSpec(scene));
 
-      const result = await applySpec(scene, {
+      const result = await applyNotebookSpec(scene, {
         ...current,
         layout: { kind: 'NotebookLayout', spec: { cells: [...current.layout.spec.cells, cell('ghost', 'assistant')] } },
       });
@@ -413,7 +411,7 @@ describe('APPLY_SPEC on a notebook', () => {
       // The dangling reference is simply skipped by the deserializer, which is exactly the silent
       // failure mode `validate: true` exists to surface.
       expect(result.success).toBe(true);
-      expect(specOf(await getSpec(scene)).layout.spec.cells).toHaveLength(2);
+      expect(specOf(await getNotebookSpec(scene)).layout.spec.cells).toHaveLength(2);
     });
   });
 });
@@ -428,18 +426,18 @@ describe('APPLY_SPEC on a notebook', () => {
  */
 describe('panel cells', () => {
   it('keeps the element name of a panel the notebook was loaded with', async () => {
-    const spec = specOf(await getSpec(buildNotebookScene(makeNotebookSpecWithPanel())));
+    const spec = specOf(await getNotebookSpec(buildNotebookScene(makeNotebookSpecWithPanel())));
 
     expect(Object.keys(spec.elements).sort()).toEqual(['intro', 'latency-panel', 'repro']);
     expect(panelIdOf(spec, 'latency-panel')).toBe(1);
     expect(danglingReferences(spec)).toEqual([]);
   });
 
-  it('keeps the element name of a panel added through APPLY_SPEC', async () => {
+  it('keeps the element name of a panel added through APPLY_NOTEBOOK_SPEC', async () => {
     const scene = buildNotebookScene(makeNotebookSpecWithPanel());
-    const current = specOf(await getSpec(scene));
+    const current = specOf(await getNotebookSpec(scene));
 
-    const result = await applySpec(
+    const result = await applyNotebookSpec(
       scene,
       {
         ...current,
@@ -462,9 +460,9 @@ describe('panel cells', () => {
 
   it('reads back a notebook that still validates after a panel is added', async () => {
     const scene = buildNotebookScene(makeNotebookSpecWithPanel());
-    const current = specOf(await getSpec(scene));
+    const current = specOf(await getNotebookSpec(scene));
 
-    await applySpec(
+    await applyNotebookSpec(
       scene,
       {
         ...current,
@@ -477,7 +475,7 @@ describe('panel cells', () => {
       true
     );
 
-    const result = await getSpec(scene, true);
+    const result = await getNotebookSpec(scene, true);
 
     expect(result.error).toBeUndefined();
     expect(result.success).toBe(true);
@@ -486,9 +484,9 @@ describe('panel cells', () => {
   // The round trip a caller actually performs: read, edit, apply, then apply what came back.
   it('keeps a newly added panel when the echoed spec is applied again', async () => {
     const scene = buildNotebookScene(makeNotebookSpecWithPanel());
-    const current = specOf(await getSpec(scene));
+    const current = specOf(await getNotebookSpec(scene));
 
-    const applied = await applySpec(scene, {
+    const applied = await applyNotebookSpec(scene, {
       ...current,
       elements: { ...current.elements, 'errors-panel': panelElement(3, '5xx rate') },
       layout: {
@@ -497,125 +495,32 @@ describe('panel cells', () => {
       },
     });
 
-    await applySpec(scene, echoedSpecOf(applied));
+    await applyNotebookSpec(scene, echoedSpecOf(applied));
 
-    const after = specOf(await getSpec(scene));
+    const after = specOf(await getNotebookSpec(scene));
     expect(referencedNames(after)).toEqual(['intro', 'latency-panel', 'repro', 'errors-panel']);
     expect(danglingReferences(after)).toEqual([]);
   });
 
   it('does not drift when the same spec is applied twice', async () => {
     const scene = buildNotebookScene(makeNotebookSpecWithPanel());
-    const current = specOf(await getSpec(scene));
+    const current = specOf(await getNotebookSpec(scene));
 
-    await applySpec(scene, current);
-    const afterFirst = specOf(await getSpec(scene));
+    await applyNotebookSpec(scene, current);
+    const afterFirst = specOf(await getNotebookSpec(scene));
 
-    await applySpec(scene, afterFirst);
-    const afterSecond = specOf(await getSpec(scene));
+    await applyNotebookSpec(scene, afterFirst);
+    const afterSecond = specOf(await getNotebookSpec(scene));
 
     expect(afterSecond).toEqual(afterFirst);
   });
 
   it('keeps the element name of a library panel cell', async () => {
-    const spec = specOf(await getSpec(buildNotebookScene(makeNotebookSpecWithLibraryPanel())));
+    const spec = specOf(await getNotebookSpec(buildNotebookScene(makeNotebookSpecWithLibraryPanel())));
 
     expect(Object.keys(spec.elements).sort()).toEqual(['intro', 'saved-view']);
     expect(panelIdOf(spec, 'saved-view')).toBe(2);
     expect(danglingReferences(spec)).toEqual([]);
-  });
-});
-
-describe('APPLY_SPEC permission', () => {
-  it('allows a notebook write when the resource is enabled and the user can write dashboards', () => {
-    const scene = buildNotebookScene(makeNotebookSpec());
-
-    expect(applySpecCommand.permission(scene)).toEqual({ allowed: true });
-  });
-
-  // The whole reason a notebook needs its own rule: the notebook page marks the scene embedded to
-  // hide dashboard chrome, which makes canEditDashboard() — and so the dashboard rule — false.
-  it('allows it even though the dashboard rule would refuse', () => {
-    const scene = buildNotebookScene(makeNotebookSpec());
-
-    expect(scene.canEditDashboard()).toBe(false);
-    expect(applySpecCommand.permission(scene).allowed).toBe(true);
-  });
-
-  it('refuses when the notebooks feature flag is off', () => {
-    notebooksFlagEnabled = false;
-    const scene = buildNotebookScene(makeNotebookSpec());
-
-    const result = applySpecCommand.permission(scene);
-    expect(result.allowed).toBe(false);
-    expect(result.allowed === false && result.error).toContain('dashboard.notebooks');
-  });
-
-  it('refuses when the user cannot write dashboards', () => {
-    jest
-      .spyOn(contextSrv, 'hasPermission')
-      .mockImplementation((action) => action !== AccessControlAction.DashboardsWrite);
-    const scene = buildNotebookScene(makeNotebookSpec());
-
-    const result = applySpecCommand.permission(scene);
-    expect(result.allowed).toBe(false);
-    expect(result.allowed === false && result.error).toContain('insufficient permissions');
-  });
-
-  it('refuses on a notebook snapshot', () => {
-    const scene = buildNotebookScene(makeNotebookSpec());
-    scene.setState({ meta: { ...scene.state.meta, isSnapshot: true } });
-
-    expect(applySpecCommand.permission(scene).allowed).toBe(false);
-  });
-
-  // The delegation in feature 7 depends entirely on this: the permission check runs before the
-  // handler, so if the dashboard rule judged a notebook, it would refuse and the forward would never
-  // be reached. Turning the dashboard toggle off and still getting an allow is the only way to show
-  // requiresSpecWrite really routed this scene to the notebook rule.
-  it('judges a notebook by the notebook rule even with dashboardNewLayouts off', () => {
-    const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-    config.featureToggles.dashboardNewLayouts = false;
-    const scene = buildNotebookScene(makeNotebookSpec());
-
-    expect(applySpecCommand.permission(scene)).toEqual({ allowed: true });
-
-    config.featureToggles.dashboardNewLayouts = dashboardNewLayouts;
-  });
-
-  it('still applies the dashboard rule to a dashboard', () => {
-    const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-    config.featureToggles.dashboardNewLayouts = false;
-
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the layout descriptor and meta are read
-    const dashboardScene = {
-      state: { body: { descriptor: { id: 'GridLayout' } }, meta: {} },
-      canEditDashboard: () => true,
-    } as unknown as DashboardScene;
-
-    const result = applySpecCommand.permission(dashboardScene);
-    expect(result.allowed).toBe(false);
-    expect(result.allowed === false && result.error).toContain('dashboardNewLayouts');
-
-    config.featureToggles.dashboardNewLayouts = dashboardNewLayouts;
-  });
-});
-
-describe('GET_NOTEBOOK_SPEC', () => {
-  it('returns the notebook, with the element names it was loaded under', async () => {
-    const spec = specOf(await getNotebookSpec(buildNotebookScene(makeNotebookSpecWithPanel())));
-
-    expect(Object.keys(spec).sort()).toEqual(['description', 'elements', 'layout', 'tags', 'timeSettings', 'title']);
-    expect(Object.keys(spec.elements).sort()).toEqual(['intro', 'latency-panel', 'repro']);
-    expect(panelIdOf(spec, 'latency-panel')).toBe(1);
-    expect(danglingReferences(spec)).toEqual([]);
-  });
-
-  it('passes notebook validation when asked to validate', async () => {
-    const result = await getNotebookSpec(buildNotebookScene(makeNotebookSpecWithPanel()), true);
-
-    expect(result.success).toBe(true);
-    expect(result.error).toBeUndefined();
   });
 });
 
@@ -656,99 +561,6 @@ describe('GET_NOTEBOOK_SPEC permission', () => {
 
     expect(getNotebookSpecCommand.permission(scene)).toEqual({ allowed: true });
     expect(applyNotebookSpecCommand.permission(scene).allowed).toBe(false);
-  });
-});
-
-describe('APPLY_NOTEBOOK_SPEC', () => {
-  it('writes a cell the paired read command then returns', async () => {
-    const scene = buildNotebookScene(makeNotebookSpec());
-    const current = specOf(await getNotebookSpec(scene));
-
-    const applied = await applyNotebookSpec(
-      scene,
-      {
-        ...current,
-        elements: { ...current.elements, finding: markdown('The spike correlates with a deploy at 14:00.') },
-        layout: {
-          kind: 'NotebookLayout',
-          spec: { cells: [...current.layout.spec.cells, cell('finding', 'assistant')] },
-        },
-      },
-      true
-    );
-
-    expect(applied.error).toBeUndefined();
-    expect(applied.success).toBe(true);
-
-    const after = specOf(await getNotebookSpec(scene));
-    expect(referencedNames(after)).toEqual(['intro', 'repro', 'finding']);
-    expect(after.elements.finding).toEqual(markdown('The spike correlates with a deploy at 14:00.'));
-  });
-
-  it('echoes the applied notebook spec so the caller needs no follow-up read', async () => {
-    const scene = buildNotebookScene(makeNotebookSpec());
-    const current = specOf(await getNotebookSpec(scene));
-
-    const echoed = echoedSpecOf(await applyNotebookSpec(scene, { ...current, title: 'Renamed' }));
-
-    expect(echoed.title).toBe('Renamed');
-    expect(Object.keys(echoed).sort()).toEqual(['description', 'elements', 'layout', 'tags', 'timeSettings', 'title']);
-  });
-
-  it('keeps the page read-only to hand editing after the rebuild', async () => {
-    const scene = buildNotebookScene(makeNotebookSpec());
-    const current = specOf(await getNotebookSpec(scene));
-
-    await applyNotebookSpec(scene, current);
-
-    // The rebuild replaces scene state wholesale; isEmbedded is set by the notebook page, not by
-    // the save model, so it has to be carried across or the dashboard edit chrome reappears.
-    expect(scene.state.meta.isEmbedded).toBe(true);
-    expect(scene.canEditDashboard()).toBe(false);
-  });
-
-  it('does not enter dashboard edit mode', async () => {
-    const scene = buildNotebookScene(makeNotebookSpec());
-    const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
-    const current = specOf(await getNotebookSpec(scene));
-
-    await applyNotebookSpec(scene, current);
-
-    expect(onEnterEditMode).not.toHaveBeenCalled();
-    expect(scene.state.isEditing).toBeFalsy();
-  });
-
-  it('restores the document header the rebuild would otherwise blank', async () => {
-    const scene = buildNotebookScene(makeNotebookSpec());
-    const current = specOf(await getNotebookSpec(scene));
-
-    await applyNotebookSpec(scene, { ...current, title: 'Renamed', tags: ['resolved'] });
-
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the notebook layout manager holds the header on its own state
-    const body = scene.state.body as unknown as { state: { title?: string; tags?: string[] } };
-    expect(body.state.title).toBe('Renamed');
-    expect(body.state.tags).toEqual(['resolved']);
-  });
-
-  it('rejects a cell that references a missing element, without mutating', async () => {
-    const scene = buildNotebookScene(makeNotebookSpec());
-    const current = specOf(await getNotebookSpec(scene));
-
-    const result = await applyNotebookSpec(
-      scene,
-      {
-        ...current,
-        layout: {
-          kind: 'NotebookLayout',
-          spec: { cells: [...current.layout.spec.cells, cell('ghost', 'assistant')] },
-        },
-      },
-      true
-    );
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('no element named "ghost"');
-    expect(specOf(await getNotebookSpec(scene)).layout.spec.cells).toHaveLength(2);
   });
 });
 
@@ -797,77 +609,71 @@ describe('APPLY_NOTEBOOK_SPEC permission', () => {
     expect(result.allowed).toBe(false);
     expect(result.allowed === false && result.error).toContain('insufficient permissions');
   });
+
+  // A notebook layout is not one of the new dashboard layouts, so the toggle that gates those says
+  // nothing about it. Pinned because the obvious tidy-up is to reuse the dashboard rule, which would
+  // make every notebook write depend on a toggle no notebook reads.
+  it('does not depend on the dashboardNewLayouts toggle', () => {
+    const dashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
+    config.featureToggles.dashboardNewLayouts = false;
+    const scene = buildNotebookScene(makeNotebookSpec());
+
+    expect(applyNotebookSpecCommand.permission(scene)).toEqual({ allowed: true });
+
+    config.featureToggles.dashboardNewLayouts = dashboardNewLayouts;
+  });
 });
 
 /**
- * The compatibility promise: on a notebook, the dashboard commands do exactly what the notebook
- * commands do. GET_SPEC and APPLY_SPEC forward, so these cases are near-tautological today, and that
- * is the point rather than a weakness. They are what fails the day someone edits that branch, which
- * is the only warning that an assistant version already released has stopped working.
+ * The other half of the contract: a dashboard command asked of a notebook refuses.
  *
- * Do not replace them with a check that the forward was called. A forward that runs and returns the
- * wrong thing is the failure worth catching, and only the caller-visible result shows it.
+ * Driven through the client rather than the handlers, because the refusal lives in the permission
+ * rule and the client is what runs it. That is also the reason to test it at all: a handler reached
+ * on the wrong resource does not fail loudly. GET_SPEC would serialize the notebook through the
+ * dashboard serializer and hand back a spec with every narrative cell missing, and APPLY_SPEC would
+ * read an ordered cell list as an empty grid.
  */
 describe('the dashboard spec commands on a notebook', () => {
-  it('GET_SPEC returns exactly what GET_NOTEBOOK_SPEC returns', async () => {
-    const scene = buildNotebookScene(makeNotebookSpecWithPanel());
+  function clientFor(scene: DashboardScene) {
+    return new DashboardMutationClient(scene);
+  }
 
-    // The whole result, not just the spec, so `resource` and `success` are covered too.
-    expect(await getSpec(scene, true)).toEqual(await getNotebookSpec(scene, true));
-  });
-
-  it('both write commands echo the same spec', async () => {
-    const viaDashboardCommand = buildNotebookScene(makeNotebookSpecWithPanel());
-    const viaNotebookCommand = buildNotebookScene(makeNotebookSpecWithPanel());
-    const edit = (current: NotebookSpec) => ({
-      ...current,
-      title: 'Renamed',
-      elements: { ...current.elements, finding: markdown('Deploy at 14:00 lines up with the spike.') },
-      layout: {
-        kind: 'NotebookLayout',
-        spec: { cells: [...current.layout.spec.cells, cell('finding', 'assistant')] },
-      },
+  it('GET_SPEC refuses, and says which command to use instead', async () => {
+    const result = await clientFor(buildNotebookScene(makeNotebookSpec())).execute({
+      type: 'GET_SPEC',
+      payload: {},
     });
 
-    const echoedByDashboardCommand = echoedSpecOf(
-      await applySpec(viaDashboardCommand, edit(specOf(await getSpec(viaDashboardCommand))), true)
-    );
-    const echoedByNotebookCommand = echoedSpecOf(
-      await applyNotebookSpec(viaNotebookCommand, edit(specOf(await getNotebookSpec(viaNotebookCommand))), true)
-    );
-
-    expect(echoedByDashboardCommand).toEqual(echoedByNotebookCommand);
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('dashboards only');
+    expect(result.error).toContain('GET_NOTEBOOK_SPEC');
   });
 
-  it('both write commands leave the scene in the same state', async () => {
-    const viaDashboardCommand = buildNotebookScene(makeNotebookSpecWithPanel());
-    const viaNotebookCommand = buildNotebookScene(makeNotebookSpecWithPanel());
-    const renamed = (current: NotebookSpec) => ({ ...current, title: 'Renamed', tags: ['resolved'] });
+  it('APPLY_SPEC refuses without touching the notebook', async () => {
+    const scene = buildNotebookScene(makeNotebookSpec());
+    const before = specOf(await getNotebookSpec(scene));
 
-    await applySpec(viaDashboardCommand, renamed(specOf(await getSpec(viaDashboardCommand))), true);
-    await applyNotebookSpec(viaNotebookCommand, renamed(specOf(await getNotebookSpec(viaNotebookCommand))), true);
+    const result = await clientFor(scene).execute({
+      type: 'APPLY_SPEC',
+      payload: { spec: { ...before, title: 'Written by the wrong command' } },
+    });
 
-    expect(specOf(await getNotebookSpec(viaDashboardCommand))).toEqual(
-      specOf(await getNotebookSpec(viaNotebookCommand))
-    );
-
-    // The header is a second copy of title and tags, held by the layout manager and not read back
-    // through the spec, so comparing specs alone would miss a missing restore.
-    expect(headerOf(viaDashboardCommand)).toEqual(headerOf(viaNotebookCommand));
-    expect(headerOf(viaDashboardCommand)).toEqual({ title: 'Renamed', tags: ['resolved'] });
-
-    // The two the rebuild is most likely to get wrong.
-    expect(viaDashboardCommand.state.meta.isEmbedded).toBe(viaNotebookCommand.state.meta.isEmbedded);
-    expect(viaDashboardCommand.state.isEditing).toBeFalsy();
-    expect(viaNotebookCommand.state.isEditing).toBeFalsy();
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('APPLY_NOTEBOOK_SPEC');
+    expect(specOf(await getNotebookSpec(scene))).toEqual(before);
   });
 
-  // Looks like testing the obvious, and is not. The assistant plugin decides whether a page can be
-  // read or edited by looking for GET_SPEC and APPLY_SPEC in this list by name, and reports the
-  // notebook as an unsupported surface if either is missing. Registration is deliberately not
-  // filtered by resource; this case is what stops that filter being added back as a tidy-up.
-  // The list is not scene-dependent today, so what this asserts is the decision, not a behaviour.
-  it('still advertises the dashboard pair alongside the notebook pair', () => {
+  it('still answers on a dashboard', () => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the layout descriptor is read
+    const dashboardScene = { state: { body: { descriptor: { id: 'GridLayout' } } } } as unknown as DashboardScene;
+
+    expect(getSpecCommand.permission(dashboardScene)).toEqual({ allowed: true });
+  });
+
+  // The notebook commands are registered unconditionally, next to the dashboard ones, so a caller
+  // that lists the surface sees them wherever it asks. What decides whether one answers is its
+  // permission rule, not whether it appears here.
+  it('advertises both resources on one surface', () => {
     const client = new DashboardMutationClient(buildNotebookScene(makeNotebookSpec()));
 
     expect(client.getAvailableCommands()).toEqual(

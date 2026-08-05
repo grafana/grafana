@@ -10,24 +10,24 @@
  * resets transient runtime state (in-flight queries, variable selections,
  * scroll position).
  *
- * A notebook is accepted too, by forwarding to APPLY_NOTEBOOK_SPEC. That is
- * compatibility rather than design: the assistant plugin is released on its own
- * schedule and looks for this command by name when it decides whether a page can
- * be edited at all, so refusing a notebook here would break notebook pages for
- * every plugin version already out there.
+ * Dashboard-only. A notebook is refused, with APPLY_NOTEBOOK_SPEC named in the
+ * error: one command, one spec, so the payload this accepts can be described
+ * without naming two schemas and a rule for choosing between them. A notebook
+ * also needs three things this handler must not do (no dashboard edit mode,
+ * `isEmbedded` carried across the rebuild, the document header restored), which
+ * is the second reason the two are separate commands rather than one dispatching
+ * on the scene.
  */
 
 import * as z from 'zod';
 
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { isNotebookScene } from '../../serialization/notebookSpecTransform';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
-import { applyNotebookSpecCommand } from './applyNotebookSpec';
 import { rebuildSceneFromSpec } from './specRebuild';
-import { enterEditModeIfNeeded, requiresSpecWrite, type MutationCommand } from './types';
+import { enterEditModeIfNeeded, requiresDashboardSpecWrite, type MutationCommand } from './types';
 
 const applySpecPayloadSchema = z.object({
   spec: z
@@ -46,25 +46,18 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   name: 'APPLY_SPEC',
   description:
     'Replace the dashboard with a complete v2 DashboardSpec: settings, variables, annotations, ' +
-    'panels and the nested rows/tabs layout. The scene is rebuilt from the spec. Also accepted on ' +
-    'a notebook, where the payload is a v2beta1 NotebookSpec and APPLY_NOTEBOOK_SPEC is the ' +
-    'command to prefer.',
+    'panels and the nested rows/tabs layout. The scene is rebuilt from the spec. Dashboards only: ' +
+    'on a notebook it is refused, and APPLY_NOTEBOOK_SPEC is the command to use.',
 
   payloadSchema: applySpecPayloadSchema,
-  // Rebuilds the layout tree, so a dashboard gates on the same toggle as the layout commands;
-  // a notebook has its own rule (the dashboard one refuses every notebook write).
-  permission: requiresSpecWrite,
+  // Rebuilds the layout tree, so it gates on the same toggle as the layout commands, and refuses a
+  // notebook rather than reinterpreting its ordered cell list as a dashboard layout.
+  permission: requiresDashboardSpecWrite,
   readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
     try {
-      // Compatibility forward, see the docstring for why it cannot simply refuse. This branch goes
-      // when no released assistant plugin version still asks for APPLY_SPEC on a notebook page.
-      if (isNotebookScene(scene)) {
-        return applyNotebookSpecCommand.handler(payload, context);
-      }
-
       // Opt-in structural validation (default off to avoid breaking existing
       // callers). When enabled, reject an invalid spec before mutating anything.
       // On success we apply the *parsed* spec: the schema normalizes Go's

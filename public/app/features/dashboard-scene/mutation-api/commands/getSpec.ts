@@ -4,21 +4,18 @@
  * `transformSceneToSaveModelSchemaV2`, so it always reflects the canonical save
  * model.
  *
- * A notebook is answered too, by forwarding to GET_NOTEBOOK_SPEC. That is
- * compatibility rather than design: the assistant plugin is released on its own
- * schedule and looks for this command by name when it decides whether a page can
- * be read at all, so refusing a notebook here would break notebook pages for
- * every plugin version already out there.
+ * Dashboard-only. A notebook is refused, with GET_NOTEBOOK_SPEC named in the
+ * error: one command, one spec. Answering both would mean describing two schemas
+ * and a rule for choosing between them, and the dashboard serializer cannot
+ * produce a notebook anyway — it drops every narrative cell.
  */
 
 import * as z from 'zod';
 
-import { isNotebookScene } from '../../serialization/notebookSpecTransform';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
-import { getNotebookSpecCommand } from './getNotebookSpec';
-import { readOnly, type MutationCommand } from './types';
+import { requiresDashboardResource, type MutationCommand } from './types';
 
 const getSpecPayloadSchema = z
   .object({
@@ -36,23 +33,16 @@ export const getSpecCommand: MutationCommand<GetSpecPayload> = {
   name: 'GET_SPEC',
   description:
     'Return the entire dashboard as one v2 DashboardSpec JSON object: settings, variables, ' +
-    'annotations, panels and the nested rows/tabs layout. Also accepted on a notebook, where it ' +
-    'returns a v2beta1 NotebookSpec and GET_NOTEBOOK_SPEC is the command to prefer. The response ' +
-    'reports which one it returned in `resource`.',
+    'annotations, panels and the nested rows/tabs layout. Dashboards only: on a notebook it is ' +
+    'refused, and GET_NOTEBOOK_SPEC is the command to use.',
 
   payloadSchema: getSpecPayloadSchema,
-  permission: readOnly,
+  permission: requiresDashboardResource,
   readOnly: true,
 
   handler: async (payload, context) => {
     const { scene } = context;
     try {
-      // Compatibility forward, see the docstring for why it cannot simply refuse. This branch goes
-      // when no released assistant plugin version still asks for GET_SPEC on a notebook page.
-      if (isNotebookScene(scene)) {
-        return getNotebookSpecCommand.handler(payload, context);
-      }
-
       const spec = transformSceneToSaveModelSchemaV2(scene);
 
       // Opt-in structural validation (default off to avoid breaking reads).

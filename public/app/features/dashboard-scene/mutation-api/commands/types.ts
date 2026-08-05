@@ -94,18 +94,52 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
 }
 
 /**
- * Requires the scene to be a notebook, on an instance where notebooks are enabled. The rule for the
- * read-only half of the notebook surface, and the base the edit rule builds on.
+ * Requires notebooks to be enabled on this instance. Split out from the resource check because a
+ * create runs from any page, so it gates on the flag without requiring an open notebook.
  */
-export function requiresNotebookResource(scene: DashboardScene): PermissionCheckResult {
+function requiresNotebooksEnabled(): PermissionCheckResult {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)) {
     return {
       allowed: false,
       error: 'Notebooks are not enabled on this instance (feature flag dashboard.notebooks).',
     };
   }
+  return { allowed: true };
+}
+
+/**
+ * Requires the scene to be a notebook, on an instance where notebooks are enabled. The rule for the
+ * read-only half of the notebook surface, and the base the edit rule builds on.
+ */
+export function requiresNotebookResource(scene: DashboardScene): PermissionCheckResult {
+  const enabled = requiresNotebooksEnabled();
+  if (!enabled.allowed) {
+    return enabled;
+  }
   if (!isNotebookScene(scene)) {
     return { allowed: false, error: 'This command applies to notebooks only: the open document is a dashboard.' };
+  }
+  return { allowed: true };
+}
+
+/**
+ * Requires the scene to be a dashboard. The mirror of {@link requiresNotebookResource}, and the
+ * reason each command names exactly one spec: a dashboard command asked of a notebook used to
+ * answer, either by forwarding or — worse — by serializing the notebook through the dashboard
+ * serializer, which silently drops every narrative cell.
+ *
+ * Deliberately not gated on the notebooks feature flag. The question here is what the open document
+ * is, not whether the resource is enabled, and refusing has to work even if a notebook is somehow
+ * rendered with the flag off.
+ */
+export function requiresDashboardResource(scene: DashboardScene): PermissionCheckResult {
+  if (isNotebookScene(scene)) {
+    return {
+      allowed: false,
+      error:
+        'This command applies to dashboards only: the open document is a notebook. ' +
+        'Use GET_NOTEBOOK_SPEC / APPLY_NOTEBOOK_SPEC instead.',
+    };
   }
   return { allowed: true };
 }
@@ -140,12 +174,31 @@ export function requiresNotebookEdit(scene: DashboardScene): PermissionCheckResu
 }
 
 /**
- * Write permission for the full-spec surface (APPLY_SPEC), which is the one command that serves
- * both resources. Dispatches on what the scene actually renders so a notebook is judged by the
- * notebook rule and a dashboard keeps the exact rule it had before.
+ * Requires that a notebook can be created: the resource must be enabled and the user must be able to
+ * create dashboards.
+ *
+ * Unlike the other notebook rules this does NOT require an open notebook. A create is the one
+ * notebook command that runs from anywhere — a dashboard, a drilldown, another notebook — because
+ * there is no blank notebook to open first.
  */
-export function requiresSpecWrite(scene: DashboardScene): PermissionCheckResult {
-  return isNotebookScene(scene) ? requiresNotebookEdit(scene) : requiresNewDashboardLayouts(scene);
+export function requiresNotebookCreate(_scene: DashboardScene): PermissionCheckResult {
+  const enabled = requiresNotebooksEnabled();
+  if (!enabled.allowed) {
+    return enabled;
+  }
+  if (!contextSrv.hasPermission(AccessControlAction.DashboardsCreate)) {
+    return { allowed: false, error: 'Cannot create notebook: insufficient permissions.' };
+  }
+  return { allowed: true };
+}
+
+/**
+ * Write permission for the dashboard full-spec surface (APPLY_SPEC): the dashboard layout rule, plus
+ * a refusal when the open document is a notebook.
+ */
+export function requiresDashboardSpecWrite(scene: DashboardScene): PermissionCheckResult {
+  const resource = requiresDashboardResource(scene);
+  return resource.allowed ? requiresNewDashboardLayouts(scene) : resource;
 }
 
 /**
