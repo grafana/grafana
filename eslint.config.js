@@ -594,6 +594,63 @@ module.exports = [
     },
   },
 
+  {
+    // DataPro finished migrating off the deprecated synchronous DataSourceSrv, so guard the
+    // paths we own against new imports creeping back in.
+    name: 'grafana/datapro-no-datasource-srv',
+    files: [
+      'public/app/features/explore/**/*.{ts,tsx,js,jsx}',
+      'public/app/features/correlations/**/*.{ts,tsx,js,jsx}',
+      'public/app/features/expressions/**/*.{ts,tsx,js,jsx}',
+      'public/app/features/transformers/**/*.{ts,tsx,js,jsx}',
+      'public/app/features/loki-helpers/**/*.{ts,tsx,js,jsx}',
+      'public/app/features/dashboard-scene/panel-edit/PanelEditNext/**/*.{ts,tsx,js,jsx}',
+      'public/app/features/dashboard/components/TransformationsEditor/**/*.{ts,tsx,js,jsx}',
+      'public/app/core/history/**/*.{ts,tsx,js,jsx}',
+      'public/app/core/utils/explore*.{ts,tsx,js,jsx}',
+      'public/app/core/utils/richHistory*.{ts,tsx,js,jsx}',
+      'public/app/core/components/SplitPaneWrapper/**/*.{ts,tsx,js,jsx}',
+      'public/app/core/crash/**/*.{ts,tsx,js,jsx}',
+    ],
+    ignores: [
+      // Owned by @grafana/observability-traces-and-profiling and still mid-migration.
+      'public/app/features/explore/TraceView/**',
+      // Deliberate holdout: reads the current srv so teardown can restore it. Needed until
+      // DataSourceSrv itself is deleted.
+      'public/app/features/explore/spec/helper/setup.tsx',
+      'public/app/features/explore/utils/supplementaryQueries_legacy.test.ts',
+      // Constructs a real DatasourceSrv to back a jest mock; legacy test seeding.
+      'public/app/core/history/RichHistoryLocalStorage.test.ts',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              // Duplicated because this block overrides the previous grafana/no-extensions-imports
+              group: ['app/extensions', 'app/extensions/*'],
+              message: 'Importing from app/extensions is not allowed',
+            },
+            {
+              group: ['@grafana/runtime'],
+              importNames: ['getDataSourceSrv'],
+              message:
+                'getDataSourceSrv is deprecated. Use the async APIs from @grafana/runtime/unstable instead: getDataSourceInstance, getDataSourceInstanceSettings, getDataSourceInstanceList, or the use* hooks. See grafana/grafana#125083.',
+            },
+            {
+              // getDatasourceSrv returns the concrete DatasourceSrv, which implements the same
+              // deprecated interface, so the app-internal module is restricted in full.
+              group: ['app/features/plugins/datasource_srv', '**/plugins/datasource_srv'],
+              message:
+                'app/features/plugins/datasource_srv is the deprecated synchronous DataSourceSrv. Use the async APIs from @grafana/runtime/unstable instead: getDataSourceInstance, getDataSourceInstanceSettings, getDataSourceInstanceList, or the use* hooks. See grafana/grafana#125083.',
+            },
+          ],
+        }),
+      ],
+    },
+  },
+
   // Old betterer rules config:
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
