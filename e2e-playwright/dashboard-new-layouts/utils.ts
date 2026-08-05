@@ -1,25 +1,19 @@
 import { type Locator, type Page } from '@playwright/test';
 
-import { Components, type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-import { Canvas, Controls, Panels, Rows, Sidebar, type Tabs } from './page-objects';
+import type { Controls, Panels, Rows, Sidebar, Tabs } from './page-objects';
 
 export const flows = {
   async addNewGenericVariable(
     page: Page,
-    dashboardPage: DashboardPage,
-    selectors: E2ESelectorGroups,
+    sidebar: Sidebar,
+    controls: Controls,
     variable: Variable,
     skipEnterEditMode = false
   ) {
-    // Keep the flows signature unchanged for unmigrated callers: build the
-    // `components` fixture equivalent from the page context
-    const components = new Components(dashboardPage.ctx);
-    const controls = new Controls({ page, dashboardPage, selectors, components });
-    const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
     if (!skipEnterEditMode) {
       await controls.enterEditMode();
     }
@@ -31,23 +25,15 @@ export const flows = {
 
     // New variable creation schedules a delayed autofocus to name input
     // Let that timer finish before we interact to prevent focus on the wrong input
-    await dashboardPage.ctx.page.waitForTimeout(250);
+    await page.waitForTimeout(250);
 
     await sidebar.variableOptions.setName(variable.name);
     if (variable.label) {
       await sidebar.variableOptions.setLabel(variable.label);
     }
   },
-  async addNewTextBoxVariable(
-    page: Page,
-    dashboardPage: DashboardPage,
-    selectors: E2ESelectorGroups,
-    variable: Variable
-  ) {
-    await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
-
-    const components = new Components(dashboardPage.ctx);
-    const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+  async addNewTextBoxVariable(page: Page, sidebar: Sidebar, controls: Controls, variable: Variable) {
+    await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
     await sidebar.variableOptions.textbox.setValue(variable.value);
     if (variable.display) {
@@ -65,17 +51,7 @@ export type Variable = {
   display?: string;
 };
 
-export async function saveDashboard(
-  dashboardPage: DashboardPage,
-  page: Page,
-  selectors: E2ESelectorGroups,
-  title?: string
-) {
-  // Keep the flows signature unchanged for unmigrated callers: build the
-  // `components` fixture equivalent from the page context
-  const components = new Components(dashboardPage.ctx);
-  const controls = new Controls({ page, dashboardPage, selectors, components });
-
+export async function saveDashboardAndCloseToast(page: Page, controls: Controls, title?: string) {
   await controls.saveDashboard(title);
 
   // wait for the toast
@@ -86,37 +62,21 @@ export async function saveDashboard(
 }
 
 export async function checkRepeatedPanelTitles(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
+  panels: Panels,
   title: string,
-  options: Array<string | number>,
+  values: Array<string | number>,
   expectHidden = false
 ) {
-  // Keep the signature unchanged for unmigrated callers: build the
-  // `components` fixture equivalent from the page context
-  const components = new Components(dashboardPage.ctx);
-  const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
-
-  for (const option of options) {
+  for (const value of values) {
     if (expectHidden) {
-      await expect(panels.getPanel(`${title}${option}`)).toBeHidden();
+      await expect(panels.getPanel(`${title}${value}`)).toBeHidden();
     } else {
-      await expect(panels.getPanel(`${title}${option}`)).toBeVisible();
+      await expect(panels.getPanel(`${title}${value}`)).toBeVisible();
     }
   }
 }
 
-export async function movePanel(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
-  sourcePanel: string | RegExp,
-  targetPanel: string | RegExp
-) {
-  // Keep the signature unchanged for unmigrated callers: build the
-  // `components` fixture equivalent from the page context
-  const components = new Components(dashboardPage.ctx);
-  const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
-
+export async function movePanel(panels: Panels, sourcePanel: string | RegExp, targetPanel: string | RegExp) {
   await test.step(`Move panel "${sourcePanel}" onto "${targetPanel}"`, async () => {
     // Perform drag and drop; pixel-sensitive mechanics stay out of page objects
     await panels.getHeader(sourcePanel).dragTo(panels.getHeader(targetPanel));
@@ -124,13 +84,9 @@ export async function movePanel(
 }
 
 export async function getPanelBox(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
+  panels: Panels,
   panelTitle: string
 ): Promise<{ x: number; y: number; width: number; height: number }> {
-  const components = new Components(dashboardPage.ctx);
-  const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
-
   // boundingBox() is a point-in-time snapshot and stays out of page objects;
   // measures the whole panel <section>, matched exactly by testid
   const boundingBox = await panels.getPanel(panelTitle).boundingBox();
@@ -257,41 +213,28 @@ export async function dragTo(
   });
 }
 
-export async function moveTab(
-  dashboardPage: DashboardPage,
-  page: Page,
-  selectors: E2ESelectorGroups,
-  sourceTab: string,
-  targetTab: string
-) {
-  // Get target panel position
-  const targetTabElement = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(targetTab)).first();
+export async function moveTab(page: Page, tabs: Tabs, sourceTab: string, targetTab: string) {
+  await test.step(`Move tab "${sourceTab}" onto "${targetTab}"`, async () => {
+    const targetBox = await getTabBox(tabs, targetTab);
+    const sourceTabElement = tabs.getTitle(sourceTab).first();
 
-  // Get source panel element
-  const sourceTabElement = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(sourceTab)).first();
-
-  const targetBox = await targetTabElement.boundingBox();
-
-  // Perform drag and drop (dragTo() did not work in this case)
-  await sourceTabElement.hover();
-  await page.mouse.down();
-  // move to adjusted target position (relative to top left)
-  await page.mouse.move((targetBox?.x || 0) + (targetBox?.width || 0), targetBox?.y || 0, { steps: 5 });
-  await page.mouse.up();
+    // Perform drag and drop (dragTo() did not work in this case)
+    await sourceTabElement.hover();
+    await page.mouse.down();
+    // move to adjusted target position (relative to top left)
+    await page.mouse.move(targetBox.x + targetBox.width, targetBox.y, { steps: 5 });
+    await page.mouse.up();
+  });
 }
 
 export async function moveRow(
-  dashboardPage: DashboardPage,
   page: Page,
+  dashboardPage: DashboardPage,
+  rows: Rows,
   selectors: E2ESelectorGroups,
   sourceRow: string,
   targetRow: string
 ) {
-  // Keep the signature unchanged for unmigrated callers: build the
-  // `components` fixture equivalent from the page context
-  const components = new Components(dashboardPage.ctx);
-  const rows = new Rows({ page, dashboardPage, selectors, components });
-
   const targetBox = await getRowBox(dashboardPage, selectors, targetRow);
 
   // drop below the target row (relative to top left)
@@ -304,32 +247,20 @@ export async function moveRow(
   );
 }
 
-export async function groupIntoTab(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  // Keep the flows signature unchanged for unmigrated callers: build the
-  // `components` fixture equivalent from the page context
-  const components = new Components(dashboardPage.ctx);
-  const canvas = new Canvas({ page, dashboardPage, selectors, components });
-  await canvas.groupPanels('tab');
-}
-
-export async function groupIntoRow(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  // Keep the flows signature unchanged for unmigrated callers: build the
-  // `components` fixture equivalent from the page context
-  const components = new Components(dashboardPage.ctx);
-  const canvas = new Canvas({ page, dashboardPage, selectors, components });
-  await canvas.groupPanels('row');
-}
-
-export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, tabTitle: string) {
-  const tab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabTitle)).first();
+export async function getTabBox(
+  tabs: Tabs,
+  tabTitle: string
+): Promise<{ x: number; y: number; width: number; height: number }> {
+  const tab = tabs.getTitle(tabTitle).first();
+  await expect(tab).toBeVisible();
   const boundingBox = await tab.boundingBox();
-  return boundingBox;
+  return boundingBox!;
 }
 
-export async function checkRepeatedTabTitles(tabs: Tabs, title: string, options: Array<string | number>) {
+export async function checkRepeatedTabTitles(tabs: Tabs, title: string, values: Array<string | number>) {
   await test.step('Checking repeated tab titles', async () => {
-    for (const option of options) {
-      await expect(tabs.getTitle(`${title}${option}`)).toBeVisible();
+    for (const value of values) {
+      await expect(tabs.getTitle(`${title}${value}`)).toBeVisible();
     }
   });
 }
@@ -348,12 +279,12 @@ export async function getRowBox(
 export async function checkRepeatedRowTitles(
   rows: Rows,
   title: string,
-  options: Array<string | number>,
+  values: Array<string | number>,
   state: 'visible' | 'hidden' = 'visible'
 ) {
   await test.step(`Checking repeated row titles are ${state}`, async () => {
-    for (const option of options) {
-      const rowTitle = rows.getTitle(`${title}${option}`);
+    for (const value of values) {
+      const rowTitle = rows.getTitle(`${title}${value}`);
       if (state === 'visible') {
         await expect(rowTitle).toBeVisible();
       } else {
@@ -385,18 +316,7 @@ export async function expectVisibleRow(rowTitle: string, rows: Rows): Promise<Lo
   });
 }
 
-export async function fillVariableValue(
-  page: Page,
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
-  varName: string,
-  text: string
-) {
-  // Keep the signature unchanged for unmigrated callers: build the
-  // `components` fixture equivalent from the page context
-  const components = new Components(dashboardPage.ctx);
-  const controls = new Controls({ page, dashboardPage, selectors, components });
-
+export async function fillVariableValue(page: Page, controls: Controls, varName: string, text: string) {
   await controls.variables.setValue(varName, text);
   await page.waitForLoadState('networkidle');
 }

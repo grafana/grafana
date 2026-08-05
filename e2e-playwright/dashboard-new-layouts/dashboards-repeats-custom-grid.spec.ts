@@ -9,7 +9,7 @@ import {
   verifyChanges,
   movePanel,
   getPanelBox,
-  saveDashboard,
+  saveDashboardAndCloseToast,
   importTestDashboard,
   goToEmbeddedPanel,
 } from './utils';
@@ -51,12 +51,12 @@ test.describe(
         await sidebar.panelOptions.setTitle(`${REPEAT_TITLE_BASE}$c1`);
         await sidebar.panelOptions.repeatOptions.repeatByVariable('c1');
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
       });
 
       test('can remove repeats', async ({ dashboardPage, selectors, page, components }) => {
@@ -84,7 +84,7 @@ test.describe(
         // verify only 3 panels are present
         await expect(panels.getHeaders()).toHaveCount(3);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
@@ -109,7 +109,7 @@ test.describe(
         await page.locator('body').click({ position: { x: 0, y: 0 } }); // blur select
 
         // verify that repeats are present for first 3 values
-        await checkRepeatedPanelTitles(dashboardPage, selectors, REPEAT_TITLE_BASE, REPEAT_OPTIONS.slice(0, -1));
+        await checkRepeatedPanelTitles(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS.slice(0, -1));
 
         // verify there is no repeat with last value
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeHidden();
@@ -134,12 +134,12 @@ test.describe(
 
         await sidebar.panelOptions.setTitle(`${NEW_TITLE_BASE}$c1`);
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
       });
 
       test('can update repeats in panel editor', async ({ dashboardPage, selectors, page, components }) => {
@@ -181,12 +181,12 @@ test.describe(
 
         await expect(canvas.getContainer()).toBeVisible(); // verifying that dashboard loaded
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
       });
 
       test('can update repeats in panel editor when loaded directly', async ({
@@ -228,12 +228,12 @@ test.describe(
 
         await expect(canvas.getContainer()).toBeVisible(); // verifying that dashboard loaded
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
       });
     });
 
@@ -251,26 +251,22 @@ test.describe(
 
         await controls.enterEditMode();
 
-        await movePanel(dashboardPage, selectors, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New panel');
+        await movePanel(panels, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New panel');
 
         // verify move by panel title order
         await expect(panels.getHeaders().first()).toHaveText('New panel');
         await expect(panels.getHeaders().last()).toHaveText(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`);
 
         // verify move by panel position
-        let repeatedPanelBox = await getPanelBox(
-          dashboardPage,
-          selectors,
-          `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`
-        );
-        let normalPanelBox = await getPanelBox(dashboardPage, selectors, 'New panel');
+        let repeatedPanelBox = await getPanelBox(panels, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
+        let normalPanelBox = await getPanelBox(panels, 'New panel');
         expect(normalPanelBox.y).toBeLessThan(repeatedPanelBox.y);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
-        repeatedPanelBox = await getPanelBox(dashboardPage, selectors, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
-        normalPanelBox = await getPanelBox(dashboardPage, selectors, 'New panel');
+        repeatedPanelBox = await getPanelBox(panels, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
+        normalPanelBox = await getPanelBox(panels, 'New panel');
 
         expect(normalPanelBox.y).toBeLessThan(repeatedPanelBox.y);
         await expect(panels.getHeaders().first()).toHaveText('New panel');

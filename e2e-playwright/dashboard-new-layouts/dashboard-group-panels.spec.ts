@@ -1,7 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
 import { Canvas, Controls, Panels, Rows, Sidebar, Tabs } from './page-objects';
-import { expectVisibleRow, expectVisibleTab, importTestDashboard, saveDashboard } from './utils';
+import { expectVisibleRow, expectVisibleTab, importTestDashboard, saveDashboardAndCloseToast } from './utils';
 
 test.use({
   featureToggles: {
@@ -41,7 +41,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         // Verify row and panel titles after reload
@@ -58,7 +58,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         // Verify Row title is gone
@@ -102,7 +102,7 @@ test.describe(
         await expect(panels.getPanels('New panel', thirdRow)).toHaveCount(1);
 
         // Save dashboard and reload
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         firstRow = await expectVisibleRow('New row', rows);
@@ -151,7 +151,7 @@ test.describe(
         await expect(thirdRow).toBeHidden();
         await expect(panels.getPanels('New panel')).toHaveCount(4); // All 4 panels should be visible in the single grid
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         // Verify all rows are still gone after reload
@@ -187,7 +187,7 @@ test.describe(
         await secondRow.scrollIntoViewIfNeeded();
         await expect(panels.getPanels('New panel', secondRow)).toHaveCount(3);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         firstRow = await expectVisibleRow('New row', rows);
@@ -224,7 +224,7 @@ test.describe(
         await secondRow.scrollIntoViewIfNeeded();
         await expect(panels.getPanels('New panel', secondRow)).toHaveCount(3);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         firstRow = await expectVisibleRow('New row', rows);
@@ -274,7 +274,7 @@ test.describe(
 
         await expect(panels.getPanels('New panel')).toHaveCount(0);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         await expect(rows.getTitle('New row')).toBeVisible();
@@ -327,7 +327,7 @@ test.describe(
         await tabs.select('New row 1');
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         await expectVisibleTab('New row 1', tabs); // last active tab is selected
@@ -364,7 +364,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         // Verify tab, row and panel titles after reload
@@ -384,7 +384,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         // Verify Row title is gone
@@ -449,7 +449,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         // Verify tab and panel titles after reload
@@ -466,7 +466,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         // Verify tab title is gone
@@ -501,7 +501,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(1);
 
         // Save dashboard and reload
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         await expect(tabs.getTitle('New tab')).toBeVisible();
@@ -525,7 +525,7 @@ test.describe(
         await expectVisibleTab('New tab', tabs);
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         await expect(tabs.getTitle('New tab 1')).toBeHidden();
@@ -557,7 +557,7 @@ test.describe(
         await expect(tabs.getTitle('New tab 1')).toBeVisible();
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         await expect(tabs.getTitle('New tab')).toBeVisible();
@@ -586,7 +586,7 @@ test.describe(
         await expect(tabs.getTitle('New tab 1')).toBeVisible();
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         await expect(tabs.getTitle('New tab')).toBeVisible();
@@ -641,7 +641,7 @@ test.describe(
         await thirdRow.scrollIntoViewIfNeeded();
         await expect(panels.getPanels('New panel', thirdRow)).toHaveCount(3);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         firstRow = await expectVisibleRow('New tab', rows);
@@ -685,7 +685,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         // Verify tab, row and panel titles after reload
@@ -705,7 +705,7 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
 
         // Save dashboard and reload
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         // Verify Row title is gone
