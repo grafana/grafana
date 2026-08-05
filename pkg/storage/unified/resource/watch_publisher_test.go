@@ -2,8 +2,11 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -67,6 +70,28 @@ func TestPublishWatchNotification(t *testing.T) {
 		assert.Equal(t, event.ResourceVersion, got.GetResourceVersion())
 		assert.Equal(t, event.Folder, got.GetFolder())
 		assert.Equal(t, event.PreviousRV, got.GetPreviousResourceVersion())
+	})
+
+	t.Run("counts a successful publish", func(t *testing.T) {
+		pub := &fakeEventPublisher{enabled: true}
+		metrics := newKVBackendMetrics(prometheus.NewPedanticRegistry())
+		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub, metrics: metrics}
+
+		backend.publishWatchNotification(context.Background(), event)
+
+		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+	})
+
+	t.Run("counts a failed publish as a failure, not as published", func(t *testing.T) {
+		pub := &fakeEventPublisher{enabled: true, err: errors.New("bus unavailable")}
+		metrics := newKVBackendMetrics(prometheus.NewPedanticRegistry())
+		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: pub, metrics: metrics}
+
+		backend.publishWatchNotification(context.Background(), event)
+
+		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action))))
 	})
 
 	t.Run("does nothing when the publisher is disabled", func(t *testing.T) {

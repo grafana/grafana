@@ -73,9 +73,15 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	// Jobs informer feeding the driver's work queue with job keys. Under the NATS
 	// watch the source is a NATS-backed informer; otherwise an apiserver-backed
 	// one. Both satisfy DeltaSource, so the rest of the wiring is identical. The
-	// handler must be registered before the informer runs: the NATS-backed source
-	// has no cache to replay for late handlers.
-	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	// informer's periodic resync/re-list is the driver's only recovery path for
+	// unclaimed jobs (rolled-back claims, dropped keys, missed notifications), so
+	// the handler must be registered before the informer runs: the NATS-backed
+	// source has no cache to replay for late handlers.
+	//
+	// The jobs informer resyncs on job_interval (default 30s) rather than the
+	// controllers' resync_interval, preserving the job pickup cadence (and config
+	// key) of the polling design this replaced.
+	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.jobInterval, deps.Registerer)
 	reg, err := jobInformer.AddEventHandler(driver.EventHandler())
 	if err != nil {
 		return fmt.Errorf("failed to add job event handler: %w", err)
@@ -141,12 +147,21 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 
+	// The jobs informer resyncs on jobInterval and that resync is the driver's
+	// only recovery path for unclaimed jobs. A non-positive value would disable
+	// the apiserver informer's resync entirely (and fall back to an unrelated
+	// default under NATS), so clamp it to the default instead.
+	jobInterval := operatorSec.Key("job_interval").MustDuration(30 * time.Second)
+	if jobInterval <= 0 {
+		jobInterval = 30 * time.Second
+	}
+
 	return &jobQueueControllerConfig{
 		ControllerConfig:     *controllerCfg,
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
-		jobInterval:          operatorSec.Key("job_interval").MustDuration(30 * time.Second),
+		jobInterval:          jobInterval,
 		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(jobClaimExpiry / 3),
 	}, nil
 }

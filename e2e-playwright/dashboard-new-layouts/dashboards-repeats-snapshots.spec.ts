@@ -5,22 +5,16 @@ import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafa
 import { type SnapshotCreateResponse } from '../../public/app/features/dashboard/services/SnapshotSrv';
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
-import { importTestDashboard, saveDashboard, switchToAutoGrid } from './utils';
+import { Controls, Panels, Sidebar } from './page-objects';
+import { importTestDashboard, saveDashboard } from './utils';
 
 const repeatTitleBase = 'repeat - ';
 const repeatOptions = [1, 2, 3, 4];
 
-async function expectRepeatPanelsRendered(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
-  expectedCount: number
-) {
+async function expectRepeatPanelsRendered(panels: Panels, expectedCount: number) {
   // Snapshot rendering can interpolate the repeat variable differently (for example, as a single multi-value string),
   // so assert on the number of repeated panels rather than exact per-clone titles.
-  const repeatedPanels = dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-    .filter({ hasText: new RegExp(`^${repeatTitleBase}`) });
-
+  const repeatedPanels = panels.getHeaders(new RegExp(`^${repeatTitleBase}`));
   await expect(repeatedPanels).toHaveCount(expectedCount);
   await expect(repeatedPanels.first()).toBeVisible();
 }
@@ -34,10 +28,11 @@ async function publishDashboardSnapshot(
     (response) => response.url().includes('/api/snapshots') && response.request().method() === 'POST'
   );
 
-  await expect(
-    dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareSnapshot.publishSnapshot)
-  ).toBeVisible();
-  await dashboardPage.getByGrafanaSelector(selectors.pages.ShareDashboardDrawer.ShareSnapshot.publishSnapshot).click();
+  const publishSnapshotButton = dashboardPage.getByGrafanaSelector(
+    selectors.pages.ShareDashboardDrawer.ShareSnapshot.publishSnapshot
+  );
+  await expect(publishSnapshotButton).toBeVisible();
+  await publishSnapshotButton.click();
 
   const createResponse = await createSnapshotPromise;
   expect(createResponse.status()).toBe(200);
@@ -60,7 +55,15 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('dashboard snapshot renders repeated panels (custom grid)', async ({ dashboardPage, selectors, page }) => {
+    test('dashboard snapshot renders repeated panels (custom grid)', async ({
+      dashboardPage,
+      selectors,
+      page,
+      components,
+    }) => {
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
+
       await importTestDashboard(
         page,
         selectors,
@@ -69,23 +72,28 @@ test.describe(
       );
 
       // Sanity check: repeats exist before snapshot.
-      await expectRepeatPanelsRendered(dashboardPage, selectors, repeatOptions.length);
+      await expectRepeatPanelsRendered(panels, repeatOptions.length);
 
-      // Open share drawer -> Share snapshot.
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.menu.shareSnapshot)
-        .click();
+      await controls.openShareSnapshotDrawer();
 
       const snapshotUrl = await publishDashboardSnapshot(page, dashboardPage, selectors);
       await page.goto(snapshotUrl);
-      await expect(dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls)).toBeVisible();
+      await expect(controls.getContainer()).toBeVisible();
 
       // Regression: snapshot must include repeat clones; otherwise panels are missing / fail to render.
-      await expectRepeatPanelsRendered(dashboardPage, selectors, repeatOptions.length);
+      await expectRepeatPanelsRendered(panels, repeatOptions.length);
     });
 
-    test('dashboard snapshot renders repeated panels (auto grid)', async ({ dashboardPage, selectors, page }) => {
+    test('dashboard snapshot renders repeated panels (auto grid)', async ({
+      dashboardPage,
+      selectors,
+      page,
+      components,
+    }) => {
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+
       await importTestDashboard(
         page,
         selectors,
@@ -94,24 +102,21 @@ test.describe(
       );
 
       // Convert layout to auto grid and persist it, then snapshot.
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-      await switchToAutoGrid(page, dashboardPage);
+      await controls.enterEditMode();
+      await sidebar.toolbar.clickButton('Options');
+      await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm: true });
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
-      await expectRepeatPanelsRendered(dashboardPage, selectors, repeatOptions.length);
+      await expectRepeatPanelsRendered(panels, repeatOptions.length);
 
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.DashNav.newShareButton.menu.shareSnapshot)
-        .click();
+      await controls.openShareSnapshotDrawer();
 
       const snapshotUrl = await publishDashboardSnapshot(page, dashboardPage, selectors);
       await page.goto(snapshotUrl);
-      await expect(dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Controls)).toBeVisible();
+      await expect(controls.getContainer()).toBeVisible();
 
-      await expectRepeatPanelsRendered(dashboardPage, selectors, repeatOptions.length);
+      await expectRepeatPanelsRendered(panels, repeatOptions.length);
     });
   }
 );

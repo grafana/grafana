@@ -1,6 +1,8 @@
-import { test, expect, type E2ESelectorGroups, type DashboardPage } from '@grafana/plugin-e2e';
+import { test, expect } from '@grafana/plugin-e2e';
 
-import { switchToAutoGrid, importTestDashboard } from './utils';
+import { Controls, Panels, Sidebar } from './page-objects';
+import { type GridLayoutOptions } from './page-objects/sidebar/shared/GridLayoutOptions';
+import { getPanelBox, importTestDashboard } from './utils';
 
 test.use({
   featureToggles: {
@@ -20,406 +22,364 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can switch to auto grid layout', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(page, selectors, 'Switch to auto grid');
+    test.describe('Layout switching', () => {
+      test('can switch to auto grid layout', async ({ dashboardPage, selectors, page, components }) => {
+        await importTestDashboard(page, selectors, 'Switch to auto grid');
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+        const controls = new Controls({ page, dashboardPage, selectors, components });
+        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
+        const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
+        await controls.enterEditMode();
 
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
+        await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-      await switchToAutoGrid(page, dashboardPage);
+        await sidebar.toolbar.clickButton('Options');
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
+        await gridLayoutOptions.switchLayout('auto', { confirm: true });
 
-      await checkAutoGridLayoutInputs(dashboardPage, selectors);
+        await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-      await saveDashboard(dashboardPage, selectors);
-      await page.reload();
+        await checkAutoGridLayoutInputs(gridLayoutOptions);
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
+        await controls.saveDashboard();
+        await page.reload();
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
+        await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-      await checkAutoGridLayoutInputs(dashboardPage, selectors);
+        await controls.enterEditMode();
+        await sidebar.toolbar.clickButton('Options');
+
+        await checkAutoGridLayoutInputs(gridLayoutOptions);
+      });
     });
 
-    test('can change min column width in auto grid layout', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(page, selectors, 'Set min column width');
+    test.describe('Auto grid column options', () => {
+      test('can change min column width', async ({ dashboardPage, selectors, page, components }) => {
+        await importTestDashboard(page, selectors, 'Set min column width');
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+        const controls = new Controls({ page, dashboardPage, selectors, components });
+        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
+        const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
+        await controls.enterEditMode();
 
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
+        await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-      await switchToAutoGrid(page, dashboardPage);
+        await sidebar.toolbar.clickButton('Options');
 
-      // Get initial positions - standard width should have panels on different rows
-      const firstPanelTop = await getPanelTop(dashboardPage, selectors);
-      const lastPanel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).last();
+        await gridLayoutOptions.switchLayout('auto', { confirm: true });
 
-      expect(async () => {
-        const lastPanelBox = await lastPanel.boundingBox();
-        const lastPanelTop = lastPanelBox?.y || 0;
+        // At Standard width all 3 panels fit on one row at this viewport, so start from
+        // Wide: only 2 columns fit, which forces the last panel onto a second row
+        await gridLayoutOptions.selectMinColumnWidth('Wide');
 
-        // Verify standard layout has panels on different rows
-        expect(lastPanelTop).toBeGreaterThan(firstPanelTop);
-      }).toPass();
+        // Verify wide layout wraps panels onto two rows; poll: boundingBox() doesn't auto-wait for the re-layout
+        await expect(async () => {
+          // getPanelBox asserts non-null; the inline .last() measurement needs its own null check
+          const firstPanelBox = await getPanelBox(dashboardPage, selectors, 'New panel');
+          const lastPanelBox = await panels.getPanels('New panel').last().boundingBox();
+          expect(lastPanelBox, 'Last panel should have a bounding box').not.toBeNull();
 
-      // Change to narrow min column width
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth)
-        .click();
-      await page.getByRole('option', { name: 'Narrow' }).click();
+          expect(lastPanelBox!.y, 'Last panel should be on a row below the first').toBeGreaterThan(firstPanelBox.y);
+        }).toPass();
 
-      // Verify narrow layout has all panels on same row
-      expect(async () => {
-        const firstPanelTopNarrow = await getPanelTop(dashboardPage, selectors);
-        const lastPanelBoxNarrow = await lastPanel.boundingBox();
-        const lastPanelTopNarrow = lastPanelBoxNarrow?.y || 0;
+        await gridLayoutOptions.selectMinColumnWidth('Narrow');
 
-        expect(lastPanelTopNarrow).toBe(firstPanelTopNarrow);
-      }).toPass();
+        // Verify narrow layout fits all panels on one row; poll until the re-layout lands
+        await expect(async () => {
+          const firstPanelBox = await getPanelBox(dashboardPage, selectors, 'New panel');
+          const lastPanelBox = await panels.getPanels('New panel').last().boundingBox();
+          expect(lastPanelBox, 'Last panel should have a bounding box').not.toBeNull();
 
-      await saveDashboard(dashboardPage, selectors);
-      await page.reload();
+          expect(lastPanelBox!.y, 'Last panel should be on the same row as the first').toBe(firstPanelBox.y);
+        }).toPass();
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
+        await controls.saveDashboard();
+        await page.reload();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(
-          selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth
-        )
-      ).toHaveValue('Narrow');
+        await controls.enterEditMode();
+        await sidebar.toolbar.clickButton('Options');
 
-      expect(async () => {
-        const firstPanelTopReload = await getPanelTop(dashboardPage, selectors);
-        const lastPanelBoxReload = await lastPanel.boundingBox();
-        const lastPanelTopReload = lastPanelBoxReload?.y || 0;
+        await expect(gridLayoutOptions.getMinColumnWidthSelect()).toHaveValue('Narrow');
 
-        expect(lastPanelTopReload).toBe(firstPanelTopReload);
-      }).toPass();
+        // Verify the narrow layout persisted: all panels on one row; poll while panels re-render after the reload
+        await expect(async () => {
+          const firstPanelBox = await getPanelBox(dashboardPage, selectors, 'New panel');
+          const lastPanelBox = await panels.getPanels('New panel').last().boundingBox();
+          expect(lastPanelBox, 'Last panel should have a bounding box').not.toBeNull();
+
+          expect(lastPanelBox!.y, 'Last panel should be on the same row as the first').toBe(firstPanelBox.y);
+        }).toPass();
+      });
+
+      test('can change to custom min column width', async ({ dashboardPage, selectors, page, components }) => {
+        await importTestDashboard(page, selectors, 'Set custom min column width');
+
+        const controls = new Controls({ page, dashboardPage, selectors, components });
+        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
+        const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
+
+        await controls.enterEditMode();
+
+        await expect(panels.getPanels('New panel')).toHaveCount(3);
+
+        await sidebar.toolbar.clickButton('Options');
+
+        await gridLayoutOptions.switchLayout('auto', { confirm: true });
+
+        await gridLayoutOptions.selectMinColumnWidth('Custom', 1100);
+
+        // Changing to 1100 custom width should have each panel span the whole row (stacked vertically)
+        await verifyPanelsStackedVertically(panels);
+
+        await controls.saveDashboard();
+        await page.reload();
+
+        await verifyPanelsStackedVertically(panels);
+
+        await controls.enterEditMode();
+        await sidebar.toolbar.clickButton('Options');
+
+        await expect(gridLayoutOptions.getCustomMinColumnWidthInput()).toHaveValue('1100');
+
+        await verifyPanelsStackedVertically(panels);
+
+        await gridLayoutOptions.clickClearCustomMinColumnWidth();
+        await expect(gridLayoutOptions.getMinColumnWidthSelect()).toHaveValue('Standard');
+      });
+
+      test('can change max columns', async ({ dashboardPage, selectors, page, components }) => {
+        await importTestDashboard(page, selectors, 'Set max columns');
+
+        const controls = new Controls({ page, dashboardPage, selectors, components });
+        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
+        const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
+
+        await controls.enterEditMode();
+
+        await expect(panels.getPanels('New panel')).toHaveCount(3);
+
+        await sidebar.toolbar.clickButton('Options');
+
+        await gridLayoutOptions.switchLayout('auto', { confirm: true });
+
+        await gridLayoutOptions.selectMaxColumns('1');
+
+        // Changing to 1 max column should have each panel span the whole row (stacked vertically)
+        await verifyPanelsStackedVertically(panels);
+
+        await controls.saveDashboard();
+        await page.reload();
+
+        await verifyPanelsStackedVertically(panels);
+
+        await controls.enterEditMode();
+        await sidebar.toolbar.clickButton('Options');
+
+        await expect(gridLayoutOptions.getMaxColumnsSelect()).toHaveValue('1');
+
+        await verifyPanelsStackedVertically(panels);
+      });
     });
 
-    test('can change to custom min column width in auto grid layout', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(page, selectors, 'Set custom min column width');
+    test.describe('Auto grid row options', () => {
+      test('can change row height', async ({ dashboardPage, selectors, page, components }) => {
+        await importTestDashboard(page, selectors, 'Set row height');
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+        const controls = new Controls({ page, dashboardPage, selectors, components });
+        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
+        const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
+        await controls.enterEditMode();
 
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
+        await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-      await switchToAutoGrid(page, dashboardPage);
+        await sidebar.toolbar.clickButton('Options');
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth)
-        .click();
-      await page.getByRole('option', { name: 'Custom' }).click();
+        await gridLayoutOptions.switchLayout('auto', { confirm: true });
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customMinColumnWidth)
-        .fill('1100');
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customMinColumnWidth)
-        .blur();
+        const regularRowHeight = (await getPanelBox(dashboardPage, selectors, 'New panel')).height;
 
-      // Changing to 900 custom width should have each panel span the whole row (stacked vertically)
-      await verifyPanelsStackedVertically(dashboardPage, selectors);
+        await gridLayoutOptions.selectRowHeight('Short');
 
-      await saveDashboard(dashboardPage, selectors);
-      await page.reload();
+        // boundingBox() doesn't auto-wait, so poll the height until the re-layout applies
+        await expect
+          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+            message: 'Panel should shrink to the Short row height',
+          })
+          .toBeLessThan(regularRowHeight);
 
-      await verifyPanelsStackedVertically(dashboardPage, selectors);
+        await gridLayoutOptions.selectRowHeight('Tall');
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
+        await expect
+          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+            message: 'Panel should grow to the Tall row height',
+          })
+          .toBeGreaterThan(regularRowHeight);
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(
-          selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customMinColumnWidth
-        )
-      ).toHaveValue('1100');
+        await controls.saveDashboard();
+        await page.reload();
 
-      await verifyPanelsStackedVertically(dashboardPage, selectors);
+        await expect
+          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+            message: 'Tall row height should persist after the reload',
+          })
+          .toBeGreaterThan(regularRowHeight);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomMinColumnWidth)
-        .click();
-      await expect(
-        dashboardPage.getByGrafanaSelector(
-          selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth
-        )
-      ).toHaveValue('Standard');
-    });
+        await controls.enterEditMode();
+        await sidebar.toolbar.clickButton('Options');
 
-    test('can change max columns in auto grid layout', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(page, selectors, 'Set max columns');
+        await expect(gridLayoutOptions.getRowHeightSelect()).toHaveValue('Tall');
 
-      await await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first()
-      ).toBeVisible();
+        // The edit pane shrinks the canvas and re-flows the grid
+        await expect
+          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+            message: 'Panel should keep the Tall row height in edit mode',
+          })
+          .toBeGreaterThan(regularRowHeight);
+      });
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      test('can change to custom row height', async ({ dashboardPage, selectors, page, components }) => {
+        await importTestDashboard(page, selectors, 'Set custom row height');
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
+        const controls = new Controls({ page, dashboardPage, selectors, components });
+        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
+        const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
+        await controls.enterEditMode();
 
-      await switchToAutoGrid(page, dashboardPage);
+        await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns)
-        .click();
-      await page.getByRole('option', { name: '1', exact: true }).click();
+        await sidebar.toolbar.clickButton('Options');
 
-      // Changing to 1 max column should have each panel span the whole row (stacked vertically)
-      await verifyPanelsStackedVertically(dashboardPage, selectors);
+        await gridLayoutOptions.switchLayout('auto', { confirm: true });
 
-      await saveDashboard(dashboardPage, selectors);
-      await page.reload();
+        const regularRowHeight = (await getPanelBox(dashboardPage, selectors, 'New panel')).height;
 
-      await verifyPanelsStackedVertically(dashboardPage, selectors);
+        await gridLayoutOptions.selectRowHeight('Custom', 800);
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
+        // boundingBox() doesn't auto-wait; poll until the new row height applies
+        await expect(async () => {
+          const customHeight = (await getPanelBox(dashboardPage, selectors, 'New panel')).height;
+          expect(customHeight).toBeCloseTo(800, 5); // Allow some tolerance for rendering differences
+          expect(customHeight).toBeGreaterThan(regularRowHeight);
+        }).toPass();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns)
-      ).toHaveValue('1');
+        await controls.saveDashboard();
+        await page.reload();
 
-      await verifyPanelsStackedVertically(dashboardPage, selectors);
-    });
+        await expect
+          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+            message: 'Custom row height should persist after the reload',
+          })
+          .toBeCloseTo(800, 5);
 
-    test('can change row height in auto grid layout', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(page, selectors, 'Set row height');
+        await controls.enterEditMode();
+        await sidebar.toolbar.clickButton('Options');
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+        await expect(gridLayoutOptions.getCustomRowHeightInput()).toHaveValue('800');
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
+        await gridLayoutOptions.clickClearCustomRowHeight();
+        await expect(gridLayoutOptions.getRowHeightSelect()).toHaveValue('Standard');
+      });
 
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
+      test('can change fill screen', async ({ dashboardPage, selectors, page, components }) => {
+        await importTestDashboard(page, selectors, 'Set fill screen');
 
-      await switchToAutoGrid(page, dashboardPage);
-
-      const regularRowHeight = await getPanelHeight(dashboardPage, selectors);
+        const controls = new Controls({ page, dashboardPage, selectors, components });
+        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
+        const gridLayoutOptions = sidebar.dashboardOptions.gridLayoutOptions;
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight)
-        .click();
-      await page.getByRole('option', { name: 'Short' }).click();
+        await controls.enterEditMode();
 
-      await expect(async () => {
-        const shortHeight = await getPanelHeight(dashboardPage, selectors);
-        expect(shortHeight).toBeLessThan(regularRowHeight);
-      }).toPass();
+        await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight)
-        .click();
-      await page.getByRole('option', { name: 'Tall' }).click();
+        await sidebar.toolbar.clickButton('Options');
 
-      await expect(async () => {
-        const tallHeight = await getPanelHeight(dashboardPage, selectors);
-        expect(tallHeight).toBeGreaterThan(regularRowHeight);
-      }).toPass();
+        await gridLayoutOptions.switchLayout('auto', { confirm: true });
 
-      await saveDashboard(dashboardPage, selectors);
-      await page.reload();
+        // Set narrow column width first to ensure panels fit horizontally
+        await gridLayoutOptions.selectMinColumnWidth('Narrow');
 
-      await expect(async () => {
-        const tallHeightAfterReload = await getPanelHeight(dashboardPage, selectors);
-        expect(tallHeightAfterReload).toBeGreaterThan(regularRowHeight);
-      }).toPass();
+        const initialHeight = (await getPanelBox(dashboardPage, selectors, 'New panel')).height;
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
+        await gridLayoutOptions.toggleFillScreen();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight)
-      ).toHaveValue('Tall');
+        // boundingBox() doesn't auto-wait, so poll the height until the re-layout applies
+        await expect
+          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+            message: 'Fill screen should increase the panel height',
+          })
+          .toBeGreaterThan(initialHeight);
 
-      await expect(async () => {
-        const tallHeightAfterEdit = await getPanelHeight(dashboardPage, selectors);
-        expect(tallHeightAfterEdit).toBeGreaterThan(regularRowHeight);
-      }).toPass();
-    });
+        await controls.saveDashboard();
+        await page.reload();
 
-    test('can change to custom row height in auto grid layout', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(page, selectors, 'Set custom row height');
+        await expect
+          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+            message: 'Fill screen height should persist after the reload',
+          })
+          .toBeGreaterThan(initialHeight);
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+        await controls.enterEditMode();
+        await sidebar.toolbar.clickButton('Options');
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
+        await expect(gridLayoutOptions.getFillScreenSwitch()).toBeChecked();
 
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-
-      await switchToAutoGrid(page, dashboardPage);
-
-      const regularRowHeight = await getPanelHeight(dashboardPage, selectors);
-
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight)
-        .click();
-      await page.getByRole('option', { name: 'Custom' }).click();
-
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customRowHeight)
-        .fill('800');
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customRowHeight)
-        .blur();
-
-      await expect(async () => {
-        const customHeight = await getPanelHeight(dashboardPage, selectors);
-        expect(customHeight).toBeCloseTo(800, 5); // Allow some tolerance for rendering differences
-        expect(customHeight).toBeGreaterThan(regularRowHeight);
-      }).toPass();
-
-      await saveDashboard(dashboardPage, selectors);
-      await page.reload();
-
-      await expect(async () => {
-        const customHeightAfterReload = await getPanelHeight(dashboardPage, selectors);
-        expect(customHeightAfterReload).toBeCloseTo(800, 5);
-      }).toPass();
-
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-
-      await expect(
-        dashboardPage.getByGrafanaSelector(
-          selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customRowHeight
-        )
-      ).toHaveValue('800');
-
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomRowHeight)
-        .click();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight)
-      ).toHaveValue('Standard');
-    });
-
-    test('can change fill screen in auto grid layout', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(page, selectors, 'Set fill screen');
-
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(3);
-
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-
-      await switchToAutoGrid(page, dashboardPage);
-
-      // Set narrow column width first to ensure panels fit horizontally
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth)
-        .click();
-      await page.getByRole('option', { name: 'Narrow' }).click();
-
-      const initialHeight = await getPanelHeight(dashboardPage, selectors);
-
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen)
-        .click({ force: true });
-
-      await expect(async () => {
-        const fillScreenHeight = await getPanelHeight(dashboardPage, selectors);
-        expect(fillScreenHeight).toBeGreaterThan(initialHeight);
-      }).toPass();
-
-      await saveDashboard(dashboardPage, selectors);
-      await page.reload();
-
-      await expect(async () => {
-        const fillScreenHeightAfterReload = await getPanelHeight(dashboardPage, selectors);
-        expect(fillScreenHeightAfterReload).toBeGreaterThan(initialHeight);
-      }).toPass();
-
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.optionsButton).click();
-
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen)
-      ).toBeChecked();
-
-      await expect(async () => {
-        const fillScreenHeightAfterEdit = await getPanelHeight(dashboardPage, selectors);
-        expect(fillScreenHeightAfterEdit).toBeGreaterThan(initialHeight);
-      }).toPass();
+        // The edit pane shrinks the canvas and re-flows the grid
+        await expect
+          .poll(async () => (await getPanelBox(dashboardPage, selectors, 'New panel')).height, {
+            message: 'Fill screen height should persist in edit mode',
+          })
+          .toBeGreaterThan(initialHeight);
+      });
     });
   }
 );
 
 // Helper functions
-async function saveDashboard(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
+async function checkAutoGridLayoutInputs(gridLayoutOptions: GridLayoutOptions) {
+  await test.step('Check all auto grid sizing inputs are visible', async () => {
+    await expect(gridLayoutOptions.getMinColumnWidthSelect()).toBeVisible();
+    await expect(gridLayoutOptions.getMaxColumnsSelect()).toBeVisible();
+    await expect(gridLayoutOptions.getRowHeightSelect()).toBeVisible();
+    await expect(gridLayoutOptions.getFillScreenSwitch()).toBeVisible();
+  });
 }
 
-async function checkAutoGridLayoutInputs(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await expect(
-    dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth)
-  ).toBeVisible();
-  await expect(
-    dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns)
-  ).toBeVisible();
-  await expect(
-    dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight)
-  ).toBeVisible();
-  await expect(
-    dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen)
-  ).toBeVisible();
-}
+async function verifyPanelsStackedVertically(panels: Panels, expectedCount = 3) {
+  await test.step('Verify panels are stacked vertically, one full-width panel per row', async () => {
+    // .all() does not wait: make sure every panel is rendered before measuring
+    await expect(panels.getPanels('New panel')).toHaveCount(expectedCount);
 
-async function verifyPanelsStackedVertically(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  const panels = await dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).all();
-  let previousTop = 0;
+    const allPanels = await panels.getPanels('New panel').all();
+    expect(allPanels).toHaveLength(expectedCount);
 
-  for (const panel of panels) {
-    const boundingBox = await panel.boundingBox();
-    if (boundingBox) {
-      if (previousTop === 0) {
-        previousTop = boundingBox.y;
-      } else {
-        expect(boundingBox.y).toBeGreaterThan(previousTop);
-        previousTop = boundingBox.y;
+    // boundingBox() doesn't auto-wait; poll until the stacked layout settles
+    await expect(async () => {
+      let previousBox: { x: number; y: number; width: number; height: number } | null = null;
+
+      for (const [i, panel] of allPanels.entries()) {
+        const box = await panel.boundingBox();
+        expect(box, `Panel ${i} should have a bounding box`).not.toBeNull();
+
+        if (previousBox) {
+          expect(box!.y, `Panel ${i} should be below panel ${i - 1}`).toBeGreaterThan(previousBox.y);
+          // one panel per row: all panels share the same left edge and width
+          expect(box!.x, `Panel ${i} should be left-aligned with panel ${i - 1}`).toBe(previousBox.x);
+          expect(box!.width, `Panel ${i} should have the same width as panel ${i - 1}`).toBe(previousBox.width);
+        }
+
+        previousBox = box!;
       }
-    }
-  }
-}
-
-async function getPanelHeight(dashboardPage: DashboardPage, selectors: E2ESelectorGroups): Promise<number> {
-  const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first();
-  const boundingBox = await panel.boundingBox();
-  return boundingBox?.height || 0;
-}
-
-async function getPanelTop(dashboardPage: DashboardPage, selectors: E2ESelectorGroups): Promise<number> {
-  const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel')).first();
-  const boundingBox = await panel.boundingBox();
-  return boundingBox?.y || 0;
+    }).toPass();
+  });
 }

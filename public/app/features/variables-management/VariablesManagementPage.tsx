@@ -5,7 +5,7 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagGlobalDashboardVariables } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { Alert, Button, ConfirmModal, EmptyState, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type Variable } from 'app/api/clients/dashboard/v2beta1';
 import { extractErrorMessage } from 'app/api/utils';
@@ -20,12 +20,19 @@ import {
   bulkDeleteVariables,
   bulkMoveVariables,
   type BulkOperationResult,
+  useFolderCanEdit,
   useFolderTitles,
   useListAllVariablesQuery,
 } from './api';
 import { MoveVariablesModal } from './components/MoveVariablesModal';
 import { VariablesTable } from './components/VariablesTable';
-import { buildVariablesTree, getVariableFolderUid, getVariableSpecName } from './utils';
+import {
+  buildVariablesTree,
+  canManageGlobalVariables,
+  canManageVariableScope,
+  getVariableFolderUid,
+  getVariableSpecName,
+} from './utils';
 
 const LIST_URL = '/dashboards/variables';
 
@@ -33,7 +40,7 @@ export default function VariablesManagementPage() {
   // The route is registered unconditionally (getAppRoutes is not a React component), so the
   // feature flag is enforced here via the OpenFeature hook. When it is off the variables page
   // is not a real route, so we render the standard not-found page.
-  const globalVariablesEnabled = useFlagGlobalDashboardVariables();
+  const globalVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
 
   const styles = useStyles2(getStyles);
   const { name: editName } = useParams<{ name?: string }>();
@@ -63,6 +70,24 @@ export default function VariablesManagementPage() {
   const tree = useMemo(() => buildVariablesTree(variables, folderTitles), [variables, folderTitles]);
 
   const selectedVariables = variables.filter((v) => v.metadata.name && selected.has(v.metadata.name));
+  const allowGlobalScope = canManageGlobalVariables();
+  const selectedFolderUids = useMemo(
+    () => [...new Set(selectedVariables.map(getVariableFolderUid).filter((uid): uid is string => Boolean(uid)))].sort(),
+    [selectedVariables]
+  );
+  const folderCanEdit = useFolderCanEdit(selectedFolderUids);
+  // Disable Move/Delete when any selected variable is outside scopes the user can manage
+  // (global without Editor, or a folder without CanEdit). Reuses the same folder-access map.
+  const canMutateSelection =
+    selectedVariables.length > 0 &&
+    selectedVariables.every((variable) => {
+      const folderUid = getVariableFolderUid(variable);
+      return canManageVariableScope(
+        folderUid ?? '',
+        folderUid ? folderCanEdit[folderUid] : undefined,
+        allowGlobalScope
+      );
+    });
 
   const onToggleFolder = (folderUid: string) => {
     setExpandedFolders((prev) => {
@@ -230,19 +255,21 @@ export default function VariablesManagementPage() {
         {isError ? (
           <LoadVariablesError error={error} />
         ) : isEmpty ? (
-          <EmptyState
-            variant="call-to-action"
-            message={t('variables-management.page.empty-title', "You haven't created any variables yet")}
-            button={
-              <Button icon="plus" size="lg" onClick={() => locationService.push(`${LIST_URL}/new`)}>
-                <Trans i18nKey="variables-management.page.empty-cta">New variable</Trans>
-              </Button>
-            }
-          >
-            <Trans i18nKey="variables-management.page.empty-body">
-              Variables created here can be shared across dashboards, either globally or scoped to a folder.
-            </Trans>
-          </EmptyState>
+          <div className={styles.content}>
+            <EmptyState
+              variant="call-to-action"
+              message={t('variables-management.page.empty-title', "You haven't created any variables yet")}
+              button={
+                <Button icon="plus" size="lg" onClick={() => locationService.push(`${LIST_URL}/new`)}>
+                  <Trans i18nKey="variables-management.page.empty-cta">New variable</Trans>
+                </Button>
+              }
+            >
+              <Trans i18nKey="variables-management.page.empty-body">
+                Variables created here can be shared across dashboards, either globally or scoped to a folder.
+              </Trans>
+            </EmptyState>
+          </div>
         ) : (
           <div className={styles.content}>
             {selected.size > 0 && (
@@ -254,10 +281,18 @@ export default function VariablesManagementPage() {
                     defaultValue_other: '{{count}} selected',
                   })}
                 </Text>
-                <Button variant="secondary" onClick={() => setPendingAction('move')} disabled={isProcessing}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setPendingAction('move')}
+                  disabled={isProcessing || !canMutateSelection}
+                >
                   <Trans i18nKey="variables-management.page.move">Move</Trans>
                 </Button>
-                <Button variant="destructive" onClick={() => setPendingAction('delete')} disabled={isProcessing}>
+                <Button
+                  variant="destructive"
+                  onClick={() => setPendingAction('delete')}
+                  disabled={isProcessing || !canMutateSelection}
+                >
                   <Trans i18nKey="variables-management.page.delete">Delete</Trans>
                 </Button>
               </Stack>

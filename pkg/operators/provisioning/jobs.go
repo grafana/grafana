@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
@@ -28,8 +29,11 @@ import (
 )
 
 type driverConfig struct {
-	concurrentDrivers    int
-	maxJobTimeout        time.Duration
+	concurrentDrivers int
+	maxJobTimeout     time.Duration
+	// jobInterval is the jobs informer's resync cadence; the driver uses it as
+	// the post-claim cooldown so failed-run recovery tracks the configured
+	// pickup interval.
 	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
 	maxSyncWorkers       int
@@ -76,6 +80,7 @@ func buildDriver(
 		jobHistoryWriter,
 		registry,
 		metrics,
+		nats.Enabled(controllerCfg.natsSubscriber),
 		workers...,
 	)
 }

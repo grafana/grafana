@@ -28,7 +28,7 @@ export const CollapsableSection = ({ label, isOpen, onToggle, headerAction, chil
           aria-controls={contentId}
         >
           <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
-          <Text color="maxContrast" variant="bodySmall" weight="light">
+          <Text color="primary" variant="bodySmall" weight="light">
             {label}
           </Text>
         </button>

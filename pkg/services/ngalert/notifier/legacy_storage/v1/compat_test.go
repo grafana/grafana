@@ -3,14 +3,21 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/alerting/definition"
+	"github.com/grafana/alerting/definition/compat"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/notify/notifytest"
 	emailV0 "github.com/grafana/alerting/receivers/email/v0mimir1"
+	"github.com/grafana/alerting/receivers/schema"
+	"github.com/grafana/alerting/receivers/teams"
 	webhookV0 "github.com/grafana/alerting/receivers/webhook/v0mimir1"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -236,15 +243,26 @@ inhibit_rules:
 	require.NoError(t, err)
 	require.NotNil(t, convertedDB)
 
+	// The round-trip is lossless except that deprecated mute_time_intervals are folded into
+	// time_intervals (mute first) by design, so build the expectation from the same fold.
+	folderIntervals := make([]config.TimeInterval, 0, len(originalDB.AlertmanagerConfig.MuteTimeIntervals)+len(originalDB.AlertmanagerConfig.TimeIntervals))
+	for _, mt := range originalDB.AlertmanagerConfig.MuteTimeIntervals {
+		folderIntervals = append(folderIntervals, config.TimeInterval(mt))
+	}
+	originalDB.AlertmanagerConfig.TimeIntervals = append(folderIntervals, originalDB.AlertmanagerConfig.TimeIntervals...)
+	originalDB.AlertmanagerConfig.MuteTimeIntervals = nil
+
 	diff := cmp.Diff(originalDB, convertedDB, cmpopts.IgnoreUnexported(AMConfigDB{}, definition.Route{}, labels.Matcher{}))
 	if diff != "" {
 		t.Errorf("Unexpected change in converted DB: %v", diff)
 	}
 
+	expectedJSON, err := json.Marshal(originalDB)
+	require.NoError(t, err)
 	convertedJSON, err := json.Marshal(convertedDB)
 	require.NoError(t, err)
 
-	require.JSONEq(t, configJSON, string(convertedJSON),
+	require.JSONEq(t, string(expectedJSON), string(convertedJSON),
 		"Round-trip conversion should be lossless")
 }
 
@@ -313,30 +331,23 @@ func TestToModel_TemplateConflicts(t *testing.T) {
 }
 
 func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
-	t.Run("returns original pointer when receiver has only Grafana integrations", func(t *testing.T) {
-		receiver := &PostableApiReceiver{
-			Receiver: definition.Receiver{Name: "test"},
-			PostableGrafanaReceivers: PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*PostableGrafanaReceiver{
-					{UID: "grafana-uid", Name: "test", Type: "email"},
-				},
-			},
-		}
+	t.Run("returns receiver with no integrations when legacy receiver has none", func(t *testing.T) {
+		receiver := compat.Receiver{Name: "test"}
 		result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
 		require.NoError(t, err)
-		assert.Same(t, receiver, result)
+		require.NotNil(t, result)
+		assert.Equal(t, "test", result.Name)
+		assert.Empty(t, result.GrafanaManagedReceivers)
 	})
 
 	t.Run("converts Mimir integrations to Grafana integrations", func(t *testing.T) {
 		wh := webhookV0.GetFullValidConfig()
-		receiver := &PostableApiReceiver{
-			Receiver: definition.Receiver{
-				Name:           "test-receiver",
-				WebhookConfigs: []*webhookV0.Config{&wh},
-			},
+		receiver := compat.Receiver{
+			Name:           "test-receiver",
+			WebhookConfigs: []*webhookV0.Config{&wh},
 		}
 
-		mimirConfigs, err := alertingNotify.ConfigReceiverToMimirIntegrations(receiver.Receiver)
+		mimirConfigs, err := alertingNotify.ConfigReceiverToMimirIntegrations(receiver)
 		require.NoError(t, err)
 		require.Len(t, mimirConfigs, 1)
 		expectedJSON, err := mimirConfigs[0].ConfigJSON()
@@ -345,7 +356,6 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
 		require.NoError(t, err)
 		require.NotNil(t, result)
-		assert.NotSame(t, receiver, result)
 		require.Len(t, result.GrafanaManagedReceivers, 1)
 
 		converted := result.GrafanaManagedReceivers[0]
@@ -355,43 +365,16 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		assert.JSONEq(t, string(expectedJSON), string(converted.Settings))
 		assert.False(t, converted.DisableResolveMessage)
 		assert.Nil(t, converted.SecureSettings)
-		assert.False(t, result.HasMimirIntegrations())
-	})
-
-	t.Run("existing Grafana integrations appear before converted Mimir ones", func(t *testing.T) {
-		wh := webhookV0.GetFullValidConfig()
-		grafanaRecv := &PostableGrafanaReceiver{
-			UID:  "existing-uid",
-			Name: "existing",
-			Type: "email",
-		}
-		receiver := &PostableApiReceiver{
-			Receiver: definition.Receiver{
-				Name:           "mixed-receiver",
-				WebhookConfigs: []*webhookV0.Config{&wh},
-			},
-			PostableGrafanaReceivers: PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*PostableGrafanaReceiver{grafanaRecv},
-			},
-		}
-
-		result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
-		require.NoError(t, err)
-		require.Len(t, result.GrafanaManagedReceivers, 2)
-		assert.Same(t, grafanaRecv, result.GrafanaManagedReceivers[0])
-		assert.Equal(t, "webhook", result.GrafanaManagedReceivers[1].Type)
 	})
 
 	t.Run("assigns per-type UIDs to converted Mimir integrations", func(t *testing.T) {
 		// UIDs are indexed per integration type, so each type starts at 0.
 		em := emailV0.GetFullValidConfig()
 		wh := webhookV0.GetFullValidConfig()
-		receiver := &PostableApiReceiver{
-			Receiver: definition.Receiver{
-				Name:           "multi-receiver",
-				EmailConfigs:   []*emailV0.Config{&em},
-				WebhookConfigs: []*webhookV0.Config{&wh},
-			},
+		receiver := compat.Receiver{
+			Name:           "multi-receiver",
+			EmailConfigs:   []*emailV0.Config{&em},
+			WebhookConfigs: []*webhookV0.Config{&wh},
 		}
 
 		result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
@@ -400,5 +383,39 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 
 		assert.Equal(t, mimirIntegrationUID("multi-receiver", "email", 0), result.GrafanaManagedReceivers[0].UID)
 		assert.Equal(t, mimirIntegrationUID("multi-receiver", "webhook", 0), result.GrafanaManagedReceivers[1].UID)
+	})
+
+	t.Run("can convert all known types", func(t *testing.T) {
+		notifytest.ForEachIntegrationTypeReceiver(t, func(configType reflect.Type, receiver compat.Receiver, rawConfig string) {
+			expectedType, err := alertingNotify.IntegrationTypeFromMimirTypeReflect(configType)
+			assert.NoError(t, err)
+			expectedVersion := schema.V0mimir1
+			if strings.Contains(configType.PkgPath(), "/teams/v0mimir1") {
+				expectedType = teams.Type
+			}
+			if strings.Contains(configType.PkgPath(), "/teams/v0mimir2") {
+				expectedType = teams.Type
+				expectedVersion = schema.V0mimir2
+			}
+			t.Run(fmt.Sprintf("%s as %s %s", configType.PkgPath(), expectedType, expectedVersion), func(t *testing.T) {
+				result, err := PostableMimirReceiverToPostableGrafanaReceiver(receiver)
+				require.NoError(t, err)
+				require.Len(t, result.GrafanaManagedReceivers, 1)
+				converted := result.GrafanaManagedReceivers[0]
+
+				assert.EqualValues(t, expectedVersion, converted.Version)
+				assert.EqualValues(t, expectedType, converted.Type)
+				assert.JSONEq(t, rawConfig, string(converted.Settings))
+				assert.Empty(t, converted.SecureSettings)
+			})
+		})
+	})
+
+	t.Run("can convert receiver with all integrations", func(t *testing.T) {
+		recv, err := notifytest.GetMimirReceiverWithAllIntegrations()
+		require.NoError(t, err)
+		result, err := PostableMimirReceiverToPostableGrafanaReceiver(recv)
+		require.NoError(t, err)
+		require.Len(t, result.GrafanaManagedReceivers, len(notifytest.AllValidMimirConfigs))
 	})
 }

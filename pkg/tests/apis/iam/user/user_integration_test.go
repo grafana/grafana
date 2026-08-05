@@ -749,6 +749,8 @@ func doSelfTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NotEmpty(t, res.AvatarURL)
 		require.Contains(t, res.AvatarURL, "/avatar/")
 		require.Equal(t, wantID, res.InternalID)
+		require.NotEmpty(t, res.Role)
+		require.Equal(t, string(caller.Identity.GetOrgRole()), res.Role)
 	}
 
 	t.Run("self endpoint returns the calling user's display info", func(t *testing.T) {

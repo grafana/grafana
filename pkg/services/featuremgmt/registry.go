@@ -680,7 +680,7 @@ var (
 			Name:        "feedbackButton",
 			Description: "Enables the feedback button in the dashboard edit sidebar",
 			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
 		},
@@ -825,14 +825,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "alertingSaveStateCompressed",
-			Description: "Enables the compressed protobuf-based alert state storage. Default is enabled.",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "scopeApi",
@@ -985,10 +977,10 @@ var (
 		{
 			Name:        "queryLibrary",
 			Description: "Enables Saved queries (query library) feature",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "grafana.savedQueriesPage",
@@ -1009,18 +1001,18 @@ var (
 		{
 			Name:        "savedQueriesRBAC",
 			Description: "Enables Saved queries (query library) RBAC permissions",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "newSavedQueriesExperience",
 			Description: "Enables the new Saved queries (query library) modal experience",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true},
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "dashboardLibrary",
@@ -2064,15 +2056,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "alertingAlertsActivityBanner",
-			Description:  "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "graphiteBackendMode",
 			Description: "Enables the Graphite data source full backend mode",
 			Stage:       FeatureStagePrivatePreview,
@@ -2265,6 +2248,9 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		// Deprecated: prefer grafana.dashboardGlobalVariables. Kept registered so
+		// cloud enablement via the legacy wave remains valid until that flag is
+		// removed in a follow-up after all consumers read the new key.
 		{
 			Name:            "globalDashboardVariables",
 			Description:     "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
@@ -2273,6 +2259,14 @@ var (
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: true,
 			Expression:      "false",
+		},
+		{
+			Name:        "grafana.dashboardGlobalVariables",
+			Description: "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "smoothingTransformation",
@@ -2844,14 +2838,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grafana.unifiedHomepage",
-			Description: "Replaces the bundled home dashboard with the unified homepage React page",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Generate:    Generate{React: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "preferences.rerouteLegacyAPIs",
 			Description: "Use K8s client implementation for legacy preferences API",
 			Stage:       FeatureStageGeneralAvailability,
@@ -3000,6 +2986,24 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "table.paginationPageSize",
+			Description:  "Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "table.autoColumnWidths",
+			Description:  "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "dataviz.experimentalColorSchemes",
 			Description:  "Enables additional experimental color schemes for visualizations.",
 			Stage:        FeatureStageExperimental,
@@ -3139,6 +3143,15 @@ var (
 			Description:  "Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "alerting.stateManagerRequireWarm",
+			Description:  "Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},

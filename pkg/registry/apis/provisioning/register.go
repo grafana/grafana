@@ -161,10 +161,11 @@ type APIBuilder struct {
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
 	// controllerResyncInterval is the informer re-list interval for the
-	// repository, connection, and job controllers; historyExpiration is both the
+	// repository and connection controllers; historyExpiration is both the
 	// HistoricJob retention and the historic-job informer's resync;
-	// jobPollInterval is the job driver's fallback poll for new jobs. All fall
-	// back to their defaults when <=0 (see the controller post-start hook).
+	// jobPollInterval is the jobs informer's resync — the job driver's recovery
+	// cadence for unclaimed jobs missed by live events. All fall back to their
+	// defaults when <=0 (see the controller post-start hook).
 	controllerResyncInterval time.Duration
 	historyExpiration        time.Duration
 	jobPollInterval          time.Duration
@@ -1004,8 +1005,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// Informer resync interval used for health check and reconciliation of
-			// the repository, connection, and job controllers. Configurable via
-			// [provisioning] resync_interval; <=0 falls back to the default.
+			// the repository and connection controllers (the jobs informer uses
+			// job_poll_interval, below). Configurable via [provisioning]
+			// resync_interval; <=0 falls back to the default.
 			informerFactoryResyncInterval := b.controllerResyncInterval
 			if informerFactoryResyncInterval <= 0 {
 				informerFactoryResyncInterval = setting.ProvisioningControllerResyncIntervalDefault
@@ -1119,9 +1121,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// considered abandoned.
 			leaseRenewalInterval := jobClaimExpiry / 3
 
-			// Backstop poll for unclaimed jobs missed by the informer events (one
-			// list per interval per replica). Configurable via [provisioning]
-			// job_poll_interval; <=0 falls back to the default.
+			// The jobs informer resyncs on job_poll_interval (default 30s) rather
+			// than the controllers' resync_interval, preserving the job pickup
+			// cadence (and config key) of the polling design this replaced. The
+			// driver gets the same value so its post-claim cooldown tracks the
+			// configured recovery cadence.
 			jobPollInterval := b.jobPollInterval
 			if jobPollInterval <= 0 {
 				jobPollInterval = setting.ProvisioningJobPollIntervalDefault
@@ -1131,21 +1135,24 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,                    // 3 drivers for now
 				20*time.Minute,       // Max time for each job
-				jobPollInterval,      // Periodically look for unclaimed jobs
+				jobPollInterval,      // Jobs informer resync = post-claim cooldown
 				leaseRenewalInterval, // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				b.registry,
 				&metrics,
+				nats.Enabled(b.natsSubscriber),
 				workers...,
 			)
 			if err != nil {
 				return err
 			}
 
-			// Feed the driver's work queue from job create events. The handler must
-			// be registered before the informer runs: the NATS-backed source has no
+			// Feed the driver's work queue from the jobs informer: live create
+			// events plus the periodic resync/re-list, which re-delivers unclaimed
+			// jobs and is the driver's only recovery path. The handler must be
+			// registered before the informer runs: the NATS-backed source has no
 			// cache to replay for late handlers.
-			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry)
 			if _, err := jobSource.AddEventHandler(driver.EventHandler()); err != nil {
 				return fmt.Errorf("add job event handler: %w", err)
 			}
@@ -1191,6 +1198,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
 				b.incrementalPolicy,
 				webhookSecretRotationInterval,
+				nats.Enabled(b.natsSubscriber),
 			)
 			repoReg, err := repoSource.AddEventHandler(repoController.EventHandler())
 			if err != nil {
@@ -1221,6 +1229,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				informerFactoryResyncInterval,
 				30*time.Second,
 				b.registry,
+				nats.Enabled(b.natsSubscriber),
 			)
 			connReg, err := connSource.AddEventHandler(connController.EventHandler())
 			if err != nil {

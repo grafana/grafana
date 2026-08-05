@@ -279,11 +279,16 @@ describe('RuleViewer', () => {
 
         expect(screen.getAllByRole('row')[6]).toHaveTextContent(/1Unknown 2025-01-13 04:35:17/i);
 
+        // findBy* resolves as soon as the button exists — it does not retry the enabled/disabled
+        // assertion — so the state check has to be wrapped in waitFor to survive a loaded CI runner.
+        const compareButton = screen.getByRole('button', { name: /Compare versions/i });
+
         await user.click(screen.getByLabelText('1'));
         await user.click(screen.getByLabelText('2'));
-        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeEnabled();
+        await waitFor(() => expect(compareButton).toBeEnabled());
+
         await user.click(screen.getByLabelText('1'));
-        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
+        await waitFor(() => expect(compareButton).toBeDisabled());
       });
       it('shows version history with special case `updated_by` values', async () => {
         await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);

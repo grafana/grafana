@@ -3,6 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { useFavoriteDatasources, type FavoriteDatasources } from '@grafana/runtime';
 import { EmptyState, LinkButton, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
@@ -123,7 +124,13 @@ export function DataSourcesListView({
       <EmptyState
         variant="call-to-action"
         button={
-          <LinkButton disabled={!hasCreateRights} href={ROUTES.DataSourcesNew} icon="database" size="lg">
+          <LinkButton
+            disabled={!hasCreateRights}
+            href={ROUTES.DataSourcesNew}
+            icon="database"
+            size="lg"
+            data-testid={selectors.pages.DataSources.dataSourceAddButton}
+          >
             <Trans i18nKey="data-source-list.empty-state.button-title">Add data source</Trans>
           </LinkButton>
         }
