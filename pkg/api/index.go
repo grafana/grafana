@@ -147,7 +147,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(folder.ActionFoldersCreate)))
+	hasEditPerm := hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate))
 
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
