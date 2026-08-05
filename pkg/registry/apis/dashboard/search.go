@@ -798,6 +798,9 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 			field.Set("subresource", resultChunks[0].GetSubresource())
 			field.Set("snippet", resultChunks[0].GetContent())
 		}
+		if r.GetFolderTitle() != "" {
+			field.Set("folderTitle", r.GetFolderTitle())
+		}
 
 		hits = append(hits, dashboardv0alpha1.DashboardHit{
 			Resource: dashboardv0alpha1.DASHBOARD_RESOURCE,

@@ -178,6 +178,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.stateManagerRequireWarm",
+        "resourceVersion": "1785789740487",
+        "creationTimestamp": "2026-08-03T20:42:20Z"
+      },
+      "spec": {
+        "description": "Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.syncExternalAlertmanager",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -792,7 +806,8 @@
       "metadata": {
         "name": "alertingSaveStateCompressed",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-01-27T17:47:33Z"
+        "creationTimestamp": "2025-01-27T17:47:33Z",
+        "deletionTimestamp": "2026-07-23T18:10:32Z"
       },
       "spec": {
         "description": "Enables the compressed protobuf-based alert state storage. Default is enabled.",
