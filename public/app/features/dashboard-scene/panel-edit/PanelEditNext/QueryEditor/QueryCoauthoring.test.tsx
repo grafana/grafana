@@ -9,6 +9,7 @@ const mockGenerate = jest.fn().mockResolvedValue(undefined);
 const mockCancel = jest.fn();
 const mockReset = jest.fn();
 const mockOpenAssistant = jest.fn();
+const mockPost = jest.fn();
 const VIEWPORT_TEST_MARGIN = 8;
 
 jest.mock('@grafana/assistant', () => ({
@@ -30,6 +31,13 @@ jest.mock('@grafana/assistant', () => ({
     error: null,
     cancel: mockCancel,
     reset: mockReset,
+  }),
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({
+    post: (...args: unknown[]) => mockPost(...args),
   }),
 }));
 
@@ -108,6 +116,7 @@ async function setup(anchorTop = 0) {
 describe('QueryCoauthoring', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPost.mockResolvedValue({ id: 'feedback-id' });
   });
 
   it('sends only the full query, focused text, and relevant metric metadata', async () => {
@@ -188,7 +197,7 @@ describe('QueryCoauthoring', () => {
     expect(onAccept).not.toHaveBeenCalled();
   });
 
-  it('surfaces a completion without a terminal tool result or clarification', async () => {
+  it('treats an empty completion without a terminal tool result as a request failure', async () => {
     const { user } = await setup();
 
     await user.type(screen.getByRole('textbox'), 'Use increase');
@@ -196,7 +205,7 @@ describe('QueryCoauthoring', () => {
 
     act(() => mockGenerate.mock.calls[0][0].onComplete(''));
 
-    expect(screen.getByText(/returned no query proposal/i)).toBeInTheDocument();
+    expect(screen.getByText(/could not build a query proposal/i)).toBeInTheDocument();
   });
 
   it('returns invalid PromQL to the tool loop so Assistant can repair it', async () => {
@@ -287,6 +296,67 @@ describe('QueryCoauthoring', () => {
     );
   });
 
+  it('submits privacy-bounded feedback for a query proposal', async () => {
+    const { user } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      });
+      request.onComplete('');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Helpful' }));
+    expect(screen.getByRole('dialog', { name: 'What went well?' })).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: 'Share feedback' }), 'The explanation was clear.');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    expect(mockPost).toHaveBeenCalledWith('/api/plugins/grafana-assistant-app/resources/api/v1/feedback', {
+      targetKind: 'query-coauthoring',
+      targetId: 'grafana.query.coauthor.v1',
+      rating: 1,
+      comment: 'The explanation was clear.',
+      metadata: { outcome: 'proposal' },
+    });
+  });
+
+  it('closes feedback on Escape without propagating or dismissing the proposal', async () => {
+    const { user, dismissInvocation } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      });
+      request.onComplete('');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Helpful' }));
+    const propagatedKeyDown = jest.fn();
+    document.addEventListener('keydown', propagatedKeyDown);
+
+    try {
+      await user.keyboard('{Escape}');
+
+      expect(screen.queryByRole('dialog', { name: 'What went well?' })).not.toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+      expect(propagatedKeyDown).not.toHaveBeenCalled();
+      expect(dismissInvocation).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('keydown', propagatedKeyDown);
+    }
+  });
+
   it('surfaces request errors with retry and dismissal paths', async () => {
     const { user, dismissInvocation } = await setup();
 
@@ -298,9 +368,26 @@ describe('QueryCoauthoring', () => {
     await user.click(screen.getByRole('button', { name: 'Try again' }));
     expect(screen.queryByText(/could not build a query proposal/i)).not.toBeInTheDocument();
 
-    act(() => mockGenerate.mock.calls[0][0].onError(new Error('request failed')));
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[1][0].onError(new Error('request failed')));
     await user.click(screen.getByRole('button', { name: 'Dismiss' }));
     expect(dismissInvocation).toHaveBeenCalled();
+  });
+
+  it('does not overwrite a request error with a later empty completion', async () => {
+    const { user } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+
+    act(() => {
+      request.onError(new Error('request failed'));
+      request.onComplete('');
+    });
+
+    expect(screen.getByText(/could not build a query proposal/i)).toBeInTheDocument();
+    expect(screen.queryByText(/returned no query proposal/i)).not.toBeInTheDocument();
   });
 
   it('dismisses on Escape without applying and restores focus to the editor', async () => {

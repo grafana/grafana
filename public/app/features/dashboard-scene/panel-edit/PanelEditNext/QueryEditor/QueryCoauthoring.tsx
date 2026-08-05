@@ -12,7 +12,8 @@ import {
   type QueryEditorCoauthoringPreview,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, Icon, Spinner, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
+import { Alert, Button, Icon, IconButton, Modal, Spinner, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 interface QueryProposal {
   proposedQuery: string;
@@ -37,12 +38,18 @@ interface StagedFallback extends QueryFallback {
   context: QueryEditorCoauthoringContext;
 }
 
+interface FeedbackState {
+  outcome: 'proposal' | 'handoff';
+  rating: -1 | 1;
+}
+
 interface Props {
   capability: QueryEditorCoauthoringCapability;
   onAccept: (query: DataQuery) => void;
 }
 
 const VIEWPORT_MARGIN = 8;
+const ASSISTANT_FEEDBACK_URL = '/api/plugins/grafana-assistant-app/resources/api/v1/feedback';
 
 export function QueryCoauthoring({ capability, onAccept }: Props) {
   const { generate, isGenerating, cancel, reset } = useInlineAssistant();
@@ -55,6 +62,10 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
   const [fallback, setFallback] = useState<StagedFallback>();
   const [clarification, setClarification] = useState<QueryClarification>();
   const [error, setError] = useState<string>();
+  const [feedback, setFeedback] = useState<FeedbackState>();
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [feedbackError, setFeedbackError] = useState<string>();
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [availableHeight, setAvailableHeight] = useState<number>();
   const generationIdRef = useRef(0);
   const invocationRef = useRef<QueryEditorCoauthoringInvocation>();
@@ -72,8 +83,21 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
     setFallback(undefined);
     setClarification(undefined);
     setError(undefined);
+    setFeedback(undefined);
+    setFeedbackComment('');
+    setFeedbackError(undefined);
+    setIsSubmittingFeedback(false);
     contextPromiseRef.current = undefined;
   }, [cancel, capability, reset]);
+
+  const closeFeedback = useCallback(() => {
+    if (isSubmittingFeedback) {
+      return;
+    }
+    setFeedback(undefined);
+    setFeedbackComment('');
+    setFeedbackError(undefined);
+  }, [isSubmittingFeedback]);
 
   const dismiss = useCallback(() => {
     clearSession();
@@ -179,6 +203,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
     let submittedFallback: QueryFallback | undefined;
     let acceptedTerminalToolCallCount = 0;
     let rejectedProposalCount = 0;
+    let terminalCallbackHandled = false;
 
     capability.clearPreview();
     setProposal(undefined);
@@ -256,9 +281,10 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
       systemPrompt: buildSystemPrompt(submittedContext),
       tools: [proposalTool, fallbackTool],
       onComplete: (completionText) => {
-        if (generationId !== generationIdRef.current) {
+        if (generationId !== generationIdRef.current || terminalCallbackHandled) {
           return;
         }
+        terminalCallbackHandled = true;
         if (capability.getValue() !== baseline) {
           setError(
             t(
@@ -276,7 +302,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           } else if (rejectedProposalCount > 0) {
             setError(invalidPromQLResponseMessage());
           } else {
-            setError(missingResponseMessage());
+            setError(requestFailedMessage());
           }
           return;
         }
@@ -303,13 +329,36 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
         setProposal({ ...submittedProposal, baseline, context: submittedContext, preview });
       },
       onError: () => {
-        if (generationId === generationIdRef.current) {
-          setError(
-            t('query-editor-coauthoring.error-request-failed', 'Assistant could not build a query proposal. Try again.')
-          );
+        if (generationId === generationIdRef.current && !terminalCallbackHandled) {
+          terminalCallbackHandled = true;
+          setError(requestFailedMessage());
         }
       },
     });
+  };
+
+  const submitFeedback = async () => {
+    if (!feedback || isSubmittingFeedback) {
+      return;
+    }
+
+    setIsSubmittingFeedback(true);
+    setFeedbackError(undefined);
+    try {
+      await getBackendSrv().post(ASSISTANT_FEEDBACK_URL, {
+        targetKind: 'query-coauthoring',
+        targetId: 'grafana.query.coauthor.v1',
+        rating: feedback.rating,
+        comment: feedbackComment.trim(),
+        metadata: { outcome: feedback.outcome },
+      });
+      setFeedback(undefined);
+      setFeedbackComment('');
+    } catch {
+      setFeedbackError(t('query-editor-coauthoring.feedback-error', 'Feedback could not be sent. Try again.'));
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
   };
 
   const accept = useCallback(() => {
@@ -354,13 +403,21 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
-        dismiss();
+        event.stopImmediatePropagation();
+        if (feedback) {
+          closeFeedback();
+        } else {
+          dismiss();
+        }
       } else if (event.key === 'Enter' && proposal) {
         event.preventDefault();
         accept();
       }
     };
     const onPointerDown = (event: PointerEvent) => {
+      if (feedback) {
+        return;
+      }
       if (!(event.target instanceof Node) || !invocation.anchorElement.contains(event.target)) {
         dismiss();
       }
@@ -372,7 +429,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
       document.removeEventListener('keydown', onKeyDown, true);
       document.removeEventListener('pointerdown', onPointerDown, true);
     };
-  }, [accept, dismiss, invocation, proposal]);
+  }, [accept, closeFeedback, dismiss, feedback, invocation, proposal]);
 
   if (!invocation) {
     return null;
@@ -512,13 +569,33 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           <Text variant="bodySmall" color="secondary" italic>
             <Trans i18nKey="query-editor-coauthoring.unsaved-safe">Your unsaved panel edits will not be lost.</Trans>
           </Text>
-          <Stack gap={1} justifyContent="flex-end">
-            <Button size="sm" variant="secondary" onClick={dismiss}>
-              <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
-            </Button>
-            <Button size="sm" icon="ai-sparkle" onClick={() => continueInAssistant(fallback.reason)}>
-              <Trans i18nKey="query-editor-coauthoring.continue-assistant">Continue with Assistant</Trans>
-            </Button>
+          <Stack gap={1} justifyContent="space-between">
+            <Stack gap={0.5}>
+              <IconButton
+                name="thumbs-up"
+                size="sm"
+                variant="secondary"
+                tooltip={t('query-editor-coauthoring.feedback-helpful', 'Helpful')}
+                aria-label={t('query-editor-coauthoring.feedback-helpful', 'Helpful')}
+                onClick={() => setFeedback({ outcome: 'handoff', rating: 1 })}
+              />
+              <IconButton
+                name="thumbs-down"
+                size="sm"
+                variant="secondary"
+                tooltip={t('query-editor-coauthoring.feedback-not-helpful', 'Not helpful')}
+                aria-label={t('query-editor-coauthoring.feedback-not-helpful', 'Not helpful')}
+                onClick={() => setFeedback({ outcome: 'handoff', rating: -1 })}
+              />
+            </Stack>
+            <Stack gap={1}>
+              <Button size="sm" variant="secondary" onClick={dismiss}>
+                <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
+              </Button>
+              <Button size="sm" icon="ai-sparkle" onClick={() => continueInAssistant(fallback.reason)}>
+                <Trans i18nKey="query-editor-coauthoring.continue-assistant">Continue with Assistant</Trans>
+              </Button>
+            </Stack>
           </Stack>
         </Stack>
       )}
@@ -528,24 +605,57 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
             <Text variant="bodySmall" weight="medium">
               <Trans i18nKey="query-editor-coauthoring.why">Why</Trans>
             </Text>
-            <Text variant="bodySmall">{proposal.why.join(' ')}</Text>
+            <Stack direction="column" gap={0.5}>
+              {proposal.why.map((reason, index) => (
+                <Text variant="bodySmall" key={index}>
+                  {reason}
+                </Text>
+              ))}
+            </Stack>
             {proposal.preview.changes.length > 0 && (
               <div className={styles.changes}>
                 {proposal.preview.changes.slice(0, 4).map((change) => (
-                  <div className={styles.change} key={change.id}>
-                    <Text variant="bodySmall" color="secondary">
-                      {(change.kind ?? 'change').toUpperCase()}
-                    </Text>
-                    <code>{change.proposed || 'removed'}</code>
+                  <div className={styles.changePair} key={change.id}>
+                    <div className={styles.change}>
+                      <Text variant="bodySmall" color="secondary">
+                        {(change.kind ?? 'change').toUpperCase()}
+                      </Text>
+                      <code>{change.original || 'added'}</code>
+                    </div>
+                    <Icon name="arrow-right" />
+                    <div className={`${styles.change} ${styles.proposedChange}`}>
+                      <Text variant="bodySmall" color="secondary">
+                        {(change.kind ?? 'change').toUpperCase()}
+                      </Text>
+                      <code>{change.proposed || 'removed'}</code>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
           <Stack gap={1} justifyContent="space-between">
-            <Button size="sm" variant="secondary" onClick={dismiss}>
-              <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
-            </Button>
+            <Stack gap={0.5}>
+              <IconButton
+                name="thumbs-up"
+                size="sm"
+                variant="secondary"
+                tooltip={t('query-editor-coauthoring.feedback-helpful', 'Helpful')}
+                aria-label={t('query-editor-coauthoring.feedback-helpful', 'Helpful')}
+                onClick={() => setFeedback({ outcome: 'proposal', rating: 1 })}
+              />
+              <IconButton
+                name="thumbs-down"
+                size="sm"
+                variant="secondary"
+                tooltip={t('query-editor-coauthoring.feedback-not-helpful', 'Not helpful')}
+                aria-label={t('query-editor-coauthoring.feedback-not-helpful', 'Not helpful')}
+                onClick={() => setFeedback({ outcome: 'proposal', rating: -1 })}
+              />
+              <Button size="sm" variant="secondary" onClick={dismiss}>
+                <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
+              </Button>
+            </Stack>
             <Stack gap={1}>
               <Button size="sm" variant="secondary" icon="ai-sparkle" onClick={() => continueInAssistant()}>
                 <Trans i18nKey="query-editor-coauthoring.chat">Chat about it</Trans>
@@ -556,6 +666,57 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
             </Stack>
           </Stack>
         </div>
+      )}
+      {feedback && (
+        <Modal
+          isOpen
+          title={
+            feedback.rating === 1
+              ? t('query-editor-coauthoring.feedback-positive-title', 'What went well?')
+              : t('query-editor-coauthoring.feedback-negative-title', 'What went wrong?')
+          }
+          closeOnEscape={false}
+          onDismiss={closeFeedback}
+        >
+          <Stack direction="column" gap={2}>
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="query-editor-coauthoring.feedback-description">
+                Your feedback helps improve the query experience in Grafana.
+              </Trans>
+            </Text>
+            <TextArea
+              value={feedbackComment}
+              rows={4}
+              autoFocus
+              aria-label={t('query-editor-coauthoring.feedback-label', 'Share feedback')}
+              placeholder={
+                feedback.rating === 1
+                  ? t(
+                      'query-editor-coauthoring.feedback-positive-placeholder',
+                      'What did you like? How could it have been even better?'
+                    )
+                  : t(
+                      'query-editor-coauthoring.feedback-negative-placeholder',
+                      "Describe what didn't go well and what you expected instead."
+                    )
+              }
+              onChange={(event) => setFeedbackComment(event.currentTarget.value)}
+            />
+            {feedbackError && <Alert severity="error" title={feedbackError} />}
+            <Modal.ButtonRow>
+              <Button variant="secondary" disabled={isSubmittingFeedback} onClick={closeFeedback}>
+                <Trans i18nKey="query-editor-coauthoring.feedback-cancel">Cancel</Trans>
+              </Button>
+              <Button disabled={isSubmittingFeedback} onClick={() => void submitFeedback()}>
+                {isSubmittingFeedback ? (
+                  <Trans i18nKey="query-editor-coauthoring.feedback-sending">Sending…</Trans>
+                ) : (
+                  <Trans i18nKey="query-editor-coauthoring.feedback-send">Send</Trans>
+                )}
+              </Button>
+            </Modal.ButtonRow>
+          </Stack>
+        </Modal>
       )}
     </div>,
     invocation.anchorElement
@@ -646,11 +807,8 @@ function invalidPromQLResponseMessage(): string {
   );
 }
 
-function missingResponseMessage(): string {
-  return t(
-    'query-editor-coauthoring.error-missing-response',
-    'Assistant returned no query proposal. Try again or add more detail.'
-  );
+function requestFailedMessage(): string {
+  return t('query-editor-coauthoring.error-request-failed', 'Assistant could not build a query proposal. Try again.');
 }
 
 function multipleResponsesMessage(): string {
@@ -667,7 +825,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
-      width: 320,
+      width: 'min(420px, calc(100vw - 16px))',
       minHeight: 0,
       padding: theme.spacing(1),
       overflow: 'hidden',
@@ -701,9 +859,16 @@ function getStyles(theme: GrafanaTheme2) {
       scrollbarGutter: 'stable',
     }),
     changes: css({
-      display: 'grid',
-      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+      display: 'flex',
+      flexDirection: 'column',
       gap: theme.spacing(0.5),
+    }),
+    changePair: css({
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
     }),
     change: css({
       display: 'flex',
@@ -713,12 +878,14 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(0.75),
       border: `1px dashed ${theme.colors.border.medium}`,
       borderRadius: theme.shape.radius.default,
-      background: theme.colors.action.selected,
       code: {
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
       },
+    }),
+    proposedChange: css({
+      background: theme.colors.action.selected,
     }),
   };
 }
