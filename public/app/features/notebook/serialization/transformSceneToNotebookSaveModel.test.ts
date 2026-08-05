@@ -1,12 +1,12 @@
 import { defaultPanelKind, type PanelKind, type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
-import { buildNotebookEnvelope } from 'app/features/notebook/scene/buildNotebookEnvelope';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { transformSaveModelSchemaV2ToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
+import { getElements } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 
-import { type DashboardScene } from '../scene/DashboardScene';
+import { buildNotebookEnvelope } from '../scene/buildNotebookEnvelope';
 
 import { downgradeElementsToNotebookWire } from './notebookSpecTransform';
-import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSceneToNotebookSaveModel } from './transformSceneToNotebookSaveModel';
-import { getElements } from './transformSceneToSaveModelSchemaV2';
 
 const timeSettings = {
   from: 'now-6h',

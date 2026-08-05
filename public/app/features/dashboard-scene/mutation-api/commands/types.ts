@@ -10,10 +10,10 @@ import type * as z from 'zod';
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isNotebookScene } from 'app/features/notebook/serialization/notebookSpecTransform';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
-import { isNotebookScene } from '../../serialization/notebookSpecTransform';
 import type { MutationResult } from '../types';
 
 export interface MutationContext {

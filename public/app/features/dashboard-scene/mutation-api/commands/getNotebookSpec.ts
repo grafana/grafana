@@ -10,8 +10,8 @@
 
 import * as z from 'zod';
 
-import { transformSceneToNotebookSaveModel } from '../../serialization/transformSceneToNotebookSaveModel';
-import { validateNotebookSpec } from '../../v2schema/notebookSpecSchema';
+import { validateNotebookSpec } from 'app/features/notebook/schema/notebookSpecSchema';
+import { transformSceneToNotebookSaveModel } from 'app/features/notebook/serialization/transformSceneToNotebookSaveModel';
 
 import { requiresNotebookResource, type MutationCommand } from './types';
 

@@ -22,8 +22,7 @@ import * as z from 'zod';
 import { locationService } from '@grafana/runtime';
 import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { createNotebook } from 'app/features/notebook/api/notebookResource';
-
-import { validateNotebookSpec } from '../../v2schema/notebookSpecSchema';
+import { validateNotebookSpec } from 'app/features/notebook/schema/notebookSpecSchema';
 
 import { requiresNotebookCreate, type MutationCommand } from './types';
 

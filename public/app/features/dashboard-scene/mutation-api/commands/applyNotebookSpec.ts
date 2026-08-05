@@ -17,10 +17,12 @@
 import * as z from 'zod';
 
 import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
-
-import { notebookSpecToDashboardSpec, setNotebookDocumentHeader } from '../../serialization/notebookSpecTransform';
-import { transformSceneToNotebookSaveModel } from '../../serialization/transformSceneToNotebookSaveModel';
-import { validateNotebookSpec } from '../../v2schema/notebookSpecSchema';
+import { validateNotebookSpec } from 'app/features/notebook/schema/notebookSpecSchema';
+import {
+  notebookSpecToDashboardSpec,
+  setNotebookDocumentHeader,
+} from 'app/features/notebook/serialization/notebookSpecTransform';
+import { transformSceneToNotebookSaveModel } from 'app/features/notebook/serialization/transformSceneToNotebookSaveModel';
 
 import { rebuildSceneFromSpec } from './specRebuild';
 import { requiresNotebookEdit, type MutationCommand } from './types';

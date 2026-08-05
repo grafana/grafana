@@ -2,7 +2,8 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { notebookSpecToDashboardSpec } from 'app/features/dashboard-scene/serialization/notebookSpecTransform';
+
+import { notebookSpecToDashboardSpec } from '../serialization/notebookSpecTransform';
 
 // transformSaveModelSchemaV2ToScene expects a DashboardWithAccessInfo<DashboardV2Spec>
 // envelope. A notebook is fetched as a bare Resource<NotebookSpec> with no access

@@ -8,10 +8,10 @@ import {
   type LoadDashboardOptions,
 } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { setNotebookDocumentHeader } from 'app/features/dashboard-scene/serialization/notebookSpecTransform';
 import { dispatch } from 'app/store/store';
 
 import { buildNotebookEnvelope } from '../scene/buildNotebookEnvelope';
+import { setNotebookDocumentHeader } from '../serialization/notebookSpecTransform';
 
 // A notebook renders through the same scene pipeline as a v2 dashboard, so we reuse
 // the v2 state manager wholesale (loading/error/caching/transform) and only swap the

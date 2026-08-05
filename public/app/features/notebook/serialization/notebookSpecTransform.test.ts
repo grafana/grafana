@@ -1,7 +1,7 @@
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 
-import { notebookSpecSchema } from '../v2schema/notebookSpecSchema';
+import { notebookSpecSchema } from '../schema/notebookSpecSchema';
 
 import {
   dashboardSpecToNotebookSpec,

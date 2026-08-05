@@ -15,11 +15,13 @@
  */
 
 import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
-
-import { type DashboardScene } from '../scene/DashboardScene';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import {
+  buildTimeSettings,
+  getElements,
+} from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 
 import { downgradeElementsToNotebookWire, getNotebookCellElements } from './notebookSpecTransform';
-import { buildTimeSettings, getElements } from './transformSceneToSaveModelSchemaV2';
 
 export function transformSceneToNotebookSaveModel(scene: DashboardScene): NotebookSpec {
   const sceneState = scene.state;

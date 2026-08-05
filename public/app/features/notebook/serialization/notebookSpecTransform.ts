@@ -20,8 +20,11 @@ import {
   type Spec as DashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
-
-import { normalizeTransformation, toWireTransformation, type WireTransformation } from './transformationCompat';
+import {
+  normalizeTransformation,
+  toWireTransformation,
+  type WireTransformation,
+} from 'app/features/dashboard-scene/serialization/transformationCompat';
 
 /** Layout kind, and the layout registry id, that identifies a notebook. */
 const NOTEBOOK_LAYOUT_KIND = 'NotebookLayout';

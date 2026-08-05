@@ -33,7 +33,6 @@ import type {
   QueryGroupKind as NotebookQueryGroupKind,
   TransformationKind as NotebookTransformationKind,
 } from '@grafana/schema/apis/notebook/v2beta1';
-
 import {
   dataLinkSchema,
   elementReferenceSchema,
@@ -44,7 +43,7 @@ import {
   queryOptionsSpecSchema,
   timeSettingsSpecSchema,
   vizConfigKindSchema,
-} from './dashboardV2Schema';
+} from 'app/features/dashboard-scene/v2schema/dashboardV2Schema';
 
 // ---------------------------------------------------------------------------
 // Narrative cells

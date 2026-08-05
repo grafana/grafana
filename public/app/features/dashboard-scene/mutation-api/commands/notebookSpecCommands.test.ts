@@ -20,10 +20,10 @@ import {
 import { contextSrv } from 'app/core/services/context_srv';
 import { createNotebook } from 'app/features/notebook/api/notebookResource';
 import { buildNotebookEnvelope } from 'app/features/notebook/scene/buildNotebookEnvelope';
+import { setNotebookDocumentHeader } from 'app/features/notebook/serialization/notebookSpecTransform';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { setNotebookDocumentHeader } from '../../serialization/notebookSpecTransform';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 
