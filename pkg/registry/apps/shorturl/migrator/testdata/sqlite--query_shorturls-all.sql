@@ -5,7 +5,7 @@ SELECT
     s.path,
     s.created_by,
     s.created_at,
-    s.last_seen_at
+    COALESCE(s.last_seen_at, 0) as last_seen_at
 FROM
     "grafana"."short_url" as s
 WHERE

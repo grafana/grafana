@@ -1204,5 +1204,3 @@ func (s *TeamK8sService) GetTeamMembers(ctx context.Context, query *team.GetTeam
 
 	return members, nil
 }
-
-func (s *TeamK8sService) RegisterDelete(query string) {}
