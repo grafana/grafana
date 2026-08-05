@@ -12,6 +12,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestMigrationWorker_IsSupported(t *testing.T) {
@@ -39,7 +40,8 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 			want: false,
 		},
 	}
-	//true
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+
 	worker := NewMigrationWorker(nil)
 
 	for _, tt := range tests {
@@ -51,7 +53,8 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 }
 
 func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
-	// true
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+
 	worker := NewMigrationWorker(NewMockMigrator(t))
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
@@ -81,7 +84,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 				Spec: provisioning.JobSpec{
 					Action:  provisioning.JobActionMigrate,
 					Migrate: nil,
-				,
+				},
 			},
 			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
 			},
@@ -129,8 +132,8 @@ func TestMigrationWorker_Process(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			unifiedMigrator := NewMockMigrator(t)
 			progressRecorder := jobs.NewMockJobProgressRecorder(t)
+			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 
-			//true
 			worker := NewMigrationWorker(unifiedMigrator)
 
 			if tt.setupMocks != nil {
@@ -184,9 +187,9 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 			// Set up mock expectations for when enabled
 			if tt.enabled {
 				mockMigrator.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 			}
 
-			// as in test
 			// Create migration worker
 			worker := NewMigrationWorker(mockMigrator)
 
