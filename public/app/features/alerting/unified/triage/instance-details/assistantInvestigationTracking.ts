@@ -3,7 +3,7 @@ import { reportInteraction } from '@grafana/runtime';
 import type { StartInvestigationViewModel } from './startInvestigationViewModel';
 
 /** Visible (non-hidden) UI statuses for the instance-drawer investigation control. */
-export type AssistantInvestigationUiStatus = Exclude<StartInvestigationViewModel['status'], 'hidden'>;
+type AssistantInvestigationUiStatus = Exclude<StartInvestigationViewModel['status'], 'hidden'>;
 
 type StartFromStatus = Extract<AssistantInvestigationUiStatus, 'idle' | 'startError' | 'reportFailed'>;
 type OpenReportFromStatus = Extract<AssistantInvestigationUiStatus, 'completed' | 'reportFailed'>;
