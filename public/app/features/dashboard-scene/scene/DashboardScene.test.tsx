@@ -2699,7 +2699,7 @@ describe('DashboardScene', () => {
 
   describe('refreshPredefinedVariables', () => {
     beforeEach(() => {
-      setTestFlags({ globalDashboardVariables: true });
+      setTestFlags({ 'grafana.dashboardGlobalVariables': true });
       mockFetchPredefinedVariables.mockReset();
     });
 

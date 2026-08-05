@@ -4794,6 +4794,7 @@
       "not-found": "<0>찾을 수 없음: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + 마우스 오른쪽 버튼",
       "middle-mouse": "마우스 가운데 버튼",
       "pan-title": "이동:",
@@ -9188,6 +9189,7 @@
       "name-lookup-field": "조회 필드"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "기본 필드 이름을 토대로 위치 데이터를 자동으로 식별합니다",
         "description-coords": "위도 및 경도 필드 지정",

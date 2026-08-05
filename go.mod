@@ -91,7 +91,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.23.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20260730170421-576e3a65664f // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20260805100035-e1a167a201a8 // @grafana/alerting-backend
 	github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20260715184607-1dffa9543b9f // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2 // @grafana/identity-access-team
@@ -237,6 +237,7 @@ require (
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/grafana-catalog
 	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/alerting/alertrulequality v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/annotation v0.0.0 // @grafana/grafana-backend-services-squad
@@ -270,6 +271,7 @@ require (
 replace (
 	github.com/grafana/grafana/apps/advisor => ./apps/advisor
 	github.com/grafana/grafana/apps/alerting/alertenrichment => ./apps/alerting/alertenrichment
+	github.com/grafana/grafana/apps/alerting/alertrulequality => ./apps/alerting/alertrulequality
 	github.com/grafana/grafana/apps/alerting/notifications => ./apps/alerting/notifications
 	github.com/grafana/grafana/apps/alerting/rules => ./apps/alerting/rules
 	github.com/grafana/grafana/apps/annotation => ./apps/annotation
