@@ -7588,6 +7588,14 @@
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "This feature will be removed in Grafana 14. <2>Read the deprecation notice</2>.",
+      "title": "Scripted dashboards are deprecated"
+    },
+    "scripted-dashboards-disabled": {
+      "body": "Scripted dashboards are deprecated and will be removed in Grafana 14. <2>Read the deprecation notice</2>. To temporarily restore them, set the <4>disableScriptedDashboards</4> feature toggle to <7>false</7>.",
+      "title": "Scripted dashboards are disabled"
+    },
     "section-placement": {
       "top-row": "Top of row",
       "top-tab": "Top of tab"

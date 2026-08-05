@@ -644,6 +644,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "disableScriptedDashboards",
+			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
+			Stage:       FeatureStageDeprecated,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true", // enabled by default: scripted dashboards are disabled
+		},
+		{
 			Name:        "dashboard.notebooks",
 			Description: "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
 			Stage:       FeatureStageExperimental,

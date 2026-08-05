@@ -299,6 +299,12 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.
+  * @deprecated
+  * @default true
+  */
+  disableScriptedDashboards?: boolean;
+  /**
   * Enables undo/redo in dynamic dashboards
   * @default false
   */
