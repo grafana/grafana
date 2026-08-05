@@ -30,6 +30,15 @@ export class Canvas extends PageObject {
     });
   }
 
+  // Each nested grid (per row/tab) renders its own add actions strip, so a
+  // page-level lookup can match several "Group panels" buttons — pass the grid's
+  // container (e.g. rows.getContent(...)) to target a specific one
+  getGroupPanelsButton(panelsContainer?: Locator): Locator {
+    return (panelsContainer ?? this.getContainer()).getByTestId(
+      this.selectors.components.CanvasGridAddActions.groupPanels
+    );
+  }
+
   async groupPanels(targetLayout: 'row' | 'tab', panelsContainer?: Locator) {
     await test.step(`Group panels into ${targetLayout}`, async () => {
       // The add actions are revealed by hovering the layout container that hosts them
@@ -41,10 +50,7 @@ export class Canvas extends PageObject {
       // a panel and trigger unrelated hover states (header actions, tooltips)
       await container.hover({ position: { x: 0, y: 0 } });
 
-      // Each nested grid (per row/tab) renders its own add actions strip, so a
-      // page-level lookup can match several "Group panels" buttons — scope the
-      // click to the hovered container to target the one that was just revealed.
-      await container.getByTestId(this.selectors.components.CanvasGridAddActions.groupPanels).click();
+      await this.getGroupPanelsButton(panelsContainer).click();
 
       await this.page
         .getByRole('menu')
@@ -63,15 +69,17 @@ export class Canvas extends PageObject {
     return (panelsContainer ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.addTab);
   }
 
-  async addTab() {
+  async addTab(panelsContainer?: Locator) {
     await test.step('Add tab from canvas', async () => {
-      await this.getAddTabButton().click();
+      await this.getAddTabButton(panelsContainer).click();
     });
   }
 
-  async pasteTab() {
+  async pasteTab(panelsContainer?: Locator) {
     await test.step('Paste tab from canvas', async () => {
-      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.CanvasGridAddActions.pasteTab).click();
+      await (panelsContainer ?? this.getContainer())
+        .getByTestId(this.selectors.components.CanvasGridAddActions.pasteTab)
+        .click();
     });
   }
 
@@ -91,15 +99,17 @@ export class Canvas extends PageObject {
     return (panelsContainer ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.addRow);
   }
 
-  async addRow() {
+  async addRow(panelsContainer?: Locator) {
     await test.step('Add row from canvas', async () => {
-      await this.getAddRowButton().click();
+      await this.getAddRowButton(panelsContainer).click();
     });
   }
 
-  async pasteRow() {
+  async pasteRow(panelsContainer?: Locator) {
     await test.step('Paste row from canvas', async () => {
-      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.CanvasGridAddActions.pasteRow).click();
+      await (panelsContainer ?? this.getContainer())
+        .getByTestId(this.selectors.components.CanvasGridAddActions.pasteRow)
+        .click();
     });
   }
 
