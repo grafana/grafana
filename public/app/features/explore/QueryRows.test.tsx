@@ -19,12 +19,15 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: () => null,
 }));
 
-function setup(queries: DataQuery[]) {
+function setup(queries: DataQuery[], { resolveDatasource = true } = {}) {
   const defaultDs = {
     name: 'newDs',
     uid: 'newDs-uid',
     meta: { id: 'newDs' },
-  } as DataSourceApi;
+    components: {
+      QueryEditor: () => 'newDs query editor',
+    },
+  } as unknown as DataSourceApi;
 
   const datasources: Record<string, DataSourceApi> = {
     'newDs-uid': defaultDs,
@@ -58,13 +61,15 @@ function setup(queries: DataQuery[]) {
   initDataSourceInstanceSettings(dsSettings, 'newDs');
 
   // QueryEditorRow still loads the plugin through the legacy service, so it stays seeded
-  // until that call site is migrated.
+  // until that call site is migrated. getInstanceSettings deliberately has no default-datasource
+  // fallback: that keeps the new API's own default resolution under test instead of masking a
+  // cache miss behind the legacy path.
   setDataSourceSrv({
     getList() {
       return Object.values(datasources).map((d) => ({ name: d.name }));
     },
     getInstanceSettings(uid: string) {
-      return dsSettings[uid] || dsSettings['newDs-uid'];
+      return dsSettings[uid];
     },
     get(uid?: string) {
       return Promise.resolve(uid ? datasources[uid] || defaultDs : defaultDs);
@@ -77,7 +82,7 @@ function setup(queries: DataQuery[]) {
     panes: {
       left: {
         ...leftState,
-        datasourceInstance: datasources['someDs-uid'],
+        datasourceInstance: resolveDatasource ? datasources['someDs-uid'] : undefined,
         queries,
         correlations: [],
       },
@@ -114,5 +119,19 @@ describe('Explore QueryRows', () => {
 
     // We should have another row with refId B
     expect(await screen.findByTestId(selectors.components.QueryEditorRow.title('B'))).toBeInTheDocument();
+  });
+
+  // Parity with the removed sync call: getInstanceSettings(undefined) returned the default
+  // datasource, and the async API keeps that, so an unresolved pane still gets an editor.
+  it('renders the default datasource editor when the pane has no resolved datasource', async () => {
+    const { store } = setup([{ refId: 'A' }], { resolveDatasource: false });
+
+    render(
+      <Provider store={store}>
+        <QueryRows exploreId={'left'} changeCompactMode={jest.fn()} />
+      </Provider>
+    );
+
+    expect(await screen.findAllByText('newDs query editor')).toHaveLength(1);
   });
 });
