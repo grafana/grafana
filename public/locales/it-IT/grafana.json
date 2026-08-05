@@ -4832,6 +4832,7 @@
       "not-found": "<0>Non trovato: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + pulsante destro del mouse",
       "middle-mouse": "Pulsante centrale del mouse",
       "pan-title": "Panoramica:",
@@ -9249,6 +9250,7 @@
       "name-lookup-field": "Campo di ricerca"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Identifica automaticamente i dati sulla posizione in base ai nomi dei campi predefiniti",
         "description-coords": "Specifica i campi latitudine e longitudine",
