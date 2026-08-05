@@ -6,12 +6,10 @@ import type { Observable } from 'rxjs';
 
 import { toEmitValues } from './toEmitValues';
 import { toEmitValuesWith } from './toEmitValuesWith';
-import { toHaveValueOf } from './toHaveValueOf';
 import { type ObservableMatchers } from './types';
 
 export const matchers: ObservableMatchers<void, Observable<unknown>> | CanvasSnapshotMatchers = {
   toEmitValues,
   toEmitValuesWith,
-  toHaveValueOf,
   ...jestCanvasMatchers,
 };
