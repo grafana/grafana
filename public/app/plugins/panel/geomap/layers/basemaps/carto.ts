@@ -27,6 +27,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
   name: 'CARTO basemap',
   description: 'Add layer CARTO Raster basemaps',
   isBaseMap: true,
+  requiresAttribution: true,
   defaultOptions: defaultCartoConfig,
 
   /**

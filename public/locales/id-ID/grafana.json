@@ -4794,6 +4794,7 @@
       "not-found": "<0>Tidak ditemukan: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + mouse kanan",
       "middle-mouse": "Tombol tengah mouse",
       "pan-title": "Geser:",
@@ -9188,6 +9189,7 @@
       "name-lookup-field": "Bidang pencarian"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Identifikasi data lokasi secara otomatis berdasarkan nama bidang default",
         "description-coords": "Tentukan bidang garis lintang dan bujur",

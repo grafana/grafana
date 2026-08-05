@@ -4794,6 +4794,7 @@
       "not-found": "<0>未找到：</0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + 鼠标右键",
       "middle-mouse": "鼠标中键",
       "pan-title": "平移：",
@@ -9188,6 +9189,7 @@
       "name-lookup-field": "查找字段"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "根据默认字段名称自动识别位置数据",
         "description-coords": "指定纬度和经度字段",

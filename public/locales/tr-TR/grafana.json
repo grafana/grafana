@@ -4832,6 +4832,7 @@
       "not-found": "<0>Bulunamadı: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + sağ fare",
       "middle-mouse": "Orta fare",
       "pan-title": "Kaydır:",
@@ -9249,6 +9250,7 @@
       "name-lookup-field": "Arama alanı"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Varsayılan alan adlarına göre konum verilerini otomatik olarak tanımlayın",
         "description-coords": "Enlem ve boylam alanlarını belirtin",

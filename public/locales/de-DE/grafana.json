@@ -4832,6 +4832,7 @@
       "not-found": "<0>Nicht gefunden: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "STRG + rechte Maustaste",
       "middle-mouse": "Mittlere Maustaste",
       "pan-title": "Schwenken:",
@@ -9249,6 +9250,7 @@
       "name-lookup-field": "Nachschlagefeld"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Standortdaten automatisch anhand von Standard-Feldnamen identifizieren",
         "description-coords": "Breiten- und Längengradfelder angeben",
