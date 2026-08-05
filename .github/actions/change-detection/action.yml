@@ -116,6 +116,10 @@ runs:
             - '!**.spec.tsx'
             - '!e2e/**'
             - '!e2e-playwright/**'
+            # test-plugins/* are yarn workspaces copied into the image before
+            # `yarn install --immutable`, so a manifest change there can break the
+            # build even though the rest of e2e-playwright is test-only.
+            - 'e2e-playwright/test-plugins/**/package.json'
           rpm_packaging:
             - 'scripts/build-rpm.sh'
             - 'scripts/build-deb.sh'
