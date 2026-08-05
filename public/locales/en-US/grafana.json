@@ -4416,6 +4416,9 @@
     "create-new": {
       "dashboard-group": "Dashboard"
     },
+    "create-new-button": {
+      "generate-dashboard": "Generate dashboard"
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "This item is not in the same repository as the selected items."
@@ -6746,6 +6749,21 @@
       "button-title": "Add dashboard link",
       "info-box-content": "Dashboard links allow you to place links to other dashboards and web sites directly below the dashboard header. <2>Learn more</2>",
       "title": "There are no dashboard links added yet"
+    }
+  },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": "Generate dashboard"
+    },
+    "modal": {
+      "title": "What do you want to monitor?"
+    },
+    "prompt": {
+      "cancel": "Cancel",
+      "description": "Describe it in your own words — mention the services, data, or questions you care about.",
+      "input-label": "Describe the dashboard you want",
+      "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment",
+      "submit": "Build it"
     }
   },
   "dashboard-scene": {
@@ -12585,6 +12603,7 @@
     },
     "quick-add": {
       "aria-label": "New",
+      "generate-dashboard-button": "Generate dashboard",
       "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"

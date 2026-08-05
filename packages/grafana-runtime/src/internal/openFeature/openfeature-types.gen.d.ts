@@ -81,6 +81,7 @@ declare module "@openfeature/core" {
     | "grafana.dashboardSettingsRedesign"
     | "grafana.growthHomepage"
     | "grafana.onDemandDiagnostics"
+    | "assistant.dashboardPlanning"
     | "grafana.multiTenantNavTree"
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"

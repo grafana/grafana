@@ -21,6 +21,8 @@ export const FlagKeys = {
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
+  /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
+  AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
   /** Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar */
@@ -207,6 +209,17 @@ export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvalu
  */
 export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("analyticsFramework", false, options).value;
+};
+
+/**
+ * Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built
+ *
+ * **Details:**
+ * - flag key: `assistant.dashboardPlanning`
+ * - default value: `false`
+ */
+export const useFlagAssistantDashboardPlanning = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.dashboardPlanning", false, options).value;
 };
 
 /**

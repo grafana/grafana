@@ -1059,6 +1059,20 @@
     },
     {
       "metadata": {
+        "name": "assistant.dashboardPlanning",
+        "resourceVersion": "1785916087451",
+        "creationTimestamp": "2026-08-05T07:48:07Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "assistant.frontend.tools.dashboardTemplates",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -1599,6 +1613,21 @@
     },
     {
       "metadata": {
+        "name": "dashboard.generation",
+        "resourceVersion": "1785840164813",
+        "creationTimestamp": "2026-08-04T10:42:44Z",
+        "deletionTimestamp": "2026-08-05T07:48:07Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard prompt",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.notebooks",
         "resourceVersion": "1783509818865",
         "creationTimestamp": "2026-07-08T11:23:38Z"
@@ -1664,6 +1693,36 @@
       "spec": {
         "description": "Enables the dashboard filters overview pane",
         "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardGeneration",
+        "resourceVersion": "1785828839880",
+        "creationTimestamp": "2026-08-04T07:33:59Z",
+        "deletionTimestamp": "2026-08-04T10:42:44Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard prompt",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardGenerationWizard",
+        "resourceVersion": "1783598235144",
+        "creationTimestamp": "2026-07-09T11:57:15Z",
+        "deletionTimestamp": "2026-08-04T07:33:59Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard wizard",
+        "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "false"
