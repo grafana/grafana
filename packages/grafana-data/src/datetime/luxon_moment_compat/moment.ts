@@ -90,7 +90,7 @@ interface ParseOptions {
   format?: MomentFormat;
 }
 
-interface MomentTimeZoneInfo {
+export interface MomentTimeZoneInfo {
   name: string;
   abbr(timestamp: number): string;
   utcOffset(timestamp: number): number;
