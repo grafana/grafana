@@ -14,7 +14,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type DashboardScene } from '../../scene/DashboardScene';
 
 import { createNotebookSpecCommand } from './createNotebookSpec';
-import { cell, contextFor, makeNotebookSpec, stubDashboardScene } from './test-utils';
+import { cell, contextFor, makeNotebookSpec } from './test-utils';
 
 jest.mock('app/features/notebook/api/notebookResource', () => ({
   createNotebook: jest.fn(),

@@ -68,8 +68,7 @@ describe('GET_SPEC on a notebook', () => {
   });
 
   it('still answers on a dashboard', () => {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the layout descriptor is read
-    const dashboardScene = { state: { body: { descriptor: { id: 'GridLayout' } } } } as unknown as DashboardScene;
+    const dashboardScene = stubDashboardScene();
 
     expect(getSpecCommand.permission(dashboardScene)).toEqual({ allowed: true });
   });

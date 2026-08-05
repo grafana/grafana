@@ -150,8 +150,7 @@ describe('GET_NOTEBOOK_SPEC permission', () => {
   });
 
   it('refuses a dashboard', () => {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the layout descriptor is read
-    const dashboardScene = { state: { body: { descriptor: { id: 'GridLayout' } } } } as unknown as DashboardScene;
+    const dashboardScene = stubDashboardScene();
 
     const result = getNotebookSpecCommand.permission(dashboardScene);
     expect(result.allowed).toBe(false);

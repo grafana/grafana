@@ -8,7 +8,6 @@
 
 import {
   defaultPanelKind as defaultDashboardPanelKind,
-  defaultPanelSpec,
   type Spec as DashboardV2Spec,
   type PanelKind as DashboardPanelKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
