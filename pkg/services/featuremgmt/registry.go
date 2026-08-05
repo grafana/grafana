@@ -2739,7 +2739,7 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
-			Expression:   "true",
+			Expression:   "false",
 		},
 		{
 			Name:         "streamingForwardTeamHeadersTempo",
