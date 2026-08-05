@@ -48,10 +48,6 @@ The History page shows the history and state changes of all Grafana-managed aler
 
 Users can only view the history of alert rules they have permission to access (RBAC).
 
-{{< admonition type="note" >}}
-Grafana OSS and Grafana Enterprise users must also enable the [`alertingCentralAlertHistory`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) feature toggle to access this page.
-{{< /admonition >}}
-
 To access the History page, complete the following steps.
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **History**.
