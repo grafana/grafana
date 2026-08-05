@@ -30,7 +30,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
         <div className={styles.titleInfoContainer}>
           <div className={styles.title}>
             {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
-            {navItem.icon && visualRefreshEnabled && (
+            {!navItem.img && navItem.icon && visualRefreshEnabled && (
               <div className={styles.icon}>
                 <Icon name={navItem.icon} size="lg" />
               </div>
