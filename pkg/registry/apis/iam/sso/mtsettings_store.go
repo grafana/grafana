@@ -90,7 +90,7 @@ func (s *MTSettingsStore) Get(ctx context.Context, name string, _ *metav1.GetOpt
 // row under auth.<provider>. Secret classification/encryption is the settings
 // service mutator's job.
 func (s *MTSettingsStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
-	if s.writer == nil {
+	if s.reader == nil || s.writer == nil {
 		return nil, s.notImplemented("create", "")
 	}
 	ssoSetting, ok := obj.(*iamv0.SSOSetting)
@@ -111,11 +111,9 @@ func (s *MTSettingsStore) Create(ctx context.Context, obj runtime.Object, create
 		}
 	}
 
-	out := ssoSetting.DeepCopy()
-	out.TypeMeta = ssoTypeMeta()
-	out.Namespace = genericapirequest.NamespaceValue(ctx)
-	out.ResourceVersion = coarseResourceVersion(desired)
-	return out, nil
+	// Re-read so the response is the stored projection, not an echo of the
+	// request (which omits default-layer keys and never sets Spec.Source).
+	return s.Get(ctx, ssoSetting.Name, &metav1.GetOptions{})
 }
 
 // List implements rest.Lister.
@@ -196,11 +194,8 @@ func (s *MTSettingsStore) Update(ctx context.Context, name string, objInfo rest.
 		}
 	}
 
-	out := ssoSetting.DeepCopy()
-	out.TypeMeta = ssoTypeMeta()
-	out.Namespace = genericapirequest.NamespaceValue(ctx)
-	out.ResourceVersion = coarseResourceVersion(desired)
-	return out, created, nil
+	updated, err := s.Get(ctx, name, &metav1.GetOptions{})
+	return updated, created, err
 }
 
 // Delete implements rest.GracefulDeleter. It removes the provider's us-layer
@@ -233,6 +228,10 @@ func (s *MTSettingsStore) Delete(ctx context.Context, name string, deleteValidat
 			return nil, false, apierrors.NewInternalError(err)
 		}
 	}
+	// NOTE: returns the pre-delete object. Removing the us override leaves any
+	// defaults/hgapi rows, so the provider does not truly vanish; the accurate
+	// post-delete semantics are mode-dependent (which store is read-authoritative)
+	// and are settled in the migration's later choreography stage.
 	return current, true, nil
 }
 
