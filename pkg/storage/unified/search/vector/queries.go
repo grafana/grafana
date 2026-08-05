@@ -154,9 +154,7 @@ func (r *sqlVectorCollectionExistsRequest) Results() (*sqlVectorCollectionExists
 	return &cp, nil
 }
 
-// sqlVectorCollectionContentVersionResponse.MinVersion is NULL (Valid=false)
-// when the uid has no rows, since MIN() over zero matching rows still
-// returns exactly one result row.
+// MinVersion is NULL (Valid=false) when the uid has no rows: MIN() over zero rows still returns one row.
 type sqlVectorCollectionContentVersionResponse struct {
 	MinVersion sql.NullInt64
 }
@@ -272,9 +270,7 @@ func (r *sqlVectorBackfillJobsCreateRequest) Validate() error {
 	return nil
 }
 
-// sqlVectorBackfillJobsReopenRequest reopens jobs whose content_version
-// trails Version. Resource is the builder's resource; the template's IN
-// clause also matches the ”-catch-all job for the same model.
+// Reopens jobs whose content_version trails Version; the IN clause also matches the ”-catch-all job.
 type sqlVectorBackfillJobsReopenRequest struct {
 	sqltemplate.SQLTemplate
 	Model      string

@@ -207,10 +207,7 @@ END $$;`))
 			ON CONFLICT DO NOTHING;
 		`))
 
-	// content_version tracks the extractor content-shape version that produced
-	// a row, so an extractor change can trigger incremental re-embedding
-	// instead of a full backfill. ADD COLUMN on the partitioned parent
-	// propagates to every leaf.
+	// content_version = extractor version that produced the row; ADD COLUMN on the parent propagates to leaves.
 	mg.AddMigration("add content_version to embeddings",
 		migrator.NewRawSQLMigration("").Postgres(`
 			ALTER TABLE embeddings ADD COLUMN IF NOT EXISTS content_version INT NOT NULL DEFAULT 1;

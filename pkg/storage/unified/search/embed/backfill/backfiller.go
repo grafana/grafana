@@ -69,11 +69,7 @@ type VectorBackfiller struct {
 	interval       time.Duration
 
 	folderTitleResolver *foldertitle.Resolver
-	// folderTitleCache caches namespace+"/"+folderUID -> title for the
-	// duration of a single job run. Folders repeat heavily across a scan
-	// (many dashboards share a folder), and staleness within one run is
-	// harmless since the job re-runs periodically anyway.
-	folderTitleCache map[string]string
+	folderTitleCache    map[string]string
 }
 
 const defaultBackfillInterval = time.Minute
@@ -196,10 +192,7 @@ func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	}
 }
 
-// reopenStaleJobs runs once per tick, before the incomplete-jobs list is
-// read, so a job a builder's version bump just reopened is picked up on the
-// same tick rather than waiting for the next one. Best-effort per builder: a
-// failure for one builder doesn't block the others or the rest of the tick.
+// reopenStaleJobs runs before the incomplete-jobs list so a version-bump reopen is drained on the same tick; per-builder failures don't block the tick.
 func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger) {
 	stoppingRV := resource.ToSnowflakeRV(time.Now().UnixMicro())
 	for _, builder := range b.sortedBuilders {
@@ -219,9 +212,7 @@ func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger) 
 // Builders are processed in deterministic resource-name order; each one gets its own paginated cross-namespace scan.
 // last_seen_key contains the continue token and the resource name so we know which builder to resume from.
 func (b *VectorBackfiller) runBackfillJob(ctx context.Context, job vector.BackfillJob) error {
-	// Fresh cache per job run: folders repeat heavily within a single scan,
-	// but a job run can span a long time, so we don't carry titles forward
-	// into the next run.
+	// Fresh title cache per job run; titles aren't carried across runs.
 	b.folderTitleCache = make(map[string]string)
 
 	// Decode cursor to see if we need to resume
@@ -405,9 +396,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return nil
 	}
 
-	// if a same-or-newer version is already embedded, skip; a lower stored
-	// version means the builder's content shape moved on and this uid needs
-	// re-embedding.
+	// Same-or-newer stored version: nothing to do.
 	version, exists, err := b.vectorBackend.ContentVersion(ctx, namespace, job.Model, res, name)
 	if err != nil {
 		return fmt.Errorf("content version check: %w", err)
@@ -416,9 +405,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		statusLabel = "skipped_already_embedded"
 		return nil
 	}
-	// isVersionStale gates the identical-content check below: a brand-new
-	// uid (exists=false) has no stored rows to compare against, so it
-	// always takes the normal extract+embed path.
+	// Only version-stale uids get the identical-content check; new uids have nothing to compare.
 	isVersionStale := exists && version < builder.Version()
 
 	if embed.HasPendingDeleteLabel(iter.Value()) {
@@ -438,9 +425,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		Name:      name,
 	}
 
-	// Unlike Extract, a folder title lookup hits storage and can fail
-	// transiently — treat it as a retryable item error rather than a
-	// permanent one.
+	// Storage errors fail the job so the next tick retries this item, unlike permanent Extract errors.
 	folderTitle, err := b.resolveFolderTitle(ctx, namespace, iter.Value())
 	if err != nil {
 		return fmt.Errorf("resolve folder title %s/%s: %w", namespace, name, err)
@@ -468,11 +453,6 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		if err != nil {
 			return fmt.Errorf("get stored content %s/%s: %w", namespace, name, err)
 		}
-		// Folder is deliberately not compared here (unlike the reconciler,
-		// which force-differs on a folder move): under v2 a folder move
-		// changes content anyway (the breadcrumb gets the folder-title
-		// prefix), so content equality already subsumes that case for this
-		// extractor version.
 		if identicalContent(stored, items) {
 			if err := b.vectorBackend.UpdateContentVersion(ctx, namespace, job.Model, res, name, builder.Version()); err != nil {
 				return fmt.Errorf("update content version %s/%s: %w", namespace, name, err)
@@ -480,12 +460,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 			statusLabel = "skipped_identical_content"
 			return nil
 		}
-		// Not identical: fall through to the full re-embed below. Per-panel
-		// diffing is deliberately not done — under v2 the folder-prefix
-		// touches every panel, so diffing would leave some rows re-embedded
-		// at the new version and others stranded at the old one, and the
-		// stranded rows would be rescanned forever. Re-embedding every item
-		// keeps a uid's rows version-uniform.
+		// Not identical: re-embed everything. Per-panel diffing would strand unchanged rows at the old version and rescan them forever.
 	}
 
 	vectors, err := b.batchEmbedder.Embed(ctx, namespace, res, rv, builder.Version(), items)
@@ -493,9 +468,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return fmt.Errorf("embed %s/%s: %w", namespace, name, err)
 	}
 
-	// desired is the full subresource set the extractor produced this time;
-	// UpsertReplaceSubresources deletes any stored row not in this list, so a
-	// re-embed after e.g. a dropped panel doesn't leave a stale row behind.
+	// Replace-with-desired sheds stored rows for panels the extractor no longer produces.
 	desired := make([]string, 0, len(items))
 	for _, it := range items {
 		desired = append(desired, it.Subresource)
@@ -512,8 +485,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	return nil
 }
 
-// identicalContent reports whether extracted matches stored exactly: same
-// subresource key set, and equal content per key.
+// identicalContent reports whether extracted and stored have the same subresource set and content.
 func identicalContent(stored map[string]string, extracted []embed.Item) bool {
 	if len(stored) != len(extracted) {
 		return false
@@ -527,8 +499,7 @@ func identicalContent(stored map[string]string, extracted []embed.Item) bool {
 	return true
 }
 
-// resolveFolderTitle resolves the display title for the folder referenced by
-// value's k8s annotation, caching per job run (see folderTitleCache).
+// resolveFolderTitle resolves the value's folder annotation to a title via the per-run cache.
 func (b *VectorBackfiller) resolveFolderTitle(ctx context.Context, namespace string, value []byte) (string, error) {
 	folderUID := embed.FolderUIDFromValue(value)
 	if folderUID == "" {

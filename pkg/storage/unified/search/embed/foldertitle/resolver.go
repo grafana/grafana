@@ -1,11 +1,5 @@
-// Package foldertitle resolves a folder UID to its current display title by
-// reading the folder resource straight from storage.
-//
-// This lives outside the parent embed package deliberately:
-// pkg/storage/unified/resource defines resource.StorageBackend and depends
-// on embed transitively (resource -> embedder -> embed), so embed importing
-// resource.StorageBackend directly would create an import cycle. This
-// subpackage isn't part of that chain and can import resource freely.
+// Package foldertitle resolves folder UIDs to display titles from storage.
+// Separate from embed because importing resource.StorageBackend there would cycle (resource -> embedder -> embed).
 package foldertitle
 
 import (
@@ -22,24 +16,16 @@ const (
 	folderResource = "folders"
 )
 
-// Resolver resolves a folder UID to its current display title. Titles are
-// resolved at embed time and go stale on rename until the next re-embed;
-// query-time consumers should prefer resolving fresh rather than trusting
-// stored copies.
+// Resolver resolves folder UIDs to display titles; embed-time results go stale on rename until re-embed.
 type Resolver struct {
 	storage resource.StorageBackend
 }
 
-// NewResolver builds a resolver backed by storage.
 func NewResolver(storage resource.StorageBackend) *Resolver {
 	return &Resolver{storage: storage}
 }
 
-// Title returns the display title for folderUID within namespace. An empty
-// folderUID (root-level resource) and a folder that no longer exists both
-// return ("", nil) — neither is an error condition worth failing the caller
-// over. Any other storage error is returned so the caller can decide whether
-// to retry.
+// Title resolves folderUID's display title; "" folderUID and deleted folders return ("", nil), other storage errors propagate.
 func (r *Resolver) Title(ctx context.Context, namespace, folderUID string) (string, error) {
 	if folderUID == "" {
 		return "", nil

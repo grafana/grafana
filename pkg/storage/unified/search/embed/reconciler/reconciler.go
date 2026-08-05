@@ -111,9 +111,7 @@ type Reconciler struct {
 	log               log.Logger
 	metrics           *resource.VectorMetrics
 
-	// folderTitleResolver resolves the current folder title at embed time.
-	// Deliberately uncached here: event rate is low, and correctness (fresh
-	// title) beats the staleness a cache would introduce.
+	// folderTitleResolver is uncached: event rate is low and fresh titles beat cache staleness.
 	folderTitleResolver *foldertitle.Resolver
 
 	// broadcaster is attached after construction by the resource server,

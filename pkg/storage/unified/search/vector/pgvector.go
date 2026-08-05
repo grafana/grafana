@@ -249,8 +249,7 @@ func (b *pgvectorBackend) upsertAll(ctx context.Context, tx db.Tx, vectors []Vec
 			return fmt.Errorf("vector[%d]: %w", i, err)
 		}
 		vectors[i].Title = truncateRunes(vectors[i].Title, maxTitleLen)
-		// Zero means the caller predates content versioning; store the
-		// baseline so an explicit 0 can't undercut the column's DEFAULT 1.
+		// Floor unset versions to the baseline so an explicit 0 can't undercut DEFAULT 1.
 		if vectors[i].ContentVersion < 1 {
 			vectors[i].ContentVersion = 1
 		}
@@ -650,8 +649,7 @@ func (b *pgvectorBackend) resourcePartitionReady(ctx context.Context, leaf, idx 
 }
 
 func (b *pgvectorBackend) CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64, contentVersion int) error {
-	// Zero means the caller predates content versioning; store the baseline
-	// so an explicit 0 can't undercut the column's DEFAULT 1.
+	// Floor unset versions to the baseline so an explicit 0 can't undercut DEFAULT 1.
 	if contentVersion < 1 {
 		contentVersion = 1
 	}
@@ -668,9 +666,7 @@ func (b *pgvectorBackend) CreateBackfillJob(ctx context.Context, model, resource
 	return nil
 }
 
-// ReopenStaleBackfillJobs resets the cursor rather than resuming it: a
-// mid-flight version bump means whatever the previous run already scanned
-// may now be stale too, so correctness wins over avoiding a rescan.
+// ReopenStaleBackfillJobs resets the cursor: a mid-flight bump makes already-scanned rows stale too.
 func (b *pgvectorBackend) ReopenStaleBackfillJobs(ctx context.Context, model, resource string, version int, stoppingRV int64) (bool, error) {
 	req := &sqlVectorBackfillJobsReopenRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),

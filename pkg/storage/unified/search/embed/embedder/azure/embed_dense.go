@@ -42,8 +42,7 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 		return embedder.EmbedTextOutput{}, nil
 	}
 
-	// BatchProcess runs chunks concurrently, so tokens is accumulated with
-	// an atomic rather than a plain int sum.
+	// Chunks run concurrently; accumulate tokens atomically.
 	var tokens atomic.Int64
 	results, err := embedder.BatchProcess(ctx, input.Texts, e.batchSize, func(ctx context.Context, texts []string) ([]embedder.Embedding, error) {
 		callCtx, cancel := context.WithTimeoutCause(ctx, callTimeout, ErrCallTimeout)

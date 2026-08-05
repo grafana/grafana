@@ -30,10 +30,7 @@ func NewBatchEmbedder(e Embedder) *BatchEmbedder {
 // empty Content are dropped (the extractor already filters these, but be
 // defensive in case a future caller doesn't).
 //
-// namespace, resource, rv, and contentVersion are stamped onto every
-// returned Vector; they're not derivable from the Item alone. contentVersion
-// should be the calling Builder's Version() so backfill can tell stale
-// content shapes apart from current ones.
+// namespace, resource, rv, and contentVersion (the calling Builder's Version()) are stamped onto every returned Vector.
 func (b *BatchEmbedder) Embed(
 	ctx context.Context,
 	namespace, resource string,

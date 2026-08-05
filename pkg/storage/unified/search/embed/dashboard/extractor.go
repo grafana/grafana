@@ -34,11 +34,7 @@ const maxItemContentBytes = 4 * 1024
 // maxDescriptionBytes cap the panel desc at 2Kib to leave room for queries
 const maxDescriptionBytes = 2 * 1024
 
-// extractorVersion identifies the shape of content this extractor produces.
-// Bump when Extract output changes shape or content so backfill re-embeds
-// existing rows; never reuse a value.
-//
-// v2 prefixes the breadcrumb with the folder title (see buildEmbeddableItem).
+// extractorVersion: bump when Extract output changes so backfill re-embeds; never reuse. v2 = folder-title breadcrumb prefix.
 const extractorVersion = 2
 
 // Extractor produces one embed.Item per panel.
@@ -62,8 +58,6 @@ func (e *Extractor) Resource() string { return "dashboards" }
 // embed.Builder interface.
 func (e *Extractor) MaxItemsPerResource() int { return e.maxPanels }
 
-// Version returns the content-format version; satisfies the embed.Builder
-// interface.
 func (e *Extractor) Version() int { return extractorVersion }
 
 func (e *Extractor) Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]embed.Item, error) {

@@ -26,9 +26,7 @@ import (
 // when no provider is configured. Callers (the search server) treat nil as
 // "vector search is disabled" and surface Unimplemented to clients.
 //
-// vectorMetrics is optional; when non-nil its EmbedDuration histogram and
-// EmbedTokensTotal counter are wired into the constructed Embedder so each
-// provider call is timed and its billed input tokens are tallied.
+// vectorMetrics is optional; when non-nil, provider calls are timed and their input tokens tallied.
 //
 // The configured provider's connection fields (project ID for Vertex, region
 // + credentials for Bedrock, endpoint + AZURE_OPENAI_API_KEY for Azure) must
