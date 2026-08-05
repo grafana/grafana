@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type IconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
@@ -15,10 +15,16 @@ type PageCardProps = {
 export default function PageCard({ title, description, icon, url, index }: PageCardProps) {
   const styles = useStyles2(getStyles);
 
+  // Nav-tree urls arrive with appSubUrl already prepended by the backend, while
+  // locationService's history is created with `basename: config.appSubUrl`.
+  // Strip the base before pushing so the prefix is applied exactly once
+  // (same convention as the Link component in @grafana/ui).
+  const navigateToCard = () => locationService.push(locationUtil.stripBaseFromUrl(url));
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      locationService.push(url);
+      navigateToCard();
     }
   };
 
@@ -27,7 +33,7 @@ export default function PageCard({ title, description, icon, url, index }: PageC
       className={styles.card}
       role="button"
       tabIndex={0}
-      onClick={() => locationService.push(url)}
+      onClick={navigateToCard}
       onKeyDown={onKeyDown}
     >
       <Icon name={icon} className={`${styles.logo} ${index % 2 === 0 ? styles.evenLogo : styles.oddLogo}`} />
