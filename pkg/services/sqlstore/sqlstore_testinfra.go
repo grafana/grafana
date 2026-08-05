@@ -12,6 +12,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -27,7 +28,9 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
-// TestingTB is an interface that is implemented by *testing.T and *testing.B. Similar to testing.TB.
+// TestingTB is the subset of the standard library's testing.TB (the interface common to
+// *testing.T and *testing.B - hence "TB") that this package needs. It exists because
+// testing.TB embeds a private method to forbid implementations outside the standard library.
 type TestingTB interface {
 	// Helper marks the calling function as a test helper function. See also (*testing.T).Helper.
 	Helper()
@@ -146,8 +149,10 @@ var dbTemplates sync.Map
 
 // dbTemplateRequest asks createTemporaryDatabase for a database pre-migrated with the given migration set.
 type dbTemplateRequest struct {
-	key        string // fingerprint: driver + hash of the set's ordered migration IDs
+	key        string // fingerprint: driver + hash of the set's ordered migration IDs + hash of the config/features identity
 	dbMigrator registry.DatabaseMigrator
+	cfg        *setting.Cfg // the caller's effective config; the template build must migrate with it, not a fresh default
+	features   featuremgmt.FeatureToggles
 }
 
 // getDBTemplate returns the template ref for key, building it once per process via build.
@@ -160,8 +165,13 @@ func getDBTemplate(key string, build func() (string, error)) (string, error) {
 	return t.ref, t.err
 }
 
-// dbTemplateFingerprint identifies a migration set by its ordered migration IDs — the same identity migration_log uses, so cache validity and skip-logic agree by construction.
-func dbTemplateFingerprint(dbm registry.DatabaseMigrator) (key string, err error) {
+// dbTemplateFingerprint identifies a template by the migration set's ordered migration IDs — the same
+// identity migration_log uses, so cache validity and skip-logic agree by construction — plus the
+// config/features identity the migrations run under. Registration must see the same non-nil cfg the
+// template build migrates with: migration sets may register differently based on it (the enterprise
+// set registers its migrations only when the config is non-nil), and a nil-config enumeration would
+// let two different sets share a key.
+func dbTemplateFingerprint(cfg *setting.Cfg, featureFlags map[string]bool, dbm registry.DatabaseMigrator) (key string, err error) {
 	defer func() {
 		// AddMigration panics on ID conflicts; a set we cannot enumerate is a set we do not cache.
 		if r := recover(); r != nil {
@@ -170,9 +180,46 @@ func dbTemplateFingerprint(dbm registry.DatabaseMigrator) (key string, err error
 	}()
 
 	dbType := getTestDBType()
-	ids := migrator.MigrationIDs(dbType, dbm.AddMigration)
+	ids := migrator.MigrationIDs(cfg, dbType, dbm.AddMigration)
 	sum := sha256.Sum256([]byte(strings.Join(ids, "\n")))
-	return dbType + ":" + hex.EncodeToString(sum[:8]), nil
+	return dbType + ":" + hex.EncodeToString(sum[:8]) + ":" + configIdentity(cfg, featureFlags), nil
+}
+
+// configIdentity hashes the migration-visible parts of the test configuration: the raw INI settings
+// and the feature flags. Limitation: values assigned directly to Cfg struct fields rather than through
+// Raw are invisible here, so such configs can share a template; code migrations only act on pre-existing
+// rows, which fresh templates do not have, so their config-dependent effects do not diverge template content.
+func configIdentity(cfg *setting.Cfg, featureFlags map[string]bool) string {
+	h := sha256.New()
+
+	sections := cfg.Raw.SectionStrings()
+	sort.Strings(sections)
+	for _, section := range sections {
+		if section == "database" {
+			// This infrastructure owns the whole [database] section (see WithCfg) and rewrites it on
+			// every call, including randomly named per-store databases in connection_string and path.
+			// Hashing any of that would give a reused cfg object a fresh key per call and defeat the
+			// cache; what remains (connection behaviour) cannot change what migrations put in a template.
+			continue
+		}
+		sec := cfg.Raw.Section(section)
+		keys := sec.KeyStrings()
+		sort.Strings(keys)
+		for _, key := range keys {
+			_, _ = fmt.Fprintf(h, "%s.%s=%s\n", section, key, sec.Key(key).Value())
+		}
+	}
+
+	flags := make([]string, 0, len(featureFlags))
+	for flag := range featureFlags {
+		flags = append(flags, flag)
+	}
+	sort.Strings(flags)
+	for _, flag := range flags {
+		_, _ = fmt.Fprintf(h, "feature:%s=%t\n", flag, featureFlags[flag])
+	}
+
+	return hex.EncodeToString(h.Sum(nil)[:8])
 }
 
 // NewTestStore creates a new SQLStore with a test database. It is useful in parallel tests.
@@ -204,8 +251,15 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 	// pre-migrated templates. Fresh factory instances per use: AddMigration may mutate its receiver.
 	var tmpl *dbTemplateRequest
 	if dbMigrator != nil && strings.EqualFold(os.Getenv("GRAFANA_TEST_DB_TEMPLATE"), "true") {
-		if key, ferr := dbTemplateFingerprint(options.MigratorFactory(features)); ferr == nil {
-			tmpl = &dbTemplateRequest{key: key, dbMigrator: options.MigratorFactory(features)}
+		// Fingerprint registration and the template build must both see the caller's effective,
+		// non-nil config; see dbTemplateFingerprint. newTestCfg later rewrites this same object's
+		// [database] section for the actual store, undoing the template build's mutation of it.
+		baseCfg := options.Cfg
+		if baseCfg == nil {
+			baseCfg = setting.NewCfg()
+		}
+		if key, ferr := dbTemplateFingerprint(baseCfg, options.FeatureFlags, options.MigratorFactory(features)); ferr == nil {
+			tmpl = &dbTemplateRequest{key: key, dbMigrator: options.MigratorFactory(features), cfg: baseCfg, features: features}
 		} else {
 			tb.Logf("DB template fingerprint unavailable, falling back to running migrations: %v", ferr)
 		}
@@ -363,7 +417,7 @@ func createTemporaryDatabase(tb TestingTB, tmpl *dbTemplateRequest) (*testDB, er
 	if tmpl != nil && dbType == "postgres" {
 		// Postgres clones at CREATE time; the template must have zero connections (the builder closes its engine).
 		ref, terr := getDBTemplate(tmpl.key, func() (string, error) {
-			return buildPostgresTemplate(tmpl.dbMigrator)
+			return buildPostgresTemplate(tmpl)
 		})
 		if terr == nil {
 			if _, cerr := engine.Exec("CREATE DATABASE " + id + " TEMPLATE " + ref); cerr == nil {
@@ -384,7 +438,7 @@ func createTemporaryDatabase(tb TestingTB, tmpl *dbTemplateRequest) (*testDB, er
 	if tmpl != nil && dbType == "mysql" {
 		// MySQL has no native clone; copy the template's tables into the fresh database.
 		ref, terr := getDBTemplate(tmpl.key, func() (string, error) {
-			return buildMySQLTemplate(tmpl.dbMigrator)
+			return buildMySQLTemplate(tmpl)
 		})
 		if terr == nil {
 			if cerr := copyMySQLDatabase(engine, ref, id); cerr != nil {
@@ -487,7 +541,7 @@ func cloneSQLiteTemplate(tb TestingTB, tmpl *dbTemplateRequest, dst string) erro
 	tb.Helper()
 
 	ref, err := getDBTemplate(tmpl.key, func() (string, error) {
-		return buildSQLiteTemplate(tmpl.dbMigrator, tmpl.key)
+		return buildSQLiteTemplate(tmpl)
 	})
 	if err != nil {
 		return fmt.Errorf("template build failed: %w", err)
@@ -505,7 +559,7 @@ func cloneSQLiteTemplate(tb TestingTB, tmpl *dbTemplateRequest, dst string) erro
 
 // buildPostgresTemplate migrates a fresh template database and closes every connection to
 // it (Postgres refuses to clone a template with live connections). The template DB is left behind (PoC: one per package run).
-func buildPostgresTemplate(dbm registry.DatabaseMigrator) (name string, err error) {
+func buildPostgresTemplate(tmpl *dbTemplateRequest) (name string, err error) {
 	defer func() {
 		// A panicking build must not poison the sync.Once cache.
 		if r := recover(); r != nil {
@@ -531,8 +585,11 @@ func buildPostgresTemplate(dbm registry.DatabaseMigrator) (name string, err erro
 	tmplDriver, tmplConn := newPostgresConnString(name)
 	templateDB := &testDB{Driver: tmplDriver, Conn: tmplConn}
 
-	features := featuremgmt.WithFeatures()
-	cfg, err := newTestCfg(nil, features, templateDB)
+	// The template must be migrated under the caller's config and features: both the registered
+	// migration set and the runtime behaviour of code migrations depend on them, and the copied
+	// migration_log prevents the clone from ever re-running them with the right values.
+	features := tmpl.features
+	cfg, err := newTestCfg(tmpl.cfg, features, templateDB)
 	if err != nil {
 		dropTemplate()
 		return "", fmt.Errorf("template cfg: %w", err)
@@ -549,7 +606,7 @@ func buildPostgresTemplate(dbm registry.DatabaseMigrator) (name string, err erro
 	engine.TZLocation = time.UTC
 
 	tracer := tracing.InitializeTracerForTest()
-	store, err := newStore(cfg, engine, features, dbm, bus.ProvideBus(tracer), tracer)
+	store, err := newStore(cfg, engine, features, tmpl.dbMigrator, bus.ProvideBus(tracer), tracer)
 	if err != nil {
 		_ = engine.Close()
 		dropTemplate()
@@ -569,7 +626,7 @@ func buildPostgresTemplate(dbm registry.DatabaseMigrator) (name string, err erro
 }
 
 // buildMySQLTemplate migrates a fresh template database; it is left behind (PoC: one per package run).
-func buildMySQLTemplate(dbm registry.DatabaseMigrator) (name string, err error) {
+func buildMySQLTemplate(tmpl *dbTemplateRequest) (name string, err error) {
 	defer func() {
 		// A panicking build must not poison the sync.Once cache.
 		if r := recover(); r != nil {
@@ -595,8 +652,9 @@ func buildMySQLTemplate(dbm registry.DatabaseMigrator) (name string, err error) 
 	tmplDriver, tmplConn := newMySQLConnString(name)
 	templateDB := &testDB{Driver: tmplDriver, Conn: tmplConn}
 
-	features := featuremgmt.WithFeatures()
-	cfg, err := newTestCfg(nil, features, templateDB)
+	// See buildPostgresTemplate: the caller's config and features must shape the template.
+	features := tmpl.features
+	cfg, err := newTestCfg(tmpl.cfg, features, templateDB)
 	if err != nil {
 		dropTemplate()
 		return "", fmt.Errorf("template cfg: %w", err)
@@ -613,7 +671,7 @@ func buildMySQLTemplate(dbm registry.DatabaseMigrator) (name string, err error) 
 	engine.TZLocation = time.UTC
 
 	tracer := tracing.InitializeTracerForTest()
-	store, err := newStore(cfg, engine, features, dbm, bus.ProvideBus(tracer), tracer)
+	store, err := newStore(cfg, engine, features, tmpl.dbMigrator, bus.ProvideBus(tracer), tracer)
 	if err != nil {
 		_ = engine.Close()
 		dropTemplate()
@@ -665,7 +723,7 @@ func copyMySQLDatabase(admin *xorm.Engine, src, dst string) error {
 
 // buildSQLiteTemplate returns the content-addressed template file, building it if absent
 // (migrate → WAL checkpoint → close → atomic rename); partials never exist under the canonical name, so reuse needs no locking.
-func buildSQLiteTemplate(dbm registry.DatabaseMigrator, key string) (path string, err error) {
+func buildSQLiteTemplate(tmpl *dbTemplateRequest) (path string, err error) {
 	defer func() {
 		// A panicking build must not poison the sync.Once cache.
 		if r := recover(); r != nil {
@@ -673,7 +731,7 @@ func buildSQLiteTemplate(dbm registry.DatabaseMigrator, key string) (path string
 		}
 	}()
 
-	canonical := filepath.Join(os.TempDir(), "grafana-test-sqlite-template-"+strings.ReplaceAll(key, ":", "-")+".db")
+	canonical := filepath.Join(os.TempDir(), "grafana-test-sqlite-template-"+strings.ReplaceAll(tmpl.key, ":", "-")+".db")
 	if info, serr := os.Stat(canonical); serr == nil && info.Size() > 0 {
 		// Cross-process warm start: published templates are complete by construction.
 		return canonical, nil
@@ -695,8 +753,9 @@ func buildSQLiteTemplate(dbm registry.DatabaseMigrator, key string) (path string
 		Conn:   fmt.Sprintf("file:%s?cache=private&mode=rwc&_journal_mode=WAL&_synchronous=OFF", tmp.Name()),
 	}
 
-	features := featuremgmt.WithFeatures()
-	cfg, err := newTestCfg(nil, features, templateDB)
+	// See buildPostgresTemplate: the caller's config and features must shape the template.
+	features := tmpl.features
+	cfg, err := newTestCfg(tmpl.cfg, features, templateDB)
 	if err != nil {
 		removeTemplate()
 		return "", fmt.Errorf("template cfg: %w", err)
@@ -716,7 +775,7 @@ func buildSQLiteTemplate(dbm registry.DatabaseMigrator, key string) (path string
 	engine.TZLocation = time.UTC
 
 	tracer := tracing.InitializeTracerForTest()
-	store, err := newStore(cfg, engine, features, dbm, bus.ProvideBus(tracer), tracer)
+	store, err := newStore(cfg, engine, features, tmpl.dbMigrator, bus.ProvideBus(tracer), tracer)
 	if err != nil {
 		removeTemplate()
 		return "", fmt.Errorf("template store: %w", err)

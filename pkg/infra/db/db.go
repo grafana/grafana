@@ -51,8 +51,8 @@ type DB interface {
 type Session = sqlstore.DBSession
 type InitTestDBOpt = sqlstore.InitTestDBOpt
 
-// TestingTB and TestOption are re-exported so NewTestStore callers don't need
-// to import sqlstore directly.
+// Re-exported so NewTestStore callers need not import sqlstore directly;
+// TestingTB mirrors the standard library's testing.TB (see sqlstore.TestingTB).
 type TestingTB = sqlstore.TestingTB
 type TestOption = sqlstore.TestOption
 
