@@ -758,7 +758,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo
 		}
 		scopeMap := s.getScopeMap(permissions)
 
-		scopeMap, err = s.resolveScopeMap(ctx, ns, scopeMap)
+		scopeMap, err = s.resolveScopeMap(ctx, ns, action, scopeMap)
 		if err != nil {
 			return nil, fmt.Errorf("could not resolve scope map: %w", err)
 		}

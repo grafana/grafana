@@ -1649,6 +1649,52 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "delegate-scoped grant must not authorize the action itself",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+				Verb:      "get",
+				Name:      "dash1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "permissions:type:delegate"},
+			},
+			expected: false,
+		},
+		{
+			name: "delegate-scoped grant still authorizes role management",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "iam.grafana.app",
+				Resource:  "roles",
+				Verb:      "update",
+				Name:      "some-role",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "roles:write", Scope: "permissions:type:delegate"},
+			},
+			expected: true,
+		},
+		{
+			name: "delegation gate for a non-role action works from the literal alone",
+			req: &authzv1.CheckRequest{
+				Namespace:   "org-12",
+				Subject:     "user:test-uid",
+				Group:       "iam.grafana.app",
+				Resource:    "permissions",
+				Subresource: "dashboards:read",
+				Verb:        utils.VerbPatch,
+				Name:        "delegate",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards:read", Scope: "permissions:type:delegate"},
+			},
+			expected: true,
+		},
+		{
 			name: "permissions:type check without action subresource should keep the roles:write verb mapping",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",

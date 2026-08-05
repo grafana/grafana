@@ -189,13 +189,32 @@ func permissionsTypeResolverFunc(scope string) (string, error) {
 	}
 }
 
-func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, scopePrefix string) (ScopeResolverFunc, error) {
+// delegationImpliesWildcard reports whether a permissions:type:delegate grant
+// on the action also implies the wildcard scope. Role management is the only
+// family where that holds: holding the delegate scope must allow operating on
+// any role or role binding. Expanding it for other actions would turn a
+// delegation-only grant into global access to the resource itself.
+func delegationImpliesWildcard(action string) bool {
+	switch action {
+	case "roles:read", "roles:write", "roles:delete",
+		"users.roles:read", "users.roles:add", "users.roles:remove":
+		return true
+	}
+	return false
+}
+
+func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, action, scopePrefix string) (ScopeResolverFunc, error) {
 	if scopePrefix == "teams:id:" {
 		return s.newTeamNameResolver(ctx, ns)
 	}
 
 	if scopePrefix == "permissions:type:" {
-		return permissionsTypeResolverFunc, nil
+		if delegationImpliesWildcard(action) {
+			return permissionsTypeResolverFunc, nil
+		}
+		// The literal alone gates delegation checks; deriving a wildcard here
+		// would grant the action itself on every resource.
+		return nil, nil
 	}
 	if scopePrefix == "serviceaccounts:id:" {
 		return s.newServiceAccountNameResolver(ctx, ns)
@@ -209,7 +228,8 @@ func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, scop
 
 // resolveScopeMap translates scopes like "teams:id:1" to "teams:uid:t1".
 // It assumes only one scope resolver is needed for a given scope map, based on the first valid scope encountered.
-func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, scopeMap map[string]bool) (map[string]bool, error) {
+// The action the scopes were granted on decides whether permissions:type:delegate expands to the wildcard.
+func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, action string, scopeMap map[string]bool) (map[string]bool, error) {
 	var (
 		prefix        string
 		scopeResolver ScopeResolverFunc
@@ -226,7 +246,7 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, s
 
 			// Initialize the scope resolver only once
 			prefix = accesscontrol.ScopePrefix(scope)
-			scopeResolver, err = s.nameResolver(ctx, ns, prefix)
+			scopeResolver, err = s.nameResolver(ctx, ns, action, prefix)
 			if err != nil {
 				s.logger.FromContext(ctx).Error("failed to create scope resolver", "prefix", prefix, "error", err)
 				return nil, err
