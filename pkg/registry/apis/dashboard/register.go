@@ -365,7 +365,12 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		}
 
 	case dashv0.LIBRARY_PANEL_RESOURCE:
-		return nil // OK for now
+		switch op {
+		case admission.Create, admission.Update, admission.Delete:
+			return b.validateLibraryPanelAccess(ctx, a)
+		default:
+			return nil
+		}
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
 	// Reachability invariant: this case only fires when the apiserver routes
@@ -407,6 +412,56 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	}
 
 	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
+}
+
+func (b *DashboardsAPIBuilder) validateLibraryPanelAccess(ctx context.Context, a admission.Attributes) error {
+	var obj runtime.Object
+	var verb string
+	switch a.GetOperation() {
+	case admission.Create:
+		obj = a.GetObject()
+		verb = utils.VerbCreate
+	case admission.Update:
+		obj = a.GetObject()
+		verb = utils.VerbUpdate
+	case admission.Delete:
+		obj = a.GetOldObject()
+		verb = utils.VerbDelete
+	default:
+		return nil
+	}
+	if obj == nil {
+		return fmt.Errorf("library panel object is required for %s authorization", verb)
+	}
+
+	accessor, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return fmt.Errorf("get library panel metadata for authorization: %w", err)
+	}
+	folderUID := accessor.GetFolder()
+	if folderUID == "" {
+		folderUID = accesscontrol.GeneralFolderUID
+	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return fmt.Errorf("get requester for library panel authorization: %w", err)
+	}
+	gvr := dashv0.LibraryPanelResourceInfo.GroupVersionResource()
+	resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
+		Verb:      verb,
+		Group:     gvr.Group,
+		Resource:  gvr.Resource,
+		Namespace: a.GetNamespace(),
+		Name:      accessor.GetName(),
+	}, folderUID)
+	if err != nil {
+		return err
+	}
+	if !resp.Allowed {
+		return apierrors.NewForbidden(gvr.GroupResource(), accessor.GetName(), errors.New("access denied"))
+	}
+	return nil
 }
 
 // validateDelete checks if a dashboard can be deleted
