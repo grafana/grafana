@@ -127,6 +127,7 @@ func (h *previewAssetsHandler) renderConfirmationPage(w http.ResponseWriter, log
 		return
 	}
 
+	// #nosec G124 nosemgrep: go.lang.security.audit.net.cookie-missing-secure.cookie-missing-secure -- Secure follows [security] cookie_secure, like all Grafana cookies (see pkg/middleware/cookies)
 	http.SetCookie(w, &http.Cookie{
 		Name:     previewCSRFCookieName,
 		Value:    csrfToken,
@@ -160,6 +161,7 @@ func (h *previewAssetsHandler) renderConfirmationPage(w http.ResponseWriter, log
 }
 
 func (h *previewAssetsHandler) clearCSRFCookie(w http.ResponseWriter) {
+	// #nosec G124 nosemgrep: go.lang.security.audit.net.cookie-missing-secure.cookie-missing-secure -- Secure follows [security] cookie_secure, like all Grafana cookies (see pkg/middleware/cookies)
 	http.SetCookie(w, &http.Cookie{
 		Name:     previewCSRFCookieName,
 		Value:    "",
@@ -172,6 +174,7 @@ func (h *previewAssetsHandler) clearCSRFCookie(w http.ResponseWriter) {
 }
 
 func (h *previewAssetsHandler) setCookie(w http.ResponseWriter, name, value string, maxAge int) {
+	// #nosec G124 nosemgrep: go.lang.security.audit.net.cookie-missing-secure.cookie-missing-secure -- Secure follows [security] cookie_secure, like all Grafana cookies (see pkg/middleware/cookies)
 	http.SetCookie(w, &http.Cookie{
 		Name:     name,
 		Value:    value,
