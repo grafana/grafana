@@ -31,8 +31,8 @@ type Bundler struct {
 // their uncompressed JSON bounded independently so adding querydata.json cannot multiply a large
 // panel/dashboard archive without an explicit truncation marker.
 const (
-	maxQueryDataArtifactBytes  = 1 << 30
-	maxDashboardQueryDataBytes = 1536 << 20 // 1.5 GiB; 4 GiB would overflow a 32-bit int
+	maxQueryDataArtifactBytes  = 1 << 30    // 1 GiB
+	maxDashboardQueryDataBytes = 1536 << 20 // 1.5 GiB
 	// minQueryDataArtifactBytes is the smallest budget worth attempting: below it not even a truncated
 	// artifact (version + omission markers) fits, so the panel's query data is skipped up front.
 	minQueryDataArtifactBytes = 256
