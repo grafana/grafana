@@ -5,12 +5,13 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
+import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
-export interface EditPaneInputAutoFocusProps {
+export interface SidebarInputAutoFocusProps {
   autoFocus?: boolean;
 }
 
-export function useEditPaneInputAutoFocus({ autoFocus }: EditPaneInputAutoFocusProps = {}) {
+export function useSidebarInputAutoFocus({ autoFocus }: SidebarInputAutoFocusProps = {}) {
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -55,12 +56,24 @@ export function generateUniqueTitle(title: string | undefined, existingTitles: S
   return baseTitle;
 }
 
-export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: DashboardLayoutManager, skipUndo?: boolean) {
-  const layoutParent = layout.parent!;
-  if (isLayoutParent(layoutParent)) {
-    innerLayout.clearParent();
-    layoutParent.switchLayout(innerLayout, skipUndo);
+function switchLayoutOnParent(current: DashboardLayoutManager, newLayout: DashboardLayoutManager, skipUndo?: boolean) {
+  const layoutParent = current.parent;
+  if (layoutParent && isLayoutParent(layoutParent)) {
+    layoutParent.switchLayout(newLayout, skipUndo);
   }
+}
+
+export function changeLayoutTo(
+  currentManager: DashboardLayoutManager,
+  layoutItem: LayoutRegistryItem,
+  skipUndo?: boolean
+) {
+  switchLayoutOnParent(currentManager, layoutItem.createFromLayout(currentManager), skipUndo);
+}
+
+export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: DashboardLayoutManager, skipUndo?: boolean) {
+  innerLayout.clearParent();
+  switchLayoutOnParent(layout, innerLayout, skipUndo);
 }
 
 export function getIsLazy(preload: boolean | undefined): boolean {

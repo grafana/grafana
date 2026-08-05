@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useFlagGlobalDashboardVariables } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 import {
   AnnoKeyIgnorePredefinedVariables,
@@ -115,7 +115,7 @@ interface Props {
 export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
   const { meta } = dashboard.useState();
   const canEditDenyList = Boolean(meta.canSave) && !dashboard.managedResourceCannotBeEdited();
-  const globalDashboardVariablesEnabled = useFlagGlobalDashboardVariables();
+  const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
 
   const annotationValue = meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
   const mode = useMemo(() => {
@@ -134,28 +134,28 @@ export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
 
   const options: Array<SelectableValue<PredefinedVariablesMode>> = [
     {
-      label: t('dashboard-scene.predefined-variables-options.none', 'None'),
+      label: t('dashboard.sidebar.predefined-variables.none', 'None'),
       value: 'none',
     },
     {
-      label: t('dashboard-scene.predefined-variables-options.all', 'All'),
+      label: t('dashboard.sidebar.predefined-variables.all', 'All'),
       value: 'all',
     },
     {
-      label: t('dashboard-scene.predefined-variables-options.global', 'Global'),
+      label: t('dashboard.sidebar.predefined-variables.global', 'Global'),
       value: 'global',
     },
     {
-      label: t('dashboard-scene.predefined-variables-options.folder', 'Folder'),
+      label: t('dashboard.sidebar.predefined-variables.folder', 'Folder'),
       value: 'folder',
     },
   ];
 
   return (
     <Field
-      label={t('dashboard-scene.predefined-variables-options.label', 'Predefined variables')}
+      label={t('dashboard.sidebar.predefined-variables.label', 'Predefined variables')}
       description={t(
-        'dashboard-scene.predefined-variables-options.description',
+        'dashboard.sidebar.predefined-variables.description',
         'This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.'
       )}
       noMargin

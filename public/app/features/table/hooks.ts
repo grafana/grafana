@@ -10,7 +10,7 @@ import {
   type InterpolateFunction,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useFlagTablePaginationPageSize, useFlagTableRefactorNested } from '@grafana/runtime/internal';
+import { useFlagTablePaginationPageSize } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
 import { usePanelContext } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
@@ -75,7 +75,6 @@ type CommonTableOptions = Pick<
  * are left to the caller. Spread the result onto `<TableNG {...props} />`.
  */
 export function useCommonTableProps(options: CommonTableOptions, fieldConfig: FieldConfigSource) {
-  const nestedRefactorEnabled = useFlagTableRefactorNested();
   const paginationPageSizeEnabled = useFlagTablePaginationPageSize();
 
   return useMemo(
@@ -93,7 +92,6 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       maxRowHeight: options.maxRowHeight,
       disableKeyboardEvents: options.disableKeyboardEvents,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
-      nestedRefactorEnabled,
     }),
     [
       options.showHeader,
@@ -106,7 +104,6 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       options.maxRowHeight,
       options.disableKeyboardEvents,
       fieldConfig.defaults.noValue,
-      nestedRefactorEnabled,
       paginationPageSizeEnabled,
     ]
   );

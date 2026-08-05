@@ -14,7 +14,7 @@ import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import BrowseFolderVariablesPage from './BrowseFolderVariablesPage';
 import * as permissions from './permissions';
 
-const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'globalDashboardVariables';
+const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'grafana.dashboardGlobalVariables';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -125,7 +125,26 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
     render(<BrowseFolderVariablesPage />);
 
     expect(await screen.findByText('env')).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'New folder variable' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'New folder variable' })).toBeEnabled();
+  });
+
+  it('disables "New folder variable" when the user cannot edit the folder', async () => {
+    server.use(
+      http.get('/api/folders/:uid', () => {
+        return HttpResponse.json({
+          id: 1,
+          uid: mockFolderUid,
+          title: mockFolderName,
+          canEdit: false,
+          canSave: false,
+          canAdmin: false,
+          canDelete: false,
+        });
+      })
+    );
+    render(<BrowseFolderVariablesPage />);
+
+    expect(await screen.findByRole('button', { name: 'New folder variable' })).toBeDisabled();
   });
 
   it('displays an empty state when the folder has no variables', async () => {

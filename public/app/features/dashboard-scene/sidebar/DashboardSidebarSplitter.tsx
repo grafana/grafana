@@ -131,7 +131,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
       return (
         <div
           className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk)}
-          data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+          data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
         >
           <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
         </div>
@@ -141,14 +141,14 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
     return (
       <div
         className={styles.bodyWrapper}
-        data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+        data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
         {...sidebarContext.outerWrapperProps}
       >
         <div
           className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
-          data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
+          data-testid={selectors.components.DashboardSidebarSplitter.bodyContainer}
           // The dashboard scrolls inside this element rather than the document body, so make it
           // focusable; without this, arrow/page keys can't scroll the dashboard once it's focused.
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
@@ -284,7 +284,7 @@ function getStyles(theme: GrafanaTheme2) {
       // Clip-bleed: top padding + matching negative margin cancel out visually but extend the
       // clip box under the controls bar, so top-row selection outlines aren't sheared off. The
       // bar paints over the overlap — see DashboardControlsChrome.
-      padding: theme.spacing(1, 1, 2, 2),
+      padding: theme.spacing(1.125, 1, 2, 2),
       marginTop: theme.spacing(-1),
     }),
     scrollContainerNoSidebar: css({
@@ -308,7 +308,7 @@ function getStyles(theme: GrafanaTheme2) {
       overflow: 'auto',
       scrollbarWidth: 'thin',
       scrollbarGutter: 'stable',
-      // Because the edit pane splitter handle area adds padding we can reduce it here
+      // Because the sidebar splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
     }),
   };

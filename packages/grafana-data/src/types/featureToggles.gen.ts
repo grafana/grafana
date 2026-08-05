@@ -389,11 +389,6 @@ export interface FeatureToggles {
   */
   alertingSaveStatePeriodic?: boolean;
   /**
-  * Enables the compressed protobuf-based alert state storage. Default is enabled.
-  * @default true
-  */
-  alertingSaveStateCompressed?: boolean;
-  /**
   * In-development feature flag for the scope api using the app platform.
   * @default false
   */
@@ -1079,11 +1074,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingTriage?: boolean;
-  /**
-  * Shows a promotional banner for the Alerts Activity feature on the Rule List page
-  * @default false
-  */
-  alertingAlertsActivityBanner?: boolean;
   /**
   * Enables the Graphite data source full backend mode
   * @default false

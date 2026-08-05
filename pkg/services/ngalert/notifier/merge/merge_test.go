@@ -20,9 +20,7 @@ import (
 func TestReceivers(t *testing.T) {
 	r := func(name string) *v1.PostableApiReceiver {
 		return &v1.PostableApiReceiver{
-			Receiver: definition.Receiver{
-				Name: name,
-			},
+			Name: name,
 		}
 	}
 
@@ -416,7 +414,7 @@ func TestMergeExtraConfig(t *testing.T) {
 	t.Run("should append index suffix if rename still collides", func(t *testing.T) {
 		grafana := load(t, fullGrafanaConfig, func(p *v1.PostableApiAlertingConfig) {
 			p.Receivers = append(p.Receivers, &v1.PostableApiReceiver{
-				Receiver: definition.Receiver{Name: "grafana-default-email" + getDedupSuffix(identifier)},
+				Name: "grafana-default-email" + getDedupSuffix(identifier),
 			})
 		})
 		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)

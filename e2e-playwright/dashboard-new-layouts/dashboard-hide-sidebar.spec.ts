@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { Controls, Panel, Sidebar } from './page-objects';
+import { Controls, Panels, Sidebar } from './page-objects';
 
 test.use({
   featureToggles: {
@@ -107,7 +107,7 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       const controls = new Controls({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panel = new Panel({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
 
       // Enter edit mode
       await controls.enterEditMode();
@@ -119,7 +119,7 @@ test.describe(
       await expect(sidebar.getContainer()).not.toBeVisible();
 
       // Select a panel — sidebar should reappear temporarily
-      await panel.selectByTitle('No Data Points Warning');
+      await panels.selectByTitle('No Data Points Warning');
 
       await expect(sidebar.getContainer()).toBeVisible();
       // The dock toggle is hidden during temp-show — the user shouldn't dock from this state

@@ -73,13 +73,20 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<GeoJSONMapperConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => {
     const config = { ...defaultOptions, ...options.config };
 
     // Interpolate variables in the URL
     const interpolatedUrl = getTemplateSrv().replace(config.src || '');
     const isAbsoluteUrl = interpolatedUrl.startsWith('http');
-    const layerUrl = isAbsoluteUrl ? interpolatedUrl : `${window.__grafana_public_path__}${interpolatedUrl.replace(/^(public\/)/, '')}`;
+    const layerUrl = isAbsoluteUrl
+      ? interpolatedUrl
+      : `${window.__grafana_public_path__}${interpolatedUrl.replace(/^(public\/)/, '')}`;
 
     const source = new VectorSource({
       url: layerUrl,

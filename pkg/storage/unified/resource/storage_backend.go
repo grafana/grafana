@@ -94,8 +94,7 @@ type kvStorageBackend struct {
 	gcGate                  *GCGate
 	lastImportStore         *lastImportStore
 	lastImportTimeMaxAge    time.Duration
-	//reg     prometheus.Registerer
-	metrics *kvBackendMetrics
+	metrics                 *kvBackendMetrics
 
 	watchOpts WatchOptions
 
@@ -225,9 +224,9 @@ type KVBackendOptions struct {
 	// Nil preserves existing behavior.
 	ExperimentalKV       *ExperimentalKVOptions
 	DisablePruner        bool
-	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
-	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
-	Reg                  prometheus.Registerer // TODO add metrics
+	EventRetentionPeriod time.Duration // How long to keep events (default: 1 hour)
+	EventPruningInterval time.Duration // How often to run the event pruning (default: 5 minutes)
+	Reg                  prometheus.Registerer
 	Log                  log.Logger
 	GarbageCollection    GarbageCollectionConfig
 
@@ -392,7 +391,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		cancel:                  cancel,
 		metrics:                 metrics,
 	}
-	err = backend.initPruner(ctx)
+	err = backend.initPruner(ctx, opts.Reg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
@@ -565,7 +564,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 	return nil
 }
 
-func (k *kvStorageBackend) initPruner(ctx context.Context) error {
+func (k *kvStorageBackend) initPruner(ctx context.Context, reg prometheus.Registerer) error {
 	if k.disablePruner {
 		k.log.Debug("Pruner disabled, using noop pruner")
 		k.historyPruner = &NoopPruner{}
@@ -587,6 +586,7 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 				"name", key.Name,
 				"error", err)
 		},
+		Reg: reg,
 	})
 	if err != nil {
 		return err
