@@ -25,6 +25,7 @@ import {
   type PluginDependencies,
   type PluginExtensions,
   type TimeOption,
+  type NavigationAppSectionConfig,
   type UnifiedAlertingConfig,
   type GrafanaConfig,
   type CurrentUserDTO,
@@ -196,6 +197,7 @@ export class GrafanaBootConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled = false;
+  navigationAppSections: Record<string, NavigationAppSectionConfig> = {};
   unifiedAlerting: UnifiedAlertingConfig = {
     minInterval: '',
     stateHistory: {

@@ -11,7 +11,7 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { APP_NAV_CONFIG, type AppNavConfig } from './appNavConfig';
+import { appNavConfigFor, type AppNavConfig } from './appNavConfig';
 import { buildStaticNavTree } from './buildStaticNavTree';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
@@ -40,7 +40,9 @@ const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, A
  *   counts as enabled)
  * - the plugins.app:access permission is evaluated without its per-plugin
  *   scope
- * - INI nav overrides ([navigation.app_sections]) are unsupported
+ * - INI standalone-page overrides ([navigation.app_standalone_pages]) are
+ *   unsupported ([navigation.app_sections] is: delivered via frontend
+ *   settings, applied by appNavConfigFor)
  * - assistant includes gated on per-org plugin jsonData (the Investigations
  *   page, trial-mode restrictions) are not reproduced — jsonData is not
  *   readable client-side; the deployment-mode filtering is (see
@@ -88,7 +90,7 @@ function addAppToTree(tree: NavModelItem[], app: AppPluginMetaConfig): NavModelI
   // A `singlePage` app's only page folds into the app link itself, leaving it
   // childless; it is still placed (as a leaf) as long as the page passed its
   // access checks. Any other childless app is not part of the nav tree.
-  const placeAsLeaf = Boolean(APP_NAV_CONFIG[app.id]?.singlePage) && hasAccessiblePages;
+  const placeAsLeaf = Boolean(appNavConfigFor(app.id)?.singlePage) && hasAccessiblePages;
   if ((appLink.children ?? []).length === 0 && !placeAsLeaf) {
     return tree;
   }
@@ -102,7 +104,7 @@ function buildAppLink(app: AppPluginMetaConfig): { appLink: NavModelItem; hasAcc
   let appUrl = `/a/${app.id}`;
   let hasAccessiblePages = false;
   const children: NavModelItem[] = [];
-  const filterInclude = APP_NAV_CONFIG[app.id]?.filterInclude;
+  const filterInclude = appNavConfigFor(app.id)?.filterInclude;
 
   for (const include of app.includes) {
     if (!hasAccessToInclude(include) || (filterInclude && !filterInclude(include))) {
@@ -159,7 +161,7 @@ function buildAppLink(app: AppPluginMetaConfig): { appLink: NavModelItem; hasAcc
 
 /** Applies the app's APP_NAV_CONFIG display overrides (name, icon, subtitle, badge) */
 function withNavConfigOverrides(app: AppPluginMetaConfig, appLink: NavModelItem): NavModelItem {
-  const navConfig = APP_NAV_CONFIG[app.id];
+  const navConfig = appNavConfigFor(app.id);
   if (!navConfig) {
     return appLink;
   }
@@ -179,7 +181,7 @@ function withNavConfigOverrides(app: AppPluginMetaConfig, appLink: NavModelItem)
  * Returns a new tree.
  */
 function placeAppInSection(tree: NavModelItem[], app: AppPluginMetaConfig, appLink: NavModelItem): NavModelItem[] {
-  const navConfig = APP_NAV_CONFIG[app.id];
+  const navConfig = appNavConfigFor(app.id);
   const sectionId = navConfig?.sectionId ?? NavID.apps;
 
   if (sectionId === NavID.root) {
