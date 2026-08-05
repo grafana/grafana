@@ -3997,6 +3997,9 @@
       "trace-id": "ID de seguimiento: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Ajustes de autenticación"
@@ -4829,6 +4832,7 @@
       "not-found": "<0>No se ha encontrado: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + botón derecho del ratón",
       "middle-mouse": "Botón central del ratón",
       "pan-title": "Desplazamiento:",
@@ -6177,13 +6181,10 @@
         "show-in": ""
       },
       "annotations": {
-        "add-annotation": "",
         "add-annotation-query": "",
         "name-builtin": "",
         "name-disabled": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-annotation": "",
         "title-above-dashboard-count_one": "",
         "title-above-dashboard-count_other": "",
         "title-controls-menu-count_one": "",
@@ -6269,10 +6270,7 @@
       "links": {
         "add-link": "",
         "new-link": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-link": "",
-        "untitled": "",
         "title-above-dashboard_one": "",
         "title-above-dashboard_other": "",
         "title-controls-menu_one": "",
@@ -6372,11 +6370,9 @@
       "variables": {
         "add-variable": "",
         "change-type": "",
-        "reorder": "",
         "reorder-description": "",
         "select-type": "",
         "select-type-card-tooltip": "",
-        "select-variable": "",
         "top-placement-default": "",
         "title-controls-menu_one": "",
         "title-controls-menu_other": "",
@@ -6814,11 +6810,6 @@
       "delete-text": "¿Seguro que quieres eliminar: {{name}}?",
       "delete-title": "Eliminar consulta de anotación"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Notas"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Utilizar consulta guardada"
     },
@@ -7241,11 +7232,6 @@
       "delete-text": "¿Seguro que quieres eliminar: {{name}}?",
       "delete-title": "Eliminar enlace",
       "unnamed": "Enlace sin nombre"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Enlace"
-      }
     },
     "link-options": {
       "icon": "Icono",
@@ -9264,6 +9250,7 @@
       "name-lookup-field": "Campo de búsqueda"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Identificar automáticamente los datos de ubicación en función de los nombres de campo predeterminados",
         "description-coords": "Especificar campos de latitud y longitud",
@@ -15952,18 +15939,29 @@
     },
     "editor": {
       "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
       "view-preview": "",
       "view-split": "",
       "view-write": ""
-    },
-    "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
-    },
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "Tema base",
