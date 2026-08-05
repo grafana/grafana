@@ -329,9 +329,9 @@ describe('dashboardActions', () => {
       });
     });
 
-    it('returns hybrid dashboard actions when both the cmdkHybridSearch and vectorSearchCmdk flags are on', async () => {
+    it('returns hybrid dashboard actions when both the cmdkHybridSearch and vectorSearch flags are on', async () => {
       mockContextSrv.user.isSignedIn = true;
-      setTestFlags({ 'grafana.cmdkHybridSearch': true, 'grafana.vectorSearchCmdk': true });
+      setTestFlags({ 'grafana.cmdkHybridSearch': true, 'dashboard.vectorSearch': true });
       server.use(getHybridSearchHandler([{ name: 'hybrid-dashboard-1', title: 'Hybrid dashboard 1', score: 0.9 }]));
 
       const { result } = renderHook(
@@ -355,9 +355,9 @@ describe('dashboardActions', () => {
       });
     });
 
-    it('does not use hybrid search when the vectorSearchCmdk flag is off', async () => {
+    it('does not use hybrid search when the vectorSearch flag is off', async () => {
       mockContextSrv.user.isSignedIn = true;
-      setTestFlags({ 'grafana.cmdkHybridSearch': true, 'grafana.vectorSearchCmdk': false });
+      setTestFlags({ 'grafana.cmdkHybridSearch': true, 'grafana.vectorSearch': false });
       server.use(getHybridSearchHandler([{ name: 'hybrid-dashboard-1', title: 'Hybrid dashboard 1', score: 0.9 }]));
 
       const { result } = renderHook(
