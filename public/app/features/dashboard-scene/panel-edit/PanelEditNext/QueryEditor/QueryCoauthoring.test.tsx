@@ -227,6 +227,8 @@ describe('QueryCoauthoring', () => {
     expect(request.systemPrompt).toContain('Focused text: ["rate"]');
     expect(request.systemPrompt).toContain('http_requests_total');
     expect(request.systemPrompt).toContain('counter');
+    expect(request.systemPrompt).toContain('Make only the requested change.');
+    expect(request.systemPrompt).toContain('slash-separated label names');
     expect(request.systemPrompt).not.toContain('dashboardTitle');
   });
 

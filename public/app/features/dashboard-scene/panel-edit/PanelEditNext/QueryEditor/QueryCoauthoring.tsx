@@ -897,6 +897,8 @@ function buildSystemPrompt(context: QueryEditorCoauthoringContext): string {
     'Prefer edits within the focused ranges. Make edits outside them only when required for valid PromQL, and explain why.',
     'Metric metadata is advisory. Do not invent metadata that is not provided.',
     'Preserve existing label matchers and Grafana template variables unless the user explicitly asks to change them.',
+    'Make only the requested change. Do not add grouping labels, filters, functions, or other transformations the user did not ask for.',
+    'Treat slash-separated label names in the user request as alternatives or synonyms, not a request to use every listed label. Choose the single exact available label that best matches, or ask one concise clarification question if none does.',
     'Use only metric labels provided in relevant metric metadata. If the requested grouping is ambiguous or unavailable, ask one concise clarification question in plain text and do not call a tool.',
     'For a counter breakdown, place the rate expression inside an aggregation, for example: sum by (label) (rate(metric[range])). A by/without modifier cannot follow a function call.',
     'When there is enough information, call exactly one terminal tool: submit_query_proposal for a focused query edit, or request_assistant_handoff if the request requires other queries, data sources, or panel changes.',
