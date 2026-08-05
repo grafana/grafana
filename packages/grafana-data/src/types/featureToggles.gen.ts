@@ -1396,6 +1396,11 @@ export interface FeatureToggles {
   */
   ['alerting.syncExternalAlertmanager']?: boolean;
   /**
+  * Uses the Luxon-backed compatibility implementation for Grafana date and time APIs
+  * @default false
+  */
+  ['datetime.useLuxon']?: boolean;
+  /**
   * Enables Critical User Journey (CUJ) tracking
   * @default false
   */
