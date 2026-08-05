@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useImperativeHandle, useRef, useState, type Ref } from 'react';
 
 import { t } from '@grafana/i18n';
 import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
@@ -18,10 +18,15 @@ import { TeamFilterCombobox } from './TeamFilterCombobox';
 import { canViewFiringAlerts, useFiringAlerts } from './useFiringAlerts';
 import { useIncidents } from './useIncidents';
 
-const ALERTS_TAB_ID = 'firing-alerts';
-const INCIDENTS_TAB_ID = 'incidents';
+export const ALERTS_TAB_ID = 'firing-alerts' as const;
+export const INCIDENTS_TAB_ID = 'incidents' as const;
 
-export function AlertIncidentTabs() {
+type TabId = typeof ALERTS_TAB_ID | typeof INCIDENTS_TAB_ID;
+export type AlertIncidentSwitchHandle = {
+  switch: (tab: TabId, scroll?: boolean) => void;
+};
+
+export function AlertIncidentTabs({ switchRef }: { switchRef?: Ref<AlertIncidentSwitchHandle> }) {
   const { installed, loading } = usePluginBridge(SupportedPlugin.Irm);
   const canViewIncidents = Boolean(installed && !loading);
   const canViewAlerts = canViewFiringAlerts();
@@ -31,18 +36,22 @@ export function AlertIncidentTabs() {
     return null;
   }
 
-  return <AlertIncidentTabsInner canViewAlerts={canViewAlerts} canViewIncidents={canViewIncidents} />;
+  return (
+    <AlertIncidentTabsInner canViewAlerts={canViewAlerts} canViewIncidents={canViewIncidents} switchRef={switchRef} />
+  );
 }
 
 function AlertIncidentTabsInner({
   canViewAlerts,
   canViewIncidents,
+  switchRef,
 }: {
   canViewAlerts: boolean;
   canViewIncidents: boolean;
+  switchRef?: Ref<AlertIncidentSwitchHandle>;
 }) {
   // Default to alerts tab if alerts are available, otherwise default to incidents tab
-  const [activeTab, setActiveTab] = useState(canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
+  const [activeTab, setActiveTab] = useState<TabId>(canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
   // Kept across tab switches so returning to the Alerts tab restores the filter.
   const [selectedTeam, setSelectedTeam] = useState<string | undefined>();
   const alertsData = useFiringAlerts(selectedTeam);
@@ -60,6 +69,16 @@ function AlertIncidentTabsInner({
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
   const isIncidentsActionsVisible =
     canViewIncidents && !incidentsLoading && !incidentsError && activeTab === INCIDENTS_TAB_ID;
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  useImperativeHandle(switchRef, () => ({
+    switch: (tab: TabId, scroll = true) => {
+      setActiveTab(tab);
+      if (scroll) {
+        containerRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    },
+  }));
 
   const title =
     canViewAlerts && canViewIncidents
@@ -94,7 +113,7 @@ function AlertIncidentTabsInner({
       : []),
   ];
   return (
-    <Stack direction="column" gap={1} minWidth={0}>
+    <Stack direction="column" gap={1} minWidth={0} ref={containerRef}>
       <Stack justifyContent="space-between" alignItems="center" minHeight={4}>
         <Text element="h2" variant="h5">
           {title}
