@@ -1,10 +1,15 @@
+import { css } from '@emotion/css';
+
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, ButtonGroup, Stack, Text } from '@grafana/ui';
+import { Button, ButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 
 export function HeaderActions() {
+  const styles = useStyles2(getStyles);
+
   return (
-    <ButtonGroup>
+    <ButtonGroup className={styles.group}>
       <Button
         variant="secondary"
         tooltip={t('home.header-actions.firing-alerts', 'Firing alerts')}
@@ -39,3 +44,9 @@ export function HeaderActions() {
     </ButtonGroup>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  group: css({
+    marginTop: 'auto',
+  }),
+});
