@@ -244,6 +244,28 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	})
 	ctx := createTestContext(t, helper, helper.Org1)
 
+	legacyOnlyUIDBody, err := json.Marshal(map[string]interface{}{
+		"kind": 1,
+		"uid":  "Legacy_UID",
+		"name": "Legacy-only UID",
+		"model": map[string]interface{}{
+			"type":  "text",
+			"title": "Legacy-only UID",
+		},
+	})
+	require.NoError(t, err)
+	legacyOnlyUIDResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:        ctx.AdminUser,
+		Method:      http.MethodPost,
+		Path:        "/api/library-elements",
+		Body:        legacyOnlyUIDBody,
+		ContentType: "application/json",
+	}, &struct{}{})
+	require.Equal(t, http.StatusBadRequest, legacyOnlyUIDResp.Response.StatusCode)
+	var legacyOnlyUIDError map[string]interface{}
+	require.NoError(t, json.Unmarshal(legacyOnlyUIDResp.Body, &legacyOnlyUIDError))
+	require.Equal(t, model.ErrLibraryElementInvalidUID.Error(), legacyOnlyUIDError["message"])
+
 	legacyFolderResponse := apis.DoRequest(helper, apis.RequestParams{
 		User:        ctx.AdminUser,
 		Method:      http.MethodPost,
@@ -351,6 +373,27 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	byName, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements/name/CRUDPanel", ctx.AdminUser)
 	require.NoError(t, err)
 	require.Len(t, byName["result"], 1)
+
+	// Legacy get-by-name distinguishes an absent name from an existing panel that
+	// permission filtering hides: the former is 404, while the latter is a 200
+	// response with an empty result array. Preserve that contract through /apis.
+	restrictedFolder, err := createFolder(t, ctx.Helper, ctx.AdminUser, "Restricted by-name folder")
+	require.NoError(t, err)
+	restrictedUID, err := createLibraryElement(t, ctx, ctx.AdminUser, "RestrictedPanel", restrictedFolder.UID)
+	require.NoError(t, err)
+	setResourceUserPermission(t, ctx, ctx.AdminUser, false, restrictedFolder.UID, []ResourcePermissionSetting{})
+
+	hiddenByName, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements/name/RestrictedPanel", ctx.ViewerUser)
+	require.NoError(t, err)
+	require.Empty(t, hiddenByName["result"])
+
+	missingByNameResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:   ctx.ViewerUser,
+		Method: http.MethodGet,
+		Path:   "/api/library-elements/name/DoesNotExist",
+	}, &struct{}{})
+	require.Equal(t, http.StatusNotFound, missingByNameResp.Response.StatusCode)
+	require.NoError(t, deleteLibraryElement(t, ctx, ctx.AdminUser, restrictedUID))
 
 	// patch with a stale version must fail the optimistic concurrency check
 	staleBody, err := json.Marshal(map[string]interface{}{"kind": 1, "name": "CRUDPanelRenamed", "version": 99})

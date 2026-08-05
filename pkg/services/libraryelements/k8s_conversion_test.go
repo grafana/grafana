@@ -187,5 +187,21 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	require.Equal(t, dashboards.RootFolderName, result.Meta.FolderName)
 	require.Zero(t, result.FolderID) // nolint:staticcheck
 
+	// Missing creator metadata must not prevent a valid updater from being
+	// resolved. GetUsersFromMeta stops at an untyped/empty identity string.
+	updatedTimestamp := creationTimestamp.Add(time.Minute)
+	meta.SetCreatedBy("")
+	meta.SetUpdatedBy("user:" + testUser.UID)
+	meta.SetUpdatedTimestamp(&updatedTimestamp)
+	userSvc.ListUsersByIdOrUidCalls = nil
+
+	result, err = handler.unstructuredToLegacyLibraryPanelDTO(reqContext, *unstructuredObj)
+	require.NoError(t, err)
+	require.Zero(t, result.Meta.CreatedBy.Id)
+	require.Empty(t, result.Meta.CreatedBy.Name)
+	require.Equal(t, testUser.ID, result.Meta.UpdatedBy.Id)
+	require.Equal(t, testUser.Login, result.Meta.UpdatedBy.Name)
+	require.Equal(t, []string{testUser.UID}, userSvc.ListUsersByIdOrUidCalls[0].Uids)
+
 	dashboardsSvc.AssertExpectations(t)
 }
