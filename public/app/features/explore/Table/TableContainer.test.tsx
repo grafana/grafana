@@ -68,9 +68,17 @@ const dataFrame = toDataFrame({
   ],
 });
 
+// Tempo appends this frame to every streaming search response, including the final one, so it
+// outlives the query that produced it.
+const tempoStreamingProgressFrame = toDataFrame({
+  refId: 'streaming-progress',
+  name: 'Streaming Progress',
+  fields: [{ name: 'state', type: FieldType.string, values: ['Done'] }],
+});
+
 const defaultProps = {
   exploreId: 'left',
-  loading: false,
+  panelLoadingState: undefined,
   queryStreaming: false,
   width: 800,
   onCellFilterAdded: jest.fn(),
@@ -217,12 +225,25 @@ describe('TableContainer', () => {
       return state;
     }
 
-    it('is not loading when the query has settled without any data', () => {
-      expect(mapStateToProps(makeState(LoadingState.Done, null), ownProps).loading).toBe(false);
+    it('has no panel loading state when the query has settled without any data', () => {
+      expect(mapStateToProps(makeState(LoadingState.Done, null), ownProps).panelLoadingState).toBeUndefined();
     });
 
     it('is loading while a query is running and no data has arrived yet', () => {
-      expect(mapStateToProps(makeState(LoadingState.Loading, null), ownProps).loading).toBe(true);
+      expect(mapStateToProps(makeState(LoadingState.Loading, null), ownProps).panelLoadingState).toBe(
+        LoadingState.Loading
+      );
+    });
+
+    it('is streaming while a query is streaming', () => {
+      expect(mapStateToProps(makeState(LoadingState.Streaming, [dataFrame]), ownProps).panelLoadingState).toBe(
+        LoadingState.Streaming
+      );
+    });
+
+    it('is loading, not streaming, when a stale Tempo streaming-progress frame outlives its query', () => {
+      const state = makeState(LoadingState.Loading, [dataFrame, tempoStreamingProgressFrame]);
+      expect(mapStateToProps(state, ownProps).panelLoadingState).toBe(LoadingState.Loading);
     });
   });
 
@@ -279,6 +300,13 @@ describe('TableContainer', () => {
       expect(screen.getByTestId('panel-streaming')).toBeInTheDocument();
       expect(queryLoadingBars()).toHaveLength(0);
       expect(getLastRenderedState()).toBe(LoadingState.Streaming);
+    });
+
+    it('shows a loading bar when a re-query leaves a stale Tempo streaming-progress frame behind', () => {
+      setup(LoadingState.Loading, [dataFrame, tempoStreamingProgressFrame]);
+      expect(queryLoadingBars()).toHaveLength(2);
+      expect(screen.queryByTestId('panel-streaming')).not.toBeInTheDocument();
+      expect(getLastRenderedState()).toBe(LoadingState.Loading);
     });
   });
 

@@ -48,7 +48,10 @@ export function mapStateToProps(state: StoreState, { exploreId }: TableContainer
   const loading = selectIsWaitingForData(exploreId)(state);
   const hasTempoStreamingProgressTable = tableResult?.some((f) => f.refId === TEMPO_STREAMING_PROGRESS_REF_ID);
   return {
-    loading,
+    // PanelChrome renders a loading bar for Loading and a streaming indicator for Streaming. Mirror the
+    // query state only while a query is in flight, so neither indicator can outlive the query. Reading
+    // the state directly keeps a leftover Tempo streaming-progress frame from picking the indicator.
+    panelLoadingState: loading ? item.queryResponse.state : undefined,
     tableResult,
     range,
     queryStreaming: item.queryResponse.state === LoadingState.Streaming || Boolean(hasTempoStreamingProgressTable),
@@ -59,7 +62,7 @@ const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export const TableContainer = memo(function TableContainer({
-  loading,
+  panelLoadingState,
   onCellFilterAdded,
   tableResult,
   width,
@@ -100,14 +103,6 @@ export const TableContainer = memo(function TableContainer({
     return name
       ? t('explore.table.title-with-name', 'Table - {{name}}', { name, interpolation: { escapeValue: false } })
       : t('explore.table.title', 'Table');
-  }
-
-  // PanelChrome renders a loading bar for Loading and a streaming indicator for Streaming. Gate both
-  // on a query actually being in flight, so a leftover Tempo streaming-progress frame cannot pin the
-  // streaming indicator on after the query has finished.
-  let panelLoadingState: LoadingState | undefined;
-  if (loading) {
-    panelLoadingState = queryStreaming ? LoadingState.Streaming : LoadingState.Loading;
   }
 
   let dataFrames = hasDeprecatedParentRowIndex(tableResult)
