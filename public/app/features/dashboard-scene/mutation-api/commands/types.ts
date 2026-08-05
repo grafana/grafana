@@ -125,7 +125,7 @@ export function requiresNotebookResource(scene: DashboardScene): PermissionCheck
  * blast radius of the coarseness is a scene the user could not save anyway. A notebook-scoped
  * action is the right long-term answer and is tracked with the resource's permission model.
  */
-function requiresNotebookEdit(scene: DashboardScene): PermissionCheckResult {
+export function requiresNotebookEdit(scene: DashboardScene): PermissionCheckResult {
   const resource = requiresNotebookResource(scene);
   if (!resource.allowed) {
     return resource;

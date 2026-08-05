@@ -56,6 +56,7 @@ describe('Command consistency', () => {
       'ADD_ROW',
       'ADD_TAB',
       'ADD_VARIABLE',
+      'APPLY_NOTEBOOK_SPEC',
       'APPLY_SPEC',
       'ENTER_EDIT_MODE',
       'GET_DASHBOARD_INFO',

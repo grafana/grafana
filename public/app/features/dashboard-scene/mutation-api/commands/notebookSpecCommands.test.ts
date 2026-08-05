@@ -22,6 +22,7 @@ import { type DashboardScene } from '../../scene/DashboardScene';
 import { setNotebookDocumentHeader } from '../../serialization/notebookSpecTransform';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
+import { applyNotebookSpecCommand } from './applyNotebookSpec';
 import { applySpecCommand } from './applySpec';
 import { getNotebookSpecCommand } from './getNotebookSpec';
 import { getSpecCommand } from './getSpec';
@@ -180,6 +181,10 @@ async function applySpec(scene: DashboardScene, spec: unknown, validate = false)
 
 async function getNotebookSpec(scene: DashboardScene, validate = false) {
   return getNotebookSpecCommand.handler({ validate }, contextFor(scene));
+}
+
+async function applyNotebookSpec(scene: DashboardScene, spec: unknown, validate = false) {
+  return applyNotebookSpecCommand.handler({ spec: spec as Record<string, unknown>, validate }, contextFor(scene));
 }
 
 /** The notebook spec carried by a GET_SPEC result. */
@@ -618,5 +623,116 @@ describe('GET_NOTEBOOK_SPEC permission', () => {
     const result = getNotebookSpecCommand.permission(scene);
     expect(result.allowed).toBe(false);
     expect(result.allowed === false && result.error).toContain('dashboard.notebooks');
+  });
+});
+
+describe('APPLY_NOTEBOOK_SPEC', () => {
+  it('writes a cell the paired read command then returns', async () => {
+    const scene = buildNotebookScene(makeNotebookSpec());
+    const current = specOf(await getNotebookSpec(scene));
+
+    const applied = await applyNotebookSpec(
+      scene,
+      {
+        ...current,
+        elements: { ...current.elements, finding: markdown('The spike correlates with a deploy at 14:00.') },
+        layout: {
+          kind: 'NotebookLayout',
+          spec: { cells: [...current.layout.spec.cells, cell('finding', 'assistant')] },
+        },
+      },
+      true
+    );
+
+    expect(applied.error).toBeUndefined();
+    expect(applied.success).toBe(true);
+
+    const after = specOf(await getNotebookSpec(scene));
+    expect(referencedNames(after)).toEqual(['intro', 'repro', 'finding']);
+    expect(after.elements.finding).toEqual(markdown('The spike correlates with a deploy at 14:00.'));
+  });
+
+  it('echoes the applied notebook spec so the caller needs no follow-up read', async () => {
+    const scene = buildNotebookScene(makeNotebookSpec());
+    const current = specOf(await getNotebookSpec(scene));
+
+    const echoed = echoedSpecOf(await applyNotebookSpec(scene, { ...current, title: 'Renamed' }));
+
+    expect(echoed.title).toBe('Renamed');
+    expect(Object.keys(echoed).sort()).toEqual(['description', 'elements', 'layout', 'tags', 'timeSettings', 'title']);
+  });
+
+  it('keeps the page read-only to hand editing after the rebuild', async () => {
+    const scene = buildNotebookScene(makeNotebookSpec());
+    const current = specOf(await getNotebookSpec(scene));
+
+    await applyNotebookSpec(scene, current);
+
+    // The rebuild replaces scene state wholesale; isEmbedded is set by the notebook page, not by
+    // the save model, so it has to be carried across or the dashboard edit chrome reappears.
+    expect(scene.state.meta.isEmbedded).toBe(true);
+    expect(scene.canEditDashboard()).toBe(false);
+  });
+
+  it('does not enter dashboard edit mode', async () => {
+    const scene = buildNotebookScene(makeNotebookSpec());
+    const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+    const current = specOf(await getNotebookSpec(scene));
+
+    await applyNotebookSpec(scene, current);
+
+    expect(onEnterEditMode).not.toHaveBeenCalled();
+    expect(scene.state.isEditing).toBeFalsy();
+  });
+
+  it('restores the document header the rebuild would otherwise blank', async () => {
+    const scene = buildNotebookScene(makeNotebookSpec());
+    const current = specOf(await getNotebookSpec(scene));
+
+    await applyNotebookSpec(scene, { ...current, title: 'Renamed', tags: ['resolved'] });
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the notebook layout manager holds the header on its own state
+    const body = scene.state.body as unknown as { state: { title?: string; tags?: string[] } };
+    expect(body.state.title).toBe('Renamed');
+    expect(body.state.tags).toEqual(['resolved']);
+  });
+
+  it('rejects a cell that references a missing element, without mutating', async () => {
+    const scene = buildNotebookScene(makeNotebookSpec());
+    const current = specOf(await getNotebookSpec(scene));
+
+    const result = await applyNotebookSpec(
+      scene,
+      {
+        ...current,
+        layout: {
+          kind: 'NotebookLayout',
+          spec: { cells: [...current.layout.spec.cells, cell('ghost', 'assistant')] },
+        },
+      },
+      true
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('no element named "ghost"');
+    expect(specOf(await getNotebookSpec(scene)).layout.spec.cells).toHaveLength(2);
+  });
+});
+
+describe('APPLY_NOTEBOOK_SPEC permission', () => {
+  it('allows a write to an embedded notebook, which the dashboard rule would refuse', () => {
+    const scene = buildNotebookScene(makeNotebookSpec());
+
+    expect(scene.canEditDashboard()).toBe(false);
+    expect(applyNotebookSpecCommand.permission(scene)).toEqual({ allowed: true });
+  });
+
+  it('refuses a dashboard', () => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the layout descriptor is read
+    const dashboardScene = { state: { body: { descriptor: { id: 'GridLayout' } } } } as unknown as DashboardScene;
+
+    const result = applyNotebookSpecCommand.permission(dashboardScene);
+    expect(result.allowed).toBe(false);
+    expect(result.allowed === false && result.error).toContain('notebooks only');
   });
 });
