@@ -5,8 +5,6 @@ import { Alert, Box, TextLink } from '@grafana/ui';
 import { SCRIPTED_DASHBOARDS_DEPRECATION_URL } from 'app/features/dashboard/services/DashboardLoaderSrv';
 
 interface ScriptedDashboardDeprecationBannerProps {
-  // Whether the current dashboard is a scripted dashboard. Derived from the route type rather than
-  // dashboard meta, because `fromScript` is dropped by the v2 response transformer.
   isScripted: boolean;
 }
 
