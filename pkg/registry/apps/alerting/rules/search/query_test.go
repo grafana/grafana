@@ -278,6 +278,29 @@ func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
 		assert.False(t, matchLabels(other, groups), "other must not exist")
 	})
 
+	t.Run("rejects a negated value sharing an In filter", func(t *testing.T) {
+		// In disjoins into one requirement carrying one operator, so "env!=prod"
+		// alongside "team=a" has nowhere to put its negation. Encoding it as "in"
+		// would silently search for env=prod — the opposite of the request.
+		_, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{
+			Where: &model.CreateSearchRulesRequestSearchWhereNode{
+				Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldLabels, Operator: opIn, Values: []string{"team=a", "env!=prod"}},
+			},
+		}, "default", gr, nil)
+		require.Error(t, err)
+	})
+
+	t.Run("NotIn splits mixed polarity per value", func(t *testing.T) {
+		// NOT(team=a OR env!=prod) is team!=a AND env=prod, so each value gets
+		// its own requirement and "env!=prod" flips to a positive term.
+		req := build(notIn, "team=a", "env!=prod")
+		require.Len(t, req.Options.Fields, 2)
+		assert.Equal(t, "notin", req.Options.Fields[0].Operator)
+		assert.Equal(t, []string{"team=a"}, req.Options.Fields[0].Values)
+		assert.Equal(t, "in", req.Options.Fields[1].Operator)
+		assert.Equal(t, []string{"env=prod"}, req.Options.Fields[1].Values)
+	})
+
 	t.Run("single values are unchanged", func(t *testing.T) {
 		for _, tc := range []struct {
 			op       model.CreateSearchRulesRequestSearchFilterLeafOperator
@@ -287,8 +310,12 @@ func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
 		}{
 			{opIn, "team=a", "in", "team=a"},
 			{opIn, "team", "in", "team"},
+			// A lone negated value is encodable: the requirement's operator
+			// carries the negation, so the term stays positive.
+			{opIn, "team!=a", "notin", "team=a"},
 			{notIn, "team=a", "notin", "team=a"},
 			{notIn, "team", "notin", "team"},
+			{notIn, "team!=a", "in", "team=a"},
 		} {
 			req := build(tc.op, tc.value)
 			require.Len(t, req.Options.Fields, 1, "%s %q", tc.op, tc.value)

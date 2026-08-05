@@ -259,6 +259,14 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 				req.Options.Fields = append(req.Options.Fields, labelMatcherRequirement(negateMatcher(m)))
 				continue
 			}
+			// In disjoins its values into one requirement, which carries a single
+			// operator for all of them — so there is nowhere to record that only
+			// some values are negated, and batching would silently turn
+			// "key!=value" into "key=value". Alone it is encodable: the whole
+			// requirement becomes "notin".
+			if labelMatcherIsNegated(m) && len(leaf.Values) > 1 {
+				return fmt.Errorf("negated value %q cannot be mixed with non-negated values", v)
+			}
 			matchers = append(matchers, m)
 		}
 		if len(matchers) > 0 {
@@ -583,9 +591,10 @@ func parseLabelMatcher(s string) labelMatcher {
 // labelMatchersRequirement encodes matchers that must be read as a set — any one
 // of them matching is enough — into a single requirement.
 //
-// Only non-negated matchers may be passed: negation conjoins rather than
-// disjoins, so a negated matcher needs a requirement of its own. See the NotIn
-// branch in applyFilter.
+// A negated matcher may only be passed alone, where it becomes a "notin"
+// requirement of its own. Batching drops negation — one requirement carries one
+// operator for all its values — so applyFilter rejects a negated value that
+// shares a leaf with non-negated values.
 func labelMatchersRequirement(ms []labelMatcher) *resourcepb.Requirement {
 	if len(ms) == 1 {
 		return labelMatcherRequirement(ms[0])
