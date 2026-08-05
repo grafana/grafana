@@ -1,34 +1,33 @@
-// Package wire exposes the edition-neutral core Wire provider sets (sets.go:
-// Basic, Server, CLI, Test) together with the OSS dependency-injection
-// entrypoints and generated graph (inject.go, wire_gen.go, register_oss.go).
+// Package wire holds the core Wire provider sets that both OSS and Enterprise
+// build the Grafana server from (sets.go: Basic, Server, CLI, Test), plus the
+// OSS-only code that turns those sets into a running server (inject.go,
+// wire_gen.go, register_oss.go).
 //
-// Grafana Enterprise imports this package only for the shared provider sets when
-// it composes its own Wire graph. It never links the OSS-specific files here:
-// those carry the `oss` or `!enterprise && !pro` build tags, so an enterprise
-// build excludes them. OSS edition bindings live in pkg/server/wireext.
+// Grafana Enterprise imports this package only for the sets, and combines them
+// with its own bindings. The OSS-only files here are behind the `oss` /
+// `!enterprise && !pro` build tags, so Enterprise builds skip them. OSS bindings
+// live in pkg/server/wireext.
 //
-// # Why the OSS injectors register themselves into pkg/server
+// Why the OSS server.Initialize is set up in an init() instead of just being called:
 //
-// The core sets reference constructors that live in pkg/server (server.New,
-// server.NewRunner), so this package imports pkg/server. That makes the reverse
-// edge impossible: pkg/server cannot import this package to call the OSS
-// Initialize directly — it would be an import cycle.
+// The sets in sets.go call server.New and server.NewRunner, so this package
+// imports pkg/server. That means pkg/server can't import this package back (Go
+// doesn't allow two packages to import each other). So rather than pkg/server
+// calling the Initialize generated here, this package hands its Initialize
+// functions to pkg/server when it loads:
 //
-// To still expose server.Initialize (and friends) as pkg/server symbols, the OSS
-// injectors are pushed into pkg/server at init time rather than imported:
+//	register_oss.go init() -> server.RegisterInitializers(Initialize, ...)
 //
-//	wire.init()  (register_oss.go)
-//	  → server.RegisterInitializers(Initialize, …)   // stores funcs in pkg/server vars
-//	server.Initialize(…)  (initialize_oss.go)        // thin shim over those vars
+// pkg/server stores those functions and its own server.Initialize just calls
+// whichever one it was given (see initialize_oss.go). That only works if the
+// program actually loads this package, which is why main, grafana-cli, and
+// testinfra import it with a blank identifier (_) — the import runs the init()
+// above. Without it those functions are never registered.
 //
-// This is why main / grafana-cli / testinfra blank-import this package: the blank
-// import runs register_oss.go's init() so the pkg/server dispatch vars are
-// populated (otherwise they are nil).
-//
-// Enterprise does not use this indirection — enterprise_wire_gen.go defines
-// server.Initialize directly in pkg/server and keeps its own copy of the core
-// sets in pkg/server/wire_core.go. Both this register/dispatch shim and that
-// duplicate are workarounds for the same pkg/server import cycle. See
-// docs/design/ge-standalone/unify-wire-core-sets.md for the planned cleanup that
-// relocates the constructors and removes both.
+// Enterprise doesn't do any of this: its generated enterprise_wire_gen.go
+// defines server.Initialize directly, and it keeps its own copy of the sets in
+// pkg/server/wire_core.go. This init() setup and that copied file both exist to
+// work around the same import limitation; there's a plan to remove them by
+// moving server.New and server.NewRunner into their own package. See
+// docs/design/ge-standalone/unify-wire-core-sets.md.
 package wire

@@ -14,23 +14,22 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// This file is the OSS edition's server-construction seam (build tag
-// !enterprise && !pro). It exposes Initialize, InitializeForTest,
-// InitializeForCLI and InitializeAPIServerFactory as pkg/server symbols. Under
-// the enterprise build tag the generated enterprise_wire_gen.go defines those
-// same symbols directly instead.
+// This file provides the OSS versions of Initialize, InitializeForTest,
+// InitializeForCLI and InitializeAPIServerFactory (build tag !enterprise && !pro).
+// In an Enterprise build the generated enterprise_wire_gen.go provides those same
+// functions instead.
 //
-// The OSS Wire graph does not live here. It is generated in
-// pkg/server/bootstrap/wire, which imports pkg/server (its provider sets
-// reference server.New / server.NewRunner). pkg/server therefore cannot import
-// bootstrap/wire back to call the generated Initialize — that would be an import
-// cycle. Instead bootstrap/wire registers its injectors into the unexported vars
-// below via RegisterInitializers (from its init()), and the exported functions
-// are thin shims that dispatch to them. A binary must blank-import
-// pkg/server/bootstrap/wire for that init() to run; otherwise these vars are nil.
+// The generated OSS code that actually builds the server lives in
+// pkg/server/bootstrap/wire, not here. That package imports pkg/server (its sets
+// call server.New and server.NewRunner), so pkg/server can't import it back. To
+// get around that, pkg/server/bootstrap/wire hands its build functions to us
+// through RegisterInitializers when it loads, and the functions below just call
+// whatever was handed in. For that to happen the program has to import
+// pkg/server/bootstrap/wire (main, grafana-cli, and testinfra do, with a blank _
+// import); otherwise these variables are nil.
 //
-// See docs/design/ge-standalone/unify-wire-core-sets.md for the planned cleanup
-// that relocates the constructors and removes this indirection.
+// See docs/design/ge-standalone/unify-wire-core-sets.md for the plan to remove
+// this by moving server.New and server.NewRunner into their own package.
 type (
 	initializeFn        func(context.Context, *setting.Cfg, Options, api.ServerOptions) (*Server, error)
 	initializeForTestFn func(context.Context, sqlutil.ITestDB, interface {
