@@ -60,6 +60,7 @@ describe('Command consistency', () => {
       'ENTER_EDIT_MODE',
       'GET_DASHBOARD_INFO',
       'GET_LAYOUT',
+      'GET_NOTEBOOK_SPEC',
       'GET_SPEC',
       'LIST_ANNOTATIONS',
       'LIST_PANELS',

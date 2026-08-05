@@ -14,6 +14,7 @@ import { applySpecCommand } from './applySpec';
 import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
+import { getNotebookSpecCommand } from './getNotebookSpec';
 import { getSpecCommand } from './getSpec';
 import { listAnnotationsCommand } from './listAnnotations';
 import { listPanelsCommand } from './listPanels';
@@ -65,6 +66,7 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   updateDashboardSettingsCommand,
   getSpecCommand,
   applySpecCommand,
+  getNotebookSpecCommand,
 ];
 
 /** Lookup command by name (case-insensitive). */

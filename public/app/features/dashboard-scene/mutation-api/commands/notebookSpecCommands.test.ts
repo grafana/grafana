@@ -1,7 +1,7 @@
 /**
  * End-to-end cover for the full-spec surface on a notebook: a real notebook scene, built the way
- * the notebook page builds one, driven through the real GET_SPEC / APPLY_SPEC handlers and the
- * real serializer. Deliberately unmocked — the bugs this replaces were all in the seams between
+ * the notebook page builds one, driven through the real command handlers and the real serializer,
+ * both the notebook pair and the dashboard commands that still answer on a notebook. Deliberately unmocked — the bugs this replaces were all in the seams between
  * those pieces (elements derived from viz panels only, a dashboard-shaped spec handed back for a
  * notebook resource, a permission rule that refused every notebook write).
  */
@@ -23,6 +23,7 @@ import { setNotebookDocumentHeader } from '../../serialization/notebookSpecTrans
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { applySpecCommand } from './applySpec';
+import { getNotebookSpecCommand } from './getNotebookSpec';
 import { getSpecCommand } from './getSpec';
 import { type MutationContext } from './types';
 
@@ -175,6 +176,10 @@ async function getSpec(scene: DashboardScene, validate = false) {
 
 async function applySpec(scene: DashboardScene, spec: unknown, validate = false) {
   return applySpecCommand.handler({ spec: spec as Record<string, unknown>, validate }, contextFor(scene));
+}
+
+async function getNotebookSpec(scene: DashboardScene, validate = false) {
+  return getNotebookSpecCommand.handler({ validate }, contextFor(scene));
 }
 
 /** The notebook spec carried by a GET_SPEC result. */
@@ -566,5 +571,52 @@ describe('APPLY_SPEC permission', () => {
     expect(result.allowed === false && result.error).toContain('dashboardNewLayouts');
 
     config.featureToggles.dashboardNewLayouts = dashboardNewLayouts;
+  });
+});
+
+describe('GET_NOTEBOOK_SPEC', () => {
+  it('returns the notebook, with the element names it was loaded under', async () => {
+    const spec = specOf(await getNotebookSpec(buildNotebookScene(makeNotebookSpecWithPanel())));
+
+    expect(Object.keys(spec).sort()).toEqual(['description', 'elements', 'layout', 'tags', 'timeSettings', 'title']);
+    expect(Object.keys(spec.elements).sort()).toEqual(['intro', 'latency-panel', 'repro']);
+    expect(panelIdOf(spec, 'latency-panel')).toBe(1);
+    expect(danglingReferences(spec)).toEqual([]);
+  });
+
+  it('passes notebook validation when asked to validate', async () => {
+    const result = await getNotebookSpec(buildNotebookScene(makeNotebookSpecWithPanel()), true);
+
+    expect(result.success).toBe(true);
+    expect(result.error).toBeUndefined();
+  });
+});
+
+describe('GET_NOTEBOOK_SPEC permission', () => {
+  // Reading a notebook needs its own rule rather than the unconditional one GET_SPEC uses, because
+  // the command promises a notebook spec and a dashboard cannot produce one.
+  it('allows a read of an embedded notebook', () => {
+    const scene = buildNotebookScene(makeNotebookSpec());
+
+    expect(scene.canEditDashboard()).toBe(false);
+    expect(getNotebookSpecCommand.permission(scene)).toEqual({ allowed: true });
+  });
+
+  it('refuses a dashboard', () => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the layout descriptor is read
+    const dashboardScene = { state: { body: { descriptor: { id: 'GridLayout' } } } } as unknown as DashboardScene;
+
+    const result = getNotebookSpecCommand.permission(dashboardScene);
+    expect(result.allowed).toBe(false);
+    expect(result.allowed === false && result.error).toContain('notebooks only');
+  });
+
+  it('refuses when the notebooks feature flag is off', () => {
+    notebooksFlagEnabled = false;
+    const scene = buildNotebookScene(makeNotebookSpec());
+
+    const result = getNotebookSpecCommand.permission(scene);
+    expect(result.allowed).toBe(false);
+    expect(result.allowed === false && result.error).toContain('dashboard.notebooks');
   });
 });

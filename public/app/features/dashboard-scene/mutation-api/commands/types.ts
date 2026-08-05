@@ -94,6 +94,23 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
 }
 
 /**
+ * Requires the scene to be a notebook, on an instance where notebooks are enabled. The rule for the
+ * read-only half of the notebook surface, and the base the edit rule builds on.
+ */
+export function requiresNotebookResource(scene: DashboardScene): PermissionCheckResult {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)) {
+    return {
+      allowed: false,
+      error: 'Notebooks are not enabled on this instance (feature flag dashboard.notebooks).',
+    };
+  }
+  if (!isNotebookScene(scene)) {
+    return { allowed: false, error: 'This command applies to notebooks only: the open document is a dashboard.' };
+  }
+  return { allowed: true };
+}
+
+/**
  * Requires notebook editing to be possible: the resource must be enabled and the user must be
  * able to write dashboards.
  *
@@ -109,11 +126,9 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
  * action is the right long-term answer and is tracked with the resource's permission model.
  */
 function requiresNotebookEdit(scene: DashboardScene): PermissionCheckResult {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)) {
-    return {
-      allowed: false,
-      error: 'Notebooks are not enabled on this instance (feature flag dashboard.notebooks).',
-    };
+  const resource = requiresNotebookResource(scene);
+  if (!resource.allowed) {
+    return resource;
   }
   if (scene.state.meta.isSnapshot) {
     return { allowed: false, error: 'Cannot edit notebook: it is a snapshot.' };
