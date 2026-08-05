@@ -599,6 +599,17 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           <Text variant="bodySmall" color="secondary">
             <Trans i18nKey="query-editor-coauthoring.building">Building query…</Trans>
           </Text>
+          {context && (
+            <div
+              className={styles.workingFocus}
+              aria-label={t('query-editor-coauthoring.working-focus', 'Query focus')}
+            >
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="query-editor-coauthoring.focus">Focus:</Trans>
+              </Text>
+              <code>{workingFocusSummary(context)}</code>
+            </div>
+          )}
         </div>
       )}
       {isAssistantAvailable && clarification && (
@@ -934,6 +945,15 @@ function normalizeSelectionExplanation(completionText: string, fallback: string)
   return explanation ? explanation.slice(0, 500) : fallback;
 }
 
+function workingFocusSummary(context: QueryEditorCoauthoringContext): string {
+  const focusedText = context.focusRanges
+    .slice(0, 3)
+    .map(({ from, to }) => context.query.slice(from, to).replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .join(' … ');
+  return (focusedText || context.query.replace(/\s+/g, ' ').trim()).slice(0, 160);
+}
+
 function invalidPromQLResponseMessage(): string {
   return t(
     'query-editor-coauthoring.error-invalid-promql-response',
@@ -975,6 +995,24 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       gap: theme.spacing(0.75),
       padding: theme.spacing(0.5),
+    }),
+    workingFocus: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+      marginLeft: 'auto',
+      padding: theme.spacing(0.25, 0.75),
+      border: `1px dashed ${theme.colors.border.medium}`,
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.primary,
+      code: {
+        minWidth: 0,
+        overflow: 'hidden',
+        color: theme.colors.text.secondary,
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      },
     }),
     proposal: css({
       display: 'flex',

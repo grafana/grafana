@@ -284,6 +284,17 @@ describe('QueryCoauthoring', () => {
     expect(onAccept).not.toHaveBeenCalled();
   });
 
+  it('keeps the captured query focus visible while building', async () => {
+    mockIsGenerating = true;
+
+    await setup();
+
+    expect(screen.getByText('Building query…')).toBeInTheDocument();
+    expect(screen.getByLabelText('Query focus')).toHaveTextContent('Focus');
+    expect(screen.getByLabelText('Query focus')).toHaveTextContent('rate');
+    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toBeInTheDocument();
+  });
+
   it('constrains the popover to the viewport below its editor anchor', async () => {
     await setup(500);
 
