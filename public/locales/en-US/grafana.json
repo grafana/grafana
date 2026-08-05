@@ -6837,7 +6837,6 @@
       "label": "Default filters"
     },
     "annotation-edit-actions": {
-      "annotation-settings": "Annotation settings",
       "description": {
         "change-annotation-color": "Change annotation color",
         "change-annotation-controls-display": "Change annotation controls display",
@@ -6845,7 +6844,8 @@
         "change-annotation-name": "Change annotation name",
         "change-annotation-panel-filter": "Change annotation panel filter"
       },
-      "edit-query": "Edit query"
+      "edit-query": "Edit query",
+      "settings": "Settings"
     },
     "annotation-editable-element": {
       "delete-confirm": "Delete annotation query",
@@ -7261,8 +7261,8 @@
     },
     "link-edit-actions": {
       "add-link": "Add link",
-      "link-settings": "Link settings",
       "remove-link": "Remove link",
+      "settings": "Settings",
       "update-link": "Update link"
     },
     "link-editable-element": {
@@ -7726,7 +7726,7 @@
     "variable-edit-actions": {
       "edit-custom-values": "Edit values",
       "edit-query": "Edit query",
-      "variable-settings": "Variable settings"
+      "settings": "Settings"
     },
     "variable-editable-element": {
       "delete-confirm": "Delete variable",
