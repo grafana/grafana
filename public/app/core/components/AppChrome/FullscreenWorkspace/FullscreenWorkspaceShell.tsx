@@ -50,11 +50,24 @@ export function FullscreenWorkspaceShell({ workspaceHostRef }: Props) {
   // Non-link items (theme, kiosk, news) are buttons that open drawers in place, so they don't match.
   const exitWorkspaceOnLinkClick = useCallback(
     (event: MouseEvent<HTMLElement>) => {
-      const target = event.target;
-      if (!(target instanceof Element)) {
+      // Only leave for a click that navigates *this* tab. Modifier and non-primary clicks open a
+      // new tab or window, so the current page stays put and closing the workspace would pull it
+      // out from under the user. Stricter than `interceptLinkClicks`, which only needs ctrl/meta:
+      // a wrong bail there just falls back to the browser, here it would discard the workspace.
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
         return;
       }
-      const link = target.closest('a[href]');
+      if (!(event.target instanceof Element)) {
+        return;
+      }
+      const link = event.target.closest('a[href]');
       if (link && link.getAttribute('target') !== '_blank') {
         exitWorkspace();
       }
