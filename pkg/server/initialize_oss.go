@@ -14,6 +14,23 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// This file is the OSS edition's server-construction seam (build tag
+// !enterprise && !pro). It exposes Initialize, InitializeForTest,
+// InitializeForCLI and InitializeAPIServerFactory as pkg/server symbols. Under
+// the enterprise build tag the generated enterprise_wire_gen.go defines those
+// same symbols directly instead.
+//
+// The OSS Wire graph does not live here. It is generated in
+// pkg/server/bootstrap/wire, which imports pkg/server (its provider sets
+// reference server.New / server.NewRunner). pkg/server therefore cannot import
+// bootstrap/wire back to call the generated Initialize — that would be an import
+// cycle. Instead bootstrap/wire registers its injectors into the unexported vars
+// below via RegisterInitializers (from its init()), and the exported functions
+// are thin shims that dispatch to them. A binary must blank-import
+// pkg/server/bootstrap/wire for that init() to run; otherwise these vars are nil.
+//
+// See docs/design/ge-standalone/unify-wire-core-sets.md for the planned cleanup
+// that relocates the constructors and removes this indirection.
 type (
 	initializeFn        func(context.Context, *setting.Cfg, Options, api.ServerOptions) (*Server, error)
 	initializeForTestFn func(context.Context, sqlutil.ITestDB, interface {
