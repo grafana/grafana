@@ -2056,15 +2056,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "alertingAlertsActivityBanner",
-			Description:  "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "graphiteBackendMode",
 			Description: "Enables the Graphite data source full backend mode",
 			Stage:       FeatureStagePrivatePreview,
@@ -2257,6 +2248,9 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		// Deprecated: prefer grafana.dashboardGlobalVariables. Kept registered so
+		// cloud enablement via the legacy wave remains valid until that flag is
+		// removed in a follow-up after all consumers read the new key.
 		{
 			Name:            "globalDashboardVariables",
 			Description:     "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
@@ -2265,6 +2259,14 @@ var (
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: true,
 			Expression:      "false",
+		},
+		{
+			Name:        "grafana.dashboardGlobalVariables",
+			Description: "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "smoothingTransformation",

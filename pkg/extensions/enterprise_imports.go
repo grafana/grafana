@@ -112,6 +112,7 @@ import (
 	_ "github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
 	_ "github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
 	_ "github.com/grafana/grafana/apps/alerting/alertenrichment/pkg/apis/alertenrichment/v1beta1"
+	_ "github.com/grafana/grafana/apps/alerting/alertrulequality/pkg/apis/alertrulequality/v0alpha1"
 	_ "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	_ "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	_ "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"

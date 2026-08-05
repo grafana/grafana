@@ -1075,11 +1075,6 @@ export interface FeatureToggles {
   */
   alertingTriage?: boolean;
   /**
-  * Shows a promotional banner for the Alerts Activity feature on the Rule List page
-  * @default false
-  */
-  alertingAlertsActivityBanner?: boolean;
-  /**
   * Enables the Graphite data source full backend mode
   * @default false
   */

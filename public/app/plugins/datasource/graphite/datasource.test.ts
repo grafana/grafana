@@ -15,6 +15,7 @@ import {
   type MetricFindValue,
   PluginType,
   type ScopedVars,
+  toDataFrame,
 } from '@grafana/data';
 import {
   type BackendSrvRequest,
@@ -597,6 +598,76 @@ describe('graphiteDatasource', () => {
       });
       expect(results).toEqual([]);
       expect(console.error).toHaveBeenCalledWith(expect.stringMatching(/Unable to get annotations/));
+    });
+  });
+
+  describe('when fetching a Graphite query as annotations', () => {
+    const range = {
+      from: dateTime('2026-07-06T12:59:45.000Z'),
+      to: dateTime('2026-07-07T18:52:17.000Z'),
+      raw: {
+        from: '2026-07-06T12:59:45.000Z',
+        to: '2026-07-07T18:52:17.000Z',
+      },
+    };
+
+    const target = {
+      fromAnnotations: true,
+      target: "seriesByTag('event=deploy', 'status=success')",
+      textEditor: true,
+      refId: 'Anno',
+    };
+
+    const seriesName = 'dash.metrics.count;event=deploy;status=success';
+
+    // the backend builds frames with data.NewFrame("", ...) and carries the series name only in
+    // the value field's displayNameFromDS, so the frame itself has no name
+    const backendFrame = () =>
+      toDataFrame({
+        refId: 'Anno',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1783398240000, 1783399800000] },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [1, 1],
+            config: { displayNameFromDS: seriesName },
+          },
+        ],
+      });
+
+    it('should title events from the value field display name when the frame has no name', async () => {
+      const frame = backendFrame();
+      expect(frame.name).toBeUndefined();
+      jest.spyOn(ctx.ds, 'query').mockReturnValue(of({ data: [frame] }));
+
+      const results = await ctx.ds.annotationEvents(range, target);
+
+      expect(results.length).toEqual(2);
+      expect(results[0].title).toEqual(seriesName);
+      expect(results[1].title).toEqual(seriesName);
+    });
+
+    it('should produce a string-typed title field so text can be auto-resolved', async () => {
+      jest.spyOn(ctx.ds, 'query').mockReturnValue(of({ data: [backendFrame()] }));
+
+      const results = await ctx.ds.annotationEvents(range, target);
+
+      // standardAnnotationSupport resolves `text` to the first string field; without one it
+      // discards every event and the editor reports "No events found"
+      const annotationFrame = toDataFrame(results);
+      const stringField = annotationFrame.fields.find((f) => f.type === FieldType.string);
+      expect(stringField?.name).toEqual('title');
+    });
+
+    it('should keep the frame name as the title when one is present', async () => {
+      const frame = backendFrame();
+      frame.name = seriesName;
+      jest.spyOn(ctx.ds, 'query').mockReturnValue(of({ data: [frame] }));
+
+      const results = await ctx.ds.annotationEvents(range, target);
+
+      expect(results[0].title).toEqual(seriesName);
     });
   });
 

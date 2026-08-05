@@ -97,6 +97,7 @@ runs:
             - '**.cue'
             - 'devenv/docker/blocks/*_tests/**'
             - 'scripts/ci/backend-tests/**'
+            - 'public/app/plugins/**/plugin.json'
             - '${{ inputs.self }}'
           frontend:
             - '.github/actions/setup-enterprise/**'

@@ -4,7 +4,7 @@ import { Components, type DashboardPage, type E2ESelectorGroups, expect, test } 
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-import { Canvas, Controls, Panels, Sidebar } from './page-objects';
+import { Canvas, Controls, Panels, Rows, Sidebar, type Tabs } from './page-objects';
 
 export const flows = {
   async addNewGenericVariable(
@@ -143,17 +143,19 @@ export async function verifyChanges(
   selectors: E2ESelectorGroups,
   changeText: string
 ) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
-  await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
-  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
+  await test.step('Verify JSON diff in save drawer', async () => {
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
+    await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
+    await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
+  });
 }
 interface ImportTestDashboardOptions {
   checkPanelsVisible?: boolean;
   requiresDataSourceSelection?: boolean;
 }
 
-export function stripMetadataNameFromImportJson(input: string): string {
+function stripMetadataNameFromImportJson(input: string): string {
   // Keep fixture JSON intact, but remove a fixed resource name at import time so
   // each test creates an isolated dashboard via generateName in parallel runs.
   try {
@@ -176,26 +178,43 @@ export async function importTestDashboard(
   title: string,
   dashInput?: string,
   options: ImportTestDashboardOptions = {}
-) {
-  options = { checkPanelsVisible: true, requiresDataSourceSelection: true, ...options };
-  const importJson = stripMetadataNameFromImportJson(dashInput || JSON.stringify(testV2Dashboard));
-  await page.goto(selectors.pages.ImportDashboard.url);
-  await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(importJson);
-  await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
-  await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
-  if (options.requiresDataSourceSelection) {
-    await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-    await page.locator('div[data-testid^="data-testid data source card"]').first().click();
-  }
-  await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
-  const undockMenuButton = page.locator('[aria-label="Undock menu"]');
-  const undockMenuVisible = await undockMenuButton.isVisible();
-  if (undockMenuVisible) {
-    undockMenuButton.click();
-  }
-  if (options.checkPanelsVisible) {
-    await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
-  }
+): Promise<string> {
+  return test.step(`Import test dashboard "${title}"`, async () => {
+    options = { checkPanelsVisible: true, requiresDataSourceSelection: true, ...options };
+
+    await page.goto(selectors.pages.ImportDashboard.url);
+
+    const importJson = stripMetadataNameFromImportJson(dashInput || JSON.stringify(testV2Dashboard));
+    await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(importJson);
+    await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
+
+    // we always append a timestamp so every import gets a unique title. Collisions happen on test retries
+    // and when parallel workers import dashboards sharing the same title (several specs reuse titles like "Paste tab")
+    // a collision does not fail the test (the import overwrites the existing dashboard),
+    // but Playwright traces show a validation error in the UI and tests may run against a stale dashboard
+    const uniqueTitle = `${title} [${Date.now().toString(36)}-${test.info().workerIndex}]`;
+    await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(uniqueTitle);
+
+    if (options.requiresDataSourceSelection) {
+      await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
+      await page.locator('div[data-testid^="data-testid data source card"]').first().click();
+    }
+
+    await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
+
+    const undockMenuButton = page.locator('[aria-label="Undock menu"]');
+    const undockMenuVisible = await undockMenuButton.isVisible();
+    if (undockMenuVisible) {
+      await undockMenuButton.click();
+    }
+
+    if (options.checkPanelsVisible) {
+      // wait for the 1st panel to render
+      await expect(page.locator('[data-testid="uplot-main-div"]').first()).toBeVisible();
+    }
+
+    return uniqueTitle;
+  });
 }
 
 export async function goToEmbeddedPanel(page: Page) {
@@ -266,22 +285,21 @@ export async function moveRow(
   sourceRow: string,
   targetRow: string
 ) {
-  const targetRowElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.DashboardRow.wrapper(targetRow))
-    .first();
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const rows = new Rows({ page, dashboardPage, selectors, components });
 
-  const sourceRowElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.DashboardRow.title(sourceRow))
-    .first();
+  const targetBox = await getRowBox(dashboardPage, selectors, targetRow);
 
-  const targetBox = await targetRowElement.boundingBox();
-
-  // Perform drag and drop (dragTo() did not work in this case)
-  await sourceRowElement.hover();
-  await page.mouse.down();
-  // move to adjusted target position (relative to top left)
-  await page.mouse.move(targetBox?.x || 0, (targetBox?.y || 0) + (targetBox?.height || 0), { steps: 5 });
-  await page.mouse.up();
+  // drop below the target row (relative to top left)
+  await dragTo(
+    page,
+    `row "${sourceRow}"`,
+    rows.getTitle(sourceRow).first(),
+    targetBox.x,
+    targetBox.y + targetBox.height
+  );
 }
 
 export async function groupIntoTab(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
@@ -300,21 +318,18 @@ export async function groupIntoRow(page: Page, dashboardPage: DashboardPage, sel
   await canvas.groupPanels('row');
 }
 
-export async function checkRepeatedTabTitles(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
-  title: string,
-  options: Array<string | number>
-) {
-  for (const option of options) {
-    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(`${title}${option}`))).toBeVisible();
-  }
-}
-
 export async function getTabPosition(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, tabTitle: string) {
   const tab = dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabTitle)).first();
   const boundingBox = await tab.boundingBox();
   return boundingBox;
+}
+
+export async function checkRepeatedTabTitles(tabs: Tabs, title: string, options: Array<string | number>) {
+  await test.step('Checking repeated tab titles', async () => {
+    for (const option of options) {
+      await expect(tabs.getTitle(`${title}${option}`)).toBeVisible();
+    }
+  });
 }
 
 export async function getRowBox(
@@ -329,16 +344,21 @@ export async function getRowBox(
 }
 
 export async function checkRepeatedRowTitles(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
+  rows: Rows,
   title: string,
-  options: Array<string | number>
+  options: Array<string | number>,
+  state: 'visible' | 'hidden' = 'visible'
 ) {
-  for (const option of options) {
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(`${title}${option}`))
-    ).toBeVisible();
-  }
+  await test.step(`Checking repeated row titles are ${state}`, async () => {
+    for (const option of options) {
+      const rowTitle = rows.getTitle(`${title}${option}`);
+      if (state === 'visible') {
+        await expect(rowTitle).toBeVisible();
+      } else {
+        await expect(rowTitle).toBeHidden();
+      }
+    }
+  });
 }
 
 export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage, confirm = true) {
@@ -350,24 +370,18 @@ export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage,
 }
 
 export async function selectRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).click();
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const rows = new Rows({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+  await rows.select(rowTitle);
 }
 export async function toggleRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.toggle(rowTitle)).click();
-}
-
-export function getPanelByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, panelTitle: string) {
-  return dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.title(panelTitle))
-    .getByTestId(selectors.components.Panels.Panel.headerContainer);
-}
-
-export function getRowByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(rowTitle)).first();
-}
-
-export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper(rowTitle)).first();
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const rows = new Rows({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+  await rows.toggle(rowTitle);
 }
 
 export async function fillVariableValue(

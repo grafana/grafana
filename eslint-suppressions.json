@@ -852,11 +852,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/ThemeSelector/ThemeSelectorDrawer.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 1
-    }
-  },
   "public/app/core/components/TimeSeries/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

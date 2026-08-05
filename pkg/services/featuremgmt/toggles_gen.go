@@ -738,6 +738,10 @@ const (
 	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
 	FlagGlobalDashboardVariables = "globalDashboardVariables"
 
+	// FlagGrafanaDashboardGlobalVariables
+	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+	FlagGrafanaDashboardGlobalVariables = "grafana.dashboardGlobalVariables"
+
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
