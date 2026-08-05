@@ -95,11 +95,15 @@ function CommandPaletteContents() {
   // Report interaction when opened/closed
   useEffect(() => {
     resetCommandPaletteInputMode();
-    reportInteraction('command_palette_opened');
+    reportInteraction('command_palette_opened', {
+      isHybridSearchEnabled: hybridSearchEnabled,
+      isDeepSearchEnabled: deepSearchEnabled,
+    });
     return () => {
       reportInteraction('command_palette_closed', undefined, { silent: true });
     };
-  }, []);
+    // This could inflate the opened closed numbers, but I assume nobody is going to change these through UI that much.
+  }, [hybridSearchEnabled, deepSearchEnabled]);
 
   // CUJ-only signal: debounce typing into the palette so we record one event
   // per typing burst instead of one per keystroke. Skip the initial empty render.
@@ -170,6 +174,7 @@ function CommandPaletteContents() {
               showDeepSearch={showDeepSearch}
               onNavigate={queryToggle}
               deepSearchEnabled={deepSearchEnabled}
+              hybridSearchEnabled={hybridSearchEnabled}
             />
           </div>
         </FocusScope>
@@ -219,6 +224,7 @@ interface RenderResultsProps {
   onNavigate: () => void;
   // For event reporting
   deepSearchEnabled: boolean;
+  hybridSearchEnabled: boolean;
 }
 
 const RenderResults = ({
@@ -230,6 +236,7 @@ const RenderResults = ({
   showDeepSearch,
   onNavigate,
   deepSearchEnabled,
+  hybridSearchEnabled,
 }: RenderResultsProps) => {
   const { results: kbarResults, rootActionId } = useMatches();
   const { query, activeIndex } = useKBar((state) => ({ activeIndex: state.activeIndex }));
@@ -291,15 +298,23 @@ const RenderResults = ({
         // Destination URL of the dashboard/page, unset for actions that don't navigate
         target: params.url,
         isDeepSearchEnabled: deepSearchEnabled,
+        isHybridSearchEnabled: hybridSearchEnabled,
         isDeepSearchAction: params.deepSearch,
         // Whether the deep search column had finished loading at selection time
         isDeepSearchLoaded: showDeepSearch && !isFetchingDeepSearchResults,
         deepSearchItemsCount: deepSearchResults.length,
-        // Number of selectable items in the old search column
+        // Number of selectable items in the old or hybrid search column
         itemsCount: items.filter((item) => typeof item !== 'string').length,
       });
     },
-    [showDeepSearch, isFetchingDeepSearchResults, deepSearchResults.length, items, deepSearchEnabled]
+    [
+      showDeepSearch,
+      isFetchingDeepSearchResults,
+      deepSearchResults.length,
+      items,
+      deepSearchEnabled,
+      hybridSearchEnabled,
+    ]
   );
 
   const keywordListRef = useRef<HTMLDivElement | null>(null);
