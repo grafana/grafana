@@ -11,7 +11,8 @@ import {
   FieldType,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 
 import { useCacheFieldDisplayNames, useCellActions, useCommonTableProps, useTableSharedCrosshair } from './hooks';
