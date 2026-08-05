@@ -39,8 +39,8 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 			want: false,
 		},
 	}
-
-	worker := NewMigrationWorker(nil, true)
+	//true
+	worker := NewMigrationWorker(nil)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -51,7 +51,8 @@ func TestMigrationWorker_IsSupported(t *testing.T) {
 }
 
 func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
-	worker := NewMigrationWorker(NewMockMigrator(t), true)
+	// true
+	worker := NewMigrationWorker(NewMockMigrator(t))
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
 			Action:  provisioning.JobActionMigrate,
@@ -80,7 +81,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 				Spec: provisioning.JobSpec{
 					Action:  provisioning.JobActionMigrate,
 					Migrate: nil,
-				},
+				,
 			},
 			setupMocks: func(um *MockMigrator, pr *jobs.MockJobProgressRecorder) {
 			},
@@ -129,7 +130,8 @@ func TestMigrationWorker_Process(t *testing.T) {
 			unifiedMigrator := NewMockMigrator(t)
 			progressRecorder := jobs.NewMockJobProgressRecorder(t)
 
-			worker := NewMigrationWorker(unifiedMigrator, true)
+			//true
+			worker := NewMigrationWorker(unifiedMigrator)
 
 			if tt.setupMocks != nil {
 				tt.setupMocks(unifiedMigrator, progressRecorder)
@@ -184,8 +186,9 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 				mockMigrator.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			}
 
+			// as in test
 			// Create migration worker
-			worker := NewMigrationWorker(mockMigrator, tt.enabled)
+			worker := NewMigrationWorker(mockMigrator)
 
 			// Create a mock repository (ReaderWriter interface required)
 			mockRepo := repository.NewMockReaderWriter(t)
