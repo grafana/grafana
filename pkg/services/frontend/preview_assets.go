@@ -57,8 +57,8 @@ func (h *previewAssetsHandler) handleGet(w http.ResponseWriter, r *http.Request)
 	logger := contexthandler.FromContext(ctx).Logger
 
 	// Stacks that haven't opted in see an unknown route.
-	namespace, _ := request.NamespaceFrom(ctx)
-	if !h.previewCfg.NamespaceAllowed(namespace) {
+	namespace := request.NamespaceValue(ctx)
+	if !h.previewCfg.Active(namespace) {
 		logger.Debug("preview assets requested by a namespace that has not opted in", "namespace", namespace)
 		http.NotFound(w, r)
 		return

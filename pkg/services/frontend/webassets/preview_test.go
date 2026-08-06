@@ -205,20 +205,24 @@ func TestGetPreviewWebAssets(t *testing.T) {
 	})
 }
 
-func TestNamespaceAllowed(t *testing.T) {
+func TestActive(t *testing.T) {
 	cfg := fswebassets.PreviewAssetsConfig{
 		BaseURL:           "https://storage.example.com/bucket/",
 		AllowedNamespaces: []string{"stacks-123", "stacks-456"},
 	}
 
-	assert.True(t, cfg.NamespaceAllowed("stacks-123"))
-	assert.True(t, cfg.NamespaceAllowed("stacks-456"))
-	assert.False(t, cfg.NamespaceAllowed("stacks-789"))
-	assert.False(t, cfg.NamespaceAllowed(""), "requests without a namespace must fail closed")
+	assert.True(t, cfg.Active("stacks-123"))
+	assert.True(t, cfg.Active("stacks-456"))
+	assert.False(t, cfg.Active("stacks-789"))
+	assert.False(t, cfg.Active(""), "requests without a namespace must fail closed")
 
 	empty := fswebassets.PreviewAssetsConfig{BaseURL: "https://storage.example.com/"}
-	assert.False(t, empty.NamespaceAllowed("stacks-123"), "an empty allowlist must not allow any namespace")
-	assert.False(t, empty.Active(), "an empty allowlist must disable the feature entirely")
+	assert.False(t, empty.Active("stacks-123"), "an empty allowlist must not allow any namespace")
+	assert.False(t, empty.Configured(), "an empty allowlist must disable the feature entirely")
+
+	noURL := fswebassets.PreviewAssetsConfig{AllowedNamespaces: []string{"stacks-123"}}
+	assert.False(t, noURL.Active("stacks-123"), "a missing base URL must disable the feature entirely")
+	assert.False(t, noURL.Configured())
 }
 
 func TestReadPreviewAssetsConfig(t *testing.T) {
@@ -228,7 +232,8 @@ func TestReadPreviewAssetsConfig(t *testing.T) {
 	sec.Key("preview_assets_allowed_namespaces").SetValue("stacks-123, stacks-456")
 
 	cfg := fswebassets.ReadPreviewAssetsConfig(&setting.Cfg{Raw: raw})
-	assert.True(t, cfg.Active())
+	assert.True(t, cfg.Configured())
+	assert.True(t, cfg.Active("stacks-123"))
 	assert.Equal(t, "https://storage.example.com/bucket/", cfg.BaseURL)
 	assert.Equal(t, []string{"stacks-123", "stacks-456"}, cfg.AllowedNamespaces)
 }

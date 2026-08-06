@@ -229,17 +229,15 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 // resolveAssets returns the preview build's assets when a valid preview cookie is
 // present, falling back to the default assets so a stale cookie can't break the page.
 func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request) (dtos.EntryPointAssets, string, error) {
-	if p.previewCfg.Active() {
-		if cookie, err := req.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
-			// Second lock: the cookie only takes effect on stacks that opted in.
-			if namespace, _ := k8srequest.NamespaceFrom(ctx); p.previewCfg.NamespaceAllowed(namespace) {
-				assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value)
-				if err == nil {
-					p.log.Info("resolved preview assets", "folder", cookie.Value)
-					return assets, cookie.Value, nil
-				}
-				p.log.Warn("unable to load preview assets, falling back to default assets", "folder", cookie.Value, "err", err)
+	if cookie, err := req.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
+		// The cookie only takes effect on stacks that have opted in.
+		if p.previewCfg.Active(k8srequest.NamespaceValue(ctx)) {
+			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value)
+			if err == nil {
+				p.log.Info("resolved preview assets", "folder", cookie.Value)
+				return assets, cookie.Value, nil
 			}
+			p.log.Warn("unable to load preview assets, falling back to default assets", "folder", cookie.Value, "err", err)
 		}
 	}
 
