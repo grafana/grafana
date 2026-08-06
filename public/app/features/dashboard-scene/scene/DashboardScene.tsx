@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
-import { getPanelPluginMeta } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
   SceneDataTransformer,
@@ -59,11 +59,10 @@ import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
+  AnnoKeyIgnorePredefinedVariables,
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
-import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
-import { dashboardEditActions } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -84,6 +83,8 @@ import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
+import { DashboardSidebar } from '../sidebar/DashboardSidebar';
+import { dashboardEditActions } from '../sidebar/shared';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -91,7 +92,11 @@ import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
-import { isPredefinedOrigin } from '../utils/predefinedVariables';
+import {
+  mayInjectAnyPredefinedVariables,
+  resolvePredefinedVariablesForDashboard,
+} from '../utils/predefinedVariableDenyList';
+import { fetchPredefinedVariables, isPredefinedOrigin } from '../utils/predefinedVariables';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -115,7 +120,7 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
-import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
+import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
@@ -179,7 +184,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    */
   private _changeTracker: DashboardSceneChangeTracker;
 
-  private _editPaneActivation?: CancelActivationHandler;
+  private _sidebarActivation?: CancelActivationHandler;
 
   /**
    * Remember scroll position when going into panel edit
@@ -191,6 +196,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * What initiated the current edit session, e.g. the assistant building a dashboard for the user
    */
   private _editSessionSource?: 'user' | 'assistant';
+
+  /**
+   * Monotonic id so overlapping refreshPredefinedVariables() calls only apply the latest result.
+   * Also bumped on discard/restore so an in-flight refresh that snapped a discarded denylist
+   * cannot overwrite the restored variable set.
+   */
+  private _predefinedVariablesRefreshId = 0;
 
   public serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
@@ -209,7 +221,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         state.body ?? state.preferences?.defaultLayoutTemplate?.clone() ?? DefaultGridLayoutManager.fromVizPanels([]),
       links: state.links ?? [],
       ...state,
-      editPane: new DashboardEditPane(),
+      sidebar: new DashboardSidebar(),
       layoutOrchestrator: new DashboardLayoutOrchestrator(),
       preferences: state.preferences ?? {},
     });
@@ -268,7 +280,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
-      this.deactivateEditPane();
+      this.deactivateSidebar();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
     };
@@ -348,6 +360,45 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     variableSet.setState({ variables: [...predefinedVarObjects, ...keptVars] });
   }
 
+  /**
+   * Re-resolve global/folder variables from the current denylist annotation and apply them
+   * to the live scene (e.g. after save) so a full page reload is not required.
+   */
+  public async refreshPredefinedVariables(): Promise<void> {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false)) {
+      return;
+    }
+
+    const refreshId = ++this._predefinedVariablesRefreshId;
+    const folderUid = this.state.meta.folderUid;
+    const annotations: Record<string, string | undefined> = {};
+    for (const [key, value] of Object.entries(this.state.meta.k8s?.annotations ?? {})) {
+      if (typeof value === 'string') {
+        annotations[key] = value;
+      }
+    }
+    const resolutionInput = { annotations };
+
+    if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
+      if (refreshId !== this._predefinedVariablesRefreshId) {
+        return;
+      }
+      this.setPredefinedVariables([]);
+      return;
+    }
+
+    const candidates = await fetchPredefinedVariables(folderUid);
+    // A newer radio/save refresh may have started while this fetch was in flight.
+    if (refreshId !== this._predefinedVariablesRefreshId) {
+      return;
+    }
+    // Keep the currently injected set when the fetch fails — do not treat failure as "none".
+    if (candidates === null) {
+      return;
+    }
+    this.setPredefinedVariables(resolvePredefinedVariablesForDashboard(candidates, resolutionInput));
+  }
+
   public setDefaultLinks(defaultLinks: DashboardLink[]) {
     const userLinks = this.state.links.filter((l) => !l.origin);
     this.setState({ links: [...defaultLinks, ...userLinks] });
@@ -390,29 +441,36 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
-   * Activate the edit pane if it is not already active (e.g. not rendered), so programmatic
+   * Activate the sidebar if it is not already active (e.g. not rendered), so programmatic
    * mutations that dispatch DashboardEditActionEvents get performed. The activation is
-   * reference-counted, so we retain the handler and release it on exit (see deactivateEditPane).
+   * reference-counted, so we retain the handler and release it on exit (see deactivateSidebar).
    */
-  public activateEditPane() {
-    const { editPane } = this.state;
-    if (editPane.isActive) {
+  public activateSidebar() {
+    const { sidebar } = this.state;
+    if (sidebar.isActive) {
       return;
     }
     // Release the previous pane's activation before acquiring a new one.
-    this.deactivateEditPane();
-    this._editPaneActivation = editPane.activate();
+    this.deactivateSidebar();
+    this._sidebarActivation = sidebar.activate();
   }
 
-  private deactivateEditPane() {
-    this._editPaneActivation?.();
-    this._editPaneActivation = undefined;
+  private deactivateSidebar() {
+    this._sidebarActivation?.();
+    this._sidebarActivation = undefined;
   }
 
-  public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
+  public async saveCompleted(
+    saveModel: Dashboard | DashboardV2Spec,
+    result: SaveDashboardResponseDTO,
+    folderUid?: string
+  ) {
     this.serializer.onSaveComplete(saveModel, result);
 
     this._changeTracker.stopTrackingChanges();
+
+    // Save As / first save mint a new uid; skip the refresh await below so redirect isn't delayed.
+    const isNewResource = result.uid !== this.state.uid;
 
     this.setState({
       version: result.version,
@@ -430,6 +488,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     });
 
     this.state.editPanel?.dashboardSaved();
+
+    // Re-apply denylist before re-baselining on in-place saves. Skip awaiting on Save As —
+    // we're about to navigate away.
+    if (!isNewResource) {
+      await this.refreshPredefinedVariables();
+    }
 
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
     this._initialUrlState = locationService.getLocation();
@@ -505,8 +569,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // none to begin with. dashboardEditDiscarded only fires on the dirty path,
     // so we'd otherwise lose the no-op exit case.
     reportInteraction('dashboards_edit_exited', { restoreInitialState }, { silent: true });
-    // Release any edit pane we activated programmatically before the pane is swapped/unmounted.
-    this.deactivateEditPane();
+    // Release any sidebar we activated programmatically before the pane is swapped/unmounted.
+    this.deactivateSidebar();
 
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
@@ -522,8 +586,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     locationService.replace(locationUtil.stripBaseFromUrl(url));
 
     if (restoreInitialState) {
-      //  Restore initial state and disable editing
+      // Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
+      this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
     } else {
@@ -560,9 +625,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Stop tracking while we reset state.
     this._changeTracker.stopTrackingChanges();
 
-    // The restored state swaps in a cloned edit pane, so release the one we activated programmatically.
-    const hadProgrammaticEditPane = this._editPaneActivation !== undefined;
-    this.deactivateEditPane();
+    // The restored state swaps in a cloned sidebar, so release the one we activated programmatically.
+    const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
+    this.deactivateSidebar();
 
     const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
 
@@ -580,11 +645,39 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     });
 
     // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
-    if (hadProgrammaticEditPane) {
-      this.activateEditPane();
+    if (hadProgrammaticSidebar) {
+      this.activateSidebar();
     }
 
+    this.restoreSerializerAnnotationsFromInitialState();
     this._changeTracker.startTrackingChanges();
+  }
+
+  /**
+   * Serializer annotations are mutated outside scene state when editing the denylist.
+   * Restore them from the edit-session baseline when discarding.
+   */
+  private restoreSerializerAnnotationsFromInitialState() {
+    // Drop any in-flight refresh that captured the discarded denylist.
+    this._predefinedVariablesRefreshId++;
+
+    const k8s = this.serializer.getK8SMetadata();
+    if (!k8s) {
+      return;
+    }
+    const annotations: Record<string, string> = {};
+    for (const [key, value] of Object.entries(k8s.annotations ?? {})) {
+      if (typeof value === 'string') {
+        annotations[key] = value;
+      }
+    }
+    const initialValue = this._initialState?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+    if (typeof initialValue === 'string') {
+      annotations[AnnoKeyIgnorePredefinedVariables] = initialValue;
+    } else {
+      delete annotations[AnnoKeyIgnorePredefinedVariables];
+    }
+    this.serializer.setK8SAnnotations(annotations);
   }
 
   public pauseTrackingChanges() {
@@ -1012,7 +1105,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       panel.setState({
         $data: new SceneDataTransformer({
           $data: new SceneQueryRunner({
-            datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined, // @TODO - fixes new text panel query editor error
+            // The query editor needs the datasource type, which config.defaultDatasource does not provide.
+            datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,
             queries: [{ refId: 'A' }],
           }),
           transformations: [],
@@ -1090,7 +1184,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  public getLayout(): DashboardLayoutManager {
+  public getLayout(): AnyDashboardLayoutManager {
     return this.state.body;
   }
 
@@ -1390,7 +1484,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   isManagedRepository() {
-    if (!config.featureToggles.provisioning) {
+    if (!config.provisioningEnabled) {
       return false;
     }
     return Boolean(this.getManagerKind() === ManagerKind.Repo);

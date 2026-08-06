@@ -12,7 +12,7 @@ import { type ExplorePanelData, type ExploreState } from 'app/types/explore';
 
 import { createEmptyQueryResponse } from '../state/utils';
 
-import { ToolbarExtensionPoint } from './ToolbarExtensionPoint';
+import { type PluginExtensionExploreContext, ToolbarExtensionPoint } from './ToolbarExtensionPoint';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -198,6 +198,29 @@ describe('ToolbarExtensionPoint', () => {
       const { context } = options;
 
       expect(context).toHaveProperty('panelsState', panelsState);
+    });
+
+    it('types the extension context with `panelsState` (guards against the `panelsSate` typo)', () => {
+      const panelsState: ExplorePanelsState = {
+        logs: { sortOrder: LogsSortOrder.Ascending, displayedFields: ['time', 'body'] },
+      };
+
+      // Compile-time regression guard (2026-07-02 DataPro code audit, finding #28): assigning a
+      // fresh object literal to `PluginExtensionExploreContext` triggers excess-property checking,
+      // so if the field regresses to the misspelled `panelsSate`, `panelsState` becomes an unknown
+      // property and `yarn typecheck` fails. Extension authors read `context.panelsState`, so the
+      // type must expose it under that name.
+      const context: PluginExtensionExploreContext = {
+        exploreId: 'left',
+        targets: [{ refId: 'A' }],
+        data: createEmptyQueryResponse(),
+        timeRange: { from: 'now-1h', to: 'now' },
+        timeZone: 'browser',
+        shouldShowAddCorrelation: false,
+        panelsState,
+      };
+
+      expect(context.panelsState).toBe(panelsState);
     });
   });
 

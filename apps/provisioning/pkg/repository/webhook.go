@@ -74,6 +74,8 @@ type WebhookEvent struct {
 	SourceRef    string
 	Hash         string
 	Message      string
+	Sender       string
+	SenderID     string
 }
 
 // WebhookID identifies a provider webhook. Providers disagree on the

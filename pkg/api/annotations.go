@@ -498,6 +498,11 @@ func (hs *HTTPServer) GetAnnotationTags(c *contextmodel.ReqContext) response.Res
 		Limit: c.QueryInt64("limit"),
 	}
 
+	// Default limit if not specified
+	if query.Limit == 0 {
+		query.Limit = defaultAnnotationsLimit
+	}
+
 	result, err := hs.annotationsRepo.FindTags(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to find annotation tags", err)

@@ -12,7 +12,7 @@ import { useChildrenByParentUIDState, rootItemsSelector } from '../../browse-das
 
 // This hook is responsible for validating if all selected resources (dashboard folders and dashboards) are in the same repository
 export function useSelectionRepoValidation(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
-  const provisioningEnabled = config.featureToggles.provisioning;
+  const provisioningEnabled = config.provisioningEnabled;
   const childrenByParentUID = useChildrenByParentUIDState();
   const rootItems = useSelector(rootItemsSelector)?.items ?? [];
   const isProvisionedInstance = useIsProvisionedInstance();

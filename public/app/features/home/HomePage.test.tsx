@@ -9,11 +9,18 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
+import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
+
+jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
+  ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
+  usePluginBridge: jest.fn(),
+}));
 
 jest.mock('./analytics/main', () => ({
   ctaClicked: jest.fn(),
@@ -22,12 +29,22 @@ jest.mock('./analytics/main', () => ({
   homepageViewed: jest.fn(),
 }));
 
+jest.mock('app/plugins/panel/news/useNewsFeed');
+
 setBackendSrv(backendSrv);
 setupMockServer();
+
+const mockUsePluginBridge = jest.mocked(usePluginBridge);
+const useNewsFeedMock = jest.mocked(useNewsFeed);
 
 beforeEach(() => {
   jest.clearAllMocks();
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+  mockUsePluginBridge.mockReturnValue({ installed: false, loading: false });
+  useNewsFeedMock.mockReturnValue({
+    state: { loading: false, error: undefined, value: undefined },
+    getNews: jest.fn(),
+  });
 
   // Deny alerting permission so the FiringAlertsCard renders null
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
@@ -35,7 +52,7 @@ beforeEach(() => {
   server.use(
     http.get('/api/user/teams', () => HttpResponse.json([])),
     http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json([])),
-    // IncidentsCard checks the IRM/Incident plugins; report them absent so it renders nothing
+    // Report any probed app plugin as absent so plugin-gated cards render nothing
     http.get('/api/plugins/:pluginId/settings', () => HttpResponse.json({ enabled: false }))
   );
 });
@@ -175,6 +192,16 @@ describe('HomePage', () => {
 
   it('renders a skeleton instead of the page content while extensions are loading', async () => {
     setPluginComponentsHook(() => ({ components: [], isLoading: true }));
+
+    render(<HomePage />);
+
+    expect(await screen.findByTestId('home-page-skeleton')).toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
+  });
+
+  it('renders a skeleton instead of the page content while the IRM plugin is loading', async () => {
+    mockUsePluginBridge.mockReturnValue({ installed: undefined, loading: true });
 
     render(<HomePage />);
 

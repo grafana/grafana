@@ -74,7 +74,7 @@ func TestIntegration_EndToEndDashboardSearch(t *testing.T) {
 		require.NoError(t, err, "read %s", f.path)
 
 		items, err := extractor.Extract(ctx,
-			&resourcepb.ResourceKey{Resource: "dashboards", Name: f.name}, data, "")
+			&resourcepb.ResourceKey{Resource: "dashboards", Name: f.name}, data)
 		require.NoError(t, err)
 		require.NotEmpty(t, items, "%s produced no items", f.path)
 

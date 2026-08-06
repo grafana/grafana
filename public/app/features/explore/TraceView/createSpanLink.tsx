@@ -25,7 +25,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 
-import { type LokiQuery } from '../../../plugins/datasource/loki/types';
+import { type LokiQuery } from '../../loki-helpers/types';
 import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
 import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from './components/types/links';
