@@ -3,16 +3,16 @@ SELECT
   team_member.team_id,
   team_member.user_id,
   team_member.uid,
-  user.email,
-  user.name,
-  user.login,
-  user.uid AS user_uid,
+  team_user.email,
+  team_user.name,
+  team_user.login,
+  team_user.uid AS user_uid,
   team_member.external,
   team_member.permission,
   user_auth.auth_module,
   team.uid AS team_uid
 FROM {{ .Ident .TeamMemberTable }} AS team_member
-INNER JOIN {{ .Ident .UserTable }} AS user ON team_member.user_id = user.id
+INNER JOIN {{ .Ident .UserTable }} AS team_user ON team_member.user_id = team_user.id
 INNER JOIN {{ .Ident .TeamTable }} AS team ON team.id = team_member.team_id
 LEFT JOIN {{ .Ident .UserAuthTable }} AS user_auth ON user_auth.id = (
   SELECT id
@@ -21,9 +21,9 @@ LEFT JOIN {{ .Ident .UserAuthTable }} AS user_auth ON user_auth.id = (
   ORDER BY user_auth.created DESC
   LIMIT 1
 )
-WHERE user.is_service_account = {{ .Arg .IsServiceAccount }}
+WHERE team_user.is_service_account = {{ .Arg .IsServiceAccount }}
 {{ if .AccessUserIDs -}}
-  AND user.id IN ({{ .ArgList .AccessUserIDs }})
+  AND team_user.id IN ({{ .ArgList .AccessUserIDs }})
 {{ else if not .AccessAll -}}
   AND 1 = 0
 {{ end -}}
@@ -42,4 +42,4 @@ WHERE user.is_service_account = {{ .Arg .IsServiceAccount }}
 {{ if .External -}}
   AND team_member.external = {{ .Arg .IsExternal }}
 {{ end -}}
-ORDER BY user.login ASC, user.email ASC
+ORDER BY team_user.login ASC, team_user.email ASC
