@@ -35,7 +35,7 @@ import {
 } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
-import { canRotateSessionToken, getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
+import { getSessionExpiry, hasRotatableSession } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type DashboardSearchItem } from 'app/features/search/types';
@@ -511,7 +511,7 @@ export class BackendSrv implements BackendService {
                 }
 
                 let authChecker = this.loginPing();
-                if (hasSessionExpiry() && canRotateSessionToken(this.dependencies.contextSrv.user.authenticatedBy)) {
+                if (hasRotatableSession(this.dependencies.contextSrv.user.authenticatedBy)) {
                   const expired = getSessionExpiry() * 1000 < Date.now();
                   if (expired) {
                     authChecker = this.rotateToken();

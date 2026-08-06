@@ -90,7 +90,9 @@ const getTestContext = (overides?: object, mockFromFetch = true) => {
 jest.mock('app/core/utils/auth', () => ({
   ...jest.requireActual('app/core/utils/auth'),
   getSessionExpiry: () => 1,
-  hasSessionExpiry: () => true,
+  // pretend the session expiry cookie is always present so only the auth method decides
+  hasRotatableSession: (authenticatedBy?: string) =>
+    jest.requireActual('app/core/utils/auth').canRotateSessionToken(authenticatedBy),
 }));
 
 describe('backendSrv', () => {
