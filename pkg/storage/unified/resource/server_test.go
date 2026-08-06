@@ -1495,8 +1495,9 @@ type prunedPreviousBackend struct {
 	StorageBackend
 	mu       sync.Mutex
 	prunedRV int64
-	// staleRV, when non-zero, is returned instead of NotFound to simulate an
-	// older surviving version.
+	// staleRV, when non-zero, is read instead of the pruned version, to simulate
+	// an older version that survived pruning. It must name a version that really
+	// exists so the value the server sees matches the resource version.
 	staleRV int64
 }
 
@@ -1515,9 +1516,7 @@ func (b *prunedPreviousBackend) ReadResource(ctx context.Context, req *resourcep
 		return b.StorageBackend.ReadResource(ctx, req)
 	}
 	if staleRV != 0 {
-		rsp := b.StorageBackend.ReadResource(ctx, &resourcepb.ReadRequest{Key: req.Key})
-		rsp.ResourceVersion = staleRV
-		return rsp
+		return b.StorageBackend.ReadResource(ctx, &resourcepb.ReadRequest{Key: req.Key, ResourceVersion: staleRV})
 	}
 	return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 }
@@ -1629,16 +1628,32 @@ func TestWatchWithUnreadablePreviousObject(t *testing.T) {
 		defer cancel()
 
 		srv, backend, mock, eg, createdRV := setup(t, ctx)
-		backend.prune(createdRV, createdRV-1)
 
+		// Build a real history so the version that "survives" pruning is one that
+		// genuinely exists: create (createdRV) -> update (updated) -> update
+		// (third). Pruning `updated` leaves createdRV as the older survivor.
 		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: value("second"), ResourceVersion: createdRV})
 		require.NoError(t, err)
 		require.Nil(t, updated.Error)
 
-		evt := nextEvent(t, mock)
+		backend.prune(updated.ResourceVersion, createdRV)
+
+		third, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: value("third"), ResourceVersion: updated.ResourceVersion})
+		require.NoError(t, err)
+		require.Nil(t, third.Error)
+
+		// The second update's own event comes first and reads its previous
+		// version normally; the third is the one pointing at the pruned version.
+		var evt *resourcepb.WatchEvent
+		for evt == nil || evt.Resource.Version != third.ResourceVersion {
+			evt = nextEvent(t, mock)
+		}
 		require.Equal(t, resourcepb.WatchEvent_MODIFIED, evt.Type)
 		require.NotNil(t, evt.Previous)
-		require.Equal(t, createdRV-1, evt.Previous.Version)
+		require.Equal(t, createdRV, evt.Previous.Version)
+		// The value has to be the one that belongs to the version reported, not
+		// whatever the latest read happened to return.
+		require.Contains(t, string(evt.Previous.Value), `"first"`)
 
 		cancel()
 		require.NoError(t, eg.Wait())
