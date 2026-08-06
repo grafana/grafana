@@ -12,7 +12,7 @@ type Props = PropsWithChildren<{
 }>;
 
 /**
- * Clickable attribute-value wrapper that promotes installing a related app plugin.
+ * Clickable attribute-value wrapper that promotes installing or activating a related app plugin.
  */
 export function AttributePluginPromoTip({ promo, children }: Props) {
   const styles = useStyles2(getStyles);
