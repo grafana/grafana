@@ -2,11 +2,6 @@ import { type Config, type JsonTree, Utils } from '@react-awesome-query-builder/
 
 import { raqbConfig } from './AwesomeQueryBuilder';
 
-// Route RAQB's `import moment from 'moment'` through the luxon-backed compat adapter, mirroring
-// what plugin webpack builds do via the `moment$` resolve alias in @grafana/plugin-configs, so
-// these tests exercise the adapter's date handling rather than the real moment library.
-jest.mock('moment', () => require('../../utils/raqbMomentCompat'));
-
 const config: Config = {
   ...raqbConfig,
   fields: {
