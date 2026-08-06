@@ -1,9 +1,39 @@
 name: "SBOM on Release"
 
+# Not triggered by `on: release: published`: the release is created by github-release.yml
+# using secrets.GITHUB_TOKEN, and GitHub does not fire new workflow runs for events produced
+# by the default GITHUB_TOKEN. That native trigger silently never fired for releases created
+# by the automated pipeline, so this is called explicitly right after the release is created
+# instead (mirrors how deploy-storybook.yml is chained from github-release.yml).
 on:
-  release:
-    types:
-      - published
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        description: The GitHub release tag to attach the SBOM to (with `v` prefix, e.g. v11.2.3)
+        type: string
+      release_branch:
+        required: true
+        description: The release branch to check out for the SBOM scan (e.g. release-11.2.3)
+        type: string
+      dry_run:
+        required: false
+        default: false
+        type: boolean
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        description: The GitHub release tag to attach the SBOM to (with `v` prefix, e.g. v11.2.3)
+        type: string
+      release_branch:
+        required: true
+        description: The release branch to check out for the SBOM scan (e.g. release-11.2.3)
+        type: string
+      dry_run:
+        required: false
+        default: false
+        type: boolean
 
 permissions: {}
 
@@ -15,6 +45,13 @@ jobs:
       contents: write # to upload the SBOM as a release asset
       id-token: write # to authenticate to Vault
     steps:
+      # Socket scans the dependency manifests (package.json/yarn.lock, go.mod/go.sum, etc.) in the
+      # checkout, so it needs the release branch's tree at release time, not the runner's default ref.
+      - name: "Checkout release branch"
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.release_branch }}
+
       - name: "Get Socket API token from Vault"
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@e46fe1e9a2bf9e618bcf8d8d32f3a7381b45c06d # get-vault-secrets/v2.0.0
@@ -22,18 +59,24 @@ jobs:
           common_secrets: |
             SOCKET_API_TOKEN=socket:SOCKET_API_KEY
 
+      # Pinned to a commit rather than a version tag: shared-workflows hasn't cut a release past
+      # v0.1.2 yet, but 801dc0b (branch-scoped scans via the Socket CLI, requiring the caller to
+      # check out `branch` first) is already the behavior this workflow depends on. Re-pin to the
+      # next tagged socket-export-sbom release once one exists.
       - name: "Export SPDX SBOM from Socket"
         id: export-sbom
-        uses: grafana/shared-workflows/actions/socket-export-sbom@ff9aaa53f25716fcd6dde39f6d4e41c4e16fb5e1 # socket-export-sbom/v0.1.2
+        uses: grafana/shared-workflows/actions/socket-export-sbom@801dc0b75637c2fb0d0d4de0c85890991d973f68 # commit, pending next socket-export-sbom tag
         with:
           socket_api_token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).SOCKET_API_TOKEN }}
           socket_org: grafana
-          output_file: ${{ github.event.repository.name }}-${{ github.event.release.tag_name }}.spdx.json
+          branch: ${{ inputs.release_branch }}
+          output_file: ${{ github.event.repository.name }}-${{ inputs.tag }}.spdx.json
 
       - name: "Upload SBOM to release"
+        if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ inputs.tag }}
           SBOM_PATH: ${{ steps.export-sbom.outputs.path }}
         run: gh release upload "$TAG" "$SBOM_PATH" --clobber
