@@ -286,17 +286,21 @@ func (b *watcher) run(ctx context.Context) {
 		}
 		b.watch.Stop()
 
-		// Pace every resume, not just the failed ones: a stream that opens
-		// fine but closes straight away would otherwise spin this loop. The
-		// backoff is reset on each successful publish, so a channel that is
-		// actually delivering always waits the minimum.
-		bo.Wait()
-
 		next, ok := b.reopen(ctx, logger, bo)
 		if !ok {
 			return
 		}
 		b.watch = next
+
+		// Pace every resume, not just the failed ones: a stream that opens fine
+		// but closes straight away would otherwise spin this loop. Wait with the
+		// replacement already open, so the pacing costs nothing -- waiting first
+		// would leave a window with nothing subscribed, and unified storage
+		// filters the live stream rather than replaying it, so whatever is
+		// written during such a window is never delivered. The backoff is reset
+		// on each successful publish, so a channel that is actually delivering
+		// always waits the minimum.
+		bo.Wait()
 	}
 }
 

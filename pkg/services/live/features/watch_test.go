@@ -253,7 +253,7 @@ func TestWatcherBacksOffBetweenResumes(t *testing.T) {
 		// Every stream closes immediately with nothing published, which is the
 		// case that could otherwise spin the loop.
 		const breaks = 8
-		streams := make([]*watch.FakeWatcher, breaks+1)
+		streams := make([]*watch.FakeWatcher, breaks+2)
 		for i := range streams {
 			streams[i] = watch.NewFake()
 		}
@@ -263,23 +263,39 @@ func TestWatcherBacksOffBetweenResumes(t *testing.T) {
 		defer cancel()
 		tw.start(ctx)
 
-		// dskit draws each wait from the exponential range rather than a fixed
-		// value, so assert the bounds rather than an instant: nothing may
-		// happen before the minimum, and everything must be free by the
-		// maximum. Virtual time makes both edges exact.
-		for i := range breaks {
+		// The first close reopens straight away: the backoff is spent holding an
+		// open watch, never in front of one, so that pacing the loop cannot cost
+		// events that arrive while nothing is subscribed.
+		streams[0].Stop()
+		synctest.Wait()
+		require.Len(t, tw.resumes(), 1, "the reopen must not wait")
+
+		// Each replacement is closed while the watcher is still inside that
+		// backoff, so the next reopen is released only once it elapses. dskit
+		// draws each wait from the exponential range rather than a fixed value,
+		// so assert the bounds rather than an instant: nothing may happen before
+		// the minimum, and everything must be free by the maximum. Virtual time
+		// makes both edges exact.
+		const step = 10 * time.Millisecond
+		for i := 1; i <= breaks; i++ {
 			streams[i].Stop()
 			synctest.Wait()
-			require.Len(t, tw.resumes(), i, "must not resume before the backoff starts")
+			require.Len(t, tw.resumes(), i, "must not reopen again while the backoff runs")
 
 			time.Sleep(resumeBackoffMin - time.Nanosecond) // advances the bubble's clock
 			synctest.Wait()
-			require.Len(t, tw.resumes(), i, "must not resume before the minimum backoff")
+			require.Len(t, tw.resumes(), i, "must not reopen before the minimum backoff")
 
-			time.Sleep(resumeBackoffMax)
-			synctest.Wait()
+			// Advance in steps rather than one jump to the ceiling, so the clock
+			// stops as soon as the reopen lands and the watcher is left freshly
+			// parked in the next backoff. Sleeping the whole ceiling would
+			// overshoot into that backoff and release it too.
+			for budget := resumeBackoffMax; budget > 0 && len(tw.resumes()) == i; budget -= step {
+				time.Sleep(step)
+				synctest.Wait()
+			}
 			require.Len(t, tw.resumes(), i+1,
-				"resume %d must be released by the maximum backoff; an unclamped "+
+				"reopen %d must be released by the maximum backoff; an unclamped "+
 					"backoff would still be asleep here", i+1)
 		}
 
