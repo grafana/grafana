@@ -220,13 +220,21 @@ func (s *Service) List(ctx context.Context) ([]*models.SSOSettings, error) {
 	storedSettings, err := s.store.List(ctx)
 
 	if err != nil {
-		return nil, err
+		// If the DB store is unavailable, log the error and continue with
+		// only the fallback (config-file / MT-Settings) sources so that
+		// providers configured via grafana.ini or env vars still appear
+		// on the login page.
+		s.logger.Warn("Failed to list SSO settings from DB, falling back to system settings", "error", err)
+		storedSettings = nil
 	}
 
 	for _, provider := range s.providersList {
 		fallbackSettings, servedByMT, err := s.loadSettingsUsingFallbackStrategy(ctx, provider)
 		if err != nil {
-			return nil, err
+			// If a single provider's fallback strategy fails, log the
+			// error and skip it rather than failing the entire list.
+			s.logger.Warn("Failed to load fallback settings for provider", "provider", provider, "error", err)
+			continue
 		}
 
 		// Mode 4+: MT-Settings is the sole read source, the DB is ignored.
