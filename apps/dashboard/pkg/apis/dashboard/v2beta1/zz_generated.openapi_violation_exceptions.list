@@ -50,9 +50,9 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookInfinityOptions,Headers
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookInfinityOptions,QueryParams
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookNotebookLayoutSpec,Cells
-API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookPanelSpec,Links
-API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookQueryGroupSpec,Queries
-API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookQueryGroupSpec,Transformations
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookNotebookPanelSpec,Links
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookNotebookQueryGroupSpec,Queries
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookNotebookQueryGroupSpec,Transformations
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookSpec,Tags
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookThresholdsConfig,Steps
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookTimeSettingsSpec,AutoRefreshIntervals
@@ -92,9 +92,9 @@ API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/ap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap,RegexMap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap,SpecialValueMap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap,ValueMap
-API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookCellKindOrPanelKindOrLibraryPanelKind,CellKind
-API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookCellKindOrPanelKindOrLibraryPanelKind,LibraryPanelKind
-API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookCellKindOrPanelKindOrLibraryPanelKind,PanelKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind,CellKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind,LibraryPanelKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind,NotebookPanelKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookClient,client
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookMarkdownCellContentKindOrCodeCellContentKind,CodeCellContentKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookMarkdownCellContentKindOrCodeCellContentKind,MarkdownCellContentKind
