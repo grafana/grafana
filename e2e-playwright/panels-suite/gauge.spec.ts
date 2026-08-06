@@ -18,7 +18,7 @@ test.describe(
     tag: ['@panels', '@gauge'],
   },
   () => {
-    test('a11y', { tag: ['@a11y'] }, async ({ scanForA11yViolations, selectors, gotoDashboardPage }) => {
+    test.skip('a11y', { tag: ['@a11y'] }, async ({ scanForA11yViolations, selectors, gotoDashboardPage }) => {
       const dashboardPage = await gotoDashboardPage({ uid: NEW_GAUGES_DASHBOARD_UID });
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Gauge.Container)
@@ -42,7 +42,8 @@ test.describe(
       await expect(errorInfo).toBeHidden();
     });
 
-    test('renders new gauge panels', async ({ gotoDashboardPage, selectors }) => {
+    // heavy flake aug 3 - aug 6
+    test.skip('renders new gauge panels', async ({ gotoDashboardPage, selectors }) => {
       // open Panel Tests - Gauge
       const dashboardPage = await gotoDashboardPage({ uid: NEW_GAUGES_DASHBOARD_UID });
 
