@@ -2048,11 +2048,6 @@
       "count": 1
     }
   },
-  "public/app/features/plugins/admin/components/InstallControls/InstallControlsWarning.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 1
-    }
-  },
   "public/app/features/plugins/admin/hooks/usePluginConfig.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1
