@@ -29,9 +29,9 @@ export function useInhibitedAlerts(): {
     { skip: false }
   );
 
-  // The state params tell the API which states to drop, they don't select inhibited alerts. Nothing
-  // excludes "unprocessed" alerts (those with no marker entry yet), so they come back too. Only a
-  // non-empty inhibitedBy means inhibited, which makes the params above an optimisation, not a filter.
+  // The state params above only bound the response, they don't select inhibited alerts (see
+  // AlertmanagerAlertsFilter): unprocessed alerts come back too, so a non-empty inhibitedBy is
+  // what actually decides.
   const inhibitedAlerts = useMemo(() => (data ?? []).filter((alert) => alert.status.inhibitedBy.length > 0), [data]);
 
   return {
