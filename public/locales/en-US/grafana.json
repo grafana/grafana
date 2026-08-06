@@ -9003,7 +9003,6 @@
         "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
         "title": "Find slow queries faster"
       },
-      "loading": "Loading...",
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
     },
