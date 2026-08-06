@@ -30,13 +30,17 @@ type Bundler struct {
 // Query responses can contain substantially more data than the diagnostic traffic itself. Keep
 // their uncompressed JSON bounded independently so adding querydata.json cannot multiply a large
 // panel/dashboard archive without an explicit truncation marker.
-const (
+//
+// Declared as vars, not consts, solely so tests can shrink them (see diagnostics_test.go) instead of
+// each allocating a payload at the real multi-hundred-MiB scale.
+var (
 	maxQueryDataArtifactBytes  = 1 << 30    // 1 GiB
 	maxDashboardQueryDataBytes = 1536 << 20 // 1.5 GiB
-	// minQueryDataArtifactBytes is the smallest budget worth attempting: below it not even a truncated
-	// artifact (version + omission markers) fits, so the panel's query data is skipped up front.
-	minQueryDataArtifactBytes = 256
 )
+
+// minQueryDataArtifactBytes is the smallest budget worth attempting: below it not even a truncated
+// artifact (version + omission markers) fits, so the panel's query data is skipped up front.
+const minQueryDataArtifactBytes = 256
 
 // queryDataArtifactVersion is the schema version stamped into every querydata.json (including its
 // truncated fallbacks) so a reader can tell how to interpret the artifact.

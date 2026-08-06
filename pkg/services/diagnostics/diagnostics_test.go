@@ -21,6 +21,18 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 )
 
+// shrinkQueryDataLimits lowers the package's query-data size budgets for the duration of the calling
+// test, restored on cleanup, so a test proving truncation happens at the budget doesn't have to
+// allocate a payload at the real (multi-hundred-MiB) production scale to cross it.
+func shrinkQueryDataLimits(t *testing.T, artifactBytes, dashboardBytes int) {
+	t.Helper()
+	prevArtifact, prevDashboard := maxQueryDataArtifactBytes, maxDashboardQueryDataBytes
+	maxQueryDataArtifactBytes, maxDashboardQueryDataBytes = artifactBytes, dashboardBytes
+	t.Cleanup(func() {
+		maxQueryDataArtifactBytes, maxDashboardQueryDataBytes = prevArtifact, prevDashboard
+	})
+}
+
 func TestBundler_Build(t *testing.T) {
 	// No HAR captured (empty buffer, nil response) -> traffic.har omitted; only panel.json present.
 	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil)
@@ -123,6 +135,7 @@ func TestBundler_Build_excludesCaptureFramesFromQueryData(t *testing.T) {
 }
 
 func TestBundler_Build_boundsOversizedQueryData(t *testing.T) {
+	shrinkQueryDataLimits(t, 4096, 16384)
 	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes)}))
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{
 		"A": {Frames: data.Frames{frame}},
@@ -140,6 +153,7 @@ func TestBundler_Build_boundsOversizedQueryData(t *testing.T) {
 }
 
 func TestBundler_Build_boundsOversizedRequestWithoutResponse(t *testing.T) {
+	shrinkQueryDataLimits(t, 4096, 16384)
 	// An oversized request with no response must truncate without claiming a response was omitted.
 	request := json.RawMessage(`{"expr":"` + strings.Repeat("x", maxQueryDataArtifactBytes) + `"}`)
 
@@ -576,6 +590,7 @@ func TestBuildDashboard_recordsQueryDataPerPanel(t *testing.T) {
 }
 
 func TestBuildDashboard_boundsAggregateQueryData(t *testing.T) {
+	shrinkQueryDataLimits(t, 64<<10, 128<<10)
 	panels := make([]DashboardPanel, 0, 5)
 	for i := 1; i <= 5; i++ {
 		frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes-4096)}))
@@ -895,17 +910,18 @@ func TestTruncateDiagnosticString(t *testing.T) {
 }
 
 func TestMarshalQueryDataArtifactWithLimit_reportsTruncation(t *testing.T) {
-	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes)}))
+	const limit = 4096
+	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", limit)}))
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
 
-	_, truncated, err := marshalQueryDataArtifactWithLimit(nil, resp, maxQueryDataArtifactBytes)
+	_, truncated, err := marshalQueryDataArtifactWithLimit(nil, resp, limit)
 	require.NoError(t, err)
 	require.True(t, truncated, "an oversized response must report truncated=true")
 
 	small := &backend.QueryDataResponse{Responses: backend.Responses{
 		"A": {Frames: data.Frames{data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))}},
 	}}
-	_, truncated, err = marshalQueryDataArtifactWithLimit(nil, small, maxQueryDataArtifactBytes)
+	_, truncated, err = marshalQueryDataArtifactWithLimit(nil, small, limit)
 	require.NoError(t, err)
 	require.False(t, truncated, "a response that fits must report truncated=false")
 }
