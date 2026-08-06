@@ -35,6 +35,10 @@ var (
 	searchRegex = regexp.MustCompile(`\{(\w+)\}`)
 )
 
+// lotexRulerCompatibleTypes lists the datasource types accepted by
+// isLotexRulerCompatible, for use in error messages.
+const lotexRulerCompatibleTypes = "loki, prometheus, amazon prometheus, azure prometheus, victoriametrics"
+
 func isLotexRulerCompatible(dsType string) bool {
 	return dsType == datasources.DS_LOKI || datasources.IsPrometheusCompatible(dsType)
 }
@@ -59,7 +63,7 @@ func getDatasourceByUID(ctx *contextmodel.ReqContext, cache datasources.CacheSer
 		}
 	case apimodels.LoTexRulerBackend:
 		if !isLotexRulerCompatible(ds.Type) {
-			return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus, amazon prometheus, azure prometheus")
+			return nil, unexpectedDatasourceTypeError(ds.Type, lotexRulerCompatibleTypes)
 		}
 	default:
 		return nil, unexpectedDatasourceTypeError(ds.Type, expectedType.String())

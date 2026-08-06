@@ -127,6 +127,20 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 	return response.JSON(http.StatusOK, alerts)
 }
 
+// instantQueryPath returns the instant query path for a Lotex ruler compatible
+// datasource type. It must stay in sync with isLotexRulerCompatible, otherwise a
+// datasource accepted by getDatasourceByUID cannot be queried.
+func instantQueryPath(dsType string) (string, bool) {
+	switch {
+	case dsType == datasources.DS_LOKI:
+		return "loki/api/v1/query", true
+	case datasources.IsPrometheusCompatible(dsType):
+		return "api/v1/query", true
+	default:
+		return "", false
+	}
+}
+
 func (srv TestingApiSrv) RouteTestRuleConfig(c *contextmodel.ReqContext, body apimodels.TestRulePayload, datasourceUID string) response.Response {
 	if body.Type() != apimodels.LoTexRulerBackend {
 		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.LoTexRulerBackend, body.Type().String()))
@@ -135,15 +149,10 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *contextmodel.ReqContext, body ap
 	if err != nil {
 		return errorToResponse(err)
 	}
-	var path string
-	switch ds.Type {
-	case "loki":
-		path = "loki/api/v1/query"
-	case "prometheus":
-		path = "api/v1/query"
-	default:
+	path, ok := instantQueryPath(ds.Type)
+	if !ok {
 		// this should not happen because getDatasourceByUID would not return the data source
-		return errorToResponse(unexpectedDatasourceTypeError(ds.Type, "loki, prometheus"))
+		return errorToResponse(unexpectedDatasourceTypeError(ds.Type, lotexRulerCompatibleTypes))
 	}
 
 	t := timeNow()
