@@ -9,6 +9,7 @@ import (
 	"time"
 
 	natsserver "github.com/nats-io/nats-server/v2/server"
+	natsclient "github.com/nats-io/nats.go"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -23,6 +24,14 @@ const (
 	// comfortable multiple of the interval so one missed tick doesn't evict a peer.
 	defaultDiscoveryInterval = 5 * time.Second
 	defaultDiscoveryTTL      = 15 * time.Second
+
+	// discoveryWakeSubject carries a best-effort "something changed" hint over
+	// the cluster mesh so peers that already share a route can reconcile before
+	// their next periodic tick instead of waiting up to interval. It only ever
+	// reaches nodes already meshed with the sender, so it accelerates joins and
+	// graceful leaves but cannot itself bootstrap a brand-new node's discovery
+	// (that still relies on the DB-backed periodic tick, same as today).
+	discoveryWakeSubject = "grafana.internal.discovery.wake"
 )
 
 // peer is an embedded NATS server advertising the cluster route URL peers dial.
@@ -56,9 +65,21 @@ type discovery struct {
 	self     peer
 	interval time.Duration
 	ttl      time.Duration
+	metrics  *serverMetrics
 
 	// routes is the applied peer route set; only touched by the loop goroutine.
 	routes map[string]struct{}
+
+	// wake lets the accelerator below (or any future non-periodic signal)
+	// request an early tick(). Buffered by one so a burst of hints coalesces
+	// into a single early tick rather than queuing one per hint.
+	wake chan struct{}
+
+	// wakeConn is an in-process NATS client used only to broadcast/receive
+	// discoveryWakeSubject hints. It is a pure accelerator: nil (connectWake
+	// failed) or any publish error just means changes are found on the next
+	// periodic tick instead, exactly like before this existed.
+	wakeConn *natsclient.Conn
 }
 
 // discoveryOptions bundles the embedded server's base options with the
@@ -68,6 +89,7 @@ type discoveryOptions struct {
 	baseOpts natsserver.Options
 	interval time.Duration
 	ttl      time.Duration
+	metrics  *serverMetrics
 }
 
 func newDiscovery(logger log.Logger, server *natsserver.Server, registry peerRegistry, self peer, opts discoveryOptions) *discovery {
@@ -79,7 +101,7 @@ func newDiscovery(logger log.Logger, server *natsserver.Server, registry peerReg
 	if ttl <= 0 {
 		ttl = defaultDiscoveryTTL
 	}
-	return &discovery{
+	d := &discovery{
 		log:      logger,
 		server:   server,
 		baseOpts: opts.baseOpts,
@@ -87,8 +109,72 @@ func newDiscovery(logger log.Logger, server *natsserver.Server, registry peerReg
 		self:     self,
 		interval: interval,
 		ttl:      ttl,
+		metrics:  opts.metrics,
 		routes:   map[string]struct{}{},
+		wake:     make(chan struct{}, 1),
 	}
+	d.connectWake()
+	return d
+}
+
+// connectWake best-effort dials this node's own embedded server in-process and
+// subscribes to discoveryWakeSubject. Any failure here just leaves wakeConn
+// nil, so the caller keeps running on periodic ticks alone.
+func (d *discovery) connectWake() {
+	nc, err := natsclient.Connect(d.server.ClientURL(),
+		natsclient.InProcessServer(d.server),
+		natsclient.Name("grafana-nats-discovery-wake"),
+		natsclient.NoEcho(),
+		natsclient.Timeout(2*time.Second),
+	)
+	if err != nil {
+		d.log.Warn("nats discovery wake accelerator unavailable; relying on periodic ticks only", "err", err)
+		return
+	}
+	if _, err := nc.Subscribe(discoveryWakeSubject, func(*natsclient.Msg) {
+		d.metrics.incWakeReceived()
+		d.requestWake()
+	}); err != nil {
+		d.log.Warn("nats discovery wake subscribe failed; relying on periodic ticks only", "err", err)
+		nc.Close()
+		return
+	}
+	d.wakeConn = nc
+}
+
+// requestWake asks the run loop for an early tick(). Non-blocking: with the
+// wake channel already full, a tick is already pending, so this is a no-op.
+func (d *discovery) requestWake() {
+	select {
+	case d.wake <- struct{}{}:
+	default:
+	}
+}
+
+// broadcastWake best-effort hints already-connected peers that something
+// changed, so they can reconcile before their next periodic tick. It never
+// affects correctness: a peer that misses the hint (or isn't meshed with this
+// node yet) still converges on its own next tick.
+func (d *discovery) broadcastWake() {
+	if d.wakeConn == nil {
+		return
+	}
+	if err := d.wakeConn.Publish(discoveryWakeSubject, nil); err != nil {
+		d.log.Debug("nats discovery wake publish failed", "err", err)
+		return
+	}
+	d.metrics.incWakeSent()
+}
+
+// close releases the wake accelerator's connection, flushing first so a hint
+// published just before shutdown (see deregister) still reaches peers. Safe to
+// call even when connectWake never established a connection.
+func (d *discovery) close() {
+	if d.wakeConn == nil {
+		return
+	}
+	_ = d.wakeConn.FlushTimeout(time.Second)
+	d.wakeConn.Close()
 }
 
 // run drives the discovery loop until ctx is cancelled. It always returns nil so
@@ -104,6 +190,8 @@ func (d *discovery) run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
+			d.tick(ctx)
+		case <-d.wake:
 			d.tick(ctx)
 		}
 	}
@@ -149,6 +237,7 @@ func (d *discovery) reconcile(peers []peer) {
 	}
 	d.routes = desired
 	d.log.Info("reconciled nats cluster routes", "peers", len(desired))
+	d.broadcastWake()
 }
 
 func (d *discovery) applyRoutes(routes map[string]struct{}) error {
@@ -181,6 +270,9 @@ func (d *discovery) deregister(ctx context.Context) {
 	if err := d.registry.remove(ctx, d.self.ServerName); err != nil {
 		d.log.Warn("failed to deregister nats peer", "server_name", d.self.ServerName, "err", err)
 	}
+	// Hint already-connected peers to drop this node's route now rather than
+	// waiting for their next tick or the TTL prune.
+	d.broadcastWake()
 }
 
 func sameRouteSet(a, b map[string]struct{}) bool {
