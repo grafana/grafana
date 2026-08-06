@@ -235,7 +235,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 				outList.Items = make([]v1beta1.Config, len(inList.Items))
 				itemGVK := v1beta1.ConfigKind().GroupVersionKind()
 				for i := range inList.Items {
-					outList.Items[i] = *(*v1beta1.Config)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i] = *(*v1beta1.Config)(unsafe.Pointer(&inList.Items[i])) // #nosec G103 nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
 					outList.Items[i].SetGroupVersionKind(itemGVK)
 				}
 				return nil
@@ -250,7 +250,7 @@ func registerListConversions(scheme *runtime.Scheme) error {
 				outList.Items = make([]v0alpha1.Config, len(inList.Items))
 				itemGVK := v0alpha1.ConfigKind().GroupVersionKind()
 				for i := range inList.Items {
-					outList.Items[i] = *(*v0alpha1.Config)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i] = *(*v0alpha1.Config)(unsafe.Pointer(&inList.Items[i])) // #nosec G103 nosemgrep: go.lang.security.audit.unsafe.use-of-unsafe-block
 					outList.Items[i].SetGroupVersionKind(itemGVK)
 				}
 				return nil
