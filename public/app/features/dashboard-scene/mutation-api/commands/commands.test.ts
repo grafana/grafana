@@ -48,6 +48,24 @@ describe('Command consistency', () => {
     }
   });
 
+  // Not decoration: the client reads readOnly to decide whether to forceRender after a command and
+  // whether to deep-clone the payload. A write marked read-only would apply a spec and never repaint.
+  it('marks the full-spec reads read-only and the writes not', () => {
+    const readOnlyByName = Object.fromEntries(
+      ALL_COMMANDS.filter((cmd) => cmd.name.includes('SPEC')).map((cmd) => [cmd.name, cmd.readOnly ?? false])
+    );
+
+    expect(readOnlyByName).toEqual({
+      GET_SPEC: true,
+      GET_NOTEBOOK_SPEC: true,
+      APPLY_SPEC: false,
+      APPLY_NOTEBOOK_SPEC: false,
+      // Not read-only despite leaving the open scene alone: readOnly also decides whether the client
+      // clones the payload before handing it over, and this one passes the spec into a request.
+      CREATE_NOTEBOOK_SPEC: false,
+    });
+  });
+
   it('registers the expected set of commands', () => {
     const names = ALL_COMMANDS.map((cmd) => cmd.name).sort();
     expect(names).toEqual([
@@ -56,10 +74,13 @@ describe('Command consistency', () => {
       'ADD_ROW',
       'ADD_TAB',
       'ADD_VARIABLE',
+      'APPLY_NOTEBOOK_SPEC',
       'APPLY_SPEC',
+      'CREATE_NOTEBOOK_SPEC',
       'ENTER_EDIT_MODE',
       'GET_DASHBOARD_INFO',
       'GET_LAYOUT',
+      'GET_NOTEBOOK_SPEC',
       'GET_SPEC',
       'LIST_ANNOTATIONS',
       'LIST_PANELS',

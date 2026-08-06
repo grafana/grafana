@@ -1,8 +1,13 @@
 /**
- * GET_SPEC — return the whole dashboard as a single v2 DashboardSpec, the read
+ * GET_SPEC — return the whole dashboard as a single v2 `DashboardSpec`, the read
  * half of the full-spec surface (paired with APPLY_SPEC). A thin wrapper over
  * `transformSceneToSaveModelSchemaV2`, so it always reflects the canonical save
  * model.
+ *
+ * Dashboard-only. A notebook is refused, with GET_NOTEBOOK_SPEC named in the
+ * error: one command, one spec. Answering both would mean describing two schemas
+ * and a rule for choosing between them, and the dashboard serializer cannot
+ * produce a notebook anyway — it drops every narrative cell.
  */
 
 import * as z from 'zod';
@@ -10,7 +15,7 @@ import * as z from 'zod';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
-import { readOnly, type MutationCommand } from './types';
+import { requiresDashboardResource, type MutationCommand } from './types';
 
 const getSpecPayloadSchema = z
   .object({
@@ -18,7 +23,7 @@ const getSpecPayloadSchema = z
       .boolean()
       .optional()
       .default(false)
-      .describe('When true, validate the serialized spec against the v2 schema and fail if it is invalid.'),
+      .describe('When true, validate the serialized spec against its schema and fail if it is invalid.'),
   })
   .strict();
 
@@ -26,10 +31,13 @@ export type GetSpecPayload = z.infer<typeof getSpecPayloadSchema>;
 
 export const getSpecCommand: MutationCommand<GetSpecPayload> = {
   name: 'GET_SPEC',
-  description: 'Return the entire dashboard as a v2 DashboardSpec JSON object.',
+  description:
+    'Return the entire dashboard as one v2 DashboardSpec JSON object: settings, variables, ' +
+    'annotations, panels and the nested rows/tabs layout. Dashboards only: on a notebook it is ' +
+    'refused, and GET_NOTEBOOK_SPEC is the command to use.',
 
   payloadSchema: getSpecPayloadSchema,
-  permission: readOnly,
+  permission: requiresDashboardResource,
   readOnly: true,
 
   handler: async (payload, context) => {

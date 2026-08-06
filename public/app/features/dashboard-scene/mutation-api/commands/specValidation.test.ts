@@ -61,6 +61,8 @@ function makeSceneContext(): MutationContext {
     activateSidebar: jest.fn(),
     serializer: {
       getK8SMetadata: () => ({ name: 'dash-uid', generation: 1, creationTimestamp: '2026-01-01T00:00:00Z' }),
+      // The rebuild reseeds the element map, so a stub that omits this fails the apply.
+      initializeElementMapping: jest.fn(),
     },
     setState: jest.fn(),
   };

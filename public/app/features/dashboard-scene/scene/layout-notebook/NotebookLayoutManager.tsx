@@ -10,7 +10,11 @@ import {
   type SceneObjectState,
   type VizPanel,
 } from '@grafana/scenes';
-import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
+import {
+  type CellKind,
+  type NotebookLayoutItemKind,
+  type NotebookLayoutKind,
+} from '@grafana/schema/apis/notebook/v2beta1';
 import { useStyles2 } from '@grafana/ui';
 
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
@@ -74,6 +78,39 @@ export class NotebookLayoutManager
   // intentionally invisible to the rest of the scene (query runner, edit tooling).
   public getVizPanels(): VizPanel[] {
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
+  }
+
+  // The panels this layout places, keyed by the element name it currently holds for each.
+  //
+  // The notebook transformer uses this to resolve a panel cell's reference through the same lookup
+  // that keys the elements map, instead of trusting the name held here. The two agree for whatever
+  // was loaded and nothing keeps them agreeing afterwards: a name the serializer's element map does
+  // not know falls back to `panel-<id>` on the elements side while this side keeps the original, and
+  // the cell ends up referencing an element that is not in the spec.
+  public getPanelCells(): Record<string, VizPanel> {
+    const panels: Record<string, VizPanel> = {};
+    for (const cell of this.state.cells) {
+      if (cell.state.body) {
+        panels[cell.state.elementName] = cell.state.body;
+      }
+    }
+    return panels;
+  }
+
+  // Narrative cells are exactly the elements getVizPanels() cannot report, so the notebook
+  // transformer asks for them separately and merges the two. Without them a spec carries
+  // `layout.spec.cells` entries pointing at elements that are not there.
+  //
+  // Notebook-specific on purpose: the dashboard layout contract knows nothing about this, because a
+  // dashboard has no elements that are not panels.
+  public getNonPanelElements(): Record<string, CellKind> {
+    const elements: Record<string, CellKind> = {};
+    for (const cell of this.state.cells) {
+      if (cell.state.content) {
+        elements[cell.state.elementName] = { kind: 'Cell', spec: { content: cell.state.content } };
+      }
+    }
+    return elements;
   }
 
   // Editing (add/reorder/remove) is out of scope for the POC; these satisfy the

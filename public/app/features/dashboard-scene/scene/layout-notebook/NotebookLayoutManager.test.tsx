@@ -64,4 +64,45 @@ describe('NotebookLayoutManager', () => {
 
     expect(result.kind).toBe('NotebookLayout');
   });
+
+  // Still the notebook's own source of narrative elements, even though the notebook now has its own
+  // transformer: `transformSceneToNotebookSaveModel` asks the layout for these (through
+  // `getNotebookCellElements`) rather than deriving them, because `getVizPanels()` cannot report a
+  // markdown or code cell and only the manager knows what it holds. Where it moved to is the
+  // dashboard serializer no longer needing to know that some layouts own elements it cannot see.
+  describe('getNonPanelElements', () => {
+    it('reports markdown and code cells keyed by element name', () => {
+      const manager = new NotebookLayoutManager({
+        cells: [
+          new NotebookCellItem({
+            elementName: 'intro',
+            source: 'assistant',
+            content: { kind: 'Markdown', spec: { text: '## Findings' } },
+          }),
+          new NotebookCellItem({
+            elementName: 'repro',
+            source: 'user',
+            content: { kind: 'Code', spec: { language: 'promql', code: 'up' } },
+          }),
+        ],
+      });
+
+      expect(manager.getNonPanelElements()).toEqual({
+        intro: { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: '## Findings' } } } },
+        repro: { kind: 'Cell', spec: { content: { kind: 'Code', spec: { language: 'promql', code: 'up' } } } },
+      });
+    });
+
+    it('skips panel cells, which the transformer already gets from getVizPanels', () => {
+      const manager = new NotebookLayoutManager({
+        cells: [new NotebookCellItem({ elementName: 'panel-1', source: 'assistant' })],
+      });
+
+      expect(manager.getNonPanelElements()).toEqual({});
+    });
+
+    it('returns an empty map for an empty notebook', () => {
+      expect(new NotebookLayoutManager({ cells: [] }).getNonPanelElements()).toEqual({});
+    });
+  });
 });
