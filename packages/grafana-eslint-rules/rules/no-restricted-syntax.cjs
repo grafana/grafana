@@ -33,9 +33,11 @@ module.exports = createNoRestrictedSyntax(
       'Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.',
   },
   {
+    /* eslint-disable @grafana/no-gf-form -- logic that implements the rule itself */
     name: 'no-gf-form',
     selector: 'Literal[value=/gf-form/], TemplateElement[value.cooked=/gf-form/]',
     message: 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.',
+    /* eslint-enable @grafana/no-gf-form */
   },
   {
     name: 'no-config-apps',
