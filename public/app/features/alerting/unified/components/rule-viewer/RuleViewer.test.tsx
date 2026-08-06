@@ -411,6 +411,15 @@ describe('RuleViewer', () => {
       ]);
     });
 
+    /**
+     * The badge only appears once the Alertmanager query resolves, so checking for its absence
+     * straight after render could pass before the response is even delivered. Waiting out the
+     * findBy timeout gives the badge every chance to show up first.
+     */
+    const expectNoInhibitedBadge = async () => {
+      await expect(screen.findByText('Inhibited')).rejects.toThrow();
+    };
+
     it('should show "Inhibited" state in the title when the rule has inhibited instances', async () => {
       setAlertmanagerAlertsHandler([
         mockAlertmanagerAlert({
@@ -429,9 +438,7 @@ describe('RuleViewer', () => {
 
       await renderRuleViewer(mockRule, mockRuleIdentifier);
 
-      // wait for the page to settle
-      await screen.findByText('Test alert');
-      expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
+      await expectNoInhibitedBadge();
     });
 
     it('should not show "Inhibited" when inhibited alerts belong to a different rule', async () => {
@@ -444,8 +451,7 @@ describe('RuleViewer', () => {
 
       await renderRuleViewer(mockRule, mockRuleIdentifier);
 
-      await screen.findByText('Test alert');
-      expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
+      await expectNoInhibitedBadge();
     });
 
     it('should not show "Inhibited" for unprocessed instances of the rule', async () => {
@@ -458,8 +464,7 @@ describe('RuleViewer', () => {
 
       await renderRuleViewer(mockRule, mockRuleIdentifier);
 
-      await screen.findByText('Test alert');
-      expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
+      await expectNoInhibitedBadge();
     });
 
     it('should not show a stale "Inhibited" badge while re-fetching after the rule is no longer inhibited', async () => {

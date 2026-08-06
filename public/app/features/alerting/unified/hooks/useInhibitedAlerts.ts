@@ -8,8 +8,8 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 /**
  * Fetches the full list of currently inhibited alerts from the Grafana Alertmanager.
  *
- * This is intentionally unfiltered so the result is shared via RTK Query's cache
- * across all consumers, avoiding per-rule network requests.
+ * The request is intentionally not scoped to a single rule, so the result is shared via
+ * RTK Query's cache across all consumers, avoiding per-rule network requests.
  *
  * Only runs for the Grafana-managed alertmanager.
  */
