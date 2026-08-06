@@ -305,6 +305,19 @@ describe('instanceSettings', () => {
         setTemplateSrv(templateSrv);
       });
 
+      it('resolves a name that contains $ but is not a variable through the plain lookup', async () => {
+        // The shared templateSrv mock returns unknown values unchanged, so
+        // interpolation is a no-op and the lookup must fall through. The variable
+        // wrapper would carry the ref string as uid and a rawRef; the genuine
+        // settings carry neither.
+        const dollar = ds({ id: 9, uid: 'uid-dollar', name: 'cost$db' });
+        initDataSourceInstanceSettings({ ...fixtures, [dollar.name]: dollar }, 'Bravo');
+
+        const result = await getDataSourceInstanceSettings('cost$db');
+        expect(result?.uid).toBe('uid-dollar');
+        expect(result?.rawRef).toBeUndefined();
+      });
+
       it('interpolates a variable that is not at the start of the ref', async () => {
         setTemplateSrv({
           ...templateSrv,
