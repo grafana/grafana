@@ -259,7 +259,7 @@ func TestSQLiteWALDefault(t *testing.T) {
 		assert.Contains(t, dbCfg.ConnectionString, "_journal_mode=WAL")
 	})
 
-	t.Run("WAL disabled omits journal_mode from SQLite connection string", func(t *testing.T) {
+	t.Run("WAL disabled sets journal_mode DELETE to revert persisted WAL", func(t *testing.T) {
 		dbCfg := &DatabaseConfig{
 			Type:       migrator.SQLite,
 			Path:       filepath.Join(t.TempDir(), "grafana_test.db"),
@@ -269,5 +269,6 @@ func TestSQLiteWALDefault(t *testing.T) {
 		cfg := &setting.Cfg{}
 		require.NoError(t, dbCfg.buildConnectionString(cfg, nil))
 		assert.NotContains(t, dbCfg.ConnectionString, "_journal_mode=WAL")
+		assert.Contains(t, dbCfg.ConnectionString, "_journal_mode=DELETE")
 	})
 }

@@ -475,7 +475,7 @@ Defaults to `private`.
 
 For "sqlite3" only. Setting to enable/disable [Write-Ahead Logging](https://sqlite.org/wal.html). The default value is `true` (enabled).
 
-WAL mode significantly reduces "database is locked" errors under concurrent load. Set to `false` if your SQLite database file resides on a network-mounted volume (NFS, EFS, CIFS), as WAL requires file locking that most network filesystems do not support reliably.
+WAL mode significantly reduces "database is locked" errors under concurrent load. Set to `false` if your SQLite database file resides on a network-mounted volume (NFS, EFS, CIFS), as WAL requires file locking that most network filesystems do not support reliably. When set to `false`, Grafana explicitly sets `journal_mode=DELETE` so a database that was previously opened with WAL is reverted (SQLite otherwise persists WAL mode on the database file).
 
 #### `query_retries`
 
