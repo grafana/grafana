@@ -12,6 +12,7 @@ import {
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+import { dashboardEditActions } from '../actions/dashboardEditActions';
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -29,7 +30,6 @@ import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardOutline } from './outline/DashboardOutline';
-import { dashboardEditActions } from './shared';
 import { type DashboardSidebarLike } from './types';
 
 jest.mock('@grafana/runtime', () => ({

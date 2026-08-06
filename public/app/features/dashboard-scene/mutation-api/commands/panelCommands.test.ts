@@ -31,8 +31,8 @@ jest.mock('@grafana/data', () => {
   };
 });
 
-jest.mock('../../sidebar/shared', () => {
-  const actual = jest.requireActual('../../sidebar/shared');
+jest.mock('../../actions/dashboardEditActions', () => {
+  const actual = jest.requireActual('../../actions/dashboardEditActions');
   return {
     ...actual,
     dashboardEditActions: {

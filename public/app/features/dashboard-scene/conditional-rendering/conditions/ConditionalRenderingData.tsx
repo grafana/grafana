@@ -14,7 +14,7 @@ import {
 import { type ConditionalRenderingDataKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../sidebar/shared';
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';

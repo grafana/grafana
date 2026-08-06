@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type QueryVariable, type VariableValueOption, type VariableValueOptionProperties } from '@grafana/scenes';
 import { Alert, Button, Modal, Spinner, Stack, Tab, TabsBar, Text, useSplitter, useStyles2 } from '@grafana/ui';
-import { dashboardEditActions } from 'app/features/dashboard-scene/sidebar/shared';
+import { dashboardEditActions } from 'app/features/dashboard-scene/actions/dashboardEditActions';
 import {
   type StaticOptionsOrderType,
   type StaticOptionsType,

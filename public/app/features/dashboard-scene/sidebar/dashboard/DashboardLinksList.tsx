@@ -6,10 +6,10 @@ import { t, Trans } from '@grafana/i18n';
 import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema/dist/esm/index.gen';
 import { Box, Button } from '@grafana/ui';
 
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddLinkPane, openEditLinkPane } from '../../settings/links/LinkAddEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
-import { dashboardEditActions } from '../shared';
 
 import { DraggableList } from './DraggableList';
 

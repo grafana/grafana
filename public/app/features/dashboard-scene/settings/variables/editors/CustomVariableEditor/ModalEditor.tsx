@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { CustomVariable } from '@grafana/scenes';
 import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana/ui';
-import { dashboardEditActions } from 'app/features/dashboard-scene/sidebar/shared';
+import { dashboardEditActions } from 'app/features/dashboard-scene/actions/dashboardEditActions';
 
 import { ValuesFormatSelector } from '../../components/CustomVariableForm';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';

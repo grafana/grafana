@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../sidebar/shared';
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { DashboardInteractions } from '../../utils/interactions';
 import { type GroupConditionConditionType } from '../group/types';
 

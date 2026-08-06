@@ -21,6 +21,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { type BulkActionElement } from '../../scene/types/BulkActionElement';
@@ -36,7 +37,6 @@ import {
   restoreUnshadowedPredefinedVariables,
   validateVariableName,
 } from '../../settings/variables/utils';
-import { dashboardEditActions } from '../../sidebar/shared';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 import { DashboardInteractions } from '../../utils/interactions';
