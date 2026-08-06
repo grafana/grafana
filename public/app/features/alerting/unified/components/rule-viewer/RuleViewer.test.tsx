@@ -448,6 +448,20 @@ describe('RuleViewer', () => {
       expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
     });
 
+    it('should not show "Inhibited" for unprocessed instances of the rule', async () => {
+      setAlertmanagerAlertsHandler([
+        mockAlertmanagerAlert({
+          labels: { __alert_rule_uid__: grafanaRulerRule.grafana_alert.uid, alertname: 'Test alert' },
+          status: { state: AlertState.Unprocessed, silencedBy: [], inhibitedBy: [] },
+        }),
+      ]);
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier);
+
+      await screen.findByText('Test alert');
+      expect(screen.queryByText('Inhibited')).not.toBeInTheDocument();
+    });
+
     it('should not show a stale "Inhibited" badge while re-fetching after the rule is no longer inhibited', async () => {
       // Seed the cache: the rule currently has an inhibited instance, so the badge shows.
       setAlertmanagerAlertsHandler([
