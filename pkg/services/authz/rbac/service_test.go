@@ -421,6 +421,74 @@ func TestService_checkPermission(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should allow reading a notebook via a folder permission",
+			permissions: []accesscontrol.Permission{
+				{
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: new("parent")},
+			},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "notebooks",
+				Name:         "some_notebook",
+				ParentFolder: "child",
+			},
+			expected: true,
+		},
+		{
+			name: "should deny reading a notebook when the folder permission is on an unrelated folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Scope:      "folders:uid:other",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "other",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: new("parent")},
+				{UID: "other"},
+			},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "notebooks",
+				Name:         "some_notebook",
+				ParentFolder: "child",
+			},
+			expected: false,
+		},
+		{
+			// A per-object dashboard grant must not authorize a same-named notebook: notebooks
+			// keep their own notebooks:uid: scope, so dashboard object grants never bleed in.
+			name: "should deny a notebook when only a same-named dashboard object grant exists",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "dashboards:uid:nb1",
+					Kind:       "dashboards",
+					Attribute:  "uid",
+					Identifier: "nb1",
+				},
+			},
+			check: checkRequest{
+				Action:   "dashboards:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "notebooks",
+				Name:     "nb1",
+			},
+			expected: false,
+		},
+		{
 			name: "should allow querying a datasource",
 			permissions: []accesscontrol.Permission{
 				{
