@@ -149,6 +149,17 @@ func TestDenseEmbedder_EmbedText_PropagatesError(t *testing.T) {
 	require.Error(t, err)
 }
 
+// A failed batch still reports tokens billed by its successful chunks.
+func TestDenseEmbedder_EmbedText_PartialFailureReportsTokens(t *testing.T) {
+	c := &fakeClient{dim: 4, tokens: 7, failAfter: 2}
+	e := NewDenseEmbedder(c, "m", 4, 1) // batch size 1: 3 texts = 3 chunks, 2nd fails
+	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: []string{"a", "b", "c"}})
+	require.Error(t, err)
+	assert.Empty(t, out.Embeddings)
+	// two chunks succeeded before/around the failure; their 14 tokens were billed
+	assert.Equal(t, 14, out.InputTokens)
+}
+
 func TestDenseEmbedder_EmbedText_SumsTokensAcrossChunks(t *testing.T) {
 	fc := &fakeClient{dim: 3, failAfter: -1, tokens: 7}
 	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)

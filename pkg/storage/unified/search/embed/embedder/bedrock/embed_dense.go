@@ -68,7 +68,8 @@ func (e *DenseEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextI
 		return out, nil
 	})
 	if err != nil {
-		return embedder.EmbedTextOutput{}, err
+		// Successful chunks were still billed; surface their tokens with the error.
+		return embedder.EmbedTextOutput{InputTokens: int(tokens.Load())}, err
 	}
 	return embedder.EmbedTextOutput{Embeddings: results, InputTokens: int(tokens.Load())}, nil
 }

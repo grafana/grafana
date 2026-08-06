@@ -144,7 +144,7 @@ func (i *instrumentedTextEmbedder) EmbedText(ctx context.Context, input EmbedTex
 			time.Since(start).Seconds(),
 		)
 	}
-	// InputTokens is 0 on error, so no err check needed.
+	// Counted even on error: a failed batch's successful chunks were still billed.
 	if i.tokensTotal != nil && out.InputTokens > 0 {
 		i.tokensTotal.WithLabelValues(i.model, string(input.Task)).Add(float64(out.InputTokens))
 	}
