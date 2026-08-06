@@ -14,6 +14,7 @@ import { TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
+  useContentAwareWidths,
   useFlatRowHeight,
   useFilteredRows,
   useHeaderHeight,
@@ -22,6 +23,7 @@ import {
   useScrollbarWidth,
   useSortedRows,
   useRowCompiler,
+  useTypographyCtx,
 } from './hooks';
 import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
 import {
@@ -34,8 +36,6 @@ import {
 } from './types';
 import {
   calculateFooterHeight,
-  createTypographyContext,
-  extractPixelValue,
   getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
@@ -152,15 +152,7 @@ export function TableFlat(props: TableNGProps) {
   );
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
-  const typographyCtx = useMemo(
-    () =>
-      createTypographyContext(
-        theme.typography.fontSize,
-        theme.typography.fontFamily,
-        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize
-      ),
-    [theme]
-  );
+  const typographyCtx = useTypographyCtx();
 
   const frozenColumns = _frozenColumns;
 
@@ -178,30 +170,13 @@ export function TableFlat(props: TableNGProps) {
 
   prevConfiguredWidthCount.current = configuredWidthCount;
 
-  const headerTypographyCtx = useMemo(
-    () =>
-      createTypographyContext(
-        theme.typography.fontSize,
-        theme.typography.fontFamily,
-        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
-        theme.typography.fontWeightMedium
-      ),
-    [theme]
-  );
-
-  const contentAwareWidths = useMemo(
-    () =>
-      contentAwareWidthsEnabled
-        ? {
-            typographyCtx,
-            headerTypographyCtx,
-            showTypeIcons: showTypeIcons ?? false,
-            getActions: getCellActions,
-            sortColumns,
-          }
-        : undefined,
-    [contentAwareWidthsEnabled, typographyCtx, headerTypographyCtx, showTypeIcons, getCellActions, sortColumns]
-  );
+  const contentAwareWidths = useContentAwareWidths({
+    enabled: contentAwareWidthsEnabled,
+    typographyCtx,
+    showTypeIcons,
+    getActions: getCellActions,
+    sortColumns,
+  });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
     visibleFields,

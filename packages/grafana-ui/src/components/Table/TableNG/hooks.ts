@@ -28,6 +28,7 @@ import {
 } from '@grafana/react-data-grid';
 import { type MatcherScope } from '@grafana/schema';
 
+import { useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
 import { CELL_HORIZONTAL_CHROME, HEADER_ICON_SPACE, TABLE } from './constants';
@@ -55,6 +56,8 @@ import {
   buildCellHeightMeasurers,
   applyFilter,
   compileFrameToRecords,
+  createTypographyContext,
+  extractPixelValue,
 } from './utils';
 
 export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
@@ -732,6 +735,63 @@ export interface ContentAwareWidths {
 
 const pickColWidths = (fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>
   contentAware ? computeContentAwareColWidths(fields, availWidth, contentAware) : computeColWidths(fields, availWidth);
+
+/**
+ * Typography context for measuring body text, derived from the current theme.
+ */
+export function useTypographyCtx(): TypographyCtx {
+  const theme = useTheme2();
+  return useMemo(
+    () =>
+      createTypographyContext(
+        theme.typography.fontSize,
+        theme.typography.fontFamily,
+        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize
+      ),
+    [theme]
+  );
+}
+
+interface UseContentAwareWidthsOptions {
+  enabled: boolean;
+  typographyCtx: TypographyCtx;
+  showTypeIcons?: boolean;
+  getActions?: GetActionsFunctionLocal;
+  sortColumns?: SortColumn[];
+}
+
+/**
+ * Assembles the {@link ContentAwareWidths} options for the column width hooks, or `undefined` when
+ * content-aware widths are disabled. Header labels render at medium weight, so they are measured
+ * with a separate typography context.
+ */
+export function useContentAwareWidths({
+  enabled,
+  typographyCtx,
+  showTypeIcons = false,
+  getActions,
+  sortColumns,
+}: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
+  const theme = useTheme2();
+  return useMemo(
+    () =>
+      enabled
+        ? {
+            typographyCtx,
+            headerTypographyCtx: createTypographyContext(
+              theme.typography.fontSize,
+              theme.typography.fontFamily,
+              extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
+              theme.typography.fontWeightMedium
+            ),
+            showTypeIcons,
+            getActions,
+            sortColumns,
+          }
+        : undefined,
+    [enabled, theme, typographyCtx, showTypeIcons, getActions, sortColumns]
+  );
+}
 
 interface UseNestedColWidthsOptions {
   nestedVisibleFields: Field[];
