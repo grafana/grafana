@@ -465,7 +465,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
         } else {
           dismiss();
         }
-      } else if (event.key === 'Enter' && proposal) {
+      } else if (event.key === 'Enter' && proposal && !feedback) {
         event.preventDefault();
         accept();
       }
@@ -680,7 +680,12 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
       )}
       {isAssistantAvailable && fallback && (
         <Stack direction="column" gap={1}>
-          <Text variant="bodySmall">{fallback.reason}</Text>
+          <Text variant="bodySmall">
+            <Trans i18nKey="query-editor-coauthoring.handoff-guidance">
+              This change may need to span other data sources or queries outside the one in focus. Continue in
+              Assistant to make larger changes.
+            </Trans>
+          </Text>
           <Text variant="bodySmall" color="secondary" italic>
             <Trans i18nKey="query-editor-coauthoring.unsaved-safe">Your unsaved panel edits will not be lost.</Trans>
           </Text>

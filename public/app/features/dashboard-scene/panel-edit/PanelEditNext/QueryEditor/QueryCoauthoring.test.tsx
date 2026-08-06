@@ -411,7 +411,7 @@ describe('QueryCoauthoring', () => {
       request.onComplete('');
     });
 
-    expect(screen.getByText('This change spans other queries.')).toBeInTheDocument();
+    expect(screen.getByText(/may need to span other data sources or queries/i)).toBeInTheDocument();
     expect(screen.getByText(/unsaved panel edits will not be lost/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Continue with Assistant' }));
@@ -510,6 +510,31 @@ describe('QueryCoauthoring', () => {
     } finally {
       document.removeEventListener('keydown', propagatedKeyDown);
     }
+  });
+
+  it('keeps Enter available for multiline feedback instead of accepting the proposal', async () => {
+    const { user, onAccept, dismissInvocation } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'increase(http_requests_total[5m])',
+        why: ['Returns the increase over the selected range.'],
+      });
+      request.onComplete('');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Not helpful' }));
+    const feedbackInput = screen.getByRole('textbox', { name: 'Share feedback' });
+    await user.type(feedbackInput, 'The grouping is wrong.{enter}I expected handler.');
+
+    expect(feedbackInput).toHaveValue('The grouping is wrong.\nI expected handler.');
+    expect(screen.getByRole('dialog', { name: 'What went wrong?' })).toBeInTheDocument();
+    expect(onAccept).not.toHaveBeenCalled();
+    expect(dismissInvocation).not.toHaveBeenCalled();
   });
 
   it('surfaces request errors with retry and dismissal paths', async () => {
