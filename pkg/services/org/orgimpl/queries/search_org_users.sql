@@ -35,7 +35,7 @@ WHERE org_user.org_id = {{ .Arg .OrgID }}
 {{ end -}}
 ORDER BY
 {{ if .Sorts -}}
-  {{ range $index, $sort := .Sorts }}{{ if $index }}, {{ end }}{{ $sort }}{{ end }}
+  {{ range $index, $sort := .Sorts }}{{ if $index }}, {{ end }}{{ if eq $sort "login_asc" }}u.login ASC{{ else if eq $sort "login_desc" }}u.login DESC{{ else if eq $sort "email_asc" }}u.email ASC{{ else if eq $sort "email_desc" }}u.email DESC{{ else if eq $sort "name_asc" }}u.name ASC{{ else if eq $sort "name_desc" }}u.name DESC{{ else if eq $sort "last_seen_at_asc" }}u.last_seen_at ASC{{ else if eq $sort "last_seen_at_desc" }}u.last_seen_at DESC{{ end }}{{ end }}
 {{ else -}}
   u.login ASC, u.email ASC
 {{ end -}}

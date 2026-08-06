@@ -35,8 +35,6 @@ var (
 	deleteRoleByNameTemplate           = mustTemplate("delete_role_by_name.sql")
 	getUserByIDTemplate                = mustTemplate("get_user_by_id.sql")
 	getUserOrgListTemplate             = mustTemplate("get_user_org_list.sql")
-	getUserOrgByUserAndOrgTemplate     = mustTemplate("get_user_org_by_user_and_org.sql")
-	getUserOrgsByUserTemplate          = mustTemplate("get_user_orgs_by_user.sql")
 	searchOrgUsersTemplate             = mustTemplate("search_org_users.sql")
 	countSearchOrgUsersTemplate        = mustTemplate("count_search_org_users.sql")
 	searchOrgUsersByEmailsTemplate     = mustTemplate("search_org_users_by_emails.sql")
