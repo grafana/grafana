@@ -214,7 +214,7 @@ func (a AppInstaller) AddToScheme(scheme *runtime.Scheme) error {
 }
 
 // registerListConversions adds bidirectional v0alpha1 ↔ v1beta1 list conversion functions to
-// the scheme for all five notification resource types.
+// the scheme for every notification resource type.
 func registerListConversions(scheme *runtime.Scheme) error {
 	// Individual item types have identical memory layouts between v0alpha1 and v1beta1,
 	// so we reinterpret each item pointer directly — the same approach used by conversion-gen
@@ -226,6 +226,36 @@ func registerListConversions(scheme *runtime.Scheme) error {
 		convertFn conversion.ConversionFunc
 	}
 	pairs := []convPair{
+		{
+			(*v0alpha1.ConfigList)(nil), (*v1beta1.ConfigList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				inList := in.(*v0alpha1.ConfigList)
+				outList := out.(*v1beta1.ConfigList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v1beta1.Config, len(inList.Items))
+				itemGVK := v1beta1.ConfigKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v1beta1.Config)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
+				return nil
+			},
+		},
+		{
+			(*v1beta1.ConfigList)(nil), (*v0alpha1.ConfigList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				inList := in.(*v1beta1.ConfigList)
+				outList := out.(*v0alpha1.ConfigList)
+				inList.ListMeta.DeepCopyInto(&outList.ListMeta)
+				outList.Items = make([]v0alpha1.Config, len(inList.Items))
+				itemGVK := v0alpha1.ConfigKind().GroupVersionKind()
+				for i := range inList.Items {
+					outList.Items[i] = *(*v0alpha1.Config)(unsafe.Pointer(&inList.Items[i])) // #nosec G103
+					outList.Items[i].SetGroupVersionKind(itemGVK)
+				}
+				return nil
+			},
+		},
 		{
 			(*v0alpha1.ReceiverList)(nil), (*v1beta1.ReceiverList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
