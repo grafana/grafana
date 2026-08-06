@@ -11,6 +11,7 @@ type GitRepository interface {
 	repository.Versioned
 	repository.Writer
 	repository.SizeLimitedReader
+	repository.HashReader
 	repository.StageableRepository
 	repository.BranchHandler
 	URL() string

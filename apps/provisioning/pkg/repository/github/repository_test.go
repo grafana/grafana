@@ -111,6 +111,26 @@ func TestNewGitHub(t *testing.T) {
 	}
 }
 
+func TestGitHubRepositorySupportsHashReads(t *testing.T) {
+	ctx := context.Background()
+	expected := &repo.FileInfo{
+		Path: "dashboards/test.json",
+		Ref:  "main",
+		Hash: "abcdef",
+		Data: []byte("dashboard"),
+	}
+	gitRepo := git.NewMockGitRepository(t)
+	gitRepo.EXPECT().ReadByHash(ctx, expected.Path, expected.Ref, expected.Hash).Return(expected, nil)
+	githubRepo := &githubRepository{GitRepository: gitRepo}
+
+	hashReader, ok := any(githubRepo).(repo.HashReader)
+	require.True(t, ok)
+
+	actual, err := hashReader.ReadByHash(ctx, expected.Path, expected.Ref, expected.Hash)
+	require.NoError(t, err)
+	require.Same(t, expected, actual)
+}
+
 func TestParseOwnerRepoGithub(t *testing.T) {
 	tests := []struct {
 		name          string
