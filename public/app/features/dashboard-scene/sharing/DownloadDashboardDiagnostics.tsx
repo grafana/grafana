@@ -247,7 +247,7 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
       >
         <Trans i18nKey="dashboard.diagnostics.size-limit-warning-body">
           A response that&apos;s too large has its captured query data truncated to keep the bundle a manageable
-          size. The archive records when and where that happened.
+          size.
         </Trans>
       </Alert>
 
