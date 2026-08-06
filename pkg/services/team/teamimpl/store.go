@@ -40,21 +40,6 @@ type xormStore struct {
 
 var _ store = (*xormStore)(nil)
 
-// quoteTable resolves a table name and quotes it for use in a raw SQL string.
-// Resolved names may be schema-qualified, so they are quoted with db.DB.Quote,
-// which quotes each dotted part separately.
-//
-// Names passed to XORM instead (sess.Table, sess.Join) must be resolved but not
-// quoted, because XORM quotes them itself. Call dbHelper.Table directly there.
-// Locals holding a quoted name are prefixed with q.
-//
-// In raw SQL, columns reference tables by their unqualified name (team.x,
-// team_member.x) without a self-alias: a qualified reference already exposes
-// its unqualified name as the correlation name.
-func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
-	return dbHelper.DB.Quote(dbHelper.Table(name))
-}
-
 func getFilteredUsers(signedInUser identity.Requester, hiddenUsers map[string]struct{}) []string {
 	filteredUsers := make([]string, 0, len(hiddenUsers))
 	if signedInUser == nil || signedInUser.IsNil() || signedInUser.GetIsGrafanaAdmin() {
