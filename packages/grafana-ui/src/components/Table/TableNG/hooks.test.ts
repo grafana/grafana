@@ -1428,6 +1428,25 @@ describe('TableNG hooks', () => {
       expect(after[1]).toBeGreaterThan(before[1]);
     });
 
+    it('preserves a manual nested resize across a panel resize before it persists to config', () => {
+      const fields = makeFields(['a', 'b']); // configured width 100 each
+      const { result, rerender } = renderHook(
+        ({ availableWidth }: { availableWidth: number }) =>
+          useNestedColWidths({ nestedVisibleFields: fields, availableWidth }),
+        { initialProps: { availableWidth: 300 } }
+      );
+
+      // user drags column 'a' — local widths update immediately; config persists later on pointer-up.
+      act(() => {
+        result.current.handleNestedColumnWidthsChange(new Map([['a', { type: 'resized', width: 250 }]]));
+      });
+      expect(result.current.nestedFieldWidths[0]).toBe(250);
+
+      // a panel resize lands before the drag persists — it must not overwrite the in-progress resize.
+      rerender({ availableWidth: 600 });
+      expect(result.current.nestedFieldWidths[0]).toBe(250);
+    });
+
     it('handleNestedColumnWidthsChange updates nestedFieldWidths and nestedColWidths', () => {
       const fields = makeFields(['a', 'b']);
       const { result } = renderHook(() => useNestedColWidths({ nestedVisibleFields: fields, availableWidth: 300 }));

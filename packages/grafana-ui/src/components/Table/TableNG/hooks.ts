@@ -762,22 +762,30 @@ export function useNestedColWidths({
   );
 
   const [nestedFieldWidths, setNestedFieldWidths] = useState(() => configuredWidths);
+  // Previous config-derived widths, so we can tell which columns actually changed upstream.
+  const prevConfiguredWidths = useRef(configuredWidths);
 
-  // Sync the widths from config whenever they change — i.e. on structure changes and, crucially, on
+  // Re-sync from config-derived widths whenever they change — structure changes and, crucially,
   // panel resize (availableWidth feeds configuredWidths), so content-aware auto columns re-flow to
-  // the new width. Manual resizes persist to field config, so they survive this re-sync; only the
-  // auto columns actually move. Bail out when nothing changed to avoid a needless render.
+  // the new width. We adopt a column's new width only when its *config-derived* width changed; a
+  // column that changed only locally (an in-progress manual drag, which persists to field config
+  // later on pointer-up) keeps its local width, so an interleaved resize doesn't clobber the drag.
   useEffect(() => {
-    setNestedFieldWidths((prev) => {
-      if (prev.length !== configuredWidths.length) {
+    const prevConfigured = prevConfiguredWidths.current;
+    prevConfiguredWidths.current = configuredWidths;
+    setNestedFieldWidths((current) => {
+      if (current.length !== configuredWidths.length) {
         return configuredWidths;
       }
-      for (let i = 0; i < configuredWidths.length; i++) {
-        if (prev[i] !== configuredWidths[i]) {
-          return configuredWidths;
+      let changed = false;
+      const next = current.map((width, i) => {
+        if (configuredWidths[i] !== prevConfigured[i]) {
+          changed = changed || width !== configuredWidths[i];
+          return configuredWidths[i];
         }
-      }
-      return prev;
+        return width;
+      });
+      return changed ? next : current;
     });
   }, [configuredWidths, structureRev]);
 

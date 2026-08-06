@@ -16,6 +16,7 @@ import {
   type DisplayProcessor,
   isDataFrame,
   reduceField,
+  ReducerID,
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
@@ -1343,6 +1344,10 @@ function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boo
 // gap between a footer reducer's label and its value (theme.spacing(0.5), matches SummaryCell).
 const FOOTER_LABEL_GAP = 4;
 
+// Reducers the footer renders unformatted (raw count), skipping the field's display processor —
+// mirrors SummaryCell so a count on a time/unit column isn't measured as a formatted value.
+const FOOTER_UNFORMATTED_REDUCERS = new Set<string>([ReducerID.count, ReducerID.countAll]);
+
 /**
  * Width a column's footer/summary cell needs. Each configured reducer renders its label (e.g. "Sum")
  * inline with its reduced value, so a column that hugs its body content can truncate a wider footer.
@@ -1363,7 +1368,9 @@ function measureFooterWidth(field: Field, avgCharWidth: number): number {
   for (const id of reducers) {
     const label = fieldReducers.get(id)?.name ?? id;
     const value = results[id];
-    const valueText = value == null ? '' : formatCellValue(field, value);
+    // count/countAll render raw (String), like the footer; everything else goes through display.
+    const valueText =
+      value == null ? '' : FOOTER_UNFORMATTED_REDUCERS.has(id) ? String(value) : formatCellValue(field, value);
     widest = Math.max(widest, (label.length + valueText.length) * avgCharWidth + FOOTER_LABEL_GAP);
   }
   return widest + CELL_HORIZONTAL_CHROME;
@@ -1568,10 +1575,18 @@ export function computeContentAwareColWidths(
   const growTotal = autoIdxs.reduce((sum, i) => sum + growShare(i), 0);
 
   const leftover = availWidth - definedWidth - contentTotal;
+  // Round cumulatively so the auto columns' rounded widths sum to the same total as their exact
+  // widths. Rounding each share independently can push the total a pixel or two past availWidth and
+  // trigger a spurious horizontal scrollbar on a table that should exactly fill the panel.
+  let exactSoFar = 0;
+  let roundedSoFar = 0;
   for (const i of autoIdxs) {
     const contentWidth = contentWidths.get(i)!;
     const grown = leftover > 0 && growTotal > 0 ? contentWidth + leftover * (growShare(i) / growTotal) : contentWidth;
-    widths[i] = Math.round(grown);
+    exactSoFar += grown;
+    const rounded = Math.round(exactSoFar) - roundedSoFar;
+    roundedSoFar += rounded;
+    widths[i] = rounded;
   }
 
   return widths;
