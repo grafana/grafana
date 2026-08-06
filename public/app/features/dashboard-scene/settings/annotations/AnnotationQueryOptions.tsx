@@ -11,7 +11,7 @@ import { updateAnnotationFromSavedQuery } from 'app/features/annotations/utils/s
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
-import { dashboardEditActions } from '../../sidebar/shared';
+import { dashboardEditActions } from '../../actions';
 
 import { type AnnotationLayer } from './AnnotationEditableElement';
 

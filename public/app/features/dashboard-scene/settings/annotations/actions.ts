@@ -4,7 +4,7 @@ import { type AnnotationPanelFilter } from '@grafana/schema/dist/esm/index.gen';
 
 import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { dashboardEditActions } from '../../sidebar/shared';
+import { dashboardEditActions } from '../../actions';
 
 type DataLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 

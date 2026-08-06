@@ -22,7 +22,7 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
-import { dashboardEditActions } from '../../sidebar/shared';
+import { dashboardEditActions } from '../../actions';
 import { cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';

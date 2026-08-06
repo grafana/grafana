@@ -9,7 +9,7 @@ import { Box, Button } from '@grafana/ui';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddLinkPane, openEditLinkPane } from '../../settings/links/LinkAddEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
-import { dashboardEditActions } from '../shared';
+import { dashboardEditActions } from '../../actions';
 
 import { DraggableList } from './DraggableList';
 

@@ -7,7 +7,7 @@ import { type SceneComponentProps, sceneGraph, SceneObjectBase, type SceneObject
 import { type ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Field, Select } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../sidebar/shared';
+import { dashboardEditActions } from '../../actions';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';

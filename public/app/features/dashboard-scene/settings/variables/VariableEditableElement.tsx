@@ -36,7 +36,7 @@ import {
   restoreUnshadowedPredefinedVariables,
   validateVariableName,
 } from '../../settings/variables/utils';
-import { dashboardEditActions } from '../../sidebar/shared';
+import { dashboardEditActions } from '../../actions';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 import { DashboardInteractions } from '../../utils/interactions';

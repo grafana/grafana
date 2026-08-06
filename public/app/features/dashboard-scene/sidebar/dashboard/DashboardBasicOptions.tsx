@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { Input, TextArea } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { dashboardEditActions } from '../shared';
+import { dashboardEditActions } from '../../actions';
 
 export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {
   const { title } = dashboard.useState();

@@ -19,7 +19,7 @@ import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { SourceIcon } from '../settings/ProvisionedControlsSection';
 import { isVariableEditable } from '../settings/variables/utils';
-import { dashboardEditActions } from '../sidebar/shared';
+import { dashboardEditActions } from '../actions';
 import { getPredefinedOrigin } from '../utils/predefinedVariables';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 

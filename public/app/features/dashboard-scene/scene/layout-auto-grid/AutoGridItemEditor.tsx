@@ -4,7 +4,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
-import { dashboardEditActions } from '../../sidebar/shared';
+import { dashboardEditActions } from '../../actions';
 
 import { type AutoGridItem } from './AutoGridItem';
 

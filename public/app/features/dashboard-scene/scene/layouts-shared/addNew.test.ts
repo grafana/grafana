@@ -10,7 +10,7 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
 
-jest.mock('../../sidebar/shared', () => ({
+jest.mock('../../actions', () => ({
   dashboardEditActions: {
     addElement: jest.fn(({ perform }) => {
       perform();
@@ -22,7 +22,6 @@ jest.mock('../../sidebar/shared', () => ({
       perform();
     }),
   },
-  NewObjectAddedToCanvasEvent: jest.fn().mockImplementation(() => ({})),
 }));
 
 function buildScene(body: DashboardScene['state']['body']) {

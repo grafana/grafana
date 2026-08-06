@@ -1,11 +1,11 @@
 import { type FieldConfigSource, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 
-import { dashboardEditActions } from '../sidebar/shared';
+import { dashboardEditActions } from '../actions';
 
 import { createPresetApplyHandler } from './getPanelFrameOptions';
 
-jest.mock('../sidebar/shared', () => ({
+jest.mock('../actions', () => ({
   dashboardEditActions: { edit: jest.fn() },
 }));
 

@@ -13,7 +13,7 @@ import { type ConditionalRenderingGroupKind } from '@grafana/schema/apis/dashboa
 import { Stack } from '@grafana/ui';
 
 import { ConditionalRenderingChangedEvent } from '../../sidebar/events';
-import { dashboardEditActions } from '../../sidebar/shared';
+import { dashboardEditActions } from '../../actions';
 import { getUserDefinedVariables, useUserDefinedVariables } from '../../utils/variables';
 import { ConditionalRenderingData } from '../conditions/ConditionalRenderingData';
 import { ConditionalRenderingTimeRangeSize } from '../conditions/ConditionalRenderingTimeRangeSize';

@@ -13,7 +13,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../sidebar/SectionFiltersList';
 import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../sidebar/SectionVariablesList';
-import { dashboardEditActions } from '../../sidebar/shared';
+import { dashboardEditActions } from '../../actions';
 import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';

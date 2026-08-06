@@ -20,7 +20,7 @@ import { activateFullSceneTree } from '../utils/test-utils';
 
 import { type DashboardSidebar } from './DashboardSidebar';
 import { ElementEditPaneHeader } from './ElementEditPaneHeader';
-import { getEditableElementFor } from './shared';
+import { getEditableElementFor } from '../actions';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),

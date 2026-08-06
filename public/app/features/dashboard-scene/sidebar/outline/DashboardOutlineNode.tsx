@@ -23,7 +23,7 @@ import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
-import { getEditableElementFor } from '../shared';
+import { getEditableElementFor } from '../../actions';
 import { SidebarCategoryType, type DashboardSidebarLike } from '../types';
 import { useOutlineRename } from '../useOutlineRename';
 

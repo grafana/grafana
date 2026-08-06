@@ -3,7 +3,7 @@ import { type DropResult } from '@hello-pangea/dnd';
 import { VariableHide } from '@grafana/data';
 import { type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
 
-import { dashboardEditActions } from '../shared';
+import { dashboardEditActions } from '../../actions';
 
 export interface ListIds {
   visible: string;

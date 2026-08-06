@@ -9,17 +9,6 @@ import { type EditableDashboardElement } from '../scene/types/EditableDashboardE
 import { type DashboardSidebar } from './DashboardSidebar';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 
-export { dashboardEditActions } from '../actions';
-export { getEditableElementFor } from '../actions/utils/getEditableElementFor';
-export type {
-  AddElementActionHelperProps,
-  AddVariableActionHelperProps,
-  ChangeVariableTypeActionHelperProps,
-  MoveElementActionHelperProps,
-  RemoveElementActionHelperProps,
-  RemoveVariableActionHelperProps,
-} from '../actions/utils/types';
-
 export const SIDEBAR_COLLAPSED_KEY = 'grafana.dashboards.sidebar.isCollapsed';
 
 export function useSidebarCollapsed() {

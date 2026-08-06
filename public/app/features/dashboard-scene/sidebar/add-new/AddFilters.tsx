@@ -6,7 +6,7 @@ import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import { getNextAvailableId, getVariableNamePrefix, getVariableScene } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
-import { dashboardEditActions } from '../shared';
+import { dashboardEditActions } from '../../actions';
 
 import { AddButton } from './AddButton';
 
