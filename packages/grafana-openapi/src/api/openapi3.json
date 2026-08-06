@@ -1276,6 +1276,22 @@
         },
         "description": "(empty)"
       },
+      "getUserPermissionsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getUserTeamsResponse": {
         "content": {
           "application/json": {
@@ -13902,6 +13918,24 @@
         },
         "summary": "Remove team role.",
         "tags": ["access_control", "enterprise"]
+      }
+    },
+    "/access-control/user/permissions": {
+      "get": {
+        "operationId": "getUserPermissions",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getUserPermissionsResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get the signed-in user's permissions, as a map of each action to its scopes.",
+        "tags": ["access_control"]
       }
     },
     "/access-control/users/roles/search": {

@@ -143,6 +143,10 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['access_control', 'enterprise'],
       }),
+      getUserPermissions: build.query<GetUserPermissionsApiResponse, GetUserPermissionsApiArg>({
+        query: () => ({ url: `/access-control/user/permissions` }),
+        providesTags: ['access_control'],
+      }),
       listUsersRoles: build.mutation<ListUsersRolesApiResponse, ListUsersRolesApiArg>({
         query: (queryArg) => ({
           url: `/access-control/users/roles/search`,
@@ -1782,6 +1786,10 @@ export type RemoveTeamRoleApiArg = {
   roleUid: string;
   teamId: number;
 };
+export type GetUserPermissionsApiResponse = /** status 200 (empty) */ {
+  [key: string]: string[];
+};
+export type GetUserPermissionsApiArg = void;
 export type ListUsersRolesApiResponse = /** status 200 (empty) */ {
   [key: string]: RoleDto[];
 };
@@ -5370,6 +5378,8 @@ export const {
   useAddTeamRoleMutation,
   useSetTeamRolesMutation,
   useRemoveTeamRoleMutation,
+  useGetUserPermissionsQuery,
+  useLazyGetUserPermissionsQuery,
   useListUsersRolesMutation,
   useListUserRolesQuery,
   useLazyListUserRolesQuery,

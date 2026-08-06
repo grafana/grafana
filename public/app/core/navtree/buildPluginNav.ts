@@ -14,6 +14,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { appNavConfigFor, type AppNavConfig } from './appNavConfig';
 import { buildStaticNavTree } from './buildStaticNavTree';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
+import { hasScopedAppAccess } from './pluginAccess';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
 import {
   applyAppSubUrl,
@@ -38,8 +39,9 @@ const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, A
  * build:
  * - per-org plugin enablement is not checked (presence in the namespace
  *   counts as enabled)
- * - the plugins.app:access permission is evaluated without its per-plugin
- *   scope
+ * - the plugins.app:access permission falls back to an unscoped evaluation
+ *   when the scoped permissions fetch is unavailable (signed-out, or a
+ *   deployment without the single-tenant /api/access-control routes)
  * - INI standalone-page overrides ([navigation.app_standalone_pages]) are
  *   unsupported ([navigation.app_sections] is: delivered via frontend
  *   settings, applied by appNavConfigFor)
@@ -50,7 +52,13 @@ const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, A
  * - page includes without a path are skipped (the meta spec carries no slug
  *   for the legacy /plugins/<id>/page/<slug> fallback URL)
  */
-export function mergePluginNavIntoTree(apps: AppPluginMetaConfig[]): NavModelItem[] {
+export function mergePluginNavIntoTree(
+  apps: AppPluginMetaConfig[],
+  appAccessScopes?: ReadonlySet<string> | null
+): NavModelItem[] {
+  // Built from ALL installed apps, before the access gate: matches the Go
+  // builder, which reads plugin presence (e.g. the assistant onboarding flag)
+  // before evaluating access
   const installedPluginIds: ReadonlySet<string> = new Set(apps.map((app) => app.id));
 
   // Merge into a freshly built static tree rather than the current slice
@@ -61,13 +69,24 @@ export function mergePluginNavIntoTree(apps: AppPluginMetaConfig[]): NavModelIte
   // carryOverRuntimeChildren.
   let tree = buildStaticNavTree();
 
-  if (contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)) {
-    for (const app of apps) {
-      try {
-        tree = addAppToTree(tree, app);
-      } catch (error) {
-        console.warn('[navtree] failed to build nav for app plugin', app.id, error);
-      }
+  // With the user's plugins.app:access scopes available, each app is gated
+  // individually like the server builder gates it (plugins:id:<id>); without
+  // them (signed-out, fetch failure, no single-tenant API) the coarse
+  // action-only check from the flattened bootdata permissions applies to all
+  // apps at once.
+  const hasAppAccess = (app: AppPluginMetaConfig) =>
+    appAccessScopes != null
+      ? hasScopedAppAccess(appAccessScopes, app.id)
+      : contextSrv.hasPermission(AccessControlAction.PluginsAppAccess);
+
+  for (const app of apps) {
+    if (!hasAppAccess(app)) {
+      continue;
+    }
+    try {
+      tree = addAppToTree(tree, app);
+    } catch (error) {
+      console.warn('[navtree] failed to build nav for app plugin', app.id, error);
     }
   }
 
@@ -265,13 +284,11 @@ export function carryOverRuntimeChildren(tree: NavModelItem[], currentTree: NavM
   }, tree);
 }
 
-// An include with an RBAC action is gated on that action. The action's
-// per-plugin scope (plugins:id:*) is not representable client-side — the
-// frontend permissions map flattens scopes away, and evaluating it would take
-// a server round-trip per plugin (an /api/access-control check today, an
-// apiserver access review once plugin access moves there). Otherwise the
-// legacy role check applies: the user's org role must rank at or above the
-// include's role.
+// An include with an RBAC action is gated on that action, evaluated unscoped
+// like the Go builder evaluates include actions (the app-level
+// plugins.app:access check IS scope-aware — see mergePluginNavIntoTree).
+// Otherwise the legacy role check applies: the user's org role must rank at
+// or above the include's role.
 function hasAccessToInclude(include: PluginInclude): boolean {
   if (include.action) {
     return contextSrv.hasPermission(include.action);

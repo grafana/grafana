@@ -1,21 +1,31 @@
+import { HttpResponse } from 'msw';
+
+import { generatedAPI as legacyAPI } from '@grafana/api-clients/internal/rtkq/legacy';
 import { type NavModelItem } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
-import { config } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { getAppPluginMetasStrict, invalidateCachedPromisesCache } from '@grafana/runtime/internal';
-import { setupMockServer } from '@grafana/test-utils/server';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
+  customGetUserPermissionsHandler,
   mockPluginMeta,
   setMockPluginMetas,
+  setMockUserPermissions,
   type MockPluginMeta,
   type MockPluginMetaInclude,
 } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { configureStore } from 'app/store/configureStore';
+import { dispatch } from 'app/store/store';
 
 import { carryOverRuntimeChildren, mergePluginNavIntoTree } from './buildPluginNav';
 import { NavID } from './constants';
+import { fetchAppAccessScopes } from './pluginAccess';
 import { navIds as ids, setupNavTestState, type NavTestState } from './test-utils';
 import { findNavById as findById } from './utils';
 
 setupMockServer();
+setBackendSrv(backendSrv);
 
 const setup = ({ permissions = [], openFeatureFlags = {}, ...rest }: NavTestState = {}) =>
   setupNavTestState({
@@ -407,5 +417,73 @@ describe('mergePluginNavIntoTree', () => {
     );
 
     expect(findById(merged, NavID.apps)).toBeUndefined();
+  });
+});
+
+// End-to-end scoped access: metas and permissions both served through MSW,
+// scopes fetched via the access-control endpoint and applied per plugin.
+describe('scoped plugin access', () => {
+  const somePages = () => [
+    appMeta('some-app', 'Some app', [page('Page', '/a/some-app/page')]),
+    appMeta('other-app', 'Other app', [page('Page', '/a/other-app/page')]),
+  ];
+
+  const mergeWithScopes = async (metas: MockPluginMeta[]) => {
+    const [apps, scopes] = await Promise.all([fetchApps(metas), fetchAppAccessScopes()]);
+    return mergePluginNavIntoTree(apps, scopes);
+  };
+
+  beforeAll(() => {
+    configureStore();
+  });
+
+  beforeEach(() => {
+    setup();
+    dispatch(legacyAPI.util.resetApiState());
+  });
+
+  afterAll(() => {
+    setMockUserPermissions({ 'plugins.app:access': ['plugins:id:*'] });
+  });
+
+  it('places only the apps the user has scoped access to', async () => {
+    setMockUserPermissions({ 'plugins.app:access': ['plugins:id:some-app'] });
+
+    const merged = await mergeWithScopes(somePages());
+
+    expect(findById(merged, 'plugin-page-some-app')).toBeDefined();
+    expect(findById(merged, 'plugin-page-other-app')).toBeUndefined();
+  });
+
+  it.each(['*', 'plugins:*', 'plugins:id:*'])('places all apps with the %s wildcard scope', async (wildcard) => {
+    setMockUserPermissions({ 'plugins.app:access': [wildcard] });
+
+    const merged = await mergeWithScopes(somePages());
+
+    expect(findById(merged, 'plugin-page-some-app')).toBeDefined();
+    expect(findById(merged, 'plugin-page-other-app')).toBeDefined();
+  });
+
+  it('places no apps when the action is missing from the scoped response', async () => {
+    setMockUserPermissions({ 'dashboards:read': ['folders:*'] });
+
+    const merged = await mergeWithScopes(somePages());
+
+    expect(findById(merged, 'plugin-page-some-app')).toBeUndefined();
+    expect(findById(merged, 'plugin-page-other-app')).toBeUndefined();
+  });
+
+  it('falls back to the coarse action check when the scoped fetch fails', async () => {
+    server.use(customGetUserPermissionsHandler(() => HttpResponse.json(null, { status: 403 })));
+
+    // The flattened action is held (test default), so all apps show
+    const merged = await mergeWithScopes(somePages());
+    expect(findById(merged, 'plugin-page-some-app')).toBeDefined();
+    expect(findById(merged, 'plugin-page-other-app')).toBeDefined();
+
+    // Without the flattened action either, nothing shows
+    setupNavTestState({ permissions: [] });
+    const withoutAction = await mergeWithScopes(somePages());
+    expect(findById(withoutAction, 'plugin-page-some-app')).toBeUndefined();
   });
 });

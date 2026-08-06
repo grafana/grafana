@@ -71,7 +71,22 @@ func (api *AccessControlAPI) getUserActions(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, ac.BuildPermissionsMap(permissions))
 }
 
-// GET /api/access-control/user/permissions
+// swagger:response getUserPermissionsResponse
+type GetUserPermissionsResponse struct {
+	// The signed-in user's permissions, mapping each action to its scopes.
+	// in:body
+	// required:true
+	Body map[string][]string `json:"body"`
+}
+
+// swagger:route GET /access-control/user/permissions access_control getUserPermissions
+//
+// Get the signed-in user's permissions, as a map of each action to its scopes.
+//
+// Responses:
+// 200: getUserPermissionsResponse
+// 401: unauthorisedError
+// 500: internalServerError
 func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) response.Response {
 	ctx, span := tracer.Start(c.Req.Context(), "accesscontrol.api.getUserPermissions")
 	defer span.End()

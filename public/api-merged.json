@@ -515,6 +515,26 @@
         }
       }
     },
+    "/access-control/user/permissions": {
+      "get": {
+        "tags": [
+          "access_control"
+        ],
+        "summary": "Get the signed-in user's permissions, as a map of each action to its scopes.",
+        "operationId": "getUserPermissions",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getUserPermissionsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/access-control/users/roles/search": {
       "post": {
         "description": "Lists the roles that have been directly assigned to the given users. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:read` and scope `users:id:*`.",
@@ -24694,6 +24714,18 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/UserOrgDTO"
+        }
+      }
+    },
+    "getUserPermissionsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

@@ -7,6 +7,7 @@ import { useDispatch, useSelector, type StoreState } from 'app/types/store';
 
 import { carryOverRuntimeChildren, mergePluginNavIntoTree } from './buildPluginNav';
 import { arePluginNavItemsEnabled } from './buildStaticNavTree';
+import { fetchAppAccessScopes } from './pluginAccess';
 import { pluginNavFailed, pluginNavLoaded } from './state';
 
 export interface UseNavTreeResult {
@@ -44,12 +45,18 @@ export function useNavTree(): UseNavTreeResult {
       return;
     }
     let cancelled = false;
-    getAppPluginMetasStrict().then(
-      (apps) => {
+    // The scopes promise never rejects (unavailable scoped data resolves null
+    // and the merge falls back to the coarse access check), so the failure
+    // branch still only fires for metas failures.
+    Promise.all([getAppPluginMetasStrict(), fetchAppAccessScopes()]).then(
+      ([apps, appAccessScopes]) => {
         if (cancelled || store.getState().pluginNavStatus === 'loaded') {
           return;
         }
-        const merged = carryOverRuntimeChildren(mergePluginNavIntoTree(apps), store.getState().navBarTree);
+        const merged = carryOverRuntimeChildren(
+          mergePluginNavIntoTree(apps, appAccessScopes),
+          store.getState().navBarTree
+        );
         dispatch(pluginNavLoaded({ tree: merged }));
       },
       () => {
