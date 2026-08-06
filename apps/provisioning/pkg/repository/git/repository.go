@@ -968,7 +968,7 @@ func (r *gitRepository) ensureBranchExists(ctx context.Context, branchName strin
 // falling back to default Grafana signature. The committer is overridden by
 // spec.commit.signerName/Email when set; that identity must match the signing
 // key for providers to mark commits as Verified. The author is overridden by
-// the signer identity when spec.commit.signerIsAuthor is true.
+// the signer identity when configured.
 func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, nanogit.Committer) {
 	author := nanogit.Author{
 		Name:  "Grafana",
@@ -997,10 +997,14 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 	if commit := r.config.Spec.Commit; commit != nil && (commit.SignerName != "" || commit.SignerEmail != "") {
 		committer.Name = cmp.Or(commit.SignerName, "Grafana")
 		committer.Email = cmp.Or(commit.SignerEmail, "noreply@grafana.com")
-		if commit.SignerIsAuthor {
-			author.Name = committer.Name
-			author.Email = committer.Email
-		}
+		// The signer identity is the user's real identity. When a signer
+		// name/email is configured for commit signing, use it for the author
+		// as well so that the commit author reflects the user instead of the
+		// hardcoded "Grafana <noreply@grafana.com>" default. Git providers with
+		// pre-receive hooks that validate the commit author (e.g. GitLab org
+		// membership) otherwise reject the push.
+		author.Name = committer.Name
+		author.Email = committer.Email
 	}
 
 	return author, committer
