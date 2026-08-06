@@ -90,6 +90,15 @@ func storeKey(ns, group, res, name string) string {
 	return ns + "/" + group + "/" + res + "/" + name
 }
 
+func (f *fakeStorage) markNotFound(ns, group, res, name string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.notFound == nil {
+		f.notFound = map[string]struct{}{}
+	}
+	f.notFound[storeKey(ns, group, res, name)] = struct{}{}
+}
+
 func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
 	if f.readErr != nil {
 		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: f.readErr.Error()}}
@@ -100,15 +109,21 @@ func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadReques
 	if _, nf := f.notFound[k]; nf {
 		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"}}
 	}
-	r, ok := f.resources[k]
-	if !ok {
-		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"}}
+	if r, ok := f.resources[k]; ok {
+		return &resource.BackendReadResponse{
+			Key:             req.Key,
+			Value:           r.Value,
+			ResourceVersion: r.RV,
+		}
 	}
-	return &resource.BackendReadResponse{
-		Key:             req.Key,
-		Value:           r.Value,
-		ResourceVersion: r.RV,
+	// One storage: reads agree with the list feed unless a test overrides
+	// via resources (different RV) or notFound (deleted).
+	for _, it := range f.listItems {
+		if it.Namespace == req.Key.Namespace && it.Name == req.Key.Name && req.Key.Resource == "dashboards" {
+			return &resource.BackendReadResponse{Key: req.Key, Value: it.Value, ResourceVersion: it.RV}
+		}
 	}
+	return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"}}
 }
 
 // Unused methods of StorageBackend — panic so a test that hits them is

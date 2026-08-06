@@ -418,6 +418,65 @@ func extractDashboardItems(t *testing.T, ns, name string, value []byte, folderTi
 // errors that fail the job (retry path), never silent skips — a swallowed
 // UpdateContentVersion error would leave the uid version-stale and rescanned
 // on every tick forever.
+// A concurrent edit must not lose its embeddings to a stale empty-extract delete.
+func TestRunBackfillJob_EmptyExtractDelete_GuardedByLiveRV(t *testing.T) {
+	storage := newFakeStorage()
+	// Scanned snapshot (RV 50) has no embeddable panels; the live resource
+	// has moved on (RV 60) — the reconciler owns the newer revision.
+	body, _ := json.Marshal(map[string]any{"uid": "dash-a", "title": "empty"})
+	storage.listItems = []listItem{{Namespace: "ns", Name: "dash-a", RV: 50, Value: body}}
+	storage.resources[storeKey("ns", "dashboard.grafana.app", "dashboards", "dash-a")] = storedResource{
+		Value: minimalDashboardJSON("dash-a", "dash-a-title"), RV: 60,
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "dash-a", 1, "panel/1")
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.deletes, "stale empty extract must not delete the newer revision's rows")
+}
+
+// A dashboard deleted after the scan must not be re-created from the stale snapshot.
+func TestRunBackfillJob_DeletedSinceScan_SkipsWrite(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+	storage.markNotFound("ns", "dashboard.grafana.app", "dashboards", "dash-a")
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts, "deleted dashboard must not be re-embedded")
+	assert.Empty(t, vec.replaceCalls)
+	require.Len(t, vec.completedJobIDs, 1)
+}
+
+// A transient live-read failure retries the item instead of writing stale content.
+func TestRunBackfillJob_LiveReadError_FailsJob(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+	storage.readErr = errors.New("storage flake")
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts)
+	assert.Empty(t, vec.replaceCalls)
+	require.Len(t, vec.errorMarks, 1, "read failure must mark the job errored for retry")
+	assert.Empty(t, vec.completedJobIDs)
+}
+
 // A concurrent edit between scan and write must not be overwritten with stale content.
 func TestRunBackfillJob_RVChangedSinceScan_SkipsWrite(t *testing.T) {
 	storage := newFakeStorage()

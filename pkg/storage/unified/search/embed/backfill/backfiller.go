@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"sort"
 	"strings"
 	"time"
@@ -456,6 +457,12 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	if len(items) == 0 {
 		// A version-stale uid whose new extractor output is empty must shed its old rows, like the reconciler's empty-extract path.
 		if isVersionStale {
+			if outcome, err := b.checkLiveRV(ctx, key, rv); err != nil {
+				return err
+			} else if outcome.skip {
+				statusLabel = outcome.status
+				return nil
+			}
 			if err := b.vectorBackend.Delete(ctx, namespace, job.Model, res, name); err != nil {
 				return fmt.Errorf("delete empty extract %s/%s: %w", namespace, name, err)
 			}
@@ -493,9 +500,10 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	// live RV just before writing so we don't overwrite it with stale content.
 	// Not airtight (the write isn't RV-conditional) but shrinks the race
 	// window from the whole page scan to milliseconds.
-	liveResp := b.storage.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
-	if liveResp.Error == nil && liveResp.ResourceVersion != rv {
-		statusLabel = "skipped_rv_changed"
+	if outcome, err := b.checkLiveRV(ctx, key, rv); err != nil {
+		return err
+	} else if outcome.skip {
+		statusLabel = outcome.status
 		return nil
 	}
 
@@ -514,6 +522,33 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
 	}
 	return nil
+}
+
+// liveGuardOutcome classifies the pre-write live read: proceed, skip with
+// the given status, or retry via error.
+type liveGuardOutcome struct {
+	skip   bool
+	status string
+}
+
+// checkLiveRV re-reads the resource just before a destructive write. The
+// scanned value can be a page-scan old; skipping when the live state moved
+// leaves the newer revision to the reconciler. Not airtight (writes are not
+// RV-conditional) but shrinks the race window to milliseconds.
+func (b *VectorBackfiller) checkLiveRV(ctx context.Context, key *resourcepb.ResourceKey, scannedRV int64) (liveGuardOutcome, error) {
+	resp := b.storage.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
+	switch {
+	case resp.Error != nil && resp.Error.Code == http.StatusNotFound:
+		// Deleted since the scan; writing would recreate rows the reconciler's
+		// delete event already removed, with no later event to clean them up.
+		return liveGuardOutcome{skip: true, status: "skipped_deleted"}, nil
+	case resp.Error != nil:
+		// Transient read failure: retry the item rather than risk a stale write.
+		return liveGuardOutcome{}, fmt.Errorf("live read %s/%s: %s", key.Namespace, key.Name, resp.Error.Message)
+	case resp.ResourceVersion != scannedRV:
+		return liveGuardOutcome{skip: true, status: "skipped_rv_changed"}, nil
+	}
+	return liveGuardOutcome{}, nil
 }
 
 // identicalContent reports whether extracted and stored have the same subresource set and content.
