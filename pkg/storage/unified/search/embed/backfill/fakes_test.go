@@ -187,6 +187,7 @@ type fakeVector struct {
 	completedJobIDs   []int64
 	updateCalls       []updateCall
 	updateErr         error
+	latestRV          int64
 	getContentErr     error
 	markErrErr        error
 	completeErr       error
@@ -398,8 +399,12 @@ func (f *fakeVector) UpdateContentVersion(_ context.Context, ns, model, res, uid
 	}
 	return nil
 }
-func (f *fakeVector) GetLatestRV(context.Context) (int64, error) { return 0, nil }
-func (f *fakeVector) SetLatestRV(context.Context, int64) error   { return nil }
+func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.latestRV, nil
+}
+func (f *fakeVector) SetLatestRV(context.Context, int64) error { return nil }
 func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {
 	return func() {}, true, nil
 }

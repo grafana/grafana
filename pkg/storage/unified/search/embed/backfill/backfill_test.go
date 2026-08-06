@@ -641,11 +641,37 @@ func TestRunBackfillJob_VersionStale_SubresourceSetDiffers_FullReEmbed(t *testin
 // TestRunBackfill_CompletedJobStaleVersion_ReopensAndProcesses covers job
 // reopening: a job that finished under an older content_version is reopened
 // (is_complete=false, cursor/error reset) and drained on the same tick.
+// A zero reconciler checkpoint means nothing was ever embedded; reopening
+// then would complete the job against an empty bound and strand it.
+func TestReopenStaleJobs_ZeroCheckpoint_SkipsReopen(t *testing.T) {
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100, IsComplete: true}}
+
+	o := newBackfiller(t, newFakeStorage(), vec)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.reopenCalls)
+}
+
+// The reopened job's stopping RV is the reconciler checkpoint, not wall clock.
+func TestReopenStaleJobs_UsesCheckpointAsStoppingRV(t *testing.T) {
+	vec := newFakeVector()
+	vec.latestRV = 424242
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100, IsComplete: true}}
+
+	o := newBackfiller(t, newFakeStorage(), vec)
+	o.runBackfill(context.Background())
+
+	require.NotEmpty(t, vec.reopenCalls)
+	assert.Equal(t, int64(424242), vec.reopenCalls[0].StoppingRV)
+}
+
 func TestRunBackfill_CompletedJobStaleVersion_ReopensAndProcesses(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
 
 	vec := newFakeVector()
+	vec.latestRV = 100 // reconciler checkpoint feeds the reopened job's stopping RV
 	vec.jobs = []vector.BackfillJob{{
 		ID:          1,
 		Model:       "test-model",

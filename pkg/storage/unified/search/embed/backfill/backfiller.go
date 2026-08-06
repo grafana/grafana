@@ -194,7 +194,18 @@ func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 
 // reopenStaleJobs runs before the incomplete-jobs list so a version-bump reopen is drained on the same tick; per-builder failures don't block the tick.
 func (b *VectorBackfiller) reopenStaleJobs(ctx context.Context, log log.Logger) {
-	stoppingRV := resource.ToSnowflakeRV(time.Now().UnixMicro())
+	// The reconciler checkpoint is a real observed RV, so every row processed
+	// before the reopen sorts below it — a wall-clock snowflake would not
+	// (node/sequence bits, clock skew). Zero means the reconciler has never
+	// written, so there is nothing stale to reopen yet.
+	stoppingRV, err := b.vectorBackend.GetLatestRV(ctx)
+	if err != nil {
+		log.Error("backfill: read reconciler checkpoint for reopen", "err", err)
+		return
+	}
+	if stoppingRV == 0 {
+		return
+	}
 	for _, builder := range b.sortedBuilders {
 		reopened, err := b.vectorBackend.ReopenStaleBackfillJobs(ctx, b.batchEmbedder.Model(), builder.Resource(), builder.Version(), stoppingRV)
 		if err != nil {
