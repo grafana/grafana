@@ -1752,22 +1752,22 @@ describe('TableNG utils', () => {
 
     it('grows text columns far more than numeric columns, but still lets numeric grow a little', () => {
       const fields: Field[] = [
-        { name: 'N', type: FieldType.number, values: [999], config: {} }, // 21 => floor 50
-        { name: 'AAAA', type: FieldType.string, values: ['hello world'], config: {} }, // 11 => 101
-        { name: 'B', type: FieldType.string, values: ['x'], config: {} }, // 21 => floor 50
+        { name: 'N', type: FieldType.number, values: [999], config: {} }, // 37 => floor 50 (no text wiggle)
+        { name: 'AAAA', type: FieldType.string, values: ['hello world'], config: {} }, // 11*8+13+6 = 107
+        { name: 'B', type: FieldType.string, values: ['x'], config: {} }, // 27 => floor 50
       ];
-      // content widths [50, 101, 50] total 201; availWidth 401 => leftover 200 split by growth share
-      // growthWeight × √(content) (numeric 0.35, string 1): N 0.35√50=2.47, AAAA √101=10.05,
-      // B √50=7.07 => total 19.60.
-      //   N: 50 + 200*(2.47/19.60) = 75; AAAA: 101 + 200*(10.05/19.60) = 204; B: 50 + 200*(7.07/19.60) = 122.
+      // content widths [50, 107, 50] total 207; availWidth 401 => leftover 194 split by growth share
+      // growthWeight × √(content) (numeric 0.35, string 1): N 0.35√50=2.47, AAAA √107=10.34,
+      // B √50=7.07 => total 19.89.
+      //   N: 50 + 194*(2.47/19.89) = 74; AAAA: 107 + 194*(10.34/19.89) = 208; B: 50 + 194*(7.07/19.89) = 119.
       const result = compute(fields, 401);
 
-      expect(result).toEqual([75, 204, 122]);
+      expect(result).toEqual([74, 208, 119]);
       // numeric grew, but much less than either text column; and the wider text column (AAAA) grew
       // more than the narrower one (B) since growth scales with √(content width).
       expect(result[0] - 50).toBeGreaterThan(0);
-      expect(result[1] - 101).toBeGreaterThan(result[0] - 50);
-      expect(result[1] - 101).toBeGreaterThan(result[2] - 50);
+      expect(result[1] - 107).toBeGreaterThan(result[0] - 50);
+      expect(result[1] - 107).toBeGreaterThan(result[2] - 50);
     });
 
     it('grows numeric and boolean columns only modestly while a string column takes most of the leftover', () => {
@@ -1834,10 +1834,11 @@ describe('TableNG utils', () => {
           display: (v) => ({ text: `${v} response time`, numeric: NaN }),
         },
       ];
-      // "fast response time" (18) => 18*8+13 = 157, beating header "S" (1) => 21. availWidth 100 is
-      // below the content width, so the column overflows and keeps 157 (grid scrolls). The raw
-      // "fast" (4 => floored to 50) would instead grow to fill 100, so 157 proves we used display.
-      expect(compute(fields, 100)).toEqual([157]);
+      // "fast response time" (18) => 18*8+13 + 6 text wiggle = 163, beating header "S" (1) => 21.
+      // availWidth 100 is below the content width, so the column overflows and keeps 163 (grid
+      // scrolls). The raw "fast" (4 => floored to 50) would instead grow to fill 100, so 163 proves
+      // we used the display processor.
+      expect(compute(fields, 100)).toEqual([163]);
     });
 
     it('uses a fixed default width for graphical (non-text) cells regardless of content', () => {
@@ -1923,6 +1924,43 @@ describe('TableNG utils', () => {
       ];
       // "Open dashboard" (14*8+8=120); one link => rowTotal 120; +CELL_CHROME 13 = 133.
       expect(computeContentAwareColWidths(fields, 133, { typographyCtx: makeTypographyCtx() })).toEqual([133]);
+    });
+
+    it('sizes a wrapped data links column to the widest single link, not the summed run', () => {
+      const mockLinks: LinkModel[] = [
+        { title: 'Open dashboard', href: 'http://x/1', target: '_blank', origin: { datasourceUid: 'test' } },
+        { title: 'Docs', href: 'http://x/2', target: '_blank', origin: { datasourceUid: 'test' } },
+      ];
+      const field = (wrap: boolean): Field => ({
+        name: 'lnk',
+        type: FieldType.string,
+        values: ['x'],
+        config: {
+          custom: { cellOptions: { type: TableCellDisplayMode.DataLinks }, ...(wrap ? { wrapText: true } : {}) },
+        },
+        getLinks: () => mockLinks,
+      });
+      // Wrapped links stack vertically, so the column follows the widest link ("Open dashboard",
+      // 14*8+8=120; +CELL_CHROME 13 = 133) rather than the summed inline run of both links.
+      const wrapped = computeContentAwareColWidths([field(true)], 50, { typographyCtx: makeTypographyCtx() });
+      const inline = computeContentAwareColWidths([field(false)], 50, { typographyCtx: makeTypographyCtx() });
+      expect(wrapped).toEqual([133]);
+      expect(inline[0]).toBeGreaterThan(wrapped[0]);
+    });
+
+    it('sizes an auto column wide enough for its footer reducer value', () => {
+      const withFooter: Field = {
+        name: 'N',
+        type: FieldType.number,
+        values: [100000, 200000, 300000],
+        config: { custom: { footer: { reducers: ['sum'] } } },
+      };
+      const noFooter: Field = { ...withFooter, config: {} };
+      // The footer sum (600000) plus its reducer label is wider than the body values, so the column
+      // with a footer is sized wider than the same column without one (which just hugs its cells).
+      const [withW] = compute([withFooter], 60);
+      const [withoutW] = compute([noFooter], 60);
+      expect(withW).toBeGreaterThan(withoutW);
     });
 
     it('resolves an auto cell to its graphical default (geo) instead of measuring it as text', () => {
@@ -2017,9 +2055,10 @@ describe('TableNG utils', () => {
       // front-biased sample would miss the long tail; the evenly-spaced sample includes the last row.
       const values = [...new Array(50).fill('x'), 'X'.repeat(30)]; // 51 rows, long value at index 50
       const fields: Field[] = [{ name: 'c', type: FieldType.string, values, config: {} }];
-      // sampleSize 5 => indices [0, 13, 25, 38, 50]; index 50 (30 chars) drives width: 30*8+13 = 253.
-      const widths = computeContentAwareColWidths(fields, 253, { typographyCtx: makeTypographyCtx(), sampleSize: 5 });
-      expect(widths).toEqual([253]);
+      // sampleSize 5 => indices [0, 13, 25, 38, 50]; index 50 (30 chars) drives width:
+      // 30*8+13 + 6 text wiggle = 259.
+      const widths = computeContentAwareColWidths(fields, 259, { typographyCtx: makeTypographyCtx(), sampleSize: 5 });
+      expect(widths).toEqual([259]);
     });
 
     describe('pill columns', () => {

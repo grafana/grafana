@@ -6,6 +6,7 @@ import { type Count, varPreLine } from 'uwrap';
 import {
   FieldType,
   type Field,
+  fieldReducers,
   formattedValueToString,
   type GrafanaTheme2,
   type DisplayValue,
@@ -14,6 +15,7 @@ import {
   type DataFrame,
   type DisplayProcessor,
   isDataFrame,
+  reduceField,
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
@@ -1278,7 +1280,10 @@ function measureInlineRunWidth(
   itemsForRow: (rowIdx: number) => string[],
   avgCharWidth: number,
   chrome: number,
-  gap: number
+  gap: number,
+  // When the items stack vertically instead of flowing horizontally (e.g. a wrapped DataLinks cell
+  // lays its links out in a column), the width follows the widest single item, not the row's run.
+  stack = false
 ): number {
   let widestItem = 0;
   let rowTotalSum = 0;
@@ -1305,7 +1310,7 @@ function measureInlineRunWidth(
     return 0;
   }
 
-  return Math.max(rowTotalSum / sampledRows, widestItem);
+  return stack ? widestItem : Math.max(rowTotalSum / sampledRows, widestItem);
 }
 
 /**
@@ -1333,6 +1338,31 @@ function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boo
     iconSpace += HEADER_ICON_SPACE;
   }
   return textWidth + iconSpace + CELL_HORIZONTAL_CHROME;
+}
+
+// gap between a footer reducer's label and its value (theme.spacing(0.5), matches SummaryCell).
+const FOOTER_LABEL_GAP = 4;
+
+/**
+ * Width a column's footer/summary cell needs. Each configured reducer renders its label (e.g. "Sum")
+ * inline with its reduced value, so a column that hugs its body content can truncate a wider footer.
+ * Size to the widest reducer row (label + value, estimated from `avgCharWidth`); returns 0 when the
+ * column has no footer. The reduced values are computed the same way the footer renders them.
+ */
+function measureFooterWidth(field: Field, avgCharWidth: number): number {
+  const reducers = field.config.custom?.footer?.reducers;
+  if (reducers == null || reducers.length === 0) {
+    return 0;
+  }
+  const results = reduceField({ field, reducers });
+  let widest = 0;
+  for (const id of reducers) {
+    const label = fieldReducers.get(id)?.name ?? id;
+    const value = results[id];
+    const valueText = value == null ? '' : formatCellValue(field, value);
+    widest = Math.max(widest, (label.length + valueText.length) * avgCharWidth + FOOTER_LABEL_GAP);
+  }
+  return widest + CELL_HORIZONTAL_CHROME;
 }
 
 interface ColWidthMeasureCtx {
@@ -1373,7 +1403,9 @@ const measureDataLinksColWidth: MeasureColWidth = (field, sampleSize, { typograp
     (i) => getCellLinks(field, i)?.map((link) => link.title ?? '') ?? [],
     typographyCtx.avgCharWidth,
     LINK_SPACING,
-    LINK_GAP
+    LINK_GAP,
+    // when wrapping, DataLinksCell stacks its links vertically, so size to the widest single link.
+    shouldTextWrap(field)
   ) + CELL_HORIZONTAL_CHROME;
 
 const measureActionsColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx, getActions }) => {
@@ -1392,8 +1424,17 @@ const measureActionsColWidth: MeasureColWidth = (field, sampleSize, { typography
   );
 };
 
-const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
-  measureLongestContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
+// `avgCharWidth` is derived from a prose sample, so it under-estimates digit/symbol-heavy strings
+// like dates and timestamps, leaving those columns cramped. Give string/time columns a cell-padding's
+// worth of slack so they get a little breathing room rather than hugging the content exactly.
+// Numeric/boolean columns are left tight on purpose — hugging their short values is the whole point.
+const TEXT_WIDTH_WIGGLE = TABLE.CELL_PADDING;
+
+const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) => {
+  const width = measureLongestContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
+  const isText = field.type === FieldType.string || field.type === FieldType.time;
+  return isText ? width + TEXT_WIDTH_WIGGLE : width;
+};
 
 // Markdown always wraps (its cell style forces whiteSpace: normal) and renders formatted, so its
 // raw source string is a poor proxy for rendered width — markup syntax and long link URLs would
@@ -1505,10 +1546,11 @@ export function computeContentAwareColWidths(
       COL_WIDTH_MEASURERS[cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType] ??
       measureTextColWidth;
     const cellWidth = measure(field, effectiveSampleSize, measureCtx);
+    const footerWidth = measureFooterWidth(field, typographyCtx.avgCharWidth);
 
     const floor = Math.max(COLUMN.MIN_WIDTH, field.config.custom?.minWidth ?? 0);
     const cap = Math.max(COLUMN.MAX_AUTO_WIDTH, floor);
-    const clamped = Math.min(Math.max(Math.max(cellWidth, headerWidth), floor), cap);
+    const clamped = Math.min(Math.max(Math.max(cellWidth, headerWidth, footerWidth), floor), cap);
 
     contentWidths.set(i, clamped);
     contentTotal += clamped;
