@@ -26,3 +26,21 @@ func WithEnabledFlags(t *testing.T, flags ...string) {
 		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
 	})
 }
+
+// WithEnabledFlags sets up an OpenFeature static provider with the given flags
+// enabled for the duration of the test, then resets to the no-op provider.
+func WithDisabledFlags(t *testing.T, flags ...string) {
+	t.Helper()
+
+	inMemoryFlags := make(map[string]memprovider.InMemoryFlag, len(flags))
+	for _, f := range flags {
+		inMemoryFlags[f] = setting.NewInMemoryFlag(f, false)
+	}
+	provider, err := CreateStaticProviderWithStandardFlags(inMemoryFlags)
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+	})
+}
