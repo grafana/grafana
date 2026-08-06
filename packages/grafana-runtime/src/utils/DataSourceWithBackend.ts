@@ -80,6 +80,9 @@ enum PluginRequestHeaders {
  *
  * If the 'message' key exists, this will be displayed in the error message in DataSourceSettingsPage
  * If the 'verboseMessage' key exists, this will be displayed in the expandable details in the error message in DataSourceSettingsPage
+ * If the 'followUpMessage' key exists (string), it replaces the default success follow-up
+ * ("Next, you can start to visualize data...") on DataSourceSettingsPage. An empty string
+ * suppresses that default follow-up without showing replacement text.
  *
  * @public
  */
