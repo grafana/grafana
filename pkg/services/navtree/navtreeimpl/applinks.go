@@ -189,6 +189,11 @@ func (s *ServiceImpl) shouldIncludeInvestigations(plugin pluginstore.Plugin, inc
 	return ok && enabled
 }
 
+type pendingInclude struct {
+	link   *navtree.NavLink
+	isPage bool
+}
+
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	assistantTrialMode := s.isAssistantTrialMode(plugin, c)
@@ -210,10 +215,6 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 	ctx := c.Req.Context()
 	nestByPath := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaPluginPathNesting, false, openfeature.TransactionContext(ctx))
 
-	type pendingInclude struct {
-		link   *navtree.NavLink
-		isPage bool
-	}
 	var pending []pendingInclude
 	var pageLinks []*navtree.NavLink
 
@@ -302,17 +303,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		}
 	}
 
-	// Attach each include to its nearest path-ancestor page (when nesting is enabled
-	// and one exists) or to the app section. Dashboards never nest.
-	for _, p := range pending {
-		parent := appLink
-		if nestByPath && p.isPage {
-			if anc := nearestAncestorByPath(p.link, pageLinks); anc != nil {
-				parent = anc
-			}
-		}
-		parent.Children = append(parent.Children, p.link)
-	}
+	attachPendingIncludes(appLink, pending, pageLinks, nestByPath)
 
 	// Apps without any nav children are not part of navtree
 	if len(appLink.Children) == 0 {
@@ -383,6 +374,20 @@ func (s *ServiceImpl) shouldIncludeAssistantNavigation(plugin pluginstore.Plugin
 
 	_, allowed := assistantOSSNavigationPaths[include.Path]
 	return allowed
+}
+
+// attachPendingIncludes puts pages under their nearest path ancestor when nesting
+// is enabled and keeps dashboards under the app section.
+func attachPendingIncludes(appLink *navtree.NavLink, pending []pendingInclude, pageLinks []*navtree.NavLink, nestByPath bool) {
+	for _, p := range pending {
+		parent := appLink
+		if nestByPath && p.isPage {
+			if anc := nearestAncestorByPath(p.link, pageLinks); anc != nil {
+				parent = anc
+			}
+		}
+		parent.Children = append(parent.Children, p.link)
+	}
 }
 
 // nearestAncestorByPath returns the page link whose URL is the deepest segment
