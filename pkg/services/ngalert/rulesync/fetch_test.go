@@ -103,14 +103,15 @@ func TestRulerFetcher_Fetch(t *testing.T) {
 		assert.Empty(t, got)
 	})
 
-	t.Run("200 with an empty body is ErrNotARuler (a ruler returns at least {})", func(t *testing.T) {
-		// A truly empty body (unlike {}) would unmarshal to a nil map and prune
-		// everything; a real ruler never returns that, so reject it.
-		for _, body := range [][]byte{[]byte(""), []byte("  \n")} {
+	t.Run("200 with an empty or null body is ErrNotARuler (a ruler returns at least {})", func(t *testing.T) {
+		// Empty, whitespace and YAML null bodies all unmarshal to a nil map, which
+		// must not be treated as "no rules" (that would prune everything); a real
+		// ruler returns at least "{}".
+		for _, body := range [][]byte{[]byte(""), []byte("  \n"), []byte("null"), []byte("~"), []byte("null\n")} {
 			proxy := &fakeDatasourceProxy{status: http.StatusOK, body: body}
 
 			_, _, err := NewRulerFetcher(proxy, log.NewNopLogger()).Fetch(ctx, testDS())
-			require.Error(t, err)
+			require.Errorf(t, err, "body %q should be rejected", string(body))
 			assert.ErrorIs(t, err, ErrNotARuler)
 		}
 	})

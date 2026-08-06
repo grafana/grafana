@@ -59,7 +59,7 @@ func NewRulerFetcher(proxy datasourceProxy, logger log.Logger) *RulerFetcher {
 // and the FNV-1a hash of the raw body (for cross-tick dedup). Any non-2xx
 // (including a 404) is a fetch failure — the ruler config list API returns 200
 // with an empty object when there are no rule groups, so a 404 is never "no
-// rules"; an unparseable or empty 2xx body yields ErrNotARuler. The GET is routed through the datasource
+// rules"; a 2xx body that is not a rule-config object (unparseable, empty or null) yields ErrNotARuler. The GET is routed through the datasource
 // proxy service, which loads the datasource by UID, access-checks SignedInUser,
 // validates egress, and derives the upstream path from the request URL
 // (/api/datasources/proxy/uid/<uid>/config/v1/rules -> config/v1/rules).
@@ -108,17 +108,16 @@ func (f *RulerFetcher) Fetch(ctx context.Context, ds *datasources.DataSource) (R
 	}
 
 	body := resp.Body()
-	// A ruler config API always returns at least an empty object ("{}") when it
-	// has no rule groups, so a 2xx with an empty body is a broken or non-ruler
-	// response, not "no rules" — treating it as empty would prune every synced
-	// rule. An empty YAML body also unmarshals to a nil map without error, so it
-	// must be rejected explicitly.
-	if len(bytes.TrimSpace(body)) == 0 {
-		return nil, 0, fmt.Errorf("%w: empty response body", ErrNotARuler)
-	}
 	var cfg RulerConfig
 	if err := yaml.Unmarshal(body, &cfg); err != nil {
 		return nil, 0, fmt.Errorf("%w: failed to parse response as ruler config: %v", ErrNotARuler, err)
+	}
+	// A real ruler returns "{}" (a non-nil empty map) when it has no rule groups. A
+	// nil map means the body was empty, null ("null"/"~"), or otherwise not a
+	// rule-config object — treating that as "no rules" would prune every synced
+	// rule, so reject it as not-a-ruler.
+	if cfg == nil {
+		return nil, 0, fmt.Errorf("%w: response is empty or null, not a rule-config object", ErrNotARuler)
 	}
 
 	h := fnv.New64a()
