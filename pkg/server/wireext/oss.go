@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
+	ngalertprovisioning "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
@@ -100,6 +101,7 @@ var BasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
 	wire.Bind(new(pluginauth.RBACCleaner), new(*acimpl.Service)),
 	validations.ProvideValidator,
+	ngalertprovisioning.ProvideRuleMutationValidator,
 	wire.Bind(new(validations.DataSourceRequestValidator), new(*validations.OSSDataSourceRequestValidator)),
 	validations.ProvideURLValidator,
 	wire.Bind(new(validations.DataSourceRequestURLValidator), new(*validations.OSSDataSourceRequestURLValidator)),
