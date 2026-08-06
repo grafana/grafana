@@ -74,6 +74,12 @@ const baseImportConfig = {
       importNames: ['useObservable'],
       message: 'react-use is being phased out. Import useObservable from @grafana/data/unstable instead.',
     },
+    {
+      name: '@grafana/runtime',
+      importNames: ['getDataSourceSrv'],
+      message:
+        'getDataSourceSrv is being phased out in Grafana core. Use the async data source APIs from @grafana/runtime/unstable instead (getDataSourceInstance, getDataSourceInstanceSettings, getDataSourceInstanceList). See the migration guide in issue #125083.',
+    },
   ],
 };
 
