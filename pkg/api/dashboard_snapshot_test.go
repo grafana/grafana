@@ -396,7 +396,7 @@ func TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots(t *testing.T) 
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
+			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
 
 			dashSnapSvc := dashboardsnapshots.NewMockService(t)
 			if tt.supportLegacy {
@@ -446,7 +446,7 @@ func TestCreateDashboardSnapshot_DispatchSwitchesAtRuntime(t *testing.T) {
 	_ = sendPostRequest(t, server, signedInUser)
 	assert.Empty(t, kubeMock.lastServedPath)
 
-	WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
 
 	// Flag ON: request is dispatched to kube API.
 	_ = sendPostRequest(t, server, signedInUser)
