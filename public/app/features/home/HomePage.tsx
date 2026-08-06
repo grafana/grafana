@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Suspense, useCallback, useEffect, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
@@ -11,14 +11,12 @@ import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
-import { usePluginBridge } from '../alerting/unified/hooks/usePluginBridge';
-import { SupportedPlugin } from '../alerting/unified/types/pluginBridges';
-
 import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncidents/AlertIncidentTabs';
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { NewsCard } from './AlertsIncidents/NewsCard';
-import { canViewFiringAlerts } from './AlertsIncidents/useFiringAlerts';
+import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
+import { useIncidents } from './AlertsIncidents/useIncidents';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HeaderActions } from './HeaderActions';
@@ -71,11 +69,13 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
+  const [team, setTeam] = useState<string>();
+  const alertsData = useFiringAlerts(team);
+  const incidentsData = useIncidents();
   const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
-  const irm = usePluginBridge(SupportedPlugin.Irm);
 
   const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
-  const isWaitingForIRM = !redesignEnabled && irm.loading;
+  const isWaitingForIRM = !redesignEnabled && incidentsData.enabled === undefined;
   const isLoadingExtensions = isLoadingAssistant || isLoadingExtra || isWaitingForTabs || isWaitingForIRM;
 
   // The impression counts a rendered homepage, never a skeleton: the tracker mounts inside
@@ -107,8 +107,8 @@ export default function HomePage() {
       ),
   });
   const showExtra = extraContent !== null;
-  const showAlertsCard = canViewFiringAlerts();
-  const showIRMNewsCard = irm.loading || irm.installed || config.newsFeedEnabled;
+  const showAlertsCard = alertsData.enabled;
+  const showIRMNewsCard = incidentsData.enabled === undefined || incidentsData.enabled || config.newsFeedEnabled;
   const skeleton = (
     <HomePageSkeleton
       showAlertsCard={showAlertsCard}
@@ -156,7 +156,13 @@ export default function HomePage() {
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
                     {/* Skip the HomepageTabs extension point for the redesign UI */}
                     <DashboardTabs extensionComponents={[]} />
-                    <AlertIncidentTabs switchRef={alertIncidentRef} />
+                    <AlertIncidentTabs
+                      alertsData={alertsData}
+                      incidentsData={incidentsData}
+                      team={team}
+                      setTeam={setTeam}
+                      switchRef={alertIncidentRef}
+                    />
                   </Grid>
                 </>
               ) : (
@@ -173,8 +179,12 @@ export default function HomePage() {
                   </HomeSection>
 
                   <Grid gap={2} columns={{ xs: 1, md: 2 }}>
-                    <FiringAlertsCard />
-                    {irm.installed ? <IncidentsCard /> : config.newsFeedEnabled && <NewsCard />}
+                    {alertsData.enabled && <FiringAlertsCard data={alertsData} />}
+                    {incidentsData.enabled ? (
+                      <IncidentsCard data={incidentsData} />
+                    ) : (
+                      config.newsFeedEnabled && <NewsCard />
+                    )}
                   </Grid>
                 </>
               )}
