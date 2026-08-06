@@ -61,7 +61,7 @@ func TestDeleteKeyREST_Connect_SameOrg(t *testing.T) {
 	require.True(t, ok, "expected DashboardSnapshotWithDeleteKey, got %T", responder.obj)
 	assert.Equal(t, "secret-delete-key", result.DeleteKey)
 	// The embedded spec must not carry the deleteKey.
-	assert.Nil(t, result.Snapshot.Spec.DeleteKey)
+	assert.Nil(t, result.Spec.DeleteKey)
 }
 
 func TestDeleteKeyREST_Connect_CrossOrg(t *testing.T) {
