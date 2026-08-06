@@ -137,7 +137,18 @@ As an experimental feature, on-demand data source diagnostics currently has the 
 
 - **Data beyond the data source isn't captured.** Server-side expressions and panel transformations are recorded as configuration in `panel.json`, not as the data flowing between them. If `querydata.json` looks correct but the panel doesn't, the cause lies in that configuration.
 
-- **Large responses might be trimmed, and generation of large bundles might fail.** `querydata.json` is limited to 8 MiB for a single panel and 32 MiB across a whole-dashboard bundle. Query data above that limit is replaced by a summary that records what was left out, rather than being dropped without trace. If a dashboard bundle uses up its budget, the remaining panels' query data is skipped and the reason is recorded in `manifest.json`. Nevertheless, large bundles might still be generated, for example if the faulty plugin is unintentionally duplicating data, and the generation might fail. If a bundle hits these limits or issues, reproduce the problem on a small, temporary test dashboard or panel and generate the bundle from that instead.
+- **Large responses might be trimmed, and, less commonly, generation might fail outright.** These are two different limits:
+
+  - `querydata.json` is capped at 1 GiB for a single panel and 1.5 GiB across a whole-dashboard bundle. A response over that limit isn't dropped without trace: it's replaced by a summary that records what was left out, and the rest of the bundle still generates. For a dashboard bundle, once the shared 1.5 GiB budget is used up, the remaining panels' query data is skipped, and the reason is recorded in `manifest.json`.
+  - `traffic.har` isn't limited by Grafana the same way: capture is limited by the data source plugin itself, up to 1 GiB per request or response body and 1.5 GiB in total per bundle.
+  - Generating a bundle can fail outright, rather than trim, if the entire request to Grafana -- the queries, panel and dashboard JSON, and, for a single panel, the frames your browser is holding for it -- exceeds 100 MiB. This is uncommon in practice: it takes an unusually large payload from the browser itself, not just a large data source response.
+
+  If you hit either limit, or a bundle takes unreasonably long to generate, reproduce the problem on a minimal setup instead of the original dashboard:
+
+  - Use a temporary panel or dashboard holding only the misbehaving panel.
+  - Narrow the time range to the shortest window that still reproduces the problem. Fewer returned data points means a smaller bundle and a faster capture.
+
+  A smaller, reproducible setup is also easier for Grafana Labs Technical Support to work with.
 
 ## Related documentation
 
