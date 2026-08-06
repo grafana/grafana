@@ -129,6 +129,14 @@ describe('MegaMenu', () => {
     expect(await screen.findByRole('link', { name: 'Child2' })).toBeInTheDocument();
   });
 
+  it('should render great-grandchildren under section-placed apps', async () => {
+    renderMegaMenu({ navBarTree: nestedNavTree });
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Section name' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Child1' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section: Grandchild1' }));
+    expect(await screen.findByRole('link', { name: 'GreatGrandchild1' })).toBeInTheDocument();
+  });
+
   it('should filter out profile', async () => {
     renderMegaMenu({ navBarTree: nestedNavTree });
 

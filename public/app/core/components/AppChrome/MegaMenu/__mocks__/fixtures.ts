@@ -13,7 +13,17 @@ export const nestedNavTree: NavModelItem[] = [
         text: 'Child1',
         id: 'child1',
         url: 'section/child1',
-        children: [{ text: 'Grandchild1', id: 'grandchild1', url: 'section/child1/grandchild1' }],
+        children: [
+          {
+            text: 'Grandchild1',
+            id: 'grandchild1',
+            url: 'section/child1/grandchild1',
+            // Mirrors section → app → page → path-nested child (grafana.pluginPathNesting).
+            children: [
+              { text: 'GreatGrandchild1', id: 'greatgrandchild1', url: 'section/child1/grandchild1/great' },
+            ],
+          },
+        ],
       },
       { text: 'Child2', id: 'child2', url: 'section/child2' },
     ],
