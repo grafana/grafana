@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError, logError } from '@grafana/runtime';
+import { logError } from '@grafana/runtime';
 import {
   sceneGraph,
   type SceneComponentProps,
@@ -16,13 +16,16 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { Alert, Button, FeatureBadge, useStyles2 } from '@grafana/ui';
 import {
   capturePanelData,
   capturePanelDataFailure,
   type PanelDataPayload,
 } from 'app/features/query/diagnostics/capturePanelData';
-import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
+import {
+  diagnosticsErrorMessage,
+  downloadDiagnosticsForQueries,
+} from 'app/features/query/diagnostics/downloadDiagnostics';
 import { interpolateDiagnosticsQueries } from 'app/features/query/diagnostics/interpolateQueries';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -126,21 +129,11 @@ function findPanelSaveModel(dashboardModel: unknown, panel: VizPanel, dashboard:
   return findV1PanelSaveModel(dashboardModel.panels, panelId);
 }
 
-// The download uses a blob-response fetch, whose FetchError carries the detail in status/statusText
-// (its data is a Blob and message is unset), so build a message from those rather than error.message
-// which would leave the alert body empty.
-function diagnosticsErrorMessage(error: Error): string {
-  if (isFetchError(error)) {
-    const parts = [error.status, error.statusText].filter(Boolean);
-    return parts.length ? parts.join(' ') : t('dashboard.diagnostics.request-failed', 'Request failed');
-  }
-  return error.message || t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics');
-}
-
 function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiagnostics>) {
   const { onDismiss, panelRef, dashboardRef } = model.useState();
   const styles = useStyles2(getStyles);
   const abortRef = useRef<AbortController | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Abort any in-flight request if the drawer unmounts.
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -239,6 +232,24 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     });
   }, [panelRef, dashboardRef]);
 
+  // Resolved asynchronously: the archive-download fetch always requests responseType: 'blob', so an
+  // error response's JSON body has to be read back off the Blob (see diagnosticsErrorMessage).
+  useEffect(() => {
+    if (!error) {
+      setErrorMessage('');
+      return;
+    }
+    let cancelled = false;
+    diagnosticsErrorMessage(error).then((message) => {
+      if (!cancelled) {
+        setErrorMessage(message);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [error]);
+
   const handleDismiss = () => {
     abortRef.current?.abort();
     onDismiss?.();
@@ -246,6 +257,10 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
 
   return (
     <div>
+      <div className={styles.badgeRow}>
+        <FeatureBadge featureState={FeatureState.experimental} />
+      </div>
+
       <p className={styles.info}>
         <Trans i18nKey="dashboard.diagnostics.info-text-panel">
           Generates a diagnostic bundle for this panel by re-running its queries with HTTP capture active. The download
@@ -255,7 +270,7 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
 
       <Alert
         severity="warning"
-        title={t('dashboard.diagnostics.sensitive-warning-title', 'May contain sensitive data — experimental feature')}
+        title={t('dashboard.diagnostics.sensitive-warning-title', 'May contain sensitive data')}
       >
         <Trans i18nKey="dashboard.diagnostics.sensitive-warning-body">
           The bundle can include request headers, query parameters, and server log lines. Review it before sharing
@@ -277,7 +292,7 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
 
       {error && (
         <Alert severity="error" title={t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics')}>
-          {diagnosticsErrorMessage(error)}
+          {errorMessage}
         </Alert>
       )}
 
@@ -302,6 +317,9 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  badgeRow: css({
+    marginBottom: theme.spacing(1),
+  }),
   info: css({
     marginBottom: theme.spacing(2),
   }),
