@@ -503,6 +503,9 @@
         "border": {
           "type": "object",
           "properties": {
+            "faint": {
+              "type": "string"
+            },
             "weak": {
               "type": "string"
             },
