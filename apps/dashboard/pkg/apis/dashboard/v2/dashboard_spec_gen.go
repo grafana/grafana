@@ -2615,6 +2615,42 @@ func (DashboardV2DataQueryKindDatasource) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardV2DataQueryKindDatasource"
 }
 
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardV2DataQueryKindDatasource` from JSON.
+// It accepts both a string (datasource name) and an object with a "name" field.
+// This is needed because some exported dashboards have the datasource reference as a plain string,
+// while the generated schema expects {"name": "..."}.
+func (resource *DashboardV2DataQueryKindDatasource) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	var errList []error
+
+	// Try object form: {"name": "datasource-uid"}
+	var obj struct {
+		Name *string `json:"name,omitempty"`
+	}
+	if err := json.Unmarshal(raw, &obj); err != nil {
+		errList = append(errList, err)
+	} else {
+		if obj.Name != nil {
+			resource.Name = obj.Name
+		}
+		return nil
+	}
+
+	// Try string form: "datasource-uid"
+	var str string
+	if err := json.Unmarshal(raw, &str); err != nil {
+		errList = append(errList, err)
+	} else {
+		resource.Name = &str
+		return nil
+	}
+
+	return errors.Join(errList...)
+}
+
 // +k8s:openapi-gen=true
 type DashboardV2FieldConfigSourceOverrides struct {
 	// Describes config override rules created when interacting with Grafana.
