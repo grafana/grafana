@@ -25,6 +25,7 @@ var (
 	getTeamByIDTemplate           = mustTemplate("get_team_by_id.sql")
 	getTeamsByUserTemplate        = mustTemplate("get_teams_by_user.sql")
 	getTeamIDsByUserTemplate      = mustTemplate("get_team_ids_by_user.sql")
+	getTeamMembersTemplate        = mustTemplate("get_team_members.sql")
 	teamExistsTemplate            = mustTemplate("team_exists.sql")
 	isTeamMemberTemplate          = mustTemplate("is_team_member.sql")
 	getTeamMemberTemplate         = mustTemplate("get_team_member.sql")

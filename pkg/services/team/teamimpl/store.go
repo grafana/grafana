@@ -801,71 +801,58 @@ func (ss *xormStore) GetMembers(ctx context.Context, query *team.GetTeamMembersQ
 	return ss.getTeamMembers(ctx, dbHelper, query, acFilter)
 }
 
+type getTeamMembersQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable  string
+	UserTable        string
+	TeamTable        string
+	UserAuthTable    string
+	IsServiceAccount any
+	OrgID            int64
+	TeamID           int64
+	TeamUID          string
+	UserID           int64
+	External         bool
+	IsExternal       any
+	AccessAll        bool
+	AccessUserIDs    []any
+}
+
+func (q getTeamMembersQuery) Validate() error { return nil }
+
 // getTeamMembers return a list of members for the specified team
 func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, query *team.GetTeamMembersQuery, acUserFilter *ac.SQLFilter) ([]*team.TeamMemberDTO, error) {
 	queryResult := make([]*team.TeamMemberDTO, 0)
 
-	err := dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
-		// Resolved but unquoted: these are handed to XORM, which quotes them itself.
-		// The correlated subquery below builds raw SQL and so uses quoteTable.
-		teamMemberTable := dbHelper.Table("team_member")
-		userTable := dbHelper.Table("user")
-		teamTable := dbHelper.Table("team")
-		userAuthTable := dbHelper.Table("user_auth")
-		userRef := dbHelper.DB.GetDialect().Quote("user")
-		sess := dbSess.Table(teamMemberTable)
-		sess.Join("INNER", []string{userTable, "user"},
-			fmt.Sprintf("team_member.user_id=%s.%s", userRef, dbHelper.DB.GetDialect().Quote("id")),
-		)
-		sess.Join("INNER", []string{teamTable, "team"}, "team.id=team_member.team_id")
-
-		// explicitly check for serviceaccounts
-		sess.Where(fmt.Sprintf("%s.is_service_account=?", userRef), dbHelper.DB.GetDialect().BooleanValue(false))
-
+	err := dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		accessAll := true
+		var accessUserIDs []any
 		if acUserFilter != nil {
-			sess.Where(acUserFilter.Where, acUserFilter.Args...)
+			accessAll, accessUserIDs = accessControlQueryFields(*acUserFilter)
 		}
 
-		// Join with only most recent auth module
-		authJoinCondition := `user_auth.id=(
-			SELECT id
-			FROM ` + quoteTable(dbHelper, "user_auth") + ` AS user_auth
-			WHERE user_auth.user_id = team_member.user_id
-			ORDER BY user_auth.created DESC ` +
-			dbHelper.DB.GetDialect().Limit(1) + ")"
-		sess.Join("LEFT", []string{userAuthTable, "user_auth"}, authJoinCondition)
+		sqlQuery := getTeamMembersQuery{
+			SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
+			TeamMemberTable:  dbHelper.Table("team_member"),
+			UserTable:        dbHelper.Table("user"),
+			TeamTable:        dbHelper.Table("team"),
+			UserAuthTable:    dbHelper.Table("user_auth"),
+			IsServiceAccount: dbHelper.DB.GetDialect().BooleanValue(false),
+			OrgID:            query.OrgID,
+			TeamID:           query.TeamID,
+			TeamUID:          query.TeamUID,
+			UserID:           query.UserID,
+			External:         query.External,
+			IsExternal:       dbHelper.DB.GetDialect().BooleanValue(true),
+			AccessAll:        accessAll,
+			AccessUserIDs:    accessUserIDs,
+		}
+		rawSQL, err := sqltemplate.Execute(getTeamMembersTemplate, sqlQuery)
+		if err != nil {
+			return err
+		}
 
-		if query.OrgID != 0 {
-			sess.Where("team_member.org_id=?", query.OrgID)
-		}
-		if query.TeamID != 0 {
-			sess.Where("team_member.team_id=?", query.TeamID)
-		}
-		if query.TeamUID != "" {
-			sess.Where("team.uid=?", query.TeamUID)
-		}
-		if query.UserID != 0 {
-			sess.Where("team_member.user_id=?", query.UserID)
-		}
-		if query.External {
-			sess.Where("team_member.external=?", dbHelper.DB.GetDialect().BooleanValue(true))
-		}
-		sess.Select(fmt.Sprintf(`team_member.org_id,
-			team_member.team_id,
-			team_member.user_id,
-			team_member.uid,
-			%[1]s.email,
-			%[1]s.name,
-			%[1]s.login,
-			%[1]s.uid as user_uid,
-			team_member.external,
-			team_member.permission,
-			user_auth.auth_module,
-			team.uid as team_uid`, userRef))
-		sess.Asc("user.login", "user.email")
-
-		err := sess.Find(&queryResult)
-		return err
+		return sess.SQL(rawSQL, sqlQuery.GetArgs()...).Find(&queryResult)
 	})
 	if err != nil {
 		return nil, err
