@@ -28,6 +28,8 @@ const maplibreLayer: MapLayerRegistryItem<MaplibreConfig> = {
   name: 'MapLibre layer',
   description: 'Add layer using MapLibre style.json URL',
   isBaseMap: true,
+  // Attribution comes from the style, so the tile provider terms are unknown here
+  requiresAttribution: true,
 
   create: async (
     map: Map,

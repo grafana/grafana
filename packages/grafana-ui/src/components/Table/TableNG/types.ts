@@ -126,6 +126,8 @@ interface BaseTableProps {
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
+  /** When pagination is enabled, fixes the number of rows per page instead of deriving it from the panel height. */
+  pageSize?: number;
   cellHeight?: TableCellHeight;
   maxRowHeight?: number;
   structureRev?: number;
@@ -145,8 +147,6 @@ interface BaseTableProps {
   disableSanitizeHtml?: boolean;
   // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
   disableKeyboardEvents?: boolean;
-  // temporary feature toggle to manage rollout of the refactored nested-table implementation
-  nestedRefactorEnabled?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */

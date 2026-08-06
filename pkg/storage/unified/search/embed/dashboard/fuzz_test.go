@@ -67,6 +67,6 @@ func FuzzExtractDashboard(f *testing.F) {
 		if len(data) > 1<<20 {
 			t.Skip()
 		}
-		_, _ = e.Extract(context.Background(), key, data, "")
+		_, _ = e.Extract(context.Background(), key, data)
 	})
 }

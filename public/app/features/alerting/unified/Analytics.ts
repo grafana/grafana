@@ -408,35 +408,6 @@ export type AlertRuleTrackingProps = {
 };
 
 // ============================================================================
-// Alerts Activity Banner & View Experience Telemetry
-// ============================================================================
-
-/**
- * Track banner impression - fired once per session when banner is first shown.
- * Note: user_id, org_id, grafana_version, and other common properties are automatically
- * tracked by the analytics infrastructure.
- */
-export function trackAlertsActivityBannerImpression() {
-  reportInteraction('grafana_alerting_alerts_activity_banner_impression');
-}
-
-/**
- * Track when user clicks "Open Alerts Activity" CTA
- */
-export function trackAlertsActivityBannerClickTry() {
-  reportInteraction('grafana_alerting_alerts_activity_banner_click');
-}
-
-/**
- * Track when user dismisses the banner
- */
-export function trackAlertsActivityBannerDismiss(dismissedUntil: string) {
-  reportInteraction('grafana_alerting_alerts_activity_banner_dismiss', {
-    dismissed_until: dismissedUntil,
-  });
-}
-
-// ============================================================================
 // View Experience Toggle Telemetry (persistent control near page title)
 // ============================================================================
 

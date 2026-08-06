@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type DataSourceInstanceSettings, type TimeRange, store } from '@grafana/data';
-import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type TimeRange, store } from '@grafana/data';
+import { initDataSourceInstanceSettings, setDatasourcePluginMetas } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 
 import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline, shouldBeActive } from './ContentOutline';
@@ -24,11 +24,13 @@ const scrollerMock = document.createElement('div');
 
 const unregisterMock = jest.fn();
 
+const promMeta = { id: 'prometheus', info: { logos: { small: 'prometheus.svg' } } } as unknown as DataSourcePluginMeta;
+
 const promSettings = {
   uid: 'prom-uid',
   type: 'prometheus',
   name: 'gdev-prometheus',
-  meta: { id: 'prometheus', info: { logos: { small: 'prometheus.svg' } } },
+  meta: promMeta,
 } as unknown as DataSourceInstanceSettings;
 
 const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
@@ -52,7 +54,7 @@ const queriesOutlineItem = () => ({
   })),
 });
 
-const setup = (
+const setup = async (
   mergeSingleChild = false,
   showSignalExplorer = false,
   queries: DataQuery[] = [],
@@ -62,9 +64,10 @@ const setup = (
 
   scrollerMock.scroll = jest.fn();
 
-  setDataSourceSrv({
-    getInstanceSettings: () => promSettings,
-  } as unknown as DataSourceSrv);
+  // SignalExplorer resolves a card's datasource and logo through the async datasource APIs, so
+  // both of the caches behind them are seeded rather than the legacy `DataSourceSrv`.
+  initDataSourceInstanceSettings({ 'gdev-prometheus': promSettings }, 'gdev-prometheus');
+  setDatasourcePluginMetas({ prometheus: promMeta });
 
   // Mock useContentOutlineContext with custom outlineItems
   const mockUseContentOutlineContext = require('./ContentOutlineContext').useContentOutlineContext;
@@ -117,7 +120,7 @@ const setup = (
     unregister: unregisterMock,
   });
 
-  return render(
+  const rendered = render(
     <ContentOutline
       scroller={scrollerMock}
       panelId="content-outline-container-1"
@@ -126,6 +129,15 @@ const setup = (
       timeRange={timeRange}
     />
   );
+
+  // The explorer's datasource hooks resolve a few promise turns after the first paint, so settle
+  // them here: their state updates stay inside act() and the cards carry resolved names.
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+
+  return rendered;
 };
 
 describe('<ContentOutline />', () => {
@@ -136,7 +148,7 @@ describe('<ContentOutline />', () => {
   });
 
   it('toggles content on button click', async () => {
-    setup();
+    await setup();
     let showContentOutlineButton = screen.getByRole('button', { name: 'Collapse outline' });
     expect(showContentOutlineButton).toBeInTheDocument();
 
@@ -169,7 +181,7 @@ describe('<ContentOutline />', () => {
   });
 
   it('scrolls into view on content button click', async () => {
-    setup();
+    await setup();
     const itemButtons = screen.getAllByRole('button', { name: /Item [0-9]+/ });
 
     for (const button of itemButtons) {
@@ -180,7 +192,7 @@ describe('<ContentOutline />', () => {
   });
 
   it('doesnt merge a single child item when mergeSingleChild is false', async () => {
-    setup();
+    await setup();
     const expandSectionChevrons = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
     await userEvent.click(expandSectionChevrons[0]);
 
@@ -188,15 +200,15 @@ describe('<ContentOutline />', () => {
     expect(child).toBeInTheDocument();
   });
 
-  it('merges a single child item when mergeSingleChild is true', () => {
-    setup(true);
+  it('merges a single child item when mergeSingleChild is true', async () => {
+    await setup(true);
     const child = screen.queryByRole('button', { name: 'Item 1-1' });
 
     expect(child).not.toBeInTheDocument();
   });
 
   it('displays multiple children', async () => {
-    setup();
+    await setup();
     const expandSectionChevrons = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
     await userEvent.click(expandSectionChevrons[1]);
 
@@ -207,7 +219,7 @@ describe('<ContentOutline />', () => {
   });
 
   it('if item has multiple children, it displays multiple children even when mergeSingleChild is true', async () => {
-    setup(true);
+    await setup(true);
     const expandSectionChevrons = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
     // since first item has only one child, we will have only one chevron
     await userEvent.click(expandSectionChevrons[0]);
@@ -219,7 +231,7 @@ describe('<ContentOutline />', () => {
   });
 
   it('collapse button has same aria-controls as the section content', async () => {
-    setup();
+    await setup();
     const expandSectionChevrons = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
     // chevron for the second item
     const button = expandSectionChevrons[1];
@@ -230,7 +242,7 @@ describe('<ContentOutline />', () => {
   });
 
   it('deletes item on delete button click', async () => {
-    setup();
+    await setup();
     const expandSectionChevrons = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
     // chevron for the second item
     const button = expandSectionChevrons[1];
@@ -243,7 +255,7 @@ describe('<ContentOutline />', () => {
 
   it('should retrieve the last expanded state from local storage', async () => {
     const getBoolMock = jest.spyOn(store, 'getBool').mockReturnValue(false);
-    setup();
+    await setup();
     const collapseContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
     const expandContentOutlineButton = screen.queryByRole('button', { name: 'Expand outline' });
     expect(collapseContentOutlineButton).not.toBeInTheDocument();
@@ -254,7 +266,7 @@ describe('<ContentOutline />', () => {
 
   describe('icon-only outline', () => {
     it('renders every section open, with no collapse toggle left behind', async () => {
-      setup();
+      await setup();
       await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
 
       expect(screen.queryAllByRole('button', { name: 'Content outline item collapse button' })).toHaveLength(0);
@@ -264,7 +276,7 @@ describe('<ContentOutline />', () => {
     });
 
     it('lets the children stand for a section instead of repeating its icon', async () => {
-      setup();
+      await setup();
       await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
 
       expect(screen.queryByRole('button', { name: 'Item 1' })).not.toBeInTheDocument();
@@ -273,7 +285,7 @@ describe('<ContentOutline />', () => {
 
     it('keeps the section row when its children are not rendered', async () => {
       // A merged single child is folded into its section, which then has nothing to stand for it.
-      setup(true);
+      await setup(true);
       await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
 
       expect(screen.getByRole('button', { name: 'Item 1' })).toBeInTheDocument();
@@ -320,7 +332,7 @@ describe('<ContentOutline />', () => {
     });
 
     it('restores each section to the state it had before the outline was collapsed', async () => {
-      setup();
+      await setup();
       // Open the first section only, so the two sections differ when the outline widens again.
       const chevrons = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
       await userEvent.click(chevrons[0]);
@@ -340,23 +352,23 @@ describe('<ContentOutline />', () => {
       useBooleanFlagValueMock.mockImplementation((_: string, defaultValue: boolean) => defaultValue);
     });
 
-    it('hides the header title and the query cards by default (feature toggle off)', () => {
-      setup(false, false, promQueries);
+    it('hides the header title and the query cards by default (feature toggle off)', async () => {
+      await setup(false, false, promQueries);
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();
       expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
       expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
     });
 
-    it('does not render the query cards or header title when the feature toggle is disabled', () => {
+    it('does not render the query cards or header title when the feature toggle is disabled', async () => {
       useBooleanFlagValueMock.mockReturnValue(false);
-      setup(false, true, promQueries);
+      await setup(false, true, promQueries);
       expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();
     });
 
-    it('renders a query card and the "Datasource explorer" title when the toggle is enabled and Prometheus is selected', () => {
+    it('renders a query card and the "Datasource explorer" title when the toggle is enabled and Prometheus is selected', async () => {
       useBooleanFlagValueMock.mockReturnValue(true);
-      setup(false, true, promQueries);
+      await setup(false, true, promQueries);
       expect(screen.getByText('Datasource explorer')).toBeInTheDocument();
       expect(screen.getByTestId('signal-card-A')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
@@ -364,7 +376,7 @@ describe('<ContentOutline />', () => {
 
     it('renders the metrics explorer once a Prometheus card is expanded', async () => {
       useBooleanFlagValueMock.mockReturnValue(true);
-      setup(false, true, promQueries);
+      await setup(false, true, promQueries);
       expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
@@ -376,7 +388,7 @@ describe('<ContentOutline />', () => {
 
     it('hides the explorer when the outline is collapsed', async () => {
       useBooleanFlagValueMock.mockReturnValue(true);
-      setup(false, true, promQueries);
+      await setup(false, true, promQueries);
       expect(screen.getByTestId('signal-card-A')).toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
@@ -388,9 +400,9 @@ describe('<ContentOutline />', () => {
       expect(screen.getByRole('button', { name: 'Expand outline' })).toBeInTheDocument();
     });
 
-    it('drops the outline Queries section while the explorer is visible', () => {
+    it('drops the outline Queries section while the explorer is visible', async () => {
       useBooleanFlagValueMock.mockReturnValue(true);
-      setup(false, true, promQueries, true);
+      await setup(false, true, promQueries, true);
 
       expect(screen.getByTestId('signal-card-A')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Queries' })).not.toBeInTheDocument();
@@ -398,15 +410,15 @@ describe('<ContentOutline />', () => {
       expect(screen.getByRole('button', { name: 'Item 1' })).toBeInTheDocument();
     });
 
-    it('keeps the outline Queries section when the explorer is not visible', () => {
-      setup(false, false, promQueries, true);
+    it('keeps the outline Queries section when the explorer is not visible', async () => {
+      await setup(false, false, promQueries, true);
 
       expect(screen.getByRole('button', { name: 'Queries' })).toBeInTheDocument();
     });
 
     it('renders the query rows as icons once the outline is collapsed in metrics mode', async () => {
       useBooleanFlagValueMock.mockReturnValue(true);
-      setup(false, true, promQueries, true);
+      await setup(false, true, promQueries, true);
 
       await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
 
@@ -417,9 +429,9 @@ describe('<ContentOutline />', () => {
       expect(screen.queryByRole('button', { name: 'Queries' })).not.toBeInTheDocument();
     });
 
-    it('does not render the query cards or header title when the toggle is enabled but Prometheus is not selected', () => {
+    it('does not render the query cards or header title when the toggle is enabled but Prometheus is not selected', async () => {
       useBooleanFlagValueMock.mockReturnValue(true);
-      setup(false, false, promQueries);
+      await setup(false, false, promQueries);
       expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
       expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();

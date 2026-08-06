@@ -147,7 +147,61 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	if len(fused) > limit {
 		fused = fused[:limit]
 	}
+	s.resolveFolderTitles(ctx, req.Key.Namespace, fused)
 	return &resourcepb.HybridSearchResponse{Results: fused}, nil
+}
+
+// resolveFolderTitles fills FolderTitle on the final results with one
+// batched lookup against the folder index, so titles are always current
+// (stored chunk metadata predates folder renames and mostly lacks the
+// title entirely). Best-effort display data: failures leave titles empty
+// and never fail the search.
+func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string, results []*resourcepb.HybridSearchResult) {
+	uids := make([]string, 0, len(results))
+	seen := make(map[string]struct{}, len(results))
+	for _, r := range results {
+		// "" and "general" are root-folder sentinels, not real folders.
+		if r.Folder == "" || r.Folder == "general" {
+			continue
+		}
+		if _, dup := seen[r.Folder]; !dup {
+			seen[r.Folder] = struct{}{}
+			uids = append(uids, r.Folder)
+		}
+	}
+	if len(uids) == 0 {
+		return
+	}
+
+	resp, err := s.Search(ctx, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: namespace,
+				Group:     "folder.grafana.app",
+				Resource:  "folders",
+			},
+			Fields: []*resourcepb.Requirement{
+				{Key: SEARCH_FIELD_NAME, Operator: "in", Values: uids},
+			},
+		},
+		Limit:  int64(len(uids)),
+		Fields: []string{SEARCH_FIELD_TITLE},
+	})
+	if err == nil && resp != nil && resp.Error != nil {
+		err = grpcErrorFromErrorResult(resp.Error)
+	}
+	if err != nil || resp == nil {
+		s.log.Warn("hybrid search: folder title resolution failed", "err", err)
+		return
+	}
+
+	titles := make(map[string]string, len(uids))
+	for _, hit := range lexicalHitsFromResponse(resp) {
+		titles[hit.uid] = hit.title
+	}
+	for _, r := range results {
+		r.FolderTitle = titles[r.Folder]
+	}
 }
 
 // resolveAllowedCollection is the shared vector-entry guard for

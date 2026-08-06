@@ -608,12 +608,6 @@
       "title-restore-version": "バージョンの復元",
       "title-restoring-alertmanager-configuration": "Alertmanager設定の復元"
     },
-    "alerts-activity-banner": {
-      "description": "Grafana管理アラートルールの運用作業を処理するための新しいページが利用可能になりました。どのアラートが発生しているかを確認し、履歴情報を調べ、フィルタリングとグループ化を行うことで、トリアージと根本原因分析を強化できます。",
-      "open-button": "アラートアクティビティを表示",
-      "open-button-aria": "アラートアクティビティを開く",
-      "title": "アラートアクティビティが利用可能になりました！"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "並べ替え",
       "label-filter-placeholder-search-alerts-by-labels": "ラベルでアラートを検索",
@@ -788,7 +782,9 @@
         "value-in-transition": "移行中の値"
       },
       "error": {
-        "server-error": "アラート状態履歴のクエリに失敗しました：サーバーからエラーが返されました"
+        "server-error": "アラート状態履歴のクエリに失敗しました：サーバーからエラーが返されました",
+        "server-error-description": "",
+        "title": ""
       },
       "filter": {
         "clear": "フィルタをクリア",
@@ -3266,6 +3262,8 @@
         "title": ""
       },
       "import": {
+        "any": "",
+        "collapse-all": "",
         "empty-body": "",
         "empty-cta": "",
         "empty-learn-more": "",
@@ -3273,9 +3271,25 @@
         "error-body": "",
         "error-retry": "",
         "error-title": "",
+        "expand-all": "",
+        "inhibition-equal": "",
         "loading": "",
+        "no-matchers": "",
+        "parse-error-body": "",
+        "parse-error-title": "",
+        "resources": "",
+        "section": {
+          "contact-points": "",
+          "inhibition-rules": "",
+          "notification-policy": "",
+          "templates": "",
+          "time-intervals": ""
+        },
+        "staged-badge": "",
         "staged-description": "",
-        "staged-title": ""
+        "staged-title": "",
+        "view": "",
+        "policy-tree-routes_other": ""
       },
       "tabs": {
         "alert-managers": "アラートマネージャー",
@@ -4387,6 +4401,9 @@
     "create-new": {
       "dashboard-group": ""
     },
+    "create-new-button": {
+      "generate-dashboard": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "このアイテムは、選択したアイテムと同じリポジトリにありません。"
@@ -4794,6 +4811,7 @@
       "not-found": "<0>見つかりません：</0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "Ctrl + 右マウス",
       "middle-mouse": "マウス中央ボタン",
       "pan-title": "パン：",
@@ -5361,6 +5379,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "自動",
       "options": {
         "custom-min-height": {
@@ -5378,6 +5397,11 @@
         "min-width-custom": "カスタム最小幅",
         "min-width-custom-clear": "標準の最小列幅に戻る",
         "min-width-error": "50から2000の間の数値である必要があります"
+      },
+      "resize-intercept": {
+        "edit": "",
+        "header": "",
+        "switch": ""
       }
     },
     "canvas-actions": {
@@ -5525,6 +5549,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "カスタム",
       "row-actions": {
         "delete": "行を削除する",
@@ -6693,6 +6718,21 @@
       "title": "ダッシュボードリンクがまだ追加されていません"
     }
   },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": ""
+    },
+    "modal": {
+      "title": ""
+    },
+    "prompt": {
+      "cancel": "",
+      "description": "",
+      "input-label": "",
+      "placeholder": "",
+      "submit": ""
+    }
+  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "このデータソースはフィルターをサポートしていません。",
@@ -7510,6 +7550,14 @@
       "disabled-tooltip": "アラートルールを作成する前にダッシュボードを保存する",
       "new-alert-rule": "新しいアラートルール",
       "title-no-alerting-capable-query-found": "アラート対応クエリが見つかりません"
+    },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "",
+      "title": ""
+    },
+    "scripted-dashboards-disabled": {
+      "body": "",
+      "title": ""
     },
     "section-placement": {
       "top-row": "",
@@ -8795,6 +8843,7 @@
       "open-in-profiles-drilldown": "",
       "profiles-for-this-span": "",
       "related-logs": "",
+      "related-logs-no-logs-tooltip": "",
       "related-logs-tooltip": "",
       "session-for-this-span": ""
     },
@@ -9188,6 +9237,7 @@
       "name-lookup-field": "ルックアップフィールド"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "デフォルトのフィールド名に基づいて位置データを自動的に識別",
         "description-coords": "緯度と経度のフィールドを指定",
@@ -9217,9 +9267,9 @@
     "description-mouse-wheel-zoom": "マウスホイールによるズームコントロールを有効にする",
     "description-no-repeat": "マップの水平繰り返しを防止",
     "description-share-view": "複数のパネルで同じビューを使用します。注：ダッシュボードの再読み込みが必要になる場合があります。",
-    "description-show-attribution": "右下にマップソースの帰属情報を表示",
     "description-show-debug": "マップ情報を表示",
     "description-show-measure": "マップ上で測定を行うためのツールを表示",
+    "description-show-optional-attribution": "",
     "description-show-scale": "マップの縮尺を示す",
     "description-show-zoom": "左上隅にズームコントロールボタンを表示",
     "description-sync-view-variable": "クエリで使用するために、ダッシュボード変数にビューの境界を保存する",
@@ -9280,9 +9330,9 @@
     "name-mouse-wheel-zoom": "マウスホイールズーム",
     "name-no-repeat": "マップの繰り返しなし",
     "name-share-view": "ビューを共有",
-    "name-show-attribution": "帰属情報を表示",
     "name-show-debug": "デバッグを表示",
     "name-show-measure": "測定ツールを表示",
+    "name-show-optional-attribution": "",
     "name-show-scale": "スケール表示",
     "name-show-zoom": "ズームコントロールを表示",
     "name-sync-view-variable": "ビューをダッシュボード変数に同期する",
@@ -9954,6 +10004,14 @@
       "log-base": "ログベース"
     },
     "builder": {
+      "annotation-options": {
+        "canvas-controls-desc": "",
+        "canvas-controls-name": "",
+        "clustering-desc": "",
+        "clustering-name": "",
+        "multi-lane-name": "",
+        "multi-row-desc": ""
+      },
       "annotations": "注釈",
       "axis": {
         "category-axis": "軸",
@@ -10289,9 +10347,13 @@
     "matchers": {
       "groups": {
         "annotation": "注釈",
+        "annotation-description": "",
         "exemplar": "エグゼンプラー",
+        "exemplar-description": "",
         "nested": "ネストされた",
-        "series": "データフレーム"
+        "nested-description": "",
+        "series": "データフレーム",
+        "series-description": ""
       },
       "labels": {
         "base-field-name": "{{name}}（ベースフィールド名）",
@@ -12488,6 +12550,7 @@
     },
     "quick-add": {
       "aria-label": "新規",
+      "generate-dashboard-button": "",
       "new-template-dashboard-button": ""
     },
     "rss-button": "最新ブログから"
@@ -13322,7 +13385,7 @@
         "repository-label": "リポジトリ",
         "repository-read-write-admin": "読み取りと書き込み",
         "webhooks-label": "Webhook",
-        "webhooks-read-write": "読み取りと書き込み"
+        "webhooks-read-write-delete": ""
       },
       "pr-workflow-description": "変更保存時にプルリクエストを開くかどうかをユーザーが選択できます。メインブランチへの直接変更が許可されていないリポジトリでは、プルリクエストが必要になる場合があります。",
       "pr-workflow-label": "保存時にプルリクエストオプションを有効にする",
@@ -14597,6 +14660,7 @@
       "message": ""
     },
     "sidebar": {
+      "add": "",
       "add-below": "{{id}}の下に追加",
       "add-expression": "式を追加",
       "add-expression-disabled": "式はダッシュボードのデータソースではサポートされていません",
@@ -14616,6 +14680,7 @@
       "new-type": "新規{{type}} ",
       "queries-empty": "",
       "queries-expressions": "クエリと式",
+      "stacked": "",
       "toggle-size": "サイドバーのサイズを切り替える",
       "transformations": "変換",
       "transformations-empty": "",
@@ -15611,6 +15676,7 @@
     "description-column-filter": "テーブルのフィールドフィルターを有効/無効化",
     "description-frozen-columns": "",
     "description-min-column-width": "列の自動サイズ変更の最小幅",
+    "description-page-size": "",
     "description-styling-from-field": "CSSプロパティを持つJSONオブジェクトを含むフィールド",
     "description-tooltip-from-field": "",
     "frame-picker": {
@@ -15644,6 +15710,7 @@
     "name-hide-in-table": "テーブルで非表示",
     "name-max-height": "",
     "name-min-column-width": "最小列幅",
+    "name-page-size": "",
     "name-show-table-header": "テーブルヘッダーを表示",
     "name-styling-from-field": "フィールドからのスタイリング",
     "name-tooltip-from-field": "",
@@ -15654,6 +15721,7 @@
     "placeholder-column-width": "自動",
     "placeholder-frozen-columns": "なし",
     "placeholder-max-height": "",
+    "placeholder-page-size": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/audit"
+	discoveryendpoint "k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -45,6 +46,7 @@ import (
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -107,6 +109,15 @@ type service struct {
 
 	auditBackend            audit.Backend
 	auditPolicyRuleProvider auditing.PolicyRuleProvider
+
+	// vpRegistry serves the resolved policy consulted by apistore.encode.
+	vpRegistry *versionpolicy.VersionPolicyRegistry
+	// groupPriority reads the live scheme; reprioritizeDiscovery uses it without mutating the scheme.
+	groupPriority func(string) []schema.GroupVersion
+	// groupDiscoveryPriority is each builder group's discovery priority-minimum, preserved across re-prioritize.
+	groupDiscoveryPriority map[string]int
+	// discoveryManager is nil until the server is built; nil skips re-prioritize (startup sets order at install).
+	discoveryManager discoveryendpoint.ResourceManager
 }
 
 func ProvideService(
@@ -337,9 +348,14 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	// Snapshot natural priority before applyPreferredAPIVersions reorders the scheme, so the cap ranks against natural order and preferred can't weaken it.
+	naturalOrder := naturalOrderSnapshot(s.scheme, groupVersions)
+
 	if err := applyPreferredAPIVersions(s.log, s.cfg, s.scheme, apiResourceConfig); err != nil {
 		return err
 	}
+	// groupPriority reads the live scheme (discovery follows preferred); the cap ranks against the natural snapshot instead.
+	s.groupPriority = s.scheme.PrioritizedVersionsForGroup
 
 	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
@@ -362,6 +378,22 @@ func (s *service) start(ctx context.Context) error {
 		}
 	} else {
 		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
+
+		if s.cfg.EnableVersionPolicy {
+			versionPolicyIni, err := buildVersionPolicyIniLayer(s.cfg)
+			if err != nil {
+				return err
+			}
+			s.vpRegistry = versionpolicy.NewVersionPolicyRegistry(
+				versionpolicy.NewResolver(naturalOrder),
+				versionPolicyIni,
+			)
+			if err := s.vpRegistry.Validate(); err != nil {
+				return err
+			}
+			getter.SetVersionPolicy(s.vpRegistry)
+		}
+
 		optsregister = getter.RegisterOptions
 		serverConfig.RESTOptionsGetter = getter
 	}
@@ -442,6 +474,10 @@ func (s *service) start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// Capture the discovery seam so preferred can re-prioritize without a scheme mutation; group priorities mirror startup.
+	s.groupDiscoveryPriority = builder.BuilderGroupPriorities(builders)
+	s.discoveryManager = server.AggregatedDiscoveryGroupManager
 
 	// Install the API group+version for existing builders
 	err = builder.InstallAPIs(s.scheme,
@@ -618,6 +654,8 @@ func (s *service) IsReady() bool {
 }
 
 func (s *service) running(ctx context.Context) error {
+	// Apply the global preferred order to aggregated discovery now the manager exists (startup one-shot).
+	s.reprioritizeDiscovery()
 	select {
 	case err := <-s.stoppedCh:
 		if err != nil {
@@ -626,6 +664,24 @@ func (s *service) running(ctx context.Context) error {
 	case <-ctx.Done():
 	}
 	return nil
+}
+
+// reprioritizeDiscovery reports each group's global preferred version first in aggregated discovery; advisory only (no scheme/storage/cap effect), reverting to natural order when preferred is unset.
+func (s *service) reprioritizeDiscovery() {
+	if s.discoveryManager == nil || s.vpRegistry == nil {
+		return
+	}
+	for group, groupPriority := range s.groupDiscoveryPriority {
+		pvs := s.groupPriority(group)
+		if len(pvs) == 0 {
+			continue
+		}
+		ordered := pvs
+		if preferred := s.vpRegistry.Preferred(group); preferred != "" {
+			ordered = preferredFirst(pvs, schema.GroupVersion{Group: group, Version: preferred})
+		}
+		builder.SetGroupVersionPriorities(s.discoveryManager, groupPriority, ordered)
+	}
 }
 
 func ensureKubeConfig(restConfig *clientrest.Config, dir string) error {
