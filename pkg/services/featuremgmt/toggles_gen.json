@@ -2722,7 +2722,8 @@
       "metadata": {
         "name": "frontendService.settingsSourceFilter",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-06T11:53:39Z"
       },
       "spec": {
         "description": "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
