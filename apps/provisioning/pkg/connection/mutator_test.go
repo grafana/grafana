@@ -1,6 +1,7 @@
 package connection
 
 import (
+	"cmp"
 	"errors"
 	"testing"
 
@@ -126,11 +127,27 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 	tests := []struct {
 		name      string
+		newType   provisioning.ConnectionType
+		newURL    string
 		newOAuth  *provisioning.ConnectionOAuthConfig
 		newSecure provisioning.ConnectionSecure
 		oldOAuth  *provisioning.ConnectionOAuthConfig
 		wantToken common.InlineSecureValue
 	}{
+		{
+			name:      "removes token when connection type is changed",
+			newType:   provisioning.GitlabConnectionType,
+			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
+		{
+			name:      "removes token when connection URL is changed",
+			newURL:    "https://gitlab.example.com",
+			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
 		{
 			name:      "keeps token when oauth credentials are unchanged",
 			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
@@ -184,7 +201,8 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 			obj := &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
-					Type:  provisioning.GithubConnectionType,
+					Type:  cmp.Or(tt.newType, provisioning.GithubConnectionType),
+					URL:   tt.newURL,
 					OAuth: tt.newOAuth,
 				},
 				Secure: tt.newSecure,
