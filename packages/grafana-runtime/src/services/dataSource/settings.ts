@@ -241,14 +241,11 @@ function lookupFromMaps(
   ref: DataSourceRef | string | null | undefined,
   scopedVars: ScopedVars | undefined
 ): DataSourceInstanceSettings | undefined {
-  const nameOrUid = getNameOrUid(ref);
-
-  // Check the uid as well as the full ref: dashboards exist with refs like
-  // `{uid: '__expr__'}` that carry no type, which the legacy DataSourceSrv
-  // recognises as expression refs by uid alone.
-  if (isExpressionReference(ref) || isExpressionReference(nameOrUid)) {
+  if (isExpressionReference(ref)) {
     return getExpressionDataSourceSettings();
   }
+
+  const nameOrUid = getNameOrUid(ref);
 
   if (nameOrUid == null || nameOrUid === 'default') {
     if (isDataSourceRef(ref) && ref.type) {
@@ -396,10 +393,7 @@ function applyFilters(filters: GetDataSourceListFilters = {}): DataSourceInstanc
   return results;
 }
 
-/**
- * @internal
- */
-export function getNameOrUid(ref: DataSourceRef | string | null | undefined): string | undefined {
+function getNameOrUid(ref: DataSourceRef | string | null | undefined): string | undefined {
   if (ref == null) {
     return undefined;
   }

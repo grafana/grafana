@@ -8,7 +8,7 @@ import { FALLBACK_TO_LEGACY_INSTANCE_WARNING } from './constants';
 import { getExpressionDataSourceInstance } from './expressionDs';
 import { describeRef, logDataSourceInstanceError, logDataSourceWarning } from './logging';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
-import { getDataSourceInstanceSettings, getNameOrUid, upsertRuntimeDataSourceInstanceSettings } from './settings';
+import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
 import { type ImportDataSourcePluginFn } from './types';
 
 let importDataSourcePlugin: ImportDataSourcePluginFn | undefined;
@@ -37,10 +37,7 @@ export async function getDataSourceInstance(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
-  // Check the uid as well as the full ref: dashboards exist with refs like
-  // `{uid: '__expr__'}` that carry no type, which the legacy DataSourceSrv
-  // recognises as expression refs by uid alone.
-  if (isExpressionReference(ref) || isExpressionReference(getNameOrUid(ref))) {
+  if (isExpressionReference(ref)) {
     const expressionDs = getExpressionDataSourceInstance();
     if (!expressionDs) {
       throw new Error(
