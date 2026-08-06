@@ -424,6 +424,24 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelAccess(ctx context.Context, a
 	case admission.Update:
 		obj = a.GetObject()
 		verb = utils.VerbUpdate
+		oldObj := a.GetOldObject()
+		if oldObj == nil {
+			return fmt.Errorf("existing library panel object is required for %s authorization", verb)
+		}
+		if err := b.authorizeLibraryPanel(ctx, oldObj, verb, a.GetNamespace()); err != nil {
+			return err
+		}
+		oldName, oldFolder, err := libraryPanelAuthorizationTarget(oldObj)
+		if err != nil {
+			return err
+		}
+		newName, newFolder, err := libraryPanelAuthorizationTarget(obj)
+		if err != nil {
+			return err
+		}
+		if oldName == newName && oldFolder == newFolder {
+			return nil
+		}
 	case admission.Delete:
 		obj = a.GetOldObject()
 		verb = utils.VerbDelete
@@ -437,13 +455,9 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelAccess(ctx context.Context, a
 }
 
 func (b *DashboardsAPIBuilder) authorizeLibraryPanel(ctx context.Context, obj runtime.Object, verb, namespace string) error {
-	accessor, err := utils.MetaAccessor(obj)
+	name, folderUID, err := libraryPanelAuthorizationTarget(obj)
 	if err != nil {
-		return fmt.Errorf("get library panel metadata for authorization: %w", err)
-	}
-	folderUID := accessor.GetFolder()
-	if folderUID == "" {
-		folderUID = accesscontrol.GeneralFolderUID
+		return err
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -456,15 +470,27 @@ func (b *DashboardsAPIBuilder) authorizeLibraryPanel(ctx context.Context, obj ru
 		Group:     gvr.Group,
 		Resource:  gvr.Resource,
 		Namespace: namespace,
-		Name:      accessor.GetName(),
+		Name:      name,
 	}, folderUID)
 	if err != nil {
 		return err
 	}
 	if !resp.Allowed {
-		return apierrors.NewForbidden(gvr.GroupResource(), accessor.GetName(), errors.New("access denied"))
+		return apierrors.NewForbidden(gvr.GroupResource(), name, errors.New("access denied"))
 	}
 	return nil
+}
+
+func libraryPanelAuthorizationTarget(obj runtime.Object) (string, string, error) {
+	accessor, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return "", "", fmt.Errorf("get library panel metadata for authorization: %w", err)
+	}
+	folderUID := accessor.GetFolder()
+	if folderUID == "" {
+		folderUID = accesscontrol.GeneralFolderUID
+	}
+	return accessor.GetName(), folderUID, nil
 }
 
 // validateDelete checks if a dashboard can be deleted
