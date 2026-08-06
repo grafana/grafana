@@ -6157,6 +6157,20 @@
     },
     {
       "metadata": {
+        "name": "text.dashboardEditor",
+        "resourceVersion": "1785960303634",
+        "creationTimestamp": "2026-08-05T20:05:03Z"
+      },
+      "spec": {
+        "description": "Enables editing the text panel directly from the dashboard",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "timeComparison",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-07-24T20:07:28Z"

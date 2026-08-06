@@ -1,3 +1,4 @@
+import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -11,7 +12,7 @@ import { createProps, renderPanel } from './test-utils';
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
-  __esModule: true,
+  ...jest.requireActual('@grafana/ui/unstable'),
   CodeMirrorEditor: ({
     value,
     basicSetup,
@@ -288,22 +289,25 @@ describe('TextNGPanel', () => {
         options: { content: '# Hello', mode: TextMode.Markdown },
       });
 
-      const { rerender } = render(
-        <PanelContextProvider value={{ app: CoreApp.PanelEditor } as PanelContext}>
-          <TextNGPanel {...props} />
-        </PanelContextProvider>
+      // The panel reads `text.dashboardEditor` through the OpenFeature react hook, which throws
+      // without a provider.
+      const inApp = (app: CoreApp, panelProps: Props) => (
+        <OpenFeatureTestProvider flagValueMap={{ 'text.dashboardEditor': false }}>
+          {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */}
+          <PanelContextProvider value={{ app } as PanelContext}>
+            <TextNGPanel {...panelProps} />
+          </PanelContextProvider>
+        </OpenFeatureTestProvider>
       );
+
+      const { rerender } = render(inApp(CoreApp.PanelEditor, props));
       expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
 
       // The debounce that applies while the editor owns rendering must not delay this.
       const edited = Object.assign({}, props, {
         options: { content: '# Edited', mode: TextMode.Markdown },
       });
-      rerender(
-        <PanelContextProvider value={{ app: CoreApp.Dashboard } as PanelContext}>
-          <TextNGPanel {...edited} />
-        </PanelContextProvider>
-      );
+      rerender(inApp(CoreApp.Dashboard, edited));
 
       expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toContain('Edited');
     });

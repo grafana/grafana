@@ -1,5 +1,11 @@
 import { type ChangeSpec, type EditorState, type Line } from '@codemirror/state';
-import { type EditorView } from '@codemirror/view';
+import { EditorView } from '@codemirror/view';
+import { type RefObject } from 'react';
+
+/** The lazily-loaded CodeMirror bundle does not expose its `EditorView`, so it comes from the DOM. */
+export function getEditorView(container: RefObject<HTMLElement | null>) {
+  return container.current ? EditorView.findFromDOM(container.current) : null;
+}
 
 /** Whether `before`/`after` sit immediately outside the range. */
 function isWrapped(state: EditorState, from: number, to: number, before: string, after: string) {

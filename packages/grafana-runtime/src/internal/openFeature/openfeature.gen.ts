@@ -165,6 +165,8 @@ export const FlagKeys = {
   TableProtoRowParser: "table.protoRowParser",
   /** Enables the refactored TableNG nested-table implementation */
   TableRefactorNested: "table.refactorNested",
+  /** Enables editing the text panel directly from the dashboard */
+  TextDashboardEditor: "text.dashboardEditor",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -1003,6 +1005,17 @@ export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagTableRefactorNested = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.refactorNested", false, options).value;
+};
+
+/**
+ * Enables editing the text panel directly from the dashboard
+ *
+ * **Details:**
+ * - flag key: `text.dashboardEditor`
+ * - default value: `false`
+ */
+export const useFlagTextDashboardEditor = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("text.dashboardEditor", false, options).value;
 };
 
 /**
