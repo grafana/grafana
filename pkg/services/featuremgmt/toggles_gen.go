@@ -79,10 +79,6 @@ const (
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
-	// FlagProvisioning
-	// Enables Git Sync and as-code provisioning for Grafana resources
-	FlagProvisioning = "provisioning"
-
 	// FlagProvisioningFolderMetadata
 	// Allow setting folder metadata for provisioned folders
 	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
@@ -837,10 +833,6 @@ const (
 	// FlagReact19
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
-
-	// FlagFrontendServiceSettingsSourceFilter
-	// Adds a label filter for source=us when fetching settings from the settings service in the frontend service
-	FlagFrontendServiceSettingsSourceFilter = "frontendService.settingsSourceFilter"
 
 	// FlagManagedPluginsV2
 	// Enables managed plugins v2 (expanded rollout, community plugin coverage)

@@ -3,7 +3,7 @@ import { type Page } from '@playwright/test';
 import { test, expect, type Components, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { Controls, Sidebar } from './page-objects';
-import { importTestDashboard, switchToAutoGrid } from './utils';
+import { importTestDashboard } from './utils';
 
 test.use({
   featureToggles: {
@@ -30,7 +30,13 @@ test.describe(
       page,
       components,
     }) => {
-      await setupAutoGridInEditMode(page, dashboardPage, selectors, components, 'Auto grid resize intercept - switch');
+      const { sidebar } = await setupAutoGridInEditMode(
+        page,
+        dashboardPage,
+        selectors,
+        components,
+        'Auto grid resize intercept - switch'
+      );
 
       const resizeZones = page.getByTestId(RESIZE_ZONE_TESTID);
       await expect(resizeZones.first()).toBeVisible();
@@ -38,15 +44,17 @@ test.describe(
       await dragResizeCorner(page);
 
       // The popover explains why the resize was blocked and offers the two ways out.
-      await expect(page.getByText('Panel sizes are managed by auto layout')).toBeVisible();
+      // Portalled UI: anchored to the menu's own root, per the suite conventions.
+      const interceptMenu = page.getByRole('menu');
+      await expect(interceptMenu.getByText('Panel sizes are managed by auto layout')).toBeVisible();
 
-      await page.getByRole('menuitem', { name: 'Switch to custom' }).click();
+      await interceptMenu.getByRole('menuitem', { name: 'Switch to custom' }).click();
 
-      // Confirm the "resets panel positions and sizes" modal.
+      // Confirm the "resets panel positions and sizes" modal. This is the spec's permitted one-off
+      // raw selector: the confirm is triggered by the popover menu, which has no page object.
       await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
 
-      const customLayoutOption = page.getByLabel('layout-selection-option-Custom');
-      await expect(customLayoutOption).toBeChecked();
+      await expect(sidebar.dashboardOptions.gridLayoutOptions.getLayoutType('Custom')).toBeChecked();
     });
 
     test('intercepts a resize gesture and can open the auto grid layout settings', async ({
@@ -55,15 +63,24 @@ test.describe(
       page,
       components,
     }) => {
-      await setupAutoGridInEditMode(page, dashboardPage, selectors, components, 'Auto grid resize intercept - edit');
+      const { sidebar } = await setupAutoGridInEditMode(
+        page,
+        dashboardPage,
+        selectors,
+        components,
+        'Auto grid resize intercept - edit'
+      );
+
+      await sidebar.clickCloseButton();
 
       await dragResizeCorner(page);
-      await expect(page.getByText('Panel sizes are managed by auto layout')).toBeVisible();
 
-      await page.getByRole('menuitem', { name: 'Edit auto layout' }).click();
-      const autoLayoutOption = page.getByLabel('layout-selection-option-Auto');
+      const interceptMenu = page.getByRole('menu');
+      await expect(interceptMenu.getByText('Panel sizes are managed by auto layout')).toBeVisible();
 
-      await expect(autoLayoutOption).toBeVisible();
+      await interceptMenu.getByRole('menuitem', { name: 'Edit auto layout' }).click();
+
+      await expect(sidebar.dashboardOptions.gridLayoutOptions.getLayoutType('Auto')).toBeVisible();
     });
   }
 );
@@ -74,7 +91,7 @@ async function setupAutoGridInEditMode(
   selectors: E2ESelectorGroups,
   components: Components,
   title: string
-) {
+): Promise<{ sidebar: Sidebar }> {
   await importTestDashboard(page, selectors, title, undefined);
 
   const controls = new Controls({ page, dashboardPage, selectors, components });
@@ -83,7 +100,9 @@ async function setupAutoGridInEditMode(
   await controls.enterEditMode();
 
   await sidebar.toolbar.clickButton('Options');
-  await switchToAutoGrid(page, dashboardPage);
+  await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
+
+  return { sidebar };
 }
 
 // Drags the panel's bottom-right resize corner. Uses the raw mouse API (not locator.hover) because
