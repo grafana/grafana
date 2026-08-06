@@ -11,8 +11,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -48,24 +46,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
-
-// WithEnabledFlags sets up an OpenFeature static provider with the given flags
-// enabled for the duration of the test, then resets to the no-op provider.
-func WithEnabledFlags(t *testing.T, flags ...string) {
-	t.Helper()
-
-	inMemoryFlags := make(map[string]memprovider.InMemoryFlag, len(flags))
-	for _, f := range flags {
-		inMemoryFlags[f] = setting.NewInMemoryFlag(f, true)
-	}
-	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(inMemoryFlags)
-	require.NoError(t, err)
-	require.NoError(t, openfeature.SetProviderAndWait(provider))
-
-	t.Cleanup(func() {
-		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
-	})
-}
 
 func loggedInUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, sqlStore db.DB) {
 	loggedInUserScenarioWithRole(t, desc, "GET", url, routePattern, org.RoleEditor, fn, sqlStore)
