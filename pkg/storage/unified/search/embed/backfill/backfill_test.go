@@ -117,6 +117,22 @@ func newBackfillerWithBuilders(t *testing.T, storage *fakeStorage, vec *fakeVect
 	return b
 }
 
+// newBackfillerWithEmbedder is newBackfiller exposing the fake embedder so
+// tests can assert whether the provider was called.
+func newBackfillerWithEmbedder(t *testing.T, storage *fakeStorage, vec *fakeVector) (*VectorBackfiller, *fakeText) {
+	t.Helper()
+	text := &fakeText{dim: 4}
+	emb := newFakeEmbedder(text)
+	b, err := NewVectorBackfiller(Options{
+		Storage:       storage,
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
+		Builders:      []embed.Builder{dashboard.New()},
+	})
+	require.NoError(t, err)
+	return b, text
+}
+
 // versionedBuilder wraps a real Builder but reports a different Version(),
 // so tests can simulate an extractor content-shape bump without a second
 // real extractor implementation.
@@ -638,15 +654,7 @@ func TestRunBackfillJob_VersionStale_FolderedDashboard_ContentDiffers_FullReEmbe
 	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
 	vec.seedStoredContent("ns", "test-model", "dashboards", "dash-a", oldItems[0].Subresource, oldItems[0].Content, 1)
 
-	text := &fakeText{dim: 4}
-	emb := newFakeEmbedder(text)
-	o, err := NewVectorBackfiller(Options{
-		Storage:       storage,
-		VectorBackend: vec,
-		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
-		Builders:      []embed.Builder{dashboard.New()},
-	})
-	require.NoError(t, err)
+	o, text := newBackfillerWithEmbedder(t, storage, vec)
 	o.runBackfill(context.Background())
 
 	require.Len(t, vec.upserts, 1, "folder-title prefix makes the content differ, so the full re-embed path must run")
@@ -677,15 +685,7 @@ func TestRunBackfillJob_VersionStale_SubresourceSetDiffers_FullReEmbed(t *testin
 	// removed panel); its content is irrelevant, only its presence matters.
 	vec.seedStoredContent("ns", "test-model", "dashboards", "dash-a", "panel/2", "stale content", 1)
 
-	text := &fakeText{dim: 4}
-	emb := newFakeEmbedder(text)
-	o, err := NewVectorBackfiller(Options{
-		Storage:       storage,
-		VectorBackend: vec,
-		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
-		Builders:      []embed.Builder{dashboard.New()},
-	})
-	require.NoError(t, err)
+	o, text := newBackfillerWithEmbedder(t, storage, vec)
 	o.runBackfill(context.Background())
 
 	require.Len(t, vec.replaceCalls, 1, "subresource-set drift must force the full re-embed path")

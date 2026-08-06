@@ -29,6 +29,6 @@ type Builder interface {
 	MaxItemsPerResource() int
 	// Version identifies the content format Extract produces; bump on output changes to trigger re-embed backfills, never reuse a value.
 	Version() int
-	// Extract turns a stored value into embeddable items. folderTitle prefixes the breadcrumb and goes stale on rename until re-embed; display titles resolve at query time instead.
+	// Extract turns a stored value into embeddable items; folderTitle prefixes the breadcrumb.
 	Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]Item, error)
 }
