@@ -363,14 +363,6 @@ export async function checkRepeatedRowTitles(
   });
 }
 
-export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage, confirm = true) {
-  // Keep the signature unchanged for unmigrated callers: build the
-  // `components` fixture equivalent from the page context
-  const components = new Components(dashboardPage.ctx);
-  const sidebar = new Sidebar({ page, dashboardPage, selectors: dashboardPage.ctx.selectors, components });
-  await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('auto', { confirm });
-}
-
 export async function selectRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
   // Keep the signature unchanged for unmigrated callers: build the
   // `components` fixture equivalent from the page context

@@ -6,20 +6,20 @@ import { PageObject } from '../../PageObject';
 // element's grid between auto and custom layout, and edits the auto grid
 // sizing options (min column width, max columns, row height, fill screen)
 export class GridLayoutOptions extends PageObject {
-  async switchLayout(layoutType: 'auto' | 'custom', { confirm = false }: { confirm?: boolean } = {}) {
+  getLayoutType(layoutType: 'Auto' | 'Custom'): Locator {
+    return this.dashboardPage
+      .getByGrafanaSelector(this.selectors.components.Sidebar.container)
+      .getByTestId(this.selectors.components.OptionsGroup.group('layout'))
+      .getByLabel(`layout-selection-option-${layoutType}`);
+  }
+
+  async switchLayout(layoutType: 'Auto' | 'Custom', { confirm = false }: { confirm?: boolean } = {}) {
     const stepTitle = confirm
       ? `Switch layout to ${layoutType} grid (with confirmation)`
       : `Switch layout to ${layoutType} grid`;
 
     await test.step(stepTitle, async () => {
-      const layoutGroup = this.dashboardPage.getByGrafanaSelector(
-        this.selectors.components.OptionsGroup.group('layout'),
-        { root: this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.container) }
-      );
-
-      // the option's aria-label is layout-selection-option-<layout name>, with the name capitalized
-      const optionName = layoutType === 'auto' ? 'Auto' : 'Custom';
-      await layoutGroup.getByLabel(`layout-selection-option-${optionName}`).click();
+      await this.getLayoutType(layoutType).click();
 
       if (confirm) {
         // despite its name, ConfirmModal.delete is the testid of every ConfirmModal confirm button (see ConfirmContent.tsx)

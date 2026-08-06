@@ -49,7 +49,8 @@ export const xyzTiles: MapLayerRegistryItem<XYZConfig> = {
       return new TileLayer({
         source: new XYZ({
           url: interpolatedUrl,
-          attributions: interpolatedAttribution,
+          // An empty string would add a blank entry to the attribution control
+          attributions: interpolatedAttribution || undefined,
           wrapX: !noRepeat,
           minZoom: cfg.minZoom,
           maxZoom: cfg.maxZoom,
