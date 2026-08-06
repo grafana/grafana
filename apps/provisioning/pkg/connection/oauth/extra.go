@@ -12,8 +12,10 @@ import (
 )
 
 // NewProviderFunc constructs the provider-specific parts of an OAuth app
-// connection from the connection spec.
-type NewProviderFunc func(spec provisioning.ConnectionSpec) Provider
+// connection from the connection spec and the stored access token. The token
+// is empty until the user authorizes the OAuth application; the connection
+// never calls the provider's API in that state.
+type NewProviderFunc func(spec provisioning.ConnectionSpec, accessToken string) (Provider, error)
 
 // ValidateSpecFunc performs provider-specific spec validation. The shared
 // oauth section and secure values are validated by the extra itself. May be
@@ -66,13 +68,17 @@ func (e *extra) Build(ctx context.Context, conn *provisioning.Connection) (conne
 		return nil, fmt.Errorf("decrypt token: %w", err)
 	}
 
-	secrets := ConnectionSecrets{
-		ClientSecret: clientSecret,
-		Token:        token,
+	accessToken := ""
+	if parsed, err := parseToken(token); err == nil {
+		accessToken = parsed.AccessToken
 	}
 
-	c := NewConnection(e.newProvider(conn.Spec), e.repoType, *conn.Spec.OAuth, secrets)
-	return &c, nil
+	provider, err := e.newProvider(conn.Spec, accessToken)
+	if err != nil {
+		return nil, fmt.Errorf("build provider: %w", err)
+	}
+
+	return newConnection(provider, e.repoType, *conn.Spec.OAuth, clientSecret, token), nil
 }
 
 func (e *extra) Mutate(_ context.Context, _ runtime.Object) error {

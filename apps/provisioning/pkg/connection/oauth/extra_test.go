@@ -244,7 +244,7 @@ func newTestExtra(t *testing.T, secure *connection.MockSecureValues, validateSpe
 		func(*provisioning.Connection) connection.SecureValues { return secure },
 		provisioning.GitlabConnectionType,
 		provisioning.GitLabRepositoryType,
-		func(_ provisioning.ConnectionSpec) oauth.Provider { return oauth.NewMockProvider(t) },
+		func(_ provisioning.ConnectionSpec, _ string) (oauth.Provider, error) { return oauth.NewMockProvider(t), nil },
 		validateSpec,
 	)
 }
