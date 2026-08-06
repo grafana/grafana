@@ -42,11 +42,6 @@ const DefaultInterval = time.Minute
 // poll interval — long enough to ride out transient Vertex hiccups.
 const maxEventAttempts = 5
 
-// embeddingCountInterval is how often the lock holder samples stored row
-// counts for the vector_storage_embeddings_stored gauge. COUNT(*) is a full
-// aggregate scan, so this stays far above the reconcile interval.
-const embeddingCountInterval = 10 * time.Minute
-
 // defaultLockRetryInterval is how long Run waits between attempts to
 // acquire the reconciler advisory lock when another replica holds it.
 // The loser is idle anyway, so longer intervals reduce churn against
@@ -94,6 +89,10 @@ type Options struct {
 	Backfiller        Backfiller
 	Interval          time.Duration
 	LockRetryInterval time.Duration
+	// EmbeddingCountInterval paces the stored-embedding gauge. Each sample
+	// is a full aggregate scan of the embeddings table, so it belongs far
+	// above Interval. Zero disables the sampling entirely.
+	EmbeddingCountInterval time.Duration
 	// Metrics is optional; when nil the reconciler runs without
 	// observability instrumentation (handy for unit tests).
 	Metrics *resource.VectorMetrics
@@ -105,15 +104,16 @@ type Options struct {
 // pagination doesn't ping-pong across replicas. Connection-bound pg
 // session locks release naturally if the pod crashes.
 type Reconciler struct {
-	storage           resource.StorageBackend
-	vectorBackend     vector.VectorBackend
-	batchEmbedder     *embedder.BatchEmbedder
-	builders          map[string]embed.Builder
-	backfiller        Backfiller
-	interval          time.Duration
-	lockRetryInterval time.Duration
-	log               log.Logger
-	metrics           *resource.VectorMetrics
+	storage                resource.StorageBackend
+	vectorBackend          vector.VectorBackend
+	batchEmbedder          *embedder.BatchEmbedder
+	builders               map[string]embed.Builder
+	backfiller             Backfiller
+	interval               time.Duration
+	lockRetryInterval      time.Duration
+	embeddingCountInterval time.Duration
+	log                    log.Logger
+	metrics                *resource.VectorMetrics
 
 	// broadcaster is attached after construction by the resource server,
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
@@ -147,17 +147,18 @@ func New(opts Options) (*Reconciler, error) {
 		opts.LockRetryInterval = defaultLockRetryInterval
 	}
 	return &Reconciler{
-		storage:           opts.Storage,
-		vectorBackend:     opts.VectorBackend,
-		batchEmbedder:     opts.BatchEmbedder,
-		builders:          builders,
-		backfiller:        opts.Backfiller,
-		interval:          opts.Interval,
-		lockRetryInterval: opts.LockRetryInterval,
-		log:               log.New("embeddings_reconciler"),
-		metrics:           opts.Metrics,
-		pending:           make(map[string]*pendingEvent),
-		ensuredResources:  make(map[string]struct{}),
+		storage:                opts.Storage,
+		vectorBackend:          opts.VectorBackend,
+		batchEmbedder:          opts.BatchEmbedder,
+		builders:               builders,
+		backfiller:             opts.Backfiller,
+		interval:               opts.Interval,
+		lockRetryInterval:      opts.LockRetryInterval,
+		embeddingCountInterval: opts.EmbeddingCountInterval,
+		log:                    log.New("embeddings_reconciler"),
+		metrics:                opts.Metrics,
+		pending:                make(map[string]*pendingEvent),
+		ensuredResources:       make(map[string]struct{}),
 	}, nil
 }
 
@@ -242,7 +243,7 @@ func (s *Reconciler) Run(ctx context.Context) error {
 
 	// Gauge sampling runs only on the lock holder so the aggregate scan
 	// happens once per cluster rather than once per replica.
-	if s.metrics != nil {
+	if s.metrics != nil && s.embeddingCountInterval > 0 {
 		go s.runEmbeddingCounts(ctx)
 	}
 
@@ -308,7 +309,7 @@ func (s *Reconciler) acquireLockBlocking(ctx context.Context) (func(), error) {
 }
 
 func (s *Reconciler) runEmbeddingCounts(ctx context.Context) {
-	t := time.NewTicker(embeddingCountInterval)
+	t := time.NewTicker(s.embeddingCountInterval)
 	defer t.Stop()
 	for {
 		s.recordEmbeddingCounts(ctx)

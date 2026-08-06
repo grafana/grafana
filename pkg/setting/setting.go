@@ -792,6 +792,7 @@ type Cfg struct {
 	VectorDBSSLMode                  string
 	VectorIndexingEnabled            bool          // run the embedding backfiller and reconciler
 	VectorReconcilerInterval         time.Duration // reconciler tick interval; default 60s
+	VectorEmbeddingCountInterval     time.Duration // stored-embedding gauge sample interval; 0 disables
 	VectorPromotionThreshold         int           // row count per tenant to trigger promotion
 	VectorPromoterInterval           time.Duration // promoter tick interval; 0 disables
 
