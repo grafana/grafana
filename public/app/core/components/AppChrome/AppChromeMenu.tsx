@@ -111,7 +111,6 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       },
     }),
     wrapper: css({
-      position: 'fixed',
       display: 'grid',
       gridAutoFlow: 'column',
       height: '100%',

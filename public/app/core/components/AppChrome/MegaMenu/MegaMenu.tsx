@@ -367,7 +367,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     }),
     dockMenuButton: css({
       display: 'none',
-      marginLeft: 'auto'
+      marginLeft: 'auto',
 
       [theme.breakpoints.up('xl')]: {
         display: 'inline-flex',
