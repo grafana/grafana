@@ -1,7 +1,29 @@
-import { formatOffset, getTimeZonesAt, type TimeZoneInfo as EasyTzInfo } from './easytz';
+import { formatOffset as easyTzFormatOffset, getTimeZonesAt as getEasyTzTimeZonesAt } from './easytz';
 
-export { formatOffset, getTimeZonesAt };
-export type { EasyTzInfo };
+export interface EasyTzInfo {
+  name: string;
+  abbr: string;
+  offset: number;
+  offsetDisplay: string;
+  aliasOf?: string;
+}
+
+const displayListCache = new WeakMap<ReturnType<typeof getEasyTzTimeZonesAt>, EasyTzInfo[]>();
+
+export const getTimeZonesAt = (timestamp: number, withAliases?: boolean): EasyTzInfo[] => {
+  const source = getEasyTzTimeZonesAt(timestamp, withAliases);
+  let list = displayListCache.get(source);
+
+  if (!list) {
+    list = source.map((tz) => ({
+      ...tz,
+      offsetDisplay: easyTzFormatOffset(tz.offset),
+    }));
+    displayListCache.set(source, list);
+  }
+
+  return list;
+};
 
 // getTimeZonesAt memoizes per hour bucket and returns the same array by
 // reference, so a WeakMap keyed on that array caches the name lookup.

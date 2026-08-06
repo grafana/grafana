@@ -12,7 +12,6 @@
 export { useObservable } from './hooks/useObservable';
 export { DEFAULT_TAG_COLORS } from './themes/createComponents';
 export {
-  formatOffset,
   getTimeZonesAt,
   findTimeZoneAt,
   canonicalZoneName,

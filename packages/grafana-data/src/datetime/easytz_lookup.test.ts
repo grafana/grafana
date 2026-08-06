@@ -6,20 +6,20 @@ const JUL = Date.UTC(2026, 6, 15); // northern summer / southern winter
 
 describe('findTimeZoneAt', () => {
   it('returns DST-correct abbreviation and offset', () => {
-    expect(findTimeZoneAt('America/New_York', JAN)).toMatchObject({ abbr: 'EST', offset: -300 });
-    expect(findTimeZoneAt('America/New_York', JUL)).toMatchObject({ abbr: 'EDT', offset: -240 });
-    expect(findTimeZoneAt('Europe/Paris', JAN)).toMatchObject({ abbr: 'CET', offset: 60 });
-    expect(findTimeZoneAt('Europe/Paris', JUL)).toMatchObject({ abbr: 'CEST', offset: 120 });
+    expect(findTimeZoneAt('America/New_York', JAN)).toMatchObject({ abbr: 'EST', offsetDisplay: '-05:00' });
+    expect(findTimeZoneAt('America/New_York', JUL)).toMatchObject({ abbr: 'EDT', offsetDisplay: '-04:00' });
+    expect(findTimeZoneAt('Europe/Paris', JAN)).toMatchObject({ abbr: 'CET', offsetDisplay: '+01:00' });
+    expect(findTimeZoneAt('Europe/Paris', JUL)).toMatchObject({ abbr: 'CEST', offsetDisplay: '+02:00' });
   });
 
   it('inverts DST for the southern hemisphere', () => {
-    expect(findTimeZoneAt('Australia/Sydney', JAN)).toMatchObject({ abbr: 'AEDT', offset: 660 });
-    expect(findTimeZoneAt('Australia/Sydney', JUL)).toMatchObject({ abbr: 'AEST', offset: 600 });
+    expect(findTimeZoneAt('Australia/Sydney', JAN)).toMatchObject({ abbr: 'AEDT', offsetDisplay: '+11:00' });
+    expect(findTimeZoneAt('Australia/Sydney', JUL)).toMatchObject({ abbr: 'AEST', offsetDisplay: '+10:00' });
   });
 
   it('handles zones without DST', () => {
-    expect(findTimeZoneAt('Asia/Kolkata', JAN)).toMatchObject({ abbr: 'IST', offset: 330 });
-    expect(findTimeZoneAt('Asia/Kolkata', JUL)).toMatchObject({ abbr: 'IST', offset: 330 });
+    expect(findTimeZoneAt('Asia/Kolkata', JAN)).toMatchObject({ abbr: 'IST', offsetDisplay: '+05:30' });
+    expect(findTimeZoneAt('Asia/Kolkata', JUL)).toMatchObject({ abbr: 'IST', offsetDisplay: '+05:30' });
   });
 
   it('resolves a legacy spelling to the canonical entry', () => {
@@ -76,7 +76,7 @@ describe('on runtimes that list only canonical zone ids (e.g. Firefox)', () => {
         expect(lookup.findTimeZoneAt('Asia/Calcutta', JAN)).toMatchObject({
           name: 'Asia/Kolkata',
           abbr: 'IST',
-          offset: 330,
+          offsetDisplay: '+05:30',
         });
         expect(lookup.canonicalZoneName('Asia/Calcutta', JAN)).toBe('Asia/Kolkata');
       });

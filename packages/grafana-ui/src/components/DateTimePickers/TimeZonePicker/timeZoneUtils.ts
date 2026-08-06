@@ -1,5 +1,5 @@
 import { InternalTimeZones, type TimeZone, getTimeZone, guessBrowserTimeZone } from '@grafana/data';
-import { findTimeZoneAt, formatOffset } from '@grafana/data/unstable';
+import { findTimeZoneAt } from '@grafana/data/unstable';
 
 // Resolves Grafana's internal time zones ('', 'browser', 'utc') to a concrete
 // IANA name.
@@ -54,6 +54,6 @@ export const getTimeZoneDisplayInfo = (zone: TimeZone, timestamp: number): TimeZ
   return {
     name: internalName ?? tz?.name ?? resolved,
     abbreviation: isUtc ? 'UTC, GMT' : (tz?.abbr ?? ''),
-    offset: formatOffset(tz?.offset ?? 0),
+    offset: tz?.offsetDisplay ?? '+00:00',
   };
 };
