@@ -26,6 +26,14 @@ function fileNameFromContentDisposition(header: string | null): string | undefin
   return header?.match(/filename="?([^";]+)"?/i)?.[1];
 }
 
+/** Extracts a string `message` property from a parsed JSON error body, if present. */
+function messageFrom(value: unknown): string | undefined {
+  if (typeof value !== 'object' || value === null || !('message' in value)) {
+    return undefined;
+  }
+  return typeof value.message === 'string' ? value.message : undefined;
+}
+
 /** The backend's own error message, however the failed response's body arrived: already-parsed JSON
  * for a json-typed fetch, or a Blob for a blob-typed one. The archive-download endpoints always
  * request responseType: 'blob' (they're downloading a file on success), so on failure the JSON error
@@ -34,16 +42,12 @@ function fileNameFromContentDisposition(header: string | null): string | undefin
 async function errorBodyMessage(data: unknown): Promise<string | undefined> {
   if (data instanceof Blob) {
     try {
-      const parsed = JSON.parse(await data.text());
-      return typeof parsed?.message === 'string' ? parsed.message : undefined;
+      return messageFrom(JSON.parse(await data.text()));
     } catch {
       return undefined;
     }
   }
-  if (data && typeof data === 'object' && typeof (data as { message?: unknown }).message === 'string') {
-    return (data as { message: string }).message;
-  }
-  return undefined;
+  return messageFrom(data);
 }
 
 /** One human-readable message for any diagnostics request failure, regardless of which endpoint it
