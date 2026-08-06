@@ -649,11 +649,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/VizTooltip/VizTooltipFooter.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 2
-    }
-  },
   "packages/grafana-ui/src/components/uPlot/Plot.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -857,11 +852,6 @@
   },
   "public/app/core/components/TagFilter/TagFilter.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/ThemeSelector/ThemeSelectorDrawer.tsx": {
-    "react/no-unescaped-entities": {
       "count": 1
     }
   },
@@ -1692,7 +1682,7 @@
       "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 16
+      "count": 13
     }
   },
   "public/app/features/dashboard/state/DashboardModel.repeat.test.ts": {
@@ -2055,11 +2045,6 @@
   },
   "public/app/features/plugins/admin/components/GetStartedWithPlugin/GetStartedWithDataSource.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/admin/components/InstallControls/InstallControlsWarning.tsx": {
-    "react/no-unescaped-entities": {
       "count": 1
     }
   },
@@ -2711,72 +2696,6 @@
     }
   },
   "public/app/plugins/datasource/graphite/utils.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/influxdb/components/editor/annotation/AnnotationEditor.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/influxdb/components/editor/config/ConfigEditor.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    },
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/influxdb/components/editor/config/InfluxSQLConfig.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 3
-    }
-  },
-  "public/app/plugins/datasource/influxdb/components/editor/query/QueryEditor.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/influxdb/components/editor/query/flux/FluxQueryEditor.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 3
-    }
-  },
-  "public/app/plugins/datasource/influxdb/components/editor/query/influxql/visual/PartListSection.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/influxdb/components/editor/query/influxql/visual/TagsSection.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/influxdb/datasource.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 9
-    }
-  },
-  "public/app/plugins/datasource/influxdb/influx_query_model.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/influxdb/influx_series.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 8
-    }
-  },
-  "public/app/plugins/datasource/influxdb/query_part.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 12
-    }
-  },
-  "public/app/plugins/datasource/influxdb/response_parser.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }

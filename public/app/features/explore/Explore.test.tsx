@@ -260,6 +260,9 @@ describe('Explore', () => {
     it('should retrieve the last visible state from local storage', async () => {
       const getBoolMock = jest.spyOn(store, 'getBool').mockReturnValue(false);
       setup();
+      // Wait for the Explore component to render
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
       const showContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
       expect(showContentOutlineButton).not.toBeInTheDocument();
       getBoolMock.mockRestore();
