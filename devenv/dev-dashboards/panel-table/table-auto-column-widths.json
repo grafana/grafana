@@ -160,6 +160,22 @@
                             "options": "State"
                           },
                           "operation": "groupby"
+                        },
+                        {
+                          "matcher": {
+                            "id": "byName",
+                            "options": "Min"
+                          },
+                          "operation": "aggregate",
+                          "aggregations": ["min"]
+                        },
+                        {
+                          "matcher": {
+                            "id": "byName",
+                            "options": "Max"
+                          },
+                          "operation": "aggregate",
+                          "aggregations": ["max"]
                         }
                       ],
                       "showSubframeHeaders": true
