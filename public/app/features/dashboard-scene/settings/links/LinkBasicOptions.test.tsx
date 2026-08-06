@@ -102,13 +102,13 @@ describe('LinkBasicOptions', () => {
         fireEvent.blur(input);
 
         expect(input).toHaveValue('Changed');
-        expect(sidebar.state.undoStack).toHaveLength(1);
+        expect(sidebar.state.editHistory.state.undoStack).toHaveLength(1);
 
         act(() => sidebar.undoAction());
 
         expect(input).toHaveValue('Test Link');
-        expect(sidebar.state.undoStack).toHaveLength(0);
-        expect(sidebar.state.redoStack).toHaveLength(1);
+        expect(sidebar.state.editHistory.state.undoStack).toHaveLength(0);
+        expect(sidebar.state.editHistory.state.redoStack).toHaveLength(1);
 
         act(() => sidebar.redoAction());
 
@@ -157,7 +157,7 @@ describe('LinkBasicOptions', () => {
         fireEvent.blur(input);
 
         expect(dashboard.state.links[0].url).toBe('https://new-url.com');
-        expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
+        expect(dashboard.state.sidebar.state.editHistory.state.undoStack).toHaveLength(1);
       });
     });
 

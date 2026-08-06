@@ -231,8 +231,8 @@ function renderEnterpriseItems() {
 }
 
 function UndoButton({ dashboard }: ToolbarActionProps) {
-  const sidebar = dashboard.state.sidebar;
-  const { undoStack } = sidebar.useState();
+  const editHistory = dashboard.state.sidebar.state.editHistory;
+  const { undoStack } = editHistory.useState();
   const undoAction = undoStack[undoStack.length - 1];
   const undoWord = t('dashboard.sidebar.undo', 'Undo');
   const tooltip = `${undoWord}${undoAction?.description ? ` ${undoAction.description}` : ''}`;
@@ -241,7 +241,7 @@ function UndoButton({ dashboard }: ToolbarActionProps) {
     <Sidebar.Button
       icon="corner-up-left"
       disabled={undoStack.length === 0}
-      onClick={() => sidebar.undoAction()}
+      onClick={() => editHistory.undoAction()}
       title={undoWord}
       tooltip={tooltip}
     />
@@ -249,8 +249,8 @@ function UndoButton({ dashboard }: ToolbarActionProps) {
 }
 
 function RedoButton({ dashboard }: ToolbarActionProps) {
-  const sidebar = dashboard.state.sidebar;
-  const { redoStack } = sidebar.useState();
+  const editHistory = dashboard.state.sidebar.state.editHistory;
+  const { redoStack } = editHistory.useState();
   const redoAction = redoStack[redoStack.length - 1];
   const redoWord = t('dashboard.sidebar.redo', 'Redo');
   const tooltip = `${redoWord}${redoAction?.description ? ` ${redoAction.description}` : ''}`;
@@ -261,7 +261,7 @@ function RedoButton({ dashboard }: ToolbarActionProps) {
       disabled={redoStack.length === 0}
       title={redoWord}
       tooltip={tooltip}
-      onClick={() => sidebar.redoAction()}
+      onClick={() => editHistory.redoAction()}
     />
   );
 }

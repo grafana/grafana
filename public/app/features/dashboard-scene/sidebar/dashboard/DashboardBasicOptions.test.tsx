@@ -51,49 +51,49 @@ async function testDashboardEditableElement(dashboard: DashboardScene, inputElem
   };
 
   const sidebar = dashboard.state.sidebar;
-  expect(sidebar.state.undoStack).toHaveLength(0);
-  expect(sidebar.state.redoStack).toHaveLength(0);
+  expect(sidebar.state.editHistory.state.undoStack).toHaveLength(0);
+  expect(sidebar.state.editHistory.state.redoStack).toHaveLength(0);
   expect(inputElement).toHaveValue('initial');
 
   await updateInput('first');
   expect(inputElement).toHaveValue('first');
-  expect(sidebar.state.undoStack).toHaveLength(1);
-  expect(sidebar.state.redoStack).toHaveLength(0);
+  expect(sidebar.state.editHistory.state.undoStack).toHaveLength(1);
+  expect(sidebar.state.editHistory.state.redoStack).toHaveLength(0);
 
   undo(sidebar);
   expect(inputElement).toHaveValue('initial');
-  expect(sidebar.state.undoStack).toHaveLength(0);
-  expect(sidebar.state.redoStack).toHaveLength(1);
+  expect(sidebar.state.editHistory.state.undoStack).toHaveLength(0);
+  expect(sidebar.state.editHistory.state.redoStack).toHaveLength(1);
 
   await updateInput('second');
   expect(inputElement).toHaveValue('second');
-  expect(sidebar.state.redoStack).toHaveLength(0);
-  expect(sidebar.state.undoStack).toHaveLength(1);
+  expect(sidebar.state.editHistory.state.redoStack).toHaveLength(0);
+  expect(sidebar.state.editHistory.state.undoStack).toHaveLength(1);
 
   await updateInput('third');
   expect(inputElement).toHaveValue('third');
-  expect(sidebar.state.redoStack).toHaveLength(0);
-  expect(sidebar.state.undoStack).toHaveLength(2);
+  expect(sidebar.state.editHistory.state.redoStack).toHaveLength(0);
+  expect(sidebar.state.editHistory.state.undoStack).toHaveLength(2);
 
   await updateInput('fourth');
   expect(inputElement).toHaveValue('fourth');
-  expect(sidebar.state.redoStack).toHaveLength(0);
-  expect(sidebar.state.undoStack).toHaveLength(3);
+  expect(sidebar.state.editHistory.state.redoStack).toHaveLength(0);
+  expect(sidebar.state.editHistory.state.undoStack).toHaveLength(3);
 
   undo(sidebar);
   expect(inputElement).toHaveValue('third');
-  expect(sidebar.state.redoStack).toHaveLength(1);
-  expect(sidebar.state.undoStack).toHaveLength(2);
+  expect(sidebar.state.editHistory.state.redoStack).toHaveLength(1);
+  expect(sidebar.state.editHistory.state.undoStack).toHaveLength(2);
 
   undo(sidebar);
   expect(inputElement).toHaveValue('second');
-  expect(sidebar.state.redoStack).toHaveLength(2);
-  expect(sidebar.state.undoStack).toHaveLength(1);
+  expect(sidebar.state.editHistory.state.redoStack).toHaveLength(2);
+  expect(sidebar.state.editHistory.state.undoStack).toHaveLength(1);
 
   redo(sidebar);
   expect(inputElement).toHaveValue('third');
-  expect(sidebar.state.redoStack).toHaveLength(1);
-  expect(sidebar.state.undoStack).toHaveLength(2);
+  expect(sidebar.state.editHistory.state.redoStack).toHaveLength(1);
+  expect(sidebar.state.editHistory.state.undoStack).toHaveLength(2);
 }
 
 function setup(overrides?: Partial<DashboardSceneState>) {

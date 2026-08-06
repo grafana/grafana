@@ -10,6 +10,10 @@ import {
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
+import {
+  type DashboardEditActionsHistoryHost,
+  DashboardEditActionsHistory,
+} from '../actions/DashboardEditActionsHistory';
 import { getEditableElementFor } from '../actions/utils/getEditableElementFor';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
@@ -19,9 +23,7 @@ import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '..
 import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
-  DashboardEditActionEvent,
-  type DashboardEditActionEventPayload,
-  DashboardStateChangedEvent,
+  type DashboardEditActionEvent,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
@@ -32,6 +34,8 @@ import { type DashboardSidebarPane, type DashboardSidebarLike, type DashboardSid
 
 export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> implements DashboardSidebarLike {
   public constructor(state?: Partial<DashboardSidebarState>) {
+    const editHistory = state?.editHistory ?? new DashboardEditActionsHistory();
+
     super({
       selectionContext: {
         enabled: false,
@@ -40,11 +44,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
         onClear: () => this.clearSelection(),
       },
       isNewElement: false,
-      undoStack: [],
-      redoStack: [],
+      editHistory,
       outlinePane: state?.outlinePane ?? new DashboardOutline({}),
     });
 
+    this.state.editHistory.setHost(this.createHistoryHost());
     this.addActivationHandler(this.onActivate.bind(this));
   }
 
@@ -56,21 +60,30 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   public clone(withState: Partial<DashboardSidebarState>): this {
     // Clone without any undo/redo history
-    return super.clone({ ...withState, redoStack: [], undoStack: [] });
+    const editHistory = new DashboardEditActionsHistory();
+    const cloned = super.clone({ ...withState, editHistory });
+    cloned.state.editHistory.setHost(cloned.createHistoryHost());
+    return cloned;
+  }
+
+  private createHistoryHost(): DashboardEditActionsHistoryHost {
+    return {
+      onObjectAdded: (obj) => this.newObjectAddedToCanvas(obj),
+      clearSelection: () => this.clearSelection(),
+      selectObject: (obj, options) => this.selectObject(obj, options),
+      getSelectedObject: () => this.getSelectedObject(),
+      fixSelectionOfRemovedObject: () => this.fixSelectionOfRemovedObject(),
+    };
   }
 
   private onActivate() {
     const dashboard = getDashboardSceneFor(this);
+    // editHistory is not a $behavior / rendered child, so activate it with the sidebar
+    const deactivateHistory = this.state.editHistory.activate();
 
     if (dashboard.state.isEditing) {
       this.enableSelection();
     }
-
-    this._subs.add(
-      dashboard.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
-        this.handleEditAction(payload);
-      })
-    );
 
     this._subs.add(
       dashboard.subscribeToEvent(NewObjectAddedToCanvasEvent, ({ payload }) => {
@@ -108,6 +121,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
 
     return () => {
+      deactivateHistory();
       if (this.state.selectionContext.selected.length) {
         this.clearSelection(true);
       }
@@ -126,88 +140,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     action.payload.source.publishEvent(action, true);
   }
 
-  /**
-   * Handles all edit actions
-   * Adds to undo history and selects new object
-   * @param payload
-   */
-  private handleEditAction(action: DashboardEditActionEventPayload) {
-    // Clear redo stack when user performs a new action
-    // Otherwise things can get into very broken states
-    if (this.state.redoStack.length > 0) {
-      this.setState({ redoStack: [] });
-    }
-
-    this.performAction(action);
-
-    this.setState({ undoStack: [...this.state.undoStack, action] });
-  }
-
-  /**
-   * Removes last action from undo stack and adds it to redo stack.
-   */
   public undoAction() {
-    const undoStack = this.state.undoStack.slice();
-    const action = undoStack.pop();
-    if (!action) {
-      return;
-    }
-
-    action.undo();
-    action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
-
-    if (action.addedObject) {
-      this.clearSelection();
-    }
-
-    if (action.movedObject) {
-      this.selectObject(action.movedObject, { force: true });
-    }
-
-    if (action.removedObject) {
-      this.newObjectAddedToCanvas(action.removedObject);
-    }
-
-    this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
+    this.state.editHistory.undoAction();
   }
 
-  /**
-   * Some edit actions also require clearing selection or selecting new objects
-   */
-  private performAction(action: DashboardEditActionEventPayload) {
-    action.perform();
-    action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
-
-    if (action.addedObject) {
-      this.newObjectAddedToCanvas(action.addedObject);
-    }
-
-    if (action.movedObject) {
-      this.selectObject(action.movedObject, { force: true });
-    }
-
-    // If action removed an object and not added a new one we need to update selection
-    if (action.removedObject && !action.addedObject) {
-      // But only if removed object is currently selected
-      if (action.removedObject === this.getSelectedObject()) {
-        this.fixSelectionOfRemovedObject();
-      }
-    }
-  }
-
-  /**
-   * Removes last action from redo stack and adds it to undo stack.
-   */
   public redoAction() {
-    const redoStack = this.state.redoStack.slice();
-    const action = redoStack.pop();
-    if (!action) {
-      return;
-    }
-
-    this.performAction(action);
-
-    this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
+    this.state.editHistory.redoAction();
   }
 
   public enableSelection() {

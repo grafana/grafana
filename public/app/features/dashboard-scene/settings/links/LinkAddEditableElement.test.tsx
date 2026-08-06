@@ -83,11 +83,11 @@ describe('LinkAddEditableElement', () => {
       const dashboard = buildDashboard();
       const sidebar = dashboard.state.sidebar;
 
-      expect(sidebar.state.undoStack).toHaveLength(0);
+      expect(sidebar.state.editHistory.state.undoStack).toHaveLength(0);
 
       openAddLinkPane(dashboard);
 
-      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.editHistory.state.undoStack).toHaveLength(1);
     });
 
     it('supports undo of the added link', () => {
@@ -201,7 +201,7 @@ describe('LinkAddEditableElement', () => {
         element.onDelete();
 
         const sidebar = dashboard.state.sidebar;
-        expect(sidebar.state.undoStack).toHaveLength(1);
+        expect(sidebar.state.editHistory.state.undoStack).toHaveLength(1);
 
         act(() => sidebar.undoAction());
         expect(dashboard.state.links).toHaveLength(1);
