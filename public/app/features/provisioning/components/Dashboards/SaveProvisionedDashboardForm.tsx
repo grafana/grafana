@@ -376,7 +376,7 @@ export function SaveProvisionedDashboardForm({
   });
 
   // Submit handler for saving the form data
-  const handleFormSubmit = async ({ title, description, repo, path, ref, copyTags }: ProvisionedDashboardFormData) => {
+  const handleFormSubmit = async ({ title, description, repo, path, copyTags }: ProvisionedDashboardFormData) => {
     setError(undefined);
     // Validate required fields
     if (!repo || !path) {
@@ -427,7 +427,9 @@ export function SaveProvisionedDashboardForm({
 
     try {
       const data = await createOrUpdateFile({
-        // Skip adding ref to the default branch request
+        // Use the watched `ref`, not the submit payload: when the branch template is enforced the
+        // field renders read-only/disabled, and react-hook-form drops that value from the submit
+        // handler's arguments even though it is in the form state. Skip the ref on the default branch.
         ref: ref === repository?.branch ? undefined : ref,
         name: repo,
         path,

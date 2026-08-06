@@ -136,10 +136,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
         {repository?.type && isGitProvider(repository.type) && !readOnly && (
           <>
             <Field
-              // Do not disable for lockBranch: `Field` clones `disabled` onto the input, and
-              // react-hook-form drops disabled fields from the submitted values, which would strip
-              // the enforced template branch from `ref`. The Input below stays read-only instead.
-              disabled={canOnlyPushToConfiguredBranch}
+              disabled={canOnlyPushToConfiguredBranch || lockBranch}
               htmlFor="provisioned-ref"
               noMargin
               label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}

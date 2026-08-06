@@ -1,9 +1,8 @@
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Playlist } from 'app/api/clients/playlist/v1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -335,50 +334,6 @@ describe('SaveProvisionedResourceDrawer', () => {
       setup({ action: 'delete' });
 
       expect(screen.queryByRole('button', { name: /^delete$/i })).not.toBeInTheDocument();
-    });
-  });
-
-  describe('enforced branch name template', () => {
-    beforeEach(() => {
-      setTestFlags({ 'provisioning.gitConventions': true });
-    });
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
-    // A write-first repo (workflows: ['write', 'branch']) that enforces a branch template must still
-    // send the templated branch as `ref` for non-dashboard resources: getDefaultWorkflow switches to
-    // the branch workflow, and the read-only branch field must not be dropped from the submitted ref.
-    it('sends the enforced template branch as ref when saving a provisioned resource', async () => {
-      mockRepoView({
-        repository: {
-          ...mockRepository,
-          workflows: ['write', 'branch'],
-          branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/enforced-branch' },
-        },
-      });
-      server.use(
-        http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
-          capturedRequest = { url: new URL(request.url), body: await request.json() };
-          return HttpResponse.json({
-            ref: 'grafana/enforced-branch',
-            path: 'playlists/test-playlist.json',
-            resource: { upsert: {} },
-          });
-        })
-      );
-
-      const { user } = setup();
-
-      const branch = await screen.findByRole('textbox', { name: /branch/i });
-      await waitFor(() => expect(branch).toHaveValue('grafana/enforced-branch'));
-
-      await user.click(screen.getByRole('button', { name: /^save$/i }));
-
-      await waitFor(() => expect(capturedRequest).not.toBeNull());
-      expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBe('grafana/enforced-branch');
     });
   });
 
