@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -42,6 +43,116 @@ import (
 const (
 	existingDSUID = "test-ds"
 )
+
+func TestRouteConvertPrometheusPostRuleGroups_ExternalRulerSyncGate(t *testing.T) {
+	group := apimodels.PrometheusRuleGroup{
+		Name:  "g",
+		Rules: []apimodels.PrometheusRule{{Alert: "A", Expr: "up == 0"}},
+	}
+
+	const managedFolderUID = "managed-folder"
+
+	// postToFolder issues an import whose working folder is folderUID (via the
+	// folder header), so the folder-scoped gate can be exercised per case.
+	postToFolder := func(srv *ConvertPrometheusSrv, folderUID string) response.Response {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(folderUIDHeader, folderUID)
+		return srv.RouteConvertPrometheusPostRuleGroup(rc, "test", group)
+	}
+
+	t.Run("allows when ruler sync is not configured", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, withRulerSync(fakeRulerSyncChecker{
+			configured:     false,
+			managedFolders: map[string]bool{managedFolderUID: true},
+		}))
+		resp := postToFolder(srv, managedFolderUID)
+		require.Equal(t, http.StatusAccepted, resp.Status())
+	})
+
+	t.Run("allows when configured but import targets a non-managed folder", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, withRulerSync(fakeRulerSyncChecker{
+			configured:     true,
+			managedFolders: map[string]bool{managedFolderUID: true},
+		}))
+		resp := postToFolder(srv, "some-other-folder")
+		require.Equal(t, http.StatusAccepted, resp.Status())
+	})
+
+	t.Run("rejects with 409 when configured and import targets the managed folder", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, withRulerSync(fakeRulerSyncChecker{
+			configured:     true,
+			managedFolders: map[string]bool{managedFolderUID: true},
+		}))
+		resp := postToFolder(srv, managedFolderUID)
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+}
+
+func TestRouteConvertPrometheusDelete_ExternalRulerSyncGate(t *testing.T) {
+	const managedFolderUID = "managed-folder"
+	sync := withRulerSync(fakeRulerSyncChecker{
+		configured:     true,
+		managedFolders: map[string]bool{managedFolderUID: true},
+	})
+
+	t.Run("DeleteNamespace rejects with 409 in the managed folder", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, sync)
+		rc := createRequestCtx()
+		rc.Req.Header.Set(folderUIDHeader, managedFolderUID)
+		resp := srv.RouteConvertPrometheusDeleteNamespace(rc, "test-ns")
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+
+	t.Run("DeleteRuleGroup rejects with 409 in the managed folder", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, sync)
+		rc := createRequestCtx()
+		rc.Req.Header.Set(folderUIDHeader, managedFolderUID)
+		resp := srv.RouteConvertPrometheusDeleteRuleGroup(rc, "test-ns", "test-group")
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+}
+
+func TestRouteConvertPrometheus_ExternalRulerSyncGate_ResolvedFolder(t *testing.T) {
+	group := apimodels.PrometheusRuleGroup{
+		Name:  "g",
+		Rules: []apimodels.PrometheusRule{{Alert: "A", Expr: "up == 0"}},
+	}
+	// A namespace set to the sync root's own title, imported/deleted with no folder
+	// header, resolves straight to the top-level managed folder — the gate must catch
+	// that even though the working (root) folder isn't itself managed.
+	const syncRootTitle = "[Alerting] External Ruler Sync (test-ds)"
+	const managedUID = "sync-root-uid"
+
+	setup := func(t *testing.T) *ConvertPrometheusSrv {
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withRulerSync(fakeRulerSyncChecker{
+			configured:     true,
+			managedFolders: map[string]bool{managedUID: true},
+		}))
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], &folder.Folder{
+			UID:       managedUID,
+			Title:     syncRootTitle,
+			ParentUID: folder.LegacyRootFolderUID, //nolint:staticcheck
+		})
+		return srv
+	}
+
+	t.Run("POST resolving to the managed folder by namespace title is rejected", func(t *testing.T) {
+		srv := setup(t)
+		resp := srv.RouteConvertPrometheusPostRuleGroup(createRequestCtx(), syncRootTitle, group)
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+
+	t.Run("DELETE resolving to the managed folder by namespace title is rejected", func(t *testing.T) {
+		srv := setup(t)
+		resp := srv.RouteConvertPrometheusDeleteNamespace(createRequestCtx(), syncRootTitle)
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+}
 
 func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	simpleGroup := apimodels.PrometheusRuleGroup{
@@ -1728,6 +1839,7 @@ type convertPrometheusSrvOptions struct {
 	featureToggles               featuremgmt.FeatureToggles
 	alertmanager                 Alertmanager
 	folderService                folder.Service
+	rulerSync                    ExternalRulerSyncChecker
 }
 
 type convertPrometheusSrvOptionsFunc func(*convertPrometheusSrvOptions)
@@ -1762,6 +1874,29 @@ func withAlertmanager(am Alertmanager) convertPrometheusSrvOptionsFunc {
 	}
 }
 
+func withRulerSync(checker ExternalRulerSyncChecker) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.rulerSync = checker
+	}
+}
+
+type fakeRulerSyncChecker struct {
+	configured     bool
+	err            error
+	managedFolders map[string]bool
+}
+
+func (f fakeRulerSyncChecker) IsConfiguredForOrg(context.Context, int64) (bool, error) {
+	return f.configured, f.err
+}
+
+func (f fakeRulerSyncChecker) IsManagedFolder(_ context.Context, _ int64, folderUID string) (bool, error) {
+	if f.err != nil {
+		return false, f.err
+	}
+	return f.managedFolders[folderUID], nil
+}
+
 func withFolderService(f folder.Service) convertPrometheusSrvOptionsFunc {
 	return func(opts *convertPrometheusSrvOptions) {
 		opts.folderService = f
@@ -1780,6 +1915,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		fakeAccessControlRuleService: &acfakes.FakeRuleService{},
 		quotaChecker:                 quotas,
 		folderService:                foldertest.NewFakeService(),
+		rulerSync:                    fakeRulerSyncChecker{},
 	}
 
 	for _, opt := range opts {
@@ -1818,7 +1954,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil)
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil, options.rulerSync)
 
 	return srv, dsCache, ruleStore
 }
