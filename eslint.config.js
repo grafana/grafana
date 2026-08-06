@@ -74,12 +74,6 @@ const baseImportConfig = {
       importNames: ['useObservable'],
       message: 'react-use is being phased out. Import useObservable from @grafana/data/unstable instead.',
     },
-    {
-      name: '@grafana/runtime',
-      importNames: ['getDataSourceSrv'],
-      message:
-        'getDataSourceSrv is being phased out in Grafana core. Use the async data source APIs from @grafana/runtime/unstable instead (getDataSourceInstance, getDataSourceInstanceSettings, getDataSourceInstanceList). See the migration guide in issue #125083.',
-    },
   ],
 };
 
@@ -184,6 +178,7 @@ module.exports = [
       '@grafana/zod-import-namespace': 'error',
       '@grafana/no-direct-date-fns': 'error',
       '@grafana/no-direct-create-monitoring-logger': 'error',
+      '@grafana/no-get-data-source-srv': 'error',
       'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
