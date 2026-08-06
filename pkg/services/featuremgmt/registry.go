@@ -2515,15 +2515,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:         "frontendService.settingsSourceFilter",
-			Description:  "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-			Generate:     Generate{Go: true},
-		},
-		{
 			Name:         "managedPluginsV2",
 			Description:  "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
 			Stage:        FeatureStageExperimental,
