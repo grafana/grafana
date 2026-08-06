@@ -154,9 +154,8 @@ export function TraceView(props: Props) {
   );
 
   const datasourceRef = datasource?.uid ?? datasource?.name;
-  const { settings: loadedInstanceSettings } = useDataSourceInstanceSettings(datasourceRef);
-  // Undefined ref resolves to the default DS — only use settings when we had an explicit ref.
-  const instanceSettings = datasourceRef ? loadedInstanceSettings : undefined;
+  const { settings: loadedInstanceSettings, isLoading } = useDataSourceInstanceSettings(datasourceRef);
+  const instanceSettings = datasourceRef && !isLoading ? loadedInstanceSettings : undefined;
   const traceToLogsOptions = getTraceToLogsOptions(instanceSettings?.jsonData);
   const traceToMetrics: TraceToMetricsData | undefined = instanceSettings?.jsonData;
   const traceToMetricsOptions = traceToMetrics?.tracesToMetrics;
