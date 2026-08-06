@@ -243,12 +243,7 @@ func (s *Reconciler) Run(ctx context.Context) error {
 	// Gauge sampling runs only on the lock holder so the aggregate scan
 	// happens once per cluster rather than once per replica.
 	if s.metrics != nil {
-		countsDone := make(chan struct{})
-		defer func() { <-countsDone }()
-		go func() {
-			defer close(countsDone)
-			s.runEmbeddingCounts(ctx)
-		}()
+		go s.runEmbeddingCounts(ctx)
 	}
 
 	// Subscribe before startupReconcile so events between the
