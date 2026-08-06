@@ -47,6 +47,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
+import { scrollToRow } from 'app/features/dashboard-scene/scene/layout-rows/scrollToRow';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
@@ -1411,6 +1412,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (this._prevScrollPos !== undefined) {
       this._scrollRef?.scrollTo(0, this._prevScrollPos!);
     }
+  }
+
+  public scrollToRow(srow: string) {
+    locationService.partial({ srow: null });
+
+    scrollToRow(srow, this.state.body);
   }
 
   getSaveModel(): Dashboard | DashboardV2Spec {

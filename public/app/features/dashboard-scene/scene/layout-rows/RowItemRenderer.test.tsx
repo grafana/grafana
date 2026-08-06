@@ -51,4 +51,37 @@ describe('RowItemRenderer', () => {
     await userEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
   });
+
+  it('copies a link to the row when the copy link button is clicked', async () => {
+    // ClipboardButton only uses the clipboard API in a secure context.
+    // userEvent.setup() (called by render) attaches a working clipboard stub we can read back.
+    Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+
+    renderRow({ title: 'My row' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Copy link to row' }));
+
+    expect(await navigator.clipboard.readText()).toContain('srow=My-row');
+  });
+
+  it('copies a link with the full slug path for a nested row', async () => {
+    Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+
+    const nestedRow = new RowItem({ title: 'Row 1', layout: AutoGridLayoutManager.createEmpty() });
+    const outerRow = new RowItem({ title: 'Row 2', layout: new RowsLayoutManager({ rows: [nestedRow] }) });
+    const scene = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      body: new RowsLayoutManager({ rows: [outerRow] }),
+    });
+    render(<scene.Component model={scene} />);
+
+    const copyButtons = screen.getAllByRole('button', { name: 'Copy link to row' });
+    expect(copyButtons).toHaveLength(2);
+
+    // The outer row's header renders before the nested row's header
+    await userEvent.click(copyButtons[1]);
+
+    const copiedUrl = new URL(await navigator.clipboard.readText());
+    expect(copiedUrl.searchParams.get('srow')).toBe('Row-2/Row-1');
+  });
 });
