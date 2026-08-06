@@ -110,7 +110,8 @@ func (ss *sqlStore) Insert(ctx context.Context, orga *org.Org) (int64, error) {
 
 		if orga.ID != 0 && dbHelper.DB.GetDialect().DriverName() == migrator.Postgres {
 			orgTable := quoteTable(dbHelper, "org")
-			if _, err := sess.Exec("SELECT setval(?::regclass, (SELECT max(id) FROM "+orgTable+"));", dbHelper.Table("org_id_seq")); err != nil {
+			orgSequence := quoteTable(dbHelper, "org_id_seq")
+			if _, err := sess.Exec("SELECT setval(?::regclass, (SELECT max(id) FROM "+orgTable+"));", orgSequence); err != nil {
 				return fmt.Errorf("failed to sync primary key for org table: %w", err)
 			}
 		}
