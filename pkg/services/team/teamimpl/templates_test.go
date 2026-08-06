@@ -71,6 +71,24 @@ func TestTemplates(t *testing.T) {
 			AccessTeamIDs:   accessTeamIDs,
 		}
 	}
+	teamMembersQuery := func(accessAll bool, accessUserIDs []any) sqltemplate.SQLTemplate {
+		return &getTeamMembersQuery{
+			SQLTemplate:      queryTemplate(),
+			TeamMemberTable:  dbHelper.Table("team_member"),
+			UserTable:        dbHelper.Table("user"),
+			TeamTable:        dbHelper.Table("team"),
+			UserAuthTable:    dbHelper.Table("user_auth"),
+			IsServiceAccount: false,
+			OrgID:            7,
+			TeamID:           11,
+			TeamUID:          "team-a",
+			UserID:           42,
+			External:         true,
+			IsExternal:       true,
+			AccessAll:        accessAll,
+			AccessUserIDs:    accessUserIDs,
+		}
+	}
 
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir:        "testdata",
@@ -89,6 +107,9 @@ func TestTemplates(t *testing.T) {
 				{Name: "all_teams", Data: teamsByUserQuery(true, nil)},
 				{Name: "selected_teams", Data: teamsByUserQuery(false, []any{11, 12})},
 				{Name: "denied", Data: teamsByUserQuery(false, nil)},
+			},
+			getTeamMembersTemplate: {
+				{Name: "all_filters", Data: teamMembersQuery(false, []any{42, 43})},
 			},
 			getTeamIDsByUserTemplate: {
 				{
