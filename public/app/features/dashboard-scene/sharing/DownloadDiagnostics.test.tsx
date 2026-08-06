@@ -18,6 +18,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { DownloadDiagnostics } from './DownloadDiagnostics';
 
 jest.mock('app/features/query/diagnostics/downloadDiagnostics', () => ({
+  ...jest.requireActual('app/features/query/diagnostics/downloadDiagnostics'),
   downloadDiagnosticsForQueries: jest.fn(),
 }));
 

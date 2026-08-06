@@ -283,8 +283,7 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
         title={t('dashboard.diagnostics.size-limit-warning-title', 'Very large responses are truncated')}
       >
         <Trans i18nKey="dashboard.diagnostics.size-limit-warning-body">
-          A response that&apos;s too large has its captured query data truncated to keep the bundle a manageable
-          size.
+          A response that&apos;s too large has its captured query data truncated to keep the bundle a manageable size.
         </Trans>
       </Alert>
 
