@@ -6,7 +6,15 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
-import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import {
+  clearButtonStyles,
+  ClipboardButton,
+  Icon,
+  Tooltip,
+  useElementSelection,
+  usePointerDistance,
+  useStyles2,
+} from '@grafana/ui';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
@@ -162,6 +170,16 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 {!isEditing && titleElement}
               </button>
               {isEditing && titleElement}
+              <ClipboardButton
+                icon="link"
+                size="sm"
+                fill="text"
+                variant="secondary"
+                className={cx(styles.copyLinkButton, 'dashboard-row-header-copy-link')}
+                aria-label={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
+                tooltip={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
+                getText={() => model.getUrl()}
+              />
               {isEditing && layoutType && <LayoutModeIndicator layoutType={layoutType} className="layout-indicator" />}
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
@@ -217,6 +235,17 @@ function getStyles(theme: GrafanaTheme2) {
       minWidth: 0,
       gap: theme.spacing(1),
     }),
+    copyLinkButton: css({
+      opacity: 0,
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.25s',
+      },
+
+      '&:focus-visible': {
+        opacity: 1,
+      },
+    }),
     rowTitle: css({
       display: 'flex',
       alignItems: 'center',
@@ -269,6 +298,11 @@ function getStyles(theme: GrafanaTheme2) {
       // Reveal this row's layout indicator when hovering or focusing anywhere on the row
       '&:hover > .dashboard-row-header .layout-indicator, &:focus-within > .dashboard-row-header .layout-indicator': {
         display: 'inline-block',
+      },
+      // Reveal this row's copy link button when hovering anywhere on the row
+      // (child selector so hovering an outer row does not reveal nested rows' buttons)
+      '&:hover > .dashboard-row-header .dashboard-row-header-copy-link': {
+        opacity: 1,
       },
     }),
     wrapperNotCollapsed: css({
