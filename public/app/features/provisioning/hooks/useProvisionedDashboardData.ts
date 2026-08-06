@@ -12,7 +12,6 @@ import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../components/defaults';
-import { generateNewBranchName } from '../components/utils/newBranchName';
 import { generatePath } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
 import { type ProvisionedDashboardFormData } from '../types/form';
@@ -151,16 +150,16 @@ export function useProvisionedDashboardData(dashboard: DashboardScene, saveAsCop
 
   // When the branch name template is enforced, dashboard pushes must go through the branch workflow
   // so the templated branch is created and sent as `ref`, rather than a direct push that drops it.
-  // getDefaultWorkflow stays a pure default; the enforced case is decided here at the point of use,
-  // gated on the gitConventions flag to match useBranchTemplate.
+  // getDefaultWorkflow stays a pure default; the enforced case is decided here at the point of use.
+  // The conditions mirror useBranchTemplate (gitConventions flag + a usable nameTemplate) so we only
+  // switch when the template will actually be applied; useBranchTemplate then fills the `ref`.
   const enforceBranchTemplate =
     gitConventionsEnabled &&
     Boolean(repository.branchOptions?.enforceTemplate) &&
+    Boolean(repository.branchOptions?.nameTemplate?.trim()) &&
     Boolean(repository.workflows?.includes('branch'));
   const defaultValues =
-    enforceBranchTemplate && values.workflow !== 'branch'
-      ? { ...values, workflow: 'branch' as const, ref: generateNewBranchName('dashboard') }
-      : values;
+    enforceBranchTemplate && values.workflow !== 'branch' ? { ...values, workflow: 'branch' as const } : values;
 
   return {
     defaultValues,

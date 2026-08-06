@@ -141,7 +141,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     },
   });
 
-  const doSave = async ({ ref, title, workflow }: BaseProvisionedFormData) => {
+  const doSave = async ({ title }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     if (!title || !repoName) {
@@ -162,11 +162,10 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       type: 'folder',
     };
 
-    // The branch entered in the form, before the ref is dropped for the write workflow
+    // Read the branch from the watched form value, not the submit payload: an enforced template
+    // renders the field read-only and react-hook-form drops that value from the handler arguments.
     const selectedBranch = ref;
-    if (workflow === 'write') {
-      ref = undefined;
-    }
+    const branchRef = workflow === 'write' ? undefined : ref;
 
     reportInteraction('grafana_provisioning_folder_create_submitted', {
       workflow,
@@ -177,7 +176,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
 
     try {
       const data = await create({
-        ref,
+        ref: branchRef,
         name: repoName,
         path,
         message,

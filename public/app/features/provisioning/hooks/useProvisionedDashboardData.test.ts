@@ -266,7 +266,7 @@ describe('useProvisionedDashboardData', () => {
       });
     });
 
-    it('uses the branch workflow with a generated ref when enforced and the flag is on', async () => {
+    it('switches to the branch workflow when the template is enforced and the flag is on', async () => {
       setTestFlags({ 'provisioning.gitConventions': true });
       server.use(
         http.get(`${BASE}/settings`, () => HttpResponse.json(enforcedSettings)),
@@ -279,14 +279,43 @@ describe('useProvisionedDashboardData', () => {
       });
 
       await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
+      // The workflow is switched here; useBranchTemplate fills the actual template ref in the form.
       expect(result.current.defaultValues?.workflow).toBe('branch');
-      expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
     });
 
     it('keeps the default write workflow when the gitConventions flag is off', async () => {
       setTestFlags({ 'provisioning.gitConventions': false });
       server.use(
         http.get(`${BASE}/settings`, () => HttpResponse.json(enforcedSettings)),
+        http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
+      );
+
+      const dashboard = createDashboard();
+      const { result } = renderHook(() => useProvisionedDashboardData(dashboard), {
+        wrapper: getWrapper({ renderWithRouter: true }),
+      });
+
+      await waitFor(() => expect(result.current.repoDataStatus).toBe(RepoViewStatus.Ready));
+      expect(result.current.defaultValues?.workflow).toBe('write');
+    });
+
+    it('keeps the default write workflow when enforcement has no usable template', async () => {
+      setTestFlags({ 'provisioning.gitConventions': true });
+      server.use(
+        http.get(`${BASE}/settings`, () =>
+          HttpResponse.json({
+            ...settingsWithRepo,
+            items: [
+              {
+                ...settingsWithRepo.items[0],
+                workflows: ['write', 'branch'],
+                // enforceTemplate set without a nameTemplate: useBranchTemplate stays inactive, so
+                // the workflow must not switch (nothing to enforce).
+                branchOptions: { enforceTemplate: true },
+              },
+            ],
+          })
+        ),
         http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json(folderResponse))
       );
 

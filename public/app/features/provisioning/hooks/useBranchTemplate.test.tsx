@@ -33,11 +33,15 @@ function Host({
   vars,
   workflow = 'branch',
   defaultRef = '',
+  resetTo,
 }: {
   repository?: RepositoryView;
   vars: BranchTemplateVars;
   workflow?: WorkflowOption;
   defaultRef?: string;
+  /** When set, renders a button that reruns reset() with this ref, mirroring the Save drawer's
+   *  reset(defaultValues, { keepDirtyValues }) overwriting the non-dirty ref on a parent re-render. */
+  resetTo?: string;
 }) {
   const methods = useForm<{ ref?: string }>({ defaultValues: { ref: defaultRef } });
   const { locked } = useBranchTemplate({
@@ -58,6 +62,11 @@ function Host({
         onChange={(e) => methods.setValue('ref', e.currentTarget.value, { shouldDirty: true })}
       />
       <output data-testid="locked">{String(locked)}</output>
+      {resetTo !== undefined && (
+        <button type="button" onClick={() => methods.reset({ ref: resetTo }, { keepDirtyValues: true })}>
+          reset
+        </button>
+      )}
     </>
   );
 }
@@ -161,6 +170,25 @@ describe('useBranchTemplate', () => {
     // Re-render with the same vars: the rendered name is unchanged, so the manual edit survives.
     rerender(<Host repository={repository} vars={dashboardVars} />);
     expect(input).toHaveValue('grafana/create-testx');
+  });
+
+  it('re-applies the enforced template after a form reset overwrites the ref', async () => {
+    // The Save drawer runs reset(defaultValues, { keepDirtyValues }) whenever the parent re-renders
+    // (e.g. selecting a target folder), overwriting the hook's non-dirty ref. Because the enforced
+    // field is read-only, the hook must treat that as a reset (not a user edit) and reassert the
+    // template instead of freezing on the generated branch.
+    const repository = makeRepo({ nameTemplate: TEMPLATE, enforceTemplate: true });
+    const { user } = render(
+      <Host repository={repository} vars={dashboardVars} resetTo="dashboard/2023-01-01-xyz" />
+    );
+
+    const input = screen.getByRole('textbox', { name: /branch/i });
+    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
+
+    await user.click(screen.getByRole('button', { name: /reset/i }));
+
+    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
+    expect(input).toHaveAttribute('readonly');
   });
 
   it('reports locked and keeps the field read-only when enforcement is on', async () => {
