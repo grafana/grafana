@@ -206,8 +206,8 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 	// uses cache busting to ensure requests aren't cached.
 	s.routeGet(m, "/-/fe-boot-error", s.handleBootError)
 
-	// Preview assets MUST NOT be configured unless explicitly enabled.
-	if s.previewCfg.Active() {
+	// Preview assets MUST NOT be reachable unless explicitly configured.
+	if s.previewCfg.Configured() {
 		s.routeGet(m, previewAssetsPath, s.previewAssetsHandler.handleGet)
 	}
 

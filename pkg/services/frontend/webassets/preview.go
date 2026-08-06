@@ -37,14 +37,16 @@ type PreviewAssetsConfig struct {
 	AllowedNamespaces []string
 }
 
-func (c PreviewAssetsConfig) Active() bool {
+// Configured reports whether the cluster serves preview assets at all.
+// Per-request access also requires an opted-in namespace: see Active.
+func (c PreviewAssetsConfig) Configured() bool {
 	return c.BaseURL != "" && len(c.AllowedNamespaces) > 0
 }
 
-// NamespaceAllowed reports whether a stack has opted in. Fails closed: requests
-// without a namespace never see preview assets.
-func (c PreviewAssetsConfig) NamespaceAllowed(namespace string) bool {
-	return namespace != "" && slices.Contains(c.AllowedNamespaces, namespace)
+// Active reports whether preview assets are available to the request's
+// namespace. Fails closed: requests without a namespace never see previews.
+func (c PreviewAssetsConfig) Active(namespace string) bool {
+	return c.Configured() && namespace != "" && slices.Contains(c.AllowedNamespaces, namespace)
 }
 
 // ReadPreviewAssetsConfig reads startup-time, cluster-wide configuration;
@@ -106,7 +108,7 @@ func ResetPreviewAssetsCache() {
 // GetPreviewWebAssets fetches the assets manifest for a preview folder, with all
 // asset URLs rooted at the preview location.
 func GetPreviewWebAssets(ctx context.Context, preview PreviewAssetsConfig, folder string) (dtos.EntryPointAssets, error) {
-	if !preview.Active() {
+	if !preview.Configured() {
 		return dtos.EntryPointAssets{}, fmt.Errorf("preview assets are not configured")
 	}
 
