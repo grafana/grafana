@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -13,8 +13,8 @@ import { useFlagGrafanaUnifiedDataSourcePicker } from '@grafana/runtime/internal
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 // Imported eagerly so the shim's lazy import resolves from the module cache, keeping the
-// Suspense fallback -> core picker transition fast enough for waitFor under parallel workers
-import './DataSourcePickerAdapter';
+// Suspense fallback -> core picker transition fast enough for the tests under parallel workers
+import './DataSourcePicker';
 import { RuntimeDataSourcePickerShim } from './RuntimeDataSourcePickerShim';
 
 const pluginMetaInfo: PluginMetaInfo = {
@@ -98,12 +98,12 @@ describe('RuntimeDataSourcePickerShim', () => {
     useFlagMock.mockReturnValue(true);
     render(<RuntimeDataSourcePickerShim onChange={jest.fn()} current={mockDS.uid} />);
 
-    // The legacy picker renders as the Suspense fallback until the core picker chunk loads
-    await waitFor(() => expect(legacyPicker()).not.toBeInTheDocument(), { timeout: 3000 });
-    expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
-      'placeholder',
-      mockDS.name
-    );
+    // A skeleton renders as the Suspense fallback until the core picker chunk loads
+    const input = await screen.findByTestId(selectors.components.DataSourcePicker.inputV2, undefined, {
+      timeout: 3000,
+    });
+    expect(input).toHaveAttribute('placeholder', mockDS.name);
+    expect(legacyPicker()).not.toBeInTheDocument();
   });
 
   it('should accept the full runtime prop contract without errors', async () => {
@@ -124,8 +124,9 @@ describe('RuntimeDataSourcePickerShim', () => {
       />
     );
 
-    await waitFor(() => expect(legacyPicker()).not.toBeInTheDocument(), { timeout: 3000 });
-    const input = screen.getByTestId(selectors.components.DataSourcePicker.inputV2);
+    const input = await screen.findByTestId(selectors.components.DataSourcePicker.inputV2, undefined, {
+      timeout: 3000,
+    });
     expect(input).toHaveAttribute('aria-invalid', 'true');
 
     await userEvent.click(screen.getByRole('button', { name: 'Clear data source' }));
