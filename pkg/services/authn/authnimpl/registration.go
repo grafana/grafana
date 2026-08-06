@@ -108,8 +108,7 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features, tracer))
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	if cfg.ProvisioningEnabled {
 		authnSvc.RegisterClient(clients.ProvideProvisioning())
 	}
 

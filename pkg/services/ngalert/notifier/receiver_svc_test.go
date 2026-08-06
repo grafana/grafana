@@ -544,21 +544,17 @@ func TestReceiverService_Create(t *testing.T) {
 				),
 			)),
 			expectedStored: &v1.PostableApiReceiver{
-				Receiver: definitions.Receiver{
-					Name: lineIntegration.Name,
-				},
-				PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-						{
-							UID:                   lineIntegration.UID,
-							Name:                  lineIntegration.Name,
-							Type:                  string(lineIntegration.Config.Type()),
-							Version:               string(lineIntegration.Config.Version),
-							DisableResolveMessage: lineIntegration.DisableResolveMessage,
-							Settings:              definitions.RawMessage(`{}`), // Empty settings, not nil.
-							SecureSettings: map[string]string{
-								"token": "c2VjcmV0", // base64 encoded "secret".
-							},
+				Name: lineIntegration.Name,
+				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+					{
+						UID:                   lineIntegration.UID,
+						Name:                  lineIntegration.Name,
+						Type:                  string(lineIntegration.Config.Type()),
+						Version:               string(lineIntegration.Config.Version),
+						DisableResolveMessage: lineIntegration.DisableResolveMessage,
+						Settings:              definitions.RawMessage(`{}`), // Empty settings, not nil.
+						SecureSettings: map[string]string{
+							"token": "c2VjcmV0", // base64 encoded "secret".
 						},
 					},
 				},

@@ -270,6 +270,7 @@
       "placeholder-search-devices-by-ip-address": "Search devices by IP address."
     },
     "user-list-page": {
+      "label-active-users": "Active users",
       "label-all-users": "All users",
       "label-anonymous-devices": "Anonymous devices",
       "label-organization-users": "Organization users",
@@ -612,12 +613,6 @@
       "title-restore-version": "Restore version",
       "title-restoring-alertmanager-configuration": "Restoring Alertmanager configuration"
     },
-    "alerts-activity-banner": {
-      "description": "A brand new page is now available to handle operational work for your Grafana-managed alert rules. Find out what alerts are firing, explore historical information, filter and group to enhance your triage and root cause analysis.",
-      "open-button": "See Alert Activity",
-      "open-button-aria": "Open Alerts Activity",
-      "title": "Alert Activity is now available!"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "Sort",
       "label-filter-placeholder-search-alerts-by-labels": "Search alerts by labels",
@@ -792,7 +787,9 @@
         "value-in-transition": "Value in transition"
       },
       "error": {
-        "server-error": "The alert state history query failed — the server returned an error"
+        "server-error": "The alert state history query failed — the server returned an error",
+        "server-error-description": "This can happen when a regex or negation label filter matches too many alert instances and the response exceeds the server's size limit. Try using a shorter time range or a more specific filter (e.g. an exact match instead of a regex).",
+        "title": "Something went wrong loading the alert state history"
       },
       "filter": {
         "clear": "Clear filters",
@@ -3290,6 +3287,8 @@
         "title": "Auto-sync configuration"
       },
       "import": {
+        "any": "any",
+        "collapse-all": "Collapse all",
         "empty-body": "Import an Alertmanager configuration to stage it here as a safe, reversible copy. Review what it contains, then promote it into your live Grafana Alertmanager when you're ready.",
         "empty-cta": "Import Alertmanager configuration",
         "empty-learn-more": "Learn more about importing configurations",
@@ -3297,9 +3296,26 @@
         "error-body": "The request to the Alerting API failed. Check your connection and try again.",
         "error-retry": "Retry",
         "error-title": "Couldn't load imported configurations",
+        "expand-all": "Expand all",
+        "inhibition-equal": "equal: {{labels}}",
         "loading": "Loading imported configurations…",
+        "no-matchers": "(no matchers)",
+        "parse-error-body": "The imported Alertmanager configuration could not be parsed.",
+        "parse-error-title": "Couldn't read the staged configuration",
+        "policy-tree-routes_one": "{{count}} route",
+        "policy-tree-routes_other": "{{count}} routes",
+        "resources": "Resources",
+        "section": {
+          "contact-points": "Contact points",
+          "inhibition-rules": "Inhibition rules",
+          "notification-policy": "Notification policy",
+          "templates": "Templates",
+          "time-intervals": "Time intervals"
+        },
+        "staged-badge": "Staged · read-only",
         "staged-description": "A read-only, reversible copy of an imported Alertmanager config. Promote it to merge into your live config, or revert to remove it.",
-        "staged-title": "Staged configuration"
+        "staged-title": "Staged configuration",
+        "view": "View"
       },
       "tabs": {
         "alert-managers": "Alert managers",
@@ -3996,6 +4012,9 @@
       "trace-id": "Trace ID: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": "Add to Assistant"
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Auth settings"
@@ -4418,6 +4437,9 @@
     "create-new": {
       "dashboard-group": "Dashboard"
     },
+    "create-new-button": {
+      "generate-dashboard": "Generate dashboard"
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "This item is not in the same repository as the selected items."
@@ -4828,6 +4850,7 @@
       "not-found": "<0>Not found: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "Open Canvas documentation",
       "ctrl-right-mouse": "CTRL + right mouse",
       "middle-mouse": "Middle mouse",
       "pan-title": "Pan:",
@@ -5396,6 +5419,7 @@
           }
         }
       },
+      "layout-indicator": "Auto layout – panel sizes are managed automatically",
       "name": "Auto",
       "options": {
         "custom-min-height": {
@@ -5413,6 +5437,11 @@
         "min-width-custom": "Custom min width",
         "min-width-custom-clear": "Back to standard min column width",
         "min-width-error": "A number between 50 and 2000 is required"
+      },
+      "resize-intercept": {
+        "edit": "Edit auto layout",
+        "header": "Panel sizes are managed by auto layout",
+        "switch": "Switch to custom layout"
       }
     },
     "canvas-actions": {
@@ -5560,6 +5589,7 @@
           }
         }
       },
+      "layout-indicator": "Custom layout",
       "name": "Custom",
       "row-actions": {
         "delete": "Delete row",
@@ -5884,8 +5914,12 @@
         }
       },
       "scroll-content": "Dashboard content",
-      "ungroup-nested-text": "This will ungroup all nested groups.",
-      "ungroup-nested-title": "Ungroup nested groups?"
+      "ungroup-convert-to-rows": "Convert to rows",
+      "ungroup-convert-to-tabs": "Convert to tabs",
+      "ungroup-groups-text": "Nested groups will be moved up a level and converted to rows or tabs.",
+      "ungroup-groups-title": "Ungroup nested groups?",
+      "ungroup-repeat-loss": "Repeat options configured on the ungrouped groups will be lost.",
+      "ungroup-repeat-loss-title": "Ungroup?"
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
@@ -6176,13 +6210,10 @@
         "show-in": "Show in"
       },
       "annotations": {
-        "add-annotation": "Add annotation",
         "add-annotation-query": "Add annotation query",
         "name-builtin": "{{annoName}} (Built-in)",
         "name-disabled": "(Disabled) {{annoName}}",
-        "reorder": "Drag to reorder",
         "reorder-description": "Reorder annotations list",
-        "select-annotation": "Select",
         "title-above-dashboard-count_one": "Above dashboard ({{count}})",
         "title-above-dashboard-count_other": "Above dashboard ({{count}})",
         "title-controls-menu-count_one": "Controls menu ({{count}})",
@@ -6268,14 +6299,11 @@
       "links": {
         "add-link": "Add link",
         "new-link": "New link",
-        "reorder": "Drag to reorder",
         "reorder-description": "Reorder links list",
-        "select-link": "Select",
         "title-above-dashboard_one": "Above dashboard ({{count}})",
         "title-above-dashboard_other": "Above dashboard ({{count}})",
         "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "untitled": "Untitled link"
+        "title-controls-menu_other": "Controls menu ({{count}})"
       },
       "outline": {
         "pane-header": "Content outline",
@@ -6371,11 +6399,9 @@
       "variables": {
         "add-variable": "Add variable",
         "change-type": "Change variable type",
-        "reorder": "Drag to reorder",
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
-        "select-variable": "Select",
         "title-controls-menu_one": "Controls menu ({{count}})",
         "title-controls-menu_other": "Controls menu ({{count}})",
         "title-hidden_one": "Hidden ({{count}})",
@@ -6750,6 +6776,21 @@
       "title": "There are no dashboard links added yet"
     }
   },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": "Generate dashboard"
+    },
+    "modal": {
+      "title": "What do you want to monitor?"
+    },
+    "prompt": {
+      "cancel": "Cancel",
+      "description": "Describe it in your own words — mention the services, data, or questions you care about.",
+      "input-label": "Describe the dashboard you want",
+      "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment",
+      "submit": "Build it"
+    }
+  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "This data source does not support filters.",
@@ -6812,11 +6853,6 @@
       "delete-confirm": "Delete annotation query",
       "delete-text": "Are you sure you want to delete: {{name}}?",
       "delete-title": "Delete annotation query"
-    },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Annotation"
-      }
     },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Use saved query"
@@ -7241,11 +7277,6 @@
       "delete-title": "Delete link",
       "unnamed": "Unnamed link"
     },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Link"
-      }
-    },
     "link-options": {
       "icon": "Icon",
       "include-time-range": "Include current time range",
@@ -7579,6 +7610,14 @@
       "disabled-tooltip": "Save the dashboard before creating alert rules",
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
+    },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "This feature will be removed in Grafana 14. <2>Read the deprecation notice</2>.",
+      "title": "Scripted dashboards are deprecated"
+    },
+    "scripted-dashboards-disabled": {
+      "body": "Scripted dashboards are deprecated and will be removed in Grafana 14. <2>Read the deprecation notice</2>. To temporarily restore them, set the <4>disableScriptedDashboards</4> feature toggle to <7>false</7>.",
+      "title": "Scripted dashboards are disabled"
     },
     "section-placement": {
       "top-row": "Top of row",
@@ -8610,7 +8649,24 @@
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
     "metrics-list": {
-      "search-placeholder": "Search metrics"
+      "collapse-metric": "Collapse {{name}}",
+      "error": "Failed to load metrics",
+      "expand-metric": "Expand {{name}}",
+      "filter-values": "Filter values",
+      "hide-values": "Hide values for {{label}}",
+      "labels-error": "Failed to load labels",
+      "loading": "Loading metrics…",
+      "loading-labels": "Loading labels…",
+      "loading-values": "Loading values…",
+      "no-metrics": "No metrics found",
+      "search-placeholder": "Search metrics",
+      "show-more": "Show more",
+      "show-more-metrics": "Show more metrics",
+      "show-more-values": "Show more values",
+      "show-values": "Show values for {{label}}",
+      "sort-ascending": "Sort ascending",
+      "sort-descending": "Sort descending",
+      "values-error": "Failed to load values"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",
@@ -8853,6 +8909,7 @@
       "open-in-profiles-drilldown": "Open in Profiles Drilldown",
       "profiles-for-this-span": "Profiles for this span",
       "related-logs": "Related logs",
+      "related-logs-no-logs-tooltip": "No related logs found using the trace data source configuration.",
       "related-logs-tooltip": "View related logs using the trace data source configuration.",
       "session-for-this-span": "Session for this span"
     },
@@ -9246,6 +9303,7 @@
       "name-lookup-field": "Lookup field"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "Open geospatial data documentation",
       "mode-options": {
         "description-auto": "Automatically identify location data based on default field names",
         "description-coords": "Specify latitude and longitude fields",
@@ -9275,9 +9333,9 @@
     "description-mouse-wheel-zoom": "Enable zoom control via mouse wheel",
     "description-no-repeat": "Prevent the map from repeating horizontally",
     "description-share-view": "Use the same view across multiple panels.  Note: this may require a dashboard reload.",
-    "description-show-attribution": "Show the map source attribution info in the lower right",
     "description-show-debug": "Show map info",
     "description-show-measure": "Show tools for making measurements on the map",
+    "description-show-optional-attribution": "Show the map source attribution info in the lower right. Attribution required by a layer license is always shown.",
     "description-show-scale": "Indicate map scale",
     "description-show-zoom": "Show zoom control buttons in the upper left corner",
     "description-sync-view-variable": "Store view bounds in a dashboard variable for use in queries",
@@ -9338,9 +9396,9 @@
     "name-mouse-wheel-zoom": "Mouse wheel zoom",
     "name-no-repeat": "No map repeating",
     "name-share-view": "Share view",
-    "name-show-attribution": "Show attribution",
     "name-show-debug": "Show debug",
     "name-show-measure": "Show measure tools",
+    "name-show-optional-attribution": "Show optional attribution",
     "name-show-scale": "Show scale",
     "name-show-zoom": "Show zoom control",
     "name-sync-view-variable": "Sync view to dashboard variable",
@@ -10022,6 +10080,14 @@
       "log-base": "Log base"
     },
     "builder": {
+      "annotation-options": {
+        "canvas-controls-desc": "Hides annotation indicator lines and shaded regions",
+        "canvas-controls-name": "Hide lines and areas",
+        "clustering-desc": "Combines high density point annotations into region annotations",
+        "clustering-name": "Enable annotation clustering",
+        "multi-lane-name": "Enable multi-row annotations",
+        "multi-row-desc": "Breaks each annotation frame into a separate row in the visualization"
+      },
       "annotations": "Annotations",
       "axis": {
         "category-axis": "Axis",
@@ -10357,9 +10423,13 @@
     "matchers": {
       "groups": {
         "annotation": "Annotations",
+        "annotation-description": "Annotations series for this panel.",
         "exemplar": "Exemplars",
+        "exemplar-description": "Trace exemplars for this panel.",
         "nested": "Nested",
-        "series": "Dataframe"
+        "nested-description": "Fields from nested dataframes.",
+        "series": "Dataframe",
+        "series-description": "Fields from the dataframes in this panel."
       },
       "labels": {
         "base-field-name": "{{name}} (base field name)",
@@ -10929,6 +10999,83 @@
       "read-more": "Read more from the Grafana Labs blog",
       "title": "Latest from the blog"
     },
+    "overview": {
+      "get-started": {
+        "cards": {
+          "app-monitoring": {
+            "cta": "Start setup",
+            "description": "Visualize traces, metrics, and logs from services you build and run.",
+            "title": "Set up app monitoring"
+          },
+          "cloud-monitoring": {
+            "cta": "Start setup",
+            "description": "Monitor AWS, Azure, or GCP resources, costs, and service metrics.",
+            "title": "Observe cloud services"
+          },
+          "database-monitoring": {
+            "cta": "Start setup",
+            "description": "Gain insights into MySQL and PostgreSQL query performance and resource consumption.",
+            "title": "Analyze database performance"
+          },
+          "demo-data": {
+            "cta": "Start setup",
+            "description": "Connect real data from our demo environment and explore pre-built dashboards.",
+            "title": "Demo data dashboards"
+          },
+          "hosted-data": {
+            "cta": "Start setup",
+            "description": "Store, query, and visualize your telemetry with our fully managed backend.",
+            "title": "Hosted telemetry data"
+          },
+          "infra-monitoring": {
+            "cta": "Start setup",
+            "description": "Collect operating system metrics for Linux, Windows, or macOS hosts.",
+            "title": "Monitor your OS"
+          },
+          "kubernetes": {
+            "cta": "Start setup",
+            "description": "Get full visibility into the health and performance of your clusters.",
+            "title": "Kubernetes"
+          },
+          "logs": {
+            "cta": "Start setup",
+            "description": "Aggregate, search, and analyze logs across all your applications and services.",
+            "title": "Logs"
+          },
+          "opentelemetry": {
+            "cta": "Start setup",
+            "description": "Instrument your app or infrastructure for observability across your stack.",
+            "title": "OpenTelemetry"
+          },
+          "prometheus": {
+            "cta": "Start setup",
+            "description": "Connect Prometheus to monitor and visualize metrics in Grafana Cloud.",
+            "title": "Prometheus metrics"
+          },
+          "visualize-data": {
+            "cta": "Start setup",
+            "description": "Connect your existing data to Grafana and build dashboards to visualize it.",
+            "title": "Visualize existing data"
+          },
+          "website-monitoring": {
+            "cta": "Start setup",
+            "description": "Track the availability of your website and its performance from different locations.",
+            "title": "Monitor website uptime and performance"
+          }
+        },
+        "show-less": "Show fewer guides",
+        "show-more": "More getting started guides",
+        "title": "Recommended getting started guides"
+      },
+      "options": {
+        "all": "All solutions",
+        "attention": "Needs attention",
+        "available": "Available solutions",
+        "enabled": "Enabled solutions",
+        "get-started": "Get started"
+      },
+      "title": "Your observability stack overview"
+    },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
       "clear": "Clear history",
@@ -10949,14 +11096,25 @@
       },
       "carousel-label": "Recommended apps",
       "carousel-roledescription": "carousel",
-      "existing": "Enabled solution",
-      "frontend-observability": {
-        "action": "Enable Frontend Observability",
-        "context": "Connect the browser to your backend traces",
-        "description": "Capture Core Web Vitals and errors from the browser and tie them back to backend traces.",
-        "setup-action": "Set up Frontend Observability",
-        "title": "Measure real user experience"
+      "connect-metrics": {
+        "action": "Connect metrics",
+        "context": "The foundation of your observability stack",
+        "description": "Connect a Prometheus-compatible data source or ship metrics with a collector to light up dashboards and alerting.",
+        "title": "Start with metrics"
       },
+      "enable-logs": {
+        "action": "Add Logs",
+        "context": "Correlate spikes with the logs that explain them",
+        "description": "Send logs alongside your metrics to explain anomalies. Use your existing collector or follow a guided connection.",
+        "title": "See the story behind your metrics"
+      },
+      "enable-logs-k8s": {
+        "action": "Set up log collection",
+        "context": "Pod logs next to the cluster metrics you already have",
+        "description": "Add pod logs alongside your cluster metrics. If you use the Grafana Kubernetes Monitoring Helm chart, log collection is a single values flag.",
+        "title": "Turn on logs for your clusters"
+      },
+      "existing": "Enabled solution",
       "go-to": "Go to recommendation {{index}}",
       "health": {
         "nodes_one": "{{count}} node not ready",
@@ -10987,16 +11145,57 @@
         "title": "Kubernetes Monitoring",
         "view": "View"
       },
+      "kubernetes-monitoring": {
+        "action": "Enable Kubernetes Monitoring",
+        "context": "Cluster health next to your existing telemetry",
+        "description": "Deploy the Helm chart to get pod, node, and workload health out of the box.",
+        "setup-action": "Set up Kubernetes Monitoring",
+        "title": "Monitor your Kubernetes fleet"
+      },
+      "logs": {
+        "action": "Open Explore (Logs)",
+        "action-explore": "Open in Explore",
+        "datasource": "via {{name}}",
+        "stats": "ingested · 7d",
+        "stats-sources_one": "ingested · 7d · ~{{count}} source",
+        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
+        "title": "Hosted Logs",
+        "volume": "Ingest volume · last 24h"
+      },
+      "metrics": {
+        "action": "Open Metrics Drilldown",
+        "action-explore": "Open in Explore",
+        "data-points-per-minute": "{{value}} data points/min",
+        "datasource": "via {{name}}",
+        "disk-eta_one": "~{{count}} h to full",
+        "disk-eta_other": "~{{count}} h to full",
+        "disk-hosts_one": "{{count}} host above 90% disk",
+        "disk-hosts_other": "{{count}} hosts above 90% disk",
+        "disk-worst": "{{host}} at {{percent}}%",
+        "names_one": "{{value}} metric",
+        "names_other": "{{value}} metrics",
+        "series_one": "{{value}} series",
+        "series_other": "{{value}} series",
+        "series-trend": "Active series · last 24h",
+        "stats": "active",
+        "stats-hosts_one": "active · {{count}} host",
+        "stats-hosts_other": "active · {{count}} hosts",
+        "title": "Metrics & infrastructure",
+        "view": "View"
+      },
       "next": "Next",
       "no-data": {
         "badge": "Getting started",
         "connect": "Connect a data source",
         "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
+        "description-partial": "Some signals are already flowing. Connect more data sources or pick a solution to see live stats here.",
+        "description-unknown": "We couldn't confirm live data yet. Connect more data sources or pick a solution to see live stats here.",
         "popular-solutions": "Popular solutions",
         "solution-k6": "k6",
         "solution-kubernetes": "Kubernetes Monitoring",
         "solution-synthetics": "Synthetic Monitoring",
-        "title": "No data flowing yet"
+        "title": "No data flowing yet",
+        "title-partial": "Add more telemetry"
       },
       "pause": "Pause",
       "previous": "Previous",
@@ -11005,14 +11204,19 @@
       "show": "Show",
       "switch": "Recommendations follow the selected solution",
       "switchSolution": "Switch solution",
-      "synthetic-monitoring": {
-        "action": "Add Synthetic Monitoring",
-        "context": "Catch outages before your users do",
-        "description": "Probe your endpoints from 20+ global locations before your users notice.",
-        "setup-action": "Set up Synthetic Monitoring",
-        "title": "Watch your cluster from outside"
-      },
-      "title": "Recommendations for your stack"
+      "title": "Recommendations for your stack",
+      "traces": {
+        "action": "Open Traces Drilldown",
+        "action-explore": "Open in Explore",
+        "datasource": "via {{name}}",
+        "spans_one": "{{value}} span",
+        "spans_other": "{{value}} spans",
+        "stats": "traced · 24h",
+        "stats-services_one": "traced · 24h · {{count}} service",
+        "stats-services_other": "traced · 24h · {{count}} services",
+        "throughput": "Span throughput · last 24h",
+        "title": "Hosted Traces"
+      }
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
@@ -12281,7 +12485,7 @@
       "title": "Reporting"
     },
     "saved-queries": {
-      "subtitle": "Reusable queries you can use across panels and Explore",
+      "subtitle": "Reusable queries across Grafana",
       "title": "Saved queries"
     },
     "scenes": {
@@ -12425,7 +12629,7 @@
       "list-label": "Navigation",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
-      "pinned-list-label": "Pinned",
+      "pinned-list-label": "Pinned items",
       "undock": "Undock menu"
     },
     "megamenu-item": {
@@ -12445,6 +12649,7 @@
     },
     "quick-add": {
       "aria-label": "New",
+      "generate-dashboard-button": "Generate dashboard",
       "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"
@@ -13282,7 +13487,7 @@
         "repository-label": "Repositories",
         "repository-read-write-admin": "Read, and write",
         "webhooks-label": "Webhooks",
-        "webhooks-read-write": "Read and write"
+        "webhooks-read-write-delete": "Read, write, and delete"
       },
       "pr-workflow-description": "Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.",
       "pr-workflow-label": "Enable pull request option when saving",
@@ -14556,7 +14761,6 @@
     },
     "header": {
       "alert": "Alert",
-      "expression": "Expression",
       "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
       "pending-transformation": "Select a transformation",
@@ -14570,6 +14774,7 @@
     "labels": {
       "alert": "alert",
       "expression": "expression",
+      "expression-title": "{{type}} Expression",
       "query": "query",
       "transformation": "transformation"
     },
@@ -14578,6 +14783,7 @@
       "message": "Add a query, expression, or transformation to get started"
     },
     "sidebar": {
+      "add": "Add",
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
       "add-expression-disabled": "Expressions are not supported with the Dashboard data source",
@@ -14603,6 +14809,7 @@
       "new-type": "New {{type}}",
       "queries-empty": "No queries or expressions",
       "queries-expressions": "Queries & Expressions",
+      "stacked": "Stack",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
       "transformations-empty": "No transformations",
@@ -15601,6 +15808,7 @@
     "description-column-filter": "Enables/disables field filters in table",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "frame-picker": {
@@ -15634,6 +15842,7 @@
     "name-hide-in-table": "Hide in table",
     "name-max-height": "Max row height",
     "name-min-column-width": "Minimum column width",
+    "name-page-size": "Page size",
     "name-show-table-header": "Show table header",
     "name-styling-from-field": "Styling from field",
     "name-tooltip-from-field": "Tooltip from field",
@@ -15644,6 +15853,7 @@
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "none",
     "placeholder-max-height": "none",
+    "placeholder-page-size": "auto",
     "tooltip-placement-options": {
       "label-auto": "Auto",
       "label-bottom": "Bottom",
@@ -15800,18 +16010,29 @@
     },
     "editor": {
       "aria-label-content": "Text content",
+      "aria-label-mode": "Text mode: {{mode}}",
+      "footer-line-numbers": "Line numbers",
+      "format-bold": "B",
+      "format-heading": "H",
+      "format-italic": "I",
+      "language-plaintext": "Plain text",
+      "mode-code": "Code",
+      "mode-html": "HTML",
+      "mode-markdown": "Markdown",
+      "mode-picker-label": "Mode",
+      "tooltip-bold": "Bold",
+      "tooltip-bullet-list": "Bullet list",
+      "tooltip-checklist": "Checklist",
+      "tooltip-heading": "Heading",
+      "tooltip-insert-variable": "Insert variable",
+      "tooltip-italic": "Italic",
+      "tooltip-link": "Link",
+      "tooltip-numbered-list": "Numbered list",
+      "tooltip-table": "Table",
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
-    },
-    "mode-options": {
-      "label-code": "Code",
-      "label-html": "HTML",
-      "label-markdown": "Markdown"
-    },
-    "name-language": "Language",
-    "name-mode": "Mode",
-    "name-show-line-numbers": "Show line numbers"
+    }
   },
   "theme-playground": {
     "label-base-theme": "Base theme",
@@ -17123,6 +17344,7 @@
       "delete-modal-confirm": "Delete",
       "delete-modal-title": "Delete variable",
       "folder-description": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)",
+      "folder-description-folder-only": "Scope the variable to a folder you can edit",
       "folder-label": "Folder",
       "moved": "Variable moved",
       "name-exists": "A variable with this name already exists in the selected folder",
@@ -17138,6 +17360,8 @@
     "move-modal": {
       "body_one": "Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available everywhere in the organization).",
       "body_other": "Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).",
+      "body-folder-only_one": "Move {{count}} selected variable to a folder you can edit.",
+      "body-folder-only_other": "Move {{count}} selected variables to a folder you can edit.",
       "cancel": "Cancel",
       "folder-label": "Folder",
       "move": "Move",

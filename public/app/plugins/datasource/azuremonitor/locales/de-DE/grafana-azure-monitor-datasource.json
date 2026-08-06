@@ -78,6 +78,11 @@
       "description-basic-logs": "Wenn Sie diese Funktion aktivieren, fallen pro Abfrage Azure Monitor-Kosten für Dashboard-Panels an, die Tabellen abfragen, die für <2>Basis-Logs</2> konfiguriert sind.",
       "label-enable-basic-logs": "Basis-Logs aktivieren"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "Zusätzliche Einstellungen sind optionale Einstellungen, die Sie für mehr Kontrolle über Ihre Datenquelle konfiguriert können. Dazu gehören Secure Socks Proxy, Request Timeout und weitergeleitete Cookies.",
       "title-additional-settings": "Zusätzliche Einstellungen"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Metrik-Namensraum"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "Wird geladen ..."
     },
@@ -204,6 +216,10 @@
       "label-by": "NACH",
       "label-order-by": "Ordnen nach",
       "tooltip-order-by": "Sortieren Sie die Ergebnisse auf der Grundlage einer oder mehrerer Spalten in aufsteigender oder absteigender Reihenfolge."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Bei der Anfrage von Metadaten von Azure Monitor ist ein Fehler aufgetreten"

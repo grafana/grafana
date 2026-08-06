@@ -175,6 +175,7 @@ module.exports = [
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
       '@grafana/no-restricted-img-srcs': 'error',
+      '@grafana/zod-import-namespace': 'error',
       '@grafana/no-direct-date-fns': 'error',
       '@grafana/no-direct-create-monitoring-logger': 'error',
       'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
@@ -504,7 +505,6 @@ module.exports = [
       'public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/graphite/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/influxdb/**/*.{ts,tsx}',
     ],
     plugins: {
       import: importPlugin,

@@ -41,6 +41,22 @@ describe('NoDataCard', () => {
     expect(screen.getByText('Popular solutions')).toBeInTheDocument();
   });
 
+  it('renders the softened copy for the partial variant, keeping the connect CTA', () => {
+    render(<NoDataCard variant="partial" />);
+
+    expect(screen.getByRole('heading', { name: 'Add more telemetry', level: 3 })).toBeInTheDocument();
+    expect(screen.getByText(/Some signals are already flowing/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Connect a data source/ })).toBeInTheDocument();
+  });
+
+  it('renders neutral copy for the unknown variant, never claiming data flows', () => {
+    render(<NoDataCard variant="unknown" />);
+
+    expect(screen.getByRole('heading', { name: 'Add more telemetry', level: 3 })).toBeInTheDocument();
+    expect(screen.getByText(/We couldn't confirm live data yet/)).toBeInTheDocument();
+    expect(screen.queryByText(/Some signals are already flowing/)).not.toBeInTheDocument();
+  });
+
   it('links the popular solutions to a prefilled catalog search when the apps are not available', () => {
     setAvailableApps([]);
 

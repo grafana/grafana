@@ -6,7 +6,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { base64UrlEncode } from '@grafana/alerting';
 import {
   ContactPointSelector as GrafanaManagedContactPointSelector,
-  notificationsAPIv0alpha1,
+  notificationsAPIv1beta1,
 } from '@grafana/alerting/unstable';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -28,7 +28,7 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
   // check if the contact point still exists, we'll use listReceiver to check if the contact point exists because getReceiver doesn't work with
   // contact point titles but with UUIDs (which is not what we store on the alert rule definition)
   const encodedContactPoint = contactPointInForm ? base64UrlEncode(contactPointInForm) : '';
-  const { currentData, status } = notificationsAPIv0alpha1.endpoints.listReceiver.useQuery(
+  const { currentData, status } = notificationsAPIv1beta1.endpoints.listReceiver.useQuery(
     {
       fieldSelector: stringifyFieldSelector([['metadata.name', encodedContactPoint]]),
     },
@@ -109,6 +109,7 @@ function LinkToContactPoints() {
         'alerting.link-to-contact-points.aria-label-view-or-create-contact-points',
         'View or create contact points'
       )}
+      data-testid={selectors.components.AlertRules.viewContactPointsLink}
     >
       <Trans i18nKey="alerting.link-to-contact-points.view-or-create-contact-points">
         View or create contact points

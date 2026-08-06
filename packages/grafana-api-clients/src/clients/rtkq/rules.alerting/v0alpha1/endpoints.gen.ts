@@ -431,7 +431,7 @@ const injectedRtkApi = api
         invalidatesTags: ['RuleSequence'],
       }),
       createSearchRules: build.mutation<CreateSearchRulesApiResponse, CreateSearchRulesApiArg>({
-        query: (queryArg) => ({ url: `/search`, method: 'POST', body: queryArg.createSearchRulesRequestBody }),
+        query: (queryArg) => ({ url: `/searchRules`, method: 'POST', body: queryArg.createSearchRulesRequestBody }),
       }),
     }),
     overrideExisting: false,
@@ -1451,9 +1451,12 @@ export type CreateSearchRulesSearchResultHit = {
   resource: CreateSearchRulesSearchResultResource;
   score?: number;
 };
+export type CreateSearchRulesTotalHitsRelation = 'eq' | 'lte';
 export type CreateSearchRulesSearchResultsMetadata = {
   continue?: string;
   totalHits?: number;
+  /** Always read totalHits together with totalHitsRelation. */
+  totalHitsRelation?: CreateSearchRulesTotalHitsRelation;
 };
 export type CreateSearchRulesResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

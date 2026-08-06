@@ -31,6 +31,9 @@ export const versionedPages = {
       emptyStateNewRuleLink: {
         '13.2.0': 'data-testid rule-list empty-state-new-rule-link',
       },
+      newAlertRuleLink: {
+        '13.2.0': 'data-testid rule-list new-alert-rule-link',
+      },
       moreMenu: {
         triggerButton: {
           '13.2.0': 'data-testid rule-list more-menu-trigger-button',
@@ -306,6 +309,9 @@ export const versionedPages = {
           },
           variableSelection: {
             '12.4.0': 'data-testid Dashboard Conditional Rendering Variable variable selection',
+          },
+          operatorSelection: {
+            '13.2.0': 'data-testid Dashboard Conditional Rendering Variable operator selection',
           },
         },
         timeRange: {
@@ -1181,6 +1187,11 @@ export const versionedPages = {
     QueryHistory: {
       container: {
         '11.1.0': 'data-testid QueryHistory',
+      },
+    },
+    QueryInspector: {
+      container: {
+        '13.2.0': 'data-testid explore query inspector',
       },
     },
   },

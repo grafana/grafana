@@ -797,7 +797,6 @@ func TestCompareAndSendConfigurationConvertsMimirReceivers(t *testing.T) {
 				}
 			}
 			require.NotNil(t, webhookRecv, "expected webhook receiver in merged config")
-			require.Empty(t, webhookRecv.WebhookConfigs, "Mimir webhook_configs should be cleared after conversion")
 			require.Len(t, webhookRecv.GrafanaManagedReceivers, 1)
 			gr := webhookRecv.GrafanaManagedReceivers[0]
 			require.Equal(t, "webhook", gr.Type)
@@ -1043,7 +1042,6 @@ receivers:
 		}
 	}
 	require.NotNil(t, extraReceiver)
-	require.Empty(t, extraReceiver.EmailConfigs)
 	require.Len(t, extraReceiver.GrafanaManagedReceivers, 1)
 	require.Equal(t, "email", extraReceiver.GrafanaManagedReceivers[0].Type)
 	require.NotEmpty(t, configSent.Hash)
@@ -1082,14 +1080,12 @@ func TestCompareAndSendConfigurationWithExtraConfigs(t *testing.T) {
 			},
 			Receivers: []*v1.PostableApiReceiver{
 				{
-					Receiver: apimodels.Receiver{Name: "grafana-default-email"},
-					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-							{
-								Name:     "email receiver",
-								Type:     "email",
-								Settings: apimodels.RawMessage(`{"addresses":"<example@example.com>"}`),
-							},
+					Name: "grafana-default-email",
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+						{
+							Name:     "email receiver",
+							Type:     "email",
+							Settings: apimodels.RawMessage(`{"addresses":"<example@example.com>"}`),
 						},
 					},
 				},
@@ -1477,9 +1473,9 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	// Let's create two active alerts and one expired one.
 	// UTF-8 label names should be preserved.
 	utf8LabelName := "test utf-8 label 😳"
-	alert1 := genAlert(true, map[string]string{utf8LabelName: "test_1", "empty": "", alertingModels.NamespaceUIDLabel: "test_1"})
-	alert2 := genAlert(true, map[string]string{utf8LabelName: "test_2", "empty": "", alertingModels.NamespaceUIDLabel: "test_2"})
-	alert3 := genAlert(false, map[string]string{utf8LabelName: "test_3", "empty": "", alertingModels.NamespaceUIDLabel: "test_3"})
+	alert1 := genAlert(true, map[string]string{utf8LabelName: "test_1", "empty": "", "": "empty_name", alertingModels.NamespaceUIDLabel: "test_1"})
+	alert2 := genAlert(true, map[string]string{utf8LabelName: "test_2", "empty": "", "": "empty_name", alertingModels.NamespaceUIDLabel: "test_2"})
+	alert3 := genAlert(false, map[string]string{utf8LabelName: "test_3", "empty": "", "": "empty_name", alertingModels.NamespaceUIDLabel: "test_3"})
 	postableAlerts := apimodels.PostableAlerts{
 		PostableAlerts: []amv2.PostableAlert{alert1, alert2, alert3},
 	}
@@ -1497,12 +1493,13 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, len(alertGroups))
 
-	// Labels with empty values and the namespace UID label should be removed.
+	// Labels with empty names, empty values, and the namespace UID label should be removed.
 	// UTF-8 label names should remain unchanged.
 	for _, a := range alertGroups {
 		require.Len(t, a.Alerts, 2)
 		for _, a := range a.Alerts {
 			require.NotContains(t, a.Labels, "empty")
+			require.NotContains(t, a.Labels, "")
 			require.NotContains(t, a.Labels, alertingModels.NamespaceUIDLabel)
 			require.Contains(t, a.Labels, utf8LabelName)
 		}

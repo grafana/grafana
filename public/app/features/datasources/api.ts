@@ -30,7 +30,9 @@ export interface K8sMetadata {
 
 export interface DatasourceInstanceK8sSpec {
   access: string;
-  jsonData: DataSourceJsonData;
+  // Omitted by the apiserver when empty (`json:"jsonData,omitzero"`), so it is not
+  // guaranteed to be present on responses.
+  jsonData?: DataSourceJsonData;
   title: string;
   url: string;
   user: string;
@@ -103,7 +105,7 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
   };
   let k8sSpec: DatasourceInstanceK8sSpec = {
     access: dsSettings.access,
-    jsonData: dsSettings.jsonData,
+    jsonData: dsSettings.jsonData ?? {},
     title: dsSettings.name,
     url: dsSettings.url,
     basicAuth: dsSettings.basicAuth,
@@ -158,7 +160,9 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
     basicAuth: dsK8sSettings.spec.basicAuth,
     basicAuthUser: dsK8sSettings.spec.basicAuthUser,
     isDefault: dsK8sSettings.spec.isDefault ? true : false,
-    jsonData: dsK8sSettings.spec.jsonData,
+    // DataSourceSettings.jsonData is non-optional and consumers (e.g. the
+    // grafana/datasources/config extension point) dereference it without guarding.
+    jsonData: dsK8sSettings.spec.jsonData ?? {},
     secureJsonFields: {},
     readOnly: dsK8sSettings.spec.readOnly ? dsK8sSettings.spec.readOnly : false,
     withCredentials: false,

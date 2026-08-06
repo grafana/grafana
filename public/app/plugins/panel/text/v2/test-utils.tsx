@@ -1,11 +1,20 @@
 import { render } from '@testing-library/react';
 
 import { type CoreApp, dateTime, EventBusSrv, LoadingState } from '@grafana/data';
+import { setTemplateSrv } from '@grafana/runtime';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { TextMode } from '../panelcfg.gen';
 
 import { type Props, TextNGPanel } from './TextNGPanel';
+
+// Edit mode builds variable suggestions from the template service.
+setTemplateSrv({
+  getVariables: () => [],
+  replace: (target = '') => target,
+  containsTemplate: () => false,
+  updateTimeRange: () => {},
+});
 
 export function createProps(replaceVariables: Props['replaceVariables'], overrides: Partial<Props> = {}): Props {
   return {

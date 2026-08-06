@@ -2016,6 +2016,14 @@ describe('DashboardScene', () => {
   });
 
   describe('When checking dashboard managed by an external system', () => {
+    beforeEach(() => {
+      config.provisioningEnabled = true;
+    });
+
+    afterEach(() => {
+      config.provisioningEnabled = false;
+    });
+
     it('should return true if the dashboard is managed', () => {
       const scene = buildTestScene({
         meta: {
@@ -2691,7 +2699,7 @@ describe('DashboardScene', () => {
 
   describe('refreshPredefinedVariables', () => {
     beforeEach(() => {
-      setTestFlags({ globalDashboardVariables: true });
+      setTestFlags({ 'grafana.dashboardGlobalVariables': true });
       mockFetchPredefinedVariables.mockReset();
     });
 

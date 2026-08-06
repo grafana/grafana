@@ -34,9 +34,7 @@ func TestAddAutogenConfig(t *testing.T) {
 		}
 		for _, receiver := range receivers {
 			cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
-				Receiver: definitions.Receiver{
-					Name: receiver,
-				},
+				Name: receiver,
 			})
 		}
 		for _, muteInterval := range muteIntervals {
