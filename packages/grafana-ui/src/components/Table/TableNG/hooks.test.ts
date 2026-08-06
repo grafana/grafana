@@ -1410,6 +1410,24 @@ describe('TableNG hooks', () => {
       expect(result.current.nestedColWidths.get('b')).toEqual({ type: 'resized', width: 100 });
     });
 
+    it('re-flows auto (unconfigured) column widths when the panel width changes', () => {
+      const fields: Field[] = ['a', 'b'].map((name) => ({ name, type: FieldType.string, config: {}, values: [] }));
+      const { result, rerender } = renderHook(
+        ({ availableWidth }: { availableWidth: number }) =>
+          useNestedColWidths({ nestedVisibleFields: fields, availableWidth }),
+        { initialProps: { availableWidth: 300 } }
+      );
+
+      const before = [...result.current.nestedFieldWidths];
+      rerender({ availableWidth: 600 });
+      const after = result.current.nestedFieldWidths;
+
+      // widening the panel widens the auto-sized nested columns (previously they stayed put until a
+      // structure change, so they ignored panel resize).
+      expect(after[0]).toBeGreaterThan(before[0]);
+      expect(after[1]).toBeGreaterThan(before[1]);
+    });
+
     it('handleNestedColumnWidthsChange updates nestedFieldWidths and nestedColWidths', () => {
       const fields = makeFields(['a', 'b']);
       const { result } = renderHook(() => useNestedColWidths({ nestedVisibleFields: fields, availableWidth: 300 }));

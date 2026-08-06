@@ -763,25 +763,23 @@ export function useNestedColWidths({
 
   const [nestedFieldWidths, setNestedFieldWidths] = useState(() => configuredWidths);
 
-  // on structureRev change, sync the widths from config and check whether we ought to dispatch an update.
+  // Sync the widths from config whenever they change — i.e. on structure changes and, crucially, on
+  // panel resize (availableWidth feeds configuredWidths), so content-aware auto columns re-flow to
+  // the new width. Manual resizes persist to field config, so they survive this re-sync; only the
+  // auto columns actually move. Bail out when nothing changed to avoid a needless render.
   useEffect(() => {
-    const newWidths = pickColWidths(nestedVisibleFields, availableWidth, contentAware);
-    let hasChanges = false;
-    if (nestedFieldWidths.length !== newWidths.length) {
-      // if we have fewer columns than the new widths, we have changes
-      hasChanges = true;
-    }
-    for (let i = 0; i < newWidths.length; i++) {
-      if (nestedFieldWidths[i] !== newWidths[i]) {
-        hasChanges = true;
-        break;
+    setNestedFieldWidths((prev) => {
+      if (prev.length !== configuredWidths.length) {
+        return configuredWidths;
       }
-    }
-
-    if (hasChanges) {
-      setNestedFieldWidths(newWidths);
-    }
-  }, [structureRev]); // eslint-disable-line react-hooks/exhaustive-deps
+      for (let i = 0; i < configuredWidths.length; i++) {
+        if (prev[i] !== configuredWidths[i]) {
+          return configuredWidths;
+        }
+      }
+      return prev;
+    });
+  }, [configuredWidths, structureRev]);
 
   // this is the representation that react-data-grid wants, which we derive from the source of truth (nestedFieldWidths) on every render
   const nestedColWidths = useMemo(
