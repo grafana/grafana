@@ -308,6 +308,10 @@
       window.__grafanaRenderBindingSupported = true;
       [[end]]
 
+      [[if .UseLuxon]]
+      window.__grafanaUseLuxon = true;
+      [[end]]
+
       [[if .AssetSriChecksEnabled]]
         // For enabling SRI checks on dynamically loaded Grafana assets
         window.__grafanaAssetSriChecksEnabled = true;

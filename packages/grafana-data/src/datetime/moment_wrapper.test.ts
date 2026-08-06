@@ -1,20 +1,33 @@
-import moment, { setDateTimeImplementation } from './moment_implementation';
-import { ISO_8601, dateTime } from './moment_wrapper';
+describe('__grafanaUseLuxon', () => {
+  const flagName = '__grafanaUseLuxon';
+  const originalDescriptor = Object.getOwnPropertyDescriptor(window, flagName);
 
-describe('setDateTimeImplementation', () => {
   afterEach(() => {
-    setDateTimeImplementation(false);
+    if (originalDescriptor) {
+      Object.defineProperty(window, flagName, originalDescriptor);
+    } else {
+      Reflect.deleteProperty(window, flagName);
+    }
   });
 
   it.each([
-    [false, 'Moment'],
+    [undefined, 'Moment'],
     [true, 'MomentCompat'],
-  ])('uses the expected implementation when set to %s', (useLuxon, constructorName) => {
-    setDateTimeImplementation(useLuxon);
+  ])('uses the expected implementation when set to %s', async (useLuxon, constructorName) => {
+    if (useLuxon === undefined) {
+      Reflect.deleteProperty(window, flagName);
+    } else {
+      Object.defineProperty(window, flagName, { configurable: true, value: useLuxon });
+    }
 
-    expect(Object.getPrototypeOf(dateTime()).constructor.name).toBe(constructorName);
-    expect(dateTime('2026-08-06T12:34:56Z', ISO_8601).isValid()).toBe(true);
-    expect(moment.tz.zone('America/New_York')).not.toBeNull();
-    expect(moment.tz.zone('not/a-zone')).toBeNull();
+    await jest.isolateModulesAsync(async () => {
+      const { default: moment } = await import('./moment_implementation');
+      const { ISO_8601, dateTime } = await import('./moment_wrapper');
+
+      expect(Object.getPrototypeOf(dateTime()).constructor.name).toBe(constructorName);
+      expect(dateTime('2026-08-06T12:34:56Z', ISO_8601).isValid()).toBe(true);
+      expect(moment.tz.zone('America/New_York')).not.toBeNull();
+      expect(moment.tz.zone('not/a-zone')).toBeNull();
+    });
   });
 });

@@ -121,7 +121,6 @@ export { decoupleHideFromState } from '../field/decoupleHideFromState';
 export { findNumericFieldMinMax } from '../field/fieldOverrides';
 export { type PluginViewOptionsQuickToggles, type PanelPluginViewOptions } from '../panel/PanelPlugin';
 export { sanitize, sanitizeUrl } from '../text/sanitize';
-export { setDateTimeImplementation } from '../datetime/moment_implementation';
 
 export { NewThemeOptionsSchema } from '../themes/createTheme';
 export { createFieldsOrdererAuto } from '../transformations/transformers/order';
