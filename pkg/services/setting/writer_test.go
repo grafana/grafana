@@ -133,7 +133,7 @@ func TestRemoteSettingService_writes(t *testing.T) {
 			handler: func(reqs *[]string) http.HandlerFunc {
 				return func(w http.ResponseWriter, r *http.Request) { *reqs = append(*reqs, r.Method) }
 			},
-			wantMethods: nil, // guarded before any request
+			wantMethods: []string{}, // guarded before any request
 		},
 	}
 
@@ -146,7 +146,7 @@ func TestRemoteSettingService_writes(t *testing.T) {
 			err := tc.op(newTestClient(t, srv.URL, 500).(Writer))
 			tc.wantErr(t, err)
 
-			var methods []string
+			methods := make([]string, 0, len(reqs))
 			for _, r := range reqs {
 				methods = append(methods, strings.SplitN(r, " ", 2)[0])
 			}
