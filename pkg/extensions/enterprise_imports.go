@@ -419,6 +419,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/ngalert/image"
 	_ "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	_ "github.com/grafana/grafana/pkg/services/ngalert/models"
+	_ "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	_ "github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	_ "github.com/grafana/grafana/pkg/services/ngalert/state/historian"
