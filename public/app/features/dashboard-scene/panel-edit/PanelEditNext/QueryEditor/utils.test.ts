@@ -23,10 +23,19 @@ describe('getExpressionSectionLabel', () => {
   }
 
   it.each([
-    [ExpressionQueryType.sql, 'Sql Expression'],
+    [ExpressionQueryType.sql, 'SQL Expression'],
     [ExpressionQueryType.math, 'Math Expression'],
     [ExpressionQueryType.threshold, 'Threshold Expression'],
-  ])('capitalizes the %s expression type', (type, expected) => {
+    [ExpressionQueryType.classic, 'Classic condition (legacy) Expression'],
+  ])('uses the human-readable name for the %s expression type', (type, expected) => {
     expect(getExpressionSectionLabel(expressionQuery(type))).toBe(expected);
+  });
+
+  it('falls back to the raw type when it is not a known expression type', () => {
+    // Reachable at runtime: isExpressionQuery narrows on the __expr__ datasource ref alone, so a
+    // query can be treated as an expression while carrying a type outside the enum.
+    const query = { refId: 'A', type: 'custom_thing' } as unknown as ExpressionQuery;
+
+    expect(getExpressionSectionLabel(query)).toBe('Custom_thing Expression');
   });
 });

@@ -11,7 +11,7 @@ import { t } from '@grafana/i18n';
 import { type CustomTransformerDefinition, SafeSerializableSceneObject, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { type ExpressionQuery } from 'app/features/expressions/types';
+import { getExpressionLabel, type ExpressionQuery } from 'app/features/expressions/types';
 
 import { getAlertStateColor, getQueryEditorTypeConfig, QueryEditorType } from '../constants';
 
@@ -56,11 +56,17 @@ export function getEditorType(
 }
 
 /**
- * Section label for an expression card, e.g. "Sql Expression". Shared by the single-edit header and
- * the stacked editor so both render expression labels identically.
+ * Section label for an expression card, e.g. "SQL Expression". Shared by the single-edit header and
+ * the stacked editor so both render expression labels identically, matching the names on the
+ * expression type picker cards.
  */
 export function getExpressionSectionLabel(query: ExpressionQuery): string {
-  return t('query-editor-next.labels.expression-title', '{{type}} Expression', { type: upperFirst(query.type) });
+  // The fallback looks unreachable because `type` is typed as an enum member, but isExpressionQuery
+  // accepts any query pointing at the __expr__ datasource without validating `type`, so an absent
+  // or unrecognised type reaches here at runtime.
+  const typeName = getExpressionLabel(query.type) ?? upperFirst(query.type);
+
+  return t('query-editor-next.labels.expression-title', '{{type}} Expression', { type: typeName });
 }
 
 function isDataTransformerConfig(
