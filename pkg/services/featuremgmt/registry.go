@@ -236,15 +236,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "provisioning",
-			Description:     "Enables Git Sync and as-code provisioning for Grafana resources",
-			Stage:           FeatureStageGeneralAvailability,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "provisioningFolderMetadata",
 			Description:     "Allow setting folder metadata for provisioned folders",
 			Stage:           FeatureStageGeneralAvailability,
@@ -651,6 +642,14 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:        "disableScriptedDashboards",
+			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
+			Stage:       FeatureStageDeprecated,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "true", // enabled by default: scripted dashboards are disabled
 		},
 		{
 			Name:        "dashboard.notebooks",
@@ -2516,15 +2515,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:         "frontendService.settingsSourceFilter",
-			Description:  "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendPlatformSquad,
-			Expression:   "false",
-			HideFromDocs: true,
-			Generate:     Generate{Go: true},
-		},
-		{
 			Name:         "managedPluginsV2",
 			Description:  "Enables managed plugins v2 (expanded rollout, community plugin coverage)",
 			Stage:        FeatureStageExperimental,
@@ -2909,6 +2899,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "paneledit.buttonLabels",
+			Description:  "Shows text labels on the add and stacked view buttons in PanelEditNext",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataProSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "grafana.panelEditNextFeedbackEvent",
 			Description:  "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
 			Stage:        FeatureStageExperimental,
@@ -3013,6 +3012,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "datetime.useLuxon",
+			Description:  "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:        "grafana.customizableMegaMenu",
 			Description: "Allows users to customise the mega menu by hiding top-level navigation items they are not interested in",
 			Stage:       FeatureStageExperimental,
@@ -3063,12 +3071,13 @@ var (
 			Generate:        Generate{Go: true, LegacyGo: true},
 		},
 		{
-			Name:        "reporting.redirectReportsToK8SApi",
-			Description: "Redirect legacy report CRUD API endpoints to the Kubernetes reporting API",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Name:            "reporting.redirectReportsToK8SApi",
+			Description:     "Redirect legacy report CRUD API endpoints to the Kubernetes reporting API",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+			Generate:        Generate{Go: true},
 		},
 		{
 			Name:        "grafana.onDemandDiagnostics",
@@ -3086,6 +3095,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:        "assistant.dashboardPlanning",
+			Description: "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "features.bulkFlagEvalFiltering",

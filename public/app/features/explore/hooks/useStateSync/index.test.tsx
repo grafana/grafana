@@ -5,8 +5,14 @@ import { type ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { type DataQuery, type DataSourceApi, type UrlQueryMap } from '@grafana/data';
-import { HistoryWrapper, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
+import {
+  type DataQuery,
+  type DataSourceApi,
+  type DataSourceRef,
+  type ScopedVars,
+  type UrlQueryMap,
+} from '@grafana/data';
+import { HistoryWrapper } from '@grafana/runtime';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
@@ -31,7 +37,21 @@ jest.mock('rxjs', () => ({
     }),
 }));
 
-function defaultDsGetter(datasources: Array<ReturnType<typeof makeDatasourceSetup>>): DataSourceSrv['get'] {
+type DatasourceGetter = (ref?: DataSourceRef | string | null, scopedVars?: ScopedVars) => Promise<DataSourceApi>;
+
+// setup() seeds this per test. The mock factory below is hoisted above the datasources it
+// serves and runs on import, so the delegation has to stay lazy — reading the getter eagerly
+// would hit the temporal dead zone.
+const currentDatasourceGetter: { get: DatasourceGetter } = {
+  get: () => Promise.reject(new Error('datasources have not been seeded')),
+};
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: (...args: Parameters<DatasourceGetter>) => currentDatasourceGetter.get(...args),
+}));
+
+function defaultDsGetter(datasources: Array<ReturnType<typeof makeDatasourceSetup>>): DatasourceGetter {
   return (datasource) => {
     let ds;
     if (!datasource) {
@@ -54,7 +74,7 @@ function defaultDsGetter(datasources: Array<ReturnType<typeof makeDatasourceSetu
 
 interface SetupParams {
   queryParams?: UrlQueryMap;
-  datasourceGetter?: (datasources: Array<ReturnType<typeof makeDatasourceSetup>>) => DataSourceSrv['get'];
+  datasourceGetter?: (datasources: Array<ReturnType<typeof makeDatasourceSetup>>) => DatasourceGetter;
 }
 function setup({ queryParams = {}, datasourceGetter = defaultDsGetter }: SetupParams) {
   const history = createMemoryHistory({
@@ -69,13 +89,7 @@ function setup({ queryParams = {}, datasourceGetter = defaultDsGetter }: SetupPa
     makeDatasourceSetup({ name: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME, id: 999 }),
   ];
 
-  setDataSourceSrv({
-    registerRuntimeDataSource: jest.fn(),
-    get: datasourceGetter(datasources),
-    getInstanceSettings: jest.fn(),
-    getList: jest.fn(),
-    reload: jest.fn(),
-  });
+  currentDatasourceGetter.get = datasourceGetter(datasources);
 
   const store = configureStore({
     user: {
@@ -150,7 +164,7 @@ describe('useStateSync', () => {
         }),
         schemaVersion: 1,
       },
-      datasourceGetter: (datasources: Array<ReturnType<typeof makeDatasourceSetup>>): DataSourceSrv['get'] => {
+      datasourceGetter: (datasources: Array<ReturnType<typeof makeDatasourceSetup>>): DatasourceGetter => {
         return (datasource) => {
           let ds: DataSourceApi | undefined;
           if (!datasource) {
