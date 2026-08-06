@@ -271,6 +271,9 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *te
 			switch tt.operation {
 			case admission.Delete:
 				oldObject = panel
+			case admission.Update:
+				object = panel
+				oldObject = panel.DeepCopy()
 			default:
 				object = panel
 			}
@@ -301,6 +304,60 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *te
 			require.Equal(t, tt.expectedFolder, gotFolder)
 		})
 	}
+}
+
+func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinationAccess(t *testing.T) {
+	requester := &identity.StaticRequester{
+		Type:      authlib.TypeServiceAccount,
+		UserID:    42,
+		UserUID:   "folder-limited-service-account",
+		OrgID:     1,
+		Namespace: "stacks-1",
+	}
+	checkedFolders := make([]string, 0, 2)
+	accessClient := &recordingAccessClient{
+		check: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			require.Equal(t, utils.VerbUpdate, req.Verb)
+			checkedFolders = append(checkedFolders, folder)
+			return authlib.CheckResponse{Allowed: folder == "source-folder", Zookie: authlib.NoopZookie{}}, nil
+		},
+	}
+	dashboardBuilder := NewAPIService(
+		accessClient,
+		nil,
+		nil,
+		migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig),
+		migrationtestutil.NewLibraryElementProvider(),
+		nil,
+		nil,
+		nil,
+	)
+	admissionPlugin := apiserverbuilder.NewAdmissionFromBuilders([]apiserverbuilder.APIGroupBuilder{dashboardBuilder})
+
+	oldPanel := &dashv0.LibraryPanel{ObjectMeta: metav1.ObjectMeta{
+		Name:        "panel-a",
+		Namespace:   "stacks-1",
+		Annotations: map[string]string{utils.AnnoKeyFolder: "source-folder"},
+	}}
+	updatedPanel := oldPanel.DeepCopy()
+	updatedPanel.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "destination-folder"})
+	ctx := identity.WithRequester(context.Background(), requester)
+	err := admissionPlugin.Validate(ctx, admission.NewAttributesRecord(
+		updatedPanel,
+		oldPanel,
+		dashv0.LibraryPanelResourceInfo.GroupVersionKind(),
+		"stacks-1",
+		updatedPanel.Name,
+		dashv0.LibraryPanelResourceInfo.GroupVersionResource(),
+		"",
+		admission.Update,
+		nil,
+		false,
+		requester,
+	), nil)
+
+	require.True(t, apierrors.IsForbidden(err), "moving a panel must require destination-folder access")
+	require.Equal(t, []string{"source-folder", "destination-folder"}, checkedFolders)
 }
 
 type recordingAccessClient struct {
