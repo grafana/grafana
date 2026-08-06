@@ -9,10 +9,10 @@ import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
-import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
 
 import { type NotebookScene } from '../scene/NotebookScene';
 
+import { NotebookPageError } from './NotebookPageError';
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
 
 // Fetch a notebook, build its composed NotebookScene, and render it. The page owns the chrome
@@ -43,7 +43,7 @@ export function NotebookScenePage() {
 
   if (!scene) {
     return loadError ? (
-      <DashboardPageError error={loadError} />
+      <NotebookPageError error={loadError} />
     ) : (
       <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid="notebook-scene-page">
         <Box paddingY={4} display="flex" direction="column" alignItems="center">

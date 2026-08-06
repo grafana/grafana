@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
 import {
   behaviors,
+  type CancelActivationHandler,
   type DataRequestEnricher,
   type SceneComponentProps,
   type SceneObject,
@@ -68,7 +69,17 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       const prevSceneContext = window.__grafanaSceneContext;
       window.__grafanaSceneContext = this;
 
+      // activate() only propagates to $timeRange/$variables/$data/$behaviors — the pickers are
+      // plain state, so they are activated by their renderers. With the controls row hidden nothing
+      // renders the refresh picker, so activate it here or the spec's autoRefresh interval never
+      // starts. Same workaround as DashboardControls.
+      let refreshPickerDeactivation: CancelActivationHandler | undefined;
+      if (this.state.hideTimeControls) {
+        refreshPickerDeactivation = this.state.refreshPicker.activate();
+      }
+
       return () => {
+        refreshPickerDeactivation?.();
         window.__grafanaSceneContext = prevSceneContext;
       };
     });

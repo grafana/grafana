@@ -1,16 +1,28 @@
 import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { type Resource } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
 import { type NotebookScene } from '../scene/NotebookScene';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 
+/**
+ * A load failure normalized to the fields the error UI needs. RTK rejects with `{ status, data }`
+ * rather than an Error, so the raw value must be normalized here — coercing it to an Error would
+ * drop the HTTP status (no 404 not-found state) and stringify the body to "[object Object]".
+ */
+export interface NotebookLoadError {
+  status?: number;
+  messageId?: string;
+  message: string;
+}
+
 export interface NotebookPageState {
   scene?: NotebookScene;
   isLoading: boolean;
-  loadError?: Error;
+  loadError?: NotebookLoadError;
 }
 
 /**
@@ -62,7 +74,11 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     } catch (error) {
       this.setState({
         isLoading: false,
-        loadError: error instanceof Error ? error : new Error(String(error)),
+        loadError: {
+          status: getStatusFromError(error),
+          message: getMessageFromError(error),
+          messageId: getMessageIdFromError(error),
+        },
       });
     }
   }

@@ -103,6 +103,24 @@ describe('NotebookPageStateManager', () => {
 
     expect(manager.state.scene).toBeUndefined();
     expect(manager.state.isLoading).toBe(false);
-    expect(manager.state.loadError).toBeInstanceOf(Error);
+    expect(manager.state.loadError?.message).toBe('nope');
+  });
+
+  // RTK rejects with { status, data } rather than an Error. Both fields have to survive: the status
+  // drives the 404 not-found state and the body carries the backend message.
+  it('preserves the HTTP status and backend message of an API failure', async () => {
+    setBackendSrv({
+      fetch: jest.fn().mockReturnValue(throwError(() => ({ status: 404, data: { message: 'notebook not found' } }))),
+    } as unknown as BackendSrv);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('missing');
+
+    expect(manager.state.scene).toBeUndefined();
+    expect(manager.state.loadError).toEqual({
+      status: 404,
+      message: 'notebook not found',
+      messageId: undefined,
+    });
   });
 });
