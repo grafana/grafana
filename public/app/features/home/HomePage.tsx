@@ -126,7 +126,11 @@ export default function HomePage() {
         subTitle: t('home.home-page.placeholder', 'Welcome to {{edition}}.', { edition: getEdition() }),
         hideFromBreadcrumbs: true,
       }}
-      actions={redesignEnabled ? <HeaderActions alertIncidentRef={alertIncidentRef} /> : undefined}
+      actions={
+        redesignEnabled ? (
+          <HeaderActions alertsData={alertsData} incidentsData={incidentsData} alertIncidentRef={alertIncidentRef} />
+        ) : undefined
+      }
       layout={PageLayoutType.Home}
     >
       <Page.Contents>
