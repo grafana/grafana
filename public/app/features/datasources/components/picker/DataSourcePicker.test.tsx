@@ -201,6 +201,32 @@ describe('DataSourcePicker', () => {
       );
     });
 
+    it('should mark the input as invalid when `invalid` is true', () => {
+      render(<DataSourcePicker onChange={jest.fn()} invalid></DataSourcePicker>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('should show a spinner when `isLoading` is true', () => {
+      render(<DataSourcePicker onChange={jest.fn()} isLoading></DataSourcePicker>);
+      expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Clear data source' })).not.toBeInTheDocument();
+    });
+
+    it('should show a clear button when `onClear` is provided and a data source is selected', async () => {
+      const onClear = jest.fn();
+      const onChange = jest.fn();
+      render(<DataSourcePicker onChange={onChange} onClear={onClear} current={mockDS1.name}></DataSourcePicker>);
+
+      const clearButton = screen.getByRole('button', { name: 'Clear data source' });
+      await user.click(clearButton);
+      expect(onClear).toHaveBeenCalledTimes(1);
+      // Clicking clear should not open the dropdown
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'aria-expanded',
+        'false'
+      );
+    });
+
     it('should not set the default DS when setting `noDefault` to true and `current` is not provided', () => {
       render(<DataSourcePicker onChange={jest.fn()} current={null} noDefault></DataSourcePicker>);
       getListMock.mockClear();
