@@ -1009,9 +1009,6 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
 		}
 	}
-	if err := service.validateRuleMutation(ctx, &rule, manager); err != nil {
-		return models.AlertRule{}, err
-	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
 	// Normal rule groups share an interval, so single-rule updates can't change it.
@@ -1029,6 +1026,9 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
+		return models.AlertRule{}, err
+	}
+	if err := service.validateRuleMutation(ctx, &rule, manager); err != nil {
 		return models.AlertRule{}, err
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
