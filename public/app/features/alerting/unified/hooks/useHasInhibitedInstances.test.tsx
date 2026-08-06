@@ -81,7 +81,7 @@ describe('useHasInhibitedInstances', () => {
     expect(result.current.hasInhibitedInstances).toBe(false);
   });
 
-  it('should not ask the API to exclude silenced alerts', async () => {
+  const captureAlertsRequests = async () => {
     const { http, HttpResponse } = await import('msw');
     const { default: mswServer } = await import('@grafana/test-utils/server');
 
@@ -93,6 +93,12 @@ describe('useHasInhibitedInstances', () => {
       })
     );
 
+    return requestedUrls;
+  };
+
+  it('should scope the request to the rule and not exclude silenced alerts', async () => {
+    const requestedUrls = await captureAlertsRequests();
+
     renderHook(() => useHasInhibitedInstances(TEST_RULE_UID), { wrapper: wrapper() });
 
     await waitFor(() => {
@@ -100,10 +106,24 @@ describe('useHasInhibitedInstances', () => {
     });
 
     const params = new URL(requestedUrls[0]).searchParams;
+    // scoping to the rule keeps the response small, rather than every suppressed alert in the org
+    expect(params.getAll('filter')).toEqual([`__alert_rule_uid__="${TEST_RULE_UID}"`]);
     // an alert can be both silenced and inhibited, so excluding silenced alerts would hide it
     expect(params.has('silenced')).toBe(false);
     expect(params.get('active')).toBe('false');
     expect(params.get('inhibited')).toBe('true');
+  });
+
+  it('should not request anything when ruleUid is undefined', async () => {
+    const requestedUrls = await captureAlertsRequests();
+
+    const { result } = renderHook(() => useHasInhibitedInstances(undefined), { wrapper: wrapper() });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(requestedUrls).toHaveLength(0);
   });
 
   it('should return false for alerts that are only silenced', async () => {
