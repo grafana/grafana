@@ -14,7 +14,7 @@ import { type LayoutRegistryItem } from './LayoutRegistryItem';
  * serialize() is not type-checked through this alias. Narrow to the concrete manager first
  * (e.g. `body instanceof NotebookLayoutManager`) if you need a specific kind.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- erases only the serialize()/element kinds so sibling layout managers fit
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- erases only the serialize() kind so sibling layout managers fit
 export type AnyDashboardLayoutManager = DashboardLayoutManager<{}, any>;
 
 /**

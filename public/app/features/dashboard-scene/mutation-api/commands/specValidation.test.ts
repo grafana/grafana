@@ -1,25 +1,18 @@
-/**
- * The `validate` flag, with the serializer mocked.
- *
- * Apart from the real-scene suite in applySpec.test.ts on purpose, and it has to be: these cases assert
- * what the command hands ONWARD, that the rebuild sees the parsed and normalized spec rather than the
- * raw payload, which is only observable by standing in for the transformer. And jest mocks are
- * file-wide, so it cannot share a file with cases that drive a real one.
- */
-
 import type { DashboardScene } from '../../scene/DashboardScene';
 
 import { applySpecCommand } from './applySpec';
+import { getSpecCommand } from './getSpec';
 import type { MutationContext } from './types';
 
+const mockTransformSceneToSaveModelSchemaV2 = jest.fn();
 const mockTransformSaveModelSchemaV2ToScene = jest.fn();
+
+jest.mock('../../serialization/transformSceneToSaveModelSchemaV2', () => ({
+  transformSceneToSaveModelSchemaV2: (scene: unknown) => mockTransformSceneToSaveModelSchemaV2(scene),
+}));
 
 jest.mock('../../serialization/transformSaveModelSchemaV2ToScene', () => ({
   transformSaveModelSchemaV2ToScene: (dto: unknown) => mockTransformSaveModelSchemaV2ToScene(dto),
-}));
-
-jest.mock('../../serialization/transformSceneToSaveModelSchemaV2', () => ({
-  transformSceneToSaveModelSchemaV2: jest.fn(),
 }));
 
 jest.mock('@grafana/scenes', () => ({
@@ -68,6 +61,7 @@ function makeSceneContext(): MutationContext {
     activateSidebar: jest.fn(),
     serializer: {
       getK8SMetadata: () => ({ name: 'dash-uid', generation: 1, creationTimestamp: '2026-01-01T00:00:00Z' }),
+      // The rebuild reseeds the element map, so a stub that omits this fails the apply.
       initializeElementMapping: jest.fn(),
     },
     setState: jest.fn(),
@@ -81,6 +75,7 @@ describe('APPLY_SPEC validate flag', () => {
 
   afterEach(() => {
     mockTransformSaveModelSchemaV2ToScene.mockReset();
+    mockTransformSceneToSaveModelSchemaV2.mockReset();
   });
 
   it('defaults `validate` to false in the payload schema (non-breaking)', () => {
@@ -128,5 +123,32 @@ describe('APPLY_SPEC validate flag', () => {
     expect(result.success).toBe(true);
     const dto = mockTransformSaveModelSchemaV2ToScene.mock.calls[0][0];
     expect(dto.spec).toBe(validSpec);
+  });
+});
+
+describe('GET_SPEC validate flag', () => {
+  afterEach(() => {
+    mockTransformSceneToSaveModelSchemaV2.mockReset();
+  });
+
+  it('returns the serialized spec unchanged when validate is omitted, even if invalid (non-breaking)', async () => {
+    mockTransformSceneToSaveModelSchemaV2.mockReturnValue(invalidSpec);
+    const result = await getSpecCommand.handler({ validate: false }, stubContext);
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({ spec: invalidSpec });
+  });
+
+  it('fails with a structured error when validate is true and the spec is invalid', async () => {
+    mockTransformSceneToSaveModelSchemaV2.mockReturnValue(invalidSpec);
+    const result = await getSpecCommand.handler({ validate: true }, stubContext);
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Validation failed');
+  });
+
+  it('succeeds when validate is true and the spec is valid', async () => {
+    mockTransformSceneToSaveModelSchemaV2.mockReturnValue(validSpec);
+    const result = await getSpecCommand.handler({ validate: true }, stubContext);
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({ spec: validSpec });
   });
 });
