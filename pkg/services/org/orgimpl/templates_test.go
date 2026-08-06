@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
@@ -205,29 +206,6 @@ func TestTemplates(t *testing.T) {
 					},
 				},
 			},
-			getUserOrgByUserAndOrgTemplate: {
-				{
-					Name: "get_user_org_by_user_and_org",
-					Data: getUserOrgByUserAndOrgQuery{
-						SQLTemplate:  queryTemplate(),
-						OrgUserTable: dbHelper.Table("org_user"),
-						OrgTable:     dbHelper.Table("org"),
-						UserID:       42,
-						OrgID:        7,
-					},
-				},
-			},
-			getUserOrgsByUserTemplate: {
-				{
-					Name: "get_user_orgs_by_user",
-					Data: getUserOrgsByUserQuery{
-						SQLTemplate:  queryTemplate(),
-						OrgUserTable: dbHelper.Table("org_user"),
-						OrgTable:     dbHelper.Table("org"),
-						UserID:       42,
-					},
-				},
-			},
 			searchOrgUsersTemplate: {
 				{
 					Name: "all_filters",
@@ -242,7 +220,7 @@ func TestTemplates(t *testing.T) {
 						AccessUserIDs:    []any{11, 12},
 						HiddenUserLogins: []string{"hidden-user", "another-hidden-user"},
 						QueryPattern:     "%ops%",
-						Sorts:            []string{"u.login DESC", "u.email ASC"},
+						Sorts:            []orgUserSort{orgUserSortLoginDesc, orgUserSortEmailAsc},
 						Limit:            25,
 						Offset:           50,
 					},
@@ -305,7 +283,7 @@ func TestSearchOrgUsersQueryArguments(t *testing.T) {
 		AccessUserIDs:    []any{11, 12},
 		HiddenUserLogins: []string{"hidden-user", "another-hidden-user"},
 		QueryPattern:     "%ops%",
-		Sorts:            []string{"u.login DESC", "u.email ASC"},
+		Sorts:            []orgUserSort{orgUserSortLoginDesc, orgUserSortEmailAsc},
 		Limit:            25,
 		Offset:           50,
 	}
@@ -326,4 +304,28 @@ func TestSearchOrgUsersQueryArguments(t *testing.T) {
 		25,
 		50,
 	}, query.GetArgs())
+}
+
+type testOrderBy string
+
+func (s testOrderBy) OrderBy() string { return string(s) }
+
+func TestOrgUserSearchSorts(t *testing.T) {
+	query := &org.SearchOrgUsersQuery{
+		SortOpts: []model.SortOption{{
+			Filter: []model.SortOptionFilter{testOrderBy("u.login; DROP TABLE user")},
+		}},
+	}
+
+	require.Empty(t, orgUserSorts(query))
+	require.Equal(t, 0, orgUserSearchOffset(25, 0))
+	require.Equal(t, 25, orgUserSearchOffset(25, 2))
+}
+
+func TestQueryValidation(t *testing.T) {
+	require.Error(t, searchOrgUsersQuery{}.Validate())
+	require.Error(t, searchOrgUsersByEmailsQuery{
+		OrgUserTable: "test_schema.org_user",
+		UserTable:    "test_schema.user",
+	}.Validate())
 }

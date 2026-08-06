@@ -66,6 +66,15 @@ func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
 	return dbHelper.DB.Quote(dbHelper.Table(name))
 }
 
+func validateQueryFields(fields ...string) error {
+	for _, field := range fields {
+		if field == "" {
+			return fmt.Errorf("required query field is empty")
+		}
+	}
+	return nil
+}
+
 func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
 	dbHelper, err := ss.sql(ctx)
 	if err != nil {
@@ -95,7 +104,9 @@ type syncOrgSequenceQuery struct {
 	OrgSequence string
 }
 
-func (q syncOrgSequenceQuery) Validate() error { return nil }
+func (q syncOrgSequenceQuery) Validate() error {
+	return validateQueryFields(q.OrgTable, q.OrgSequence)
+}
 
 func (ss *sqlStore) Insert(ctx context.Context, orga *org.Org) (int64, error) {
 	dbHelper, err := ss.sql(ctx)
@@ -165,7 +176,9 @@ type deleteByIDQuery struct {
 	ID     int64
 }
 
-func (q deleteByIDQuery) Validate() error { return nil }
+func (q deleteByIDQuery) Validate() error {
+	return validateQueryFields(q.Table, q.Column)
+}
 
 func executeDeleteByID(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, table, column string, id int64) error {
 	query := deleteByIDQuery{
@@ -274,7 +287,9 @@ type orgExistsQuery struct {
 	OrgID    int64
 }
 
-func (q orgExistsQuery) Validate() error { return nil }
+func (q orgExistsQuery) Validate() error {
+	return validateQueryFields(q.OrgTable)
+}
 
 func orgExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64) (bool, error) {
 	query := orgExistsQuery{
@@ -300,7 +315,9 @@ type deleteAlertRuleTagsByOrgQuery struct {
 	OrgID             int64
 }
 
-func (q deleteAlertRuleTagsByOrgQuery) Validate() error { return nil }
+func (q deleteAlertRuleTagsByOrgQuery) Validate() error {
+	return validateQueryFields(q.AlertRuleTagTable, q.AlertTable)
+}
 
 func deleteAlertRuleTagsByOrg(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64) error {
 	query := deleteAlertRuleTagsByOrgQuery{
@@ -402,7 +419,9 @@ type getUserOrgListQuery struct {
 	IsServiceAccount any
 }
 
-func (q getUserOrgListQuery) Validate() error { return nil }
+func (q getUserOrgListQuery) Validate() error {
+	return validateQueryFields(q.OrgUserTable, q.OrgTable, q.UserTable)
+}
 
 // TODO: refactor move logic to service method
 func (ss *sqlStore) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQuery) ([]*org.UserOrgDTO, error) {
@@ -516,7 +535,9 @@ type orgUserExistsQuery struct {
 	UserID       int64
 }
 
-func (q orgUserExistsQuery) Validate() error { return nil }
+func (q orgUserExistsQuery) Validate() error {
+	return validateQueryFields(q.OrgUserTable)
+}
 
 func orgUserExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID, userID int64) (bool, error) {
 	query := orgUserExistsQuery{
@@ -536,16 +557,6 @@ func orgUserExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, o
 	return len(res) == 1, nil
 }
 
-type getUserOrgByUserAndOrgQuery struct {
-	sqltemplate.SQLTemplate
-	OrgUserTable string
-	OrgTable     string
-	UserID       int64
-	OrgID        int64
-}
-
-func (q getUserOrgByUserAndOrgQuery) Validate() error { return nil }
-
 type getUserByIDQuery struct {
 	sqltemplate.SQLTemplate
 	UserTable        string
@@ -553,7 +564,9 @@ type getUserByIDQuery struct {
 	IsServiceAccount any
 }
 
-func (q getUserByIDQuery) Validate() error { return nil }
+func (q getUserByIDQuery) Validate() error {
+	return validateQueryFields(q.UserTable)
+}
 
 func getUserByID(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userID int64) (user.User, bool, error) {
 	query := getUserByIDQuery{
@@ -628,18 +641,11 @@ func (ss *sqlStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) 
 		}
 
 		var userOrgs []*org.UserOrgDTO
-		query := getUserOrgByUserAndOrgQuery{
-			SQLTemplate:  sqltemplate.New(dbHelper.DialectForDriver()),
-			OrgUserTable: dbHelper.Table("org_user"),
-			OrgTable:     dbHelper.Table("org"),
-			UserID:       usr.ID,
-			OrgID:        usr.OrgID,
-		}
-		querySQL, err := sqltemplate.Execute(getUserOrgByUserAndOrgTemplate, query)
-		if err != nil {
-			return err
-		}
-		err = sess.SQL(querySQL, query.GetArgs()...).Find(&userOrgs)
+		sess.Table(dbHelper.Table("org_user"))
+		sess.Join("INNER", []string{dbHelper.Table("org"), "org"}, "org_user.org_id=org.id")
+		sess.Where("org_user.user_id=? AND org_user.org_id=?", usr.ID, usr.OrgID)
+		sess.Cols("org.name", "org_user.role", "org_user.org_id")
+		err = sess.Find(&userOrgs)
 
 		if err != nil {
 			return err
@@ -658,7 +664,9 @@ type countOrgsQuery struct {
 	OrgTable string
 }
 
-func (q countOrgsQuery) Validate() error { return nil }
+func (q countOrgsQuery) Validate() error {
+	return validateQueryFields(q.OrgTable)
+}
 
 type countOrgUsersQuery struct {
 	sqltemplate.SQLTemplate
@@ -668,7 +676,9 @@ type countOrgUsersQuery struct {
 	IsServiceAccount any
 }
 
-func (q countOrgUsersQuery) Validate() error { return nil }
+func (q countOrgUsersQuery) Validate() error {
+	return validateQueryFields(q.OrgUserTable, q.UserTable)
+}
 
 type countUserOrgsQuery struct {
 	sqltemplate.SQLTemplate
@@ -676,7 +686,9 @@ type countUserOrgsQuery struct {
 	UserID       int64
 }
 
-func (q countUserOrgsQuery) Validate() error { return nil }
+func (q countUserOrgsQuery) Validate() error {
+	return validateQueryFields(q.OrgUserTable)
+}
 
 func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	dbHelper, err := ss.sql(ctx)
@@ -810,7 +822,9 @@ type validateOrgAdminQuery struct {
 	Role         org.RoleType
 }
 
-func (q validateOrgAdminQuery) Validate() error { return nil }
+func (q validateOrgAdminQuery) Validate() error {
+	return validateQueryFields(q.OrgUserTable)
+}
 
 // validate that there is an org admin user left
 func validateOneAdminLeftInOrg(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, sess *db.Session) error {
@@ -860,6 +874,19 @@ func (ss *sqlStore) GetByID(ctx context.Context, query *org.GetOrgByIDQuery) (*o
 	return &orga, nil
 }
 
+type orgUserSort string
+
+const (
+	orgUserSortLoginAsc       orgUserSort = "login_asc"
+	orgUserSortLoginDesc      orgUserSort = "login_desc"
+	orgUserSortEmailAsc       orgUserSort = "email_asc"
+	orgUserSortEmailDesc      orgUserSort = "email_desc"
+	orgUserSortNameAsc        orgUserSort = "name_asc"
+	orgUserSortNameDesc       orgUserSort = "name_desc"
+	orgUserSortLastSeenAtAsc  orgUserSort = "last_seen_at_asc"
+	orgUserSortLastSeenAtDesc orgUserSort = "last_seen_at_desc"
+)
+
 type searchOrgUsersQuery struct {
 	sqltemplate.SQLTemplate
 	OrgUserTable     string
@@ -872,12 +899,14 @@ type searchOrgUsersQuery struct {
 	AccessUserIDs    []any
 	HiddenUserLogins []string
 	QueryPattern     string
-	Sorts            []string
+	Sorts            []orgUserSort
 	Limit            int
 	Offset           int
 }
 
-func (q searchOrgUsersQuery) Validate() error { return nil }
+func (q searchOrgUsersQuery) Validate() error {
+	return validateQueryFields(q.OrgUserTable, q.UserTable)
+}
 
 func accessControlQueryFields(filter accesscontrol.SQLFilter) (bool, []any) {
 	return strings.TrimSpace(filter.Where) == "1 = 1", filter.Args
@@ -898,12 +927,41 @@ func filteredHiddenUsers(requester identity.Requester, hiddenUsersMap map[string
 	return hiddenUsers
 }
 
-func newSearchOrgUsersQuery(dbHelper *legacysql.LegacyDatabaseHelper, query *org.SearchOrgUsersQuery, accessAll bool, accessUserIDs []any, hiddenUserLogins, sorts []string) searchOrgUsersQuery {
-	offset := 0
-	if query.Limit > 0 {
-		offset = query.Limit * (query.Page - 1)
+func orgUserSorts(query *org.SearchOrgUsersQuery) []orgUserSort {
+	sorts := make([]orgUserSort, 0)
+	for i := range query.SortOpts {
+		for j := range query.SortOpts[i].Filter {
+			switch query.SortOpts[i].Filter[j].OrderBy() {
+			case "u.login ASC":
+				sorts = append(sorts, orgUserSortLoginAsc)
+			case "u.login DESC":
+				sorts = append(sorts, orgUserSortLoginDesc)
+			case "u.email ASC":
+				sorts = append(sorts, orgUserSortEmailAsc)
+			case "u.email DESC":
+				sorts = append(sorts, orgUserSortEmailDesc)
+			case "u.name ASC":
+				sorts = append(sorts, orgUserSortNameAsc)
+			case "u.name DESC":
+				sorts = append(sorts, orgUserSortNameDesc)
+			case "u.last_seen_at ASC":
+				sorts = append(sorts, orgUserSortLastSeenAtAsc)
+			case "u.last_seen_at DESC":
+				sorts = append(sorts, orgUserSortLastSeenAtDesc)
+			}
+		}
 	}
+	return sorts
+}
 
+func orgUserSearchOffset(limit, page int) int {
+	if limit > 0 && page > 0 {
+		return limit * (page - 1)
+	}
+	return 0
+}
+
+func newSearchOrgUsersQuery(dbHelper *legacysql.LegacyDatabaseHelper, query *org.SearchOrgUsersQuery, accessAll bool, accessUserIDs []any, hiddenUserLogins []string, sorts []orgUserSort) searchOrgUsersQuery {
 	queryPattern := ""
 	if query.Query != "" {
 		queryPattern = "%" + query.Query + "%"
@@ -923,7 +981,7 @@ func newSearchOrgUsersQuery(dbHelper *legacysql.LegacyDatabaseHelper, query *org
 		QueryPattern:     queryPattern,
 		Sorts:            sorts,
 		Limit:            query.Limit,
-		Offset:           offset,
+		Offset:           orgUserSearchOffset(query.Limit, query.Page),
 	}
 }
 
@@ -956,14 +1014,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			hiddenUserLogins = filteredHiddenUsers(query.User, ss.cfg.HiddenUsers)
 		}
 
-		sorts := make([]string, 0)
-		if len(query.SortOpts) > 0 {
-			for i := range query.SortOpts {
-				for j := range query.SortOpts[i].Filter {
-					sorts = append(sorts, query.SortOpts[i].Filter[j].OrderBy())
-				}
-			}
-		}
+		sorts := orgUserSorts(query)
 
 		templateQuery := newSearchOrgUsersQuery(dbHelper, query, accessAll, accessUserIDs, hiddenUserLogins, sorts)
 		querySQL, err := sqltemplate.Execute(searchOrgUsersTemplate, templateQuery)
@@ -1009,7 +1060,15 @@ type searchOrgUsersByEmailsQuery struct {
 	HiddenUserLogins []string
 }
 
-func (q searchOrgUsersByEmailsQuery) Validate() error { return nil }
+func (q searchOrgUsersByEmailsQuery) Validate() error {
+	if err := validateQueryFields(q.OrgUserTable, q.UserTable); err != nil {
+		return err
+	}
+	if len(q.Emails) == 0 {
+		return fmt.Errorf("emails must not be empty")
+	}
+	return nil
+}
 
 func (ss *sqlStore) SearchOrgUsersByEmails(ctx context.Context, query *org.SearchOrgUsersByEmailsQuery) ([]*org.OrgUserDTO, error) {
 	result := make([]*org.OrgUserDTO, 0)
@@ -1085,7 +1144,9 @@ type deleteByOrgAndUserQuery struct {
 	UserID int64
 }
 
-func (q deleteByOrgAndUserQuery) Validate() error { return nil }
+func (q deleteByOrgAndUserQuery) Validate() error {
+	return validateQueryFields(q.Table)
+}
 
 func executeDeleteByOrgAndUser(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, table string, orgID, userID int64) error {
 	query := deleteByOrgAndUserQuery{
@@ -1101,15 +1162,6 @@ func executeDeleteByOrgAndUser(dbHelper *legacysql.LegacyDatabaseHelper, sess *d
 	_, err = sess.Exec(append([]any{querySQL}, query.GetArgs()...)...)
 	return err
 }
-
-type getUserOrgsByUserQuery struct {
-	sqltemplate.SQLTemplate
-	OrgUserTable string
-	OrgTable     string
-	UserID       int64
-}
-
-func (q getUserOrgsByUserQuery) Validate() error { return nil }
 
 func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
 	dbHelper, err := ss.sql(ctx)
@@ -1155,17 +1207,11 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 
 		// check user other orgs and update user current org
 		var userOrgs []*org.UserOrgDTO
-		query := getUserOrgsByUserQuery{
-			SQLTemplate:  sqltemplate.New(dbHelper.DialectForDriver()),
-			OrgUserTable: dbHelper.Table("org_user"),
-			OrgTable:     dbHelper.Table("org"),
-			UserID:       usr.ID,
-		}
-		querySQL, err := sqltemplate.Execute(getUserOrgsByUserTemplate, query)
-		if err != nil {
-			return err
-		}
-		err = sess.SQL(querySQL, query.GetArgs()...).Find(&userOrgs)
+		sess.Table(dbHelper.Table("org_user"))
+		sess.Join("INNER", []string{dbHelper.Table("org"), "org"}, "org_user.org_id=org.id")
+		sess.Where("org_user.user_id=?", usr.ID)
+		sess.Cols("org.name", "org_user.role", "org_user.org_id")
+		err = sess.Find(&userOrgs)
 
 		if err != nil {
 			return err
@@ -1229,7 +1275,9 @@ type deletePermissionByScopeQuery struct {
 	Scope           string
 }
 
-func (q deletePermissionByScopeQuery) Validate() error { return nil }
+func (q deletePermissionByScopeQuery) Validate() error {
+	return validateQueryFields(q.PermissionTable, q.Scope)
+}
 
 type managedUserRoleIDsQuery struct {
 	sqltemplate.SQLTemplate
@@ -1237,7 +1285,9 @@ type managedUserRoleIDsQuery struct {
 	RoleName  string
 }
 
-func (q managedUserRoleIDsQuery) Validate() error { return nil }
+func (q managedUserRoleIDsQuery) Validate() error {
+	return validateQueryFields(q.RoleTable, q.RoleName)
+}
 
 type deletePermissionsByRoleIDsQuery struct {
 	sqltemplate.SQLTemplate
@@ -1246,6 +1296,9 @@ type deletePermissionsByRoleIDsQuery struct {
 }
 
 func (q deletePermissionsByRoleIDsQuery) Validate() error {
+	if err := validateQueryFields(q.PermissionTable); err != nil {
+		return err
+	}
 	if len(q.RoleIDs) == 0 {
 		return fmt.Errorf("role IDs must not be empty")
 	}
@@ -1258,7 +1311,9 @@ type deleteRoleByNameQuery struct {
 	RoleName  string
 }
 
-func (q deleteRoleByNameQuery) Validate() error { return nil }
+func (q deleteRoleByNameQuery) Validate() error {
+	return validateQueryFields(q.RoleTable, q.RoleName)
+}
 
 func deleteUserAccessControl(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userID int64) error {
 	// Delete user role assignments
