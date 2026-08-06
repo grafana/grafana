@@ -81,6 +81,7 @@
       "link": "palette.blue600"
     },
     "border": {
+      "faint": "palette.neutral150",
       "weak": "palette.neutral200",
       "medium": "palette.neutral300",
       "strong": "palette.neutral400"
@@ -103,6 +104,9 @@
     },
     "overlay": {
       "background": "hsl(from palette.neutral300 h s l / 0.5)"
+    },
+    "panel": {
+      "borderColor": "palette.neutral150"
     },
     "switch": {
       "activeBackgroundHover": "palette.orange700"
