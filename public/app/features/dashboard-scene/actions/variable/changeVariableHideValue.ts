@@ -1,4 +1,3 @@
-/* eslint-disable @grafana/i18n/no-translation-top-level */
 import { t } from '@grafana/i18n';
 import { type SceneVariable, SceneVariableSet } from '@grafana/scenes';
 
