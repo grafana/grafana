@@ -56,9 +56,7 @@ jobs:
       id-token: write
     uses: grafana/grafana/.github/workflows/sbom-on-release.yml@main
     with:
-      tag: v${{ inputs.version }}
-      # Same "release-<version>" convention used by create-release-branch.yml and release-comms.yml.
-      release_branch: release-${{ inputs.version }}
+      version: ${{ inputs.version }}
       dry_run: ${{ inputs.dry_run }}
   deploy-storybook:
     needs: main

@@ -8,13 +8,9 @@ name: "SBOM on Release"
 on:
   workflow_call:
     inputs:
-      tag:
+      version:
         required: true
-        description: The GitHub release tag to attach the SBOM to (with `v` prefix, e.g. v11.2.3)
-        type: string
-      release_branch:
-        required: true
-        description: The release branch to check out for the SBOM scan (e.g. release-11.2.3)
+        description: The version being released, with or without a leading `v` (e.g. 11.2.3 or v11.2.3)
         type: string
       dry_run:
         required: false
@@ -22,13 +18,9 @@ on:
         type: boolean
   workflow_dispatch:
     inputs:
-      tag:
+      version:
         required: true
-        description: The GitHub release tag to attach the SBOM to (with `v` prefix, e.g. v11.2.3)
-        type: string
-      release_branch:
-        required: true
-        description: The release branch to check out for the SBOM scan (e.g. release-11.2.3)
+        description: The version being released, with or without a leading `v` (e.g. 11.2.3 or v11.2.3)
         type: string
       dry_run:
         required: false
@@ -45,12 +37,27 @@ jobs:
       contents: write # to upload the SBOM as a release asset
       id-token: write # to authenticate to Vault
     steps:
+      # inputs.version may or may not carry a leading `v` depending on the caller (e.g.
+      # release-comms.yml passes it v-prefixed) -- strip it once here so tag/release_branch are
+      # unambiguous for every step below, matching the same `${VERSION#v}` idiom release-comms.yml
+      # already uses.
+      - name: "Resolve tag and release branch"
+        id: version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          bare="${VERSION#v}"
+          {
+            echo "tag=v${bare}"
+            echo "release_branch=release-${bare}"
+          } >> "$GITHUB_OUTPUT"
+
       # Socket scans the dependency manifests (package.json/yarn.lock, go.mod/go.sum, etc.) in the
       # checkout, so it needs the release branch's tree at release time, not the runner's default ref.
       - name: "Checkout release branch"
         uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.release_branch }}
+          ref: ${{ steps.version.outputs.release_branch }}
 
       - name: "Get Socket API token from Vault"
         id: vault-secrets
@@ -69,14 +76,14 @@ jobs:
         with:
           socket_api_token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).SOCKET_API_TOKEN }}
           socket_org: grafana
-          branch: ${{ inputs.release_branch }}
-          output_file: ${{ github.event.repository.name }}-${{ inputs.tag }}.spdx.json
+          branch: ${{ steps.version.outputs.release_branch }}
+          output_file: ${{ github.event.repository.name }}-${{ steps.version.outputs.tag }}.spdx.json
 
       - name: "Upload SBOM to release"
         if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ steps.version.outputs.tag }}
           SBOM_PATH: ${{ steps.export-sbom.outputs.path }}
         run: gh release upload "$TAG" "$SBOM_PATH" --clobber
