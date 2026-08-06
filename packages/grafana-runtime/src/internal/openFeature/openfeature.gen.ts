@@ -45,6 +45,8 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Uses the Luxon-backed compatibility implementation for Grafana date and time APIs */
+  DatetimeUseLuxon: "datetime.useLuxon",
   /** A/A test for recently viewed dashboards feature */
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
@@ -121,6 +123,8 @@ export const FlagKeys = {
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
+  /** Shows text labels on the add and stacked view buttons in PanelEditNext */
+  PaneleditButtonLabels: "paneledit.buttonLabels",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
@@ -341,6 +345,17 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
+};
+
+/**
+ * Uses the Luxon-backed compatibility implementation for Grafana date and time APIs
+ *
+ * **Details:**
+ * - flag key: `datetime.useLuxon`
+ * - default value: `false`
+ */
+export const useFlagDatetimeUseLuxon = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datetime.useLuxon", false, options).value;
 };
 
 /**
@@ -759,6 +774,17 @@ export const useFlagNewSavedQueriesExperience = (options?: ReactFlagEvaluationOp
  */
 export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("otelLogsFormatting", false, options).value;
+};
+
+/**
+ * Shows text labels on the add and stacked view buttons in PanelEditNext
+ *
+ * **Details:**
+ * - flag key: `paneledit.buttonLabels`
+ * - default value: `false`
+ */
+export const useFlagPaneleditButtonLabels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("paneledit.buttonLabels", false, options).value;
 };
 
 /**
