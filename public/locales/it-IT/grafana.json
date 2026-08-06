@@ -613,12 +613,6 @@
       "title-restore-version": "Ripristina versione",
       "title-restoring-alertmanager-configuration": "Ripristino della configurazione di Alertmanager"
     },
-    "alerts-activity-banner": {
-      "description": "È ora disponibile una nuova pagina dedicata alla configurazione delle regole di avviso gestite da Grafana. Scopri quali avvisi si stanno attivando, esplora i dati storici, filtra e raggruppa i dati per migliorare la valutazione e l'analisi delle cause principali.",
-      "open-button": "Visualizza l'attività degli avvisi",
-      "open-button-aria": "Apri l'attività degli avvisi",
-      "title": "L'attività degli avvisi è ora disponibile!"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "Ordina",
       "label-filter-placeholder-search-alerts-by-labels": "Cerca avvisi per etichette",
@@ -793,7 +787,9 @@
         "value-in-transition": "Valore in transizione"
       },
       "error": {
-        "server-error": "La query sulla cronologia dello stato degli avvisi non è andata a buon fine: il server ha restituito un errore"
+        "server-error": "La query sulla cronologia dello stato degli avvisi non è andata a buon fine: il server ha restituito un errore",
+        "server-error-description": "",
+        "title": ""
       },
       "filter": {
         "clear": "Cancella i filtri",
@@ -3291,6 +3287,8 @@
         "title": ""
       },
       "import": {
+        "any": "",
+        "collapse-all": "",
         "empty-body": "",
         "empty-cta": "",
         "empty-learn-more": "",
@@ -3298,9 +3296,26 @@
         "error-body": "",
         "error-retry": "",
         "error-title": "",
+        "expand-all": "",
+        "inhibition-equal": "",
         "loading": "",
+        "no-matchers": "",
+        "parse-error-body": "",
+        "parse-error-title": "",
+        "resources": "",
+        "section": {
+          "contact-points": "",
+          "inhibition-rules": "",
+          "notification-policy": "",
+          "templates": "",
+          "time-intervals": ""
+        },
+        "staged-badge": "",
         "staged-description": "",
-        "staged-title": ""
+        "staged-title": "",
+        "view": "",
+        "policy-tree-routes_one": "",
+        "policy-tree-routes_other": ""
       },
       "tabs": {
         "alert-managers": "Gestori avvisi",
@@ -4422,6 +4437,9 @@
     "create-new": {
       "dashboard-group": ""
     },
+    "create-new-button": {
+      "generate-dashboard": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Questo elemento non si trova nello stesso repository degli elementi selezionati."
@@ -5401,6 +5419,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Automatico",
       "options": {
         "custom-min-height": {
@@ -5418,6 +5437,11 @@
         "min-width-custom": "Larghezza minima personalizzata",
         "min-width-custom-clear": "Torna alla larghezza minima standard della colonna",
         "min-width-error": "È richiesto un numero compreso tra 50 e 2.000"
+      },
+      "resize-intercept": {
+        "edit": "",
+        "header": "",
+        "switch": ""
       }
     },
     "canvas-actions": {
@@ -5565,6 +5589,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Personalizzazione",
       "row-actions": {
         "delete": "Elimina riga",
@@ -6747,6 +6772,21 @@
       "title": "Non sono ancora stati aggiunti link al dashboard"
     }
   },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": ""
+    },
+    "modal": {
+      "title": ""
+    },
+    "prompt": {
+      "cancel": "",
+      "description": "",
+      "input-label": "",
+      "placeholder": "",
+      "submit": ""
+    }
+  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "Questa origine di dati non supporta i filtri.",
@@ -7566,6 +7606,14 @@
       "disabled-tooltip": "Salva la dashboard prima di creare regole di avviso",
       "new-alert-rule": "Nuova regola di avviso",
       "title-no-alerting-capable-query-found": "Nessuna query con funzione di avviso trovata"
+    },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "",
+      "title": ""
+    },
+    "scripted-dashboards-disabled": {
+      "body": "",
+      "title": ""
     },
     "section-placement": {
       "top-row": "",
@@ -8857,6 +8905,7 @@
       "open-in-profiles-drilldown": "",
       "profiles-for-this-span": "",
       "related-logs": "",
+      "related-logs-no-logs-tooltip": "",
       "related-logs-tooltip": "",
       "session-for-this-span": ""
     },
@@ -9280,9 +9329,9 @@
     "description-mouse-wheel-zoom": "Abilita il controllo dello zoom tramite la rotella del mouse",
     "description-no-repeat": "Impedisci alla mappa di ripetersi orizzontalmente",
     "description-share-view": "Utilizza la stessa visualizzazione su più pannelli. Nota: potrebbe essere necessario ricaricare la dashboard.",
-    "description-show-attribution": "Mostra le informazioni sull'attribuzione dell'origine della mappa in basso a destra",
     "description-show-debug": "Mostra informazioni sulla mappa",
     "description-show-measure": "Mostra gli strumenti per effettuare misurazioni sulla mappa",
+    "description-show-optional-attribution": "",
     "description-show-scale": "Indica la scala della mappa",
     "description-show-zoom": "Mostra i pulsanti di controllo dello zoom nell'angolo in alto a sinistra",
     "description-sync-view-variable": "Memorizza i limiti della vista in una variabile della dashboard per l'utilizzo nelle query",
@@ -9343,9 +9392,9 @@
     "name-mouse-wheel-zoom": "Zoom con la rotellina del mouse",
     "name-no-repeat": "Nessuna ripetizione della mappa",
     "name-share-view": "Condividi vista",
-    "name-show-attribution": "Mostra attribuzione",
     "name-show-debug": "Mostra debug",
     "name-show-measure": "Mostra strumenti di misurazione",
+    "name-show-optional-attribution": "",
     "name-show-scale": "Mostra scala",
     "name-show-zoom": "Mostra controllo zoom",
     "name-sync-view-variable": "Sincronizza la vista con la variabile della dashboard",
@@ -10027,6 +10076,14 @@
       "log-base": "Base logaritmica"
     },
     "builder": {
+      "annotation-options": {
+        "canvas-controls-desc": "",
+        "canvas-controls-name": "",
+        "clustering-desc": "",
+        "clustering-name": "",
+        "multi-lane-name": "",
+        "multi-row-desc": ""
+      },
       "annotations": "Annotazioni",
       "axis": {
         "category-axis": "Asse",
@@ -10362,9 +10419,13 @@
     "matchers": {
       "groups": {
         "annotation": "Annotazioni",
+        "annotation-description": "",
         "exemplar": "Esempi",
+        "exemplar-description": "",
         "nested": "Nidificato",
-        "series": "Dataframe"
+        "nested-description": "",
+        "series": "Dataframe",
+        "series-description": ""
       },
       "labels": {
         "base-field-name": "{{name}} (nome del campo di base)",
@@ -12584,6 +12645,7 @@
     },
     "quick-add": {
       "aria-label": "Nuovo",
+      "generate-dashboard-button": "",
       "new-template-dashboard-button": ""
     },
     "rss-button": "Ultime dal blog"
@@ -13421,7 +13483,7 @@
         "repository-label": "Repository",
         "repository-read-write-admin": "Lettura e scrittura",
         "webhooks-label": "Webhook",
-        "webhooks-read-write": "Lettura e scrittura"
+        "webhooks-read-write-delete": ""
       },
       "pr-workflow-description": "Consente agli utenti di scegliere se aprire una richiesta di pull durante il salvataggio delle modifiche. Se il repository non consente modifiche dirette al ramo principale, potrebbe essere comunque necessaria una richiesta di pull.",
       "pr-workflow-label": "Abilita l'opzione di richiesta di pull durante il salvataggio",
@@ -14717,6 +14779,7 @@
       "message": ""
     },
     "sidebar": {
+      "add": "",
       "add-below": "Aggiungi {{id}} sotto",
       "add-expression": "Aggiungi espressione",
       "add-expression-disabled": "Le espressioni non sono supportate con l'origine di dati della dashboard",
@@ -14736,6 +14799,7 @@
       "new-type": "Nuovo {{type}}",
       "queries-empty": "",
       "queries-expressions": "Query ed espressioni",
+      "stacked": "",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
       "transformations": "Trasformazioni",
       "transformations-empty": "",
@@ -15740,6 +15804,7 @@
     "description-column-filter": "Abilita/disabilita i filtri di campo nella tabella",
     "description-frozen-columns": "",
     "description-min-column-width": "La larghezza minima per il ridimensionamento automatico della colonna",
+    "description-page-size": "",
     "description-styling-from-field": "Un campo contenente oggetti JSON con proprietà CSS",
     "description-tooltip-from-field": "",
     "frame-picker": {
@@ -15773,6 +15838,7 @@
     "name-hide-in-table": "Nascondi nella tabella",
     "name-max-height": "",
     "name-min-column-width": "Larghezza minima colonna",
+    "name-page-size": "",
     "name-show-table-header": "Mostra intestazione tabella",
     "name-styling-from-field": "Stile dal campo",
     "name-tooltip-from-field": "",
@@ -15783,6 +15849,7 @@
     "placeholder-column-width": "automatica",
     "placeholder-frozen-columns": "nessuno",
     "placeholder-max-height": "",
+    "placeholder-page-size": "",
     "tooltip-placement-options": {
       "label-auto": "Automatico",
       "label-bottom": "",
