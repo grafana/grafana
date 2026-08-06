@@ -53,7 +53,6 @@ func setupPreviewTestMux(t *testing.T, previewBaseURL string) *web.Mux {
 	fswebassets.ResetPreviewAssetsCache()
 
 	raw := ini.Empty()
-	raw.Section("frontend_service").Key("preview_assets_enabled").SetValue("true")
 	raw.Section("frontend_service").Key("preview_assets_base_url").SetValue(previewBaseURL)
 	raw.Section("frontend_service").Key("preview_assets_allowed_namespaces").SetValue(previewTestNamespace)
 
