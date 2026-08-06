@@ -167,7 +167,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		migrateExportWorker,
 		syncWorker,
 	)
-	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator, exportEnabled)
+	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
 
 	// Delete
 	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
