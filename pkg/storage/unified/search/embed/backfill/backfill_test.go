@@ -418,6 +418,64 @@ func extractDashboardItems(t *testing.T, ns, name string, value []byte, folderTi
 // errors that fail the job (retry path), never silent skips — a swallowed
 // UpdateContentVersion error would leave the uid version-stale and rescanned
 // on every tick forever.
+// A concurrent edit between scan and write must not be overwritten with stale content.
+func TestRunBackfillJob_RVChangedSinceScan_SkipsWrite(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+	// Live resource has moved past the scanned RV (a concurrent edit).
+	storage.resources[storeKey("ns", "dashboard.grafana.app", "dashboards", "dash-a")] = storedResource{
+		Value: minimalDashboardJSON("dash-a", "dash-a-title"), RV: 60,
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts, "stale scan must not overwrite the newer revision")
+	assert.Empty(t, vec.replaceCalls)
+	require.Len(t, vec.completedJobIDs, 1, "skip is per-item; the job still completes")
+}
+
+// A version-stale uid whose new extractor output is empty sheds its old rows.
+func TestRunBackfillJob_VersionStale_EmptyExtract_DeletesOldRows(t *testing.T) {
+	storage := newFakeStorage()
+	// Dashboard JSON with no panels: extractor produces zero items.
+	body, _ := json.Marshal(map[string]any{"uid": "dash-a", "title": "empty"})
+	storage.listItems = []listItem{{Namespace: "ns", Name: "dash-a", RV: 50, Value: body}}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "dash-a", 1, "panel/1")
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.deletes, 1, "stale rows must be deleted when the new extract is empty")
+	assert.Equal(t, "dash-a", vec.deletes[0].UID)
+	assert.Empty(t, vec.upserts)
+}
+
+// A never-embedded uid with an empty extract keeps the plain skip (nothing to delete).
+func TestRunBackfillJob_Fresh_EmptyExtract_StillSkips(t *testing.T) {
+	storage := newFakeStorage()
+	body, _ := json.Marshal(map[string]any{"uid": "dash-a", "title": "empty"})
+	storage.listItems = []listItem{{Namespace: "ns", Name: "dash-a", RV: 50, Value: body}}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.deletes)
+	assert.Empty(t, vec.upserts)
+}
+
 func TestRunBackfillJob_GetSubresourceContentError_FailsJob(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}

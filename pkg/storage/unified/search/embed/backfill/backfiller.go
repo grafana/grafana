@@ -442,6 +442,14 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		items = items[:resCap]
 	}
 	if len(items) == 0 {
+		// A version-stale uid whose new extractor output is empty must shed its old rows, like the reconciler's empty-extract path.
+		if isVersionStale {
+			if err := b.vectorBackend.Delete(ctx, namespace, job.Model, res, name); err != nil {
+				return fmt.Errorf("delete empty extract %s/%s: %w", namespace, name, err)
+			}
+			statusLabel = "deleted_empty_extract"
+			return nil
+		}
 		statusLabel = "skipped_empty_extract"
 		// this shouldn't happen that often. If it does, use this to look up the dashboard json and understand why nothing was extracted.
 		b.log.Info("skipping empty extract", "namespace", namespace, "group", group, "resource", res, "name", name)
@@ -466,6 +474,17 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	vectors, err := b.batchEmbedder.Embed(ctx, namespace, res, rv, builder.Version(), items)
 	if err != nil {
 		return fmt.Errorf("embed %s/%s: %w", namespace, name, err)
+	}
+
+	// The scanned value may be a minute old (pages process serially) and the
+	// reconciler may have embedded a newer revision meanwhile; re-check the
+	// live RV just before writing so we don't overwrite it with stale content.
+	// Not airtight (the write isn't RV-conditional) but shrinks the race
+	// window from the whole page scan to milliseconds.
+	liveResp := b.storage.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
+	if liveResp.Error == nil && liveResp.ResourceVersion != rv {
+		statusLabel = "skipped_rv_changed"
+		return nil
 	}
 
 	// Replace-with-desired sheds stored rows for panels the extractor no longer produces.
