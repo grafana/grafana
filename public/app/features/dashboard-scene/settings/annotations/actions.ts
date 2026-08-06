@@ -2,9 +2,9 @@ import { t } from '@grafana/i18n';
 import { type dataLayers } from '@grafana/scenes';
 import { type AnnotationPanelFilter } from '@grafana/schema/dist/esm/index.gen';
 
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
 
 type DataLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 

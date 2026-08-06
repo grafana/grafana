@@ -15,9 +15,9 @@ import {
 } from '@grafana/scenes';
 import { Box, Card, Sidebar, Stack, useStyles2 } from '@grafana/ui';
 
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { isRowItem, isTabItem } from '../../scene/types/LayoutItemTypeGuards';
 import { getDashboardSceneLike, type DashboardSceneLike } from '../../scene/types/dashboard';
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { type DashboardSidebarPane } from '../../sidebar/types';
 import { DashboardInteractions } from '../../utils/interactions';
 

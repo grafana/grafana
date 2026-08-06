@@ -23,13 +23,13 @@ import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import {
   ObjectsReorderedOnCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   NewObjectAddedToCanvasEvent,
 } from '../../sidebar/events';
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';

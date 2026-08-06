@@ -8,11 +8,11 @@ import { t, Trans } from '@grafana/i18n';
 import { type SceneDataLayerProvider } from '@grafana/scenes';
 import { Box, Button, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
 
 import { DraggableList } from './DraggableList';
 import { partitionSceneObjects } from './helpers';

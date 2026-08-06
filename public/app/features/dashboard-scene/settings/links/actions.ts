@@ -2,8 +2,8 @@ import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
 
-import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import { dashboardEditActions } from '../../actions/dashboardEditActions';
+import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
 export const linkEditActions = {
   addLink({
