@@ -108,8 +108,12 @@ const asDateTime = (value: Moment): DateTime => {
   return value as DateTime;
 };
 
+const getImplementationFormat = (formatInput?: FormatInput) => {
+  return formatInput === ISO_8601 ? moment.ISO_8601 : formatInput;
+};
+
 export const toUtc = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
-  return asDateTime(moment.utc(toMomentInput(input), formatInput));
+  return asDateTime(moment.utc(toMomentInput(input), getImplementationFormat(formatInput)));
 };
 
 export const toDuration = (input?: DurationInput, unit?: DurationUnit): DateTimeDuration => {
@@ -123,7 +127,7 @@ export const toDuration = (input?: DurationInput, unit?: DurationUnit): DateTime
 };
 
 export const dateTime = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
-  return asDateTime(moment(toMomentInput(input), formatInput));
+  return asDateTime(moment(toMomentInput(input), getImplementationFormat(formatInput)));
 };
 
 export const dateTimeAsMoment = (input?: DateTimeInput) => {
@@ -137,7 +141,7 @@ export const dateTimeForTimeZone = (
 ): DateTime => {
   if (timezone && timezone !== 'browser') {
     if (typeof input === 'string' && formatInput) {
-      return asDateTime(moment.tz(input, formatInput, timezone));
+      return asDateTime(moment.tz(input, getImplementationFormat(formatInput), timezone));
     }
 
     return asDateTime(moment.tz(toMomentInput(input), timezone));

@@ -19,6 +19,7 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
+import { setDateTimeImplementation } from '@grafana/data/internal';
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {
@@ -46,6 +47,8 @@ import {
   setMegaMenuOpenHook,
 } from '@grafana/runtime';
 import {
+  FlagKeys,
+  getFeatureFlagClient,
   getPanelPluginMetas,
   initDataSourceInstanceSettings,
   initOpenFeature,
@@ -168,6 +171,7 @@ export class GrafanaApp {
       if (contextSrv.user.isSignedIn) {
         try {
           await initOpenFeature();
+          setDateTimeImplementation(getFeatureFlagClient().getBooleanValue(FlagKeys.DatetimeUseLuxon, false));
         } catch (err) {
           console.error('Failed to initialize OpenFeature provider', err);
         }

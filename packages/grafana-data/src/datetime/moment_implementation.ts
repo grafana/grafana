@@ -3,8 +3,10 @@ import legacyMoment from 'moment-timezone';
 
 import luxonMoment from './luxon_moment_compat/moment';
 
-const useLuxon =
-  typeof window !== 'undefined' &&
-  window.grafanaBootData?.settings.featureToggles['datetime.useLuxon'] === true;
+let momentImplementation = legacyMoment as unknown as typeof luxonMoment;
 
-export default useLuxon ? luxonMoment : (legacyMoment as unknown as typeof luxonMoment);
+export function setDateTimeImplementation(useLuxon: boolean) {
+  momentImplementation = useLuxon ? luxonMoment : (legacyMoment as unknown as typeof luxonMoment);
+}
+
+export { momentImplementation as default };
