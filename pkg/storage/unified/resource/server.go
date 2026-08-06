@@ -2,12 +2,14 @@ package resource
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"iter"
 	"net/http"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -202,6 +204,10 @@ type StorageBackend interface {
 
 	// GetResourceLastImportTimes returns import times for all namespaced resources in the backend.
 	GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error]
+}
+
+type replayBoundaryProvider interface {
+	CurrentResourceVersion(context.Context) (int64, error)
 }
 
 type ModifiedResource struct {
@@ -1756,7 +1762,7 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 			}
 
 			// Parse item metadata — needed for both provisioned and authorization checks.
-			obj, err := parseTrashItem(iter.Value())
+			obj, err := metaAccessorFromValue(iter.Value())
 			if err != nil {
 				continue
 			}
@@ -1848,13 +1854,26 @@ func (s *server) checkFolderAdmin(ctx context.Context, user claims.AuthInfo, fol
 	return isAdmin
 }
 
-// parseTrashItem unmarshals the raw value into a GrafanaMetaAccessor.
-func parseTrashItem(value []byte) (utils.GrafanaMetaAccessor, error) {
+func metaAccessorFromValue(value []byte) (utils.GrafanaMetaAccessor, error) {
 	partial := &metav1.PartialObjectMetadata{}
 	if err := json.Unmarshal(value, partial); err != nil {
 		return nil, err
 	}
 	return utils.MetaAccessor(partial)
+}
+
+func writtenEventResource(event *WrittenEvent) string {
+	if event == nil || event.Key == nil {
+		return ""
+	}
+	return event.Key.Resource
+}
+
+func writtenEventRV(event *WrittenEvent) int64 {
+	if event == nil {
+		return unknownReplayBoundary
+	}
+	return event.ResourceVersion
 }
 
 // producerChanSize is the buffer for the channel that feeds events into the
@@ -1891,13 +1910,105 @@ func (s *server) initWatcher() error {
 	if s.storageMetrics != nil {
 		broadcasterMetrics = s.storageMetrics.Broadcaster
 	}
-	s.broadcaster = NewBroadcaster(s.ctx, out, broadcasterMetrics, func(e *WrittenEvent) string {
-		if e == nil || e.Key == nil {
-			return ""
+	broadcaster := NewBroadcaster(
+		s.ctx,
+		out,
+		broadcasterMetrics,
+		writtenEventResource,
+		writtenEventRV,
+	)
+	s.broadcaster = broadcaster
+
+	if provider, ok := s.backend.(replayBoundaryProvider); ok {
+		rv, err := provider.CurrentResourceVersion(s.ctx)
+		if err != nil {
+			s.log.Warn("failed to initialize watch replay boundary", "error", err)
+		} else {
+			broadcaster.advanceReplayBoundary(rv)
 		}
-		return e.Key.Resource
-	})
+	}
 	return nil
+}
+
+type watchResumeOutcome string
+
+const (
+	watchResumeContinuous watchResumeOutcome = "continuous"
+	watchResumeBackfilled watchResumeOutcome = "backfilled"
+	watchResumeRejected   watchResumeOutcome = "rejected"
+)
+
+func (s *server) recordWatchResume(outcome watchResumeOutcome) {
+	if s.storageMetrics != nil {
+		s.storageMetrics.WatchResumeTotal.WithLabelValues(string(outcome)).Inc()
+	}
+}
+
+// errBackfillSend marks a failure to deliver a backfilled event to the client,
+// as opposed to a failure reading the changes from the backend.
+var errBackfillSend = errors.New("sending backfilled watch event")
+
+// backfillWatchResume replays changes since req.Since from the backend when
+// the broadcaster cache can no longer cover the gap. The replay is compacted:
+// only the latest revision of each object is available and Previous is never
+// set, so intermediate transitions within the gap are not replayed.
+func (s *server) backfillWatchResume(
+	ctx context.Context,
+	req *resourcepb.WatchRequest,
+	checker claims.ItemChecker,
+	srv resourcepb.ResourceStore_WatchServer,
+) (int64, error) {
+	key := req.Options.Key
+	latestRV, modifiedResources := s.backend.ListModifiedSince(ctx, NamespacedResource{
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+	}, req.Since, nil)
+
+	var events []*resourcepb.WatchEvent
+	for modified, err := range modifiedResources {
+		if err != nil {
+			return 0, fmt.Errorf("listing changes since resource version %d: %w", req.Since, err)
+		}
+		if modified == nil {
+			return 0, fmt.Errorf("listing changes since resource version %d returned a nil resource", req.Since)
+		}
+		if modified.ResourceVersion <= req.Since || !matchesQueryKey(key, &modified.Key) {
+			continue
+		}
+
+		meta, err := metaAccessorFromValue(modified.Value)
+		if err != nil {
+			return 0, fmt.Errorf("reading metadata for backfilled resource %q: %w", modified.Key.Name, err)
+		}
+		if !checker(modified.Key.Name, meta.GetFolder()) {
+			continue
+		}
+
+		// Unlike the live path, DELETED events keep the stored tombstone value:
+		// backfill never sets Previous, and clients decode the object from
+		// Value when Previous is absent, so an empty value would break them.
+		events = append(events, &resourcepb.WatchEvent{
+			Type: modified.Action,
+			Resource: &resourcepb.WatchEvent_Resource{
+				Value:   modified.Value,
+				Version: modified.ResourceVersion,
+			},
+		})
+	}
+
+	// Backends yield newest-first, but the watch contract requires ascending
+	// resource versions for clients
+	slices.SortFunc(events, func(a, b *resourcepb.WatchEvent) int {
+		return cmp.Compare(a.Resource.Version, b.Resource.Version)
+	})
+	for _, event := range events {
+		if err := srv.Send(event); err != nil {
+			return 0, fmt.Errorf("%w: %w", errBackfillSend, err)
+		}
+	}
+
+	return max(req.Since, latestRV), nil
 }
 
 //nolint:gocyclo
@@ -1943,14 +2054,42 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		return apierrors.NewUnauthorized("not allowed to list anything") // ?? or a single error?
 	}
 
-	// Start listening -- this will buffer any changes that happen while we backfill.
-	// If events are generated faster than we can process them, then some events will be dropped.
-	// TODO: Think of a way to allow the client to catch up.
+	// Start listening before any list so changes committed during catch-up are buffered.
 	stream, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace), key.Resource)
 	if err != nil {
 		return err
 	}
 	defer s.broadcaster.Unsubscribe(stream)
+
+	resumeSince := req.Since
+	var lastEmittedRV int64 // tracks the most recent RV sent to the client
+	if !req.SendInitialEvents && req.Since > 0 {
+		if s.broadcaster.CanReplaySince(req.Since) {
+			// We can resume watch as we can replay all
+			// events since the since resource version
+			s.recordWatchResume(watchResumeContinuous)
+		} else {
+			var backfillErr error
+			resumeSince, backfillErr = s.backfillWatchResume(ctx, req, checker, srv)
+			if backfillErr != nil {
+				if errors.Is(backfillErr, errBackfillSend) {
+					return backfillErr
+				}
+				s.recordWatchResume(watchResumeRejected)
+				s.log.Warn("watch resume rejected", "group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", req.Since, "error", backfillErr)
+				// Fail-safe here, so clients' informers can at least fall back
+				// to a full list. apistore translates this to an Expired error
+				// that reflectors respect:
+				// https://github.com/kubernetes/client-go/blob/master/tools/cache/reflector.go#L1154-L1160
+				// The error here is the same ETCD uses:
+				// https://github.com/etcd-io/etcd/blob/main/api/v3rpc/rpctypes/error.go#L32
+				return status.Errorf(codes.OutOfRange, "resource version too old: %d", req.Since)
+			}
+			// We resumed watch with a backfilled set of events
+			s.recordWatchResume(watchResumeBackfilled)
+			lastEmittedRV = resumeSince
+		}
+	}
 
 	// Determine a safe starting resource-version for the watch.
 	// When the client requests SendInitialEvents we will use the resource-version
@@ -2011,7 +2150,6 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		return nil
 	}
 
-	var lastEmittedRV int64 // tracks the most recent RV sent to the client
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
 		initialEventsRV, err := s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
@@ -2053,7 +2191,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	case req.Since == 0:
 		since = mostRecentRV
 	default:
-		since = req.Since
+		since = resumeSince
 	}
 
 	// Set up periodic bookmark ticker when the client opted in.

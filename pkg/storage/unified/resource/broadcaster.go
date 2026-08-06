@@ -2,8 +2,10 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
+	"sync/atomic"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,6 +15,7 @@ import (
 type Broadcaster[T any] interface {
 	Subscribe(ctx context.Context, name, resource string) (<-chan T, error)
 	Unsubscribe(<-chan T)
+	CanReplaySince(rv int64) bool
 }
 
 type BroadcasterMetrics struct {
@@ -53,13 +56,35 @@ func newBroadcasterMetrics(reg prometheus.Registerer) *BroadcasterMetrics {
 // for closing it when no more data will be sent. The broadcaster terminates
 // when either ctx is cancelled or input is closed.
 //
-// eventResourceFn extracts a resource label for an event entering the broadcaster.
-func NewBroadcaster[T any](ctx context.Context, input <-chan T, metrics *BroadcasterMetrics, eventResourceFn func(T) string) Broadcaster[T] {
-	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap, metrics, eventResourceFn)
+// eventResourceFn extracts a resource label and eventRVFn extracts a resource
+// version for an event entering the broadcaster.
+func NewBroadcaster[T any](
+	ctx context.Context,
+	input <-chan T,
+	metrics *BroadcasterMetrics,
+	eventResourceFn func(T) string,
+	eventRVFn func(T) int64,
+) *broadcaster[T] {
+	return newBroadcasterWithSizes(
+		ctx,
+		input,
+		watchChanSize,
+		defaultOverflowCap,
+		metrics,
+		eventResourceFn,
+		eventRVFn,
+	)
 }
 
 // newBroadcasterWithSizes creates a broadcaster with configurable buffer sizes for testing.
-func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics, eventResourceFn func(T) string) *broadcaster[T] {
+func newBroadcasterWithSizes[T any](
+	ctx context.Context,
+	input <-chan T,
+	subBufSize, ovfCap int,
+	metrics *BroadcasterMetrics,
+	eventResourceFn func(T) string,
+	eventRVFn func(T) int64,
+) *broadcaster[T] {
 	if metrics == nil {
 		metrics = newBroadcasterMetrics(nil)
 	}
@@ -72,9 +97,11 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 		terminated:      make(chan struct{}),
 		metrics:         metrics,
 		eventResourceFn: eventResourceFn,
+		eventRVFn:       eventRVFn,
 		watchBufSize:    subBufSize,
 		overflowCap:     ovfCap,
 	}
+	b.replayUnavailableThrough.Store(unknownReplayBoundary)
 
 	go b.stream(input)
 
@@ -86,6 +113,7 @@ type subscription[T any] struct {
 	resource string // metric label for subscriber-attributed metrics
 	ch       chan T
 	overflow []T // pending items when channel is full, nil when not overflowing
+	ready    chan error
 }
 
 type broadcaster[T any] struct {
@@ -102,6 +130,9 @@ type broadcaster[T any] struct {
 	subs            map[<-chan T]*subscription[T]
 	metrics         *BroadcasterMetrics
 	eventResourceFn func(T) string
+	eventRVFn       func(T) int64
+
+	replayUnavailableThrough atomic.Int64
 
 	// configuration
 
@@ -118,7 +149,46 @@ func (b *broadcaster[T]) eventResource(item T) string {
 	return b.eventResourceFn(item)
 }
 
+func (b *broadcaster[T]) eventRV(item T) int64 {
+	if b.eventRVFn == nil {
+		return unknownReplayBoundary
+	}
+	return b.eventRVFn(item)
+}
+
+// CanReplaySince reports whether every event with resource version >= rv is
+// covered by the replay cache. The answer is only trustworthy for a caller
+// that has already completed Subscribe: its ready handshake blocks until the
+// stream goroutine has replayed the cache into the subscriber channel, so any
+// event evicted after that point is guaranteed to reach the subscriber live.
+func (b *broadcaster[T]) CanReplaySince(rv int64) bool {
+	unavailableThrough := b.replayUnavailableThrough.Load()
+	return unavailableThrough >= 0 && rv >= unavailableThrough
+}
+
+func (b *broadcaster[T]) advanceReplayBoundary(rv int64) {
+	if rv < 0 {
+		return
+	}
+	for {
+		current := b.replayUnavailableThrough.Load()
+		if current >= rv {
+			return
+		}
+		if b.replayUnavailableThrough.CompareAndSwap(current, rv) {
+			return
+		}
+	}
+}
+
+// errReplayBufferFull can only occur with test-sized buffers: in production
+// the freshly created subscriber channel (watchChanSize) is larger than the
+// replay cache (defaultCacheSize), so readInto never fills it.
+var errReplayBufferFull = errors.New("broadcaster replay buffer is full")
+
 const (
+	unknownReplayBoundary = int64(-1)
+
 	subscriptionResultOK           = "ok"
 	subscriptionResultCtxCanceled  = "ctx_canceled"
 	subscriptionResultTerminated   = "terminated"
@@ -154,7 +224,12 @@ const (
 )
 
 func (b *broadcaster[T]) Subscribe(ctx context.Context, name, resource string) (<-chan T, error) {
-	sub := &subscription[T]{name: name, resource: resource, ch: make(chan T, b.watchBufSize)}
+	sub := &subscription[T]{
+		name:     name,
+		resource: resource,
+		ch:       make(chan T, b.watchBufSize),
+		ready:    make(chan error, 1),
+	}
 
 	select {
 	case <-ctx.Done(): // client canceled
@@ -164,7 +239,25 @@ func (b *broadcaster[T]) Subscribe(ctx context.Context, name, resource string) (
 		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultTerminated).Inc()
 		return nil, io.EOF
 	case b.subscribe <- sub: // success submitting subscription
+	}
+
+	select {
+	case err := <-sub.ready:
+		if err != nil {
+			return nil, err
+		}
 		return sub.ch, nil
+	case <-b.terminated:
+		select {
+		case err := <-sub.ready:
+			if err != nil {
+				return nil, err
+			}
+			return sub.ch, nil
+		default:
+		}
+		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultTerminated).Inc()
+		return nil, io.EOF
 	}
 }
 
@@ -224,11 +317,13 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 		if !b.cache.readInto(sub.ch) {
 			b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultReplayFailed).Inc()
 			close(sub.ch)
+			sub.ready <- errReplayBufferFull
 			return
 		}
 		b.subs[sub.ch] = sub
 		b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultOK).Inc()
 		b.metrics.Subscribers.WithLabelValues(sub.resource).Inc()
+		sub.ready <- nil
 	}
 
 	for {
@@ -258,7 +353,12 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 				return
 			}
 			b.metrics.EventsReceivedTotal.WithLabelValues(b.eventResource(item)).Inc()
-			b.cache.add(item)
+			// The first event seeds the boundary: anything older predates this
+			// process and was never cached.
+			b.replayUnavailableThrough.CompareAndSwap(unknownReplayBoundary, b.eventRV(item))
+			if evicted, ok := b.cache.add(item); ok {
+				b.advanceReplayBoundary(b.eventRV(evicted))
+			}
 
 			var slow []<-chan T
 			for _, sub := range b.subs {
@@ -339,14 +439,20 @@ func newRingBuffer[T any](size int) ringBuffer[T] {
 	}
 }
 
-func (r *ringBuffer[T]) add(item T) {
+func (r *ringBuffer[T]) add(item T) (T, bool) {
+	var evicted T
+	if r.len == len(r.buf) {
+		evicted = r.buf[r.zero]
+	}
+
 	i := (r.zero + r.len) % len(r.buf)
 	r.buf[i] = item
 	if r.len < len(r.buf) {
 		r.len++
-	} else {
-		r.zero = (r.zero + 1) % len(r.buf)
+		return evicted, false
 	}
+	r.zero = (r.zero + 1) % len(r.buf)
+	return evicted, true
 }
 
 // readInto sends all cached items to dst without blocking. Returns true if all

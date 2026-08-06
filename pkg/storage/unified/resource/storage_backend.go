@@ -1814,6 +1814,18 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, effectiveRv)
 }
 
+// CurrentResourceVersion returns the newest event resource version in storage.
+func (k *kvStorageBackend) CurrentResourceVersion(ctx context.Context) (int64, error) {
+	latestEvent, err := k.eventStore.LastEventKey(ctx)
+	if errors.Is(err, ErrNotFound) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, fmt.Errorf("fetching latest event: %w", err)
+	}
+	return latestEvent.ResourceVersion, nil
+}
+
 func convertEventType(action kv.DataAction) resourcepb.WatchEvent_Type {
 	switch action {
 	case DataActionCreated:

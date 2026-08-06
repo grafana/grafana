@@ -477,6 +477,10 @@ func (b *fakeBroadcaster) Unsubscribe(ch <-chan *resource.WrittenEvent) {
 	b.unsubscribeOnce.Do(func() { close(b.ch) })
 }
 
+func (b *fakeBroadcaster) CanReplaySince(int64) bool {
+	return true
+}
+
 func (b *fakeBroadcaster) emit(ev *resource.WrittenEvent) {
 	b.ch <- ev
 }

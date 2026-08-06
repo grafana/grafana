@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"iter"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -1416,6 +1417,47 @@ type watchTestServerOpts struct {
 	AccessClient      authlib.AccessClient
 }
 
+type watchResumeTestBackend struct {
+	StorageBackend
+	listModifiedSince func(context.Context, NamespacedResource, int64, *time.Time) (int64, iter.Seq2[*ModifiedResource, error])
+}
+
+func (b *watchResumeTestBackend) ListModifiedSince(
+	ctx context.Context,
+	key NamespacedResource,
+	sinceRV int64,
+	lastCalledAt *time.Time,
+) (int64, iter.Seq2[*ModifiedResource, error]) {
+	if b.listModifiedSince != nil {
+		return b.listModifiedSince(ctx, key, sinceRV, lastCalledAt)
+	}
+	return b.StorageBackend.ListModifiedSince(ctx, key, sinceRV, lastCalledAt)
+}
+
+func (b *watchResumeTestBackend) Stop(ctx context.Context) error {
+	if backend, ok := b.StorageBackend.(ResourceServerStopper); ok {
+		return backend.Stop(ctx)
+	}
+	return nil
+}
+
+type watchReplayBoundaryBackend struct {
+	UnimplementedStorageBackend
+	currentRV int64
+}
+
+func (b *watchReplayBoundaryBackend) CurrentResourceVersion(context.Context) (int64, error) {
+	return b.currentRV, nil
+}
+
+func (b *watchReplayBoundaryBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+	events := make(chan *WrittenEvent)
+	context.AfterFunc(ctx, func() {
+		close(events)
+	})
+	return events, nil
+}
+
 func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	t.Helper()
 	db, err := badger.Open(badger.DefaultOptions("").
@@ -1452,13 +1494,23 @@ var playlistCounter int
 func createTestPlaylist(ctx context.Context, srv *server) error {
 	playlistCounter++
 	name := fmt.Sprintf("playlist-%d", playlistCounter)
+	_, err := createTestPlaylistWithName(ctx, srv, name)
+	return err
+}
+
+func createTestPlaylistWithName(ctx context.Context, srv *server, name string) (int64, error) {
+	return createTestPlaylistInFolder(ctx, srv, name, "")
+}
+
+func createTestPlaylistInFolder(ctx context.Context, srv *server, name, folder string) (int64, error) {
 	value := []byte(`{
 		"apiVersion": "playlist.grafana.app/v0alpha1",
 		"kind": "Playlist",
 		"metadata": {
 			"name": "` + name + `",
 			"namespace": "` + watchTestNamespace + `",
-			"uid": "uid-` + name + `"
+			"uid": "uid-` + name + `",
+			"annotations": {"grafana.app/folder": "` + folder + `"}
 		},
 		"spec": {
 			"title": "` + name + `",
@@ -1474,12 +1526,62 @@ func createTestPlaylist(ctx context.Context, srv *server) error {
 	}
 	created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if created.Error != nil {
-		return fmt.Errorf("creating playlist %q: %v", name, created.Error)
+		return 0, fmt.Errorf("creating playlist %q: %v", name, created.Error)
 	}
-	return nil
+	return created.ResourceVersion, nil
+}
+
+func watchResumeRequest(since int64) *resourcepb.WatchRequest {
+	return &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:    watchTestGroup,
+				Resource: watchTestResource,
+			},
+		},
+		Since: since,
+	}
+}
+
+func receiveWatchEvents(t *testing.T, server *mockWatchServer, count int) []*resourcepb.WatchEvent {
+	t.Helper()
+	events := make([]*resourcepb.WatchEvent, 0, count)
+	timeout := time.After(5 * time.Second)
+	for len(events) < count {
+		select {
+		case event := <-server.events:
+			events = append(events, event)
+		case <-timeout:
+			t.Fatalf("timed out waiting for watch events: got %d, want %d", len(events), count)
+		}
+	}
+	return events
+}
+
+func watchTestBroadcaster(t *testing.T, srv *server) *broadcaster[*WrittenEvent] {
+	t.Helper()
+	b, ok := srv.broadcaster.(*broadcaster[*WrittenEvent])
+	require.True(t, ok)
+	return b
+}
+
+func TestInitWatcherSeedsReplayBoundary(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	const currentRV = int64(123)
+	srv := &server{
+		ctx:     ctx,
+		backend: &watchReplayBoundaryBackend{currentRV: currentRV},
+		log:     log.NewNopLogger(),
+	}
+
+	require.NoError(t, srv.initWatcher())
+	require.False(t, srv.broadcaster.CanReplaySince(currentRV-1))
+	require.True(t, srv.broadcaster.CanReplaySince(currentRV))
 }
 
 func TestPeriodicBookmarks(t *testing.T) {
@@ -1774,6 +1876,264 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 		"WatchEventLatency should only observe events that arrived after the subscription started")
 }
 
+func TestWatchResumeWithinReplayCache(t *testing.T) {
+	user := newWatchTestUser()
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), user))
+	defer cancel()
+
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{StorageMetrics: metrics})
+
+	firstRV, err := createTestPlaylistWithName(ctx, srv, "resume-cache-1")
+	require.NoError(t, err)
+	secondRV, err := createTestPlaylistWithName(ctx, srv, "resume-cache-2")
+	require.NoError(t, err)
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
+
+	backend := srv.backend
+	var backfillCalls int
+	srv.backend = &watchResumeTestBackend{
+		StorageBackend: backend,
+		listModifiedSince: func(ctx context.Context, key NamespacedResource, sinceRV int64, calledAt *time.Time) (int64, iter.Seq2[*ModifiedResource, error]) {
+			backfillCalls++
+			return backend.ListModifiedSince(ctx, key, sinceRV, calledAt)
+		},
+	}
+
+	mock := newMockWatchServer(ctx)
+	var group errgroup.Group
+	group.Go(func() error {
+		return srv.Watch(watchResumeRequest(firstRV), mock)
+	})
+
+	events := receiveWatchEvents(t, mock, 1)
+	require.Equal(t, secondRV, events[0].Resource.Version)
+
+	cancel()
+	require.NoError(t, group.Wait())
+	require.Zero(t, backfillCalls)
+	requireMetricValue(t, metrics.WatchResumeTotal.WithLabelValues(string(watchResumeContinuous)), 1)
+}
+
+func TestWatchResumeBackfillsGapAndDeduplicatesReplay(t *testing.T) {
+	user := newWatchTestUser()
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), user))
+	defer cancel()
+
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{StorageMetrics: metrics})
+
+	firstRV, err := createTestPlaylistWithName(ctx, srv, "resume-gap-1")
+	require.NoError(t, err)
+	secondRV, err := createTestPlaylistWithName(ctx, srv, "resume-gap-2")
+	require.NoError(t, err)
+	thirdRV, err := createTestPlaylistWithName(ctx, srv, "resume-gap-3")
+	require.NoError(t, err)
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 3)
+	watchTestBroadcaster(t, srv).advanceReplayBoundary(secondRV)
+
+	mock := newMockWatchServer(ctx)
+	var group errgroup.Group
+	group.Go(func() error {
+		return srv.Watch(watchResumeRequest(firstRV), mock)
+	})
+
+	events := receiveWatchEvents(t, mock, 2)
+	fourthRV, err := createTestPlaylistWithName(ctx, srv, "resume-gap-4")
+	require.NoError(t, err)
+	events = append(events, receiveWatchEvents(t, mock, 1)...)
+
+	var versions []int64
+	for _, event := range events {
+		versions = append(versions, event.Resource.Version)
+	}
+	// Order matters: backfilled events must arrive in ascending RV order
+	require.Equal(t, []int64{secondRV, thirdRV, fourthRV}, versions)
+
+	select {
+	case event := <-mock.events:
+		t.Fatalf("received duplicate watch event at resource version %d", event.Resource.Version)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	cancel()
+	require.NoError(t, group.Wait())
+	requireMetricValue(t, metrics.WatchResumeTotal.WithLabelValues(string(watchResumeBackfilled)), 1)
+}
+
+func TestWatchResumeBackfillSendsBookmark(t *testing.T) {
+	user := newWatchTestUser()
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), user))
+	defer cancel()
+
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{
+		StorageMetrics:    metrics,
+		BookmarkFrequency: 20 * time.Millisecond,
+	})
+
+	firstRV, err := createTestPlaylistWithName(ctx, srv, "resume-bookmark-1")
+	require.NoError(t, err)
+	secondRV, err := createTestPlaylistWithName(ctx, srv, "resume-bookmark-2")
+	require.NoError(t, err)
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
+	watchTestBroadcaster(t, srv).advanceReplayBoundary(secondRV)
+
+	req := watchResumeRequest(firstRV)
+	req.AllowWatchBookmarks = true
+
+	mock := newMockWatchServer(ctx)
+	var group errgroup.Group
+	group.Go(func() error {
+		return srv.Watch(req, mock)
+	})
+
+	// A bookmark must follow the backfilled event even without live traffic,
+	// so an idle client learns it is caught up past the backfill window.
+	events := receiveWatchEvents(t, mock, 2)
+	require.Equal(t, secondRV, events[0].Resource.Version)
+	require.Equal(t, resourcepb.WatchEvent_BOOKMARK, events[1].Type)
+	require.Equal(t, secondRV, events[1].Resource.Version)
+
+	cancel()
+	require.NoError(t, group.Wait())
+}
+
+func TestWatchResumeBackfillRespectsItemChecker(t *testing.T) {
+	const (
+		allowedName   = "resume-allowed"
+		allowedFolder = "folder-allowed"
+		deniedName    = "resume-denied"
+		deniedFolder  = "folder-denied"
+	)
+
+	access := &callbackAccessClient{
+		fn: func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			if req.Verb == utils.VerbGet && folder != allowedFolder {
+				return deny()
+			}
+			return allow()
+		},
+	}
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{
+		AccessClient:   access,
+		StorageMetrics: metrics,
+	})
+
+	user := newWatchTestUser()
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), user))
+	defer cancel()
+
+	allowedRV, err := createTestPlaylistInFolder(ctx, srv, allowedName, allowedFolder)
+	require.NoError(t, err)
+	deniedRV, err := createTestPlaylistInFolder(ctx, srv, deniedName, deniedFolder)
+	require.NoError(t, err)
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
+	watchTestBroadcaster(t, srv).advanceReplayBoundary(deniedRV)
+
+	mock := newMockWatchServer(ctx)
+	var group errgroup.Group
+	group.Go(func() error {
+		return srv.Watch(watchResumeRequest(allowedRV-1), mock)
+	})
+
+	event := receiveWatchEvents(t, mock, 1)[0]
+	require.Equal(t, allowedRV, event.Resource.Version)
+	require.Contains(t, string(event.Resource.Value), allowedName)
+	require.NotContains(t, string(event.Resource.Value), deniedName)
+
+	select {
+	case event := <-mock.events:
+		t.Fatalf("received unauthorized watch event at resource version %d", event.Resource.Version)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	cancel()
+	require.NoError(t, group.Wait())
+}
+
+func TestWatchResumeBackfillsDeletedResourceValue(t *testing.T) {
+	user := newWatchTestUser()
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), user))
+	defer cancel()
+
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{StorageMetrics: metrics})
+
+	const name = "resume-deleted"
+	createdRV, err := createTestPlaylistWithName(ctx, srv, name)
+	require.NoError(t, err)
+	deleted, err := srv.Delete(ctx, &resourcepb.DeleteRequest{
+		Key: &resourcepb.ResourceKey{
+			Group:     watchTestGroup,
+			Resource:  watchTestResource,
+			Namespace: watchTestNamespace,
+			Name:      name,
+		},
+		ResourceVersion: createdRV,
+	})
+	require.NoError(t, err)
+	require.Nil(t, deleted.Error)
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
+	watchTestBroadcaster(t, srv).advanceReplayBoundary(deleted.ResourceVersion)
+
+	mock := newMockWatchServer(ctx)
+	var group errgroup.Group
+	group.Go(func() error {
+		return srv.Watch(watchResumeRequest(createdRV), mock)
+	})
+
+	event := receiveWatchEvents(t, mock, 1)[0]
+	require.Equal(t, resourcepb.WatchEvent_DELETED, event.Type)
+	require.Equal(t, deleted.ResourceVersion, event.Resource.Version)
+	require.NotEmpty(t, event.Resource.Value)
+	require.True(t, json.Valid(event.Resource.Value))
+
+	var marker unstructured.Unstructured
+	require.NoError(t, marker.UnmarshalJSON(event.Resource.Value))
+	require.Equal(t, name, marker.GetName())
+	require.NotNil(t, marker.GetDeletionTimestamp())
+
+	cancel()
+	require.NoError(t, group.Wait())
+}
+
+func TestWatchResumeRejectsFailedBackfill(t *testing.T) {
+	user := newWatchTestUser()
+	ctx := authlib.WithAuthInfo(t.Context(), user)
+
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{StorageMetrics: metrics})
+
+	createdRV, err := createTestPlaylistWithName(ctx, srv, "resume-rejected")
+	require.NoError(t, err)
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 1)
+
+	sentinel := errors.New("backfill unavailable")
+	srv.backend = &watchResumeTestBackend{
+		StorageBackend: srv.backend,
+		listModifiedSince: func(context.Context, NamespacedResource, int64, *time.Time) (int64, iter.Seq2[*ModifiedResource, error]) {
+			return 0, func(yield func(*ModifiedResource, error) bool) {
+				yield(nil, sentinel)
+			}
+		},
+	}
+	watchTestBroadcaster(t, srv).advanceReplayBoundary(createdRV + 1)
+
+	err = srv.Watch(watchResumeRequest(createdRV), newMockWatchServer(ctx))
+	require.Equal(t, codes.OutOfRange, status.Code(err))
+	require.ErrorContains(t, err, "resource version too old")
+	require.NotContains(t, err.Error(), sentinel.Error())
+	requireMetricValue(t, metrics.WatchResumeTotal.WithLabelValues(string(watchResumeRejected)), 1)
+}
+
 // TestWatchInitialEventsRespectsItemChecker tests that checker is used for
 // initial-events when SendInitialEvents=true.
 func TestWatchInitialEventsRespectsItemChecker(t *testing.T) {
@@ -1805,18 +2165,8 @@ func TestWatchInitialEventsRespectsItemChecker(t *testing.T) {
 		{allowedName, allowedFolder},
 		{deniedName, deniedFolder},
 	} {
-		value := []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"` + item.name + `","uid":"uid-` + item.name + `","namespace":"` + watchTestNamespace + `","annotations":{"grafana.app/folder":"` + item.folder + `"}},"spec":{"title":"t","interval":"5m","items":[]}}`)
-		created, err := srv.Create(ctx, &resourcepb.CreateRequest{
-			Key: &resourcepb.ResourceKey{
-				Group:     watchTestGroup,
-				Resource:  watchTestResource,
-				Namespace: watchTestNamespace,
-				Name:      item.name,
-			},
-			Value: value,
-		})
+		_, err := createTestPlaylistInFolder(ctx, srv, item.name, item.folder)
 		require.NoError(t, err)
-		require.Nil(t, created.Error, "creating seed resource %q", item.name)
 	}
 
 	mock := newMockWatchServer(ctx)
@@ -1853,10 +2203,10 @@ drain:
 	require.NoError(t, eg.Wait())
 
 	for _, evt := range added {
-		require.NotContains(t, string(evt.Resource.Value), `"name":"`+deniedName+`"`)
+		require.NotContains(t, string(evt.Resource.Value), deniedName)
 	}
 	require.Len(t, added, 1)
-	require.Contains(t, string(added[0].Resource.Value), `"name":"`+allowedName+`"`)
+	require.Contains(t, string(added[0].Resource.Value), allowedName)
 }
 
 // callbackAccessClient is a test helper whose Check behavior can be swapped between calls.

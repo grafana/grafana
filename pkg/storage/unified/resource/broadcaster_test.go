@@ -90,7 +90,7 @@ func TestBroadcaster(t *testing.T) {
 		close(ch)
 	})
 
-	b := NewBroadcaster(ctx, ch, metrics, nil)
+	b := NewBroadcaster(ctx, ch, metrics, nil, nil)
 
 	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
@@ -121,7 +121,7 @@ func TestBroadcasterUnsubscribe(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	metrics := newBroadcasterMetrics(reg)
 
-	b := NewBroadcaster(ctx, ch, metrics, nil)
+	b := NewBroadcaster(ctx, ch, metrics, nil, nil)
 
 	// subscribe three, then unsubscribe all
 	sub1, err := b.Subscribe(ctx, "sub1", "test")
@@ -166,7 +166,7 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	// Use small overflow cap so slow consumers get disconnected quickly.
 	const subBuf = 10
 	const ovfCap = 20
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil, nil)
 
 	// Create 101 subscribers that never read — enough to exceed the
 	// internal unsubscribe channel buffer and exercise bulk disconnect.
@@ -204,7 +204,7 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 
 	const subBuf = 10
 	const ovfCap = 100
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil, nil)
 
 	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
@@ -241,7 +241,7 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 
 	const subBuf = 10
 	const ovfCap = 20
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil, nil)
 
 	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
@@ -293,7 +293,7 @@ func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
 	// so readInto should leave headroom.
 	const subBuf = defaultCacheSize + 100
 	const ovfCap = 1000
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil, nil)
 
 	// Fill the cache to capacity by sending items through the input channel
 	// (no subscribers yet, so items only go to cache).
@@ -342,7 +342,7 @@ func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
 
 	const subBuf = 10
 	const ovfCap = 100
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil, nil)
 
 	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
@@ -387,6 +387,34 @@ func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
 	requireMetricEventually(t, metrics.Subscribers.WithLabelValues("test"), 1)
 }
 
+func TestBroadcasterCanReplaySince(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	input := make(chan int)
+	t.Cleanup(func() { close(input) })
+	b := NewBroadcaster(ctx, input, nil, nil, func(rv int) int64 {
+		return int64(rv)
+	})
+	b.advanceReplayBoundary(100)
+
+	require.False(t, b.CanReplaySince(99))
+	require.True(t, b.CanReplaySince(100))
+
+	for rv := 101; rv <= 100+defaultCacheSize; rv++ {
+		input <- rv
+	}
+	require.Eventually(t, func() bool {
+		return b.CanReplaySince(100)
+	}, time.Second, 10*time.Millisecond)
+
+	input <- 101 + defaultCacheSize
+	require.Eventually(t, func() bool {
+		return !b.CanReplaySince(100)
+	}, time.Second, 10*time.Millisecond)
+	require.True(t, b.CanReplaySince(101))
+}
+
 func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 	t.Run("context canceled", func(t *testing.T) {
 		reg := prometheus.NewPedanticRegistry()
@@ -414,7 +442,7 @@ func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 
 		ctx := context.Background()
 		input := make(chan int)
-		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, metrics, nil)
+		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, metrics, nil, nil)
 		close(input)
 
 		require.Eventually(t, func() bool {
