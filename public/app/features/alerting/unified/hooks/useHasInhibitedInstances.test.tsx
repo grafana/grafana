@@ -64,6 +64,23 @@ describe('useHasInhibitedInstances', () => {
     expect(result.current.hasInhibitedInstances).toBe(false);
   });
 
+  it('should return false for unprocessed alerts matching the rule UID', async () => {
+    setAlertmanagerAlertsHandler([
+      mockAlertmanagerAlert({
+        labels: { __alert_rule_uid__: TEST_RULE_UID, alertname: 'TestAlert' },
+        status: { state: AlertState.Unprocessed, silencedBy: [], inhibitedBy: [] },
+      }),
+    ]);
+
+    const { result } = renderHook(() => useHasInhibitedInstances(TEST_RULE_UID), { wrapper: wrapper() });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.hasInhibitedInstances).toBe(false);
+  });
+
   it('should return isLoading true initially', () => {
     const { result } = renderHook(() => useHasInhibitedInstances(TEST_RULE_UID), { wrapper: wrapper() });
 

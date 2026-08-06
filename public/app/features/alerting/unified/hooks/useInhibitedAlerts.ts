@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
@@ -25,8 +27,13 @@ export function useInhibitedAlerts(): {
     { skip: false }
   );
 
+  // The Alertmanager state filters are exclusions, not a selector: the API drops alerts that are
+  // active or silenced, but "unprocessed" alerts (no marker entry yet) match neither and come back
+  // too. Only alerts with a non-empty inhibitedBy are actually inhibited.
+  const inhibitedAlerts = useMemo(() => (data ?? []).filter((alert) => alert.status.inhibitedBy.length > 0), [data]);
+
   return {
-    inhibitedAlerts: data ?? [],
+    inhibitedAlerts,
     isLoading,
     isFetching,
   };
