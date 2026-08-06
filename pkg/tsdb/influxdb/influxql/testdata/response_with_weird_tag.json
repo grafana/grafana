@@ -1,1 +1,0 @@
-{"results":[{"series":[{"name":"cpu.upc","columns":["time","mean","sum"],"tags":{"@cluster@name@":"Cluster@"},"values":[[111,222,333]]}]}]}

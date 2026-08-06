@@ -21,7 +21,6 @@ import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
 import { ALERTING_PATHS } from '../utils/navigation';
 
-import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
 import { RuleListPageTitle } from './RuleListPageTitle';
@@ -36,7 +35,6 @@ function RuleList() {
 
   return (
     <Stack direction="column">
-      <AlertsActivityBanner />
       {showImportToGMABanner && <ImportToGMABanner />}
       <Stack direction="column" gap={2}>
         <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />

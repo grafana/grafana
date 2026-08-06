@@ -185,6 +185,9 @@ type Cfg struct {
 	// Grafana API Server
 	DisableControllers bool
 	// Provisioning config
+	// ProvisioningEnabled: enable or disable Git Sync / as-code provisioning
+	// for Grafana resources. See [provisioning] enabled in defaults.ini.
+	ProvisioningEnabled        bool
 	ProvisioningAllowedTargets []string
 	// ProvisioningResources is the configured set of provisionable resources, each as a
 	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
@@ -896,6 +899,12 @@ type Cfg struct {
 	// the AppManifest installer in-process inside single-tenant Grafana. Enterprise
 	// only; OSS keeps the no-op path. Default off.
 	EnableEmbeddedAPIExtensions bool
+
+	// EnableVersionPolicy turns on the global API version policy (preferred and
+	// max-allowed API version per group). Off leaves today's behavior unchanged.
+	// Temporary opt-in kill-switch while the feature is experimental; remove it and
+	// enforce unconditionally once the version policy is enabled by default.
+	EnableVersionPolicy bool
 
 	// Enable playlist reconciler
 	EnablePlaylistsReconciler bool
@@ -1937,6 +1946,7 @@ func (cfg *Cfg) readStartupParams(iniFile *ini.File) {
 	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
 	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
 	cfg.EnableEmbeddedAPIExtensions = iniFile.Section("grafana-apiserver").Key("apiextensions_enabled").MustBool(false)
+	cfg.EnableVersionPolicy = iniFile.Section("grafana-apiserver").Key("version_policy_enabled").MustBool(false)
 }
 func (cfg *Cfg) LogConfigSources() {
 	var text bytes.Buffer
@@ -2526,6 +2536,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if !cfg.DisableControllers {
 		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
 	}
+	cfg.ProvisioningEnabled = iniFile.Section("provisioning").Key("enabled").MustBool(true)
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"folder", "folderless"}

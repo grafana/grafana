@@ -66,6 +66,8 @@ const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   name: 'ArcGIS MapServer',
   description: 'Add layer from an ESRI ArcGIS MapServer',
   isBaseMap: true,
+  // The public services are attributed to ArcGIS, a custom server is attributed by the user
+  requiresAttribution: (options) => (options.config?.server ?? DEFAULT_SERVICE) !== CUSTOM_SERVICE,
 
   create: async (
     map: OpenLayersMap,
