@@ -473,7 +473,9 @@ Defaults to `private`.
 
 #### `wal`
 
-For "sqlite3" only. Setting to enable/disable [Write-Ahead Logging](https://sqlite.org/wal.html). The default value is `false` (disabled).
+For "sqlite3" only. Setting to enable/disable [Write-Ahead Logging](https://sqlite.org/wal.html). The default value is `true` (enabled).
+
+WAL mode significantly reduces "database is locked" errors under concurrent load. Set to `false` if your SQLite database file resides on a network-mounted volume (NFS, EFS, CIFS), as WAL requires file locking that most network filesystems do not support reliably.
 
 #### `query_retries`
 
