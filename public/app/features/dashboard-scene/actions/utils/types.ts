@@ -1,4 +1,4 @@
-import { type SceneObject, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import type { SceneObject, SceneVariable, SceneVariableSet } from '@grafana/scenes';
 
 export interface AddElementActionHelperProps {
   addedObject: SceneObject;
