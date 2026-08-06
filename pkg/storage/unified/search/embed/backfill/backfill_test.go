@@ -944,6 +944,27 @@ func TestRunBackfillJob_ViewsFilter_SkipsZeroViewDashboards(t *testing.T) {
 // Integration: the Exists short-circuit must run before the stats
 // lookup so already-indexed dashboards don't burn a usageinsights call.
 // This ordering isn't covered by the predicate-level tests below.
+// Zero views only gates new embeds: version-stale rows re-embed regardless.
+func TestRunBackfillJob_ViewsFilter_StaleZeroViewRows_ReembedsAnyway(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dusty", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	vec.jobContentVersion = map[int64]int{1: dashboard.New().Version()}
+	vec.seedEmbeddedRows("ns", "test-model", "dashboards", "dusty", 1, "panel/1")
+
+	stats := newFakeDashboardStats()
+	stats.set("ns", "dusty", map[string]int64{"views_last_30_days": 0})
+
+	o := newBackfillerWithStats(t, storage, vec, stats)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.deletes)
+	require.Len(t, vec.replaceCalls, 1, "stale rows re-embed even with zero views")
+	assert.Equal(t, 0, stats.calls, "stats lookup only runs for never-embedded uids")
+}
+
 func TestRunBackfillJob_ViewsFilter_ExistsShortCircuitSkipsStats(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{makeListItem("ns", "already-indexed", 50)}

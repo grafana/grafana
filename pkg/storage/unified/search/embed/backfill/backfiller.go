@@ -413,7 +413,8 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return nil
 	}
 
-	if b.shouldSkipForZeroViews(ctx, builder, namespace, name) {
+	// Zero views only gates NEW embeds; already-embedded dashboards stay embedded and current.
+	if !exists && b.shouldSkipForZeroViews(ctx, builder, namespace, name) {
 		statusLabel = "skipped_zero_views"
 		return nil
 	}
