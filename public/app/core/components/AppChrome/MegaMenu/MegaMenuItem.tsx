@@ -58,8 +58,7 @@ interface Props {
   disabled?: boolean;
 }
 
-// Levels 0–3: section → app → page → path-nested child (grafana.pluginPathNesting).
-const MAX_DEPTH = 3;
+const MAX_DEPTH = 2;
 
 export function MegaMenuItem({
   link,
