@@ -31,6 +31,13 @@ type Bundler struct {
 // their uncompressed JSON bounded independently so adding querydata.json cannot multiply a large
 // panel/dashboard archive without an explicit truncation marker.
 //
+// This bound is unrelated to the plugin<->core gRPC message size limit that constrains
+// grafana-plugin-sdk-go's own HAR capture caps (backend/harcapture.maxCapturedTotalBytes): by the
+// time marshalQueryDataArtifact runs, resp has already crossed that boundary (or, for an in-process
+// core datasource, never crossed it at all). What these bound instead is the size of the downloaded
+// bundle and the transient memory json.MarshalIndent allocates for the full artifact before the
+// length check below runs -- a response near the cap still costs a full-size allocation once.
+//
 // Declared as vars, not consts, solely so tests can shrink them (see diagnostics_test.go) instead of
 // each allocating a payload at the real multi-hundred-MiB scale.
 var (
