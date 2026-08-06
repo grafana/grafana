@@ -3,21 +3,30 @@ package snapshot
 import (
 	"context"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // NewSnapshotAuthorizer returns an authorizer that maps k8s verbs to snapshot RBAC actions.
-// Anonymous GET requests for snapshots and the dashboard subresource are allowed without
-// RBAC checks (mirroring legacy SnapshotPublicMode behavior).
+// The snapshots resource is gated on kubernetesSnapshots, evaluated per request: the storage
+// is always registered, so enablement is enforced here. When the feature is disabled, snapshots
+// are served exclusively by the legacy /api routes and the /apis endpoints are denied.
+// When enabled, anonymous GET requests for snapshots and the dashboard subresource are allowed
+// without RBAC checks (mirroring legacy SnapshotPublicMode behavior).
 func NewSnapshotAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if !attr.IsResourceRequest() {
 				return authorizer.DecisionNoOpinion, "", nil
+			}
+
+			if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesSnapshots, false, openfeature.TransactionContext(ctx)) {
+				return authorizer.DecisionDeny, "kubernetes snapshots feature is not enabled", nil
 			}
 
 			// Allow anonymous GET on snapshots and the dashboard subresource (public viewing).

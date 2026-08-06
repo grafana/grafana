@@ -33,6 +33,7 @@ import (
 )
 
 func TestCreateSnapshotDashboardValidation(t *testing.T) {
+	setKubernetesSnapshotsToggle(t, true)
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
@@ -161,6 +162,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 }
 
 func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
+	setKubernetesSnapshotsToggle(t, true)
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
@@ -214,6 +216,7 @@ func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
 }
 
 func TestCreateSnapshotPublicMode(t *testing.T) {
+	setKubernetesSnapshotsToggle(t, true)
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
@@ -293,6 +296,7 @@ func TestCreateSnapshotPublicMode(t *testing.T) {
 }
 
 func TestCreateSnapshotPublicModeRejectsExternal(t *testing.T) {
+	setKubernetesSnapshotsToggle(t, true)
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
@@ -791,6 +795,7 @@ func TestDeleteExternalSnapshotLegacy(t *testing.T) {
 }
 
 func TestHandleDeleteByKey(t *testing.T) {
+	setKubernetesSnapshotsToggle(t, true)
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 	testUser := &user.SignedInUser{
@@ -1048,6 +1053,10 @@ func (a *testAttributes) GetLabelSelector() (labels.Requirements, error) {
 }
 
 func TestSnapshotAuthorizer(t *testing.T) {
+	// The snapshots resource is gated on kubernetesSnapshots; enable it so these
+	// cases exercise the RBAC mapping rather than the feature gate.
+	setKubernetesSnapshotsToggle(t, true)
+
 	testUser := &user.SignedInUser{
 		UserID: 1,
 		OrgID:  1,
