@@ -270,6 +270,7 @@
       "placeholder-search-devices-by-ip-address": "Wyszukaj urządzenia według adresu IP."
     },
     "user-list-page": {
+      "label-active-users": "",
       "label-all-users": "Wszyscy użytkownicy",
       "label-anonymous-devices": "Urządzenia anonimowe",
       "label-organization-users": "Użytkownicy organizacji",
@@ -622,12 +623,6 @@
       "title-restore-version": "Przywróć wersję",
       "title-restoring-alertmanager-configuration": "Przywracanie konfiguracji menedżera alertów"
     },
-    "alerts-activity-banner": {
-      "description": "Dostępna jest nowa strona do obsługi operacyjnej reguł alertów zarządzanych przez Grafanę. Sprawdzaj, jakie alerty są uruchamiane, przeglądaj informacje historyczne oraz filtruj i grupuj dane, aby usprawnić selekcję i analizę przyczyn źródłowych.",
-      "open-button": "Zobacz aktywność związaną z alertami",
-      "open-button-aria": "Otwórz aktywność związaną z alertami",
-      "title": "Aktywność związana z alertami jest już dostępna!"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "Sortuj",
       "label-filter-placeholder-search-alerts-by-labels": "Szukaj alertów według etykiet",
@@ -802,7 +797,9 @@
         "value-in-transition": "Wartość w trakcie przejścia"
       },
       "error": {
-        "server-error": "Zapytanie o historię stanu alertów się nie powiodło – serwer zwrócił błąd"
+        "server-error": "Zapytanie o historię stanu alertów się nie powiodło – serwer zwrócił błąd",
+        "server-error-description": "",
+        "title": ""
       },
       "filter": {
         "clear": "Wyczyść filtry",
@@ -3340,6 +3337,8 @@
         "title": ""
       },
       "import": {
+        "any": "",
+        "collapse-all": "",
         "empty-body": "",
         "empty-cta": "",
         "empty-learn-more": "",
@@ -3347,9 +3346,28 @@
         "error-body": "",
         "error-retry": "",
         "error-title": "",
+        "expand-all": "",
+        "inhibition-equal": "",
         "loading": "",
+        "no-matchers": "",
+        "parse-error-body": "",
+        "parse-error-title": "",
+        "resources": "",
+        "section": {
+          "contact-points": "",
+          "inhibition-rules": "",
+          "notification-policy": "",
+          "templates": "",
+          "time-intervals": ""
+        },
+        "staged-badge": "",
         "staged-description": "",
-        "staged-title": ""
+        "staged-title": "",
+        "view": "",
+        "policy-tree-routes_one": "",
+        "policy-tree-routes_few": "",
+        "policy-tree-routes_many": "",
+        "policy-tree-routes_other": ""
       },
       "tabs": {
         "alert-managers": "Menedżery alertów",
@@ -4052,6 +4070,9 @@
       "trace-id": "Identyfikator śledzenia: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Ustawienia uwierzytelniania"
@@ -4488,6 +4509,9 @@
     "create-new": {
       "dashboard-group": ""
     },
+    "create-new-button": {
+      "generate-dashboard": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Ten element nie znajduje się w tym samym repozytorium co wybrane elementy."
@@ -4904,6 +4928,7 @@
       "not-found": "<0>Nie znaleziono: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + prawy przycisk myszy",
       "middle-mouse": "Środkowy przycisk myszy",
       "pan-title": "Przesuwanie:",
@@ -5474,6 +5499,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Automatycznie",
       "options": {
         "custom-min-height": {
@@ -5491,6 +5517,11 @@
         "min-width-custom": "Niestandardowa szerokość minimalna",
         "min-width-custom-clear": "Powrót do standardowej minimalnej szerokości kolumny",
         "min-width-error": "Wymagana jest liczba z zakresu 50–2000"
+      },
+      "resize-intercept": {
+        "edit": "",
+        "header": "",
+        "switch": ""
       }
     },
     "canvas-actions": {
@@ -5638,6 +5669,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Niestandardowe",
       "row-actions": {
         "delete": "Usuń wiersz",
@@ -6256,13 +6288,10 @@
         "show-in": ""
       },
       "annotations": {
-        "add-annotation": "",
         "add-annotation-query": "",
         "name-builtin": "",
         "name-disabled": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-annotation": "",
         "title-above-dashboard-count_one": "",
         "title-above-dashboard-count_few": "",
         "title-above-dashboard-count_many": "",
@@ -6360,10 +6389,7 @@
       "links": {
         "add-link": "",
         "new-link": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-link": "",
-        "untitled": "",
         "title-above-dashboard_one": "",
         "title-above-dashboard_few": "",
         "title-above-dashboard_many": "",
@@ -6467,11 +6493,9 @@
       "variables": {
         "add-variable": "",
         "change-type": "",
-        "reorder": "",
         "reorder-description": "",
         "select-type": "",
         "select-type-card-tooltip": "",
-        "select-variable": "",
         "top-placement-default": "",
         "title-controls-menu_one": "",
         "title-controls-menu_few": "",
@@ -6856,6 +6880,21 @@
       "title": "Nie dodano jeszcze linków do pulpitu"
     }
   },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": ""
+    },
+    "modal": {
+      "title": ""
+    },
+    "prompt": {
+      "cancel": "",
+      "description": "",
+      "input-label": "",
+      "placeholder": "",
+      "submit": ""
+    }
+  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "To źródło danych nie obsługuje filtrów.",
@@ -6918,11 +6957,6 @@
       "delete-confirm": "Usuń zapytanie dotyczące adnotacji",
       "delete-text": "Czy na pewno chcesz usunąć: {{name}}?",
       "delete-title": "Usuń zapytanie dotyczące adnotacji"
-    },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Adnotacja"
-      }
     },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Użyj zapisanego zapytania"
@@ -7349,11 +7383,6 @@
       "delete-title": "Usuń link",
       "unnamed": "Link bez nazwy"
     },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Link"
-      }
-    },
     "link-options": {
       "icon": "Ikona",
       "include-time-range": "Uwzględnij bieżący zakres czasu",
@@ -7689,6 +7718,14 @@
       "disabled-tooltip": "Zapisz pulpit przed utworzeniem reguł alertów",
       "new-alert-rule": "Nowa reguła alertu",
       "title-no-alerting-capable-query-found": "Nie znaleziono zapytania obsługującego alerty"
+    },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "",
+      "title": ""
+    },
+    "scripted-dashboards-disabled": {
+      "body": "",
+      "title": ""
     },
     "section-placement": {
       "top-row": "",
@@ -8724,7 +8761,24 @@
       "body-no-logs-volume-available": "Brak dostępnych informacji o wolumenie dla bieżących zapytań i zakresu czasu."
     },
     "metrics-list": {
-      "search-placeholder": ""
+      "collapse-metric": "",
+      "error": "",
+      "expand-metric": "",
+      "filter-values": "",
+      "hide-values": "",
+      "labels-error": "",
+      "loading": "",
+      "loading-labels": "",
+      "loading-values": "",
+      "no-metrics": "",
+      "search-placeholder": "",
+      "show-more": "",
+      "show-more-metrics": "",
+      "show-more-values": "",
+      "show-values": "",
+      "sort-ascending": "",
+      "sort-descending": "",
+      "values-error": ""
     },
     "next-prev-result": {
       "aria-label-next": "Przycisk Następny wynik",
@@ -8975,6 +9029,7 @@
       "open-in-profiles-drilldown": "",
       "profiles-for-this-span": "",
       "related-logs": "",
+      "related-logs-no-logs-tooltip": "",
       "related-logs-tooltip": "",
       "session-for-this-span": ""
     },
@@ -9368,6 +9423,7 @@
       "name-lookup-field": "Pole wyszukiwania"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Automatycznie identyfikuj dane o lokalizacji na podstawie domyślnych nazw pól",
         "description-coords": "Określ pola szerokości i długości geograficznej",
@@ -9397,9 +9453,9 @@
     "description-mouse-wheel-zoom": "Włącz sterowanie powiększeniem za pomocą kółka myszy",
     "description-no-repeat": "Zapobiegaj powtarzaniu się mapy w poziomie",
     "description-share-view": "Użyj tego samego widoku w wielu panelach. Uwaga: może to wymagać ponownego załadowania pulpitu.",
-    "description-show-attribution": "Pokaż informacje o źródle mapy w prawym dolnym rogu",
     "description-show-debug": "Pokaż informacje o mapie",
     "description-show-measure": "Pokaż narzędzia do wykonywania pomiarów na mapie",
+    "description-show-optional-attribution": "",
     "description-show-scale": "Wskaż skalę mapy",
     "description-show-zoom": "Pokaż przyciski sterowania powiększeniem w lewym górnym rogu",
     "description-sync-view-variable": "Przechowuj granice widoku w zmiennej pulpitu do wykorzystania w zapytaniach",
@@ -9460,9 +9516,9 @@
     "name-mouse-wheel-zoom": "Powiększanie kółkiem myszy",
     "name-no-repeat": "Brak powtarzania mapy",
     "name-share-view": "Udostępnij widok",
-    "name-show-attribution": "Pokaż atrybucję",
     "name-show-debug": "Pokaż debugowanie",
     "name-show-measure": "Pokaż narzędzia pomiarowe",
+    "name-show-optional-attribution": "",
     "name-show-scale": "Pokaż skalę",
     "name-show-zoom": "Pokaż sterowanie powiększeniem",
     "name-sync-view-variable": "Synchronizuj widok ze zmienną pulpitu",
@@ -10164,6 +10220,14 @@
       "log-base": "Baza logów"
     },
     "builder": {
+      "annotation-options": {
+        "canvas-controls-desc": "",
+        "canvas-controls-name": "",
+        "clustering-desc": "",
+        "clustering-name": "",
+        "multi-lane-name": "",
+        "multi-row-desc": ""
+      },
       "annotations": "Adnotacje",
       "axis": {
         "category-axis": "Oś",
@@ -10499,9 +10563,13 @@
     "matchers": {
       "groups": {
         "annotation": "Adnotacje",
+        "annotation-description": "",
         "exemplar": "Przykłady",
+        "exemplar-description": "",
         "nested": "Zagnieżdżone",
-        "series": "Ramka danych"
+        "nested-description": "",
+        "series": "Ramka danych",
+        "series-description": ""
       },
       "labels": {
         "base-field-name": "{{name}} (nazwa pola bazowego)",
@@ -11075,6 +11143,83 @@
       "read-more": "",
       "title": ""
     },
+    "overview": {
+      "get-started": {
+        "cards": {
+          "app-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "cloud-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "database-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "demo-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "hosted-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "infra-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "kubernetes": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "logs": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "opentelemetry": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "prometheus": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "visualize-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "website-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          }
+        },
+        "show-less": "",
+        "show-more": "",
+        "title": ""
+      },
+      "options": {
+        "all": "",
+        "attention": "",
+        "available": "",
+        "enabled": "",
+        "get-started": ""
+      },
+      "title": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -11095,14 +11240,25 @@
       },
       "carousel-label": "",
       "carousel-roledescription": "",
-      "existing": "",
-      "frontend-observability": {
+      "connect-metrics": {
         "action": "",
         "context": "",
         "description": "",
-        "setup-action": "",
         "title": ""
       },
+      "enable-logs": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "enable-logs-k8s": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "existing": "",
       "go-to": "",
       "health": {
         "nodes_one": "",
@@ -11145,16 +11301,69 @@
         "pods_many": "",
         "pods_other": ""
       },
+      "kubernetes-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
+      "logs": {
+        "action": "",
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "title": "",
+        "volume": "",
+        "stats-sources_one": "",
+        "stats-sources_few": "",
+        "stats-sources_many": "",
+        "stats-sources_other": ""
+      },
+      "metrics": {
+        "action": "",
+        "action-explore": "",
+        "data-points-per-minute": "",
+        "datasource": "",
+        "disk-worst": "",
+        "series-trend": "",
+        "stats": "",
+        "title": "",
+        "view": "",
+        "disk-eta_one": "",
+        "disk-eta_few": "",
+        "disk-eta_many": "",
+        "disk-eta_other": "",
+        "disk-hosts_one": "",
+        "disk-hosts_few": "",
+        "disk-hosts_many": "",
+        "disk-hosts_other": "",
+        "names_one": "",
+        "names_few": "",
+        "names_many": "",
+        "names_other": "",
+        "series_one": "",
+        "series_few": "",
+        "series_many": "",
+        "series_other": "",
+        "stats-hosts_one": "",
+        "stats-hosts_few": "",
+        "stats-hosts_many": "",
+        "stats-hosts_other": ""
+      },
       "next": "",
       "no-data": {
         "badge": "",
         "connect": "",
         "description": "",
+        "description-partial": "",
+        "description-unknown": "",
         "popular-solutions": "",
         "solution-k6": "",
         "solution-kubernetes": "",
         "solution-synthetics": "",
-        "title": ""
+        "title": "",
+        "title-partial": ""
       },
       "pause": "",
       "previous": "",
@@ -11163,14 +11372,23 @@
       "show": "",
       "switch": "",
       "switchSolution": "",
-      "synthetic-monitoring": {
+      "title": "",
+      "traces": {
         "action": "",
-        "context": "",
-        "description": "",
-        "setup-action": "",
-        "title": ""
-      },
-      "title": ""
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "throughput": "",
+        "title": "",
+        "spans_one": "",
+        "spans_few": "",
+        "spans_many": "",
+        "spans_other": "",
+        "stats-services_one": "",
+        "stats-services_few": "",
+        "stats-services_many": "",
+        "stats-services_other": ""
+      }
     },
     "starred-dashboards-tab": {
       "empty": "",
@@ -12617,6 +12835,7 @@
     },
     "quick-add": {
       "aria-label": "Nowy",
+      "generate-dashboard-button": "",
       "new-template-dashboard-button": ""
     },
     "rss-button": "Najnowsze na blogu"
@@ -13460,7 +13679,7 @@
         "repository-label": "Repozytoria",
         "repository-read-write-admin": "Odczyt i zapis",
         "webhooks-label": "Webhooki",
-        "webhooks-read-write": "Odczyt i zapis"
+        "webhooks-read-write-delete": ""
       },
       "pr-workflow-description": "Pozwala użytkownikom wybrać, czy otworzyć żądanie pull podczas zapisywania zmian. Jeśli repozytorium nie zezwala na bezpośrednie zmiany w głównej gałęzi, nadal może być wymagane żądanie pull.",
       "pr-workflow-label": "Włącz opcję żądania pull podczas zapisywania",
@@ -14798,6 +15017,7 @@
       "message": ""
     },
     "sidebar": {
+      "add": "",
       "add-below": "Dodaj poniżej {{id}}",
       "add-expression": "Dodaj wyrażenie",
       "add-expression-disabled": "Wyrażenia nie są obsługiwane w przypadku źródła danych pulpitu",
@@ -14817,6 +15037,7 @@
       "new-type": "Nowy: {{type}}",
       "queries-empty": "",
       "queries-expressions": "Zapytania i wyrażenia",
+      "stacked": "",
       "toggle-size": "Przełącz rozmiar paska bocznego",
       "transformations": "Transformacje",
       "transformations-empty": "",
@@ -15839,6 +16060,7 @@
     "description-column-filter": "Włącza/wyłącza filtry pól w tabeli",
     "description-frozen-columns": "",
     "description-min-column-width": "Minimalna szerokość dla automatycznej zmiany rozmiaru kolumny",
+    "description-page-size": "",
     "description-styling-from-field": "Pole zawierające obiekty JSON z właściwościami CSS",
     "description-tooltip-from-field": "",
     "frame-picker": {
@@ -15872,6 +16094,7 @@
     "name-hide-in-table": "Ukryj w tabeli",
     "name-max-height": "",
     "name-min-column-width": "Minimalna szerokość kolumny",
+    "name-page-size": "",
     "name-show-table-header": "Pokaż nagłówek tabeli",
     "name-styling-from-field": "Styl z pola",
     "name-tooltip-from-field": "",
@@ -15882,6 +16105,7 @@
     "placeholder-column-width": "automatycznie",
     "placeholder-frozen-columns": "brak",
     "placeholder-max-height": "",
+    "placeholder-page-size": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
@@ -16038,18 +16262,29 @@
     },
     "editor": {
       "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
       "view-preview": "",
       "view-split": "",
       "view-write": ""
-    },
-    "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
-    },
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "Motyw podstawowy",
@@ -17369,6 +17604,7 @@
       "delete-modal-confirm": "",
       "delete-modal-title": "",
       "folder-description": "",
+      "folder-description-folder-only": "",
       "folder-label": "",
       "moved": "",
       "name-exists": "",
@@ -17390,7 +17626,11 @@
       "body_one": "",
       "body_few": "",
       "body_many": "",
-      "body_other": ""
+      "body_other": "",
+      "body-folder-only_one": "",
+      "body-folder-only_few": "",
+      "body-folder-only_many": "",
+      "body-folder-only_other": ""
     },
     "page": {
       "delete": "",

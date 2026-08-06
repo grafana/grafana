@@ -310,6 +310,9 @@ export const versionedPages = {
           variableSelection: {
             '12.4.0': 'data-testid Dashboard Conditional Rendering Variable variable selection',
           },
+          operatorSelection: {
+            '13.2.0': 'data-testid Dashboard Conditional Rendering Variable operator selection',
+          },
         },
         timeRange: {
           select: {
@@ -1184,6 +1187,11 @@ export const versionedPages = {
     QueryHistory: {
       container: {
         '11.1.0': 'data-testid QueryHistory',
+      },
+    },
+    QueryInspector: {
+      container: {
+        '13.2.0': 'data-testid explore query inspector',
       },
     },
   },

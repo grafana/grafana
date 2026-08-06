@@ -64,6 +64,12 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
   hideOpacity?: boolean;
 
   /**
+   * The license of the layer source requires attribution, so it can not be hidden.
+   * Pass a function when the requirement depends on the layer configuration.
+   */
+  requiresAttribution?: boolean | ((options: MapLayerOptions<TConfig>) => boolean);
+
+  /**
    * Function that configures transformation and returns a transformer
    * @param options
    */
