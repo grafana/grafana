@@ -4859,10 +4859,10 @@
     {
       "metadata": {
         "name": "splashScreen",
-        "resourceVersion": "1775046571105",
+        "resourceVersion": "1785966920361",
         "creationTimestamp": "2026-03-25T17:59:16Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-04-01 12:29:31.105103 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-08-05 21:55:20.361587 +0000 UTC"
         }
       },
       "spec": {
@@ -4870,7 +4870,7 @@
         "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
