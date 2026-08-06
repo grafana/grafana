@@ -501,6 +501,7 @@ class DataSourceWithBackend<
         return {
           status: 'success',
           message: res.message,
+          details: res.details,
         };
       }
 
