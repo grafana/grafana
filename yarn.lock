@@ -25330,7 +25330,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment-timezone@npm:^0.5.47":
+"moment-timezone@npm:0.5.47, moment-timezone@npm:^0.5.47":
   version: 0.5.47
   resolution: "moment-timezone@npm:0.5.47"
   dependencies:
