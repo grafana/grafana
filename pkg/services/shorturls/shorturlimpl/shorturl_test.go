@@ -22,6 +22,16 @@ func TestMain(m *testing.M) {
 func TestIntegrationShortURLService(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	// ShortURL is migrated to unified storage and enforced to mode 5, so the legacy
+	// sqlStore is no longer used at runtime. The migration renames the legacy
+	// short_url table, so these legacy-store tests can no longer run against the
+	// shared integration databases. Path validation is covered independently by
+	// TestValidateRelativePath in the shorturls package.
+	//
+	// TODO: remove this test together with the legacy sqlStore when the legacy
+	// short URL service is removed (post mode-5 rollout).
+	t.Skip("shorturls is migrated to unified storage; the legacy sqlStore is superseded and its short_url table is renamed by the migration")
+
 	user := &user.SignedInUser{UserID: 1}
 	store := db.InitTestDB(t)
 

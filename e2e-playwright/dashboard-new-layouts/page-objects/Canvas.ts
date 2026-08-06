@@ -9,12 +9,16 @@ export class Canvas extends PageObject {
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardSidebarSplitter.primaryBody);
   }
 
+  // Each nested grid (per row/tab) renders its own "Add panel" button —
+  // pass the grid's container (e.g. rows.getContent(...)) to target a specific one
+  getAddPanelButton(panelsContainer?: Locator): Locator {
+    return (panelsContainer ?? this.getContainer()).getByTestId(
+      this.selectors.components.CanvasGridAddActions.addPanel
+    );
+  }
+
   async addPanel(panelsContainer?: Locator) {
     await test.step('Add panel from canvas', async () => {
-      // Like groupPanels: each nested grid (per row/tab) renders its own "Add panel"
-      // button — scope the click to the given container to target the right one.
-      const container = panelsContainer ?? this.getContainer();
-
       // The edit canvas scrolls via the first child of primaryBody — neither
       // primaryBody nor a row/tab content wrapper is scrollable, so scrolling
       // `container` would be a silent no-op. Scroll to the bottom so
@@ -22,21 +26,31 @@ export class Canvas extends PageObject {
       const scrollContainer = this.getContainer().locator('> div').first();
       await scrollContainer.evaluate((el) => el.scrollTo(0, el.scrollHeight));
 
-      await container.getByTestId(this.selectors.components.CanvasGridAddActions.addPanel).click();
+      await this.getAddPanelButton(panelsContainer).click();
     });
   }
 
-  // No scoping parameter yet because no migrated spec needs one yet
+  // Scoped to the canvas container: the "Group into tab" menu item reuses the
+  // same testid in a portalled menu, which a page-wide lookup could match
+  getAddTabButton(panelsContainer?: Locator): Locator {
+    return (panelsContainer ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.addTab);
+  }
+
   async addTab() {
     await test.step('Add tab from canvas', async () => {
-      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.CanvasGridAddActions.addTab).click();
+      await this.getAddTabButton().click();
     });
   }
 
-  // No scoping parameter yet because no migrated spec needs one yet
+  // Scoped to the canvas container: the "Group into row" menu item reuses the
+  // same testid in a portalled menu, which a page-wide lookup could match
+  getAddRowButton(panelsContainer?: Locator): Locator {
+    return (panelsContainer ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.addRow);
+  }
+
   async addRow() {
     await test.step('Add row from canvas', async () => {
-      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.CanvasGridAddActions.addRow).click();
+      await this.getAddRowButton().click();
     });
   }
 

@@ -1,7 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
 import { Controls } from './page-objects';
-import { getPanelPosition, movePanel } from './utils';
+import { getPanelBox, movePanel } from './utils';
 
 const PAGE_UNDER_TEST = 'ed155665/annotation-filtering';
 
@@ -32,19 +32,19 @@ test.describe(
       await movePanel(dashboardPage, selectors, /^Panel three$/, /^Panel one$/);
 
       // Verify panel three is now above panel one
-      const panel3Position = await getPanelPosition(dashboardPage, selectors, /^Panel three$/);
-      const panel1Position = await getPanelPosition(dashboardPage, selectors, /^Panel one$/);
+      const panel3Box = await getPanelBox(dashboardPage, selectors, 'Panel three');
+      const panel1Box = await getPanelBox(dashboardPage, selectors, 'Panel one');
 
-      expect(panel3Position?.y).toBeLessThan(panel1Position?.y || 0);
+      expect(panel3Box.y).toBeLessThan(panel1Box.y);
 
       // Move panel two to panel three position
       await movePanel(dashboardPage, selectors, /^Panel two$/, /^Panel three$/);
 
       // Verify panel two is now above panel three
-      const panel2Position = await getPanelPosition(dashboardPage, selectors, /^Panel two$/);
-      const panel3PositionAfter = await getPanelPosition(dashboardPage, selectors, /^Panel three$/);
+      const panel2Box = await getPanelBox(dashboardPage, selectors, 'Panel two');
+      const panel3BoxAfter = await getPanelBox(dashboardPage, selectors, 'Panel three');
 
-      expect(panel2Position?.y).toBeLessThan(panel3PositionAfter?.y || 0);
+      expect(panel2Box.y).toBeLessThan(panel3BoxAfter.y);
     });
   }
 );
