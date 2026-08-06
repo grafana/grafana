@@ -95,7 +95,6 @@ interface ContentHeaderProps {
   onCancelPendingTransformation?: () => void;
   onChangeDataSource: (ds: DataSourceInstanceSettings, refId: string) => void;
   onUpdateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
-  isMultiSelection?: boolean;
   currentDatasource?: DataSourceInstanceSettings;
   scopedVars?: ScopedVars;
   /**
@@ -141,7 +140,6 @@ export function ContentHeader({
   onCancelPendingTransformation,
   onChangeDataSource,
   onUpdateQuery,
-  isMultiSelection,
   renderHeaderExtras,
   containerRef: externalContainerRef,
   typeConfig: typeConfigProp,
@@ -244,7 +242,6 @@ export function ContentHeader({
               query={selectedQuery}
               queries={queries}
               onQueryUpdate={onUpdateQuery}
-              readOnly={isMultiSelection}
             />
             {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
           </>
@@ -272,9 +269,6 @@ export function ContentHeaderSceneWrapper({
     selectedAlert,
     selectedQuery,
     selectedTransformation,
-    selectedQueryRefIds,
-    selectedTransformationIds,
-    multiSelectMode,
     cardType,
     pendingExpression,
     setPendingExpression,
@@ -300,7 +294,6 @@ export function ContentHeaderSceneWrapper({
       onCancelPendingTransformation={() => setPendingTransformation(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
-      isMultiSelection={multiSelectMode && (selectedQueryRefIds.length > 0 || selectedTransformationIds.length > 0)}
       renderHeaderExtras={renderHeaderExtras}
       typeConfig={typeConfig}
       currentDatasource={selectedQueryDsData?.dsSettings}

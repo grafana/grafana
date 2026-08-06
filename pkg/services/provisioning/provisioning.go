@@ -64,6 +64,7 @@ const (
 
 func ProvideService(
 	ac accesscontrol.AccessControl,
+	ruleMutationValidator provisioning.RuleMutationValidator,
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	pluginStore pluginstore.Store,
@@ -88,6 +89,7 @@ func ProvideService(
 	routesPermissions accesscontrol.RoutePermissionsService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
+		ruleMutationValidator:        ruleMutationValidator,
 		Cfg:                          cfg,
 		SQLStore:                     sqlStore,
 		ac:                           ac,
@@ -276,6 +278,7 @@ func newProvisioningServiceImpl(
 	migratePrometheusType func(context.Context) error,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
+		ruleMutationValidator:   provisioning.NoopRuleMutationValidator{},
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionDatasources:    provisionDatasources,
@@ -303,6 +306,7 @@ type ProvisioningServiceImpl struct {
 	orgService                   org.Service
 	userService                  user.Service
 	ac                           accesscontrol.AccessControl
+	ruleMutationValidator        provisioning.RuleMutationValidator
 	pluginStore                  pluginstore.Store
 	alertingStore                *alertstore.DBstore
 	EncryptionService            encryption.Internal
@@ -409,6 +413,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.log,
 		notifier.NewCachedNotificationSettingsValidationService(ps.alertingStore),
 		alertingauthz.NewRuleService(ps.ac),
+		ps.ruleMutationValidator,
 	)
 	var features featuremgmt.FeatureToggles
 	if ps.alertingStore != nil {

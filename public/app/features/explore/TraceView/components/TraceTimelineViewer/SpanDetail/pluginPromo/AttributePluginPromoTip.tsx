@@ -53,7 +53,8 @@ export function AttributePluginPromoTip({ promo, children }: Props) {
 const getStyles = (theme: GrafanaTheme2) => ({
   trigger: css({
     display: 'inline-flex',
-    alignItems: 'center',
+    // attribute values wrap, so keep the icon on the first line instead of centering it across all of them
+    alignItems: 'flex-start',
     gap: theme.spacing(0.5),
     padding: 0,
     margin: 0,
