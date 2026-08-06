@@ -58,7 +58,10 @@ func (sc *SmtpClient) Send(ctx context.Context, messages ...*Message) (int, erro
 	for _, msg := range messages {
 		err := sc.sendMessage(ctx, dialer, msg)
 		if err != nil {
-			return sentEmailsCount, err
+			// Log the error (already recorded in the per-message span) and
+			// continue sending the remaining messages. One invalid address
+			// must not prevent delivery to the others (#16651 regression).
+			continue
 		}
 
 		sentEmailsCount++
