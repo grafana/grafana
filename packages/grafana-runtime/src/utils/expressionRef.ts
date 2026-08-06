@@ -16,6 +16,16 @@ export function isExpressionReference(ref?: DataSourceRef | string | null): bool
   if (!ref) {
     return false;
   }
-  const v = typeof ref === 'string' ? ref : ref.type;
-  return v === ExpressionDatasourceRef.type || v === ExpressionDatasourceRef.name || v === '-100'; // -100 was a legacy accident that should be removed
+  if (typeof ref === 'string') {
+    return isExpressionValue(ref);
+  }
+  // Check the uid as well as the type: dashboards exist with refs like `{uid: '__expr__'}`
+  // that carry no type, which the legacy DataSourceSrv resolves by uid alone.
+  return isExpressionValue(ref.type) || isExpressionValue(ref.uid);
+}
+
+function isExpressionValue(value: string | undefined): boolean {
+  return (
+    value === ExpressionDatasourceRef.type || value === ExpressionDatasourceRef.name || value === '-100' // -100 was a legacy accident that should be removed
+  );
 }
