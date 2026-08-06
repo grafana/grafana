@@ -10969,7 +10969,9 @@
     },
     "header-actions": {
       "active-incidents": "Active incidents",
-      "firing-alerts": "Firing alerts"
+      "firing-alerts": "Firing alerts",
+      "no-active-incidents": "All clear",
+      "no-firing-alerts": "All clear"
     },
     "home-page": {
       "edition": {
