@@ -1945,7 +1945,7 @@ func TestWatchResumeBackfillsGapAndDeduplicatesReplay(t *testing.T) {
 	require.NoError(t, err)
 	events = append(events, receiveWatchEvents(t, mock, 1)...)
 
-	var versions []int64
+	versions := make([]int64, 0, len(events))
 	for _, event := range events {
 		versions = append(versions, event.Resource.Version)
 	}
