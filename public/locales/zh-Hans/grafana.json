@@ -608,12 +608,6 @@
       "title-restore-version": "恢复版本",
       "title-restoring-alertmanager-configuration": "恢复 Alertmanager 配置"
     },
-    "alerts-activity-banner": {
-      "description": "现在，您可以使用一个全新的页面来处理由 Grafana 管理的警报规则的运营工作。查看正在触发的警报，浏览历史信息，进行筛选和分组，以便更好地进行分类和根本原因分析。",
-      "open-button": "查看警报活动",
-      "open-button-aria": "打开警报活动",
-      "title": "警报活动现已推出！"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "排序",
       "label-filter-placeholder-search-alerts-by-labels": "按标签搜索警报",
@@ -788,7 +782,9 @@
         "value-in-transition": "转换中的值"
       },
       "error": {
-        "server-error": "警报状态历史记录查询失败 — 服务器返回错误"
+        "server-error": "警报状态历史记录查询失败 — 服务器返回错误",
+        "server-error-description": "",
+        "title": ""
       },
       "filter": {
         "clear": "清除筛选器",
@@ -3266,6 +3262,8 @@
         "title": ""
       },
       "import": {
+        "any": "",
+        "collapse-all": "",
         "empty-body": "",
         "empty-cta": "",
         "empty-learn-more": "",
@@ -3273,9 +3271,25 @@
         "error-body": "",
         "error-retry": "",
         "error-title": "",
+        "expand-all": "",
+        "inhibition-equal": "",
         "loading": "",
+        "no-matchers": "",
+        "parse-error-body": "",
+        "parse-error-title": "",
+        "resources": "",
+        "section": {
+          "contact-points": "",
+          "inhibition-rules": "",
+          "notification-policy": "",
+          "templates": "",
+          "time-intervals": ""
+        },
+        "staged-badge": "",
         "staged-description": "",
-        "staged-title": ""
+        "staged-title": "",
+        "view": "",
+        "policy-tree-routes_other": ""
       },
       "tabs": {
         "alert-managers": "警报管理器",
@@ -4387,6 +4401,9 @@
     "create-new": {
       "dashboard-group": ""
     },
+    "create-new-button": {
+      "generate-dashboard": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "此项目与所选项目不在同一个存储库中。"
@@ -5362,6 +5379,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "自动",
       "options": {
         "custom-min-height": {
@@ -5379,6 +5397,11 @@
         "min-width-custom": "自定义最小宽度",
         "min-width-custom-clear": "恢复为标准的最小列宽",
         "min-width-error": "需要介于 50 和 2000 之间的数字"
+      },
+      "resize-intercept": {
+        "edit": "",
+        "header": "",
+        "switch": ""
       }
     },
     "canvas-actions": {
@@ -5526,6 +5549,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "自定义",
       "row-actions": {
         "delete": "刪除行",
@@ -6694,6 +6718,21 @@
       "title": "尚未添加数据面板链接"
     }
   },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": ""
+    },
+    "modal": {
+      "title": ""
+    },
+    "prompt": {
+      "cancel": "",
+      "description": "",
+      "input-label": "",
+      "placeholder": "",
+      "submit": ""
+    }
+  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "此数据源不支持筛选条件。",
@@ -7511,6 +7550,14 @@
       "disabled-tooltip": "在创建警报规则之前保存数据面板",
       "new-alert-rule": "新建警报规则",
       "title-no-alerting-capable-query-found": "未找到支持警报的查询"
+    },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "",
+      "title": ""
+    },
+    "scripted-dashboards-disabled": {
+      "body": "",
+      "title": ""
     },
     "section-placement": {
       "top-row": "",
@@ -8796,6 +8843,7 @@
       "open-in-profiles-drilldown": "",
       "profiles-for-this-span": "",
       "related-logs": "",
+      "related-logs-no-logs-tooltip": "",
       "related-logs-tooltip": "",
       "session-for-this-span": ""
     },
@@ -9219,9 +9267,9 @@
     "description-mouse-wheel-zoom": "启用鼠标滚轮缩放控制",
     "description-no-repeat": "防止地图水平重复",
     "description-share-view": "在多个面板上使用相同的视图。注意：这可能需要重新加载数据面板。",
-    "description-show-attribution": "在右下角显示地图来源归属信息",
     "description-show-debug": "显示地图信息",
     "description-show-measure": "在地图上显示用于测量的工具",
+    "description-show-optional-attribution": "",
     "description-show-scale": "标注地图比例",
     "description-show-zoom": "在左上角显示缩放控制按钮",
     "description-sync-view-variable": "将视图边界存储在数据面板变量中，以便在查询中使用",
@@ -9282,9 +9330,9 @@
     "name-mouse-wheel-zoom": "鼠标滚轮缩放",
     "name-no-repeat": "无地图重复",
     "name-share-view": "共享视图",
-    "name-show-attribution": "显示属性",
     "name-show-debug": "显示调试",
     "name-show-measure": "显示测量工具",
+    "name-show-optional-attribution": "",
     "name-show-scale": "显示比例",
     "name-show-zoom": "显示缩放控制",
     "name-sync-view-variable": "将视图同步到数据面板变量",
@@ -9956,6 +10004,14 @@
       "log-base": "记录基础"
     },
     "builder": {
+      "annotation-options": {
+        "canvas-controls-desc": "",
+        "canvas-controls-name": "",
+        "clustering-desc": "",
+        "clustering-name": "",
+        "multi-lane-name": "",
+        "multi-row-desc": ""
+      },
       "annotations": "注释",
       "axis": {
         "category-axis": "轴",
@@ -10291,9 +10347,13 @@
     "matchers": {
       "groups": {
         "annotation": "注释",
+        "annotation-description": "",
         "exemplar": "范例",
+        "exemplar-description": "",
         "nested": "嵌套",
-        "series": "数据框"
+        "nested-description": "",
+        "series": "数据框",
+        "series-description": ""
       },
       "labels": {
         "base-field-name": "{{name}}（基本字段名称）",
@@ -12490,6 +12550,7 @@
     },
     "quick-add": {
       "aria-label": "新建",
+      "generate-dashboard-button": "",
       "new-template-dashboard-button": ""
     },
     "rss-button": "最新博客"
@@ -13324,7 +13385,7 @@
         "repository-label": "存储库",
         "repository-read-write-admin": "读，和写",
         "webhooks-label": "网络勾子",
-        "webhooks-read-write": "读和写"
+        "webhooks-read-write-delete": ""
       },
       "pr-workflow-description": "允许用户选择在保存更改时是否打开拉取请求。如果存储库不允许直接更改主分支，则仍可能需要拉取请求。",
       "pr-workflow-label": "保存时启用拉取请求选项",
@@ -14599,6 +14660,7 @@
       "message": ""
     },
     "sidebar": {
+      "add": "",
       "add-below": "在 {{id}} 下添加",
       "add-expression": "添加表达式",
       "add-expression-disabled": "数据面板数据源不支持表达式",
@@ -14618,6 +14680,7 @@
       "new-type": "新{{type}}",
       "queries-empty": "",
       "queries-expressions": "查询和表达式",
+      "stacked": "",
       "toggle-size": "切换侧边栏大小",
       "transformations": "转换",
       "transformations-empty": "",
@@ -15613,6 +15676,7 @@
     "description-column-filter": "启用/禁用表格中的字段筛选条件",
     "description-frozen-columns": "",
     "description-min-column-width": "列自动调整大小的最小宽度",
+    "description-page-size": "",
     "description-styling-from-field": "包含具有 CSS 属性的 JSON 对象的字段",
     "description-tooltip-from-field": "",
     "frame-picker": {
@@ -15646,6 +15710,7 @@
     "name-hide-in-table": "在表格中隐藏",
     "name-max-height": "",
     "name-min-column-width": "最小列宽",
+    "name-page-size": "",
     "name-show-table-header": "显示表格表头",
     "name-styling-from-field": "字段中的样式",
     "name-tooltip-from-field": "",
@@ -15656,6 +15721,7 @@
     "placeholder-column-width": "自动",
     "placeholder-frozen-columns": "无",
     "placeholder-max-height": "",
+    "placeholder-page-size": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
