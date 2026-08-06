@@ -253,14 +253,23 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
         </Trans>
       </p>
 
-      {/* Seed warning. Additional warnings (e.g. sensitive-data redaction, large bundles) are added here later. */}
       <Alert
         severity="warning"
-        title={t('dashboard.diagnostics.sensitive-warning-title', 'May contain sensitive data')}
+        title={t('dashboard.diagnostics.sensitive-warning-title', 'May contain sensitive data — experimental feature')}
       >
         <Trans i18nKey="dashboard.diagnostics.sensitive-warning-body">
           The bundle can include request headers, query parameters, and server log lines. Review it before sharing
           outside your organization.
+        </Trans>
+      </Alert>
+
+      <Alert
+        severity="warning"
+        title={t('dashboard.diagnostics.size-limit-warning-title', 'Very large responses are truncated')}
+      >
+        <Trans i18nKey="dashboard.diagnostics.size-limit-warning-body">
+          A response that&apos;s too large has its captured query data truncated to keep the bundle a manageable
+          size. The archive records when and where that happened.
         </Trans>
       </Alert>
 
