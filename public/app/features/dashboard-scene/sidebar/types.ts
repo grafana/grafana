@@ -1,14 +1,15 @@
 import { type SceneObjectState, type SceneObject } from '@grafana/scenes';
 import { type ElementSelectionContextState, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 
-import { type DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
+import { type DashboardEditActionsHistory } from '../actions/DashboardEditActionsHistory';
+
+import { type DashboardEditActionEvent } from './events';
 import { type DashboardOutline } from './outline/DashboardOutline';
 
 export interface DashboardSidebarState extends SceneObjectState {
   selectionContext: ElementSelectionContextState;
 
-  undoStack: DashboardEditActionEventPayload[];
-  redoStack: DashboardEditActionEventPayload[];
+  editHistory: DashboardEditActionsHistory;
   outlinePane?: DashboardOutline;
   openPane?: DashboardSidebarPane;
   /** Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now  */

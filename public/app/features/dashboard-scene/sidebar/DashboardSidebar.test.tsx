@@ -172,14 +172,14 @@ describe('DashboardSidebar', () => {
 
     scene.onCreateNewPanel();
 
-    expect(sidebar.state.undoStack).toHaveLength(1);
+    expect(sidebar.state.editHistory.state.undoStack).toHaveLength(1);
 
     // Should select object
     expect(sidebar.getSelectedObject()).toBeDefined();
 
     sidebar.undoAction();
 
-    expect(sidebar.state.undoStack).toHaveLength(0);
+    expect(sidebar.state.editHistory.state.undoStack).toHaveLength(0);
 
     // should clear selection
     expect(sidebar.getSelectedObject()).toBeUndefined();
@@ -193,11 +193,11 @@ describe('DashboardSidebar', () => {
 
     sidebar.undoAction();
 
-    expect(sidebar.state.redoStack).toHaveLength(1);
+    expect(sidebar.state.editHistory.state.redoStack).toHaveLength(1);
 
     scene.onCreateNewPanel();
 
-    expect(sidebar.state.redoStack).toHaveLength(0);
+    expect(sidebar.state.editHistory.state.redoStack).toHaveLength(0);
   });
 
   it('clone should not include undo/redo history', () => {
@@ -209,13 +209,13 @@ describe('DashboardSidebar', () => {
 
     sidebar.undoAction();
 
-    expect(sidebar.state.redoStack).toHaveLength(1);
-    expect(sidebar.state.undoStack).toHaveLength(1);
+    expect(sidebar.state.editHistory.state.redoStack).toHaveLength(1);
+    expect(sidebar.state.editHistory.state.undoStack).toHaveLength(1);
 
     const cloned = sidebar.clone({});
 
-    expect(cloned.state.redoStack).toHaveLength(0);
-    expect(cloned.state.undoStack).toHaveLength(0);
+    expect(cloned.state.editHistory.state.redoStack).toHaveLength(0);
+    expect(cloned.state.editHistory.state.undoStack).toHaveLength(0);
   });
 
   it('clone should preserve the outline collapsed state', () => {
