@@ -1354,7 +1354,11 @@ function measureFooterWidth(field: Field, avgCharWidth: number): number {
   if (reducers == null || reducers.length === 0) {
     return 0;
   }
-  const results = reduceField({ field, reducers });
+  // Reduce over a copy with its own `state` so we never touch the shared `field.state.calcs`:
+  // reduceField reads and writes that cache, and the footer (useReducerEntries) relies on it —
+  // reducing the full, unfiltered values here would otherwise leave the footer showing whole-dataset
+  // stats while the table is filtered.
+  const results = reduceField({ field: { ...field, state: undefined }, reducers });
   let widest = 0;
   for (const id of reducers) {
     const label = fieldReducers.get(id)?.name ?? id;

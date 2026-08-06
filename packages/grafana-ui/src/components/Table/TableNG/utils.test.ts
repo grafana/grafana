@@ -1963,6 +1963,19 @@ describe('TableNG utils', () => {
       expect(withW).toBeGreaterThan(withoutW);
     });
 
+    it('does not mutate the shared field state.calcs while measuring a footer', () => {
+      const field: Field = {
+        name: 'N',
+        type: FieldType.number,
+        values: [1, 2, 3],
+        config: { custom: { footer: { reducers: ['sum'] } } },
+      };
+      compute([field], 200);
+      // reduceField caches into field.state.calcs and the footer reuses it; the width calc must not
+      // poison that cache with whole-dataset stats.
+      expect(field.state?.calcs).toBeUndefined();
+    });
+
     it('resolves an auto cell to its graphical default (geo) instead of measuring it as text', () => {
       // No explicit cellOptions, so the cell type is Auto; getAutoRendererDisplayMode maps a geo
       // field to Geo, which is graphical. availWidth < the default leaves no room to grow, so text
