@@ -11,6 +11,13 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { useAssistantContext } from 'app/features/assistant/AssistantContext';
 import { AssistantPanel, ASSISTANT_SIDEBAR_WIDTH } from 'app/features/assistant/AssistantPanel';
+import { useAssistantDifyContext } from 'app/features/assistant-dify/AssistantDifyContext';
+import { AssistantDifyPanel, ASSISTANT_DIFY_SIDEBAR_WIDTH } from 'app/features/assistant-dify/AssistantDifyPanel';
+import { useAssistantDifyIframeContext } from 'app/features/assistant-dify-iframe/AssistantDifyIframeContext';
+import {
+  AssistantDifyIframePanel,
+  ASSISTANT_DIFY_IFRAME_SIDEBAR_WIDTH,
+} from 'app/features/assistant-dify-iframe/AssistantDifyIframePanel';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 
@@ -38,6 +45,8 @@ export function AppChrome({ children }: Props) {
     setExtensionSidebarWidth,
   } = useExtensionSidebarContext();
   const { isOpen: isAssistantOpen } = useAssistantContext();
+  const { isOpen: isDifyAssistantOpen } = useAssistantDifyContext();
+  const { isOpen: isDifyIframeAssistantOpen } = useAssistantDifyIframeContext();
   const state = chrome.useState();
   const scopes = useScopes();
 
@@ -45,16 +54,22 @@ export function AppChrome({ children }: Props) {
   const isScopesDashboardsOpen = Boolean(
     scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
   );
+  const isAnyAssistantOpen = isAssistantOpen || isDifyAssistantOpen || isDifyIframeAssistantOpen;
+  const assistantSidebarWidth = isDifyIframeAssistantOpen
+    ? ASSISTANT_DIFY_IFRAME_SIDEBAR_WIDTH
+    : isDifyAssistantOpen
+      ? ASSISTANT_DIFY_SIDEBAR_WIDTH
+      : ASSISTANT_SIDEBAR_WIDTH;
 
   const headerLevels = useChromeHeaderLevels();
-  const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight());
+  const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight(), assistantSidebarWidth);
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
 
   useResponsiveDockedMegaMenu(chrome);
   useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
 
-  const anySidebarOpen = isExtensionSidebarOpen || isAssistantOpen;
+  const anySidebarOpen = isExtensionSidebarOpen || isAnyAssistantOpen;
   const contentClass = cx({
     [styles.content]: true,
     [styles.contentChromeless]: state.chromeless,
@@ -135,7 +150,7 @@ export function AppChrome({ children }: Props) {
               [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
               [styles.pageContainerWithSidebar]: !state.chromeless && anySidebarOpen,
               [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen,
-              [styles.pageContainerWithAssistant]: !state.chromeless && isAssistantOpen,
+              [styles.pageContainerWithAssistant]: !state.chromeless && isAnyAssistantOpen,
             })}
             id="pageContent"
           >
@@ -157,6 +172,16 @@ export function AppChrome({ children }: Props) {
           {!state.chromeless && isAssistantOpen && (
             <div className={styles.assistantContainer}>
               <AssistantPanel />
+            </div>
+          )}
+          {!state.chromeless && isDifyAssistantOpen && (
+            <div className={styles.assistantContainer}>
+              <AssistantDifyPanel />
+            </div>
+          )}
+          {!state.chromeless && isDifyIframeAssistantOpen && (
+            <div className={styles.assistantContainer}>
+              <AssistantDifyIframePanel />
             </div>
           )}
         </div>
@@ -194,7 +219,12 @@ function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
   }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
 }
 
-const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: number) => {
+const getStyles = (
+  theme: GrafanaTheme2,
+  headerLevels: number,
+  headerHeight: number,
+  assistantSidebarWidth = ASSISTANT_SIDEBAR_WIDTH
+) => {
   return {
     content: css({
       label: 'page-content',
@@ -275,7 +305,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       minHeight: 0,
     }),
     pageContainerWithAssistant: css({
-      marginRight: ASSISTANT_SIDEBAR_WIDTH,
+      marginRight: assistantSidebarWidth,
     }),
     skipLink: css({
       position: 'fixed',
@@ -302,7 +332,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       bottom: 0,
       right: 0,
       zIndex: theme.zIndex.navbarFixed + 1,
-      width: ASSISTANT_SIDEBAR_WIDTH,
+      width: assistantSidebarWidth,
     }),
   };
 };

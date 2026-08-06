@@ -18,6 +18,8 @@ import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { AssistantContextProvider } from './features/assistant/AssistantContext';
+import { AssistantDifyContextProvider } from './features/assistant-dify/AssistantDifyContext';
+import { AssistantDifyIframeContextProvider } from './features/assistant-dify-iframe/AssistantDifyIframeContext';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
@@ -51,6 +53,8 @@ export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
 
+// Existing Grafana root wrapper; kept as a class for enterprise hooks compatibility.
+// eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
 export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   private iconCacheID = `grafana-icon-cache-${config.buildInfo.commit}`;
 
@@ -135,14 +139,18 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                         <ExtensionRegistriesProvider registries={registries}>
                           <ExtensionSidebarContextProvider>
                             <AssistantContextProvider>
-                              <UNSAFE_PortalProvider getContainer={getPortalContainer}>
-                                <GlobalStyles />
-                                <div className="grafana-app">
-                                  <RouterWrapper {...routerWrapperProps} />
-                                  <LiveConnectionWarning />
-                                  <PortalContainer />
-                                </div>
-                              </UNSAFE_PortalProvider>
+                              <AssistantDifyContextProvider>
+                                <AssistantDifyIframeContextProvider>
+                                  <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+                                    <GlobalStyles />
+                                    <div className="grafana-app">
+                                      <RouterWrapper {...routerWrapperProps} />
+                                      <LiveConnectionWarning />
+                                      <PortalContainer />
+                                    </div>
+                                  </UNSAFE_PortalProvider>
+                                </AssistantDifyIframeContextProvider>
+                              </AssistantDifyContextProvider>
                             </AssistantContextProvider>
                           </ExtensionSidebarContextProvider>
                         </ExtensionRegistriesProvider>
