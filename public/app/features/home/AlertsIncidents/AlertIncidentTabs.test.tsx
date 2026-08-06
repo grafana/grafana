@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { useState } from 'react';
+import { useState, type Ref } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { PluginIncludeType, type PluginMeta } from '@grafana/data';
@@ -21,7 +21,12 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { AlertIncidentTabs } from './AlertIncidentTabs';
+import {
+  ALERTS_TAB_ID,
+  AlertIncidentTabs,
+  INCIDENTS_TAB_ID,
+  type AlertIncidentSwitchHandle,
+} from './AlertIncidentTabs';
 import { useFiringAlerts } from './useFiringAlerts';
 import { useIncidents } from './useIncidents';
 
@@ -170,11 +175,19 @@ afterEach(async () => {
   invalidateCachedPromisesCache();
 });
 
-function AlertIncidentTabsWithData() {
+function AlertIncidentTabsWithData({ switchRef }: { switchRef?: Ref<AlertIncidentSwitchHandle> } = {}) {
   const [team, setTeam] = useState<string | undefined>();
   const alertsData = useFiringAlerts(team);
   const incidentsData = useIncidents();
-  return <AlertIncidentTabs alertsData={alertsData} incidentsData={incidentsData} team={team} setTeam={setTeam} />;
+  return (
+    <AlertIncidentTabs
+      alertsData={alertsData}
+      incidentsData={incidentsData}
+      team={team}
+      setTeam={setTeam}
+      switchRef={switchRef}
+    />
+  );
 }
 
 describe('AlertIncidentTabs', () => {
@@ -277,6 +290,85 @@ describe('AlertIncidentTabs', () => {
 
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
+  });
+
+  it('switchRef handle switches tabs imperatively', async () => {
+    mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+    mockIrmPlugin();
+    mockIncidents([activeIncident]);
+    let handle: AlertIncidentSwitchHandle | null = null;
+
+    render(
+      <AlertIncidentTabsWithData
+        switchRef={(instance) => {
+          handle = instance;
+        }}
+      />
+    );
+
+    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+    expect(handle).not.toBeNull();
+
+    await act(async () => {
+      handle?.switch(INCIDENTS_TAB_ID, false);
+    });
+
+    expect(await screen.findByText('Database outage')).toBeInTheDocument();
+    expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
+
+    await act(async () => {
+      handle?.switch(ALERTS_TAB_ID, false);
+    });
+
+    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+    expect(screen.queryByText('Database outage')).not.toBeInTheDocument();
+  });
+
+  it('switchRef handle scrolls by default and skips scrolling when requested', async () => {
+    mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+    mockIrmPlugin();
+    mockIncidents([activeIncident]);
+    let handle: AlertIncidentSwitchHandle | null = null;
+    const scrollIntoView = jest.fn();
+    const originalScrollIntoView = Element.prototype.scrollIntoView;
+
+    Object.defineProperty(Element.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    try {
+      render(
+        <AlertIncidentTabsWithData
+          switchRef={(instance) => {
+            handle = instance;
+          }}
+        />
+      );
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+
+      await act(async () => {
+        handle?.switch(INCIDENTS_TAB_ID);
+      });
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth' });
+
+      scrollIntoView.mockClear();
+
+      await act(async () => {
+        handle?.switch(ALERTS_TAB_ID, false);
+      });
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(Element.prototype, 'scrollIntoView', {
+        configurable: true,
+        value: originalScrollIntoView,
+      });
+    }
   });
 
   it('shows the incidents footer actions when the user can declare and access incidents', async () => {

@@ -3,7 +3,7 @@ import { type RefObject } from 'react';
 
 import { locale, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, ButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 
 import { ALERTS_TAB_ID, INCIDENTS_TAB_ID, type AlertIncidentSwitchHandle } from './AlertsIncidents/AlertIncidentTabs';
@@ -22,7 +22,7 @@ export function HeaderActions({
 }) {
   const styles = useStyles2(getStyles);
 
-  const canViewIncidents = !!incidentsData.enabled && !incidentsData.loading;
+  const canViewIncidents = !!incidentsData.enabled;
   const canViewAlerts = alertsData.enabled;
 
   // Hide the overview if neither alerts nor incidents are available
@@ -32,7 +32,7 @@ export function HeaderActions({
 
   return (
     <ButtonGroup className={styles.group}>
-      {canViewAlerts && (
+      {canViewAlerts && !alertsData.error && (
         <Button
           variant="secondary"
           tooltip={t('home.header-actions.firing-alerts', 'Firing alerts')}
@@ -50,7 +50,9 @@ export function HeaderActions({
           }}
         >
           <Stack direction="row" alignItems="center" gap={1}>
-            {alertsData.count === 0 ? (
+            {alertsData.loading ? (
+              <Icon name="spinner" />
+            ) : alertsData.count === 0 ? (
               <Text variant="bodySmall" color="secondary">
                 <Trans i18nKey="home.header-actions.no-firing-alerts">All clear</Trans>
               </Text>
@@ -81,7 +83,7 @@ export function HeaderActions({
         </Button>
       )}
 
-      {canViewIncidents && (
+      {canViewIncidents && !incidentsData.error && (
         <Button
           variant="secondary"
           tooltip={t('home.header-actions.active-incidents', 'Active incidents')}
@@ -99,7 +101,9 @@ export function HeaderActions({
           }}
         >
           <Stack direction="row" alignItems="center" gap={1}>
-            {incidentsData.count === 0 ? (
+            {incidentsData.loading ? (
+              <Icon name="spinner" />
+            ) : incidentsData.count === 0 ? (
               <Text variant="bodySmall" color="secondary">
                 <Trans i18nKey="home.header-actions.no-active-incidents">All clear</Trans>
               </Text>
