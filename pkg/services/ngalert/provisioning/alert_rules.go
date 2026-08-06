@@ -508,7 +508,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	if err := service.validateRuleMutation(ctx, &rule); err != nil {
+	if err := service.validateRuleMutation(ctx, &rule, manager); err != nil {
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
@@ -853,12 +853,12 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 	// Group replace is the path used by file and Terraform provisioning; it does not
 	// flow through CreateAlertRule/UpdateAlertRule, so validate here as well.
 	for _, r := range delta.New {
-		if err := service.validateRuleMutation(ctx, r); err != nil {
+		if err := service.validateRuleMutation(ctx, r, manager); err != nil {
 			return err
 		}
 	}
 	for _, u := range delta.Update {
-		if err := service.validateRuleMutation(ctx, u.New); err != nil {
+		if err := service.validateRuleMutation(ctx, u.New, manager); err != nil {
 			return err
 		}
 	}
@@ -1009,7 +1009,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
 		}
 	}
-	if err := service.validateRuleMutation(ctx, &rule); err != nil {
+	if err := service.validateRuleMutation(ctx, &rule, manager); err != nil {
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()

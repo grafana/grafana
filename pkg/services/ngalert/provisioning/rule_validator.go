@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -15,13 +16,15 @@ import (
 // Returning an error fails the write, so an implementation should fail open on its own
 // internal errors rather than make rule management unavailable.
 type RuleMutationValidator interface {
-	ValidateRuleMutation(ctx context.Context, rule *models.AlertRule) error
+	// manager identifies what is writing the rule, so an implementation can gate as-code
+	// writes without touching ones it does not own, such as file provisioning at startup.
+	ValidateRuleMutation(ctx context.Context, rule *models.AlertRule, manager utils.ManagerProperties) error
 }
 
 // NoopRuleMutationValidator accepts every mutation. This is the OSS default.
 type NoopRuleMutationValidator struct{}
 
-func (NoopRuleMutationValidator) ValidateRuleMutation(context.Context, *models.AlertRule) error {
+func (NoopRuleMutationValidator) ValidateRuleMutation(context.Context, *models.AlertRule, utils.ManagerProperties) error {
 	return nil
 }
 
@@ -32,9 +35,9 @@ func ProvideRuleMutationValidator() RuleMutationValidator {
 
 // validateRuleMutation runs the configured validator. It tolerates a nil validator so
 // that an AlertRuleService built as a struct literal, as a few tests do, does not panic.
-func (service *AlertRuleService) validateRuleMutation(ctx context.Context, rule *models.AlertRule) error {
+func (service *AlertRuleService) validateRuleMutation(ctx context.Context, rule *models.AlertRule, manager utils.ManagerProperties) error {
 	if service.ruleValidator == nil || rule == nil {
 		return nil
 	}
-	return service.ruleValidator.ValidateRuleMutation(ctx, rule)
+	return service.ruleValidator.ValidateRuleMutation(ctx, rule, manager)
 }
