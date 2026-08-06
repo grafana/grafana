@@ -20,7 +20,7 @@ export interface UseSelectionStateOptions {
  * - `keep`: leave it — and the range anchors — untouched, for the stacked view where scrolling
  *   moves the active card as a side effect of navigation rather than a selection change.
  */
-export type BulkSelectionEffect = 'clear' | 'seed' | 'keep';
+type BulkSelectionEffect = 'clear' | 'seed' | 'keep';
 
 export interface CardSelectionOptions {
   bulk?: BulkSelectionEffect;
