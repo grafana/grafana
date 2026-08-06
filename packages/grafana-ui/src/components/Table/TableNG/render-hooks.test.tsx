@@ -20,8 +20,14 @@ import { getTextColorForBackground } from '../../../utils/colors';
 import { type PanelContext } from '../../PanelChrome';
 
 import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
-import { type FilterType, type NestedRowEntry, type TableRow, type TableSummaryRow } from './types';
-import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from './utils';
+import {
+  type ApplyFilterResult,
+  type FilterType,
+  type NestedRowEntry,
+  type TableRow,
+  type TableSummaryRow,
+} from './types';
+import { applyFilter, getCellColorInlineStylesFactory } from './utils';
 
 // -----------------------------------------------------------------------------
 // useDataGridRows
