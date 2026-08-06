@@ -1,8 +1,14 @@
-import { canonicalZoneName, findTimeZoneAt } from './easytz_lookup';
+import { canonicalZoneName, findTimeZoneAt, getTimeZonesAt } from './easytz_lookup';
 
 // Fixed timestamps so DST-dependent results are deterministic.
 const JAN = Date.UTC(2026, 0, 15); // northern winter / southern summer
 const JUL = Date.UTC(2026, 6, 15); // northern summer / southern winter
+
+describe('getTimeZonesAt', () => {
+  it('memoizes augmented lists per hour bucket', () => {
+    expect(getTimeZonesAt(JAN)).toBe(getTimeZonesAt(JAN + 1));
+  });
+});
 
 describe('findTimeZoneAt', () => {
   it('returns DST-correct abbreviation and offset', () => {
@@ -27,7 +33,15 @@ describe('findTimeZoneAt', () => {
     // regardless of which one the runtime's ICU lists; the lookup returns the
     // canonical entry for both.
     expect(findTimeZoneAt('Asia/Kolkata', JUL)).toMatchObject({ name: 'Asia/Kolkata', abbr: 'IST' });
-    expect(findTimeZoneAt('Asia/Calcutta', JUL)).toEqual(findTimeZoneAt('Asia/Kolkata', JUL));
+    expect(findTimeZoneAt('Asia/Calcutta', JUL)).toBe(findTimeZoneAt('Asia/Kolkata', JUL));
+  });
+
+  it('returns cached instances within an hour bucket', () => {
+    const info = findTimeZoneAt('America/New_York', JAN);
+
+    expect(info).toBe(findTimeZoneAt('America/New_York', JAN + 1));
+    expect(info).toBe(getTimeZonesAt(JAN).find((tz) => tz.name === 'America/New_York'));
+    expect(Object.isFrozen(info)).toBe(true);
   });
 
   it('returns undefined for unknown zones', () => {

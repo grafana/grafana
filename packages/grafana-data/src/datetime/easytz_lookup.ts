@@ -1,19 +1,29 @@
 import { formatOffset, getTimeZone, getTimeZoneAt, getTimeZonesAt as getEasyTzTimeZonesAt } from './easytz';
 
 export interface EasyTzInfo {
-  name: string;
-  abbr: string;
-  offset: number;
-  offsetDisplay: string;
-  aliasOf?: string;
+  readonly name: string;
+  readonly abbr: string;
+  readonly offset: number;
+  readonly offsetDisplay: string;
+  readonly aliasOf?: string;
 }
 
 const displayListCache = new WeakMap<ReturnType<typeof getEasyTzTimeZonesAt>, EasyTzInfo[]>();
+const displayInfoCache = new WeakMap<NonNullable<ReturnType<typeof getTimeZoneAt>>, EasyTzInfo>();
 
-const withOffsetDisplay = (tz: NonNullable<ReturnType<typeof getTimeZoneAt>>): EasyTzInfo => ({
-  ...tz,
-  offsetDisplay: formatOffset(tz.offset),
-});
+const withOffsetDisplay = (tz: NonNullable<ReturnType<typeof getTimeZoneAt>>): EasyTzInfo => {
+  let info = displayInfoCache.get(tz);
+
+  if (!info) {
+    info = Object.freeze({
+      ...tz,
+      offsetDisplay: formatOffset(tz.offset),
+    });
+    displayInfoCache.set(tz, info);
+  }
+
+  return info;
+};
 
 export const getTimeZonesAt = (timestamp: number, withAliases?: boolean): EasyTzInfo[] => {
   const source = getEasyTzTimeZonesAt(timestamp, withAliases);
