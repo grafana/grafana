@@ -12,7 +12,7 @@ import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsD
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
-import { dashboardEditActions } from '../../actions';
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 
 import { DraggableList } from './DraggableList';
 import { partitionSceneObjects } from './helpers';

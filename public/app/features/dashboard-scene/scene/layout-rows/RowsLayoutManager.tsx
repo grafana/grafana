@@ -13,7 +13,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
-import { dashboardEditActions } from '../../actions';
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';

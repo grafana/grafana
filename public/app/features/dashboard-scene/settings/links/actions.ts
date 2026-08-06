@@ -3,7 +3,7 @@ import { type SceneObject } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
 
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
-import { dashboardEditActions } from '../../actions';
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 
 export const linkEditActions = {
   addLink({

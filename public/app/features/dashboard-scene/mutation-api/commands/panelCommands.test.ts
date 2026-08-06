@@ -31,8 +31,8 @@ jest.mock('@grafana/data', () => {
   };
 });
 
-jest.mock('../../actions', () => {
-  const actual = jest.requireActual('../../actions');
+jest.mock('../../actions/dashboardEditActions', () => {
+  const actual = jest.requireActual('../../actions/dashboardEditActions');
   return {
     ...actual,
     dashboardEditActions: {

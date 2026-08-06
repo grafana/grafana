@@ -13,8 +13,8 @@ import type { MutationResult } from '../types';
 
 // Mock the sidebar actions so that perform() is called synchronously
 // instead of publishing an event (which requires a DashboardScene subscriber).
-jest.mock('../../actions', () => {
-  const actual = jest.requireActual('../../actions');
+jest.mock('../../actions/dashboardEditActions', () => {
+  const actual = jest.requireActual('../../actions/dashboardEditActions');
   return {
     ...actual,
     dashboardEditActions: {

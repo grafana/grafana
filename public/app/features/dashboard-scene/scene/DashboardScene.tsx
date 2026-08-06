@@ -84,7 +84,7 @@ import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
-import { dashboardEditActions } from '../actions';
+import { dashboardEditActions } from '../actions/dashboardEditActions';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';

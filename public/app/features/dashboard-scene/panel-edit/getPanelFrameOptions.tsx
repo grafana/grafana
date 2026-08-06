@@ -15,7 +15,7 @@ import { type VizPanelLinks } from '../scene/PanelLinks';
 import { useSidebarInputAutoFocus } from '../scene/layouts-shared/utils';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
-import { dashboardEditActions } from '../actions';
+import { dashboardEditActions } from '../actions/dashboardEditActions';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 

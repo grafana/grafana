@@ -29,7 +29,7 @@ import {
   ObjectRemovedFromCanvasEvent,
   NewObjectAddedToCanvasEvent,
 } from '../../sidebar/events';
-import { dashboardEditActions } from '../../actions';
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';

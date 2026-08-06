@@ -1,6 +1,6 @@
 import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
-import { dashboardEditActions } from '../../actions';
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { getLegacySlugForRowOrTab } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -14,7 +14,7 @@ import { getTabsLayoutUrlKeysToTry, TabsLayoutManager } from './TabsLayoutManage
 
 let lastUndo: (() => void) | undefined;
 
-jest.mock('../../actions', () => ({
+jest.mock('../../actions/dashboardEditActions', () => ({
   dashboardEditActions: {
     addElement: jest.fn(({ perform, undo }) => {
       perform();

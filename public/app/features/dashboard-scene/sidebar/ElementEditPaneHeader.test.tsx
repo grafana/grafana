@@ -7,6 +7,7 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { type SceneGridItem, SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
+import { getEditableElementFor } from '../actions/utils/getEditableElementFor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -20,7 +21,6 @@ import { activateFullSceneTree } from '../utils/test-utils';
 
 import { type DashboardSidebar } from './DashboardSidebar';
 import { ElementEditPaneHeader } from './ElementEditPaneHeader';
-import { getEditableElementFor } from '../actions';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),

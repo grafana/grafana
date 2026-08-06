@@ -29,7 +29,7 @@ import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardOutline } from './outline/DashboardOutline';
-import { dashboardEditActions } from '../actions';
+import { dashboardEditActions } from '../actions/dashboardEditActions';
 import { type DashboardSidebarLike } from './types';
 
 jest.mock('@grafana/runtime', () => ({

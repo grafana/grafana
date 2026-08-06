@@ -10,7 +10,7 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
 
-jest.mock('../../actions', () => ({
+jest.mock('../../actions/dashboardEditActions', () => ({
   dashboardEditActions: {
     addElement: jest.fn(({ perform }) => {
       perform();

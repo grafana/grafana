@@ -12,7 +12,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
-import { dashboardEditActions } from '../../actions';
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getLegacySlugForRowOrTab } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';

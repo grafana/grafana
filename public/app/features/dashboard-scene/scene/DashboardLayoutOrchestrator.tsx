@@ -17,7 +17,7 @@ import { useStyles2 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { ObjectsReorderedOnCanvasEvent, DashboardStateChangedEvent } from '../sidebar/events';
-import { dashboardEditActions } from '../actions';
+import { dashboardEditActions } from '../actions/dashboardEditActions';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 

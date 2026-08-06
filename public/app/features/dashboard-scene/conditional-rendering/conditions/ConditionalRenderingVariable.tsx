@@ -18,7 +18,7 @@ import {
 import { Box, Combobox, type ComboboxOption, Field, Input, Stack } from '@grafana/ui';
 import { ALL_VARIABLE_TEXT } from 'app/features/variables/constants';
 
-import { dashboardEditActions } from '../../actions';
+import { dashboardEditActions } from '../../actions/dashboardEditActions';
 import { useUserDefinedVariables } from '../../utils/variables';
 import { getLowerTranslatedObjectType } from '../object';
 
