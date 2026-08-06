@@ -21,15 +21,17 @@ export function useInhibitedAlerts(): {
   const { data, isLoading, isFetching } = alertmanagerApi.useGetAlertmanagerAlertsQuery(
     {
       amSourceName: GRAFANA_RULES_SOURCE_NAME,
-      filter: { inhibited: true, active: false, silenced: false },
+      // `silenced` is deliberately left out: an alert can be both silenced and inhibited, and
+      // passing `silenced: false` would make the API drop it before we see it.
+      filter: { inhibited: true, active: false },
       showErrorAlert: false,
     },
     { skip: false }
   );
 
-  // The Alertmanager state filters are exclusions, not a selector: the API drops alerts that are
-  // active or silenced, but "unprocessed" alerts (no marker entry yet) match neither and come back
-  // too. Only alerts with a non-empty inhibitedBy are actually inhibited.
+  // The state params tell the API which states to drop, they don't select inhibited alerts. Nothing
+  // excludes "unprocessed" alerts (those with no marker entry yet), so they come back too. Only a
+  // non-empty inhibitedBy means inhibited, which makes the params above an optimisation, not a filter.
   const inhibitedAlerts = useMemo(() => (data ?? []).filter((alert) => alert.status.inhibitedBy.length > 0), [data]);
 
   return {

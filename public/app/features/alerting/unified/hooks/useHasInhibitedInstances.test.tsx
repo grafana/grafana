@@ -81,6 +81,86 @@ describe('useHasInhibitedInstances', () => {
     expect(result.current.hasInhibitedInstances).toBe(false);
   });
 
+  it('should not ask the API to exclude silenced alerts', async () => {
+    const { http, HttpResponse } = await import('msw');
+    const { default: mswServer } = await import('@grafana/test-utils/server');
+
+    const requestedUrls: string[] = [];
+    mswServer.use(
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+        requestedUrls.push(request.url);
+        return HttpResponse.json([]);
+      })
+    );
+
+    renderHook(() => useHasInhibitedInstances(TEST_RULE_UID), { wrapper: wrapper() });
+
+    await waitFor(() => {
+      expect(requestedUrls).toHaveLength(1);
+    });
+
+    const params = new URL(requestedUrls[0]).searchParams;
+    // an alert can be both silenced and inhibited, so excluding silenced alerts would hide it
+    expect(params.has('silenced')).toBe(false);
+    expect(params.get('active')).toBe('false');
+    expect(params.get('inhibited')).toBe('true');
+  });
+
+  it('should return false for alerts that are only silenced', async () => {
+    setAlertmanagerAlertsHandler([
+      mockAlertmanagerAlert({
+        labels: { __alert_rule_uid__: TEST_RULE_UID, alertname: 'TestAlert' },
+        status: { state: AlertState.Suppressed, silencedBy: ['silence-id'], inhibitedBy: [] },
+      }),
+    ]);
+
+    const { result } = renderHook(() => useHasInhibitedInstances(TEST_RULE_UID), { wrapper: wrapper() });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.hasInhibitedInstances).toBe(false);
+  });
+
+  it('should return true for alerts that are both silenced and inhibited', async () => {
+    setAlertmanagerAlertsHandler([
+      mockAlertmanagerAlert({
+        labels: { __alert_rule_uid__: TEST_RULE_UID, alertname: 'TestAlert' },
+        status: { state: AlertState.Suppressed, silencedBy: ['silence-id'], inhibitedBy: ['source-fingerprint'] },
+      }),
+    ]);
+
+    const { result } = renderHook(() => useHasInhibitedInstances(TEST_RULE_UID), { wrapper: wrapper() });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.hasInhibitedInstances).toBe(true);
+  });
+
+  it('should return true when the rule has both unprocessed and inhibited instances', async () => {
+    setAlertmanagerAlertsHandler([
+      mockAlertmanagerAlert({
+        labels: { __alert_rule_uid__: TEST_RULE_UID, alertname: 'Unprocessed instance' },
+        status: { state: AlertState.Unprocessed, silencedBy: [], inhibitedBy: [] },
+      }),
+      mockAlertmanagerAlert({
+        labels: { __alert_rule_uid__: TEST_RULE_UID, alertname: 'Inhibited instance' },
+        status: { state: AlertState.Suppressed, silencedBy: [], inhibitedBy: ['source-fingerprint'] },
+      }),
+    ]);
+
+    const { result } = renderHook(() => useHasInhibitedInstances(TEST_RULE_UID), { wrapper: wrapper() });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.hasInhibitedInstances).toBe(true);
+  });
+
   it('should return isLoading true initially', () => {
     const { result } = renderHook(() => useHasInhibitedInstances(TEST_RULE_UID), { wrapper: wrapper() });
 
