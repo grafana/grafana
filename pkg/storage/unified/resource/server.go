@@ -2099,21 +2099,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					},
 				}
 				if event.PreviousRV > 0 {
-					prevObj, err := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
-					if err != nil {
-						// This scenario should never happen, but if it does, we should log it and continue
-						// sending the event without the previous object. The client will decide what to do.
-						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", prevObj.Error)
-					} else {
-						if prevObj.ResourceVersion != event.PreviousRV {
-							s.log.Error("resource version mismatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
-							return fmt.Errorf("resource version mismatch")
-						}
-						resp.Previous = &resourcepb.WatchEvent_Resource{
-							Value:   prevObj.Value,
-							Version: prevObj.ResourceVersion,
-						}
-					}
+					resp.Previous = s.previousForWatch(ctx, event)
 				}
 				if err := srv.Send(resp); err != nil {
 					return err
@@ -2131,6 +2117,53 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			}
 		}
 	}
+}
+
+// previousForWatch reads the object at event.PreviousRV so it can be attached to
+// a MODIFIED/DELETED watch event, and returns nil when that version can no
+// longer be read. History is pruned per resource (down to a single version for
+// short-lived kinds such as provisioning jobs), so a watch that lags behind the
+// writers legitimately finds the previous version gone. The previous object is
+// optional for clients, so every failure degrades to sending the event without
+// it: aborting the stream would disconnect every subscriber sharing the event,
+// and the broadcaster replays that same event to them on reconnect, so the
+// stream would keep dying.
+func (s *server) previousForWatch(ctx context.Context, event *WrittenEvent) *resourcepb.WatchEvent_Resource {
+	nsr := NamespacedResource{
+		Namespace: event.Key.Namespace,
+		Group:     event.Key.Group,
+		Resource:  event.Key.Resource,
+	}
+
+	prevObj, err := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
+	switch {
+	case err != nil:
+		s.degraded(ctx, "watch_previous_object", "read_error", nsr, err)
+	case prevObj.Error != nil:
+		// A pruned version comes back as a NotFound payload rather than a Go
+		// error, so it has to be checked separately from err.
+		reason := "read_error"
+		if prevObj.Error.Code == http.StatusNotFound {
+			reason = "not_found"
+		}
+		s.degraded(ctx, "watch_previous_object", reason, nsr, GetError(prevObj.Error))
+	case prevObj.ResourceVersion != event.PreviousRV:
+		// Only an older version survived pruning. It is still a better basis for
+		// the client's predicate matching than no previous object at all.
+		s.degraded(ctx, "watch_previous_object", "version_mismatch", nsr,
+			fmt.Errorf("requested resource version %d, got %d", event.PreviousRV, prevObj.ResourceVersion))
+		return &resourcepb.WatchEvent_Resource{Value: prevObj.Value, Version: prevObj.ResourceVersion}
+	default:
+		return &resourcepb.WatchEvent_Resource{Value: prevObj.Value, Version: prevObj.ResourceVersion}
+	}
+
+	if event.Type == resourcepb.WatchEvent_DELETED {
+		// Deletions carry the full object in the deletion marker, which the watch
+		// response strips out of Value. Without a previous object the client would
+		// have nothing to decode for this event at all.
+		return &resourcepb.WatchEvent_Resource{Value: event.Value, Version: event.PreviousRV}
+	}
+	return nil
 }
 
 func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
