@@ -372,7 +372,7 @@ By default, dashboard content doesn't appear in audit logs because it can signif
 
 Data source query request and response bodies are also excluded by default. Enabling `log_datasource_query_request_body` or `log_datasource_query_response_body` significantly increases log volume and may expose sensitive data such as query parameters, credentials, or personally identifiable information.
 
-Before Grafana serves `DELETE /api/admin/users/:id`, it tries to capture the user's display name, or login when the display name is empty, so the audit log can retain it after a successful deletion. The `snapshot_timeout` option sets a cooperative context deadline for this lookup. The user store must honor context cancellation, so the setting isn't a strict upper bound on request latency. If the lookup fails or observes an expired deadline, Grafana continues to process the request. If the deletion succeeds, the audit log omits `resources[x].name`.
+Before Grafana serves `DELETE /api/admin/users/{id}`, it tries to capture the user's display name, or login when the display name is empty, so the audit log can retain it after a successful deletion. The `snapshot_timeout` option sets a cooperative context deadline for this lookup. The user store must honor context cancellation, so the setting isn't a strict upper bound on request latency. If the lookup fails or observes an expired deadline, Grafana continues to process the request. If the deletion succeeds, the audit log omits `resources[x].name`.
 
 ```ini
 [auditing]
