@@ -36,7 +36,7 @@
     "accent": {
       "main": "palette.orange400",
       "text": "palette.orange400",
-      "textEmphasis": "palette.orange500",
+      "textEmphasis": "palette.orange300",
       "background": "palette.orange950",
       "backgroundEmphasis": "palette.orange800",
       "border": "palette.orange800"
