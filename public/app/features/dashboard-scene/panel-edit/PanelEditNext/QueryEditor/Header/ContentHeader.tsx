@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { upperFirst } from 'lodash';
 import { type RefObject, useMemo, useRef } from 'react';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } from '@grafana/data';
@@ -19,7 +18,7 @@ import {
 } from '../QueryEditorContext';
 import { usePanelScopedVars } from '../hooks/usePanelScopedVars';
 import { type AlertRule, type Transformation } from '../types';
-import { getEditorBorderColor } from '../utils';
+import { getEditorBorderColor, getExpressionSectionLabel } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
@@ -217,7 +216,7 @@ export function ContentHeader({
         {cardType === QueryEditorType.Expression && selectedQuery && 'type' in selectedQuery && (
           <>
             <Text weight="light" variant="body" color="primary">
-              {upperFirst(selectedQuery.type)} <Trans i18nKey="query-editor-next.header.expression">Expression</Trans>
+              {getExpressionSectionLabel(selectedQuery)}
             </Text>
             <NavToolbarSeparator />
           </>
