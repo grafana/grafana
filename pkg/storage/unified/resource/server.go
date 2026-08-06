@@ -15,6 +15,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -1065,7 +1066,8 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
 		}
-		return rsp, nil
+		st := grpc.GRPCStatusFromErrorResult(rsp.Error)
+		return rsp, st
 	}
 
 	err := s.checkQuota(ctx, NamespacedResource{
@@ -1080,12 +1082,11 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		if errors.As(err, &quotaErr) {
 			msg = quotaErr.Message()
 		}
+
+		errRes, st := grpc.ErrorResultWithGRPCStatus(msg, http.StatusForbidden, codes.PermissionDenied)
 		return &resourcepb.CreateResponse{
-			Error: &resourcepb.ErrorResult{
-				Message: msg,
-				Code:    http.StatusForbidden,
-			},
-		}, nil
+			Error: errRes,
+		}, st
 	}
 
 	var res *resourcepb.CreateResponse

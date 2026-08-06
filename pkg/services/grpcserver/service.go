@@ -81,20 +81,25 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 		}
 	}
 
+	var instrumentationOptions []middleware.InstrumentationOption
+	if cfg.GRPCServer.ReportGrpcCodesInInstrumentationLabelEnabled {
+		instrumentationOptions = append(instrumentationOptions, middleware.ReportGRPCStatusOption)
+	}
+
 	// Recovery is listed first so it is outermost and catches panics in every
 	// subsequent interceptor and in the handlers themselves. Without it an
 	// unrecovered panic crashes the whole process.
 	unaryInterceptors := []grpc.UnaryServerInterceptor{
 		interceptors.UnaryPanicRecoveryInterceptor(),
 		interceptors.LoggingUnaryInterceptor(s.logger, s.cfg.EnableLogging), // needs to be registered after tracing interceptor to get trace id
-		middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
+		middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration, instrumentationOptions...),
 		interceptors.InnermostServiceIdentityUnaryServerInterceptor(),
 	}
 	streamInterceptors := []grpc.StreamServerInterceptor{
 		interceptors.StreamPanicRecoveryInterceptor(),
 		interceptors.TracingStreamInterceptor(tracer),
 		interceptors.LoggingStreamInterceptor(s.logger, s.cfg.EnableLogging),
-		middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
+		middleware.StreamServerInstrumentInterceptor(grpcRequestDuration, instrumentationOptions...),
 		interceptors.InnermostServiceIdentityStreamServerInterceptor(),
 	}
 

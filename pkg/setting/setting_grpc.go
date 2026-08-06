@@ -32,6 +32,8 @@ type GRPCServerSettings struct {
 	useTLS   bool
 	certFile string
 	keyFile  string
+
+	ReportGrpcCodesInInstrumentationLabelEnabled bool
 }
 
 func gRPCServerSettingsError(msg string, args ...interface{}) error {
@@ -134,6 +136,8 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.GRPCServer.KeepaliveTime = server.Key("keepalive_time").MustDuration(0)
 	cfg.GRPCServer.KeepaliveTimeout = server.Key("keepalive_timeout").MustDuration(0)
 	cfg.GRPCServer.KeepaliveMinTime = server.Key("keepalive_min_time").MustDuration(0)
+
+	cfg.GRPCServer.ReportGrpcCodesInInstrumentationLabelEnabled = server.Key("report_grpc_codes_in_instrumentation_label_enabled").MustBool(false)
 
 	return cfg.GRPCServer.processAddress()
 }
