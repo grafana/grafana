@@ -467,6 +467,19 @@ describe('logRowsToReadableJson', () => {
       },
     ]);
   });
+
+  it('should include picked dataframe fields', () => {
+    const result = logRowsToReadableJson([testRow2], ['timestamp', 'body', 'foo2']);
+
+    expect(result).toEqual([
+      {
+        date: '1970-01-01T00:00:00.010Z',
+        line: 'test entry',
+        timestamp: '123456789',
+        fields: { timestamp: '1', body: 'test entry', foo2: 'bar2' },
+      },
+    ]);
+  });
 });
 
 describe('mergeLogsVolumeDataFrames', () => {
@@ -752,6 +765,31 @@ describe('downloadLogs', () => {
         })
       );
     });
+
+    it('Downloads selected dataframe fields in text format', async () => {
+      const textLogs = [
+        createLogRow({
+          timeEpochMs: 100,
+          entry: 'test entry',
+          labels: { label: 'value' },
+          dataFrame: toDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'timestamp', type: FieldType.time, values: [100] },
+              { name: 'body', type: FieldType.string, values: ['test entry'] },
+              { name: 'labels', type: FieldType.other, values: [{ label: 'value' }] },
+            ],
+          }),
+          rowIndex: 0,
+        }),
+      ];
+
+      await downloadLogs(DownloadFormat.Text, textLogs, [], ['timestamp', 'body']);
+
+      const blob = jest.mocked(saveAs).mock.calls[0][0];
+      const text = typeof blob === 'string' ? blob : await blob.text();
+      expect(text).toContain('100\t1970-01-01T00:00:00.100Z\t100 test entry\n');
+    });
   });
 
   describe('CSV format', () => {
@@ -818,6 +856,35 @@ describe('downloadLogs', () => {
       const lineField = exportedFrame.fields.find((f) => f.name === 'body');
       expect(lineField).toBeDefined();
       expect(lineField?.values).toContain('test entry');
+    });
+
+    it('includes selected dataframe fields', async () => {
+      const csvLogs = [
+        createLogRow({
+          timeEpochMs: 100,
+          entry: 'test entry',
+          labels: { label: 'value' },
+          dataFrame: toDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'timestamp', type: FieldType.time, values: [100] },
+              { name: 'body', type: FieldType.string, values: ['test entry'] },
+              { name: 'labels', type: FieldType.other, values: [{ label: 'value' }] },
+            ],
+            meta: {
+              type: DataFrameType.LogLines,
+            },
+          }),
+          rowIndex: 0,
+        }),
+      ];
+
+      await downloadLogs(DownloadFormat.CSV, csvLogs, [], ['timestamp', 'body']);
+
+      expect(downloadDataFrameAsCsv).toHaveBeenCalledTimes(1);
+      const exportedFrame = jest.mocked(downloadDataFrameAsCsv).mock.calls[0][0];
+      expect(exportedFrame.fields.map((field) => field.name)).toEqual(['Date', 'timestamp', 'body']);
+      expect(exportedFrame.fields.find((field) => field.name === 'body')?.values).toContain('test entry');
     });
   });
 });

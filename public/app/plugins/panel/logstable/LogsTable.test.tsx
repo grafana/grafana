@@ -20,6 +20,7 @@ import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana
 import { defaultTableOptions } from '@grafana/schema';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
+import { DownloadFormat, downloadLogs } from 'app/features/logs/utils';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { configureStore } from 'app/store/configureStore';
 
@@ -68,6 +69,11 @@ jest.mock('@grafana/runtime', () => ({
     links: [],
     isLoading: false,
   }),
+}));
+
+jest.mock('app/features/logs/utils', () => ({
+  ...jest.requireActual('app/features/logs/utils'),
+  downloadLogs: jest.fn(),
 }));
 
 const setUp = (
@@ -198,6 +204,28 @@ describe('LogsTable', () => {
         new LogSortOrderChangeEvent({
           order: LogsSortOrder.Ascending,
         })
+      );
+    });
+
+    it('downloads the raw log rows from Explore table view', async () => {
+      jest.mocked(downloadLogs).mockClear();
+      setUp(undefined, { showControls: true }, CoreApp.Explore);
+      await waitFor(() => expect(screen.getByLabelText('Download')).toBeInTheDocument());
+
+      await userEvent.click(screen.getByLabelText('Download'));
+      await userEvent.click(await screen.findByText('json'));
+
+      expect(downloadLogs).toHaveBeenCalledTimes(1);
+      expect(downloadLogs).toHaveBeenCalledWith(
+        DownloadFormat.Json,
+        expect.arrayContaining([
+          expect.objectContaining({
+            entry: 'log 1',
+            labels: expect.objectContaining({ level: 'info' }),
+          }),
+        ]),
+        [],
+        []
       );
     });
   });

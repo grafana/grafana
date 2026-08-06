@@ -345,6 +345,7 @@ export const LogsTable = ({
             onChangeTimeRange={onChangeTimeRange}
             onWrapTextClick={handleWrapTextClick}
             logOptionsStorageKey={SETTING_KEY_ROOT}
+            downloadSeries={data.series}
           />
 
           <LogsTableDetails

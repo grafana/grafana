@@ -34,6 +34,7 @@ import {
 import { t } from '@grafana/i18n';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getConfig } from 'app/core/config';
+import { safeStringifyValue } from 'app/core/utils/explore';
 
 import { getLogsExtractFields } from '../explore/Logs/LogsTable';
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
@@ -191,20 +192,7 @@ export const escapeUnescapedString = (string: string) =>
 
 export function logRowsToReadableJson(logs: LogRowModel[], pickFields: string[] = []) {
   return logs.map((log) => {
-    const fields = getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
-      const key = field.keys[0];
-      acc[key] = field.values[0];
-      return acc;
-    }, {});
-
-    let logFields = {
-      ...fields,
-      ...log.labels,
-    };
-
-    if (pickFields.length) {
-      logFields = Object.fromEntries(Object.entries(logFields).filter(([key]) => pickFields.includes(key)));
-    }
+    const logFields = getFieldsForLogRowDownload(log, pickFields);
 
     return {
       line: log.entry,
@@ -213,6 +201,38 @@ export function logRowsToReadableJson(logs: LogRowModel[], pickFields: string[] 
       fields: logFields,
     };
   });
+}
+
+function getFieldsForLogRowDownload(log: LogRowModel, pickFields: string[] = []) {
+  if (!pickFields.length) {
+    return {
+      ...getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
+        const key = field.keys[0];
+        acc[key] = field.values[0];
+        return acc;
+      }, {}),
+      ...log.labels,
+    };
+  }
+
+  const dataframeFields = log.dataFrame.fields.reduce<Record<string, string>>((acc, field) => {
+    const value = field.values[log.rowIndex];
+    if (value == null) {
+      return acc;
+    }
+
+    acc[field.name] =
+      typeof value === 'string' || typeof value === 'number' ? value.toString() : safeStringifyValue(value);
+    return acc;
+  }, {});
+
+  const logFields: Record<string, string> = {
+    ...dataframeFields,
+    ...log.labels,
+    [LOG_LINE_BODY_FIELD_NAME]: log.entry,
+  };
+
+  return Object.fromEntries(Object.entries(logFields).filter(([key]) => pickFields.includes(key)));
 }
 
 /**
@@ -516,13 +536,12 @@ export const downloadLogs = async (
 ) => {
   switch (format) {
     case DownloadFormat.Text:
-      const shouldInjectLogLineBodyField = fields.length > 0 && fields.includes(LOG_LINE_BODY_FIELD_NAME);
-      const rowsForDownload = shouldInjectLogLineBodyField
+      const rowsForDownload = fields.length
         ? logRows.map((row) => ({
             ...row,
             labels: {
               ...row.labels,
-              [LOG_LINE_BODY_FIELD_NAME]: row.entry,
+              ...getFieldsForLogRowDownload(row, fields),
             },
           }))
         : logRows;
