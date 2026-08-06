@@ -305,12 +305,10 @@ func TestResetPolicyTree(t *testing.T) {
 	}
 	currentRevision.Config.AlertmanagerConfig.Receivers = []*v1.PostableApiReceiver{
 		{
-			Receiver: definitions.Receiver{Name: "receiver"},
-			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-					{
-						UID: "test", Name: "test", Type: "email", Settings: []byte("{}"),
-					},
+			Name: "receiver",
+			GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+				{
+					UID: "test", Name: "test", Type: "email", Settings: []byte("{}"),
 				},
 			},
 		},
@@ -543,9 +541,7 @@ func getDefaultConfigRevision() legacy_storage.ConfigRevision {
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "test-receiver",
-						},
+						Name: "test-receiver",
 					},
 				},
 			},

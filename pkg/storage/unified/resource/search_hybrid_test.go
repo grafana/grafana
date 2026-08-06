@@ -390,11 +390,24 @@ type hybridFakeIndex struct {
 	resp   *resourcepb.ResourceSearchResponse
 	err    error
 	gotReq *resourcepb.ResourceSearchRequest
+
+	// Folder-title resolution issues a second Search against the folders
+	// index; route it separately so lexical-leg assertions stay stable.
+	folderResp   *resourcepb.ResourceSearchResponse
+	folderErr    error
+	gotFolderReq *resourcepb.ResourceSearchRequest
 }
 
 func (h *hybridFakeIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	if req.Options.GetKey().GetResource() == "folders" {
+		h.gotFolderReq = req
+		if h.folderResp == nil && h.folderErr == nil {
+			return lexTableResponse(), nil
+		}
+		return h.folderResp, h.folderErr
+	}
 	h.gotReq = req
 	return h.resp, h.err
 }
@@ -872,6 +885,87 @@ func TestHybridSearch_SkipRerankBypassesConfiguredReranker(t *testing.T) {
 	assert.Equal(t, 0, scorer.calls, "scorer must not be called when skip_rerank is set")
 	// RRF score preserved, not the scorer's 0.9
 	assert.InDelta(t, 1.0/61, resp.Results[0].Score, 1e-12)
+}
+
+func TestHybridSearch_ResolvesFolderTitlesInOneBatchedLookup(t *testing.T) {
+	lexResp := lexTableResponse(
+		[3]string{"d1", "Dash One", "f1"},
+		[3]string{"d2", "Dash Two", "f2"},
+		[3]string{"d3", "Dash Three", "f1"}, // duplicate folder: must not repeat in the lookup
+	)
+	s, idx, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+	idx.folderResp = lexTableResponse(
+		[3]string{"f1", "Folder One", ""},
+		[3]string{"f2", "Folder Two", ""},
+	)
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 3)
+	titles := map[string]string{}
+	for _, r := range resp.Results {
+		titles[r.Key.Name] = r.FolderTitle
+	}
+	assert.Equal(t, map[string]string{"d1": "Folder One", "d2": "Folder Two", "d3": "Folder One"}, titles)
+
+	// exactly one folders request, distinct uids only, against the folder index
+	idx.mu.Lock()
+	defer idx.mu.Unlock()
+	require.NotNil(t, idx.gotFolderReq)
+	assert.Equal(t, "folder.grafana.app", idx.gotFolderReq.Options.Key.Group)
+	require.Len(t, idx.gotFolderReq.Options.Fields, 1)
+	assert.ElementsMatch(t, []string{"f1", "f2"}, idx.gotFolderReq.Options.Fields[0].Values)
+	// lexical-leg request assertions stay untouched by the folder lookup
+	assert.Equal(t, "q", idx.gotReq.Query)
+}
+
+func TestHybridSearch_RootFolderSkipsTitleLookup(t *testing.T) {
+	lexResp := lexTableResponse(
+		[3]string{"d1", "Dash One", ""},
+		[3]string{"d2", "Dash Two", "general"},
+	)
+	s, idx, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+
+	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+		Key: validKey(), Query: "q",
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Results, 2)
+	for _, r := range resp.Results {
+		assert.Empty(t, r.FolderTitle)
+	}
+	idx.mu.Lock()
+	defer idx.mu.Unlock()
+	assert.Nil(t, idx.gotFolderReq, "no folders lookup for root-only results")
+}
+
+func TestHybridSearch_FolderTitleResolutionFailsOpen(t *testing.T) {
+	for name, setup := range map[string]func(*hybridFakeIndex){
+		"transport error": func(idx *hybridFakeIndex) {
+			idx.folderErr = errors.New("folder index exploded")
+		},
+		"payload-embedded error": func(idx *hybridFakeIndex) {
+			idx.folderResp = &resourcepb.ResourceSearchResponse{
+				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
+			}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			lexResp := lexTableResponse([3]string{"d1", "Dash One", "f1"})
+			s, idx, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+			setup(idx)
+
+			resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+				Key: validKey(), Query: "q",
+			})
+			require.NoError(t, err, "title resolution is display sugar; it must never fail the search")
+			require.Len(t, resp.Results, 1)
+			assert.Empty(t, resp.Results[0].FolderTitle)
+			assert.Equal(t, "f1", resp.Results[0].Folder, "folder uid still returned")
+		})
+	}
 }
 
 func TestHybridSearch_RerankFailureFallsBackToRRFOrder(t *testing.T) {

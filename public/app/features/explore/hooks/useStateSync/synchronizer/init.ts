@@ -3,12 +3,12 @@ import { type MutableRefObject } from 'react';
 
 import { EventBusSrv } from '@grafana/data';
 import { type LocationService } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { initializeExplore } from 'app/features/explore/state/explorePane';
 import { clearPanes, syncTimesAction } from 'app/features/explore/state/main';
 import { fromURLRange } from 'app/features/explore/state/utils';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type ThunkDispatch } from 'app/types/store';
 
 import { getUrlStateFromPaneState } from '../external.utils';
@@ -55,10 +55,10 @@ export function initializeFromURL(
                       ? identity<DataQuery>
                       : (query) => ({ ...query, datasource: paneDatasource.getRef() })
                   )
-              : getDatasourceSrv()
-                  // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
-                  .get(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef())
-                  .then((ds) => [getDefaultQuery(ds)])
+              : // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
+                getDataSourceInstance(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef()).then(
+                  (ds) => [getDefaultQuery(ds)]
+                )
             : []
         ).then(async (queries) => {
           // we remove queries that have an invalid datasources
@@ -67,7 +67,7 @@ export function initializeFromURL(
           if (!validQueries.length && paneDatasource) {
             // and in case there's no query left we add a default one.
             validQueries = [
-              getDefaultQuery(isMixedDatasource(paneDatasource) ? await getDatasourceSrv().get() : paneDatasource),
+              getDefaultQuery(isMixedDatasource(paneDatasource) ? await getDataSourceInstance() : paneDatasource),
             ];
           }
 

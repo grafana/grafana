@@ -14,7 +14,7 @@ export class PanelOptions extends PageObject {
   constructor(args: PageObjectArgs) {
     super(args);
     this.conditionalRenderingOptions = new ConditionalRenderingOptions(args);
-    this.repeatOptions = new RepeatOptions(args);
+    this.repeatOptions = new RepeatOptions(args, 'repeat-options');
   }
 
   getTitleInput() {

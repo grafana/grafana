@@ -60,68 +60,26 @@ For more information, refer to [this GitHub issue](https://github.com/grafana/gr
 
 If you have a high number of alert rules or alert instances, the load on the database can get very high.
 
-By default, Grafana performs one SQL update per alert rule after each evaluation, which updates all alert instances belonging to the rule.
+Grafana performs one SQL update per alert rule after each evaluation. This update groups all alert instances belonging to the rule together and compresses them into a single protobuf-based row, which keeps database overhead low even for alert rules with many instances.
 
-You can change this behavior by disabling the `alertingSaveStateCompressed` feature flag. In this case, Grafana performs a separate SQL update for each state change of an alert instance. This configuration is rarely recommended, as it can add significant database overhead for alert rules with many instances.
+{{< admonition type="warning" >}}
+Earlier versions of Grafana wrote alert instance state to the database uncompressed, one row per instance, and let you opt in to compressed storage with the `alertingSaveStateCompressed` feature toggle. Grafana 13.2 removes that feature toggle and the uncompressed storage path entirely.
+
+If you're upgrading from a Grafana version where you had explicitly disabled `alertingSaveStateCompressed`, enable it and let Grafana run for at least one evaluation cycle _before_ you upgrade to Grafana 13.2 or later. Otherwise, any alert state still held in the old uncompressed format isn't read after the upgrade. This doesn't cause data loss beyond the alert state itself: Grafana re-evaluates every rule and rebuilds instance state from scratch, but you might see a brief, one-time gap in alert history and current state immediately after the upgrade.
+{{< /admonition >}}
 
 ### Save state periodically
 
 You can also reduce database load by writing states periodically instead of after every evaluation.
 
-There are two approaches for periodic state saving:
+Enable the `alertingSaveStatePeriodic` feature toggle to save alert states at the interval specified by `state_periodic_save_interval` instead of after every rule evaluation. Grafana groups all alert instances by rule UID and compresses them together for efficient storage.
 
-#### Compressed periodic saves
-
-You can combine compressed alert state storage with periodic saves by enabling both `alertingSaveStateCompressed` and `alertingSaveStatePeriodic` feature toggles together.
-
-This approach groups all alert instances by rule UID and compresses them together for efficient storage.
-
-When both feature toggles are enabled, Grafana will save compressed alert states at the interval specified by `state_periodic_save_interval`. Note that in compressed mode, the `state_periodic_save_batch_size` setting is ignored as the system groups instances by rule UID rather than by batch size.
-
-#### Batch-based periodic saves
-
-Alternatively, you can use batch-based periodic saves without compression:
-
-This approach processes individual alert instances in batches of a specified size.
-
-1. Enable the `alertingSaveStatePeriodic` feature toggle.
-1. Disable the `alertingSaveStateCompressed` feature toggle.
-
-By default, it saves the states every 5 minutes to the database and on each shutdown. The periodic interval
-can also be configured using the `state_periodic_save_interval` configuration flag. During this process, Grafana deletes all existing alert instances from the database and then writes the entire current set of instances back in batches in a single transaction.
-Configure the size of each batch using the `state_periodic_save_batch_size` configuration option.
-
-##### Jitter for batch-based periodic saves
-
-To further distribute database load, you can enable jitter for periodic state saves by setting `state_periodic_save_jitter_enabled = true`. When jitter is enabled, instead of saving all batches simultaneously, Grafana spreads the batch writes across a calculated time window of 85% of the save interval.
-
-**How jitter works:**
-
-- Calculates delays for each batch: `delay = (batchIndex * timeWindow) / (totalBatches - 1)`
-- Time window uses 85% of save interval for safety margin
-- Batches are evenly distributed across the time window
-- All operations occur within a single database transaction
-
-**Configuration example:**
+By default, Grafana saves the states every 5 minutes and on each shutdown. Note that `state_periodic_save_batch_size` and `state_periodic_save_jitter_enabled` don't apply here, since Grafana groups instances by rule UID rather than by batch.
 
 ```ini
 [unified_alerting]
-state_periodic_save_jitter_enabled = true
 state_periodic_save_interval = 1m
-state_periodic_save_batch_size = 100
 ```
-
-**Performance impact:**
-For 2000 alert instances with 1-minute interval and 100 batch size:
-
-- Creates 20 batches (2000 ÷ 100)
-- Spreads writes across 51 seconds (85% of 60s)
-- Batch writes occur every ~2.68 seconds
-
-This helps reduce database load spikes in environments with high alert cardinality by distributing writes over time rather than concentrating them at the beginning of each save cycle.
-
-The time it takes to write to the database periodically can be monitored using the `state_full_sync_duration_seconds` metric
-that is exposed by Grafana.
 
 If Grafana crashes or is force killed, then the database can be up to `state_periodic_save_interval` seconds out of date.
 When Grafana restarts, the UI might show incorrect state for some alerts until the alerts are re-evaluated.
