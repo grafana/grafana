@@ -34,13 +34,12 @@
       "border": "palette.violet900"
     },
     "accent": {
-      "main": "palette.orange500",
-      "text": "palette.orange500",
-      "textEmphasis": "palette.orange400",
+      "main": "palette.orange400",
+      "text": "palette.orange400",
+      "textEmphasis": "palette.orange500",
       "background": "palette.orange950",
       "backgroundEmphasis": "palette.orange800",
-      "border": "palette.orange800",
-      "contrastText": "palette.black"
+      "border": "palette.orange800"
     },
     "error": {
       "main": "palette.red400",
@@ -94,7 +93,7 @@
       "selected": "hsl(from palette.ink100 h s l / 0.10)",
       "hover": "hsl(from palette.ink100 h s l / 0.07)",
       "focus": "hsl(from palette.ink100 h s l / 0.07)",
-      "selectedBorder": "palette.orange500"
+      "selectedBorder": "palette.orange400"
     }
   },
   "shape": {
