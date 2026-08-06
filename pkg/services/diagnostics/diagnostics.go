@@ -137,7 +137,11 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 			// only trace of the drop is the truncated/limitBytes/originalBytes fields inside
 			// querydata.json itself -- easy to miss next to an actual encode failure, which does get a
 			// querydata-error.txt. Record it the same way so either cause leaves a visible trail.
-			queryDataErr = errors.Join(queryDataErr, fmt.Errorf("querydata.json was truncated: response exceeded the %d-byte size limit", maxQueryDataArtifactBytes))
+			//
+			// "request and/or response" rather than naming one side: truncated can fire with no response
+			// at all (an oversized request on its own), so blaming "the response" unconditionally would
+			// contradict querydata.json's own responseOmitted/requestOmitted markers in that case.
+			queryDataErr = errors.Join(queryDataErr, fmt.Errorf("querydata.json was truncated: request and/or response exceeded the %d-byte size limit", maxQueryDataArtifactBytes))
 		}
 		if err != nil {
 			// A query-data artifact that cannot be fully JSON-encoded must not sink the whole bundle:
@@ -489,7 +493,12 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 						// the other two QueryDataTruncated branches above, nothing else here would otherwise
 						// explain why. Without a message, QueryDataError stays empty and the manifest reads
 						// as if this panel's query data is complete.
-						queryDataErrs = append(queryDataErrs, fmt.Sprintf("querydata.json was truncated: response exceeded its %d-byte assigned budget", queryDataLimit))
+						//
+						// "request and/or response" rather than naming one side: truncated can fire with no
+						// response at all (an oversized request on its own), so blaming "the response"
+						// unconditionally would contradict querydata.json's own responseOmitted/requestOmitted
+						// markers in that case.
+						queryDataErrs = append(queryDataErrs, fmt.Sprintf("querydata.json was truncated: request and/or response exceeded its %d-byte assigned budget", queryDataLimit))
 					}
 				}
 			}
