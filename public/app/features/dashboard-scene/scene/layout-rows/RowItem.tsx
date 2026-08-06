@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { store } from '@grafana/data';
+import { locationUtil, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, logWarning } from '@grafana/runtime';
+import { config, locationService, logWarning } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   sceneGraph,
@@ -44,6 +44,7 @@ import { useSidebarOptions } from './RowItemEditor';
 import { RowItemRenderer } from './RowItemRenderer';
 import { RowItems } from './RowItems';
 import { RowsLayoutManager } from './RowsLayoutManager';
+import { getRowSlugPath } from './scrollToRow';
 
 export interface RowItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
@@ -136,6 +137,15 @@ export class RowItem
           .filter((item): item is RowItem => item instanceof RowItem)
       : [];
     return getSlugForRowOrTab(this, siblings);
+  }
+
+  /** Returns an absolute url that scrolls this row into view when the dashboard is opened */
+  public getUrl(): string {
+    const urlWithRowParam = locationUtil.getUrlForPartial(locationService.getLocation(), {
+      srow: getRowSlugPath(this),
+    });
+
+    return new URL(urlWithRowParam, window.location.origin).toString();
   }
 
   public switchLayout(layout: DashboardLayoutManager) {

@@ -6039,6 +6039,7 @@
       "new-row-title": "New row",
       "row": {
         "collapse": "Collapse row {{title}}",
+        "copy-link": "Copy link to row",
         "expand": "Expand row {{title}}",
         "new": "New row",
         "repeat": {
