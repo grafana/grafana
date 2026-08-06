@@ -220,6 +220,8 @@ server.listen(PORT, () => {
   console.log(`[assistant-dify-proxy] Dify API: ${API_BASE}`);
   console.log(`[assistant-dify-proxy] API key: ${API_KEY ? 'configured' : 'MISSING — set DIFY_API_KEY in .dify.env'}`);
   console.log(
-    `[assistant-dify-proxy] Embed: ${EMBED_URL ? EMBED_URL : 'MISSING — set DIFY_EMBED_TOKEN in .dify.env (Publish → Embed)'}`
+    `[assistant-dify-proxy] Embed: ${
+      EMBED_URL ? 'configured' : 'MISSING — set DIFY_EMBED_TOKEN or DIFY_EMBED_URL in .dify.env (Publish → Embed)'
+    }`
   );
 });

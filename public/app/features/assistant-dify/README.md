@@ -13,14 +13,14 @@ Dify’s embed/iframe ships its own chat UI. To keep the **exact** Grafana Assis
 1. Create a free account / app at [cloud.dify.ai](https://cloud.dify.ai)
 2. Create a **Chatbot** app and enable **Speech-to-text** in the app features
 3. Copy the app **API Key**
-4. In the Grafana repo root:
+4. In the Grafana repo root (keys stay **local** — `.dify.env` is gitignored and must never be committed):
 
 ```bash
 cp .dify.env.example .dify.env
 # edit .dify.env and set DIFY_API_KEY=app-...
 ```
 
-5. Start the proxy (keeps the key off the browser):
+5. Start the proxy (keeps the key off the browser and out of git):
 
 ```bash
 node scripts/assistant-dify-proxy.mjs
