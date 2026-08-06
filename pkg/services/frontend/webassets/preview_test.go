@@ -89,7 +89,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 	t.Run("should fetch the manifest and prefix all asset URLs", func(t *testing.T) {
 		fswebassets.ResetPreviewAssetsCache()
 		server := newBucketServer(t, "pr_grafana_42", nil)
-		preview := fswebassets.PreviewAssetsConfig{Enabled: true, BaseURL: server.URL + "/"}
+		preview := fswebassets.PreviewAssetsConfig{BaseURL: server.URL + "/", AllowedNamespaces: []string{"stacks-123"}}
 
 		assets, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_42")
 		require.NoError(t, err)
@@ -106,7 +106,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 		fswebassets.ResetPreviewAssetsCache()
 		var requests atomic.Int64
 		server := newBucketServer(t, "pr_grafana_42", &requests)
-		preview := fswebassets.PreviewAssetsConfig{Enabled: true, BaseURL: server.URL + "/"}
+		preview := fswebassets.PreviewAssetsConfig{BaseURL: server.URL + "/", AllowedNamespaces: []string{"stacks-123"}}
 
 		for range 3 {
 			_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_42")
@@ -116,7 +116,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 		assert.Equal(t, int64(1), requests.Load(), "manifest should only be fetched once within the cache TTL")
 	})
 
-	t.Run("should error when the feature is not enabled", func(t *testing.T) {
+	t.Run("should error when the feature is not configured", func(t *testing.T) {
 		fswebassets.ResetPreviewAssetsCache()
 		_, err := fswebassets.GetPreviewWebAssets(context.Background(), fswebassets.PreviewAssetsConfig{}, "pr_grafana_42")
 		assert.Error(t, err)
@@ -125,7 +125,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 	t.Run("should error when the manifest does not exist", func(t *testing.T) {
 		fswebassets.ResetPreviewAssetsCache()
 		server := newBucketServer(t, "pr_grafana_42", nil)
-		preview := fswebassets.PreviewAssetsConfig{Enabled: true, BaseURL: server.URL + "/"}
+		preview := fswebassets.PreviewAssetsConfig{BaseURL: server.URL + "/", AllowedNamespaces: []string{"stacks-123"}}
 
 		_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_999")
 		assert.Error(t, err)
@@ -135,7 +135,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 		fswebassets.ResetPreviewAssetsCache()
 		var requests atomic.Int64
 		server := newBucketServer(t, "pr_grafana_42", &requests)
-		preview := fswebassets.PreviewAssetsConfig{Enabled: true, BaseURL: server.URL + "/"}
+		preview := fswebassets.PreviewAssetsConfig{BaseURL: server.URL + "/", AllowedNamespaces: []string{"stacks-123"}}
 
 		for range 3 {
 			_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_999")
@@ -156,7 +156,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 			_, _ = w.Write([]byte(previewManifest))
 		}))
 		t.Cleanup(server.Close)
-		preview := fswebassets.PreviewAssetsConfig{Enabled: true, BaseURL: server.URL + "/"}
+		preview := fswebassets.PreviewAssetsConfig{BaseURL: server.URL + "/", AllowedNamespaces: []string{"stacks-123"}}
 
 		var wg sync.WaitGroup
 		for range 5 {
@@ -182,7 +182,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 			_, _ = w.Write([]byte(previewManifest))
 		}))
 		t.Cleanup(server.Close)
-		preview := fswebassets.PreviewAssetsConfig{Enabled: true, BaseURL: server.URL + "/"}
+		preview := fswebassets.PreviewAssetsConfig{BaseURL: server.URL + "/", AllowedNamespaces: []string{"stacks-123"}}
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -207,7 +207,6 @@ func TestGetPreviewWebAssets(t *testing.T) {
 
 func TestNamespaceAllowed(t *testing.T) {
 	cfg := fswebassets.PreviewAssetsConfig{
-		Enabled:           true,
 		BaseURL:           "https://storage.example.com/bucket/",
 		AllowedNamespaces: []string{"stacks-123", "stacks-456"},
 	}
@@ -217,19 +216,19 @@ func TestNamespaceAllowed(t *testing.T) {
 	assert.False(t, cfg.NamespaceAllowed("stacks-789"))
 	assert.False(t, cfg.NamespaceAllowed(""), "requests without a namespace must fail closed")
 
-	empty := fswebassets.PreviewAssetsConfig{Enabled: true, BaseURL: "https://storage.example.com/"}
+	empty := fswebassets.PreviewAssetsConfig{BaseURL: "https://storage.example.com/"}
 	assert.False(t, empty.NamespaceAllowed("stacks-123"), "an empty allowlist must not allow any namespace")
+	assert.False(t, empty.Active(), "an empty allowlist must disable the feature entirely")
 }
 
 func TestReadPreviewAssetsConfig(t *testing.T) {
 	raw := ini.Empty()
 	sec := raw.Section("frontend_service")
-	sec.Key("preview_assets_enabled").SetValue("true")
 	sec.Key("preview_assets_base_url").SetValue("https://storage.example.com/bucket/")
 	sec.Key("preview_assets_allowed_namespaces").SetValue("stacks-123, stacks-456")
 
 	cfg := fswebassets.ReadPreviewAssetsConfig(&setting.Cfg{Raw: raw})
-	assert.True(t, cfg.Enabled)
+	assert.True(t, cfg.Active())
 	assert.Equal(t, "https://storage.example.com/bucket/", cfg.BaseURL)
 	assert.Equal(t, []string{"stacks-123", "stacks-456"}, cfg.AllowedNamespaces)
 }

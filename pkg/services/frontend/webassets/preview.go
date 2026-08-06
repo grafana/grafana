@@ -31,16 +31,14 @@ const (
 // preview build instead of the release assets.
 // Should NEVER be enabled in production.
 type PreviewAssetsConfig struct {
-	Enabled bool
 	BaseURL string
 
-	// Second lock: even with the feature enabled, only these namespaces serve
-	// preview assets. Empty means no namespace is allowed.
+	// Only these namespaces serve preview assets; empty disables the feature.
 	AllowedNamespaces []string
 }
 
 func (c PreviewAssetsConfig) Active() bool {
-	return c.Enabled && c.BaseURL != ""
+	return c.BaseURL != "" && len(c.AllowedNamespaces) > 0
 }
 
 // NamespaceAllowed reports whether a stack has opted in. Fails closed: requests
@@ -54,7 +52,6 @@ func (c PreviewAssetsConfig) NamespaceAllowed(namespace string) bool {
 func ReadPreviewAssetsConfig(cfg *setting.Cfg) PreviewAssetsConfig {
 	sec := cfg.SectionWithEnvOverrides("frontend_service")
 	return PreviewAssetsConfig{
-		Enabled:           sec.Key("preview_assets_enabled").MustBool(false),
 		BaseURL:           sec.Key("preview_assets_base_url").String(),
 		AllowedNamespaces: util.SplitString(sec.Key("preview_assets_allowed_namespaces").String()),
 	}
@@ -110,7 +107,7 @@ func ResetPreviewAssetsCache() {
 // asset URLs rooted at the preview location.
 func GetPreviewWebAssets(ctx context.Context, preview PreviewAssetsConfig, folder string) (dtos.EntryPointAssets, error) {
 	if !preview.Active() {
-		return dtos.EntryPointAssets{}, fmt.Errorf("preview assets are not enabled")
+		return dtos.EntryPointAssets{}, fmt.Errorf("preview assets are not configured")
 	}
 
 	assetsURL, err := ResolvePreviewAssetsURL(preview.BaseURL, folder)
