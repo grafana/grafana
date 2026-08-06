@@ -107,8 +107,7 @@ export function LabelsColumn() {
           {open && (
             <Button
               size="sm"
-              variant="primary"
-              fill="text"
+              variant="secondary"
               onClick={clearAllFilters}
               disabled={!hasActiveFilters}
               data-testid={selectors.pages.Alerting.Triage.clearFiltersButton}

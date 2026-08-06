@@ -58,7 +58,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
       </Stack>
 
       {allowConfiguration && (
-        <Button size={'xs'} fill="text" onClick={() => setShowConfig((showConfig) => !showConfig)}>
+        <Button size={'xs'} variant="secondary" onClick={() => setShowConfig((showConfig) => !showConfig)}>
           {showConfig
             ? t('nodeGraph.view-controls.hide-config', 'Hide config')
             : t('nodeGraph.view-controls.show-config', 'Show config')}

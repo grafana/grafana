@@ -629,7 +629,7 @@ const FlameGraphCallTreeContainer = memo(
                     </span>
                     <Button
                       icon="angle-up"
-                      fill="text"
+                      variant="secondary"
                       size="sm"
                       onClick={navigateToPrevMatch}
                       tooltip="Previous match"
@@ -637,7 +637,7 @@ const FlameGraphCallTreeContainer = memo(
                     />
                     <Button
                       icon="angle-down"
-                      fill="text"
+                      variant="secondary"
                       size="sm"
                       onClick={navigateToNextMatch}
                       tooltip="Next match"

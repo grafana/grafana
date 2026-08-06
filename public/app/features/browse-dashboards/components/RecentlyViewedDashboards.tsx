@@ -86,7 +86,7 @@ export function RecentlyViewedDashboards() {
               Recently viewed dashboards couldn’t be loaded.
             </Trans>
           </Text>
-          <Button onClick={retry} size="xs" fill="text">
+          <Button onClick={retry} size="xs" variant="secondary">
             {t('browse-dashboards.recently-viewed.retry', 'Retry')}
           </Button>
         </>

@@ -48,7 +48,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
   return (
     <div className={styles.container}>
       {value.length > 0 && (
-        <Button size="xs" icon="trash-alt" fill="text" className={styles.clear} onClick={() => onChange([])}>
+        <Button size="xs" icon="trash-alt" variant="secondary" className={styles.clear} onClick={() => onChange([])}>
           <Trans i18nKey="panel-type-filter.clear-button">Clear types</Trans>
         </Button>
       )}

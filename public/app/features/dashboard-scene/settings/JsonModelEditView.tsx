@@ -310,7 +310,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
           <Trans i18nKey="dashboard-scene.dashboard-settings.json.description-moved">
             The JSON model has moved to the dashboard&apos;s sidebar, under &quot;Edit as code&quot;.
           </Trans>
-          <Button onClick={goToSidebar} fill="text" variant="primary" size="md">
+          <Button onClick={goToSidebar} variant="secondary" size="md">
             <Trans i18nKey="dashboard-scene.dashboard-settings.json.button-moved">Take me there</Trans>
           </Button>
         </Alert>

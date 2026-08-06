@@ -61,7 +61,7 @@ export const AbstractList = <T,>({
       })}
       {curLimit > 0 && items.length > curLimit && (
         <li className={styles.item} key="__limit">
-          <Button fill="text" variant="primary" size="sm" onClick={() => setLimit(0)}>
+          <Button variant="secondary" size="sm" onClick={() => setLimit(0)}>
             <Trans i18nKey={'legend.container.show-all-series'}>...show all {{ total: items.length }} items</Trans>
           </Button>
         </li>

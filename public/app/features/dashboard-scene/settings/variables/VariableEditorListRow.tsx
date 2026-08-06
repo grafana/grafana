@@ -65,7 +65,7 @@ export function VariableEditorListRow({
           <td role="gridcell" className={styles.column}>
             <Button
               size="xs"
-              fill="text"
+              variant="secondary"
               onClick={(event) => {
                 event.preventDefault();
                 propsOnEdit(identifier);

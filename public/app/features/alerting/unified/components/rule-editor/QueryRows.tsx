@@ -310,7 +310,7 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
               key="details"
               onClick={toggleDetails}
               icon={showDetails ? 'angle-up' : 'angle-down'}
-              fill="text"
+              variant="secondary"
               size="sm"
             >
               <Trans i18nKey="alerting.datasource-not-found.show-details">Show details</Trans>

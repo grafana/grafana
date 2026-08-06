@@ -52,7 +52,7 @@ export function StartInvestigationButton({
             'Waiting for alert details before starting an investigation.'
           )}
         >
-          <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" disabled>
+          <Button icon="ai-sparkle" variant="secondary" size="sm" disabled>
             <Trans i18nKey="alerting.triage.instance-details-drawer.start-investigation">Start investigation</Trans>
           </Button>
         </Tooltip>
@@ -78,7 +78,7 @@ export function StartInvestigationButton({
             'Could not check for an existing investigation. Try again.'
           )}
         >
-          <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={view.onRetry}>
+          <Button icon="ai-sparkle" variant="secondary" size="sm" onClick={view.onRetry}>
             <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-lookup-retry">Retry check</Trans>
           </Button>
         </Tooltip>
@@ -88,8 +88,7 @@ export function StartInvestigationButton({
       return (
         <LinkButton
           icon="file-alt"
-          variant="primary"
-          fill="text"
+          variant="secondary"
           size="sm"
           href={view.href}
           target="_blank"
@@ -104,7 +103,7 @@ export function StartInvestigationButton({
 
     case 'starting':
       return (
-        <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" disabled>
+        <Button icon="ai-sparkle" variant="secondary" size="sm" disabled>
           <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-starting">Starting…</Trans>
         </Button>
       );
@@ -117,7 +116,7 @@ export function StartInvestigationButton({
             'Could not start the investigation. Try again.'
           )}
         >
-          <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={view.onStart}>
+          <Button icon="ai-sparkle" variant="secondary" size="sm" onClick={view.onStart}>
             <Trans i18nKey="alerting.triage.instance-details-drawer.start-investigation">Start investigation</Trans>
           </Button>
         </Tooltip>
@@ -132,14 +131,13 @@ export function StartInvestigationButton({
               'The investigation report failed or was cancelled. You can open it or try again.'
             )}
           >
-            <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={view.onStart}>
+            <Button icon="ai-sparkle" variant="secondary" size="sm" onClick={view.onStart}>
               <Trans i18nKey="alerting.triage.instance-details-drawer.start-investigation">Start investigation</Trans>
             </Button>
           </Tooltip>
           <LinkButton
             icon="file-alt"
-            variant="primary"
-            fill="text"
+            variant="secondary"
             size="sm"
             href={view.href}
             target="_blank"
@@ -162,14 +160,13 @@ export function StartInvestigationButton({
               'Could not refresh investigation status. Try again.'
             )}
           >
-            <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={view.onRetry}>
+            <Button icon="ai-sparkle" variant="secondary" size="sm" onClick={view.onRetry}>
               <Trans i18nKey="alerting.triage.instance-details-drawer.investigation-poll-retry">Retry status</Trans>
             </Button>
           </Tooltip>
           <LinkButton
             icon="comment-alt"
-            variant="primary"
-            fill="text"
+            variant="secondary"
             size="sm"
             href={view.href}
             target="_blank"
@@ -194,8 +191,7 @@ export function StartInvestigationButton({
           </Text>
           <LinkButton
             icon="comment-alt"
-            variant="primary"
-            fill="text"
+            variant="secondary"
             size="sm"
             href={view.href}
             target="_blank"
@@ -217,7 +213,7 @@ export function StartInvestigationButton({
             'Assistant will draft it in your workspace'
           )}
         >
-          <Button icon="ai-sparkle" variant="primary" fill="text" size="sm" onClick={view.onStart}>
+          <Button icon="ai-sparkle" variant="secondary" size="sm" onClick={view.onStart}>
             <Trans i18nKey="alerting.triage.instance-details-drawer.start-investigation">Start investigation</Trans>
           </Button>
         </Tooltip>

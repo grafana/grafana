@@ -128,7 +128,7 @@ export const SignupPage = ({ queryParams }: Props) => {
             <Button type="submit">
               <Trans i18nKey="sign-up.submit-button">Submit</Trans>
             </Button>
-            <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
+            <LinkButton variant="secondary" href={getConfig().appSubUrl + '/login'}>
               <Trans i18nKey="sign-up.back-button">Back to login</Trans>
             </LinkButton>
           </Stack>

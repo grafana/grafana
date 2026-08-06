@@ -72,7 +72,7 @@ export const ResourcePicker = (props: Props) => {
       return <SanitizedSVG src={sanitizedSrc} className={styles.icon} style={{ ...colorStyle }} />;
     } else {
       return (
-        <LinkButton variant="primary" fill="text" size="sm">
+        <LinkButton variant="secondary" size="sm">
           <Trans i18nKey="dimensions.resource-picker.render-small-resource-picker.set-icon">Set icon</Trans>
         </LinkButton>
       );

@@ -58,7 +58,7 @@ const LoginPage = () => {
                       {!config.auth.disableLogin && (
                         <LinkButton
                           className={styles.forgottenPassword}
-                          fill="text"
+                          variant="secondary"
                           href={`${config.appSubUrl}/user/password/send-reset-email`}
                         >
                           <Trans i18nKey="login.forgot-password">Forgot your password?</Trans>

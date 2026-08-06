@@ -319,8 +319,7 @@ export function VariableOptionsSpreadsheet(props: VariableOptionsSpreadsheetProp
           <Stack direction="row" gap={1}>
             <Button
               icon="plus"
-              variant="primary"
-              fill="text"
+              variant="secondary"
               onClick={handleAdd}
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton}
               aria-label={t('dashboard-scene.query-variable-editor.spreadsheet.add-option', 'Add new option')}

@@ -405,8 +405,7 @@ export function ToolbarActions({ dashboard }: Props) {
         tooltip={t('dashboard.toolbar.exit-edit-mode.tooltip', 'Exits edit mode and discards unsaved changes')}
         size="sm"
         key="discard"
-        fill="text"
-        variant="primary"
+        variant="secondary"
         data-testid={selectors.components.NavToolbar.editDashboard.exitButton}
       >
         <Trans i18nKey="dashboard.toolbar.exit-edit-mode.label">Exit edit</Trans>

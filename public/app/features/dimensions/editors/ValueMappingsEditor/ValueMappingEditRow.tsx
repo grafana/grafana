@@ -269,7 +269,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             {!result.color && (
               <ColorPicker color={'gray'} onChange={onChangeColor} enableNamedColors={true}>
                 {(props) => (
-                  <Button variant="primary" fill="text" onClick={props.showColorPicker} ref={props.ref} size="sm">
+                  <Button variant="secondary" onClick={props.showColorPicker} ref={props.ref} size="sm">
                     <Trans i18nKey="dimensions.value-mapping-edit-row.set-color">Set color</Trans>
                   </Button>
                 )}

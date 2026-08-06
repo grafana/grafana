@@ -131,7 +131,7 @@ export function FunctionCellWithExpander({
     <div className={styles.functionCellContainer}>
       {connector && <span className={styles.treeConnector}>{connector} </span>}
       <span className={styles.functionNameWrapper}>
-        <Button fill="text" size="sm" onClick={handleClick} className={styles.functionButton}>
+        <Button variant="secondary" size="sm" onClick={handleClick} className={styles.functionButton}>
           {value}
         </Button>
         {!compact && row.original.children && row.original.children.length > 0 && (

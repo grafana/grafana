@@ -128,7 +128,7 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
             suffix={
               <Button
                 size="sm"
-                fill="text"
+                variant="secondary"
                 icon="times"
                 tooltip={t('dashboard.auto-grid.options.min-width-custom-clear', 'Back to standard min column width')}
                 onClick={onClearCustomMinWidth}
@@ -246,7 +246,7 @@ function GridLayoutRows({ layoutManager }: { layoutManager: AutoGridLayoutManage
             suffix={
               <Button
                 size="sm"
-                fill="text"
+                variant="secondary"
                 icon="times"
                 tooltip={t('dashboard.auto-grid.options.min-width-custom-clear', 'Back to standard min column width')}
                 onClick={onClearCustomRowHeight}

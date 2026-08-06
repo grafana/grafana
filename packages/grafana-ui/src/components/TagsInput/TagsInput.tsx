@@ -101,7 +101,7 @@ export const TagsInput = forwardRef<HTMLInputElement, Props>(
           maxLength={maxLength}
           suffix={
             <Button
-              fill="text"
+              variant="secondary"
               className={styles.addButtonStyle}
               onClick={onAdd}
               size="md"

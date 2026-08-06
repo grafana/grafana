@@ -75,8 +75,7 @@ const EmailList = ({
                 </Button>
                 <Button
                   type="button"
-                  variant="primary"
-                  fill="text"
+                  variant="secondary"
                   title={t('public-dashboard.email-sharing.resend-button-title', 'Resend')}
                   size="sm"
                   disabled={isLoading}

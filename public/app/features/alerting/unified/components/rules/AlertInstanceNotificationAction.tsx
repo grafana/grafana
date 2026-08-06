@@ -163,7 +163,7 @@ export const AlertInstanceNotificationAction = ({
               </Stack>
             }
           >
-            <Button fill="text" variant="primary" size="sm">
+            <Button variant="secondary" size="sm">
               <Trans
                 i18nKey="alerting.alert-instance-extension-point.n-contact-points"
                 count={policyReceivers.length}

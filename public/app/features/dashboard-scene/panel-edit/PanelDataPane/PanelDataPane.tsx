@@ -89,9 +89,8 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           <div className={styles.tryNewEditorWrapper}>
             <Button
               size="sm"
-              fill="text"
               icon="flask"
-              variant="primary"
+              variant="secondary"
               onClick={model.onTryNewEditor}
               tooltip={t('panel-data-pane.try-new-editor.tooltip', 'Switch to the new query editor experience')}
             >

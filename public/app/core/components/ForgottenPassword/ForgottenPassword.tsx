@@ -77,7 +77,7 @@ export const ForgottenPassword = () => {
         <Button type="submit">
           <Trans i18nKey="forgot-password.send-email-button">Send reset email</Trans>
         </Button>
-        <LinkButton fill="text" href={loginHref}>
+        <LinkButton variant="secondary" href={loginHref}>
           <Trans i18nKey="forgot-password.back-button">Back to login</Trans>
         </LinkButton>
       </Stack>

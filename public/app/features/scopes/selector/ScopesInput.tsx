@@ -186,7 +186,7 @@ export function ScopesTooltip({ nodes, scopes, appliedScopes, onRemoveAllClick, 
           name="times"
           data-testid="scopes-selector-input-clear"
           size="sm"
-          fill="text"
+          variant="secondary"
           icon="times"
         >
           <Trans i18nKey="scopes.selector.input.remove-all">Remove all</Trans>
