@@ -42,6 +42,11 @@ const DefaultInterval = time.Minute
 // poll interval — long enough to ride out transient Vertex hiccups.
 const maxEventAttempts = 5
 
+// embeddingCountInterval is how often the lock holder samples stored row
+// counts for the vector_storage_embeddings_stored gauge. COUNT(*) is a full
+// aggregate scan, so this stays far above the reconcile interval.
+const embeddingCountInterval = 10 * time.Minute
+
 // defaultLockRetryInterval is how long Run waits between attempts to
 // acquire the reconciler advisory lock when another replica holds it.
 // The loser is idle anyway, so longer intervals reduce churn against
@@ -235,6 +240,17 @@ func (s *Reconciler) Run(ctx context.Context) error {
 		}()
 	}
 
+	// Gauge sampling runs only on the lock holder so the aggregate scan
+	// happens once per cluster rather than once per replica.
+	if s.metrics != nil {
+		countsDone := make(chan struct{})
+		defer func() { <-countsDone }()
+		go func() {
+			defer close(countsDone)
+			s.runEmbeddingCounts(ctx)
+		}()
+	}
+
 	// Subscribe before startupReconcile so events between the
 	// startupReconcile snapshot and the subscription join can't slip through;
 	// the broadcaster's replay buffer covers the brief overlap.
@@ -293,6 +309,36 @@ func (s *Reconciler) acquireLockBlocking(ctx context.Context) (func(), error) {
 			return nil, ctx.Err()
 		case <-time.After(s.lockRetryInterval):
 		}
+	}
+}
+
+func (s *Reconciler) runEmbeddingCounts(ctx context.Context) {
+	t := time.NewTicker(embeddingCountInterval)
+	defer t.Stop()
+	for {
+		s.recordEmbeddingCounts(ctx)
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+		}
+	}
+}
+
+// recordEmbeddingCounts refreshes the stored-embedding gauge. Reset drops
+// label pairs that no longer exist — e.g. the superseded model after a
+// rollout — instead of pinning them at their last observed value.
+func (s *Reconciler) recordEmbeddingCounts(ctx context.Context) {
+	counts, err := s.vectorBackend.CountStoredEmbeddings(ctx)
+	if err != nil {
+		if ctx.Err() == nil {
+			s.log.Warn("reconciler: count stored embeddings", "err", err)
+		}
+		return
+	}
+	s.metrics.EmbeddingsStored.Reset()
+	for _, c := range counts {
+		s.metrics.EmbeddingsStored.WithLabelValues(c.Resource, c.Model).Set(float64(c.Count))
 	}
 }
 
