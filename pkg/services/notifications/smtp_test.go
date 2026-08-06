@@ -82,6 +82,31 @@ func TestBuildMail(t *testing.T) {
 		email := sc.buildEmail(ctx, message)
 		assert.NotEmpty(t, email.GetHeader("traceparent"))
 	})
+
+	t.Run("send continues after one message fails", func(t *testing.T) {
+		tracer := tracing.InitializeTracerForTest()
+		ctx, span := tracer.Start(ctx, "notifications.SmtpClient.SendContext")
+		defer span.End()
+
+		msgs := []*Message{
+			{From: "from@example.com", To: []string{"rcpt1@example.com"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+			{From: "from@example.com", To: []string{"invalid-address"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+			{From: "from@example.com", To: []string{"rcpt3@example.com"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+		}
+
+		// The second message has an invalid address (gomail rejects it).
+		// The fix must continue sending the third message despite the error.
+		count, err := client.Send(ctx, msgs...)
+		require.NoError(t, err)
+		assert.Equal(t, 2, count)
+
+		messages, err := srv.WaitForMessagesAndPurge(2, 5*time.Second)
+		require.NoError(t, err)
+		assert.Len(t, messages, 2)
+	})
 }
 
 func TestSmtpDialer(t *testing.T) {
@@ -149,6 +174,31 @@ func TestSmtpDialer(t *testing.T) {
 
 		require.Equal(t, 0, count)
 		require.EqualError(t, err, "could not load cert or key file: open /var/certs/does-not-exist.pem: no such file or directory")
+	})
+
+	t.Run("send continues after one message fails", func(t *testing.T) {
+		tracer := tracing.InitializeTracerForTest()
+		ctx, span := tracer.Start(ctx, "notifications.SmtpClient.SendContext")
+		defer span.End()
+
+		msgs := []*Message{
+			{From: "from@example.com", To: []string{"rcpt1@example.com"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+			{From: "from@example.com", To: []string{"invalid-address"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+			{From: "from@example.com", To: []string{"rcpt3@example.com"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+		}
+
+		// The second message has an invalid address (gomail rejects it).
+		// The fix must continue sending the third message despite the error.
+		count, err := client.Send(ctx, msgs...)
+		require.NoError(t, err)
+		assert.Equal(t, 2, count)
+
+		messages, err := srv.WaitForMessagesAndPurge(2, 5*time.Second)
+		require.NoError(t, err)
+		assert.Len(t, messages, 2)
 	})
 }
 
@@ -340,5 +390,30 @@ func TestSmtpSend(t *testing.T) {
 
 			assert.True(t, found)
 		}
+	})
+
+	t.Run("send continues after one message fails", func(t *testing.T) {
+		tracer := tracing.InitializeTracerForTest()
+		ctx, span := tracer.Start(ctx, "notifications.SmtpClient.SendContext")
+		defer span.End()
+
+		msgs := []*Message{
+			{From: "from@example.com", To: []string{"rcpt1@example.com"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+			{From: "from@example.com", To: []string{"invalid-address"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+			{From: "from@example.com", To: []string{"rcpt3@example.com"},
+				Subject: "subject", Body: map[string]string{"text/plain": "hello world"}},
+		}
+
+		// The second message has an invalid address (gomail rejects it).
+		// The fix must continue sending the third message despite the error.
+		count, err := client.Send(ctx, msgs...)
+		require.NoError(t, err)
+		assert.Equal(t, 2, count)
+
+		messages, err := srv.WaitForMessagesAndPurge(2, 5*time.Second)
+		require.NoError(t, err)
+		assert.Len(t, messages, 2)
 	})
 }
