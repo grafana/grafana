@@ -135,11 +135,12 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
 
       const delimiter = tz.name.indexOf('/');
       const group = delimiter === -1 ? '' : tz.name.slice(0, delimiter);
-      const info = getTimeZoneDisplayInfo(tz.name, now);
-
-      if (info) {
-        pushOption(group, tz.name, info, legacyNames.get(tz.name));
-      }
+      pushOption(
+        group,
+        tz.name,
+        { name: tz.name, abbreviation: tz.abbr, offset: tz.offsetDisplay },
+        legacyNames.get(tz.name)
+      );
     }
 
     return Array.from(groups, ([label, options]) => ({ label, options }));
@@ -160,7 +161,7 @@ const useSelectedTimeZone = (
     // Options are keyed by canonical IANA ids, but the incoming value may use
     // a legacy spelling (e.g. Asia/Calcutta persisted by an older Grafana or
     // returned by Chrome's Intl).
-    const tz = canonicalZoneName(timeZone, Date.now()).toLowerCase();
+    const tz = canonicalZoneName(timeZone).toLowerCase();
 
     for (const group of groups) {
       const option = group.options.find((option) => option.value?.toLowerCase() === tz);

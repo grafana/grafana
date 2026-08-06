@@ -33,14 +33,14 @@ export declare function getTimeZonesAt(timestamp: number, withAliases?: boolean)
  * Accepts any name the list contains, plus the fixed-offset ids ICU accepts
  * but doesn't enumerate: `UTC`, `Etc/UTC`, and `Etc/GMT+1`..`+12` /
  * `Etc/GMT-1`..`-14` (POSIX sign inversion — `Etc/GMT+5` is UTC-05:00).
- * Any other unknown name resolves to a UTC sentinel.
+ * Any other unknown name returns `undefined`.
  *
  * `withAliases: false` resolves a legacy `name` as its canonical zone, so
  * the result never carries an `aliasOf` — note that its `name` is then the
  * canonical spelling, not the one passed in. Canonical, fixed-offset and
  * unknown names are unaffected.
  */
-export declare function getTimeZoneAt(name: string, timestamp: number, withAliases?: boolean): TimeZoneInfo;
+export declare function getTimeZoneAt(name: string, timestamp: number, withAliases?: boolean): TimeZoneInfo | undefined;
 
 /**
  * All zones at the current instant (Date.now()) — a no-timestamp convenience
@@ -61,7 +61,7 @@ export declare function getTimeZones(withAliases?: boolean): TimeZoneInfo[];
  * getTimeZoneAt(), including the fixed-offset Etc ids. Not memoized — the
  * result is an interned instance, so each call allocates nothing.
  */
-export declare function getTimeZone(name: string, withAliases?: boolean): TimeZoneInfo;
+export declare function getTimeZone(name: string, withAliases?: boolean): TimeZoneInfo | undefined;
 
 /**
  * Drops the hour-bucket memo so the next call recomputes (first-call

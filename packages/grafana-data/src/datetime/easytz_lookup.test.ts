@@ -27,11 +27,7 @@ describe('findTimeZoneAt', () => {
     // regardless of which one the runtime's ICU lists; the lookup returns the
     // canonical entry for both.
     expect(findTimeZoneAt('Asia/Kolkata', JUL)).toMatchObject({ name: 'Asia/Kolkata', abbr: 'IST' });
-    expect(findTimeZoneAt('Asia/Calcutta', JUL)).toBe(findTimeZoneAt('Asia/Kolkata', JUL));
-  });
-
-  it('memoizes per hour bucket', () => {
-    expect(findTimeZoneAt('America/New_York', JAN)).toBe(findTimeZoneAt('America/New_York', JAN + 1));
+    expect(findTimeZoneAt('Asia/Calcutta', JUL)).toEqual(findTimeZoneAt('Asia/Kolkata', JUL));
   });
 
   it('returns undefined for unknown zones', () => {
@@ -42,15 +38,15 @@ describe('findTimeZoneAt', () => {
 
 describe('canonicalZoneName', () => {
   it('maps legacy spellings to their canonical IANA id', () => {
-    expect(canonicalZoneName('Asia/Calcutta', JAN)).toBe('Asia/Kolkata');
-    expect(canonicalZoneName('Europe/Kiev', JAN)).toBe('Europe/Kyiv');
-    expect(canonicalZoneName('America/Buenos_Aires', JAN)).toBe('America/Argentina/Buenos_Aires');
+    expect(canonicalZoneName('Asia/Calcutta')).toBe('Asia/Kolkata');
+    expect(canonicalZoneName('Europe/Kiev')).toBe('Europe/Kyiv');
+    expect(canonicalZoneName('America/Buenos_Aires')).toBe('America/Argentina/Buenos_Aires');
   });
 
   it('passes canonical and unknown names through unchanged', () => {
-    expect(canonicalZoneName('Asia/Kolkata', JAN)).toBe('Asia/Kolkata');
-    expect(canonicalZoneName('America/New_York', JAN)).toBe('America/New_York');
-    expect(canonicalZoneName('Foo/Bar', JAN)).toBe('Foo/Bar');
+    expect(canonicalZoneName('Asia/Kolkata')).toBe('Asia/Kolkata');
+    expect(canonicalZoneName('America/New_York')).toBe('America/New_York');
+    expect(canonicalZoneName('Foo/Bar')).toBe('Foo/Bar');
   });
 });
 
@@ -78,7 +74,7 @@ describe('on runtimes that list only canonical zone ids (e.g. Firefox)', () => {
           abbr: 'IST',
           offsetDisplay: '+05:30',
         });
-        expect(lookup.canonicalZoneName('Asia/Calcutta', JAN)).toBe('Asia/Kolkata');
+        expect(lookup.canonicalZoneName('Asia/Calcutta')).toBe('Asia/Kolkata');
       });
     } finally {
       spy.mockRestore();

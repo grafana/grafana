@@ -4,7 +4,6 @@ import moment, { type Moment } from 'moment-timezone';
 import { type TimeZone } from '../types/time';
 
 import { type DateTimeOptions, getTimeZone } from './common';
-import { findTimeZoneAt } from './easytz_lookup';
 import { systemDateFormats } from './formats';
 import { type DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
 
@@ -76,11 +75,8 @@ export const dateTimeFormatTimeAgo: DateTimeFormatter = (dateInUtc, options?) =>
  *
  * @public
  */
-export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, options?) => {
-  const timeZone = getTimeZone(options);
-  const time = toTz(dateInUtc, timeZone);
-  return `${time.format(systemDateFormats.fullDate)} ${zoneAbbreviation(time, timeZone)}`;
-};
+export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
+  toTz(dateInUtc, getTimeZone(options)).format(`${systemDateFormats.fullDate} z`);
 
 /**
  * Helper function to return only the time zone abbreviation for a given date and time value. If no options
@@ -91,20 +87,8 @@ export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, opti
  *
  * @public
  */
-export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) => {
-  const timeZone = getTimeZone(options);
-  return zoneAbbreviation(toTz(dateInUtc, timeZone), timeZone);
-};
-
-const zoneAbbreviation = (time: Moment, timeZone: TimeZone): string => {
-  const zone = moment.tz.zone(timeZone);
-
-  if (!zone) {
-    return time.format('z');
-  }
-
-  return findTimeZoneAt(zone.name, time.valueOf())?.abbr ?? time.format('z');
-};
+export const timeZoneAbbrevation: DateTimeFormatter = (dateInUtc, options?) =>
+  toTz(dateInUtc, getTimeZone(options)).format('z');
 
 const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => {
   if (options?.defaultWithMS) {
