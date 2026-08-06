@@ -95,9 +95,11 @@ type ListRuleBoolFilter struct {
 }
 
 type ListAlertRulesOptions struct {
-	RuleType                  models.RuleTypeFilter
-	Limit                     int64
-	ContinueToken             string
+	RuleType      models.RuleTypeFilter
+	Limit         int64
+	ContinueToken string
+	// RuleUIDs restricts the results to rules with these UIDs (metadata.name).
+	RuleUIDs                  []string
 	GroupFilter               ListRuleStringFilter
 	FolderFilter              ListRuleStringFilter
 	TitleFilter               ListRuleStringFilter
@@ -109,6 +111,8 @@ type ListAlertRulesOptions struct {
 	RoutingTreeFilter         ListRuleStringFilter
 	MetricFilter              ListRuleStringFilter
 	TargetDatasourceUIDFilter ListRuleStringFilter
+	DatasourceUIDs            []string
+	SearchTitle               string
 }
 
 // extractSingleValue returns the single value from a ListRuleStringFilter's Include or Exclude slice,
@@ -214,6 +218,7 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 	q := models.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: models.ListAlertRulesQuery{
 			OrgID:                            user.GetOrgID(),
+			RuleUIDs:                         opts.RuleUIDs,
 			RuleGroups:                       opts.GroupFilter.Include,
 			ExcludeRuleGroups:                opts.GroupFilter.Exclude,
 			RuleGroupExists:                  opts.GroupFilter.Exists,
@@ -235,6 +240,8 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 			ExcludeRecordMetric:              f.metricExclude,
 			RecordTargetDatasourceUIDExact:   f.targetDSInclude,
 			ExcludeRecordTargetDatasourceUID: f.targetDSExclude,
+			DataSourceUIDs:                   opts.DatasourceUIDs,
+			SearchTitle:                      opts.SearchTitle,
 		},
 		RuleType:      opts.RuleType,
 		Limit:         opts.Limit,
