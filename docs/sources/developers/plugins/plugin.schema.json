@@ -515,6 +515,10 @@
       "type": "boolean",
       "description": "For panel plugins. Hides the query editor."
     },
+    "adHocTransforms": {
+      "type": "boolean",
+      "description": "For panel plugins. The panel renders its own transformation UI and applies the transformation pipeline itself, so Grafana passes it untransformed data instead of running the pipeline."
+    },
     "state": {
       "type": "string",
       "description": "Describes plugins life cycle status",

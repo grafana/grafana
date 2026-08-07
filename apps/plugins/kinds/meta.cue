@@ -46,6 +46,7 @@ metaV0Alpha1: {
 	dependencies: #Dependencies
 
 	// Optional fields
+	adHocTransforms?:    bool
 	alerting?:           bool
 	annotations?:        bool
 	autoEnabled?:        bool

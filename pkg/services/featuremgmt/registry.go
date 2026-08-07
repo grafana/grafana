@@ -684,6 +684,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "panelAdHocTransformations",
+			Description: "Allow panels that declare adHocTransforms to run the transformation pipeline themselves",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "pdfTables",
 			Description: "Enables generating table data as PDF in reporting",
 			Stage:       FeatureStagePublicPreview,

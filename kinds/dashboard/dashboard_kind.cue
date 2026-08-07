@@ -549,6 +549,12 @@ lineage: schemas: [{
 			// Options to be passed to the transformer
 			// Valid options depend on the transformer id
 			options: _
+			// Records how this transformation was created. Absent means it was authored in the
+			// transformations editor; transformations saved before this field existed have no origin.
+			origin?: {
+				source:    "panel" | "editor"
+				pluginId?: string
+			}
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 		// Counterpart for TypeScript's TimeOption type.

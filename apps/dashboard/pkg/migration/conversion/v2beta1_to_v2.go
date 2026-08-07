@@ -55,12 +55,23 @@ func fixupTransformations_V2beta1_to_V2(in *dashv2beta1.Dashboard, out *dashv2.D
 					Filter:   convertMatcherConfigToV2(t.Spec.Filter),
 					Topic:    (*dashv2.DashboardDataTopic)(t.Spec.Topic),
 					Options:  t.Spec.Options,
+					Origin:   convertTransformationOriginToV2(t.Spec.Origin),
 				},
 			}
 		}
 
 		element.PanelKind.Spec.Data.Spec.Transformations = outTransformations
 		out.Spec.Elements[key] = element
+	}
+}
+
+func convertTransformationOriginToV2(in *dashv2beta1.DashboardTransformationOrigin) *dashv2.DashboardTransformationOrigin {
+	if in == nil {
+		return nil
+	}
+	return &dashv2.DashboardTransformationOrigin{
+		Source:   dashv2.DashboardTransformationOriginSource(in.Source),
+		PluginId: in.PluginId,
 	}
 }
 

@@ -104,6 +104,9 @@ type JSONData struct {
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
 	Suggestions   bool `json:"suggestions,omitempty"`
+	// AdHocTransforms means the panel applies the transformation pipeline itself, so Grafana
+	// passes it untransformed data.
+	AdHocTransforms bool `json:"adHocTransforms,omitempty"`
 
 	// App settings
 	AutoEnabled bool       `json:"autoEnabled"`

@@ -270,6 +270,9 @@ export interface DataTransformerConfig {
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
 	options: any;
+	// Records how this transformation was created. Absent means it was authored in the
+	// transformations editor; transformations saved before this field existed have no origin.
+	origin?: TransformationOrigin;
 }
 
 export const defaultDataTransformerConfig = (): DataTransformerConfig => ({
@@ -301,6 +304,17 @@ export const defaultMatcherScope = (): MatcherScope => ("series");
 export type DataTopic = "series" | "annotations" | "alertStates";
 
 export const defaultDataTopic = (): DataTopic => ("series");
+
+// Records how a transformation was created, so a visualization that renders its own
+// transformation UI can tell its own entries apart from editor-authored ones.
+export interface TransformationOrigin {
+	source: "panel" | "editor";
+	pluginId?: string;
+}
+
+export const defaultTransformationOrigin = (): TransformationOrigin => ({
+	source: "panel",
+});
 
 export interface QueryOptionsSpec {
 	timeFrom?: string;

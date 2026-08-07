@@ -1812,8 +1812,11 @@
         "type": "object",
         "required": ["id", "type", "name", "info", "dependencies"],
         "properties": {
-          "alerting": {
+          "adHocTransforms": {
             "description": "Optional fields",
+            "type": "boolean"
+          },
+          "alerting": {
             "type": "boolean"
           },
           "annotations": {

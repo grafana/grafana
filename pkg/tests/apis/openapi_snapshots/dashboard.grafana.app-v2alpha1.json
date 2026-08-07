@@ -1768,6 +1768,14 @@
             "description": "Options to be passed to the transformer Valid options depend on the transformer id",
             "type": "object"
           },
+          "origin": {
+            "description": "Records how this transformation was created. Absent means it was authored in the transformations editor; transformations saved before this field existed have no origin.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTransformationOrigin"
+              }
+            ]
+          },
           "topic": {
             "description": "Where to pull DataFrames from as input to transformation",
             "type": "string"
@@ -3777,6 +3785,22 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardDataTransformerConfig"
               }
             ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2alpha1.DashboardTransformationOrigin": {
+        "description": "Records how a transformation was created, so a visualization that renders its own transformation UI can tell its own entries apart from editor-authored ones.",
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "properties": {
+          "pluginId": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "default": ""
           }
         }
       },

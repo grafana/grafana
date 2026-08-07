@@ -306,6 +306,12 @@ func convertTransformation_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardTransfor
 	out.Spec.Filter = convertMatcherConfigPtr_V2beta1_to_V2alpha1(in.Spec.Filter)
 	out.Spec.Topic = (*dashv2alpha1.DashboardDataTopic)(in.Spec.Topic)
 	out.Spec.Options = in.Spec.Options
+	if in.Spec.Origin != nil {
+		out.Spec.Origin = &dashv2alpha1.DashboardTransformationOrigin{
+			Source:   dashv2alpha1.DashboardTransformationOriginSource(in.Spec.Origin.Source),
+			PluginId: in.Spec.Origin.PluginId,
+		}
+	}
 }
 
 func convertQueryOptions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardQueryOptionsSpec, out *dashv2alpha1.DashboardQueryOptionsSpec) {

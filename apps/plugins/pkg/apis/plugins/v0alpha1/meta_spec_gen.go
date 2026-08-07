@@ -17,6 +17,7 @@ type MetaJSONData struct {
 	// Dependency information
 	Dependencies MetaDependencies `json:"dependencies"`
 	// Optional fields
+	AdHocTransforms    *bool                   `json:"adHocTransforms,omitempty"`
 	Alerting           *bool                   `json:"alerting,omitempty"`
 	Annotations        *bool                   `json:"annotations,omitempty"`
 	AutoEnabled        *bool                   `json:"autoEnabled,omitempty"`

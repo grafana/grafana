@@ -319,6 +319,7 @@ type PanelDTO struct {
 	HideFromList    bool              `json:"hideFromList"`
 	Sort            int               `json:"sort"`
 	SkipDataQuery   bool              `json:"skipDataQuery"`
+	AdHocTransforms bool              `json:"adHocTransforms,omitempty"`
 	Suggestions     bool              `json:"suggestions,omitempty"`
 	ReleaseState    string            `json:"state"`
 	BaseURL         string            `json:"baseUrl"`

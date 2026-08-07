@@ -337,6 +337,9 @@ type DashboardTransformationSpec struct {
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
 	Options interface{} `json:"options"`
+	// Records how this transformation was created. Absent means it was authored in the
+	// transformations editor; transformations saved before this field existed have no origin.
+	Origin *DashboardTransformationOrigin `json:"origin,omitempty"`
 }
 
 // NewDashboardTransformationSpec creates a new DashboardTransformationSpec object.
@@ -402,6 +405,24 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for DashboardDataTopic.
 func (DashboardDataTopic) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardDataTopic"
+}
+
+// Records how a transformation was created, so a visualization that renders its own
+// transformation UI can tell its own entries apart from editor-authored ones.
+// +k8s:openapi-gen=true
+type DashboardTransformationOrigin struct {
+	Source   DashboardTransformationOriginSource `json:"source"`
+	PluginId *string                             `json:"pluginId,omitempty"`
+}
+
+// NewDashboardTransformationOrigin creates a new DashboardTransformationOrigin object.
+func NewDashboardTransformationOrigin() *DashboardTransformationOrigin {
+	return &DashboardTransformationOrigin{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardTransformationOrigin.
+func (DashboardTransformationOrigin) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardTransformationOrigin"
 }
 
 // +k8s:openapi-gen=true
@@ -2741,6 +2762,19 @@ func NewDashboardV2AdhocVariableKindDatasource() *DashboardV2AdhocVariableKindDa
 // OpenAPIModelName returns the OpenAPI model name for DashboardV2AdhocVariableKindDatasource.
 func (DashboardV2AdhocVariableKindDatasource) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardV2AdhocVariableKindDatasource"
+}
+
+// +k8s:openapi-gen=true
+type DashboardTransformationOriginSource string
+
+const (
+	DashboardTransformationOriginSourcePanel  DashboardTransformationOriginSource = "panel"
+	DashboardTransformationOriginSourceEditor DashboardTransformationOriginSource = "editor"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardTransformationOriginSource.
+func (DashboardTransformationOriginSource) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardTransformationOriginSource"
 }
 
 // +k8s:openapi-gen=true

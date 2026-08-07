@@ -231,6 +231,10 @@ const (
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
 
+	// FlagPanelAdHocTransformations
+	// Allow panels that declare adHocTransforms to run the transformation pipeline themselves
+	FlagPanelAdHocTransformations = "panelAdHocTransformations"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"

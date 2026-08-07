@@ -14,6 +14,7 @@ export interface JSONData {
 	// Dependency information
 	dependencies: Dependencies;
 	// Optional fields
+	adHocTransforms?: boolean;
 	alerting?: boolean;
 	annotations?: boolean;
 	autoEnabled?: boolean;

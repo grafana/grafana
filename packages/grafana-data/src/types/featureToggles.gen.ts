@@ -320,6 +320,11 @@ export interface FeatureToggles {
   */
   feedbackButton?: boolean;
   /**
+  * Allow panels that declare adHocTransforms to run the transformation pipeline themselves
+  * @default false
+  */
+  panelAdHocTransformations?: boolean;
+  /**
   * Enables generating table data as PDF in reporting
   * @default false
   */

@@ -168,6 +168,9 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 	if jsonData.SkipDataQuery {
 		meta.SkipDataQuery = &jsonData.SkipDataQuery
 	}
+	if jsonData.AdHocTransforms {
+		meta.AdHocTransforms = &jsonData.AdHocTransforms
+	}
 	if jsonData.Streaming {
 		meta.Streaming = &jsonData.Streaming
 	}

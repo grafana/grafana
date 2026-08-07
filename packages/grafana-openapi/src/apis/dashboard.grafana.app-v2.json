@@ -3548,6 +3548,20 @@
           }
         }
       },
+      "DashboardTransformationOrigin": {
+        "description": "Records how a transformation was created, so a visualization that renders its own transformation UI can tell its own entries apart from editor-authored ones.",
+        "type": "object",
+        "required": ["source"],
+        "properties": {
+          "pluginId": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "DashboardTransformationSpec": {
         "description": "Transformations allow to manipulate data returned by a query before the system applies a visualization. Using transformations you can: rename fields, join time series data, perform mathematical operations across queries, use the output of one transformation as the input to another transformation, etc.",
         "type": "object",
@@ -3568,6 +3582,14 @@
           "options": {
             "description": "Options to be passed to the transformer Valid options depend on the transformer id",
             "type": "object"
+          },
+          "origin": {
+            "description": "Records how this transformation was created. Absent means it was authored in the transformations editor; transformations saved before this field existed have no origin.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardTransformationOrigin"
+              }
+            ]
           },
           "topic": {
             "description": "Where to pull DataFrames from as input to transformation",

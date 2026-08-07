@@ -3289,6 +3289,14 @@
             "description": "Options to be passed to the transformer Valid options depend on the transformer id",
             "type": "object"
           },
+          "origin": {
+            "description": "Records how this transformation was created. Absent means it was authored in the transformations editor; transformations saved before this field existed have no origin.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTransformationOrigin"
+              }
+            ]
+          },
           "topic": {
             "description": "Where to pull DataFrames from as input to transformation",
             "type": "string"
@@ -5355,6 +5363,22 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTransformationOrigin": {
+        "description": "Records how a transformation was created, so a visualization that renders its own transformation UI can tell its own entries apart from editor-authored ones.",
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "properties": {
+          "pluginId": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardV2beta1ActionStyle": {
         "type": "object",
         "properties": {
@@ -6008,6 +6032,14 @@
           "options": {
             "description": "Options to be passed to the transformer Valid options depend on the transformer id",
             "type": "object"
+          },
+          "origin": {
+            "description": "Records how this transformation was created. Absent means it was authored in the transformations editor; transformations saved before this field existed have no origin.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookTransformationOrigin"
+              }
+            ]
           },
           "topic": {
             "description": "Where to pull DataFrames from as input to transformation",
@@ -7060,6 +7092,22 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookDataTransformerConfig"
               }
             ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookTransformationOrigin": {
+        "description": "Records how a transformation was created, so a visualization that renders its own transformation UI can tell its own entries apart from editor-authored ones.",
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "properties": {
+          "pluginId": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "default": ""
           }
         }
       },
