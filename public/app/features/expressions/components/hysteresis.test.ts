@@ -4,9 +4,11 @@ import { type ClassicCondition, ExpressionQueryType, type ThresholdExpressionQue
 
 import {
   isInvalid,
+  normalizeUnloadEvaluator,
   thresholdReducer,
   updateHysteresisChecked,
   updateRefId,
+  updateThresholdParams,
   updateThresholdType,
   updateUnloadParams,
 } from './thresholdReducer';
@@ -411,5 +413,122 @@ describe('thresholdReducer', () => {
     expect(newState).toMatchSnapshot();
     expect(newState.conditions[0].unloadEvaluator?.params[0]).toEqual(20);
     expect(onError).toHaveBeenCalledWith('Enter a number less than or equal to 10');
+  });
+
+  it('clears the error when the main threshold changes and makes the recovery threshold valid', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [
+        {
+          ...thresholdCondition,
+          evaluator: { type: EvalFunction.IsEqual, params: [20] },
+          unloadEvaluator: { type: EvalFunction.IsEqual, params: [20] },
+        },
+      ],
+    };
+
+    thresholdReducer(initialState, updateThresholdParams({ param: 21, index: 0, onError }));
+
+    expect(onError).toHaveBeenCalledWith(undefined);
+  });
+
+  it('reports an error when the main threshold changes and makes the recovery threshold invalid', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [
+        {
+          ...thresholdCondition,
+          evaluator: { type: EvalFunction.IsAbove, params: [100] },
+          unloadEvaluator: { type: EvalFunction.IsBelow, params: [90] },
+        },
+      ],
+    };
+
+    thresholdReducer(initialState, updateThresholdParams({ param: 80, index: 0, onError }));
+
+    expect(onError).toHaveBeenCalledWith('Enter a number less than or equal to 80');
+  });
+
+  it('does not report an error when the main threshold changes and there is no recovery threshold', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [
+        {
+          ...thresholdCondition,
+          evaluator: { type: EvalFunction.IsAbove, params: [100] },
+          unloadEvaluator: undefined,
+        },
+      ],
+    };
+
+    thresholdReducer(initialState, updateThresholdParams({ param: 80, index: 0, onError }));
+
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('keeps the recovery value when the main threshold changes after enabling hysteresis', () => {
+    const initialState: ThresholdExpressionQuery = {
+      type: ExpressionQueryType.threshold,
+      refId: 'A',
+      conditions: [
+        {
+          ...thresholdCondition,
+          evaluator: { type: EvalFunction.IsAbove, params: [100] },
+          unloadEvaluator: undefined,
+        },
+      ],
+    };
+
+    const withHysteresis = thresholdReducer(
+      initialState,
+      updateHysteresisChecked({ hysteresisChecked: true, onError })
+    );
+    const withNewThreshold = thresholdReducer(withHysteresis, updateThresholdParams({ param: 200, index: 0, onError }));
+
+    expect(withNewThreshold.conditions[0].unloadEvaluator?.params[0]).toEqual(100);
+  });
+});
+
+describe('normalizeUnloadEvaluator', () => {
+  const condition: ClassicCondition = {
+    evaluator: { type: EvalFunction.IsEqual, params: [20] },
+    query: { params: ['A'] },
+    reducer: { type: 'last', params: [] },
+    type: 'query',
+  };
+
+  it('rewrites a legacy not-equal recovery evaluator on an equal threshold, keeping its value', () => {
+    const normalized = normalizeUnloadEvaluator({
+      ...condition,
+      unloadEvaluator: { type: EvalFunction.IsNotEqual, params: [1] },
+    });
+
+    expect(normalized.unloadEvaluator).toEqual({ type: EvalFunction.IsEqual, params: [1] });
+  });
+
+  it('leaves a recovery evaluator that already matches the threshold type untouched', () => {
+    const alreadyNormalized: ClassicCondition = {
+      ...condition,
+      unloadEvaluator: { type: EvalFunction.IsEqual, params: [1] },
+    };
+
+    expect(normalizeUnloadEvaluator(alreadyNormalized)).toBe(alreadyNormalized);
+  });
+
+  it('leaves a condition without a recovery evaluator untouched', () => {
+    expect(normalizeUnloadEvaluator(condition)).toBe(condition);
+  });
+
+  it('leaves the recovery evaluator untouched for threshold types that have no recovery type', () => {
+    const noValueCondition: ClassicCondition = {
+      ...condition,
+      evaluator: { type: EvalFunction.HasNoValue, params: [] },
+      unloadEvaluator: { type: EvalFunction.IsNotEqual, params: [1] },
+    };
+
+    expect(normalizeUnloadEvaluator(noValueCondition)).toBe(noValueCondition);
   });
 });

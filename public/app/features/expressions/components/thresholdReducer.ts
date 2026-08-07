@@ -10,7 +10,11 @@ export const updateThresholdType = createAction<{
   evalFunction: EvalFunction;
   onError: ((error: string | undefined) => void) | undefined;
 }>('thresold/updateThresholdType');
-export const updateThresholdParams = createAction<{ param: number; index: number }>('thresold/updateThresholdParams');
+export const updateThresholdParams = createAction<{
+  param: number;
+  index: number;
+  onError: ((error: string | undefined) => void) | undefined;
+}>('thresold/updateThresholdParams');
 export const updateHysteresisChecked = createAction<{
   hysteresisChecked: boolean;
   onError: ((error: string | undefined) => void) | undefined;
@@ -58,8 +62,14 @@ export const thresholdReducer = createReducer<ThresholdExpressionQuery>(
       }
     });
     builder.addCase(updateThresholdParams, (state, action) => {
-      const { param, index } = action.payload;
+      const { param, index, onError } = action.payload;
       state.conditions[0].evaluator.params[index] = param;
+      // Moving the threshold can turn a valid recovery threshold invalid, and can also fix an
+      // invalid one, so the error has to be re-evaluated here and not only when the recovery
+      // threshold itself is edited.
+      if (state.conditions[0].unloadEvaluator) {
+        reportValidation(state.conditions[0], onError);
+      }
     });
     builder.addCase(updateHysteresisChecked, (state, action) => {
       const { hysteresisChecked, onError } = action.payload;
@@ -110,41 +120,38 @@ function applyDefaultUnloadEvaluator(condition: ClassicCondition, onError: OnErr
   reportValidation(condition, onError);
 }
 
+// The user cannot pick the recovery type: it is derived from the threshold type, as the alert
+// recovers when the condition that made it fire stops holding. Equality has no directional
+// opposite, so both equality thresholds recover when the value equals the recovery value.
+const recoveryTypeByThresholdType: Partial<Record<EvalFunction, EvalFunction>> = {
+  [EvalFunction.IsAbove]: EvalFunction.IsBelow,
+  [EvalFunction.IsBelow]: EvalFunction.IsAbove,
+  [EvalFunction.IsEqual]: EvalFunction.IsEqual,
+  [EvalFunction.IsNotEqual]: EvalFunction.IsEqual,
+  [EvalFunction.IsGreaterThanEqual]: EvalFunction.IsLessThanEqual,
+  [EvalFunction.IsLessThanEqual]: EvalFunction.IsGreaterThanEqual,
+  [EvalFunction.IsWithinRange]: EvalFunction.IsOutsideRange,
+  [EvalFunction.IsOutsideRange]: EvalFunction.IsWithinRange,
+  [EvalFunction.IsWithinRangeIncluded]: EvalFunction.IsOutsideRangeIncluded,
+  [EvalFunction.IsOutsideRangeIncluded]: EvalFunction.IsWithinRangeIncluded,
+};
+
 function getUnloadEvaluatorTypeFromEvaluatorType(type: EvalFunction) {
-  // we don't let the user change the unload evaluator type. We just change it to the opposite of the evaluator type
-  if (type === EvalFunction.IsAbove) {
-    return EvalFunction.IsBelow;
+  return recoveryTypeByThresholdType[type] ?? EvalFunction.IsBelow;
+}
+
+// Rules saved before the eq/ne recovery fix carry a recovery type that no longer matches the one
+// derived from their threshold, which the UI can neither display nor edit correctly. The type is
+// derived state, so recomputing it does not discard anything the user chose.
+export function normalizeUnloadEvaluator(condition: ClassicCondition): ClassicCondition {
+  const { evaluator, unloadEvaluator } = condition;
+  const recoveryType = recoveryTypeByThresholdType[evaluator.type];
+
+  if (!unloadEvaluator || !recoveryType || unloadEvaluator.type === recoveryType) {
+    return condition;
   }
-  if (type === EvalFunction.IsBelow) {
-    return EvalFunction.IsAbove;
-  }
-  // Equality has no directional opposite. Both equal/not-equal thresholds recover when the
-  // value equals the recovery value, so the unload evaluator is IsEqual in both cases.
-  if (type === EvalFunction.IsEqual) {
-    return EvalFunction.IsEqual;
-  }
-  if (type === EvalFunction.IsNotEqual) {
-    return EvalFunction.IsEqual;
-  }
-  if (type === EvalFunction.IsGreaterThanEqual) {
-    return EvalFunction.IsLessThanEqual;
-  }
-  if (type === EvalFunction.IsLessThanEqual) {
-    return EvalFunction.IsGreaterThanEqual;
-  }
-  if (type === EvalFunction.IsWithinRange) {
-    return EvalFunction.IsOutsideRange;
-  }
-  if (type === EvalFunction.IsOutsideRange) {
-    return EvalFunction.IsWithinRange;
-  }
-  if (type === EvalFunction.IsWithinRangeIncluded) {
-    return EvalFunction.IsOutsideRangeIncluded;
-  }
-  if (type === EvalFunction.IsOutsideRangeIncluded) {
-    return EvalFunction.IsWithinRangeIncluded;
-  }
-  return EvalFunction.IsBelow;
+
+  return { ...condition, unloadEvaluator: { ...unloadEvaluator, type: recoveryType } };
 }
 
 export function isInvalid(condition: ClassicCondition) {

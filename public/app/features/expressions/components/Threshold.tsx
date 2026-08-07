@@ -15,6 +15,7 @@ import { ThresholdSelect } from './ThresholdSelect';
 import { ToLabel } from './ToLabel';
 import {
   isInvalid,
+  normalizeUnloadEvaluator,
   thresholdReducer,
   updateHysteresisChecked,
   updateRefId,
@@ -52,7 +53,10 @@ const defaultEvaluator: ClassicCondition = {
 export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHysteresis = false }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const initialExpression = { ...query, conditions: query.conditions?.length ? query.conditions : [defaultEvaluator] };
+  const initialExpression = {
+    ...query,
+    conditions: query.conditions?.length ? query.conditions.map(normalizeUnloadEvaluator) : [defaultEvaluator],
+  };
 
   // this queryState is the source of truth for the threshold component.
   // All the changes are made to this object through the dispatch function with the thresholdReducer.
@@ -76,7 +80,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
   };
 
   const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index: number) => {
-    dispatch(updateThresholdParams({ param: parseFloat(event.currentTarget.value), index }));
+    dispatch(updateThresholdParams({ param: parseFloat(event.currentTarget.value), index, onError }));
   };
 
   const isRange =
