@@ -124,7 +124,7 @@ func RegisterAPIService(
 
 	var resourcePermsSearchAuthorizer *iamauthorizer.ResourcePermissionsAuthorizer
 	if resourcePermsSearchBackend != nil {
-		resourcePermsSearchAuthorizer = iamauthorizer.NewResourcePermissionsAuthorizer(accessClient, resourceParentProvider)
+		resourcePermsSearchAuthorizer = iamauthorizer.NewResourcePermissionsAuthorizer(accessClient, resourceParentProvider, tracing)
 	}
 
 	// Mode lever for the SSO settings migration: any configured storage mode
@@ -760,7 +760,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateResourcePermissionsAPIGroup(
 	authzWrapper := storewrapper.New(
 		regStoreDW,
 		iamv0.ResourcePermissionInfo.GroupResource(),
-		iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider),
+		iamauthorizer.NewResourcePermissionsAuthorizer(b.accessClient, b.resourceParentProvider, b.tracing),
 		storewrapper.WithObserver(storageObserver{}),
 	)
 

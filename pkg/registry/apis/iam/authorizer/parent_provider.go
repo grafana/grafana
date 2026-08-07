@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/grafana/authlib/authn"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -136,7 +137,12 @@ func (p *ParentProviderImpl) getClient(ctx context.Context, gr schema.GroupResou
 	return client, nil
 }
 
-func (p *ParentProviderImpl) GetParent(ctx context.Context, gr schema.GroupResource, namespace, name string) (string, error) {
+func (p *ParentProviderImpl) GetParent(ctx context.Context, gr schema.GroupResource, namespace, name string) (parent string, err error) {
+	start := time.Now()
+	defer func() {
+		observeParentFetch(gr, time.Since(start), err)
+	}()
+
 	client, err := p.getClient(ctx, gr)
 	if err != nil {
 		return "", err
