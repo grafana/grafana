@@ -48,6 +48,13 @@ const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title:
 
 export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
   endpoints: {
+    getRepositoryFiles: {
+      // The file list is keyed by repository, not by folder, so every folder in a
+      // repo shares one cache entry. Keep it warm well past the 60s default so
+      // navigating between sibling folders reuses the tree instead of refetching it
+      // (the folder README/docs tabs derive from this list client-side).
+      keepUnusedDataFor: 300,
+    },
     listJob: {
       // Do not include 'watch' in the first query, so we can get the initial list of jobs
       // and then start watching for changes
