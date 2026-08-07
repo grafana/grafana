@@ -2,7 +2,7 @@ import { getFrameDisplayName, type PanelProps, type SelectableValue } from '@gra
 import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { type TableOptions } from '@grafana/schema';
-import { Combobox, Field, Stack, usePanelContext, useTheme2 } from '@grafana/ui';
+import { Combobox, Field, Stack, usePanelContext, useTheme2, useTransformedData } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
   useCacheFieldDisplayNames,
@@ -21,7 +21,6 @@ interface Props extends PanelProps<TableOptions> {
 
 export function TablePanel(props: Props) {
   const {
-    data,
     height,
     width,
     options,
@@ -33,6 +32,10 @@ export function TablePanel(props: Props) {
     initialRowIndex,
     sortByBehavior = 'initial',
   } = props;
+
+  // The table declares `adHocTransforms`, so in a dashboard it receives untransformed data and
+  // applies the pipeline itself. Everywhere else this returns props.data unchanged.
+  const { data } = useTransformedData(props.data);
 
   useCacheFieldDisplayNames(data.series);
 

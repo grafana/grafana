@@ -3,6 +3,7 @@
   "name": "Table",
   "id": "table",
   "suggestions": true,
+  "adHocTransforms": true,
   "info": {
     "description": "Supports many column styles",
     "author": {
