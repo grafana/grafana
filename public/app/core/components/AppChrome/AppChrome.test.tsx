@@ -19,6 +19,7 @@ import {
   type ExtensionSidebarContextType,
   useExtensionSidebarContext,
 } from './ExtensionSidebar/ExtensionSidebarProvider';
+import { selectors } from '@grafana/e2e-selectors';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -65,6 +66,7 @@ const setup = (children: ReactNode) => {
     {
       id: HOME_NAV_ID,
       text: 'Home',
+      url: '/',
     },
     {
       text: 'Section name',
@@ -119,7 +121,7 @@ describe('AppChrome', () => {
     const skipLink = await screen.findByRole('link', { name: 'Skip to main content' });
     expect(skipLink).toHaveFocus();
     await userEvent.keyboard('{tab}');
-    expect(await screen.findByRole('button', { name: 'Main menu' })).toHaveFocus();
+    expect(await screen.findByTestId(selectors.components.Breadcrumbs.breadcrumb('Home'))).toHaveFocus();
   });
 
   it('should move focus to main content on every skip link activation', async () => {

@@ -70,21 +70,23 @@ export const SingleTopBar = memo(function SingleTopBar({
     <>
       <div className={styles.layout}>
         <Stack minWidth={0} gap={0.5} alignItems="center" flex={{ xs: 2, lg: 1 }}>
-          {!menuDockedAndOpen && <HomeLogo homeNav={homeNav} />}
           {!menuDockedAndOpen && (
-            <ToolbarButton
-              narrow
-              id={MEGA_MENU_TOGGLE_ID}
-              data-testid={Components.NavBar.Toggle.button}
-              onClick={onToggleMegaMenu}
-              tooltip={t('navigation.megamenu.open', 'Main menu')}
-              aria-expanded={state.megaMenuOpen}
-              className={cx(state.megaMenuOpen && styles.menuToggleActive)}
-            >
-              <Stack gap={0} alignItems="center">
-                <Icon name="bars" size="xl" />
-              </Stack>
-            </ToolbarButton>
+            <>
+              <HomeLogo homeNav={homeNav} />
+              <ToolbarButton
+                narrow
+                id={MEGA_MENU_TOGGLE_ID}
+                data-testid={Components.NavBar.Toggle.button}
+                onClick={onToggleMegaMenu}
+                tooltip={t('navigation.megamenu.open', 'Main menu')}
+                aria-expanded={state.megaMenuOpen}
+                className={cx(state.megaMenuOpen && styles.menuToggleActive)}
+              >
+                <Stack gap={0} alignItems="center">
+                  <Icon name="bars" size="xl" />
+                </Stack>
+              </ToolbarButton>
+            </>
           )}
           {topLevelScopes ? <ScopesSelector /> : undefined}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
