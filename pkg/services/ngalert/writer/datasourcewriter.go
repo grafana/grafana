@@ -46,6 +46,11 @@ const (
 	// amazonPrometheusRemoteWritePath is appended to an Amazon Managed Prometheus
 	// workspace URL to form the remote write endpoint.
 	amazonPrometheusRemoteWritePath = "/api/v1/remote_write"
+
+	// amazonPrometheusSigV4Service is the AWS service namespace used to sign
+	// Amazon Managed Prometheus requests. It matches the value Grafana's core
+	// data source service derives for this type.
+	amazonPrometheusSigV4Service = "aps"
 )
 
 // supportedRemoteWriteTypes is the set of data source types that recording rules
@@ -260,6 +265,17 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 		backend = prometheusType
 	}
 
+	// The SDK's HTTPClientOptions never populates SigV4.Service; only Grafana's
+	// core data source service sets it (via awsServiceNamespace). The AWS signer
+	// uses the service name verbatim with no default, so leaving it empty
+	// produces a signature AWS rejects with 403. Set it explicitly for AMP.
+	sigV4 := ho.SigV4
+	if sigV4 != nil && ds.Type == datasources.DS_AMAZON_PROMETHEUS && sigV4.Service == "" {
+		sigV4Copy := *sigV4
+		sigV4Copy.Service = amazonPrometheusSigV4Service
+		sigV4 = &sigV4Copy
+	}
+
 	cfg := PrometheusWriterConfig{
 		URL: u.String(),
 		HTTPOptions: httpclient.Options{
@@ -272,7 +288,7 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 			// SigV4-signed remote_write requests. CustomOptions and Middlewares carry
 			// plugin-specific auth (e.g. the AMP data source plugin) that must
 			// reach the writer's HTTP client for signing to work.
-			SigV4:         ho.SigV4,
+			SigV4:         sigV4,
 			CustomOptions: ho.CustomOptions,
 			Middlewares:   ho.Middlewares,
 		},

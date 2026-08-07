@@ -527,4 +527,35 @@ func TestDatasourceWriterManagedPrometheus(t *testing.T) {
 		require.Equal(t, 1, mockProvider.callCount)
 		require.NotNil(t, mockProvider.lastOptions)
 	})
+
+	t.Run("when writing an Amazon Prometheus datasource with SigV4 then the aps service namespace is set", func(t *testing.T) {
+		testDS := setupDataSources(t)
+		testDS.Reset()
+
+		mockProvider := newMockHTTPClientProvider()
+
+		ampDS, _ := testDS.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			Name:     "amp-sigv4-service",
+			UID:      "amp-sigv4-service",
+			Type:     datasources.DS_AMAZON_PROMETHEUS,
+			JsonData: simplejson.MustJson([]byte(`{"sigV4Auth": true, "sigV4Region": "us-west-2"}`)),
+		})
+		ampDS.URL = testDS.prom1.srv.URL
+		testDS.prom1.ExpectedPath = amazonPrometheusRemoteWritePath
+
+		cfg := DatasourceWriterConfig{Timeout: time.Second * 5}
+		met := metrics.NewRemoteWriterMetrics(prometheus.NewRegistry())
+		writer := NewDatasourceWriter(cfg, testDS, mockProvider, &mockPluginContextProvider{}, clock.New(), log.New("test"), met)
+
+		err := writer.WriteDatasource(context.Background(), "amp-sigv4-service", "metric", time.Now(), frames, 1, map[string]string{})
+		require.NoError(t, err)
+
+		// The SDK's HTTPClientOptions leaves SigV4.Service empty, and the AWS signer
+		// uses it verbatim with no default, so an empty value would be signed as an
+		// empty service name and rejected with 403. It must be set to "aps".
+		require.NotNil(t, mockProvider.lastOptions)
+		require.NotNil(t, mockProvider.lastOptions.SigV4)
+		require.Equal(t, amazonPrometheusSigV4Service, mockProvider.lastOptions.SigV4.Service)
+		require.Equal(t, "us-west-2", mockProvider.lastOptions.SigV4.Region)
+	})
 }
