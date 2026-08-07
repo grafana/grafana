@@ -41,10 +41,17 @@ func TestRingBuffer(t *testing.T) {
 	require.True(t, c.readInto(dst))
 	require.Empty(t, drainChan(dst))
 
+	_, ok := c.oldest()
+	require.False(t, ok, "oldest on an empty buffer reports no item")
+
 	c.add(1)
 	dst = make(chan int, 10)
 	require.True(t, c.readInto(dst))
 	require.Equal(t, []int{1}, drainChan(dst))
+
+	oldest, ok := c.oldest()
+	require.True(t, ok)
+	require.Equal(t, 1, oldest)
 
 	for i := 2; i <= 6; i++ {
 		c.add(i)
@@ -73,6 +80,11 @@ func TestRingBuffer(t *testing.T) {
 	// destination too small — returns false
 	small := make(chan int, 1)
 	require.False(t, c.readInto(small))
+
+	// two evictions happened above: oldest is now 4 (see comment at line 71).
+	oldest, ok = c.oldest()
+	require.True(t, ok)
+	require.Equal(t, 4, oldest)
 }
 
 func TestBroadcaster(t *testing.T) {
@@ -90,9 +102,9 @@ func TestBroadcaster(t *testing.T) {
 		close(ch)
 	})
 
-	b := NewBroadcaster(ctx, ch, metrics, nil)
+	b := NewBroadcaster(ctx, ch, metrics, nil, nil)
 
-	sub, err := b.Subscribe(ctx, "test", "test")
+	sub, _, err := b.Subscribe(ctx, "test", "test", 0)
 	require.NoError(t, err)
 
 	for _, expected := range input {
@@ -112,6 +124,56 @@ func TestBroadcaster(t *testing.T) {
 	requireMetricValue(t, metrics.UnsubscriptionsTotal.WithLabelValues("test", unsubscriptionReasonShutdown), 1)
 }
 
+// TestBroadcasterHasFullHistory exercises the hasFullHistory signal Subscribe
+// reports: whether the replay cache has uninterrupted history back to a
+// requested sinceRV, or whether the caller must backfill from durable
+// storage because older events were evicted (or never observed).
+func TestBroadcasterHasFullHistory(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan int)
+	t.Cleanup(func() { close(ch) })
+
+	// Subscriber buffer must exceed the cache size for readInto to succeed.
+	const subBuf = defaultCacheSize + 100
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, defaultOverflowCap, nil, nil, func(v int) int64 { return int64(v) })
+
+	// Push past the cache's capacity so the oldest items are evicted: the
+	// cache ends up holding values [51, 550].
+	for i := 1; i <= defaultCacheSize+50; i++ {
+		ch <- i
+	}
+
+	t.Run("sinceRV within cached history reports full history", func(t *testing.T) {
+		_, historyCh, err := b.Subscribe(ctx, "sub1", "test", 51)
+		require.NoError(t, err)
+		require.True(t, <-historyCh)
+	})
+
+	t.Run("sinceRV older than the oldest cached item reports a gap", func(t *testing.T) {
+		_, historyCh, err := b.Subscribe(ctx, "sub2", "test", 50)
+		require.NoError(t, err)
+		require.False(t, <-historyCh)
+	})
+
+	t.Run("sinceRV == 0 always reports full history", func(t *testing.T) {
+		_, historyCh, err := b.Subscribe(ctx, "sub3", "test", 0)
+		require.NoError(t, err)
+		require.True(t, <-historyCh)
+	})
+
+	t.Run("non-zero sinceRV against an empty cache reports a gap", func(t *testing.T) {
+		emptyCh := make(chan int)
+		t.Cleanup(func() { close(emptyCh) })
+		empty := newBroadcasterWithSizes(ctx, emptyCh, subBuf, defaultOverflowCap, nil, nil, func(v int) int64 { return int64(v) })
+
+		_, historyCh, err := empty.Subscribe(ctx, "sub4", "test", 1)
+		require.NoError(t, err)
+		require.False(t, <-historyCh)
+	})
+}
+
 func TestBroadcasterUnsubscribe(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -121,14 +183,14 @@ func TestBroadcasterUnsubscribe(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	metrics := newBroadcasterMetrics(reg)
 
-	b := NewBroadcaster(ctx, ch, metrics, nil)
+	b := NewBroadcaster(ctx, ch, metrics, nil, nil)
 
 	// subscribe three, then unsubscribe all
-	sub1, err := b.Subscribe(ctx, "sub1", "test")
+	sub1, _, err := b.Subscribe(ctx, "sub1", "test", 0)
 	require.NoError(t, err)
-	sub2, err := b.Subscribe(ctx, "sub2", "test")
+	sub2, _, err := b.Subscribe(ctx, "sub2", "test", 0)
 	require.NoError(t, err)
-	sub3, err := b.Subscribe(ctx, "sub3", "test")
+	sub3, _, err := b.Subscribe(ctx, "sub3", "test", 0)
 	require.NoError(t, err)
 
 	b.Unsubscribe(sub1)
@@ -144,7 +206,7 @@ func TestBroadcasterUnsubscribe(t *testing.T) {
 	require.False(t, ok)
 
 	// broadcaster should still work — new subscriber receives data
-	sub4, err := b.Subscribe(ctx, "sub4", "test")
+	sub4, _, err := b.Subscribe(ctx, "sub4", "test", 0)
 	require.NoError(t, err)
 
 	ch <- 42
@@ -166,13 +228,13 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	// Use small overflow cap so slow consumers get disconnected quickly.
 	const subBuf = 10
 	const ovfCap = 20
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil, nil)
 
 	// Create 101 subscribers that never read — enough to exceed the
 	// internal unsubscribe channel buffer and exercise bulk disconnect.
 	const numSubs = internalChanSize + 1
 	for i := 0; i < numSubs; i++ {
-		_, err := b.Subscribe(ctx, "test", "test")
+		_, _, err := b.Subscribe(ctx, "test", "test", 0)
 		require.NoError(t, err)
 	}
 
@@ -204,9 +266,9 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 
 	const subBuf = 10
 	const ovfCap = 100
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil, nil)
 
-	sub, err := b.Subscribe(ctx, "test", "test")
+	sub, _, err := b.Subscribe(ctx, "test", "test", 0)
 	require.NoError(t, err)
 
 	// Send more items than the subscriber buffer can hold.
@@ -241,9 +303,9 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 
 	const subBuf = 10
 	const ovfCap = 20
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil, nil)
 
-	sub, err := b.Subscribe(ctx, "test", "test")
+	sub, _, err := b.Subscribe(ctx, "test", "test", 0)
 	require.NoError(t, err)
 
 	// Send enough items to fill buffer + exceed overflow cap.
@@ -293,7 +355,7 @@ func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
 	// so readInto should leave headroom.
 	const subBuf = defaultCacheSize + 100
 	const ovfCap = 1000
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil, nil)
 
 	// Fill the cache to capacity by sending items through the input channel
 	// (no subscribers yet, so items only go to cache).
@@ -302,7 +364,7 @@ func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
 	}
 
 	// Subscribe — readInto sends all cached items into the subscriber channel.
-	sub, err := b.Subscribe(ctx, "test", "test")
+	sub, _, err := b.Subscribe(ctx, "test", "test", 0)
 	require.NoError(t, err)
 
 	// Read one cached item to confirm the subscription is active.
@@ -342,9 +404,9 @@ func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
 
 	const subBuf = 10
 	const ovfCap = 100
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil, nil)
 
-	sub, err := b.Subscribe(ctx, "test", "test")
+	sub, _, err := b.Subscribe(ctx, "test", "test", 0)
 	require.NoError(t, err)
 
 	// Send more items than the channel buffer can hold, causing overflow.
@@ -403,7 +465,7 @@ func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 			watchBufSize: watchChanSize,
 		}
 
-		_, err := b.Subscribe(subCtx, "sub1", "test")
+		_, _, err := b.Subscribe(subCtx, "sub1", "test", 0)
 		require.Error(t, err)
 		requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultCtxCanceled), 1)
 	})
@@ -414,11 +476,11 @@ func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 
 		ctx := context.Background()
 		input := make(chan int)
-		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, metrics, nil)
+		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, metrics, nil, nil)
 		close(input)
 
 		require.Eventually(t, func() bool {
-			_, err := b.Subscribe(ctx, "sub1", "test")
+			_, _, err := b.Subscribe(ctx, "sub1", "test", 0)
 			return errors.Is(err, io.EOF)
 		}, time.Second, 10*time.Millisecond)
 		requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultTerminated), 1)

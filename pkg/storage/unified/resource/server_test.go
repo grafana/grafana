@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"iter"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -1414,6 +1415,10 @@ type watchTestServerOpts struct {
 	BookmarkFrequency time.Duration
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
+	// WrapBackend, if set, wraps the real KV backend before it's handed to
+	// the server — e.g. to make a specific call fail without disturbing the
+	// rest of the backend's behaviour.
+	WrapBackend func(StorageBackend) StorageBackend
 }
 
 func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
@@ -1430,8 +1435,13 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	})
 	require.NoError(t, err)
 
+	var backend StorageBackend = store
+	if opts.WrapBackend != nil {
+		backend = opts.WrapBackend(backend)
+	}
+
 	srv, err := NewResourceServer(ResourceServerOptions{
-		Backend:           store,
+		Backend:           backend,
 		BookmarkFrequency: opts.BookmarkFrequency,
 		StorageMetrics:    opts.StorageMetrics,
 		AccessClient:      opts.AccessClient,
@@ -1450,6 +1460,13 @@ var playlistCounter int
 // createTestPlaylist creates a playlist resource with a unique auto-generated
 // name. ctx must already carry auth info.
 func createTestPlaylist(ctx context.Context, srv *server) error {
+	_, err := createTestPlaylistRV(ctx, srv)
+	return err
+}
+
+// createTestPlaylistRV is like createTestPlaylist but also returns the
+// resource version the create was assigned.
+func createTestPlaylistRV(ctx context.Context, srv *server) (int64, error) {
 	playlistCounter++
 	name := fmt.Sprintf("playlist-%d", playlistCounter)
 	value := []byte(`{
@@ -1474,12 +1491,12 @@ func createTestPlaylist(ctx context.Context, srv *server) error {
 	}
 	created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
 	if err != nil {
-		return err
+		return 0, err
 	}
 	if created.Error != nil {
-		return fmt.Errorf("creating playlist %q: %v", name, created.Error)
+		return 0, fmt.Errorf("creating playlist %q: %v", name, created.Error)
 	}
-	return nil
+	return created.ResourceVersion, nil
 }
 
 func TestPeriodicBookmarks(t *testing.T) {
@@ -1857,6 +1874,161 @@ drain:
 	}
 	require.Len(t, added, 1)
 	require.Contains(t, string(added[0].Resource.Value), `"name":"`+allowedName+`"`)
+}
+
+// TestWatchBackfillsGapWhenReplayCacheEvicted is a regression test for the
+// broadcaster's bounded replay cache silently dropping events. The cache
+// only holds the most recent defaultCacheSize written events; if a burst of
+// writes pushes the cache past that bound before a client resumes a watch
+// from an older `Since`, naively replaying only the cache would skip
+// everything older than the cache's oldest surviving entry. The server must
+// detect that gap and backfill the missing range from durable storage.
+func TestWatchBackfillsGapWhenReplayCacheEvicted(t *testing.T) {
+	testUser := newWatchTestUser()
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{StorageMetrics: metrics})
+	ctx := authlib.WithAuthInfo(t.Context(), testUser)
+
+	// The watch below resumes just after this RV — everything created from
+	// here on must reach the client.
+	resumeRV, err := createTestPlaylistRV(ctx, srv)
+	require.NoError(t, err)
+
+	// Create enough additional resources that the broadcaster's replay cache
+	// (bounded to defaultCacheSize entries) no longer covers resumeRV.
+	const burst = defaultCacheSize + 10
+	for i := 0; i < burst; i++ {
+		require.NoError(t, createTestPlaylist(ctx, srv))
+	}
+
+	// Wait until the broadcaster has actually absorbed every create into its
+	// (bounded) cache before subscribing. Otherwise some of the burst may
+	// still be in flight and get delivered live instead of via the replay
+	// cache, which wouldn't exercise the eviction this test targets.
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), float64(1+burst))
+
+	watchCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	mock := newMockWatchServer(watchCtx)
+
+	var eg errgroup.Group
+	eg.Go(func() error {
+		return srv.Watch(&resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+			},
+			Since: resumeRV,
+		}, mock)
+	})
+
+	added := 0
+	deadline := time.After(5 * time.Second)
+drain:
+	for added < burst {
+		select {
+		case evt := <-mock.events:
+			if evt.Type == resourcepb.WatchEvent_ADDED {
+				require.Greater(t, evt.Resource.Version, resumeRV,
+					"backfilled/replayed events must be newer than the requested Since")
+				added++
+			}
+		case <-deadline:
+			break drain
+		}
+	}
+
+	cancel()
+	require.NoError(t, eg.Wait())
+
+	require.Equal(t, burst, added, "every event after Since should be delivered exactly once, even once evicted from the replay cache")
+}
+
+// listModifiedSinceFailingBackend wraps a StorageBackend and makes
+// ListModifiedSince always fail, simulating a backend that doesn't support
+// it (e.g. the legacy-SQL-backed IAM resources).
+type listModifiedSinceFailingBackend struct {
+	StorageBackend
+}
+
+func (b *listModifiedSinceFailingBackend) ListModifiedSince(context.Context, NamespacedResource, int64, *time.Time) (int64, iter.Seq2[*ModifiedResource, error]) {
+	return 0, func(yield func(*ModifiedResource, error) bool) {
+		yield(nil, errors.New("list modified since not supported by this backend"))
+	}
+}
+
+// Stop forwards to the embedded backend's Stop, if it has one. Without this,
+// the type assertion server.Stop uses to find a stoppable backend fails
+// against the wrapper type, and the real backend (with its background
+// pruner/GC goroutines) never gets told to shut down.
+func (b *listModifiedSinceFailingBackend) Stop(ctx context.Context) error {
+	if stopper, ok := b.StorageBackend.(ResourceServerStopper); ok {
+		return stopper.Stop(ctx)
+	}
+	return nil
+}
+
+// TestWatchGapBackfillDegradesGracefullyWhenUnsupported verifies that Watch
+// doesn't fail the whole stream when the storage backend can't backfill a
+// replay-cache gap. It should fall back to whatever the replay cache and
+// live stream provide — i.e. the same behaviour as before the backfill was
+// added — rather than erroring the watch out from under the client.
+func TestWatchGapBackfillDegradesGracefullyWhenUnsupported(t *testing.T) {
+	testUser := newWatchTestUser()
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{
+		StorageMetrics: metrics,
+		WrapBackend: func(b StorageBackend) StorageBackend {
+			return &listModifiedSinceFailingBackend{StorageBackend: b}
+		},
+	})
+	ctx := authlib.WithAuthInfo(t.Context(), testUser)
+
+	resumeRV, err := createTestPlaylistRV(ctx, srv)
+	require.NoError(t, err)
+
+	// Force the same replay-cache gap as TestWatchBackfillsGapWhenReplayCacheEvicted.
+	const burst = defaultCacheSize + 10
+	for i := 0; i < burst; i++ {
+		require.NoError(t, createTestPlaylist(ctx, srv))
+	}
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), float64(1+burst))
+
+	watchCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	mock := newMockWatchServer(watchCtx)
+
+	var eg errgroup.Group
+	eg.Go(func() error {
+		return srv.Watch(&resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+			},
+			Since: resumeRV,
+		}, mock)
+	})
+
+	// The backend can't backfill, so only the cache's bounded window of
+	// events arrives — the same imperfect-but-non-fatal outcome as before
+	// this feature existed.
+	added := 0
+	deadline := time.After(2 * time.Second)
+drain:
+	for {
+		select {
+		case evt := <-mock.events:
+			if evt.Type == resourcepb.WatchEvent_ADDED {
+				added++
+			}
+		case <-deadline:
+			break drain
+		}
+	}
+
+	cancel()
+	require.NoError(t, eg.Wait(), "Watch must not fail just because gap backfill isn't supported")
+	require.Equal(t, defaultCacheSize, added)
 }
 
 // callbackAccessClient is a test helper whose Check behavior can be swapped between calls.

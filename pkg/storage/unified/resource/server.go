@@ -1756,7 +1756,7 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 			}
 
 			// Parse item metadata — needed for both provisioned and authorization checks.
-			obj, err := parseTrashItem(iter.Value())
+			obj, err := parseMetaAccessor(iter.Value())
 			if err != nil {
 				continue
 			}
@@ -1848,8 +1848,8 @@ func (s *server) checkFolderAdmin(ctx context.Context, user claims.AuthInfo, fol
 	return isAdmin
 }
 
-// parseTrashItem unmarshals the raw value into a GrafanaMetaAccessor.
-func parseTrashItem(value []byte) (utils.GrafanaMetaAccessor, error) {
+// parseMetaAccessor unmarshals the raw value into a GrafanaMetaAccessor.
+func parseMetaAccessor(value []byte) (utils.GrafanaMetaAccessor, error) {
 	partial := &metav1.PartialObjectMetadata{}
 	if err := json.Unmarshal(value, partial); err != nil {
 		return nil, err
@@ -1896,6 +1896,11 @@ func (s *server) initWatcher() error {
 			return ""
 		}
 		return e.Key.Resource
+	}, func(e *WrittenEvent) int64 {
+		if e == nil {
+			return 0
+		}
+		return e.ResourceVersion
 	})
 	return nil
 }
@@ -1943,10 +1948,21 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		return apierrors.NewUnauthorized("not allowed to list anything") // ?? or a single error?
 	}
 
+	// If the client supplies an explicit `since`, resumeRV records it so we can
+	// ask the broadcaster whether its replay cache has uninterrupted history
+	// back to that point. The cache only holds a bounded number of recent
+	// events, so a client that reconnects slowly — or a burst of writes while
+	// it was disconnected — can push events the client hasn't seen yet out of
+	// the cache before it resubscribes. When that happens we backfill the gap
+	// from durable storage below instead of silently skipping those events.
+	var resumeRV int64
+	if !req.SendInitialEvents && req.Since != 0 {
+		resumeRV = req.Since
+	}
+
 	// Start listening -- this will buffer any changes that happen while we backfill.
 	// If events are generated faster than we can process them, then some events will be dropped.
-	// TODO: Think of a way to allow the client to catch up.
-	stream, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace), key.Resource)
+	stream, hasFullHistory, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace), key.Resource, resumeRV)
 	if err != nil {
 		return err
 	}
@@ -2056,6 +2072,28 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		since = req.Since
 	}
 
+	if resumeRV > 0 {
+		select {
+		case ok := <-hasFullHistory:
+			if !ok {
+				// The broadcaster's replay cache doesn't cover resumeRV onward
+				// without gaps (it may have evicted older events, or never
+				// observed any). List the missing range directly from durable
+				// storage so we don't silently skip events the client hasn't
+				// seen yet.
+				latestRV, err := s.backfillWatchGap(ctx, srv, req, checker, resumeRV, &lastEmittedRV)
+				if err != nil {
+					return err
+				}
+				if latestRV > since {
+					since = latestRV
+				}
+			}
+		case <-ctx.Done():
+			return nil
+		}
+	}
+
 	// Set up periodic bookmark ticker when the client opted in.
 	var bookmarkC <-chan time.Time
 	if req.AllowWatchBookmarks && s.bookmarkFrequency > 0 {
@@ -2131,6 +2169,71 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			}
 		}
 	}
+}
+
+// backfillWatchGap replays events in (resumeRV, latestRV] straight from
+// durable storage, for the case where the broadcaster's in-memory replay
+// cache doesn't have uninterrupted history back to resumeRV (e.g. the cache
+// evicted older events during a burst of writes while the client was
+// disconnected, or never observed any events at all). It returns the
+// resource version storage has now been fully scanned up to; the caller
+// should resume filtering the live/cached stream from there rather than
+// resumeRV, to avoid re-delivering what was just backfilled.
+//
+// Because ListModifiedSince only returns the latest change per resource
+// name within the scanned range, backfilled events carry no "previous
+// object" — the client treats them as if it's seeing the resource for the
+// first time, which is the correct behaviour for a resource it never
+// observed a prior state for.
+//
+// A failure while listing (for example a backend that doesn't implement
+// ListModifiedSince, such as the legacy-SQL-backed IAM resources) is logged
+// and treated as "nothing more to backfill": the caller falls back to
+// resumeRV, i.e. exactly the pre-backfill behaviour. A failure sending to
+// the client, on the other hand, means the client is gone and is returned
+// so Watch can shut the stream down like it does everywhere else.
+func (s *server) backfillWatchGap(ctx context.Context, srv resourcepb.ResourceStore_WatchServer, req *resourcepb.WatchRequest, checker claims.ItemChecker, resumeRV int64, lastEmittedRV *int64) (int64, error) {
+	key := req.Options.Key
+	latestRV, seq := s.backend.ListModifiedSince(ctx, NamespacedResource{
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+	}, resumeRV, nil)
+
+	for res, err := range seq {
+		if err != nil {
+			s.log.Warn("watch: failed to backfill gap in replay cache from storage, resuming from cache only", "err", err)
+			return resumeRV, nil
+		}
+		if res.ResourceVersion <= resumeRV || !matchesQueryKey(key, &res.Key) {
+			continue
+		}
+
+		var folder string
+		if obj, err := parseMetaAccessor(res.Value); err == nil {
+			folder = obj.GetFolder()
+		}
+		if !checker(res.Key.Name, folder) {
+			continue
+		}
+
+		value := res.Value
+		if res.Action == resourcepb.WatchEvent_DELETED {
+			value = []byte{}
+		}
+		if err := srv.Send(&resourcepb.WatchEvent{
+			Type: res.Action,
+			Resource: &resourcepb.WatchEvent_Resource{
+				Value:   value,
+				Version: res.ResourceVersion,
+			},
+		}); err != nil {
+			return 0, err
+		}
+		*lastEmittedRV = res.ResourceVersion
+	}
+
+	return latestRV, nil
 }
 
 func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {

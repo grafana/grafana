@@ -458,14 +458,16 @@ func newFakeBroadcaster() *fakeBroadcaster {
 	return &fakeBroadcaster{ch: make(chan *resource.WrittenEvent, 16)}
 }
 
-func (b *fakeBroadcaster) Subscribe(_ context.Context, _, _ string) (<-chan *resource.WrittenEvent, error) {
+func (b *fakeBroadcaster) Subscribe(_ context.Context, _, _ string, _ int64) (<-chan *resource.WrittenEvent, <-chan bool, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.subscribeCalls++
 	if b.subscribeErr != nil {
-		return nil, b.subscribeErr
+		return nil, nil, b.subscribeErr
 	}
-	return b.ch, nil
+	historyCh := make(chan bool, 1)
+	historyCh <- true
+	return b.ch, historyCh, nil
 }
 
 func (b *fakeBroadcaster) Unsubscribe(ch <-chan *resource.WrittenEvent) {
