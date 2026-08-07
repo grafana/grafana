@@ -133,7 +133,10 @@ If a crash occurs before migration log is inserted, some tables might not have b
 
 ### CountValidator
 
-Compares resource counts between legacy SQL and unified storage. Accounts for rejected items during validation. Uses direct table queries for SQLite and the `GetStats` API for other databases.
+Compares resource counts between legacy SQL and unified storage by querying the
+legacy table and the unified `resource` table directly on the migration session.
+Accounts for rejected items during validation. Does not use the `GetStats` API
+(search DocCount), which can lag the table after large bulk migrations.
 
 ### FolderTreeValidator
 
