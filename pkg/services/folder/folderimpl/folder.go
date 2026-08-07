@@ -342,15 +342,10 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 		Default:           true,
 		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
 			s.log.Info("Generating folder support bundle")
+			ctx, requester := identity.WithServiceIdentity(ctx, 0)
 			folders, err := s.GetFolders(ctx, folder.GetFoldersQuery{
-				OrgID: 0,
-				SignedInUser: &user.SignedInUser{
-					Login:            "sa-supportbundle",
-					OrgRole:          "Admin",
-					IsGrafanaAdmin:   true,
-					IsServiceAccount: true,
-					Permissions:      map[int64]map[string][]string{accesscontrol.GlobalOrgID: {folder.ActionFoldersRead: {folder.ScopeFoldersAll}}},
-				},
+				OrgID:        0,
+				SignedInUser: requester,
 			})
 			if err != nil {
 				return nil, err
