@@ -14,7 +14,8 @@ labels:
     - oss
 menuTitle: Query editor
 title: Loki query editor
-weight: 300
+weight: 200
+review_date: 2026-07-29
 ---
 
 # Loki query editor
@@ -48,14 +49,7 @@ You can also augment queries by using [template variables](https://grafana.com/d
 
 The query editor toolbar contains the following elements:
 
-- **Kick start your query** - Click to see a list of queries that help you quickly get started creating LogQL queries. You can then continue to complete your query.
-
-These include:
-
-- Log query starters
-- Metric query starters
-
-Click the arrow next to each to see available query options.
+- **Kick start your query** - Click to see a list of sample queries that help you quickly start creating LogQL queries. These include log query starters and metric query starters. Click the arrow next to each to see the available query options, then continue to complete your query.
 
 - **Label browser** - Use the Loki label browser to navigate through your labels and values, and build queries.
 
@@ -119,17 +113,34 @@ The query editor groups operations into the following sections:
 - Label filters - see [Label filter expression](https://grafana.com/docs/loki/latest/logql/log_queries/#label-filter-expression)
 - Line filters - see [Line filter expression](https://grafana.com/docs/loki/latest/logql/log_queries/#label-filter-expression)
 
-Some operations make sense only when used in a specific order. If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
-To re-order operations manually, drag the operation box by its name and drop it into the desired place. For additional information see [Order of operations](https://grafana.com/docs/loki/latest/logql/#order-of-operations).
+Some operations make sense only when used in a specific order. If adding an operation would result in a nonsensical query, the query editor adds the operation to the correct place.
+To reorder operations manually, drag the operation box by its name and drop it into the desired place. For more information, refer to [Order of operations](https://grafana.com/docs/loki/latest/logql/#order-of-operations).
 
 ### Hints
 
-In same cases the query editor can detect which operations would be most appropriate for a selected log stream. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
+In some cases, the query editor can detect which operations are most appropriate for a selected log stream. When it does, it shows a hint next to the **+ Operations** button. Click the hint to add the operations to your query.
+
+### Builder mode example
+
+The following steps build a metric query that counts the rate of error lines for the `payments` app, without writing any LogQL:
+
+1. Under **Label filters**, select the `app` label and the value `payments`.
+1. Select **+ Operations**, then from **Line filters** add a **Line contains** operation and enter `error`.
+1. Select **+ Operations** again, then from **Range functions** add **Rate** with a range of `[5m]`.
+1. From **Aggregations**, add **Sum** to combine the results into a single series.
+
+The builder produces the equivalent LogQL query:
+
+```logql
+sum(rate({app="payments"} |= `error` [5m]))
+```
+
+Switch to [Code mode](#code-mode) at any time to view or refine the generated query.
 
 ## Code mode
 
-In **Code mode**, you can write complex queries using a text editor with autocompletion feature, syntax highlighting, and query validation.
-It also contains a [label browser](#label-browser) to further help you write queries.
+In **Code mode**, you can write complex queries using a text editor with autocompletion, syntax highlighting, and query validation.
+It also provides the [label browser](#toolbar-elements) to further help you write queries.
 
 For more information about Loki's query language, refer to the [Loki documentation](https://grafana.com/docs/loki/latest/logql/).
 
@@ -146,13 +157,13 @@ The following options are the same for both **Builder** and **Code** mode:
 
 - **Legend** - Controls the time series name, using a name or pattern. For example, `{{hostname}}` is replaced with the label value for the label `hostname`.
 
-- **Type** - Selects the query type to run. The `instant` type queries against a single point in time. We use the "To" time from the time range. The `range` type queries over the selected range of time.
+- **Type** - Selects the query type to run. The `instant` type queries against a single point in time, using the **To** time from the time range. The `range` type queries over the selected range of time.
 
-- **Line limit** -Defines the upper limit for the number of log lines returned by a query. The default is `1000`
+- **Line limit** - Defines the upper limit for the number of log lines returned by a query. The default is `1000`.
 
-- **Direction** - Determines the search order. **Backward** is a backward search starting at the end of the time range. **Forward** is a forward search starting at the beginning of the time range. The default is **Backward**
+- **Direction** - Determines the search order. **Backward** is a backward search starting at the end of the time range. **Forward** is a forward search starting at the beginning of the time range. The default is **Backward**.
 
-- **Step** Sets the step parameter of Loki metrics queries. The default value equals to the value of `$__auto` variable, which is calculated using the time range and the width of the graph (the number of pixels).
+- **Step** - Sets the step parameter of Loki metric queries. The default value equals the value of the `$__auto` variable, which Grafana calculates using the time range and the width of the graph in pixels.
 
 ## Create a log query
 
@@ -163,15 +174,57 @@ To display the results of a log query, select the Loki data source, then enter a
 
 For more information about log queries and LogQL, refer to the [Loki log queries documentation](https://grafana.com/docs/loki/latest/logql/log_queries/).
 
+### Log query examples
+
+A log query has two parts: a stream selector that chooses log streams by label, and an optional pipeline that filters and parses the matching lines. Replace the label matchers with values from your own logs.
+
+Return every log line from the `payments` app:
+
+```logql
+{app="payments"}
+```
+
+Keep only lines that contain the word `error`, and drop health-check noise:
+
+```logql
+{app="payments"} |= `error` != `healthcheck`
+```
+
+Match lines with a regular expression, for example any 4xx or 5xx status:
+
+```logql
+{app="nginx"} |~ `status=(4|5)..`
+```
+
+Parse structured logs, then filter on an extracted field. This example parses logfmt logs and keeps requests slower than 500 ms:
+
+```logql
+{app="payments"} | logfmt | duration > 500ms
+```
+
+Parse JSON logs and keep only error-level entries:
+
+```logql
+{namespace="prod", app="checkout"} | json | level=`error`
+```
+
+**Use case: debug a failing service.** Combine a namespace and app selector with a parser and label filter to isolate the errors for one service during an incident:
+
+```logql
+{namespace="prod", app="checkout"} |= `error` | logfmt | status >= 500
+```
+
 ### Show log context
 
-In Explore, you can can retrieve the context surrounding your log results by clicking the `Show Context` button. You'll be able to investigate the logs from the same log stream that came before and after the log message you're interested in.
+In Explore, you can retrieve the context surrounding your log results by clicking the **Show context** button. You can then investigate the logs from the same log stream that came before and after the log message you're interested in.
 
-The initial log context query is created from all labels defining the stream for the selected log line. You can use the log context query editor to widen the search by removing one or more of the label filters from log stream. Additionally, if you used a parser in your original query, you can refine your search by using extracted labels filters.
+The initial log context query is created from all labels defining the stream for the selected log line. You can use the log context query editor to widen the search by removing one or more of the label filters from the log stream. If you used a parser in your original query, you can refine your search by using extracted label filters.
 
-To reduce the repetition of selecting and removing the same labels when examining multiple log context windows, Grafana stores your selected labels and applies them to each open context window. This lets you seamlessly navigate through various log context windows without having to reapply your filters.
+You can also adjust the size of the time window that the log context loads, so you can expand or narrow the range of surrounding logs without leaving the context view.
 
-To reset filters and use the initial log context query, click the `Revert to initial query` button next to the query preview.
+To reduce the repetition of selecting and removing the same labels when examining multiple log context windows, Grafana stores your selected labels and applies them to each open context window. This lets you navigate through various log context windows without having to reapply your filters.
+
+To reset filters and use the initial log context query, click the **Revert to initial query** button next to the query preview.
 
 ### Tail live logs
 
@@ -235,11 +288,48 @@ You can use LogQL to wrap a log query with functions that create metrics from yo
 
 For more information about metric queries, refer to the [Loki metric queries documentation](https://grafana.com/docs/loki/latest/logql/metric_queries/).
 
+### Metric query examples
+
+Metric queries apply a range aggregation, such as `rate` or `count_over_time`, over a log query and an optional range like `[5m]`. You can then wrap the result in an aggregation operator, such as `sum` or `topk`, to group or rank the series.
+
+Count the rate of error lines per second across the `payments` app:
+
+```logql
+sum(rate({app="payments"} |= `error` [5m]))
+```
+
+Break the request rate down by status code:
+
+```logql
+sum by (status) (rate({app="nginx"} | logfmt [5m]))
+```
+
+Count how many timeouts occurred in the last hour:
+
+```logql
+count_over_time({app="payments"} |= `timeout` [1h])
+```
+
+Calculate the 95th percentile request duration per route. This example parses logfmt logs and unwraps the numeric `duration` field:
+
+```logql
+quantile_over_time(0.95, {app="payments"} | logfmt | unwrap duration [5m]) by (route)
+```
+
+**Use case: find the noisiest endpoints.** Rank the top 10 request paths by log volume over the last hour:
+
+```logql
+topk(10, sum by (path) (count_over_time({app="nginx"} | logfmt [1h])))
+```
+
+## Query splitting
+
+To keep large queries responsive, Grafana automatically splits Loki queries that cover a long time range into a series of smaller sub-queries. Grafana runs the sub-queries and merges the results, and the query progresses incrementally so you see partial results as they arrive. Query splitting applies to both log and metric queries and requires no configuration.
+
+## Structured metadata
+
+Loki stores three types of labels: indexed labels, parsed fields, and structured metadata. The query editor and log details treat all three types as labels you can filter on and use in [derived fields](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/#derived-fields). For more information, refer to the [Loki structured metadata documentation](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/).
+
 ## Apply annotations
 
-[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs.
-You can add annotation queries by clicking the **Add new element** icon (blue plus sign) in the dashboard toolbar and selecting **Annotation query**.
-
-You can only use log queries as a source for annotations.
-Grafana automatically uses log content as annotation text and your log stream labels as tags.
-You don't need to create any additional mapping.
+You can use Loki log queries as a source for dashboard annotations. For details, refer to [Loki annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/annotations/).
