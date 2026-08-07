@@ -89,6 +89,11 @@ func (db *PostgresDialect) SQLType(c *Column) string {
 		return DB_Uuid // do not add the length options
 	case DB_Blob, DB_TinyBlob, DB_MediumBlob, DB_LongBlob:
 		return DB_Bytea
+	case DB_BigInt:
+		if c.IsAutoIncrement {
+			return DB_BigSerial
+		}
+		res = t
 	case DB_Double:
 		return "DOUBLE PRECISION"
 	default:
