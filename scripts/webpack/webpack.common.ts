@@ -57,6 +57,12 @@ export default (env: Env = {}): Configuration => ({
       '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
         '@locker/near-membrane-dom/custom-devtools-formatter.js'
       ),
+      // rxjs' package exports map `require` to dist/cjs and everything else to dist/esm5, so a
+      // single CommonJS dependency is enough to bundle a second, un-tree-shakeable copy of the
+      // whole library. Pin every request to the ESM build the rest of the app already uses.
+      // The dist/esm5 directory mirrors the package's subpath layout, so `rxjs/operators` and
+      // friends keep resolving.
+      rxjs: path.join(path.dirname(require.resolve('rxjs/package.json')), 'dist/esm5'),
     },
     modules: [
       // default value
