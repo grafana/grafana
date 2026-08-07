@@ -24,8 +24,10 @@ import {
   useSortedRows,
   useRowCompiler,
   useTypographyCtx,
+  useColumnBuilderFromFields,
+  useDataGridRows,
+  type ColumnBuildConfig,
 } from './hooks';
-import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
 import {
   type CellRootRenderer,
   type InspectCellProps,

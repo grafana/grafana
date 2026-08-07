@@ -8,7 +8,9 @@ import { t } from '@grafana/i18n';
 import { type TableFooterOptions } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
-import { useReducerEntries } from '../hooks';
+// Imported from the leaf module rather than the hooks barrel: hooks/render.tsx imports this
+// component, so going through the barrel would make hooks/index.ts circular.
+import { useReducerEntries } from '../hooks/footer';
 import { getDefaultCellStyles, getJustifyContent, type TextAlign } from '../styles';
 import { type TableRow } from '../types';
 import { getDisplayName } from '../utils';

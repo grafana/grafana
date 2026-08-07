@@ -37,8 +37,10 @@ import {
   useScrollbarWidth,
   useSortedRows,
   useTypographyCtx,
+  useColumnBuilderFromFields,
+  useDataGridRows,
+  type ColumnBuildConfig,
 } from './hooks';
-import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
 import {
   type CellRootRenderer,

@@ -37,13 +37,12 @@ import {
   type TableFooterOptions,
 } from '@grafana/schema';
 
-import { type PanelContext } from '../../PanelChrome';
-
-import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
-import { HeaderCell } from './components/HeaderCell';
-import { SummaryCell } from './components/SummaryCell';
-import { TableCellActions } from './components/TableCellActions';
-import { TableCellTooltip } from './components/TableCellTooltip';
+import { type PanelContext } from '../../../PanelChrome';
+import { getCellRenderer, getCellSpecificStyles } from '../Cells/renderers';
+import { HeaderCell } from '../components/HeaderCell';
+import { SummaryCell } from '../components/SummaryCell';
+import { TableCellActions } from '../components/TableCellActions';
+import { TableCellTooltip } from '../components/TableCellTooltip';
 import {
   getCellActionStyles,
   getDefaultCellStyles,
@@ -53,7 +52,7 @@ import {
   getTooltipStyles,
   getJustifyContent,
   IS_SAFARI_26,
-} from './styles';
+} from '../styles';
 import {
   type ApplyFilterResult,
   type CellRootRenderer,
@@ -66,7 +65,7 @@ import {
   type TableFilterActionCallback,
   type TableRow,
   type TableSummaryRow,
-} from './types';
+} from '../types';
 import {
   canFieldBeColorized,
   displayJsonValue,
@@ -80,7 +79,7 @@ import {
   predicateByName,
   shouldTextOverflow,
   shouldTextWrap,
-} from './utils';
+} from '../utils';
 
 // -----------------------------------------------------------------------------
 // useDataGridRows
