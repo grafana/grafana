@@ -37,6 +37,9 @@ export declare global {
      * The image renderer can check this to decide whether to use this mechanism or a fallback.
      */
     __grafanaRenderBindingSupported?: boolean;
+
+    /** Selects the Luxon-backed implementation before the application bundle loads. */
+    __grafanaUseLuxon?: boolean;
   }
 
   // Augment DOMParser to accept TrustedType sanitised content
