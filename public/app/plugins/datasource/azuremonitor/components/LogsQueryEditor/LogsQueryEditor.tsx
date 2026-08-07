@@ -141,34 +141,26 @@ const LogsQueryEditor = ({
   }, [searchLogsEnabled, query.azureLogAnalytics?.resources, templateSrv]);
 
   useEffect(() => {
-    const tier = query.azureLogAnalytics?.logTier;
     const tierStillEnabled =
-      (tier === 'Basic' && basicLogsEnabled) || (tier === 'Auxiliary' && auxiliaryLogsEnabled);
-    
-    // Handle legacy queries: basicLogsQuery: true with no logTier should resolve to an enabled tier
-    if (query.azureLogAnalytics?.basicLogsQuery && tier === undefined) {
-      // Resolve to first available enabled tier
-      const resolvedTier = basicLogsEnabled ? 'Basic' : auxiliaryLogsEnabled ? 'Auxiliary' : undefined;
-      if (resolvedTier) {
-        const updated = setLogTier(query, resolvedTier);
-        onChange(updated);
-      } else {
-        // No tier is enabled, clear it
-        const cleared = setLogTier(query, undefined);
-        onChange(cleared);
-      }
-      return;
-    }
-    
+      (selectedTier === 'Basic' && basicLogsEnabled) || (selectedTier === 'Auxiliary' && auxiliaryLogsEnabled);
+
     const shouldClear =
       (!searchLogsEnabled || !showBasicLogsToggle) && query.azureLogAnalytics?.basicLogsQuery
         ? true
-        : !!query.azureLogAnalytics?.basicLogsQuery && tier !== undefined && !tierStillEnabled;
+        : !!query.azureLogAnalytics?.basicLogsQuery && !tierStillEnabled;
     if (shouldClear) {
       const cleared = setLogTier(query, undefined);
       onChange(setKustoQuery(cleared, ''));
     }
-  }, [searchLogsEnabled, basicLogsEnabled, auxiliaryLogsEnabled, onChange, query, showBasicLogsToggle]);
+  }, [
+    searchLogsEnabled,
+    basicLogsEnabled,
+    auxiliaryLogsEnabled,
+    onChange,
+    query,
+    selectedTier,
+    showBasicLogsToggle,
+  ]);
 
   useEffect(() => {
     const hasRawKql = !!query.azureLogAnalytics?.query;

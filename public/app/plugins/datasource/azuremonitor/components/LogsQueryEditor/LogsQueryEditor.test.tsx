@@ -467,6 +467,86 @@ describe('LogsQueryEditor', () => {
         await screen.findByText('When using Basic Logs, you may only select one resource at a time.')
       ).toBeInTheDocument();
     });
+
+    it('should preserve a legacy Basic query when Basic Logs are enabled', async () => {
+      const mockDatasource = createMockDatasource();
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          basicLogsQuery: true,
+          logTier: undefined,
+          query: 'BasicTable | take 10',
+        },
+      });
+      const onChange = jest.fn();
+
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={jest.fn()}
+          setError={() => {}}
+          basicLogsEnabled={true}
+          auxiliaryLogsEnabled={false}
+        />
+      );
+
+      await waitFor(() => expect(screen.getByLabelText('Basic')).toBeChecked());
+      expect(onChange).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          azureLogAnalytics: expect.objectContaining({ basicLogsQuery: false }),
+        })
+      );
+    });
+
+    it('should clear a legacy Basic query rather than convert it when only Auxiliary Logs are enabled', async () => {
+      const mockDatasource = createMockDatasource();
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: [
+            '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+          ],
+          basicLogsQuery: true,
+          logTier: undefined,
+          query: 'BasicTable | take 10',
+        },
+      });
+      const onChange = jest.fn();
+
+      render(
+        <LogsQueryEditor
+          query={query}
+          datasource={mockDatasource}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onChange}
+          onQueryChange={jest.fn()}
+          setError={() => {}}
+          basicLogsEnabled={false}
+          auxiliaryLogsEnabled={true}
+        />
+      );
+
+      await waitFor(() =>
+        expect(onChange).toHaveBeenCalledWith(
+          expect.objectContaining({
+            azureLogAnalytics: expect.objectContaining({
+              basicLogsQuery: false,
+              logTier: undefined,
+              query: '',
+            }),
+          })
+        )
+      );
+      expect(onChange).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          azureLogAnalytics: expect.objectContaining({ logTier: 'Auxiliary' }),
+        })
+      );
+    });
   });
 
   describe('data ingestion warning', () => {
