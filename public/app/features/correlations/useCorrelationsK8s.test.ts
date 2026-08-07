@@ -107,12 +107,17 @@ describe('useCorrelationsK8s', () => {
           source: { group: 'notFoundGroup', name: 'foundUid' },
           target: { group: 'notFoundGroup', name: 'foundUid' },
           type: 'query',
-          config: { field: 'testField', target: { url: 'testUrl' } },
+          config: { field: 'testField', target: { url: 'testUrl' }, timeRange: { field: 'time' } },
         },
       });
 
       expect(correlation).toStrictEqual({
-        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined },
+        config: {
+          field: 'testField',
+          target: { url: 'testUrl' },
+          transformations: undefined,
+          timeRange: { field: 'time' },
+        },
         description: 'testDesc',
         label: 'testLabel',
         provisioned: false,
@@ -170,7 +175,7 @@ describe('useCorrelationsK8s', () => {
       });
 
       expect(correlation).toStrictEqual({
-        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined },
+        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined, timeRange: undefined },
         description: 'testDesc',
         label: 'testLabel',
         provisioned: true,
@@ -204,7 +209,7 @@ describe('useCorrelationsK8s', () => {
       });
 
       expect(correlation).toStrictEqual({
-        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined },
+        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined, timeRange: undefined },
         description: 'testDesc',
         label: 'testLabel',
         provisioned: false,
