@@ -7,6 +7,7 @@ import webpack, { type Configuration } from 'webpack';
 
 import { getEnvConfig } from '../cli/env-util.ts';
 
+import { getMomentLocaleRegExp } from './momentLocales.ts';
 import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 import { esbuildRule, sassRule } from './rules.ts';
 
@@ -102,6 +103,9 @@ export default (env: Env = {}): Configuration => ({
         ]
       : []),
     new CorsWorkerPlugin(),
+    // moment requires its locales through a dynamic expression, so webpack bundles all ~137 of
+    // them. Grafana only ever calls moment.locale() with a language it ships translations for.
+    new webpack.ContextReplacementPlugin(/moment[\\/]locale$/, getMomentLocaleRegExp()),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
