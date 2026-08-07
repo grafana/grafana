@@ -20,7 +20,6 @@ import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
 import { type TextAlign } from './styles';
-import { type ApplyFilterResult } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -58,6 +57,15 @@ export type FilterType = Record<
     parentIndex?: number;
   }
 >;
+
+// Result of applying `filter` to a set of rows. Lives here rather than beside `applyFilter` so that
+// types.ts doesn't have to import from utils/, which imports back from here.
+export interface ApplyFilterResult {
+  crossFilterOrder: string[];
+  crossFilterRows: Record<string, TableRow[]>;
+  crossFilterTailRows: TableRow[];
+  filteredRows: TableRow[];
+}
 
 /* ----------------------------- Table specific types ----------------------------- */
 export interface TableSummaryRow {

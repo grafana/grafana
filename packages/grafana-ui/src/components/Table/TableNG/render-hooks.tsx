@@ -55,6 +55,7 @@ import {
   IS_SAFARI_26,
 } from './styles';
 import {
+  type ApplyFilterResult,
   type CellRootRenderer,
   type FilterType,
   type FromFieldsResult,
@@ -67,7 +68,6 @@ import {
   type TableSummaryRow,
 } from './types';
 import {
-  type ApplyFilterResult,
   canFieldBeColorized,
   displayJsonValue,
   getAlignment,
