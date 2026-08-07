@@ -149,9 +149,12 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 			log.Debug("Found collision of result labels and system reserved. Renamed labels with suffix '_user'", "renamedLabels", strings.Join(reserved, ","))
 		}
 	}
-	// Merge both the extra labels and the labels from the evaluation into a common set
+	// Merge extra labels, rule labels, and result labels into a common set
 	// of labels that can be expanded in custom labels and annotations.
-	templateData := template.NewData(mergeLabels(extraLabels, resultLabels), result)
+	// Rule labels are included so that manually-set labels (e.g., environment: production)
+	// are available in $labels when templating annotations and labels.
+	// Extra labels take precedence over rule labels; result labels have lowest priority.
+	templateData := template.NewData(mergeLabels(mergeLabels(extraLabels, alertRule.Labels), resultLabels), result)
 
 	// For now, do nothing with these errors as they are already logged in expand.
 	// In the future, we want to show these errors to the user somehow.
