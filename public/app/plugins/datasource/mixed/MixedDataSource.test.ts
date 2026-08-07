@@ -251,4 +251,20 @@ describe('MixedDatasource', () => {
       expect(results[0].data).toHaveLength(0);
     });
   });
+
+  it('should not execute hidden queries', async () => {
+  const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+  const requestMixed = getQueryOptions({
+    targets: [
+      { refId: 'QA', datasource: { uid: 'A' } },           // visible
+      { refId: 'QB', datasource: { uid: 'B' }, hide: true }, // hidden - should NOT execute
+    ],
+  });
+
+  await expect(ds.query(requestMixed)).toEmitValuesWith((results) => {
+    expect(results.length).toBe(1);
+    expect(results[0].data).toEqual(['AAAA']);
+    expect(results[0].state).toEqual(LoadingState.Done);
+  });
+});
 });
