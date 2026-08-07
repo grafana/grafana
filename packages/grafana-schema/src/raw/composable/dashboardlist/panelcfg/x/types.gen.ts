@@ -10,7 +10,7 @@
 
 // Generated from public/app/plugins/panel/dashboardlist/panelcfg.cue file.
 
-export const pluginVersion = "12.4.8";
+export const pluginVersion = "12.4.9";
 
 export interface Options {
   /**
