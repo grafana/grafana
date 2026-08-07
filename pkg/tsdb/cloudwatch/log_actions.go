@@ -137,6 +137,8 @@ func (ds *DataSource) executeLogAction(ctx context.Context, logsQuery models.Log
 		frame, err = ds.handleGetQueryResults(ctx, logsClient, logsQuery, query.RefID)
 	case "GetLogEvents":
 		frame, err = ds.handleGetLogEvents(ctx, logsClient, logsQuery)
+	default:
+		return nil, backend.DownstreamError(fmt.Errorf("unrecognized log action subtype: %q", logsQuery.Subtype))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute log action with subtype: %s: %w", logsQuery.Subtype, err)
