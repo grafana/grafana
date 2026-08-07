@@ -61,6 +61,18 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 		return nil, false, err
 	}
 
+	// Snapshots are org-scoped, but lookups by key are global. Reject deletes that
+	// target a snapshot owned by a different org than the caller's namespace, and
+	// return NotFound (rather than a distinct error) so the endpoint does not become
+	// a cross-org existence oracle.
+	ns, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+	if snap.OrgID != ns.OrgID {
+		return nil, false, s.ResourceInfo.NewNotFound(name)
+	}
+
 	// Delete the external one first
 	if snap.ExternalDeleteURL != "" {
 		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(snap.ExternalDeleteURL)
