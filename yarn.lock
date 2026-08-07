@@ -2435,7 +2435,7 @@ __metadata:
     "@types/node": "npm:24.10.1"
     "@types/semver": "npm:7.7.1"
     "@typescript/native": "npm:typescript@^7.0.2"
-    esbuild: "npm:0.25.8"
+    esbuild: "npm:0.28.1"
     rimraf: "npm:6.0.1"
     rollup: "npm:^4.60.1"
     rollup-plugin-esbuild: "npm:6.2.1"
