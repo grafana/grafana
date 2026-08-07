@@ -60,6 +60,13 @@ func TestInstrumentationMiddleware(t *testing.T) {
 				shouldInstrumentRequestSize: true,
 			},
 			{
+				expEndpoint: backend.EndpointQueryChunkedData,
+				fn: func(cdt *handlertest.HandlerMiddlewareTest) error {
+					return cdt.MiddlewareHandler.QueryChunkedData(context.Background(), &backend.QueryChunkedDataRequest{PluginContext: pCtx}, nopChunkedWriter{})
+				},
+				shouldInstrumentRequestSize: true,
+			},
+			{
 				expEndpoint: backend.EndpointCollectMetrics,
 				fn: func(cdt *handlertest.HandlerMiddlewareTest) error {
 					_, err := cdt.MiddlewareHandler.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{PluginContext: pCtx})
@@ -246,6 +253,44 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestInstrumentationMiddlewareQueryChunkedDataStreamedError(t *testing.T) {
+	pCtx := backend.PluginContext{PluginID: pluginID, PluginVersion: "1.0.0"}
+
+	promRegistry := prometheus.NewRegistry()
+	pluginsRegistry := pluginfakes.NewFakePluginRegistry()
+	require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
+		JSONData: plugins.JSONData{ID: pluginID, Backend: true},
+	}))
+	mw := newMetricsMiddleware(promRegistry, pluginsRegistry)
+	cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(
+		backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
+			mw.BaseHandler = backend.NewBaseHandler(next)
+			return mw
+		}),
+	))
+
+	// The chunked fallback path streams a per-refID error via WriteError but returns a
+	// nil top-level error. The request must still be recorded as an error, matching how
+	// QueryData reports per-refID response errors.
+	cdt.TestHandler.QueryChunkedDataFunc = func(ctx context.Context, _ *backend.QueryChunkedDataRequest, w backend.ChunkedDataWriter) error {
+		return w.WriteError(ctx, "A", backend.StatusBadRequest, errors.New("boom"))
+	}
+
+	err := cdt.MiddlewareHandler.QueryChunkedData(context.Background(), &backend.QueryChunkedDataRequest{PluginContext: pCtx}, nopChunkedWriter{})
+	require.NoError(t, err)
+
+	counter, err := mw.pluginRequestCounter.GetMetricWith(prometheus.Labels{
+		"plugin_id":      pluginID,
+		"endpoint":       string(backend.EndpointQueryChunkedData),
+		"status":         instrumentationutils.RequestStatusError.String(),
+		"target":         string(backendplugin.TargetUnknown),
+		"plugin_version": "1.0.0",
+		"status_source":  string(backend.DefaultErrorSource),
+	})
+	require.NoError(t, err)
+	require.Equal(t, 1.0, testutil.ToFloat64(counter))
 }
 
 func TestCallResourceHTTPStatusMetrics(t *testing.T) {
