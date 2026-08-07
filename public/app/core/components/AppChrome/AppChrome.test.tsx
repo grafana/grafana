@@ -4,6 +4,7 @@ import { type ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { render, screen, waitFor, act, getWrapper } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv, useScopes } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -19,7 +20,6 @@ import {
   type ExtensionSidebarContextType,
   useExtensionSidebarContext,
 } from './ExtensionSidebar/ExtensionSidebarProvider';
-import { selectors } from '@grafana/e2e-selectors';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
