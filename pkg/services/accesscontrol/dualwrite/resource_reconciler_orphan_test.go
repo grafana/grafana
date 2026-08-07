@@ -54,6 +54,10 @@ func (f *fakeZanzanaClient) BatchCheck(ctx context.Context, info authlib.AuthInf
 	return authlib.BatchCheckResponse{}, nil
 }
 
+func (f *fakeZanzanaClient) CheckPermission(context.Context, *authzextv1.CheckPermissionRequest) (*authzextv1.CheckPermissionResponse, error) {
+	return &authzextv1.CheckPermissionResponse{}, nil
+}
+
 func TestResourceReconciler_OrphanedManagedDashboardTuplesAreDeleted(t *testing.T) {
 	legacy := func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		return map[string]map[string]*openfgav1.TupleKey{}, nil

@@ -399,6 +399,10 @@ const (
 	// Merge Zanzana permissions into legacy RBAC for access-control API endpoints.
 	FlagZanzanaMergeUserPermissions = "zanzanaMergeUserPermissions"
 
+	// FlagZanzanaRBACFallbackChecks
+	// Evaluate legacy RBAC permissions through Zanzana using native and generic representations.
+	FlagZanzanaRBACFallbackChecks = "zanzanaRBACFallbackChecks"
+
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
 	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"

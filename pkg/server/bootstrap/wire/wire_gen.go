@@ -120,6 +120,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/authz"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	store2 "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -291,7 +292,9 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	kvStore := kvstore.ProvideService(sqlStore)
-	accessControl := acimpl.ProvideAccessControl(featureToggles)
+	permissionCheckerProxy := zanzana.ProvidePermissionCheckerProxy()
+	registerer := metrics.ProvideRegisterer()
+	accessControl := acimpl.ProvideAccessControlWithFallback(featureToggles, cfg, permissionCheckerProxy, registerer)
 	bundleregistryService := bundleregistry.ProvideService()
 	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracingService, accessControl, bundleregistryService)
 	if err != nil {
@@ -381,7 +384,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
 	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
-	registerer := metrics.ProvideRegisterer()
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
 	dbProvider, err := sql.ProvideResourceDB(cfg, sqlStore)
@@ -400,7 +402,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, zanzanaServer, featureToggles, registerer)
+	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, zanzanaServer, featureToggles, registerer, permissionCheckerProxy)
 	if err != nil {
 		return nil, err
 	}
@@ -1052,7 +1054,9 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	kvStore := kvstore.ProvideService(sqlStore)
-	accessControl := acimpl.ProvideAccessControl(featureToggles)
+	permissionCheckerProxy := zanzana.ProvidePermissionCheckerProxy()
+	registerer := metrics.ProvideRegistererForTest()
+	accessControl := acimpl.ProvideAccessControlWithFallback(featureToggles, cfg, permissionCheckerProxy, registerer)
 	bundleregistryService := bundleregistry.ProvideService()
 	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracingService, accessControl, bundleregistryService)
 	if err != nil {
@@ -1142,7 +1146,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
 	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
-	registerer := metrics.ProvideRegistererForTest()
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
 	defaultElector := leaderelection.NewDefaultElector()
@@ -1150,7 +1153,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, zanzanaServer, featureToggles, registerer)
+	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, zanzanaServer, featureToggles, registerer, permissionCheckerProxy)
 	if err != nil {
 		return nil, err
 	}
@@ -1810,7 +1813,9 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	providerProvider := provider.ProvideEncryptionProvider()
 	kvStore := kvstore.ProvideService(sqlStore)
 	routeRegisterImpl := routing.ProvideRegister()
-	accessControl := acimpl.ProvideAccessControl(featureToggles)
+	permissionCheckerProxy := zanzana.ProvidePermissionCheckerProxy()
+	registerer := metrics.ProvideRegisterer()
+	accessControl := acimpl.ProvideAccessControlWithFallback(featureToggles, cfg, permissionCheckerProxy, registerer)
 	bundleregistryService := bundleregistry.ProvideService()
 	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracingService, accessControl, bundleregistryService)
 	if err != nil {
@@ -1845,7 +1850,6 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	}
 	tracer := server.OtelTracer()
 	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
-	registerer := metrics.ProvideRegisterer()
 	globalDataKeyStorage, err := encryption.ProvideGlobalDataKeyStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
 		return server.Runner{}, err
@@ -1887,7 +1891,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, zanzanaServer, featureToggles, registerer)
+	zanzanaClient, err := authz.ProvideZanzanaClient(cfg, sqlStore, zanzanaServer, featureToggles, registerer, permissionCheckerProxy)
 	if err != nil {
 		return server.Runner{}, err
 	}

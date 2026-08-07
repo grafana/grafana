@@ -585,6 +585,11 @@ export interface FeatureToggles {
   */
   zanzanaMergeUserPermissions?: boolean;
   /**
+  * Evaluate legacy RBAC permissions through Zanzana using native and generic representations.
+  * @default false
+  */
+  zanzanaRBACFallbackChecks?: boolean;
+  /**
   * Enables reload of dashboards on scopes, time range and variables changes
   * @default false
   */

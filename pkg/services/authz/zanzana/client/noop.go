@@ -51,3 +51,7 @@ func (nc NoopClient) Mutate(ctx context.Context, req *authzextv1.MutateRequest) 
 func (nc NoopClient) Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
 	return nil, nil
 }
+
+func (nc NoopClient) CheckPermission(ctx context.Context, req *authzextv1.CheckPermissionRequest) (*authzextv1.CheckPermissionResponse, error) {
+	return nil, errors.New("not implemented")
+}

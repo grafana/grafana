@@ -52,10 +52,14 @@ import (
 
 // ProvideZanzanaClient used to register ZanzanaClient.
 // It will also start an embedded ZanzanaSever if mode is set to "embedded".
-func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Server, features featuremgmt.FeatureToggles, reg prometheus.Registerer) (zanzana.Client, error) {
+func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Server, features featuremgmt.FeatureToggles, reg prometheus.Registerer, checker *zanzana.PermissionCheckerProxy) (zanzana.Client, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		return zClient.NewNoopClient(), nil
+		client := zClient.NewNoopClient()
+		// Install every selected client into the proxy so AccessControl observes the
+		// same Zanzana mode as the Kubernetes-style authorization client.
+		checker.Set(client)
+		return client, nil
 	}
 
 	switch cfg.ZanzanaClient.Mode {
@@ -69,7 +73,11 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 			KeepaliveTime:    cfg.ZanzanaClient.KeepaliveTime,
 			CallTimeout:      cfg.ZanzanaClient.CallTimeout,
 		}
-		return NewRemoteZanzanaClient(zanzanaConfig, reg)
+		client, err := NewRemoteZanzanaClient(zanzanaConfig, reg)
+		if err == nil {
+			checker.Set(client)
+		}
+		return client, err
 
 	case setting.ZanzanaModeEmbedded:
 		channel := &inprocgrpc.Channel{}
@@ -93,6 +101,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize zanzana client: %w", err)
 		}
+		checker.Set(client)
 		return client, nil
 
 	default:
