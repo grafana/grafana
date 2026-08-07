@@ -3333,7 +3333,9 @@
           "rules-note-body": "Alert rules and recording rules are already active as Grafana-managed rules — promote only merges the Alertmanager resources above.",
           "success-body": "The imported resources were merged into your live config.",
           "success-title": "Configuration promoted",
-          "sync-stops-body": "Once merged, the resources become normal Grafana resources and stop tracking the datasource. Grafana will not sync from it again.",
+          "sync-not-cleared-body": "Nothing syncs from the datasource any more. Disable auto-sync in Alerting settings to import notification resources again — if it is set in grafana.ini, remove the key there.",
+          "sync-not-cleared-title": "Configuration promoted, but auto-sync is still configured",
+          "sync-stops-body": "Once merged, the resources become normal Grafana resources and stop tracking the datasource. Auto-sync is turned off as part of the merge.",
           "sync-stops-title": "This will stop auto-sync",
           "title": "Promote this configuration?"
         },

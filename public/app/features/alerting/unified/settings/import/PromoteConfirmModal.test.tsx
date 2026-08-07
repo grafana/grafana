@@ -3,10 +3,17 @@ import { act, render, screen, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setupMswServer } from '../../mockApi';
+import { type AdminConfigPostState, setupAdminConfigPost } from '../../mocks/server/configure/admin_config';
 
 import { PromoteConfirmModal } from './PromoteConfirmModal';
 
 const server = setupMswServer();
+
+// Toasts render outside this tree, so assert on the notification calls instead.
+const notify = { success: jest.fn(), warning: jest.fn(), error: jest.fn() };
+jest.mock('app/core/copy/appNotification', () => ({
+  useAppNotification: () => notify,
+}));
 
 const stagedConfig = {
   identifier: 'config-min',
@@ -41,6 +48,10 @@ function fullDryRunResponse() {
 }
 
 describe('PromoteConfirmModal', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('previews the merge impact and renamed resources from the dry-run, then promotes on confirm', async () => {
     let promoted = false;
     server.use(
@@ -102,6 +113,66 @@ describe('PromoteConfirmModal', () => {
 
     await waitFor(() => expect(onDismiss).toHaveBeenCalled());
     expect(promoteCount).toBe(1);
+  });
+
+  it('clears the configured auto-sync datasource after promoting a sync-managed config', async () => {
+    const adminConfig: AdminConfigPostState = { lastPayload: null };
+    server.use(
+      http.post(CONVERT_URL, fullDryRunResponse),
+      http.post(PROMOTE_URL, () => HttpResponse.json({}))
+    );
+    setupAdminConfigPost(server, adminConfig, 201);
+
+    const onDismiss = jest.fn();
+    const { user } = render(<PromoteConfirmModal stagedConfig={stagedConfig} isSyncManaged onDismiss={onDismiss} />);
+
+    await waitFor(() => expect(ui.confirm.get()).toBeEnabled());
+    await user.click(ui.confirm.get());
+
+    // Empty UID is the backend's "clear it" convention; without it auto-sync stays reported as
+    // active and the convert API keeps rejecting notification imports.
+    await waitFor(() => expect(adminConfig.lastPayload).toEqual({ external_alertmanager_uid: '' }));
+    expect(notify.success).toHaveBeenCalled();
+    expect(onDismiss).toHaveBeenCalled();
+  });
+
+  it('leaves the auto-sync configuration alone when the staged config is not sync-managed', async () => {
+    const adminConfig: AdminConfigPostState = { lastPayload: null };
+    server.use(
+      http.post(CONVERT_URL, fullDryRunResponse),
+      http.post(PROMOTE_URL, () => HttpResponse.json({}))
+    );
+    setupAdminConfigPost(server, adminConfig, 201);
+
+    const onDismiss = jest.fn();
+    const { user } = render(<PromoteConfirmModal stagedConfig={stagedConfig} onDismiss={onDismiss} />);
+
+    await waitFor(() => expect(ui.confirm.get()).toBeEnabled());
+    await user.click(ui.confirm.get());
+
+    await waitFor(() => expect(onDismiss).toHaveBeenCalled());
+    expect(adminConfig.lastPayload).toBeNull();
+  });
+
+  it('reports a promote that succeeded but could not clear auto-sync as a warning, not a failure', async () => {
+    const adminConfig: AdminConfigPostState = { lastPayload: null };
+    server.use(
+      http.post(CONVERT_URL, fullDryRunResponse),
+      http.post(PROMOTE_URL, () => HttpResponse.json({}))
+    );
+    // 409 is the operator-managed (grafana.ini) case: the UID can never be cleared through the API.
+    setupAdminConfigPost(server, adminConfig, 409, { message: 'managed by the operator' });
+
+    const onDismiss = jest.fn();
+    const { user } = render(<PromoteConfirmModal stagedConfig={stagedConfig} isSyncManaged onDismiss={onDismiss} />);
+
+    await waitFor(() => expect(ui.confirm.get()).toBeEnabled());
+    await user.click(ui.confirm.get());
+
+    await waitFor(() => expect(notify.warning).toHaveBeenCalled());
+    expect(notify.error).not.toHaveBeenCalled();
+    expect(notify.success).not.toHaveBeenCalled();
+    expect(onDismiss).toHaveBeenCalled();
   });
 
   it('surfaces a validation error and keeps promote disabled when the dry-run is invalid', async () => {

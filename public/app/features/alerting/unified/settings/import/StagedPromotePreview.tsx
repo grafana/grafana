@@ -6,7 +6,7 @@ import { Box, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { type PromoteStatsSummary } from '../../components/import-to-gma/types';
 
-export interface RenameEntry {
+interface RenameEntry {
   originalName: string;
   newName: string;
 }
