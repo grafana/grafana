@@ -7,7 +7,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -57,7 +56,6 @@ func TestIntegrationProvisioning_MigrateDisabledByConfiguration(t *testing.T) {
 
 func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
 	helper := sharedHelper(t)
-	featuremgmt.WithDisabledFlags(t, featuremgmt.FlagProvisioningExport)
 
 	const repo = "test-repository"
 	testRepo := common.TestRepo{
