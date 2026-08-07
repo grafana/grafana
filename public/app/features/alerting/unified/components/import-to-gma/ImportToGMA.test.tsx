@@ -119,7 +119,9 @@ describe('ImportToGMA wizard — stage/promote analytics', () => {
         expect.objectContaining({ importMethod: method })
       )
     );
-    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/list'), { timeout: 3000 });
+    // A staged import lands on the Import settings tab; a promote merges into live and returns to the rule list.
+    const expectedPath = method === 'promote' ? '/alerting/list' : '/alerting/admin/import';
+    await waitFor(() => expect(locationService.getLocation().pathname).toContain(expectedPath), { timeout: 3000 });
   });
 
   it('tracks an error with importMethod when the import fails', async () => {
