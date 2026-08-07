@@ -78,7 +78,7 @@ func TestReadWebassets(t *testing.T) {
 func TestReadWebassetsFromCDN(t *testing.T) {
 	t.Skip()
 
-	assets, err := readWebAssetsFromCDN(context.Background(), "build", "https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
+	assets, err := ReadWebAssetsFromCDN(context.Background(), "build", "https://grafana-assets.grafana.net/grafana/10.3.0-64123/")
 	require.NoError(t, err)
 
 	dto, err := json.MarshalIndent(assets, "", "  ")
