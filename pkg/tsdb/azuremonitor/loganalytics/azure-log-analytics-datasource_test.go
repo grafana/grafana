@@ -982,6 +982,26 @@ func TestAddDataLinksToFields_TraceExemplar(t *testing.T) {
 		require.NotNil(t, exploreLogs.AzureLogAnalytics)
 		require.Equal(t, []string{resolvedResource}, exploreLogs.AzureLogAnalytics.Resources)
 	})
+
+	// Regression: table-format explore links previously shared one AzureTraces pointer, so setting
+	// TraceParentExploreQuery overwrote the Explore Trace link's query as well.
+	t.Run("table format explore links keep independent AzureTraces query payloads", func(t *testing.T) {
+		frame := newTraceFrame()
+		err := addDataLinksToFields(newExemplarQuery(dataquery.ResultFormatTable), "https://portal.azure.com", frame, dsInfo, "https://portal.azure.com/query")
+		require.NoError(t, err)
+
+		exploreTrace := findInternalAzureQueryByLinkTitle(t, frame, "Explore Trace: ${__data.fields.traceID}")
+		exploreParent := findInternalAzureQueryByLinkTitle(t, frame, "Explore Parent Span: ${__data.fields.parentSpanID}")
+
+		require.NotNil(t, exploreTrace.AzureTraces)
+		require.NotNil(t, exploreParent.AzureTraces)
+		require.NotSame(t, exploreTrace.AzureTraces, exploreParent.AzureTraces)
+		require.NotNil(t, exploreTrace.AzureTraces.Query)
+		require.NotNil(t, exploreParent.AzureTraces.Query)
+		require.Equal(t, traceExploreQuery, *exploreTrace.AzureTraces.Query)
+		require.Equal(t, parentExploreQuery, *exploreParent.AzureTraces.Query)
+		require.NotEqual(t, *exploreTrace.AzureTraces.Query, *exploreParent.AzureTraces.Query)
+	})
 }
 
 func countFieldLinksByTitle(frame *data.Frame, title string) int {
