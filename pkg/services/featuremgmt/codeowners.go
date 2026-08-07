@@ -23,7 +23,6 @@ const (
 	grafanaOperatorExperienceSquad              codeowner = "@grafana/grafana-operator-experience-squad"
 	grafanaSharingSquad                         codeowner = "@grafana/sharing-squad"
 	grafanaDatasourcesCoreServicesSquad         codeowner = "@grafana/grafana-datasources-core-services"
-	grafanaBackendGroup                         codeowner = "@grafana/grafana-backend-group"
 	grafanaPathfinderSquad                      codeowner = "@grafana/pathfinder"
 	grafanaDataSources                          codeowner = "@grafana/data-sources"
 	grafanaDataSourcesPlugins                   codeowner = "@grafana/data-sources-plugins"
