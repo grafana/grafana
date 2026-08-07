@@ -446,8 +446,7 @@ describe('AnnotationsPlugin', () => {
         });
 
         it.each([userEvent.hover, userEvent.click])('delete', async (event) => {
-          const onAnnotationDelete = jest.fn().mockImplementation((id: number) => {}) as (id: number) => void;
-          // @ts-expect-error @todo https://github.com/grafana/grafana/issues/120097 - id is typed incorrectly as string but string breaks annotation API
+          const onAnnotationDelete: (id: string) => void = jest.fn().mockImplementation((id: string) => {});
           mockUsePanelContext.mockReturnValue({
             canExecuteActions: () => true,
             canEditAnnotations: () => true,
@@ -471,7 +470,7 @@ describe('AnnotationsPlugin', () => {
           expect(onAnnotationDelete).not.toHaveBeenCalled();
           await userEvent.click(deleteButton);
           // from the 'id' field
-          expect(onAnnotationDelete).toHaveBeenCalledWith(4683);
+          expect(onAnnotationDelete).toHaveBeenCalledWith('4683');
         });
       });
     });

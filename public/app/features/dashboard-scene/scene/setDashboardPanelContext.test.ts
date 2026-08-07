@@ -194,7 +194,6 @@ describe('setDashboardPanelContext', () => {
       await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
 
       expect(putFn).toHaveBeenCalledWith('/api/annotations/event-id-123', {
-        id: 'event-id-123',
         dashboardUID: 'dash-1',
         isRegion: true,
         panelId: 4,
@@ -254,7 +253,7 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAnnotationDelete', () => {
-    it('should update annotation', async () => {
+    it('should delete annotation', async () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
       await context.onAnnotationDelete!('I-do-not-want-you');
