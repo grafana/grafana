@@ -3282,8 +3282,12 @@
         "picker-label": "Datasource",
         "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
         "save-disabled-no-selection": "Select a Mimir or Cortex Alertmanager datasource to enable saving.",
+        "save-disabled-staged-config": "Revert the staged configuration before enabling auto-sync.",
         "save-error": "Failed to save Mimir Alertmanager auto-sync",
         "save-success": "Mimir Alertmanager auto-sync enabled",
+        "staged-conflict-active-title": "Auto-sync is not running",
+        "staged-conflict-body": "Grafana holds one imported configuration at a time, and {{identifier}} currently occupies that slot. Revert it below to free auto-sync.",
+        "staged-conflict-title": "Auto-sync is unavailable while a configuration is staged",
         "title": "Auto-sync configuration"
       },
       "import": {
@@ -3300,11 +3304,23 @@
         "inhibition-equal": "equal: {{labels}}",
         "loading": "Loading imported configurations…",
         "no-matchers": "(no matchers)",
+        "no-write-permission": "You don't have permission to modify the imported configuration.",
         "parse-error-body": "The imported Alertmanager configuration could not be parsed.",
         "parse-error-title": "Couldn't read the staged configuration",
         "policy-tree-routes_one": "{{count}} route",
         "policy-tree-routes_other": "{{count}} routes",
         "resources": "Resources",
+        "revert": {
+          "body": "This removes the staged copy of the imported configuration from Grafana.",
+          "confirm": "Revert",
+          "error-title": "Failed to revert configuration",
+          "reassure-live": "Your live Alertmanager config is not affected.",
+          "reassure-promoted": "Anything you already promoted stays in place.",
+          "reassure-reimport": "You can import this configuration again at any time.",
+          "success": "Staged configuration reverted",
+          "title": "Revert this staged configuration?"
+        },
+        "revert-button": "Revert",
         "section": {
           "contact-points": "Contact points",
           "inhibition-rules": "Inhibition rules",
@@ -3315,6 +3331,8 @@
         "staged-badge": "Staged · read-only",
         "staged-description": "A read-only, reversible copy of an imported Alertmanager config. Promote it to merge into your live config, or revert to remove it.",
         "staged-title": "Staged configuration",
+        "sync-managed-description": "This configuration is kept up to date by auto-sync, so it can't be reverted — disable auto-sync to remove it.",
+        "synced-badge": "Synced · read-only",
         "view": "View"
       },
       "tabs": {

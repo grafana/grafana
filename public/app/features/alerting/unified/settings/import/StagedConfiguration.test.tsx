@@ -60,12 +60,17 @@ const ui = {
   notificationPoliciesSection: byRole('button', { name: /notification polic/i }),
   notificationPoliciesContent: byRole('region', { name: /notification polic/i }),
   expandAll: byRole('button', { name: /expand all/i }),
+  syncedBadge: byText(/synced · read-only/i),
+  syncManagedNote: byText(/kept up to date by auto-sync/i),
   parseError: byText(/couldn't read the staged configuration/i),
+  revertButton: byRole('button', { name: /^revert$/i }),
+  revertModalTitle: byRole('heading', { name: /revert this staged configuration/i }),
+  noPermissionTooltip: byText(/don't have permission to modify/i),
 };
 
 describe('StagedConfiguration', () => {
   it('renders the identifier, staged badge and resource sections', () => {
-    render(<StagedConfiguration stagedConfig={stagedConfig} />);
+    render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
 
     expect(ui.heading.get()).toBeInTheDocument();
     expect(ui.badge.get()).toBeInTheDocument();
@@ -73,7 +78,7 @@ describe('StagedConfiguration', () => {
   });
 
   it('expands a section to reveal resource names', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} />);
+    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
 
     await user.click(ui.contactPointsSection.get());
 
@@ -82,7 +87,7 @@ describe('StagedConfiguration', () => {
   });
 
   it('reveals every section when Expand all is clicked', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} />);
+    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
 
     await user.click(ui.expandAll.get());
 
@@ -91,7 +96,7 @@ describe('StagedConfiguration', () => {
   });
 
   it('links each resource to its detail/list page', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} />);
+    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
 
     await user.click(ui.expandAll.get());
 
@@ -127,6 +132,7 @@ describe('StagedConfiguration', () => {
     const { user } = render(
       <StagedConfiguration
         stagedConfig={stagedConfig}
+        canRevert
         liveConfig={{ receivers: [{ name: 'default' }], time_intervals: [{ name: 'weekends', time_intervals: [] }] }}
       />
     );
@@ -148,7 +154,7 @@ describe('StagedConfiguration', () => {
   });
 
   it('shows inhibition rule details inline (no link)', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} />);
+    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
 
     await user.click(ui.expandAll.get());
 
@@ -156,7 +162,7 @@ describe('StagedConfiguration', () => {
   });
 
   it('presents the import as a single routing tree named after the identifier', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={nestedPoliciesConfig} />);
+    const { user } = render(<StagedConfiguration stagedConfig={nestedPoliciesConfig} canRevert />);
 
     // One import contributes one routing tree, so the section count is 1 regardless of the tree's size.
     expect(within(ui.notificationPoliciesSection.get()).getByText('1')).toBeInTheDocument();
@@ -171,7 +177,7 @@ describe('StagedConfiguration', () => {
   });
 
   it('does not label the imported root as the default policy', async () => {
-    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} />);
+    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
 
     await user.click(ui.notificationPoliciesSection.get());
 
@@ -180,8 +186,51 @@ describe('StagedConfiguration', () => {
   });
 
   it('shows an error when the configuration cannot be parsed', () => {
-    render(<StagedConfiguration stagedConfig={{ identifier: 'broken', alertmanager_config: 'foo: [bar' }} />);
+    render(<StagedConfiguration stagedConfig={{ identifier: 'broken', alertmanager_config: 'foo: [bar' }} canRevert />);
 
     expect(ui.parseError.get()).toBeInTheDocument();
+  });
+
+  describe('revert action', () => {
+    it('enables revert when the user can delete the import', () => {
+      render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
+
+      expect(ui.revertButton.get()).toBeEnabled();
+    });
+
+    it('disables revert with an explanatory tooltip when the user cannot', async () => {
+      const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert={false} />);
+
+      // A button with a tooltip renders aria-disabled (wrapped so the tooltip still shows on hover)
+      // rather than the native disabled attribute.
+      expect(ui.revertButton.get()).toHaveAttribute('aria-disabled', 'true');
+
+      await user.hover(ui.revertButton.get());
+      expect(await ui.noPermissionTooltip.find()).toBeInTheDocument();
+    });
+
+    it('opens the revert modal from the header action', async () => {
+      const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} canRevert />);
+
+      await user.click(ui.revertButton.get());
+
+      expect(await ui.revertModalTitle.find()).toBeInTheDocument();
+    });
+  });
+
+  describe('when the staged config belongs to auto-sync', () => {
+    it('hides revert and explains why', () => {
+      render(<StagedConfiguration stagedConfig={stagedConfig} canRevert isSyncManaged />);
+
+      expect(ui.revertButton.query()).not.toBeInTheDocument();
+      expect(ui.syncManagedNote.get()).toBeInTheDocument();
+    });
+
+    it('marks the card as synced rather than staged', () => {
+      render(<StagedConfiguration stagedConfig={stagedConfig} canRevert isSyncManaged />);
+
+      expect(ui.syncedBadge.get()).toBeInTheDocument();
+      expect(ui.badge.query()).not.toBeInTheDocument();
+    });
   });
 });
