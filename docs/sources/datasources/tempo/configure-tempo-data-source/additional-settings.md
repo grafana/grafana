@@ -66,6 +66,47 @@ The **Search** setting configures [Tempo search](https://grafana.com/docs/tempo/
 
 You can configure the **Hide search** setting to hide the search query option in **Explore** if search is not configured in the Tempo instance.
 
+### Default filter chips
+
+The **Static filters** setting controls which filter chips are pinned in the Search tab of the query editor.
+Pinning a filter makes its tag a first-class chip in the **Search** row, so users don't have to add it manually for every query.
+
+By default, the Search tab pins **Service Name** (`service.name`) and **Span Name** (`name`).
+You can add or remove filters from the data source settings UI, or set them through [provisioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/provision/) using the `search.filters` field.
+
+Each filter accepts the following properties:
+
+| Property   | Description                                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------------------- |
+| `id`       | A unique identifier for the filter. Used internally to track the filter and prevent duplicates.               |
+| `tag`      | The tag the filter applies to, for example `service.name`, `http.status_code`, or `trace:id`.                 |
+| `scope`    | The TraceQL scope. One of `resource`, `span`, `intrinsic`, `event`, `instrumentation`, `link`, or `unscoped`. |
+| `operator` | The default operator, for example `=`, `!=`, or `=~`.                                                         |
+
+The following example pins **Trace ID**, **HTTP status code**, **Service Name**, and a tenant-specific tag as default filter chips:
+
+```yaml
+jsonData:
+  search:
+    filters:
+      - id: 'trace-id'
+        tag: 'trace:id'
+        scope: 'intrinsic'
+        operator: '='
+      - id: 'http-status-code'
+        tag: 'http.status_code'
+        scope: 'span'
+        operator: '='
+      - id: 'service-name'
+        tag: 'service.name'
+        scope: 'resource'
+        operator: '='
+      - id: 'customer-id'
+        tag: 'customer.id'
+        scope: 'span'
+        operator: '='
+```
+
 ## TraceID query
 
 The **TraceID query** setting modifies how TraceID queries are run.
