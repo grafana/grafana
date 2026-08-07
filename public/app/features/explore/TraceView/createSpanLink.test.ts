@@ -1648,6 +1648,149 @@ describe('dataFrame links', () => {
     );
     expect(links![2].type).toBe(SpanLinkType.Unknown);
   });
+
+  describe('should handle duplicate links correctly', () => {
+    beforeAll(() => {
+      setDataSourceSrv({
+        getInstanceSettings() {
+          return { uid: 'azure_monitor_uid', name: 'Azure Monitor', type: 'azuremonitor' } as unknown as DataSourceInstanceSettings;
+        },
+      } as unknown as DataSourceSrv);
+
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('should deduplicate identical links from multiple fields', () => {
+      // Create a dataFrame that simulates the Azure Monitor trace scenario from Prometheus exemplars
+      // This reproduces the case where multiple fields have the same link configuration
+      const duplicateLinksDataFrame = createDataFrame({
+        fields: [
+          { name: 'traceID', values: ['testTraceId'] },
+          { name: 'spanID', values: ['testSpanId'] },
+          // Field 1: Azure Monitor link
+          {
+            name: 'trace_link_field_1',
+            config: {
+              links: [{
+                title: 'View Query in Azure Portal',
+                url: 'https://portal.azure.com/#blade/WebsitesExtension/AppServicesBladeV2/resourceType/Microsoft.Web%2Fsites/resourceName/myapp/resourceGroup/mygroup',
+                target: '_blank'
+              }]
+            },
+            values: ['link1']
+          },
+          // Field 2: IDENTICAL Azure Monitor link (this causes duplication)
+          {
+            name: 'trace_link_field_2', 
+            config: {
+              links: [{
+                title: 'View Query in Azure Portal', // SAME title
+                url: 'https://portal.azure.com/#blade/WebsitesExtension/AppServicesBladeV2/resourceType/Microsoft.Web%2Fsites/resourceName/myapp/resourceGroup/mygroup', // SAME URL
+                target: '_blank'
+              }]
+            },
+            values: ['link2']
+          },
+          // Field 3: ANOTHER IDENTICAL Azure Monitor link
+          {
+            name: 'trace_link_field_3',
+            config: {
+              links: [{
+                title: 'View Query in Azure Portal', // SAME title again
+                url: 'https://portal.azure.com/#blade/WebsitesExtension/AppServicesBladeV2/resourceType/Microsoft.Web%2Fsites/resourceName/myapp/resourceGroup/mygroup', // SAME URL again
+                target: '_blank'
+              }]
+            },
+            values: ['link3']
+          }
+        ]
+      });
+
+      const splitOpenFn = jest.fn();
+      const createLink = createSpanLinkFactory({
+        splitOpenFn,
+        dataFrame: duplicateLinksDataFrame,
+        trace: dummyTraceData,
+      });
+
+      const links = createLink!(createTraceSpan());
+
+      expect(links).toBeDefined();
+      
+      // We should have only 1 unique link, not 3 duplicates
+      expect(links?.length).toBe(1);
+      
+      // Check that the single link has the correct properties
+      const singleLink = links![0];
+      expect(singleLink.title).toBe('View Query in Azure Portal');
+      expect(singleLink.href).toBe('https://portal.azure.com/#blade/WebsitesExtension/AppServicesBladeV2/resourceType/Microsoft.Web%2Fsites/resourceName/myapp/resourceGroup/mygroup');
+      expect(singleLink.type).toBe(SpanLinkType.Unknown);
+    });
+
+    it('should preserve distinct links while removing duplicates', () => {
+      // Test that we keep distinct links but remove duplicates
+      const mixedLinksDataFrame = createDataFrame({
+        fields: [
+          { name: 'traceID', values: ['testTraceId'] },
+          { name: 'spanID', values: ['testSpanId'] },
+          // Unique link 1
+          {
+            name: 'field1',
+            config: {
+              links: [{
+                title: 'Azure Traces',
+                url: 'https://portal.azure.com/traces',
+                target: '_blank'
+              }]
+            },
+            values: ['value1']
+          },
+          // Duplicate of link 1
+          {
+            name: 'field2',
+            config: {
+              links: [{
+                title: 'Azure Traces', // SAME as field1
+                url: 'https://portal.azure.com/traces', // SAME as field1
+                target: '_blank'
+              }]
+            },
+            values: ['value2']
+          },
+          // Unique link 2 (different from link 1)
+          {
+            name: 'field3',
+            config: {
+              links: [{
+                title: 'Azure Metrics',
+                url: 'https://portal.azure.com/metrics',  // DIFFERENT URL
+                target: '_blank'
+              }]
+            },
+            values: ['value3']
+          }
+        ]
+      });
+
+      const splitOpenFn = jest.fn();
+      const createLink = createSpanLinkFactory({
+        splitOpenFn,
+        dataFrame: mixedLinksDataFrame,
+        trace: dummyTraceData,
+      });
+
+      const links = createLink!(createTraceSpan());
+      
+      // Should have exactly 2 unique links (duplicates removed)
+      expect(links).toBeDefined();
+      expect(links?.length).toBe(2);
+      
+      // Check that we have both unique links
+      const linkTitles = links!.map(l => l.title).sort();
+      expect(linkTitles).toEqual(['Azure Metrics', 'Azure Traces']);
+    });
+  });
 });
 
 function setupSpanLinkFactory(

@@ -13,6 +13,7 @@ import {
   type SplitOpen,
   type TimeRange,
 } from '@grafana/data';
+import { uniqBy } from 'lodash';
 import { t } from '@grafana/i18n';
 import {
   type TraceToProfilesOptions,
@@ -108,7 +109,10 @@ export function createSpanLinkFactory({
           links = links.concat(fieldLinksForExplore);
         });
 
-        const newSpanLinks: SpanLinkDef[] = links.map((link) => {
+        // Deduplicate identical links from multiple fields with the same link configuration
+        const uniqueLinks = uniqBy(links, (link) => `${link.href}|${link.title}`);
+
+        const newSpanLinks: SpanLinkDef[] = uniqueLinks.map((link) => {
           return {
             title: link.title,
             href: link.href,
