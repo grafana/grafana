@@ -37,6 +37,12 @@ export declare global {
      * The image renderer can check this to decide whether to use this mechanism or a fallback.
      */
     __grafanaRenderBindingSupported?: boolean;
+
+    /**
+     * Set by the frontend service to the preview folder name when this page is
+     * serving frontend assets from a PR preview build instead of the release assets.
+     */
+    __grafanaPreviewAssets?: string;
   }
 
   // Augment DOMParser to accept TrustedType sanitised content

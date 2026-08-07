@@ -31,6 +31,7 @@ describe('FeatureControlFlags', () => {
     jest.clearAllMocks();
     window.localStorage.clear();
     getLocalStorageProvider().clearFlags();
+    delete window.__grafanaPreviewAssets;
   });
 
   it('renders flags from local storage', async () => {
@@ -54,5 +55,21 @@ describe('FeatureControlFlags', () => {
     expect(setIsOpen).toHaveBeenCalledWith(false);
     expect(setIsAccessible).toHaveBeenCalledWith(false);
     expect(window.localStorage.getItem(getStorageKey('alpha'))).toBe('true');
+  });
+
+  it('does not show the preview assets message by default', () => {
+    renderComponent();
+
+    expect(screen.queryByText('Frontend preview active')).not.toBeInTheDocument();
+  });
+
+  it('shows the preview assets message when preview assets are active', () => {
+    window.__grafanaPreviewAssets = 'pr_grafana_123456';
+
+    renderComponent();
+
+    expect(screen.getByText('Frontend preview active')).toBeInTheDocument();
+    expect(screen.getByText('pr_grafana_123456')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Stop preview/ })).toBeInTheDocument();
   });
 });
