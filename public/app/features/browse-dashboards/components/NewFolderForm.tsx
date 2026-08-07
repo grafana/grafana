@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -35,6 +35,12 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
 
   const [createTeamFolder, setCreateTeamFolder] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<OwnerReference | null>(null);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const frame = setTimeout(() => nameInputRef.current?.focus(), 50);
+    return () => clearTimeout(frame);
+  }, []);
 
   const handleTeamFolderToggle = () => {
     setCreateTeamFolder(!createTeamFolder);
@@ -50,6 +56,11 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
   );
 
   const fieldNameLabel = t('browse-dashboards.new-folder-form.name-label', 'Folder name');
+
+  const { ref: nameInputCallback, ...folderNameProps } = register('folderName', {
+    required: translatedFolderNameRequiredPhrase,
+    validate: async (v) => await validateFolderName(v, parentFolder?.uid),
+  });
 
   return (
     <form
@@ -75,15 +86,16 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
             data-testid={selectors.pages.BrowseDashboards.NewFolderForm.nameInput}
             id="folder-name-input"
             defaultValue={initialFormModel.folderName}
-            {...register('folderName', {
-              required: translatedFolderNameRequiredPhrase,
-              validate: async (v) => await validateFolderName(v, parentFolder?.uid),
-            })}
+            {...folderNameProps}
+            ref={(e) => {
+              nameInputRef.current = e;
+              nameInputCallback(e);
+            }}
           />
         </Field>
         {showFolderOwnerSelector && (
           <>
-            <Box>
+            <Box display="flex" alignItems="center" gap={1}>
               <Checkbox
                 value={createTeamFolder}
                 label={t(
