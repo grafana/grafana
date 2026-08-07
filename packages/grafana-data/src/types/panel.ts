@@ -21,6 +21,11 @@ export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, forma
 export interface PanelPluginMeta extends PluginMeta {
   /** Indicates that panel does not issue queries */
   skipDataQuery?: boolean;
+  /**
+   * Indicates the panel renders its own transformation UI and applies the transformation
+   * pipeline itself. The host skips the pipeline and passes untransformed data instead.
+   */
+  adHocTransforms?: boolean;
   /** Indicates that the panel implements suggestions */
   suggestions?: boolean;
   /** Indicates that panel should not be available in visualisation picker */

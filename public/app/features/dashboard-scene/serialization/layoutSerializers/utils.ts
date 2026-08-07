@@ -36,6 +36,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBeha
 import { PanelNotices } from '../../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
+import { panelSkipsTransformationPipeline, syncSkipTransformationsBehavior } from '../../scene/adHocTransformations';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
@@ -236,6 +237,8 @@ function createPanelDataProvider(
         topic: transformDataTopic(normalized.spec.topic),
       };
     }),
+    skipTransformations: panelSkipsTransformationPipeline(panel.vizConfig?.group, panelMetas),
+    $behaviors: [syncSkipTransformationsBehavior],
   });
 }
 

@@ -33,6 +33,7 @@ import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
+import { syncSkipTransformationsBehavior } from '../scene/adHocTransformations';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -313,6 +314,7 @@ export function getDefaultVizPanel(): VizPanel {
             $behaviors: [new DashboardDatasourceBehaviour({})],
           }),
           transformations: [],
+          $behaviors: [syncSkipTransformationsBehavior],
         })
       : undefined,
   });

@@ -306,6 +306,7 @@ export {
   doStandardCalcs,
 } from './transformations/fieldReducer';
 export { transformDataFrame } from './transformations/transformDataFrame';
+export { transformPanelData } from './transformations/transformPanelData';
 export {
   type TransformerRegistryItem,
   type TransformerUIProps,

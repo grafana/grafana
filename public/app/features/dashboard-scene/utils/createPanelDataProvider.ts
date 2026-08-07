@@ -4,6 +4,7 @@ import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
+import { panelSkipsTransformationPipeline, syncSkipTransformationsBehavior } from '../scene/adHocTransformations';
 
 export function createPanelDataProvider(
   panel: PanelModel,
@@ -40,6 +41,8 @@ export function createPanelDataProvider(
   return new SceneDataTransformer({
     $data: dataProvider,
     transformations: panel.transformations || [],
+    skipTransformations: panelSkipsTransformationPipeline(panel.type, panelMetas),
+    $behaviors: [syncSkipTransformationsBehavior],
   });
 }
 

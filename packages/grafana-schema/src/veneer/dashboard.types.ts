@@ -58,6 +58,13 @@ export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
   options?: TConfig;
 }
 
+/**
+ * Records how a transformation was created, so a visualization that renders its own
+ * transformation UI can tell its own entries apart from editor-authored ones.
+ * An absent origin means the transformation was authored in the transformations editor.
+ */
+export type TransformationOrigin = NonNullable<raw.DataTransformerConfig['origin']>;
+
 export interface DataTransformerConfig<TOptions = any> extends raw.DataTransformerConfig {
   options: TOptions;
   topic?: DataTopic;

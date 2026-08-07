@@ -590,6 +590,7 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
           filter: transformation.filter,
           ...(transformation.topic && { topic: transformation.topic }),
           options: transformation.options,
+          ...(transformation.origin && { origin: transformation.origin }),
         };
 
         transformations.push({

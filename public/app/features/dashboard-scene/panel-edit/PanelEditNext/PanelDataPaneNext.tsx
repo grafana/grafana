@@ -26,6 +26,7 @@ import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type QueryGroupOptions } from 'app/types/query';
 
+import { withEditorOrigin } from '../../scene/adHocTransformations';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
@@ -538,7 +539,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     });
 
     const transformations = filterDataTransformerConfigs([...transformer.state.transformations]);
-    const newConfig: DataTransformerConfig = { id: transformationId, options: {} };
+    const newConfig: DataTransformerConfig = withEditorOrigin({ id: transformationId, options: {} });
     const insertAt = afterIndex !== undefined ? afterIndex + 1 : transformations.length;
     transformations.splice(insertAt, 0, newConfig);
     transformer.setState({ transformations });
