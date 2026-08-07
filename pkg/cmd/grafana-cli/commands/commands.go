@@ -14,11 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/server"
+	bootstrapwire "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 	"github.com/grafana/grafana/pkg/setting"
-
-	// Registers the OSS dependency-injection entrypoints (server.InitializeForCLI etc.)
-	// via bootstrap/wire's init(); without this side-effect import they are nil.
-	_ "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 )
 
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.Runner) error) func(context *cli.Context) error {
@@ -67,7 +64,7 @@ func initializeRunner(ctx context.Context, cmd *utils.ContextCommandLine) (serve
 		return server.Runner{}, err
 	}
 
-	runner, err := server.InitializeForCLI(ctx, cfg)
+	runner, err := bootstrapwire.InitializeForCLI(ctx, cfg)
 	if err != nil {
 		return server.Runner{}, fmt.Errorf("%v: %w", "failed to initialize runner", err)
 	}

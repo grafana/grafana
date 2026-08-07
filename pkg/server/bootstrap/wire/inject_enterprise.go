@@ -1,6 +1,10 @@
-//go:build wireinject && oss
-// +build wireinject,oss
+//go:build wireinject && (enterprise || pro)
+// +build wireinject
+// +build enterprise pro
 
+// Enterprise Wire injectors for the full Grafana server. Core provider sets
+// live in sets.go; edition bindings live in the overlaid
+// wireexts_enterprise.go. Mirrors inject.go on the OSS side.
 package wire
 
 import (
@@ -11,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/server/wireext"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -19,7 +22,7 @@ import (
 )
 
 func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {
-	wire.Build(Server, wireext.BasicSet)
+	wire.Build(wireExtsSet)
 	return &server.Server{}, nil
 }
 
@@ -28,17 +31,17 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	Cleanup(func())
 }, cfg *setting.Cfg, opts server.Options, apiOpts api.ServerOptions,
 ) (*server.TestEnv, error) {
-	wire.Build(Test, wireext.BasicSet)
+	wire.Build(wireExtsTestSet)
 	return &server.TestEnv{Server: &server.Server{}, TestingT: testingT, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }
 
 func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, error) {
-	wire.Build(CLI, wireext.BasicSet)
+	wire.Build(wireExtsCLISet)
 	return server.Runner{}, nil
 }
 
-// Initialize the standalone APIServer factory
+// InitializeAPIServerFactory initializes the standalone APIServer factory.
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
-	wire.Build(StandaloneAPIServerSet)
+	wire.Build(wireExtsStandaloneAPIServerSet)
 	return &standalone.NoOpAPIServerFactory{}, nil // Wire will replace this with a real interface
 }

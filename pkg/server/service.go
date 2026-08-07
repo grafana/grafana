@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/dskit/services"
 
@@ -28,7 +29,10 @@ func NewService(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*cor
 }
 
 func (s *coreService) start(ctx context.Context) error {
-	serv, err := Initialize(ctx, s.cfg, s.opts, s.apiOpts)
+	if s.opts.Initialize == nil {
+		return errors.New("cannot start the core module: no server initializer was supplied in server.Options")
+	}
+	serv, err := s.opts.Initialize(ctx, s.cfg, s.opts, s.apiOpts)
 	if err != nil {
 		return err
 	}

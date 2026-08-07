@@ -6,6 +6,7 @@
 package server
 
 import (
+	"context"
 	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/bus"
@@ -30,6 +31,19 @@ import (
 )
 
 // Injectors from wire_subinject_oss.go:
+
+// InitializeForCLITarget is a simplified set of dependencies for the CLI, used
+// by the server target subcommand to launch specific dskit modules.
+func InitializeForCLITarget(ctx context.Context, cfg *setting.Cfg) (ModuleRunner, error) {
+	ossImpl := setting.ProvideProvider(cfg)
+	featureManager, err := featuremgmt.ProvideManagerService(cfg)
+	if err != nil {
+		return ModuleRunner{}, err
+	}
+	featureToggles := featuremgmt.ProvideToggles(featureManager)
+	moduleRunner := NewModuleRunner(cfg, ossImpl, featureToggles)
+	return moduleRunner, nil
+}
 
 // InitializeModuleServer is a simplified set of dependencies for the CLI,
 // suitable for running background services and targeting dskit modules.
@@ -108,6 +122,9 @@ func InitializeDashboardStats(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 
 // wire_subinject_oss.go:
 
+// ossBaseCLISet is a simplified set of dependencies for the OSS CLI, suitable
+// for running background services and targeted dskit modules without starting
+// the full Grafana server.
 var ossBaseCLISet = wire.NewSet(
 	NewModuleRunner, metrics.WireSet, featuremgmt.ProvideManagerService, featuremgmt.ProvideToggles, hooks.ProvideService, setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)), licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)), configprovider.ProvideService,
 )

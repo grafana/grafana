@@ -15,13 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// ServerInitializer builds the full Grafana server. OSS supplies the generated
-// server.Initialize; Grafana Enterprise supplies its own Wire injector.
-type ServerInitializer func(context.Context, *setting.Cfg, server.Options, api.ServerOptions) (*server.Server, error)
+// ServerInitializer builds the full Grafana server. Each edition supplies the
+// Initialize generated into pkg/server/bootstrap/wire under its build tag.
+type ServerInitializer = server.ServerInitializer
 
 // ModuleServerInitializer builds a module server that targets specific dskit
-// modules. OSS supplies the generated server.InitializeModuleServer; Grafana
-// Enterprise supplies its own Wire injector.
+// modules. Each edition supplies the InitializeModuleServer generated into
+// pkg/server under its build tag.
 type ModuleServerInitializer func(*setting.Cfg, server.Options, api.ServerOptions) (*server.ModuleServer, error)
 
 // RunServerConfig is the input to RunServer: the shared startup Config plus the
@@ -38,6 +38,9 @@ type RunTargetServerConfig struct {
 	Config
 	// Initialize builds the module server. Required.
 	Initialize ModuleServerInitializer
+	// ServerInitialize builds the full server. Required only when the target
+	// includes the `core` module, which starts the full server on demand.
+	ServerInitialize ServerInitializer
 }
 
 // RunServer starts the full Grafana server: it handles version flags, sets up
@@ -144,6 +147,7 @@ func RunTargetServer(ctx context.Context, cfg RunTargetServerConfig) error {
 			Version:     cfg.BuildInfo.Version,
 			Commit:      cfg.BuildInfo.Commit,
 			BuildBranch: cfg.BuildInfo.BuildBranch,
+			Initialize:  cfg.ServerInitialize,
 		},
 		api.ServerOptions{},
 	)

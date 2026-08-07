@@ -13,11 +13,8 @@ import (
 	_ "github.com/grafana/grafana/pkg/operators"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/server/bootstrap"
+	bootstrapwire "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
-
-	// Registers the OSS dependency-injection entrypoints (server.InitializeAPIServerFactory etc.)
-	// via bootstrap/wire's init(); without this side-effect import they are nil.
-	_ "github.com/grafana/grafana/pkg/server/bootstrap/wire"
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag
@@ -48,10 +45,11 @@ func MainApp() *cli.App {
 	}
 
 	// deps supplies the edition-specific injectors and metadata to the server
-	// commands. server.Initialize / server.InitializeModuleServer are dispatched
-	// to the OSS or enterprise Wire graph by build tag.
+	// commands. Both injectors resolve to the OSS or enterprise Wire graph by
+	// build tag: the full server comes from bootstrap/wire, the module server
+	// from pkg/server.
 	deps := commands.ServerDeps{
-		Initialize:       server.Initialize,
+		Initialize:       bootstrapwire.Initialize,
 		ModuleInitialize: server.InitializeModuleServer,
 		IsEnterprise:     extensions.IsEnterprise,
 	}
@@ -78,7 +76,7 @@ func MainApp() *cli.App {
 	bootstrap.SetBuildInfo(buildInfo, "", extensions.IsEnterprise)
 
 	// Add the enterprise command line to build an api server
-	f, err := server.InitializeAPIServerFactory()
+	f, err := bootstrapwire.InitializeAPIServerFactory()
 	if err == nil {
 		cmd := f.GetCLICommand(buildInfo)
 		if cmd != nil {

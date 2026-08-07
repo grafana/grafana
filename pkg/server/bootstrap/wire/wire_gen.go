@@ -1900,19 +1900,6 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	return runner, nil
 }
 
-// InitializeForCLITarget is a simplified set of dependencies for the CLI, used
-// by the server target subcommand to launch specific dskit modules.
-func InitializeForCLITarget(ctx context.Context, cfg *setting.Cfg) (server.ModuleRunner, error) {
-	ossImpl := setting.ProvideProvider(cfg)
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
-	if err != nil {
-		return server.ModuleRunner{}, err
-	}
-	featureToggles := featuremgmt.ProvideToggles(featureManager)
-	moduleRunner := server.NewModuleRunner(cfg, ossImpl, featureToggles)
-	return moduleRunner, nil
-}
-
 // Initialize the standalone APIServer factory
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	apiServerFactory := standalone.ProvideAPIServerFactory()

@@ -24,6 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// ServerInitializer builds the full Grafana server from an edition's Wire
+// graph. Those graphs live in pkg/server/bootstrap/wire, which imports this
+// package, so the dskit `core` module receives the injector through Options
+// rather than calling it directly.
+type ServerInitializer func(context.Context, *setting.Cfg, Options, api.ServerOptions) (*Server, error)
+
 // Options contains parameters for the New function.
 type Options struct {
 	HomePath    string
@@ -32,6 +38,10 @@ type Options struct {
 	Commit      string
 	BuildBranch string
 	Listener    net.Listener
+
+	// Initialize builds the full server. Only required when the `core` dskit
+	// module is started; see coreService in service.go.
+	Initialize ServerInitializer
 }
 
 // New returns a new instance of Server.

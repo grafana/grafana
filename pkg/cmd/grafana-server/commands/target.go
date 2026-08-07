@@ -27,7 +27,8 @@ func TargetCommand(buildInfo standalone.BuildInfo, deps ServerDeps) *cli.Command
 // the pre-delegation behavior.
 func RunTargetServer(buildInfo standalone.BuildInfo, deps ServerDeps, cliCtx *cli.Context) error {
 	return bootstrap.RunTargetServer(context.Background(), bootstrap.RunTargetServerConfig{
-		Config:     bootstrapConfig(buildInfo, deps, cliCtx.Args().Slice()),
-		Initialize: deps.ModuleInitialize,
+		Config:           bootstrapConfig(buildInfo, deps, cliCtx.Args().Slice()),
+		Initialize:       deps.ModuleInitialize,
+		ServerInitialize: deps.Initialize,
 	})
 }

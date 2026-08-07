@@ -4,6 +4,8 @@
 package server
 
 import (
+	"context"
+
 	"github.com/google/wire"
 	promclient "github.com/prometheus/client_golang/prometheus"
 
@@ -28,6 +30,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
 
+// ossBaseCLISet is a simplified set of dependencies for the OSS CLI, suitable
+// for running background services and targeted dskit modules without starting
+// the full Grafana server.
 var ossBaseCLISet = wire.NewSet(
 	NewModuleRunner,
 	metrics.WireSet,
@@ -70,6 +75,13 @@ var searchSupportSet = wire.NewSet(
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	search2.ProvideDocumentBuilders,
 )
+
+// InitializeForCLITarget is a simplified set of dependencies for the CLI, used
+// by the server target subcommand to launch specific dskit modules.
+func InitializeForCLITarget(ctx context.Context, cfg *setting.Cfg) (ModuleRunner, error) {
+	wire.Build(ossBaseCLISet)
+	return ModuleRunner{}, nil
+}
 
 // InitializeModuleServer is a simplified set of dependencies for the CLI,
 // suitable for running background services and targeting dskit modules.

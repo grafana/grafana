@@ -267,6 +267,7 @@ gen-enterprise-go:
 else
 gen-enterprise-go: ## Generate Wire graph (Enterprise)
 	@echo "re-generating Wire graph for enterprise"
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "enterprise" -gen_tags "(enterprise || pro)" -output_file_prefix="enterprise_" ./pkg/server/bootstrap/wire
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "enterprise" -gen_tags "(enterprise || pro)" -output_file_prefix="enterprise_" ./pkg/server
 endif
 gen-go: gen-enterprise-go ## Generate Wire graph

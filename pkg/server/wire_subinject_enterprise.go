@@ -2,8 +2,11 @@
 // +build wireinject
 // +build enterprise pro
 
-// Enterprise Wire injectors. Core provider sets live in wire_core.go; edition
-// bindings live in the overlaid wireexts_enterprise.go.
+// Enterprise Wire injectors for the module server and its sub-graphs. These
+// stay in pkg/server (rather than moving to bootstrap/wire with the full-server
+// injectors) because ModuleServer calls InitializeSearchSupport and
+// InitializeDashboardStats lazily during module startup. Mirrors
+// wire_subinject_oss.go on the OSS side.
 package server
 
 import (
@@ -11,36 +14,13 @@ import (
 
 	"github.com/google/wire"
 	promclient "github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
-
-func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
-	wire.Build(wireExtsSet)
-	return &Server{}, nil
-}
-
-func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interface {
-	mock.TestingT
-	Cleanup(func())
-}, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions,
-) (*TestEnv, error) {
-	wire.Build(wireExtsTestSet)
-	return &TestEnv{Server: &Server{}, TestingT: testingT, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
-}
-
-func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (Runner, error) {
-	wire.Build(wireExtsCLISet)
-	return Runner{}, nil
-}
 
 // InitializeForCLITarget is a simplified set of dependencies for the CLI, used
 // by the server target subcommand to launch specific dskit modules.
@@ -54,12 +34,6 @@ func InitializeForCLITarget(ctx context.Context, cfg *setting.Cfg) (ModuleRunner
 func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*ModuleServer, error) {
 	wire.Build(wireExtsModuleServerSet)
 	return &ModuleServer{}, nil
-}
-
-// Initialize the standalone APIServer factory
-func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
-	wire.Build(wireExtsStandaloneAPIServerSet)
-	return &standalone.NoOpAPIServerFactory{}, nil // Wire will replace this with a real interface
 }
 
 // InitializeSearchSupport builds the document builders together with the
