@@ -263,7 +263,7 @@ export const MegaMenu = memo(
                 saving={isSaving}
               />
             )}
-            {!editMode && canCustomise && (
+            {!editMode && canCustomise && !isLoading && (
               <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
                 <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
               </Button>

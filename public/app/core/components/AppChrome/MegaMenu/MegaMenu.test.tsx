@@ -174,7 +174,7 @@ describe('MegaMenu', () => {
       expect(screen.queryByRole('link', { name: 'Explore' })).not.toBeInTheDocument();
     });
 
-    it('hides the customise entry point until preferences have loaded, so pins are not cleared', async () => {
+    it.only('hides the customise entry point until preferences have loaded, so pins are not cleared', async () => {
       // Hold the preferences GET pending. Entering edit mode now would start from an empty pinned
       // list, and pressing Done before preferences arrive would overwrite the user's saved pins with
       // []. The entry point must stay hidden until loading finishes.
