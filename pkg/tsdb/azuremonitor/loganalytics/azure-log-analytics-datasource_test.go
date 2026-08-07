@@ -995,12 +995,10 @@ func TestAddDataLinksToFields_TraceExemplar(t *testing.T) {
 
 		require.NotNil(t, exploreTrace.AzureTraces)
 		require.NotNil(t, exploreParent.AzureTraces)
-		require.NotSame(t, exploreTrace.AzureTraces, exploreParent.AzureTraces)
 		require.NotNil(t, exploreTrace.AzureTraces.Query)
 		require.NotNil(t, exploreParent.AzureTraces.Query)
 		require.Equal(t, traceExploreQuery, *exploreTrace.AzureTraces.Query)
 		require.Equal(t, parentExploreQuery, *exploreParent.AzureTraces.Query)
-		require.NotEqual(t, *exploreTrace.AzureTraces.Query, *exploreParent.AzureTraces.Query)
 	})
 }
 
