@@ -613,12 +613,6 @@
       "title-restore-version": "Verzió visszaállítása",
       "title-restoring-alertmanager-configuration": "A riasztáskezelő konfigurációjának visszaállítása"
     },
-    "alerts-activity-banner": {
-      "description": "Mostantól egy vadonatúj oldal áll rendelkezésre a Grafana által felügyelt riasztási szabályokkal kapcsolatos operatív feladatok kezeléséhez. Megismerheti, milyen riasztások aktívak, átnézheti az előzményadatokat, valamint szűrést és csoportosítást alkalmazhat a prioritási sorrend és a kiváltó okok elemzésének javítása érdekében.",
-      "open-button": "Riasztási tevékenység megtekintése",
-      "open-button-aria": "Riasztási tevékenység megnyitása",
-      "title": "Mostantól elérhető a riasztási tevékenység!"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "Rendezés",
       "label-filter-placeholder-search-alerts-by-labels": "Riasztások keresése címkék alapján",
@@ -793,7 +787,9 @@
         "value-in-transition": "Megváltozó érték"
       },
       "error": {
-        "server-error": "A riasztási állapot előzményeinek lekérése nem sikerült – a kiszolgáló hibát jelzett"
+        "server-error": "A riasztási állapot előzményeinek lekérése nem sikerült – a kiszolgáló hibát jelzett",
+        "server-error-description": "",
+        "title": ""
       },
       "filter": {
         "clear": "Szűrők törlése",
@@ -3291,6 +3287,8 @@
         "title": ""
       },
       "import": {
+        "any": "",
+        "collapse-all": "",
         "empty-body": "",
         "empty-cta": "",
         "empty-learn-more": "",
@@ -3298,9 +3296,26 @@
         "error-body": "",
         "error-retry": "",
         "error-title": "",
+        "expand-all": "",
+        "inhibition-equal": "",
         "loading": "",
+        "no-matchers": "",
+        "parse-error-body": "",
+        "parse-error-title": "",
+        "resources": "",
+        "section": {
+          "contact-points": "",
+          "inhibition-rules": "",
+          "notification-policy": "",
+          "templates": "",
+          "time-intervals": ""
+        },
+        "staged-badge": "",
         "staged-description": "",
-        "staged-title": ""
+        "staged-title": "",
+        "view": "",
+        "policy-tree-routes_one": "",
+        "policy-tree-routes_other": ""
       },
       "tabs": {
         "alert-managers": "Riasztáskezelők",
@@ -4422,6 +4437,9 @@
     "create-new": {
       "dashboard-group": ""
     },
+    "create-new-button": {
+      "generate-dashboard": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Ez az elem nem ugyanabban az adattárban található, mint a kiválasztott elemek."
@@ -5401,6 +5419,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Automatikus",
       "options": {
         "custom-min-height": {
@@ -5418,6 +5437,11 @@
         "min-width-custom": "Egyéni minimális szélesség",
         "min-width-custom-clear": "Vissza a szabványos minimális oszlopszélességre",
         "min-width-error": "50 és 2000 közötti számot kell megadni"
+      },
+      "resize-intercept": {
+        "edit": "",
+        "header": "",
+        "switch": ""
       }
     },
     "canvas-actions": {
@@ -5565,6 +5589,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Egyéni",
       "row-actions": {
         "delete": "Sor törlése",
@@ -6747,6 +6772,21 @@
       "title": "Még nem lettek hozzáadva irányítópult-hivatkozások"
     }
   },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": ""
+    },
+    "modal": {
+      "title": ""
+    },
+    "prompt": {
+      "cancel": "",
+      "description": "",
+      "input-label": "",
+      "placeholder": "",
+      "submit": ""
+    }
+  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "Ez az adatforrás nem támogatja a szűrőket.",
@@ -7566,6 +7606,14 @@
       "disabled-tooltip": "Mentse az irányítópultot a riasztási szabályok létrehozása előtt",
       "new-alert-rule": "Új riasztási szabály",
       "title-no-alerting-capable-query-found": "Nem található riasztásképes lekérdezés"
+    },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "",
+      "title": ""
+    },
+    "scripted-dashboards-disabled": {
+      "body": "",
+      "title": ""
     },
     "section-placement": {
       "top-row": "",
@@ -8857,6 +8905,7 @@
       "open-in-profiles-drilldown": "",
       "profiles-for-this-span": "",
       "related-logs": "",
+      "related-logs-no-logs-tooltip": "",
       "related-logs-tooltip": "",
       "session-for-this-span": ""
     },
@@ -9280,9 +9329,9 @@
     "description-mouse-wheel-zoom": "Egérgörgővel történő nagyítás engedélyezése",
     "description-no-repeat": "A térkép vízszintes ismétlésének megakadályozása",
     "description-share-view": "Ugyanaz a nézet több panelen keresztül. Megjegyzés: Ehhez lehetséges, hogy újra kell tölteni az irányítópultot.",
-    "description-show-attribution": "A térkép forrására vonatkozó attribútumadatok megjelenítése a jobb alsó sarokban",
     "description-show-debug": "Térképadatok megjelenítése",
     "description-show-measure": "A térképen történő mérésekhez szükséges eszközök megjelenítése",
+    "description-show-optional-attribution": "",
     "description-show-scale": "Térkép méretarányának jelzése",
     "description-show-zoom": "Nagyítási vezérlőgombok megjelenítése a bal felső sarokban",
     "description-sync-view-variable": "A nézet határainak tárolása egy irányítópult-változóban a lekérdezésekben való használathoz",
@@ -9343,9 +9392,9 @@
     "name-mouse-wheel-zoom": "Nagyítás az egérgörgővel",
     "name-no-repeat": "Nincs térképismétlés",
     "name-share-view": "Nézet megosztása",
-    "name-show-attribution": "Tulajdonság megjelenítése",
     "name-show-debug": "Hibakeresés megjelenítése",
     "name-show-measure": "Mérőeszközök megjelenítése",
+    "name-show-optional-attribution": "",
     "name-show-scale": "Méretarány megjelenítése",
     "name-show-zoom": "Nagyításvezérlő megjelenítése",
     "name-sync-view-variable": "Nézet szinkronizálása az irányítópult-változóval",
@@ -10027,6 +10076,14 @@
       "log-base": "Naplóbázis"
     },
     "builder": {
+      "annotation-options": {
+        "canvas-controls-desc": "",
+        "canvas-controls-name": "",
+        "clustering-desc": "",
+        "clustering-name": "",
+        "multi-lane-name": "",
+        "multi-row-desc": ""
+      },
       "annotations": "Jegyzetek",
       "axis": {
         "category-axis": "Tengely",
@@ -10362,9 +10419,13 @@
     "matchers": {
       "groups": {
         "annotation": "Jegyzetek",
+        "annotation-description": "",
         "exemplar": "Mintapéldányok",
+        "exemplar-description": "",
         "nested": "Beágyazott",
-        "series": "Adatkeret"
+        "nested-description": "",
+        "series": "Adatkeret",
+        "series-description": ""
       },
       "labels": {
         "base-field-name": "{{name}} (alapmező neve)",
@@ -12584,6 +12645,7 @@
     },
     "quick-add": {
       "aria-label": "Új",
+      "generate-dashboard-button": "",
       "new-template-dashboard-button": ""
     },
     "rss-button": "Újdonságok a blogról"
@@ -13421,7 +13483,7 @@
         "repository-label": "Adattárak",
         "repository-read-write-admin": "Olvasás és írás",
         "webhooks-label": "Webhookok",
-        "webhooks-read-write": "Olvasás és írás"
+        "webhooks-read-write-delete": ""
       },
       "pr-workflow-description": "Lehetővé teszi a felhasználók számára, hogy kiválasszák, megnyitják-e az összefésülési kérelmet a módosítások mentésekor. Ha az adattár nem teszi lehetővé a főág közvetlen módosítását, akkor is szükség lehet összefésülési kérelemre.",
       "pr-workflow-label": "Összefésülési kérelemopció engedélyezése mentéskor",
@@ -14717,6 +14779,7 @@
       "message": ""
     },
     "sidebar": {
+      "add": "",
       "add-below": "Hozzáadás a(z) {{id}} alatt",
       "add-expression": "Kifejezés hozzáadása",
       "add-expression-disabled": "A kifejezések nem támogatottak az irányítópult adatforrásával",
@@ -14736,6 +14799,7 @@
       "new-type": "Új {{type}}",
       "queries-empty": "",
       "queries-expressions": "Lekérdezések és kifejezések",
+      "stacked": "",
       "toggle-size": "Oldalsáv méretének átváltása",
       "transformations": "Transzformációk",
       "transformations-empty": "",
@@ -15740,6 +15804,7 @@
     "description-column-filter": "Engedélyezi/letiltja a mezőszűrőket a táblázatban",
     "description-frozen-columns": "",
     "description-min-column-width": "Az oszlop automatikus átméretezésének minimális szélessége",
+    "description-page-size": "",
     "description-styling-from-field": "JSON-objektumokat tartalmazó mező CSS-tulajdonságokkal",
     "description-tooltip-from-field": "",
     "frame-picker": {
@@ -15773,6 +15838,7 @@
     "name-hide-in-table": "Elrejtés a táblázatban",
     "name-max-height": "",
     "name-min-column-width": "Minimális oszlopszélesség",
+    "name-page-size": "",
     "name-show-table-header": "Táblázatfejléc megjelenítése",
     "name-styling-from-field": "Stílus a mezőből",
     "name-tooltip-from-field": "",
@@ -15783,6 +15849,7 @@
     "placeholder-column-width": "automatikus",
     "placeholder-frozen-columns": "nincs",
     "placeholder-max-height": "",
+    "placeholder-page-size": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

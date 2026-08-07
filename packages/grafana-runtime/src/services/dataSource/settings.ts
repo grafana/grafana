@@ -257,20 +257,25 @@ function lookupFromMaps(
     return byUid[defaultName] ?? byName[defaultName];
   }
 
-  // Template variable reference — interpolate and preserve the raw ref.
-  if (nameOrUid[0] === '$') {
+  // Template variable reference — interpolate and preserve the raw ref. The variable can
+  // sit anywhere in the string (e.g. `logs-${stage}-loki`), not only at the start; legacy
+  // DataSourceSrv.get() interpolates unconditionally. When interpolation changes nothing
+  // (a datasource name that merely contains `$`), fall through to the plain lookup.
+  if (nameOrUid.includes('$')) {
     const interpolated = getTemplateSrv().replace(nameOrUid, scopedVars, variableInterpolation);
-    const resolved = interpolated === 'default' ? byName[defaultName] : (byUid[interpolated] ?? byName[interpolated]);
-    if (!resolved) {
-      return undefined;
+    if (interpolated !== nameOrUid) {
+      const resolved = interpolated === 'default' ? byName[defaultName] : (byUid[interpolated] ?? byName[interpolated]);
+      if (!resolved) {
+        return undefined;
+      }
+      return {
+        ...resolved,
+        isDefault: false,
+        name: nameOrUid,
+        uid: nameOrUid,
+        rawRef: { type: resolved.type, uid: resolved.uid },
+      };
     }
-    return {
-      ...resolved,
-      isDefault: false,
-      name: nameOrUid,
-      uid: nameOrUid,
-      rawRef: { type: resolved.type, uid: resolved.uid },
-    };
   }
 
   return byUid[nameOrUid] ?? byName[nameOrUid] ?? byId[nameOrUid];
