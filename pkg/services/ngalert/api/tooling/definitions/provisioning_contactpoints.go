@@ -70,6 +70,23 @@ import (
 //       202: description: The contact point was deleted successfully.
 //       403: ForbiddenError
 
+// swagger:route POST /v1/provisioning/contact-points/modify-export provisioning stable RoutePostExportModifiedContactPoint
+//
+// Export a modified contact point.
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
+//
+//     Responses:
+//     200: AlertingFileExport
+//     400: ValidationError
+
 // swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
 type ContactPointUIDReference struct {
 	// UID is the contact point unique identifier
@@ -89,6 +106,12 @@ type ContactPointParams struct {
 type ContactPointPayload struct {
 	// in:body
 	Body EmbeddedContactPoint
+}
+
+// swagger:parameters RoutePostExportModifiedContactPoint
+type ExportContactPointPayload struct {
+	// in:body
+	Body ContactPointExport
 }
 
 // swagger:model
@@ -137,7 +160,7 @@ type ContactPointExport struct {
 
 // ReceiverExport is the provisioned file export of alerting.ReceiverV1.
 type ReceiverExport struct {
-	UID                   string     `json:"uid" yaml:"uid"`
+	UID                   string     `json:"uid,omitempty" yaml:"uid,omitempty"`
 	Type                  string     `json:"type" yaml:"type"`
 	Settings              RawMessage `json:"settings" yaml:"settings"`
 	DisableResolveMessage bool       `json:"disableResolveMessage" yaml:"disableResolveMessage"`

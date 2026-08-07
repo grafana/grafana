@@ -186,6 +186,17 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 	return exportResponse(c, e)
 }
 
+func (srv *ProvisioningSrv) RoutePostExportModifiedContactPoint(c *contextmodel.ReqContext, cp definitions.ContactPointExport) response.Response {
+	cp.OrgID = c.GetOrgID()
+
+	f := definitions.AlertingFileExport{
+		APIVersion:    1,
+		ContactPoints: []definitions.ContactPointExport{cp},
+	}
+
+	return exportResponse(c, f)
+}
+
 func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp definitions.EmbeddedContactPoint) response.Response {
 	provenance := determineProvenance(c)
 	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.GetOrgID(), c.SignedInUser, cp, alerting_models.Provenance(provenance))
