@@ -6,9 +6,11 @@ import (
 )
 
 type State struct {
-	StateUpdateDuration   prometheus.Histogram
-	StateFullSyncDuration prometheus.Histogram
-	r                     prometheus.Registerer
+	StateUpdateDuration            prometheus.Histogram
+	StateFullSyncDuration          prometheus.Histogram
+	StateCacheRefreshFailuresTotal prometheus.Counter
+	StateCacheLastRefreshSuccess   prometheus.Gauge
+	r                              prometheus.Registerer
 }
 
 // Registerer exposes the Prometheus register directly. The state package needs this as, it uses a collector to fetch the current alerts by state in the system.
@@ -35,6 +37,22 @@ func NewStateMetrics(r prometheus.Registerer) *State {
 				Name:      "state_full_sync_duration_seconds",
 				Help:      "The duration of fully synchronizing the state with the database.",
 				Buckets:   []float64{0.01, 0.1, 1, 2, 5, 10, 60},
+			},
+		),
+		StateCacheRefreshFailuresTotal: promauto.With(r).NewCounter(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "state_cache_refresh_failures_total",
+				Help:      "The total number of failed loads of the cached alert state.",
+			},
+		),
+		StateCacheLastRefreshSuccess: promauto.With(r).NewGauge(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "state_cache_last_refresh_success_timestamp_seconds",
+				Help:      "Unix timestamp of the last fully successful background refresh of the cached alert state.",
 			},
 		),
 	}
