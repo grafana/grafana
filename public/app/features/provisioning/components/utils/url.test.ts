@@ -17,8 +17,8 @@ describe('getBranchUrl', () => {
     expect(getBranchUrl(bbUrl, 'feature/x', 'bitbucket')).toBe('https://bitbucket.org/org/repo/src/feature/x');
   });
 
-  it('returns base URL for generic git', () => {
-    expect(getBranchUrl(baseUrl, 'main', 'git')).toBe('https://github.com/org/repo');
+  it('returns empty string for generic git (no standard branch deep-link)', () => {
+    expect(getBranchUrl(baseUrl, 'main', 'git')).toBe('');
   });
 
   it('returns empty string for local repos', () => {

@@ -25,7 +25,14 @@ const mockTextUtil = jest.mocked(textUtil);
 const mockUsePullRequestParam = jest.mocked(usePullRequestParam);
 
 function setup(
-  options: { prURL: string; isNewPr?: boolean; repoType?: RepoType; action?: string; prTitle?: string } = {
+  options: {
+    prURL?: string;
+    isNewPr?: boolean;
+    repoType?: RepoType;
+    action?: string;
+    prTitle?: string;
+    repoUrl?: string;
+  } = {
     prURL: 'test-url',
     repoType: 'github',
   }
@@ -33,13 +40,15 @@ function setup(
   const componentProps = {
     prURL: options.prURL,
     isNewPr: options.isNewPr || false,
+    repoUrl: options.repoUrl,
   };
 
   mockUsePullRequestParam.mockReturnValue({
     prURL: undefined,
     newPrURL: undefined,
     repoURL: undefined,
-    repoType: options.repoType || 'github',
+    // Allow explicit undefined (missing repo_type query param) — don't coerce to github.
+    repoType: 'repoType' in options ? options.repoType : 'github',
     resourcePushedTo: 'abc',
     action: options.action,
     prTitle: options.prTitle,
@@ -171,6 +180,47 @@ describe('PreviewBannerViewPR', () => {
           'This resource is loaded from the branch you just created in Bitbucket and it is only visible to you'
         )
       ).toBeInTheDocument();
+    });
+
+    it('should keep Open pull request label for GitLab when a PR URL is present', () => {
+      setup({ prURL: 'test-url', isNewPr: true, repoType: 'gitlab' });
+
+      expect(screen.getByText('Open pull request in GitLab')).toBeInTheDocument();
+      expect(screen.queryByText(/cannot open pull requests from Grafana/i)).not.toBeInTheDocument();
+    });
+
+    it('should use Open in Git and show the no-PR hint for pure git', () => {
+      setup({ prURL: 'https://git.example.com/org/repo', isNewPr: true, repoType: 'git' });
+
+      expect(screen.getByText('Open in Git')).toBeInTheDocument();
+      expect(screen.queryByText('Open pull request in Git')).not.toBeInTheDocument();
+      expect(screen.queryByText('View pull request in Git')).not.toBeInTheDocument();
+      expect(screen.getByText(/This connection cannot open pull requests from Grafana/i)).toBeInTheDocument();
+    });
+
+    it('should not show the no-PR hint for GitHub when the PR URL is missing', () => {
+      setup({
+        prURL: undefined,
+        isNewPr: true,
+        repoType: 'github',
+        repoUrl: 'https://github.com/org/repo',
+      });
+
+      expect(screen.getByText('Open in GitHub')).toBeInTheDocument();
+      expect(screen.queryByText('Open pull request in GitHub')).not.toBeInTheDocument();
+      expect(screen.queryByText(/cannot open pull requests from Grafana/i)).not.toBeInTheDocument();
+    });
+
+    it('should not show the no-PR hint when repoType is missing', () => {
+      setup({
+        prURL: undefined,
+        isNewPr: true,
+        repoType: undefined,
+        repoUrl: 'https://example.com/org/repo',
+      });
+
+      expect(screen.getByText('Open in repository')).toBeInTheDocument();
+      expect(screen.queryByText(/cannot open pull requests from Grafana/i)).not.toBeInTheDocument();
     });
   });
 

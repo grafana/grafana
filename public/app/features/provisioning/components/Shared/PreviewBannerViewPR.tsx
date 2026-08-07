@@ -6,7 +6,7 @@ import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { appendPullRequestTitleParam } from '../../utils/pullRequestTitle';
-import { isGitProvider } from '../../utils/repositoryTypes';
+import { isGitProvider, supportsPullRequests } from '../../utils/repositoryTypes';
 import { getBranchUrl } from '../utils/url';
 
 interface Props {
@@ -54,13 +54,19 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
   // PR/compare URL carries it. Returns prURL unchanged when no title was threaded through.
   const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
   const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
+  // Capability (can this provider open PRs?) vs whether we have a PR URL right now.
+  const canOpenPullRequests = supportsPullRequests(repoType);
+  const hasPullRequestLink = canOpenPullRequests && Boolean(prLink);
+  // Only claim "cannot open pull requests" for known non-PR providers (git/local), not when
+  // repoType is missing or the PR link simply isn't ready yet.
+  const showNoPullRequestHint = isValidRepoType(repoType) && !canOpenPullRequests;
 
   const actionText =
     action === 'delete'
-      ? getDeleteBannerText(capitalizedRepoType)
+      ? getDeleteBannerText(capitalizedRepoType, hasPullRequestLink, showNoPullRequestHint)
       : action === 'update'
-        ? getUpdateBannerText(capitalizedRepoType)
-        : getCreateBannerText(isNewPr, capitalizedRepoType);
+        ? getUpdateBannerText(capitalizedRepoType, hasPullRequestLink, showNoPullRequestHint)
+        : getCreateBannerText(isNewPr, capitalizedRepoType, hasPullRequestLink, showNoPullRequestHint);
 
   if (behindBranch) {
     return (
@@ -127,7 +133,37 @@ interface BannerText {
   button: string;
 }
 
-function getCreateBannerText(isNewPr: boolean | undefined, repoType: string): BannerText {
+function noPullRequestSupportBody(): string {
+  return t(
+    'provisioned-resource-preview-banner.preview-banner.no-pull-request-support',
+    'This connection cannot open pull requests from Grafana. Create one from this branch in your Git provider to publish the changes.'
+  );
+}
+
+function withNoPullRequestHint(body: string, showNoPullRequestHint: boolean): string {
+  return showNoPullRequestHint ? `${body} ${noPullRequestSupportBody()}` : body;
+}
+
+function openInRepoButton(repoType: string): string {
+  return t('provisioned-resource-preview-banner.preview-banner.open-in-repo-button', 'Open in {{repoType}}', {
+    repoType,
+  });
+}
+
+function openPullRequestButton(repoType: string): string {
+  return t(
+    'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
+    'Open pull request in {{repoType}}',
+    { repoType }
+  );
+}
+
+function getCreateBannerText(
+  isNewPr: boolean | undefined,
+  repoType: string,
+  hasPullRequestLink: boolean,
+  showNoPullRequestHint: boolean
+): BannerText {
   return {
     title: isNewPr
       ? t(
@@ -140,59 +176,58 @@ function getCreateBannerText(isNewPr: boolean | undefined, repoType: string): Ba
           'This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you',
           { repoType }
         ),
-    body: t(
-      'provisioned-resource-preview-banner.preview-banner.not-saved',
-      'The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged'
+    body: withNoPullRequestHint(
+      t(
+        'provisioned-resource-preview-banner.preview-banner.not-saved',
+        'The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged'
+      ),
+      showNoPullRequestHint
     ),
-    button: isNewPr
-      ? t(
-          'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-          'Open pull request in {{repoType}}',
-          { repoType }
-        )
-      : t(
-          'provisioned-resource-preview-banner.preview-banner.view-pull-request-in-repo',
-          'View pull request in {{repoType}}',
-          { repoType }
-        ),
+    button: hasPullRequestLink
+      ? isNewPr
+        ? openPullRequestButton(repoType)
+        : t(
+            'provisioned-resource-preview-banner.preview-banner.view-pull-request-in-repo',
+            'View pull request in {{repoType}}',
+            { repoType }
+          )
+      : openInRepoButton(repoType),
   };
 }
 
-function getDeleteBannerText(repoType: string): BannerText {
+function getDeleteBannerText(repoType: string, hasPullRequestLink: boolean, showNoPullRequestHint: boolean): BannerText {
   return {
     title: t(
       'provisioned-resource-preview-banner.title-deleted-resource-in-branch',
       'A resource has been deleted in a branch in {{repoType}}.',
       { repoType }
     ),
-    body: t(
-      'provisioned-resource-preview-banner.preview-banner.delete-from-branch',
-      'The rest of Grafana users in your organization will still see this resource until this branch is merged'
+    body: withNoPullRequestHint(
+      t(
+        'provisioned-resource-preview-banner.preview-banner.delete-from-branch',
+        'The rest of Grafana users in your organization will still see this resource until this branch is merged'
+      ),
+      showNoPullRequestHint
     ),
-    button: t(
-      'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-      'Open pull request in {{repoType}}',
-      { repoType }
-    ),
+    button: hasPullRequestLink ? openPullRequestButton(repoType) : openInRepoButton(repoType),
   };
 }
 
-function getUpdateBannerText(repoType: string): BannerText {
+function getUpdateBannerText(repoType: string, hasPullRequestLink: boolean, showNoPullRequestHint: boolean): BannerText {
   return {
     title: t(
       'provisioned-resource-preview-banner.title-updated-resource-in-branch',
       'A resource has been updated in a branch in {{repoType}}.',
       { repoType }
     ),
-    body: t(
-      'provisioned-resource-preview-banner.preview-banner.update-from-branch',
-      'The rest of Grafana users in your organization will still see the current version until this branch is merged'
+    body: withNoPullRequestHint(
+      t(
+        'provisioned-resource-preview-banner.preview-banner.update-from-branch',
+        'The rest of Grafana users in your organization will still see the current version until this branch is merged'
+      ),
+      showNoPullRequestHint
     ),
-    button: t(
-      'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-      'Open pull request in {{repoType}}',
-      { repoType }
-    ),
+    button: hasPullRequestLink ? openPullRequestButton(repoType) : openInRepoButton(repoType),
   };
 }
 
