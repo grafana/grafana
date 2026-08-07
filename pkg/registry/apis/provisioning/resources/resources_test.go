@@ -724,3 +724,252 @@ func requireNotWrapped(t *testing.T, got, original error) {
 		"error %q should NOT be wrapped as *ResourceValidationError (would incorrectly become a warning)", got)
 	require.Same(t, original, got, "non-wrapped errors should be returned unchanged")
 }
+
+// TestWriteResourceFromParsed_AccidentalDuplicateUIDAcrossFiles covers the
+// cross-file duplicate-UID discriminator: when a file writes a UID already owned
+// by a different file, the owning file is re-read at the current ref to tell an
+// accidental duplicate (skip + warn) from a legitimate move or intentional
+// takeover (proceed). A non-NotFound error while probing is surfaced rather than
+// silently proceeding with an ambiguous write.
+func TestWriteResourceFromParsed_AccidentalDuplicateUIDAcrossFiles(t *testing.T) {
+	const (
+		ref   = "abc123"
+		uid   = "shared-uid"
+		pathP = "dir-b/dashboard.json" // the file being written this sync
+		pathQ = "dir-a/dashboard.json" // the file that already owns the UID
+	)
+
+	// newManager wires a fresh ResourcesManager whose write path (P) goes through
+	// repo.Read → parser.Parse → writeResourceFromParsed. The returned client is
+	// the parsed resource's client, reused by the duplicate probe and parsed.Run.
+	newManager := func(t *testing.T) (*repository.MockReaderWriter, *MockParser, *MockDynamicResourceInterface, *ResourcesManager) {
+		repo := repository.NewMockReaderWriter(t)
+		parser := NewMockParser(t)
+		client := &MockDynamicResourceInterface{}
+
+		clients := NewMockResourceClients(t)
+		// Only consulted once the write proceeds past the duplicate check; empty
+		// capabilities keep alertrules out of the folder branch so the nil
+		// FolderManager is never dereferenced.
+		clients.EXPECT().SupportedResources().Return([]SupportedResource{
+			{GroupKind: replaceTestGVK.GroupKind(), Capabilities: sets.New[string]()},
+		}).Maybe()
+
+		fileP := &repository.FileInfo{Data: []byte(`{}`), Path: pathP}
+		repo.On("Read", mock.Anything, pathP, ref).Return(fileP, nil)
+		parsedP := mustBuildParsedResource(uid, client)
+		parser.On("Parse", mock.Anything, fileP).Return(parsedP, nil)
+
+		return repo, parser, client, NewResourcesManager(repo, nil, parser, clients)
+	}
+
+	ownedByQ := func() *unstructured.Unstructured {
+		return managedGrafanaObj(uid, "default", map[string]any{grafanautils.AnnoKeySourcePath: pathQ})
+	}
+	requireNoWrite := func(t *testing.T, client *MockDynamicResourceInterface) {
+		t.Helper()
+		client.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		client.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	}
+
+	t.Run("accidental duplicate: owning file still declares the UID → skip with warning", func(t *testing.T) {
+		repo, parser, client, mgr := newManager(t)
+
+		// The UID already exists, owned by dir-a.
+		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedByQ(), nil)
+		// dir-a is read at the current ref and still parses to the same UID.
+		fileQ := &repository.FileInfo{Data: []byte(`{}`), Path: pathQ}
+		repo.On("Read", mock.Anything, pathQ, ref).Return(fileQ, nil)
+		parser.On("Parse", mock.Anything, fileQ).Return(mustBuildParsedResource(uid, nil), nil)
+
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref)
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrDuplicateName)
+		require.Contains(t, err.Error(), pathP)
+		require.Contains(t, err.Error(), pathQ)
+		// A cross-file accidental duplicate is surfaced as a validation warning
+		// (JobStateWarning), consistent with the in-run duplicate path.
+		var validationErr *ResourceValidationError
+		require.ErrorAs(t, err, &validationErr,
+			"cross-file duplicate must be surfaced as a warning")
+		// The hijacking write must not happen — dir-a keeps the UID.
+		requireNoWrite(t, client)
+	})
+
+	t.Run("move: owning file is gone at ref → write proceeds", func(t *testing.T) {
+		repo, _, client, mgr := newManager(t)
+
+		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedByQ(), nil)
+		// dir-a no longer exists at the current ref (moved/deleted); repo.Read
+		// returns repository.ErrFileNotFound, which must be treated as a re-home.
+		repo.On("Read", mock.Anything, pathQ, ref).Return(nil, repository.ErrFileNotFound)
+		client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(ownedByQ(), nil)
+
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref)
+
+		require.NoError(t, err)
+		client.AssertCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("takeover: owning file now declares a different UID → write proceeds", func(t *testing.T) {
+		repo, parser, client, mgr := newManager(t)
+
+		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedByQ(), nil)
+		fileQ := &repository.FileInfo{Data: []byte(`{}`), Path: pathQ}
+		repo.On("Read", mock.Anything, pathQ, ref).Return(fileQ, nil)
+		// dir-a released the UID: it now declares a different one.
+		parser.On("Parse", mock.Anything, fileQ).Return(mustBuildParsedResource("other-uid", nil), nil)
+		client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(ownedByQ(), nil)
+
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref)
+
+		require.NoError(t, err)
+		client.AssertCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("takeover by kind change: owning file keeps the name but changes kind → write proceeds", func(t *testing.T) {
+		repo, parser, client, mgr := newManager(t)
+
+		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedByQ(), nil)
+		fileQ := &repository.FileInfo{Data: []byte(`{}`), Path: pathQ}
+		repo.On("Read", mock.Anything, pathQ, ref).Return(fileQ, nil)
+		// dir-a now declares a different kind under the same name: it released the
+		// original resource identity, so this write is a legitimate takeover.
+		otherKind := mustBuildParsedResource(uid, nil)
+		otherKind.GVK = schema.GroupVersionKind{Group: replaceTestGVK.Group, Version: replaceTestGVK.Version, Kind: "AlertRuleGroup"}
+		parser.On("Parse", mock.Anything, fileQ).Return(otherKind, nil)
+		client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(ownedByQ(), nil)
+
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref)
+
+		require.NoError(t, err)
+		client.AssertCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("normal update: UID owned by the same file → probe is a no-op, write proceeds", func(t *testing.T) {
+		_, _, client, mgr := newManager(t)
+
+		// sourcePath points back at the file being written, so the probe returns at
+		// owner==path without reading the owning file; no owning-file read is
+		// registered, so any such read would panic the test.
+		ownedBySelf := managedGrafanaObj(uid, "default", map[string]any{grafanautils.AnnoKeySourcePath: pathP})
+		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedBySelf, nil)
+		client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(ownedBySelf, nil)
+
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref)
+
+		require.NoError(t, err)
+		client.AssertCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("new resource: UID does not exist → no probe, write proceeds", func(t *testing.T) {
+		_, _, client, mgr := newManager(t)
+
+		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, uid))
+		client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, uid))
+		client.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(ownedByQ(), nil)
+
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref)
+
+		require.NoError(t, err)
+		client.AssertCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("probe get errors → surfaced as error, write skipped", func(t *testing.T) {
+		_, _, client, mgr := newManager(t)
+
+		// A non-NotFound error looking up the existing resource must not silently
+		// proceed with a potentially hijacking write.
+		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).
+			Return(nil, errors.New("transient get failure"))
+
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref)
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "transient get failure")
+		requireNoWrite(t, client)
+	})
+
+	t.Run("reading the owning file errors → surfaced as error, write skipped", func(t *testing.T) {
+		repo, _, client, mgr := newManager(t)
+
+		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedByQ(), nil)
+		// A non-NotFound read error is ambiguous, so it must not proceed.
+		repo.On("Read", mock.Anything, pathQ, ref).Return(nil, errors.New("transient read failure"))
+
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref)
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "transient read failure")
+		requireNoWrite(t, client)
+	})
+
+	t.Run("parsing the owning file errors → surfaced as error, write skipped", func(t *testing.T) {
+		repo, parser, client, mgr := newManager(t)
+
+		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedByQ(), nil)
+		fileQ := &repository.FileInfo{Data: []byte(`{}`), Path: pathQ}
+		repo.On("Read", mock.Anything, pathQ, ref).Return(fileQ, nil)
+		parser.On("Parse", mock.Anything, fileQ).Return(nil, errors.New("transient parse failure"))
+
+		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref)
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "transient parse failure")
+		requireNoWrite(t, client)
+	})
+}
+
+// TestWriteResourceFromParsed_SkippedDuplicateDoesNotPolluteLookup verifies that a
+// probe-rejected cross-file duplicate never claims the UID (the claim happens only
+// on the write path, after the probe), so the real owner file processed later in
+// the same run is not wrongly flagged as an in-run duplicate.
+func TestWriteResourceFromParsed_SkippedDuplicateDoesNotPolluteLookup(t *testing.T) {
+	const (
+		ref   = "abc123"
+		uid   = "shared-uid"
+		pathP = "dir-b/dashboard.json" // duplicate; its write is skipped
+		pathQ = "dir-a/dashboard.json" // the real owner
+	)
+
+	repo := repository.NewMockReaderWriter(t)
+	parser := NewMockParser(t)
+	clients := NewMockResourceClients(t)
+	clients.EXPECT().SupportedResources().Return([]SupportedResource{
+		{GroupKind: replaceTestGVK.GroupKind(), Capabilities: sets.New[string]()},
+	}).Maybe()
+
+	owned := func() *unstructured.Unstructured {
+		return managedGrafanaObj(uid, "default", map[string]any{grafanautils.AnnoKeySourcePath: pathQ})
+	}
+
+	// File P (dir-b) is the duplicate: the UID already exists owned by dir-a.
+	clientP := &MockDynamicResourceInterface{}
+	clientP.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(owned(), nil)
+	fileP := &repository.FileInfo{Data: []byte(`{}`), Path: pathP}
+	repo.On("Read", mock.Anything, pathP, ref).Return(fileP, nil)
+	parser.On("Parse", mock.Anything, fileP).Return(mustBuildParsedResource(uid, clientP), nil)
+
+	// File Q (dir-a) is the real owner: a normal in-place update.
+	clientQ := &MockDynamicResourceInterface{}
+	clientQ.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(owned(), nil)
+	clientQ.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(owned(), nil)
+	fileQ := &repository.FileInfo{Data: []byte(`{}`), Path: pathQ}
+	repo.On("Read", mock.Anything, pathQ, ref).Return(fileQ, nil)
+	parser.On("Parse", mock.Anything, fileQ).Return(mustBuildParsedResource(uid, clientQ), nil)
+
+	mgr := NewResourcesManager(repo, nil, parser, clients)
+
+	// dir-b is processed first and skipped as a cross-file duplicate.
+	_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref)
+	require.ErrorIs(t, err, ErrDuplicateName)
+
+	// dir-a (the real owner) is processed later in the same run: it must not be
+	// flagged as an in-run duplicate just because dir-b was attempted first.
+	_, _, err = mgr.WriteResourceFromFile(context.Background(), pathQ, ref)
+	require.NoError(t, err, "the real owner must not be flagged as an in-run duplicate after a skipped cross-file duplicate")
+	clientQ.AssertCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
