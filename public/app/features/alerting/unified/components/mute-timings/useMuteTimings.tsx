@@ -99,16 +99,16 @@ const useGrafanaAlertmanagerIntervals = () =>
  * Imported time intervals (provenance: converted_prometheus) are marked with canUse: false
  * by the backend because they belong to external Mimir-kind resources and should not be
  * referenced in Grafana-managed routes or rules.
+ *
+ * Only k8s entities carry the annotation; intervals parsed from the Alertmanager config API have no
+ * metadata and are always usable.
  */
-const isUsableTimeInterval = (timing: MuteTiming): boolean => {
-  const canUse = timing.metadata?.annotations?.[K8sAnnotations.CanUse];
-  return canUse === 'true';
+export const isUsableTimeInterval = (timing: MuteTiming): boolean => {
+  if (!timing.metadata) {
+    return true;
+  }
+  return timing.metadata.annotations?.[K8sAnnotations.CanUse] === 'true';
 };
-
-interface UseMuteTimingsOptions extends BaseAlertmanagerArgs, Skippable {
-  /** When true, filters out intervals marked as non-usable (canUse: false). Defaults to false. */
-  filterUsable?: boolean;
-}
 
 /**
  * Depending on alertmanager source, fetches mute timings.
@@ -117,8 +117,11 @@ interface UseMuteTimingsOptions extends BaseAlertmanagerArgs, Skippable {
  * fetches time intervals from k8s API.
  *
  * Otherwise, fetches and parses from the alertmanager config API
+ *
+ * Non-usable intervals are included — callers offering them for selection should disable them via
+ * {@link isUsableTimeInterval} rather than drop them.
  */
-export const useMuteTimings = ({ alertmanager, skip, filterUsable = false }: UseMuteTimingsOptions) => {
+export const useMuteTimings = ({ alertmanager, skip }: BaseAlertmanagerArgs & Skippable) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
   const [getGrafanaTimeIntervals, intervalsResponse] = useGrafanaAlertmanagerIntervals();
@@ -135,13 +138,7 @@ export const useMuteTimings = ({ alertmanager, skip, filterUsable = false }: Use
     }
   }, [alertmanager, getAlertmanagerTimeIntervals, getGrafanaTimeIntervals, skip, useK8sApi]);
 
-  const response = useK8sApi ? intervalsResponse : configApiResponse;
-
-  if (filterUsable && useK8sApi && response.data) {
-    return { ...response, data: response.data.filter(isUsableTimeInterval) };
-  }
-
-  return response;
+  return useK8sApi ? intervalsResponse : configApiResponse;
 };
 
 type CreateUpdateMuteTimingArgs = { interval: MuteTimeInterval };
