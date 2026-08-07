@@ -218,9 +218,12 @@ func preserveGrafanaExternalID(uid, stackExternalID string, existing, updated *s
 			_, restoreModeKey = externalIDKeys(existing)
 		}
 		updated.Set(restoreIdKey, existingID)
-		// When the update omits the mode flag, restore the stored value so Terraform/API
-		// updates that only send partial jsonData do not silently fall back to stack ID.
-		if !modeSet {
+		// When the update omits the mode flag in the restore namespace, restore the stored
+		// value so Terraform/API updates that only send partial jsonData do not silently
+		// fall back to stack ID. Check restoreModeKey (not updated's selected namespace) so
+		// cross-namespace restores (FT off, auth type omitted) honor an explicit SigV4 mode
+		// on the payload and are not blocked by a native mode key.
+		if _, restoreModeSet := updated.CheckGet(restoreModeKey); !restoreModeSet {
 			if existingModeSet, existingModeOn := usePerDatasourceExternalID(existing); existingModeSet {
 				updated.Set(restoreModeKey, existingModeOn)
 			}

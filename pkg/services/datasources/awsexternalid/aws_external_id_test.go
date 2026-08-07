@@ -349,6 +349,38 @@ func TestPreserveGrafanaExternalID_SigV4(t *testing.T) {
 		assert.Empty(t, updated.Get(usePerDatasourceExternalIDJSONKey).Interface())
 	})
 
+	t.Run("FT off omit-auth restores SigV4 mode even when native mode key is set", func(t *testing.T) {
+		// Cross-namespace restore must gate on the SigV4 mode key, not the native one that
+		// externalIDKeys(updated) would select when sigV4AuthType is omitted.
+		existing := simplejson.NewFromAny(map[string]any{
+			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
+			sigV4UsePerDatasourceExternalIDJSONKey: true,
+			sigV4GrafanaExternalIDJSONKey:          wantID,
+		})
+		updated := simplejson.NewFromAny(map[string]any{
+			usePerDatasourceExternalIDJSONKey: true,
+		})
+		preserveGrafanaExternalID(uid, stack, existing, updated, false)
+		assert.Equal(t, wantID, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+		assert.True(t, updated.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
+	})
+
+	t.Run("FT off omit-auth keeps explicit SigV4 mode on update", func(t *testing.T) {
+		existing := simplejson.NewFromAny(map[string]any{
+			sigV4AuthTypeJSONKey:                   grafanaAssumeRoleAuthType,
+			sigV4UsePerDatasourceExternalIDJSONKey: true,
+			sigV4GrafanaExternalIDJSONKey:          wantID,
+		})
+		updated := simplejson.NewFromAny(map[string]any{
+			sigV4UsePerDatasourceExternalIDJSONKey: false,
+		})
+		preserveGrafanaExternalID(uid, stack, existing, updated, false)
+		assert.Equal(t, wantID, updated.Get(sigV4GrafanaExternalIDJSONKey).MustString())
+		assert.False(t, updated.Get(sigV4UsePerDatasourceExternalIDJSONKey).MustBool())
+		assert.Empty(t, updated.Get(grafanaExternalIDJSONKey).MustString())
+	})
+
 	t.Run("auth switch into SigV4 GAR mints unless stack mode is requested", func(t *testing.T) {
 		keys := simplejson.NewFromAny(map[string]any{sigV4AuthTypeJSONKey: "keys"})
 
