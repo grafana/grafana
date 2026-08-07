@@ -32,6 +32,13 @@ export const preferredVisualizationTypes = [
 export type PreferredVisualisationType = (typeof preferredVisualizationTypes)[number];
 
 /**
+ * @alpha - experimental
+ * Explicit frame level mappings for graph edges keys
+ * Must be valid field names (not display names)
+ */
+export type GraphMeta = { sourceKey?: string; targetKey?: string };
+
+/**
  * Should be kept in sync with https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/frame_meta.go
  * @public
  */
@@ -45,7 +52,7 @@ export interface QueryResultMeta {
   typeVersion?: [number, number];
 
   /** DatasSource Specific Values */
-  custom?: Record<string, any>;
+  custom?: Record<string, any> & GraphMeta;
 
   /** Stats */
   stats?: QueryResultMetaStat[];
