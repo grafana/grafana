@@ -32,7 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-const FULLPATH_SEPARATOR = "/"
+const FULLPATH_SEPARATOR = '/'
 
 var (
 	_ folder.Service = (*Service)(nil)
@@ -266,33 +266,50 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 	return nil
 }
 
-// SplitFullpath splits a string into an array of strings using the FULLPATH_SEPARATOR as the delimiter.
-// It handles escape characters by appending the separator and the new string if the current string ends with an escape character.
-// The resulting array does not contain empty strings.
+// SplitFullpath splits a fullpath into its component titles on unescaped
+// FULLPATH_SEPARATOR characters. It unescapes the escape sequences within each
+// title (\\ -> \ and \/ -> /), so it is the inverse of the escaping applied when
+// a fullpath is built. A backslash that does not form one of those sequences
+// (including a trailing backslash) is treated as a literal character and left
+// untouched, so legacy, unescaped provisioning paths such as "team\ops" pass
+// through unchanged. The resulting array does not contain empty strings.
 func SplitFullpath(s string) []string {
-	splitStrings := strings.Split(s, FULLPATH_SEPARATOR)
-
 	result := make([]string, 0)
-	current := ""
+	var current strings.Builder
 
-	for _, str := range splitStrings {
-		if strings.HasSuffix(current, "\\") {
-			// If the current string ends with an escape character, append the separator and the new string
-			current = current[:len(current)-1] + FULLPATH_SEPARATOR + str
-		} else {
-			// If the current string does not end with an escape character, append the current string to the result and start a new current string
-			if current != "" {
-				result = append(result, current)
+	escaped := false
+	for _, r := range s {
+		switch {
+		case escaped:
+			// Only "\\" and "\/" are escape sequences. Any other backslash is a literal
+			// character (e.g. legacy unescaped titles such as "team\ops"), so preserve it.
+			if r != '\\' && r != FULLPATH_SEPARATOR {
+				current.WriteRune('\\')
 			}
-			current = str
+			current.WriteRune(r)
+			escaped = false
+		case r == '\\':
+			escaped = true
+		case r == FULLPATH_SEPARATOR:
+			if current.Len() > 0 {
+				result = append(result, current.String())
+				current.Reset()
+			}
+		default:
+			current.WriteRune(r)
 		}
 	}
 
-	// Append the last string to the result
-	if current != "" {
-		result = append(result, current)
+	// A trailing backslash is a literal character, not the start of an escape
+	// sequence, so preserve it (e.g. legacy unescaped title "team\").
+	if escaped {
+		current.WriteRune('\\')
 	}
 
+	// Add the last string to the result
+	if current.Len() > 0 {
+		result = append(result, current.String())
+	}
 	return result
 }
 

@@ -136,6 +136,26 @@ func TestSplitFullpath(t *testing.T) {
 			input:    "folder\\/with\\/slashes/subfolder\\/with\\/slashes",
 			expected: []string{"folder/with/slashes", "subfolder/with/slashes"},
 		},
+		{
+			name:     "escaped backslash",
+			input:    "folder\\\\with/backslash",
+			expected: []string{"folder\\with", "backslash"},
+		},
+		{
+			name:     "unescaped backslash in title is preserved",
+			input:    "team\\ops",
+			expected: []string{"team\\ops"},
+		},
+		{
+			name:     "trailing backslash is preserved",
+			input:    "team\\",
+			expected: []string{"team\\"},
+		},
+		{
+			name:     "unescaped backslash preserved across a separator",
+			input:    "team\\ops/child",
+			expected: []string{"team\\ops", "child"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -211,4 +231,47 @@ func TestGetUIDFromLegacyID(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "resolved-uid", uid)
 	fakeK8s.AssertExpectations(t)
+}
+
+func TestFullpathRoundTrip(t *testing.T) {
+	tests := []struct {
+		name   string
+		titles []string
+	}{
+		{
+			name:   "plain titles",
+			titles: []string{"parent", "child"},
+		},
+		{
+			name:   "titles containing slashes",
+			titles: []string{"a/b", "c/d"},
+		},
+		{
+			name:   "title with backslash in middle",
+			titles: []string{"foo\\bar", "xyz"},
+		},
+		{
+			name:   "title ending in double backslash",
+			titles: []string{"team\\\\", "alerts"},
+		},
+		{
+			name:   "title ending in backslash",
+			titles: []string{"team\\", "alerts"},
+		},
+		{
+			name:   "single dangling backslash",
+			titles: []string{"\\"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			parents := make([]*folder.Folder, len(tt.titles))
+			for i, title := range tt.titles {
+				parents[i] = &folder.Folder{Title: title, UID: fmt.Sprintf("uid-%d", i)}
+			}
+			fullpath, _ := computeFullPath(parents)
+			require.Equal(t, tt.titles, SplitFullpath(fullpath))
+		})
+	}
 }
