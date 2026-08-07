@@ -227,13 +227,21 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
-	if !apierrors.IsServiceUnavailable(err) {
+	// Retry transient conditions: the service being unavailable, and reads that
+	// are provably staler than the event that triggered them (the write is
+	// committed, the read path just has not caught up — retrying is exactly what
+	// heals it, where dropping the key would defer it to the next re-list).
+	switch {
+	case errors.Is(err, usinformer.ErrStaleRead):
+		logger.Info("ConnectionController will retry as read is staler than the triggering event")
+	case apierrors.IsServiceUnavailable(err):
+		logger.Info("ConnectionController will retry as service is unavailable")
+	default:
 		logger.Info("ConnectionController will not retry")
 		cc.queue.Forget(item)
 		return true
 	}
 
-	logger.Info("ConnectionController will retry as service is unavailable")
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
 	cc.queue.AddRateLimited(item)
 
