@@ -2365,6 +2365,63 @@ func TestService_DoReload(t *testing.T) {
 	})
 }
 
+func TestService_Reload(t *testing.T) {
+	t.Parallel()
+
+	t.Run("triggers reload for the requested provider", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+		provider := social.AzureADProviderName
+
+		env.store.ExpectedSSOSetting = &models.SSOSettings{
+			Provider: provider,
+			Settings: map[string]any{"enabled": true},
+			Source:   models.DB,
+		}
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+			defer wg.Done()
+			return settings.Provider == provider && settings.Settings["enabled"] == true
+		})).Return(nil).Once()
+		env.reloadables[provider] = reloadable
+
+		err := env.service.Reload(context.Background(), provider)
+		require.NoError(t, err)
+
+		wg.Wait()
+	})
+
+	t.Run("returns an error when no reloadable is registered for the provider", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		err := env.service.Reload(context.Background(), "unknown-provider")
+		require.ErrorIs(t, err, ssosettings.ErrInvalidProvider)
+	})
+
+	t.Run("returns an error when GetForProvider fails", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+		provider := social.AzureADProviderName
+
+		expectedErr := errors.New("failed fetching the settings")
+		env.store.ExpectedError = expectedErr
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		env.reloadables[provider] = reloadable
+
+		err := env.service.Reload(context.Background(), provider)
+		require.ErrorIs(t, err, expectedErr)
+	})
+}
+
 func TestService_decryptSecrets(t *testing.T) {
 	t.Parallel()
 
