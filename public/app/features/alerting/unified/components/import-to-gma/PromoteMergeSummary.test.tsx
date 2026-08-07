@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { PromoteMergeSummary } from './ImportToGMA';
+import { PromoteMergeSummary } from './PromoteMergeSummary';
 import { type PromoteStatsSummary } from './types';
 
 const emptyStats: PromoteStatsSummary = {
