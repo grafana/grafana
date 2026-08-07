@@ -178,6 +178,16 @@ cache_ttl = 60m
 If the JWKS endpoint includes cache control headers and the value is less than the configured `cache_ttl`, then the cache control header value is used instead. If the `cache_ttl` is not set, the default of `60m` is used. `no-store` and `no-cache` cache control headers are ignored. To disable JWKS caching, set `cache_ttl = 0s`
 {{< /admonition >}}
 
+#### Use the key id to build the JWKS URL
+
+Some providers, such as AWS Application Load Balancer, host each key on its own URL derived from the token's key id (`kid`). To support these, `jwk_set_url` may include a `{{kid}}` placeholder that is replaced with the `kid` from the token header before the request is made.
+
+```ini
+jwk_set_url = https://public-keys.auth.elb.eu-west-1.amazonaws.com/{{kid}}
+```
+
+When the URL is templated, the token must carry a `kid` header, otherwise verification fails. Each resolved URL is cached independently.
+
 ### Verify token using a JSON Web Key Set loaded from JSON file
 
 Key set in the same format as in JWKS endpoint but located on disk.
