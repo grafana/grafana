@@ -40,6 +40,8 @@ export interface ShareExportTabState extends SceneShareTabState {
   exportFormat?: ExportFormat;
 }
 
+export type SaveExportResult = { success: true } | { success: false; error: unknown };
+
 export class ShareExportTab extends SceneObjectBase<ShareExportTabState> implements ShareView {
   public tabId = shareDashboardType.export;
   static Component = ShareExportTabRenderer;
@@ -219,8 +221,12 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     }
   };
 
-  public onSaveAsFile = async () => {
+  public onSaveAsFile = async (): Promise<SaveExportResult> => {
     const dashboard = await this.getExportableDashboardJson();
+    if ('error' in dashboard.json) {
+      return { success: false, error: dashboard.json.error };
+    }
+
     const dashboardJsonPretty = JSON.stringify(dashboard.json, null, 2);
     const { isSharingExternally, isViewingYAML } = this.state;
 
@@ -240,6 +246,8 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       format: isViewingYAML ? 'yaml' : 'json',
       action: 'download',
     });
+
+    return { success: true };
   };
 
   public onClipboardCopy = async () => {
