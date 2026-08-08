@@ -3,6 +3,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { initDataSourceInstanceSettings } from '@grafana/runtime/internal';
 
 import { type AlertDataQuery, type AlertQuery } from '../../../../../../types/unified-alerting-dto';
 import { setupMswServer } from '../../../mockApi';
@@ -17,7 +18,11 @@ const DS_UID = 'test-ds-uid';
 const server = setupMswServer();
 
 beforeEach(() => {
-  const dsrv = setupDataSources(mockDataSource({ uid: DS_UID, name: 'Test DS' }));
+  const ds = mockDataSource({ uid: DS_UID, name: 'Test DS' });
+  const dsrv = setupDataSources(ds);
+
+  // Populate the new async instance-settings cache so useAlertQueriesStatus resolves correctly.
+  initDataSourceInstanceSettings({ 'Test DS': ds }, '');
 
   // AlertingQueryRunner.prepareQueries calls dataSourceSrv.get(uid) to load the plugin instance.
   // In tests this fails because the Prometheus plugin can't be imported. We spy on get() to return
@@ -32,6 +37,8 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.restoreAllMocks();
+  // Clear the async instance-settings cache between tests.
+  initDataSourceInstanceSettings({}, '');
 });
 
 /** Default relative time range used in test queries to silence AlertingQueryRunner warnings. */
