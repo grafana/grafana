@@ -107,6 +107,7 @@ function UseStylesWithConditionalCSS({ index }: TestComponentProps) {
 
 function InlineEmotionCSS({ index }: TestComponentProps) {
   const theme = useTheme2();
+  // eslint-disable-next-line @grafana/prefer-use-styles2 -- intentionally demonstrates the un-memoized pattern
   const styles = getStyles(theme);
 
   return (

@@ -5,7 +5,7 @@ import Highlighter from 'react-highlight-words';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { type HighlightPart } from '../../types/completion';
 import { PartialHighlighter } from '../Typeahead/PartialHighlighter';
 
@@ -45,8 +45,7 @@ export const Label = forwardRef<HTMLButtonElement, Props>(
     },
     ref
   ) => {
-    const theme = useTheme2();
-    const styles = getLabelStyles(theme);
+    const styles = useStyles2(getLabelStyles);
     const searchWords = searchTerm ? [searchTerm] : [];
 
     const onLabelClick = useCallback(

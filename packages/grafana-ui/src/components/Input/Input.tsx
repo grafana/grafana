@@ -4,7 +4,7 @@ import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { useFieldContext } from '../Forms/FieldContext';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
@@ -84,7 +84,7 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   const theme = useTheme2();
 
   // Don't pass the width prop, as this causes an unnecessary amount of Emotion calls when auto sizing
-  const styles = getInputStyles({ theme, invalid: !!invalid, width: autoSizeWidth ? undefined : width });
+  const styles = useStyles2(getInputStylesFromProps, !!invalid, autoSizeWidth ? undefined : width);
 
   const suffix = suffixProp || (loading && <Spinner inline={true} />);
 
@@ -139,6 +139,12 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
 });
 
 Input.displayName = 'Input';
+
+// Stable-identity adapter so useStyles2 can memoize by primitive argument identity
+// instead of re-serializing a fresh object literal on every render.
+function getInputStylesFromProps(theme: GrafanaTheme2, invalid: boolean, width: number | undefined) {
+  return getInputStyles({ theme, invalid, width });
+}
 
 export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
   const prefixSuffixStaticWidth = '28px';

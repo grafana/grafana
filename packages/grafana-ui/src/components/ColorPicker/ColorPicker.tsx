@@ -10,7 +10,7 @@ import {
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { closePopover } from '../../utils/closePopover';
 import { Popover } from '../Tooltip/Popover';
 import { PopoverController } from '../Tooltip/PopoverController';
@@ -42,7 +42,7 @@ const colorPickerFactory = <T extends ColorPickerProps>(
     const { children, onChange, color, id } = props;
     const theme = useTheme2();
     const pickerTriggerRef = useRef<any>(null);
-    const styles = getStyles(theme);
+    const styles = useStyles2(getStyles);
 
     const popoverElement = createElement(
       popover,

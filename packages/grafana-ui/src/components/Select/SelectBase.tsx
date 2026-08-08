@@ -157,6 +157,7 @@ export function SelectBase<T, Rest = {}>({
   ...rest
 }: SelectBaseProps<T> & Rest) {
   const theme = useTheme2();
+  // eslint-disable-next-line @grafana/prefer-use-styles2 -- getSelectStyles is stylesFactory-memoized with a stable theme arg, so it does not re-serialize
   const styles = getSelectStyles(theme);
 
   const fieldContext = useFieldContext();
@@ -166,6 +167,7 @@ export function SelectBase<T, Rest = {}>({
 
   const reactSelectRef = useRef<HTMLElement & { controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
+  // eslint-disable-next-line @grafana/prefer-use-styles2 -- useCustomSelectStyles is a hook, not a plain style creator
   const selectStyles = useCustomSelectStyles(theme, width);
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
   // local state to track when menu is open - used to stop Escape key from propagating to parent overlays when menu is open
@@ -426,6 +428,7 @@ export function SelectBase<T, Rest = {}>({
 
 function ClearIndicator({ clearValue, ...rest }: ClearIndicatorProps) {
   const theme = useTheme2();
+  // eslint-disable-next-line @grafana/prefer-use-styles2 -- getSelectStyles is stylesFactory-memoized with a stable theme arg, so it does not re-serialize
   const styles = getSelectStyles(theme);
 
   return (

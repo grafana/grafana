@@ -7,7 +7,7 @@ import { Children, forwardRef, type HTMLAttributes, useState, useRef, useLayoutE
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getPortalContainer } from '../Portal/Portal';
 
 import { ToolbarButton } from './ToolbarButton';
@@ -44,9 +44,8 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
       overflowItemsRef
     );
     const { dialogProps } = useDialog({}, overflowItemsRef);
-    const theme = useTheme2();
     const overflowButtonOrder = alignment === 'left' ? childVisibility.indexOf(false) - 1 : childVisibility.length;
-    const styles = getStyles(theme, overflowButtonOrder, alignment);
+    const styles = useStyles2(getStyles, overflowButtonOrder, alignment);
 
     useLayoutEffect(() => {
       const intersectionObserver = new IntersectionObserver(

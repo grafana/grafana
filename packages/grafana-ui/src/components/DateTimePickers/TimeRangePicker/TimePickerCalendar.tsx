@@ -7,7 +7,7 @@ import { createRef, type FormEvent, memo } from 'react';
 import { type DateTime, type GrafanaTheme2, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { useStyles2 } from '../../../themes/ThemeContext';
 import { getModalStyles } from '../../Modal/getModalStyles';
 import { type WeekStart } from '../WeekStartPicker';
 
@@ -71,9 +71,8 @@ export interface TimePickerCalendarProps {
 }
 
 function TimePickerCalendar(props: TimePickerCalendarProps) {
-  const theme = useTheme2();
   const { modalBackdrop } = useStyles2(getModalStyles);
-  const styles = getStyles(theme, props.isReversed);
+  const styles = useStyles2(getStyles, props.isReversed);
   const { isOpen, isFullscreen: isFullscreenProp, onClose } = props;
   const ref = createRef<HTMLElement>();
   const { dialogProps } = useDialog(

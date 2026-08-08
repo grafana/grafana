@@ -5,7 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
 import { getTagColor, getTagColorsFromName } from '../../utils/tags';
@@ -27,8 +27,7 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
 }
 
 const TagComponent = forwardRef<HTMLElement, Props>(({ name, onClick, icon, className, colorIndex, ...rest }, ref) => {
-  const theme = useTheme2();
-  const styles = getTagStyles(theme, name, colorIndex);
+  const styles = useStyles2(getTagStyles, name, colorIndex);
 
   const onTagClick = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();

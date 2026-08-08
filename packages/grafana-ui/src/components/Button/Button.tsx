@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { type GrafanaTheme2, textUtil, type ThemeRichColor } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getButtonFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { type IconName, type IconSize, type IconType } from '../../types/icon';
 import { type ComponentSize } from '../../types/size';
@@ -75,15 +75,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const theme = useTheme2();
-    const styles = getButtonStyles({
-      theme,
-      size,
-      variant,
-      fill,
-      fullWidth,
-      iconOnly: !children,
-    });
+    const styles = useStyles2(getButtonStylesForPrimitives, size, variant, fill, !children, fullWidth);
 
     const buttonStyles = cx(
       styles.button,
@@ -158,15 +150,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
   ) => {
     const sanitizedHref = href ? textUtil.sanitizeUrl(href) : href;
 
-    const theme = useTheme2();
-    const styles = getButtonStyles({
-      theme,
-      fullWidth,
-      size,
-      variant,
-      fill,
-      iconOnly: !children,
-    });
+    const styles = useStyles2(getButtonStylesForPrimitives, size, variant, fill, !children, fullWidth);
 
     const linkButtonStyles = cx(
       styles.button,
@@ -243,6 +227,20 @@ export interface StyleProps {
   theme: GrafanaTheme2;
   fullWidth?: boolean;
   narrow?: boolean;
+}
+
+// Stable-identity adapter with primitive args so Button/LinkButton styles can go through useStyles2:
+// its micro-memoize keys on argument identity, so identical buttons reuse the cached classes instead of
+// re-serializing on every render. getButtonStyles keeps its public object signature for other callers.
+function getButtonStylesForPrimitives(
+  theme: GrafanaTheme2,
+  size: ComponentSize,
+  variant: ButtonVariant,
+  fill: ButtonFill,
+  iconOnly: boolean,
+  fullWidth: boolean | undefined
+) {
+  return getButtonStyles({ theme, size, variant, fill, iconOnly, fullWidth });
 }
 
 export const getButtonStyles = (props: StyleProps) => {

@@ -14,6 +14,7 @@ interface MultiValueContainerProps {
 
 export const MultiValueContainer = ({ innerProps, children }: React.PropsWithChildren<MultiValueContainerProps>) => {
   const theme = useTheme2();
+  // eslint-disable-next-line @grafana/prefer-use-styles2 -- getSelectStyles is stylesFactory-memoized with a stable theme arg, so it does not re-serialize
   const styles = getSelectStyles(theme);
 
   return (
@@ -29,6 +30,7 @@ export type MultiValueRemoveProps = {
 
 export const MultiValueRemove = ({ children, innerProps }: React.PropsWithChildren<MultiValueRemoveProps>) => {
   const theme = useTheme2();
+  // eslint-disable-next-line @grafana/prefer-use-styles2 -- getSelectStyles is stylesFactory-memoized with a stable theme arg, so it does not re-serialize
   const styles = getSelectStyles(theme);
   return (
     <IconButton

@@ -3,7 +3,7 @@ import { cloneElement, type ReactNode, useId } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getChildId } from '../../utils/reactUtils';
 import { type PopoverContent } from '../Tooltip/types';
 
@@ -56,8 +56,7 @@ export const InlineField = ({
   useFieldset: useFieldsetProp,
   ...htmlProps
 }: Props) => {
-  const theme = useTheme2();
-  const styles = getStyles(theme, grow, shrink);
+  const styles = useStyles2(getStyles, grow, shrink);
   const fieldId = useId();
   const labelId = useId();
   const errorId = useId();
