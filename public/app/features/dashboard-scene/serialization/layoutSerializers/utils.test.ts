@@ -407,6 +407,25 @@ describe('buildVizPanel', () => {
     return viz.state.$timeRange;
   }
 
+  it('builds a panel when vizConfig.spec omits fieldConfig', () => {
+    const base = defaultPanelSpec();
+    const panel: PanelKind = {
+      kind: 'Panel',
+      spec: {
+        ...base,
+        vizConfig: {
+          ...base.vizConfig,
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          spec: {} as PanelKind['spec']['vizConfig']['spec'],
+        },
+      },
+    };
+
+    const viz = buildVizPanel(panel);
+
+    expect(viz.state.fieldConfig).toEqual({ defaults: {}, overrides: [] });
+  });
+
   it.each([
     ['timeCompare', 'compareWith', '1d'],
     ['timeFrom', 'timeFrom', '2h'],

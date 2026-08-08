@@ -22,6 +22,7 @@ import {
   type QueryVariableKind,
   type TabsLayoutTabKind,
   type DataQueryKind,
+  defaultFieldConfigSource,
   defaultPanelQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
@@ -84,7 +85,11 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.group,
     options,
-    fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
+    // VizConfigSpec requires fieldConfig, but specs reaching us from the
+    // mutation API can omit it. VizPanelState requires it too, and passing an
+    // explicit undefined defeats the VizPanel constructor default, so resolve
+    // it here (same as options above).
+    fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig ?? defaultFieldConfigSource()),
     // An empty/absent version means the caller didn't pin one (it's optional in
     // the spec); leave pluginVersion undefined so the panel uses the running
     // plugin's current version rather than migrating against a bogus value.
