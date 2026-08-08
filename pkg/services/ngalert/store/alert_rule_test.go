@@ -753,12 +753,12 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 
 		_ = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			var versions []alertRuleVersion
-			err = sess.Table(alertRuleVersion{}).Where(`rule_uid = ''`).In("rule_guid", guids).Find(&versions)
+			err = sess.Table(alertRuleVersion{}).In("rule_guid", guids).Find(&versions)
 			require.NoError(t, err)
 			require.Len(t, versions, len(rules)) // should be one version per GUID
 
 			for _, version := range versions {
-				assert.Equal(t, "", version.RuleUID)
+				require.NotEmpty(t, version.RuleUID)
 				assert.Equal(t, "test", *version.CreatedBy)
 				// Remove the GUID from guids
 				for i, guid := range guids {
