@@ -395,7 +395,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:         "kubernetesFolderCascadeDelete",

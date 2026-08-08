@@ -125,7 +125,6 @@ type DashboardsAPIBuilder struct {
 	dualWriter               dualwrite.Service
 	folderClientProvider     client.K8sHandlerProvider
 	libraryPanels            libraryelements.Service // for legacy library panels
-	libraryPanelsEnabled     bool
 	publicDashboardService   publicdashboards.Service
 	snapshotService          dashboardsnapshots.Service
 	snapshotOptions          dashv0.SnapshotSharingOptions
@@ -202,7 +201,6 @@ func RegisterAPIService(
 		dashboardK8sClient:       dashboardClient,
 		folderClientProvider:     newSimpleClientProvider(folderClient),
 		libraryPanels:            libraryPanels,
-		libraryPanelsEnabled:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs), // nolint:staticcheck
 		publicDashboardService:   publicDashboardService,
 		snapshotService:          snapshotService,
 		snapshotOptions:          snapshotOptions,
@@ -367,7 +365,12 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		}
 
 	case dashv0.LIBRARY_PANEL_RESOURCE:
-		return nil // OK for now
+		switch op {
+		case admission.Create, admission.Update, admission.Delete:
+			return b.validateLibraryPanelAccess(ctx, a)
+		default:
+			return nil
+		}
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
 	// Reachability invariant: Variable storage is always registered, but
@@ -408,6 +411,59 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	}
 
 	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
+}
+
+func (b *DashboardsAPIBuilder) validateLibraryPanelAccess(ctx context.Context, a admission.Attributes) error {
+	var obj runtime.Object
+	var verb string
+	switch a.GetOperation() {
+	case admission.Create:
+		obj = a.GetObject()
+		verb = utils.VerbCreate
+	case admission.Update:
+		obj = a.GetObject()
+		verb = utils.VerbUpdate
+	case admission.Delete:
+		obj = a.GetOldObject()
+		verb = utils.VerbDelete
+	default:
+		return nil
+	}
+	if obj == nil {
+		return fmt.Errorf("library panel object is required for %s authorization", verb)
+	}
+	return b.authorizeLibraryPanel(ctx, obj, verb, a.GetNamespace())
+}
+
+func (b *DashboardsAPIBuilder) authorizeLibraryPanel(ctx context.Context, obj runtime.Object, verb, namespace string) error {
+	accessor, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return fmt.Errorf("get library panel metadata for authorization: %w", err)
+	}
+	folderUID := accessor.GetFolder()
+	if folderUID == "" {
+		folderUID = accesscontrol.GeneralFolderUID
+	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return fmt.Errorf("get requester for library panel authorization: %w", err)
+	}
+	gvr := dashv0.LibraryPanelResourceInfo.GroupVersionResource()
+	resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
+		Verb:      verb,
+		Group:     gvr.Group,
+		Resource:  gvr.Resource,
+		Namespace: namespace,
+		Name:      accessor.GetName(),
+	}, folderUID)
+	if err != nil {
+		return err
+	}
+	if !resp.Allowed {
+		return apierrors.NewForbidden(gvr.GroupResource(), accessor.GetName(), errors.New("access denied"))
+	}
+	return nil
 }
 
 // validateDelete checks if a dashboard can be deleted
@@ -854,14 +910,11 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// EnableFolderSupport=false and any folder-scoped write (e.g. provisioning syncing a panel
 	// into a managed folder) is rejected with "folders are not supported". The folder is
 	// optional (panels may live at the root), so RequireFolder stays false.
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.libraryPanelsEnabled {
-		opts.StorageOptsRegister(dashv0.LibraryPanelResourceInfo.GroupResource(), apistore.StorageOptions{
-			Scheme:              opts.Scheme,
-			Index:               b.unified,
-			EnableFolderSupport: true,
-		})
-	}
+	opts.StorageOptsRegister(dashv0.LibraryPanelResourceInfo.GroupResource(), apistore.StorageOptions{
+		Scheme:              opts.Scheme,
+		Index:               b.unified,
+		EnableFolderSupport: true,
+	})
 
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts,
@@ -1049,6 +1102,16 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			return err
 		}
 
+		// Standalone mode has no legacy SQL, so library panels are served from
+		// unified storage directly (no dual writer).
+		if libraryPanels != nil {
+			// status.missing preserves legacy model fields that have no typed spec field.
+			storage[libraryPanels.StoragePath()], err = grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	}
 
@@ -1073,20 +1136,19 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return err
 	}
 
-	// Expose read library panels
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if libraryPanels != nil && b.libraryPanelsEnabled {
+	// Library panels - only v0alpha1
+	if libraryPanels != nil {
 		legacyLibraryStore := &LibraryPanelStore{
 			Access:       b.legacy,
 			ResourceInfo: *libraryPanels,
 			service:      b.libraryPanels,
 		}
 
-		unifiedLibraryStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+		// status.missing preserves legacy model fields that have no typed spec field.
+		unifiedLibraryStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
 		if err != nil {
 			return err
 		}
-
 		libraryGr := libraryPanels.GroupResource()
 		storage[libraryPanels.StoragePath()], err = opts.DualWriteBuilder(libraryGr, legacyLibraryStore, unifiedLibraryStore)
 		if err != nil {
