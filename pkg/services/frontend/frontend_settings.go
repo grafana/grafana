@@ -19,6 +19,7 @@ type FSFrontendSettings struct {
 	VerifyEmailEnabled bool   `json:"verifyEmailEnabled,omitempty"`
 	DisableLoginForm   bool   `json:"disableLoginForm,omitempty"`
 	DisableUserSignUp  bool   `json:"disableUserSignUp,omitempty"`
+	DisableForgotPassword   bool   `json:"disableForgotPassword,omitempty"`
 	LoginHint          string `json:"loginHint,omitempty"`
 	PasswordHint       string `json:"passwordHint,omitempty"`
 	AnonymousEnabled   bool   `json:"anonymousEnabled,omitempty"`

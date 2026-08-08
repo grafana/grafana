@@ -50,6 +50,7 @@ func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing
 		CSPReportOnlyEnabled:                 cfg.CSPReportOnlyEnabled,
 		DisableLoginForm:                     cfg.DisableLoginForm,
 		DisableUserSignUp:                    !cfg.AllowUserSignUp,
+		DisableForgotPassword:                cfg.DisableForgotPassword,
 		GoogleAnalytics4Id:                   cfg.GoogleAnalytics4ID,
 		GoogleAnalytics4SendManualPageViews:  cfg.GoogleAnalytics4SendManualPageViews,
 		GoogleAnalyticsId:                    cfg.GoogleAnalyticsID,
