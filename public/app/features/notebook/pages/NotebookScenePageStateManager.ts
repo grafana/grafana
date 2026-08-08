@@ -11,6 +11,8 @@ import { type DashboardScene } from 'app/features/dashboard-scene/scene/Dashboar
 import { NotebookLayoutManager } from 'app/features/dashboard-scene/scene/layout-notebook/NotebookLayoutManager';
 import { dispatch } from 'app/store/store';
 
+import { setLastUsedNotebook } from '../model/lastUsedNotebook';
+import { normalizeNotebookSpec } from '../model/notebookSpec';
 import { buildNotebookEnvelope } from '../scene/buildNotebookEnvelope';
 
 // A notebook renders through the same scene pipeline as a v2 dashboard, so we reuse
@@ -46,7 +48,12 @@ export class NotebookScenePageStateManager extends DashboardScenePageStateManage
     // stay on the @grafana/schema notebook types.
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema resource type at the fetch seam
     const notebook = result.data as unknown as Resource<NotebookSpec>;
-    return buildNotebookEnvelope(notebook);
+    // RTK Query freezes cached responses (Immer). The scene pipeline mutates nested panel
+    // fieldConfig (e.g. threshold base → -Infinity), so clone before building the envelope.
+    const mutable = structuredClone(notebook);
+    // Viewing counts as "using": quick-add targets and the sidebar follow the last opened notebook.
+    setLastUsedNotebook(mutable.metadata.name, mutable.spec.title);
+    return buildNotebookEnvelope({ ...mutable, spec: normalizeNotebookSpec(mutable.spec) });
   }
 
   public transformResponseToScene(
@@ -54,17 +61,28 @@ export class NotebookScenePageStateManager extends DashboardScenePageStateManage
     options: LoadDashboardOptions
   ): DashboardScene | null {
     const scene = super.transformResponseToScene(rsp, options);
+    if (!scene) {
+      return null;
+    }
+
     // The POC notebook is read-only. Marking the scene as embedded hides the dashboard
     // edit/share/export toolbar actions and the outline/sidebar (canEditDashboard() and
     // the share button both require !isEmbedded) while the page + title still render.
-    scene?.setState({ meta: { ...scene.state.meta, isEmbedded: true } });
+    scene.setState({ meta: { ...scene.state.meta, isEmbedded: true } });
 
     // Surface the notebook's title and tags on the layout manager's own state so its header can
     // show them. The manager deliberately doesn't read them off the DashboardScene (that import
     // would form a dependency cycle), so the loader pushes them down here.
-    const body = scene?.state.body;
+    const body = scene.state.body;
     if (body instanceof NotebookLayoutManager) {
       body.setState({ title: rsp?.spec.title, tags: rsp?.spec.tags });
+
+      // No visualizations → nothing for the shared time range to drive. Hide the picker
+      // (and skip URL time sync) so markdown/code-only notebooks aren't showing dead chrome.
+      // Spec hideTimepicker already sets this; OR so we never un-hide an author preference.
+      if (body.getVizPanels().length === 0 && scene.state.controls) {
+        scene.state.controls.setState({ hideTimeControls: true });
+      }
     }
 
     return scene;

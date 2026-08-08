@@ -10,6 +10,11 @@ export interface NotebookCellItemState extends SceneObjectState {
   source: 'assistant' | 'user';
   // Optional to mirror the schema: an omitted `collapsed` must round-trip as omitted, not `false`.
   collapsed?: boolean;
+  // Rendered height in pixels for panel cells; omitted means the default height.
+  height?: number;
+  // When both set, the panel is locked to this time range instead of the notebook's.
+  timeFrom?: string;
+  timeTo?: string;
   // A cell is either a panel or narrative content, never both. `body` deliberately follows the
   // DashboardLayoutItem convention (every layout item exposes its wrapped VizPanel at
   // `.state.body`, set via setElementBody) so the panel editor and scene-graph tooling can find

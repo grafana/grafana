@@ -186,6 +186,8 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
+	// Notebook collaboration sessions (cursor presence + doc sync) for the notebooks POC.
+	g.GrafanaScope.Features["notebook"] = &features.NotebookHandler{}
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
