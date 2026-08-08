@@ -62,6 +62,10 @@ const baseImportConfig = {
       group: ['@grafana/ui/src/*', '@grafana/runtime/src/*', '@grafana/data/src/*'],
       message: 'Import from the public export instead.',
     },
+    {
+      group: ['react-router', 'react-router-dom'],
+      message: 'Import from react-router-dom-v5-compat instead until the react-router v6 migration is complete.',
+    },
   ],
   paths: [
     {

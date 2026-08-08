@@ -3,9 +3,9 @@
  * It is not meant to be used in any other way
  * This file doesn't require any compilation
  */
-define(['react', '@grafana/data', 'react-router-dom'], function (React, grafanaData, ReactRouterDom) {
+define(['react', '@grafana/data', 'react-router'], function (React, grafanaData, ReactRouter) {
   const { AppPlugin } = grafanaData;
-  const { Switch, Route } = ReactRouterDom;
+  const { Routes, Route } = ReactRouter;
 
   function PageOne() {
     return React.createElement(
@@ -18,7 +18,11 @@ define(['react', '@grafana/data', 'react-router-dom'], function (React, grafanaD
   }
 
   function App() {
-    return React.createElement(Switch, null, React.createElement(Route, { component: PageOne }));
+    return React.createElement(
+      Routes,
+      null,
+      React.createElement(Route, { path: '*', element: React.createElement(PageOne) })
+    );
   }
   function AppConfig() {
     return React.createElement(
