@@ -5,7 +5,7 @@ import { type CustomVariableModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { CustomVariable } from '@grafana/scenes';
-import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana/ui';
+import { Button, Field, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana/ui';
 import { dashboardEditActions } from 'app/features/dashboard-scene/sidebar/shared';
 
 import { ValuesFormatSelector } from '../../components/CustomVariableForm';
@@ -39,22 +39,24 @@ export function ModalEditor(props: ModalEditorProps) {
       <Stack direction="column" gap={2}>
         <ValuesFormatSelector valuesFormat={valuesFormat} onValuesFormatChange={onValuesFormatChange} />
         <div>
-          <TextArea
-            id={valuesFormat}
-            key={valuesFormat}
-            rows={4}
-            defaultValue={query}
-            onChange={onQueryChange}
-            placeholder={
-              valuesFormat === 'json'
-                ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                  '[{ "text":"text1", "value":"val1", "propA":"a1", "propB":"b1" },\n{ "text":"text2", "value":"val2", "propA":"a2", "propB":"b2" }]'
-                : // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                  '1, 10, mykey : myvalue, myvalue, escaped\,value'
-            }
-            required
-            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
-          />
+          <Field label={t('dashboard-scene.custom-variable-form.name-values', 'Values')} required>
+            <TextArea
+              id={valuesFormat}
+              key={valuesFormat}
+              rows={4}
+              defaultValue={query}
+              onChange={onQueryChange}
+              placeholder={
+                valuesFormat === 'json'
+                  ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                    '[{ "text":"text1", "value":"val1", "propA":"a1", "propB":"b1" },\n{ "text":"text2", "value":"val2", "propA":"a2", "propB":"b2" }]'
+                  : // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+                    '1, 10, mykey : myvalue, myvalue, escaped\,value'
+              }
+              required
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}
+            />
+          </Field>
           {queryValidationError && <FieldValidationMessage>{queryValidationError.message}</FieldValidationMessage>}
         </div>
         <div>

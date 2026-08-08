@@ -289,6 +289,7 @@ function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; a
         invalid={!!nameError}
         error={nameError}
         noMargin={false}
+        required
       >
         <Input
           id={id}

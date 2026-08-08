@@ -40,7 +40,7 @@ export function VariableTextField({
   const id = useId(name);
 
   return (
-    <Field label={name} description={description} invalid={invalid} error={error} htmlFor={id}>
+    <Field label={name} description={description} invalid={invalid} error={error} htmlFor={id} required={required}>
       <Input
         type="text"
         id={id}
