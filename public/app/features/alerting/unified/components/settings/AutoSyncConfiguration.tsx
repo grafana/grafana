@@ -8,7 +8,12 @@ import { Alert, Button, Card, ConfirmModal, Field, LinkButton, Select, Stack, To
 import { AutoSyncStatusBadge } from './AutoSyncStatusBadge';
 import { hasConfiguredUid, isOperatorManaged, useAutoSyncConfiguration } from './useAutoSyncConfiguration';
 
-export function AutoSyncConfiguration() {
+interface AutoSyncConfigurationProps {
+  /** Identifier of the staged import occupying the shared `extra_config` slot, if there is one. */
+  stagedConfigIdentifier?: string;
+}
+
+export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfigurationProps) {
   const styles = useStyles2(getStyles);
   const { state, mimirCortexDatasources, selectedUid, setSelectedUid, save, disableSync, isPending, isLoading } =
     useAutoSyncConfiguration();
@@ -29,11 +34,23 @@ export function AutoSyncConfiguration() {
   const showDisableSync = state.kind === 'configured' || state.kind === 'orphan-uid';
   const showSave = state.kind === 'unconfigured' || state.kind === 'orphan-uid';
   const savedUid = hasConfiguredUid(state) ? state.uid : '';
-  const saveDisabled = !selectedUid || selectedUid === savedUid;
-  const saveDisabledTooltip = t(
-    'alerting.settings.auto-sync.save-disabled-no-selection',
-    'Select a Mimir or Cortex Alertmanager datasource to enable saving.'
-  );
+
+  // The syncer writes to the same single extra_config slot, keyed by datasource UID, and saves without
+  // replacing — so a foreign identifier parked there makes every sync tick fail server-side. An identifier
+  // matching the saved or selected UID is the syncer's own config, which it simply overwrites.
+  const conflictingStagedConfig =
+    Boolean(stagedConfigIdentifier) && stagedConfigIdentifier !== savedUid && stagedConfigIdentifier !== selectedUid;
+
+  const saveDisabled = !selectedUid || selectedUid === savedUid || conflictingStagedConfig;
+  const saveDisabledTooltip = conflictingStagedConfig
+    ? t(
+        'alerting.settings.auto-sync.save-disabled-staged-config',
+        'Revert the staged configuration before enabling auto-sync.'
+      )
+    : t(
+        'alerting.settings.auto-sync.save-disabled-no-selection',
+        'Select a Mimir or Cortex Alertmanager datasource to enable saving.'
+      );
 
   const handleDisableConfirm = async () => {
     setShowDisableConfirm(false);
@@ -83,6 +100,27 @@ export function AutoSyncConfiguration() {
               </Trans>
             </Alert>
           )}
+          {conflictingStagedConfig && (
+            <Alert
+              severity={savedUid ? 'error' : 'warning'}
+              title={
+                savedUid
+                  ? t('alerting.settings.auto-sync.staged-conflict-active-title', 'Auto-sync is not running')
+                  : t(
+                      'alerting.settings.auto-sync.staged-conflict-title',
+                      'Auto-sync is unavailable while a configuration is staged'
+                    )
+              }
+            >
+              <Trans
+                i18nKey="alerting.settings.auto-sync.staged-conflict-body"
+                values={{ identifier: stagedConfigIdentifier }}
+              >
+                Grafana holds one imported configuration at a time, and {'{{identifier}}'} currently occupies that slot.
+                Revert it below to free auto-sync.
+              </Trans>
+            </Alert>
+          )}
           <div className={styles.formRow}>
             <Field
               noMargin
@@ -112,6 +150,8 @@ export function AutoSyncConfiguration() {
                   aria-label={t('alerting.settings.auto-sync.picker-label', 'Datasource')}
                   options={options}
                   value={selectedUid || null}
+                  // Stays selectable during a staged-config conflict: picking the datasource whose UID
+                  // matches the staged identifier is one of the ways out of it.
                   onChange={(option) => option?.value && setSelectedUid(option.value)}
                   disabled={operatorManaged || isLoading}
                   isLoading={isLoading}
