@@ -19,7 +19,7 @@ labels:
 menuTitle: Template variables
 title: InfluxDB template variables
 weight: 450
-review_date: 2026-05-01
+review_date: 2026-08-04
 ---
 
 # InfluxDB template variables
@@ -41,6 +41,20 @@ For general information about variables, refer to [Variables](https://grafana.co
 | Custom        | Yes                 |
 | Data source   | Yes                 |
 | Ad-hoc filter | Yes (InfluxQL only) |
+
+To switch a dashboard between InfluxDB instances, use a data source variable. Don't use a query variable that returns data source names as a workaround. Query-based workarounds can break after Grafana upgrades because they depend on internal identifiers. Refer to [Add a data source variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-a-data-source-variable) for details.
+
+## Where you can use variables
+
+Variable support differs by query editor and mode:
+
+| Editor                 | Variable support                                                                                          |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------- |
+| InfluxQL visual editor | Drop-downs include your template variables alongside values from your database.                            |
+| InfluxQL raw mode      | Full support.                                                                                              |
+| SQL builder mode       | Drop-downs list only tables and columns from your database. Switch to code mode to use variables.          |
+| SQL code mode          | Full support. Press Ctrl+Space to show variable suggestions.                                               |
+| Flux code editor       | Full support.                                                                                              |
 
 ## Create a query variable
 
@@ -97,6 +111,27 @@ You can list columns in a specific table:
 SHOW COLUMNS FROM cpu
 ```
 
+## Scope variables to the dashboard time range
+
+By default, metadata queries such as `SHOW TAG VALUES` return values from the entire retention period, not just the dashboard time range. If a host or sensor stopped reporting long ago, its values still appear in the variable drop-down as long as they exist within retention.
+
+To limit variable results to the dashboard time range:
+
+1. Include a time condition in the variable query. Variable queries interpolate the same time macros as regular queries: `$timeFilter` for InfluxQL, `$__timeFilter(<column>)` for SQL, and `v.timeRangeStart` and `v.timeRangeStop` for Flux.
+1. Set the variable's **Refresh** option to **On time range change** so the values update when the dashboard time range changes.
+
+**InfluxQL example:**
+
+```sql
+SHOW TAG VALUES WITH KEY = "hostname" WHERE $timeFilter
+```
+
+**SQL example:**
+
+```sql
+SELECT DISTINCT hostname FROM cpu WHERE $__timeFilter(time)
+```
+
 ## Chain or nest variables
 
 You can create nested variables, sometimes called [chained variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#chained-variables).
@@ -149,7 +184,13 @@ SELECT mean("value") FROM "logins" WHERE "hostname" =~ /^$host$/ AND $timeFilter
 SELECT mean("value") FROM "logins" WHERE "hostname" =~ /^${host}$/ AND $timeFilter GROUP BY time($__interval), "hostname"
 ```
 
-When you enable the **Multi-value** or **Include all value** options with InfluxQL, Grafana converts the labels from plain text to a regular expression-compatible string, so you must use `=~` instead of `=`.
+When you enable the **Multi-value** or **Include all value** options with InfluxQL, Grafana converts the labels from plain text to a regular expression-compatible string, so you must use `=~` instead of `=` and wrap the variable in a regular expression such as `/^$host$/`.
+
+For example, if `$host` is a multi-value variable and you select `server1` and `server2`, Grafana joins the values with `|`, wraps them in parentheses, and escapes any special characters. The interpolated query looks like this:
+
+```sql
+SELECT mean("value") FROM "logins" WHERE "hostname" =~ /^(server1|server2)$/ AND $timeFilter GROUP BY time($__interval), "hostname"
+```
 
 **SQL examples:**
 
@@ -162,6 +203,16 @@ SELECT $__dateBin(time), mean(usage_system) FROM cpu WHERE $__timeFilter(time) A
 ```
 
 When you enable the **Multi-value** option with SQL, use the `IN` operator instead of `=` to match multiple values.
+
+### Prevent unwanted value escaping
+
+When you use a variable inside a regular expression, or when the variable is multi-value, Grafana escapes special characters in the values so the query remains valid. If you need the literal, unmodified value instead, use the `raw` format option:
+
+```sql
+SELECT mean("value") FROM "requests" WHERE "path" = '${path:raw}' AND $timeFilter GROUP BY time($__interval)
+```
+
+This is useful for custom variables whose values intentionally contain characters that Grafana would otherwise escape. For all available format options, refer to [Advanced variable format options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options).
 
 ### Templated dashboard example
 
