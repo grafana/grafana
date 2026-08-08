@@ -174,6 +174,28 @@ func newDashboardTranslation() translation {
 	return dashTranslation
 }
 
+// newNotebookTranslation authorizes notebooks during the private preview by reusing dashboard
+// RBAC, but only on the action axis: notebooks map to dashboard ACTIONS (dashboards:read/write/…)
+// and the folder action sets, so any existing dashboard/folder/basic-role grant already covers
+// them and no new roles are needed to ship the preview.
+//
+// The object SCOPE is deliberately kept in the notebook's own namespace (notebooks:uid:) rather
+// than dashboards:uid:, because a notebook is not a dashboard: its UID must not live in the
+// dashboards scope tree, and dashboard per-object grants must not bleed into notebook access or
+// listing (buildItemList keys the allowed-item set off this prefix). Nothing grants notebooks:uid:
+// scopes yet — per-notebook sharing isn't offered in the preview — so access is folder-scoped.
+//
+// After the private preview notebooks should move to full, first-class RBAC: dedicated
+// notebooks:* actions and notebook roles (view/edit/admin), wired into the folder action sets so
+// folder grants keep covering them, plus a notebook resource-permissions service for per-notebook
+// sharing. The notebooks:uid: scope chosen here is what makes that a clean, additive change (no
+// scope migration): swap the action mapping to notebooks:* and the scope is already correct.
+func newNotebookTranslation() translation {
+	t := newDashboardTranslation()
+	t.resource = "notebooks"
+	return t
+}
+
 // newFolderTranslation creates a translation for folders and also maps the actions to action sets
 func newFolderTranslation() translation {
 	folderTranslation := newResourceTranslation("folders", "uid", true, nil)
@@ -418,6 +440,7 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
+			"notebooks":     newNotebookTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
 			// Annotations subresource for dashboards
 			// Uses dashboard scope (dashboards:uid:...) but annotation actions

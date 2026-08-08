@@ -354,6 +354,34 @@ func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
 	}
 }
 
+// TestMapperRegistry_Notebooks verifies notebooks reuse dashboard actions and folder
+// action sets (so existing dashboard/folder grants cover them for the private preview)
+// while keeping their own notebooks:uid: object scope, so notebook identities never live
+// in the dashboards scope tree.
+func TestMapperRegistry_Notebooks(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("dashboard.grafana.app", "notebooks", "")
+	require.True(t, ok)
+	require.NotNil(t, mapping)
+
+	// Reuses dashboard actions so existing dashboard/basic-role grants apply.
+	action, ok := mapping.Action(utils.VerbGet)
+	require.True(t, ok)
+	assert.Equal(t, "dashboards:read", action)
+	action, ok = mapping.Action(utils.VerbUpdate)
+	require.True(t, ok)
+	assert.Equal(t, "dashboards:write", action)
+
+	// Folder action sets make folder permissions grant notebook access.
+	assert.Contains(t, mapping.ActionSets(utils.VerbGet), "folders:view")
+	assert.True(t, mapping.HasFolderSupport())
+
+	// Object scope stays in the notebook's own namespace, never dashboards:uid:.
+	assert.Equal(t, "notebooks:uid:", mapping.Prefix())
+	assert.Equal(t, "notebooks:uid:nb1", mapping.Scope("nb1"))
+}
+
 func TestMapperRegistry_Settings(t *testing.T) {
 	reg := NewMapperRegistry()
 
