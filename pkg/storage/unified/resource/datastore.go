@@ -976,6 +976,13 @@ type sqlKVLegacySaveRequest struct {
 	Action     int64
 	Folder     string
 	PreviousRV int64
+	// CurrentRV is the resource_version currently stored in the `resource`
+	// table, used for the optimistic-lock (CAS) comparison in the UPDATE/DELETE
+	// WHERE clause. It must be kept in the same encoding as the stored value
+	// (the raw snowflake RV), unlike PreviousRV which is normalized to the
+	// microsecond form used by the legacy SQL backend's previous_resource_version
+	// column.
+	CurrentRV int64
 }
 
 func (req sqlKVLegacySaveRequest) Validate() error {
@@ -1088,6 +1095,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 			Action:      action,
 			Folder:      key.Folder,
 			PreviousRV:  previousRV,
+			CurrentRV:   event.PreviousRV,
 		})
 
 		if err != nil {
@@ -1107,6 +1115,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 			Namespace:   key.Namespace,
 			Name:        key.Name,
 			PreviousRV:  previousRV,
+			CurrentRV:   event.PreviousRV,
 		})
 
 		if err != nil {
