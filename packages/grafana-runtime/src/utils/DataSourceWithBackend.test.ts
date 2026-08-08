@@ -723,6 +723,40 @@ describe('DataSourceWithBackend', () => {
     });
   });
 
+  describe('testDatasource', () => {
+    test('preserves health details on success so plugins can customize follow-up', async () => {
+      const response: HealthCheckResult = {
+        status: HealthStatus.OK,
+        message: 'Data source is working',
+        details: { followUpMessage: 'Custom next step' },
+      };
+      const { ds } = createMockDatasource();
+      mockDatasourceRequest.mockResolvedValueOnce({ data: response } as FetchResponse);
+
+      await expect(ds.testDatasource()).resolves.toEqual({
+        status: 'success',
+        message: 'Data source is working',
+        details: { followUpMessage: 'Custom next step' },
+      });
+    });
+
+    test('preserves empty followUpMessage so plugins can suppress the default follow-up', async () => {
+      const response: HealthCheckResult = {
+        status: HealthStatus.OK,
+        message: 'Data source is working',
+        details: { followUpMessage: '' },
+      };
+      const { ds } = createMockDatasource();
+      mockDatasourceRequest.mockResolvedValueOnce({ data: response } as FetchResponse);
+
+      await expect(ds.testDatasource()).resolves.toEqual({
+        status: 'success',
+        message: 'Data source is working',
+        details: { followUpMessage: '' },
+      });
+    });
+  });
+
   test('check that queries can skip the query cache', async () => {
     const { mock, ds } = createMockDatasource();
     await firstValueFrom(
