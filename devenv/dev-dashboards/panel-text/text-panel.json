@@ -1,0 +1,214 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "adssfc8"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Markdown",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "# Markdown syntax guide\n---\n\n## Headers\n\n# This is a Heading h1\n## This is a Heading h2\n###### This is a Heading h6\n\n---\n\n## Emphasis\n\n*This text will be italic*  \n_This will also be italic_\n\n**This text will be bold**  \n__This will also be bold__\n\n_You **can** combine them_\n\n---\n\n### Strikethrough\n\n~~The world is flat.~~\n\n---\n\n## Lists\n\n#### Unordered\n\n* Item 1\n* Item 2\n* Item 2a\n* Item 2b\n    * Item 3a\n    * Item 3b\n\n#### Ordered\n\n1. Item 1\n2. Item 2\n3. Item 3\n    1. Item 3a\n    2. Item 3b\n\n---\n\n## Images\n\n![alt text](https://grafana.com/static/img/menu/grafana2.svg)\n\n---\n\n## Links\n\n[Technical documentation](https://grafana.com/docs/)\n\n---\n\n## Blockquotes\n\n> Markdown is a lightweight markup language with plain-text-formatting syntax, created in 2004 by John Gruber with Aaron Swartz.\n>\n>> Markdown is often used to format readme files, for writing messages in online discussion forums, and to create rich text using a plain text editor.\n\n---\n\n## Tables\n\n| Left columns  | Right columns |\n| ------------- |:-------------:|\n| left foo      | right foo     |\n| left bar      | right bar     |\n| left baz      | right baz     |\n\n\n---\n\n## Blocks of code\n\n```\nlet message = 'Hello world';\nalert(message);\n```\n\n---\n\n## Inline code\n\nThis web site is using `code`.\n\n---\n\n### Task List\n\n- [x] Write the press release\n- [ ] Update the website\n- [ ] Contact the media\n      ",
+                "mode": "markdown"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "HTML",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "<h2>HTML</h2>\n<p>\n  This paragraph has <strong>bold</strong>, <em>italic</em>,\n  <u>underline</u>, <s>strikethrough</s>, and <code>inline code</code>.\n</p>\n<hr />\n<h3>Lists</h3>\n<ul>\n  <li>Unordered item one</li>\n  <li>Unordered item two\n    <ul>\n      <li>Nested item</li>\n    </ul>\n  </li>\n</ul>\n<ol>\n  <li>Ordered item one</li>\n  <li>Ordered item two</li>\n</ol>\n<hr />\n<h3>Links</h3>\n<p><a href=\"https://grafana.com\" target=\"_blank\" rel=\"noreferrer\">Grafana.com</a></p>\n<hr />\n<h3>Images</h3>\n<img src=\"https://grafana.com/static/img/menu/grafana2.svg\" alt=\"Grafana logo\" width=\"120\" />\n<hr />\n<h3>Table</h3>\n<table>\n  <thead>\n    <tr><th>Service</th><th>Status</th></tr>\n  </thead>\n  <tbody>\n    <tr><td>API</td><td>Healthy</td></tr>\n    <tr><td>Web</td><td>Degraded</td></tr>\n  </tbody>\n</table>\n<hr />\n<h3>Blockquote and rule</h3>\n<blockquote>OSS is in our DNA.</blockquote>\n<hr />\n<h3>Inline styling</h3>\n<p style=\"color: #ff7043; font-weight: bold;\">Styled orange text</p>\n<pre>preformatted\n  block\n    of text</pre>",
+                "mode": "html"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Code Support with Language Syntax Highlighting",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.2.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "typescript",
+                  "showLineNumbers": true,
+                  "showMiniMap": true
+                },
+                "content": "interface User {\n  name: string;\n  id: number;\n}\n \nclass UserAccount {\n  name: string;\n  id: number;\n \n  constructor(name: string, id: number) {\n    this.name = name;\n    this.id = id;\n  }\n}\n \nconst user: User = new UserAccount(\"Murphy\", 1);",
+                "mode": "code"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 8,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": ["gdev", "panel-tests"],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Text panel",
+    "variables": [],
+    "preferences": {
+      "layout": {
+        "kind": "GridLayout",
+        "spec": {
+          "items": []
+        }
+      }
+    }
+  }
+}
