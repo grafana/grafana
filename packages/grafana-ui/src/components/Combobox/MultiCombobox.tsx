@@ -60,6 +60,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     prefixIcon,
     id: idProp,
     options: optionsProp,
+    descriptionPosition = 'bottom',
   } = props;
 
   const styles = useStyles2(getComboboxStyles);
@@ -270,7 +271,12 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
   });
 
-  const { inputRef: containerRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(options, isOpen);
+  const {
+    inputRef: containerRef,
+    floatingRef,
+    floatStyles,
+    scrollRef,
+  } = useComboboxFloat(options, isOpen, descriptionPosition);
   const multiStyles = useStyles2(
     getMultiComboboxStyles,
     isOpen,
@@ -398,6 +404,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
               enableAllOption={enableAllOption}
               isMultiSelect={true}
               error={asyncError}
+              descriptionPosition={descriptionPosition}
             />
           )}
         </div>
