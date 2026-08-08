@@ -355,6 +355,14 @@ For example, given a CDN URL like `https://cdn.myserver.com`, Grafana tries to l
 Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
 `0` means there is no timeout for reading the request.
 
+#### `write_timeout`
+
+Sets the maximum duration using a duration format (5s/5m/5ms) before timing out writes of the response. `0` means there is no timeout for writing the response. If you have long-running streaming responses such as Live WebSocket connections, SSE, or large data source queries, set this to a value higher than the longest expected response time or leave at `0`.
+
+#### `idle_timeout`
+
+Sets the maximum amount of time using a duration format (5s/5m/5ms) to wait for the next request when keep-alive connections are enabled. If `idle_timeout` is zero, the value of `read_timeout` is used. If both are zero, there is no timeout.
+
 <hr />
 
 ### `[server.custom_response_headers]`
