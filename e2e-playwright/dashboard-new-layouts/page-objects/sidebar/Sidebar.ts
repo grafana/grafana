@@ -55,6 +55,18 @@ export class Sidebar extends PageObject {
     });
   }
 
+  async clickDuplicateButton() {
+    await test.step('Duplicate selected element', async () => {
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.EditPaneHeader.duplicate).click();
+    });
+  }
+
+  async clickCopyButton() {
+    await test.step('Copy selected element', async () => {
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.EditPaneHeader.copy).click();
+    });
+  }
+
   async clickDeleteButton({ confirm = false }: { confirm?: boolean } = {}) {
     const stepTitle = confirm ? 'Delete selected element(s) (with confirmation)' : 'Click delete button in sidebar';
 
