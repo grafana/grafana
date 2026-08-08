@@ -45,6 +45,8 @@ export interface PanelTimeRangeState extends SceneTimeRangeState {
 export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRangeState> implements SceneTimeRangeLike {
   public static Component = PanelTimeRangeRenderer;
 
+  private _isActivationComplete = false;
+
   public constructor(state: Partial<PanelTimeRangeState> = {}) {
     super({
       ...state,
@@ -62,6 +64,7 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
   });
 
   private _onActivate() {
+    this._isActivationComplete = true;
     this._subs.add(
       this.subscribeToState((n) => {
         const { timeInfo, timeRange } = this.getTimeOverride(this.getAncestorTimeRange().state.value);
@@ -75,18 +78,13 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
       })
     );
 
-    const { timeRange } = this.getTimeOverride(this.getAncestorTimeRange().state.value);
-
-    // set initial values on activate
-    this.setState({
-      value: timeRange,
-      from: typeof timeRange.raw.from === 'string' ? timeRange.raw.from : timeRange.raw.from.toISOString(),
-      to: typeof timeRange.raw.to === 'string' ? timeRange.raw.to : timeRange.raw.to.toISOString(),
-    });
+    return () => {
+      this._isActivationComplete = false;
+    };
   }
 
   protected ancestorTimeRangeChanged(timeRange: SceneTimeRangeState): void {
-    if (this.state.timeFrom && this.state.zoomBehavior === 'dashboard') {
+    if (this._isActivationComplete && this.state.timeFrom && this.state.zoomBehavior === 'dashboard') {
       return;
     }
 
