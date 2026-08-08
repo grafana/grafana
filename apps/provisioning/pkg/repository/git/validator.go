@@ -37,7 +37,39 @@ func Validate(_ context.Context, obj runtime.Object, allowInsecure bool) field.E
 // validateGitConfig validates the git configuration fields.
 // This is extracted to be reusable by other git-based repository types (github, gitlab, bitbucket).
 func validateGitConfig(repo *provisioning.Repository, cfg *provisioning.GitRepositoryConfig, allowInsecure bool) field.ErrorList {
-	return ValidateGitConfigFields(repo, cfg.URL, cfg.Branch, cfg.Path, allowInsecure)
+	list := ValidateGitConfigFields(repo, cfg.URL, cfg.Branch, cfg.Path, allowInsecure)
+	return append(list, validateGitRequestLimits(cfg.RequestLimits)...)
+}
+
+func validateGitRequestLimits(limits *provisioning.GitRequestLimits) field.ErrorList {
+	if limits == nil {
+		return nil
+	}
+
+	var list field.ErrorList
+	requestLimitsPath := field.NewPath("spec", "git", "requestLimits")
+	if limits.MaxConcurrent < 0 {
+		list = append(list, field.Invalid(
+			requestLimitsPath.Child("maxConcurrent"),
+			limits.MaxConcurrent,
+			"must not be negative",
+		))
+	}
+	if limits.RequestsPerSecond < 0 {
+		list = append(list, field.Invalid(
+			requestLimitsPath.Child("requestsPerSecond"),
+			limits.RequestsPerSecond,
+			"must not be negative",
+		))
+	}
+	if limits.Burst < 0 {
+		list = append(list, field.Invalid(
+			requestLimitsPath.Child("burst"),
+			limits.Burst,
+			"must not be negative",
+		))
+	}
+	return list
 }
 
 // ValidateGitConfigFields validates common git configuration fields (Branch, Path, token/connection).

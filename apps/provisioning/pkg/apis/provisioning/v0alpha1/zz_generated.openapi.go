@@ -42,6 +42,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		GitHubRepositoryConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
 		GitLabRepositoryConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref),
 		GitRepositoryConfig{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref),
+		GitRequestLimits{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_GitRequestLimits(ref),
 		HealthStatus{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
 		HistoricJob{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
 		HistoricJobList{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
@@ -1230,8 +1231,49 @@ func schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref common.Refere
 							Format:      "",
 						},
 					},
+					"requestLimits": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RequestLimits controls outbound Git Smart HTTP traffic for this repository.",
+							Ref:         ref(GitRequestLimits{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"branch"},
+			},
+		},
+		Dependencies: []string{
+			GitRequestLimits{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_GitRequestLimits(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"maxConcurrent": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Maximum number of concurrent outbound requests. Zero disables the limit.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"requestsPerSecond": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Sustained number of outbound requests per second. Zero disables rate limiting.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"burst": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Burst allowance for the request rate limit. Zero uses a burst of one.",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+				},
 			},
 		},
 	}

@@ -63,6 +63,16 @@ repository: {
 					encryptedToken?: [...string]
 					// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 					path?: string
+					// RequestLimits controls outbound Git Smart HTTP traffic for this repository.
+					requestLimits?: #GitRequestLimits
+				}
+				#GitRequestLimits: {
+					// Maximum number of concurrent outbound requests. Zero disables the limit.
+					maxConcurrent?: int & >=0
+					// Sustained number of outbound requests per second. Zero disables rate limiting.
+					requestsPerSecond?: int & >=0
+					// Burst allowance for the request rate limit. Zero uses a burst of one.
+					burst?: int & >=0
 				}
 				#BitbucketRepositoryConfig: {
 					// The repository URL (e.g. `https://bitbucket.org/example/test`).

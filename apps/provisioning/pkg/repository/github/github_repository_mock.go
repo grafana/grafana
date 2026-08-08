@@ -706,6 +706,67 @@ func (_c *MockGithubRepository_Read_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
+// ReadByHash provides a mock function with given fields: ctx, path, ref, contentHash
+func (_m *MockGithubRepository) ReadByHash(ctx context.Context, path string, ref string, contentHash string) (*repository.FileInfo, error) {
+	ret := _m.Called(ctx, path, ref, contentHash)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReadByHash")
+	}
+
+	var r0 *repository.FileInfo
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*repository.FileInfo, error)); ok {
+		return rf(ctx, path, ref, contentHash)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *repository.FileInfo); ok {
+		r0 = rf(ctx, path, ref, contentHash)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repository.FileInfo)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, path, ref, contentHash)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockGithubRepository_ReadByHash_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReadByHash'
+type MockGithubRepository_ReadByHash_Call struct {
+	*mock.Call
+}
+
+// ReadByHash is a helper method to define mock.On call
+//   - ctx context.Context
+//   - path string
+//   - ref string
+//   - contentHash string
+func (_e *MockGithubRepository_Expecter) ReadByHash(ctx interface{}, path interface{}, ref interface{}, contentHash interface{}) *MockGithubRepository_ReadByHash_Call {
+	return &MockGithubRepository_ReadByHash_Call{Call: _e.mock.On("ReadByHash", ctx, path, ref, contentHash)}
+}
+
+func (_c *MockGithubRepository_ReadByHash_Call) Run(run func(ctx context.Context, path string, ref string, contentHash string)) *MockGithubRepository_ReadByHash_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockGithubRepository_ReadByHash_Call) Return(_a0 *repository.FileInfo, _a1 error) *MockGithubRepository_ReadByHash_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockGithubRepository_ReadByHash_Call) RunAndReturn(run func(context.Context, string, string, string) (*repository.FileInfo, error)) *MockGithubRepository_ReadByHash_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ReadTree provides a mock function with given fields: ctx, ref
 func (_m *MockGithubRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
 	ret := _m.Called(ctx, ref)

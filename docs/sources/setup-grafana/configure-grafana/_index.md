@@ -2908,6 +2908,14 @@ Maximum number of repositories allowed. Default is `10`. Set to `0` for unlimite
 
 Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `0`, which means unlimited.
 
+#### `max_sync_workers`
+
+Maximum number of resources that Grafana applies concurrently during a full repository sync. Default is `10`. A non-positive value uses the default.
+
+#### `sync_resource_timeout`
+
+Maximum time Grafana allows for applying a single resource or folder during a repository sync. During resource application, this timeout includes time spent waiting for a Pure Git request slot. Configure this setting as a duration, such as `30s` or `2m`. Default is `30s`. A non-positive value uses the default.
+
 #### `public_root_url`
 
 Public-facing root URL of this Grafana instance, used by provisioning to construct URLs that must be reachable from external systems. When empty, falls back to `[server] root_url`.

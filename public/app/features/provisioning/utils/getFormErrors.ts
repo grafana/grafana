@@ -10,7 +10,10 @@ type RepositoryField = keyof WizardFormData['repository'];
 type RepositoryFormPath =
   | `repository.${RepositoryField}`
   | 'repository.sync.intervalSeconds'
-  | 'repository.webhook.disabled';
+  | 'repository.webhook.disabled'
+  | 'repository.requestLimits.maxConcurrent'
+  | 'repository.requestLimits.requestsPerSecond'
+  | 'repository.requestLimits.burst';
 
 type GenericFormPath = string;
 type GenericFormErrors<T extends GenericFormPath> = Array<[T, { message: string }]>;
@@ -116,6 +119,9 @@ export const getFormErrors = (data: ErrorDetails[] | Status): FormErrors => {
     'bitbucket.path': 'repository.path',
     'git.branch': 'repository.branch',
     'git.url': 'repository.url',
+    'git.requestLimits.maxConcurrent': 'repository.requestLimits.maxConcurrent',
+    'git.requestLimits.requestsPerSecond': 'repository.requestLimits.requestsPerSecond',
+    'git.requestLimits.burst': 'repository.requestLimits.burst',
     'sync.intervalSeconds': 'repository.sync.intervalSeconds',
     'webhook.disabled': 'repository.webhook.disabled',
   };
@@ -135,6 +141,9 @@ export const getConfigFormErrors = (data: ErrorDetails[] | Status): ConfigFormEr
     url: 'url',
     token: 'token',
     tokenUser: 'tokenUser',
+    'git.requestLimits.maxConcurrent': 'requestLimits.maxConcurrent',
+    'git.requestLimits.requestsPerSecond': 'requestLimits.requestsPerSecond',
+    'git.requestLimits.burst': 'requestLimits.burst',
     'sync.intervalSeconds': 'sync.intervalSeconds',
     'webhook.disabled': 'webhook.disabled',
   };

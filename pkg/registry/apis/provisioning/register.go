@@ -157,6 +157,7 @@ type APIBuilder struct {
 	quotaGetter                   quotas.QuotaGetter
 	folderMetadataEnabled         bool
 	maxFileSize                   int64
+	maxSyncWorkers                int
 	syncResourceTimeout           time.Duration
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
@@ -409,6 +410,7 @@ func RegisterAPIService(
 	}
 	builder.repoValidatorOpts = repoValidatorOpts
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
+	builder.maxSyncWorkers = cfg.ProvisioningMaxSyncWorkers
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
 	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
@@ -1035,7 +1037,20 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				exportEnabled,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout) //nolint:staticcheck
+			maxSyncWorkers := b.maxSyncWorkers
+			if maxSyncWorkers <= 0 {
+				maxSyncWorkers = setting.ProvisioningMaxSyncWorkersDefault
+			}
+			syncer := sync.NewSyncer( //nolint:staticcheck
+				sync.Compare,
+				sync.FullSync,
+				sync.IncrementalSync,
+				b.tracer,
+				maxSyncWorkers,
+				metrics,
+				b.folderMetadataEnabled,
+				b.syncResourceTimeout,
+			)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -1043,7 +1058,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				syncer,
 				metrics,
 				b.tracer,
-				10,
+				maxSyncWorkers,
 				b.maxFileSize,
 			)
 

@@ -34,3 +34,23 @@ resources = dashboard.grafana.app/Dashboard:folder, playlist.grafana.app/Playlis
 		}, cfg.ProvisioningResources)
 	})
 }
+
+func TestReadProvisioningMaxSyncWorkers(t *testing.T) {
+	t.Run("uses defaults", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(``))
+		require.NoError(t, err)
+
+		assert.Equal(t, ProvisioningMaxSyncWorkersDefault, cfg.ProvisioningMaxSyncWorkers)
+	})
+
+	t.Run("reads configured values", func(t *testing.T) {
+		iniContent := `
+[provisioning]
+max_sync_workers = 3
+`
+		cfg, err := NewCfgFromBytes([]byte(iniContent))
+		require.NoError(t, err)
+
+		assert.Equal(t, 3, cfg.ProvisioningMaxSyncWorkers)
+	})
+}

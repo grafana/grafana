@@ -7,6 +7,14 @@ import { type RepoType, type StepStatusInfo, type WizardStep } from '../types';
 
 export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
   const isLocal = type === 'local';
+  const pureGitRequestLimitFields =
+    type === 'git'
+      ? ([
+          'repository.requestLimits.maxConcurrent',
+          'repository.requestLimits.requestsPerSecond',
+          'repository.requestLimits.burst',
+        ] as const)
+      : [];
   const authStepText = isLocal
     ? t('provisioning.wizard.connect-step-local', 'File provisioning')
     : t('provisioning.wizard.connect-step', 'Connect');
@@ -27,7 +35,7 @@ export const getSteps = (type: RepoType): Array<Step<WizardStep>> => {
         ? t('provisioning.wizard.title-connect', 'Connect to external storage')
         : t('provisioning.wizard.title-configure-repo', 'Configure repository'),
       submitOnNext: true,
-      formFields: ['repository.branch', 'repository.path'],
+      formFields: ['repository.branch', 'repository.path', ...pureGitRequestLimitFields],
     },
     {
       id: 'bootstrap',
