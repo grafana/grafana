@@ -14,6 +14,7 @@ import { TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
+  useContentAwareWidths,
   useFlatRowHeight,
   useFilteredRows,
   useHeaderHeight,
@@ -22,6 +23,7 @@ import {
   useScrollbarWidth,
   useSortedRows,
   useRowCompiler,
+  useTypographyCtx,
 } from './hooks';
 import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
 import {
@@ -34,8 +36,6 @@ import {
 } from './types';
 import {
   calculateFooterHeight,
-  createTypographyContext,
-  extractPixelValue,
   getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
@@ -77,6 +77,7 @@ export function TableFlat(props: TableNGProps) {
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
+    contentAwareWidthsEnabled = false,
   } = props;
 
   const theme = useTheme2();
@@ -151,15 +152,7 @@ export function TableFlat(props: TableNGProps) {
   );
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
-  const typographyCtx = useMemo(
-    () =>
-      createTypographyContext(
-        theme.typography.fontSize,
-        theme.typography.fontFamily,
-        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize
-      ),
-    [theme]
-  );
+  const typographyCtx = useTypographyCtx();
 
   const frozenColumns = _frozenColumns;
 
@@ -177,11 +170,20 @@ export function TableFlat(props: TableNGProps) {
 
   prevConfiguredWidthCount.current = configuredWidthCount;
 
+  const contentAwareWidths = useContentAwareWidths({
+    enabled: contentAwareWidthsEnabled,
+    typographyCtx,
+    showTypeIcons,
+    getActions: getCellActions,
+    sortColumns,
+  });
+
   const [widths, numFrozenColsFullyInView] = useColWidths(
     visibleFields,
     availableWidth,
     frozenColumns,
-    widthConfigResetKey
+    widthConfigResetKey,
+    contentAwareWidths
   );
 
   const headerHeight = useHeaderHeight({
