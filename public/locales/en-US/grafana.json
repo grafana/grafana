@@ -6837,6 +6837,7 @@
       "input-placeholder": "Add a default filter..."
     },
     "adhoc-origin-filters-editor": {
+      "add-filter": "Add default filter",
       "description": "Filters that are pre-selected by default.",
       "label": "Default filters"
     },
@@ -7051,6 +7052,18 @@
       "name-instance-name-filter": "Instance name filter",
       "name-type": "Type",
       "selection-options": "Selection options"
+    },
+    "default-filter-row": {
+      "label-key": "Default filter {{rowNumber}} key",
+      "label-key-label": "Default filter {{rowNumber}} label",
+      "label-operator": "Default filter {{rowNumber}} operator",
+      "label-value": "Default filter {{rowNumber}} value",
+      "label-values": "Default filter {{rowNumber}} values",
+      "placeholder-key": "Key",
+      "placeholder-key-label": "Label",
+      "placeholder-value": "Value",
+      "placeholder-values": "Values",
+      "tooltip-remove": "Remove default filter {{rowNumber}}"
     },
     "default-grid-layout-manager": {
       "row": {
