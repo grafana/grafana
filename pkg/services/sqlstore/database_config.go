@@ -117,7 +117,7 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	dbCfg.IsolationLevel = sec.Key("isolation_level").String()
 
 	dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
-	dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
+	dbCfg.WALEnabled = sec.Key("wal").MustBool(true)
 	dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
 	dbCfg.EnsureDefaultOrgAndUser = sec.Key("ensure_default_org_and_user").MustBool(true)
 	dbCfg.MigrationLock = sec.Key("migration_locking").MustBool(true)
@@ -202,8 +202,12 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 
 		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", dbCfg.Path, dbCfg.CacheMode)
 
+		// Always set journal_mode explicitly. SQLite persists WAL on the DB file, so
+		// omitting the pragma when wal=false would leave an upgraded DB stuck in WAL.
 		if dbCfg.WALEnabled {
 			cnnstr += "&_journal_mode=WAL"
+		} else {
+			cnnstr += "&_journal_mode=DELETE"
 		}
 
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)
