@@ -685,6 +685,270 @@ func TestSearchHandlerSharedDashboards(t *testing.T) {
 		assert.Equal(t, len(mockResponse3.Results.Rows), len(p.Hits))
 	})
 
+	t.Run("phase 1.5: toggle on, item with a resolvable-but-inaccessible ancestor chain is excluded from Shared with me", func(t *testing.T) {
+		// dashboardSearchRequest: one dashboard the user can read directly, parented under a
+		// folder the user has no access to at all (not even folders.self:read).
+		mockResponse1 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+						Cells: [][]byte{[]byte("privatefolder")},
+					},
+				},
+			},
+		}
+
+		// folderSearchRequest: privatefolder is not among the folders the user can fully read.
+		mockResponse2 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows:    []*resourcepb.ResourceTableRow{},
+			},
+		}
+
+		// resolveAncestorChainNames' privileged lookup of privatefolder itself: it resolves,
+		// and its own parent is the root -- so the whole chain is resolvable.
+		mockResponse3 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "privatefolder", Resource: "folder"},
+						Cells: [][]byte{[]byte("")},
+					},
+				},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
+		}
+
+		features := featuremgmt.WithFeatures(featuremgmt.FlagAuthzFolderPathVisibility)
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
+		req.Header.Add("content-type", "application/json")
+		allPermissions := make(map[int64]map[string][]string)
+		permissions := make(map[string][]string)
+		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinprivatefolder"}
+		allPermissions[1] = permissions
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
+
+		searchHandler.DoSearch(rr, req)
+
+		// call1 = dashboardSearchRequest, call2 = folderSearchRequest (both inside
+		// getDashboardsUIDsSharedWithUser), call3 = resolveAncestorChainNames' privileged lookup
+		// of privatefolder. It resolves, so the item is excluded, sharedDashboards ends up empty,
+		// and the handler short-circuits to an empty result -- no further "final display" search.
+		assert.Equal(t, 3, mockClient.CallCount)
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(p.Hits))
+	})
+
+	t.Run("phase 1.5: toggle off, an item with a resolvable-but-inaccessible ancestor still falls through to Shared with me unchanged", func(t *testing.T) {
+		// Identical setup to the toggle-on case above, but with the toggle off: behavior must be
+		// byte-for-byte the pre-Phase-1.5 fallback.
+		mockResponse1 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+						Cells: [][]byte{[]byte("privatefolder")},
+					},
+				},
+			},
+		}
+		mockResponse2 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows:    []*resourcepb.ResourceTableRow{},
+			},
+		}
+
+		// Final display search using the narrowed "names" filter (sharedDashboards, unchanged
+		// from today) -- this is the pre-Phase-1.5 path, so unlike the toggle-on case above there
+		// is no ancestor-resolution call, and this third call still happens.
+		mockResponse3 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardinprivatefolder", Resource: "dashboard"},
+						Cells: [][]byte{[]byte("privatefolder")},
+					},
+				},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3},
+		}
+
+		features := featuremgmt.WithFeatures() // toggle off
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
+		req.Header.Add("content-type", "application/json")
+		allPermissions := make(map[int64]map[string][]string)
+		permissions := make(map[string][]string)
+		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardinprivatefolder"}
+		allPermissions[1] = permissions
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
+
+		searchHandler.DoSearch(rr, req)
+
+		// call1 = dashboardSearchRequest, call2 = folderSearchRequest (both inside
+		// getDashboardsUIDsSharedWithUser, no ancestor-resolution call since the toggle is off),
+		// call3 = final display search for the (still non-empty) sharedDashboards list.
+		assert.Equal(t, 3, mockClient.CallCount)
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(p.Hits))
+	})
+
+	t.Run("phase 1.5 guardrail: a resolvable item is never duplicated into Shared with me alongside a genuinely unresolvable one", func(t *testing.T) {
+		// dashboardSearchRequest: one dashboard whose ancestor chain will resolve, one whose
+		// won't (e.g. the ancestor itself was deleted/corrupted).
+		mockResponse1 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardresolvable", Resource: "dashboard"},
+						Cells: [][]byte{[]byte("resolvablefolder")},
+					},
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardunresolvable", Resource: "dashboard"},
+						Cells: [][]byte{[]byte("deadfolder")},
+					},
+				},
+			},
+		}
+
+		// folderSearchRequest: neither folder is directly accessible.
+		mockResponse2 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows:    []*resourcepb.ResourceTableRow{},
+			},
+		}
+
+		// resolveAncestorChainNames("resolvablefolder"): resolves, parented at root.
+		mockResponse3 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "resolvablefolder", Resource: "folder"},
+						Cells: [][]byte{[]byte("")},
+					},
+				},
+			},
+		}
+
+		// resolveAncestorChainNames("deadfolder"): no rows back -- doesn't resolve at all.
+		mockResponse4 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows:    []*resourcepb.ResourceTableRow{},
+			},
+		}
+
+		// Final display search for the (still non-empty) sharedDashboards list -- only the
+		// unresolvable dashboard should ever be requested here.
+		mockResponse5 := &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{{Name: "folder"}},
+				Rows: []*resourcepb.ResourceTableRow{
+					{
+						Key:   &resourcepb.ResourceKey{Name: "dashboardunresolvable", Resource: "dashboard"},
+						Cells: [][]byte{[]byte("deadfolder")},
+					},
+				},
+			},
+		}
+
+		mockClient := &MockClient{
+			MockResponses: []*resourcepb.ResourceSearchResponse{mockResponse1, mockResponse2, mockResponse3, mockResponse4, mockResponse5},
+		}
+
+		features := featuremgmt.WithFeatures(featuremgmt.FlagAuthzFolderPathVisibility)
+		searchHandler := SearchHandler{
+			log:      log.New("test", "test"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: features,
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/search?folder=sharedwithme", nil)
+		req.Header.Add("content-type", "application/json")
+		allPermissions := make(map[int64]map[string][]string)
+		permissions := make(map[string][]string)
+		permissions[dashboards.ActionDashboardsRead] = []string{"dashboards:uid:dashboardresolvable", "dashboards:uid:dashboardunresolvable"}
+		allPermissions[1] = permissions
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test", OrgID: 1, Permissions: allPermissions}))
+
+		searchHandler.DoSearch(rr, req)
+
+		// call1+call2 (getDashboardsUIDsSharedWithUser's own lookups) + call3+call4 (one
+		// resolveAncestorChainNames probe per distinct folder) + call5 (final display search).
+		assert.Equal(t, 5, mockClient.CallCount)
+		thirdCall := mockClient.MockCalls[2]
+		assert.Equal(t, []string{"resolvablefolder"}, thirdCall.Options.Fields[0].Values)
+		fourthCall := mockClient.MockCalls[3]
+		assert.Equal(t, []string{"deadfolder"}, fourthCall.Options.Fields[0].Values)
+		// The final display search must only ever have been narrowed to the unresolvable item --
+		// the resolvable one is never (also) folded into Shared with me.
+		fifthCall := mockClient.MockCalls[4]
+		assert.Equal(t, []string{"dashboardunresolvable"}, fifthCall.Options.Fields[1].Values)
+
+		resp := rr.Result()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
+		}()
+
+		p := &v0alpha1.SearchResults{}
+		err := json.NewDecoder(resp.Body).Decode(p)
+		require.NoError(t, err)
+		require.Len(t, p.Hits, 1)
+		assert.Equal(t, "dashboardunresolvable", p.Hits[0].Name)
+	})
+
 	t.Run("should compute shared dashboards based on requested edit permission", func(t *testing.T) {
 		// dashboardSearchRequest
 		mockResponse1 := &resourcepb.ResourceSearchResponse{

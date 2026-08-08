@@ -42,6 +42,27 @@ type FolderInfo struct {
 
 	// This folder does not resolve
 	Detached bool `json:"detached,omitempty"`
+
+	// CanView reports whether the requester can read this folder itself. False for a
+	// Detached (ghost) ancestor: its name is shown as inert path context (Phase 1.5,
+	// see identity-access-team#2285 §4.5), never as something the caller can actually
+	// open or list the children of.
+	CanView bool `json:"canView,omitempty"`
+
+	// CanEdit reports whether the requester can edit this folder. Always false for a
+	// Detached ancestor. Conservative placeholder for non-detached ancestors too --
+	// unlike CanView, this is not derived from a real permission check yet.
+	CanEdit bool `json:"canEdit,omitempty"`
+
+	// CanAdmin reports whether the requester can administer this folder's permissions.
+	// Always false for a Detached ancestor. Conservative placeholder for non-detached
+	// ancestors too -- unlike CanView, this is not derived from a real permission check yet.
+	CanAdmin bool `json:"canAdmin,omitempty"`
+
+	// CanDelete reports whether the requester can delete this folder. Always false for
+	// a Detached ancestor. Conservative placeholder for non-detached ancestors too --
+	// unlike CanView, this is not derived from a real permission check yet.
+	CanDelete bool `json:"canDelete,omitempty"`
 }
 
 func (FolderInfo) OpenAPIModelName() string {

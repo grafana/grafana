@@ -1189,14 +1189,91 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		foldersWithAccess = append(foldersWithAccess, fold.Key.Name)
 	}
 
+	// Phase 1.5 (identity-access-team#2285 §4.5 / #2310): behind the toggle, an item whose
+	// inaccessible parent's own ancestor chain still resolves (privileged, title-only read, see
+	// #2309) renders in its real tree position instead of falling through to Shared with me.
+	// Toggle off, this is a no-op and the loop below is byte-for-byte the pre-Phase-1.5 check.
+	pathVisibilityEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagAuthzFolderPathVisibility)
+	resolvable := make(map[string]bool)
+
 	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder.
 	// Root-parented dashboards (reported as "" or "general") have no parent folder, so skip both sentinels.
 	for _, dash := range dashboardResult.Results.Rows {
 		dashboardUid := dash.Key.Name
 		folderUid := string(dash.Cells[folderUidIdx])
-		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(foldersWithAccess, folderUid) {
-			sharedDashboards = append(sharedDashboards, dashboardUid)
+		if foldermodel.IsRootFolderUID(folderUid) || slices.Contains(foldersWithAccess, folderUid) {
+			continue
 		}
+
+		if pathVisibilityEnabled {
+			resolves, ok := resolvable[folderUid]
+			if !ok {
+				resolves = s.resolveAncestorChainNames(ctx, user, folderKey, folderUid)
+				resolvable[folderUid] = resolves
+			}
+			if resolves {
+				// Real position, with ghost ancestors (#2311), instead of Shared with me.
+				continue
+			}
+		}
+
+		sharedDashboards = append(sharedDashboards, dashboardUid)
 	}
 	return sharedDashboards, nil
+}
+
+// maxAncestorChainDepth bounds resolveAncestorChainNames against a corrupt or cyclic ancestor
+// chain; it mirrors the kind of depth guard newParentsGetter's maxDepth provides for the /parents
+// walk, but generously, since this is just a resolvability probe (no response body to bound).
+const maxAncestorChainDepth = 64
+
+// resolveAncestorChainNames reports whether every ancestor of folderUID, up to the root, can be
+// resolved via a privileged, title-only lookup (see identity-access-team#2309) -- even if user
+// (from the real ctx) can't actually read some of them. It intentionally returns only a bool: the
+// one thing this decides is the Shared-with-me placement carve-out below, never anything that
+// itself needs to expose a title or other ancestor detail to the caller.
+func (s *SearchHandler) resolveAncestorChainNames(ctx context.Context, user identity.Requester, folderKey *resourcepb.ResourceKey, folderUID string) bool {
+	svcCtx := identity.WithServiceIdentityContext(ctx, user.GetOrgID())
+
+	seen := make(map[string]bool, maxAncestorChainDepth)
+	current := folderUID
+	for depth := 0; depth < maxAncestorChainDepth; depth++ {
+		if foldermodel.IsRootFolderUID(current) {
+			return true
+		}
+		if seen[current] {
+			return false // cyclic reference -- never resolvable
+		}
+		seen[current] = true
+
+		req := &resourcepb.ResourceSearchRequest{
+			Fields: []string{"folder"},
+			Limit:  1,
+			Options: &resourcepb.ListOptions{
+				Key: folderKey,
+				Fields: []*resourcepb.Requirement{{
+					Key:      "name",
+					Operator: "in",
+					Values:   []string{current},
+				}},
+			},
+		}
+		resp, err := s.client.Search(svcCtx, req)
+		if err != nil || resp.Results == nil || len(resp.Results.Rows) == 0 {
+			return false
+		}
+
+		folderColIdx := -1
+		for i, col := range resp.Results.Columns {
+			if col.Name == "folder" {
+				folderColIdx = i
+			}
+		}
+		if folderColIdx == -1 {
+			return false
+		}
+
+		current = string(resp.Results.Rows[0].Cells[folderColIdx])
+	}
+	return false
 }
