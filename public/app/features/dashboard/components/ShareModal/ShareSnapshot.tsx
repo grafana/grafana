@@ -322,7 +322,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
         <div style={{ alignSelf: 'flex-end', padding: '5px' }}>
           <Trans i18nKey="share-modal.snapshot.mistake-message">Did you make a mistake? </Trans>&nbsp;
-          <LinkButton fill="text" target="_blank" onClick={this.deleteSnapshot}>
+          <LinkButton variant="secondary" target="_blank" onClick={this.deleteSnapshot}>
             <Trans i18nKey="share-modal.snapshot.delete-button">Delete snapshot.</Trans>
           </LinkButton>
         </div>

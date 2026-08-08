@@ -38,7 +38,7 @@ export function RulesFilterSidebar() {
     <div className={styles.sidebar}>
       <Stack direction="column" gap={0}>
         <Stack direction="row" justifyContent="flex-end">
-          <Button size="sm" variant="primary" fill="text" onClick={clearAll} disabled={!hasActiveFilters}>
+          <Button size="sm" variant="secondary" onClick={clearAll} disabled={!hasActiveFilters}>
             <Trans i18nKey="alerting.rules-filter-sidebar.clear-filters">Clear filters</Trans>
           </Button>
         </Stack>

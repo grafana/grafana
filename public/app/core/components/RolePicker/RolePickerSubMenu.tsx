@@ -69,7 +69,7 @@ export const RolePickerSubMenu = ({
       </ScrollContainer>
       <div className={customStyles.subMenuButtonRow}>
         <Stack justifyContent="flex-end">
-          <Button size="sm" fill="text" onClick={onClearInternal}>
+          <Button size="sm" variant="secondary" onClick={onClearInternal}>
             <Trans i18nKey="role-picker.sub-menu.clear-button">Clear</Trans>
           </Button>
         </Stack>

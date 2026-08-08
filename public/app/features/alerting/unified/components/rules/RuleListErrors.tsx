@@ -119,7 +119,7 @@ export function RuleListErrors(): ReactElement {
               {errors.length >= 2 && (
                 <Button
                   className={styles.moreButton}
-                  fill="text"
+                  variant="secondary"
                   icon="angle-right"
                   size="sm"
                   onClick={() => setExpanded(true)}

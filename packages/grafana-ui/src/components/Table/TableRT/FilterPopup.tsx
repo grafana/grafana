@@ -114,7 +114,7 @@ export const FilterPopup = ({
             </Stack>
             {clearFilterVisible && (
               <Stack>
-                <Button fill="text" size="sm" onClick={onClearFilter}>
+                <Button variant="secondary" size="sm" onClick={onClearFilter}>
                   <Trans i18nKey="grafana-ui.table.filter-popup-clear">Clear filter</Trans>
                 </Button>
               </Stack>

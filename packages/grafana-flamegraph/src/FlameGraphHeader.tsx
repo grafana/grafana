@@ -73,7 +73,7 @@ const FlameGraphHeader = (props: Props) => {
     localSearch !== '' ? (
       <Button
         icon="times"
-        fill="text"
+        variant="secondary"
         size="sm"
         onClick={() => {
           // We could set only one and wait them to sync but there is no need to debounce this.

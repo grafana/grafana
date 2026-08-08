@@ -78,7 +78,7 @@ export const GettingStarted = memo(function GettingStarted({ id }: PanelProps) {
         </div>
       ) : (
         <>
-          <Button size="sm" fill="text" className={styles.dismiss} onClick={dismiss}>
+          <Button size="sm" variant="secondary" className={styles.dismiss} onClick={dismiss}>
             <Trans i18nKey="gettingstarted.getting-started.remove-this-panel">Remove this panel</Trans>
           </Button>
           {currentStep === steps.length - 1 && (

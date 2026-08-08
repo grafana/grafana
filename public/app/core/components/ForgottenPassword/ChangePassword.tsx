@@ -112,7 +112,7 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
           >
             <Button
               className={styles.skipButton}
-              fill="text"
+              variant="secondary"
               onClick={onSkip}
               type="button"
               data-testid={selectors.pages.Login.skip}

@@ -102,7 +102,7 @@ export function QueryEditorFooter() {
     <div className={styles.container}>
       <div className={styles.queryOptionsWrapper}>
         <Button
-          fill="text"
+          variant="secondary"
           size="sm"
           onClick={(e) => handleItemClick(e)}
           aria-label={t('query-editor-next.footer.query-options', 'Query options')}
@@ -118,7 +118,7 @@ export function QueryEditorFooter() {
         {items.map((item) => (
           <li key={item.id}>
             <Button
-              fill="text"
+              variant="secondary"
               size="sm"
               className={styles.itemButton}
               onClick={(e) => handleItemClick(e, item.id)}

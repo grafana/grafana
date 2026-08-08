@@ -188,7 +188,7 @@ export const FilterPopup = memo(
               <Trans i18nKey="grafana-ui.table.filter-popup-cancel">Cancel</Trans>
             </Button>
             {clearFilterVisible && (
-              <Button fill="text" size="sm" onClick={onClearFilter}>
+              <Button variant="secondary" size="sm" onClick={onClearFilter}>
                 <Trans i18nKey="grafana-ui.table.filter-popup-clear">Clear filter</Trans>
               </Button>
             )}

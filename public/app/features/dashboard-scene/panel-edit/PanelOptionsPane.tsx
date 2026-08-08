@@ -208,7 +208,7 @@ function PanelOptionsPaneComponent({ model }: SceneComponentProps<PanelOptionsPa
               </Text>
               <Button
                 size="sm"
-                fill="text"
+                variant="secondary"
                 onClick={model.onToggleVizPicker}
                 data-testid={selectors.components.PanelEditor.toggleVizPicker}
                 aria-label={t(

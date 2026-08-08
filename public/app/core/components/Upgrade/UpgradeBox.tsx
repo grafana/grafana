@@ -157,7 +157,13 @@ export const UpgradeContent = ({
           </Button>
         )}
         {featureUrl && (
-          <LinkButton fill={'text'} href={featureUrl} className={styles.link} target="_blank" rel="noreferrer noopener">
+          <LinkButton
+            variant="secondary"
+            href={featureUrl}
+            className={styles.link}
+            target="_blank"
+            rel="noreferrer noopener"
+          >
             <Trans i18nKey="upgrade-box.learn-more">Learn more</Trans>
           </LinkButton>
         )}
@@ -232,7 +238,7 @@ export const UpgradeContentVertical = ({
         <Trans i18nKey="upgrade-box.get-started">Get started with {{ featureName }}</Trans>
       </h3>
       {description && <h6 className={styles.description}>{description}</h6>}
-      <LinkButton fill={'text'} href={featureUrl} target="_blank" rel="noreferrer noopener">
+      <LinkButton variant="secondary" href={featureUrl} target="_blank" rel="noreferrer noopener">
         <Trans i18nKey="upgrade-box.learn-more">Learn more</Trans>
       </LinkButton>
       <div className={styles.media}>

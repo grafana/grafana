@@ -179,7 +179,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
           <Trans i18nKey="dashboard-scene.dashboard-settings.annotations.description-moved">
             Annotation settings have moved to the dashboard&apos;s sidebar.
           </Trans>
-          <Button onClick={goToSidebar} fill="text" variant="primary" size="md">
+          <Button onClick={goToSidebar} variant="secondary" size="md">
             <Trans i18nKey="dashboard-scene.dashboard-settings.annotations.button-moved">Take me there</Trans>
           </Button>
         </Alert>

@@ -93,10 +93,9 @@ export const AcknowledgeCheckboxes = ({
                 data-testid={acknowledge.testId}
               />
               <LinkButton
-                variant="primary"
+                variant="secondary"
                 href={acknowledge.info.href}
                 target="_blank"
-                fill="text"
                 icon="info-circle"
                 rel="noopener noreferrer"
                 tooltip={acknowledge.info.tooltip}

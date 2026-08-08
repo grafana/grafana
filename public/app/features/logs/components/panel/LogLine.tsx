@@ -280,8 +280,7 @@ const LogLineComponent = memo(
         {collapsed === true && (
           <div className={styles.expandCollapseControl}>
             <Button
-              variant="primary"
-              fill="text"
+              variant="secondary"
               size="sm"
               className={styles.expandCollapseControlButton}
               onClick={handleExpandCollapse}
@@ -293,8 +292,7 @@ const LogLineComponent = memo(
         {collapsed === false && (
           <div className={styles.expandCollapseControl}>
             <Button
-              variant="primary"
-              fill="text"
+              variant="secondary"
               size="sm"
               className={styles.expandCollapseControlButton}
               onClick={handleExpandCollapse}

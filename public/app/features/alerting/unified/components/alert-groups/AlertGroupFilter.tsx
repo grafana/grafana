@@ -68,7 +68,7 @@ export const AlertGroupFilter = ({ groups }: Props) => {
       </div>
       {showClearButton && (
         <div className={styles.clearButtonRow}>
-          <Button size="sm" variant="primary" fill="text" onClick={clearFilters}>
+          <Button size="sm" variant="secondary" onClick={clearFilters}>
             <Trans i18nKey="alerting.alert-group-filter.clear-filters">Clear filters</Trans>
           </Button>
         </div>

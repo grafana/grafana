@@ -15,7 +15,7 @@ export function FederatedRuleWarning() {
         <Trans i18nKey="alerting.federated-rule-warning.experimental">
           Federated rule groups are currently an experimental feature.
         </Trans>
-        <Button fill="text" icon="book">
+        <Button variant="secondary" icon="book">
           <a href={DOCS_URL_FEDERATED_RULES}>
             <Trans i18nKey="alerting.federated-rule-warning.read-documentation">Read documentation</Trans>
           </a>

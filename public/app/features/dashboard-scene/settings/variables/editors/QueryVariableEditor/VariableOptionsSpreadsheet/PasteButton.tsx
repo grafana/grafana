@@ -16,8 +16,7 @@ export function PasteButton({ canPaste, onClick, clipboardAccess, textFormat }: 
   return (
     <Button
       icon="clipboard-alt"
-      variant="primary"
-      fill="text"
+      variant="secondary"
       disabled={!canPaste}
       onClick={onClick}
       aria-label={label}

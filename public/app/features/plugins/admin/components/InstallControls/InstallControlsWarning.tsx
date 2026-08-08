@@ -53,7 +53,7 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
             target="_blank"
             rel="noopener noreferrer"
             size="sm"
-            fill="text"
+            variant="secondary"
             icon="external-link-alt"
           >
             <Trans i18nKey="plugins.install-controls-warning.learn-more">Learn more</Trans>

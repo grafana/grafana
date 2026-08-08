@@ -42,8 +42,7 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
       <div className={styles.right}>
         {useQueryExperienceNext && feedbackEventEnabled && (
           <Button
-            variant="primary"
-            fill="text"
+            variant="secondary"
             size="sm"
             icon="comment-alt-message"
             onClick={() => {
@@ -68,7 +67,7 @@ export function QueryEditorBanner({ useQueryExperienceNext, onToggle, onDismiss,
             {t('dashboard-scene.query-editor-banner.go-back', 'Back to classic')}
           </Button>
         ) : (
-          <Button variant="primary" fill="text" size="sm" icon="rocket" onClick={onToggle}>
+          <Button variant="secondary" size="sm" icon="rocket" onClick={onToggle}>
             {t('dashboard-scene.query-editor-banner.try-it', 'Try it out')}
           </Button>
         )}

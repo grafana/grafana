@@ -281,7 +281,7 @@ export const RolePickerMenu = ({
         </ScrollContainer>
         <div className={customStyles.menuButtonRow}>
           <Stack justifyContent="flex-end">
-            <Button size="sm" fill="text" onClick={onClearInternal} disabled={updateDisabled}>
+            <Button size="sm" variant="secondary" onClick={onClearInternal} disabled={updateDisabled}>
               <Trans i18nKey="role-picker.menu.clear-button">Clear all</Trans>
             </Button>
             <Button size="sm" onClick={onUpdateInternal} disabled={updateDisabled}>

@@ -108,7 +108,7 @@ export const ConfirmButton = ({
     <div className={styles.container}>
       <span className={buttonClass}>
         {typeof children === 'string' ? (
-          <Button disabled={disabled} size={size} fill="text" onClick={onClickButton} ref={mainButtonRef}>
+          <Button disabled={disabled} size={size} variant="secondary" onClick={onClickButton} ref={mainButtonRef}>
             {children}
           </Button>
         ) : (
@@ -120,7 +120,7 @@ export const ConfirmButton = ({
           <Button size={size} variant={confirmVariant} onClick={onClickConfirm} ref={confirmButtonRef}>
             {confirmText}
           </Button>
-          <Button size={size} fill="text" onClick={onClickCancel}>
+          <Button size={size} variant="secondary" onClick={onClickCancel}>
             <Trans i18nKey="grafana-ui.confirm-button.cancel">Cancel</Trans>
           </Button>
         </span>

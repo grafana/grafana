@@ -144,7 +144,7 @@ export const VizLegendTable = <T extends unknown>({
         <tbody>{limitedItems.map(itemRenderer!)}</tbody>
       </table>
       {curLimit > 0 && items.length > curLimit && (
-        <Button fill="text" variant="primary" size="sm" onClick={() => setLimit(0)} className={styles.showAll}>
+        <Button variant="secondary" size="sm" onClick={() => setLimit(0)} className={styles.showAll}>
           <Trans i18nKey={'legend.container.show-all-series'} className={styles.showAll}>
             ...show all {{ total: items.length }} items
           </Trans>

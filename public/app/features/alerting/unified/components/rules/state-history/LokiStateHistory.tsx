@@ -304,7 +304,7 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
           prefix={<Icon name="search" />}
           suffix={
             showClearFilterSuffix && (
-              <Button fill="text" icon="times" size="sm" onClick={onClearFilterClick}>
+              <Button variant="secondary" icon="times" size="sm" onClick={onClearFilterClick}>
                 <Trans i18nKey="alerting.search-field-input.clear">Clear</Trans>
               </Button>
             )

@@ -78,7 +78,7 @@ export const VerifyEmail = () => {
         <Button type="submit">
           <Trans i18nKey="sign-up.verify.send-button">Send verification email</Trans>
         </Button>
-        <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
+        <LinkButton variant="secondary" href={getConfig().appSubUrl + '/login'}>
           <Trans i18nKey="sign-up.verify.back-button">Back to login</Trans>
         </LinkButton>
       </Stack>

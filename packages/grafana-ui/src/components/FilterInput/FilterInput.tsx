@@ -26,7 +26,7 @@ export const FilterInput = forwardRef<HTMLInputElement, Props>(
         {value !== '' && (
           <Button
             icon="times"
-            fill="text"
+            variant="secondary"
             size="sm"
             onClick={(e) => {
               innerRef.current?.focus();

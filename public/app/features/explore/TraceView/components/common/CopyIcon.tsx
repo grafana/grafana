@@ -56,7 +56,7 @@ export default function CopyIcon({ className, copyText, icon = 'copy', tooltipTi
         className={cx(styles.CopyIcon, className)}
         type="button"
         icon={icon}
-        fill="text"
+        variant="secondary"
         size="sm"
         onClick={handleClick}
       />

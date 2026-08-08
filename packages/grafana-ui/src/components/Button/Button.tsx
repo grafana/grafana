@@ -60,7 +60,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       'aria-label': ariaLabel,
       size = 'md',
       fill = 'solid',
-      variant = fill === 'text' ? 'accent' : 'primary',
+      variant = 'primary',
       icon,
       fullWidth,
       children,
