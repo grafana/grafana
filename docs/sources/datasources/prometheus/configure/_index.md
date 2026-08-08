@@ -15,12 +15,12 @@ labels:
 menuTitle: Configure
 title: Configure the Prometheus data source
 weight: 200
-review_date: 2026-05-07
+review_date: 2026-08-04
 ---
 
 # Configure the Prometheus data source
 
-This document provides instructions for configuring the Prometheus data source and explains the available configuration options. Grafana includes built-in support for Prometheus, so you don't need to install a plugin. For general information on adding a data source to Grafana, refer to [Add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source).
+This document provides instructions for configuring the Prometheus data source and explains the available configuration options. The Prometheus data source is preinstalled in Grafana, so you don't need to install it manually. For general information on adding a data source to Grafana, refer to [Add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source).
 
 ## Before you begin
 
@@ -88,9 +88,9 @@ Additional authentication methods (Azure AD, AWS SigV4) are available depending 
 Azure AD and SigV4 authentication on the core Prometheus data source are **deprecated** in Grafana 13. Existing data sources using these methods are automatically migrated to dedicated plugins on startup. For new setups, use the [Azure Monitor Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-azureprometheus-datasource/) or [Amazon Managed Service for Prometheus](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) plugins instead. For migration details, refer to [Azure authentication (deprecated)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/azure-authentication/) or [AWS authentication (deprecated)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/aws-authentication/).
 {{< /admonition >}}
 
-- **Azure AD authentication** - Available in Grafana Enterprise and self-managed instances where `azure_auth_enabled = true` is configured. On Grafana Cloud, this option requires a server-side feature flag that isn't enabled by default — contact [Grafana Support](https://grafana.com/profile/org#support) to request it be enabled for your stack. Refer to [Azure authentication settings](#azure-authentication-settings-deprecated) for configuration details.
+- **Azure AD authentication** - Available in Grafana Enterprise and self-managed instances where `azure_auth_enabled = true` is configured. On Grafana Cloud, this option requires a server-side feature flag that isn't enabled by default. Contact [Grafana Support](https://grafana.com/profile/org#support) to request it be enabled for your stack. Refer to [Azure authentication settings](#azure-authentication-settings-deprecated) for configuration details.
 
-- **AWS SigV4 authentication** - Available in self-managed Grafana instances where `sigv4_auth_enabled = true` is configured. On Grafana Cloud, this option isn't available by default — contact [Grafana Support](https://grafana.com/profile/org#support) to request it be enabled for your stack.
+- **AWS SigV4 authentication** - Available in self-managed Grafana instances where `sigv4_auth_enabled = true` is configured. On Grafana Cloud, this option isn't available by default. Contact [Grafana Support](https://grafana.com/profile/org#support) to request it be enabled for your stack.
 
 {{< admonition type="note" >}}
 If Azure AD or SigV4 options don't appear in the authentication drop-down, the required feature flag isn't enabled on your instance. For Grafana Cloud, submit a support request. For self-managed instances, update the Grafana configuration file.
@@ -155,7 +155,7 @@ Pass along additional information and metadata about the request or response.
   Grafana uses this setting to determine which API endpoints and features to enable. For example, when set to Mimir, Grafana uses regular expression-optimized label queries that significantly improve autocomplete and variable loading performance for large metric sets.
 
 {{< admonition type="note" >}}
-Team-based Label-Based Access Control (LBAC) for the Prometheus data source requires the backend to be **Grafana Cloud Metrics (Mimir)** or **Grafana Enterprise Metrics (GEM)**. LBAC doesn't work with external Prometheus-compatible endpoints such as Google Managed Prometheus, self-hosted Prometheus, or Thanos, even if you enable the `teamHttpHeadersMimir` setting. The LBAC enforcement relies on Mimir-specific HTTP headers that other backends don't support.
+Team-based Label-Based Access Control (LBAC) for the Prometheus data source requires the backend to be **Grafana Cloud Metrics (Mimir)** or **Grafana Enterprise Metrics (GEM)**. LBAC doesn't work with external Prometheus-compatible endpoints such as Google Managed Prometheus, self-managed Prometheus, or Thanos, even if you enable the `teamHttpHeadersMimir` setting. The LBAC enforcement relies on Mimir-specific HTTP headers that other backends don't support.
 {{< /admonition >}}
 
 - **Cache level** - Sets the browser caching level for editor queries. Options: `Low`, `Medium`, `High`, or `None`. Higher cache settings are recommended for high-cardinality data sources.
@@ -167,7 +167,7 @@ Team-based Label-Based Access Control (LBAC) for the Prometheus data source requ
 
 - **Custom query parameters** - Add custom parameters to the Prometheus query URL for more control over query execution. Examples: `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Join multiple parameters with `&`.
 - **HTTP method** - Select either the `POST` or `GET` HTTP method to query your data source. `POST` is recommended and selected by default, as it supports larger queries. Select `GET` if your network restricts `POST` requests.
-- **Series limit** - Maximum number of returned series. The limit applies to all resources (metrics, labels, and values) for both endpoints (series and labels). Leave empty to use the default limit (40000). Set to `0` to disable the limit — this may cause performance issues.
+- **Series limit** - Maximum number of returned series. The limit applies to all resources (metrics, labels, and values) for both endpoints (series and labels). Leave empty to use the default limit (40000). Set to `0` to disable the limit, which may cause performance issues.
 - **Use series endpoint** - Toggle on to use the series endpoint (`/api/v1/series`) with the `match[]` parameter instead of the label values endpoint (`/api/v1/label/<label_name>/values`). The label values endpoint is generally more performant, but the series endpoint supports the `POST` method.
 
 ### Exemplars
@@ -201,7 +201,7 @@ If you use PDC with SigV4 (AWS Signature Version 4 Authentication), the PDC agen
 
 Click **Manage private data source connect networks** to view your PDC configuration details.
 
-For more information, refer to [Private data source connect (PDC)](/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc).
+For more information, refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc).
 
 For troubleshooting PDC connectivity issues (DNS resolution, "host unreachable" errors, or parallel connection tuning), refer to [PDC connectivity errors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#pdc-connectivity-errors).
 
@@ -330,7 +330,7 @@ azure_auth_enabled = true
 ```
 
 {{< admonition type="note" >}}
-If you are using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token will override your Azure credentials.
+If you are using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token overrides your Azure credentials.
 {{< /admonition >}}
 
 ## Troubleshooting
