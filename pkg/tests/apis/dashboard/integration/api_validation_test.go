@@ -337,26 +337,26 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 	})
 
 	t.Run("Dashboard tag validations", func(t *testing.T) {
-		t.Run("reject dashboard with tag over 50 characters on creation", func(t *testing.T) {
+		t.Run("reject dashboard with tag over 255 UTF-8 bytes on creation", func(t *testing.T) {
 			dashObj := createDashboardObject(t, "Dashboard with Long Tag", "", 0)
 			meta, _ := utils.MetaAccessor(dashObj)
 			spec, _ := meta.GetSpec()
 			specMap := spec.(map[string]interface{})
-			specMap["tags"] = []string{"this-is-a-very-long-tag-that-exceeds-fifty-characters-limit"}
+			specMap["tags"] = []string{strings.Repeat("a", 256)}
 			_ = meta.SetSpec(specMap)
 			_, err := adminClient.Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
 			require.Error(t, err)
 			require.Contains(t, err.Error(), "tag too long")
 		})
 
-		t.Run("reject dashboard update with tag over 50 characters", func(t *testing.T) {
+		t.Run("reject dashboard update with tag over 255 UTF-8 bytes", func(t *testing.T) {
 			dash, err := createDashboard(t, adminClient, "Valid Dashboard", nil, nil, ctx.Helper)
 			require.NoError(t, err)
 			require.NotNil(t, dash)
 			meta, _ := utils.MetaAccessor(dash)
 			spec, _ := meta.GetSpec()
 			specMap := spec.(map[string]interface{})
-			specMap["tags"] = []string{"this-is-a-very-long-tag-that-exceeds-fifty-characters-limit"}
+			specMap["tags"] = []string{strings.Repeat("a", 256)}
 			_ = meta.SetSpec(specMap)
 			_, err = adminClient.Resource.Update(context.Background(), dash, v1.UpdateOptions{})
 			require.Error(t, err)
@@ -365,12 +365,26 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			require.NoError(t, err)
 		})
 
-		t.Run("accept dashboard with tag at 50 characters", func(t *testing.T) {
+		t.Run("accept dashboard with tag at 50 UTF-8 bytes", func(t *testing.T) {
 			dashObj := createDashboardObject(t, "Dashboard with Valid Tag", "", 0)
 			meta, _ := utils.MetaAccessor(dashObj)
 			spec, _ := meta.GetSpec()
 			specMap := spec.(map[string]interface{})
 			specMap["tags"] = []string{"this-tag-is-exactly-fifty-characters-long-12345"}
+			_ = meta.SetSpec(specMap)
+			createdDash, err := adminClient.Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, createdDash)
+			err = adminClient.Resource.Delete(context.Background(), createdDash.GetName(), v1.DeleteOptions{})
+			require.NoError(t, err)
+		})
+
+		t.Run("accept dashboard with tag at 255 UTF-8 bytes", func(t *testing.T) {
+			dashObj := createDashboardObject(t, "Dashboard with Max Length Tag", "", 0)
+			meta, _ := utils.MetaAccessor(dashObj)
+			spec, _ := meta.GetSpec()
+			specMap := spec.(map[string]interface{})
+			specMap["tags"] = []string{strings.Repeat("a", 255)}
 			_ = meta.SetSpec(specMap)
 			createdDash, err := adminClient.Resource.Create(context.Background(), dashObj, v1.CreateOptions{})
 			require.NoError(t, err)
@@ -387,7 +401,7 @@ func runDashboardValidationTests(t *testing.T, ctx TestContext) {
 			specMap["tags"] = []string{
 				"valid-tag",
 				"another-valid-tag",
-				"this-is-a-very-long-tag-that-exceeds-fifty-characters-limit",
+				strings.Repeat("a", 256),
 			}
 			_ = meta.SetSpec(specMap)
 			_, err := adminClient.Resource.Create(context.Background(), dashObj, v1.CreateOptions{})

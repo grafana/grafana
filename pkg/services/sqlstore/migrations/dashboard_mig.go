@@ -266,6 +266,10 @@ func addDashboardMigration(mg *Migrator) {
 		Cols: []string{"dashboard_uid"},
 		Type: IndexType,
 	}))
+
+	mg.AddMigration("Increase dashboard_tag.term length to 255", NewRawSQLMigration("").
+		Postgres("ALTER TABLE dashboard_tag ALTER COLUMN term TYPE VARCHAR(255);").
+		Mysql("ALTER TABLE dashboard_tag MODIFY term VARCHAR(255) NOT NULL;"))
 }
 
 type FillDashbordUIDAndOrgIDMigration struct {
