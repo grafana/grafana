@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel"
@@ -26,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
-	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
@@ -54,9 +52,8 @@ type dashboardRow struct {
 }
 
 type dashboardSqlAccess struct {
-	sql          legacysql.LegacyDatabaseProvider
-	namespacer   request.NamespaceMapper
-	provisioning provisioning.StubProvisioningService
+	sql        legacysql.LegacyDatabaseProvider
+	namespacer request.NamespaceMapper
 
 	accessControl accesscontrol.AccessControl
 	log           log.Logger
@@ -64,21 +61,18 @@ type dashboardSqlAccess struct {
 
 func ProvideMigrator(
 	sql legacysql.LegacyDatabaseProvider,
-	provisioning provisioning.StubProvisioningService,
 	accessControl accesscontrol.AccessControl,
 ) Migrator {
-	return NewMigratorAccess(sql, provisioning, accessControl)
+	return NewMigratorAccess(sql, accessControl)
 }
 
 func NewMigratorAccess(
 	sql legacysql.LegacyDatabaseProvider,
-	provisioning provisioning.StubProvisioningService,
 	accessControl accesscontrol.AccessControl,
 ) *dashboardSqlAccess {
 	return &dashboardSqlAccess{
 		sql:           sql,
 		namespacer:    claims.OrgNamespaceFormatter,
-		provisioning:  provisioning,
 		accessControl: accessControl,
 		log:           log.New("legacy.migrator.accessor"),
 	}
@@ -86,13 +80,11 @@ func NewMigratorAccess(
 
 func NewDashboardSQLAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
-	provisioning provisioning.ProvisioningService,
 	accessControl accesscontrol.AccessControl,
 ) *dashboardSqlAccess {
 	return &dashboardSqlAccess{
 		sql:           sql,
 		namespacer:    namespacer,
-		provisioning:  provisioning,
 		accessControl: accessControl,
 		log:           log.New("legacy.dashboard.accessor"),
 	}
@@ -509,15 +501,12 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 
 	var plugin_id sql.NullString
 	var origin_name sql.NullString
-	var origin_path sql.NullString
-	var origin_ts sql.NullInt64
-	var origin_hash sql.NullString
 	var data []byte // the dashboard JSON
 	var version int64
 
 	err := rows.Scan(&orgId, &dashboard_id, &dash.Name, &title, &folder_uid,
 		&deleted, &plugin_id,
-		&origin_name, &origin_path, &origin_hash, &origin_ts,
+		&origin_name, // should always be null now that provisioning writes to unified storage
 		&created, &createdBy, &createdByID,
 		&updated, &updatedBy, &updatedByID,
 		&version, &message, &data, &apiVersion,
@@ -569,24 +558,13 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 			row.FolderUID = folder_uid.String
 		}
 
-		if origin_name.String != "" {
-			editable := a.provisioning.GetAllowUIUpdatesFromConfig(origin_name.String)
-			prefix := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String) + "/"
-			meta.SetSourceProperties(utils.SourceProperties{
-				Path:            strings.TrimPrefix(origin_path.String, prefix),
-				Checksum:        origin_hash.String,
-				TimestampMillis: origin_ts.Int64,
-			})
-			meta.SetManagerProperties(utils.ManagerProperties{
-				Kind:        utils.ManagerKindClassicFP, // nolint:staticcheck
-				Identity:    origin_name.String,
-				AllowsEdits: editable,
-			})
-		} else if plugin_id.String != "" {
+		if plugin_id.String != "" {
 			meta.SetManagerProperties(utils.ManagerProperties{
 				Kind:     utils.ManagerKindPlugin,
 				Identity: plugin_id.String,
 			})
+		} else if origin_name.String != "" {
+			return nil, fmt.Errorf("unexpected value for origin/provisioning")
 		}
 
 		if len(data) > 0 {
