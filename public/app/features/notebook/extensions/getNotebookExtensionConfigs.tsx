@@ -1,12 +1,19 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings -- extension configs are registered at bootstrap, before i18n is ready (same as getExploreExtensionConfigs) */
 import { type PluginExtensionAddedLinkConfig, PluginExtensionPoints } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createAddedLinkConfig } from 'app/features/plugins/extensions/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type PluginExtensionExploreContext } from '../../explore/extensions/ToolbarExtensionPoint';
+import { createNotebook, notebookEditUrl } from '../api/notebookAPI';
 import { getLastUsedNotebook } from '../model/lastUsedNotebook';
+import { markNotebookAsNew } from '../model/newNotebookSignal';
+import { newNotebookSpec, newNotebookTitle } from '../model/notebookSpec';
+
+/** Title shared by the sidebar added link and added component (the sidebar matches them by title). */
+export const NOTEBOOKS_SIDEBAR_COMPONENT_TITLE = 'Notebooks';
 
 function notebooksEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false);
@@ -78,6 +85,40 @@ export function getNotebookExtensionConfigs(): PluginExtensionAddedLinkConfig[] 
             'app/features/notebook/addToNotebook/quickAddFromExplore'
           );
           await quickAddExploreToLastNotebook(context.exploreId);
+        },
+      }),
+
+      // Extension sidebar ("workspace") → notebooks panel docked next to any page.
+      // The sidebar requires a link and a component with the same title; the component
+      // is registered in the plugin extension registry setup.
+      createAddedLinkConfig({
+        title: NOTEBOOKS_SIDEBAR_COMPONENT_TITLE,
+        description: 'Browse notebooks and capture quick notes alongside any Grafana page',
+        targets: [PluginExtensionPoints.ExtensionSidebar],
+        icon: 'book-open',
+        configure: () => (notebooksEnabled() && canEditNotebooks() ? {} : undefined),
+        onClick: (_, { openSidebar }) => {
+          openSidebar(NOTEBOOKS_SIDEBAR_COMPONENT_TITLE);
+        },
+      }),
+
+      // Command palette → quick "New notebook" from anywhere (matches "New dashboard").
+      createAddedLinkConfig({
+        title: 'New notebook',
+        description: 'Create a new notebook to capture an investigation',
+        targets: [PluginExtensionPoints.CommandPalette],
+        icon: 'book-open',
+        category: 'Notebooks',
+        configure: () => {
+          if (!notebooksEnabled() || !canEditNotebooks()) {
+            return undefined;
+          }
+          return {};
+        },
+        onClick: async () => {
+          const created = await createNotebook(newNotebookSpec(newNotebookTitle()));
+          markNotebookAsNew(created.metadata.name);
+          locationService.push(notebookEditUrl(created.metadata.name));
         },
       }),
     ];

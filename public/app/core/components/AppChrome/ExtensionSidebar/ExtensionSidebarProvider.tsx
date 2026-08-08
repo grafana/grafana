@@ -16,6 +16,8 @@ import {
 export const EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDocked';
 const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
 const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
+  // Core-provided sidebar components (e.g. the notebooks workspace panel).
+  'grafana',
   'grafana-assistant-app',
   'grafana-assistant-onboarding-app',
   'grafana-dash-app',
@@ -114,21 +116,40 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
 
   // get all components for this extension point, but only for the permitted plugins
   // if the extension sidebar is not enabled, we will return an empty map
-  const availableComponents = useMemo(
-    () =>
-      new Map(
-        Array.from(pluginMap?.entries() || []).filter(
-          ([pluginId, pluginMeta]) =>
-            PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId) &&
-            links.some(
-              (link) =>
-                link.pluginId === pluginId &&
-                pluginMeta.addedComponents.some((component) => component.title === link.title)
-            )
-        )
-      ),
-    [links, pluginMap]
-  );
+  const availableComponents = useMemo(() => {
+    const map = new Map(
+      Array.from(pluginMap?.entries() || []).filter(
+        ([pluginId, pluginMeta]) =>
+          PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId) &&
+          links.some(
+            (link) =>
+              link.pluginId === pluginId &&
+              pluginMeta.addedComponents.some((component) => component.title === link.title)
+          )
+      )
+    );
+
+    // Core-registered sidebar components (pluginId 'grafana') are not app plugins, so
+    // they are absent from the app plugin meta map; synthesize their entry from the
+    // registered links (core also registers a component with the matching title).
+    const coreLinks = links.filter((link) => link.pluginId === 'grafana' && link.title);
+    if (coreLinks.length > 0) {
+      map.set('grafana', {
+        addedComponents: coreLinks.map((link) => ({
+          targets: [PluginExtensionPoints.ExtensionSidebar],
+          title: link.title,
+          description: link.description,
+        })),
+        addedLinks: coreLinks.map((link) => ({
+          targets: [PluginExtensionPoints.ExtensionSidebar],
+          title: link.title,
+          description: link.description,
+        })),
+      });
+    }
+
+    return map;
+  }, [links, pluginMap]);
 
   // check if the stored docked component is still available
   let defaultDockedComponentId: string | undefined;

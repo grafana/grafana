@@ -2,7 +2,7 @@ import { render, screen, act } from '@testing-library/react';
 import { useAsync } from 'react-use';
 
 import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/data';
-import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents, setAppEvents, locationService, usePluginLinks } from '@grafana/runtime';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import {
@@ -215,6 +215,61 @@ describe('ExtensionSidebarProvider', () => {
     // Should only include the enabled plugin
     expect(screen.getByTestId('available-components-size')).toHaveTextContent('1');
     expect(screen.getByTestId('plugin-ids')).toHaveTextContent(permittedPluginMeta.pluginId);
+  });
+
+  it('should synthesize an available component for core-registered sidebar links', () => {
+    // Core components (pluginId 'grafana') are not app plugins: they have no entry in
+    // the app plugin meta map and are derived from their registered links instead.
+    const usePluginLinksMock = jest.mocked(usePluginLinks);
+    usePluginLinksMock.mockReturnValue({
+      links: [
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the fields the provider reads
+        { pluginId: 'grafana', title: 'Notebooks', description: 'Core notebooks panel' } as ReturnType<
+          typeof usePluginLinks
+        >['links'][number],
+      ],
+      isLoading: false,
+    });
+    useAsyncMock.mockReturnValue({ loading: false, value: new Map() });
+
+    try {
+      render(
+        <ExtensionSidebarContextProvider>
+          <TestComponent />
+        </ExtensionSidebarContextProvider>
+      );
+
+      expect(screen.getByTestId('available-components-size')).toHaveTextContent('1');
+      expect(screen.getByTestId('plugin-ids')).toHaveTextContent('grafana');
+
+      // Opening a core-synthesized component exercises the same permission path as plugin apps.
+      act(() => {
+        const openCall = subscribeSpy.mock.calls.find((call) => call[0] === OpenExtensionSidebarEvent);
+        const [, subscriberFn] = openCall!;
+        subscriberFn(
+          new OpenExtensionSidebarEvent({
+            pluginId: 'grafana',
+            componentTitle: 'Notebooks',
+          })
+        );
+      });
+
+      expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+      expect(screen.getByTestId('docked-component-id')).toHaveTextContent(
+        JSON.stringify({ pluginId: 'grafana', componentTitle: 'Notebooks' })
+      );
+    } finally {
+      // Later tests rely on the module-level default implementation.
+      usePluginLinksMock.mockImplementation(() => ({
+        links: [
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the fields the provider reads
+          { pluginId: mockPluginMeta.pluginId, title: mockComponent.title } as ReturnType<
+            typeof usePluginLinks
+          >['links'][number],
+        ],
+        isLoading: false,
+      }));
+    }
   });
 
   it('should subscribe to OpenExtensionSidebarEvent and CloseExtensionSidebarEvent when feature is enabled', async () => {
