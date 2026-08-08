@@ -9,10 +9,10 @@ jest.mock('../hooks/useConnectionStatus', () => ({
   useConnectionStatus: jest.fn(() => ({ isConnected: true })),
 }));
 
-jest.mock('./GitHubAppFields', () => {
+jest.mock('./AppConnectionFields', () => {
   const React = jest.requireActual('react');
   return {
-    GitHubAppFields: () => React.createElement('div', null, 'GitHub App configuration'),
+    AppConnectionFields: () => React.createElement('div', null, 'GitHub App configuration'),
   };
 });
 

@@ -100,7 +100,13 @@ export const isGitHubBased = (type?: RepoType): type is 'github' | 'githubEnterp
   return type === 'github' || type === 'githubEnterprise';
 };
 
-// Providers whose repositories can register and receive webhooks.
+// Providers that support app-based authentication through provisioning connections.
+export const supportsConnections = (
+  type?: RepoType
+): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' => {
+  return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
+};
+
 export const supportsWebhooks = (type?: RepoType): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' => {
   return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
 };
