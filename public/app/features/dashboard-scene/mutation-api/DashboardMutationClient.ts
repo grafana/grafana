@@ -17,7 +17,7 @@ import type { DashboardScene } from '../scene/DashboardScene';
 
 import { ALL_COMMANDS, validatePayload } from './commands/registry';
 import type { MutationCommand, MutationContext } from './commands/types';
-import type { MutationClient, MutationRequest, MutationResult } from './types';
+import type { BlockedMutation, MutationClient, MutationPermission, MutationRequest, MutationResult } from './types';
 
 type MutationHandler = (payload: unknown, context: MutationContext) => Promise<MutationResult>;
 
@@ -79,8 +79,41 @@ export class DashboardMutationClient implements MutationClient {
     }
   }
 
+  /**
+   * Commands that would run against this dashboard, filtered by the same
+   * permission check `execute` applies. A caller asking what it can do gets an
+   * answer it can act on, rather than the full registry.
+   */
   getAvailableCommands(): string[] {
-    return Array.from(this.commands.keys());
+    return Array.from(this.commands.entries())
+      .filter(([, registration]) => registration.canExecute(this.scene).allowed)
+      .map(([command]) => command);
+  }
+
+  /**
+   * Run each command's permission check without executing anything, and report
+   * every command that is blocked rather than only the first. A caller gating a
+   * feature on several commands otherwise has to retry to discover the rest.
+   */
+  canExecute(commands: string[]): MutationPermission {
+    const blocked: BlockedMutation[] = [];
+
+    for (const command of commands) {
+      const type = command.toUpperCase();
+      const registration = this.commands.get(type);
+
+      if (!registration) {
+        blocked.push({ command: type, reason: `Unknown command type: ${type}` });
+        continue;
+      }
+
+      const permission = registration.canExecute(this.scene);
+      if (!permission.allowed) {
+        blocked.push({ command: type, reason: permission.error });
+      }
+    }
+
+    return blocked.length > 0 ? { allowed: false, blocked } : { allowed: true };
   }
 
   private registerCommand(cmd: MutationCommand): void {

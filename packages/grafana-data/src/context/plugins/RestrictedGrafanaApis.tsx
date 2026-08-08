@@ -6,18 +6,116 @@ interface ZodSchema {
   safeParse: (data: unknown) => { success: boolean; data?: unknown; error?: unknown };
 }
 
+/** Outcome of a single {@link DashboardMutationAPI.execute} call. */
 export interface DashboardMutationResult {
+  /** Whether the command ran to completion. */
   success: boolean;
-  error?: string; // structured validation/execution error message
+  /** Why the command did not run, or failed. Set whenever `success` is false. */
+  error?: string;
+  /**
+   * What the command changed, one entry per mutated path. Always empty when
+   * `success` is false: a failed command leaves the dashboard untouched.
+   */
   changes: Array<{ path: string; previousValue: unknown; newValue: unknown }>;
+  /** Non-fatal problems. Present on successful calls too. */
   warnings?: string[];
-  data?: unknown; // command-specific return data
+  /** Command-specific payload, such as the read state for a read command. */
+  data?: unknown;
 }
 
+/**
+ * Command-based API for reading and modifying the dashboard the user has open.
+ *
+ * Commands are dispatched by name through {@link execute}. Each one declares a
+ * payload schema, a permission check, and whether it writes, so callers describe
+ * the change they want rather than manipulating dashboard internals.
+ *
+ * Writes apply to the open dashboard in place and are not persisted. Saving
+ * stays with the user, and there is no command for it.
+ *
+ * Two lifetimes are involved, which is the distinction most of these methods
+ * exist to make visible:
+ *
+ * - This API object is created when Grafana starts and is available for as long
+ *   as the app is running.
+ * - The commands it dispatches to belong to the open dashboard, and come and go
+ *   as the user navigates. {@link isAvailable} reports whether one is there.
+ *
+ * So holding this object means the host supports dashboard mutation, not that
+ * there is a dashboard to mutate.
+ */
 export interface DashboardMutationAPI {
+  /**
+   * Run a command against the open dashboard.
+   *
+   * `type` is a command name, matched case-insensitively. `payload` must satisfy
+   * that command's schema, which {@link getPayloadSchema} returns.
+   *
+   * Rejects when no dashboard is open. Everything else resolves with
+   * `success: false` and an `error`: an unrecognised command name, a payload
+   * that fails validation, a command the current user or dashboard state does
+   * not permit, or an error raised while applying the change.
+   */
   execute(mutation: { type: string; payload: unknown }): Promise<DashboardMutationResult>;
+  /**
+   * The Zod schema a command's payload must satisfy, or `null` for a command
+   * this Grafana version does not implement. `commandId` is matched
+   * case-insensitively.
+   *
+   * Schemas come from the static command registry, so this answers with no
+   * dashboard open. That makes a `null` return usable as a version check, which
+   * {@link getAvailableCommands} cannot be, since it is empty either when the
+   * version lacks the command or when no dashboard is open.
+   */
   getPayloadSchema(commandId: string): ZodSchema | null;
+  /**
+   * The commands that would run right now: implemented by this version, with a
+   * dashboard open, and permitted on it. Filtered by the same per-command checks
+   * {@link execute} applies, so a listed command is one you can use. Empty when no
+   * dashboard is open.
+   *
+   * A command can still come back with `success: false` for a reason that is not
+   * knowable up front, such as a payload that fails validation.
+   *
+   * Absence does not say why, since a command is missing whether this version
+   * lacks it, no dashboard is open, the dashboard cannot be edited, or a feature
+   * toggle is off. Use {@link getPayloadSchema} for a version check and
+   * {@link canExecute} for the reason.
+   */
   getAvailableCommands(): string[];
+  /**
+   * Whether the given commands would be permitted right now, without executing
+   * them. Accepts one command or several, matched case-insensitively, and is
+   * all-of: `allowed` is true only when every command passes.
+   *
+   * Equivalent to checking membership in {@link getAvailableCommands}, plus the
+   * part a list cannot carry: why each unusable command is unusable. Reach for
+   * this when you need to explain or log the reason, and for a plain decision use
+   * the list.
+   *
+   * Every blocked command is reported, not just the first, and each `reason`
+   * names the cause: an unrecognised command, no dashboard open, insufficient
+   * permission, a snapshot, or a disabled feature toggle.
+   *
+   * An empty list is vacuously allowed, since there is nothing to check.
+   */
+  canExecute(
+    commands: string | string[]
+  ): { allowed: true } | { allowed: false; blocked: Array<{ command: string; reason: string }> };
+  /** Whether a dashboard is open, so {@link execute} has something to act on. */
+  isAvailable(): boolean;
+  /**
+   * Observe dashboards being opened and closed. Returns a function that
+   * unsubscribes.
+   *
+   * The listener receives the new availability, and is also called with `true`
+   * when one dashboard replaces another, since commands then dispatch against a
+   * different dashboard.
+   *
+   * It is not called on subscribe. Read {@link isAvailable} for the current
+   * state.
+   */
+  onAvailabilityChange(listener: (isAvailable: boolean) => void): () => void;
 }
 
 interface RestrictedGrafanaApisContextTypeInternal {

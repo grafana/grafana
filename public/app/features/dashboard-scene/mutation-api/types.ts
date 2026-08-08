@@ -28,9 +28,18 @@ interface MutationChange {
   newValue: unknown;
 }
 
+/** Why a set of commands cannot run, one entry per command that is blocked. */
+export type MutationPermission = { allowed: true } | { allowed: false; blocked: BlockedMutation[] };
+
+export interface BlockedMutation {
+  command: string;
+  reason: string;
+}
+
 export interface MutationClient {
   execute(mutation: MutationRequest): Promise<MutationResult>;
   getAvailableCommands(): string[];
+  canExecute(commands: string[]): MutationPermission;
 }
 
 type LayoutItemKind = GridLayoutItemKind | AutoGridLayoutItemKind;

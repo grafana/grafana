@@ -19,6 +19,75 @@ All responses share this shape:
 
 On failure, `success` is `false` and `error` contains a message. `changes` is always `[]` on failure.
 
+## Availability
+
+Two objects with different lifetimes are involved:
+
+- The **API object** is created at app boot and lives for as long as the app runs. Obtaining it means the host supports dashboard mutation, nothing more.
+- The **client** it dispatches to is created when a `DashboardScene` activates and destroyed when that scene deactivates. Commands need it.
+
+Scenes can overlap, so the client is replaced rather than cleared when one dashboard succeeds another, and a deactivating scene only clears the client it installed itself.
+
+```typescript
+isAvailable(): boolean
+getAvailableCommands(): string[]
+canExecute(commands: string | string[]): { allowed: true } | { allowed: false; blocked: Array<{ command: string; reason: string }> }
+onAvailabilityChange(listener: (isAvailable: boolean) => void): () => void
+```
+
+### State
+
+|                          | No dashboard open | Dashboard open                           |
+| ------------------------ | ----------------- | ---------------------------------------- |
+| `isAvailable()`          | `false`           | `true`                                   |
+| `getAvailableCommands()` | `[]`              | the commands permitted on this dashboard |
+| `execute`                | rejects           | resolves with a `success` result         |
+
+`execute` is the only member that rejects. Once a dashboard is open, a command that cannot run resolves with `success: false` instead.
+
+### `getAvailableCommands`
+
+The commands that would run right now: implemented by this version, with a dashboard open, and permitted on it. Filtered by the same per-command checks `execute` applies, so a listed command is one you can use. A read-only dashboard such as Grafana Home lists its read commands and none of the writes, and a command behind a disabled feature toggle is not listed at all.
+
+A listed command can still come back with `success: false` for a reason that is not knowable up front, a payload that fails validation being the usual one.
+
+Absence does not say why. A command is missing whether this version lacks it, no dashboard is open, the dashboard cannot be edited, or a toggle is off. For a version check use `getPayloadSchema(command) !== null`, which reads the static registry and so answers with no dashboard open. For the reason, use `canExecute`.
+
+### `canExecute`
+
+Answers the same question as checking membership in `getAvailableCommands`, and adds the part a list cannot carry: why a command is unusable. Reach for it when you need to explain, log, or surface the reason; a plain membership check is enough to decide.
+
+All-of over the commands given, and every blocked command is reported rather than only the first, so a caller does not have to fix one thing and retry to discover the next. An empty list is vacuously allowed.
+
+```typescript
+const permission = api.canExecute(['ADD_PANEL', 'ADD_ROW']);
+
+if (!permission.allowed) {
+  // [{ command: 'ADD_ROW', reason: 'Layout management requires the "dashboardNewLayouts" feature toggle...' }]
+  hideDashboardEditing(permission.blocked);
+}
+```
+
+### `onAvailabilityChange`
+
+Called with the new availability whenever a dashboard is opened or closed, and returns a function that unsubscribes.
+
+- It is **not** called on subscribe. Read `isAvailable()` for the current state.
+- It is called with `true` again when one dashboard replaces another, because commands then dispatch against a different dashboard.
+
+The client is installed slightly after the scene object appears, so a caller that has just triggered navigation should wait for a notification rather than assume the next tick:
+
+```typescript
+const unsubscribe = api.onAvailabilityChange((isAvailable) => {
+  if (isAvailable) {
+    // A dashboard is open, or a different one replaced the previous one.
+    refreshFromDashboard();
+  } else {
+    discardDashboardState();
+  }
+});
+```
+
 ---
 
 ## Layout
