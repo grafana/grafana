@@ -39,7 +39,7 @@ func TestUserService(t *testing.T) {
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
 		tracer:       tracing.InitializeTracerForTest(),
-		db:           db.InitTestDB(t),
+		db:           db.InitTestDB(t), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	}
 	userService.cfg = setting.NewCfg()
 
@@ -509,7 +509,7 @@ func TestIntegrationCreateUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	cfg := setting.NewCfg()
-	ss := db.InitTestDB(t)
+	ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	userStore := &sqlStore{
 		db:      ss,
 		dialect: ss.GetDialect(),

@@ -51,17 +51,50 @@ type DB interface {
 type Session = sqlstore.DBSession
 type InitTestDBOpt = sqlstore.InitTestDBOpt
 
+// Re-exported so NewTestStore callers need not import sqlstore directly;
+// TestingTB mirrors the standard library's testing.TB (see sqlstore.TestingTB).
+type TestingTB = sqlstore.TestingTB
+type TestOption = sqlstore.TestOption
+
 var SetupTestDB = sqlstore.SetupTestDB
 var CleanupTestDB = sqlstore.CleanupTestDB
 var ProvideService = sqlstore.ProvideService
 
+// Options for NewTestStore, re-exported from sqlstore.
+var (
+	WithFeatureFlags         = sqlstore.WithFeatureFlags
+	WithoutFeatureFlags      = sqlstore.WithoutFeatureFlags
+	WithFeatureFlag          = sqlstore.WithFeatureFlag
+	WithOSSMigrations        = sqlstore.WithOSSMigrations
+	WithMigrator             = sqlstore.WithMigrator
+	WithoutMigrator          = sqlstore.WithoutMigrator
+	WithTracer               = sqlstore.WithTracer
+	WithoutDefaultOrgAndUser = sqlstore.WithoutDefaultOrgAndUser
+	WithCfg                  = sqlstore.WithCfg
+	WithTruncation           = sqlstore.WithTruncation
+)
+
+// NewTestStore creates a SQLStore with an isolated, temporary database for
+// this test. Unlike InitTestDB there is no shared database or truncation
+// between tests, so tests using it may run in parallel. See
+// sqlstore.NewTestStore for details and options.
+func NewTestStore(tb TestingTB, opts ...TestOption) *sqlstore.SQLStore {
+	tb.Helper()
+	return sqlstore.NewTestStore(tb, opts...)
+}
+
+// Deprecated: use NewTestStore instead. It gives each test an isolated,
+// temporary database instead of sharing one database with truncation between
+// tests. New calls to InitTestDB fail lint (staticcheck SA1019).
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *sqlstore.SQLStore {
-	db, _ := InitTestDBWithCfg(t, opts...)
+	db, _ := InitTestDBWithCfg(t, opts...) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	return db
 }
 
+// Deprecated: use NewTestStore instead, with sqlstore.WithCfg to supply a
+// config. See InitTestDB.
 func InitTestDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*sqlstore.SQLStore, *setting.Cfg) {
-	return sqlstore.InitTestDB(t, opts...)
+	return sqlstore.InitTestDB(t, opts...) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 }
 
 func IsTestDbSQLite() bool {

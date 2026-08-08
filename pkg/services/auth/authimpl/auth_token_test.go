@@ -880,7 +880,7 @@ func createTestContext(t *testing.T) *testContext {
 	t.Helper()
 	maxInactiveDurationVal, _ := time.ParseDuration("168h")
 	maxLifetimeDurationVal, _ := time.ParseDuration("720h")
-	sqlstore := db.InitTestDB(t)
+	sqlstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	tracer := tracing.InitializeTracerForTest()
 
 	cfg := &setting.Cfg{

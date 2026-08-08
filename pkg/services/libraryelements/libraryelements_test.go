@@ -303,7 +303,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 
 	features := featuremgmt.WithFeatures()
 	tracer := tracing.InitializeTracerForTest()
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	t.Cleanup(db.CleanupTestDB)
 	quotaService := quotatest.New(false, nil)
 	ac := acimpl.ProvideAccessControl(features)

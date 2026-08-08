@@ -483,7 +483,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Run(desc, func(t *testing.T) {
 		orgID := int64(1)
 		role := org.RoleAdmin
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		quotaService := quotatest.New(false, nil)
 		features := featuremgmt.WithFeatures()
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}

@@ -57,7 +57,7 @@ import (
 
 func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.FeatureToggles, pstore pluginstore.Store, psettings pluginsettings.Service, passets *pluginassets.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
-	db.InitTestDB(t)
+	db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	// nolint:staticcheck
 	cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
@@ -101,7 +101,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features featuremgmt.F
 		RenderService: &rendering.RenderingService{
 			Cfg: cfg,
 		},
-		SQLStore:              db.InitTestDB(t),
+		SQLStore:              db.InitTestDB(t), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		SettingsProvider:      setting.ProvideProvider(cfg),
 		pluginStore:           pluginStore,
 		grafanaUpdateChecker:  &updatemanager.GrafanaService{},

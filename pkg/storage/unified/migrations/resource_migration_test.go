@@ -45,7 +45,7 @@ type testEnv struct {
 func newTestEnv(t *testing.T) testEnv {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	t.Cleanup(db.CleanupTestDB)
 	ensureOrg(t, dbstore.GetEngine())
 	return testEnv{engine: dbstore.GetEngine(), store: dbstore}
