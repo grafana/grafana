@@ -1,8 +1,12 @@
 import { type CommitOptions, type InlineSecureValue, type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type RepositoryFormData } from '../types';
+import { type ConfigMapRepositoryConfig, type RepositoryFormData } from '../types';
 
 import { isGitHubBased } from './repositoryTypes';
+
+type RepositorySpecWithConfigMap = RepositorySpec & {
+  configmap?: ConfigMapRepositoryConfig;
+};
 
 // Template field names across the git-convention option groups.
 type TemplateFieldKey = 'singleResourceMessageTemplate' | 'nameTemplate' | 'titleTemplate';
@@ -85,12 +89,12 @@ export const getWorkflows = (data: RepositoryFormData): RepositorySpec['workflow
 };
 
 export const dataToSpec = (data: RepositoryFormData, connectionName?: string): RepositorySpec => {
-  const spec: RepositorySpec = {
+  const spec = {
     type: data.type,
     sync: data.sync,
     title: data.title || '',
     workflows: getWorkflows(data),
-  };
+  } as RepositorySpecWithConfigMap;
 
   const commit = buildCommitOptions(data);
   if (commit) {
@@ -164,6 +168,14 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       };
       spec.workflows = spec.workflows.filter((v) => v !== 'branch'); // branch only supported by github
       break;
+    case 'configmap':
+      spec.configmap = {
+        name: data.configMapName,
+        namespace: data.configMapNamespace,
+        labelSelector: data.configMapLabelSelector,
+      };
+      spec.workflows = spec.workflows.filter((v) => v !== 'branch');
+      break;
   }
 
   // Add connection reference at spec level when using GitHub App (github and
@@ -202,11 +214,13 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
   const remoteConfig = spec.github || spec.githubEnterprise || spec.gitlab || spec.bitbucket || spec.git;
   // tokenUser is only available for bitbucket and pure git
   const tokenUser = spec.bitbucket?.tokenUser ?? spec.git?.tokenUser;
+  const configmap = (spec as RepositorySpecWithConfigMap).configmap;
 
   return structuredClone({
     ...spec,
     ...remoteConfig,
     ...spec.local,
+    type: spec.type as RepositoryFormData['type'],
     branch: remoteConfig?.branch || '',
     branchOptions: spec.branch,
     url: remoteConfig?.url || '',
@@ -227,10 +241,13 @@ export const specToData = (spec: RepositorySpec): RepositoryFormData => {
       signerEmail: spec.commit?.signerEmail ?? '',
       signerIsAuthor: spec.commit?.signerIsAuthor ?? false,
     },
+    configMapName: configmap?.name,
+    configMapNamespace: configmap?.namespace,
+    configMapLabelSelector: configmap?.labelSelector,
   });
 };
 
-export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'type' | 'url' | 'path'>): string => {
+export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'type' | 'url' | 'path' | 'configMapName'>) => {
   switch (repository.type) {
     case 'github':
     case 'githubEnterprise':
@@ -242,6 +259,8 @@ export const generateRepositoryTitle = (repository: Pick<RepositoryFormData, 'ty
     }
     case 'local':
       return repository.path ?? 'local';
+    case 'configmap':
+      return repository.configMapName || repository.configMapLabelSelector || 'configmap';
     default:
       return '';
   }

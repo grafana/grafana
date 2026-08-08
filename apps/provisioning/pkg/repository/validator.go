@@ -85,6 +85,11 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			cfg.Spec.GitHub, "Local config only valid when type is local"))
 	}
 
+	if cfg.Spec.Type != provisioning.ConfigMapRepositoryType && cfg.Spec.ConfigMap != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "configmap"),
+			cfg.Spec.ConfigMap, "ConfigMap config only valid when type is configmap"))
+	}
+
 	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.GitHub != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "github"),
 			cfg.Spec.GitHub, "Github config only valid when type is github"))
@@ -201,19 +206,19 @@ func validateWorkflowOptions(cfg *provisioning.Repository) field.ErrorList {
 	var list field.ErrorList
 
 	switch cfg.Spec.Type {
-	case provisioning.LocalRepositoryType:
-		// Local repositories support neither the branch workflow nor pull requests.
+	case provisioning.LocalRepositoryType, provisioning.ConfigMapRepositoryType:
+		// Local/configmap repositories support neither the branch workflow nor pull requests.
 		if cfg.Spec.Branch != nil {
 			list = append(list, field.Invalid(field.NewPath("spec", "branch"),
-				cfg.Spec.Branch, "branch options are not supported on local repositories"))
+				cfg.Spec.Branch, "branch options are not supported on this repository type"))
 		}
 		if cfg.Spec.Commit != nil {
 			list = append(list, field.Invalid(field.NewPath("spec", "commit"),
-				cfg.Spec.Commit, "commit options are not supported on local repositories"))
+				cfg.Spec.Commit, "commit options are not supported on this repository type"))
 		}
 		if cfg.Spec.PullRequest != nil {
 			list = append(list, field.Invalid(field.NewPath("spec", "pullRequest"),
-				cfg.Spec.PullRequest, "pull request options are not supported on local repositories"))
+				cfg.Spec.PullRequest, "pull request options are not supported on this repository type"))
 		}
 	case provisioning.GitRepositoryType:
 		// Plain git supports the branch workflow but cannot open pull requests.

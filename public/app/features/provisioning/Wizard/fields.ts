@@ -347,6 +347,36 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         },
       },
     },
+    configmap: {
+      name: {
+        label: t('provisioning.configmap.name-label', 'ConfigMap name'),
+        description: t(
+          'provisioning.configmap.name-description',
+          'Name of a single ConfigMap. Mutually exclusive with label selector.'
+        ),
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        placeholder: 'grafana-dashboards',
+        required: false,
+      },
+      namespace: {
+        label: t('provisioning.configmap.namespace-label', 'Namespace'),
+        description: t(
+          'provisioning.configmap.namespace-description',
+          'Kubernetes namespace for the ConfigMap(s). Defaults to the repository namespace.'
+        ),
+        required: false,
+      },
+      labelSelector: {
+        label: t('provisioning.configmap.label-selector-label', 'Label selector'),
+        description: t(
+          'provisioning.configmap.label-selector-description',
+          'Select multiple ConfigMaps (e.g. grafana_dashboard=1). Mutually exclusive with name.'
+        ),
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        placeholder: 'grafana_dashboard=1',
+        required: false,
+      },
+    },
   };
 };
 
@@ -461,4 +491,29 @@ export const getLocalProviderFields = (
   return {
     pathConfig,
   };
+};
+
+/**
+ * Get ConfigMap provider field configurations.
+ */
+export const getConfigMapProviderFields = (
+  type: RepoType
+):
+  | {
+      nameConfig: FieldConfig;
+      namespaceConfig: FieldConfig;
+      labelSelectorConfig: FieldConfig;
+    }
+  | undefined => {
+  const configs = getProviderConfigs()[type];
+  if (!configs || type !== 'configmap') {
+    return undefined;
+  }
+  const nameConfig = configs.name;
+  const namespaceConfig = configs.namespace;
+  const labelSelectorConfig = configs.labelSelector;
+  if (!nameConfig || !namespaceConfig || !labelSelectorConfig) {
+    throw new Error(`Missing required field configurations for configmap`);
+  }
+  return { nameConfig, namespaceConfig, labelSelectorConfig };
 };

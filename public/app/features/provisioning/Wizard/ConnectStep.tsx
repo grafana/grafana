@@ -9,7 +9,7 @@ import { useGetRepositoryFolders } from '../hooks/useGetRepositoryFolders';
 import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
 import { isGitProvider } from '../utils/repositoryTypes';
 
-import { getGitProviderFields, getLocalProviderFields } from './fields';
+import { getGitProviderFields, getLocalProviderFields, getConfigMapProviderFields } from './fields';
 import { type WizardFormData } from './types';
 
 export const ConnectStep = memo(function ConnectStep() {
@@ -49,7 +49,8 @@ export const ConnectStep = memo(function ConnectStep() {
   });
 
   const gitFields = isGitBased ? getGitProviderFields(type) : null;
-  const localFields = !isGitBased ? getLocalProviderFields(type) : null;
+  const localFields = type === 'local' ? getLocalProviderFields(type) : null;
+  const configMapFields = type === 'configmap' ? getConfigMapProviderFields(type) : null;
 
   const hasAutoSelectedRef = useRef(false);
 
@@ -150,6 +151,40 @@ export const ConnectStep = memo(function ConnectStep() {
             placeholder={localFields.pathConfig.placeholder}
           />
         </Field>
+      )}
+
+      {configMapFields && (
+        <>
+          <Field
+            noMargin
+            label={configMapFields.namespaceConfig.label}
+            description={configMapFields.namespaceConfig.description}
+          >
+            <Input
+              {...register('repository.configMapNamespace')}
+              id="configmap-namespace"
+              placeholder={configMapFields.namespaceConfig.placeholder}
+            />
+          </Field>
+          <Field noMargin label={configMapFields.nameConfig.label} description={configMapFields.nameConfig.description}>
+            <Input
+              {...register('repository.configMapName')}
+              id="configmap-name"
+              placeholder={configMapFields.nameConfig.placeholder}
+            />
+          </Field>
+          <Field
+            noMargin
+            label={configMapFields.labelSelectorConfig.label}
+            description={configMapFields.labelSelectorConfig.description}
+          >
+            <Input
+              {...register('repository.configMapLabelSelector')}
+              id="configmap-label-selector"
+              placeholder={configMapFields.labelSelectorConfig.placeholder}
+            />
+          </Field>
+        </>
       )}
 
       <QuotaLimitNote maxRepositories={frontendSettings?.maxRepositories} />
