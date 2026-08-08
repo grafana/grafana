@@ -23,6 +23,18 @@ const (
 
 func (session *Session) str2Time(col *core.Column, data string) (outTime time.Time, outErr error) {
 	sdata := strings.TrimSpace(data)
+
+	// Strip monotonic clock reading (Go's time.Time.String() appends " m=+xxx.xxxxx")
+	// which can cause parse failures when upgrading from older Grafana versions.
+	if idx := strings.Index(sdata, " m="); idx >= 0 {
+		sdata = sdata[:idx]
+		// Also strip the duplicate timezone offset that appears when the zone name is numeric.
+		// Go's time.String() format: "2006-01-02 15:04:05.999999999 +0330 +0330"
+		// where the second +0330 is the zone name.
+		if parts := strings.Fields(sdata); len(parts) >= 4 && parts[len(parts)-1] == parts[len(parts)-2] {
+			sdata = strings.Join(parts[:len(parts)-1], " ")
+		}
+	}
 	var x time.Time
 	var err error
 
@@ -51,6 +63,12 @@ func (session *Session) str2Time(col *core.Column, data string) (outTime time.Ti
 		if err != nil {
 			x, err = time.ParseInLocation("2006-01-02 15:04:05.9999999 Z07:00", sdata, parseLoc)
 			//session.engine.logger.Debugf("time(3) key[%v]: %+v | sdata: [%v]\n", col.FieldName, x, sdata)
+		}
+		if err != nil {
+			// Type 4: Go time.String() format without monotonic clock
+			// Format: "2006-01-02 15:04:05.999999999 -0700 MST"
+			x, err = time.ParseInLocation("2006-01-02 15:04:05.999999999 -0700 MST", sdata, parseLoc)
+			//session.engine.logger.Debugf("time(4) key[%v]: %+v | sdata: [%v]\n", col.FieldName, x, sdata)
 		}
 	} else if len(sdata) == 19 && strings.Contains(sdata, "-") {
 		x, err = time.ParseInLocation("2006-01-02 15:04:05", sdata, parseLoc)
