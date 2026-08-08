@@ -38,7 +38,8 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild && yarn generate-e2e-selectors-json",
+    "generate-e2e-selectors-json": "tsx ./scripts/generate-e2e-selectors-json.ts",
     "bundle": "rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
@@ -55,6 +56,7 @@
     "rollup": "^4.60.1",
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
+    "tsx": "^4.21.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "dependencies": {
