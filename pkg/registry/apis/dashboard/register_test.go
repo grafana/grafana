@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,6 +15,7 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -222,4 +224,62 @@ func (m *mockK8sHandler) GetStats(_ context.Context, _ int64) (*resourcepb.Resou
 }
 func (m *mockK8sHandler) GetUsersFromMeta(_ context.Context, _ []string) (map[string]*user.User, error) {
 	return nil, nil
+}
+
+func TestValidateDashboardTags(t *testing.T) {
+	// A tag whose length in characters is 50 but whose UTF-8 byte length is 51,
+	// because it contains one 2-byte rune (Cyrillic "й"). This tag was rejected by
+	// the previous len(tag) > 50 check even though the error message and the
+	// dashboard_tag.term column (VARCHAR(50), utf8mb4) both count characters.
+	multibyteAtLimit := strings.Repeat("a", 49) + "й"
+	require.Len(t, []rune(multibyteAtLimit), 50)
+	require.Greater(t, len(multibyteAtLimit), 50)
+
+	tests := []struct {
+		name    string
+		tags    []string
+		wantErr bool
+	}{
+		{
+			name:    "accept a tag shorter than 50 characters",
+			tags:    []string{"short-tag"},
+			wantErr: false,
+		},
+		{
+			name:    "accept a tag of exactly 50 ASCII characters",
+			tags:    []string{strings.Repeat("a", 50)},
+			wantErr: false,
+		},
+		{
+			name:    "accept a tag of exactly 50 characters with a multi-byte rune",
+			tags:    []string{multibyteAtLimit},
+			wantErr: false,
+		},
+		{
+			name:    "reject a tag longer than 50 characters",
+			tags:    []string{strings.Repeat("a", 51)},
+			wantErr: true,
+		},
+		{
+			name:    "reject a multi-byte tag longer than 50 characters",
+			tags:    []string{strings.Repeat("a", 49) + "йй"},
+			wantErr: true,
+		},
+		{
+			name:    "reject when any tag among several exceeds the limit",
+			tags:    []string{"ok", strings.Repeat("a", 51)},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateDashboardTags(&dashv2beta1.Dashboard{Spec: dashv2beta1.DashboardSpec{Tags: tt.tags}})
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
