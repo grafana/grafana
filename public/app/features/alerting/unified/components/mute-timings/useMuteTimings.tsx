@@ -158,7 +158,7 @@ export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
   const [createGrafanaTimeInterval] = useCreateTimeIntervalMutation();
-  const [updateConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [updateConfiguration] = useProduceNewAlertmanagerConfiguration(alertmanager);
 
   const addToK8sAPI = useAsync(({ interval }: CreateUpdateMuteTimingArgs) => {
     return createGrafanaTimeInterval({
@@ -244,7 +244,7 @@ export const useUpdateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
   const [replaceGrafanaTimeInterval] = useReplaceTimeIntervalMutation();
-  const [updateConfiguration] = useProduceNewAlertmanagerConfiguration();
+  const [updateConfiguration] = useProduceNewAlertmanagerConfiguration(alertmanager);
 
   const updateToK8sAPI = useAsync(
     async ({ interval, originalName }: CreateUpdateMuteTimingArgs & { originalName: string }) => {
@@ -277,7 +277,7 @@ type DeleteMuteTimingArgs = { name: string };
 export const useDeleteMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
-  const [updateConfiguration, _updateConfigurationRequestState] = useProduceNewAlertmanagerConfiguration();
+  const [updateConfiguration, _updateConfigurationRequestState] = useProduceNewAlertmanagerConfiguration(alertmanager);
   const [deleteGrafanaTimeInterval] = useDeleteTimeIntervalMutation();
 
   const deleteFromAlertmanagerAPI = useAsync(async ({ name }: DeleteMuteTimingArgs) => {
