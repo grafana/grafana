@@ -2942,6 +2942,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.cmdkHybridSearch",
+			Description: "Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "assistant.fullscreenWorkspace",
 			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
 			Stage:       FeatureStageExperimental,

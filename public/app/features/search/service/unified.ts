@@ -494,7 +494,7 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
   return rsp;
 }
 
-function toURL(resource: string, name: string, title: string): string {
+export function toURL(resource: string, name: string, title: string): string {
   if (resource === 'folders') {
     return `${config.appSubUrl}/dashboards/f/${name}`;
   }
