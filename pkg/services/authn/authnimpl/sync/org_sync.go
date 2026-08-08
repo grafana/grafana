@@ -119,21 +119,24 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		orgIDs = append(orgIDs, orgId)
 	}
 
-	// delete any removed org roles
-	for _, orgID := range deleteOrgIds {
-		ctxLogger.Debug("Removing user's organization membership as part of syncing with OAuth login", "orgId", orgID)
-		cmd := &org.RemoveOrgUserCommand{OrgID: orgID, UserID: userID}
-		if err := s.orgService.RemoveOrgUser(ctx, cmd); err != nil {
-			ctxLogger.Error("Failed to remove user from org", "orgId", orgID, "error", err)
-			if errors.Is(err, org.ErrLastOrgAdmin) {
-				continue
+	// delete any removed org roles, unless the client only syncs additively (it
+	// can't assert the full set of memberships, so unlisted orgs must be kept)
+	if !id.ClientParams.SyncOrgRolesAdditive {
+		for _, orgID := range deleteOrgIds {
+			ctxLogger.Debug("Removing user's organization membership as part of syncing org roles", "orgId", orgID)
+			cmd := &org.RemoveOrgUserCommand{OrgID: orgID, UserID: userID}
+			if err := s.orgService.RemoveOrgUser(ctx, cmd); err != nil {
+				ctxLogger.Error("Failed to remove user from org", "orgId", orgID, "error", err)
+				if errors.Is(err, org.ErrLastOrgAdmin) {
+					continue
+				}
+
+				return err
 			}
 
-			return err
-		}
-
-		if err := s.accessControl.DeleteUserPermissions(ctx, orgID, cmd.UserID); err != nil {
-			ctxLogger.Error("Failed to delete permissions for user", "orgId", orgID, "error", err)
+			if err := s.accessControl.DeleteUserPermissions(ctx, orgID, cmd.UserID); err != nil {
+				ctxLogger.Error("Failed to delete permissions for user", "orgId", orgID, "error", err)
+			}
 		}
 	}
 
