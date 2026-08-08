@@ -12,6 +12,7 @@ import { getCredentials, updateCredentials } from '../../credentials';
 import { trackAzureMonitorBatchAPIToggled } from '../../tracking';
 import { type AzureMonitorDataSourceSettings } from '../../types/types';
 
+import { AuxiliaryLogsToggle } from './AuxiliaryLogsToggle';
 import { AzureCredentialsForm, getAzureCloudOptions } from './AzureCredentialsForm';
 import { BasicLogsToggle } from './BasicLogsToggle';
 import { BatchAPIToggle } from './BatchAPIToggle';
@@ -45,6 +46,12 @@ export const MonitorConfig = (props: Props) => {
 
   const onBasicLogsEnabledChange = (enableBasicLogs: boolean) =>
     updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, basicLogsEnabled: enableBasicLogs } }));
+
+  const onAuxiliaryLogsEnabledChange = (enableAuxiliaryLogs: boolean) =>
+    updateOptions((options) => ({
+      ...options,
+      jsonData: { ...options.jsonData, auxiliaryLogsEnabled: enableAuxiliaryLogs },
+    }));
 
   const onBatchAPIEnabledChange = (batchAPIEnabled: boolean) => {
     trackAzureMonitorBatchAPIToggled({ grafana_version: config.buildInfo.version, enabled: batchAPIEnabled });
@@ -82,6 +89,10 @@ export const MonitorConfig = (props: Props) => {
       <ConfigSection title={t('components.monitor-config.title-features', 'Features')}>
         <Stack direction="column" gap={4}>
           <BasicLogsToggle options={options.jsonData} onBasicLogsEnabledChange={onBasicLogsEnabledChange} />
+          <AuxiliaryLogsToggle
+            options={options.jsonData}
+            onAuxiliaryLogsEnabledChange={onAuxiliaryLogsEnabledChange}
+          />
           {config.featureToggles.azureMonitorBatchAPI && (
             <BatchAPIToggle options={options.jsonData} onBatchAPIEnabledChange={onBatchAPIEnabledChange} />
           )}
