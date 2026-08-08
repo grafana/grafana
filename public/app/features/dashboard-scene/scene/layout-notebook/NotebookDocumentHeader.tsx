@@ -14,7 +14,7 @@ interface Props {
 export function NotebookDocumentHeader({ title, tags, timeFrom, timeTo }: Props) {
   return (
     <Stack direction="column" gap={1} alignItems="flex-start">
-      <Badge text={t('dashboard.notebook-layout.pill', 'Published Notebook')} color="blue" icon="book" />
+      <Badge text={t('dashboard.notebook-layout.pill', 'Notebook')} color="blue" icon="book" />
       {title ? (
         <Text element="h1" variant="h1">
           {title}
