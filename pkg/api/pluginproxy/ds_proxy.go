@@ -383,11 +383,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// Trailing validation below this point for routes that were not matched
-	switch proxy.dataSource.PluginType() {
-	case datasources.DS_PROMETHEUS,
-		datasources.DS_AMAZON_PROMETHEUS,
-		datasources.DS_AZURE_PROMETHEUS,
-		datasources.DS_LOKI:
+	if datasources.IsPrometheusCompatible(proxy.dataSource.PluginType()) || proxy.dataSource.PluginType() == datasources.DS_LOKI {
 		switch proxy.ctx.Req.Method {
 		case "DELETE", "PUT", "POST":
 			return fmt.Errorf("non allow-listed %ss not allowed on proxied %s datasource", proxy.ctx.Req.Method, proxy.dataSource.PluginType())

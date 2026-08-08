@@ -256,6 +256,11 @@ func TestIsPrometheusCompatible(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "victoria metrics datasource should be compatible",
+			dsType:   datasources.DS_VICTORIA_METRICS,
+			expected: true,
+		},
+		{
 			name:     "loki datasource should not be prometheus compatible",
 			dsType:   datasources.DS_LOKI,
 			expected: false,
@@ -269,7 +274,7 @@ func TestIsPrometheusCompatible(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := isPrometheusCompatible(tc.dsType)
+			result := datasources.IsPrometheusCompatible(tc.dsType)
 			assert.Equal(t, tc.expected, result)
 		})
 	}
@@ -294,6 +299,11 @@ func TestIsLotexRulerCompatible(t *testing.T) {
 		{
 			name:     "azure prometheus datasource should be compatible",
 			dsType:   datasources.DS_AZURE_PROMETHEUS,
+			expected: true,
+		},
+		{
+			name:     "victoria metrics datasource should be compatible",
+			dsType:   datasources.DS_VICTORIA_METRICS,
 			expected: true,
 		},
 		{
