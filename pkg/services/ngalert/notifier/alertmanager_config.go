@@ -79,6 +79,23 @@ type configurationStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
 
+// resolveAutogenRouteTimings reads the org's autogen route timing overrides from
+// the Config resource. It never fails the caller: a nil reader (tests, or when
+// the Config API isn't wired) or a read error yields nil, which AddAutogenConfig
+// treats as "use the Alertmanager route defaults". The autogen root is fully
+// defined either way, so it never inherits timings from the user's root route.
+func (moa *MultiOrgAlertmanager) resolveAutogenRouteTimings(ctx context.Context, orgID int64) *autogenRouteTimings {
+	if moa.autogenTimingsReader == nil {
+		return nil
+	}
+	timings, err := moa.autogenTimingsReader.ReadAutogenRouteTimings(ctx, orgID)
+	if err != nil {
+		moa.logger.Warn("Failed to read autogen route timings; falling back to Alertmanager defaults", "org", orgID, "error", err)
+		return nil
+	}
+	return timings
+}
+
 func (moa *MultiOrgAlertmanager) PrepareConfig(
 	ctx context.Context,
 	orgID int64,
@@ -107,7 +124,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	// route
 	prepared.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(prepared.AlertmanagerConfig.Route, prepared.ManagedRoutes)
 
-	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, prepared, onInvalid, moa.featureManager); err != nil {
+	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, prepared, onInvalid, moa.featureManager, moa.resolveAutogenRouteTimings(ctx, orgID)); err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
 	}
 
@@ -282,7 +299,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
 		// different than the config currently in-use.
 		// TODO: Preferably, we'd be getting the config directly from the in-memory AM so adding the autogen config would not be necessary.
-		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, cfg, LogInvalidReceivers, moa.featureManager)
+		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, cfg, LogInvalidReceivers, moa.featureManager, moa.resolveAutogenRouteTimings(ctx, orgID))
 		if err != nil {
 			return definitions.GettableUserConfig{}, err
 		}

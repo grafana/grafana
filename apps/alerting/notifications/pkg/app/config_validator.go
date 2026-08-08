@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 )
@@ -43,9 +44,40 @@ func newConfigValidator(cfg *Config) *simple.Validator {
 				}
 			}
 
+			// autogenRouteTimings: reject unparseable durations. We deliberately do
+			// not enforce repeat_interval > group_interval (unenforced elsewhere too).
+			if err := validateAutogenRouteTimings(obj); err != nil {
+				return err
+			}
+
 			return nil
 		},
 	}
+}
+
+// validateAutogenRouteTimings checks that every set value in
+// spec.autogenRouteTimings parses as a Prometheus duration. Unset/empty is valid.
+func validateAutogenRouteTimings(obj *v0alpha1.Config) error {
+	t := obj.Spec.AutogenRouteTimings
+	if t == nil {
+		return nil
+	}
+	for _, f := range []struct {
+		name  string
+		value *string
+	}{
+		{"group_wait", t.GroupWait},
+		{"group_interval", t.GroupInterval},
+		{"repeat_interval", t.RepeatInterval},
+	} {
+		if f.value == nil || *f.value == "" {
+			continue
+		}
+		if _, err := model.ParseDuration(*f.value); err != nil {
+			return fmt.Errorf("autogenRouteTimings.%s: invalid duration %q: %w", f.name, *f.value, err)
+		}
+	}
+	return nil
 }
 
 // externalSyncUIDChange extracts the proposed UID from obj and returns

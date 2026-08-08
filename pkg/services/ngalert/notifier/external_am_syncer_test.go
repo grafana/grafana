@@ -260,6 +260,7 @@ func buildSyncTestMOA(
 		nil,
 		false,
 		syncer,
+		nil, // no autogen timings reader
 	)
 	require.NoError(t, err)
 

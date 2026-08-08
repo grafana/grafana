@@ -322,6 +322,12 @@ func (ng *AlertNG) init() error {
 		ng.store,
 	)
 
+	autogenTimingsReader := notifier.NewConfigAutogenReader(
+		moaLogger,
+		ng.clientGenerator,
+		request.GetNamespaceMapper(ng.Cfg),
+	)
+
 	moa, err := notifier.NewMultiOrgAlertmanager(
 		ng.Cfg,
 		ng.store,
@@ -339,6 +345,7 @@ func (ng *AlertNG) init() error {
 		notificationHistorian,
 		skipClustering,
 		externalAMSyncer,
+		autogenTimingsReader,
 		opts...,
 	)
 	if err != nil {

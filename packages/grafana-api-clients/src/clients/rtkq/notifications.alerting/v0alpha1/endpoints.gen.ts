@@ -1898,6 +1898,12 @@ export type ObjectMeta = {
   uid?: string;
 };
 export type ConfigSpec = {
+  autogenRouteTimings?: {
+    group_interval?: string;
+    /** Prometheus duration strings (e.g. "30s", "5m", "4h"). */
+    group_wait?: string;
+    repeat_interval?: string;
+  };
   externalAlertmanagerSync?: {
     /** datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource to
         sync from. Empty means no sync is configured for the current org. The
