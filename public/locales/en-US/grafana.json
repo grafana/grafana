@@ -12672,6 +12672,7 @@
     "category-edges": "Edges",
     "category-node-graph": "Node graph",
     "category-nodes": "Nodes",
+    "description-fit-to-view": "Automatically fit and center the graph when its layout or panel size changes",
     "layout-algorithm-options": {
       "description-force": "Use a force-directed layout",
       "description-grid": "Use a grid layout",
@@ -12681,6 +12682,7 @@
       "label-layered": "Layered"
     },
     "name-arc-sections": "Arc sections",
+    "name-fit-to-view": "Fit graph to view",
     "name-layout-algorithm": "Layout algorithm",
     "name-main-stat-unit": "Main stat unit",
     "name-secondary-stat-unit": "Secondary stat unit",

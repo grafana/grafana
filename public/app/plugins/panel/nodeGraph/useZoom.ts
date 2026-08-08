@@ -2,11 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ZoomMode } from './panelcfg.gen';
 
+export const minZoom = 0.13;
+export const maxZoom = 2.25;
+
 const defaultOptions: Required<Options> = {
   stepUp: (s) => s * 1.5,
   stepDown: (s) => s / 1.5,
-  min: 0.13,
-  max: 2.25,
+  min: minZoom,
+  max: maxZoom,
   zoomMode: ZoomMode.Cooperative,
 };
 
@@ -18,8 +21,8 @@ interface Options {
   stepDown?: (scale: number) => number;
 
   /**
-   * Set max and min values. If stepUp/down overshoots these bounds this will return min or max but internal scale value
-   * will still be what ever the step functions returned last.
+   * Set max and min values. If stepUp/down overshoots these bounds this will return min or max, but the internal scale
+   * value will remain whatever the step function returned.
    */
   min?: number;
   max?: number;
@@ -43,17 +46,21 @@ export function useZoom(options: Options = defaultOptions) {
   const ref = useRef<HTMLElement | null>(null);
   const [scale, setScale] = useState(1);
 
+  useEffect(() => {
+    setScale((scale) => clampScale(scale, min, max));
+  }, [max, min]);
+
   const onStepUp = useCallback(() => {
     if (scale < (max ?? Infinity)) {
       setScale(stepUp(scale));
     }
-  }, [scale, stepUp, max]);
+  }, [max, scale, stepUp]);
 
   const onStepDown = useCallback(() => {
     if (scale > (min ?? -Infinity)) {
       setScale(stepDown(scale));
     }
-  }, [scale, stepDown, min]);
+  }, [min, scale, stepDown]);
 
   const onWheel = useCallback(
     function (wheelEvent: WheelEvent) {
@@ -75,7 +82,7 @@ export function useZoom(options: Options = defaultOptions) {
         }
       }
     },
-    [min, max, scale, zoomMode]
+    [max, min, scale, zoomMode]
   );
 
   useEffect(() => {
@@ -98,9 +105,14 @@ export function useZoom(options: Options = defaultOptions) {
   return {
     onStepUp,
     onStepDown,
-    scale: Math.max(Math.min(scale, max ?? Infinity), min ?? -Infinity),
+    scale: clampScale(scale, min, max),
     isMax: scale >= (max ?? Infinity),
     isMin: scale <= (min ?? -Infinity),
     ref,
+    setScale,
   };
+}
+
+function clampScale(scale: number, min?: number, max?: number) {
+  return Math.max(Math.min(scale, max ?? Infinity), min ?? -Infinity);
 }
