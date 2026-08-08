@@ -6354,7 +6354,7 @@
         "custom-options": {
           "apply": "Apply",
           "discard": "Discard",
-          "modal-title": "Custom options"
+          "modal-title": "Custom variable: {{name}}"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -6847,7 +6847,9 @@
         "change-annotation-enabled-state": "Change annotation enabled state",
         "change-annotation-name": "Change annotation name",
         "change-annotation-panel-filter": "Change annotation panel filter"
-      }
+      },
+      "edit-query": "Edit query",
+      "settings": "Settings"
     },
     "annotation-editable-element": {
       "delete-confirm": "Delete annotation query",
@@ -6924,12 +6926,7 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "Delete",
-      "aria-label-edit": "Edit",
-      "delete": {
-        "confirm": "Are you sure you want to delete: {{name}}?",
-        "text": "Delete {{type}}",
-        "title": "Delete {{type}}"
-      }
+      "aria-label-duplicate": "Duplicate"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -7269,6 +7266,7 @@
     "link-edit-actions": {
       "add-link": "Add link",
       "remove-link": "Remove link",
+      "settings": "Settings",
       "update-link": "Update link"
     },
     "link-editable-element": {
@@ -7728,6 +7726,11 @@
     },
     "variable-controls": {
       "add-variable": "Add variable"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "Edit values",
+      "edit-query": "Edit query",
+      "settings": "Settings"
     },
     "variable-editable-element": {
       "delete-confirm": "Delete variable",

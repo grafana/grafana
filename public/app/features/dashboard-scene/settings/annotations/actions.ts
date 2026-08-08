@@ -23,6 +23,20 @@ export const annotationEditActions = {
       },
     });
   },
+  duplicateAnnotation(layer: DataLayer) {
+    const dataLayerSet = layer.parent;
+    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
+      return;
+    }
+
+    annotationEditActions.addAnnotation({
+      source: dataLayerSet,
+      addedObject: layer.clone({
+        key: undefined,
+        name: `${layer.state.name} - Copy`,
+      }),
+    });
+  },
   removeAnnotation({ source, removedObject }: { removedObject: DataLayer; source: DashboardDataLayerSet }) {
     const layersBeforeRemoval = [...source.state.annotationLayers];
 
