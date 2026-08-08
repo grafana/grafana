@@ -55,7 +55,7 @@ export {
 } from './services/QueryRunner';
 export { PluginPage } from './components/PluginPage';
 export type { PluginPageType, PluginPageProps, PluginPageBackground } from './components/PluginPage';
-export { DataSourcePicker, type DataSourcePickerProps } from './components/DataSourcePicker';
+export { DataSourcePicker, setDataSourcePicker, type DataSourcePickerProps } from './components/DataSourcePicker';
 export {
   type PluginEventProperties,
   createPluginEventProperties,

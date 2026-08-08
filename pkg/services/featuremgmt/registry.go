@@ -3182,6 +3182,14 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true},
 		},
+		{
+			Name:        "grafana.unifiedDataSourcePicker",
+			Description: "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "true", // enabled by default
+			Generate:    Generate{React: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle
