@@ -16,6 +16,8 @@ interface Props {
   behindBranch?: boolean;
   repoUrl?: string;
   branchInfo?: PreviewBranchInfo;
+  /* URL of the original version saved in Grafana, if the resource already exists. Shown as a link to go back to it. */
+  originalUrl?: string;
 }
 
 export type PreviewBranchInfo = {
@@ -46,7 +48,7 @@ function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch:
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
+export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo, originalUrl }: Props) {
   const { repoType, action, prTitle } = usePullRequestParam();
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
@@ -115,6 +117,18 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
           <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.targetBranch} repoType={repoType} />
           {'\u2192'} {/* Target branch (configured branch) */}
           <BranchDisplay baseUrl={branchInfo.repoBaseUrl} branch={branchInfo.configuredBranch} repoType={repoType} />
+        </Box>
+      )}
+
+      {/* when the resource already exists in Grafana, offer a way back to the original version */}
+      {originalUrl && (
+        <Box marginTop={1}>
+          <TextLink href={originalUrl}>
+            {t(
+              'provisioned-resource-preview-banner.preview-banner.go-back-to-original',
+              'Go back to the original version'
+            )}
+          </TextLink>
         </Box>
       )}
     </Alert>

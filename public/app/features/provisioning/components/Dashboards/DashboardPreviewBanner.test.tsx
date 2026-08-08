@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
@@ -62,6 +63,13 @@ interface FileQueryData {
     repositoryURL?: string;
     newPullRequestURL?: string;
     compareURL?: string;
+  };
+  resource?: {
+    existing?: {
+      metadata?: {
+        name?: string;
+      };
+    };
   };
 }
 
@@ -235,6 +243,32 @@ describe('DashboardPreviewBanner', () => {
         })
       ).toBeInTheDocument();
       expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+    });
+
+    it('renders a link back to the original dashboard when it already exists in Grafana', () => {
+      setup(
+        {},
+        {
+          fileQuery: {
+            data: {
+              ...defaultFileQueryReturn.data,
+              resource: { existing: { metadata: { name: 'original-uid' } } },
+            },
+            isLoading: false,
+            error: null,
+          },
+        }
+      );
+
+      const link = screen.getByRole('link', { name: 'Go back to the original version' });
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveAttribute('href', '/d/original-uid');
+    });
+
+    it('does not render a link back to the original dashboard when it does not exist yet', () => {
+      setup();
+
+      expect(screen.queryByRole('link', { name: 'Go back to the original version' })).not.toBeInTheDocument();
     });
 
     it('calls useGetResourceRepositoryView with slug', () => {
