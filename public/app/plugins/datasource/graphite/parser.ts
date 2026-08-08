@@ -7,6 +7,7 @@ export class Parser {
   lexer: Lexer;
   tokens: AstNode[];
   index: number;
+  hasPipe = false;
 
   constructor(expression: string) {
     this.expression = expression;
@@ -21,7 +22,11 @@ export class Parser {
 
   start(): AstNode | null {
     try {
-      return this.functionCall() || this.metricExpression();
+      const node = this.functionCall() || this.metricExpression();
+      if (node === null) {
+        return null;
+      }
+      return this.pipedFunctionCall(node);
     } catch (e) {
       if (isGraphiteParserError(e)) {
         return {
@@ -171,6 +176,23 @@ export class Parser {
     return node;
   }
 
+  pipedFunctionCall(node: AstNode): AstNode {
+    while (this.match('|')) {
+      this.consumeToken();
+
+      const funcNode = this.functionCall();
+      if (!funcNode) {
+        this.errorMark('Expected function after pipe');
+      }
+
+      this.hasPipe = true;
+      funcNode.params = [node, ...(funcNode.params ?? [])];
+      node = funcNode;
+    }
+
+    return node;
+  }
+
   boolExpression(): AstNode | null {
     if (!this.match('bool')) {
       return null;
@@ -260,7 +282,7 @@ export class Parser {
     };
   }
 
-  errorMark(text: string) {
+  errorMark(text: string): never {
     const currentToken = this.tokens[this.index];
     const type = currentToken ? currentToken.type : 'end of string';
     const error: GraphiteParserError = {
@@ -283,6 +305,31 @@ export class Parser {
 
   match(token1: string, token2?: string) {
     return this.matchToken(token1, 0) && (!token2 || this.matchToken(token2, 1));
+  }
+}
+
+/**
+ * Renders a parsed AST back into a Graphite query string. Pipes are folded into nested
+ * function calls while parsing, so a piped expression renders as its nested equivalent.
+ * Throws on node types it cannot render, so callers never compare against a partial query.
+ */
+export function renderAstNode(node: AstNode): string {
+  switch (node.type) {
+    case 'metric':
+      return (node.segments ?? []).map(renderAstNode).join('.');
+    case 'function':
+      return `${node.name}(${(node.params ?? []).map(renderAstNode).join(', ')})`;
+    case 'template':
+      return `[[${node.value}]]`;
+    case 'string':
+      return `'${node.value}'`;
+    case 'segment':
+    case 'number':
+    case 'bool':
+    case 'series-ref':
+      return String(node.value);
+    default:
+      throw new Error(`Cannot render query node of type ${node.type}`);
   }
 }
 

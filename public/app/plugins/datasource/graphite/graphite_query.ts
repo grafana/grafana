@@ -5,7 +5,7 @@ import { type TemplateSrv } from '@grafana/runtime';
 
 import { type GraphiteDatasource } from './datasource';
 import { type FuncInstance } from './gfunc';
-import { type AstNode, Parser } from './parser';
+import { type AstNode, Parser, renderAstNode } from './parser';
 import { type GraphiteSegment } from './types';
 import { arrayMove } from './utils';
 
@@ -84,7 +84,12 @@ export default class GraphiteQuery {
         // Spaces, quotes, and commas are used when rendering the AST back into a string.
         // We are removing these for less false positives of query changes.
         const sanitizeQuery = (o: string): string => o.replace(/\s|'|"|,/g, '');
-        const oldSanitized = sanitizeQuery(oldQuery);
+        // A piped query is rewritten into its nested equivalent while parsing (`a | scale(2)`
+        // becomes `scale(a, 2)`), so it can never match the string the builder generates.
+        // Compare against that nested rewrite rather than against the text the user typed, so
+        // a lossy builder model is still caught for piped queries.
+        const expectedQuery = parser.hasPipe ? renderAstNode(astNode) : oldQuery;
+        const oldSanitized = sanitizeQuery(expectedQuery);
         const newSanitized = sanitizeQuery(newQuery);
         if (oldSanitized && newSanitized && oldSanitized !== newSanitized) {
           throw new Error(
