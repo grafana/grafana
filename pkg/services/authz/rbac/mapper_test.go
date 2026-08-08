@@ -165,6 +165,55 @@ func TestMapperRegistry_ExactMatchPreferred(t *testing.T) {
 	assert.Equal(t, "dashboards:uid:", mapping.Prefix())
 }
 
+func TestMapperRegistry_NotebooksUseDashboardPermissionsWithIndependentScopes(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	notebookMapping, ok := reg.Get("dashboard.grafana.app", "notebooks", "")
+	require.True(t, ok)
+	require.NotNil(t, notebookMapping)
+
+	dashboardMapping, ok := reg.Get("dashboard.grafana.app", "dashboards", "")
+	require.True(t, ok)
+	require.NotNil(t, dashboardMapping)
+
+	for _, verb := range []string{
+		utils.VerbGet,
+		utils.VerbList,
+		utils.VerbWatch,
+		utils.VerbCreate,
+		utils.VerbUpdate,
+		utils.VerbPatch,
+		utils.VerbDelete,
+		utils.VerbDeleteCollection,
+	} {
+		notebookAction, notebookOK := notebookMapping.Action(verb)
+		dashboardAction, dashboardOK := dashboardMapping.Action(verb)
+		require.Equal(t, dashboardOK, notebookOK)
+		assert.Equal(t, dashboardAction, notebookAction)
+		assert.Equal(t, dashboardMapping.ActionSets(verb), notebookMapping.ActionSets(verb))
+	}
+
+	assert.Equal(t, "notebooks:uid:", notebookMapping.Prefix())
+	assert.Equal(t, "notebooks:uid:nb1", notebookMapping.Scope("nb1"))
+	assert.NotEqual(t, dashboardMapping.Scope("nb1"), notebookMapping.Scope("nb1"))
+	assert.True(t, notebookMapping.HasFolderSupport())
+}
+
+func TestMapperRegistry_DashboardWinsSharedLegacyActionReverseMapping(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	var reverseMapping Mapping
+	for _, mapping := range reg.GetAll("dashboard.grafana.app") {
+		action, ok := mapping.Action(utils.VerbGet)
+		if ok && action == "dashboards:read" {
+			reverseMapping = mapping
+		}
+	}
+
+	require.NotNil(t, reverseMapping)
+	assert.Equal(t, "dashboards:uid:", reverseMapping.Prefix())
+}
+
 func TestMapperRegistry_SubresourceLookup(t *testing.T) {
 	parentTr := newResourceTranslation("widgets", "uid", true, nil)
 	subTr := translation{

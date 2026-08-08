@@ -6730,7 +6730,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutItemSpec(ref common
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
+				Description: "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI; `height` is the rendered height in pixels for panel cells (narrative cells auto-size). `timeFrom`/`timeTo` lock a panel cell to its own time range (absolute or relative time strings) instead of following the notebook's global range.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"element": {
@@ -6749,6 +6749,24 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutItemSpec(ref common
 					"collapsed": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+					"height": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"timeFrom": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"timeTo": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
 							Format: "",
 						},
 					},
