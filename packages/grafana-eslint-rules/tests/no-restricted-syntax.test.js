@@ -1,3 +1,4 @@
+import tsParser from '@typescript-eslint/parser';
 import { RuleTester } from 'eslint';
 
 import noRestrictedSyntax from '../rules/no-restricted-syntax.cjs';
@@ -6,7 +7,7 @@ RuleTester.setDefaultConfig({
   languageOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
-    parser: require('@typescript-eslint/parser'),
+    parser: tsParser,
   },
 });
 
