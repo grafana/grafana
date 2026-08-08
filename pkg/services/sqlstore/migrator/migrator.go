@@ -187,6 +187,13 @@ func (mg *Migrator) GetMigrationIDs(excludeNotLogged bool) []string {
 	return result
 }
 
+// MigrationIDs returns the ordered migration IDs that register would add
+func MigrationIDs(driverName string, register func(*Migrator)) []string {
+	mg := newMigrator(nil, nil, "", NewDialect(driverName))
+	register(mg)
+	return mg.GetMigrationIDs(false)
+}
+
 func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 	logMap := make(map[string]MigrationLog)
 	logItems := make([]MigrationLog, 0)
