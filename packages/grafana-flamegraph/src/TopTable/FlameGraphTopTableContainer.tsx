@@ -25,7 +25,7 @@ import {
 
 import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
+import { OTHER_LABEL, TOP_TABLE_COLUMN_WIDTH } from '../constants';
 import { type ColorScheme, ColorSchemeDiff, type TableData } from '../types';
 
 type Props = {
@@ -56,6 +56,11 @@ const FlameGraphTopTableContainer = memo(
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
 
+    // Stack traces that didn't make the cut for maxNodes get aggregated by the backend into a single "other" row.
+    // Showing it as a normal row in the table is confusing (it's not an actionable symbol), so we pull it out and
+    // explain it separately instead. See https://github.com/grafana/grafana/issues/110677.
+    const { rest: tableWithoutOther, other: otherData } = useMemo(() => splitOtherRow(table), [table]);
+
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
@@ -63,44 +68,163 @@ const FlameGraphTopTableContainer = memo(
 
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
-        <AutoSizer style={{ width: '100%' }}>
-          {({ width, height }) => {
-            if (width < 3 || height < 3) {
-              return null;
-            }
+        <div className={styles.table}>
+          <AutoSizer style={{ width: '100%' }}>
+            {({ width, height }) => {
+              if (width < 3 || height < 3) {
+                return null;
+              }
 
-            const frame = buildTableDataFrame(
-              data,
-              table,
-              width,
-              onSymbolClick,
-              onSearch,
-              onSandwich,
-              theme,
-              colorScheme,
-              search,
-              sandwichItem
-            );
-            return (
-              <Table
-                initialSortBy={sort}
-                onSortByChange={(s) => {
-                  if (s && s.length) {
-                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                  }
-                  setSort(s);
-                }}
-                data={frame}
-                width={width}
-                height={height}
-              />
-            );
-          }}
-        </AutoSizer>
+              const frame = buildTableDataFrame(
+                data,
+                tableWithoutOther,
+                width,
+                onSymbolClick,
+                onSearch,
+                onSandwich,
+                theme,
+                colorScheme,
+                search,
+                sandwichItem
+              );
+              return (
+                <Table
+                  initialSortBy={sort}
+                  onSortByChange={(s) => {
+                    if (s && s.length) {
+                      onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+                    }
+                    setSort(s);
+                  }}
+                  data={frame}
+                  width={width}
+                  height={height}
+                />
+              );
+            }}
+          </AutoSizer>
+        </div>
+        {otherData && (
+          <OtherRowExplanation
+            data={data}
+            otherData={otherData}
+            minTotal={getMinTotal(tableWithoutOther)}
+            search={search}
+            sandwichItem={sandwichItem}
+            onSearch={onSearch}
+            onSandwich={onSandwich}
+          />
+        )}
       </div>
     );
   }
 );
+
+/**
+ * Pulls the "other" aggregate row (if present) out of the table so it can be rendered separately from the rest of
+ * the symbols.
+ */
+function splitOtherRow(table: { [key: string]: TableData }): {
+  rest: { [key: string]: TableData };
+  other?: TableData;
+} {
+  const other = table[OTHER_LABEL];
+  if (!other) {
+    return { rest: table };
+  }
+  const { [OTHER_LABEL]: _other, ...rest } = table;
+  return { rest, other };
+}
+
+/**
+ * Finds the smallest "total" value among the rows that were kept in the table. Anything smaller than this got
+ * truncated by the backend into the "other" row, so this acts as the effective cutoff the user is seeing.
+ */
+function getMinTotal(table: { [key: string]: TableData }): number | undefined {
+  const totals = Object.values(table).map((row) => row.total);
+  return totals.length ? Math.min(...totals) : undefined;
+}
+
+type OtherRowExplanationProps = {
+  data: FlameGraphDataContainer;
+  otherData: TableData;
+  minTotal?: number;
+  search?: string;
+  sandwichItem?: string;
+  onSearch: (str: string) => void;
+  onSandwich: (str?: string) => void;
+};
+
+function OtherRowExplanation({
+  data,
+  otherData,
+  minTotal,
+  search,
+  sandwichItem,
+  onSearch,
+  onSandwich,
+}: OtherRowExplanationProps) {
+  const styles = useStyles2(getOtherRowStyles);
+  const otherDisplay = data.valueDisplayProcessor(otherData.total);
+  const otherValue = otherDisplay.text + (otherDisplay.suffix || '');
+
+  let minTotalText: string | undefined;
+  if (minTotal !== undefined) {
+    const minTotalDisplay = data.valueDisplayProcessor(minTotal);
+    minTotalText = minTotalDisplay.text + (minTotalDisplay.suffix || '');
+  }
+
+  const isSearched = search === `^${escapeStringForRegex(OTHER_LABEL)}$`;
+  const isSandwiched = sandwichItem === OTHER_LABEL;
+
+  return (
+    <div className={styles.wrapper} data-testid="topTableOtherRow">
+      <span>
+        A total of {otherValue} has been truncated and is represented by <strong>other</strong> in the flame graph.
+        {minTotalText
+          ? ` Each truncated stack trace had a total resource consumption of less than ${minTotalText}.`
+          : ''}
+      </span>
+      <div className={styles.actions}>
+        <IconButton
+          name={'search'}
+          variant={isSearched ? 'primary' : 'secondary'}
+          tooltip={isSearched ? 'Clear from search' : 'Search for symbol'}
+          aria-label={isSearched ? 'Clear from search' : 'Search for symbol'}
+          onClick={() => onSearch(isSearched ? '' : OTHER_LABEL)}
+        />
+        <IconButton
+          name={'gf-show-context'}
+          variant={isSandwiched ? 'primary' : 'secondary'}
+          tooltip={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+          aria-label={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+          onClick={() => onSandwich(isSandwiched ? undefined : OTHER_LABEL)}
+        />
+      </div>
+    </div>
+  );
+}
+
+const getOtherRowStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css({
+      label: 'otherRowExplanation',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(1),
+      padding: theme.spacing(1),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    actions: css({
+      label: 'otherRowActions',
+      display: 'flex',
+      flexShrink: 0,
+    }),
+  };
+};
 
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
 
@@ -367,9 +491,16 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     topTableContainer: css({
       label: 'topTableContainer',
+      display: 'flex',
+      flexDirection: 'column',
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,
       height: '100%',
+    }),
+    table: css({
+      label: 'table',
+      flexGrow: 1,
+      minHeight: 0,
     }),
   };
 };
@@ -389,6 +520,6 @@ const getStylesActionCell = () => {
   };
 };
 
-export { buildFilteredTable };
+export { buildFilteredTable, splitOtherRow, getMinTotal };
 
 export default FlameGraphTopTableContainer;
