@@ -175,6 +175,45 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       },
     });
 
+    if (
+      contextSrv.isSignedIn &&
+      !isEditingPanel &&
+      (contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
+        contextSrv.hasPermission(AccessControlAction.DashboardsWrite)) &&
+      getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)
+    ) {
+      items.push({
+        text: t('panel.header-menu.add-to-notebook', 'Add to notebook'),
+        iconClassName: 'book-open',
+        onClick: (e) => {
+          e.preventDefault();
+          // Loaded lazily so the notebooks feature stays out of the dashboard bundle path.
+          import('app/features/notebook/addToNotebook/addPanelToNotebookFromMenu').then((m) =>
+            m.addPanelToNotebookFromMenu(panel, dashboard)
+          );
+        },
+      });
+
+      // One-click append to the most recently used notebook (skips the picker).
+      const lastUsedNotebook = await import('app/features/notebook/model/lastUsedNotebook')
+        .then(({ getLastUsedNotebook }) => getLastUsedNotebook())
+        .catch(() => undefined);
+      if (lastUsedNotebook) {
+        const shortTitle =
+          lastUsedNotebook.title.length > 25 ? `${lastUsedNotebook.title.slice(0, 25)}…` : lastUsedNotebook.title;
+        items.push({
+          text: t('panel.header-menu.add-to-last-notebook', 'Add to "{{title}}"', { title: shortTitle }),
+          iconClassName: 'bolt',
+          onClick: (e) => {
+            e.preventDefault();
+            import('app/features/notebook/addToNotebook/addPanelToNotebookFromMenu').then((m) =>
+              m.quickAddPanelToLastNotebookFromMenu(panel, dashboard)
+            );
+          },
+        });
+      }
+    }
+
     if (dashboard.state.isEditing && !isReadOnlyRepeat && !isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),

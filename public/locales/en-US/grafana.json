@@ -12777,6 +12777,33 @@
       "viz-cancel": "Cancel",
       "viz-hint": "Tip: any dashboard panel or Explore query can also be added via “Add to notebook”."
     },
+    "add-form": {
+      "add": "Add",
+      "add-open": "Add & open notebook",
+      "added": "Added to notebook",
+      "cancel": "Cancel",
+      "default-title": "Investigation — {{date}}",
+      "error-title": "Could not add to notebook",
+      "existing": "Existing notebook",
+      "failed": "Failed to add to notebook",
+      "lock-time": "Lock this panel to the current time window",
+      "lock-time-description": "{{from}} → {{to}}",
+      "new": "New notebook",
+      "none-yet": "No notebooks yet",
+      "notebook-label": "Notebook",
+      "notebook-placeholder": "Choose a notebook",
+      "select-required": "Select a notebook to add to.",
+      "source": "Adding a live panel from {{sourceName}}.",
+      "target-label": "Target notebook",
+      "title-label": "Notebook name"
+    },
+    "add-from-panel": {
+      "origin": "From dashboard: {{title}}",
+      "unnamed-dashboard": "this dashboard"
+    },
+    "add-modal": {
+      "title": "Add to notebook"
+    },
     "cell": {
       "assistant-badge": "Assistant",
       "delete": "Delete block",
@@ -12890,6 +12917,9 @@
       "query-picker": "Query to edit",
       "run": "Run query",
       "run-tooltip": "Ctrl/Cmd + Enter to run"
+    },
+    "quick-add": {
+      "added": "Added to notebook"
     },
     "viz-suggestions": {
       "no-data": "No data yet — suggestions appear once the panel has results.",
@@ -13060,6 +13090,8 @@
       }
     },
     "header-menu": {
+      "add-to-last-notebook": "Add to \"{{title}}\"",
+      "add-to-notebook": "Add to notebook",
       "copy": "Copy",
       "copy-styles": "Copy styles",
       "download-diagnostics": "Download diagnostics",
