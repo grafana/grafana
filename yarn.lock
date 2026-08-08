@@ -2833,40 +2833,31 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/prometheus@npm:13.1.2":
-  version: 13.1.2
-  resolution: "@grafana/prometheus@npm:13.1.2"
+"@grafana/prometheus@npm:13.1.12":
+  version: 13.1.12
+  resolution: "@grafana/prometheus@npm:13.1.12"
   dependencies:
-    "@emotion/css": "npm:11.13.5"
+    "@emotion/css": "npm:^11.13.5"
     "@floating-ui/react": "npm:0.27.19"
-    "@grafana/plugin-ui": "npm:^0.13.1"
-    "@hello-pangea/dnd": "npm:18.0.1"
-    "@leeoniya/ufuzzy": "npm:1.0.19"
-    "@lezer/common": "npm:1.5.2"
-    "@lezer/highlight": "npm:1.2.3"
-    "@lezer/lr": "npm:1.4.8"
-    "@prometheus-io/lezer-promql": "npm:0.307.3"
-    "@types/debounce-promise": "npm:3.1.9"
-    "@types/lodash": "npm:4.17.20"
-    "@types/react": "npm:18.3.18"
-    "@types/react-dom": "npm:18.3.5"
-    "@types/react-highlight-words": "npm:0.20.0"
-    "@types/semver": "npm:7.7.1"
-    "@types/uuid": "npm:10.0.0"
-    debounce-promise: "npm:3.1.2"
-    lodash: "npm:^4.17.23"
-    moment: "npm:2.30.1"
-    moment-timezone: "npm:0.5.47"
-    monaco-editor: "npm:0.34.1"
-    monaco-promql: "npm:1.8.0"
-    pluralize: "npm:8.0.0"
-    prismjs: "npm:1.30.0"
-    react-highlight-words: "npm:0.21.0"
-    react-use: "npm:17.6.0"
-    react-window: "npm:1.8.11"
-    rxjs: "npm:7.8.2"
-    semver: "npm:7.7.3"
-    uuid: "npm:11.1.0"
+    "@grafana/plugin-ui": "npm:^0.17.3"
+    "@hello-pangea/dnd": "npm:^18.0.1"
+    "@leeoniya/ufuzzy": "npm:^1.0.19"
+    "@lezer/common": "npm:^1.5.2"
+    "@lezer/highlight": "npm:^1.2.3"
+    "@lezer/lr": "npm:^1.4.8"
+    "@prometheus-io/lezer-promql": "npm:^0.307.3"
+    debounce-promise: "npm:^3.1.2"
+    lodash: "npm:^4.18.1"
+    monaco-editor: "npm:^0.34.1"
+    monaco-promql: "npm:^1.8.0"
+    pluralize: "npm:^8.0.0"
+    prismjs: "npm:^1.30.0"
+    react-highlight-words: "npm:^0.21.0"
+    react-use: "npm:^17.6.0"
+    react-window: "npm:^1.8.11"
+    rxjs: "npm:^7.8.2"
+    semver: "npm:^7.7.3"
+    uuid: "npm:^14.0.0"
   peerDependencies:
     "@grafana/assistant": ">=0.1.0"
     "@grafana/data": ">=11.5.0"
@@ -2880,7 +2871,7 @@ __metadata:
   peerDependenciesMeta:
     "@grafana/assistant":
       optional: true
-  checksum: 10/d96748add1b29ed9251dbf0f7d65ece846c3ce29760a6f74e21f8f4c7614a15ec79f657c8764d4a1fa117cb45ea531ab91d8bc99495919e78bcc6ae8ce82d7d2
+  checksum: 10/3ae12730ae6cb0ef7c6651eb54c48a87e0cf36f17e15148b796947e6d81db5d440979ca7ebe54e95075f09a2f26afde3d0f24680d148fdb26f6bacf40b080706
   languageName: node
   linkType: hard
 
@@ -5061,7 +5052,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:1.5.2, @lezer/common@npm:^1.0.0, @lezer/common@npm:^1.0.2, @lezer/common@npm:^1.1.0, @lezer/common@npm:^1.2.0, @lezer/common@npm:^1.2.1, @lezer/common@npm:^1.3.0, @lezer/common@npm:^1.5.0":
+"@lezer/common@npm:1.5.2, @lezer/common@npm:^1.0.0, @lezer/common@npm:^1.0.2, @lezer/common@npm:^1.1.0, @lezer/common@npm:^1.2.0, @lezer/common@npm:^1.2.1, @lezer/common@npm:^1.3.0, @lezer/common@npm:^1.5.0, @lezer/common@npm:^1.5.2":
   version: 1.5.2
   resolution: "@lezer/common@npm:1.5.2"
   checksum: 10/62c0a0ce431cb14bfa6cded04e24a05efa566e9260314bb3f3cf547d501efa1db5c83fc9a7871f8e0b6a4030212840f0e6567433168960c7c83bb3ffbeef8b99
@@ -5090,7 +5081,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/highlight@npm:1.2.3, @lezer/highlight@npm:^1.0.0, @lezer/highlight@npm:^1.1.3, @lezer/highlight@npm:^1.2.0, @lezer/highlight@npm:^1.2.3":
+"@lezer/highlight@npm:^1.0.0, @lezer/highlight@npm:^1.1.3, @lezer/highlight@npm:^1.2.0, @lezer/highlight@npm:^1.2.3":
   version: 1.2.3
   resolution: "@lezer/highlight@npm:1.2.3"
   dependencies:
@@ -5132,21 +5123,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/lr@npm:1.4.10, @lezer/lr@npm:^1.0.0, @lezer/lr@npm:^1.3.0, @lezer/lr@npm:^1.4.0":
+"@lezer/lr@npm:1.4.10, @lezer/lr@npm:^1.0.0, @lezer/lr@npm:^1.3.0, @lezer/lr@npm:^1.4.0, @lezer/lr@npm:^1.4.8":
   version: 1.4.10
   resolution: "@lezer/lr@npm:1.4.10"
   dependencies:
     "@lezer/common": "npm:^1.0.0"
   checksum: 10/f8615c755dbbc44aa77f018d81d941cb9afc6bf7c59d78d099dadf2b15c5971bd6cbe38930c0ec143d1b4b3ee7f05da758f72e4980849c9b3eeb19f4af6f34f8
-  languageName: node
-  linkType: hard
-
-"@lezer/lr@npm:1.4.8":
-  version: 1.4.8
-  resolution: "@lezer/lr@npm:1.4.8"
-  dependencies:
-    "@lezer/common": "npm:^1.0.0"
-  checksum: 10/01eb519c21077a63292804c41aa70e6eb24cee0a75dbd569a9885860aea937930bc92c980cff14c610a714560c19c8d6e8e15108c39f3c969bfe08afd841c2e7
   languageName: node
   linkType: hard
 
@@ -6808,7 +6790,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prometheus-io/lezer-promql@npm:0.307.3":
+"@prometheus-io/codemirror-promql@npm:0.311.3":
+  version: 0.311.3
+  resolution: "@prometheus-io/codemirror-promql@npm:0.311.3"
+  dependencies:
+    "@prometheus-io/lezer-promql": "npm:0.311.3"
+    lru-cache: "npm:^11.2.7"
+  peerDependencies:
+    "@codemirror/autocomplete": ^6.4.0
+    "@codemirror/language": ^6.3.0
+    "@codemirror/lint": ^6.0.0
+    "@codemirror/state": ^6.1.1
+    "@codemirror/view": ^6.4.0
+    "@lezer/common": ^1.0.1
+  checksum: 10/b2ebb0f938ac0f13f31c96a21fb38f531547de07f15284de414b88b2402b6a10c95c73b11d837010601d26ca065dbf79a433d413dd83e514e431ed2f43997719
+  languageName: node
+  linkType: hard
+
+"@prometheus-io/lezer-promql@npm:0.311.3":
+  version: 0.311.3
+  resolution: "@prometheus-io/lezer-promql@npm:0.311.3"
+  peerDependencies:
+    "@lezer/highlight": ^1.1.2
+    "@lezer/lr": ^1.2.3
+  checksum: 10/bcaf3d0f182cb862a7c101e46703a11b0eb589771342ddc9e7ebfe9941b3be91b413632a83ebc2dead6701dbe8458f69ae00ae9ba3ef98431425f976bdc97ce7
+  languageName: node
+  linkType: hard
+
+"@prometheus-io/lezer-promql@npm:^0.307.3":
   version: 0.307.3
   resolution: "@prometheus-io/lezer-promql@npm:0.307.3"
   peerDependencies:
@@ -11317,13 +11326,6 @@ __metadata:
   version: 0.0.6
   resolution: "@types/use-sync-external-store@npm:0.0.6"
   checksum: 10/a95ce330668501ad9b1c5b7f2b14872ad201e552a0e567787b8f1588b22c7040c7c3d80f142cbb9f92d13c4ea41c46af57a20f2af4edf27f224d352abcfe4049
-  languageName: node
-  linkType: hard
-
-"@types/uuid@npm:10.0.0":
-  version: 10.0.0
-  resolution: "@types/uuid@npm:10.0.0"
-  checksum: 10/e3958f8b0fe551c86c14431f5940c3470127293280830684154b91dc7eb3514aeb79fe3216968833cf79d4d1c67f580f054b5be2cd562bebf4f728913e73e944
   languageName: node
   linkType: hard
 
@@ -15942,7 +15944,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debounce-promise@npm:3.1.2":
+"debounce-promise@npm:3.1.2, debounce-promise@npm:^3.1.2":
   version: 3.1.2
   resolution: "debounce-promise@npm:3.1.2"
   checksum: 10/9a06b4f4674abf92ccda608510ba896f1a6f25c594d6288b787f40e99de836461ad8122f6cd8ce335816b693a678dfb37b7470961888ea4b08863208f3eea348
@@ -19511,7 +19513,7 @@ __metadata:
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^3.10.0"
     "@grafana/plugin-ui": "npm:^0.17.3"
-    "@grafana/prometheus": "npm:13.1.2"
+    "@grafana/prometheus": "npm:13.1.12"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:8.13.5"
     "@grafana/scenes-react": "npm:8.13.5"
@@ -24033,7 +24035,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:^11.0.0, lru-cache@npm:^11.0.1, lru-cache@npm:^11.1.0, lru-cache@npm:^11.2.1, lru-cache@npm:^11.2.2":
+"lru-cache@npm:^11.0.0, lru-cache@npm:^11.0.1, lru-cache@npm:^11.1.0, lru-cache@npm:^11.2.1, lru-cache@npm:^11.2.2, lru-cache@npm:^11.2.7":
   version: 11.5.2
   resolution: "lru-cache@npm:11.5.2"
   checksum: 10/122789c66605ddf29df58ff279e9e2c9499499d0b80b895ec524496f14bcde045d1582e3e38008f3457226d98067556719573b352119d6be8bdb1f8849f85681
@@ -25348,10 +25350,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"monaco-promql@npm:1.8.0":
-  version: 1.8.0
-  resolution: "monaco-promql@npm:1.8.0"
-  checksum: 10/d757ecd46fb3fb3ee31d1ee06b21e2860735d24d41ca161e8d4e576a956a83e86103b7ddbecdf1e02ea9fac6a3782694c996e3ce46b7483f3c47630627b40c68
+"monaco-promql@npm:^1.8.0":
+  version: 1.9.0
+  resolution: "monaco-promql@npm:1.9.0"
+  dependencies:
+    "@prometheus-io/codemirror-promql": "npm:0.311.3"
+  checksum: 10/6595d8453e85dd88f0477738b9394ff96c47e70a05b489cbad90810bc513e2b5af80c6870324ad045d029a9abbafc86bf1a4a913dde2d87afb175476d4645504
   languageName: node
   linkType: hard
 
@@ -27525,7 +27529,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pluralize@npm:8.0.0, pluralize@npm:^8.0.0":
+"pluralize@npm:^8.0.0":
   version: 8.0.0
   resolution: "pluralize@npm:8.0.0"
   checksum: 10/17877fdfdb7ddb3639ce257ad73a7c51a30a966091e40f56ea9f2f545b5727ce548d4928f8cb3ce38e7dc0c5150407d318af6a4ed0ea5265d378473b4c2c61ec
@@ -33856,15 +33860,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:11.1.0, uuid@npm:^11.0.0, uuid@npm:^11.1.0":
-  version: 11.1.0
-  resolution: "uuid@npm:11.1.0"
-  bin:
-    uuid: dist/esm/bin/uuid
-  checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
-  languageName: node
-  linkType: hard
-
 "uuid@npm:14.0.0":
   version: 14.0.0
   resolution: "uuid@npm:14.0.0"
@@ -33880,6 +33875,15 @@ __metadata:
   bin:
     uuid: dist-node/bin/uuid
   checksum: 10/0f978fd5b0269d7acb615342aeb131f0b8d85eeb8ec34f2915d906baa3befcc14a079a430d0f8116aec6fd20c850cbfab65d1b3d1643fa81ed373c0cf9574f18
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^11.0.0, uuid@npm:^11.1.0":
+  version: 11.1.0
+  resolution: "uuid@npm:11.1.0"
+  bin:
+    uuid: dist/esm/bin/uuid
+  checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
   languageName: node
   linkType: hard
 
