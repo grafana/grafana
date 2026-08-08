@@ -63,6 +63,7 @@ export function useIncidents() {
     count,
     hasMore,
     hasIncidents,
+    enabled: installed,
     loading,
     error: loadError,
     refetch,
