@@ -648,6 +648,7 @@ github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tN
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV/sSk/8dngufqelfh6jnri85riMAaF/M=
 github.com/QcloudApi/qcloud_sign_golang v0.0.0-20141224014652-e4130a326409/go.mod h1:1pk82RBxDY/JZnPQrtqHlUFfCctgdorsd9M06fMynOM=
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0 h1:t527LHHE3HmiHrq74QMpNPZpGCIJzTx+apLkMKt4HC0=
+github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=
 github.com/Sereal/Sereal/Go/sereal v0.0.0-20231009093132-b9187f1a92c6 h1:5kUcJJAKWWI82Xnp/CaU0eu5hLlHkmm9acjowSkwCd0=
 github.com/Shopify/goreferrer v0.0.0-20220729165902-8cddb4f5de06 h1:KkH3I3sJuOLP3TjA/dfr4NAY8bghDwnXiU7cTKxQqo0=
 github.com/Shopify/goreferrer v0.0.0-20220729165902-8cddb4f5de06/go.mod h1:7erjKLwalezA0k99cWs5L11HWOAPNjdUZ6RxH1BXbbM=
@@ -704,6 +705,7 @@ github.com/apache/cassandra-gocql-driver/v2 v2.0.0 h1:Omnzb1Z/P90Dr2TbVNu54ICQL7
 github.com/apache/cassandra-gocql-driver/v2 v2.0.0/go.mod h1:QH/asJjB3mHvY6Dot6ZKMMpTcOrWJ8i9GhsvG1g0PK4=
 github.com/apache/thrift v0.21.0/go.mod h1:W1H8aR/QRtYNvrPeFXBtobyRkd0/YVhTc6i07XIAgDw=
 github.com/apache/thrift v0.23.0/go.mod h1:zPt6WxgvTOM6hF92y8C+MkEM5LMxZuk4JcQOiU4Esvs=
+github.com/apapsch/go-jsonmerge/v2 v2.0.0/go.mod h1:lvDnEdqiQrp0O42VQGgmlKpxL1AP2+08jFMw88y4klk=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e h1:QEF07wC0T1rKkctt1RINW/+RMTVmiwxETico2l3gxJA=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
 github.com/atc0005/go-teams-notify/v2 v2.13.0 h1:nbDeHy89NjYlF/PEfLVF6lsserY9O5SnN1iOIw3AxXw=
@@ -874,6 +876,7 @@ github.com/blevesearch/zapx/v17 v17.1.2 h1:avbOk2igaASNoiy0BE/jPgcxAnRI2PGeydeP4
 github.com/blevesearch/zapx/v17 v17.1.2/go.mod h1:WQObxKrqUX7cd0G1GMvDfc/bmZzQvoy7APOPimx7DiI=
 github.com/bluele/gcache v0.0.2 h1:WcbfdXICg7G/DGBh1PFfcirkWOQV+v077yF1pSy3DGw=
 github.com/bluele/gcache v0.0.2/go.mod h1:m15KV+ECjptwSPxKhOhQoAFQVtUFjTVkc3H8o0t/fp0=
+github.com/bmatcuk/doublestar v1.1.1/go.mod h1:UD6OnuiIn0yFxxA2le/rnRU1G4RaI4UvFv1sNto9p6w=
 github.com/bmatcuk/doublestar v1.3.4 h1:gPypJ5xD31uhX6Tf54sDPUOBXTqKH4c9aPY66CyQrS0=
 github.com/bmatcuk/doublestar v1.3.4/go.mod h1:wiQtGV+rzVYxB7WIlirSN++5HPtPlXEo9MEoZQC/PmE=
 github.com/bmatcuk/doublestar/v4 v4.10.0 h1:zU9WiOla1YA122oLM6i4EXvGW62DvKZVxIe6TYWexEs=
@@ -1351,6 +1354,7 @@ github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/grafana/alerting v0.0.0-20260330161147-03db0b961b17/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
 github.com/grafana/alerting v0.0.0-20260521151554-b942723acbb2/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
 github.com/grafana/alerting v0.0.0-20260616104851-587c401ed754/go.mod h1:Moux9knxDFfYBpH3WS511X6qNxrJvwUbYIPGR1h7QDo=
+github.com/grafana/alerting v0.0.0-20260721133051-bf8d0237d7c6/go.mod h1:xlvTghiB2qaV65HDCv7v5PTQ+NK47SKayDpTSndJK5E=
 github.com/grafana/alerting/apps/historian v0.0.0-20260728085903-34a493964372/go.mod h1:VeTh5j/IeWxbj5v1itvbbH6wt+nYH7qF0/BwH7GpK+U=
 github.com/grafana/authlib v0.0.0-20260414201248-d766c8627a66/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
 github.com/grafana/authlib v0.0.0-20260511070317-cdec9a89f585/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
@@ -1460,6 +1464,8 @@ github.com/imdario/mergo v0.3.16/go.mod h1:WBLT9ZmE3lPoWsEzCh9LPo3TiwVN+ZKEjmz+h
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/influxdata/influxdb v1.7.7 h1:UvNzAPfBrKMENVbQ4mr4ccA9sW+W1Ihl0Yh1s0BiVAg=
 github.com/influxdata/influxdb-client-go/v2 v2.13.0/go.mod h1:k+spCbt9hcvqvUiz0sr5D8LolXHqAAOfPw9v/RIRHl4=
+github.com/influxdata/influxdb-client-go/v2 v2.14.0/go.mod h1:Ahpm3QXKMJslpXl3IftVLVezreAUtBOTZssDrjZEFHI=
+github.com/influxdata/influxql v1.4.1/go.mod h1:VqxAKyQz5p8GzgGsxWalCWYGxEqw6kvJo2IickMQiQk=
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
 github.com/influxdata/tdigest v0.0.2-0.20210216194612-fc98d27c9e8b h1:i44CesU68ZBRvtCjBi3QSosCIKrjmMbYlQMFAwVLds4=
 github.com/influxdata/tdigest v0.0.2-0.20210216194612-fc98d27c9e8b/go.mod h1:Z0kXnxzbTC2qrx4NaIzYkE1k66+6oEDQTvL95hQFh5Y=
@@ -1502,6 +1508,7 @@ github.com/jsternberg/zap-logfmt v1.3.0 h1:z1n1AOHVVydOOVuyphbOKyR4NICDQFiJMn1IK
 github.com/jsternberg/zap-logfmt v1.3.0/go.mod h1:N3DENp9WNmCZxvkBD/eReWwz1149BK6jEN9cQ4fNwZE=
 github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6/go.mod h1:WrYiIuiXUMIvTDAQw97C+9l0CnBmCcvosPjN3XDqS/o=
 github.com/juju/gnuflag v0.0.0-20171113085948-2ce1bb71843d h1:c93kUJDtVAXFEhsCh5jSxyOJmFHuzcihnslQiX8Urwo=
+github.com/juju/gnuflag v0.0.0-20171113085948-2ce1bb71843d/go.mod h1:2PavIy+JPciBPrBUjwbNvtwB6RQlve+hkpll6QSNmOE=
 github.com/julienschmidt/httprouter v1.3.0 h1:U0609e9tgbseu3rBINet9P48AI/D3oJs4dN7jwJOQ1U=
 github.com/jung-kurt/gofpdf v1.0.3-0.20190309125859-24315acbbda5 h1:PJr+ZMXIecYc1Ey2zucXdR73SMBtgjPgwa31099IMv0=
 github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 h1:uC1QfSlInpQF+M0ao65imhwqKnz3Q2z/d8PWZRMQvDM=
@@ -1717,6 +1724,7 @@ github.com/neelance/sourcemap v0.0.0-20200213170602-2833bce08e4c/go.mod h1:Qr6/a
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/nsf/jsondiff v0.0.0-20260207060731-8e8d90c4c0ac h1:4YV96Dzy2csSnhzl14/Qk5YsSrKAQusGsIADDn/4/g8=
 github.com/nsf/jsondiff v0.0.0-20260207060731-8e8d90c4c0ac/go.mod h1:mpRZBD8SJ55OIICQ3iWH0Yz3cjzA61JdqMLoWXeB2+8=
+github.com/oapi-codegen/runtime v1.0.0/go.mod h1:LmCUMQuPB4M/nLXilQXhHw+BLZdDb18B34OO356yJ/A=
 github.com/oapi-codegen/runtime v1.1.1 h1:EXLHh0DXIJnWhdRPN2w4MXAzFyE4CskzhNLUmtpMYro=
 github.com/oapi-codegen/runtime v1.1.1/go.mod h1:SK9X900oXmPWilYR5/WKPzt3Kqxn/uS/+lbpREv+eCg=
 github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 h1:G7ERwszslrBzRxj//JalHPu/3yz+De2J+4aLtSRlHiY=
@@ -1977,6 +1985,7 @@ github.com/spf13/pflag v1.0.6/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An
 github.com/spf13/viper v1.20.1/go.mod h1:P9Mdzt1zoHIG8m2eZQinpiBjo6kCmZSKBClNNqjJvu4=
 github.com/spiffe/go-spiffe/v2 v2.5.0/go.mod h1:P+NxobPc6wXhVtINNtFjNWGBTreew1GBUCwT2wPmb7g=
 github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad h1:fiWzISvDn0Csy5H0iwgAuJGQTUpVfEMJJd4nRFXogbc=
+github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad/go.mod h1:qLr4V1qq6nMqFKkMo8ZTx3f+BZEkzsRUY10Xsm2mwU0=
 github.com/stoewer/go-strcase v1.3.0/go.mod h1:fAH5hQ5pehh+j3nZfvwdk2RgEgQjAoM8wodgtPmh1xo=
 github.com/stoewer/go-strcase v1.3.1 h1:iS0MdW+kVTxgMoE1LAZyMiYJFKlOzLooE4MxjirtkAs=
 github.com/stoewer/go-strcase v1.3.1/go.mod h1:fAH5hQ5pehh+j3nZfvwdk2RgEgQjAoM8wodgtPmh1xo=

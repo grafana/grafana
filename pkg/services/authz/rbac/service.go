@@ -155,7 +155,7 @@ func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv
 	// Used by checkPermissionsWithFolderAuthZ (mapper miss). In order to fetch folder permissions once.
 	getFolderScope := s.newFolderScopeGetter(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Verb, false)
 
-	cachedPerms, err := s.getCachedIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action)
+	cachedPerms, err := s.getCachedIdentityPermissions(ctx, checkReq.Namespace, checkReq.IdentityType, checkReq.UserUID, checkReq.Action, checkReq.ActionSets)
 	if err == nil {
 		allowed, err := s.checkPermission(ctx, cachedPerms, getFolderScope, checkReq, getTree)
 		if err != nil {
@@ -297,7 +297,8 @@ func (s *Service) batchCheckErrorResponse(checks []*authzv1.BatchCheckItem, err 
 	return &authzv1.BatchCheckResponse{Results: results}
 }
 
-// groupBatchCheckItems validates and groups batch check items by action.
+// groupBatchCheckItems validates and groups batch check items by action and
+// action-set shape, so items in a group can share a single permission lookup.
 // Items that fail validation are added directly to results with an error.
 func (s *Service) groupBatchCheckItems(
 	ctx context.Context,
@@ -332,7 +333,9 @@ func (s *Service) groupBatchCheckItems(
 
 		requiresFresh := s.requiresFreshData(item.GetFreshnessTimestamp())
 
-		if g, ok := groups[action]; ok {
+		// Group by the same identity as the permission cache (action + action-set shape).
+		groupKey := permCacheActionPart(action, actionSets)
+		if g, ok := groups[groupKey]; ok {
 			g.items = append(g.items, item)
 			g.checkReqs = append(g.checkReqs, checkReq)
 			// Bypass the cache for the entire group as soon as one check requires fresh data
@@ -340,7 +343,7 @@ func (s *Service) groupBatchCheckItems(
 				g.requiresFreshData = true
 			}
 		} else {
-			groups[action] = &batchCheckGroup{
+			groups[groupKey] = &batchCheckGroup{
 				action:            action,
 				actionSets:        actionSets,
 				items:             []*authzv1.BatchCheckItem{item},
@@ -419,7 +422,7 @@ func (s *Service) getPermissionsForGroup(
 	}
 
 	// Try cache first, then fall back to store
-	permissions, err := s.getCachedIdentityPermissions(ctx, ns, idType, userUID, group.action)
+	permissions, err := s.getCachedIdentityPermissions(ctx, ns, idType, userUID, group.action, group.actionSets)
 	if err != nil {
 		return s.getIdentityPermissions(ctx, ns, idType, userUID, group.action, group.actionSets)
 	}
@@ -461,7 +464,7 @@ func (s *Service) resolveFolderScopeMap(ctx context.Context, ns types.NamespaceI
 		return perms, false, err
 	}
 
-	perms, err := s.getCachedIdentityPermissions(ctx, ns, idType, userUID, folderAction)
+	perms, err := s.getCachedIdentityPermissions(ctx, ns, idType, userUID, folderAction, folderActionSets)
 	if err != nil {
 		perms, err = s.getIdentityPermissions(ctx, ns, idType, userUID, folderAction, folderActionSets)
 		return perms, false, err
@@ -502,7 +505,7 @@ func (s *Service) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.
 	cacheHit := false
 
 	if !listReq.Options.SkipCache {
-		permissions, err = s.getCachedIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action)
+		permissions, err = s.getCachedIdentityPermissions(ctx, listReq.Namespace, listReq.IdentityType, listReq.UserUID, listReq.Action, listReq.ActionSets)
 		if err == nil {
 			s.metrics.permissionCacheUsage.WithLabelValues("true", listReq.Action).Inc()
 			cacheHit = true
@@ -691,13 +694,13 @@ func (s *Service) getIdentityPermissions(ctx context.Context, ns types.Namespace
 	}
 }
 
-func (s *Service) getCachedIdentityPermissions(ctx context.Context, ns types.NamespaceInfo, idType types.IdentityType, userID, action string) (map[string]bool, error) {
+func (s *Service) getCachedIdentityPermissions(ctx context.Context, ns types.NamespaceInfo, idType types.IdentityType, userID, action string, actionSets []string) (map[string]bool, error) {
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getCachedIdentityPermissions")
 	defer span.End()
 
 	switch idType {
 	case types.TypeAnonymous:
-		anonPermKey := anonymousPermCacheKey(ns.Value, action)
+		anonPermKey := anonymousPermCacheKey(ns.Value, action, actionSets)
 		if cached, ok := s.permCache.Get(ctx, anonPermKey); ok {
 			return cached, nil
 		}
@@ -709,7 +712,7 @@ func (s *Service) getCachedIdentityPermissions(ctx context.Context, ns types.Nam
 		if err != nil {
 			return nil, err
 		}
-		userPermKey := userPermCacheKey(ns.Value, userIdentifiers.UID, action)
+		userPermKey := userPermCacheKey(ns.Value, userIdentifiers.UID, action, actionSets)
 		if cached, ok := s.permCache.Get(ctx, userPermKey); ok {
 			return cached, nil
 		}
@@ -728,7 +731,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo
 		return nil, err
 	}
 
-	userPermKey := userPermCacheKey(ns.Value, userIdentifiers.UID, action)
+	userPermKey := userPermCacheKey(ns.Value, userIdentifiers.UID, action, actionSets)
 	res, err, _ := s.sf.Do(userPermKey+"_getUserPermissions", func() (interface{}, error) {
 		basicRoles, err := s.getUserBasicRole(ctx, ns, userIdentifiers)
 		if err != nil {
@@ -755,7 +758,7 @@ func (s *Service) getUserPermissions(ctx context.Context, ns types.NamespaceInfo
 		}
 		scopeMap := s.getScopeMap(permissions)
 
-		scopeMap, err = s.resolveScopeMap(ctx, ns, scopeMap)
+		scopeMap, err = s.resolveScopeMap(ctx, ns, action, scopeMap)
 		if err != nil {
 			return nil, fmt.Errorf("could not resolve scope map: %w", err)
 		}
@@ -777,7 +780,7 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns types.Namespac
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.getAnonymousPermissions")
 	defer span.End()
 
-	anonPermKey := anonymousPermCacheKey(ns.Value, action)
+	anonPermKey := anonymousPermCacheKey(ns.Value, action, actionSets)
 	res, err, _ := s.sf.Do(anonPermKey+"_getAnonymousPermissions", func() (interface{}, error) {
 		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: s.settings.AnonOrgRole})
 		if err != nil {

@@ -651,7 +651,34 @@ func (m mapper) findGroupKey(group string) (string, bool) {
 	return "", false
 }
 
+// newPermissionsDelegationTranslation maps a delegation check to the RBAC
+// action being delegated. It mirrors the static permissions entry, except the
+// action comes from the request rather than a fixed verb mapping, so holding
+// a permissions:type:* scope on one action cannot authorize delegating another.
+func newPermissionsDelegationTranslation(action string) Mapping {
+	return &translation{
+		resource:  "permissions",
+		attribute: "type",
+		verbMapping: map[string]string{
+			utils.VerbCreate: action,
+			utils.VerbUpdate: action,
+			utils.VerbPatch:  action,
+		},
+		folderSupport: false,
+		skipWildcard:  true,
+	}
+}
+
 func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
+	// Delegation checks name the RBAC action being delegated as the subresource
+	// of the permissions pseudo-resource. The actions are open-ended, so the
+	// translation is built from the request instead of the static table. Only
+	// action-shaped values (containing a colon) are captured, so a real
+	// subresource of a future permissions resource falls through untouched.
+	if group == "iam.grafana.app" && resource == "permissions" && strings.Contains(subresource, ":") {
+		return newPermissionsDelegationTranslation(subresource), true
+	}
+
 	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return nil, false

@@ -2,8 +2,12 @@ package rbac
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -22,12 +26,30 @@ func userIdentifierCacheKeyById(namespace, ID string) string {
 	return namespace + ".id_" + ID
 }
 
-func anonymousPermCacheKey(namespace, action string) string {
-	return namespace + ".perm_anonymous_" + action
+// permCacheActionPart builds the action segment of permission-cache keys.
+// Lookups for the same action with a different action-set shape (e.g.
+// delegation checks, which exclude action sets) must not share entries.
+// The separator is always present so no key matches the legacy bare-action
+// format and entries written by older instances sharing the cache are never read.
+// Action sets are folded into a fixed-length digest: embedding them verbatim
+// pushes long mappings past memcached's 250-byte key limit, turning every
+// check for those actions into a permanent cache miss.
+func permCacheActionPart(action string, actionSets []string) string {
+	if len(actionSets) == 0 {
+		return action + "!"
+	}
+	sets := slices.Clone(actionSets)
+	slices.Sort(sets)
+	digest := sha256.Sum256([]byte(strings.Join(sets, ",")))
+	return action + "!" + hex.EncodeToString(digest[:8])
 }
 
-func userPermCacheKey(namespace, userUID, action string) string {
-	return namespace + ".perm_" + userUID + "_" + action
+func anonymousPermCacheKey(namespace, action string, actionSets []string) string {
+	return namespace + ".perm_anonymous_" + permCacheActionPart(action, actionSets)
+}
+
+func userPermCacheKey(namespace, userUID, action string, actionSets []string) string {
+	return namespace + ".perm_" + userUID + "_" + permCacheActionPart(action, actionSets)
 }
 
 func userPermDenialCacheKey(namespace, userUID, action, name, parent string) string {
