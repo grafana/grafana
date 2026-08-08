@@ -20,6 +20,7 @@ function getTableNoValuePlaceholder(): string {
 }
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
+  .setNoPadding()
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
   .useFieldConfig({
