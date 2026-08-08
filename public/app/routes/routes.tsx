@@ -65,6 +65,18 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/notebooks',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebooksListPage" */ '../features/notebook/pages/NotebooksListPage')
+      ),
+    },
+    {
+      path: '/notebooks/edit/:uid',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebookEditorPage" */ '../features/notebook/pages/NotebookEditorPage')
+      ),
+    },
+    {
       path: '/dashboard/assistant-preview/*',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',

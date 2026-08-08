@@ -468,6 +468,10 @@ export function updateCodeCell(
   return { ...spec, elements: { ...spec.elements, [elementName]: updated } };
 }
 
+export function setNotebookTitle(spec: NotebookSpec, title: string): NotebookSpec {
+  return { ...spec, title };
+}
+
 export function setNotebookTimeRange(spec: NotebookSpec, from: string, to: string): NotebookSpec {
   return { ...spec, timeSettings: { ...spec.timeSettings, from, to } };
 }
