@@ -23,6 +23,7 @@ type VectorMetrics struct {
 	ReconcilerSubresourcesEmbeddedTotal  *prometheus.CounterVec
 	ReconcilerSubresourcesDeletedTotal   *prometheus.CounterVec
 	BackfillItemDuration                 *prometheus.HistogramVec
+	EmbeddingsStored                     *prometheus.GaugeVec
 	QueryCacheHitsTotal                  *prometheus.CounterVec
 	QueryCacheMissesTotal                *prometheus.CounterVec
 	QueryCacheEvictionsTotal             prometheus.Counter
@@ -104,6 +105,10 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource", "status"}),
+		EmbeddingsStored: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
+			Name: "vector_storage_embeddings_stored",
+			Help: "Number of embedding rows in the vector store, labeled by partition key and model. Sampled on a slow timer by whichever replica holds the reconciler lock; other replicas export nothing.",
+		}, []string{"resource", "model"}),
 		QueryCacheHitsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "vector_storage_query_cache_hits_total",
 			Help: "Total number of VectorSearch query-embedding cache hits, labeled by model.",

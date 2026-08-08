@@ -71,6 +71,11 @@ type VectorBackend interface {
 	// resources that already have embeddings.
 	Exists(ctx context.Context, namespace, model, resource, uid string) (bool, error)
 
+	// CountStoredEmbeddings returns row counts per (partition key, model)
+	// across every partition leaf. Postgres caches no row count, so this
+	// is a full aggregate scan — callers must keep it on a slow timer.
+	CountStoredEmbeddings(ctx context.Context) ([]EmbeddingCount, error)
+
 	// GetLatestRV is the reconciler checkpoint. 0 if never advanced.
 	GetLatestRV(ctx context.Context) (int64, error)
 
@@ -139,6 +144,13 @@ type BackfillJob struct {
 	LastSeenKey string // empty when starting from the beginning
 	IsComplete  bool
 	LastError   string
+}
+
+// EmbeddingCount is the stored row count for one (partition key, model).
+type EmbeddingCount struct {
+	Resource string
+	Model    string
+	Count    int64
 }
 
 // Vector is one embeddable subresource (e.g. a dashboard panel).

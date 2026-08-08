@@ -118,6 +118,9 @@ func (f *fakeVectorBackend) GetSubresourceContent(context.Context, string, strin
 func (f *fakeVectorBackend) Exists(context.Context, string, string, string, string) (bool, error) {
 	return false, nil
 }
+func (f *fakeVectorBackend) CountStoredEmbeddings(context.Context) ([]vector.EmbeddingCount, error) {
+	return nil, nil
+}
 func (f *fakeVectorBackend) GetLatestRV(context.Context) (int64, error) { return 0, nil }
 func (f *fakeVectorBackend) SetLatestRV(context.Context, int64) error   { return nil }
 func (f *fakeVectorBackend) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {

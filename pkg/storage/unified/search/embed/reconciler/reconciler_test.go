@@ -158,6 +158,40 @@ func TestReconciler_ObservesProcessDuration(t *testing.T) {
 	require.Equal(t, 1, testutil.CollectAndCount(m.ReconcilerProcessDuration, "vector_storage_reconciler_process_duration_seconds"))
 }
 
+func TestReconciler_RecordEmbeddingCounts(t *testing.T) {
+	m := resource.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
+	vec := newFakeVector()
+	vec.counts = []vector.EmbeddingCount{
+		{Resource: "dashboards", Model: testModel, Count: 7},
+		{Resource: "folders", Model: testModel, Count: 3},
+	}
+	s, err := New(Options{
+		Storage:       &fakeStorage{},
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(&fakeText{dim: 4})),
+		Builders:      []embed.Builder{dashboard.New()},
+		Interval:      time.Hour,
+		Metrics:       m,
+	})
+	require.NoError(t, err)
+
+	s.recordEmbeddingCounts(context.Background())
+	assert.Equal(t, 7.0, testutil.ToFloat64(m.EmbeddingsStored.WithLabelValues("dashboards", testModel)))
+	assert.Equal(t, 3.0, testutil.ToFloat64(m.EmbeddingsStored.WithLabelValues("folders", testModel)))
+
+	// A label pair that disappears must stop being exported, not linger at
+	// its last value.
+	vec.counts = []vector.EmbeddingCount{{Resource: "dashboards", Model: testModel, Count: 9}}
+	s.recordEmbeddingCounts(context.Background())
+	assert.Equal(t, 1, testutil.CollectAndCount(m.EmbeddingsStored, "vector_storage_embeddings_stored"))
+	assert.Equal(t, 9.0, testutil.ToFloat64(m.EmbeddingsStored.WithLabelValues("dashboards", testModel)))
+
+	// A backend error leaves the last good sample in place.
+	vec.counts, vec.countsErr = nil, errors.New("boom")
+	s.recordEmbeddingCounts(context.Background())
+	assert.Equal(t, 9.0, testutil.ToFloat64(m.EmbeddingsStored.WithLabelValues("dashboards", testModel)))
+}
+
 func TestReconciler_HappyPath_PerDashboardEmbed(t *testing.T) {
 	// Two dashboards from different namespaces should produce two
 	// EmbedText calls (one per dashboard) and two Upsert calls.
