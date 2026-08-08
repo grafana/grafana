@@ -111,6 +111,21 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
       }),
     }),
 
+    /**
+     * Merge a staged Alertmanager config into the live one as editable resources. The backend removes the
+     * staged extra config on success, so the staged card empties.
+     */
+    promoteAlertmanagerConfig: build.mutation<ConvertAlertmanagerResponse, { configIdentifier: string }>({
+      query: ({ configIdentifier }) => ({
+        url: `/api/convert/api/v1/alerts/${encodeURIComponent(configIdentifier)}/promote`,
+        method: 'POST',
+      }),
+      // Promote merges into the live config, so invalidate the same tags the config-update mutation
+      // does (alertmanagerApi updateAlertmanagerConfiguration). Invalidating AlertmanagerConfiguration
+      // also refetches the staged-config query (extra_config lives inside the AM config).
+      invalidatesTags: ['AlertmanagerConfiguration', 'ContactPoint', 'ContactPointsStatus', 'Receiver'],
+    }),
+
     /** Discard a staged Alertmanager config. The live Grafana Alertmanager config is not affected. */
     deleteStagedAlertmanagerConfig: build.mutation<void, { configIdentifier: string }>({
       query: ({ configIdentifier }) => ({

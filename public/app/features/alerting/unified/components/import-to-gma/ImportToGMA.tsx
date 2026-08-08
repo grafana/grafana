@@ -49,6 +49,7 @@ import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
 import { RenamedResourcesList } from './CollapsibleRenameList';
 import { PolicyTreeNameHelp } from './PolicyTreeNameHelp';
+import { PromoteMergeSummary } from './PromoteMergeSummary';
 import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
@@ -59,7 +60,7 @@ import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResou
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { StepImportMethod } from './steps/StepImportMethod';
 import { StepReviewEnableAutoSync } from './steps/StepReviewEnableAutoSync';
-import { type DryRunValidationResult, type PromoteStatsSummary } from './types';
+import { type DryRunValidationResult } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
 import {
   buildRoutingParams,
@@ -416,12 +417,27 @@ function ImportWizardContent() {
         skipSubPath: true,
       });
 
+      // A staged (non-promoted) notifications import lands on the Import tab so the user can review the
+      // staged copy and decide to promote or revert it. Everything else keeps the rule-list redirect.
+      const stagedNotifications = willImportNotifications && values.importMethod !== 'promote';
+
       setTimeout(() => {
         setShowConfirmModal(false);
-        notifyApp.success(
-          t('alerting.wizard-import-to-gma.success', 'Successfully imported resources to Grafana Alerting.')
-        );
-        locationService.push(ruleListUrl);
+        if (stagedNotifications) {
+          notifyApp.success(
+            t('alerting.wizard-import-to-gma.staged-success-title', 'Configuration staged'),
+            t(
+              'alerting.wizard-import-to-gma.staged-success-body',
+              'Your imported config is now staged in the Import tab.'
+            )
+          );
+          locationService.push(ALERTING_IMPORT_SETTINGS_URL);
+        } else {
+          notifyApp.success(
+            t('alerting.wizard-import-to-gma.success', 'Successfully imported resources to Grafana Alerting.')
+          );
+          locationService.push(ruleListUrl);
+        }
       }, 1500);
     } catch (err) {
       setImportStatus('error');
@@ -679,53 +695,6 @@ const getValidationIndicatorStyles = (theme: GrafanaTheme2) => ({
   warningIcon: css({ color: theme.colors.warning.main }),
   errorIcon: css({ color: theme.colors.error.main }),
 });
-
-/**
- * Summary of how many resources a promote will merge into the live config, shown on the
- * review screen. Lists only the resource types that are actually present in the import.
- */
-export function PromoteMergeSummary({ stats }: { stats: PromoteStatsSummary }) {
-  const items = [
-    stats.receivers > 0 &&
-      t('alerting.import-to-gma.review.merge-receivers', '', {
-        count: stats.receivers,
-        defaultValue_one: '{{count}} contact point',
-        defaultValue_other: '{{count}} contact points',
-      }),
-    stats.templates > 0 &&
-      t('alerting.import-to-gma.review.merge-templates', '', {
-        count: stats.templates,
-        defaultValue_one: '{{count}} template',
-        defaultValue_other: '{{count}} templates',
-      }),
-    stats.timeIntervals > 0 &&
-      t('alerting.import-to-gma.review.merge-time-intervals', '', {
-        count: stats.timeIntervals,
-        defaultValue_one: '{{count}} mute timing',
-        defaultValue_other: '{{count}} mute timings',
-      }),
-    stats.inhibitionRules > 0 &&
-      t('alerting.import-to-gma.review.merge-inhibition-rules', '', {
-        count: stats.inhibitionRules,
-        defaultValue_one: '{{count}} inhibition rule',
-        defaultValue_other: '{{count}} inhibition rules',
-      }),
-    stats.route && t('alerting.import-to-gma.review.merge-route', 'a notification route'),
-  ].filter((item): item is string => Boolean(item));
-
-  if (items.length === 0) {
-    return null;
-  }
-
-  return (
-    <Alert
-      severity="warning"
-      title={t('alerting.import-to-gma.review.merge-summary', 'Will merge into your live config: {{summary}}', {
-        summary: items.join(', '),
-      })}
-    />
-  );
-}
 
 // Review Step Component
 interface ReviewStepProps {
