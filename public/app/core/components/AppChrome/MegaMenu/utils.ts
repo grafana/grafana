@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { type NavModelItem } from '@grafana/data';
+import { locationUtil, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
@@ -135,6 +135,50 @@ export const getActiveItem = (
     return getActiveItem(navTree, parentItem);
   }
 
+  return undefined;
+};
+
+// Reduce a nav url or the browser url to a stable key for "is this the page I'm on?". Strips the app
+// sub-path and trailing slash, and collapses dashboard/folder urls to their uid (their entry carries a
+// slug and/or `?orgId=` the browser location does not). The query string is otherwise kept, so the
+// Starred section's `/dashboards?starred` stays distinct from the Dashboards section's `/dashboards`.
+const toPageKey = (url?: string): string | undefined => {
+  if (!url) {
+    return undefined;
+  }
+  const stripped = locationUtil.stripBaseFromUrl(url);
+  const [, first, second, third] = stripped.split('?')[0].split('/');
+  if (first === 'd' && second) {
+    return `/d/${second}`;
+  }
+  if (first === 'dashboards' && second === 'f' && third) {
+    return `/dashboards/f/${third}`;
+  }
+  return stripped.replace(/\/+$/, '') || '/';
+};
+
+/**
+ * Find the nav item whose url is the page the user is currently on. This is how a starred item
+ * highlights in the Starred section: the page's sectionNav node points at the generic parent section,
+ * but a starred row (or the Starred section's own `/dashboards?starred` link) is what carries the real
+ * url. Children are matched before their parent, so `/dashboards` resolves to the Browse child rather
+ * than the Dashboards section, while a section still matches on its own url when no child does. Returns
+ * the matched element by reference, so downstream reference-equality highlighting works.
+ */
+export const findActivePageItem = (nodes: NavModelItem[], currentUrl: string): NavModelItem | undefined => {
+  const target = toPageKey(currentUrl);
+  if (!target) {
+    return undefined;
+  }
+  for (const item of nodes) {
+    const childMatch = item.children?.length ? findActivePageItem(item.children, currentUrl) : undefined;
+    if (childMatch) {
+      return childMatch;
+    }
+    if (toPageKey(item.url) === target) {
+      return item;
+    }
+  }
   return undefined;
 };
 
