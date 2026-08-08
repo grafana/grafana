@@ -104,6 +104,11 @@ export interface FeatureToggles {
   */
   faroSessionReplay?: boolean;
   /**
+  * Forward interaction events reported via reportInteraction to Faro
+  * @default false
+  */
+  faroInteractionEvents?: boolean;
+  /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
   * @default true
   */

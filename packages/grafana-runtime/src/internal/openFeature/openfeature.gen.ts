@@ -49,6 +49,8 @@ export const FlagKeys = {
   DatetimeUseLuxon: "datetime.useLuxon",
   /** A/A test for recently viewed dashboards feature */
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
+  /** Forward interaction events reported via reportInteraction to Faro */
+  FaroInteractionEvents: "faroInteractionEvents",
   /** Enable Faro session replay for Grafana */
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the feedback button in the dashboard edit sidebar */
@@ -367,6 +369,17 @@ export const useFlagDatetimeUseLuxon = (options?: ReactFlagEvaluationOptions): b
  */
 export const useFlagExperimentRecentlyViewedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("experimentRecentlyViewedDashboards", false, options).value;
+};
+
+/**
+ * Forward interaction events reported via reportInteraction to Faro
+ *
+ * **Details:**
+ * - flag key: `faroInteractionEvents`
+ * - default value: `false`
+ */
+export const useFlagFaroInteractionEvents = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("faroInteractionEvents", false, options).value;
 };
 
 /**

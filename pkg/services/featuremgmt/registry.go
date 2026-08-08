@@ -185,6 +185,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "faroInteractionEvents",
+			Description: "Forward interaction events reported via reportInteraction to Faro",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true, React: true},
+			Owner:       appO11ySquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "queryHistory.localOnly",
 			Description: "Store query history in browser IndexedDB instead of server-side",
 			Stage:       FeatureStageExperimental,
