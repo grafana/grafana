@@ -810,6 +810,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   name: string;
   apiVersion?: string;
   meta: DataSourcePluginMeta;
+  labels?: Record<string, string>;
   cachingConfig?: PluginQueryCachingConfig;
   readOnly: boolean;
   url?: string;

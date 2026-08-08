@@ -12,6 +12,7 @@ import { VariableTextField } from './VariableTextField';
 interface DataSourceVariableFormProps {
   query: string;
   regex: string;
+  labels?: string;
   multi: boolean;
   allValue?: string | null;
   allowCustomValue?: boolean;
@@ -19,6 +20,7 @@ interface DataSourceVariableFormProps {
   onChange: (option: SelectableValue) => void;
   optionTypes: Array<{ value: string; label: string }>;
   onRegExBlur: (event: FormEvent<HTMLInputElement>) => void;
+  onLabelsBlur?: (event: FormEvent<HTMLInputElement>) => void;
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
@@ -30,10 +32,12 @@ interface DataSourceVariableFormProps {
 export function DataSourceVariableForm({
   query,
   regex,
+  labels,
   optionTypes,
   allowCustomValue,
   onChange,
   onRegExBlur,
+  onLabelsBlur,
   multi,
   includeAll,
   allValue,
@@ -76,6 +80,22 @@ export function DataSourceVariableForm({
               components={{ codeExample: <code>/^prod/</code> }}
             >
               Example: {'<codeExample />'}
+            </Trans>
+          </div>
+        }
+      />
+
+      <VariableTextField
+        defaultValue={labels}
+        name={t('dashboard-scene.data-source-variable-form.name-instance-label-filter', 'Instance label filter')}
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        placeholder="env=prod, team=backend"
+        onBlur={onLabelsBlur}
+        description={
+          <div>
+            <Trans i18nKey="dashboard-scene.data-source-variable-form.description-instance-label-filter">
+              Filter data source instances by key=value labels (comma-separated for multiple labels). Leave empty for
+              all.
             </Trans>
           </div>
         }
