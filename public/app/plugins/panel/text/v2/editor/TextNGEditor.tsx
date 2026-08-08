@@ -1,9 +1,15 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  type IconName,
+  type InterpolateFunction,
+  type SelectableValue,
+  type VariableSuggestion,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { CodeMirrorEditor, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
@@ -15,12 +21,16 @@ import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '.
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
+import { getEditorView } from './editorCommands';
 import { getEditorLayoutStyles } from './editorLayout';
 import { variableCompletion } from './variableCompletion';
 
-type ViewMode = 'write' | 'split' | 'preview';
+export type ViewMode = 'write' | 'split' | 'preview';
 
 export const PREVIEW_TEST_ID = 'TextNGEditor-preview';
+
+/** Below this the chrome has to collapse to a single row to leave any room for content. */
+const COMPACT_MAX_HEIGHT = 190;
 
 /** Options the editor owns, always sent together with the current content. */
 export interface TextNGEditorChange {
@@ -37,6 +47,17 @@ export interface TextNGEditorProps {
   codeLanguage?: CodeLanguage;
   replaceVariables: InterpolateFunction;
   suggestions?: VariableSuggestion[];
+  /** Height to fit into. Below a threshold the chrome collapses to a single row. */
+  availableHeight?: number;
+  /** Defaults to true. Split needs more room than a dashboard panel has. */
+  allowSplit?: boolean;
+  /** Overrides the default of Write for an empty panel, Preview otherwise. */
+  defaultView?: ViewMode;
+  /** Focus the text area on mount, if it opens in a view that has one. */
+  autoFocus?: boolean;
+  /** Host-owned, so the view survives the editor unmounting. */
+  view?: ViewMode;
+  onViewChange?: (view: ViewMode) => void;
   onChange: (change: TextNGEditorChange) => void;
 }
 
@@ -64,11 +85,27 @@ export function TextNGEditor({
   codeLanguage,
   replaceVariables,
   suggestions,
+  availableHeight,
+  allowSplit = true,
+  defaultView,
+  autoFocus,
+  view: viewProp,
+  onViewChange,
   onChange,
 }: TextNGEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
+  const [localView, setLocalView] = useState<ViewMode>(() => defaultView ?? (content.trim() ? 'preview' : 'write'));
+  const requested = viewProp ?? localView;
+  const isCompact = (availableHeight ?? Infinity) < COMPACT_MAX_HEIGHT;
+
+  // Derived, not corrected in an effect, so a stale 'split' cannot wedge the editor.
+  const view = !allowSplit && requested === 'split' ? 'write' : requested;
+
+  const setView = (next: ViewMode) => {
+    setLocalView(next);
+    onViewChange?.(next);
+  };
 
   const [draft, setDraft] = useState(content);
   // a blur can fire before React re-renders with the new draft.
@@ -95,6 +132,26 @@ export function TextNGEditor({
     setPrevView(view);
     setPreviewSource(draftRef.current);
   }
+
+  // Only when it opens on the text area; focusing a Preview-opened panel would steal the keyboard
+  // from someone who only meant to select it.
+  const shouldAutoFocus = autoFocus && view === 'write';
+  useEffect(() => {
+    if (!shouldAutoFocus) {
+      return;
+    }
+
+    // The lazily-loaded CodeMirror bundle can mount its view a tick after this effect runs.
+    const focus = () => Boolean(getEditorView(editorContainerRef)?.focus());
+    if (focus()) {
+      return;
+    }
+
+    const id = setTimeout(focus);
+    return () => clearTimeout(id);
+    // Only on mount: refocusing on later view changes would fight the user.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldAutoFocus]);
 
   const handleDraftChange = (next: string) => {
     draftRef.current = next;
@@ -150,11 +207,16 @@ export function TextNGEditor({
     [mode, showLineNumbers]
   );
 
-  const viewOptions = [
-    { label: t('textng.editor.view-preview', 'Preview'), value: 'preview' as const },
-    { label: t('textng.editor.view-split', 'Split'), value: 'split' as const },
-    { label: t('textng.editor.view-write', 'Write'), value: 'write' as const },
+  const views: Array<{ value: ViewMode; label: string; icon: IconName }> = [
+    { value: 'preview', label: t('textng.editor.view-preview', 'Preview'), icon: 'eye' },
+    { value: 'split', label: t('textng.editor.view-split', 'Split'), icon: 'columns' },
+    { value: 'write', label: t('textng.editor.view-write', 'Write'), icon: 'pen' },
   ];
+
+  // Icon-only when compact, with the labels kept as accessible names.
+  const viewOptions: Array<SelectableValue<ViewMode>> = views
+    .filter(({ value }) => value !== 'split' || allowSplit)
+    .map(({ value, label, icon }) => (isCompact ? { value, icon, ariaLabel: label } : { value, label }));
 
   const modeLabels: Record<TextMode, string> = {
     [TextMode.Markdown]: t('textng.editor.mode-markdown', 'Markdown'),
@@ -196,6 +258,20 @@ export function TextNGEditor({
           />
         ))}
       />
+      {/* A compact panel has no room for the footer, so its one option moves in here. */}
+      {isCompact && mode === TextMode.Code && (
+        <>
+          <Menu.Divider />
+          <Menu.Item
+            className={styles.pickerMenuItem}
+            label={t('textng.editor.footer-line-numbers', 'Line numbers')}
+            role="menuitemcheckbox"
+            ariaChecked={showLineNumbers}
+            active={showLineNumbers}
+            onClick={() => changeOption({ showLineNumbers: !showLineNumbers })}
+          />
+        </>
+      )}
     </Menu>
   );
 
@@ -220,7 +296,7 @@ export function TextNGEditor({
     <div className={styles.wrapper} data-testid="TextNGEditor">
       <Stack gap={1} alignItems="center" wrap="wrap" minHeight={theme.components.height.md}>
         <RadioButtonGroup options={viewOptions} value={view} onChange={setView} size="sm" />
-        {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
+        {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} compact={isCompact} />}
         <Dropdown placement="bottom-end" overlay={renderModeMenu}>
           <Button
             className={styles.modePicker}
@@ -230,7 +306,7 @@ export function TextNGEditor({
             aria-label={t('textng.editor.aria-label-mode', 'Text mode: {{mode}}', { mode: modeValue })}
           >
             <Stack direction="row" alignItems="center" gap={0.5}>
-              <span className={styles.pickerLabel}>{t('textng.editor.mode-picker-label', 'Mode')}</span>
+              {!isCompact && <span className={styles.pickerLabel}>{t('textng.editor.mode-picker-label', 'Mode')}</span>}
               {modeValue}
               <Icon name="angle-down" />
             </Stack>
@@ -262,7 +338,7 @@ export function TextNGEditor({
         )}
       </div>
 
-      {isCode && (
+      {isCode && !isCompact && (
         <TextNGEditorFooter
           showLineNumbers={showLineNumbers}
           onShowLineNumbersChange={(next) => changeOption({ showLineNumbers: next })}

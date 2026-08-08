@@ -20,6 +20,9 @@ export const getEditorLayoutStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
       width: '100%',
       height: '100%',
+      // A short dashboard panel cannot fit the chrome and the body, and the panel content box does
+      // not clip on its own, so keep the overflow inside the panel.
+      overflow: 'hidden',
     }),
     body: css({
       display: 'flex',

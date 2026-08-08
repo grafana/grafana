@@ -13,7 +13,7 @@ import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
 jest.mock('@grafana/ui/unstable', () => ({
-  __esModule: true,
+  ...jest.requireActual('@grafana/ui/unstable'),
   CodeMirrorEditor: ({
     value,
     onChange,
@@ -518,6 +518,128 @@ describe('TextNGEditor', () => {
 
       expect(onChange).toHaveBeenLastCalledWith({ showLineNumbers: true, content: 'const b = 2;' });
       expect(screen.getByRole('textbox')).toHaveValue('const b = 2;');
+    });
+  });
+
+  // How the panel host drives the editor: no split, opening on Write, and a short panel's chrome.
+  describe('host controlled layout', () => {
+    const renderEditor = (props: Partial<React.ComponentProps<typeof TextNGEditor>> = {}, mode = TextMode.Markdown) =>
+      render(
+        <TextNGEditor
+          content="# Hello"
+          mode={mode}
+          showLineNumbers={false}
+          codeLanguage={mode === TextMode.Code ? CodeLanguage.Typescript : undefined}
+          replaceVariables={(value) => value}
+          onChange={jest.fn()}
+          {...props}
+        />
+      );
+
+    const renderInline = (props: Partial<React.ComponentProps<typeof TextNGEditor>> = {}, mode = TextMode.Markdown) =>
+      renderEditor({ allowSplit: false, defaultView: 'write', ...props }, mode);
+
+    it('opens on the view the host asks for', () => {
+      renderInline();
+
+      expect(screen.getByRole('radio', { name: 'Write' })).toBeChecked();
+      expect(screen.getByRole('textbox')).toBeInTheDocument();
+    });
+
+    it('hides Split when the host disallows it', () => {
+      renderInline();
+
+      expect(screen.queryByRole('radio', { name: 'Split' })).not.toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Preview' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Write' })).toBeInTheDocument();
+    });
+
+    it('falls back to Write for a split view carried over from the panel editor', () => {
+      renderInline({ view: 'split' });
+
+      expect(screen.getByRole('radio', { name: 'Write' })).toBeChecked();
+      expect(screen.queryByTestId(PREVIEW_TEST_ID)).not.toBeInTheDocument();
+    });
+
+    it('defaults to Preview with a split view available', () => {
+      renderEditor();
+
+      expect(screen.getByRole('radio', { name: 'Preview' })).toBeChecked();
+      expect(screen.getByRole('radio', { name: 'Split' })).toBeInTheDocument();
+      expect(screen.getByText('Mode')).toBeInTheDocument();
+    });
+
+    it('keeps the view buttons reachable by name when they collapse to icons', () => {
+      renderInline({ availableHeight: 100 });
+
+      expect(screen.getByRole('radio', { name: 'Preview' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Write' })).toBeInTheDocument();
+    });
+
+    it('collapses the format toolbar into a menu in a short panel, keeping every action', async () => {
+      renderInline({ availableHeight: 100 });
+
+      const toolbar = screen.getByTestId(FORMAT_TOOLBAR_TEST_ID);
+      // Collapsed to a single button rather than a row of them.
+      expect(toolbar.tagName).toBe('BUTTON');
+
+      await userEvent.click(toolbar);
+
+      expect(await screen.findByRole('menuitem', { name: 'Bold' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Table' })).toBeInTheDocument();
+    });
+
+    it('moves line numbers into the mode menu when there is no room for the footer', async () => {
+      renderInline({ availableHeight: 100 }, TextMode.Code);
+
+      expect(screen.queryByTestId(FOOTER_TEST_ID)).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /^Text mode/ }));
+
+      expect(await screen.findByRole('menuitemcheckbox', { name: 'Line numbers' })).toBeInTheDocument();
+    });
+
+    it('keeps the footer in code mode when the panel is tall enough', () => {
+      renderInline({ availableHeight: 400 }, TextMode.Code);
+
+      expect(screen.getByTestId(FOOTER_TEST_ID)).toBeInTheDocument();
+    });
+  });
+
+  describe('host controlled view', () => {
+    it('opens on the view the host asks for, so it survives being closed and reopened', () => {
+      render(
+        <TextNGEditor
+          content="# Hello"
+          mode={TextMode.Markdown}
+          showLineNumbers={false}
+          replaceVariables={(value) => value}
+          onChange={jest.fn()}
+          view="write"
+        />
+      );
+
+      expect(screen.getByRole('radio', { name: 'Write' })).toBeChecked();
+      expect(screen.getByRole('textbox')).toBeInTheDocument();
+    });
+
+    it('reports view changes to the host', async () => {
+      const onViewChange = jest.fn();
+      render(
+        <TextNGEditor
+          content="# Hello"
+          mode={TextMode.Markdown}
+          showLineNumbers={false}
+          replaceVariables={(value) => value}
+          onChange={jest.fn()}
+          view="preview"
+          onViewChange={onViewChange}
+        />
+      );
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Write' }));
+
+      expect(onViewChange).toHaveBeenCalledWith('write');
     });
   });
 });

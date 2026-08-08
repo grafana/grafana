@@ -1,19 +1,27 @@
+import { isEqual } from 'lodash';
+
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { AdHocFiltersVariable, dataLayers, sceneGraph, sceneUtils, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
-import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
+import { type AdHocFilterItem, type PanelContext, type PanelInlineEditChannel } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { annotationServer } from 'app/features/annotations/api';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
+// Not `sidebar/shared`, whose `dashboardEditActions.edit` would cycle back here through the
+// editable element classes. `events` is dependency-free by design.
+import { DashboardEditActionEvent } from '../sidebar/events';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
 import {
   getDashboardSceneFor,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
+  isLibraryPanel,
   isNewPanelQueryErrorsUIEnabled,
 } from '../utils/utils';
 
@@ -30,6 +38,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       context.app = CoreApp.Dashboard;
     }
   });
+
+  context.inlineEdit = createPanelInlineEditChannel(dashboard, vizPanel);
 
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
@@ -219,6 +229,80 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   if (isNewPanelQueryErrorsUIEnabled()) {
     context.onOpenInspector = () => openPanelInspector(vizPanel, InspectTab.ErrorsAndNotices);
   }
+}
+
+/**
+ * Lets a panel plugin offer in-place editing without reaching into dashboard code. Takes the
+ * concrete `vizPanel` rather than a panel id, which is what tells a repeat clone from its source —
+ * they share the id in `PanelProps`.
+ */
+function createPanelInlineEditChannel(dashboard: DashboardScene, vizPanel: VizPanel): PanelInlineEditChannel {
+  const getState = () => {
+    const { isEditing, editPanel, viewPanel, sidebar } = dashboard.state;
+    const { selected } = sidebar.state.selectionContext;
+
+    return (
+      Boolean(isEditing) &&
+      dashboard.canEditDashboard() &&
+      // The panel editor owns editing while it is open, and a maximized panel is for viewing.
+      !editPanel &&
+      !viewPanel &&
+      // Multi-select drives bulk actions, where opening an editor in every panel would fight the user.
+      selected.length === 1 &&
+      selected[0].id === vizPanel.state.key &&
+      // Repeat clones are rebuilt from their source, and library panel options are saved to the
+      // library rather than the dashboard, so edits to either would be silently dropped.
+      !isRepeatCloneOrChildOf(vizPanel) &&
+      !isLibraryPanel(vizPanel)
+    );
+  };
+
+  const subscribe = (onStoreChange: () => void) => {
+    let sidebar = dashboard.state.sidebar;
+    let sidebarSub = sidebar.subscribeToState(onStoreChange);
+
+    const dashboardSub = dashboard.subscribeToState((state) => {
+      // Discarding changes and exiting edit mode restore a cloned sidebar, so the reference moves.
+      if (state.sidebar !== sidebar) {
+        sidebarSub.unsubscribe();
+        sidebar = state.sidebar;
+        sidebarSub = sidebar.subscribeToState(onStoreChange);
+      }
+
+      onStoreChange();
+    });
+
+    return () => {
+      dashboardSub.unsubscribe();
+      sidebarSub.unsubscribe();
+    };
+  };
+
+  const beginOptionsEditSession = () => {
+    const previousOptions = vizPanel.state.options;
+
+    return () => {
+      const nextOptions = vizPanel.state.options;
+      if (isEqual(previousOptions, nextOptions)) {
+        return;
+      }
+
+      // As well as recording the undo entry, this makes the sidebar emit DashboardStateChangedEvent,
+      // which is what tells a repeating grid item to rebuild its clones from the edited panel.
+      vizPanel.publishEvent(
+        new DashboardEditActionEvent({
+          description: t('dashboard.edit-actions.change-panel-options', 'Change panel options'),
+          source: vizPanel,
+          // The options are already applied, so this is a no-op the first time and a redo later.
+          perform: () => vizPanel.onOptionsChange(nextOptions, true),
+          undo: () => vizPanel.onOptionsChange(previousOptions, true),
+        }),
+        true
+      );
+    };
+  };
+
+  return { getState, subscribe, beginOptionsEditSession };
 }
 
 /**

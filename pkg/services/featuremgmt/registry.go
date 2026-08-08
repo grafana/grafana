@@ -2038,6 +2038,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "text.dashboardEditor",
+			Description: "Enables editing the text panel directly from the dashboard",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Generate:    Generate{React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "interactiveLearning",
 			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,

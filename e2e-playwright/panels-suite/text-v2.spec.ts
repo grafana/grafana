@@ -9,7 +9,10 @@ const MARKDOWN_PANEL = '4';
 const HTML_PANEL = '6';
 const CODE_PANEL = '5';
 
-test.use({ openFeature: { flags: { 'grafana.newTextPanel': true } } });
+// `text.dashboardEditor` is stated explicitly so this suite covers the panel with dashboard editing
+// off. The on case lives in text-v2-dashboard-edit.spec.ts, since these fixtures are worker scoped
+// and so cannot be overridden per describe block.
+test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.dashboardEditor': false } } });
 
 test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
   test('renders all panels on dashboard without errors', async ({ gotoDashboardPage, selectors, page }) => {
@@ -131,5 +134,24 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
     await modePicker.click();
     await page.getByRole('menuitemradio', { name: 'Markdown' }).click();
     await expect(preview).toBeVisible();
+  });
+
+  test('selecting a panel in dashboard edit mode does not open the editor', async ({
+    gotoDashboardPage,
+    selectors,
+    page,
+  }) => {
+    const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+
+    const panel = dashboardPage.getByGrafanaSelector(
+      selectors.components.Panels.Panel.title('Markdown (with variables)')
+    );
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer, { root: panel })
+      .click();
+
+    await expect(page.getByTestId('TextNGEditor')).toBeHidden();
+    await expect(panel.getByTestId('TextNGPanel-converted-content')).toBeVisible();
   });
 });
