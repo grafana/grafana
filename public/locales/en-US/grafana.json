@@ -6320,7 +6320,7 @@
       },
       "predefined-variables": {
         "all": "All",
-        "description": "This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.",
+        "description": "This dashboard does not receive global or folder-scoped variables by default. Choose which ones to include.",
         "folder": "Folder",
         "global": "Global",
         "label": "Predefined variables",
