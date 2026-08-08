@@ -239,7 +239,7 @@ func (s *Reconciler) Run(ctx context.Context) error {
 	// startupReconcile snapshot and the subscription join can't slip through;
 	// the broadcaster's replay buffer covers the brief overlap.
 	if s.broadcaster != nil {
-		ch, err := s.broadcaster.Subscribe(ctx, "embeddings-reconciler", "embeddings-reconciler")
+		ch, _, err := s.broadcaster.Subscribe(ctx, "embeddings-reconciler", "embeddings-reconciler", 0)
 		if err != nil {
 			s.log.Error("reconciler: subscribe to write events", "err", err)
 		} else if ch != nil {

@@ -11,7 +11,20 @@ import (
 )
 
 type Broadcaster[T any] interface {
-	Subscribe(ctx context.Context, name, resource string) (<-chan T, error)
+	// Subscribe registers a new listener and returns a channel that first
+	// replays cached events, then streams new ones as they arrive.
+	//
+	// sinceRV, if non-zero, is the resource version the caller already has
+	// history up to. It's used to check whether the replay cache has
+	// uninterrupted event history back to that point: the returned
+	// hasFullHistory channel receives a single value once that check has
+	// run. true means the cache (and therefore the returned event channel)
+	// covers sinceRV onward with no gaps; false means older events may have
+	// been evicted from the cache (or it never observed any), and the
+	// caller should backfill from durable storage before trusting the
+	// stream alone. Passing sinceRV == 0 skips the check and always reports
+	// true.
+	Subscribe(ctx context.Context, name, resource string, sinceRV int64) (ch <-chan T, hasFullHistory <-chan bool, err error)
 	Unsubscribe(<-chan T)
 }
 
@@ -54,12 +67,16 @@ func newBroadcasterMetrics(reg prometheus.Registerer) *BroadcasterMetrics {
 // when either ctx is cancelled or input is closed.
 //
 // eventResourceFn extracts a resource label for an event entering the broadcaster.
-func NewBroadcaster[T any](ctx context.Context, input <-chan T, metrics *BroadcasterMetrics, eventResourceFn func(T) string) Broadcaster[T] {
-	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap, metrics, eventResourceFn)
+// eventRVFn extracts the resource version of an event, used to determine
+// whether the replay cache has uninterrupted history back to a subscriber's
+// requested sinceRV; it may be nil if callers never pass a non-zero sinceRV
+// to Subscribe.
+func NewBroadcaster[T any](ctx context.Context, input <-chan T, metrics *BroadcasterMetrics, eventResourceFn func(T) string, eventRVFn func(T) int64) Broadcaster[T] {
+	return newBroadcasterWithSizes[T](ctx, input, watchChanSize, defaultOverflowCap, metrics, eventResourceFn, eventRVFn)
 }
 
 // newBroadcasterWithSizes creates a broadcaster with configurable buffer sizes for testing.
-func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics, eventResourceFn func(T) string) *broadcaster[T] {
+func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufSize, ovfCap int, metrics *BroadcasterMetrics, eventResourceFn func(T) string, eventRVFn func(T) int64) *broadcaster[T] {
 	if metrics == nil {
 		metrics = newBroadcasterMetrics(nil)
 	}
@@ -72,6 +89,7 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 		terminated:      make(chan struct{}),
 		metrics:         metrics,
 		eventResourceFn: eventResourceFn,
+		eventRVFn:       eventRVFn,
 		watchBufSize:    subBufSize,
 		overflowCap:     ovfCap,
 	}
@@ -82,10 +100,12 @@ func newBroadcasterWithSizes[T any](ctx context.Context, input <-chan T, subBufS
 }
 
 type subscription[T any] struct {
-	name     string
-	resource string // metric label for subscriber-attributed metrics
-	ch       chan T
-	overflow []T // pending items when channel is full, nil when not overflowing
+	name      string
+	resource  string // metric label for subscriber-attributed metrics
+	sinceRV   int64
+	historyCh chan bool // buffered 1; see Broadcaster.Subscribe
+	ch        chan T
+	overflow  []T // pending items when channel is full, nil when not overflowing
 }
 
 type broadcaster[T any] struct {
@@ -102,6 +122,7 @@ type broadcaster[T any] struct {
 	subs            map[<-chan T]*subscription[T]
 	metrics         *BroadcasterMetrics
 	eventResourceFn func(T) string
+	eventRVFn       func(T) int64
 
 	// configuration
 
@@ -153,18 +174,24 @@ const (
 	overflowLogInterval = 10 * time.Second
 )
 
-func (b *broadcaster[T]) Subscribe(ctx context.Context, name, resource string) (<-chan T, error) {
-	sub := &subscription[T]{name: name, resource: resource, ch: make(chan T, b.watchBufSize)}
+func (b *broadcaster[T]) Subscribe(ctx context.Context, name, resource string, sinceRV int64) (<-chan T, <-chan bool, error) {
+	sub := &subscription[T]{
+		name:      name,
+		resource:  resource,
+		sinceRV:   sinceRV,
+		historyCh: make(chan bool, 1),
+		ch:        make(chan T, b.watchBufSize),
+	}
 
 	select {
 	case <-ctx.Done(): // client canceled
 		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultCtxCanceled).Inc()
-		return nil, ctx.Err()
+		return nil, nil, ctx.Err()
 	case <-b.terminated: // no more data
 		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultTerminated).Inc()
-		return nil, io.EOF
+		return nil, nil, io.EOF
 	case b.subscribe <- sub: // success submitting subscription
-		return sub.ch, nil
+		return sub.ch, sub.historyCh, nil
 	}
 }
 
@@ -220,6 +247,18 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 	}()
 
 	addSubscriber := func(sub *subscription[T]) {
+		hasFullHistory := true
+		if sub.sinceRV > 0 {
+			if oldest, ok := b.cache.oldest(); ok && b.eventRVFn != nil {
+				hasFullHistory = b.eventRVFn(oldest) <= sub.sinceRV
+			} else {
+				// Empty cache, or no way to inspect it: can't vouch for
+				// anything before now.
+				hasFullHistory = false
+			}
+		}
+		sub.historyCh <- hasFullHistory
+
 		// send initial batch of cached items
 		if !b.cache.readInto(sub.ch) {
 			b.metrics.SubscriptionsTotal.WithLabelValues(sub.resource, subscriptionResultReplayFailed).Inc()
@@ -337,6 +376,16 @@ func newRingBuffer[T any](size int) ringBuffer[T] {
 	return ringBuffer[T]{
 		buf: make([]T, size),
 	}
+}
+
+// oldest returns the oldest cached item and true, or the zero value and
+// false if the cache is empty.
+func (r *ringBuffer[T]) oldest() (T, bool) {
+	if r.len == 0 {
+		var zero T
+		return zero, false
+	}
+	return r.buf[r.zero], true
 }
 
 func (r *ringBuffer[T]) add(item T) {
