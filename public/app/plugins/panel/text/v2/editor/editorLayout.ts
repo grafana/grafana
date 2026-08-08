@@ -2,6 +2,12 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
+export const transparentCodeMirror = css({
+  '.cm-editor, .cm-editor .cm-gutters': {
+    backgroundColor: 'transparent',
+  },
+});
+
 /** Shared by the editor and the fallback shown while its lazy chunk loads, so content does not shift when it mounts. */
 export const getEditorLayoutStyles = (theme: GrafanaTheme2) => {
   // Padding CodeMirror's own content instead of the pane keeps the raw text
@@ -52,6 +58,10 @@ export const getEditorLayoutStyles = (theme: GrafanaTheme2) => {
       overflow: 'auto',
       background: theme.colors.background.primary,
       ...codeMirrorPadding,
+    }),
+    // Keeps the preview a faithful representation of a panel with a transparent background.
+    transparentPreviewPane: css({
+      background: 'transparent',
     }),
     // Rendered markdown and HTML bring no padding of their own.
     htmlPreviewPane: css({

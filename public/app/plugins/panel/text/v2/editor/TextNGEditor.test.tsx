@@ -10,29 +10,41 @@ import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNG
 import { FOOTER_TEST_ID } from './TextNGEditorFooter';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 
+// Kept in sync with the stub below, which paints it the way CodeMirror's own theme does.
+const CODE_MIRROR_BACKGROUND = 'rgb(1, 2, 3)';
+
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
-// stub it with a plain textarea so these tests stay fast and deterministic.
-jest.mock('@grafana/ui/unstable', () => ({
-  __esModule: true,
-  CodeMirrorEditor: ({
-    value,
-    onChange,
-    basicSetup,
-    'aria-label': ariaLabel,
-  }: {
-    value: string;
-    onChange: (value: string) => void;
-    basicSetup?: { lineNumbers?: boolean };
-    'aria-label'?: string;
-  }) => (
-    <textarea
-      aria-label={ariaLabel}
-      value={value}
-      data-line-numbers={String(Boolean(basicSetup?.lineNumbers))}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  ),
-}));
+// stub it with a plain textarea so these tests stay fast and deterministic. The
+// `.cm-editor` wrapper carries a single-class background like the real theme
+// does, so styles that have to outrank it are exercised for real.
+jest.mock('@grafana/ui/unstable', () => {
+  const { css, cx } = require('@emotion/css');
+  const themeBackground = css({ backgroundColor: 'rgb(1, 2, 3)' });
+
+  return {
+    __esModule: true,
+    CodeMirrorEditor: ({
+      value,
+      onChange,
+      basicSetup,
+      'aria-label': ariaLabel,
+    }: {
+      value: string;
+      onChange: (value: string) => void;
+      basicSetup?: { lineNumbers?: boolean };
+      'aria-label'?: string;
+    }) => (
+      <div className={cx('cm-editor', themeBackground)}>
+        <textarea
+          aria-label={ariaLabel}
+          value={value}
+          data-line-numbers={String(Boolean(basicSetup?.lineNumbers))}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </div>
+    ),
+  };
+});
 
 function ControlledEditor({
   initialValue,
@@ -114,6 +126,47 @@ const selectLanguage = async (name: string) => {
 };
 
 describe('TextNGEditor', () => {
+  describe('transparent background', () => {
+    const renderEditor = (content: string, transparent: boolean) =>
+      render(
+        <TextNGEditor
+          content={content}
+          mode={TextMode.Markdown}
+          showLineNumbers={false}
+          replaceVariables={(value: string) => value}
+          transparent={transparent}
+          onChange={jest.fn()}
+        />
+      );
+
+    const renderPreviewPane = (transparent: boolean) => {
+      renderEditor('# Hello', transparent);
+      return screen.getByTestId(PREVIEW_TEST_ID).parentElement!;
+    };
+
+    // The stub's `.cm-editor`, which stands in for the element CodeMirror paints.
+    const renderWritePane = (transparent: boolean) => {
+      renderEditor('', transparent);
+      return screen.getByRole('textbox').parentElement!;
+    };
+
+    it('keeps the preview pane opaque for a regular panel', () => {
+      expect(renderPreviewPane(false)).not.toHaveStyle({ background: 'transparent' });
+    });
+
+    it('drops the preview pane background when the panel is transparent', () => {
+      expect(renderPreviewPane(true)).toHaveStyle({ background: 'transparent' });
+    });
+
+    it('keeps the write pane opaque for a regular panel', () => {
+      expect(renderWritePane(false)).toHaveStyle({ backgroundColor: CODE_MIRROR_BACKGROUND });
+    });
+
+    it('drops the write pane background when the panel is transparent', () => {
+      expect(renderWritePane(true)).toHaveStyle({ backgroundColor: 'transparent' });
+    });
+  });
+
   describe('default (view-first) state', () => {
     it('lands on the rendered preview, not the editor', () => {
       setup('# Hello', TextMode.Markdown);

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -8,18 +8,20 @@ import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import { type CodeLanguage } from '../panelcfg.gen';
 
+import { transparentCodeMirror } from './editor/editorLayout';
 import { getCodeMirrorLanguage } from './utils';
 
 export interface TextNGCodeViewProps {
   content: string;
   language?: CodeLanguage;
   showLineNumbers: boolean;
+  transparent?: boolean;
 }
 
 /**
  * Read-only, syntax-highlighted rendering of code-mode content
  */
-export function TextNGCodeView({ content, language, showLineNumbers }: TextNGCodeViewProps) {
+export function TextNGCodeView({ content, language, showLineNumbers, transparent }: TextNGCodeViewProps) {
   const styles = useStyles2(getStyles);
 
   const basicSetup = useMemo(
@@ -43,21 +45,28 @@ export function TextNGCodeView({ content, language, showLineNumbers }: TextNGCod
   );
 
   return (
-    <CodeMirrorEditor
-      value={content}
-      onChange={() => {}}
-      language={getCodeMirrorLanguage(language)}
-      readOnly
-      lineWrapping
-      basicSetup={basicSetup}
-      height="100%"
-      aria-label={t('textng.code-view.aria-label-code-content', 'Code content')}
-      loadingFallback={<pre className={styles.loadingFallback}>{content}</pre>}
-    />
+    <div className={cx(styles.container, transparent && transparentCodeMirror)}>
+      <CodeMirrorEditor
+        value={content}
+        onChange={() => {}}
+        language={getCodeMirrorLanguage(language)}
+        readOnly
+        lineWrapping
+        basicSetup={basicSetup}
+        height="100%"
+        aria-label={t('textng.code-view.aria-label-code-content', 'Code content')}
+        loadingFallback={
+          <pre className={cx(styles.loadingFallback, transparent && styles.transparentFallback)}>{content}</pre>
+        }
+      />
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    height: '100%',
+  }),
   // Mirrors the CodeMirror theme
   loadingFallback: css({
     margin: 0,
@@ -71,5 +80,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     backgroundColor: theme.components.input.background,
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-word',
+  }),
+  transparentFallback: css({
+    backgroundColor: 'transparent',
   }),
 });

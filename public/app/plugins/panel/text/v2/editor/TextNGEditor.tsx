@@ -15,7 +15,7 @@ import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '.
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
-import { getEditorLayoutStyles } from './editorLayout';
+import { getEditorLayoutStyles, transparentCodeMirror } from './editorLayout';
 import { variableCompletion } from './variableCompletion';
 
 type ViewMode = 'write' | 'split' | 'preview';
@@ -37,6 +37,7 @@ export interface TextNGEditorProps {
   codeLanguage?: CodeLanguage;
   replaceVariables: InterpolateFunction;
   suggestions?: VariableSuggestion[];
+  transparent?: boolean;
   onChange: (change: TextNGEditorChange) => void;
 }
 
@@ -64,6 +65,7 @@ export function TextNGEditor({
   codeLanguage,
   replaceVariables,
   suggestions,
+  transparent,
   onChange,
 }: TextNGEditorProps) {
   const theme = useTheme2();
@@ -205,7 +207,12 @@ export function TextNGEditor({
   const renderOutput = (testId: string) =>
     isCode ? (
       <div className={styles.fullHeight} data-testid={testId}>
-        <TextNGCodeView content={interpolatedContent} language={codeLanguage} showLineNumbers={showLineNumbers} />
+        <TextNGCodeView
+          content={interpolatedContent}
+          language={codeLanguage}
+          showLineNumbers={showLineNumbers}
+          transparent={transparent}
+        />
       </div>
     ) : (
       <DangerouslySetHtmlContent
@@ -242,7 +249,11 @@ export function TextNGEditor({
         {showEditor && (
           // Outside interactions (Save, Apply, Back) blur the editor on mousedown,
           // so a pending draft is committed before anything reads the options.
-          <div ref={editorContainerRef} className={cx(styles.pane, styles.editorPane)} onBlur={commitDraft}>
+          <div
+            ref={editorContainerRef}
+            className={cx(styles.pane, styles.editorPane, transparent && transparentCodeMirror)}
+            onBlur={commitDraft}
+          >
             <CodeMirrorEditor
               value={draft}
               onChange={handleDraftChange}
@@ -256,7 +267,14 @@ export function TextNGEditor({
           </div>
         )}
         {showPreview && (
-          <div className={cx(styles.pane, styles.previewPane, !isCode && styles.htmlPreviewPane)}>
+          <div
+            className={cx(
+              styles.pane,
+              styles.previewPane,
+              transparent && styles.transparentPreviewPane,
+              !isCode && styles.htmlPreviewPane
+            )}
+          >
             {renderOutput(PREVIEW_TEST_ID)}
           </div>
         )}
