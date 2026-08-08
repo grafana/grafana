@@ -77,8 +77,8 @@ func TestIntegrationDiscoveryDisabled(t *testing.T) {
 	// Two nodes share a registry, but discovery is off, so neither should register
 	// or dial the other.
 	store := newSharedTestKV(t)
-	a, _ := newTestDiscoveryServer(t, store, false)
-	b, _ := newTestDiscoveryServer(t, store, false)
+	a, _ := newTestDiscoveryServer(t, store, false, 50*time.Millisecond, time.Minute)
+	b, _ := newTestDiscoveryServer(t, store, false, 50*time.Millisecond, time.Minute)
 	startService(t, ctx, a)
 	startService(t, ctx, b)
 
@@ -90,6 +90,62 @@ func TestIntegrationDiscoveryDisabled(t *testing.T) {
 	require.Never(t, func() bool {
 		return numRoutes(a) > 0 || numRoutes(b) > 0
 	}, time.Second, 100*time.Millisecond, "nodes formed a cluster route with discovery disabled")
+}
+
+// TestIntegrationDiscoveryWakeAccelerator proves the wake hint (see
+// discoveryWakeSubject) actually shortens convergence below the configured
+// interval, rather than merely reasoning about it: both nodes here run a
+// 5-second interval and a 5-minute TTL, so any convergence observed within a
+// couple of seconds cannot be explained by either node's own periodic tick.
+func TestIntegrationDiscoveryWakeAccelerator(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	const interval = 5 * time.Second
+	const ttl = 5 * time.Minute
+
+	store := newSharedTestKV(t)
+	a, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
+	b, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
+	startService(t, ctx, a)
+	startService(t, ctx, b)
+
+	require.Eventually(t, func() bool {
+		return discoveryRouteCount(a) >= 1 && discoveryRouteCount(b) >= 1
+	}, 15*time.Second, 50*time.Millisecond, "a and b did not form their initial route")
+
+	t.Run("a joining peer is picked up by already-connected peers well under the interval", func(t *testing.T) {
+		c, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
+		startService(t, ctx, c)
+
+		// c's own first tick dials a and b immediately regardless of the wake
+		// accelerator (see run()); what the accelerator buys is a and b noticing
+		// c back, which their own discovery.routes only reflects once each has
+		// reconciled — unlike numRoutes, which a solicited connection can bump
+		// before either side's discovery loop runs at all.
+		require.Eventually(t, func() bool {
+			return discoveryRouteCount(a) >= 2 && discoveryRouteCount(b) >= 2
+		}, 2*time.Second, 20*time.Millisecond,
+			"a and b did not learn about the new peer well within the %s interval", interval)
+	})
+
+	t.Run("a graceful leave is picked up by remaining peers well under the interval", func(t *testing.T) {
+		c, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
+		startService(t, ctx, c)
+		require.Eventually(t, func() bool {
+			return discoveryRouteCount(a) >= 2 && discoveryRouteCount(b) >= 2
+		}, 2*time.Second, 20*time.Millisecond, "a and b did not pick up c before the leave")
+
+		c.StopAsync()
+		require.NoError(t, c.AwaitTerminated(ctx))
+
+		require.Eventually(t, func() bool {
+			return discoveryRouteCount(a) == 1 && discoveryRouteCount(b) == 1
+		}, 2*time.Second, 20*time.Millisecond,
+			"a and b did not drop the departed peer well within the %s interval", interval)
+	})
 }
 
 // nodeCfg bundles a node's full Cfg with the Server it drives, so callers can
@@ -108,8 +164,8 @@ func startTwoNodeCluster(t *testing.T) (context.Context, *Server, *Server, nodeC
 	t.Cleanup(cancel)
 
 	store := newSharedTestKV(t)
-	a, cfgA := newTestDiscoveryServer(t, store, true)
-	b, cfgB := newTestDiscoveryServer(t, store, true)
+	a, cfgA := newTestDiscoveryServer(t, store, true, 50*time.Millisecond, time.Minute)
+	b, cfgB := newTestDiscoveryServer(t, store, true, 50*time.Millisecond, time.Minute)
 	startService(t, ctx, a)
 	startService(t, ctx, b)
 
@@ -118,7 +174,7 @@ func startTwoNodeCluster(t *testing.T) (context.Context, *Server, *Server, nodeC
 
 // newTestDiscoveryServer builds a Server running a real embedded NATS server on
 // OS-chosen ports, sharing the given KV-backed peer registry for auto-discovery.
-func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool) (*Server, *setting.Cfg) {
+func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool, interval, ttl time.Duration) (*Server, *setting.Cfg) {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.NATS = setting.NATSSettings{
@@ -130,8 +186,8 @@ func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool) (*
 		ClientPort:        natsserver.RANDOM_PORT,
 		ClusterPort:       natsserver.RANDOM_PORT,
 		DiscoveryEnabled:  discoveryEnabled,
-		DiscoveryInterval: 50 * time.Millisecond,
-		DiscoveryTTL:      time.Minute,
+		DiscoveryInterval: interval,
+		DiscoveryTTL:      ttl,
 	}
 	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
@@ -168,4 +224,18 @@ func numRoutes(s *Server) int {
 		return 0
 	}
 	return s.server.NumRoutes()
+}
+
+// discoveryRouteCount reads the discovery loop's own applied route set, which
+// only grows once its tick()/reconcile() has actually run. Unlike numRoutes,
+// a peer soliciting a route into us bumps the raw NATS count on both ends
+// before either side's discovery loop has noticed, so this is the signal that
+// actually proves the wake accelerator (or a periodic tick) fired.
+func discoveryRouteCount(s *Server) int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.discovery == nil {
+		return 0
+	}
+	return len(s.discovery.routes)
 }
