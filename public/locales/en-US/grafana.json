@@ -12836,6 +12836,9 @@
       "empty": "Click to add code — a query, a command, a config snippet…",
       "language": "Code language"
     },
+    "declare-incident": {
+      "button": "Declare incident"
+    },
     "editor": {
       "block-deleted": "Block deleted",
       "copied-markdown": "Notebook copied as Markdown",
