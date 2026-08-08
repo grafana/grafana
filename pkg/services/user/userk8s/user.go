@@ -83,6 +83,16 @@ func (s *UserK8sService) getUserClient(ctx context.Context) (*iamv0alpha1.UserCl
 	return iamv0alpha1.NewUserClientFromGenerator(registry)
 }
 
+func (s *UserK8sService) getServiceAccountClient(ctx context.Context) (*iamv0alpha1.ServiceAccountClient, error) {
+	cfg, err := s.getRestConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	cfg.APIPath = "apis"
+	registry := sdkk8s.NewClientRegistry(*cfg, sdkk8s.DefaultClientConfig())
+	return iamv0alpha1.NewServiceAccountClientFromGenerator(registry)
+}
+
 func (s *UserK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, error) {
 	cfg, err := s.getRestConfig(ctx)
 	if err != nil {
@@ -239,6 +249,15 @@ func (s *UserK8sService) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery
 
 	found, err := s.getByInternalID(ctx, ctxLogger, client, cmd.ID, namespace)
 	if err != nil {
+		// The legacy user table stores service accounts alongside users, so
+		// legacy GetByID resolved both. The k8s `users` resource does not
+		// include service accounts, so fall back to the `serviceaccounts` API
+		// to keep the same semantics.
+		if errors.Is(err, user.ErrUserNotFound) {
+			if sa, saErr := s.getServiceAccountByInternalID(ctx, ctxLogger, cmd.ID, namespace, orgID); saErr == nil {
+				return sa, nil
+			}
+		}
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -277,6 +296,13 @@ func (s *UserK8sService) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQue
 	found, err := client.Get(ctx, resource.Identifier{Namespace: namespace, Name: cmd.UID})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
+			// The legacy user table stores service accounts alongside users, so
+			// legacy GetByUID resolved both. The k8s `users` resource does not
+			// include service accounts, so fall back to the `serviceaccounts` API
+			// to keep the same semantics.
+			if sa, saErr := s.getServiceAccountByUID(ctx, ctxLogger, cmd.UID, namespace, orgID); saErr == nil {
+				return sa, nil
+			}
 			return nil, user.ErrUserNotFound
 		}
 		ctxLogger.Error("k8s user get by UID failed", "namespace", namespace, "userUID", cmd.UID, "err", err)
@@ -822,6 +848,56 @@ func (s *UserK8sService) getByInternalID(ctx context.Context, logger log.Logger,
 	return &list.Items[0], nil
 }
 
+// getServiceAccountByUID resolves a service account by its UID (k8s resource name)
+// through the `serviceaccounts` API and maps it to a user.User, mirroring how the
+// legacy user table returns service accounts from user lookups.
+func (s *UserK8sService) getServiceAccountByUID(ctx context.Context, logger log.Logger, uid, namespace string, orgID int64) (*user.User, error) {
+	saClient, err := s.getServiceAccountClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	sa, err := saClient.Get(ctx, resource.Identifier{Namespace: namespace, Name: uid})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, user.ErrUserNotFound
+		}
+		logger.Error("k8s service account get by UID failed", "namespace", namespace, "uid", uid, "err", err)
+		return nil, err
+	}
+
+	return toUserFromServiceAccount(sa, orgID), nil
+}
+
+// getServiceAccountByInternalID resolves a service account by its legacy internal ID
+// through the `serviceaccounts` API and maps it to a user.User.
+func (s *UserK8sService) getServiceAccountByInternalID(ctx context.Context, logger log.Logger, id int64, namespace string, orgID int64) (*user.User, error) {
+	saClient, err := s.getServiceAccountClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	labelSelector := utils.LabelKeyDeprecatedInternalID + "=" + strconv.FormatInt(id, 10)
+	list, err := saClient.List(ctx, namespace, resource.ListOptions{
+		LabelFilters: []string{labelSelector},
+	})
+	if err != nil {
+		logger.Error("k8s service account list failed", "namespace", namespace, "userID", id, "err", err)
+		return nil, err
+	}
+
+	if len(list.Items) == 0 {
+		return nil, user.ErrUserNotFound
+	}
+
+	if len(list.Items) > 1 {
+		logger.Error("multiple service accounts found with same deprecated internal ID", "namespace", namespace, "userID", id, "count", len(list.Items))
+		return nil, errors.New("multiple service accounts found")
+	}
+
+	return toUserFromServiceAccount(&list.Items[0], orgID), nil
+}
+
 func (s *UserK8sService) getByFieldSelectorRaw(ctx context.Context, logger log.Logger, client *iamv0alpha1.UserClient, field, value, namespace string) (*iamv0alpha1.User, error) {
 	list, err := client.List(ctx, namespace, resource.ListOptions{
 		FieldSelectors: []string{field + "=" + value},
@@ -905,6 +981,28 @@ func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
 		Updated:          u.GetUpdateTimestamp(),
 		LastSeenAt:       time.Unix(u.Status.LastSeenAt, 0),
 		ExternalAuthInfo: fromExternalAuthInfo(u.Spec.ExternalAuthInfo),
+	}
+}
+
+// toUserFromServiceAccount maps a k8s ServiceAccount to the legacy user.User model,
+// matching the shape the legacy user table returns for service accounts. Service
+// accounts have no email; the title doubles as login/name for display purposes.
+func toUserFromServiceAccount(sa *iamv0alpha1.ServiceAccount, orgID int64) *user.User {
+	var id int64
+	if meta, err := utils.MetaAccessor(sa); err == nil {
+		id = meta.GetDeprecatedInternalID() // nolint:staticcheck
+	}
+	return &user.User{
+		ID:               id,
+		UID:              sa.Name,
+		OrgID:            orgID,
+		Login:            sa.Spec.Title,
+		Name:             sa.Spec.Title,
+		IsDisabled:       sa.Spec.Disabled,
+		OrgRole:          string(sa.Spec.Role),
+		IsServiceAccount: true,
+		Created:          sa.CreationTimestamp.Time,
+		Updated:          sa.GetUpdateTimestamp(),
 	}
 }
 
