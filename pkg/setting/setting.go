@@ -43,8 +43,10 @@ const (
 	HTTPScheme                           Scheme = "http"
 	HTTPSScheme                          Scheme = "https"
 	HTTP2Scheme                          Scheme = "h2"
+	HTTP2PlaintextScheme                 Scheme = "h2c"
 	SocketScheme                         Scheme = "socket"
 	SocketHTTP2Scheme                    Scheme = "socket_h2"
+	SocketHTTP2PlaintextScheme           Scheme = "socket_h2c"
 	DefaultSQLExpressionCellLimit               = 100000
 	DefaultSQLExpressionOutputCellLimit         = 100000
 	DefaultSQLExpressionTimeout                 = time.Second * 10
@@ -2314,7 +2316,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	protocolStr := valueAsString(server, "protocol", "http")
 
 	cfg.ServeOnSocket = server.Key("serve_on_socket").MustBool(false)
-	if cfg.ServeOnSocket && (protocolStr == "http" || protocolStr == "https" || protocolStr == "h2") {
+	if cfg.ServeOnSocket && (protocolStr == "http" || protocolStr == "https" || protocolStr == "h2" || protocolStr == "h2c") {
 		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
 		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
 		cfg.SocketPath = server.Key("socket").String()
@@ -2331,6 +2333,8 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
 		cfg.CertPassword = server.Key("cert_pass").String()
+	case "h2c":
+		cfg.Protocol = HTTP2PlaintextScheme
 	case "socket":
 		cfg.Protocol = SocketScheme
 		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
@@ -2344,6 +2348,11 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
 		cfg.CertPassword = server.Key("cert_pass").String()
+	case "socket_h2c":
+		cfg.Protocol = SocketHTTP2PlaintextScheme
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
 	default:
 	}
 

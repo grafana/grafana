@@ -465,10 +465,17 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
+	protocols := http.Protocols{}
+	protocols.SetHTTP1(true)
+	protocols.SetHTTP2(true)
+	if hs.Cfg.Protocol == setting.HTTP2PlaintextScheme || hs.Cfg.Protocol == setting.SocketHTTP2PlaintextScheme {
+		protocols.SetUnencryptedHTTP2(true)
+	}
 	hs.httpSrv = &http.Server{
 		Addr:        net.JoinHostPort(host, hs.Cfg.HTTPPort),
 		Handler:     hs.web,
 		ReadTimeout: hs.Cfg.ReadTimeout,
+		Protocols:   &protocols,
 	}
 
 	customErrorLogger := &customErrorLogger{
@@ -521,7 +528,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	for _, listener := range listeners {
 		errg.Go(func() error {
 			switch hs.Cfg.Protocol {
-			case setting.HTTPScheme, setting.SocketScheme:
+			case setting.HTTPScheme, setting.SocketScheme, setting.HTTP2PlaintextScheme, setting.SocketHTTP2PlaintextScheme:
 				// If serving on socket concurrently with HTTPScheme, the unix listener needs Serve too.
 				// Serve handles both tcp and unix listeners exactly the same.
 				if err := hs.httpSrv.Serve(listener); err != nil {
@@ -564,7 +571,7 @@ func (hs *HTTPServer) getListeners() ([]net.Listener, error) {
 	var listeners []net.Listener
 
 	switch hs.Cfg.Protocol {
-	case setting.HTTPScheme, setting.HTTPSScheme, setting.HTTP2Scheme:
+	case setting.HTTPScheme, setting.HTTPSScheme, setting.HTTP2Scheme, setting.HTTP2PlaintextScheme:
 		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open listener on address %s: %w", hs.httpSrv.Addr, err)
@@ -576,7 +583,7 @@ func (hs *HTTPServer) getListeners() ([]net.Listener, error) {
 			break
 		}
 		fallthrough
-	case setting.SocketScheme, setting.SocketHTTP2Scheme:
+	case setting.SocketScheme, setting.SocketHTTP2Scheme, setting.SocketHTTP2PlaintextScheme:
 		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: hs.Cfg.SocketPath, Net: "unix"})
 		if err != nil {
 			return nil, fmt.Errorf("failed to open listener for socket %s: %w", hs.Cfg.SocketPath, err)

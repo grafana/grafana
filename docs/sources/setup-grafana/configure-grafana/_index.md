@@ -227,7 +227,7 @@ Dashboards are reloaded when the JSON files change.
 
 #### `protocol`
 
-`http`,`https`,`h2`,`socket` or `socket_h2`
+`http`,`https`,`h2`,`h2c`,`socket`,`socket_h2` or `socket_h2c`
 
 #### `min_tls_version`
 
@@ -341,7 +341,7 @@ Path where the socket should be created when `protocol=socket`. Make sure Grafan
 
 #### `serve_on_socket`
 
-If set to `true` and the primary `protocol` is `http`, `https`, or `h2`, Grafana will additionally serve on the Unix domain socket configured via `socket`. Defaults to `false`.
+If set to `true` and the primary `protocol` is `http`, `https`, `h2c` or `h2`, Grafana will additionally serve on the Unix domain socket configured via `socket`. Defaults to `false`.
 
 #### `cdn_url`
 
