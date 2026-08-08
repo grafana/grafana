@@ -255,14 +255,25 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
   return undefined;
 }
 
-export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
+/**
+ * Returns the DashboardScene root, or undefined when the object is under a different scene root
+ * (e.g. a NotebookScene). Use this when "not a dashboard" is an expected case; use
+ * getDashboardSceneFor when it is a programming error.
+ */
+export function tryGetDashboardSceneFor(sceneObject: SceneObject): DashboardScene | undefined {
   const root = sceneObject.getRoot();
 
-  if (root instanceof DashboardScene) {
-    return root;
+  return root instanceof DashboardScene ? root : undefined;
+}
+
+export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
+  const dashboard = tryGetDashboardSceneFor(sceneObject);
+
+  if (!dashboard) {
+    throw new Error('SceneObject root is not a DashboardScene');
   }
 
-  throw new Error('SceneObject root is not a DashboardScene');
+  return dashboard;
 }
 
 export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {

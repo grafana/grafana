@@ -15,7 +15,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
+import { getPanelIdForVizPanel, tryGetDashboardSceneFor } from '../utils/utils';
 
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior } from './PanelMenuBehavior';
@@ -118,9 +118,9 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     // not from the library panel definition.
     // Exception: Public dashboards and scripted dashboards still need this migration
     // even when dashboardNewLayouts is enabled. This is because public and scripted dashboard migrations are still handled in the frontend.
-    const dashboard = getDashboardSceneFor(this);
-    const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
-    const isScriptedDashboard = dashboard.state.meta.fromScript === true;
+    const dashboard = tryGetDashboardSceneFor(this);
+    const isPublicDashboard = dashboard?.state.meta.publicDashboardEnabled === true;
+    const isScriptedDashboard = dashboard?.state.meta.fromScript === true;
     const shouldSkipRepeatMigration =
       config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard;
 

@@ -4,8 +4,6 @@ import { render } from 'test/test-utils';
 import { SceneTimeRange } from '@grafana/scenes';
 import { type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
 
-import { DashboardScene } from '../DashboardScene';
-
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 
@@ -19,15 +17,14 @@ function renderNotebook() {
     new NotebookCellItem({ elementName: 'hidden-panel', source: 'user', collapsed: true }),
   ];
 
-  const manager = new NotebookLayoutManager({ cells, title: 'My notebook', tags: ['incident', 'checkout'] });
-
-  // The renderer reads the time range from the scene graph, so the manager must be parented to a
-  // scene that provides one.
-  const scene = new DashboardScene({
+  // The renderer reads the time range via sceneGraph.getTimeRange, which resolves the nearest
+  // $timeRange up the graph — attaching it to the manager keeps the test root-agnostic.
+  const manager = new NotebookLayoutManager({
+    cells,
+    title: 'My notebook',
+    tags: ['incident', 'checkout'],
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-    body: manager,
   });
-  scene.activate();
 
   render(<manager.Component model={manager} />);
 }

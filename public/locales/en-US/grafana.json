@@ -12737,7 +12737,11 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": "Notebooks"
+    "breadcrumb-title": "Notebooks",
+    "errors": {
+      "failed-to-load": "Failed to load notebook",
+      "not-found-title": "Not found"
+    }
   },
   "notifications": {
     "empty-state": {

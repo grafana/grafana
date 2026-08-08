@@ -12,10 +12,9 @@ import {
 } from '@grafana/scenes';
 import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { useStyles2 } from '@grafana/ui';
-
-import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
-import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
+import { type DashboardLayoutManager } from 'app/features/dashboard-scene/scene/types/DashboardLayoutManager';
+import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/types/LayoutRegistryItem';
+import { type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { NotebookCellRenderer } from './NotebookCellRenderer';
@@ -29,6 +28,9 @@ interface NotebookLayoutManagerState extends SceneObjectState {
   // dependency cycle.
   title?: string;
   tags?: string[];
+  // Mirrored from the scene's edit mode so cell chrome (drag handles, insert buttons, inline
+  // editors) can be gated without reaching up to the scene. Nothing reads it yet.
+  isEditing?: boolean;
 }
 
 export class NotebookLayoutManager
@@ -74,6 +76,10 @@ export class NotebookLayoutManager
   // intentionally invisible to the rest of the scene (query runner, edit tooling).
   public getVizPanels(): VizPanel[] {
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
+  }
+
+  public editModeChanged(isEditing: boolean): void {
+    this.setState({ isEditing });
   }
 
   // Editing (add/reorder/remove) is out of scope for the POC; these satisfy the

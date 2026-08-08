@@ -1,4 +1,3 @@
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import {
   type CellKind,
   defaultLibraryPanelKind,
@@ -7,7 +6,7 @@ import {
   type NotebookLayoutKind,
 } from '@grafana/schema/apis/notebook/v2beta1';
 
-import { deserializeNotebookLayout } from './NotebookLayoutSerializer';
+import { deserializeNotebookLayout } from './deserializeNotebookLayout';
 
 function markdownCell(text: string): CellKind {
   return { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text } } } };
@@ -44,18 +43,14 @@ function fixture() {
     },
   };
 
-  return {
-    // NotebookLayout/elements are a sibling kind; the serializer accepts the dashboard-typed params by design.
-    layout: layout as unknown as DashboardV2Spec['layout'],
-    elements: elements as unknown as DashboardV2Spec['elements'],
-  };
+  return { layout, elements };
 }
 
-describe('NotebookLayoutSerializer', () => {
+describe('deserializeNotebookLayout', () => {
   it('exposes only panel and library-panel cells as viz panels', () => {
     const { layout, elements } = fixture();
 
-    const manager = deserializeNotebookLayout(layout, elements, false);
+    const manager = deserializeNotebookLayout(layout, elements);
 
     // 4 cells in; the panel and library-panel are viz panels, markdown/code are narrative.
     expect(manager.state.cells).toHaveLength(4);
@@ -65,9 +60,18 @@ describe('NotebookLayoutSerializer', () => {
   it('round-trips cell order, source and collapsed', () => {
     const { layout, elements } = fixture();
 
-    const manager = deserializeNotebookLayout(layout, elements, false);
+    const manager = deserializeNotebookLayout(layout, elements);
     const roundTripped = manager.serialize();
 
     expect(roundTripped).toEqual(layout);
+  });
+
+  it('surfaces the notebook title and tags on the layout manager for the document header', () => {
+    const { layout, elements } = fixture();
+
+    const manager = deserializeNotebookLayout(layout, elements, { title: 'My notebook', tags: ['incident'] });
+
+    expect(manager.state.title).toBe('My notebook');
+    expect(manager.state.tags).toEqual(['incident']);
   });
 });

@@ -1,0 +1,140 @@
+import {
+  defaultDataQueryKind,
+  defaultSpec as defaultNotebookSpec,
+  type NotebookElement,
+  type Spec as NotebookSpec,
+} from '@grafana/schema/apis/notebook/v2beta1';
+import { type Resource } from 'app/features/apiserver/types';
+
+import { NotebookScene } from '../scene/NotebookScene';
+
+import { transformNotebookSceneToSaveModel } from './transformNotebookSceneToSaveModel';
+import { transformNotebookToScene } from './transformNotebookToScene';
+
+// The spec fixture is written in the serializer's canonical form (explicit datasource per query,
+// description always present on panels, version '' etc.) so spec → scene → spec is an exact
+// round-trip. This is the contract the Mutation API's GET_NOTEBOOK_SPEC depends on.
+function notebookSpec(): NotebookSpec {
+  const elements: Record<string, NotebookElement> = {
+    intro: { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: '## Checkout latency spike' } } } },
+    query: { kind: 'Cell', spec: { content: { kind: 'Code', spec: { language: 'promql', code: 'up == 0' } } } },
+    'latency-panel': {
+      kind: 'Panel',
+      spec: {
+        id: 1,
+        title: 'p95 latency',
+        description: '',
+        links: [],
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            queries: [
+              {
+                kind: 'PanelQuery',
+                spec: {
+                  refId: 'A',
+                  hidden: false,
+                  query: {
+                    kind: 'DataQuery',
+                    version: defaultDataQueryKind().version,
+                    group: 'prometheus',
+                    // Explicit datasource: without a DSReferencesMapping the serializer writes the
+                    // runtime-resolved datasource back, so only explicit refs round-trip exactly.
+                    datasource: { name: 'gdev-prometheus' },
+                    spec: { expr: 'histogram_quantile(0.95, http_request_duration_seconds_bucket)' },
+                  },
+                },
+              },
+            ],
+            // v2beta1 wire shape for transformations: `kind` holds the transform id and `spec.id`
+            // duplicates it. Dashboard v2 instead uses { kind: 'Transformation', group: <id> }.
+            // This is the one place the two schemas genuinely diverge, so it must round-trip
+            // through normalizeTransformation / toWireTransformation rather than leak the v2 shape
+            // into a notebook spec.
+            transformations: [{ kind: 'limit', spec: { id: 'limit', options: { limitField: 10 } } }],
+            queryOptions: {},
+          },
+        },
+        vizConfig: {
+          kind: 'VizConfig',
+          group: 'timeseries',
+          version: '',
+          spec: {
+            options: {},
+            fieldConfig: { defaults: {}, overrides: [] },
+          },
+        },
+      },
+    },
+  };
+
+  return {
+    ...defaultNotebookSpec(),
+    title: 'Checkout latency investigation',
+    description: 'What happened on checkout during the deploy',
+    tags: ['incident', 'checkout'],
+    timeSettings: {
+      from: 'now-6h',
+      to: 'now',
+      timezone: 'utc',
+      autoRefresh: '30s',
+      autoRefreshIntervals: ['5s', '30s', '1m'],
+      hideTimepicker: false,
+      fiscalYearStartMonth: 0,
+    },
+    elements,
+    layout: {
+      kind: 'NotebookLayout',
+      spec: {
+        cells: [
+          {
+            kind: 'NotebookLayoutItem',
+            spec: { element: { kind: 'ElementReference', name: 'intro' }, source: 'assistant' },
+          },
+          {
+            kind: 'NotebookLayoutItem',
+            spec: { element: { kind: 'ElementReference', name: 'latency-panel' }, source: 'user', collapsed: false },
+          },
+          {
+            kind: 'NotebookLayoutItem',
+            spec: { element: { kind: 'ElementReference', name: 'query' }, source: 'user' },
+          },
+        ],
+      },
+    },
+  };
+}
+
+function notebookResource(): Resource<NotebookSpec> {
+  return {
+    apiVersion: 'dashboard.grafana.app/v2beta1',
+    kind: 'Notebook',
+    metadata: { name: 'nb-1', resourceVersion: '1', creationTimestamp: '2026-07-01T00:00:00Z' },
+    spec: notebookSpec(),
+  };
+}
+
+describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
+  it('builds a NotebookScene with the document, time controls and header state', () => {
+    const scene = transformNotebookToScene(notebookResource());
+
+    expect(scene).toBeInstanceOf(NotebookScene);
+    expect(scene.state.title).toBe('Checkout latency investigation');
+    expect(scene.state.uid).toBe('nb-1');
+    expect(scene.state.hideTimeControls).toBe(false);
+    expect(scene.state.$timeRange.state.from).toBe('now-6h');
+    expect(scene.state.body.state.cells).toHaveLength(3);
+    // Title and tags are surfaced on the layout manager for the document header.
+    expect(scene.state.body.state.title).toBe('Checkout latency investigation');
+    expect(scene.state.body.state.tags).toEqual(['incident', 'checkout']);
+  });
+
+  it('round-trips the full spec: cells, order, source, timeSettings and metadata', () => {
+    const spec = notebookSpec();
+
+    const scene = transformNotebookToScene(notebookResource());
+    const saveModel = transformNotebookSceneToSaveModel(scene);
+
+    expect(saveModel).toEqual(spec);
+  });
+});
