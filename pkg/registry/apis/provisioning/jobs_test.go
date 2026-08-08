@@ -105,28 +105,89 @@ func TestPullRequestJobRejected(t *testing.T) {
 }
 
 func TestFixFolderMetadataFeatureGate(t *testing.T) {
+	ctx := context.Background()
 	cfg := newTestRepo("my-repo", "default")
+	spec := provisioning.JobSpec{Action: provisioning.JobActionFixFolderMetadata}
+
+	jobsCreateReq := func(req authlib.CheckRequest) bool {
+		return req.Verb == utils.VerbCreate &&
+			req.Group == provisioning.GROUP &&
+			req.Resource == provisioning.JobResourceInfo.GetName() &&
+			req.Namespace == cfg.Namespace
+	}
 
 	t.Run("rejected when flag is disabled", func(t *testing.T) {
 		c := &jobsConnector{folderMetadataEnabled: false}
-		spec := provisioning.JobSpec{
-			Action: provisioning.JobActionFixFolderMetadata,
-		}
-
-		err := c.authorizeJob(context.Background(), nil, cfg, spec)
+		err := c.authorizeJob(ctx, nil, cfg, spec)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsBadRequest(err))
 		assert.Contains(t, err.Error(), "provisioningFolderMetadata feature flag")
 	})
 
-	t.Run("allowed when flag is enabled", func(t *testing.T) {
-		c := &jobsConnector{folderMetadataEnabled: true}
-		spec := provisioning.JobSpec{
-			Action: provisioning.JobActionFixFolderMetadata,
-		}
+	t.Run("allowed when flag is enabled and user has jobs:create", func(t *testing.T) {
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(jobsCreateReq), "").Return(nil)
 
-		err := c.authorizeJob(context.Background(), nil, cfg, spec)
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+
+		c := &jobsConnector{access: accessMock, folderMetadataEnabled: true}
+		err := c.authorizeJob(ctx, nil, cfg, spec)
 		require.NoError(t, err)
+	})
+
+	t.Run("forbidden when flag is enabled but user lacks jobs:create", func(t *testing.T) {
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(jobsCreateReq), "").Return(
+			apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("editor role is required")),
+		)
+
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+
+		c := &jobsConnector{access: accessMock, folderMetadataEnabled: true}
+		err := c.authorizeJob(ctx, nil, cfg, spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
+	})
+}
+
+func TestAuthorizeEditorJob(t *testing.T) {
+	ctx := context.Background()
+	cfg := newTestRepo("my-repo", "default")
+
+	t.Run("editor is authorized", func(t *testing.T) {
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbCreate &&
+				req.Group == provisioning.GROUP &&
+				req.Resource == provisioning.JobResourceInfo.GetName() &&
+				req.Namespace == cfg.Namespace
+		}), "").Return(nil)
+
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+
+		c := &jobsConnector{access: accessMock}
+		err := c.authorizeEditorJob(ctx, cfg)
+		require.NoError(t, err)
+	})
+
+	t.Run("non-editor is forbidden", func(t *testing.T) {
+		editorChecker := auth.NewMockAccessChecker(t)
+		editorChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbCreate &&
+				req.Group == provisioning.GROUP &&
+				req.Resource == provisioning.JobResourceInfo.GetName()
+		}), "").Return(apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("editor role is required")))
+
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().WithFallbackRole(identity.RoleEditor).Return(editorChecker)
+
+		c := &jobsConnector{access: accessMock}
+		err := c.authorizeEditorJob(ctx, cfg)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
 	})
 }
 
