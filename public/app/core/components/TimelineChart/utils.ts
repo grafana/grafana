@@ -34,7 +34,14 @@ import {
   type HideableFieldConfig,
   MappingType,
 } from '@grafana/schema';
-import { FIXED_UNIT, UPlotConfigBuilder, type UPlotConfigPrepFn, type VizLegendItem } from '@grafana/ui';
+import {
+  FIXED_UNIT,
+  measureText,
+  UPlotConfigBuilder,
+  type UPlotConfigPrepFn,
+  UPLOT_AXIS_FONT_SIZE,
+  type VizLegendItem,
+} from '@grafana/ui';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/internal';
 
 import { getConfig, type TimelineCoreOptions } from './timeline';
@@ -54,6 +61,7 @@ interface UPlotConfigOptions {
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   hoverMulti: boolean;
   axisWidth?: number;
+  namePosition?: 'left' | 'top';
 }
 
 /**
@@ -94,6 +102,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   getValueColor,
   hoverMulti,
   xAxisConfig,
+  namePosition,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -140,12 +149,17 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
     hoverMulti,
+    namePosition,
   };
 
   const coreConfig = getConfig(opts);
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
+
+  if (coreConfig.drawSeriesLabels) {
+    builder.addHook('draw', coreConfig.drawSeriesLabels);
+  }
 
   builder.setPrepData((frames) => preparePlotData2(frames[0], getStackingGroups(frames[0])));
 
@@ -210,18 +224,43 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
 
   const yCustomConfig = frame.fields[1].config.custom;
   const yAxisWidth = yCustomConfig.axisWidth;
-  const yAxisHidden = yCustomConfig.axisPlacement === AxisPlacement.Hidden;
+  const userHiddenYAxis = yCustomConfig.axisPlacement === AxisPlacement.Hidden;
+
+  const aboveBarLabelsActive = namePosition === 'top' && !userHiddenYAxis;
+
+  const aboveBarAxisSize = (self: uPlot, values: Array<string | null>) => {
+    if (!values?.some((v) => v != null && v !== '')) {
+      return 0;
+    }
+    const maxW = values.reduce(
+      (acc, v) => (v ? Math.max(acc, measureText(v, UPLOT_AXIS_FONT_SIZE).width) : acc),
+      0
+    );
+    const axis = self.axes[1];
+    return Math.ceil((axis?.ticks?.size ?? 0) + (axis?.gap ?? 0) + Math.min(self.width * 0.4, maxW));
+  };
 
   builder.addAxis({
     scaleKey: FIXED_UNIT, // y
     isTime: false,
     placement: AxisPlacement.Left,
     splits: coreConfig.ySplits,
-    values: yAxisHidden ? (u, splits) => splits.map((v) => null) : coreConfig.yValues,
+    values: userHiddenYAxis
+      ? (u: uPlot, splits: number[]) => splits.map(() => null)
+      : aboveBarLabelsActive
+        ? (u: uPlot, splits: number[]) => {
+            const numFields = frame.fields.length - 1;
+            const slotH = u.bbox.height / numFields;
+            if (slotH >= coreConfig.minSlotForLabels) {
+              return splits.map(() => '');
+            }
+            return coreConfig.yValues(u, splits);
+          }
+        : coreConfig.yValues,
     grid: { show: false },
     ticks: { show: false },
-    gap: yAxisHidden ? 0 : 16,
-    size: yAxisHidden ? 0 : yAxisWidth,
+    gap: userHiddenYAxis ? 0 : 16,
+    size: userHiddenYAxis ? 0 : aboveBarLabelsActive ? aboveBarAxisSize : yAxisWidth,
     theme,
   });
 
