@@ -120,6 +120,11 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:view":  newMapping(RelationSetView, ""),
 			"dashboards:edit":  newMapping(RelationSetEdit, ""),
 			"dashboards:admin": newMapping(RelationSetAdmin, ""),
+			// Dashboard annotation subresource
+			"annotations:read":   newMapping(RelationGet, "annotations"),
+			"annotations:create": newMapping(RelationCreate, "annotations"),
+			"annotations:write":  newMapping(RelationUpdate, "annotations"),
+			"annotations:delete": newMapping(RelationDelete, "annotations"),
 		},
 	},
 	KindTeams: {
@@ -174,11 +179,12 @@ func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.Che
 	}
 
 	req := &authlib.CheckRequest{
-		Namespace: namespace,
-		Verb:      verb,
-		Group:     translation.group,
-		Resource:  translation.resource,
-		Name:      name,
+		Namespace:   namespace,
+		Verb:        verb,
+		Group:       translation.group,
+		Resource:    translation.resource,
+		Subresource: m.subresource,
+		Name:        name,
 	}
 
 	return req, true
@@ -191,11 +197,17 @@ func TranslateToListRequest(namespace, action, kind string) (*authlib.ListReques
 		return nil, false
 	}
 
+	m, ok := translation.mapping[action]
+	if !ok {
+		return nil, false
+	}
+
 	// FIXME: support different verbs
 	req := &authlib.ListRequest{
-		Namespace: namespace,
-		Group:     translation.group,
-		Resource:  translation.resource,
+		Namespace:   namespace,
+		Group:       translation.group,
+		Resource:    translation.resource,
+		Subresource: m.subresource,
 	}
 
 	return req, true
@@ -258,10 +270,11 @@ func TranslateActionToListParams(action string) (group, resource, verb string) {
 // ActionListEntry describes an action that Zanzana supports, along with
 // its List request parameters.
 type ActionListEntry struct {
-	Action   string
-	Group    string
-	Resource string
-	Verb     string
+	Action      string
+	Group       string
+	Resource    string
+	Subresource string
+	Verb        string
 }
 
 // supportedActions is the memoized result of building the action list from
@@ -297,10 +310,11 @@ var supportedActions = func() []ActionListEntry {
 
 			seen[action] = struct{}{}
 			out = append(out, ActionListEntry{
-				Action:   action,
-				Group:    group,
-				Resource: resource,
-				Verb:     verb,
+				Action:      action,
+				Group:       group,
+				Resource:    resource,
+				Subresource: m.subresource,
+				Verb:        verb,
 			})
 		}
 	}

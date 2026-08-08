@@ -103,7 +103,7 @@ func TestTranslateResourcePermissionToTuples(t *testing.T) {
 
 			tuples, err := TranslateResourcePermissionToTuples(toUnstructured(t, rp))
 			require.NoError(t, err)
-			require.Len(t, tuples, 1)
+			require.Len(t, tuples, 2)
 
 			assert.Equal(t, tt.expectedUser, tuples[0].GetUser())
 			assert.Equal(t, tt.expectedRelation, tuples[0].GetRelation())
@@ -170,6 +170,60 @@ func TestTranslateDatasourceResourcePermissionToTuples(t *testing.T) {
 				)
 			})
 		}
+	}
+}
+
+func TestTranslateDashboardResourcePermissionToTuples(t *testing.T) {
+	rp := &iamv0.ResourcePermission{
+		ObjectMeta: metav1.ObjectMeta{Name: "dashboard.grafana.app-dashboards-dash-1"},
+		Spec: iamv0.ResourcePermissionSpec{
+			Resource: iamv0.ResourcePermissionspecResource{
+				ApiGroup: "dashboard.grafana.app",
+				Resource: "dashboards",
+				Name:     "dash-1",
+			},
+			Permissions: []iamv0.ResourcePermissionspecPermission{{
+				Kind: iamv0.ResourcePermissionSpecPermissionKindUser,
+				Name: "uid1",
+				Verb: "Edit",
+			}},
+		},
+	}
+
+	tuples, err := TranslateResourcePermissionToTuples(toUnstructured(t, rp))
+	require.NoError(t, err)
+	require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+		common.NewResourceTuple("user:uid1", common.RelationSetEdit, "dashboard.grafana.app", "dashboards", "", "dash-1"),
+		common.NewResourceTuple("user:uid1", common.RelationSetEdit, "dashboard.grafana.app", "dashboards", "annotations", "dash-1"),
+	}), tupleKeyStrings(tuples))
+
+	ts := loadTypesystem(t)
+	for _, tuple := range tuples {
+		validateTupleAgainstSchema(t, ts, tuple)
+	}
+}
+
+func TestTranslateDashboardAnnotationRolePermissionsToTuples(t *testing.T) {
+	role := &iamv0.Role{
+		ObjectMeta: metav1.ObjectMeta{Name: "dashboard-annotation-role"},
+		Spec: iamv0.RoleSpec{
+			Permissions: []iamv0.RolespecPermission{
+				{Action: "annotations:read", Scope: "dashboards:uid:dash-1"},
+				{Action: "annotations:create", Scope: "dashboards:uid:dash-1"},
+			},
+		},
+	}
+
+	tuples, err := TranslateRoleToTuples(toUnstructured(t, role), nil)
+	require.NoError(t, err)
+	require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+		common.NewResourceTuple("role:dashboard-annotation-role#assignee", common.RelationGet, "dashboard.grafana.app", "dashboards", "annotations", "dash-1"),
+		common.NewResourceTuple("role:dashboard-annotation-role#assignee", common.RelationCreate, "dashboard.grafana.app", "dashboards", "annotations", "dash-1"),
+	}), tupleKeyStrings(tuples))
+
+	ts := loadTypesystem(t)
+	for _, tuple := range tuples {
+		validateTupleAgainstSchema(t, ts, tuple)
 	}
 }
 

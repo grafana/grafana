@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -150,6 +152,87 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			// doResourcePermissionAccessPolicyTests(t, helper)
 		})
 	}
+}
+
+func TestIntegrationDashboardAnnotationReadWithViewPermissionInMode5(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Setenv("GF_AUTHORIZATION_CACHE_TTL", "0s")
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:                   true,
+		DisableAnonymous:                    true,
+		DisableAuthZClientCache:             true,
+		DisableZanzanaCache:                 true,
+		DisableZanzanaServerCheckQueryCache: true,
+		ZanzanaReconciliationInterval:       100 * time.Millisecond,
+		ZanzanaReconcilerMode:               setting.ZanzanaReconcilerModeMT,
+		APIServerStorageType:                "unified",
+		RBACSingleOrganization:              true,
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"resourcepermissions.iam.grafana.app": {
+				DualWriterMode: rest.Mode5,
+			},
+			"folders.folder.grafana.app": {
+				DualWriterMode: rest.Mode5,
+			},
+			"dashboards.dashboard.grafana.app": {
+				DualWriterMode: rest.Mode5,
+			},
+		},
+		EnableFeatureToggles: append(apis.ZanzanaMTReconcilerFeatureToggles,
+			featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
+			featuremgmt.FlagZanzanaMergeUserPermissions,
+		),
+	})
+	ctx := t.Context()
+	namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+	apis.AwaitZanzanaReconcileNext(t, helper)
+
+	dashboard := createTestDashboard(t, helper, helper.Org1.Admin, "dashboard-annotations-view", "")
+	dashboardUID := dashboard.GetName()
+
+	resourcePermissions := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: namespace,
+		GVR:       gvrResourcePermissions,
+	})
+	_, err := resourcePermissions.Resource.Create(ctx, createResourcePermissionObject(
+		dashboardUID,
+		gvrDashboards.Group,
+		gvrDashboards.Resource,
+		newPermission("User", helper.Org1.None.Identity.GetIdentifier(), "view"),
+	), metav1.CreateOptions{})
+	require.NoError(t, err)
+	apis.AwaitZanzanaReconcileNext(t, helper)
+
+	response := apis.DoRequest(helper, apis.RequestParams{
+		User: helper.Org1.None,
+		Path: fmt.Sprintf("/api/annotations?dashboardUID=%s", dashboardUID),
+	}, &[]any{})
+	require.Equal(t, http.StatusOK, response.Response.StatusCode)
+
+	otherDashboard := createTestDashboard(t, helper, helper.Org1.Admin, "dashboard-annotations-denied", "")
+	deniedResponse := apis.DoRequest(helper, apis.RequestParams{
+		User: helper.Org1.None,
+		Path: fmt.Sprintf("/api/annotations?dashboardUID=%s", otherDashboard.GetName()),
+	}, &map[string]any{})
+	require.Equal(t, http.StatusForbidden, deniedResponse.Response.StatusCode)
+
+	// Tag autocomplete is org-scoped and is what surfaces the UI annotations:read warning.
+	// Dashboard View must not grant org-wide annotation tag listing.
+	legacyTagsResponse := apis.DoRequest(helper, apis.RequestParams{
+		User: helper.Org1.None,
+		Path: "/api/annotations/tags",
+	}, &map[string]any{})
+	require.Equal(t, http.StatusForbidden, legacyTagsResponse.Response.StatusCode)
+
+	k8sTagsResponse := apis.DoRequest(helper, apis.RequestParams{
+		User: helper.Org1.None,
+		Path: fmt.Sprintf("/apis/annotation.grafana.app/v0alpha1/namespaces/%s/tags", namespace),
+	}, &metav1.Status{})
+	require.Equal(t, http.StatusForbidden, k8sTagsResponse.Response.StatusCode)
+	require.NotNil(t, k8sTagsResponse.Status)
+	require.Contains(t, k8sTagsResponse.Status.Message, "forbidden")
 }
 
 func doResourcePermissionCRUDTests(t *testing.T, helper *apis.K8sTestHelper, clients *k8sTestClients, parentUID string) {

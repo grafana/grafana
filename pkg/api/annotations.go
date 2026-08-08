@@ -65,6 +65,16 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		query.DashboardUID = dqResult.UID
 	}
 
+	if query.DashboardUID != "" {
+		canRead, err := hs.canReadDashboardAnnotations(c, query.DashboardUID)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Error while checking annotation permissions", err)
+		}
+		if !canRead {
+			return response.Error(http.StatusForbidden, "Access denied to read the annotations", nil)
+		}
+	}
+
 	items, err := hs.annotationsRepo.Find(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get annotations", err)
@@ -568,6 +578,11 @@ func (hs *HTTPServer) canCreateAnnotation(c *contextmodel.ReqContext, dashboardU
 		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
 		return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 	}
+}
+
+func (hs *HTTPServer) canReadDashboardAnnotations(c *contextmodel.ReqContext, dashboardUID string) (bool, error) {
+	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboardUID))
+	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 }
 
 func (hs *HTTPServer) canMassDeleteAnnotations(c *contextmodel.ReqContext, dashboardUID string) (bool, error) {

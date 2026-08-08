@@ -291,3 +291,68 @@ func TestIntegrationServerMutateDatasourcePermissionLifecycle(t *testing.T) {
 		})
 	}
 }
+
+func TestIntegrationServerMutateDashboardAnnotationPermissionLifecycle(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	srv := setupOpenFGAServer(t)
+	setupMutateResourcePermissions(t, srv)
+
+	resource := &v1.Resource{
+		Group:    dashboardGroup,
+		Resource: dashboardResource,
+		Name:     "dashboard-annotations",
+	}
+	permission := &v1.Permission{
+		Kind: string(iamv0.ResourcePermissionSpecPermissionKindUser),
+		Name: "annotation-user",
+		Verb: "Edit",
+	}
+	mutate := func(operation *v1.MutateOperation) {
+		_, err := srv.Mutate(newContextWithZanzanaUpdatePermission(), &v1.MutateRequest{
+			Namespace:  "default",
+			Operations: []*v1.MutateOperation{operation},
+		})
+		require.NoError(t, err)
+	}
+	read := func(object string) {
+		res, err := srv.Read(newContextWithNamespace(), &v1.ReadRequest{
+			Namespace: "default",
+			TupleKey: &v1.ReadRequestTupleKey{
+				User:     "user:annotation-user",
+				Relation: common.RelationSetEdit,
+				Object:   object,
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, res.Tuples, 1)
+	}
+
+	mutate(&v1.MutateOperation{
+		Operation: &v1.MutateOperation_CreatePermission{
+			CreatePermission: &v1.CreatePermissionOperation{Resource: resource, Permission: permission},
+		},
+	})
+	read("resource:dashboard.grafana.app/dashboards/dashboard-annotations")
+	read("resource:dashboard.grafana.app/dashboards/annotations/dashboard-annotations")
+
+	mutate(&v1.MutateOperation{
+		Operation: &v1.MutateOperation_DeletePermission{
+			DeletePermission: &v1.DeletePermissionOperation{Resource: resource, Permission: permission},
+		},
+	})
+	for _, object := range []string{
+		"resource:dashboard.grafana.app/dashboards/dashboard-annotations",
+		"resource:dashboard.grafana.app/dashboards/annotations/dashboard-annotations",
+	} {
+		res, err := srv.Read(newContextWithNamespace(), &v1.ReadRequest{
+			Namespace: "default",
+			TupleKey: &v1.ReadRequestTupleKey{
+				User:   "user:annotation-user",
+				Object: object,
+			},
+		})
+		require.NoError(t, err)
+		require.Empty(t, res.Tuples)
+	}
+}

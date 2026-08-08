@@ -87,11 +87,18 @@ func TestAPI_Annotations(t *testing.T) {
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsTypeDashboard}},
 		},
 		{
-			desc:         "should be able to fetch annotation tags with correct permission",
+			desc:         "should be able to fetch annotation tags with organization scope",
 			path:         "/api/annotations/tags",
 			method:       http.MethodGet,
 			expectedCode: http.StatusOK,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsTypeOrganization}},
+		},
+		{
+			desc:         "should not be able to fetch annotation tags with only dashboard-scoped annotation read",
+			path:         "/api/annotations/tags",
+			method:       http.MethodGet,
+			expectedCode: http.StatusForbidden,
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionAnnotationsRead, Scope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashUID)}},
 		},
 		{
 			desc:         "should not be able to fetch annotation tags without correct permission",

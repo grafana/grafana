@@ -122,6 +122,59 @@ func TestResourcePermissionDeleteTuples(t *testing.T) {
 	}
 }
 
+func TestDashboardResourcePermissionTuples(t *testing.T) {
+	const (
+		group    = "dashboard.grafana.app"
+		resource = "dashboards"
+		uid      = "dashboard-1"
+	)
+
+	for _, tc := range []struct {
+		verb     string
+		relation string
+	}{
+		{"View", RelationSetView},
+		{"Edit", RelationSetEdit},
+		{"Admin", RelationSetAdmin},
+	} {
+		t.Run(tc.verb, func(t *testing.T) {
+			tuples, err := GetResourcePermissionWriteTuples(&authzextv1.CreatePermissionOperation{
+				Resource: &authzextv1.Resource{Group: group, Resource: resource, Name: uid},
+				Permission: &authzextv1.Permission{
+					Kind: string(iamv0.ResourcePermissionSpecPermissionKindUser),
+					Name: "u1",
+					Verb: tc.verb,
+				},
+			})
+			require.NoError(t, err)
+			require.Len(t, tuples, 2)
+
+			base := findTuple(tuples, tc.relation, "resource:"+group+"/"+resource+"/"+uid)
+			requireGroupFilter(t, base, group+"/"+resource)
+
+			annotations := findTuple(tuples, tc.relation, "resource:"+group+"/"+resource+"/annotations/"+uid)
+			requireGroupFilter(t, annotations, group+"/"+resource+"/annotations")
+		})
+	}
+
+	t.Run("delete mirrors expanded tuple identities", func(t *testing.T) {
+		resource := &authzextv1.Resource{Group: group, Resource: resource, Name: uid}
+		permission := &authzextv1.Permission{
+			Kind: string(iamv0.ResourcePermissionSpecPermissionKindUser),
+			Name: "u1",
+			Verb: "Edit",
+		}
+		deletes, err := GetResourcePermissionDeleteTuples(&authzextv1.DeletePermissionOperation{
+			Resource: resource, Permission: permission,
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{
+			"user:u1|edit|resource:dashboard.grafana.app/dashboards/dashboard-1",
+			"user:u1|edit|resource:dashboard.grafana.app/dashboards/annotations/dashboard-1",
+		}, deleteTupleKeys(deletes))
+	})
+}
+
 func TestResourcePermissionTupleRegressionCases(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -130,7 +183,7 @@ func TestResourcePermissionTupleRegressionCases(t *testing.T) {
 		verb  string
 		count int
 	}{
-		{"dashboard remains singular", "dashboard.grafana.app", "dashboards", "View", 1},
+		{"dashboard action set expands", "dashboard.grafana.app", "dashboards", "View", 2},
 		{"folder remains singular", "folder.grafana.app", "folders", "View", 1},
 		{"wrong datasource resource remains singular", "loki.datasource.grafana.app", "queries", "Query", 1},
 		{"unrelated group remains singular", "loki", "datasources", "View", 1},
@@ -194,7 +247,43 @@ func deleteTupleKeys(tuples []*openfgav1.TupleKeyWithoutCondition) []string {
 	return keys
 }
 
+func tupleIdentities(tuples []*openfgav1.TupleKey) []string {
+	keys := make([]string, 0, len(tuples))
+	for _, tuple := range tuples {
+		keys = append(keys, tuple.User+"|"+tuple.Relation+"|"+tuple.Object)
+	}
+	return keys
+}
+
 func TestConvertRolePermissionsToTuples(t *testing.T) {
+	t.Run("converts dashboard annotation permissions without dashboard access", func(t *testing.T) {
+		tuples, err := ConvertRolePermissionsToTuples("annotation-role", []RolePermission{
+			{Action: actionAnnotationsRead, Kind: KindDashboards, Identifier: "dash1"},
+			{Action: actionAnnotationsCreate, Kind: KindDashboards, Identifier: "dash1"},
+			{Action: actionAnnotationsWrite, Kind: KindDashboards, Identifier: "dash1"},
+			{Action: actionAnnotationsDelete, Kind: KindDashboards, Identifier: "dash1"},
+		})
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{
+			"role:annotation-role#assignee|get|resource:dashboard.grafana.app/dashboards/annotations/dash1",
+			"role:annotation-role#assignee|create|resource:dashboard.grafana.app/dashboards/annotations/dash1",
+			"role:annotation-role#assignee|update|resource:dashboard.grafana.app/dashboards/annotations/dash1",
+			"role:annotation-role#assignee|delete|resource:dashboard.grafana.app/dashboards/annotations/dash1",
+		}, tupleIdentities(tuples))
+	})
+
+	t.Run("expands dashboard action sets to annotations", func(t *testing.T) {
+		tuples, err := ConvertRolePermissionsToTuples("dashboard-role", []RolePermission{
+			{Action: "dashboards:view", Kind: KindDashboards, Identifier: "dash1"},
+			{Action: "dashboards:edit", Kind: KindDashboards, Identifier: "dash1"},
+		})
+		require.NoError(t, err)
+		require.Contains(t, tupleIdentities(tuples),
+			"role:dashboard-role#assignee|view|resource:dashboard.grafana.app/dashboards/annotations/dash1")
+		require.Contains(t, tupleIdentities(tuples),
+			"role:dashboard-role#assignee|edit|resource:dashboard.grafana.app/dashboards/annotations/dash1")
+	})
+
 	t.Run("should convert folder permissions", func(t *testing.T) {
 		permissions := []RolePermission{
 			{Action: "folders:read", Kind: "folders", Identifier: "folder1"},

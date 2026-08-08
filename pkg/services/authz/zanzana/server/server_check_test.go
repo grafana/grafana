@@ -412,3 +412,31 @@ func TestIntegrationServerCheckGenericDatasourceCreate(t *testing.T) {
 		assert.False(t, res.GetAllowed())
 	})
 }
+
+func TestIntegrationServerCheckDashboardAnnotations(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	setup(t, server)
+
+	check := func(subject, verb, name string) bool {
+		res, err := server.Check(newContextWithNamespace(), &authzv1.CheckRequest{
+			Namespace:   namespace,
+			Subject:     subject,
+			Verb:        verb,
+			Group:       dashboardGroup,
+			Resource:    dashboardResource,
+			Subresource: "annotations",
+			Name:        name,
+		})
+		require.NoError(t, err)
+		return res.GetAllowed()
+	}
+
+	require.True(t, check("user:annotation-viewer", utils.VerbGet, "dashboard-annotations"))
+	require.False(t, check("user:annotation-viewer", utils.VerbCreate, "dashboard-annotations"))
+	require.True(t, check("user:annotation-editor", utils.VerbCreate, "dashboard-annotations"))
+	require.True(t, check("user:annotation-editor", utils.VerbUpdate, "dashboard-annotations"))
+	require.True(t, check("user:annotation-editor", utils.VerbDelete, "dashboard-annotations"))
+	require.False(t, check("user:annotation-editor", utils.VerbGet, "another-dashboard"))
+}

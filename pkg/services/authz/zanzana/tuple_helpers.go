@@ -58,6 +58,15 @@ const (
 	actionTeamsRolesRemove = "teams.roles:remove"
 )
 
+const (
+	actionAnnotationsRead   = "annotations:read"
+	actionAnnotationsCreate = "annotations:create"
+	actionAnnotationsWrite  = "annotations:write"
+	actionAnnotationsDelete = "annotations:delete"
+
+	dashboardAnnotationsSubresource = "annotations"
+)
+
 // iam.grafana.app group and the resources user- and team-management actions gate.
 var (
 	iamGroup             = iamv0.UserResourceInfo.GroupResource().Group
@@ -203,6 +212,13 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 			continue
 		}
 
+		if annotationTuples := dashboardAnnotationRolePermissionToTuples(subject, perm); annotationTuples != nil {
+			for _, t := range annotationTuples {
+				tupleMap[t.String()] = t
+			}
+			continue
+		}
+
 		// Convert RBAC action/kind to Zanzana tuple
 		tuple, ok := TranslateToResourceTuple(subject, perm.Action, perm.Kind, perm.Identifier)
 		if !ok {
@@ -226,6 +242,10 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 
 		// For non-folder resource tuples, just add to the map
 		tupleMap[tuple.String()] = tuple
+
+		if annotationTuple := dashboardActionSetToAnnotationTuple(subject, perm); annotationTuple != nil {
+			tupleMap[annotationTuple.String()] = annotationTuple
+		}
 	}
 
 	// Collect all tuples
@@ -415,6 +435,53 @@ func isTeamManagementAction(action string) bool {
 	return ok
 }
 
+// dashboardAnnotationRolePermissionToTuples maps direct annotation permissions
+// scoped to a dashboard to its annotations subresource. These permissions do
+// not grant access to the parent dashboard.
+func dashboardAnnotationRolePermissionToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
+	if permission.Kind != KindDashboards || permission.Identifier == "" || permission.Identifier == "*" {
+		return nil
+	}
+
+	var relation string
+	switch permission.Action {
+	case actionAnnotationsRead:
+		relation = RelationGet
+	case actionAnnotationsCreate:
+		relation = RelationCreate
+	case actionAnnotationsWrite:
+		relation = RelationUpdate
+	case actionAnnotationsDelete:
+		relation = RelationDelete
+	default:
+		return nil
+	}
+
+	return []*openfgav1.TupleKey{newDashboardAnnotationTuple(subject, relation, permission.Identifier)}
+}
+
+// dashboardActionSetToAnnotationTuple expands dashboard action sets because
+// the legacy RBAC mapper lets View/Edit/Admin authorize dashboard annotations.
+func dashboardActionSetToAnnotationTuple(subject string, permission RolePermission) *openfgav1.TupleKey {
+	if permission.Kind != KindDashboards || permission.Identifier == "" || permission.Identifier == "*" {
+		return nil
+	}
+
+	var relation string
+	switch permission.Action {
+	case "dashboards:view":
+		relation = RelationSetView
+	case "dashboards:edit":
+		relation = RelationSetEdit
+	case "dashboards:admin":
+		relation = RelationSetAdmin
+	default:
+		return nil
+	}
+
+	return newDashboardAnnotationTuple(subject, relation, permission.Identifier)
+}
+
 // isAllTeamsScope reports whether the (kind, identifier) pair represents an "all"
 // scope for the team-management actions. The legacy shapes that appear are:
 //   - teams:* / teams:id:*      → identifier="*" (teams:read/write/delete, teams.permissions:*, teams.roles:read)
@@ -500,6 +567,9 @@ func resourcePermissionToTuples(resource *authzextv1.Resource, permission *authz
 	if isDatasourcePermission(resource) {
 		return datasourcePermissionToTuples(subject, relation, resource), nil
 	}
+	if isDashboardPermission(resource) {
+		return dashboardPermissionToTuples(subject, relation, resource), nil
+	}
 
 	return []*openfgav1.TupleKey{
 		newResourcePermissionTuple(subject, relation, resource, ""),
@@ -528,6 +598,31 @@ func datasourcePermissionToTuples(subject, relation string, resource *authzextv1
 
 func isDatasourcePermission(resource *authzextv1.Resource) bool {
 	return resource.GetResource() == "datasources" && strings.HasSuffix(resource.GetGroup(), ".datasource.grafana.app")
+}
+
+func dashboardPermissionToTuples(subject, relation string, resource *authzextv1.Resource) []*openfgav1.TupleKey {
+	base := newResourcePermissionTuple(subject, relation, resource, "")
+	switch relation {
+	case RelationSetView, RelationSetEdit, RelationSetAdmin:
+		return []*openfgav1.TupleKey{
+			base,
+			newResourcePermissionTuple(subject, relation, resource, dashboardAnnotationsSubresource),
+		}
+	default:
+		return []*openfgav1.TupleKey{base}
+	}
+}
+
+func isDashboardPermission(resource *authzextv1.Resource) bool {
+	return resource.GetGroup() == "dashboard.grafana.app" && resource.GetResource() == "dashboards"
+}
+
+func newDashboardAnnotationTuple(subject, relation, dashboardUID string) *openfgav1.TupleKey {
+	return newResourcePermissionTuple(subject, relation, &authzextv1.Resource{
+		Group:    "dashboard.grafana.app",
+		Resource: "dashboards",
+		Name:     dashboardUID,
+	}, dashboardAnnotationsSubresource)
 }
 
 func toZanzanaType(apiGroup string) string {

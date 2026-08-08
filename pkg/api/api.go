@@ -529,7 +529,8 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Put("/:annotationId", authorize(ac.EvalPermission(ac.ActionAnnotationsWrite, ac.ScopeAnnotationsID)), routing.Wrap(hs.UpdateAnnotation))
 			annotationsRoute.Patch("/:annotationId", authorize(ac.EvalPermission(ac.ActionAnnotationsWrite, ac.ScopeAnnotationsID)), routing.Wrap(hs.PatchAnnotation))
 			annotationsRoute.Post("/graphite", authorize(ac.EvalPermission(ac.ActionAnnotationsCreate, ac.ScopeAnnotationsTypeOrganization)), routing.Wrap(hs.PostGraphiteAnnotation))
-			annotationsRoute.Get("/tags", authorize(ac.EvalPermission(ac.ActionAnnotationsRead)), routing.Wrap(hs.GetAnnotationTags))
+			// Tags are org-wide; dashboard-scoped annotations:read must not unlock this endpoint.
+			annotationsRoute.Get("/tags", authorize(ac.EvalPermission(ac.ActionAnnotationsRead, ac.ScopeAnnotationsTypeOrganization)), routing.Wrap(hs.GetAnnotationTags))
 		})
 
 		apiRoute.Post("/frontend-metrics", routing.Wrap(hs.PostFrontendMetrics))
