@@ -283,16 +283,21 @@ func NewAsExternalStep(cfg *config.PluginManagementCfg) *AsExternal {
 	}
 }
 
-// Filter will filter out any plugins that are marked to be disabled.
+// Filter suppresses core plugins that have been replaced by an external plugin via the override allowlist.
+// ActiveExternalOverrides is the sole gate — a plugin is suppressed only when its core ID appears in the allowlist.
+// The allowlist is populated by externalOverridesFromIni in pluginconfig when both as_external and alias_ids are set.
 func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 	if cl == plugins.ClassCore {
+		activeOverrideIDs := make(map[string]bool, len(c.cfg.ActiveExternalOverrides))
+		for _, o := range c.cfg.ActiveExternalOverrides {
+			activeOverrideIDs[o.CorePluginID] = true
+		}
+
 		res := []*plugins.FoundBundle{}
 		for _, bundle := range bundles {
-			pluginCfg := c.cfg.PluginSettings[bundle.Primary.JSONData.ID]
-			// Skip core plugins if the feature flag is enabled and the plugin is in the skip list.
-			// It could be loaded later as an external plugin.
-			if pluginCfg["as_external"] == "true" {
-				c.log.Debug("Skipping the core plugin load", "pluginID", bundle.Primary.JSONData.ID)
+			pluginID := bundle.Primary.JSONData.ID
+			if activeOverrideIDs[pluginID] {
+				c.log.Info("Core plugin replaced by external plugin", "pluginID", pluginID)
 			} else {
 				res = append(res, bundle)
 			}
@@ -300,6 +305,21 @@ func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([
 		return res, nil
 	}
 	return bundles, nil
+}
+
+// ExternalPluginOverridesDecorateFunc returns a DecorateFunc that injects core plugin IDs as aliases
+// into their external replacement plugins, based on the active external overrides. This ensures that
+// existing dashboards and data sources continue to work without migration when a core plugin is
+// replaced by an external one.
+func ExternalPluginOverridesDecorateFunc(activeOverrides []config.ExternalOverride) func(context.Context, *plugins.Plugin) (*plugins.Plugin, error) {
+	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		for _, o := range activeOverrides {
+			if p.ID == o.ExternalPluginID {
+				p.AliasIDs = append(p.AliasIDs, o.CorePluginID)
+			}
+		}
+		return p, nil
+	}
 }
 
 // DuplicatePluginIDValidation is a filter step that will filter out any plugins that are already registered with the same
