@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 )
@@ -21,16 +22,15 @@ type unsignedStep struct {
 }
 
 func (s *unsignedStep) Title() string {
-	return "Plugin signature check"
+	return translations.StepTitle(CheckID, UnsignedStepID)
 }
 
 func (s *unsignedStep) Description() string {
-	return "Checks if the plugin's signature is missing or invalid."
+	return translations.StepDescription(CheckID, UnsignedStepID)
 }
 
 func (s *unsignedStep) Resolution() string {
-	return "For security, we recommend only installing plugins from the catalog. " +
-		"Review the plugin's status and verify your allowlist if appropriate."
+	return translations.StepResolution(CheckID, UnsignedStepID)
 }
 
 func (s *unsignedStep) ID() string {
@@ -54,7 +54,7 @@ func (s *unsignedStep) Run(ctx context.Context, log logging.Logger, _ *advisor.C
 		links := []advisor.CheckErrorLink{}
 		if _, ok := s.pluginIndex[p.ID]; ok {
 			links = append(links, advisor.CheckErrorLink{
-				Message: "View plugin",
+				Message: translations.LinkMessage("view-plugin"),
 				Url:     fmt.Sprintf("/plugins/%s", p.ID),
 			})
 		}
@@ -77,7 +77,7 @@ func (s *unsignedStep) Run(ctx context.Context, log logging.Logger, _ *advisor.C
 		links := []advisor.CheckErrorLink{}
 		if _, ok := s.pluginIndex[pluginErr.PluginID]; ok {
 			links = append(links, advisor.CheckErrorLink{
-				Message: "View plugin",
+				Message: translations.LinkMessage("view-plugin"),
 				Url:     fmt.Sprintf("/plugins/%s", pluginErr.PluginID),
 			})
 		}

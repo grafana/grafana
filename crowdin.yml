@@ -21,4 +21,10 @@ files: [
     "type": "i18next_json",
     "dest": "packages/grafana-sql/en-US/%original_file_name%"
   },
+  {
+    "source": "apps/advisor/translations/en-US/grafana-advisor.json",
+    "translation": "apps/advisor/translations/%locale%/%original_file_name%",
+    "type": "i18next_json",
+    "dest": "apps/advisor/en-US/%original_file_name%"
+  },
 ]

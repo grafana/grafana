@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 )
 
 var _ checks.Step = &pinnedVersionStep{}
@@ -20,17 +21,15 @@ type pinnedVersionStep struct {
 }
 
 func (s *pinnedVersionStep) Title() string {
-	return "Grafana Cloud version check"
+	return translations.StepTitle(CheckID, pinnedVersion)
 }
 
 func (s *pinnedVersionStep) Description() string {
-	return "Checks if the Grafana version is pinned."
+	return translations.StepDescription(CheckID, pinnedVersion)
 }
 
 func (s *pinnedVersionStep) Resolution() string {
-	return "You may miss out on security updates and bug fixes if you use a pinned version. " +
-		"Contact your Grafana administrator and open a " +
-		"<a href='https://grafana.com/profile/org#support' target=_blank>support ticket</a> to help you get unpinned."
+	return translations.StepResolution(CheckID, pinnedVersion)
 }
 
 func (s *pinnedVersionStep) ID() string {

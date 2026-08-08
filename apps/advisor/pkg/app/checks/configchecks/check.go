@@ -4,7 +4,13 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+const (
+	CheckID              = "config"
+	SecurityConfigStepID = "security_config"
 )
 
 var _ checks.Check = (*check)(nil)
@@ -20,11 +26,11 @@ func New(cfg *setting.Cfg) checks.Check {
 }
 
 func (c *check) ID() string {
-	return "config"
+	return CheckID
 }
 
 func (c *check) Name() string {
-	return "config setting"
+	return translations.CheckName(CheckID)
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {

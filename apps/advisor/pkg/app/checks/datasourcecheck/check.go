@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -90,7 +91,7 @@ func (c *check) ID() string {
 }
 
 func (c *check) Name() string {
-	return "data source"
+	return translations.CheckName(CheckID)
 }
 
 func (c *check) Init(ctx context.Context) error {

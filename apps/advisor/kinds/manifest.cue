@@ -23,6 +23,15 @@ manifest: {
 							}
 						}
 					}
+					"/translations": {
+						"GET": {
+							name: "getTranslations"
+							response: {
+								// Flat map of i18n key -> translated string for the requested locale.
+								translations: [string]: string
+							}
+						}
+					}
 				}
 			}
 		}

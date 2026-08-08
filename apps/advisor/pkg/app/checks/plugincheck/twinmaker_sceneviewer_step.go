@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 )
 
 const (
@@ -20,15 +21,15 @@ var _ checks.Step = &twinmakerSceneViewerStep{}
 type twinmakerSceneViewerStep struct{}
 
 func (s *twinmakerSceneViewerStep) Title() string {
-	return "TwinMaker SceneViewer deprecation check"
+	return translations.StepTitle(CheckID, twinmakerSceneViewerStepID)
 }
 
 func (s *twinmakerSceneViewerStep) Description() string {
-	return "Warns when the Grafana IoT TwinMaker App is installed that the SceneViewer panel will stop working in Grafana 13.1."
+	return translations.StepDescription(CheckID, twinmakerSceneViewerStepID)
 }
 
 func (s *twinmakerSceneViewerStep) Resolution() string {
-	return twinmakerSceneViewerMessage
+	return translations.StepResolution(CheckID, twinmakerSceneViewerStepID)
 }
 
 func (s *twinmakerSceneViewerStep) ID() string {
@@ -52,7 +53,7 @@ func (s *twinmakerSceneViewerStep) Run(_ context.Context, log logging.Logger, _ 
 		twinmakerSceneViewerStepID,
 		[]advisor.CheckErrorLink{
 			{
-				Message: "View plugin",
+				Message: translations.LinkMessage("view-plugin"),
 				Url:     fmt.Sprintf("/plugins/%s", p.ID),
 			},
 		},

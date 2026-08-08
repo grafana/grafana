@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 )
 
@@ -30,7 +31,7 @@ func (c *check) ID() string {
 }
 
 func (c *check) Name() string {
-	return "SSO setting"
+	return translations.CheckName(CheckID)
 }
 
 func (c *check) Init(ctx context.Context) error {

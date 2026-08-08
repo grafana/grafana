@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -20,15 +21,15 @@ type missingPluginStep struct {
 }
 
 func (s *missingPluginStep) Title() string {
-	return "Missing plugin check"
+	return translations.StepTitle(CheckID, MissingPluginStepID)
 }
 
 func (s *missingPluginStep) Description() string {
-	return "Checks if the plugin associated with the data source is installed and available."
+	return translations.StepDescription(CheckID, MissingPluginStepID)
 }
 
 func (s *missingPluginStep) Resolution() string {
-	return "Delete the datasource or install the plugin."
+	return translations.StepResolution(CheckID, MissingPluginStepID)
 }
 
 func (s *missingPluginStep) ID() string {
@@ -45,7 +46,7 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 	if !exists {
 		links := []advisor.CheckErrorLink{
 			{
-				Message: "Delete data source",
+				Message: translations.LinkMessage("delete-data-source"),
 				Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
 			},
 		}
@@ -59,7 +60,7 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 		if len(plugins) > 0 {
 			// Plugin is available in the repo
 			links = append(links, advisor.CheckErrorLink{
-				Message: "View plugin",
+				Message: translations.LinkMessage("view-plugin"),
 				Url:     fmt.Sprintf("/plugins/%s", ds.Type),
 			})
 		}

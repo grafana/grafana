@@ -5,6 +5,7 @@ import (
 	sysruntime "runtime"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
@@ -45,7 +46,7 @@ func (c *check) ID() string {
 }
 
 func (c *check) Name() string {
-	return "plugin"
+	return translations.CheckName(CheckID)
 }
 
 type pluginItem struct {

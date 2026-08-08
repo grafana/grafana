@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/translations"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 )
@@ -22,15 +23,15 @@ type updateStep struct {
 }
 
 func (s *updateStep) Title() string {
-	return "Update check"
+	return translations.StepTitle(CheckID, UpdateStepID)
 }
 
 func (s *updateStep) Description() string {
-	return "Checks if an installed plugins has a newer version available."
+	return translations.StepDescription(CheckID, UpdateStepID)
 }
 
 func (s *updateStep) Resolution() string {
-	return "There are newer versions available for the plugins listed below. We recommend going to the plugin admin page and upgrading to the latest version."
+	return translations.StepResolution(CheckID, UpdateStepID)
 }
 
 func (s *updateStep) ID() string {
@@ -65,7 +66,7 @@ func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.Che
 			p.ID,
 			[]advisor.CheckErrorLink{
 				{
-					Message: "Upgrade",
+					Message: translations.LinkMessage("upgrade"),
 					Url:     fmt.Sprintf("/plugins/%s?page=version-history", p.ID),
 				},
 			},
