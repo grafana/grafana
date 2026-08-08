@@ -14849,6 +14849,15 @@
         }
       }
     },
+    "DashboardView": {
+      "type": "object",
+      "title": "DashboardView contains serialized dashboard view state.",
+      "properties": {
+        "queryString": {
+          "type": "string"
+        }
+      }
+    },
     "DataLink": {
       "description": "DataLink define what",
       "type": "object",
@@ -18425,6 +18434,12 @@
           "type": "integer",
           "format": "int64"
         },
+        "dashboardView": {
+          "$ref": "#/definitions/DashboardView"
+        },
+        "interval": {
+          "type": "string"
+        },
         "order": {
           "type": "integer",
           "format": "int64"
@@ -18443,6 +18458,13 @@
     "PlaylistItemDTO": {
       "type": "object",
       "properties": {
+        "dashboardView": {
+          "$ref": "#/definitions/DashboardView"
+        },
+        "interval": {
+          "description": "Interval optionally overrides the playlist interval for this item.",
+          "type": "string"
+        },
         "title": {
           "description": "Title is an unused property -- it will be removed in the future",
           "type": "string"
