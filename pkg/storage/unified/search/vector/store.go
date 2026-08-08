@@ -29,6 +29,11 @@ type VectorBackend interface {
 	// not provisioned — callers surface NOT_FOUND.
 	ResolveCollection(ctx context.Context, group, resource string) (c Collection, found bool, err error)
 
+	// EnsureCollection resolves (group, resource), provisioning the catalog
+	// row and partition on first use. isExternal appends "_external" to the
+	// derived partition key. Only upsert paths may call this.
+	EnsureCollection(ctx context.Context, group, resource string, isExternal bool) (Collection, error)
+
 	// Search returns top-N nearest neighbors by cosine distance. Query
 	// embedding must come from the same model as stored vectors. resource
 	// is the partition key (Collection.PartitionKey), not the resource
@@ -38,16 +43,20 @@ type VectorBackend interface {
 
 	Upsert(ctx context.Context, vectors []Vector) error
 
-	// UpsertReplaceSubresources upserts `changed` and deletes any stored
+	// UpsertReplaceSubresources upserts `changed`, rewrites title/metadata
+	// for `metadataOnly` rows (no embedding change), and deletes any stored
 	// subresource of (namespace, model, resource, uid) not listed in
-	// `desired`, in one transaction. `changed` (a subset of `desired`)
-	// holds only the rows that need rewriting; `desired` is the full set
-	// that should remain. Every vector in `changed` must belong to the
-	// given tuple.
-	UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, desired []string) error
+	// `desired`, in one transaction. `changed` and `metadataOnly` are
+	// disjoint subsets of `desired`. Every vector in `changed` must belong
+	// to the given tuple.
+	UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, metadataOnly []VectorMeta, desired []string) error
 
-	// Delete removes every resource and subresource under `uid`. model must be non-empty.
-	Delete(ctx context.Context, namespace, model, resource, uid string) error
+	// DeleteRows removes rows selected by sel within (namespace, model,
+	// resource). Exactly one selector field must be set. UIDs deletes whole
+	// entities (all their subresources) in one statement. All deletes
+	// everything, paged by Limit — hasMore reports whether another page
+	// remains. model must be non-empty.
+	DeleteRows(ctx context.Context, namespace, model, resource string, sel DeleteSelector) (deleted int64, hasMore bool, err error)
 
 	// DeleteSubresources removes specific subresources under `uid`. Empty
 	// slice is a no-op. model must be non-empty.
@@ -56,7 +65,7 @@ type VectorBackend interface {
 	// DeleteNamespace removes every row belonging to a namespace across all
 	// resources and models, plus its cached query embeddings, rate buckets, and
 	// promotion log rows. Used when a tenant is hard-deleted. Returns the number
-	// of embedding rows removed. Not scoped by model/resource/uid, unlike Delete.
+	// of embedding rows removed. Not scoped by model/resource/uid, unlike DeleteRows.
 	DeleteNamespace(ctx context.Context, namespace string) (int64, error)
 
 	// GetSubresourceContent returns subresource → stored content and the
@@ -118,6 +127,13 @@ type VectorBackend interface {
 	// On pod crash the underlying connection drops and Postgres releases
 	// the lock automatically.
 	TryAcquireBackfillLock(ctx context.Context) (release func(), acquired bool, err error)
+
+	// WithEntityLock runs fn while holding a blocking session advisory lock
+	// scoped to (namespace, resource, uid). It serializes the
+	// read-diff-embed-write window of subresource syncs for one entity so
+	// concurrent writers can't interleave stale diffs. The lock rides a
+	// dedicated connection; a crash releases it automatically.
+	WithEntityLock(ctx context.Context, namespace, resource, uid string, fn func(context.Context) error) error
 }
 
 // BackfillJob is one row from vector_backfill_jobs.
@@ -154,6 +170,28 @@ type Vector struct {
 	Metadata        json.RawMessage
 	Embedding       []float32
 	Model           string
+}
+
+// VectorMeta is a title/metadata-only rewrite of an existing row.
+// UpsertReplaceSubresources applies these without touching the embedding, so
+// callers keep sync markers (e.g. an embeddedAt stamp) fresh without
+// re-embed cost.
+type VectorMeta struct {
+	Subresource string
+	Title       string
+	Metadata    json.RawMessage
+}
+
+// DeleteSelector picks rows for DeleteRows. Exactly one of UIDs/All is set;
+// a Filter field joins with the metadata filter dialect without another method.
+type DeleteSelector struct {
+	UIDs  []string
+	All   bool
+	Limit int // page size when All; 0 means defaultDeleteAllPageSize
+	// AllModels drops the model scope: rows under every embedding model are
+	// deleted. External collections use this — they have no backfill, so
+	// rows from a previous model are unreachable orphans otherwise.
+	AllModels bool
 }
 
 func (v *Vector) Validate() error {

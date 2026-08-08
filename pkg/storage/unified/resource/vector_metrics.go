@@ -28,6 +28,9 @@ type VectorMetrics struct {
 	QueryCacheEvictionsTotal             prometheus.Counter
 	RateLimitedRequestsTotal             prometheus.Counter
 	RateLimiterErrorsTotal               prometheus.Counter
+
+	WriteDuration  *prometheus.HistogramVec
+	WriteRowsTotal *prometheus.CounterVec
 }
 
 func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
@@ -124,5 +127,17 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			Name: "vector_storage_rate_limiter_errors_total",
 			Help: "Total number of fail-closed VectorSearch rejections caused by the rate-limiter backend being unavailable. Distinct from rate_limited_total (genuine over-quota rejections).",
 		}),
+		WriteDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "vector_storage_write_duration_seconds",
+			Help:                            "Time (in seconds) spent serving VectorStore write RPCs, labeled by rpc and gRPC status code.",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"rpc", "status_code"}),
+		WriteRowsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_write_rows_total",
+			Help: "Rows written or deleted by VectorStore RPCs, labeled by rpc, group, and resource.",
+		}, []string{"rpc", "group", "resource"}),
 	}
 }

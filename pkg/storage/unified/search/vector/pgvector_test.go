@@ -3,6 +3,8 @@ package vector
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"strings"
 	"testing"
 	"unicode/utf8"
 
@@ -113,8 +115,8 @@ func TestPgvectorBackend_UpsertReplaceSubresources_EmptySlice(t *testing.T) {
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", nil, nil))
-	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{}, []string{}))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", nil, nil, nil))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{}, nil, []string{}))
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
@@ -128,7 +130,7 @@ func TestPgvectorBackend_UpsertReplaceSubresources_InvalidVector_Rejected(t *tes
 
 	err := backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{
 		{Namespace: "ns", Model: "m", Resource: "dashboards", UID: "", Title: "t", Content: "x", Embedding: []float32{0.1}},
-	}, []string{"panel/1"})
+	}, nil, []string{"panel/1"})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "uid must not be empty")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
@@ -144,18 +146,18 @@ func TestPgvectorBackend_UpsertReplaceSubresources_UnknownResource_Rejected(t *t
 
 	err := backend.UpsertReplaceSubresources(ctx, "ns", "m", "folders", "x", []Vector{
 		{Namespace: "ns", Model: "m", Resource: "folders", UID: "x", Title: "t", Embedding: []float32{0.1}},
-	}, []string{"panel/1"})
+	}, nil, []string{"panel/1"})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported resource")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
-func TestPgvectorBackend_Delete_EmptyModel_Rejected(t *testing.T) {
+func TestPgvectorBackend_DeleteRows_EmptyModel_Rejected(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	err := backend.Delete(ctx, "ns", "", "dashboards", "dash-1")
+	_, _, err := backend.DeleteRows(ctx, "ns", "", "dashboards", DeleteSelector{UIDs: []string{"dash-1"}})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "model must not be empty")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
@@ -226,6 +228,15 @@ func TestPartialHNSWName(t *testing.T) {
 	require.Equal(t, "dashboards_stacks_123_hnsw", partialHNSWName("dashboards", "stacks-123"))
 	require.Equal(t, "dashboards_weird__name_hnsw", partialHNSWName("dashboards", "weird!!name"))
 	require.Equal(t, "dashboards_upper_ns_hnsw", partialHNSWName("dashboards", "UPPER-NS"))
+
+	// Names past Postgres's 63-char identifier limit collapse the namespace
+	// to a bounded hash — still deterministic, still unique per namespace.
+	longRes := strings.Repeat("r", maxPartitionKeyLen)
+	a := partialHNSWName(longRes, "stacks-111111111111111111")
+	b := partialHNSWName(longRes, "stacks-111111111111111112")
+	require.LessOrEqual(t, len(a), pgMaxIdentifierLen)
+	require.Equal(t, a, partialHNSWName(longRes, "stacks-111111111111111111"))
+	require.NotEqual(t, a, b)
 }
 
 func TestFitEmbedding(t *testing.T) {
@@ -289,4 +300,27 @@ func TestTruncateRunes(t *testing.T) {
 		require.True(t, utf8.ValidString(got))
 		require.Equal(t, 5, utf8.RuneCountInString(got))
 	})
+}
+
+func TestEnsureResourcePartition_RejectsOverlongResource(t *testing.T) {
+	// 63-byte Postgres identifier limit minus len("embeddings_") minus
+	// len("_metadata_idx") = 39. Postgres would silently truncate a longer
+	// name, breaking the existence fast-path forever.
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	ok39 := strings.Repeat("a", 39)
+	bad40 := strings.Repeat("a", 40)
+
+	err := backend.EnsureResourcePartition(ctx, bad40)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "too long")
+
+	// 39 passes the length guard (then hits the DB check — mock it minimally).
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnError(errors.New("stop here"))
+	err = backend.EnsureResourcePartition(ctx, ok39)
+	require.Error(t, err)
+	require.NotContains(t, err.Error(), "too long")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
