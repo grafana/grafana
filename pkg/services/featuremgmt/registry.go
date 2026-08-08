@@ -1121,14 +1121,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "alertingCentralAlertHistory",
-			Description: "Enables the new central alert history.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true}, // changes navtree from backend
-			Expression:  "false",
-		},
-		{
 			Name:        "pluginProxyPreserveTrailingSlash",
 			Description: "Preserve plugin proxy trailing slash.",
 			Stage:       FeatureStageGeneralAvailability,

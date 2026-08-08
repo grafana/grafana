@@ -337,7 +337,8 @@
       "metadata": {
         "name": "alertingCentralAlertHistory",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-05-29T15:01:38Z"
+        "creationTimestamp": "2024-05-29T15:01:38Z",
+        "deletionTimestamp": "2026-08-05T14:47:01Z"
       },
       "spec": {
         "description": "Enables the new central alert history.",
