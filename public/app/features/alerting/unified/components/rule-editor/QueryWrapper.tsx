@@ -222,27 +222,16 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
 };
 
 export function MaxDataPointsOption({
-  options,
+  value,
   onChange,
+  onBlur,
+  onKeyDown,
 }: {
-  options: AlertQueryOptions;
-  onChange: (options: AlertQueryOptions) => void;
+  value: string;
+  onChange: (value: string) => void;
+  onBlur: () => void;
+  onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 }) {
-  const value = options.maxDataPoints ?? '';
-
-  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const maxDataPointsNumber = parseInt(event.target.value, 10);
-
-    const maxDataPoints = isNaN(maxDataPointsNumber) || maxDataPointsNumber === 0 ? undefined : maxDataPointsNumber;
-
-    if (maxDataPoints !== options.maxDataPoints) {
-      onChange({
-        ...options,
-        maxDataPoints,
-      });
-    }
-  };
-
   return (
     <InlineField
       labelWidth={24}
@@ -257,32 +246,26 @@ export function MaxDataPointsOption({
         width={10}
         placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
-        onBlur={onMaxDataPointsBlur}
-        defaultValue={value}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
+        value={value}
       />
     </InlineField>
   );
 }
 
 export function MinIntervalOption({
-  options,
+  value,
   onChange,
+  onBlur,
+  onKeyDown,
 }: {
-  options: AlertQueryOptions;
-  onChange: (options: AlertQueryOptions) => void;
+  value: string;
+  onChange: (value: string) => void;
+  onBlur: () => void;
+  onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 }) {
-  const value = options.minInterval ?? '';
-
-  const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const minInterval = event.target.value;
-    if (minInterval !== value) {
-      onChange({
-        ...options,
-        minInterval,
-      });
-    }
-  };
-
   return (
     <InlineField
       label={t('alerting.min-interval-option.label-interval', 'Interval')}
@@ -299,8 +282,10 @@ export function MinIntervalOption({
         width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
-        onBlur={onMinIntervalBlur}
-        defaultValue={value}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
+        value={value}
       />
     </InlineField>
   );
