@@ -24,6 +24,9 @@ func (pr *FakePluginStore) Plugin(_ context.Context, pluginID string) (Plugin, b
 		if v.ID == pluginID {
 			return v, true
 		}
+		if slices.Contains(v.AliasIDs, pluginID) {
+			return v, true
+		}
 	}
 
 	for _, v := range pr.PluginList {

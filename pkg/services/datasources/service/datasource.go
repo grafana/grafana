@@ -128,12 +128,17 @@ func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters)
 	return s.SQLStore.Count(ctx, scopeParams)
 }
 
+//go:generate mockery --name DataSourceRetriever --structname MockDataSourceRetriever --inpackage --filename datasourceretriever_mock.go --with-expecter
+
 // DataSourceRetriever interface for retrieving a datasource.
 type DataSourceRetriever interface {
 	// GetDataSource gets a datasource.
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
 	// GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and group (datasource type).
 	GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error)
+	// CanonicalType resolves typeOrAlias to the plugin's canonical ID when possible.
+	// Implementations without a plugin store return typeOrAlias unchanged.
+	CanonicalType(ctx context.Context, typeOrAlias string) string
 }
 
 // NewNameScopeResolver provides an ScopeAttributeResolver able to
@@ -189,12 +194,36 @@ func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttr
 	})
 }
 
+// CanonicalType resolves typeOrAlias to the plugin's canonical ID using the service plugin store.
+func (s *Service) CanonicalType(ctx context.Context, typeOrAlias string) string {
+	return datasources.CanonicalPluginType(ctx, s.pluginStore, typeOrAlias)
+}
+
 func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
-	return s.retriever.GetDataSource(ctx, query)
+	ds, err := s.retriever.GetDataSource(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	if ds == nil {
+		// SqlStore never returns (nil, nil); guard fakes / alternate retrievers before Type rewrite.
+		return nil, datasources.ErrDataSourceNotFound
+	}
+	// Idempotent if the retriever already rewrote Type; covers callers that inject a
+	// retriever without a bound plugin store while Service has one.
+	ds.Type = s.CanonicalType(ctx, ds.Type)
+	return ds, nil
 }
 
 func (s *Service) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {
-	return s.retriever.GetDataSourceInNamespace(ctx, namespace, name, group)
+	ds, err := s.retriever.GetDataSourceInNamespace(ctx, namespace, name, group)
+	if err != nil {
+		return nil, err
+	}
+	if ds == nil {
+		return nil, datasources.ErrDataSourceNotFound
+	}
+	ds.Type = s.CanonicalType(ctx, ds.Type)
+	return ds, nil
 }
 
 func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {

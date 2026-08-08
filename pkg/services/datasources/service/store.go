@@ -22,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+//go:generate mockery --name Store --structname MockStore --inpackage --filename store_mock.go --with-expecter
+
 // Store is the interface for the datasource Service's storage.
 type Store interface {
 	GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
@@ -91,6 +93,12 @@ func (ss *SqlStore) getDataSource(_ context.Context, query *datasources.GetDataS
 	}
 
 	return datasource, nil
+}
+
+// CanonicalType is a no-op on SqlStore (no plugin store). Used when SqlStore is
+// passed as a DataSourceRetriever fallback in tests.
+func (ss *SqlStore) CanonicalType(_ context.Context, typeOrAlias string) string {
+	return typeOrAlias
 }
 
 func (ss *SqlStore) GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*datasources.DataSource, error) {

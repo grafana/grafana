@@ -20,6 +20,10 @@ type DataSourceService interface {
 	// GetDataSourceInNamespace gets a datasource by namespace, name (datasource uid), and group (datasource type).
 	GetDataSourceInNamespace(ctx context.Context, namespace, name, group string) (*DataSource, error)
 
+	// CanonicalType resolves typeOrAlias to the plugin's canonical ID when possible.
+	// Implementations without a plugin store return typeOrAlias unchanged.
+	CanonicalType(ctx context.Context, typeOrAlias string) string
+
 	// GetDataSources gets datasources.
 	GetDataSources(ctx context.Context, query *GetDataSourcesQuery) ([]*DataSource, error)
 
