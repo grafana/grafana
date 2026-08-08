@@ -82,8 +82,18 @@ func oauthAppChanged(new, old *provisioning.Connection) bool {
 	if new.Spec.Type != old.Spec.Type || new.Spec.URL != old.Spec.URL || new.Spec.OAuth.ClientID != old.Spec.OAuth.ClientID {
 		return true
 	}
+	if githubEnterpriseServerURL(new) != githubEnterpriseServerURL(old) {
+		return true
+	}
 	return !new.Secure.ClientSecret.Create.IsZero() ||
 		(new.Secure.ClientSecret.Name != "" && new.Secure.ClientSecret.Name != old.Secure.ClientSecret.Name)
+}
+
+func githubEnterpriseServerURL(c *provisioning.Connection) string {
+	if c.Spec.GitHubEnterpriseOAuth == nil {
+		return ""
+	}
+	return c.Spec.GitHubEnterpriseOAuth.ServerURL
 }
 
 /*
