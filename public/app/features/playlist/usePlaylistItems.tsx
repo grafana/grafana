@@ -9,14 +9,21 @@ import { loadDashboards } from './utils';
 export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
   const [items, setItems] = useState<PlaylistItemUI[]>(playlistItems ?? []);
 
-  // Attach dashboards if any were missing
+  // Attach dashboards to any items still missing them. Merge the loaded dashboards onto the
+  // current state (rather than replacing it) so an in-flight load can't clobber an interval the
+  // user edited while it was running.
   useAsync(async () => {
-    for (const item of items) {
-      if (!item.dashboards) {
-        setItems(await loadDashboards(items));
-        return;
-      }
+    if (items.every((item) => item.dashboards)) {
+      return;
     }
+    const loaded = await loadDashboards(items);
+    setItems((current) => {
+      // Bail if the list changed shape while loading; indices would no longer line up.
+      if (current.length !== loaded.length) {
+        return current;
+      }
+      return current.map((item, i) => (item.dashboards ? item : { ...item, dashboards: loaded[i].dashboards }));
+    });
   }, [items]);
 
   const addByUID = useCallback(
@@ -74,5 +81,17 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
     [items]
   );
 
-  return { items, addByUID, addByTag, deleteItem, moveItem };
+  const updateItemInterval = useCallback((index: number, interval: string) => {
+    setItems((prev) => {
+      if (!prev[index]) {
+        return prev;
+      }
+      const copy = prev.slice();
+      // Empty means "no per-item interval" so playback falls back to the global interval.
+      copy[index] = { ...copy[index], interval: interval || undefined };
+      return copy;
+    });
+  }, []);
+
+  return { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval };
 }

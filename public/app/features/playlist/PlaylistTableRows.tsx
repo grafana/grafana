@@ -6,17 +6,21 @@ import { type ReactNode } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, IconButton, useStyles2, Spinner, type IconName } from '@grafana/ui';
+import { Icon, IconButton, Input, useStyles2, Spinner, type IconName } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 import { type PlaylistItemUI } from './types';
+import { isValidInterval } from './utils';
 
 interface Props {
   items: PlaylistItemUI[];
   onDelete: (idx: number) => void;
+  /** Placeholder for empty per-item intervals; the global interval used as fallback during playback. */
+  intervalPlaceholder?: string;
+  onUpdateInterval?: (idx: number, interval: string) => void;
 }
 
-export const PlaylistTableRows = ({ items, onDelete }: Props) => {
+export const PlaylistTableRows = ({ items, onDelete, intervalPlaceholder, onUpdateInterval }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (!items?.length) {
@@ -105,6 +109,25 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
                 {renderItem(item)}
               </div>
               <div className={styles.actions}>
+                <Input
+                  className={styles.rightMargin}
+                  width={10}
+                  type="text"
+                  // Controlled so the value always reflects the correct item after a
+                  // reorder and stays synced for submission/validation on every keystroke.
+                  value={item.interval ?? ''}
+                  placeholder={intervalPlaceholder}
+                  invalid={!!item.interval && !isValidInterval(item.interval)}
+                  title={
+                    !!item.interval && !isValidInterval(item.interval)
+                      ? t('playlist.playlist-table-rows.invalid-interval', 'Invalid interval (e.g. 30s, 5m, 1h)')
+                      : undefined
+                  }
+                  aria-label={t('playlist.playlist-table-rows.aria-label-item-interval', 'Interval for {{itemValue}}', {
+                    itemValue: item.value,
+                  })}
+                  onChange={(e) => onUpdateInterval?.(index, e.currentTarget.value.trim())}
+                />
                 <IconButton
                   name="times"
                   size="md"

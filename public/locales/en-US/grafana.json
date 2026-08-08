@@ -13029,7 +13029,9 @@
       }
     },
     "playlist-table-rows": {
+      "aria-label-item-interval": "Interval for {{itemValue}}",
       "aria-label-playlist-item": "Playlist item, {{itemType}}, {{itemValue}}",
+      "invalid-interval": "Invalid interval (e.g. 30s, 5m, 1h)",
       "multiple-dashboards-found": "Multiple items found: {{items}}",
       "no-dashboards-found": "No dashboards found",
       "not-found": "Not found: {{items}}"
@@ -13075,7 +13077,8 @@
       "table-delete": "Delete playlist item",
       "table-drag": "Reorder playlist item",
       "table-empty": "Playlist is empty. Add dashboards below.",
-      "table-heading": "Dashboards"
+      "table-heading": "Dashboards",
+      "table-interval-help": "Optionally set a per-dashboard interval. Leave blank to use the interval above."
     },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"

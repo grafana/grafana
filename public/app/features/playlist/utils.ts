@@ -1,3 +1,4 @@
+import { rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -7,6 +8,19 @@ import { getGrafanaSearcher } from '../search/service/searcher';
 import { type SearchQuery } from '../search/service/types';
 
 import { type PlaylistItemUI } from './types';
+
+/**
+ * Whether an interval string (e.g. "5m", "30s") can be parsed to a positive duration.
+ * `rangeUtil.intervalToMs` throws on unparseable input, so callers must guard against it.
+ */
+export function isValidInterval(interval: string): boolean {
+  try {
+    const ms = rangeUtil.intervalToMs(interval);
+    return Number.isFinite(ms) && ms > 0;
+  } catch {
+    return false;
+  }
+}
 
 export function canWritePlaylists(): boolean {
   return config.featureToggles.playlistsRBAC
