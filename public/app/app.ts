@@ -217,7 +217,10 @@ export class GrafanaApp {
         registry.warnUnregistered();
       }
 
-      setLocale(contextSrv.user.language);
+      // Use the user locale (which includes regional info) for moment.js locale,
+      // falling back to the UI language. The locale field is returned by the
+      // backend as part of the user's browser locale.
+      setLocale((contextSrv.user as any).locale || contextSrv.user.language);
       setWeekStart(contextSrv.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
