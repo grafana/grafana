@@ -44,7 +44,6 @@ export interface TimelineCoreOptions {
   colWidth?: number;
   theme: GrafanaTheme2;
   showValue: VisibilityMode;
-  mergeValues?: boolean;
   isDiscrete: (seriesIdx: number) => boolean;
   hasMappedNull: (seriesIdx: number) => boolean;
   hasMappedNaN: (seriesIdx: number) => boolean;
@@ -91,7 +90,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     rowHeight = 0,
     colWidth = 0,
     showValue,
-    mergeValues = false,
     theme,
     label,
     formatValue,
@@ -237,11 +235,10 @@ export function getConfig(opts: TimelineCoreOptions) {
               if (shouldDrawY) {
                 let left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
 
+                // skip undefined samples: join holes and data-level-merged duplicates,
+                // both of which mean "this box extends through here"
                 let nextIx = ix;
-                while (
-                  ++nextIx < dataY.length &&
-                  (dataY[nextIx] === undefined || (mergeValues && dataY[nextIx] === yVal))
-                ) {}
+                while (++nextIx < dataY.length && dataY[nextIx] === undefined) {}
 
                 // to now (not to end of chart)
                 let right =
