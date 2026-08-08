@@ -535,12 +535,12 @@ export const getStyles = (
   }
 
   const colors = {
-    critical: '#B877D9',
+    critical: theme.visualization.getColorByName('purple'),
     error: theme.colors.error.text,
-    warning: '#FBAD37',
-    debug: '#6E9FFF',
+    warning: theme.colors.warning.text,
+    debug: theme.visualization.getColorByName('dimgray'),
     trace: '#6ed0e0',
-    info: '#6E9FFF',
+    info: theme.visualization.getColorByName('blue'),
     metadata: theme.colors.text.secondary,
     default: colorDefault,
     parsedField: theme.colors.text.secondary,
