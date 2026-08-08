@@ -7,6 +7,7 @@ import (
 	"maps"
 	"strconv"
 	"sync"
+	"unicode/utf8"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -823,7 +824,7 @@ func validateDashboardTags(obj runtime.Object) error {
 	}
 
 	for _, tag := range tags {
-		if len(tag) > 50 {
+		if utf8.RuneCountInString(tag) > 100 {
 			return dashboards.ErrDashboardTagTooLong
 		}
 	}
