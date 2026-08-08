@@ -199,6 +199,31 @@ func TestRules(t *testing.T) {
 		require.NotNil(t, ruleMapped.NotificationSettings)
 		require.Equal(t, models.NotificationSettingsFromContact(models.ContactPointRouting{Receiver: "test-receiver"}), *ruleMapped.NotificationSettings)
 	})
+	t.Run("a rule should interpolate environment variables in annotations the same way as in labels", func(t *testing.T) {
+		t.Setenv("TEST_ALERT_ANNOTATION_VALUE", "hello from env")
+		t.Setenv("TEST_ALERT_LABEL_VALUE", "hello from env")
+
+		rule := validRuleV1(t)
+
+		var annotations values.StringMapValue
+		err := yaml.Unmarshal([]byte("summary: ${TEST_ALERT_ANNOTATION_VALUE}"), &annotations)
+		require.NoError(t, err)
+		rule.Annotations = annotations
+
+		var labels values.StringMapValue
+		err = yaml.Unmarshal([]byte("severity: ${TEST_ALERT_LABEL_VALUE}"), &labels)
+		require.NoError(t, err)
+		rule.Labels = labels
+
+		ruleMapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+
+		// Before the fix, annotations used the un-interpolated Raw value while labels
+		// used the interpolated Value(), so this would fail with "${TEST_ALERT_ANNOTATION_VALUE}"
+		// instead of "hello from env".
+		require.Equal(t, "hello from env", ruleMapped.Annotations["summary"])
+		require.Equal(t, "hello from env", ruleMapped.Labels["severity"])
+	})
 }
 
 func TestRecordingRules(t *testing.T) {
