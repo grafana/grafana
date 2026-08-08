@@ -14,6 +14,8 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/stretchr/testify/require"
 
@@ -287,6 +289,176 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.NotErrorIs(t, err, ErrUnexpectedWriteFailure)
 		require.NotErrorIs(t, err, ErrNonRetryableWrite)
 	})
+}
+
+func TestPrometheusWriter_Write_Batching(t *testing.T) {
+	now := time.Now()
+	series := []map[string]string{{"foo": "1"}, {"foo": "2"}, {"foo": "3"}, {"foo": "4"}}
+	frames := frameGenFromLabels(t, data.FrameTypeNumericWide, series)
+	ctx := ngmodels.WithRuleKey(context.Background(), ngmodels.GenerateRuleKey(1))
+
+	// newWriter builds a writer with the given batch threshold. Batching is enabled solely
+	// by a positive maxBatchSizeBytes; 0 disables it (the original single-request behavior).
+	newWriter := func(client promremote.Client, maxBatchSizeBytes int64) (*PrometheusWriter, *prometheus.Registry) {
+		reg := prometheus.NewRegistry()
+		return &PrometheusWriter{
+			client:            client,
+			clock:             clock.New(),
+			logger:            log.New("test"),
+			metrics:           metrics.NewRemoteWriterMetrics(reg),
+			backendType:       prometheusType,
+			maxBatchSizeBytes: maxBatchSizeBytes,
+		}, reg
+	}
+
+	t.Run("threshold 0 sends a single request (batching disabled, back-compat)", func(t *testing.T) {
+		var calls int
+		client := &testClient{writeSeriesFunc: func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			calls++
+			require.Len(t, ts, len(series))
+			return promremote.WriteResult{}, nil
+		}}
+		writer, _ := newWriter(client, 0)
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+		require.NoError(t, err)
+		require.Equal(t, 1, calls)
+	})
+
+	t.Run("splits N series into K requests given a byte threshold", func(t *testing.T) {
+		var batchSizes []int
+		client := &testClient{writeSeriesFunc: func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			batchSizes = append(batchSizes, len(ts))
+			return promremote.WriteResult{}, nil
+		}}
+
+		// Each series here is roughly 60 bytes by the estimate; pick a threshold that
+		// fits ~2 series per batch so 4 series produce 2 requests.
+		perSeries := estimateSeriesSize(promremote.TimeSeries{Labels: []promremote.Label{
+			{Name: "__name__", Value: "test"},
+			{Name: "extra", Value: "label"},
+			{Name: "foo", Value: "1"},
+		}})
+		writer, _ := newWriter(client, perSeries*2)
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+		require.NoError(t, err)
+		require.Len(t, batchSizes, 2)
+		require.Equal(t, []int{2, 2}, batchSizes)
+	})
+
+	t.Run("a single series larger than the threshold still goes out alone", func(t *testing.T) {
+		var batchSizes []int
+		client := &testClient{writeSeriesFunc: func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			batchSizes = append(batchSizes, len(ts))
+			return promremote.WriteResult{}, nil
+		}}
+		// Threshold of 1 byte forces every series into its own batch.
+		writer, _ := newWriter(client, 1)
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+		require.NoError(t, err)
+		require.Len(t, batchSizes, len(series))
+		for _, s := range batchSizes {
+			require.Equal(t, 1, s)
+		}
+	})
+
+	t.Run("metrics are incremented once per batch", func(t *testing.T) {
+		client := &testClient{writeSeriesFunc: func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{StatusCode: 200}, nil
+		}}
+		writer, _ := newWriter(client, 1) // one batch per series
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+		require.NoError(t, err)
+
+		count := testutil.ToFloat64(writer.metrics.WritesTotal.WithLabelValues("1", string(prometheusType), "200"))
+		require.Equal(t, float64(len(series)), count)
+	})
+
+	t.Run("batches_per_write and write_size_bytes are observed", func(t *testing.T) {
+		client := &testClient{writeSeriesFunc: func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{StatusCode: 200}, nil
+		}}
+		writer, _ := newWriter(client, 1) // one batch per series
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+		require.NoError(t, err)
+
+		// batches_per_write is observed once per Write, with the number of batches.
+		batchesHist := writer.metrics.BatchesPerWrite.WithLabelValues("1", string(prometheusType)).(prometheus.Histogram)
+		require.Equal(t, uint64(1), histogramSampleCount(t, batchesHist))
+
+		// write_size_bytes is observed once per batch.
+		sizeHist := writer.metrics.WriteSizeBytes.WithLabelValues("1", string(prometheusType)).(prometheus.Histogram)
+		require.Equal(t, uint64(len(series)), histogramSampleCount(t, sizeHist))
+	})
+
+	t.Run("errors are aggregated across batches and all batches are attempted", func(t *testing.T) {
+		var calls int
+		badMsg := MimirSeriesInvalidLabelError
+		client := &testClient{writeSeriesFunc: func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			calls++
+			// Fail on every batch to confirm all are attempted and errors joined.
+			return promremote.WriteResult{StatusCode: http.StatusBadRequest}, testClientWriteError{
+				statusCode: http.StatusBadRequest,
+				msg:        &badMsg,
+			}
+		}}
+		writer, _ := newWriter(client, 1) // one batch per series
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+		require.Error(t, err)
+		require.Equal(t, len(series), calls)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+	})
+
+	t.Run("ignored errors per batch do not fail the write", func(t *testing.T) {
+		var calls int
+		ignoredMsg := MimirSampleDuplicateTimestampError
+		client := &testClient{writeSeriesFunc: func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			calls++
+			return promremote.WriteResult{StatusCode: http.StatusBadRequest}, testClientWriteError{
+				statusCode: http.StatusBadRequest,
+				msg:        &ignoredMsg,
+			}
+		}}
+		writer, _ := newWriter(client, 1)
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+		require.NoError(t, err)
+		require.Equal(t, len(series), calls)
+	})
+
+	t.Run("empty series still produces a single write", func(t *testing.T) {
+		var calls int
+		client := &testClient{writeSeriesFunc: func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			calls++
+			require.Empty(t, ts)
+			return promremote.WriteResult{}, nil
+		}}
+		writer, _ := newWriter(client, defaultTestBatchSize)
+
+		// Cover empty input directly: batching an empty slice yields a single empty batch.
+		batches := writer.batchSeries(nil)
+		require.Len(t, batches, 1)
+		require.Empty(t, batches[0])
+
+		// And end-to-end the empty batch is written exactly once.
+		require.NoError(t, writer.writeBatch(ctx, log.New("test"), 1, batches[0]))
+		require.Equal(t, 1, calls)
+	})
+}
+
+const defaultTestBatchSize = int64(20 * 1024 * 1024)
+
+// histogramSampleCount returns the total number of observations recorded by a histogram.
+func histogramSampleCount(t *testing.T, h prometheus.Histogram) uint64 {
+	t.Helper()
+	var m dto.Metric
+	require.NoError(t, h.(prometheus.Metric).Write(&m))
+	return m.GetHistogram().GetSampleCount()
 }
 
 func TestExtractActualError(t *testing.T) {

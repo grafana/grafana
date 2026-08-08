@@ -53,6 +53,11 @@ type DatasourceWriterConfig struct {
 	// CustomHeaders is a map of optional custom HTTP headers
 	// to include in recording rule write requests.
 	CustomHeaders map[string]string
+
+	// MaxBatchSizeBytes is the estimated uncompressed size threshold above which a
+	// remote-write is split into multiple sequential requests. 0 disables batching
+	// (the original single-request behavior) and is how batching is enabled per stack.
+	MaxBatchSizeBytes int64
 }
 
 type PluginContextProvider interface {
@@ -242,8 +247,9 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 			Header:       headers,
 			ProxyOptions: ho.ProxyOptions,
 		},
-		Timeout:     w.cfg.Timeout,
-		BackendType: backend,
+		Timeout:           w.cfg.Timeout,
+		BackendType:       backend,
+		MaxBatchSizeBytes: w.cfg.MaxBatchSizeBytes,
 	}
 	if err != nil {
 		return nil, err

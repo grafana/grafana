@@ -61,11 +61,22 @@ const (
 	// with intervals that are not exactly divided by this number not to be evaluated
 	SchedulerBaseInterval = 10 * time.Second
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
-	DefaultRuleEvaluationInterval          = SchedulerBaseInterval * 6 // == 60 seconds
-	stateHistoryDefaultEnabled             = true
-	notificationHistoryDefaultEnabled      = false
-	lokiDefaultMaxQueryLength              = 721 * time.Hour // 30d1h, matches the default value in Loki
-	defaultRecordingRequestTimeout         = 10 * time.Second
+	DefaultRuleEvaluationInterval     = SchedulerBaseInterval * 6 // == 60 seconds
+	stateHistoryDefaultEnabled        = true
+	notificationHistoryDefaultEnabled = false
+	lokiDefaultMaxQueryLength         = 721 * time.Hour // 30d1h, matches the default value in Loki
+	defaultRecordingRequestTimeout    = 10 * time.Second
+	// defaultRecordingMaxBatchSizeBytes disables remote-write batching by default (0), so
+	// out of the box a recording rule sends all series in a single request as before.
+	// Batching is opt-in per stack by setting max_batch_size_bytes to a positive value.
+	defaultRecordingMaxBatchSizeBytes = int64(0)
+	// RecommendedRecordingMaxBatchSizeBytes is the suggested non-zero value to enable
+	// batching. It sits well below Mimir's default distributor max-recv-msg-size (100 MB)
+	// because the estimate only counts raw label and sample bytes, while the encoded
+	// protobuf on the wire is larger (framing plus label names repeated per series). The
+	// wide margin absorbs that overhead so we stay under the limit even for pathological
+	// label sets.
+	RecommendedRecordingMaxBatchSizeBytes  = int64(20 * 1024 * 1024)
 	lokiDefaultMaxQuerySize                = 65536 // 64kb
 	defaultHistorianPrometheusWriteTimeout = 10 * time.Second
 	defaultHistorianPrometheusMetricName   = "GRAFANA_ALERTS"
@@ -177,6 +188,9 @@ type RecordingRuleSettings struct {
 	CustomHeaders        map[string]string
 	Timeout              time.Duration
 	DefaultDatasourceUID string
+	// MaxBatchSizeBytes is the estimated uncompressed size threshold above which a
+	// remote-write is split into multiple sequential requests. 0 disables batching.
+	MaxBatchSizeBytes int64
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -575,6 +589,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		Enabled:              rr.Key("enabled").MustBool(true),
 		Timeout:              rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
 		DefaultDatasourceUID: rr.Key("default_datasource_uid").MustString(""),
+		MaxBatchSizeBytes:    rr.Key("max_batch_size_bytes").MustInt64(defaultRecordingMaxBatchSizeBytes),
 	}
 
 	rrHeaders := iniFile.Section("recording_rules.custom_headers")
