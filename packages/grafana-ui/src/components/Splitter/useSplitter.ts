@@ -106,7 +106,7 @@ export function useSplitter(options: UseSplitterOptions) {
 
   const onUpdateSize = useCallback(
     (diff: number) => {
-      if (!containerSize.current || !primarySizeRef.current || !secondPaneRef.current) {
+      if (!containerSize.current || primarySizeRef.current === null || !secondPaneRef.current) {
         return;
       }
 
