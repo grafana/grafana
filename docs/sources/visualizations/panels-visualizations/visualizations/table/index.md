@@ -118,7 +118,7 @@ value4 , value5 , value6
 value7 , value8 , value9
 ```
 
-If a cell is missing or the table column-row structure is not complete, as in the following example, the table visualization won’t display any of the data:
+Grafana renders table data from data frames with columns that have the same number of rows. If your data source returns a row with missing values, use a transformation or query change to return a complete column-row structure before visualizing it as a table:
 
 ```csv
 Column1, Column2, Column3
@@ -203,7 +203,7 @@ and clicking the column name.
 ## Dataset selector
 
 If the data queried contains multiple datasets, a table displays a drop-down list at the bottom, so you can select the dataset you want to visualize.
-This option is only available when you're editing the panel.
+This selector is displayed whenever the table has multiple datasets, including in dashboard view.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-multi-dataset-v11.3.png" max-width="650px" alt="Table visualization with multiple datasets" >}}
 
@@ -463,7 +463,7 @@ The **Markdown + HTML** cell type displays rich Markdown or HTML content, render
 customized, pre-formatted information alongside tabular data, such as formatted strings,
 lists of links, or other dynamic cases.
 
-For this cell type, you can toggle the **Dynamic height** switch, which allows the cell to resize
+For this cell type, you can toggle the alpha **Dynamic height** switch, which allows the cell to resize
 dynamically based on the cell content. If you use dynamic height, we strongly recommend that you
 also toggle on **Pagination** to avoid performance issues in larger tables, since enabling
 Dynamic height disables table {{< term "virtualization" >}}virtualization{{< /term >}}.
@@ -610,9 +610,9 @@ The following image shows the "Info" field with the styling from the "Style" fie
 #### Apply overrides to nested table fields
 
 By default, field overrides apply only to columns in the parent table.
-To target columns inside a nested table, set the **Target fields** option on the override to **Nested**:
+To target columns inside a nested table, set the **Target fields** option on the override to **Nested**. To target top-level table fields, use **Dataframe**:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v13.x.png" max-width="350px" alt="Field override configuration with the Target fields selector showing Series and Nested options" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v13.x.png" max-width="350px" alt="Field override configuration with the Target fields selector showing Dataframe and Nested options" >}}
 
 All standard override properties&mdash;including thresholds, value mappings, units, data links, and cell type&mdash;apply the same way to nested fields.
 

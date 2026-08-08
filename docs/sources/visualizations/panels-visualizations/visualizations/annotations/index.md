@@ -77,6 +77,8 @@ These options control additional metadata included in the annotations list displ
 
 <!-- prettier-ignore-end -->
 
+In view mode, you can click an annotation tag or creator avatar to filter the list. Grafana shows a **Filter:** bar above the results with chips you can remove to clear each tag or user filter.
+
 ### Link behavior options
 
 Use the following options to control the behavior of annotation links in the list:
