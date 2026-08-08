@@ -5914,8 +5914,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Questa operazione separerà tutti i gruppi nidificati.",
-      "ungroup-nested-title": "Separare i gruppi nidificati?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} di {{numberOfPages}}",
@@ -14757,7 +14761,6 @@
     },
     "header": {
       "alert": "Avviso",
-      "expression": "Espressione",
       "pending-expression": "",
       "pending-expression-cancel": "Annulla",
       "pending-transformation": "",
@@ -14771,6 +14774,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

@@ -5874,8 +5874,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "这将取消所有嵌套组的分组。",
-      "ungroup-nested-title": "取消嵌套组的分组？"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}}/{{numberOfPages}}",
@@ -14638,7 +14642,6 @@
     },
     "header": {
       "alert": "警报",
-      "expression": "表达式",
       "pending-expression": "",
       "pending-expression-cancel": "取消",
       "pending-transformation": "",
@@ -14652,6 +14655,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

@@ -5914,8 +5914,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Det kommer att dela upp alla nästlade grupper.",
-      "ungroup-nested-title": "Dela upp nästlade grupper?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} av {{numberOfPages}}",
@@ -14757,7 +14761,6 @@
     },
     "header": {
       "alert": "Larm",
-      "expression": "Uttryck",
       "pending-expression": "",
       "pending-expression-cancel": "Avbryt",
       "pending-transformation": "",
@@ -14771,6 +14774,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

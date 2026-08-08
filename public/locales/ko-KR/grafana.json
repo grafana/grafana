@@ -5874,8 +5874,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "중첩된 모든 그룹이 해제됩니다.",
-      "ungroup-nested-title": "중첩된 그룹을 해제하시겠습니까?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{numberOfPages}} 중 {{currentPage}}",
@@ -14638,7 +14642,6 @@
     },
     "header": {
       "alert": "경고",
-      "expression": "표현식",
       "pending-expression": "",
       "pending-expression-cancel": "취소",
       "pending-transformation": "",
@@ -14652,6 +14655,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

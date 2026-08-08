@@ -5994,8 +5994,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Все вложенные группы будут разгруппированы.",
-      "ungroup-nested-title": "Разгруппировать вложенные группы?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} из {{numberOfPages}}",
@@ -14995,7 +14999,6 @@
     },
     "header": {
       "alert": "Оповещение",
-      "expression": "Выражение",
       "pending-expression": "",
       "pending-expression-cancel": "Отмена",
       "pending-transformation": "",
@@ -15009,6 +15012,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },
