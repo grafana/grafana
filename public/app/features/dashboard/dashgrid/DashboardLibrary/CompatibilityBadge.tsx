@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Spinner, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
 /**
  * Discriminated union for compatibility check states.
@@ -78,7 +78,7 @@ export const CompatibilityBadge = ({ state, onCheck, onRetry }: CompatibilityBad
   }
 
   if (state.status === 'error') {
-    const tooltipContent = getErrorTooltip(state.errorCode, styles.tooltipLink);
+    const tooltipContent = getErrorTooltip(state.errorCode);
 
     return (
       <Tooltip interactive={true} content={tooltipContent}>
@@ -181,7 +181,7 @@ function getScoreIndicator(score: number, metricsFound: number, metricsTotal: nu
   };
 }
 
-function getErrorTooltip(errorCode: string | undefined, linkClassName: string) {
+function getErrorTooltip(errorCode: string | undefined) {
   const category = categorizeError(errorCode);
   if (category === 'not_supported') {
     return (
@@ -195,23 +195,16 @@ function getErrorTooltip(errorCode: string | undefined, linkClassName: string) {
   return (
     <Trans i18nKey="dashboard-library.compatibility-badge.error-tooltip">
       Compatibility check failed. First, verify the{' '}
-      <a
-        href="https://grafana.com/docs/grafana/latest/datasources/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={linkClassName}
-      >
+      <TextLink href="https://grafana.com/docs/grafana/latest/datasources/" external>
         data source
-      </a>{' '}
+      </TextLink>{' '}
       is working. Then open the dashboard and review the{' '}
-      <a
+      <TextLink
         href="https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/modify-dashboard-settings/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={linkClassName}
+        external
       >
         variables
-      </a>
+      </TextLink>
       .
     </Trans>
   );
@@ -236,13 +229,6 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'pointer',
       '&:hover': {
         opacity: 0.8,
-      },
-    }),
-    tooltipLink: css({
-      color: theme.colors.text.link,
-      textDecoration: 'underline',
-      '&:hover': {
-        textDecoration: 'none',
       },
     }),
   };
