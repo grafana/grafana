@@ -136,6 +136,12 @@ jest.mock('@grafana/runtime', () => ({
   usePluginLinks: jest.fn(() => ({ links: [] })),
 }));
 
+jest.mock('app/features/datasources/hooks', () => ({
+  ...jest.requireActual('app/features/datasources/hooks'),
+  // Stub the async useDatasources() so no state update escapes act().
+  useDatasources: jest.fn(() => []),
+}));
+
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     ...jest.requireActual('app/core/services/context_srv').contextSrv,

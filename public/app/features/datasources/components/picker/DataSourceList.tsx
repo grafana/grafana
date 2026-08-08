@@ -49,6 +49,7 @@ export interface DataSourceListProps {
   onClear?: () => void;
   onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
+  /** @deprecated Pre-dates the in-memory data source cache — omit it and let the list fetch. */
   dataSources?: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   favoriteDataSources: FavoriteDatasources;
   /** Ref to the scroll container element, used by the virtualizer */

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -9,6 +9,7 @@ import {
   PluginType,
   locationUtil,
 } from '@grafana/data';
+import { type DataSourceSrv, type TemplateSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { DataSourceModal, type DataSourceModalProps } from './DataSourceModal';
@@ -47,6 +48,19 @@ const mockDSList = [mockDS1, mockDS2, mockDSBuiltIn];
 
 beforeAll(() => {
   mockBoundingClientRect();
+
+  // The async data source APIs fall back to the runtime-internal singletons, which the
+  // jest.mock of '@grafana/runtime' below doesn't cover — wire the mocks into them too.
+  setDataSourceSrv({
+    getList: getListMock,
+    getInstanceSettings: getInstanceSettingsMock,
+  } as unknown as DataSourceSrv);
+  setTemplateSrv({
+    getVariables: () => [],
+    replace: (target?: string) => target ?? '',
+    containsTemplate: () => false,
+    updateTimeRange: () => {},
+  } as unknown as TemplateSrv);
 });
 
 const setup = (partialProps: Partial<DataSourceModalProps> = {}) => {
@@ -83,9 +97,17 @@ locationUtil.initialize({
 
 const getListMock = jest.fn();
 const getInstanceSettingsMock = jest.fn();
+
+function mockInstanceSettingsFromList(list: DataSourceInstanceSettings[]) {
+  getInstanceSettingsMock.mockImplementation((ref: string | { uid?: string } | null | undefined) => {
+    const uid = typeof ref === 'string' ? ref : ref?.uid;
+    return list.find((ds) => ds.uid === uid) ?? list[0];
+  });
+}
+
 beforeEach(() => {
   getListMock.mockReturnValue(mockDSList);
-  getInstanceSettingsMock.mockReturnValue(mockDS1);
+  mockInstanceSettingsFromList(mockDSList);
 });
 
 function createMockDSList(count: number) {
@@ -93,8 +115,11 @@ function createMockDSList(count: number) {
 }
 
 describe('DataSourceDropdown', () => {
-  it('should render', () => {
+  it('should render', async () => {
     expect(() => setup()).not.toThrow();
+
+    // Wait for the async data sources so the state update doesn't escape act().
+    expect(await screen.findByText(mockDS1.name, { selector: 'span' })).toBeInTheDocument();
   });
 
   describe('configuration', () => {
@@ -139,7 +164,7 @@ describe('DataSourceDropdown', () => {
       render(<DataSourceModal {...props}></DataSourceModal>);
 
       // Every call to the service must contain same filters
-      expect(getListMock).toHaveBeenCalled();
+      await waitFor(() => expect(getListMock).toHaveBeenCalled());
       getListMock.mock.calls.forEach((call) =>
         expect(call[0]).toMatchObject({
           ...filters,
@@ -181,11 +206,14 @@ describe('DataSourceDropdown with virtualized list', () => {
 
   beforeEach(() => {
     getListMock.mockReturnValue(largeMockDSList);
-    getInstanceSettingsMock.mockReturnValue(largeMockDSList[0]);
+    mockInstanceSettingsFromList(largeMockDSList);
   });
 
-  it('should render without errors', () => {
+  it('should render without errors', async () => {
     expect(() => setup({ current: largeMockDSList[0] })).not.toThrow();
+
+    // Wait for the async data sources so the state update doesn't escape act().
+    expect(await screen.findAllByTestId(/^data-testid data source card/)).not.toHaveLength(0);
   });
 
   it('should render only a subset of items in the DOM', async () => {

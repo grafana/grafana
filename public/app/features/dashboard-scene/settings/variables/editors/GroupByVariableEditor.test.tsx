@@ -7,6 +7,7 @@ import { GroupByVariable } from '@grafana/scenes';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { useDatasources } from 'app/features/datasources/hooks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
 import { getGroupByVariableOptions, GroupByVariableEditor } from './GroupByVariableEditor';
@@ -44,6 +45,15 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: () => ({ ...defaultDatasource }),
   }),
 }));
+
+jest.mock('app/features/datasources/hooks', () => ({
+  ...jest.requireActual('app/features/datasources/hooks'),
+  // Stub the async useDatasources() so no state update escapes act(). Wired below —
+  // jest.mock factories cannot reference file-scope variables.
+  useDatasources: jest.fn(),
+}));
+
+jest.mocked(useDatasources).mockImplementation(() => [defaultDatasource, promDatasource]);
 
 describe('GroupByVariableEditor', () => {
   beforeAll(() => {

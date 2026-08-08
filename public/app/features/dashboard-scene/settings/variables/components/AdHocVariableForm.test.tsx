@@ -5,6 +5,7 @@ import * as React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { useDatasources } from 'app/features/datasources/hooks';
 
 import { AdHocVariableForm, type AdHocVariableFormProps } from './AdHocVariableForm';
 
@@ -28,6 +29,15 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: () => ({ ...defaultDatasource }),
   }),
 }));
+
+jest.mock('app/features/datasources/hooks', () => ({
+  ...jest.requireActual('app/features/datasources/hooks'),
+  // Stub the async useDatasources() so no state update escapes act(). Wired below —
+  // jest.mock factories cannot reference file-scope variables.
+  useDatasources: jest.fn(),
+}));
+
+jest.mocked(useDatasources).mockImplementation(() => [defaultDatasource, promDatasource]);
 
 describe('AdHocVariableForm', () => {
   beforeAll(() => {
