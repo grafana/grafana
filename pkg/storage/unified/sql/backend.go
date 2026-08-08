@@ -1518,6 +1518,22 @@ func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
 	return since, nil
 }
 
+// CurrentResourceVersion returns the newest resource version across all resource types.
+func (b *backend) CurrentResourceVersion(ctx context.Context) (int64, error) {
+	resourceVersions, err := b.listLatestRVs(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("listing resource versions: %w", err)
+	}
+
+	var latestRV int64
+	for _, resources := range resourceVersions {
+		for _, rv := range resources {
+			latestRV = max(latestRV, rv)
+		}
+	}
+	return latestRV, nil
+}
+
 // fetchLatestRV returns the current maximum RV in the resource table
 func (b *backend) fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, group, resource string) (int64, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.fetchLatestRV")

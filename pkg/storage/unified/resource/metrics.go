@@ -10,6 +10,7 @@ import (
 
 type StorageMetrics struct {
 	WatchEventLatency      *prometheus.HistogramVec
+	WatchResumeTotal       *prometheus.CounterVec
 	PollerLatency          prometheus.Histogram
 	ListWithFieldSelectors *prometheus.CounterVec
 	RequestDuration        *prometheus.HistogramVec
@@ -27,6 +28,10 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"resource"}),
+		WatchResumeTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_watch_resume_total",
+			Help: "Watch resume attempts by continuity outcome.",
+		}, []string{"outcome"}),
 		PollerLatency: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
 			Name:                            "storage_server_poller_query_latency_seconds",
 			Help:                            "poller query latency",
