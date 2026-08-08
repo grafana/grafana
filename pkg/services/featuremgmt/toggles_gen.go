@@ -989,4 +989,8 @@ const (
 	// FlagAlertingStateManagerRequireWarm
 	// Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.
 	FlagAlertingStateManagerRequireWarm = "alerting.stateManagerRequireWarm"
+
+	// FlagGrafanaPluginPathNesting
+	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
+	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
 )
