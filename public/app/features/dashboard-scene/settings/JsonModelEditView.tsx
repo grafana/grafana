@@ -10,7 +10,6 @@ import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Alert, Box, Button, CodeEditor, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
@@ -78,14 +77,29 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     let newDashboardScene: DashboardScene;
 
     if (isV2) {
-      // FIXME: We could avoid this call by storing the entire dashboard DTO as initial dashboard scene instead of only the spec and metadata
-      const api = await getDashboardAPI('v2');
-      const dto = await api.getDashboardDTO(result.uid);
+      const oldDto = dashboard.serializer.initialDTO;
+      const dto = {
+        ...oldDto,
+        spec: jsonModel as DashboardV2Spec,
+        metadata: {
+          ...oldDto?.metadata,
+          name: result.uid,
+          generation: result.version,
+        },
+        access: {
+          ...oldDto?.access,
+          url: result.url,
+          slug: result.slug,
+        },
+      };
+
       newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
       const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
       dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(dto.spec, dto.metadata);
+      dashboard.serializer.initialDTO = dto;
+
       this._updateTimeRangeInURL(dashboard, newState);
 
       dashboard.setState(newState);

@@ -291,6 +291,7 @@ export function transformSaveModelSchemaV2ToScene(
   );
 
   dashboardScene.setInitialSaveModel(dto.spec, dto.metadata, apiVersion);
+  dashboardScene.serializer.initialDTO = dto;
 
   // Enable panel profiling for this dashboard using the composed SceneRenderProfiler
   enablePanelProfilingForDashboard(dashboardScene, metadata.name);
