@@ -16,6 +16,7 @@ import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/compo
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { RepeatsUpdatedEvent, DashboardStateChangedEvent } from '../../sidebar/events';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
+import { registerReportRepeatPendingWork } from '../../utils/registerReportRepeatPendingWork';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { type DashboardLayoutItem } from '../types/DashboardLayoutItem';
@@ -144,6 +145,9 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
 
       this.state.conditionalRendering.setTarget(panelToRepeat);
     }
+
+    // Keeps report rendering waiting until the repeat clones mount.
+    registerReportRepeatPendingWork(this, repeatedPanels);
 
     this.setState({ repeatedPanels, repeatedConditionalRendering });
     this._prevRepeatValues = values;

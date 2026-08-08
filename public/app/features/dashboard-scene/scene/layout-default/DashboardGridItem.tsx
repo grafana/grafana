@@ -19,6 +19,7 @@ import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/compo
 
 import { RepeatsUpdatedEvent, DashboardStateChangedEvent } from '../../sidebar/events';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
+import { registerReportRepeatPendingWork } from '../../utils/registerReportRepeatPendingWork';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView, scrollIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { type DashboardLayoutItem } from '../types/DashboardLayoutItem';
@@ -203,6 +204,9 @@ export class DashboardGridItem
     } else {
       stateChange.height = panelCount * itemHeight;
     }
+
+    // Keeps report rendering waiting until the repeat clones mount.
+    registerReportRepeatPendingWork(this, repeatedPanels);
 
     this.setState(stateChange);
 

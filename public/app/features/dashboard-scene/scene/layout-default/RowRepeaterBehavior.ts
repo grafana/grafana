@@ -13,6 +13,7 @@ import {
 } from '@grafana/scenes';
 
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
+import { registerReportRepeatPendingWork } from '../../utils/registerReportRepeatPendingWork';
 import { getMultiVariableValues } from '../../utils/utils';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
@@ -175,6 +176,12 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
       this._clonedRows.push(rowClone);
     }
+
+    // Keeps report rendering waiting until the repeat clones mount.
+    registerReportRepeatPendingWork(
+      this,
+      this._clonedRows.filter((row) => row !== rowToRepeat)
+    );
 
     updateLayout(layout, this._clonedRows, maxYOfRows, rowToRepeat.state.key!);
   }
