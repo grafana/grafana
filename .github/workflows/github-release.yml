@@ -48,6 +48,16 @@ jobs:
           version: ${{ inputs.version }}
           latest: ${{ inputs.latest }}
           dry_run: ${{ inputs.dry_run }}
+  export-sbom:
+    name: "Export SBOM"
+    needs: main
+    permissions:
+      contents: write
+      id-token: write
+    uses: grafana/grafana/.github/workflows/sbom-on-release.yml@main
+    with:
+      version: ${{ inputs.version }}
+      dry_run: ${{ inputs.dry_run }}
   deploy-storybook:
     needs: main
     if: ${{ !inputs.dry_run && inputs.latest == '1' }}
