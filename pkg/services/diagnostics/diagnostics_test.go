@@ -150,6 +150,13 @@ func TestBundler_Build_boundsOversizedQueryData(t *testing.T) {
 	require.Contains(t, string(queryData), `"truncated": true`)
 	require.Contains(t, string(queryData), `"rows": 1`)
 	require.Contains(t, string(queryData), `"refId": "A"`)
+
+	// A truncated-but-successfully-encoded artifact still leaves a trail outside querydata.json
+	// itself: without this, a size-limit drop and a "nothing at all went wrong" bundle both come back
+	// with no querydata-error.txt, and a reader who doesn't dig into querydata.json's own fields would
+	// never know content was dropped.
+	require.Contains(t, files, "querydata-error.txt")
+	require.Contains(t, string(files["querydata-error.txt"]), "truncated")
 }
 
 func TestBundler_Build_boundsOversizedRequestWithoutResponse(t *testing.T) {
@@ -615,6 +622,27 @@ func TestBuildDashboard_boundsAggregateQueryData(t *testing.T) {
 	}
 	require.LessOrEqual(t, queryDataBytes, maxDashboardQueryDataBytes)
 	require.Contains(t, string(files["manifest.json"]), `"queryDataTruncated": true`)
+}
+
+// A panel whose own querydata.json needs internal truncation, but still fits comfortably inside the
+// remaining dashboard budget, took the one QueryDataTruncated branch in BuildDashboard that recorded no
+// queryDataError message -- unlike the other two (budget exhausted / artifact still over budget after
+// truncating). This pins that gap closed.
+func TestBuildDashboard_recordsQueryDataErrorWhenSinglePanelTruncatedWithinBudget(t *testing.T) {
+	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes)}))
+	panels := []DashboardPanel{{
+		ID:    1,
+		Title: "Logs",
+		Resp:  &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}},
+	}}
+
+	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, string(files["manifest.json"]), `"queryDataTruncated": true`)
+	require.Contains(t, string(files["manifest.json"]), `"queryDataError"`)
+	require.Contains(t, string(files["manifest.json"]), "truncated")
 }
 
 // The whole-dashboard client posts the dashboard save model once instead of each panel's JSON, so
