@@ -82,15 +82,15 @@ func (NotebookTimeRangeOption) OpenAPIModelName() string {
 // Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec.
 // CellKind is listed first so it is the generated default (a notebook is narrative-first).
 // +k8s:openapi-gen=true
-type NotebookNotebookElement = NotebookCellKindOrPanelKindOrLibraryPanelKind
+type NotebookNotebookElement = NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind
 
 // NewNotebookNotebookElement creates a new NotebookNotebookElement object.
 func NewNotebookNotebookElement() *NotebookNotebookElement {
-	return NewNotebookCellKindOrPanelKindOrLibraryPanelKind()
+	return NewNotebookCellKindOrNotebookPanelKindOrLibraryPanelKind()
 }
 
 // A cell holds non-panel narrative content (markdown text, code) in a notebook layout.
-// Panel cells are not represented here — they reuse PanelKind.
+// Panel cells are not represented here — they reuse NotebookPanelKind.
 // +k8s:openapi-gen=true
 type NotebookCellKind struct {
 	Kind string           `json:"kind"`
@@ -208,51 +208,56 @@ func (NotebookCodeCellContentSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookCodeCellContentSpec"
 }
 
+// The notebook's own panel chain. It is a copy of the dashboard one down to the transformation,
+// which follows the dashboard v2 shape rather than the v2beta1 shape in this package. The chain has
+// to be forked rather than shared because PanelKind reaches TransformationKind through
+// QueryGroupKind, and those three are what Dashboard v2beta1 serves. Everything the chain does not
+// change (DataLink, VizConfigKind, PanelQueryKind, QueryOptionsSpec) stays shared.
 // +k8s:openapi-gen=true
-type NotebookPanelKind struct {
-	Kind string            `json:"kind"`
-	Spec NotebookPanelSpec `json:"spec"`
+type NotebookNotebookPanelKind struct {
+	Kind string                    `json:"kind"`
+	Spec NotebookNotebookPanelSpec `json:"spec"`
 }
 
-// NewNotebookPanelKind creates a new NotebookPanelKind object.
-func NewNotebookPanelKind() *NotebookPanelKind {
-	return &NotebookPanelKind{
+// NewNotebookNotebookPanelKind creates a new NotebookNotebookPanelKind object.
+func NewNotebookNotebookPanelKind() *NotebookNotebookPanelKind {
+	return &NotebookNotebookPanelKind{
 		Kind: "Panel",
-		Spec: *NewNotebookPanelSpec(),
+		Spec: *NewNotebookNotebookPanelSpec(),
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for NotebookPanelKind.
-func (NotebookPanelKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookPanelKind"
+// OpenAPIModelName returns the OpenAPI model name for NotebookNotebookPanelKind.
+func (NotebookNotebookPanelKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookNotebookPanelKind"
 }
 
 // +k8s:openapi-gen=true
-type NotebookPanelSpec struct {
+type NotebookNotebookPanelSpec struct {
 	Id    float64 `json:"id"`
 	Title string  `json:"title"`
 	// Shown in a info icon tooltip next to panel title
 	Description *string `json:"description,omitempty"`
 	// Shown in a sub header below the title.
-	Subtitle    *string                `json:"subtitle,omitempty"`
-	Links       []NotebookDataLink     `json:"links"`
-	Data        NotebookQueryGroupKind `json:"data"`
-	VizConfig   NotebookVizConfigKind  `json:"vizConfig"`
-	Transparent *bool                  `json:"transparent,omitempty"`
+	Subtitle    *string                        `json:"subtitle,omitempty"`
+	Links       []NotebookDataLink             `json:"links"`
+	Data        NotebookNotebookQueryGroupKind `json:"data"`
+	VizConfig   NotebookVizConfigKind          `json:"vizConfig"`
+	Transparent *bool                          `json:"transparent,omitempty"`
 }
 
-// NewNotebookPanelSpec creates a new NotebookPanelSpec object.
-func NewNotebookPanelSpec() *NotebookPanelSpec {
-	return &NotebookPanelSpec{
+// NewNotebookNotebookPanelSpec creates a new NotebookNotebookPanelSpec object.
+func NewNotebookNotebookPanelSpec() *NotebookNotebookPanelSpec {
+	return &NotebookNotebookPanelSpec{
 		Links:     []NotebookDataLink{},
-		Data:      *NewNotebookQueryGroupKind(),
+		Data:      *NewNotebookNotebookQueryGroupKind(),
 		VizConfig: *NewNotebookVizConfigKind(),
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for NotebookPanelSpec.
-func (NotebookPanelSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookPanelSpec"
+// OpenAPIModelName returns the OpenAPI model name for NotebookNotebookPanelSpec.
+func (NotebookNotebookPanelSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookNotebookPanelSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -273,43 +278,43 @@ func (NotebookDataLink) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type NotebookQueryGroupKind struct {
-	Kind string                 `json:"kind"`
-	Spec NotebookQueryGroupSpec `json:"spec"`
+type NotebookNotebookQueryGroupKind struct {
+	Kind string                         `json:"kind"`
+	Spec NotebookNotebookQueryGroupSpec `json:"spec"`
 }
 
-// NewNotebookQueryGroupKind creates a new NotebookQueryGroupKind object.
-func NewNotebookQueryGroupKind() *NotebookQueryGroupKind {
-	return &NotebookQueryGroupKind{
+// NewNotebookNotebookQueryGroupKind creates a new NotebookNotebookQueryGroupKind object.
+func NewNotebookNotebookQueryGroupKind() *NotebookNotebookQueryGroupKind {
+	return &NotebookNotebookQueryGroupKind{
 		Kind: "QueryGroup",
-		Spec: *NewNotebookQueryGroupSpec(),
+		Spec: *NewNotebookNotebookQueryGroupSpec(),
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for NotebookQueryGroupKind.
-func (NotebookQueryGroupKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookQueryGroupKind"
+// OpenAPIModelName returns the OpenAPI model name for NotebookNotebookQueryGroupKind.
+func (NotebookNotebookQueryGroupKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookNotebookQueryGroupKind"
 }
 
 // +k8s:openapi-gen=true
-type NotebookQueryGroupSpec struct {
-	Queries         []NotebookPanelQueryKind     `json:"queries"`
-	Transformations []NotebookTransformationKind `json:"transformations"`
-	QueryOptions    NotebookQueryOptionsSpec     `json:"queryOptions"`
+type NotebookNotebookQueryGroupSpec struct {
+	Queries         []NotebookPanelQueryKind             `json:"queries"`
+	Transformations []NotebookNotebookTransformationKind `json:"transformations"`
+	QueryOptions    NotebookQueryOptionsSpec             `json:"queryOptions"`
 }
 
-// NewNotebookQueryGroupSpec creates a new NotebookQueryGroupSpec object.
-func NewNotebookQueryGroupSpec() *NotebookQueryGroupSpec {
-	return &NotebookQueryGroupSpec{
+// NewNotebookNotebookQueryGroupSpec creates a new NotebookNotebookQueryGroupSpec object.
+func NewNotebookNotebookQueryGroupSpec() *NotebookNotebookQueryGroupSpec {
+	return &NotebookNotebookQueryGroupSpec{
 		Queries:         []NotebookPanelQueryKind{},
-		Transformations: []NotebookTransformationKind{},
+		Transformations: []NotebookNotebookTransformationKind{},
 		QueryOptions:    *NewNotebookQueryOptionsSpec(),
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for NotebookQueryGroupSpec.
-func (NotebookQueryGroupSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookQueryGroupSpec"
+// OpenAPIModelName returns the OpenAPI model name for NotebookNotebookQueryGroupSpec.
+func (NotebookNotebookQueryGroupSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookNotebookQueryGroupSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -377,32 +382,31 @@ func (NotebookDataQueryKind) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookDataQueryKind"
 }
 
+// Dashboard v2 shape: the transformation ID moved from `kind` to `group`.
 // +k8s:openapi-gen=true
-type NotebookTransformationKind struct {
-	// The kind of a TransformationKind is the transformation ID
-	Kind string                        `json:"kind"`
-	Spec NotebookDataTransformerConfig `json:"spec"`
+type NotebookNotebookTransformationKind struct {
+	Kind string `json:"kind"`
+	// The group is the transformation ID
+	Group string                             `json:"group"`
+	Spec  NotebookNotebookTransformationSpec `json:"spec"`
 }
 
-// NewNotebookTransformationKind creates a new NotebookTransformationKind object.
-func NewNotebookTransformationKind() *NotebookTransformationKind {
-	return &NotebookTransformationKind{
-		Spec: *NewNotebookDataTransformerConfig(),
+// NewNotebookNotebookTransformationKind creates a new NotebookNotebookTransformationKind object.
+func NewNotebookNotebookTransformationKind() *NotebookNotebookTransformationKind {
+	return &NotebookNotebookTransformationKind{
+		Kind: "Transformation",
+		Spec: *NewNotebookNotebookTransformationSpec(),
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for NotebookTransformationKind.
-func (NotebookTransformationKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookTransformationKind"
+// OpenAPIModelName returns the OpenAPI model name for NotebookNotebookTransformationKind.
+func (NotebookNotebookTransformationKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookNotebookTransformationKind"
 }
 
-// Transformations allow to manipulate data returned by a query before the system applies a visualization.
-// Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
-// use the output of one transformation as the input to another transformation, etc.
+// Dashboard v2 shape: no `id`, it is carried by the parent's `group`.
 // +k8s:openapi-gen=true
-type NotebookDataTransformerConfig struct {
-	// Unique identifier of transformer
-	Id string `json:"id"`
+type NotebookNotebookTransformationSpec struct {
 	// Disabled transformations are skipped
 	Disabled *bool `json:"disabled,omitempty"`
 	// Optional frame matcher. When missing it will be applied to all results
@@ -414,14 +418,14 @@ type NotebookDataTransformerConfig struct {
 	Options interface{} `json:"options"`
 }
 
-// NewNotebookDataTransformerConfig creates a new NotebookDataTransformerConfig object.
-func NewNotebookDataTransformerConfig() *NotebookDataTransformerConfig {
-	return &NotebookDataTransformerConfig{}
+// NewNotebookNotebookTransformationSpec creates a new NotebookNotebookTransformationSpec object.
+func NewNotebookNotebookTransformationSpec() *NotebookNotebookTransformationSpec {
+	return &NotebookNotebookTransformationSpec{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for NotebookDataTransformerConfig.
-func (NotebookDataTransformerConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookDataTransformerConfig"
+// OpenAPIModelName returns the OpenAPI model name for NotebookNotebookTransformationSpec.
+func (NotebookNotebookTransformationSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookNotebookTransformationSpec"
 }
 
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
@@ -1219,7 +1223,7 @@ func (NotebookNotebookLayoutItemKind) OpenAPIModelName() string {
 }
 
 // One ordered item in a notebook layout. `element` references either a CellKind
-// (markdown/code content) or a PanelKind in the notebook's elements map. `source`
+// (markdown/code content) or a NotebookPanelKind in the notebook's elements map. `source`
 // records who authored the cell; `collapsed` hides the body in the UI.
 // +k8s:openapi-gen=true
 type NotebookNotebookLayoutItemSpec struct {
@@ -1424,24 +1428,24 @@ func (NotebookNotebookLayoutItemSpecSource) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type NotebookCellKindOrPanelKindOrLibraryPanelKind struct {
-	CellKind         *NotebookCellKind         `json:"CellKind,omitempty"`
-	PanelKind        *NotebookPanelKind        `json:"PanelKind,omitempty"`
-	LibraryPanelKind *NotebookLibraryPanelKind `json:"LibraryPanelKind,omitempty"`
+type NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind struct {
+	CellKind          *NotebookCellKind          `json:"CellKind,omitempty"`
+	NotebookPanelKind *NotebookNotebookPanelKind `json:"NotebookPanelKind,omitempty"`
+	LibraryPanelKind  *NotebookLibraryPanelKind  `json:"LibraryPanelKind,omitempty"`
 }
 
-// NewNotebookCellKindOrPanelKindOrLibraryPanelKind creates a new NotebookCellKindOrPanelKindOrLibraryPanelKind object.
-func NewNotebookCellKindOrPanelKindOrLibraryPanelKind() *NotebookCellKindOrPanelKindOrLibraryPanelKind {
-	return &NotebookCellKindOrPanelKindOrLibraryPanelKind{}
+// NewNotebookCellKindOrNotebookPanelKindOrLibraryPanelKind creates a new NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind object.
+func NewNotebookCellKindOrNotebookPanelKindOrLibraryPanelKind() *NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind {
+	return &NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `NotebookCellKindOrPanelKindOrLibraryPanelKind` as JSON.
-func (resource NotebookCellKindOrPanelKindOrLibraryPanelKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind` as JSON.
+func (resource NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind) MarshalJSON() ([]byte, error) {
 	if resource.CellKind != nil {
 		return json.Marshal(resource.CellKind)
 	}
-	if resource.PanelKind != nil {
-		return json.Marshal(resource.PanelKind)
+	if resource.NotebookPanelKind != nil {
+		return json.Marshal(resource.NotebookPanelKind)
 	}
 	if resource.LibraryPanelKind != nil {
 		return json.Marshal(resource.LibraryPanelKind)
@@ -1450,8 +1454,8 @@ func (resource NotebookCellKindOrPanelKindOrLibraryPanelKind) MarshalJSON() ([]b
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `NotebookCellKindOrPanelKindOrLibraryPanelKind` from JSON.
-func (resource *NotebookCellKindOrPanelKindOrLibraryPanelKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind` from JSON.
+func (resource *NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -1485,21 +1489,21 @@ func (resource *NotebookCellKindOrPanelKindOrLibraryPanelKind) UnmarshalJSON(raw
 		resource.LibraryPanelKind = &notebookLibraryPanelKind
 		return nil
 	case "Panel":
-		var notebookPanelKind NotebookPanelKind
-		if err := json.Unmarshal(raw, &notebookPanelKind); err != nil {
+		var notebookNotebookPanelKind NotebookNotebookPanelKind
+		if err := json.Unmarshal(raw, &notebookNotebookPanelKind); err != nil {
 			return err
 		}
 
-		resource.PanelKind = &notebookPanelKind
+		resource.NotebookPanelKind = &notebookNotebookPanelKind
 		return nil
 	}
 
 	return nil
 }
 
-// OpenAPIModelName returns the OpenAPI model name for NotebookCellKindOrPanelKindOrLibraryPanelKind.
-func (NotebookCellKindOrPanelKindOrLibraryPanelKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookCellKindOrPanelKindOrLibraryPanelKind"
+// OpenAPIModelName returns the OpenAPI model name for NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind.
+func (NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind"
 }
 
 // +k8s:openapi-gen=true

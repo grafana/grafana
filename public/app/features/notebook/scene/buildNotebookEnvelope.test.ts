@@ -1,5 +1,5 @@
-import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
+import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from 'app/features/notebook/types';
 
 import { buildNotebookEnvelope } from './buildNotebookEnvelope';
 

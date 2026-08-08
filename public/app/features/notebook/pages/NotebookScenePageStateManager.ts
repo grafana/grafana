@@ -1,5 +1,4 @@
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -9,6 +8,7 @@ import {
 } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { NotebookLayoutManager } from 'app/features/dashboard-scene/scene/layout-notebook/NotebookLayoutManager';
+import { type Spec as NotebookSpec } from 'app/features/notebook/types';
 import { dispatch } from 'app/store/store';
 
 import { buildNotebookEnvelope } from '../scene/buildNotebookEnvelope';
