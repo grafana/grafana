@@ -262,12 +262,14 @@ message QueryRequest {
 message QueryResponse {
   oneof result {
     GetFolderParentsResult folder_parents = 1;
+    GetGrantsResult grants = 2;
   }
 }
 
 message QueryOperation {
   oneof operation {
     GetFolderParentsQuery get_folder_parents = 1;
+    GetGrantsQuery get_grants = 2;
   }
 }
 
@@ -279,4 +281,57 @@ message GetFolderParentsQuery {
 message GetFolderParentsResult {
   // List of parent folder UIDs
   repeated string parent_uids = 1;
+}
+
+message GetGrantsQuery {
+  // Subject in Zanzana format (e.g. "user:<uid>" or "service-account:<uid>")
+  string subject = 1;
+  // Team UIDs supplied by the caller until memberships are stored as tuples.
+  repeated string teams = 2;
+  // Filters global, folder-resource, and resource grants. Folder grants are always returned.
+  repeated ResourceType types = 3;
+}
+
+message ResourceType {
+  string group = 1;
+  string resource = 2;
+  string subresource = 3;
+}
+
+message GrantPermission {
+  // One of view, edit, or admin when the grant uses a canonical action set.
+  string level = 1;
+  // Legacy granular relations that do not map to a canonical level.
+  repeated string additional_verbs = 2;
+}
+
+message GlobalGrant {
+  ResourceType type = 1;
+  GrantPermission permission = 2;
+}
+
+message FolderGrant {
+  string folder_uid = 1;
+  GrantPermission permission = 2;
+}
+
+message FolderResourceGrant {
+  string folder_uid = 1;
+  ResourceType type = 2;
+  // Applies to every resource type beneath the folder.
+  bool all_resource_types = 3;
+  GrantPermission permission = 4;
+}
+
+message ResourceGrant {
+  ResourceType type = 1;
+  string name = 2;
+  GrantPermission permission = 3;
+}
+
+message GetGrantsResult {
+  repeated GlobalGrant global_grants = 1;
+  repeated FolderGrant folder_grants = 2;
+  repeated FolderResourceGrant folder_resource_grants = 3;
+  repeated ResourceGrant resource_grants = 4;
 }

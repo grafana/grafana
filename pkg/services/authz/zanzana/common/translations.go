@@ -154,6 +154,21 @@ var resourceTranslations = map[string]resourceTranslation{
 			"org.users:remove": newMapping(RelationDelete, ""),
 		},
 	},
+	KindServiceAccounts: {
+		typ:      TypeServiceAccount,
+		group:    iamGroup,
+		resource: KindServiceAccounts,
+		mapping: map[string]actionMapping{
+			"serviceaccounts:read":              newMapping(RelationGet, ""),
+			"serviceaccounts:write":             newMapping(RelationUpdate, ""),
+			"serviceaccounts:delete":            newMapping(RelationDelete, ""),
+			"serviceaccounts.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"serviceaccounts.permissions:write": newMapping(RelationSetPermissions, ""),
+			"serviceaccounts:view":              newMapping(RelationSetView, ""),
+			"serviceaccounts:edit":              newMapping(RelationSetEdit, ""),
+			"serviceaccounts:admin":             newMapping(RelationSetAdmin, ""),
+		},
+	},
 }
 
 func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.CheckRequest, bool) {
