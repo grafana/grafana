@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useTheme2, useStyles2, ColorPicker, IconButton } from '@grafana/ui';
+import { useTheme2, useStyles2, ColorPicker, IconButton, clearButtonStyles } from '@grafana/ui';
 import { ColorSwatch } from '@grafana/ui/internal';
 
 export interface ColorValueEditorSettings {
@@ -37,6 +37,7 @@ export const ColorValueEditor = ({
 }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const resetButtonStyles = useStyles2(clearButtonStyles);
 
   return (
     <ColorPicker color={value ?? ''} onChange={onChange} enableNamedColors={settings?.enableNamedColors !== false}>
@@ -56,17 +57,17 @@ export const ColorValueEditor = ({
             {details && (
               <>
                 {value ? (
-                  // TODO: fix keyboard a11y
-                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                  <span className={styles.colorText} onClick={showColorPicker}>
+                  <button type="button" className={cx(resetButtonStyles, styles.colorText)} onClick={showColorPicker}>
                     {value}
-                  </span>
+                  </button>
                 ) : (
-                  // TODO: fix keyboard a11y
-                  // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                  <span className={styles.placeholderText} onClick={showColorPicker}>
+                  <button
+                    type="button"
+                    className={cx(resetButtonStyles, styles.placeholderText)}
+                    onClick={showColorPicker}
+                  >
                     {settings?.placeholder ?? 'Select color'}
-                  </span>
+                  </button>
                 )}
                 {settings?.isClearable && value && (
                   <IconButton
@@ -107,10 +108,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     colorText: css({
       flexGrow: 2,
+      textAlign: 'left',
     }),
     placeholderText: css({
       flexGrow: 2,
       color: theme.colors.text.secondary,
+      textAlign: 'left',
     }),
   };
 };
