@@ -411,6 +411,13 @@ export type ObjectMeta = {
 export type CorrelationTargetSpec = {
   [key: string]: any;
 };
+export type CorrelationTimeRangeSpec = {
+  field?: string;
+  range?: {
+    from: number;
+    to: number;
+  };
+};
 export type CorrelationTransformationSpec = {
   expression?: string;
   field?: string;
@@ -420,6 +427,8 @@ export type CorrelationTransformationSpec = {
 export type CorrelationConfigSpec = {
   field: string;
   target: CorrelationTargetSpec;
+  /** null is for PATCH/edit when we want to clear the value, undefined is if it's not valid for the correlation type */
+  timeRange?: CorrelationTimeRangeSpec | null;
   transformations?: CorrelationTransformationSpec[];
 };
 export type CorrelationDataSourceRef = {
