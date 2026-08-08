@@ -91,7 +91,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		return nil, nil, fmt.Errorf("failed to provide feature manager: %w", err)
 	}
 	features := featuremgmt.ProvideToggles(featureManager)
-	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	// Evaluated per job via OpenFeature so the flag behaves consistently with the
 	// API server (see performanceEnabled in the provisioning apiserver package).
@@ -149,7 +148,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		export.ExportAllWithNewUIDs,
 		stageIfPossible,
 		metrics,
-		exportEnabled,
 	)
 
 	// Migration export preserves original names so the takeover
@@ -161,7 +159,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		export.ExportAll,
 		stageIfPossible,
 		metrics,
-		exportEnabled,
 	)
 	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -169,7 +166,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		migrateExportWorker,
 		syncWorker,
 	)
-	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator, exportEnabled)
+	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
 
 	// Delete
 	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)

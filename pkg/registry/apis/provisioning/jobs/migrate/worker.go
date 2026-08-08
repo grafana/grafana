@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 //go:generate mockery --name Migrator --structname MockMigrator --inpackage --filename mock_migrator.go --with-expecter
@@ -18,20 +20,17 @@ type Migrator interface {
 
 type MigrationWorker struct {
 	unifiedMigrator Migrator
-	enabled         bool
 }
 
-func NewMigrationWorkerFromUnified(unifiedMigrator Migrator, enabled bool) *MigrationWorker {
+func NewMigrationWorkerFromUnified(unifiedMigrator Migrator) *MigrationWorker {
 	return &MigrationWorker{
 		unifiedMigrator: unifiedMigrator,
-		enabled:         enabled,
 	}
 }
 
-func NewMigrationWorker(unifiedMigrator Migrator, enabled bool) *MigrationWorker {
+func NewMigrationWorker(unifiedMigrator Migrator) *MigrationWorker {
 	return &MigrationWorker{
 		unifiedMigrator: unifiedMigrator,
-		enabled:         enabled,
 	}
 }
 
@@ -40,7 +39,8 @@ func (w *MigrationWorker) IsSupported(ctx context.Context, job provisioning.Job)
 }
 
 func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
-	if !w.enabled {
+	enabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningExport, false, openfeature.TransactionContext(ctx))
+	if !enabled {
 		return errors.New("migrate functionality is disabled by configuration")
 	}
 
