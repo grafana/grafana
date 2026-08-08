@@ -723,7 +723,9 @@ func (s *Server) resolveTypedItems(
 		if sample.resource.IsValidRelation(key.relation) {
 			listRelation := key.relation
 			if key.typ == common.TypeFolder {
-				listRelation = common.FolderPermissionRelation(key.relation)
+				// "Is the folder itself accessible" -- get_self-aware, see
+				// FolderDirectPermissionRelation doc comment.
+				listRelation = common.FolderDirectPermissionRelation(key.relation)
 			}
 			if err := s.collectAllowedObjects(ctx, allowed, &openfgav1.ListObjectsRequest{
 				StoreId:              store.ID,

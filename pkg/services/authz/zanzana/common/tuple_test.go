@@ -165,3 +165,29 @@ func TestTranslateToResourceTuple(t *testing.T) {
 		})
 	}
 }
+
+// TestTranslateToResourceTuple_FolderSelfReadWildcardScope is a spike test for
+// identity-access-team#2285, open question #6 (wildcard-scope edge case). A wildcard scope
+// (folders:*) routes through the group_resource branch of TranslateToResourceTuple, which emits a
+// tuple with relation get_self on a group_resource:... object. This proves that translation step
+// alone succeeds and produces a tuple -- it does NOT prove the tuple is usable, because get_self
+// is deliberately not defined on the group_resource type (see schema_resource.fga): a
+// self-only grant is only meaningful for one specific folder, so a group-wide "all folders"
+// self-only grant is nonsensical by construction. Whether OpenFGA rejects writing this tuple is
+// verified separately at the server/reconciler integration level
+// (TestIntegrationReconciler_FolderSelfReadWildcardScopeRejected).
+func TestTranslateToResourceTuple_FolderSelfReadWildcardScope(t *testing.T) {
+	tuple, ok := TranslateToResourceTuple("user:1", "folders.self:read", "folders", "*")
+	require.True(t, ok, "translation itself does not reject a wildcard scope for folders.self:read")
+	require.EqualExportedValues(t, &openfgav1.TupleKey{
+		User:     "user:1",
+		Relation: RelationGetSelf,
+		Object:   "group_resource:folder.grafana.app/folders",
+	}, tuple)
+
+	// get_self must NOT be a valid relation on group_resource: it's deliberately absent from
+	// schema_resource.fga. If this assertion ever fails because someone added it, open question
+	// #6 needs to be re-examined (a wildcard self-only grant would then silently become a full
+	// tier grant across every folder).
+	require.NotContains(t, RelationsGroupResource, RelationGetSelf)
+}
