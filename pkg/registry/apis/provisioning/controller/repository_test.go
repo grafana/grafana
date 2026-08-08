@@ -1527,6 +1527,10 @@ func (s *hookRepoStub) Test(ctx context.Context) (*provisioning.TestResults, err
 	return &provisioning.TestResults{Success: true, Code: http.StatusOK}, nil
 }
 
+func (s *hookRepoStub) ValidatePermissions(ctx context.Context) ([]repository.Permission, error) {
+	return nil, nil
+}
+
 func (s *hookRepoStub) Slug() string { return "" }
 
 func (s *hookRepoStub) VerifyRequest(*http.Request) (*repository.VerifiedWebhookRequest, error) {

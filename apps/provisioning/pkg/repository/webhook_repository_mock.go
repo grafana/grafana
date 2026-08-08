@@ -277,6 +277,64 @@ func (_c *MockWebhookRepository_Test_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
+// ValidatePermissions provides a mock function with given fields: ctx
+func (_m *MockWebhookRepository) ValidatePermissions(ctx context.Context) ([]Permission, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ValidatePermissions")
+	}
+
+	var r0 []Permission
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]Permission, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []Permission); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]Permission)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockWebhookRepository_ValidatePermissions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidatePermissions'
+type MockWebhookRepository_ValidatePermissions_Call struct {
+	*mock.Call
+}
+
+// ValidatePermissions is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockWebhookRepository_Expecter) ValidatePermissions(ctx interface{}) *MockWebhookRepository_ValidatePermissions_Call {
+	return &MockWebhookRepository_ValidatePermissions_Call{Call: _e.mock.On("ValidatePermissions", ctx)}
+}
+
+func (_c *MockWebhookRepository_ValidatePermissions_Call) Run(run func(ctx context.Context)) *MockWebhookRepository_ValidatePermissions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockWebhookRepository_ValidatePermissions_Call) Return(_a0 []Permission, _a1 error) *MockWebhookRepository_ValidatePermissions_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockWebhookRepository_ValidatePermissions_Call) RunAndReturn(run func(context.Context) ([]Permission, error)) *MockWebhookRepository_ValidatePermissions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // VerifyRequest provides a mock function with given fields: req
 func (_m *MockWebhookRepository) VerifyRequest(req *http.Request) (*VerifiedWebhookRequest, error) {
 	ret := _m.Called(req)

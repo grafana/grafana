@@ -94,6 +94,10 @@ type mockRepo struct {
 	onDeleteFunc func(ctx context.Context) error
 }
 
+func (m mockRepo) ValidatePermissions(ctx context.Context) ([]repository.Permission, error) {
+	return nil, nil
+}
+
 func (m mockRepo) Config() *provisioning.Repository {
 	return &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{

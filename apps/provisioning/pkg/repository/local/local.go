@@ -115,6 +115,12 @@ func (r *localRepository) Config() *provisioning.Repository {
 	return r.config
 }
 
+// ValidatePermissions implements repository.Repository. Local repositories have
+// no permission model, so there are never any missing permissions.
+func (r *localRepository) ValidatePermissions(ctx context.Context) ([]repository.Permission, error) {
+	return nil, nil
+}
+
 // Test implements provisioning.Repository.
 // NOTE: Validate has been called (and passed) before this function should be called
 func (r *localRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {

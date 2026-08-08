@@ -94,6 +94,15 @@ func (r *githubRepository) Client() Client {
 	return r.gh
 }
 
+// ValidatePermissions implements repository.Repository.
+// TODO: perform a real GitHub App scope check (contents/metadata/pull_requests/
+// webhooks). The repository's own client cannot yet read installation
+// permissions, so this scaffolding reports no missing permissions and does not
+// block sync; the check will be filled in once that plumbing exists.
+func (r *githubRepository) ValidatePermissions(ctx context.Context) ([]repository.Permission, error) {
+	return nil, nil
+}
+
 func (r *githubRepository) GetDefaultBranch(ctx context.Context) (string, error) {
 	repo, err := r.gh.GetRepository(ctx)
 	if err != nil {
