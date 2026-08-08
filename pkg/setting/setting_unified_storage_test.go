@@ -2,6 +2,7 @@ package setting
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
@@ -331,6 +332,40 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			// Guards a regression where bedrock used vertex_batch_size.
 			assert.Equal(t, 7, cfg.BedrockBatchSize)
 			assert.Equal(t, 15, cfg.BedrockMaxAttempts)
+		})
+	})
+
+	t.Run("polling_interval", func(t *testing.T) {
+		setSectionKey := func(cfg *Cfg, key, value string) {
+			section := cfg.Raw.Section("unified_storage")
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		t.Run("defaults to 100ms", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 100*time.Millisecond, cfg.PollingInterval)
+		})
+
+		t.Run("reads configured value", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "polling_interval", "500ms")
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 500*time.Millisecond, cfg.PollingInterval)
+		})
+
+		t.Run("reads configured value from env var", func(t *testing.T) {
+			t.Setenv("GF_UNIFIED_STORAGE_POLLING_INTERVAL", "1s")
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 1*time.Second, cfg.PollingInterval)
 		})
 	})
 
