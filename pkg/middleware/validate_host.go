@@ -44,7 +44,14 @@ func ValidateHostHeader(cfg *setting.Cfg) web.Handler {
 			}
 			hostRedirectCounter.Inc()
 			c.Logger.Info("Enforcing Host header", "hosted", c.Req.Host, "expected", cfg.Domain)
-			c.Redirect(strings.TrimSuffix(cfg.AppURL, "/")+c.Req.RequestURI, 301)
+			// With serve_from_sub_path enabled the request URI still contains the sub path
+			// (only the router-facing URL.Path has it stripped), while AppURL already ends
+			// with it — strip it so the redirect doesn't duplicate the sub path.
+			requestURI := c.Req.RequestURI
+			if cfg.AppSubURL != "" {
+				requestURI = strings.TrimPrefix(requestURI, cfg.AppSubURL)
+			}
+			c.Redirect(strings.TrimSuffix(cfg.AppURL, "/")+requestURI, 301)
 			return
 		}
 	}
