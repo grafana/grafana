@@ -1148,6 +1148,16 @@ Here is the result after applying the Merge transformation.
 
 This transformation combines values from Query A and Query B into a unified table, enhancing the presentation of data for better insights.
 
+> Note
+>
+> The Merge transformation combines rows that share matching field values, but it does not automatically deduplicate rows that share the same label set when working with multiple Prometheus instant queries.
+>
+> For Prometheus instant query results that should be joined into a single row based on shared labels, a common workflow is:
+>
+> `Labels to fields (Columns) → Merge → Group by`
+>
+> Configure the Group by transformation using the shared label fields and apply the **Last not null** calculation to the value fields.
+
 ### Organize fields by name
 
 Use this transformation to provide the flexibility to rename, reorder, or hide fields returned by a single query in your panel. This transformation is applicable only to panels with a single query. If your panel has multiple queries, consider using an "Outer join" transformation or removing extra queries.
