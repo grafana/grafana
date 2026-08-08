@@ -2,7 +2,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Badge, Box, Button, Stack, Text } from '@grafana/ui';
+import { Badge, Box, Button, Stack, Text, Tooltip } from '@grafana/ui';
 
 import { trackImportToGMAError, trackImportToGMASuccess } from '../../../Analytics';
 import { alertListPageLink } from '../../../utils/navigation';
@@ -26,7 +26,7 @@ interface StepReviewEnableAutoSyncProps {
 export function StepReviewEnableAutoSync({ onCancel }: StepReviewEnableAutoSyncProps) {
   const { watch } = useFormContext<ImportFormValues>();
   const { setActiveStep } = useStepperState();
-  const { save, isPending, mimirCortexDatasources } = useAutoSyncConfiguration();
+  const { save, isPending, isReady, notReadyMessage, mimirCortexDatasources } = useAutoSyncConfiguration();
 
   const selectedUid = watch('autosyncDatasourceUID') ?? '';
   const dataSourceName = mimirCortexDatasources.find((ds) => ds.uid === selectedUid)?.name ?? selectedUid;
@@ -81,9 +81,18 @@ export function StepReviewEnableAutoSync({ onCancel }: StepReviewEnableAutoSyncP
           <Button variant="secondary" icon="arrow-left" onClick={() => setActiveStep(StepKey.Method)}>
             {t('alerting.import-to-gma.autosync-review.back', 'Add method')}
           </Button>
-          <Button variant="primary" icon="sync" disabled={!selectedUid || isPending} onClick={handleEnable}>
-            {t('alerting.import-to-gma.autosync-review.enable', 'Enable auto-sync')}
-          </Button>
+          <Tooltip content={notReadyMessage ?? ''} show={notReadyMessage ? undefined : false}>
+            <Box display="inline-block">
+              <Button
+                variant="primary"
+                icon="sync"
+                disabled={!selectedUid || isPending || !isReady}
+                onClick={handleEnable}
+              >
+                {t('alerting.import-to-gma.autosync-review.enable', 'Enable auto-sync')}
+              </Button>
+            </Box>
+          </Tooltip>
         </Stack>
         <CancelButton onCancel={onCancel} />
       </Stack>
