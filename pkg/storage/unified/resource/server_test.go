@@ -1414,6 +1414,7 @@ type watchTestServerOpts struct {
 	BookmarkFrequency time.Duration
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
+	BackendWrap       func(StorageBackend) StorageBackend
 }
 
 func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
@@ -1424,11 +1425,16 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, db.Close()) })
 
-	store, err := NewKVStorageBackend(KVBackendOptions{
+	kvStore, err := NewKVStorageBackend(KVBackendOptions{
 		KvStore:      NewBadgerKV(db),
 		WatchOptions: WatchOptions{SettleDelay: 1 * time.Millisecond},
 	})
 	require.NoError(t, err)
+
+	var store StorageBackend = kvStore
+	if opts.BackendWrap != nil {
+		store = opts.BackendWrap(store)
+	}
 
 	srv, err := NewResourceServer(ResourceServerOptions{
 		Backend:           store,
@@ -1480,6 +1486,200 @@ func createTestPlaylist(ctx context.Context, srv *server) error {
 		return fmt.Errorf("creating playlist %q: %v", name, created.Error)
 	}
 	return nil
+}
+
+// prunedPreviousBackend fails the read of one specific resource version, the way
+// the backend does once the history pruner has dropped the version a watch event
+// points back to. Reads at any other version are delegated.
+type prunedPreviousBackend struct {
+	StorageBackend
+	mu       sync.Mutex
+	prunedRV int64
+	// staleRV, when non-zero, is read instead of the pruned version, to simulate
+	// an older version that survived pruning. It must name a version that really
+	// exists so the value the server sees matches the resource version.
+	staleRV int64
+}
+
+func (b *prunedPreviousBackend) prune(rv, stale int64) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.prunedRV, b.staleRV = rv, stale
+}
+
+func (b *prunedPreviousBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
+	b.mu.Lock()
+	prunedRV, staleRV := b.prunedRV, b.staleRV
+	b.mu.Unlock()
+
+	if prunedRV == 0 || req.ResourceVersion != prunedRV {
+		return b.StorageBackend.ReadResource(ctx, req)
+	}
+	if staleRV != 0 {
+		return b.StorageBackend.ReadResource(ctx, &resourcepb.ReadRequest{Key: req.Key, ResourceVersion: staleRV})
+	}
+	return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
+}
+
+// Embedding the interface doesn't promote Stop, so the real backend's
+// goroutines would outlive the server without this.
+func (b *prunedPreviousBackend) Stop(ctx context.Context) error {
+	if s, ok := b.StorageBackend.(ResourceServerStopper); ok {
+		return s.Stop(ctx)
+	}
+	return nil
+}
+
+// A watch event names the resource version of the object it replaces, and the
+// server re-reads that version to attach it to the event. History is pruned per
+// resource, so a lagging watch can find it gone; that must never abort the
+// stream, which is shared by every subscriber and replayed on reconnect.
+func TestWatchWithUnreadablePreviousObject(t *testing.T) {
+	testUser := newWatchTestUser()
+	const name = "playlist-prev"
+	key := &resourcepb.ResourceKey{
+		Group:     watchTestGroup,
+		Resource:  watchTestResource,
+		Namespace: watchTestNamespace,
+		Name:      name,
+	}
+	value := func(title string) []byte {
+		return []byte(`{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {"name": "` + name + `", "namespace": "` + watchTestNamespace + `", "uid": "uid-` + name + `"},
+			"spec": {"title": "` + title + `", "interval": "5m", "items": []}
+		}`)
+	}
+
+	// setup creates the resource, then starts a watch positioned just after it.
+	// It returns the RV the next event will point back to.
+	setup := func(t *testing.T, ctx context.Context) (*server, *prunedPreviousBackend, *mockWatchServer, *errgroup.Group, int64) {
+		t.Helper()
+		backend := &prunedPreviousBackend{}
+		srv := newWatchTestServer(t, watchTestServerOpts{
+			BackendWrap: func(s StorageBackend) StorageBackend {
+				backend.StorageBackend = s
+				return backend
+			},
+		})
+
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value("first")})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+
+		mock := newMockWatchServer(ctx)
+		eg := &errgroup.Group{}
+		eg.Go(func() error {
+			return srv.Watch(&resourcepb.WatchRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group:    watchTestGroup,
+					Resource: watchTestResource,
+				}},
+				Since: created.ResourceVersion,
+			}, mock)
+		})
+		return srv, backend, mock, eg, created.ResourceVersion
+	}
+
+	nextEvent := func(t *testing.T, mock *mockWatchServer) *resourcepb.WatchEvent {
+		t.Helper()
+		select {
+		case evt := <-mock.events:
+			return evt
+		case <-time.After(5 * time.Second):
+			t.Fatal("timed out waiting for watch event")
+			return nil
+		}
+	}
+
+	t.Run("modification is sent without a previous object and the stream survives", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+		defer cancel()
+
+		srv, backend, mock, eg, createdRV := setup(t, ctx)
+		backend.prune(createdRV, 0)
+
+		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: value("second"), ResourceVersion: createdRV})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+
+		evt := nextEvent(t, mock)
+		require.Equal(t, resourcepb.WatchEvent_MODIFIED, evt.Type)
+		require.Equal(t, updated.ResourceVersion, evt.Resource.Version)
+		require.Nil(t, evt.Previous)
+
+		// The stream must still be usable: the next event is delivered on it.
+		backend.prune(0, 0)
+		third, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: value("third"), ResourceVersion: updated.ResourceVersion})
+		require.NoError(t, err)
+		require.Nil(t, third.Error)
+
+		evt = nextEvent(t, mock)
+		require.Equal(t, third.ResourceVersion, evt.Resource.Version)
+		require.NotNil(t, evt.Previous)
+
+		cancel()
+		require.NoError(t, eg.Wait())
+	})
+
+	t.Run("an older surviving version is sent as the previous object", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+		defer cancel()
+
+		srv, backend, mock, eg, createdRV := setup(t, ctx)
+
+		// Build a real history so the version that "survives" pruning is one that
+		// genuinely exists: create (createdRV) -> update (updated) -> update
+		// (third). Pruning `updated` leaves createdRV as the older survivor.
+		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: value("second"), ResourceVersion: createdRV})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+
+		backend.prune(updated.ResourceVersion, createdRV)
+
+		third, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: value("third"), ResourceVersion: updated.ResourceVersion})
+		require.NoError(t, err)
+		require.Nil(t, third.Error)
+
+		// The second update's own event comes first and reads its previous
+		// version normally; the third is the one pointing at the pruned version.
+		var evt *resourcepb.WatchEvent
+		for evt == nil || evt.Resource.Version != third.ResourceVersion {
+			evt = nextEvent(t, mock)
+		}
+		require.Equal(t, resourcepb.WatchEvent_MODIFIED, evt.Type)
+		require.NotNil(t, evt.Previous)
+		require.Equal(t, createdRV, evt.Previous.Version)
+		// The value has to be the one that belongs to the version reported, not
+		// whatever the latest read happened to return.
+		require.Contains(t, string(evt.Previous.Value), `"first"`)
+
+		cancel()
+		require.NoError(t, eg.Wait())
+	})
+
+	t.Run("deletion falls back to the deletion marker as the previous object", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+		defer cancel()
+
+		srv, backend, mock, eg, createdRV := setup(t, ctx)
+		backend.prune(createdRV, 0)
+
+		deleted, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: createdRV})
+		require.NoError(t, err)
+		require.Nil(t, deleted.Error)
+
+		evt := nextEvent(t, mock)
+		require.Equal(t, resourcepb.WatchEvent_DELETED, evt.Type)
+		require.Empty(t, evt.Resource.Value)
+		// Without this the client has nothing at all to decode for the event.
+		require.NotNil(t, evt.Previous)
+		require.Contains(t, string(evt.Previous.Value), `"uid-`+name+`"`)
+
+		cancel()
+		require.NoError(t, eg.Wait())
+	})
 }
 
 func TestPeriodicBookmarks(t *testing.T) {
