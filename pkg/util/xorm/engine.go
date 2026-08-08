@@ -724,6 +724,17 @@ func (engine *Engine) formatColTime(col *core.Column, t time.Time) (v any) {
 		return ""
 	}
 
+	// Strip the monotonic clock reading before formatting.
+	// time.Now() includes a monotonic clock reading (e.g. m=+6.696806080).
+	// When serialized to a database column (especially text-based storage like
+	// SQLite), this produces strings like:
+	//   "2026-08-05 12:14:36.34069982 +0330 +0330 m=+6.696806080"
+	// which the str2Time parser cannot parse back because the format
+	// "2006-01-02 15:04:05.9999999 Z07:00" only matches the first offset.
+	// Truncate(0) strips the monotonic clock without changing the time value.
+	// See https://github.com/grafana/grafana/issues/130124
+	t = t.Truncate(0)
+
 	if col.TimeZone != nil {
 		return engine.formatTime(col.SQLType.Name, t.In(col.TimeZone))
 	}
