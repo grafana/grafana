@@ -34,7 +34,7 @@ import {
  * Must be kept in sync with the skip condition in pkg/api/index.go
  * (setIndexViewData), which stops building the server tree when this is on.
  */
-function isClientNavTreeEnabled(): boolean {
+export function isClientNavTreeEnabled(): boolean {
   return (
     getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false) &&
     getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)
@@ -50,10 +50,10 @@ export function getInitialNavTree(): NavModelItem[] {
     return config.bootData?.navTree ?? [];
   }
 
-  const staticTree = applyAppSubUrl(buildStaticNavTree());
-  // Empty sections (connections, cfg/access without children) are pruned like
-  // the server prunes them after its enterprise hooks run.
-  return pruneEmptyNavSections(staticTree);
+  // Empty attachment-parent shells (connections, cfg/access) are intentionally
+  // kept here: the plugin nav merge needs them as targets. Pruning happens when
+  // the merge completes, mirroring the server's post-hook pruning.
+  return applyAppSubUrl(buildStaticNavTree());
 }
 
 /**

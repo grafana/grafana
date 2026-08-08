@@ -157,6 +157,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.testing-and-synthetics.title', 'Testing & synthetics');
     case 'plugin-page-grafana-incident-app':
       return t('nav.incidents.title', 'Incident');
+    case 'plugin-page-grafana-auth-app':
+      return t('nav.access-policies.title', 'Access policies');
     case 'plugin-page-grafana-ml-app':
       return t('nav.machine-learning.title', 'AI & machine learning');
     case 'plugin-page-grafana-slo-app':
@@ -220,6 +222,11 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.dashboards.subtitle', 'Create and manage dashboards to visualize your data');
     case 'manage-folder':
       return t('nav.manage-folder.subtitle', 'Manage folder dashboards and permissions');
+    case 'plugin-page-grafana-auth-app':
+      return t(
+        'nav.access-policies.subtitle',
+        'Use policies to control automated access to metrics, logs, traces, and other Grafana Cloud services'
+      );
     case 'dashboards/playlists':
       return t('nav.playlists.subtitle', 'Groups of dashboards that are displayed in a sequence');
     case 'dashboards/snapshots':
