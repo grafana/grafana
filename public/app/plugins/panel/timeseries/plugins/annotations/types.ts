@@ -1,5 +1,8 @@
 type NullableString = null | string;
 type NullableNumber = null | number;
+// the legacy annotation API returns numeric ids while the app platform API returns string uids, so both can arrive here
+export type AnnotationId = string | number;
+type NullableId = null | AnnotationId;
 export type AnnotationVals = {
   // layout
   time: number[];
@@ -9,7 +12,7 @@ export type AnnotationVals = {
   color?: string[];
 
   // meta
-  id?: NullableNumber[];
+  id?: NullableId[];
   alertId?: NullableNumber[];
 
   // tooltip
