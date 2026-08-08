@@ -9905,6 +9905,7 @@
             "name-humidity": "Humidity (%H)",
             "name-locale": "Locale format",
             "name-number": "Number",
+            "name-ordinal": "Ordinal (1st, 2nd, 3rd)",
             "name-percent-1": "Percent (0.0-1.0)",
             "name-percent-100": "Percent (0-100)",
             "name-pixels": "Pixels",
