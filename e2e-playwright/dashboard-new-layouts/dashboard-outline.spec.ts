@@ -27,14 +27,6 @@ test.describe(
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Outline');
 
-      // Should be able to click Variables item in outline to see add variable button
-      await sidebar.contentOutline.clickItem('Variables');
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
-      ).toBeVisible();
-
-      await sidebar.toolbar.clickButton('Outline');
-
       // Clicking a panel should scroll that panel in view
       await expect(page.getByText('Dashboard panel 48')).not.toBeInViewport();
 

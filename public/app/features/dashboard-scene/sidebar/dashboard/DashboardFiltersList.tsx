@@ -2,17 +2,18 @@ import { DragDropContext } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { VariableHide } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
-import { Box, Button } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { VariableEditableElement } from '../../settings/variables/VariableEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { openAddFilterForm } from '../add-new/AddFilters';
 
 import { partitionVariablesByDisplay } from './DashboardVariablesList';
 import { DraggableList } from './DraggableList';
+import { SidebarAddButton } from './SidebarAddButton';
 import { createDragEndHandler } from './variablesDragEndHandler';
 
 const ID_FILTERS_VISIBLE_LIST = 'filters-list-visible';
@@ -33,6 +34,14 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
   const onClickFilter = useCallback((variable: SceneVariable) => {
     const { sidebar } = getDashboardSceneFor(variable).state;
     sidebar.selectObject(variable);
+  }, []);
+
+  const onDuplicateFilter = useCallback((variable: SceneVariable) => {
+    new VariableEditableElement(variable).onDuplicate();
+  }, []);
+
+  const onDeleteFilter = useCallback((variable: SceneVariable) => {
+    new VariableEditableElement(variable).onConfirmDelete();
   }, []);
 
   const onDragEnd = useMemo(
@@ -58,34 +67,28 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
       <DraggableList
         items={visible}
         droppableId={ID_FILTERS_VISIBLE_LIST}
-        title={t('dashboard.sidebar.filters.title-above-dashboard', '', {
-          count: visible.length,
-          defaultValue_one: 'Above dashboard ({{count}})',
-          defaultValue_other: 'Above dashboard ({{count}})',
-        })}
-        onClickItem={onClickFilter}
+        title={t('dashboard.sidebar.filters.title-above-dashboard', 'Above dashboard')}
+        onEditItem={onClickFilter}
+        onDuplicateItem={onDuplicateFilter}
+        onDeleteItem={onDeleteFilter}
         renderItemLabel={renderItemLabel}
       />
       <DraggableList
         items={controlsMenu}
         droppableId={ID_FILTERS_CONTROLS_MENU_LIST}
-        title={t('dashboard.sidebar.filters.title-controls-menu', '', {
-          count: controlsMenu.length,
-          defaultValue_one: 'Controls menu ({{count}})',
-          defaultValue_other: 'Controls menu ({{count}})',
-        })}
-        onClickItem={onClickFilter}
+        title={t('dashboard.sidebar.filters.title-controls-menu', 'Controls menu')}
+        onEditItem={onClickFilter}
+        onDuplicateItem={onDuplicateFilter}
+        onDeleteItem={onDeleteFilter}
         renderItemLabel={renderItemLabel}
       />
       <DraggableList
         items={hidden}
         droppableId={ID_FILTERS_HIDDEN_LIST}
-        title={t('dashboard.sidebar.filters.title-hidden', '', {
-          count: hidden.length,
-          defaultValue_one: 'Hidden ({{count}})',
-          defaultValue_other: 'Hidden ({{count}})',
-        })}
-        onClickItem={onClickFilter}
+        title={t('dashboard.sidebar.filters.title-hidden', 'Hidden')}
+        onEditItem={onClickFilter}
+        onDuplicateItem={onDuplicateFilter}
+        onDeleteItem={onDeleteFilter}
         renderItemLabel={renderItemLabel}
       />
     </DragDropContext>
@@ -94,17 +97,11 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
 
 const renderItemLabel = (v: SceneVariable) => <span data-testid="filter-name">{v.state.name}</span>;
 
-export function AddFilterButton({ dashboard }: { dashboard: DashboardScene }) {
+export function AddFilterIconButton({ dashboard }: { dashboard: DashboardScene }) {
   const onAddFilter = useCallback(() => {
     openAddFilterForm(dashboard, dashboard);
     DashboardInteractions.addFilterButtonClicked({ source: 'edit_pane' });
   }, [dashboard]);
 
-  return (
-    <Box display="flex" paddingTop={1} paddingBottom={1}>
-      <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={onAddFilter}>
-        <Trans i18nKey="dashboard.sidebar.filters.add-filter">Add filter</Trans>
-      </Button>
-    </Box>
-  );
+  return <SidebarAddButton onAdd={onAddFilter} tooltip={t('dashboard.sidebar.filters.add-filter', 'Add filter')} />;
 }

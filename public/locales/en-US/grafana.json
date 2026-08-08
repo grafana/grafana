@@ -6208,18 +6208,15 @@
         "query-editor-close": "Close",
         "query-editor-modal-title": "Annotation Query",
         "show-in": "Show in"
-      },
+      }, 
       "annotations": {
         "add-annotation-query": "Add annotation query",
         "name-builtin": "{{annoName}} (Built-in)",
         "name-disabled": "(Disabled) {{annoName}}",
         "reorder-description": "Reorder annotations list",
-        "title-above-dashboard-count_one": "Above dashboard ({{count}})",
-        "title-above-dashboard-count_other": "Above dashboard ({{count}})",
-        "title-controls-menu-count_one": "Controls menu ({{count}})",
-        "title-controls-menu-count_other": "Controls menu ({{count}})",
-        "title-hidden-count_one": "Hidden ({{count}})",
-        "title-hidden-count_other": "Hidden ({{count}})"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden"
       },
       "dashboard-options": {
         "annotations": "Annotations",
@@ -6232,7 +6229,6 @@
         "tooltip": "Dashboard options",
         "variables": "Variables"
       },
-      "drag-to-reorder": "Drag to reorder",
       "edit-schema": {
         "apply-button": "Apply changes",
         "apply-button-disabled-tooltip": "Fix validation errors before applying changes",
@@ -6288,22 +6284,16 @@
         "add-filter": "Add filter",
         "reorder-description": "Reorder filters list",
         "title": "Filters",
-        "title-above-dashboard_one": "Above dashboard ({{count}})",
-        "title-above-dashboard_other": "Above dashboard ({{count}})",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "title-hidden_one": "Hidden ({{count}})",
-        "title-hidden_other": "Hidden ({{count}})",
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden",
         "tooltip": "Filters overview"
       },
       "links": {
-        "add-link": "Add link",
         "new-link": "New link",
         "reorder-description": "Reorder links list",
-        "title-above-dashboard_one": "Above dashboard ({{count}})",
-        "title-above-dashboard_other": "Above dashboard ({{count}})",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})"
+        "title-above-dashboard": "Above dashboard",
+        "title-controls-menu": "Controls menu"
       },
       "outline": {
         "pane-header": "Content outline",
@@ -6342,7 +6332,6 @@
       "section-variables": {
         "title": "Variables"
       },
-      "select": "Select",
       "snapshot": {
         "title": "Source",
         "tooltip": "Open original dashboard"
@@ -6402,13 +6391,9 @@
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "title-hidden_one": "Hidden ({{count}})",
-        "title-hidden_other": "Hidden ({{count}})",
-        "title-top-placement_one": "{{placement}} ({{count}})",
-        "title-top-placement_other": "{{placement}} ({{count}})",
-        "top-placement-default": "Above dashboard"
+        "title-controls-menu": "Controls menu",
+        "title-hidden": "Hidden",
+        "top-placement": "Above dashboard"
       },
       "view-panel": {
         "disabled": "Disabled",
@@ -6980,6 +6965,9 @@
       "tooltip-move-link-up": "Move link up",
       "type": "Type"
     },
+    "dashboard-links-list": {
+      "add-link": "Add link"
+    },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Error loading dashboard"
     },
@@ -7076,6 +7064,11 @@
     },
     "description-label": {
       "description": "Description"
+    },
+    "draggable-items-list": {
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "edit": "Edit"
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7702,10 +7695,31 @@
       "save-dashboard": "Save dashboard",
       "title-unsaved-changes": "Unsaved changes"
     },
+    "use-annotations-category": {
+      "category": {
+        "title": {
+          "annotations": "Annotations"
+        }
+      }
+    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Settings"
+        }
+      }
+    },
+    "use-filters-category": {
+      "category": {
+        "title": {
+          "filters": "Filters"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": "Links"
         }
       }
     },
@@ -7716,6 +7730,13 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
+    },
+    "use-variables-category": {
+      "category": {
+        "title": {
+          "variables": "Variables"
+        }
+      }
     },
     "validate-variable-name": {
       "warning-predefined-shadow": "A global or folder variable with this name exists and will be overwritten by this dashboard variable."
