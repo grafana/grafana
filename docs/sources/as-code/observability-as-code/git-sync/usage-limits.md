@@ -48,21 +48,48 @@ The following Git Sync per-tier limits apply:
 
 {{< admonition type="note" >}}
 
-On self-managed Grafana (OSS or Enterprise), the repository count of **10** in the table is the **default**, not a hard ceiling. Raise or remove it with `[provisioning] max_repositories` in the Grafana configuration file (`0` means unlimited). On-prem resources per repository stay unlimited by default (`max_resources_per_repository = 0`); you can set a cap if you want one. Refer to [`max_repositories`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_repositories), [`max_resources_per_repository`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_resources_per_repository), and [Modify your usage limits](#modify-your-usage-limits).
+On Grafana Cloud, tier limits can't be changed from configuration. Contact Support if you need a higher connection limit, or [shard by capacity](#shard-by-capacity-not-by-team) instead of using a single connection per team or microservice.
 
-On Grafana Cloud, tier limits can't be changed from configuration. Contact Support if you need a higher connection limit, or prefer [sharding by capacity](#shard-by-capacity-not-by-team) instead of one connection per team or microservice.
+On self-managed Grafana (OSS or Enterprise), the repository count of **10** in the table is the **default**, not a hard ceiling. Raise or remove it with `[provisioning] max_repositories` in the Grafana configuration file. On-prem resources per repository stay unlimited by default (`max_resources_per_repository = 0`), and you can set a cap if you want one.
+
+Refer to [Modify your usage limits](#modify-your-usage-limits) for more details.
 
 {{< /admonition >}}
 
-**Do not sync more than 1,000 resources per repository connection as of today.** This isn't an arbitrary cap: beyond roughly 1,000 resources per connection, the sync workflow puts noticeable load on Grafana itself, which may result in slower syncs and increased database load. In any case, Git Sync is under continuous development and the recommended ceiling will increase in upcoming releases.
+### Recommended limits
 
 On Grafana Cloud, the repository-connection limit is a per-stack limit. On self-managed Grafana, the effective limit is whatever you set for `max_repositories` (default `10`).
 
+**Do not sync more than 1,000 resources per repository connection as of today.** This isn't an arbitrary cap: beyond roughly 1,000 resources per connection, the sync workflow puts noticeable load on Grafana itself, which may result in slower syncs and increased database load.
+
 Both of these limits are early figures. As Git Sync matures, these limits will raise by orders of magnitude. The goal is for Git Sync to support around 100 repository connections per stack, and up to roughly 1,000 in the longer term, with similar increases to the number of resources you can sync per connection.
 
-If these limits are affecting your use of Git Sync, [get in touch](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/contribute/#communicate-with-grafana) and explain your situation, or share any idea or suggestion.
+If these limits are affecting your use of Git Sync, [get in touch](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/contribute/#communicate-with-grafana) and explain your situation. You may also share any ideas or suggestions.
 
 For details on usage and storage limits, refer to [Dashboard and folder limits](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/usage-limits/#other-usage-limits).
+
+### Modify your usage limits
+
+Before changing your usage limits, study your specific use case. Design the repository structure carefully, and determine how many repositories and how many resources you can support. For example, setting over 1,000 resources per repository may impact your system's performance.
+
+In many cases, splitting a single repository across multiple connections, as described in [Scale beyond 1,000 resources per repository](#scale-beyond-1000-resources-per-repository), is a better option than raising the limits.
+
+#### Grafana Cloud
+
+On Grafana Cloud, limits are enforced per tier and can't be edited from configuration. The 10-connection limit can be increased slightly on request, but splitting a single repository across multiple connections is the recommended way to sync more resources without changing tier limits.
+
+Limit increases aren't granted automatically. When you request one, Support will ask you to describe your use case to understand why the current limits aren't enough, and assess whether the increase is necessary and safe for your stack's performance.
+
+#### Grafana OSS/Enterprise
+
+In Grafana On-prem (OSS or Enterprise), the table value of **10** repositories is only the default, not a hard ceiling. Resources per repository remain unlimited by default. The 1,000-resources-per-connection figure is a performance recommendation, not an on-prem default cap.
+
+If you're an on-prem user you can change the limits directly through configuration settings, as described below.
+
+To customize the limits use one of these configuration settings:
+
+- Use `max_repositories` to set how many repositories you can sync. Default is `10`. Set to `0` for unlimited repositories. Refer to [`max_repositories`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_repositories) in the Configure Grafana section to learn more.
+- Use `max_resources_per_repository` to set the amount of resources per repository to sync. Default is `0` (unlimited). Refer to [`max_resources_per_repository`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_resources_per_repository) in the Configure Grafana section to learn more.
 
 ### Scale beyond 1,000 resources per repository
 
@@ -97,27 +124,11 @@ As the number of resources grows, add `shard-2`, `shard-3`, and later shards, an
 
 If sharding isn't practical for your setup, try raising the per-connection resource limit modestly, for example from 1,000 to a limit in the 1,200 - 1,500 range. This is a small adjustment for a bit of extra headroom, not an order-of-magnitude increase. Still, do not go beyond 1,500 resources per connection because of the performance impact on Grafana. For substantially larger scales, sharding remains the recommended approach.
 
-### Modify your usage limits
-
-Before changing your usage limits, study your specific use case. Design the repository structure carefully, and determine how many repositories and how many resources you can support. For example, setting over 1,000 resources per repository may impact your system's performance.
-
-On Grafana Cloud, limit increases aren't granted automatically. When you request one, Support will ask you to describe your use case to understand why the current limits aren't enough, and assess whether the increase is necessary and safe for your stack's performance. On-prem users don't need to make a request: you can change the limits directly through configuration settings, as described below. In many cases, splitting a single repository across multiple connections, as described in [Scale beyond 1,000 resources per repository](#scale-beyond-1000-resources-per-repository), is a better option than raising the limits.
-
-How you change the limits depends on your deployment:
-
-- **Grafana Cloud**: Limits are enforced per tier and can't be edited from configuration. The 10-connection limit can be increased slightly on request — contact Support to discuss your use case. Splitting a single repository across multiple connections (see [Scale beyond 1,000 resources per repository](#scale-beyond-1000-resources-per-repository)) is the recommended way to sync more resources without changing tier limits.
-- **On-prem (OSS or Enterprise)**: The table value of **10** repositories is only the default, not a hard ceiling. Resources per repository remain unlimited by default. The 1,000-resources-per-connection figure is a performance recommendation, not an on-prem default cap. You can customize both limits through configuration settings (see below). Prefer splitting a single repository across connections when you need more resources, rather than raising `max_resources_per_repository` far above the recommended range.
-
-On-prem users can customize the limits with the following configuration settings:
-
-- Use `max_repositories` to set how many repositories you can sync. Default is `10`. Set to `0` for unlimited repositories. Refer to [`max_repositories`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_repositories) in the Configure Grafana section to learn more.
-- Use `max_resources_per_repository` to set the amount of resources per repository to sync. Default is `0` (unlimited). Refer to [`max_resources_per_repository`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_resources_per_repository) in the Configure Grafana section to learn more.
-
 ### Nested folders
 
 Git Sync supports up to four nested folders within a repository.
 
-### Git Sync across multiple organizations
+## Git Sync across multiple organizations
 
 Git Sync works across multiple organizations for self-managed Grafana instances. You can set up Git Sync independently in each of your organizations, and what you sync in one organization does not affect another. Teams that share a single Grafana instance across separate organizations can each manage their own provisioning from Git.
 
@@ -127,12 +138,13 @@ This feature is available starting in Grafana 13.0.4, but not supported until Gr
 
 Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitLab and Bitbucket.
 
-| **Provider** | **Available in**       | **Authentication**                  |
-| ------------ | ---------------------- | ----------------------------------- |
-| Pure Git     | Cloud, OSS, Enterprise | Personal Access Token               |
-| GitHub       | Cloud, OSS, Enterprise | Personal Access Token or GitHub App |
-| GitLab       | Cloud, Enterprise      | Personal Access Token               |
-| Bitbucket    | Cloud, Enterprise      | API token with scopes               |
+| **Provider**                         | **Available in**       | **Authentication**                  |
+| ------------------------------------ | ---------------------- | ----------------------------------- |
+| Pure Git                             | Cloud, OSS, Enterprise | Personal Access Token               |
+| GitHub                               | Cloud, OSS, Enterprise | Personal Access Token or GitHub App |
+| GitHub Enterprise (Server and Cloud) | Cloud, Enterprise      | Personal Access Token or GitHub App |
+| GitLab                               | Cloud, Enterprise      | Personal Access Token               |
+| Bitbucket                            | Cloud, Enterprise      | API token with scopes               |
 
 Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x or later only. Refer to [Enable Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-git-providers) to set them up.
 
@@ -154,11 +166,11 @@ However, Pure Git doesn't include any features that require provider APIs, such 
 
 ### Enhanced integrations: GitHub, GitHub Enterprise, GitLab, Bitbucket
 
-If your Git provider is GitHub, GitHub Enterprise, GitLab, or Bitbucket, use the enhanced integration. Enhanced integrations understand the platform you're using, allowing workflows that feel native: automated pull request comments with dashboard previews, instant webhook-based sync, or direct navigation from Grafana to source files in your provider's UI.
+If your Git provider is GitHub, GitHub Enterprise (Server and Cloud), GitLab, or Bitbucket, use the enhanced integration. Enhanced integrations understand the platform you're using, allowing workflows that feel native: automated pull request comments with dashboard previews, instant webhook-based sync, or direct navigation from Grafana to source files in your provider's UI.
 
-The GitHub enhanced integration is the most feature-complete experience today. It enables richer pull request workflows, deeper linking between Grafana and GitHub, and tighter integration into review processes. It is available in Grafana OSS, Enterprise, and Cloud.
+The GitHub enhanced integration is the most feature-complete experience today. It's available in Grafana OSS, Enterprise, and Cloud, and enables richer pull request workflows, deeper linking between Grafana and GitHub, and tighter integration into review processes.
 
-The GitLab and Bitbucket integrations have limited functionality for the moment, and are only available in Grafana Enterprise and Grafana Cloud. Expect continued improvements around pull request workflows, linking, and sync behavior in upcoming releases.
+The GitLab and Bitbucket integrations are only available in Grafana Enterprise and Grafana Cloud. While they're less developed for the moment, expect continued improvements around pull request workflows, linking, and sync behavior.
 
 ## Resource support and compatibility
 
