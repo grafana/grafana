@@ -1,15 +1,23 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
+
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { TestDataSettings } from '../query/state/mocks/mockDataSource';
 
-import { useRecentlyUsedDataSources } from './hooks';
+import { useDatasource, useRecentlyUsedDataSources } from './hooks';
 
-// Mock react-use's useLocalStorage
+// Mock react-use's useLocalStorage while keeping the rest (e.g. useAsync) intact
 jest.mock('react-use', () => ({
+  ...jest.requireActual('react-use'),
   useLocalStorage: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  getDataSourceInstanceSettings: jest.fn(),
+}));
+
 const mockUseLocalStorage = jest.requireMock('react-use').useLocalStorage;
+const mockGetDataSourceInstanceSettings = jest.mocked(getDataSourceInstanceSettings);
 
 describe('useRecentlyUsedDataSources', () => {
   let mockSetStorage: jest.Mock;
@@ -110,5 +118,38 @@ describe('useRecentlyUsedDataSources', () => {
       // Should remove the first item and add new one at the end
       expect(mockSetStorage).toHaveBeenCalledWith(['uid2', 'uid3', 'uid4', 'uid5', 'test-uid']);
     });
+  });
+});
+
+describe('useDatasource', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should resolve to the settings returned by getDataSourceInstanceSettings', async () => {
+    const settings = { ...TestDataSettings, uid: 'test-uid' };
+    mockGetDataSourceInstanceSettings.mockResolvedValue(settings);
+
+    const { result } = renderHook(() => useDatasource('test-uid'));
+
+    await waitFor(() => expect(result.current).toBe(settings));
+  });
+
+  it('should forward the ref and scopedVars to getDataSourceInstanceSettings', async () => {
+    mockGetDataSourceInstanceSettings.mockResolvedValue(undefined);
+    const scopedVars = { ds: { text: 'prometheus', value: 'prometheus' } };
+
+    renderHook(() => useDatasource('$ds', scopedVars));
+
+    await waitFor(() => expect(mockGetDataSourceInstanceSettings).toHaveBeenCalledWith('$ds', scopedVars));
+  });
+
+  it('should return undefined while the lookup is pending', () => {
+    // Never resolves so the hook stays in its loading state.
+    mockGetDataSourceInstanceSettings.mockReturnValue(new Promise(() => {}));
+
+    const { result } = renderHook(() => useDatasource('test-uid'));
+
+    expect(result.current).toBeUndefined();
   });
 });

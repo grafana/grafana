@@ -81,6 +81,9 @@ jest.mock('../../hooks', () => {
     ...actual,
     useRecentlyUsedDataSources: () => [[mockDS2.name], pushRecentlyUsedDataSourceMock],
     useDatasources: () => mockDSList,
+    // useDatasource now wraps the async settings API; resolve it synchronously in tests
+    // via the same mock that stands in for the legacy getInstanceSettings lookup.
+    useDatasource: (ref: unknown) => getInstanceSettingsMock(ref),
   };
 });
 
