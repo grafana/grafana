@@ -12,6 +12,7 @@ import {
   DENY_ALL_PREDEFINED,
   ManagerKind,
 } from 'app/features/apiserver/types';
+import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { type DashboardSceneState } from '../scene/types/dashboard';
@@ -41,6 +42,11 @@ jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
   ...jest.requireActual('app/features/browse-dashboards/api/browseDashboardsAPI'),
   useSaveDashboardMutation: () => [saveDashboardMutationMock],
 }));
+
+jest.mock('app/features/provisioning/hooks/useIsProvisionedNG', () => {
+  const actual = jest.requireActual('app/features/provisioning/hooks/useIsProvisionedNG');
+  return { ...actual, useIsProvisionedNG: jest.fn(actual.useIsProvisionedNG) };
+});
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   ...jest.requireActual('app/features/dashboard/api/dashboard_api'),
@@ -373,6 +379,46 @@ describe('SaveDashboardDrawer', () => {
         annotations: { [AnnoKeyIgnorePredefinedVariables]: denyList },
       });
       expect(dataSent.k8s?.name).toBeUndefined();
+    });
+  });
+
+  describe('While the provisioning repository is resolving', () => {
+    afterEach(() => {
+      const { useIsProvisionedNG: actual } = jest.requireActual('app/features/provisioning/hooks/useIsProvisionedNG');
+      jest.mocked(useIsProvisionedNG).mockImplementation(actual);
+    });
+
+    it('holds the form until the lookup settles', async () => {
+      jest.mocked(useIsProvisionedNG).mockReturnValue({ isProvisioned: false, isLoading: true });
+
+      const { openAndRender } = setup();
+      openAndRender({ saveAsCopy: true });
+
+      // Mounting a form here would swap it out once the repository resolves, dropping typed input
+      expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).not.toBeInTheDocument();
+    });
+
+    it('renders the save form once the lookup settles', async () => {
+      jest.mocked(useIsProvisionedNG).mockReturnValue({ isProvisioned: false, isLoading: false });
+
+      const { openAndRender } = setup();
+      openAndRender({ saveAsCopy: true });
+
+      expect(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeInTheDocument();
+      expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+    });
+
+    it('still renders the diff while the lookup is in flight', async () => {
+      jest.mocked(useIsProvisionedNG).mockReturnValue({ isProvisioned: false, isLoading: true });
+
+      const { dashboard, openAndRender } = setup();
+      dashboard.setState({ title: 'New title' });
+      openAndRender();
+
+      await userEvent.click(await screen.findByRole('tab', { name: /Changes/ }));
+
+      expect(await screen.findByText('Full JSON diff')).toBeInTheDocument();
     });
   });
 

@@ -266,20 +266,35 @@ export function SaveProvisionedDashboardForm({
   );
   // Updating the dashboard meta (not just the form field) makes the defaults recompute
   // against the selected folder, so path and post-save handlers stay in sync.
+  const folderSelectionIdRef = useRef(0);
   const selectFolder = useCallback(
     async (uid?: string, title?: string) => {
+      // Latest pick wins: an earlier, slower selection must not overwrite this one when it resolves
+      const selectionId = ++folderSelectionIdRef.current;
       setValue('folder', { uid, title });
-      updateURLParams('folderUid', uid);
       const meta = await getProvisionedMeta(uid);
+      if (selectionId !== folderSelectionIdRef.current) {
+        return;
+      }
       dashboard.setState({
         meta: {
-          ...meta,
+          // Keep the open dashboard's identity (uid, slug, permissions); only the folder and its
+          // manager annotations change while the drawer is open
+          ...dashboard.state.meta,
+          k8s: meta.k8s,
           folderUid: uid,
+          folderTitle: title,
         },
       });
     },
     [setValue, dashboard]
   );
+
+  const handleSaveAtRoot = useCallback(() => {
+    const { filename } = splitPath(getValues('path'));
+    setValue('path', filename);
+    selectFolder();
+  }, [getValues, setValue, selectFolder]);
 
   const handleCreateFolder = useCallback(async () => {
     if (isCreatingFolderRef.current) {
@@ -496,7 +511,8 @@ export function SaveProvisionedDashboardForm({
                     return (
                       <ProvisioningAwareFolderPicker
                         onChange={selectFolder}
-                        value={value.uid}
+                        // An empty uid must read as "root", or the picker's team-folder preselect overwrites it
+                        value={value.uid || undefined}
                         {...field}
                         showAllFolders
                       />
@@ -504,6 +520,21 @@ export function SaveProvisionedDashboardForm({
                   }}
                 />
               </Field>
+              {isFolderless && (
+                <div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    fill="text"
+                    onClick={handleSaveAtRoot}
+                    disabled={isCreatingFolder}
+                  >
+                    <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.no-folder-root">
+                      No folder (repository root)
+                    </Trans>
+                  </Button>
+                </div>
+              )}
               {isFolderless && workflow === 'write' && (
                 <>
                   {!showNewFolderForm && (
@@ -638,17 +669,6 @@ async function validateTitle(title: string, formValues: ProvisionedDashboardForm
           'Dashboard title validation failed.'
         );
   }
-}
-
-// Update the URL params without reloading the page
-function updateURLParams(param: string, value?: string) {
-  // only check undefine and null, empty string = root folder, we still want to update the URL
-  if (value === undefined || value === null) {
-    return;
-  }
-  const url = new URL(window.location.href);
-  url.searchParams.set(param, value);
-  window.history.replaceState({}, '', url);
 }
 
 /**

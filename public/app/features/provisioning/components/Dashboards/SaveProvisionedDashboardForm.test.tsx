@@ -12,6 +12,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
+import { getProvisionedMeta } from '../utils/getProvisionedMeta';
 
 import { type Props, SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 
@@ -45,8 +46,28 @@ jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
 
 jest.mock('app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker', () => {
   return {
-    ProvisioningAwareFolderPicker: () => <div data-testid="folder-picker">Mocked Folder Picker</div>,
+    ProvisioningAwareFolderPicker: ({
+      onChange,
+      value,
+    }: {
+      onChange: (uid?: string, title?: string) => void;
+      value?: string;
+    }) => (
+      <button
+        type="button"
+        data-testid="folder-picker"
+        data-folder-uid={value}
+        onClick={() => onChange('picked-folder', 'Picked Folder')}
+      >
+        Mocked Folder Picker
+      </button>
+    ),
   };
+});
+
+jest.mock('../utils/getProvisionedMeta', () => {
+  const actual = jest.requireActual('../utils/getProvisionedMeta');
+  return { ...actual, getProvisionedMeta: jest.fn(actual.getProvisionedMeta) };
 });
 
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
@@ -209,11 +230,16 @@ function saveSuccessResponse(name: string, title: string) {
 
 describe('SaveProvisionedDashboardForm', () => {
   let capturedRequest: { url: URL; body: unknown } | null = null;
+  const originalHref = window.location.href;
 
   beforeEach(() => {
     capturedRequest = null;
     jest.clearAllMocks();
     (validationSrv.validateNewDashboardName as jest.Mock).mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    window.history.replaceState({}, '', originalHref);
   });
 
   it('should render the form with correct fields for a new dashboard', async () => {
@@ -1313,6 +1339,96 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
   });
 
+  it('shows the No folder button for folderless repos', async () => {
+    setupFolderless();
+
+    expect(await screen.findByRole('button', { name: /no folder/i })).toBeInTheDocument();
+  });
+
+  it('passes no folder value to the picker for a new dashboard at root', async () => {
+    setupFolderless();
+
+    // An empty-string value would fire the picker's team-folder preselect and overwrite the root target
+    expect(await screen.findByTestId('folder-picker')).not.toHaveAttribute('data-folder-uid');
+  });
+
+  it('does not show the No folder button for non-folderless repos', async () => {
+    setup({
+      repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['write'], target: 'folder' },
+    });
+
+    await screen.findByRole('form');
+    expect(screen.queryByRole('button', { name: /no folder/i })).not.toBeInTheDocument();
+  });
+
+  it('clears the selected folder and saves at the repository root', async () => {
+    let dashboardRequest: { url: URL; body: unknown } | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        dashboardRequest = { url: new URL(request.url), body: await request.json() };
+        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+      })
+    );
+
+    // The navigation URL must stay untouched: the form only manages the scene meta
+    window.history.replaceState({}, '', '/?folderUid=my-team-uid');
+    const { user, props } = setupFolderless({
+      defaultValues: {
+        folder: { uid: 'my-team-uid', title: 'My Team' },
+        path: 'My Team/test-dashboard.json',
+      },
+    });
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p' },
+      spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /no folder/i }));
+
+    const folderCombobox = screen.getByRole('combobox', { name: /folder/i });
+    await waitFor(() => expect(folderCombobox).toHaveValue(''));
+    expect(new URL(window.location.href).searchParams.get('folderUid')).toBe('my-team-uid');
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(dashboardRequest).not.toBeNull());
+    expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
+      '/repositories/test-repo/files/test-dashboard.json'
+    );
+    // The folder is cleared, but the open dashboard keeps its identity while the drawer is open
+    expect(props.dashboard.setState).toHaveBeenCalledWith({
+      meta: { folderUid: undefined, folderTitle: undefined, k8s: undefined, slug: 'test-dashboard' },
+    });
+  });
+
+  it('ignores a slow folder pick that resolves after saving at root', async () => {
+    let resolvePickedFolderMeta!: (meta: Awaited<ReturnType<typeof getProvisionedMeta>>) => void;
+    jest
+      .mocked(getProvisionedMeta)
+      // The folder pick hangs on its meta lookup while the user moves on to the root save
+      .mockImplementationOnce(() => new Promise((resolve) => (resolvePickedFolderMeta = resolve)))
+      .mockImplementationOnce(() => Promise.resolve({}));
+
+    const { user, props } = setupFolderless();
+
+    await user.click(await screen.findByTestId('folder-picker'));
+    await user.click(screen.getByRole('button', { name: /no folder/i }));
+    await waitFor(() =>
+      expect(props.dashboard.setState).toHaveBeenCalledWith({
+        meta: expect.objectContaining({ folderUid: undefined }),
+      })
+    );
+
+    await act(async () => resolvePickedFolderMeta({}));
+
+    // The stale pick must not win over the root save the user chose afterwards
+    expect(props.dashboard.setState).not.toHaveBeenCalledWith({
+      meta: expect.objectContaining({ folderUid: 'picked-folder' }),
+    });
+  });
+
   it('creates a folder when New folder is used in folderless mode', async () => {
     let folderRequest: { url: URL; body: unknown } | null = null;
     let dashboardRequest: { url: URL; body: unknown } | null = null;
@@ -1394,6 +1510,36 @@ describe('SaveProvisionedDashboardForm', () => {
     await waitFor(() => expect(screen.queryByRole('textbox', { name: /folder name/i })).not.toBeInTheDocument());
     expect(folderPostCount).toBe(1);
     expect(dashboardRequest).toBeNull();
+  });
+
+  it('disables the No folder button while a folder is being created', async () => {
+    let folderPostStarted = false;
+    let releaseFolderPost: () => void = () => {};
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async () => {
+        folderPostStarted = true;
+        await new Promise<void>((resolve) => {
+          releaseFolderPost = resolve;
+        });
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder-uid' }, spec: { title: 'My Team' } } },
+        });
+      })
+    );
+
+    const { user } = setupFolderless();
+
+    await user.click(await screen.findByRole('button', { name: /new folder/i }));
+    await user.type(screen.getByRole('textbox', { name: /folder name/i }), 'My Team');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    // a root click mid-flight would be overwritten when the folder create lands
+    expect(screen.getByRole('button', { name: /no folder/i })).toBeDisabled();
+
+    await waitFor(() => expect(folderPostStarted).toBe(true));
+    releaseFolderPost();
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /no folder/i })).toBeEnabled());
   });
 
   it('shows a required error for whitespace-only folder names without sending a request', async () => {
@@ -1500,7 +1646,12 @@ describe('SaveProvisionedDashboardForm', () => {
     // folder picker's onChange, so downstream consumers see the created folder
     await waitFor(() =>
       expect(props.dashboard.setState).toHaveBeenCalledWith({
-        meta: expect.objectContaining({ folderUid: 'new-folder-uid' }),
+        meta: expect.objectContaining({
+          folderUid: 'new-folder-uid',
+          folderTitle: 'My Team',
+          // identity fields survive the folder change
+          slug: 'test-dashboard',
+        }),
       })
     );
 

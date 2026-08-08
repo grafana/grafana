@@ -33,9 +33,11 @@ export function useDefaultValues({
   const managerKind = annotations?.[AnnoKeyManagerKind];
   const managerIdentity = annotations?.[AnnoKeyManagerIdentity];
   const sourcePath = annotations?.[AnnoKeySourcePath];
+  const isNew = !meta.k8s?.name;
   const { repository, folder, isLoading, status, error } = useGetResourceRepositoryView({
     name: managerKind === 'repo' ? managerIdentity : undefined,
     folderName: meta.folderUid,
+    includeFolderless: !meta.folderUid && isNew,
   });
 
   if (isLoading || status === RepoViewStatus.Loading) {
@@ -93,7 +95,7 @@ export function useDefaultValues({
       workflow: getDefaultWorkflow(repository, loadedFromRef),
       copyTags: saveAsCopy ? false : true,
     },
-    isNew: !meta.k8s?.name,
+    isNew,
     repository,
     status,
   };
