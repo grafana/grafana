@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
 import {
   sceneGraph,
   type SceneComponentProps,
@@ -16,9 +15,10 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { Alert, Button, FeatureBadge, useStyles2 } from '@grafana/ui';
 import {
   type DashboardDiagnosticsPanel,
+  diagnosticsErrorMessage,
   downloadDashboardDiagnostics,
   getDashboardDiagnosticsStatus,
   startDashboardDiagnostics,
@@ -131,16 +131,6 @@ async function collectDashboardPanels(dashboard: DashboardScene): Promise<Dashbo
   return collected.filter((panel): panel is DashboardDiagnosticsPanel => panel !== null);
 }
 
-// The download uses blob/json fetches whose FetchError carries the detail in status/statusText, so
-// build the message from those rather than error.message (which would leave the alert body empty).
-function diagnosticsErrorMessage(error: Error): string {
-  if (isFetchError(error)) {
-    const parts = [error.status, error.statusText].filter(Boolean);
-    return parts.length ? parts.join(' ') : t('dashboard.diagnostics.request-failed', 'Request failed');
-  }
-  return error.message || t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics');
-}
-
 const delay = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve, reject) => {
     const id = setTimeout(resolve, ms);
@@ -159,6 +149,7 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
   const styles = useStyles2(getStyles);
   const abortRef = useRef<AbortController | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Abort any in-flight request if the drawer unmounts.
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -204,6 +195,24 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
     await downloadDashboardDiagnostics(uid, controller.signal);
   }, [dashboardRef]);
 
+  // Resolved asynchronously: the archive-download fetch always requests responseType: 'blob', so an
+  // error response's JSON body has to be read back off the Blob (see diagnosticsErrorMessage).
+  useEffect(() => {
+    if (!error) {
+      setErrorMessage('');
+      return;
+    }
+    let cancelled = false;
+    diagnosticsErrorMessage(error).then((message) => {
+      if (!cancelled) {
+        setErrorMessage(message);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [error]);
+
   const handleDismiss = () => {
     abortRef.current?.abort();
     onDismiss?.();
@@ -211,6 +220,10 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
 
   return (
     <div>
+      <div className={styles.badgeRow}>
+        <FeatureBadge featureState={FeatureState.experimental} />
+      </div>
+
       <p className={styles.info}>
         <Trans i18nKey="dashboard.diagnostics.info-text-dashboard">
           Generates a diagnostic bundle for the whole dashboard by re-running every panel&apos;s queries with HTTP
@@ -228,6 +241,15 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
         </Trans>
       </Alert>
 
+      <Alert
+        severity="warning"
+        title={t('dashboard.diagnostics.size-limit-warning-title', 'Very large responses are truncated')}
+      >
+        <Trans i18nKey="dashboard.diagnostics.size-limit-warning-body">
+          A response that&apos;s too large has its captured query data truncated to keep the bundle a manageable size.
+        </Trans>
+      </Alert>
+
       {isGenerating && progress && (
         <p className={styles.info}>
           <Trans i18nKey="dashboard.diagnostics.progress" values={{ done: progress.done, total: progress.total }}>
@@ -238,7 +260,7 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
 
       {error && (
         <Alert severity="error" title={t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics')}>
-          {diagnosticsErrorMessage(error)}
+          {errorMessage}
         </Alert>
       )}
 
@@ -263,6 +285,9 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  badgeRow: css({
+    marginBottom: theme.spacing(1),
+  }),
   info: css({
     marginBottom: theme.spacing(2),
   }),

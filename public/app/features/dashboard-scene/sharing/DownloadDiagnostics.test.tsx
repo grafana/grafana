@@ -18,6 +18,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { DownloadDiagnostics } from './DownloadDiagnostics';
 
 jest.mock('app/features/query/diagnostics/downloadDiagnostics', () => ({
+  ...jest.requireActual('app/features/query/diagnostics/downloadDiagnostics'),
   downloadDiagnosticsForQueries: jest.fn(),
 }));
 
@@ -55,7 +56,9 @@ describe('DownloadDiagnostics', () => {
 
     render(<tab.Component model={tab} />);
 
+    expect(screen.getByText('Experimental')).toBeInTheDocument();
     expect(screen.getByText('May contain sensitive data')).toBeInTheDocument();
+    expect(screen.getByText('Very large responses are truncated')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Download diagnostics' })).toBeInTheDocument();
   });
 

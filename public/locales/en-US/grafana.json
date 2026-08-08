@@ -5643,6 +5643,8 @@
       "request-failed": "Request failed",
       "sensitive-warning-body": "The bundle can include request headers, query parameters, and server log lines. Review it before sharing outside your organization.",
       "sensitive-warning-title": "May contain sensitive data",
+      "size-limit-warning-body": "A response that's too large has its captured query data truncated to keep the bundle a manageable size.",
+      "size-limit-warning-title": "Very large responses are truncated",
       "subtitle-dashboard": "Bundle HTTP traffic (HAR) and panel JSON for every panel in this dashboard to help troubleshoot.",
       "subtitle-panel": "Bundle HTTP traffic (HAR), logs, and panel JSON to help troubleshoot this panel.",
       "timed-out": "Timed out waiting for diagnostics generation",

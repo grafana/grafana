@@ -5723,6 +5723,8 @@
       "request-failed": "",
       "sensitive-warning-body": "",
       "sensitive-warning-title": "",
+      "size-limit-warning-body": "",
+      "size-limit-warning-title": "",
       "subtitle-dashboard": "",
       "subtitle-panel": "",
       "timed-out": "",
