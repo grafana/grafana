@@ -160,10 +160,6 @@ export const LogLineContext = memo(
     useEffect(() => {
       if (open) {
         updateContextQuery();
-        reportInteraction('logs_log_line_context_open', {
-          datasourceType: log.datasourceType,
-          uid: log.uid,
-        });
       }
     }, [updateContextQuery, open, log]);
 
@@ -272,9 +268,6 @@ export const LogLineContext = memo(
         })
       );
       onClose();
-      reportInteraction('logs_log_line_context_open_in_split_clicked', {
-        datasourceType: log.datasourceType,
-      });
     }, [contextQuery, dispatch, log.dataFrame.refId, log.datasourceType, log.uid, onClose, timeRange]);
 
     const handleTimeWindowChange = useCallback(
@@ -294,10 +287,6 @@ export const LogLineContext = memo(
     );
 
     const handleClose = useCallback(() => {
-      reportInteraction('logs_log_line_context_closed', {
-        datasourceType: log.datasourceType,
-        uid: log.uid,
-      });
       onClose();
     }, [log.datasourceType, log.uid, onClose]);
 
