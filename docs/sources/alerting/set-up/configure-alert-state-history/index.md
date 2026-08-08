@@ -67,6 +67,8 @@ The following steps describe a basic configuration:
    enable = alertingCentralAlertHistory
    ```
 
+   For Loki deployments with separate read and write endpoints, multi-tenant setups, or basic authentication, refer to the full list of options in [`[unified_alerting.state_history]`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#unified_alertingstate_history).
+
 1. **Configure the Loki data source in Grafana**
 
    Add the [Loki data source](/docs/grafana/<GRAFANA_VERSION>/datasources/loki/) to Grafana.
@@ -108,9 +110,11 @@ The following steps describe a basic configuration:
 
    # (Optional) Metric name for the alert state metric. Default is "GRAFANA_ALERTS".
    # prometheus_metric_name = GRAFANA_ALERTS
-   # (Optional)  Timeout for writing alert state data to the target data source. Default is 10s.
+   # (Optional) Timeout for writing alert state data to the target data source. Default is 10s.
    # prometheus_write_timeout = 10s
    ```
+
+   For a full list of configuration options, refer to [`[unified_alerting.state_history]`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#unified_alertingstate_history).
 
 You can then use **Grafana Explore** to query the alert state metric. For details, refer to [Alerting Meta monitoring](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor/).
 
@@ -120,9 +124,9 @@ GRAFANA_ALERTS{alertstate='firing'}
 
 ## Configure Loki and Prometheus for alert state
 
-You can also configure both Loki and Prometheus to record alert state changes for your Grafana-managed alert rules.
+You can configure multiple backends to record alert state changes for your Grafana-managed alert rules. Set `backend = multiple`, then choose a `primary` backend (`annotations` or `loki`) to serve state history queries and one or more `secondaries` to receive writes.
 
-Start with the same setup steps as shown in the previous [Loki](#configure-loki-for-alert-state) and [Prometheus](#configure-prometheus-for-alert-state-alerts-metric) sections. Then, adjust your Grafana configuration as follows:
+The following example uses Loki as the primary backend and Prometheus as a secondary. Start with the setup steps from [Loki](#configure-loki-for-alert-state) and [Prometheus](#configure-prometheus-for-alert-state-alerts-metric), then adjust your Grafana configuration:
 
 ```toml
 [unified_alerting.state_history]
@@ -137,4 +141,18 @@ secondaries = prometheus
 # Target data source UID for writing alert state changes.
 prometheus_target_datasource_uid = <DATA_SOURCE_UID>
 
+[feature_toggles]
+enable = alertingCentralAlertHistory
+```
+
+You can adapt this pattern for other combinations — for example, set `primary = annotations` with `secondaries = loki`, or specify multiple secondaries as a comma-separated list (`secondaries = annotations,prometheus`).
+
+## Add external labels to state history records
+
+You can attach extra labels to all outbound state history records or log streams using the `[unified_alerting.state_history.external_labels]` section. This is useful for distinguishing state history data from different Grafana instances when writing to a shared Loki or Prometheus backend.
+
+```toml
+[unified_alerting.state_history.external_labels]
+cluster = us-east-1
+environment = production
 ```
