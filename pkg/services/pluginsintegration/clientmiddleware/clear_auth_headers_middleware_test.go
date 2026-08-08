@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,7 +23,8 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 		cfg := setting.NewCfg()
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware(&cfg.JWTAuth, &cfg.AuthProxy)),
+			withAuthHTTPHeaders(req, cfg, setting.AuthJWTSettings{}),
+			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
 		)
 
 		pluginCtx := backend.PluginContext{
@@ -130,7 +132,8 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 		cfg := setting.NewCfg()
 		cdt := handlertest.NewHandlerMiddlewareTest(t,
 			WithReqContext(req, &user.SignedInUser{}),
-			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware(&cfg.JWTAuth, &cfg.AuthProxy)),
+			withAuthHTTPHeaders(req, cfg, setting.AuthJWTSettings{}),
+			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
 		)
 
 		req.Header.Set("Authorization", "val")
@@ -237,5 +240,58 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 			require.Equal(t, "test", cdt.RunStreamReq.Headers[otherHeader])
 			require.Empty(t, cdt.RunStreamReq.GetHTTPHeaders())
 		})
+	})
+
+	t.Run("Clears the JWT header captured in the request-start snapshot", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		jwtAuth := setting.AuthJWTSettings{Enabled: true, HeaderName: "X-Frozen-JWT"}
+
+		cdt := handlertest.NewHandlerMiddlewareTest(t,
+			WithReqContext(req, &user.SignedInUser{}),
+			withAuthHTTPHeaders(req, cfg, jwtAuth),
+			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
+		)
+
+		_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Headers: map[string]string{
+				otherHeader:    "test",
+				"X-Frozen-JWT": "secret",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, cdt.QueryDataReq)
+		require.Empty(t, cdt.QueryDataReq.Headers["X-Frozen-JWT"])
+		require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
+	})
+
+	t.Run("Fails closed and strips baseline auth headers when no snapshot is present", func(t *testing.T) {
+		cdt := handlertest.NewHandlerMiddlewareTest(t,
+			WithReqContext(req, &user.SignedInUser{}),
+			handlertest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
+		)
+
+		_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Headers: map[string]string{
+				otherHeader:           "test",
+				"Authorization":       "secret",
+				"X-Grafana-Device-Id": "secret",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, cdt.QueryDataReq)
+		require.Empty(t, cdt.QueryDataReq.Headers["Authorization"])
+		require.Empty(t, cdt.QueryDataReq.Headers["X-Grafana-Device-Id"])
+		require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
+	})
+}
+
+// withAuthHTTPHeaders seeds the request context with the auth-header snapshot
+// that contexthandler freezes at request start, which the middleware consumes.
+func withAuthHTTPHeaders(req *http.Request, cfg *setting.Cfg, jwtAuth setting.AuthJWTSettings) handlertest.HandlerMiddlewareTestOption {
+	return handlertest.HandlerMiddlewareTestOption(func(*handlertest.HandlerMiddlewareTest) {
+		ctx := contexthandler.WithAuthHTTPHeaders(req.Context(), cfg, jwtAuth)
+		*req = *req.WithContext(ctx)
 	})
 }

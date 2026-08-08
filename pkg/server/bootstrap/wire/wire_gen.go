@@ -699,7 +699,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	gateway := pushhttp.ProvideService(cfg, grafanaLive)
 	authnimplService := authnimpl.ProvideService(cfg, tracingService, userAuthTokenService, usageStats, registerer, authinfoimplService)
 	authnAuthenticator := authnimpl.ProvideAuthnServiceAuthenticateOnly(authnimplService)
-	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles)
+	authService, err := jwt.ProvideService(cfg, remoteCache, ssosettingsimplService)
+	if err != nil {
+		return nil, err
+	}
+	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles, authService)
 	logger := loggermw.Provide(cfg, featureToggles)
 	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
 	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
@@ -997,10 +1001,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	teamAPI := teamapi.ProvideTeamAPI(routeRegisterImpl, teamimplService, acimplService, accessControl, teamPermissionsService, userimplService, ossLicensingService, cfg, prefService, k8sHandler, dashboardService, featureToggles, resourceClient, eventualRestConfigProvider)
 	cloudmigrationService, err := cloudmigrationimpl.ProvideService(cfg, httpclientProvider, featureToggles, sqlStore, service13, secretsKVStore, secretsService, routeRegisterImpl, registerer, tracingService, dashboardService, folderimplService, pluginstoreService, service12, accessControl, acimplService, kvStore, libraryElementService, alertNG)
-	if err != nil {
-		return nil, err
-	}
-	authService, err := jwt.ProvideService(cfg, remoteCache)
 	if err != nil {
 		return nil, err
 	}
@@ -1458,7 +1458,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	gateway := pushhttp.ProvideService(cfg, grafanaLive)
 	authnimplService := authnimpl.ProvideService(cfg, tracingService, userAuthTokenService, usageStats, registerer, authinfoimplService)
 	authnAuthenticator := authnimpl.ProvideAuthnServiceAuthenticateOnly(authnimplService)
-	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles)
+	authService, err := jwt.ProvideService(cfg, remoteCache, ssosettingsimplService)
+	if err != nil {
+		return nil, err
+	}
+	contexthandlerContextHandler := contexthandler.ProvideService(cfg, authnAuthenticator, featureToggles, authService)
 	logger := loggermw.Provide(cfg, featureToggles)
 	qsDatasourceClientBuilder := dsquerierclient.NewNullQSDatasourceClientBuilder()
 	exprService := expr.ProvideService(cfg, middlewareHandler, plugincontextProvider, featureToggles, registerer, tracingService, qsDatasourceClientBuilder)
@@ -1757,10 +1761,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	teamAPI := teamapi.ProvideTeamAPI(routeRegisterImpl, teamimplService, acimplService, accessControl, teamPermissionsService, userimplService, ossLicensingService, cfg, prefService, k8sHandler, dashboardService, featureToggles, resourceClient, eventualRestConfigProvider)
 	cloudmigrationService, err := cloudmigrationimpl.ProvideService(cfg, httpclientProvider, featureToggles, sqlStore, service13, secretsKVStore, secretsService, routeRegisterImpl, registerer, tracingService, dashboardService, folderimplService, pluginstoreService, service12, accessControl, acimplService, kvStore, libraryElementService, alertNG)
-	if err != nil {
-		return nil, err
-	}
-	authService, err := jwt.ProvideService(cfg, remoteCache)
 	if err != nil {
 		return nil, err
 	}
