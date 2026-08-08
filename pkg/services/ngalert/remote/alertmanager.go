@@ -118,6 +118,11 @@ type AlertmanagerConfig struct {
 	// label/annotation name or value. 0 keeps the sender default
 	// (sender.DefaultMaxLabelStringSize)
 	MaxLabelStringSize int
+
+	// Sender configurations
+	SenderQueueCapacity     int
+	SenderBatchSize         int
+	SenderDispatcherWorkers int
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -187,6 +192,9 @@ func NewAlertmanager(
 	senderOpts := []sender.Option{
 		sender.WithDoFunc(doFunc),
 		sender.WithUTF8Labels(),
+		sender.WithMaxQueueCapacity(cfg.SenderQueueCapacity),
+		sender.WithMaxBatchSize(cfg.SenderBatchSize),
+		sender.WithDispatcherWorkers(cfg.SenderDispatcherWorkers),
 	}
 	if cfg.MaxLabelStringSize > 0 {
 		senderOpts = append(senderOpts, sender.WithMaxLabelStringSize(cfg.MaxLabelStringSize))
