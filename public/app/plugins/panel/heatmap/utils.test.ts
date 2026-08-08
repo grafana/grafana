@@ -1,6 +1,7 @@
 import uPlot from 'uplot';
 
 import { createDataFrame, createTheme, DataFrameType, dateTime, FieldType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { AxisPlacement, HeatmapCellLayout, ScaleDistribution } from '@grafana/schema';
 import { type UPlotConfigBuilder } from '@grafana/ui';
 
@@ -11,10 +12,14 @@ import {
   boundedMinMax,
   calculateBucketExpansionFactor,
   calculateYSizeDivisor,
+  findSymlogBounds,
   heatmapPathsDense,
   heatmapPathsPoints,
   heatmapPathsSparse,
   prepConfig,
+  snapSymlogRange,
+  symlogLabelMask,
+  symlogPowerSplits,
   toLogBase,
   valuesToFills,
 } from './utils';
@@ -488,6 +493,111 @@ describe('prepConfig', () => {
         // data[1][1] = yMin = [0], data[1][2] = yMax = [0]; uPlot reports dataMax = 0.
         const mockU = { data: [[1000], [null, [0], [0]]] } as unknown as uPlot;
         const result = range(mockU, 0, 0, scaleKey);
+        expect(result[1]).toBeGreaterThan(0);
+      });
+    });
+
+    describe('negative/zero buckets (heatmapNegativeLogBuckets toggle)', () => {
+      let originalToggle: boolean | undefined;
+      beforeAll(() => {
+        originalToggle = config.featureToggles.heatmapNegativeLogBuckets;
+      });
+      afterAll(() => {
+        config.featureToggles.heatmapNegativeLogBuckets = originalToggle;
+      });
+
+      // Sparse cells with a negative bucket (-4, -1] and a positive bucket (1, 4],
+      // i.e. a native histogram whose buckets straddle zero.
+      function createNegativeSparseHeatmapData(): HeatmapData {
+        const heatmap = createDataFrame({
+          meta: { type: DataFrameType.HeatmapCells },
+          fields: [
+            { name: 'x', type: FieldType.time, values: [1000, 2000] },
+            { name: 'yMin', type: FieldType.number, values: [-4, 1] },
+            { name: 'yMax', type: FieldType.number, values: [-1, 4] },
+            { name: 'count', type: FieldType.number, values: [5, 10] },
+          ],
+        });
+        return { heatmap };
+      }
+
+      function buildYScale() {
+        const dataRef = { current: createNegativeSparseHeatmapData() };
+        const builder = prepConfig({
+          dataRef,
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        });
+        const yScale = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'));
+        return { distribution: yScale?.props.distribution, ...getYScaleRangeInfo(builder) };
+      }
+
+      const sparseData: uPlot.AlignedData = [
+        [0, 1, 2],
+        [0, 1, 4, 16],
+        [0, 5, 16, 64],
+      ];
+
+      it('keeps a log scale and clips negative buckets when the toggle is off', () => {
+        config.featureToggles.heatmapNegativeLogBuckets = false;
+        const { distribution, range, scaleKey } = buildYScale();
+
+        // Unchanged behavior: sparse → log, which can't place values <= 0.
+        expect(distribution).toBe(ScaleDistribution.Log);
+        const u = createMinimalUPlot(scaleKey, { data: sparseData, log: 2 });
+        const result = range(u, -4, 4, scaleKey);
+        // dataMin (-4) is clamped up to a positive value, so the negative bucket
+        // falls off the bottom of the axis and never renders.
+        expect(result[0]).toBeGreaterThan(0);
+      });
+
+      it('switches to symlog and spans the negative buckets when the toggle is on', () => {
+        config.featureToggles.heatmapNegativeLogBuckets = true;
+        const { distribution, range, scaleKey } = buildYScale();
+
+        expect(distribution).toBe(ScaleDistribution.Symlog);
+        const u = createMinimalUPlot(scaleKey, { data: sparseData, log: 2 });
+        const result = range(u, -4, 4, scaleKey);
+        // The scale extends below zero, so the negative bucket is on screen.
+        expect(result[0]).toBeLessThan(0);
+      });
+
+      it('renders a symmetric zero band when every bucket is the zero bucket', () => {
+        config.featureToggles.heatmapNegativeLogBuckets = true;
+        // A native histogram whose only populated bucket is the zero bucket
+        // (straddler [-eps, +eps]); there is no real-magnitude bucket to anchor
+        // the symlog threshold to. It must still render, not collapse to log.
+        const heatmap = createDataFrame({
+          meta: { type: DataFrameType.HeatmapCells },
+          fields: [
+            { name: 'x', type: FieldType.time, values: [1000, 2000] },
+            { name: 'yMin', type: FieldType.number, values: [-1e-9] },
+            { name: 'yMax', type: FieldType.number, values: [1e-9] },
+            { name: 'count', type: FieldType.number, values: [42] },
+          ],
+        });
+        const builder = prepConfig({
+          dataRef: { current: { heatmap } },
+          theme,
+          timeZone: 'utc',
+          getTimeRange: () => timeRange,
+          exemplarColor: 'red',
+          yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        });
+        const yScale = builder.scales.find((s) => s.props.scaleKey.startsWith('y_'));
+        // Engages symlog (with the fallback threshold) instead of falling back to log.
+        expect(yScale?.props.distribution).toBe(ScaleDistribution.Symlog);
+
+        const { range, scaleKey } = getYScaleRangeInfo(builder);
+        const u = createMinimalUPlot(scaleKey, { data: sparseData, log: 2 });
+        const result = range(u, 0, 0, scaleKey);
+        // Symmetric, finite window centered on zero so the lone zero band shows.
+        expect(Number.isFinite(result[0])).toBe(true);
+        expect(Number.isFinite(result[1])).toBe(true);
+        expect(result[0]).toBeLessThan(0);
         expect(result[1]).toBeGreaterThan(0);
       });
     });
@@ -1597,6 +1707,225 @@ describe('heatmapPathsSparse', () => {
       expect(rect).toHaveBeenNthCalledWith(4, expect.anything(), 102.5, 18.5, 95, 1);
     });
   });
+
+  describe('zero and straddling buckets', () => {
+    // The zero-bucket / symlog handling is gated behind the negative-buckets
+    // feature toggle; default each test to enabled and restore afterwards.
+    let originalToggle: boolean | undefined;
+    beforeAll(() => {
+      originalToggle = config.featureToggles.heatmapNegativeLogBuckets;
+    });
+    afterAll(() => {
+      config.featureToggles.heatmapNegativeLogBuckets = originalToggle;
+    });
+
+    // Decreasing value->pixel mapping, like a symlog axis but simple enough to
+    // assert exact rects. valToPosY(0) = 50 is the y=0 line (zeroPx).
+    const valToPosY = (v: number) => 50 - v * 4;
+
+    function invoke(data: SparseHeatmap): { rect: jest.Mock } {
+      const rect = jest.fn();
+      const pathBuilder = heatmapPathsSparse({
+        ...minimalPathbuilderOpts,
+        each: jest.fn(),
+        disp: { fill: { values: () => [0, 0, 0, 0], index: ['#000'] } },
+      });
+      const orientSpy = jest
+        .spyOn(uPlot, 'orient')
+        .mockImplementation(createOrientMock(data, { scaleY: { distr: 4, min: -16, max: 16 }, valToPosY, rect }));
+      pathBuilder(createMockU(data), 1);
+      orientSpy.mockRestore();
+      return { rect };
+    }
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      config.featureToggles.heatmapNegativeLogBuckets = true;
+    });
+
+    it('draws a positive-only zero bucket as a full-height row above the y=0 line', () => {
+      // cells 0,1: the ±1e-128 zero bucket; cells 2,3: a normal (4, 8] positive bucket.
+      const data: SparseHeatmap = [
+        [100, 200, 100, 200],
+        [-1e-128, -1e-128, 4, 4],
+        [1e-128, 1e-128, 8, 8],
+        [5, 5, 5, 5],
+      ];
+      const { rect } = invoke(data);
+
+      // Buckets only on the positive side, so the zero bucket fills that side at
+      // full neighbor (4,8] height (|34-18| = 16, minus the 1px gap -> 15), sitting
+      // on the zero line and extending upward: y = zeroPx(50) - 15 = 35.
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 0.5, 35, 99, 15);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 100.5, 35, 99, 15);
+      // Normal buckets render at their natural extent.
+      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 0.5, 18.5, 99, 15);
+      expect(rect).toHaveBeenNthCalledWith(4, expect.anything(), 100.5, 18.5, 99, 15);
+    });
+
+    it('draws a negative-only zero bucket as a full-height row below the y=0 line', () => {
+      // cells 0,1: the ±1e-128 zero bucket; cells 2,3: a normal (-8, -4] negative bucket.
+      const data: SparseHeatmap = [
+        [100, 200, 100, 200],
+        [-1e-128, -1e-128, -8, -8],
+        [1e-128, 1e-128, -4, -4],
+        [5, 5, 5, 5],
+      ];
+      const { rect } = invoke(data);
+
+      // Buckets only on the negative side, so the zero bucket fills that side,
+      // sitting on the zero line and extending downward: y = zeroPx(50), height 15.
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 0.5, 50, 99, 15);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 100.5, 50, 99, 15);
+      // (-8,-4] spans valToPosY(-4)=66 .. valToPosY(-8)=82 -> y=66.5, height 15.
+      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 0.5, 66.5, 99, 15);
+      expect(rect).toHaveBeenNthCalledWith(4, expect.anything(), 100.5, 66.5, 99, 15);
+    });
+
+    it('centers the zero bucket on the y=0 line when buckets exist on both sides', () => {
+      // cells 0,3: zero bucket; cell 1: positive (4,8]; cell 2: negative (-8,-4].
+      const data: SparseHeatmap = [
+        [100, 200, 100, 200],
+        [-1e-128, 4, -8, -1e-128],
+        [1e-128, 8, -4, 1e-128],
+        [5, 5, 5, 5],
+      ];
+      const { rect } = invoke(data);
+
+      // Buckets on both sides, so the zero bucket straddles: y = zeroPx(50) - 15/2 = 42.5.
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 0.5, 42.5, 99, 15);
+      expect(rect).toHaveBeenNthCalledWith(4, expect.anything(), 100.5, 42.5, 99, 15);
+      // positive (4,8] above and negative (-8,-4] below, at their natural extents.
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 100.5, 18.5, 99, 15);
+      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 0.5, 66.5, 99, 15);
+    });
+
+    it('draws a wide zero-straddling bucket (NHCB) at its natural extent', () => {
+      // cells 0,1: a real bucket spanning (-4, 4]; cells 2,3: a normal (4, 8].
+      const data: SparseHeatmap = [
+        [100, 200, 100, 200],
+        [-4, -4, 4, 4],
+        [4, 4, 8, 8],
+        [5, 5, 5, 5],
+      ];
+      const { rect } = invoke(data);
+
+      // The straddler is NOT collapsed onto the zero line: it spans its own
+      // bounds valToPosY(4)=34 .. valToPosY(-4)=66 (height 32, minus 1px gap ->
+      // 31), anchored at its own yMax pixel (34 + 0.5).
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 0.5, 34.5, 99, 31);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 100.5, 34.5, 99, 31);
+      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 0.5, 18.5, 99, 15);
+      expect(rect).toHaveBeenNthCalledWith(4, expect.anything(), 100.5, 18.5, 99, 15);
+    });
+
+    it('does not apply the zero-bucket row when the feature toggle is off', () => {
+      config.featureToggles.heatmapNegativeLogBuckets = false;
+      // Same zero-bucket data as the first test.
+      const data: SparseHeatmap = [
+        [100, 200, 100, 200],
+        [-1e-128, -1e-128, 4, 4],
+        [1e-128, 1e-128, 8, 8],
+        [5, 5, 5, 5],
+      ];
+      const { rect } = invoke(data);
+
+      // Unchanged behavior: the zero bucket collapses to its natural sub-pixel
+      // height (clamped to 1px) at its own y (~valToPosY(0)=50, +0.5 gap), with
+      // no special row on the zero line.
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 0.5, 50.5, 99, 1);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 100.5, 50.5, 99, 1);
+      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 0.5, 18.5, 99, 15);
+      expect(rect).toHaveBeenNthCalledWith(4, expect.anything(), 100.5, 18.5, 99, 15);
+    });
+  });
+});
+
+describe('findSymlogBounds', () => {
+  it('reports no non-positive buckets for a purely positive histogram', () => {
+    expect(findSymlogBounds([1, 4], [4, 16])).toEqual({ hasNonPositive: false, smallestMagnitude: 1 });
+  });
+
+  it('finds the smallest magnitude across negative and positive sides', () => {
+    // Buckets (-4,-1] and (1,4]: innermost real boundary on each side is 1.
+    expect(findSymlogBounds([-4, 1], [-1, 4])).toEqual({ hasNonPositive: true, smallestMagnitude: 1 });
+  });
+
+  it('skips the straddling zero bucket so it does not collapse the threshold', () => {
+    // Zero bucket (-eps,+eps] plus a real (1,4] bucket.
+    expect(findSymlogBounds([-1e-9, 1], [1e-9, 4])).toEqual({ hasNonPositive: true, smallestMagnitude: 1 });
+  });
+
+  it('returns null magnitude when the only bucket is the zero bucket', () => {
+    // All data in the (skipped) zero bucket: non-positive present, but no
+    // real-magnitude boundary to anchor a symlog threshold to.
+    expect(findSymlogBounds([-1e-9], [1e-9])).toEqual({ hasNonPositive: true, smallestMagnitude: null });
+    expect(findSymlogBounds([0], [0])).toEqual({ hasNonPositive: true, smallestMagnitude: null });
+  });
+});
+
+describe('snapSymlogRange', () => {
+  it('snaps both ends out to clean powers of base 2 with headroom', () => {
+    // response_size_bytes shape: a lone negative bucket (yMin -1) plus positive data
+    // up to ~2257. Top snaps up to 4096; the negative end snaps to -2 so the -1
+    // bucket isn't crushed onto the axis floor.
+    expect(snapSymlogRange(-1, 2257, 0.989, 2)).toEqual([-2, 4096]);
+  });
+
+  it('snaps to clean powers of base 10', () => {
+    expect(snapSymlogRange(-1, 2257, 0.989, 10)).toEqual([-10, 10000]);
+  });
+
+  it('keeps a zero-straddling lower bound inside the linear region as-is', () => {
+    // lo within (-threshold, 0) (e.g. the exponential zero bucket's -eps) stays put
+    // rather than snapping to a power, so the linear region around zero is preserved.
+    expect(snapSymlogRange(-1e-9, 4, 0.989, 2)).toEqual([-1e-9, 8]);
+  });
+
+  it('falls back to -threshold when there is no negative data', () => {
+    expect(snapSymlogRange(0, 4, 0.989, 2)).toEqual([-0.989, 8]);
+  });
+
+  it('clamps the max to the threshold when all data is within the linear region', () => {
+    expect(snapSymlogRange(-0.5, 0.5, 0.989, 2)).toEqual([-0.5, 0.989]);
+  });
+});
+
+describe('symlogPowerSplits', () => {
+  it('emits the y=0 seam plus every power of base 2 in range on both sides', () => {
+    expect(symlogPowerSplits(-2, 4096, 0.989, 2)).toEqual([
+      -2, -1, 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096,
+    ]);
+  });
+
+  it('handles a small symmetric range', () => {
+    expect(symlogPowerSplits(-2, 2, 0.989, 2)).toEqual([-2, -1, 0, 1, 2]);
+  });
+
+  it('emits powers of base 10', () => {
+    expect(symlogPowerSplits(-10, 10000, 0.989, 10)).toEqual([-10, -1, 0, 1, 10, 100, 1000, 10000]);
+  });
+});
+
+describe('symlogLabelMask', () => {
+  const splits = [-2, -1, 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
+
+  it('labels every split when keepMod is 1', () => {
+    expect(symlogLabelMask(splits, 1, 2)).toEqual(splits.map(() => true));
+  });
+
+  it('labels the seam and every 2nd power (anchored at the largest magnitude)', () => {
+    const mask = symlogLabelMask(splits, 2, 2);
+    const labeled = splits.filter((_v, i) => mask[i]);
+    // kMax = 12 (4096); keep powers with even (kMax - k), i.e. exponents 0,2,4,…,12,
+    // plus the y=0 seam — symmetric across the negative side.
+    expect(labeled).toEqual([-1, 0, 1, 4, 16, 64, 256, 1024, 4096]);
+  });
+
+  it('always labels the y=0 seam', () => {
+    const mask = symlogLabelMask(splits, 3, 2);
+    expect(mask[splits.indexOf(0)]).toBe(true);
+  });
 });
 
 describe('toLogBase', () => {
@@ -2235,6 +2564,134 @@ describe('Regression tests', () => {
       const yMaxValues = [0.1, 0.5, 1.0];
       const factor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
       expect(factor).toBe(1);
+    });
+  });
+});
+
+describe('findSymlogBounds', () => {
+  // ±epsilon zero bucket emitted by OTel exponential histograms.
+  const ZERO_LO = -1e-128;
+  const ZERO_HI = 1e-128;
+
+  describe('hasNonPositive detection', () => {
+    it('is false for purely positive buckets', () => {
+      const yMin = [0.957, 1.915, 4];
+      const yMax = [1, 2, 5];
+
+      expect(findSymlogBounds(yMin, yMax).hasNonPositive).toBe(false);
+    });
+
+    it('is true when a zero-straddling bucket is present', () => {
+      const yMin = [ZERO_LO, 0.957];
+      const yMax = [ZERO_HI, 1];
+
+      expect(findSymlogBounds(yMin, yMax).hasNonPositive).toBe(true);
+    });
+
+    it('is true when a negative bucket is present', () => {
+      const yMin = [-2, -1];
+      const yMax = [-1.5, -0.5];
+
+      expect(findSymlogBounds(yMin, yMax).hasNonPositive).toBe(true);
+    });
+
+    it('is true when a bucket boundary sits exactly at zero', () => {
+      const yMin = [0, 2];
+      const yMax = [1.5, 3];
+
+      expect(findSymlogBounds(yMin, yMax).hasNonPositive).toBe(true);
+    });
+  });
+
+  describe('smallestMagnitude', () => {
+    it('is the smallest positive boundary for purely positive buckets', () => {
+      const yMin = [0.957, 1.915, 4];
+      const yMax = [1, 2, 5];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
+    });
+
+    it('skips the zero-straddling bucket and uses the first real bucket boundary', () => {
+      const yMin = [ZERO_LO, 0.957, 1.915];
+      const yMax = [ZERO_HI, 1, 2];
+
+      // The straddler's ±1e-128 bounds must not collapse the threshold.
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
+    });
+
+    it('uses the closest-to-zero boundary across both sides (symmetric)', () => {
+      const yMin = [-2, -1, ZERO_LO, 0.957, 1.915];
+      const yMax = [-1.915, -0.957, ZERO_HI, 1, 2];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
+    });
+
+    it('uses the negative side when it is closer to zero than the positive side', () => {
+      // Regression: the smallest positive bucket has been dropped, so the
+      // innermost real boundary lives on the negative side (-0.957). The
+      // threshold must follow it, otherwise that negative bucket would fall
+      // inside the linear strip with no separating line above it.
+      const yMin = [-1, ZERO_LO, 1.915];
+      const yMax = [-0.957, ZERO_HI, 2];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
+    });
+
+    it('uses the positive side when it is closer to zero than the negative side', () => {
+      const yMin = [-2, ZERO_LO, 0.957];
+      const yMax = [-1.915, ZERO_HI, 1];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
+    });
+
+    it('handles negative-only buckets', () => {
+      const yMin = [-2, -1];
+      const yMax = [-1.5, -0.5];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.5);
+    });
+
+    it('uses the upper bound when a bucket starts exactly at zero', () => {
+      const yMin = [0, 2];
+      const yMax = [1.5, 3];
+
+      // lo === 0 contributes nothing (zero has no magnitude); hi === 1.5 wins.
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(1.5);
+    });
+
+    it('is null when only the zero-straddling bucket is populated', () => {
+      const yMin = [ZERO_LO];
+      const yMax = [ZERO_HI];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBeNull();
+    });
+  });
+
+  describe('edge cases', () => {
+    it('returns no bounds for empty input', () => {
+      expect(findSymlogBounds([], [])).toEqual({ hasNonPositive: false, smallestMagnitude: null });
+    });
+
+    it('ignores infinite tail-bucket boundaries', () => {
+      // NHCB unbounded tails: (-Inf, 0.5] and (4, +Inf].
+      const yMin = [-Infinity, 0.5, 1, 4];
+      const yMax = [0.5, 1, 4, Infinity];
+
+      expect(findSymlogBounds(yMin, yMax)).toEqual({ hasNonPositive: false, smallestMagnitude: 0.5 });
+    });
+
+    it('ignores non-numeric values', () => {
+      const yMin = [null, 'x', 0.957, undefined];
+      const yMax = [undefined, 1, 2, null] as unknown[];
+
+      expect(findSymlogBounds(yMin as unknown[], yMax)).toEqual({ hasNonPositive: false, smallestMagnitude: 0.957 });
+    });
+
+    it('tolerates yMin and yMax arrays of differing lengths', () => {
+      const yMin = [ZERO_LO, 0.957];
+      const yMax = [ZERO_HI, 1, 2];
+
+      expect(findSymlogBounds(yMin, yMax).smallestMagnitude).toBe(0.957);
     });
   });
 });
