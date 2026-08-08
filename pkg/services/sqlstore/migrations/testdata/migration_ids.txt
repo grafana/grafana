@@ -591,6 +591,7 @@
 "prevent seeding OnCall access"
 "managed folder permissions alert actions repeated fixed migration"
 "managed folder permissions library panel actions migration"
+"managed folder permissions variable actions migration"
 "migrate external alertmanagers to datsourcse"
 "create folder table"
 "Add index for parent_uid"
