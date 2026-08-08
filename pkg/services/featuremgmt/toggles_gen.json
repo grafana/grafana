@@ -2722,7 +2722,8 @@
       "metadata": {
         "name": "frontendService.settingsSourceFilter",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-06T11:53:39Z"
       },
       "spec": {
         "description": "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
@@ -3091,6 +3092,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.ofrepRootUrl",
+        "resourceVersion": "1786015306366",
+        "creationTimestamp": "2026-08-06T11:21:46Z"
+      },
+      "spec": {
+        "description": "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -5576,13 +5591,17 @@
     {
       "metadata": {
         "name": "reporting.redirectReportsToK8SApi",
-        "resourceVersion": "1785214026884",
-        "creationTimestamp": "2026-07-28T04:47:06Z"
+        "resourceVersion": "1786008381487",
+        "creationTimestamp": "2026-07-28T04:47:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-06 09:26:21.487357 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Redirect legacy report CRUD API endpoints to the Kubernetes reporting API",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
         "expression": "false"
       }
     },

@@ -264,6 +264,13 @@ describe('instanceSettings', () => {
         const result = await getDataSourceInstanceSettings({ type: '-100' });
         expect(result?.uid).toBe('__expr__');
       });
+
+      it('resolves a DataSourceRef with the expression uid but no type', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
+        const result = await getDataSourceInstanceSettings({ uid: '__expr__' });
+        expect(result?.uid).toBe('__expr__');
+      });
     });
 
     describe('template variables', () => {
@@ -293,6 +300,33 @@ describe('instanceSettings', () => {
         initDataSourceInstanceSettings(fixtures, 'Bravo');
 
         const result = await getDataSourceInstanceSettings('${multi}');
+        expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-alpha' });
+
+        setTemplateSrv(templateSrv);
+      });
+
+      it('resolves a name that contains $ but is not a variable through the plain lookup', async () => {
+        // The shared templateSrv mock returns unknown values unchanged, so
+        // interpolation is a no-op and the lookup must fall through. The variable
+        // wrapper would carry the ref string as uid and a rawRef; the genuine
+        // settings carry neither.
+        const dollar = ds({ id: 9, uid: 'uid-dollar', name: 'cost$db' });
+        initDataSourceInstanceSettings({ ...fixtures, [dollar.name]: dollar }, 'Bravo');
+
+        const result = await getDataSourceInstanceSettings('cost$db');
+        expect(result?.uid).toBe('uid-dollar');
+        expect(result?.rawRef).toBeUndefined();
+      });
+
+      it('interpolates a variable that is not at the start of the ref', async () => {
+        setTemplateSrv({
+          ...templateSrv,
+          replace: (value?: string) => (value === 'logs-${stage}-loki' ? 'Alpha' : (value ?? '')),
+        } as unknown as TemplateSrv);
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+        const result = await getDataSourceInstanceSettings('logs-${stage}-loki');
+        expect(result?.uid).toBe('logs-${stage}-loki');
         expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-alpha' });
 
         setTemplateSrv(templateSrv);
