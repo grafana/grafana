@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
 import { type Folder } from 'app/api/clients/folder/v1beta1';
@@ -41,6 +42,7 @@ export function useProvisionedFolderFormData({
   const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     folderName: folderUid,
   });
+  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 
@@ -49,15 +51,23 @@ export function useProvisionedFolderFormData({
     if (!repository || isLoading) {
       return undefined;
     }
+    // When the branch name template is enforced, folder pushes must use the branch workflow so the
+    // templated branch is created and sent as `ref`. getDefaultWorkflow stays a pure default; the
+    // enforced case is decided here, mirroring useBranchTemplate (flag + a usable nameTemplate).
+    const enforceBranchTemplate =
+      gitConventionsEnabled &&
+      Boolean(repository.branchOptions?.enforceTemplate) &&
+      Boolean(repository.branchOptions?.nameTemplate?.trim()) &&
+      Boolean(repository.workflows?.includes('branch'));
     return {
       title: title || '',
       comment: '',
       ref: getDefaultRef(repository, branchPrefix),
       repo: repository.name || '',
       path: ensureFolderPathTrailingSlash(folder?.metadata?.annotations?.[AnnoKeySourcePath] || ''),
-      workflow: getDefaultWorkflow(repository),
+      workflow: enforceBranchTemplate ? ('branch' as const) : getDefaultWorkflow(repository),
     };
-  }, [repository, isLoading, title, folder?.metadata?.annotations, branchPrefix]);
+  }, [repository, isLoading, title, folder?.metadata?.annotations, branchPrefix, gitConventionsEnabled]);
 
   return {
     repository,

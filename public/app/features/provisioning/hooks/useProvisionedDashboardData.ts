@@ -1,3 +1,5 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -120,6 +122,7 @@ export function useProvisionedDashboardData(dashboard: DashboardScene, saveAsCop
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const [params] = useUrlParams();
   const loadedFromRef = params.get('ref') ?? undefined;
+  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   const defaultValuesResult = useDefaultValues({
     meta,
@@ -145,8 +148,21 @@ export function useProvisionedDashboardData(dashboard: DashboardScene, saveAsCop
   const { values, isNew, repository } = defaultValuesResult;
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 
+  // When the branch name template is enforced, dashboard pushes must go through the branch workflow
+  // so the templated branch is created and sent as `ref`, rather than a direct push that drops it.
+  // getDefaultWorkflow stays a pure default; the enforced case is decided here at the point of use.
+  // The conditions mirror useBranchTemplate (gitConventions flag + a usable nameTemplate) so we only
+  // switch when the template will actually be applied; useBranchTemplate then fills the `ref`.
+  const enforceBranchTemplate =
+    gitConventionsEnabled &&
+    Boolean(repository.branchOptions?.enforceTemplate) &&
+    Boolean(repository.branchOptions?.nameTemplate?.trim()) &&
+    Boolean(repository.workflows?.includes('branch'));
+  const defaultValues =
+    enforceBranchTemplate && values.workflow !== 'branch' ? { ...values, workflow: 'branch' as const } : values;
+
   return {
-    defaultValues: values,
+    defaultValues,
     repository,
     loadedFromRef,
     canPushToConfiguredBranch,

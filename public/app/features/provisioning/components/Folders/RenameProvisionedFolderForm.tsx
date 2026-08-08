@@ -130,7 +130,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     },
   });
 
-  const doSave = async ({ ref, title, workflow }: BaseProvisionedFormData) => {
+  const doSave = async ({ title }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     const folderPath = initialValues.path;
@@ -140,7 +140,9 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       return;
     }
 
-    // For write workflow, write to the configured branch; otherwise use the selected branch
+    // Read the branch from the watched form value, not the submit payload: an enforced template
+    // renders the field read-only and react-hook-form drops that value from the handler arguments.
+    // For write workflow, write to the configured branch; otherwise use the selected branch.
     const branchRef = workflow === 'write' ? undefined : ref;
 
     reportInteraction('grafana_provisioning_folder_rename_submitted', {

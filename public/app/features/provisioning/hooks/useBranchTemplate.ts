@@ -45,7 +45,7 @@ export function useBranchTemplate({ repository, vars, workflow, value, setBranch
   // live template variables — but stop once the user edits the field. We can't gate on react-hook-
   // form's dirty state: reaching the branch workflow by typing a branch name already marks `ref`
   // dirty, which would suppress the first fill. Instead we latch as soon as the field value diverges
-  // from the value the hook last wrote itself. `enforce` still makes the field read-only via `locked`.
+  // from the value the hook last wrote itself.
   const lastApplied = useRef<string | undefined>(undefined);
   const userEdited = useRef(false);
   useEffect(() => {
@@ -54,18 +54,25 @@ export function useBranchTemplate({ repository, vars, workflow, value, setBranch
       userEdited.current = false;
       return;
     }
-    // Field no longer holds the value we last wrote → the user edited it; freeze from now on.
-    if (lastApplied.current !== undefined && value !== lastApplied.current) {
-      userEdited.current = true;
+    // When the template is enforced the field is read-only (`locked`), so the user can never edit
+    // it: any divergence from the value we last wrote is a form reset overwriting our non-dirty ref,
+    // not a manual edit. The Save drawer runs reset(defaultValues, { keepDirtyValues }) whenever the
+    // parent re-renders (e.g. selecting a target folder), so we must keep re-applying the rendered
+    // name rather than latching off — otherwise the enforced branch is lost from `ref`.
+    if (!enforce) {
+      // Field no longer holds the value we last wrote → the user edited it; freeze from now on.
+      if (lastApplied.current !== undefined && value !== lastApplied.current) {
+        userEdited.current = true;
+      }
+      if (userEdited.current) {
+        return;
+      }
     }
-    if (userEdited.current) {
-      return;
-    }
-    if (rendered !== lastApplied.current) {
+    if (rendered !== value) {
       lastApplied.current = rendered;
       setBranch(rendered);
     }
-  }, [active, rendered, value, setBranch]);
+  }, [active, enforce, rendered, value, setBranch]);
 
   return { locked };
 }
