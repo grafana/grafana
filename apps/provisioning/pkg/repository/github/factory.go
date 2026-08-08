@@ -1,7 +1,6 @@
 package github
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -64,7 +63,7 @@ func WithCustomServerURL(serverURL string) ClientOption {
 	}
 }
 
-func (r *Factory) New(ctx context.Context, owner, repo string, ghToken common.RawSecureValue, opts ...ClientOption) (Client, error) {
+func (r *Factory) New(owner, repo string, ghToken common.RawSecureValue, opts ...ClientOption) (Client, error) {
 	var options ClientOptions
 	for _, opt := range opts {
 		opt(&options)
@@ -76,10 +75,11 @@ func (r *Factory) New(ctx context.Context, owner, repo string, ghToken common.Ra
 
 	httpClient := &http.Client{}
 	if !ghToken.IsZero() {
-		tokenSrc := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: string(ghToken)},
-		)
-		httpClient = oauth2.NewClient(ctx, tokenSrc)
+		httpClient = &http.Client{
+			Transport: &oauth2.Transport{
+				Source: oauth2.StaticTokenSource(&oauth2.Token{AccessToken: string(ghToken)}),
+			},
+		}
 	}
 
 	ghClient := github.NewClient(httpClient)
