@@ -367,9 +367,9 @@ var (
 			Description:     "Routes snapshot requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
+			RequiresRestart: true,
 			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyFrontend: true},
 		},
 		{
 			Name:            "externalSnapshotsK8SAPIPush",
@@ -388,6 +388,14 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:        "snapshots.kubernetesSnapshots",
+			Description: "Routes snapshot requests from /api to the /apis endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:        "libraryelements.kubernetesLibraryPanels",
