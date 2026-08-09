@@ -61,8 +61,9 @@ type FolderAPIBuilder struct {
 	maxNestedFolderDepth int
 
 	// Flags
-	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
-	permissionsOnCreate bool // cfg.RBAC.PermissionsOnCreation("folder")
+	useZanzana           bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
+	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
+	folderPathVisibility bool // features.IsEnabledGlobally(featuremgmt.FlagAuthzFolderPathVisibility)
 
 	// Legacy services -- these will not exist in the MT environment
 	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
@@ -128,6 +129,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		useZanzana:           features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
+		folderPathVisibility: features.IsEnabledGlobally(featuremgmt.FlagAuthzFolderPathVisibility),
 		searcher:             unified,
 		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
@@ -158,6 +160,7 @@ func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, fe
 		dashboardSvc:           dashboardSvc, // injected so cascade delete can remove dashboards in MT
 		maxNestedFolderDepth:   maxNestedFolderDepth,
 		useZanzana:             features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
+		folderPathVisibility:   features.IsEnabledGlobally(featuremgmt.FlagAuthzFolderPathVisibility),
 	}
 }
 
@@ -258,7 +261,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
 
-	b.parents = newParentsGetter(b.storage, b.maxNestedFolderDepth) // used for validation
+	b.parents = newParentsGetter(b.storage, b.maxNestedFolderDepth, b.folderPathVisibility) // used for validation
 	storage[folders.StoragePath("parents")] = &subParentsREST{
 		getter:  b.storage,
 		parents: b.parents,

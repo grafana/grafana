@@ -17,6 +17,7 @@ const (
 
 	ActionFoldersCreate           = "folders:create"
 	ActionFoldersRead             = "folders:read"
+	ActionFoldersReadSelf         = "folders.self:read"
 	ActionFoldersWrite            = "folders:write"
 	ActionFoldersDelete           = "folders:delete"
 	ActionFoldersPermissionsRead  = "folders.permissions:read"

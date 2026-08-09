@@ -143,7 +143,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 
 			b := &FolderAPIBuilder{
 				storage:              us,
-				parents:              newParentsGetter(us, 2),
+				parents:              newParentsGetter(us, 2, false),
 				maxNestedFolderDepth: setting.NewCfg().MaxNestedFolderDepth,
 			}
 
@@ -503,7 +503,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			b := &FolderAPIBuilder{
 				storage:  us,
 				searcher: sm,
-				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth, false),
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -595,7 +595,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			b := &FolderAPIBuilder{
 				storage:  us,
 				searcher: sm,
-				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth, false),
 			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
@@ -699,7 +699,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	b := &FolderAPIBuilder{
 		storage:  us,
 		searcher: sm,
-		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth, false),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

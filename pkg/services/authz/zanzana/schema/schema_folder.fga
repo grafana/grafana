@@ -9,6 +9,9 @@ type folder
     define edit: [user, service-account, team#member, role#assignee] or edit from parent
     define view: [user, service-account, team#member, role#assignee] or view from parent
     define get: [user, service-account, team#member, role#assignee] or get from parent
+    # get_self is deliberately NOT "or get_self from parent": a self-only grant
+    # must not propagate to children, unlike every other relation here.
+    define get_self: [user, service-account, team#member, role#assignee]
     define create: [user, service-account, team#member, role#assignee] or create from parent
     define update: [user, service-account, team#member, role#assignee] or update from parent
     define delete: [user, service-account, team#member, role#assignee] or delete from parent
@@ -17,6 +20,11 @@ type folder
 
     # Computed actions
     define can_get: admin or edit or view or get
+    # can_get_self is ONLY for checking the folder object itself. It must never be used for
+    # resources that inherit permissions from a folder (dashboards, subresources) or for
+    # subfolder inheritance -- can_get (unchanged, no get_self) is what those paths use, and
+    # that is what keeps get_self from leaking folder content or subtree visibility.
+    define can_get_self: can_get or get_self
     define can_create: admin or edit or create
     define can_update: admin or edit or update
     define can_delete: admin or edit or delete

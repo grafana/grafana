@@ -3182,6 +3182,15 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true},
 		},
+		{
+			Name:         "authz.folderPathVisibility",
+			Description:  "Show a folder's full ancestor path, including the names of ancestors the signed-in user has no access to, as inert non-browsable context. Gates the relaxed real-tree-placement criterion so items with a resolvable-but-inaccessible ancestor chain render in their real position instead of falling through to Shared with me; leaves Shared with me itself, and every other partial-access scenario, unchanged when off.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

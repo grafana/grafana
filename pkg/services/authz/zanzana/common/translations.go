@@ -83,6 +83,7 @@ var resourceTranslations = map[string]resourceTranslation{
 		resource: folderResource,
 		mapping: map[string]actionMapping{
 			"folders:read":      newMapping(RelationGet, ""),
+			"folders.self:read": newMapping(RelationGetSelf, ""),
 			"folders:write":     newMapping(RelationUpdate, ""),
 			"folders:create":    newMapping(RelationCreate, ""),
 			"folders:delete":    newMapping(RelationDelete, ""),

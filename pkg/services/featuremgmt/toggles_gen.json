@@ -1150,6 +1150,20 @@
     },
     {
       "metadata": {
+        "name": "authz.folderPathVisibility",
+        "resourceVersion": "1786222559124",
+        "creationTimestamp": "2026-08-08T20:55:59Z"
+      },
+      "spec": {
+        "description": "Show a folder's full ancestor path, including the names of ancestors the signed-in user has no access to, as inert non-browsable context. Gates the relaxed real-tree-placement criterion so items with a resolvable-but-inaccessible ancestor chain render in their real position instead of falling through to Shared with me; leaves Shared with me itself, and every other partial-access scenario, unchanged when off.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "authz.listFoldersViaSearch",
         "resourceVersion": "1782267268333",
         "creationTimestamp": "2026-06-24T02:14:28Z"

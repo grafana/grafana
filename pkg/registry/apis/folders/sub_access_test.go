@@ -201,6 +201,67 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 	}
 }
 
+// TestSubAccessREST_getAccessInfo_folderSelfReadGrant is a spike observation for
+// identity-access-team#2285, Phase 1, open question raised for #2295: what does /access report
+// for a folder the caller can only self-read (folders.self:read), and is it misleading?
+//
+// checkAccess only ever probes the folder object itself (get/create/update/delete/setperms on
+// THIS folder, see folderTierChecks) -- it never probes whether dashboards/alerts/library panels
+// in the folder are actually readable. This test's "allowed" map is not hypothetical: it is
+// exactly the real BatchCheck result for a get_self-only grant, proven independently and
+// end-to-end in pkg/services/authz/zanzana/server/server_check_folder_self_test.go
+// (TestIntegrationServerCheck_FolderSelfRead) --
+//   - "get_self grants get on the folder itself" -> the get probe here is allowed
+//   - "get_self does NOT recurse to a child folder" -> create/update/delete/setperms would all
+//     be denied too, since none of those relations include get_self
+//   - "get_self does NOT leak read on a dashboard directly inside the folder" -> a real
+//     dashboards:read check against this same folder would be denied, even though...
+//
+// ...the tier resolution below reports Viewer, and Viewer's AccessControl bundle includes
+// "dashboards:read" (and alert.rules:read, library.panels:read, alert.silences:read). A frontend
+// trusting AccessControl would show "you can view dashboards here" for a folder whose contents
+// the user cannot actually see. That gap -- not the OpenFGA layer, which behaves correctly -- is
+// what #2295 needs to close: either compute a distinct tier for self-only access, or stop
+// deriving AccessControl from the tier for folders where the grant is self-only.
+func TestSubAccessREST_getAccessInfo_folderSelfReadGrant(t *testing.T) {
+	f := &folders.Folder{}
+	meta, err := utils.MetaAccessor(f)
+	require.NoError(t, err)
+	meta.SetName("self-only-folder")
+	store := grafanarest.NewMockStorage(t)
+	store.On("Get", mock.Anything, "self-only-folder", &metav1.GetOptions{}).Return(f, nil)
+
+	ac := &subAccessMockClient{
+		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+			results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+			for _, item := range req.Checks {
+				// The only real signal a get_self grant produces: the folder-object get probe
+				// is allowed, every other folder-object probe is denied.
+				results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: item.Verb == utils.VerbGet}
+			}
+			return authlib.BatchCheckResponse{Results: results}, nil
+		},
+	}
+
+	r := &subAccessREST{getter: store, accessClient: ac}
+	ctx := request.WithNamespace(context.Background(), "default")
+	ctx = identity.WithRequester(ctx, &user.SignedInUser{UserID: 1, OrgID: 1})
+
+	got, err := r.getAccessInfo(ctx, "self-only-folder")
+	require.NoError(t, err)
+	require.NotNil(t, got)
+
+	require.False(t, got.CanAdmin)
+	require.False(t, got.CanEdit)
+	require.False(t, got.CanSave)
+	require.False(t, got.CanDelete)
+	require.Equal(t, actionsForTier(tierViewer), got.AccessControl,
+		"a self-only grant currently resolves to the full Viewer bundle, including dashboards:read -- "+
+			"this is the misleading-UI gap #2295 needs to close, not a regression introduced here")
+	require.True(t, got.AccessControl["dashboards:read"],
+		"AccessControl claims dashboard read access that the real Zanzana check denies for a self-only grant")
+}
+
 func TestSubAccessREST_getAccessInfo_virtualFolders(t *testing.T) {
 	t.Run("root/general folder runs real access checks against the general scope without a Get", func(t *testing.T) {
 		// "general" and the legacy empty UID must both resolve to the general scope.

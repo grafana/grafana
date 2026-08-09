@@ -478,7 +478,7 @@ func TestValidateCreate(t *testing.T) {
 				mockStorage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(f, nil).Maybe()
 			}
 
-			getter := newParentsGetter(mockStorage, maxDepth)
+			getter := newParentsGetter(mockStorage, maxDepth, false)
 
 			err := validateOnCreate(ctx, tt.folder, getter, maxDepth)
 
