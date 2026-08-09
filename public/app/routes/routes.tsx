@@ -666,13 +666,25 @@ function DataSourceEditRoute() {
   return <Navigate replace to={CONNECTIONS_ROUTES.DataSourcesEdit.replace(':uid', uid)} />;
 }
 
+// A well-formed short URL is exactly `/goto/<uid>` — a single, non-empty uid segment using the
+// short-uid charset. Malformed paths (double slash `/goto//a`, empty uid, extra segments) never
+// match the backend `/goto/:uid` route, so the server re-serves the SPA (HTTP 404); bouncing to
+// the server here would hard-navigate straight back into an infinite loop.
+export function isValidGotoPath(pathname: string): boolean {
+  const uid = pathname.replace(/^\/goto\//, '');
+  return /^[a-zA-Z0-9\-_]+$/.test(uid);
+}
+
 // Explicitly send "goto" URLs to server, bypassing client-side routing
 function HandleGoToRedirect() {
   const { pathname } = useLocation();
+  const isValid = isValidGotoPath(pathname);
 
   useEffect(() => {
-    window.location.href = pathname;
-  }, [pathname]);
+    if (isValid) {
+      window.location.href = pathname;
+    }
+  }, [pathname, isValid]);
 
-  return null;
+  return isValid ? null : <PageNotFound />;
 }
