@@ -147,7 +147,6 @@ func (m *subscriberMetrics) collectors() []prometheus.Collector {
 // deployments never export a misleading `embedded_server_up 0`.
 type serverMetrics struct {
 	embeddedServerUp       prometheus.Gauge
-	discoveryWakesSent     prometheus.Counter
 	discoveryWakesReceived prometheus.Counter
 }
 
@@ -159,36 +158,15 @@ func newServerMetrics(reg prometheus.Registerer) *serverMetrics {
 			Name:      "embedded_server_up",
 			Help:      "Whether the embedded NATS server is running (1 = up, 0 = down).",
 		}),
-		discoveryWakesSent: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: metricsNamespace,
-			Subsystem: metricsSubsystem,
-			Name:      "discovery_wakes_sent_total",
-			Help:      "Total number of peer-change hints this node broadcast to accelerate discovery on already-connected peers.",
-		}),
 		discoveryWakesReceived: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
 			Name:      "discovery_wakes_received_total",
-			Help:      "Total number of peer-change hints this node received that triggered an early discovery tick.",
+			Help:      "Total number of departing-peer hints this node received that triggered an early discovery tick.",
 		}),
 	}
 
-	reg.MustRegister(m.embeddedServerUp, m.discoveryWakesSent, m.discoveryWakesReceived)
+	reg.MustRegister(m.embeddedServerUp, m.discoveryWakesReceived)
 
 	return m
-}
-
-// incWakeSent is nil-safe so discovery instances built without metrics (tests,
-// or a nil *Server.metrics) can call it unconditionally.
-func (m *serverMetrics) incWakeSent() {
-	if m != nil {
-		m.discoveryWakesSent.Inc()
-	}
-}
-
-// incWakeReceived is nil-safe for the same reason as incWakeSent.
-func (m *serverMetrics) incWakeReceived() {
-	if m != nil {
-		m.discoveryWakesReceived.Inc()
-	}
 }

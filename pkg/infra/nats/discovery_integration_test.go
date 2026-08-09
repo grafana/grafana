@@ -8,6 +8,7 @@ import (
 	badger "github.com/dgraph-io/badger/v4"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
+	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -92,12 +93,11 @@ func TestIntegrationDiscoveryDisabled(t *testing.T) {
 	}, time.Second, 100*time.Millisecond, "nodes formed a cluster route with discovery disabled")
 }
 
-// TestIntegrationDiscoveryWakeAccelerator proves the wake hint (see
-// discoveryWakeSubject) actually shortens convergence below the configured
-// interval, rather than merely reasoning about it: both nodes here run a
-// 5-second interval and a 5-minute TTL, so any convergence observed within a
-// couple of seconds cannot be explained by either node's own periodic tick.
-func TestIntegrationDiscoveryWakeAccelerator(t *testing.T) {
+// TestIntegrationDiscoveryWakeOnLeave asserts a departing node's hint makes the
+// remaining peers drop its route ahead of their own periodic tick. The wake
+// counters are zero until c leaves, so the drop cannot be explained by a tick
+// that merely happened to land inside the window.
+func TestIntegrationDiscoveryWakeOnLeave(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -109,43 +109,25 @@ func TestIntegrationDiscoveryWakeAccelerator(t *testing.T) {
 	store := newSharedTestKV(t)
 	a, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
 	b, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
+	c, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
 	startService(t, ctx, a)
 	startService(t, ctx, b)
+	startService(t, ctx, c)
+	routeC := selfRoute(c)
 
 	require.Eventually(t, func() bool {
-		return discoveryRouteCount(a) >= 1 && discoveryRouteCount(b) >= 1
-	}, 15*time.Second, 50*time.Millisecond, "a and b did not form their initial route")
+		return hasDiscoveryRoute(a, routeC) && hasDiscoveryRoute(b, routeC)
+	}, 30*time.Second, 50*time.Millisecond, "a and b did not pick up c before the leave")
+	require.Zero(t, wakesReceived(a)+wakesReceived(b), "no wake hint is expected before a peer leaves")
 
-	t.Run("a joining peer is picked up by already-connected peers well under the interval", func(t *testing.T) {
-		c, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
-		startService(t, ctx, c)
+	c.StopAsync()
+	require.NoError(t, c.AwaitTerminated(ctx))
 
-		// c's own first tick dials a and b immediately regardless of the wake
-		// accelerator (see run()); what the accelerator buys is a and b noticing
-		// c back, which their own discovery.routes only reflects once each has
-		// reconciled — unlike numRoutes, which a solicited connection can bump
-		// before either side's discovery loop runs at all.
-		require.Eventually(t, func() bool {
-			return discoveryRouteCount(a) >= 2 && discoveryRouteCount(b) >= 2
-		}, 2*time.Second, 20*time.Millisecond,
-			"a and b did not learn about the new peer well within the %s interval", interval)
-	})
-
-	t.Run("a graceful leave is picked up by remaining peers well under the interval", func(t *testing.T) {
-		c, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
-		startService(t, ctx, c)
-		require.Eventually(t, func() bool {
-			return discoveryRouteCount(a) >= 2 && discoveryRouteCount(b) >= 2
-		}, 2*time.Second, 20*time.Millisecond, "a and b did not pick up c before the leave")
-
-		c.StopAsync()
-		require.NoError(t, c.AwaitTerminated(ctx))
-
-		require.Eventually(t, func() bool {
-			return discoveryRouteCount(a) == 1 && discoveryRouteCount(b) == 1
-		}, 2*time.Second, 20*time.Millisecond,
-			"a and b did not drop the departed peer well within the %s interval", interval)
-	})
+	require.Eventually(t, func() bool {
+		return !hasDiscoveryRoute(a, routeC) && !hasDiscoveryRoute(b, routeC)
+	}, 2*time.Second, 20*time.Millisecond, "a and b did not drop the departed peer within the %s interval", interval)
+	require.NotZero(t, wakesReceived(a), "a dropped the departed peer without a wake hint")
+	require.NotZero(t, wakesReceived(b), "b dropped the departed peer without a wake hint")
 }
 
 // nodeCfg bundles a node's full Cfg with the Server it drives, so callers can
@@ -226,16 +208,30 @@ func numRoutes(s *Server) int {
 	return s.server.NumRoutes()
 }
 
-// discoveryRouteCount reads the discovery loop's own applied route set, which
-// only grows once its tick()/reconcile() has actually run. Unlike numRoutes,
-// a peer soliciting a route into us bumps the raw NATS count on both ends
-// before either side's discovery loop has noticed, so this is the signal that
-// actually proves the wake accelerator (or a periodic tick) fired.
-func discoveryRouteCount(s *Server) int {
+// selfRoute is the route URL a node advertises, which identifies it in its
+// peers' route sets.
+func selfRoute(s *Server) string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if s.discovery == nil {
-		return 0
+		return ""
 	}
-	return len(s.discovery.routes)
+	return s.discovery.self.RouteURL
+}
+
+// hasDiscoveryRoute reports whether the discovery loop has reconciled routeURL
+// into its applied route set, read under the locks both fields are written with.
+func hasDiscoveryRoute(s *Server, routeURL string) bool {
+	s.mu.RLock()
+	d := s.discovery
+	s.mu.RUnlock()
+	if d == nil {
+		return false
+	}
+	_, ok := d.routeSet()[routeURL]
+	return ok
+}
+
+func wakesReceived(s *Server) float64 {
+	return promtestutil.ToFloat64(s.metrics.discoveryWakesReceived)
 }
