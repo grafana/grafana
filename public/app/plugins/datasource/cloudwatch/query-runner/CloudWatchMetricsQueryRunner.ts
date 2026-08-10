@@ -1,6 +1,6 @@
 import { isEmpty } from 'lodash';
 import { createElement } from 'react';
-import { catchError, map, type Observable, of } from 'rxjs';
+import { catchError, map, merge, type Observable, of } from 'rxjs';
 
 import {
   AppEvents,
@@ -12,18 +12,82 @@ import {
   dateTimeFormat,
   FieldType,
   rangeUtil,
+  renderLegendFormat,
   type ScopedVars,
+  type TimeRange,
 } from '@grafana/data';
+import { transformV2, type PromQuery } from '@grafana/prometheus';
 import { type TemplateSrv, getAppEvents } from '@grafana/runtime';
 
 import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';
-import { type CloudWatchMetricsQuery } from '../dataquery.gen';
+import { type CloudWatchMetricsQuery, MetricQueryType } from '../dataquery.gen';
+import { isCloudWatchMetricsQuery } from '../guards';
 import memoizedDebounce from '../memoizedDebounce';
 import { migrateMetricQuery } from '../migrations/metricQueryMigrations';
 import { type CloudWatchJsonData, type CloudWatchQuery } from '../types';
 import { filterMetricsQuery } from '../utils/utils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
+
+export function applyPromQLTransform(
+  response: DataQueryResponse,
+  request: DataQueryRequest<CloudWatchQuery>
+): DataQueryResponse {
+  const promTargets: PromQuery[] = [];
+
+  for (const target of request.targets.filter(isCloudWatchMetricsQuery)) {
+    if (target.metricQueryType !== MetricQueryType.PromQL) {
+      continue;
+    }
+
+    const promTarget: PromQuery = {
+      refId: target.refId,
+      expr: target.promqlExpression ?? '',
+      legendFormat: target.legendFormat,
+      format: target.format,
+      instant: target.instant,
+      range: target.range,
+    };
+
+    promTargets.push(promTarget);
+  }
+
+  if (promTargets.length === 0) {
+    return response;
+  }
+
+  const promRefIds = new Set(promTargets.map((target) => target.refId));
+  const promFrames: DataFrame[] = [];
+  const otherFrames: DataFrame[] = [];
+  for (const frame of response.data) {
+    if (frame.refId && promRefIds.has(frame.refId)) {
+      promFrames.push(frame);
+    } else {
+      otherFrames.push(frame);
+    }
+  }
+
+  for (const frame of promFrames) {
+    const promTarget = promTargets.find((target) => target.refId === frame.refId);
+    if (!promTarget?.legendFormat || promTarget.legendFormat === '__auto') {
+      continue;
+    }
+
+    for (const field of frame.fields) {
+      if (field.type !== FieldType.number || !field.labels) {
+        continue;
+      }
+
+      field.config = {
+        ...field.config,
+        displayNameFromDS: renderLegendFormat(promTarget.legendFormat, field.labels),
+      };
+    }
+  }
+
+  const transformed = transformV2({ ...response, data: promFrames }, { ...request, targets: promTargets }, {});
+  return { ...response, data: [...otherFrames, ...transformed.data] };
+}
 
 const getThrottlingErrorMessage = (region: string, message: string) =>
   `Please visit the AWS Service Quotas console at https://${region}.console.aws.amazon.com/servicequotas/home?region=${region}#!/services/monitoring/quotas/L-5E141212 to request a quota increase or see our documentation at https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#manage-service-quotas to learn more. ${message}`;
@@ -59,14 +123,19 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
 
     const validMetricsQueries = metricQueries.filter(this.filterMetricQuery).map((q) => {
       const migratedQuery = migrateMetricQuery(q);
-      const migratedAndIterpolatedQuery = this.interpolateMetricsQueryVariables(migratedQuery, options.scopedVars);
+      const migratedAndInterpolatedQuery = this.interpolateMetricsQueryVariables(
+        migratedQuery,
+        options.scopedVars,
+        options.range
+      );
 
       return {
         timezoneUTCOffset,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
-        ...migratedAndIterpolatedQuery,
-        type: 'timeSeriesQuery',
+        ...migratedAndInterpolatedQuery,
+        type:
+          migratedAndInterpolatedQuery.metricQueryType === MetricQueryType.PromQL ? 'promqlQuery' : 'timeSeriesQuery',
         datasource: this.ref,
       };
     });
@@ -76,16 +145,53 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
       return of({ data: [] });
     }
 
-    const request: DataQueryRequest<CloudWatchQuery> = {
-      ...options,
-      requestId: options.requestId + '-metrics', // adding -metrics to prevent requestId from matching logs queries sent from the same panel
-      targets: validMetricsQueries,
-    };
+    const timeSeriesTargets = validMetricsQueries.filter((q) => q.type === 'timeSeriesQuery');
+    const promqlTargets = validMetricsQueries.filter((q) => q.type === 'promqlQuery');
+    const responses: Array<Observable<DataQueryResponse>> = [];
 
-    return this.performTimeSeriesQuery(request, queryFn);
+    if (timeSeriesTargets.length) {
+      responses.push(
+        this.performTimeSeriesQuery(
+          { ...options, requestId: options.requestId + '-metrics', targets: timeSeriesTargets },
+          queryFn
+        )
+      );
+    }
+
+    if (promqlTargets.length) {
+      responses.push(
+        this.performTimeSeriesQuery(
+          { ...options, requestId: options.requestId + '-promql', targets: promqlTargets },
+          queryFn
+        )
+      );
+    }
+
+    return responses.length === 1 ? responses[0] : merge(...responses);
   };
 
-  interpolateMetricsQueryVariables(query: CloudWatchMetricsQuery, scopedVars: ScopedVars): CloudWatchMetricsQuery {
+  interpolateMetricsQueryVariables(
+    query: CloudWatchMetricsQuery,
+    scopedVars: ScopedVars,
+    range?: TimeRange
+  ): CloudWatchMetricsQuery {
+    const intervalMs = Number(scopedVars?.__interval_ms?.value) || 60000;
+    const rateIntervalMs = Math.max(intervalMs, 60000);
+    const rateIntervalSeconds = Math.round(rateIntervalMs / 1000);
+    const rateInterval = `${rateIntervalSeconds}s`;
+    const promQLScopedVars: ScopedVars = {
+      ...scopedVars,
+      __rate_interval: { text: rateInterval, value: rateInterval },
+      __rate_interval_ms: { text: rateIntervalMs, value: rateIntervalMs },
+    };
+    if (range) {
+      const rangeMs = range.to.valueOf() - range.from.valueOf();
+      const rangeSeconds = Math.round(rangeMs / 1000);
+      promQLScopedVars.__range = { text: `${rangeSeconds}s`, value: `${rangeSeconds}s` };
+      promQLScopedVars.__range_s = { text: rangeSeconds, value: rangeSeconds };
+      promQLScopedVars.__range_ms = { text: rangeMs, value: rangeMs };
+    }
+
     return {
       ...query,
       region: this.templateSrv.replace(this.getActualRegion(query.region), scopedVars),
@@ -95,6 +201,9 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
       period: String(this.getPeriod(query, scopedVars)),
       expression: this.templateSrv.replace(query.expression, scopedVars),
       sqlExpression: this.templateSrv.replace(query.sqlExpression, scopedVars, 'raw'),
+      promqlExpression: query.promqlExpression
+        ? this.templateSrv.replace(query.promqlExpression, promQLScopedVars)
+        : query.promqlExpression,
       dimensions: this.convertDimensionFormat(query.dimensions ?? {}, scopedVars),
       statistic: this.templateSrv.replace(query.statistic, scopedVars),
       id: this.templateSrv.replace(query.id, scopedVars),
@@ -123,8 +232,9 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
           this.alertOnThrottlingErrors(res.errors, request);
         }
 
+        const transformed = applyPromQLTransform({ ...res, data: dataframes }, request);
         return {
-          data: dataframes,
+          data: transformed.data,
           // DataSourceWithBackend will not throw an error, instead it will return "errors" field along with the response
           errors: this.enrichThrottlingErrorMessages(request, res.errors),
         };

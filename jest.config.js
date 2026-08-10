@@ -28,6 +28,8 @@ const esModules = [
   '@bsull/augurs',
   '@grafana/react-data-grid',
   '@grafana/llm',
+  '@grafana/prometheus',
+  '@grafana/plugin-ui',
   'pkce-challenge',
   'quickselect',
   'rbush',
