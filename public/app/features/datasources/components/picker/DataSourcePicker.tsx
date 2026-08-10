@@ -122,22 +122,6 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
 
-  let suffix = <Icon name={isOpen ? 'search' : 'angle-down'} />;
-  if (isLoading) {
-    suffix = <Spinner inline />;
-  } else if (onClear && currentValue) {
-    suffix = (
-      <IconButton
-        name="times"
-        aria-label={t('datasources.data-source-picker.clear-button', 'Clear data source')}
-        onClick={(e) => {
-          // Don't let the click bubble up to the trigger, which would open the dropdown
-          e.stopPropagation();
-          onClear();
-        }}
-      />
-    );
-  }
   const dataSources = useDatasources({
     alerting: props.alerting,
     annotations: props.annotations,
@@ -189,6 +173,25 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     setOpen(false);
     markerElement?.focus();
   }, [setOpen, markerElement]);
+
+  // Like Combobox, the clear control renders next to the dropdown indicator instead of replacing it
+  const suffix = (
+    <>
+      {onClear && currentValue && !isLoading && (
+        <IconButton
+          name="times"
+          aria-label={t('datasources.data-source-picker.clear-button', 'Clear data source')}
+          onClick={(e) => {
+            // Don't let the click bubble up to the trigger, which would open the dropdown
+            e.stopPropagation();
+            onClose();
+            onClear();
+          }}
+        />
+      )}
+      {isLoading ? <Spinner inline /> : <Icon name={isOpen ? 'search' : 'angle-down'} />}
+    </>
+  );
 
   const { overlayProps, underlayProps } = useOverlay(
     {

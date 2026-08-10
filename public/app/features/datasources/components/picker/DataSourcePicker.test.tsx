@@ -218,6 +218,9 @@ describe('DataSourcePicker', () => {
       render(<DataSourcePicker onChange={onChange} onClear={onClear} current={mockDS1.name}></DataSourcePicker>);
 
       const clearButton = screen.getByRole('button', { name: 'Clear data source' });
+      // The dropdown indicator renders next to the clear button, not replaced by it
+      expect(screen.getByTestId('icon-angle-down')).toBeInTheDocument();
+
       await user.click(clearButton);
       expect(onClear).toHaveBeenCalledTimes(1);
       // Clicking clear should not open the dropdown
@@ -225,6 +228,16 @@ describe('DataSourcePicker', () => {
         'aria-expanded',
         'false'
       );
+    });
+
+    it('should close the dropdown when the clear button is clicked while it is open', async () => {
+      const onClear = jest.fn();
+      await setupOpenDropdown(user, { onChange: jest.fn(), onClear, current: mockDS1.name });
+      expect(await screen.findByText(mockDS1.name, { selector: 'span' })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Clear data source' }));
+      expect(onClear).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText(mockDS1.name, { selector: 'span' })).not.toBeInTheDocument();
     });
 
     it('should not set the default DS when setting `noDefault` to true and `current` is not provided', () => {
