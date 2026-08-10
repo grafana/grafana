@@ -15,6 +15,10 @@ import { newNotebookSpec, newNotebookTitle } from '../model/notebookSpec';
 /** Title shared by the sidebar added link and added component (the sidebar matches them by title). */
 export const NOTEBOOKS_SIDEBAR_COMPONENT_TITLE = 'Notebooks';
 
+// The Alerts & IRM landing page renders extension links from this point as cards —
+// the lightweight IRM entry point into notebooks.
+const IRM_LANDING_CARDS_EXTENSION_POINT = 'grafana/dynamic/nav-landing-page/nav-id-alerts-and-incidents/cards/v1';
+
 function notebooksEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false);
 }
@@ -99,6 +103,18 @@ export function getNotebookExtensionConfigs(): PluginExtensionAddedLinkConfig[] 
         configure: () => (notebooksEnabled() && canEditNotebooks() ? {} : undefined),
         onClick: (_, { openSidebar }) => {
           openSidebar(NOTEBOOKS_SIDEBAR_COMPONENT_TITLE);
+        },
+      }),
+
+      // Alerts & IRM landing page card → notebooks as the incident note-taking surface.
+      createAddedLinkConfig({
+        title: 'Notebooks',
+        description: 'Capture incident investigation notes with live panels and share findings with your team',
+        targets: [IRM_LANDING_CARDS_EXTENSION_POINT],
+        icon: 'book-open',
+        configure: () => (notebooksEnabled() ? {} : undefined),
+        onClick: () => {
+          locationService.push('/notebooks');
         },
       }),
 
