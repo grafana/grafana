@@ -716,7 +716,15 @@ func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.C
 	folderScope := variableFolderScope(folderUID)
 	ok, err := b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action, folderScope))
 	if err != nil {
-		return err
+		// FolderUIDScopeResolver errors with folder-not-found when the parent is
+		// gone. Treat that as a failed scope check so allowMissingFolder can run
+		// (root writers with folders:uid:general only never match the missing
+		// folder scope before resolution, and returning the resolver error would
+		// incorrectly deny orphan cleanup).
+		if !isFolderNotFound(err) {
+			return err
+		}
+		ok = false
 	}
 	if ok {
 		return nil

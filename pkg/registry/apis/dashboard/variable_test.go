@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -456,9 +457,16 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			// Production registers FolderUIDScopeResolver; without it, Evaluate never
+			// errors on a missing folder and the general-scope orphan path is untested.
+			acSvc := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+			folderSvc := foldertest.NewFakeService()
+			folderSvc.ExpectedError = folder.ErrFolderNotFound
+			acSvc.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(folderSvc))
+
 			folderHandler := &variableFolderAccessHandler{notFoundAccessSubresource: true}
 			builder := &DashboardsAPIBuilder{
-				accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+				accessControl:        acSvc,
 				folderClientProvider: &staticHandlerProvider{handler: folderHandler},
 			}
 
