@@ -3500,6 +3500,13 @@ func schema_pkg_apis_dashboard_v2_DashboardQueryOptionsSpec(ref common.Reference
 							Format: "",
 						},
 					},
+					"timeTo": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Absolute end of a panel time range, intended to pair with timeFrom. Reserved in the schema; not yet honored by the panel renderer.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"maxDataPoints": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},

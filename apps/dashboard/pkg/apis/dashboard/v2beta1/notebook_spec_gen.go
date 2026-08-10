@@ -481,7 +481,10 @@ func (NotebookDataTopic) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type NotebookQueryOptionsSpec struct {
-	TimeFrom         *string `json:"timeFrom,omitempty"`
+	TimeFrom *string `json:"timeFrom,omitempty"`
+	// Absolute end of a panel time range, intended to pair with timeFrom. Reserved in the schema;
+	// not yet honored by the panel renderer.
+	TimeTo           *string `json:"timeTo,omitempty"`
 	MaxDataPoints    *int64  `json:"maxDataPoints,omitempty"`
 	TimeShift        *string `json:"timeShift,omitempty"`
 	QueryCachingTTL  *int64  `json:"queryCachingTTL,omitempty"`
