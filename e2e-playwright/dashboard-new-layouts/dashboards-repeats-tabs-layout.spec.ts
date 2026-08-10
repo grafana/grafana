@@ -11,6 +11,7 @@ import {
   groupIntoTab,
   moveTab,
   getTabPosition,
+  checkRepeatedTabTitles,
 } from './utils';
 
 const REPEAT_TITLE_BASE = 'Tab - ';
@@ -39,7 +40,7 @@ test.describe(
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
       const tabs = new Tabs({ page, dashboardPage, selectors, components });
 
-      await importTestDashboard(page, selectors, `Tabs layout repeats - add repeats - ${Date.now()}`);
+      await importTestDashboard(page, selectors, 'Tabs layout repeats - add repeats');
 
       await controls.enterEditMode();
 
@@ -66,7 +67,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Tabs layout repeats - update on variable change - ${Date.now()}`,
+        'Tabs layout repeats - update on variable change',
         JSON.stringify(V2DashWithTabRepeats)
       );
 
@@ -89,7 +90,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Tabs layout repeats - update through sidebar - ${Date.now()}`,
+        'Tabs layout repeats - update through sidebar',
         JSON.stringify(V2DashWithTabRepeats)
       );
 
@@ -117,7 +118,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Tabs layout repeats - update repeats after panel change - ${Date.now()}`,
+        'Tabs layout repeats - update repeats after panel change',
         JSON.stringify(V2DashWithTabRepeats)
       );
 
@@ -151,7 +152,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Tabs layout repeats - update repeats after panel change in editor - ${Date.now()}`,
+        'Tabs layout repeats - update repeats after panel change in editor',
         JSON.stringify(V2DashWithTabRepeats)
       );
 
@@ -166,7 +167,7 @@ test.describe(
       await verifyChanges(dashboardPage, page, selectors, 'New edited panel');
 
       // verify panel title change in panel editor UI
-      await expect(panels.getPanel(`New edited panel`)).toBeVisible();
+      await expect(panels.getPanel('New edited panel')).toBeVisible();
 
       await controls.clickBackToDashboard();
       await expect(canvas.getContainer()).toBeVisible(); // verifying that dashboard loaded
@@ -189,21 +190,22 @@ test.describe(
     test('can hide canvas grid add row action in repeats', async ({ dashboardPage, selectors, page, components }) => {
       const controls = new Controls({ page, dashboardPage, selectors, components });
       const tabs = new Tabs({ page, dashboardPage, selectors, components });
+      const canvas = new Canvas({ page, dashboardPage, selectors, components });
 
       await importTestDashboard(
         page,
         selectors,
-        `Tabs layout repeats - hide canvas add action in repeats - ${Date.now()}`,
+        'Tabs layout repeats - hide canvas add action in repeats',
         JSON.stringify(V2DashWithTabRepeats)
       );
 
       await controls.enterEditMode();
 
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow)).toBeVisible();
+      await expect(canvas.getAddRowButton()).toBeVisible();
 
       await tabs.select(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(1)}`);
 
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow)).toBeHidden();
+      await expect(canvas.getAddRowButton()).toBeHidden();
     });
 
     test('can move repeated tabs', async ({ dashboardPage, selectors, page, components }) => {
@@ -212,7 +214,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Tabs layout repeats - move repeated tabs - ${Date.now()}`,
+        'Tabs layout repeats - move repeated tabs',
         JSON.stringify(V2DashWithTabRepeats)
       );
       await controls.enterEditMode();
@@ -249,7 +251,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Tabs layout repeats - can load into repeated tab - ${Date.now()}`,
+        'Tabs layout repeats - can load into repeated tab',
         JSON.stringify(V2DashWithTabRepeats)
       );
 
@@ -273,7 +275,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Tabs layout repeats - view panels in repeated tabs - ${Date.now()}`,
+        'Tabs layout repeats - view panels in repeated tabs',
         JSON.stringify(V2DashWithTabRepeats)
       );
 
@@ -325,7 +327,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Tabs layout repeats - view embedded panels in repeated tabs - ${Date.now()}`,
+        'Tabs layout repeats - view embedded panels in repeated tabs',
         JSON.stringify(V2DashWithTabRepeats)
       );
 
@@ -365,7 +367,7 @@ test.describe(
       await importTestDashboard(
         page,
         selectors,
-        `Tabs layout repeats - remove repeats - ${Date.now()}`,
+        'Tabs layout repeats - remove repeats',
         JSON.stringify(V2DashWithTabRepeats)
       );
 
@@ -396,11 +398,3 @@ test.describe(
     });
   }
 );
-
-async function checkRepeatedTabTitles(tabs: Tabs, title: string, options: Array<string | number>) {
-  await test.step('Checking repeated tab titles', async () => {
-    for (const option of options) {
-      await expect(tabs.getTitle(`${title}${option}`)).toBeVisible();
-    }
-  });
-}

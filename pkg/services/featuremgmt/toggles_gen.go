@@ -79,10 +79,6 @@ const (
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
-	// FlagProvisioning
-	// Enables Git Sync and as-code provisioning for Grafana resources
-	FlagProvisioning = "provisioning"
-
 	// FlagProvisioningFolderMetadata
 	// Allow setting folder metadata for provisioned folders
 	FlagProvisioningFolderMetadata = "provisioningFolderMetadata"
@@ -838,10 +834,6 @@ const (
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
 
-	// FlagFrontendServiceSettingsSourceFilter
-	// Adds a label filter for source=us when fetching settings from the settings service in the frontend service
-	FlagFrontendServiceSettingsSourceFilter = "frontendService.settingsSourceFilter"
-
 	// FlagManagedPluginsV2
 	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
 	FlagManagedPluginsV2 = "managedPluginsV2"
@@ -973,6 +965,10 @@ const (
 	// FlagGrafanaFrontendLegacyAPIHandling
 	// Controls whether the frontend blocks calls to legacy /api/ endpoints
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
+
+	// FlagGrafanaOfrepRootUrl
+	// Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route
+	FlagGrafanaOfrepRootUrl = "grafana.ofrepRootUrl"
 
 	// FlagFeaturesBulkFlagEvalFiltering
 	// Filters bulk OFREP flag evaluations to public-metadata flags only

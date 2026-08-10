@@ -78,31 +78,30 @@ describe('useGuides', () => {
     await waitFor(() => expect(result.current).toBeDefined());
   });
 
-  it('keeps non-plugin guides visible when no app plugins are installed', async () => {
-    const { result } = renderHook(() => useGuides());
-
-    await waitFor(() => expect(result.current).toBeDefined());
-
-    expect(result.current?.map((guide) => guide.title)).toEqual(['Monitor infrastructure']);
-  });
-
   it('filters plugin guides when canAccessPluginPage denies the route', async () => {
-    setInstalledPlugins(['grafana-app-observability-app']);
+    setInstalledPlugins(['grafana-app-observability-app', 'grafana-synthetic-monitoring-app']);
     setPluginSettingsById({
       'grafana-app-observability-app': pluginSettings('grafana-app-observability-app', true),
+      'grafana-synthetic-monitoring-app': pluginSettings('grafana-synthetic-monitoring-app', true),
     });
     mockCanAccessPluginPage.mockImplementation((_settings, pluginPagePath) => {
-      return pluginPagePath !== '/a/grafana-app-observability-app/landing';
+      return pluginPagePath === '/a/grafana-app-observability-app/landing';
     });
 
-    const { result } = renderHook(() => useGuides());
-
+    const result = renderHook(() => useGuides()).result;
     await waitFor(() => expect(result.current).toBeDefined());
 
-    expect(result.current?.map((guide) => guide.title)).toEqual(['Monitor infrastructure']);
+    const ids = result.current?.map((guide) => guide.id) ?? [];
+    expect(ids).toContain('app-monitoring');
+    expect(ids).not.toContain('website-monitoring');
+
     expect(mockCanAccessPluginPage).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'grafana-app-observability-app' }),
       '/a/grafana-app-observability-app/landing'
+    );
+    expect(mockCanAccessPluginPage).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'grafana-synthetic-monitoring-app' }),
+      '/a/grafana-synthetic-monitoring-app/checks/new/api-endpoint'
     );
   });
 
@@ -113,10 +112,9 @@ describe('useGuides', () => {
     });
 
     const { result } = renderHook(() => useGuides());
-
     await waitFor(() => expect(result.current).toBeDefined());
 
-    expect(result.current?.map((guide) => guide.title)).toEqual(['Monitor infrastructure']);
+    expect(result.current?.map((guide) => guide.id)).toEqual([]);
     expect(mockCanAccessPluginPage).not.toHaveBeenCalled();
     expect(hasRoleSpy).toHaveBeenCalledWith('Admin');
   });
@@ -132,17 +130,16 @@ describe('useGuides', () => {
     });
 
     const { result } = renderHook(() => useGuides());
-
     await waitFor(() => expect(result.current).toBeDefined());
 
-    const titles = result.current?.map((guide) => guide.title) ?? [];
-    expect(titles).toContain('Monitor infrastructure');
-    expect(titles).toContain('Observe cloud services');
-    expect(titles).toContain('Visualize existing data');
-    expect(titles).toContain('Prometheus metrics');
-    expect(titles).toContain('OpenTelemetry');
-    expect(titles).toContain('Hosted telemetry data');
-    expect(titles).not.toContain('Logs');
+    const ids = result.current?.map((guide) => guide.id) ?? [];
+    expect(ids).toContain('infra-monitoring');
+    expect(ids).toContain('cloud-monitoring');
+    expect(ids).toContain('visualize-data');
+    expect(ids).toContain('prometheus-metrics');
+    expect(ids).toContain('opentelemetry');
+    expect(ids).toContain('hosted-data');
+    expect(ids).not.toContain('logs');
     expect(mockCanAccessPluginPage).toHaveBeenCalledWith(
       expect.objectContaining({ id: SETUPGUIDE_PLUGIN_ID }),
       '/a/grafana-setupguide-app/getting-started/logs-onboarding'
@@ -156,12 +153,10 @@ describe('useGuides', () => {
     });
 
     const { result } = renderHook(() => useGuides());
-
     await waitFor(() => expect(result.current).toBeDefined());
 
-    const titles = result.current?.map((guide) => guide.title) ?? [];
-    expect(titles).toContain('Monitor infrastructure');
-    expect(titles).toContain('Set up app monitoring');
-    expect(titles).not.toContain('Monitor website uptime and performance');
+    const ids = result.current?.map((guide) => guide.id) ?? [];
+    expect(ids).toContain('app-monitoring');
+    expect(ids).not.toContain('website-monitoring');
   });
 });

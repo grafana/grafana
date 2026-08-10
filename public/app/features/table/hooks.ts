@@ -10,6 +10,7 @@ import {
   type InterpolateFunction,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { useFlagTablePaginationPageSize } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
 import { usePanelContext } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
@@ -62,6 +63,7 @@ type CommonTableOptions = Pick<
   | 'sortBy'
   | 'frozenColumns'
   | 'enablePagination'
+  | 'pageSize'
   | 'cellHeight'
   | 'maxRowHeight'
   | 'disableKeyboardEvents'
@@ -73,6 +75,8 @@ type CommonTableOptions = Pick<
  * are left to the caller. Spread the result onto `<TableNG {...props} />`.
  */
 export function useCommonTableProps(options: CommonTableOptions, fieldConfig: FieldConfigSource) {
+  const paginationPageSizeEnabled = useFlagTablePaginationPageSize();
+
   return useMemo(
     () => ({
       noHeader: !options.showHeader,
@@ -82,6 +86,8 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       sortBy: options.sortBy,
       frozenColumns: options.frozenColumns?.left,
       enablePagination: options.enablePagination,
+      // pageSize is gated behind the feature toggle; when disabled the page size falls back to the panel height
+      pageSize: paginationPageSizeEnabled ? options.pageSize : undefined,
       cellHeight: options.cellHeight,
       maxRowHeight: options.maxRowHeight,
       disableKeyboardEvents: options.disableKeyboardEvents,
@@ -93,10 +99,12 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       options.sortBy,
       options.frozenColumns?.left,
       options.enablePagination,
+      options.pageSize,
       options.cellHeight,
       options.maxRowHeight,
       options.disableKeyboardEvents,
       fieldConfig.defaults.noValue,
+      paginationPageSizeEnabled,
     ]
   );
 }

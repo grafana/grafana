@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	discoveryendpoint "k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -257,9 +258,7 @@ func SetupConfig(
 			return fmt.Errorf("builder did not return any API group versions: %T", b)
 		}
 		pvs := scheme.PrioritizedVersionsForGroup(gvs[0].Group)
-		for j, gv := range pvs {
-			serverConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), 15000+i, len(pvs)-j)
-		}
+		SetGroupVersionPriorities(serverConfig.AggregatedDiscoveryGroupManager, discoveryGroupPriorityBase+i, pvs)
 	}
 
 	if err := AddPostStartHooks(serverConfig, builders); err != nil {
@@ -267,6 +266,29 @@ func SetupConfig(
 	}
 
 	return nil
+}
+
+// discoveryGroupPriorityBase is the group-priority-minimum base; the builder index is added for stable relative order.
+const discoveryGroupPriorityBase = 15000
+
+// SetGroupVersionPriorities orders a group's versions in aggregated discovery under one group priority; safe at runtime (the manager serializes calls).
+func SetGroupVersionPriorities(mgr discoveryendpoint.ResourceManager, groupPriority int, pvs []schema.GroupVersion) {
+	for j, gv := range pvs {
+		mgr.SetGroupVersionPriority(metav1.GroupVersion(gv), groupPriority, len(pvs)-j)
+	}
+}
+
+// BuilderGroupPriorities returns each builder group's discovery priority-minimum, matching startup, so a runtime re-prioritize preserves group order.
+func BuilderGroupPriorities(builders []APIGroupBuilder) map[string]int {
+	priorities := make(map[string]int, len(builders))
+	for i, b := range builders {
+		gvs := GetGroupVersions(b)
+		if len(gvs) == 0 {
+			continue
+		}
+		priorities[gvs[0].Group] = discoveryGroupPriorityBase + i
+	}
+	return priorities
 }
 
 // servedVersionsForResource returns the versions the scheme registers for this resource's

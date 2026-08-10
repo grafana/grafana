@@ -31,6 +31,7 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
 
       const grotArm = svgRef.current?.querySelector('#grot-not-found-arm');
       const grotMagnifier = svgRef.current?.querySelector('#grot-not-found-magnifier');
+      const grotLensScene = svgRef.current?.querySelector('#grot-not-found-lens-scene');
 
       const { clientX, clientY } = event;
       const { innerWidth, innerHeight } = window;
@@ -40,8 +41,11 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
       const translation = getIntermediateValue(widthRatio, MIN_ARM_TRANSLATION, MAX_ARM_TRANSLATION);
 
       window.requestAnimationFrame(() => {
-        grotArm?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
-        grotMagnifier?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
+        const transform = `transform: rotate(${rotation}deg) translateX(${translation}%)`;
+        grotArm?.setAttribute('style', transform);
+        grotMagnifier?.setAttribute('style', transform);
+        // Cancel the magnifier transform so its contents stay aligned with the static artwork.
+        grotLensScene?.setAttribute('style', `transform: translateX(${-translation}%) rotate(${-rotation}deg)`);
       });
     };
 
@@ -60,7 +64,8 @@ GrotNotFound.displayName = 'GrotNotFound';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     svg: css({
-      '#grot-not-found-arm, #grot-not-found-magnifier': {
+      '--grot-lens-backing': theme.colors.background.primary,
+      '#grot-not-found-arm, #grot-not-found-magnifier, #grot-not-found-lens-scene': {
         transformOrigin: 'center',
       },
     }),
