@@ -75,6 +75,9 @@ type IndexViewData struct {
 
 	// Feature flag for controlling behaviour of blocking or alerting legacy api usage from the frontend
 	LegacyAPIMode string
+
+	// Feature flag for gradually rolling out the root /ofrep/v1 OFREP route instead of the namespaced route
+	OFREPRootUrlEnabled bool
 }
 
 // Templates setup.
@@ -151,6 +154,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
 	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
 	legacyAPIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyAPIHandling, "off", openfeature.TransactionContext(ctx))
+	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                              "Grafana",
@@ -172,6 +176,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		NewPreferencesPage:                    newPreferencesPage,
 		BootScript:                            p.bootScript,
 		LegacyAPIMode:                         legacyAPIMode,
+		OFREPRootUrlEnabled:                   ofrepRootUrlEnabled,
 	}
 
 	// Check for login_error cookie. Two writers exist:

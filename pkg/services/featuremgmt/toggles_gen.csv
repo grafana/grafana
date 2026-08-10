@@ -359,6 +359,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-28,reporting.redirectReportsToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-06-26,grafana.onDemandDiagnostics,experimental,@grafana/data-sources,false,false,false
 2026-07-08,grafana.frontendLegacyAPIHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-08-06,grafana.ofrepRootUrl,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-08-05,assistant.dashboardPlanning,experimental,@grafana/dashboards-squad,false,false,true
 2026-07-17,features.bulkFlagEvalFiltering,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-07-14,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,false
@@ -368,3 +369,5 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-24,authz.listFoldersViaSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-06-24,libraryElements.folderTreeViaSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-08-03,alerting.stateManagerRequireWarm,experimental,@grafana/alerting-squad,false,false,false
+2026-08-06,grafana.rspackBuild,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-08-10,pluginsForceTls13,experimental,@grafana/data-sources-plugins,false,false,false

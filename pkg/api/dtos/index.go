@@ -41,6 +41,7 @@ type IndexViewData struct {
 	AutoLoginRedirectURL  string `json:"autoLoginRedirectURL,omitempty"`
 	AssetSriChecksEnabled bool   `json:"-"`
 	NewPreferencesPage    bool   `json:"-"`
+	OFREPRootUrlEnabled   bool   `json:"-"`
 }
 
 type EntryPointAssets struct {

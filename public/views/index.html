@@ -321,6 +321,10 @@
         window.__grafanaNewPreferencesPage = true;
       [[end]]
 
+      [[if .OFREPRootUrlEnabled]]
+        window.__grafanaOFREPRootUrlEnabled = true;
+      [[end]]
+
       // FEMT index.html uses this, and we want to keep the index.ts the same for both
       window.__grafana_boot_data_promise = Promise.resolve();
 
