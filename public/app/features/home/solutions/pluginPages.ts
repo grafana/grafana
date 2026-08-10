@@ -1,0 +1,60 @@
+import memoize from 'micro-memoize';
+
+import { locationUtil, type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
+import { canAccessPluginPage, isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
+
+import { type SolutionCta } from './model';
+import { PROBE_TIMEOUT_MS, withTimeout } from './probeUtils';
+
+async function probeApp(appId: string): Promise<PluginMeta<{}> | null> {
+  try {
+    // getPluginSettings has no timeout, and some offer checks block Overview grouping.
+    const { settings } = await withTimeout(probePlugin(appId), PROBE_TIMEOUT_MS);
+    return settings && isPluginEnabled(settings) ? settings : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Shares one bounded settings lookup per app across its CTAs. */
+const probeEnabledApp = memoize(probeApp, { isPromise: true, maxSize: 8 });
+
+export async function isDrilldownAvailable(appId: string, appPath: string): Promise<boolean> {
+  const settings = await probeEnabledApp(appId);
+  if (!settings) {
+    return false;
+  }
+
+  // Some apps put their app-wide permission on the default page while routing CTAs to a deeper path.
+  const defaultPage = settings.includes?.find((include) => include.defaultNav && include.path)?.path;
+  return (!defaultPage || canAccessPluginPage(settings, defaultPage)) && canAccessPluginPage(settings, appPath);
+}
+
+export async function accessibleAppPage(appId: string, path: string): Promise<string | null> {
+  const settings = await probeEnabledApp(appId);
+  const bridgePath = createBridgeURL(appId, path);
+  return settings && canAccessPluginPage(settings, bridgePath) ? bridgePath : null;
+}
+
+export async function drilldownActiveCta(
+  ds: DataSourceInstanceListItem,
+  appId: string,
+  appName: string,
+  appPath: string
+): Promise<SolutionCta> {
+  return (await isDrilldownAvailable(appId, appPath))
+    ? { label: openAppLabel(appName), href: locationUtil.assureBaseUrl(appPath) }
+    : { label: openExploreLabel(), href: constructDataSourceExploreUrl({ name: ds.name }) };
+}
+
+// Product names are not translated.
+export function openAppLabel(appName: string): string {
+  return t('home.solutions.cta.open-app', 'Open {{appName}}', { appName });
+}
+
+export function openExploreLabel(): string {
+  return t('home.solutions.cta.open-explore', 'Open in Explore');
+}
