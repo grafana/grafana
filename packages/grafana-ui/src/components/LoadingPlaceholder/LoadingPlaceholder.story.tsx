@@ -1,4 +1,4 @@
-import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { type StoryFn, type Meta } from '@storybook/react';
 
 import { LoadingPlaceholder, type LoadingPlaceholderProps } from './LoadingPlaceholder';
 import mdx from './LoadingPlaceholder.mdx';

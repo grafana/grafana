@@ -141,12 +141,11 @@
     "@faker-js/faker": "^9.0.0",
     "@grafana/test-utils": "workspace:*",
     "@rollup/plugin-node-resolve": "16.0.1",
+    "@rsbuild/core": "^2.1.9",
+    "@rsbuild/plugin-react": "^2.1.0",
     "@storybook/addon-a11y": "10.3.6",
     "@storybook/addon-docs": "10.3.6",
-    "@storybook/addon-webpack5-compiler-swc": "^4.0.3",
-    "@storybook/preset-scss": "1.0.3",
     "@storybook/react": "10.3.6",
-    "@storybook/react-webpack5": "10.3.6",
     "@storybook/test-runner": "^0.24.3",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "6.6.4",
@@ -192,9 +191,9 @@
     "rollup-plugin-svg-import": "3.0.0",
     "sass-loader": "16.0.5",
     "storybook": "10.3.6",
+    "storybook-react-rsbuild": "3.3.4",
     "style-loader": "4.0.0",
-    "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "webpack": "^5.105.0"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {
     "react": ">=19",

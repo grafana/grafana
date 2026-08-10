@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn, type StoryObj } from '@storybook/react-webpack5';
+import { type Meta, type StoryFn, type StoryObj } from '@storybook/react';
 import { action } from 'storybook/actions';
 import { useArgs, useState, useEffect } from 'storybook/preview-api';
 

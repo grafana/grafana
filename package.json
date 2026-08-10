@@ -450,6 +450,7 @@
     "js-yaml@npm:=4.1.1": "^4.1.0",
     "nodemailer": "9.0.3",
     "storybook@npm:10.3.6": "patch:storybook@npm%3A10.3.6#~/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch",
+    "storybook-react-rsbuild/@storybook/react": "10.3.6",
     "@types/slate/immutable": "^5.0.0",
     "@types/slate-react/immutable": "^5.0.0",
     "ws": "^8.20.1",
