@@ -16,9 +16,9 @@ import { FlameGraph } from '@grafana/flamegraph';
 import { Trans } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { type PyroscopeQuery } from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/pyroscope-types';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import {
   defaultProfilingKeys,
@@ -56,6 +56,10 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
   } = props;
   const [sizeRef, { height: containerHeight }] = useMeasure<HTMLDivElement>();
   const styles = useStyles2(getStyles);
+  const profilesUid = traceToProfilesOptions?.datasourceUid;
+  const { settings: loadedProfilesSettings } = useDataSourceInstanceSettings(profilesUid);
+  // Undefined ref resolves to the default DS — only use settings when a profiles UID is configured.
+  const profilesDataSourceSettings = profilesUid ? loadedProfilesSettings : undefined;
   const theme = useTheme2();
 
   const profileTag = span.tags.filter((tag) => tag.key === pyroscopeProfileIdTagKey);
@@ -78,7 +82,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
   }, [span.duration, span.startTime]);
 
   const getFlameGraphData = async (request: DataQueryRequest<PyroscopeQuery>, datasourceUid: string) => {
-    const ds = await getDatasourceSrv().get(datasourceUid);
+    const ds = await getDataSourceInstance(datasourceUid);
     if (ds instanceof DataSourceWithBackend) {
       const result = await lastValueFrom(ds.query(request));
       const frame = result.data.find((x: DataFrame) => {
@@ -150,10 +154,6 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
 
   useEffect(() => {
     if (!Object.keys(traceFlameGraphs).includes(profileTagValue)) {
-      let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-      if (traceToProfilesOptions && traceToProfilesOptions?.datasourceUid) {
-        profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
-      }
       if (traceToProfilesOptions && profilesDataSourceSettings) {
         queryFlameGraph(profilesDataSourceSettings, traceToProfilesOptions, span);
       }
@@ -163,6 +163,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
     span,
     traceFlameGraphs,
     traceToProfilesOptions,
+    profilesDataSourceSettings,
     getTimeRangeForProfile,
     timeZone,
     queryFlameGraph,
