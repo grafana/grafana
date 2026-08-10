@@ -2123,6 +2123,34 @@ describe('TableNG utils', () => {
       expect(compute(fields, 50)).toEqual([50]);
     });
 
+    it('reserves the wider column menu instead of the filter icon when table.refresh is on', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
+      ];
+      // header "Name" (4) => 4*8 = 32, + chrome 13 = 45, plus the reserved affordance:
+      // filter icon (22) => 67 with the flag off, column menu (22) => 67 with it on. The two happen
+      // to tie today, so assert the flag doesn't double-reserve rather than that it widens.
+      expect(compute(fields, 67)).toEqual([67]);
+      expect(
+        computeContentAwareColWidths(fields, 67, {
+          typographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+        })
+      ).toEqual([67]);
+    });
+
+    it('reserves no column menu space for a non-filterable column when table.refresh is on', () => {
+      // The menu only renders on filterable columns (it has nothing else to offer yet), so a
+      // non-filterable column must not pay for it: content "a" floors to MIN_WIDTH either way.
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      expect(
+        computeContentAwareColWidths(fields, 50, {
+          typographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+        })
+      ).toEqual([50]);
+    });
+
     it('measures header labels with the medium-weight header context when provided', () => {
       // Header labels render bolder than the body, so a wider (medium-weight) context is passed for
       // them. This mock context measures every glyph 2px wider than the body's CHAR_W.

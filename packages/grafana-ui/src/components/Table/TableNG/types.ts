@@ -149,6 +149,8 @@ interface BaseTableProps {
   disableKeyboardEvents?: boolean;
   // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
   contentAwareWidthsEnabled?: boolean;
+  // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
+  tableRefreshEnabled?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */

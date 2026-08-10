@@ -681,6 +681,14 @@ export const versionedComponents = {
             '13.2.0': 'data-testid tableng cell-actions filter-out-button',
           },
         },
+        headerColumnMenu: {
+          button: {
+            '13.2.0': 'data-testid tableng header column-menu-button',
+          },
+          filterItem: {
+            '13.2.0': 'data-testid tableng header column-menu-filter-item',
+          },
+        },
         Filters: {
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',

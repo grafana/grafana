@@ -13,6 +13,8 @@ import { Filter } from '../Filter/Filter';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 import { getDisplayName } from '../utils';
 
+import { HeaderCellMenu } from './HeaderCellMenu';
+
 interface HeaderCellProps {
   column: Column<TableRow, TableSummaryRow>;
   rows: TableRow[];
@@ -26,6 +28,8 @@ interface HeaderCellProps {
   parentIndex?: number;
   crossFilterRows: Record<string, TableRow[]>;
   crossFilterTailRows: TableRow[];
+  /** `table.refresh`: left-align the label and move the filter into a hover-revealed column menu. */
+  tableRefreshEnabled?: boolean;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -41,6 +45,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   parentIndex,
   crossFilterRows,
   crossFilterTailRows,
+  tableRefreshEnabled,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -65,44 +70,36 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     return null;
   }
 
-  /* eslint-disable jsx-a11y/no-static-element-interactions */
-  return (
-    <Stack
-      ref={ref}
-      direction="row"
-      gap={0.5}
-      alignItems="center"
-      onKeyDown={
-        disableKeyboardEvents
-          ? undefined
-          : (ev) => {
-              // unfortunately, react-data-grid's default keyboard behavior is not compatible with what we need
-              // to do to make filter and sort keyboard accessible, so we have to stop the propagation of events here,
-              // and add a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
-              ev.stopPropagation();
+  const onKeyDown = disableKeyboardEvents
+    ? undefined
+    : (ev: React.KeyboardEvent) => {
+        // unfortunately, react-data-grid's default keyboard behavior is not compatible with what we need
+        // to do to make filter and sort keyboard accessible, so we have to stop the propagation of events here,
+        // and add a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
+        ev.stopPropagation();
 
-              if (!(ev.key === 'Tab' && !ev.shiftKey)) {
-                return;
-              }
+        if (!(ev.key === 'Tab' && !ev.shiftKey)) {
+          return;
+        }
 
-              const tableTabbedElement = ev.target;
-              if (!(tableTabbedElement instanceof HTMLElement)) {
-                return;
-              }
+        const tableTabbedElement = ev.target;
+        if (!(tableTabbedElement instanceof HTMLElement)) {
+          return;
+        }
 
-              const headerContent = ref.current;
-              const headerCell = ref.current?.parentNode;
-              const row = headerCell?.parentNode;
-              const isLastElementInHeader =
-                headerContent?.lastElementChild?.contains(tableTabbedElement) && headerCell === row?.lastElementChild;
+        const headerContent = ref.current;
+        const headerCell = ref.current?.parentNode;
+        const row = headerCell?.parentNode;
+        const isLastElementInHeader =
+          headerContent?.lastElementChild?.contains(tableTabbedElement) && headerCell === row?.lastElementChild;
 
-              if (isLastElementInHeader) {
-                selectFirstCell();
-              }
-            }
-      }
-    >
-      {/* eslint-enable jsx-a11y/no-static-element-interactions */}
+        if (isLastElementInHeader) {
+          selectFirstCell();
+        }
+      };
+
+  const label = (
+    <>
       {showTypeIcons && (
         <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
       )}
@@ -112,6 +109,40 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
         )}
       </button>
+    </>
+  );
+
+  /* eslint-disable jsx-a11y/no-static-element-interactions */
+  if (tableRefreshEnabled) {
+    // Same DOM depth as the default branch below — the Tab handler above walks up from `ref` to the
+    // react-data-grid header cell, so this root has to stay its direct child.
+    return (
+      <div ref={ref} className={styles.headerCellRoot} onKeyDown={onKeyDown}>
+        <div className={styles.headerCellLabelGroup}>{label}</div>
+
+        {filterable && (
+          <div className={styles.headerCellActions}>
+            <HeaderCellMenu
+              name={column.key}
+              displayName={displayName}
+              field={field}
+              filterable={filterable}
+              filter={filter}
+              setFilter={setFilter}
+              parentIndex={parentIndex}
+              crossFilterRows={crossFilterRows}
+              crossFilterTailRows={crossFilterTailRows}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <Stack ref={ref} direction="row" gap={0.5} alignItems="center" onKeyDown={onKeyDown}>
+      {/* eslint-enable jsx-a11y/no-static-element-interactions */}
+      {label}
 
       {filterable && (
         <Filter
@@ -131,6 +162,29 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 };
 
 const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sortable = true) => ({
+  headerCellRoot: css({
+    label: 'headerCellRoot',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    // fill the header cell so the actions can sit against its trailing edge
+    flex: 1,
+    minWidth: 0,
+  }),
+  headerCellLabelGroup: css({
+    label: 'headerCellLabelGroup',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    minWidth: 0,
+  }),
+  headerCellActions: css({
+    label: 'headerCellActions',
+    display: 'flex',
+    alignItems: 'center',
+    flexShrink: 0,
+    marginLeft: 'auto',
+  }),
   headerCellLabel: css({
     all: 'unset',
     cursor: sortable ? 'pointer' : 'default',
