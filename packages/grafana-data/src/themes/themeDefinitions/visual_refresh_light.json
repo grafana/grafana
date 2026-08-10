@@ -137,6 +137,11 @@
       "background": "palette.white"
     }
   },
+  "shadows": {
+    "z1": "0px 0px 2px 2px hsl(from palette.neutral150 h s l / 0.30)",
+    "z2": "0px 0px 3px 3px hsl(from palette.neutral150 h s l / 0.40)",
+    "z3": "0px 0px 4px 4px hsl(from palette.neutral150 h s l / 0.50)"
+  },
   "shape": {
     "borderRadiusSm": 4,
     "borderRadius": 8,

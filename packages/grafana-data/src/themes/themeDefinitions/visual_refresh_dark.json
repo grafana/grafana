@@ -96,6 +96,11 @@
       "selectedBorder": "palette.orange500"
     }
   },
+  "shadows": {
+    "z1": "0px 0px 2px 2px hsl(from palette.ink650 h s l / 0.15)",
+    "z2": "0px 0px 2px 2px hsl(from palette.ink650 h s l / 0.20)",
+    "z3": "0px 0px 4px 4px hsl(from palette.ink650 h s l / 0.30)"
+  },
   "shape": {
     "borderRadiusSm": 4,
     "borderRadius": 8,

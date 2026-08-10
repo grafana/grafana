@@ -1,6 +1,7 @@
 import * as z from 'zod';
 
 import { type ThemeColors } from './createColors';
+import { resolvePaletteRefs } from './palette_new';
 
 /** @internal */
 export const ThemeShadowsInputSchema = z.object({
@@ -32,6 +33,7 @@ const DEFAULT_LIGHT_SHADOWS: ThemeShadows = {
 
 /** @alpha */
 export function createShadows(colors: ThemeColors, input: ThemeShadowsInput = {}): ThemeShadows {
+  input = resolvePaletteRefs(input);
   const defaultShadows = colors.mode === 'dark' ? DEFAULT_DARK_SHADOWS : DEFAULT_LIGHT_SHADOWS;
 
   return {
