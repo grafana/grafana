@@ -41,11 +41,11 @@ image_maps:
       - x_coord: 52
         y_coord: 9.5
         content: |
-          Ungroups all the tabs inside **Row with tabs**, leaving the panels in that row.
+          Ungroups the tabs inside **Row with tabs**. Nested rows move up a level and tabs that contain only panels are converted to rows.
       - x_coord: 20.5
         y_coord: 96
         content: |
-          Removes all groupings on the dashboard, leaving just the panels on the dashboard.
+          Ungroups the top-level rows. Nested tabs move up a level and rows that contain only panels are converted to tabs.
 ---
 
 # Dashboard panel groupings
@@ -185,8 +185,18 @@ You can add more one more level of grouping if needed.
 
 You can ungroup some or all of the dashboard groupings without losing your panels.
 
-When you ungroup a row or tab, all the groupings inside it are ungrouped and the panels are moved into the next higher-level grouping.
-If there are no more groupings left, the panels are moved onto the dashboard.
+What happens when you ungroup rows or tabs depends on what they contain:
+
+- **Groupings that contain only panels**: The grouping level is removed and the panels are merged into the next higher-level grouping. If there are no groupings left, the panels are moved onto the dashboard.
+- **Groupings that contain nested groupings**: Only the grouping level you're ungrouping is removed. The nested groupings move up a level, and any groupings at the same level that contain only panels are converted to the same grouping type, so the structure of your dashboard content is preserved.
+
+When the groupings you're ungrouping contain nested groupings, the following rules apply:
+
+- If the nested groupings are all rows or all tabs, Grafana automatically converts everything at that level to that grouping type.
+- If the nested groupings are a mix of rows and tabs, or if converting to tabs isn't possible because tabs can't be directly nested inside a tab, you're prompted to choose between **Convert to rows** and **Convert to tabs**.
+- If any of the ungrouped groupings have repeat options configured, those repeat options are lost. Grafana warns you before making the change.
+
+Section-level variables and filters configured on the ungrouped groupings aren't lost; they move up to the next level.
 
 {{< image-map key="ungrouping" >}}
 
@@ -201,8 +211,9 @@ To remove groupings, follow these steps:
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to remove.
-1. Hover your mouse over the relevant area to show the **Ungroup rows** or **Ungroup tabs** button, then click it to ungroup all rows or tabs, including any nested groupings.
+1. Hover your mouse over the relevant area to show the **Ungroup rows** or **Ungroup tabs** button, then click it.
 1. If you've ungrouped panels that were previously in different panel layouts, you'll be prompted to select a common layout type for all the panels; click **Convert to Auto grid** or **Convert to Custom**.
+1. If the ungrouped groupings contain a mix of nested rows and tabs, you'll be prompted to select how to convert them; click **Convert to rows** or **Convert to tabs**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
@@ -241,3 +252,4 @@ Panels in the grouping resolve section-level variables and filters first, then f
 
 The panel query editor is context-aware, so the autocomplete only shows the variables available to the panel you're editing.
 Also, section-level variables and filters carry over when you convert between rows and tabs, change layouts, and work with repeating rows and tabs.
+When you ungroup rows or tabs, their section-level variables and filters move up to the next level.

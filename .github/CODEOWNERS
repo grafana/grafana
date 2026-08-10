@@ -371,7 +371,6 @@
 /pkg/tsdb/azuremonitor/ @grafana/data-sources-plugins
 
 # Partner Datasources backend code
-/pkg/tsdb/influxdb/ @grafana/data-sources-plugins
 /pkg/tsdb/graphite/ @grafana/data-sources-plugins
 
 # Grafana search and storage
@@ -424,6 +423,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e-playwright/alerting-suite/ @grafana/alerting-squad
 /e2e-playwright/cloud-plugins-suite/ @grafana/data-sources-plugins
+/e2e-playwright/diagnostics-suite/ @grafana/data-sources-plugins
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
 /e2e-playwright/dashboard-cujs/ @grafana/dashboards-squad
 /e2e-playwright/journey-tracking/ @grafana/dashboards-squad
@@ -964,7 +964,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/isOnPrem.ts @grafana/grafana-frontend-navigation
 /public/app/core/utils/isRecord.ts @grafana/dashboards-squad
 /public/app/core/utils/kbn* @grafana/grafana-frontend-platform
-/public/app/core/utils/navBarItem-translations* @grafana/grafana-frontend-navigation
+/public/app/core/utils/navBarItem-translations.ts @grafana/grafana-frontend-navigation
 /public/app/core/utils/object* @grafana/grafana-frontend-platform
 /public/app/core/utils/query* @grafana/grafana-datasources-core-services
 /public/app/core/utils/richHistory* @grafana/datapro
@@ -993,6 +993,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/correlations/ @grafana/datapro
 /public/app/features/dashboard/ @grafana/dashboards-squad
 /public/app/features/dashboard/components/TransformationsEditor/ @grafana/datapro
+/public/app/features/dashboard-prompt/ @grafana/dashboards-squad
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
 /public/app/features/dashboard-scene/panel-edit/PanelEditNext/ @grafana/datapro
 /public/app/features/dashboard-scene/panel-edit/PanelStylesSection*.tsx/ @grafana/dataviz-squad
@@ -1153,6 +1154,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/grafana-frontend-platform
+/scripts/rspack/ @grafana/grafana-frontend-platform
 /scripts/test-aliases.py @grafana/docs-tooling @jtvdez
 eslint-suppressions.json @grafanabot
 
@@ -1166,7 +1168,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/grafana-catalog
 /public/app/plugins/datasource/azuremonitor/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/graphite/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/influxdb/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
@@ -1374,6 +1375,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
 /.github/workflows/analytics-events-report.yml @grafana/grafana-frontend-platform
 /.github/workflows/pr-e2e-tests.yml @grafana/grafana-backend-services-squad
+/.github/workflows/pr-diagnostics-e2e.yml @grafana/data-sources-plugins
 /.github/workflows/frontend-perf-tests.yaml @grafana/grafana-frontend-platform
 /.github/workflows/release-npm.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/determine-npm-tag.sh @grafana/grafana-frontend-platform

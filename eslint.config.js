@@ -178,6 +178,7 @@ module.exports = [
       '@grafana/zod-import-namespace': 'error',
       '@grafana/no-direct-date-fns': 'error',
       '@grafana/no-direct-create-monitoring-logger': 'error',
+      '@grafana/no-get-data-source-srv': 'error',
       'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
@@ -505,7 +506,6 @@ module.exports = [
       'public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/graphite/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/influxdb/**/*.{ts,tsx}',
     ],
     plugins: {
       import: importPlugin,

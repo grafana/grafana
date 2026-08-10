@@ -1189,6 +1189,11 @@ export const versionedPages = {
         '11.1.0': 'data-testid QueryHistory',
       },
     },
+    QueryInspector: {
+      container: {
+        '13.2.0': 'data-testid explore query inspector',
+      },
+    },
   },
   SoloPanel: {
     url: {
