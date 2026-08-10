@@ -12,17 +12,17 @@ labels:
 menuTitle: Query editor
 title: PostgreSQL query editor
 weight: 20
-review_date: 2026-05-04
+review_date: 2026-08-10
 ---
 
 # PostgreSQL query editor
 
 The PostgreSQL query editor lets you build and run queries against your data source. For general query editor and data transformation concepts, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
-You can open the PostgreSQL query editor from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or from a dashboard panel—click the ellipsis in the upper right of the panel and select **Edit**.
+You can open the PostgreSQL query editor from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
 {{< admonition type="note" >}}
-A default database must be configured in the data source settings. If none is set, or it is removed, the data source will not run queries until a database is configured again.
+A default database must be configured in the data source settings. If none is set, or it is removed, the data source doesn't run queries until a database is configured again.
 {{< /admonition >}}
 
 ## PostgreSQL query editor components
@@ -33,7 +33,7 @@ Builder mode helps you build a query using a visual interface. Code mode allows 
 
 ### PostgreSQL Builder mode
 
-The following components will help you build a PostgreSQL query:
+The following components help you build a PostgreSQL query:
 
 - **Format** - Select the query result format from the drop-down. The default is **Table**. If you use the **Time series** format option, one of the columns must be `time`. Refer to [Time series queries](#time-series-queries) for more information.
 - **Table** - Select a table from the drop-down. Tables correspond to the chosen database.
@@ -62,7 +62,7 @@ If a table or column name is a reserved word or contains mixed case or special c
 Select **Table** or **Time Series** as the format. Click the **{}** in the bottom right to format the query. Click the **downward caret** to expand the Code mode editor. **CTRL/CMD + Return** serves as a keyboard shortcut to execute the query.
 
 {{< admonition type="warning" >}}
-Changes made to a query in Code mode will not transfer to Builder mode and will be discarded. You will be prompted to copy your code to the clipboard to save any changes.
+Changes made to a query in Code mode don't transfer to Builder mode and are discarded. You're prompted to copy your code to the clipboard to save any changes.
 {{< /admonition >}}
 
 ## Macros
@@ -115,8 +115,8 @@ You can set a lower bound for these variables with the **Min time interval** opt
 Keep the following behavior in mind when using macros:
 
 - **Comment stripping:** Grafana strips SQL comments (`--` line comments and `/* */` block comments) before expanding macros. Macros placed inside comments aren't expanded.
-- **TimescaleDB mode:** When the **TimescaleDB** toggle is enabled in the data source configuration, `$__timeGroup` and `$__timeGroupAlias` use PostgreSQL's `time_bucket()` function instead of `floor(extract(epoch ...))`.
-- **Trailing comma pattern:** A `$__timeGroup(...)` call followed immediately by a comma (`,`) is automatically treated as `$__timeGroupAlias(...)`, adding the `AS "time"` alias. This is a legacy convenience—use `$__timeGroupAlias` explicitly for clarity.
+- **TimescaleDB mode:** When the **TimescaleDB** toggle is enabled in the data source configuration, `$__timeGroup` and `$__timeGroupAlias` use the PostgreSQL `time_bucket()` function instead of `floor(extract(epoch ...))`.
+- **Trailing comma pattern:** A `$__timeGroup(...)` call followed immediately by a comma (`,`) is automatically treated as `$__timeGroupAlias(...)`, adding the `AS "time"` alias. This is a legacy convenience. Use `$__timeGroupAlias` explicitly for clarity.
 - **Inspect expanded SQL:** To view the final SQL after macro expansion, open the [Query inspector](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-inspector) in a panel and check the query that was sent to the database.
 
 ## Table queries
@@ -274,7 +274,7 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-Based on the data frame result in the following example, the time series panel will generate two series named _value 10.0.1.1_ and _value 10.0.1.2_. To display the series names as _10.0.1.1_ and _10.0.1.2_, use the [Standard options definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name) display value `${__field.labels.hostname}`.
+Based on the data frame result in the following example, the time series panel generates two series named _value 10.0.1.1_ and _value 10.0.1.2_. To display the series names as _10.0.1.1_ and _10.0.1.2_, use the [Standard options definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#display-name) display value `${__field.labels.hostname}`.
 
 Data frame result:
 

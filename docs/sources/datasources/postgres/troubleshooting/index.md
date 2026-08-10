@@ -15,7 +15,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot PostgreSQL data source issues
 weight: 600
-review_date: 2026-05-04
+review_date: 2026-08-10
 ---
 
 # Troubleshoot PostgreSQL data source issues
@@ -45,13 +45,13 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 
 **Error message:** `dial tcp: connect: connection refused`, `i/o timeout`, or `context deadline exceeded` when using Grafana Cloud with a database on a private network.
 
-**Cause:** Grafana Cloud runs in a hosted environment and can't directly reach databases on `localhost`, `127.0.0.1`, or private IP ranges (`10.x`, `172.16.x`, `192.168.x`). This is the most common issue when migrating from self-hosted Grafana to Grafana Cloud.
+**Cause:** Grafana Cloud runs in a hosted environment and can't directly reach databases on `localhost`, `127.0.0.1`, or private IP ranges (`10.x`, `172.16.x`, `192.168.x`). This is the most common issue when migrating from self-managed Grafana to Grafana Cloud.
 
 **Solution:**
 
 1. Set up [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to create a secure tunnel between Grafana Cloud and your private network.
 1. Install the PDC agent on a machine that has network access to your PostgreSQL instance.
-1. If you experience intermittent connection drops with the Docker-based PDC agent, try the binary-based agent instead—this has resolved stability issues in some environments.
+1. If you experience intermittent connection drops with the Docker-based PDC agent, try the binary-based agent instead. This has resolved stability issues in some environments.
 1. Update the **Host URL** in the data source settings to use the hostname as seen from the PDC agent's network (not `localhost`).
 
 ### Request timed out

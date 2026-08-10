@@ -14,7 +14,7 @@ labels:
 menuTitle: Alerting
 title: PostgreSQL alerting
 weight: 500
-review_date: 2026-05-04
+review_date: 2026-08-10
 ---
 
 # PostgreSQL alerting
