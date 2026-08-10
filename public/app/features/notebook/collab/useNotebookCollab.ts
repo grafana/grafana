@@ -71,6 +71,31 @@ export function resourceVersionTs(resource?: Resource<NotebookSpec>): number | u
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
+/**
+ * One-shot document broadcast for flows that save over HTTP outside an editor
+ * session (add-to-notebook from dashboards/Explore) — open editors of the same
+ * notebook apply the fresh document immediately instead of waiting for a reload.
+ */
+export function broadcastNotebookDoc(uid: string, spec: NotebookSpec) {
+  const message: CollabMessage = {
+    t: 'doc',
+    sid: `oneshot-${generateUUID()}`,
+    ts: Date.now(),
+    user: {
+      login: contextSrv.user.login,
+      name: contextSrv.user.name || contextSrv.user.login,
+      avatarUrl: contextSrv.user.gravatarUrl,
+    },
+    spec,
+    transient: true,
+  };
+  getGrafanaLiveSrv()
+    .publish({ scope: LiveChannelScope.Grafana, stream: 'notebook', path: `uid/${uid}` }, message)
+    .catch(() => {
+      // Best-effort: open editors fall back to seeing the change on reload.
+    });
+}
+
 function colorForSession(sid: string): string {
   let hash = 0;
   for (let i = 0; i < sid.length; i++) {
