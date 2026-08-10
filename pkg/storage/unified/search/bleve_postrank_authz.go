@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"fmt"
+	"iter"
 	"slices"
 	"sort"
 	"strings"
@@ -147,11 +148,23 @@ func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req 
 // extends the bleve load list only; it is NOT part of the response column list
 // (selectFields) — Search snapshots selectFields before calling this so the
 // caller's requested columns are returned unchanged.
-func (b *bleveIndex) ensureAuthzFields(searchrequest *bleve.SearchRequest) {
-	if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER) &&
-		!slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_ALL_FIELDS) {
-		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_FOLDER)
+func (b *bleveIndex) ensureAuthzFields(searchrequest *bleve.SearchRequest, trash bool) {
+	for _, f := range authzLoadFields(trash) {
+		if !slices.Contains(searchrequest.Fields, f) &&
+			!slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_ALL_FIELDS) {
+			searchrequest.Fields = append(searchrequest.Fields, f)
+		}
 	}
+}
+
+// authzLoadFields are the stored fields the post-rank runner reads to authorize a
+// hit. Every place that narrows the load list has to keep all of them: dropping
+// deleted_by raises no error, it just stops the deleter seeing their own objects.
+func authzLoadFields(trash bool) []string {
+	if trash {
+		return []string{resource.SEARCH_FIELD_FOLDER, resource.SEARCH_FIELD_DELETED_BY}
+	}
+	return []string{resource.SEARCH_FIELD_FOLDER}
 }
 
 // authzResources builds the resource-type -> verb map used to authorize hits.
@@ -191,6 +204,10 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 	if v, ok := doc.Fields[resource.SEARCH_FIELD_FOLDER].(string); ok {
 		folder = v
 	}
+	deletedBy := ""
+	if v, ok := doc.Fields[resource.SEARCH_FIELD_DELETED_BY].(string); ok {
+		deletedBy = v
+	}
 
 	return docInfo{
 		doc:          doc,
@@ -200,6 +217,7 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 		name:         parts[3],
 		folder:       folder,
 		verb:         verb,
+		deletedBy:    deletedBy,
 	}, true
 }
 
@@ -226,6 +244,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	selectFields []string,
 	stats *resource.SearchStats,
 	response *resourcepb.ResourceSearchResponse,
+	trashAuthz *resource.TrashAuthorizer,
 ) (*resourcepb.ResourceSearchResponse, error) {
 	limit, offset := int(req.Limit), int(req.Offset)
 	ctx, span := tracer.Start(ctx, "search.postRankAuthz", trace.WithAttributes(
@@ -245,7 +264,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	countOnly := limit == 0 && !wantFacets
 
 	agg, facetAuthorized, facetExhausted, err := b.prepareFacetAggregation(
-		ctx, access, req, index, firstReq, resources, stats,
+		ctx, access, req, index, firstReq, resources, stats, trashAuthz,
 	)
 	if err != nil {
 		return nil, err
@@ -256,7 +275,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	case countOnly:
 		baseWindow = cfg.countWindowSize()
 		// No rows are returned, so load only what authorization reads.
-		firstReq.Fields = []string{resource.SEARCH_FIELD_FOLDER}
+		firstReq.Fields = authzLoadFields(trashAuthz != nil)
 		firstReq.Size = baseWindow
 	case wantFacets:
 		// Facets always use a separate scan starting at the top of the query.
@@ -325,7 +344,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		}
 
 		stop := false
-		for info, err := range authz.FilterAuthorized(ctx, access, candidateSeq, extractFn, authz.WithTracer(tracer)) {
+		for info, err := range authorizeHits(ctx, access, candidateSeq, extractFn, trashAuthz) {
 			if err != nil {
 				return nil, err
 			}
@@ -391,6 +410,22 @@ func (b *bleveIndex) runPostFilterAuthz(
 		authorized, exhausted, reverseSort, wantFacets, agg, stats)
 }
 
+// authorizeHits filters ranked hits by the trash rule when trashAuthz is set,
+// otherwise by the read check. Same shape either way, so the scan loops do not
+// need to know which is running.
+func authorizeHits(
+	ctx context.Context,
+	access authlib.AccessClient,
+	candidates iter.Seq[docInfo],
+	extractFn func(docInfo) authz.BatchCheckItem,
+	trashAuthz *resource.TrashAuthorizer,
+) iter.Seq2[docInfo, error] {
+	if trashAuthz != nil {
+		return trashAuthorized(ctx, candidates, trashAuthz)
+	}
+	return authz.FilterAuthorized(ctx, access, candidates, extractFn, authz.WithTracer(tracer))
+}
+
 func (b *bleveIndex) prepareFacetAggregation(
 	ctx context.Context,
 	access authlib.AccessClient,
@@ -399,6 +434,7 @@ func (b *bleveIndex) prepareFacetAggregation(
 	firstReq *bleve.SearchRequest,
 	resources map[string]string,
 	stats *resource.SearchStats,
+	trashAuthz *resource.TrashAuthorizer,
 ) (*facetAggregator, int64, bool, error) {
 	if len(req.Facet) == 0 {
 		return nil, 0, false, nil
@@ -415,7 +451,7 @@ func (b *bleveIndex) prepareFacetAggregation(
 		}
 	}
 	agg, authorized, exhausted, err := b.aggregateFacetsFromTop(
-		ctx, access, index, firstReq, resources, extractFn, req.Facet, stats,
+		ctx, access, index, firstReq, resources, extractFn, req.Facet, stats, trashAuthz,
 	)
 	return agg, authorized, exhausted, err
 }
@@ -424,8 +460,8 @@ func (b *bleveIndex) prepareFacetAggregation(
 // folder to authorize a hit and the stored facet fields to count its terms.
 // The response columns come from the page scan, so loading them here would
 // fetch stored data for up to FacetSampleSize hits that is never returned.
-func (b *bleveIndex) facetScanFields(facets map[string]*resourcepb.ResourceSearchRequest_Facet) []string {
-	fields := make([]string, 0, len(facets)+1)
+func (b *bleveIndex) facetScanFields(facets map[string]*resourcepb.ResourceSearchRequest_Facet, trash bool) []string {
+	fields := make([]string, 0, len(facets)+2)
 	for _, facet := range facets {
 		field := b.searchFields.storedFacetFields[facet.Field]
 		if field != "" && !slices.Contains(fields, field) {
@@ -433,7 +469,7 @@ func (b *bleveIndex) facetScanFields(facets map[string]*resourcepb.ResourceSearc
 		}
 	}
 	slices.Sort(fields)
-	return append(fields, resource.SEARCH_FIELD_FOLDER)
+	return append(fields, authzLoadFields(trash)...)
 }
 
 func (b *bleveIndex) aggregateFacetsFromTop(
@@ -445,6 +481,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 	extractFn func(docInfo) authz.BatchCheckItem,
 	facets map[string]*resourcepb.ResourceSearchRequest_Facet,
 	stats *resource.SearchStats,
+	trashAuthz *resource.TrashAuthorizer,
 ) (*facetAggregator, int64, bool, error) {
 	agg := newFacetAggregator(facets, b.searchFields.storedFacetFields)
 	cfg := b.postRankAuthz
@@ -456,7 +493,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 	initial.SearchAfter = nil
 	initial.SearchBefore = nil
 	initial.Size = cfg.facetWindowSize()
-	initial.Fields = b.facetScanFields(facets)
+	initial.Fields = b.facetScanFields(facets, trashAuthz != nil)
 	windowReq := &initial
 
 	var firstRes *bleve.SearchResult
@@ -486,7 +523,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 				}
 			}
 		}
-		for info, err := range authz.FilterAuthorized(ctx, access, candidateSeq, extractFn, authz.WithTracer(tracer)) {
+		for info, err := range authorizeHits(ctx, access, candidateSeq, extractFn, trashAuthz) {
 			if err != nil {
 				return nil, 0, false, err
 			}
