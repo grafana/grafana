@@ -12454,6 +12454,10 @@
     "new-folder": {
       "title": "New folder"
     },
+    "notebooks": {
+      "subtitle": "Capture investigations with narrative text and live visualizations",
+      "title": "Notebooks"
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12763,6 +12767,7 @@
   "notebooks": {
     "activity": {
       "added-code": "added a code block",
+      "added-note": "added a note",
       "added-text": "added a text block",
       "added-viz": "added a visualization",
       "changed-time": "changed the notebook time range",
@@ -12864,6 +12869,7 @@
       "status-pending": "Saving shortly…",
       "status-saved": "Saved {{when}}",
       "status-saving": "Saving…",
+      "status-unsaved": "Unsaved changes",
       "stop-following": "Stop following",
       "tags-placeholder": "Add tags",
       "title-label": "Notebook title",
@@ -12933,6 +12939,21 @@
     },
     "quick-add": {
       "added": "Added to notebook"
+    },
+    "sidebar": {
+      "add-note": "Add note (Enter)",
+      "delete-block": "Delete block",
+      "edit": "Open in editor",
+      "empty": "No notebooks yet — create one to start capturing findings.",
+      "load-error": "Failed to load notebooks",
+      "new": "New",
+      "no-blocks": "Nothing here yet — capture your first note below, or add panels from any dashboard.",
+      "note-placeholder": "Jot a quick note — Enter to add",
+      "open": "Open notebook",
+      "picker": "Notebook",
+      "status-synced": "All changes saved",
+      "title": "Notebooks",
+      "view-all": "View all"
     },
     "viz-suggestions": {
       "no-data": "No data yet — suggestions appear once the panel has results.",

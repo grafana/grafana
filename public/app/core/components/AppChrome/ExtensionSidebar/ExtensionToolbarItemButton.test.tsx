@@ -51,6 +51,8 @@ describe('ExtensionToolbarItemButton', () => {
     ['grafana-grafanadocsplugin-app', 'book'],
     ['grafana-pathfinder-app', 'book'],
     ['grafana-grotfood-app', 'gf-grotfood'],
+    // Core-provided sidebar components (e.g. the notebooks workspace panel).
+    ['grafana', 'book-open'],
   ])('renders the correct icon for pluginId "%s" (%s)', (pluginId, iconName) => {
     render(<ExtensionToolbarItemButton isOpen={false} pluginId={pluginId} />);
 
