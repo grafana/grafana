@@ -115,7 +115,7 @@ require (
 	github.com/grafana/otel-profiling-go v0.6.0 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // @grafana/data-sources-plugins
 	github.com/grafana/saml v0.4.15-0.20251017092131-c91c4e045805 // @grafana/identity-access-team
-	github.com/grafana/schemads v0.2.2 // @grafana/data-sources
+	github.com/grafana/schemads v0.2.3 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20260427112133-525d1bab07e0 // @grafana/data-sources-plugins
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/grafana-catalog
@@ -709,6 +709,8 @@ require gitlab.com/gitlab-org/api/client-go v1.46.0 // @grafana/grafana-app-plat
 require github.com/ktrysmt/go-bitbucket v0.10.0 // @grafana/grafana-app-platform-squad
 
 require cloud.google.com/go/discoveryengine v1.32.0 // @grafana/grafana-search-and-storage
+
+require github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.15
 
 require (
 	github.com/efficientgo/core v1.0.0-rc.3 // indirect
