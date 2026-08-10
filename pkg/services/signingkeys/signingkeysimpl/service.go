@@ -117,7 +117,7 @@ func (s *Service) buildJWKS(ctx context.Context, keys []signingkeys.SigningKey) 
 
 // GetOrCreatePrivateKey returns the private key with the specified key ID. If the key does not exist, it will be
 // created with the specified algorithm.
-// The key will be automatically rotated at the beginning of each month. The previous key will be kept for 30 days.
+// The key will be automatically rotated at the beginning of each month.
 func (s *Service) GetOrCreatePrivateKey(ctx context.Context,
 	keyPrefix string, alg jose.SignatureAlgorithm) (string, crypto.Signer, error) {
 	if alg != jose.ES256 {
