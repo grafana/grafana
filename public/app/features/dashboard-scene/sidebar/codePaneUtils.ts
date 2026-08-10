@@ -37,15 +37,20 @@ export function getDashboardResourceText(dashboard: DashboardScene, format: Sche
 // changes to apiVersion, kind, or metadata fail loudly instead of being silently dropped.
 export function validateDashboardResourceEnvelope(
   dashboard: DashboardScene,
-  resource: { apiVersion?: string; kind?: string; metadata?: Record<string, unknown> }
+  resource: {
+    apiVersion?: string;
+    kind?: string;
+    spec?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+  }
 ): { success: boolean; error?: string } {
   const expectedAPIVersion = `dashboard.grafana.app/${getK8sV2DashboardApiConfig().version}`;
-  const { apiVersion, kind, metadata } = resource;
+  const { apiVersion, kind, spec, metadata } = resource;
 
-  if (kind && kind !== 'Dashboard') {
+  if (!spec) {
     return {
       success: false,
-      error: t('dashboard.schema-editor.invalid-kind', "Invalid kind: {{kind}}. Expected 'Dashboard'.", { kind }),
+      error: t('dashboard.schema-editor.missing-spec', 'Missing spec. Expected a valid dashboard spec.', { kind }),
     };
   }
   if (apiVersion && apiVersion !== expectedAPIVersion) {
