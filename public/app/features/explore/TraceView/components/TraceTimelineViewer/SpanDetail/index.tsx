@@ -485,7 +485,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     />
   );
 
-  if (process.tags) {
+  if (process.tags?.length) {
     listOfContentCards.push(
       <AccordionCategorizedKeyValues
         data={process.tags}

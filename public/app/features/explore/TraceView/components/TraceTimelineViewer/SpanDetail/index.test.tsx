@@ -272,6 +272,26 @@ describe('<SpanDetail>', () => {
     expect(props.processToggle).toHaveBeenLastCalledWith(span.spanID);
   });
 
+  it('hides Resource attributes when process.tags is empty', () => {
+    const spanWithoutResourceAttributes = {
+      ...span,
+      process: {
+        ...span.process,
+        tags: [],
+      },
+    };
+
+    render(
+      <SpanDetail
+        {...(props as unknown as SpanDetailProps)}
+        span={spanWithoutResourceAttributes}
+      />
+    );
+
+    expect(screen.queryByText('Resource attributes')).not.toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: /Span attributes/ })).toBeInTheDocument();
+  });
+
   it('renders the logs', async () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     await userEvent.click(screen.getByRole('switch', { name: /Events/ }));
