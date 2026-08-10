@@ -1,9 +1,5 @@
-import {
-  type LibraryPanelKind as DashboardLibraryPanelKind,
-  type PanelKind as DashboardPanelKind,
-  type Spec as DashboardV2Spec,
-} from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type NotebookElement, type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type NotebookElement, type NotebookLayoutKind } from 'app/features/notebook/types';
 
 import { NotebookCellItem } from '../../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../../scene/layout-notebook/NotebookLayoutManager';
@@ -28,10 +24,11 @@ export function deserializeNotebookLayout(
   for (const item of notebookLayout.spec.cells) {
     const elementName = item.spec.element.name;
     // `elements` is typed DashboardV2Spec['elements'] = Record<string, PanelKind | LibraryPanelKind>
-    // (the dashboard element union, which has no CellKind). A notebook's elements really do
-    // include CellKind at runtime, and we branch on element.kind === 'Cell' below. TS rejects a
-    // direct `as NotebookElement` because the two unions aren't considered related enough
-    // ("neither sufficiently overlaps the other"), so we widen through `unknown` to bridge them.
+    // (the dashboard element union, which has no CellKind). A notebook's elements really do include
+    // CellKind at runtime, and we branch on element.kind === 'Cell' below, so widen through
+    // `unknown`. A plain widening assignment does not work: it keeps the declared union and the
+    // Cell branch collapses to `never`. Unlike the leaf types, this one is a genuine difference
+    // between the notebook and dashboard element unions, not a cross-module artifact.
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- notebook is a sibling kind riding the dashboard-typed transformer
     const element = elements[elementName] as unknown as NotebookElement | undefined;
     if (!element) {
@@ -46,18 +43,11 @@ export function deserializeNotebookLayout(
     };
 
     if (element.kind === 'Panel') {
-      // Same reason as the elements cast above: PanelKind is generated identically for both the
-      // notebook and dashboard schemas, but TS sees them as unrelated types from different modules,
-      // so buildVizPanel (dashboard-typed) rejects the notebook-typed value without this bridge.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- identical leaf type across the two schemas
-      const panel = element as unknown as DashboardPanelKind;
-      cells.push(new NotebookCellItem({ ...base, body: buildVizPanel(panel, panelIdGenerator?.()) }));
+      // buildVizPanel is dashboard-typed and takes this directly: the notebook panel chain carries
+      // the dashboard v2 shape, so the two generated types are structurally identical.
+      cells.push(new NotebookCellItem({ ...base, body: buildVizPanel(element, panelIdGenerator?.()) }));
     } else if (element.kind === 'LibraryPanel') {
-      // Same bridge as the Panel branch: identical generated LibraryPanelKind, different module,
-      // so buildLibraryPanel (dashboard-typed) needs the notebook-typed value widened through unknown.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- identical leaf type across the two schemas
-      const libraryPanel = element as unknown as DashboardLibraryPanelKind;
-      cells.push(new NotebookCellItem({ ...base, body: buildLibraryPanel(libraryPanel, panelIdGenerator?.()) }));
+      cells.push(new NotebookCellItem({ ...base, body: buildLibraryPanel(element, panelIdGenerator?.()) }));
     } else if (element.kind === 'Cell') {
       cells.push(new NotebookCellItem({ ...base, content: element.spec.content }));
     }
