@@ -222,10 +222,10 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     home: {
       background: {
         base: colors.background.page,
-        fade: colors.mode === 'dark' ? palette.violet950 : palette.violet100,
-        highlight: colors.mode === 'dark' ? palette.violet900 : palette.violet200,
-        right: colors.mode === 'dark' ? palette.orange900 : palette.orange200,
-        left: colors.mode === 'dark' ? palette.blue900 : palette.blue200,
+        fade: colors.mode === 'dark' ? palette.violet900 : palette.violet100,
+        highlight: colors.mode === 'dark' ? palette.violet800 : palette.violet200,
+        right: colors.mode === 'dark' ? palette.orange800 : palette.orange200,
+        left: colors.mode === 'dark' ? palette.blue800 : palette.blue200,
       },
     },
   };
