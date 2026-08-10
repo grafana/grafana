@@ -54,10 +54,21 @@ export class Panels extends PageObject {
     }
   }
 
-  async selectByIndex(index: number) {
-    await test.step(`Select panel at index ${index}`, async () => {
-      await this.getHeaders().nth(index).click();
-    });
+  async selectByIndex(index: number | number[]) {
+    if (!Array.isArray(index)) {
+      await test.step(`Select panel at index ${index}`, async () => {
+        await this.getHeaders().nth(index).click();
+      });
+    } else {
+      await test.step(`Select panels at indexes: ${index.join(', ')}`, async () => {
+        for (const [position, i] of index.entries()) {
+          // first click selects; subsequent shift-clicks extend the multi-selection
+          await this.getHeaders()
+            .nth(i)
+            .click(position === 0 ? undefined : { modifiers: ['Shift'] });
+        }
+      });
+    }
   }
 
   // Note: each menuPath segment is the item's label, e.g. ['More...', 'Duplicate']

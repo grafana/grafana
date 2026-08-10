@@ -18,10 +18,19 @@ export class Rows extends PageObject {
       .locator('> .dashboard-row-header + div');
   }
 
-  async select(rowTitle: string) {
-    await test.step(`Select row "${rowTitle}"`, async () => {
-      await this.getTitle(rowTitle).click();
-    });
+  async select(rowTitle: string | string[]) {
+    if (!Array.isArray(rowTitle)) {
+      await test.step(`Select row "${rowTitle}"`, async () => {
+        await this.getTitle(rowTitle).click();
+      });
+    } else {
+      await test.step(`Select multiple rows: ${rowTitle.join(', ')}`, async () => {
+        for (const [index, title] of rowTitle.entries()) {
+          // first click selects; subsequent shift-clicks extend the multi-selection
+          await this.getTitle(title).click(index === 0 ? undefined : { modifiers: ['Shift'] });
+        }
+      });
+    }
   }
 
   // Collapses an expanded row, expands a collapsed one

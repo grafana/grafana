@@ -5,6 +5,7 @@ import { PageObject, type PageObjectArgs } from '../PageObject';
 import { AddOptions } from './AddOptions';
 import { ContentOutline } from './ContentOutline';
 import { DashboardOptions } from './DashboardOptions';
+import { GroupOptions } from './GroupOptions';
 import { PanelOptions } from './PanelOptions';
 import { RowOptions } from './RowOptions';
 import { TabOptions } from './TabOptions';
@@ -22,6 +23,7 @@ export class Sidebar extends PageObject {
   public panelOptions: PanelOptions;
   public rowOptions: RowOptions;
   public tabOptions: TabOptions;
+  public groupOptions: GroupOptions;
 
   constructor(args: PageObjectArgs) {
     super(args);
@@ -33,6 +35,7 @@ export class Sidebar extends PageObject {
     this.panelOptions = new PanelOptions(args);
     this.rowOptions = new RowOptions(args);
     this.tabOptions = new TabOptions(args);
+    this.groupOptions = new GroupOptions(args);
   }
 
   getContainer() {

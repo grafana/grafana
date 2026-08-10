@@ -13,9 +13,18 @@ export class Tabs extends PageObject {
     // the layout container holding the tab's content
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.LayoutContainer(`tab ${tabTitle}`));
   }
-  async select(tabTitle: string) {
-    await test.step(`Select tab "${tabTitle}"`, async () => {
-      await this.getTitle(tabTitle).click();
-    });
+  async select(tabTitle: string | string[]) {
+    if (!Array.isArray(tabTitle)) {
+      await test.step(`Select tab "${tabTitle}"`, async () => {
+        await this.getTitle(tabTitle).click();
+      });
+    } else {
+      await test.step(`Select multiple tabs: ${tabTitle.join(', ')}`, async () => {
+        for (const [index, title] of tabTitle.entries()) {
+          // first click selects; subsequent shift-clicks extend the multi-selection
+          await this.getTitle(title).click(index === 0 ? undefined : { modifiers: ['Shift'] });
+        }
+      });
+    }
   }
 }
