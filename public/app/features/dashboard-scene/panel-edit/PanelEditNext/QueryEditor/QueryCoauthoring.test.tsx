@@ -1,7 +1,11 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type QueryEditorCoauthoringCapability, type QueryEditorCoauthoringInvocation } from '@grafana/data';
+import {
+  type QueryEditorCoauthoringCapability,
+  type QueryEditorCoauthoringContext,
+  type QueryEditorCoauthoringInvocation,
+} from '@grafana/data';
 
 import { QueryCoauthoring } from './QueryCoauthoring';
 
@@ -68,7 +72,21 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-async function setup(anchorTop = 0, waitForPrompt = true) {
+async function setup(
+  anchorTop = 0,
+  waitForPrompt = true,
+  context: QueryEditorCoauthoringContext = {
+    query: 'rate(http_requests_total[5m])',
+    focusRanges: [{ from: 0, to: 4 }],
+    metricMetadata: [
+      {
+        name: 'http_requests_total',
+        type: 'counter',
+        help: 'Total HTTP requests.',
+      },
+    ],
+  }
+) {
   const focus = jest.fn();
   const clearPreview = jest.fn();
   const stagePreview = jest.fn(() => ({
@@ -87,17 +105,7 @@ async function setup(anchorTop = 0, waitForPrompt = true) {
   let invocationListener: ((invocation: QueryEditorCoauthoringInvocation) => void) | undefined;
   const capability: QueryEditorCoauthoringCapability = {
     getValue: jest.fn(() => 'rate(http_requests_total[5m])'),
-    getContext: jest.fn().mockResolvedValue({
-      query: 'rate(http_requests_total[5m])',
-      focusRanges: [{ from: 0, to: 4 }],
-      metricMetadata: [
-        {
-          name: 'http_requests_total',
-          type: 'counter',
-          help: 'Total HTTP requests.',
-        },
-      ],
-    }),
+    getContext: jest.fn().mockResolvedValue(context),
     createQuery: (value) => ({ refId: 'A', expr: value }),
     validateQuery: jest.fn(() => true),
     stagePreview,
@@ -179,6 +187,23 @@ describe('QueryCoauthoring', () => {
 
     expect(screen.getByText(/Calculates the per-second request rate\./)).toBeInTheDocument();
     expect(screen.getByText(/Looks like:/)).toBeInTheDocument();
+  });
+
+  it('requests a holistic explanation when the whole query is focused', async () => {
+    const query = 'rate(http_requests_total[5m])';
+    await setup(0, true, {
+      query,
+      focusRanges: [{ from: 0, to: query.length }],
+      metricMetadata: [{ name: 'http_requests_total', type: 'counter' }],
+    });
+
+    const request = mockIdentifySelection.mock.calls[0][0];
+    expect(request.prompt).toBe('Explain this existing PromQL query as a whole.');
+    expect(request.systemPrompt).toContain('Focus scope: whole query.');
+    expect(request.systemPrompt).toContain('Explain how the complete query works as one expression.');
+
+    act(() => request.onError());
+    expect(screen.getByText(/The complete PromQL query is selected for coauthoring\./)).toBeInTheDocument();
   });
 
   it('allows prompt entry while identifying and ignores a late explanation after submission', async () => {
