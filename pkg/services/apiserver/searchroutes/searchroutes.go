@@ -35,22 +35,26 @@ type groupResource struct {
 	resource string
 }
 
-// Build returns the search routes to mount, or nil when the endpoint is off or
-// there is no client to serve it with.
+// Build returns the search and trash routes to mount, or nil when both are off or
+// there is no client to serve them with.
+//
+// The two are switched separately because trash authorizes on a different rule
+// that has not been reviewed yet. See searchapi.ConfigKeyTrash.
 //
 // builders and installers are the two ways a kind reaches the apiserver; a route
 // is only mounted on a group version one of them actually serves.
 func Build(
-	enabled bool,
+	searchEnabled bool,
+	trashEnabled bool,
 	tracer tracing.Tracer,
 	index resourcepb.ResourceIndexClient,
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
-	// Whether the endpoint is on is read by the caller, because the two servers
-	// that mount it are configured differently: one from an ini file, one from
+	// Whether an endpoint is on is read by the caller, because the two servers
+	// that mount them are configured differently: one from an ini file, one from
 	// flags.
-	if !enabled || index == nil {
+	if (!searchEnabled && !trashEnabled) || index == nil {
 		return nil
 	}
 
@@ -82,8 +86,14 @@ func Build(
 				if !allowed[groupResource{group: gv.Group, resource: resourceName}] {
 					continue
 				}
-				byGroupVersion[gv] = append(byGroupVersion[gv],
-					handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
+				if searchEnabled {
+					byGroupVersion[gv] = append(byGroupVersion[gv],
+						handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
+				}
+				if trashEnabled {
+					byGroupVersion[gv] = append(byGroupVersion[gv],
+						handler.TrashRoute(gv.Group, gv.Version, resourceName, kind.Kind))
+				}
 			}
 		}
 	}
