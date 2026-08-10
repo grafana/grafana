@@ -50,7 +50,7 @@ const invalidSpec = { cursorSync: 'nope', timeSettings: {} };
 
 // The scene is only reached after validation passes, so an invalid-spec test
 // never touches it.
-const stubContext = { scene: {} as DashboardScene, getRevision: () => 'rev' } satisfies MutationContext;
+const stubContext = { scene: {} as DashboardScene } satisfies MutationContext;
 
 // A scene stub with just the surface APPLY_SPEC touches on the success path
 // (edit-mode entry, metadata envelope, state swap), so the rebuild is reached.
@@ -65,7 +65,7 @@ function makeSceneContext(): MutationContext {
     setState: jest.fn(),
   };
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structural stub of the DashboardScene surface this command reads
-  return { scene: scene as unknown as DashboardScene, getRevision: () => 'rev' } satisfies MutationContext;
+  return { scene: scene as unknown as DashboardScene } satisfies MutationContext;
 }
 
 describe('APPLY_SPEC validate flag', () => {

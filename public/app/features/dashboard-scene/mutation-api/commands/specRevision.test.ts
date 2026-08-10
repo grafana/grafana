@@ -1,3 +1,5 @@
+import { defaultSpec, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { computeRevisionToken, REVISION_MISMATCH } from '../dashboardRevision';
 
@@ -24,8 +26,11 @@ jest.mock('app/features/dashboard/api/DashboardAPIVersionResolver', () => ({
   dashboardAPIVersionResolver: { getV2: () => 'dashboard.grafana.app/v2' },
 }));
 
-function makeSpec(title = 'Test') {
-  return { title, elements: {}, layout: { kind: 'GridLayout', spec: { items: [] } } };
+/** APPLY_SPEC takes an untyped wire payload; computeRevisionToken takes a typed spec. */
+type TestSpec = DashboardV2Spec & Record<string, unknown>;
+
+function makeSpec(title = 'Test'): TestSpec {
+  return { ...defaultSpec(), title };
 }
 
 const spec = makeSpec();
@@ -42,12 +47,7 @@ function makeContext() {
     setState,
   };
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structural stub of the DashboardScene surface this command reads
-  const context: MutationContext = {
-    scene: scene as unknown as DashboardScene,
-    getRevision: () => {
-      throw new Error('APPLY_SPEC CAS serializes via transformSceneToSaveModelSchemaV2, not getRevision');
-    },
-  };
+  const context: MutationContext = { scene: scene as unknown as DashboardScene };
   return { context, onEnterEditMode, setState };
 }
 

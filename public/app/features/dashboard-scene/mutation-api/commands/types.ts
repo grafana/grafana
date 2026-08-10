@@ -14,7 +14,6 @@ import type { MutationResult } from '../types';
 
 export interface MutationContext {
   scene: DashboardScene;
-  getRevision: () => string;
 }
 
 export type PermissionCheckResult = { allowed: true } | { allowed: false; error: string };
