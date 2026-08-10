@@ -12762,9 +12762,20 @@
   },
   "notebooks": {
     "activity": {
+      "added-code": "added a code block",
+      "added-text": "added a text block",
+      "added-viz": "added a visualization",
+      "changed-time": "changed the notebook time range",
+      "changed-viz": "changed a visualization",
+      "deleted-block": "deleted a block",
+      "duplicated-block": "duplicated a block",
       "edited-query": "edited a query",
+      "empty": "Edits made while this notebook is open will show up here.",
       "locked-time": "locked a block to a time range",
+      "moved-block": "moved a block",
       "renamed-panel": "renamed a panel",
+      "title": "Activity",
+      "tooltip": "Activity",
       "unlocked-time": "synced a block back to notebook time"
     },
     "add-cell": {
@@ -12810,6 +12821,7 @@
       "empty-dashboards": "Browse dashboards",
       "empty-explore": "Open Explore",
       "empty-title": "Start your investigation",
+      "following": "Following {{name}}",
       "library-panel": "Library panel — open the notebook view to render it",
       "link-copied": "Notebook link copied",
       "load-error": "Failed to load notebook",
@@ -12820,6 +12832,7 @@
       "status-pending": "Saving shortly…",
       "status-saved": "Saved {{when}}",
       "status-saving": "Saving…",
+      "stop-following": "Stop following",
       "tags-placeholder": "Add tags",
       "title-label": "Notebook title",
       "title-placeholder": "Give this notebook a title",
@@ -12872,6 +12885,11 @@
     },
     "panel-cell": {
       "resize": "Resize panel"
+    },
+    "presence": {
+      "click-to-follow": "{{name}} is in this notebook — click to follow",
+      "stop-following": "Following {{name}} — click to stop",
+      "viewing": "{{name}} is in this notebook"
     },
     "query-editor": {
       "close": "Close query editor",
