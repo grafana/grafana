@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent } from 'test/test-utils';
 
 import server from '@grafana/test-utils/server';
+import { type MultiSelectCommonProps } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setTimeIntervalsList } from 'app/features/alerting/unified/mocks/server/configure';
@@ -17,7 +18,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import MuteTimingsSelector from './MuteTimingsSelector';
 
-const renderWithProvider = (alertManagerSource = GRAFANA_RULES_SOURCE_NAME, onChange: () => void = () => {}) => {
+const renderWithProvider = (
+  alertManagerSource = GRAFANA_RULES_SOURCE_NAME,
+  onChange: MultiSelectCommonProps<string>['onChange'] = () => {}
+) => {
   return render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerSource}>
       <MuteTimingsSelector alertmanager={alertManagerSource} selectProps={{ onChange }} />

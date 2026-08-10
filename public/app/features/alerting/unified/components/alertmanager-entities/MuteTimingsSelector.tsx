@@ -10,8 +10,8 @@ import { type BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/h
 import { timeIntervalToString } from 'app/features/alerting/unified/utils/alertmanager';
 
 const mapTimeInterval = (timing: MuteTiming): SelectableValue<string> => {
-  const { name, time_intervals } = timing;
-  const schedule = time_intervals.map((interval) => timeIntervalToString(interval)).join(', AND ');
+  const { name, time_intervals: timeIntervals } = timing;
+  const schedule = timeIntervals.map((interval) => timeIntervalToString(interval)).join(', AND ');
   const isUsable = isUsableTimeInterval(timing);
 
   return {
