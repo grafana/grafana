@@ -1,3 +1,4 @@
+import { SceneTimeRange } from '@grafana/scenes';
 import {
   type LibraryPanelKind as DashboardLibraryPanelKind,
   type PanelKind as DashboardPanelKind,
@@ -38,11 +39,15 @@ export function deserializeNotebookLayout(
       continue;
     }
 
-    // collapsed is optional in the schema; keep it undefined when omitted so serialize round-trips faithfully.
+    // collapsed/height/time lock are optional in the schema; keep them undefined when omitted so
+    // serialize round-trips faithfully.
     const base = {
       elementName,
       source: item.spec.source,
       collapsed: item.spec.collapsed,
+      height: item.spec.height,
+      timeFrom: item.spec.timeFrom,
+      timeTo: item.spec.timeTo,
     };
 
     if (element.kind === 'Panel') {
@@ -51,7 +56,12 @@ export function deserializeNotebookLayout(
       // so buildVizPanel (dashboard-typed) rejects the notebook-typed value without this bridge.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- identical leaf type across the two schemas
       const panel = element as unknown as DashboardPanelKind;
-      cells.push(new NotebookCellItem({ ...base, body: buildVizPanel(panel, panelIdGenerator?.()) }));
+      const body = buildVizPanel(panel, panelIdGenerator?.());
+      // A locked cell gets its own time range instead of following the notebook's.
+      if (item.spec.timeFrom && item.spec.timeTo) {
+        body.setState({ $timeRange: new SceneTimeRange({ from: item.spec.timeFrom, to: item.spec.timeTo }) });
+      }
+      cells.push(new NotebookCellItem({ ...base, body }));
     } else if (element.kind === 'LibraryPanel') {
       // Same bridge as the Panel branch: identical generated LibraryPanelKind, different module,
       // so buildLibraryPanel (dashboard-typed) needs the notebook-typed value widened through unknown.

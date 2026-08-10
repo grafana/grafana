@@ -42,7 +42,9 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
     context: context,
-    limitPerPlugin: 3,
+    // Core ('grafana') registers four links here: add to dashboard, add correlation,
+    // add to notebook and add to "<named>" notebook.
+    limitPerPlugin: 4,
   });
   const selectExploreItem = getExploreItemSelector(exploreId);
   const noQueriesInPane = Boolean(useSelector(selectExploreItem)?.queries?.length);

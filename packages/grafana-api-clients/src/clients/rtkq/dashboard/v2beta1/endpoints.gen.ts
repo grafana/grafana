@@ -2121,7 +2121,10 @@ export type NotebookElementReference = {
 export type NotebookNotebookLayoutItemSpec = {
   collapsed?: boolean;
   element: NotebookElementReference;
+  height?: number;
   source: string;
+  timeFrom?: string;
+  timeTo?: string;
 };
 export type NotebookNotebookLayoutItemKind = {
   kind: string;

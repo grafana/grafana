@@ -77,6 +77,65 @@ func TestService_checkPermission(t *testing.T) {
 			expected: false,
 		},
 		{
+			name: "notebook compatibility name does not collide with dashboard UID permission",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "dashboards:uid:same-uid",
+					Kind:       "dashboards",
+					Attribute:  "uid",
+					Identifier: "same-uid",
+				},
+			},
+			check: checkRequest{
+				Action:   "dashboards:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Name:     "notebook/same-uid",
+			},
+			expected: false,
+		},
+		{
+			name: "dashboard wildcard permission authorizes notebook compatibility name",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "dashboards:uid:*",
+					Kind:       "dashboards",
+					Attribute:  "uid",
+					Identifier: "*",
+				},
+			},
+			check: checkRequest{
+				Action:   "dashboards:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Name:     "notebook/same-uid",
+			},
+			expected: true,
+		},
+		{
+			name: "folder permission authorizes notebook compatibility name",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:folder-1",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "folder-1",
+				},
+			},
+			folders: []store.Folder{{UID: "folder-1"}},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "notebook/same-uid",
+				ParentFolder: "folder-1",
+			},
+			expected: true,
+		},
+		{
 			name: "should return true if user has wildcard permission on identifier",
 			permissions: []accesscontrol.Permission{
 				{

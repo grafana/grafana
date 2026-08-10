@@ -2,7 +2,7 @@ import { render, screen, act } from '@testing-library/react';
 import { useAsync } from 'react-use';
 
 import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/data';
-import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
+import { getAppEvents, setAppEvents, locationService, usePluginLinks } from '@grafana/runtime';
 import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import {
@@ -10,6 +10,7 @@ import {
   useExtensionSidebarContext,
   getComponentIdFromComponentMeta,
   getComponentMetaFromComponentId,
+  getInteractiveLearningPluginId,
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
 } from './ExtensionSidebarProvider';
 
@@ -141,6 +142,21 @@ describe('ExtensionSidebarProvider', () => {
     expect(screen.getByTestId('docked-component-id')).toHaveTextContent(componentId);
   });
 
+  it('should clear a docked component that is no longer available', () => {
+    // A component of a permitted plugin that is not among its added components anymore.
+    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, 'Removed Component');
+    (store.get as jest.Mock).mockReturnValue(componentId);
+
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent('undefined');
+  });
+
   it('should update storage when docked component changes', () => {
     const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title);
 
@@ -215,6 +231,61 @@ describe('ExtensionSidebarProvider', () => {
     // Should only include the enabled plugin
     expect(screen.getByTestId('available-components-size')).toHaveTextContent('1');
     expect(screen.getByTestId('plugin-ids')).toHaveTextContent(permittedPluginMeta.pluginId);
+  });
+
+  it('should synthesize an available component for core-registered sidebar links', () => {
+    // Core components (pluginId 'grafana') are not app plugins: they have no entry in
+    // the app plugin meta map and are derived from their registered links instead.
+    const usePluginLinksMock = jest.mocked(usePluginLinks);
+    usePluginLinksMock.mockReturnValue({
+      links: [
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the fields the provider reads
+        { pluginId: 'grafana', title: 'Notebooks', description: 'Core notebooks panel' } as ReturnType<
+          typeof usePluginLinks
+        >['links'][number],
+      ],
+      isLoading: false,
+    });
+    useAsyncMock.mockReturnValue({ loading: false, value: new Map() });
+
+    try {
+      render(
+        <ExtensionSidebarContextProvider>
+          <TestComponent />
+        </ExtensionSidebarContextProvider>
+      );
+
+      expect(screen.getByTestId('available-components-size')).toHaveTextContent('1');
+      expect(screen.getByTestId('plugin-ids')).toHaveTextContent('grafana');
+
+      // Opening a core-synthesized component exercises the same permission path as plugin apps.
+      act(() => {
+        const openCall = subscribeSpy.mock.calls.find((call) => call[0] === OpenExtensionSidebarEvent);
+        const [, subscriberFn] = openCall!;
+        subscriberFn(
+          new OpenExtensionSidebarEvent({
+            pluginId: 'grafana',
+            componentTitle: 'Notebooks',
+          })
+        );
+      });
+
+      expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+      expect(screen.getByTestId('docked-component-id')).toHaveTextContent(
+        JSON.stringify({ pluginId: 'grafana', componentTitle: 'Notebooks' })
+      );
+    } finally {
+      // Later tests rely on the module-level default implementation.
+      usePluginLinksMock.mockImplementation(() => ({
+        links: [
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the fields the provider reads
+          { pluginId: mockPluginMeta.pluginId, title: mockComponent.title } as ReturnType<
+            typeof usePluginLinks
+          >['links'][number],
+        ],
+        isLoading: false,
+      }));
+    }
   });
 
   it('should subscribe to OpenExtensionSidebarEvent and CloseExtensionSidebarEvent when feature is enabled', async () => {
@@ -599,6 +670,27 @@ describe('Utility Functions', () => {
     it('should return undefined for wrong field types', () => {
       const meta = getComponentMetaFromComponentId(JSON.stringify({ pluginId: 123, componentTitle: 'Test Component' }));
       expect(meta).toBeUndefined();
+    });
+  });
+
+  describe('getInteractiveLearningPluginId', () => {
+    const emptyMeta = { addedComponents: [], addedLinks: [] };
+
+    it('prefers the pathfinder plugin when both learning plugins are available', () => {
+      const components = new Map([
+        ['grafana-pathfinder-app', emptyMeta],
+        ['grafana-grafanadocsplugin-app', emptyMeta],
+      ]);
+      expect(getInteractiveLearningPluginId(components)).toBe('grafana-pathfinder-app');
+    });
+
+    it('falls back to the docs plugin when pathfinder is not available', () => {
+      const components = new Map([['grafana-grafanadocsplugin-app', emptyMeta]]);
+      expect(getInteractiveLearningPluginId(components)).toBe('grafana-grafanadocsplugin-app');
+    });
+
+    it('returns undefined when no learning plugin is available', () => {
+      expect(getInteractiveLearningPluginId(new Map())).toBeUndefined();
     });
   });
 });

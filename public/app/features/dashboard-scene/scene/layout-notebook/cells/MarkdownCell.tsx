@@ -17,7 +17,10 @@ export function MarkdownCell({ content }: { content: CellContentKind }) {
   }
 
   const html = renderTextPanelMarkdown(content.spec.text);
-  return <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.markdown)} />;
+  // allowRerender: the component defaults to injecting the html only on first mount,
+  // but the notebook editor re-renders this preview when the cell text changes
+  // (local typing or a collaborator's live edit).
+  return <DangerouslySetHtmlContent html={html} allowRerender className={cx('markdown-html', styles.markdown)} />;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
