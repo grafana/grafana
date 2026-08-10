@@ -244,6 +244,14 @@ func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
+func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+	key := resource
+	if isExternal {
+		key += "_external"
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}, nil
+}
+
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }
@@ -253,7 +261,7 @@ func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	return f.upsertLocked(vs)
 }
 
-func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, desired []string) error {
+func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, _ []vector.VectorMeta, desired []string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	// Mirror the real backend: delete subresources not in `desired`, then upsert `changed`.
@@ -301,15 +309,17 @@ func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
 	}
 	return nil
 }
-func (f *fakeVector) Delete(_ context.Context, ns, model, res, uid string) error {
+func (f *fakeVector) DeleteRows(_ context.Context, ns, model, res string, sel vector.DeleteSelector) (int64, bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.deleteErr != nil {
-		return f.deleteErr
+		return 0, false, f.deleteErr
 	}
-	f.deletes = append(f.deletes, deleteCall{ns, model, res, uid})
-	delete(f.storedSubs, subsKey(ns, model, res, uid))
-	return nil
+	for _, uid := range sel.UIDs {
+		f.deletes = append(f.deletes, deleteCall{ns, model, res, uid})
+		delete(f.storedSubs, subsKey(ns, model, res, uid))
+	}
+	return int64(len(sel.UIDs)), false, nil
 }
 func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid string, subs []string) error {
 	f.mu.Lock()
@@ -412,6 +422,9 @@ func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, er
 		defer f.mu.Unlock()
 		f.lockReleases++
 	}, true, nil
+}
+func (f *fakeVector) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
+	return fn(ctx)
 }
 
 // fakeBackfiller records that Run was invoked and blocks until ctx is

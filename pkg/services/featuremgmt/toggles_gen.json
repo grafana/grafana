@@ -3173,6 +3173,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.rspackBuild",
+        "resourceVersion": "1786019246422",
+        "creationTimestamp": "2026-08-06T12:27:26Z"
+      },
+      "spec": {
+        "description": "Switches the backend to load frontend assets built with rspack instead of webpack",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.savedQueriesPage",
         "resourceVersion": "1784068714544",
         "creationTimestamp": "2026-07-14T22:38:34Z"
@@ -6283,6 +6296,34 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorage.vectorStore",
+        "resourceVersion": "1785880163909",
+        "creationTimestamp": "2026-08-04T21:49:23Z",
+        "deletionTimestamp": "2026-08-04T22:01:34Z"
+      },
+      "spec": {
+        "description": "Enables the VectorStore write RPCs on the unified storage server",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageVectorStore",
+        "resourceVersion": "1785880096317",
+        "creationTimestamp": "2026-08-04T21:48:16Z",
+        "deletionTimestamp": "2026-08-04T21:49:23Z"
+      },
+      "spec": {
+        "description": "Enables the VectorStore write RPCs on the unified storage server",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "expression": "false"
       }
     },

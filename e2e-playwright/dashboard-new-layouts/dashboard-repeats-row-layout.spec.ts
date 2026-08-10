@@ -5,10 +5,9 @@ import V2DashWithRowRepeats from '../dashboards/V2DashWithRowRepeats.json';
 import { Canvas, Controls, Panels, Rows, Sidebar, Tabs } from './page-objects';
 import {
   verifyChanges,
-  saveDashboard,
+  saveDashboardAndCloseToast,
   importTestDashboard,
   goToEmbeddedPanel,
-  groupIntoRow,
   checkRepeatedTabTitles,
   checkRepeatedRowTitles,
   moveRow,
@@ -42,12 +41,13 @@ test.describe(
       const controls = new Controls({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
       const rows = new Rows({ page, dashboardPage, selectors, components });
+      const canvas = new Canvas({ page, dashboardPage, selectors, components });
 
       await importTestDashboard(page, selectors, 'Row layout repeats - add repeats');
 
       await controls.enterEditMode();
 
-      await groupIntoRow(page, dashboardPage, selectors);
+      await canvas.groupPanels('row');
 
       await sidebar.rowOptions.setTitle(`${REPEAT_TITLE_BASE}$c1`);
 
@@ -57,7 +57,7 @@ test.describe(
 
       await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
@@ -107,7 +107,7 @@ test.describe(
 
       await checkRepeatedRowTitles(rows, getEditedName(REPEAT_TITLE_BASE), REPEAT_OPTIONS);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await checkRepeatedRowTitles(rows, getEditedName(REPEAT_TITLE_BASE), REPEAT_OPTIONS);
@@ -139,7 +139,7 @@ test.describe(
       // reopen first row so collapse is not saved
       await rows.toggle(`${REPEAT_TITLE_BASE}1`);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       // close first row to load the second row
@@ -186,7 +186,7 @@ test.describe(
       // open first row again so collapse is not saved
       await rows.toggle(`${REPEAT_TITLE_BASE}1`);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       // collapse row again so lazy loading loads 2nd row
@@ -330,7 +330,7 @@ test.describe(
       await expect(panels.getPanel(`single panel row ${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
       await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS, 'hidden');
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await expect(rows.getTitle(nonRepeatedTitle)).toBeVisible();
@@ -362,7 +362,7 @@ test.describe(
 
       await expect(tabs.getTitle('tab-row-1')).toBeVisible();
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await checkRepeatedTabTitles(tabs, 'tab-row-', [1, 2]);
@@ -394,7 +394,7 @@ test.describe(
       // tabs repeated by c1 are present in the first row
       await checkRepeatedTabTitles(tabs, 'tab-', ['1-row-1', '2-row-1']);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       // each repeated tab is present in both repeated rows
@@ -415,6 +415,7 @@ test.describe(
 
     test('moves repeated rows', async ({ dashboardPage, selectors, page, components }) => {
       const controls = new Controls({ page, dashboardPage, selectors, components });
+      const rows = new Rows({ page, dashboardPage, selectors, components });
 
       // collapse rows so it's easier to move them without simulating scrolling
       // clone to avoid mutating V2DashWithRowRepeats, which is shared with the other tests in this file
@@ -432,7 +433,7 @@ test.describe(
       const singleRowTitle = 'single row';
 
       await controls.enterEditMode();
-      await moveRow(dashboardPage, page, selectors, `${REPEAT_TITLE_BASE}1`, singleRowTitle);
+      await moveRow(page, dashboardPage, rows, selectors, `${REPEAT_TITLE_BASE}1`, singleRowTitle);
 
       // The row order is only updated after the drop animation finishes (onDragEnd),
       // so retry the position check until the reorder has been applied
@@ -448,7 +449,7 @@ test.describe(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton)
       ).toHaveAttribute('data-testactive');
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
 
       await page.reload();
 
