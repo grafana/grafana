@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -155,8 +156,14 @@ func UnmarshalThresholdCommand(rn *rawNode) (Command, error) {
 		}
 		unloading.Invert = true
 		var d Fingerprints
-		if firstCondition.LoadedDimensions != nil {
-			d, err = FingerprintsFromFrame(firstCondition.LoadedDimensions)
+		switch {
+		case firstCondition.LoadedFingerprints != nil:
+			d = make(Fingerprints, len(firstCondition.LoadedFingerprints))
+			for _, fp := range firstCondition.LoadedFingerprints {
+				d[data.Fingerprint(fp)] = struct{}{}
+			}
+		case firstCondition.LoadedDimensions != nil:
+			d, err = fingerprintsFromFrame(firstCondition.LoadedDimensions)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse loaded dimensions: %w", err)
 			}
@@ -235,9 +242,14 @@ type ThresholdCommandConfig struct {
 }
 
 type ThresholdConditionJSON struct {
-	Evaluator        ConditionEvalJSON  `json:"evaluator"`
-	UnloadEvaluator  *ConditionEvalJSON `json:"unloadEvaluator,omitempty"`
-	LoadedDimensions *data.Frame        `json:"loadedDimensions,omitempty"`
+	Evaluator       ConditionEvalJSON  `json:"evaluator"`
+	UnloadEvaluator *ConditionEvalJSON `json:"unloadEvaluator,omitempty"`
+
+	// Fingerprints of the series that are already firing. Supersedes LoadedDimensions
+	LoadedFingerprints []uint64 `json:"loadedFingerprints,omitempty"`
+
+	// Deprecated: use LoadedFingerprints. Read only when LoadedFingerprints is absent.
+	LoadedDimensions *data.Frame `json:"loadedDimensions,omitempty"`
 }
 
 // IsHysteresisExpression returns true if the raw model describes a hysteresis command:
@@ -252,7 +264,8 @@ func IsHysteresisExpression(query map[string]any) bool {
 	return c != nil
 }
 
-// SetLoadedDimensionsToHysteresisCommand mutates the input map and sets field "conditions[0].loadedMetrics" with the data frame created from the provided fingerprints.
+// SetLoadedDimensionsToHysteresisCommand mutates the input map and sets field
+// "conditions[0].loadedFingerprints" to the provided fingerprints.
 func SetLoadedDimensionsToHysteresisCommand(query map[string]any, fingerprints Fingerprints) error {
 	condition, err := getConditionForHysteresisCommand(query)
 	if err != nil {
@@ -261,7 +274,23 @@ func SetLoadedDimensionsToHysteresisCommand(query map[string]any, fingerprints F
 	if condition == nil {
 		return errors.New("not a hysteresis command")
 	}
-	fr := FingerprintsToFrame(fingerprints)
+	fp := make([]uint64, 0, len(fingerprints))
+	for fingerprint := range fingerprints {
+		fp = append(fp, uint64(fingerprint))
+	}
+	condition["loadedFingerprints"] = fp
+	return nil
+}
+
+func setLoadedDimensionsToHysteresisCommandAsFrame(query map[string]any, fingerprints Fingerprints) error {
+	condition, err := getConditionForHysteresisCommand(query)
+	if err != nil {
+		return err
+	}
+	if condition == nil {
+		return errors.New("not a hysteresis command")
+	}
+	fr := fingerprintsToFrame(fingerprints)
 	condition["loadedDimensions"] = fr
 	return nil
 }

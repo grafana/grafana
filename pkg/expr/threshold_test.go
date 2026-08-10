@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -261,6 +263,70 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
 			},
 		},
+		{
+			// The frame encoding cannot survive a caller that re-serialises the query through a map:
+			// sorting the keys puts "data" ahead of "schema", and the frame decoder needs the schema
+			// first. Documented rather than worked around — such callers should send the array below.
+			description: "frame loaded dimensions ordered data first are rejected",
+			query: `{
+				  "conditions": [
+				    {
+				      "evaluator": {
+				        "params": [
+				          100
+				        ],
+				        "type": "gt"
+				      },
+				      "loadedDimensions": {"data":{"values":[[18446744073709551615,2,3,4,5]]},"schema":{"fields":[{"name":"fingerprints","type":"number","typeInfo":{"frame":"uint64"}}],"meta":{"type":"fingerprints","typeVersion":[1,0]},"name":"test"}},
+				      "unloadEvaluator": {
+				        "params": [
+				          31
+				        ],
+				        "type": "lt"
+				      }
+				    }
+				  ],
+				  "expression": "B"
+				}`,
+			shouldError:   true,
+			expectedError: "malformed key order or frame without schema",
+		},
+		{
+			description: "unmarshal as hysteresis command from loadedFingerprints",
+			query: `{
+				  "expression": "B",
+				  "conditions": [
+				    {
+				      "evaluator": {
+				        "params": [
+				          100
+				        ],
+				        "type": "gt"
+				      },
+				      "unloadEvaluator": {
+				        "params": [
+				          31
+				        ],
+				        "type": "lt"
+				      },
+				      "loadedFingerprints": [18446744073709551615,2,3,4,5]
+				    }
+				  ]
+				}`,
+			assert: func(t *testing.T, c Command) {
+				require.IsType(t, &HysteresisCommand{}, c)
+				cmd := c.(*HysteresisCommand)
+				actual := make([]uint64, 0, len(cmd.LoadedDimensions))
+				for fingerprint := range cmd.LoadedDimensions {
+					actual = append(actual, uint64(fingerprint))
+				}
+				sort.Slice(actual, func(i, j int) bool {
+					return actual[i] < actual[j]
+				})
+
+				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -473,6 +539,46 @@ func TestSetLoadedDimensionsToHysteresisCommand(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, fingerprints, cmd.(*HysteresisCommand).LoadedDimensions)
+	})
+}
+
+func TestLoadedFingerprintsEncoding(t *testing.T) {
+	const model = `{ "type": "threshold", "conditions": [{ "evaluator": { "params": [5], "type": "gt" }, "unloadEvaluator" : {"params": [2], "type": "lt"}}], "expression": "A" }`
+
+	// The point of the array encoding. A query reaches the expression service through callers that
+	// re-serialise it via simplejson, which sorts object keys on the way out — the ordering the frame
+	// encoding cannot survive. Note this says nothing about integer precision: that holds because
+	// simplejson decodes with UseNumber, and a decoder that reads JSON numbers into float64 instead
+	// would mangle a fingerprint above 2^53 in either encoding, frame included.
+	t.Run("survives the simplejson round-trip that sorts keys", func(t *testing.T) {
+		query := map[string]any{}
+		require.NoError(t, json.Unmarshal([]byte(model), &query))
+		fingerprints := Fingerprints{math.MaxUint64: {}, 2: {}, 3: {}}
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, fingerprints))
+
+		raw, err := json.Marshal(query)
+		require.NoError(t, err)
+		sj, err := simplejson.NewJson(raw)
+		require.NoError(t, err)
+		raw, err = sj.MarshalJSON()
+		require.NoError(t, err)
+
+		cmd, err := UnmarshalThresholdCommand(&rawNode{RefID: "B", QueryRaw: raw})
+		require.NoError(t, err)
+		require.Equal(t, fingerprints, cmd.(*HysteresisCommand).LoadedDimensions)
+	})
+
+	t.Run("takes precedence over the deprecated frame", func(t *testing.T) {
+		query := map[string]any{}
+		require.NoError(t, json.Unmarshal([]byte(model), &query))
+		require.NoError(t, setLoadedDimensionsToHysteresisCommandAsFrame(query, Fingerprints{2: {}, 3: {}}))
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, Fingerprints{7: {}}))
+
+		raw, err := json.Marshal(query)
+		require.NoError(t, err)
+		cmd, err := UnmarshalThresholdCommand(&rawNode{RefID: "B", QueryRaw: raw})
+		require.NoError(t, err)
+		require.Equal(t, Fingerprints{7: {}}, cmd.(*HysteresisCommand).LoadedDimensions)
 	})
 }
 
