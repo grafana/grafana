@@ -5,8 +5,8 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -61,6 +61,9 @@ export interface NestedFolderPickerProps {
 
   /* HTML ID for the button element for form labels */
   id?: string;
+
+  /* Disable opening the picker (still shows the selected folder label) */
+  disabled?: boolean;
 }
 
 const debouncedSearch = debounce(getSearchResults, 300);
@@ -88,6 +91,7 @@ export function NestedFolderPicker({
   permission = 'edit',
   onChange,
   id,
+  disabled = false,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const getSelectedFolderResult = useGetFolderQueryFacade(value);
@@ -116,7 +120,7 @@ export function NestedFolderPicker({
     teamFolderTreeItems,
     teamFolderOwnersByUid,
     error: teamFoldersError,
-  } = useTeamFolders(foldersOpenState, value, onChange);
+  } = useTeamFolders(foldersOpenState, value, onChange, showRootFolder);
 
   const { starredFolderTreeItems, error: starredFoldersError } = useStarredFolders(foldersOpenState, permission);
 
@@ -315,6 +319,7 @@ export function NestedFolderPicker({
     return (
       <Trigger
         id={id}
+        data-testid={selectors.components.FolderPicker.triggerButton}
         label={labelComponent}
         handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
         invalid={invalid}
@@ -329,7 +334,7 @@ export function NestedFolderPicker({
             : undefined
         }
         {...getReferenceProps()}
-        disabled={isForbidden}
+        disabled={disabled || isForbidden}
       />
     );
   }
@@ -339,6 +344,7 @@ export function NestedFolderPicker({
       <Input
         ref={refs.setReference}
         autoFocus
+        data-testid={selectors.components.FolderPicker.input}
         prefix={label ? <Icon name="folder" /> : <Icon name="search" />}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
@@ -407,9 +413,10 @@ export function NestedFolderPicker({
 function useTeamFolders(
   foldersOpenState: Record<string, boolean>,
   value?: string,
-  onChange?: (folderUID: string | undefined, folderName: string | undefined) => void
+  onChange?: (folderUID: string | undefined, folderName: string | undefined) => void,
+  showRootFolder = true
 ) {
-  const { foldersByTeam, error } = useGetTeamFolders({ skip: !config.featureToggles.teamFolders });
+  const { foldersByTeam, error } = useGetTeamFolders();
   const teamFolders = useMemo(() => foldersByTeam.flatMap(({ folders }) => folders), [foldersByTeam]);
   const firstTeamFolder = teamFolders[0];
 
@@ -462,11 +469,15 @@ function useTeamFolders(
 
   const preselectDidRun = useRef(false);
   useEffect(() => {
+    // When root is shown, value '' means the Dashboards root — do not overwrite it.
+    if (showRootFolder) {
+      return;
+    }
     if (value === '' && firstTeamFolder && onChange && !preselectDidRun.current) {
       preselectDidRun.current = true;
       onChange(firstTeamFolder.name, firstTeamFolder.title);
     }
-  }, [value, firstTeamFolder, onChange]);
+  }, [value, firstTeamFolder, onChange, showRootFolder]);
 
   return {
     teamFolderTreeItems,

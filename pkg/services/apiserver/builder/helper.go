@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	discoveryendpoint "k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -81,19 +83,16 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + "/name" // connector requires a name
 		},
 	},
-	{
-		// Rewrite the deprecated query path
-		// NOTE, this should be removed after the enterprise changes are running in hosted grafana
-		Pattern: regexp.MustCompile(`(/apis/.*.datasource.grafana.app/v0alpha1/namespaces/.*/connections/.*/query$)`),
-		ReplaceFunc: func(matches []string) string {
-			return strings.Replace(matches[0], "connections", "datasources", 1)
-		},
-	},
 }
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
+
+		// auditing.HTTPInjectAuditAnnotationMiddleware extracts the innermost service caller identity from the request
+		// and injects it into the k8s audit event context (used for audit log suppression).
+		// Runs after WithRequester so auth info is available for the first-hop fallback.
+		handler = auditing.HTTPInjectAuditAnnotationMiddleware(handler)
 
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
 		handler = filters.WithRequester(handler)
@@ -126,6 +125,7 @@ func SetupConfig(
 	additionalOpenAPIDefGetters []common.GetOpenAPIDefinitions,
 	reg prometheus.Registerer,
 	apiResourceConfig *serverstorage.ResourceConfig,
+	extraRoutes ...GroupVersionRoutes,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders, additionalOpenAPIDefGetters...)
@@ -138,7 +138,7 @@ func SetupConfig(
 		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs, apiResourceConfig)
+	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs, apiResourceConfig, extraRoutes)
 	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
 		meta := r.Metadata()
 		kind := ""
@@ -258,9 +258,7 @@ func SetupConfig(
 			return fmt.Errorf("builder did not return any API group versions: %T", b)
 		}
 		pvs := scheme.PrioritizedVersionsForGroup(gvs[0].Group)
-		for j, gv := range pvs {
-			serverConfig.AggregatedDiscoveryGroupManager.SetGroupVersionPriority(metav1.GroupVersion(gv), 15000+i, len(pvs)-j)
-		}
+		SetGroupVersionPriorities(serverConfig.AggregatedDiscoveryGroupManager, discoveryGroupPriorityBase+i, pvs)
 	}
 
 	if err := AddPostStartHooks(serverConfig, builders); err != nil {
@@ -268,6 +266,42 @@ func SetupConfig(
 	}
 
 	return nil
+}
+
+// discoveryGroupPriorityBase is the group-priority-minimum base; the builder index is added for stable relative order.
+const discoveryGroupPriorityBase = 15000
+
+// SetGroupVersionPriorities orders a group's versions in aggregated discovery under one group priority; safe at runtime (the manager serializes calls).
+func SetGroupVersionPriorities(mgr discoveryendpoint.ResourceManager, groupPriority int, pvs []schema.GroupVersion) {
+	for j, gv := range pvs {
+		mgr.SetGroupVersionPriority(metav1.GroupVersion(gv), groupPriority, len(pvs)-j)
+	}
+}
+
+// BuilderGroupPriorities returns each builder group's discovery priority-minimum, matching startup, so a runtime re-prioritize preserves group order.
+func BuilderGroupPriorities(builders []APIGroupBuilder) map[string]int {
+	priorities := make(map[string]int, len(builders))
+	for i, b := range builders {
+		gvs := GetGroupVersions(b)
+		if len(gvs) == 0 {
+			continue
+		}
+		priorities[gvs[0].Group] = discoveryGroupPriorityBase + i
+	}
+	return priorities
+}
+
+// servedVersionsForResource returns the versions the scheme registers for this resource's
+// kind, falling back to the group's prioritized versions if the kind cannot be resolved.
+func servedVersionsForResource(scheme *runtime.Scheme, gr schema.GroupResource, storage grafanarest.Storage) []schema.GroupVersion {
+	if gvks, _, err := scheme.ObjectKinds(storage.New()); err == nil {
+		for _, gvk := range gvks {
+			if gvk.Group == gr.Group {
+				return scheme.VersionsForGroupKind(gvk.GroupKind())
+			}
+		}
+	}
+	return scheme.PrioritizedVersionsForGroup(gr.Group)
 }
 
 func InstallAPIs(
@@ -284,20 +318,22 @@ func InstallAPIs(
 	builderMetrics *BuilderMetrics,
 	apiResourceConfig *serverstorage.ResourceConfig,
 ) error {
-	// dual writing is only enabled when the storage type is not legacy.
-	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
-	// support the legacy storage type.
-	var dualWrite grafanarest.DualWriteBuilder
-
-	// nolint:staticcheck
-	if storageOpts.StorageType != options.StorageTypeLegacy {
-		dualWrite = func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
-			key := gr.String()
-			if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
-				builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
-			}
-			return dualWriteService.NewStorage(gr, legacy, storage)
+	dualWrite := func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+		key := gr.String()
+		if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
+			builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
 		}
+		// unified must never serve an apiVersion the scheme never registered; with no
+		// legacy fallback there is nothing safe to serve, so refuse to install.
+		served := servedVersionsForResource(scheme, gr, storage)
+		if err := dualWriteService.ValidateServedVersions(context.Background(), gr, served); err != nil {
+			if legacy == nil {
+				return nil, fmt.Errorf("cannot serve %q from unified storage: %w", gr.String(), err)
+			}
+			klog.Warningf("serving legacy storage for %q: %v", gr.String(), err)
+			return legacy, nil
+		}
+		return dualWriteService.NewStorage(gr, legacy, storage)
 	}
 
 	// NOTE: we build a map structure by version only for the purposes of InstallAPIGroup

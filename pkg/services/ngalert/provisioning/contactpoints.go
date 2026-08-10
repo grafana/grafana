@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
@@ -116,6 +117,11 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 
 	res, err := ecp.receiverService.GetReceivers(ctx, receiverQuery, u)
 	if err != nil {
+		// New orgs have no Alertmanager config yet. Listing contact points is a
+		// valid empty state (GET-before-POST reconcilers depend on this).
+		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) || legacy_storage.ErrNoAlertmanagerConfiguration.Is(err) {
+			return []apimodels.EmbeddedContactPoint{}, nil
+		}
 		return nil, convertRecSvcErr(err)
 	}
 	if q.Name != "" && len(res) > 0 {
@@ -244,12 +250,8 @@ func (ecp *ContactPointService) CreateContactPoint(
 			return apimodels.EmbeddedContactPoint{}, err
 		}
 		revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
-			Receiver: apimodels.Receiver{
-				Name: grafanaReceiver.Name,
-			},
-			PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{grafanaReceiver},
-			},
+			Name:                    grafanaReceiver.Name,
+			GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{grafanaReceiver},
 		})
 	}
 
@@ -311,7 +313,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-		return fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
+		return validation.MakeErrProvenanceChangeNotAllowed(storedProvenance, provenance)
 	}
 
 	// Check protected fields authorization
@@ -634,13 +636,9 @@ groupLoop:
 
 				// Doesn't exist? Create a new group just for the receiver.
 				newGroup := &v1.PostableApiReceiver{
-					Receiver: apimodels.Receiver{
-						Name: target.Name,
-					},
-					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-							target,
-						},
+					Name: target.Name,
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+						target,
 					},
 				}
 				cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, newGroup)

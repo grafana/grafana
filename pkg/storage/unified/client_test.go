@@ -55,6 +55,10 @@ func TestUnifiedStorageClient(t *testing.T) {
 				nil,
 				nil,
 				nil,
+				nil,
+				nil,
+				nil,
+				nil,
 			)
 			require.NoError(t, err)
 
@@ -84,6 +88,10 @@ func TestUnifiedStorageClient(t *testing.T) {
 				nil,
 				nil,
 				authlib.FixedAccessClient(true),
+				nil,
+				nil,
+				nil,
+				nil,
 				nil,
 				nil,
 				nil,

@@ -10,16 +10,27 @@ import {
   shouldRenderInviteUserButton,
   performInviteUserClick,
 } from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
+import { contextSrv } from 'app/core/services/context_srv';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
+import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
 import { type CommandPaletteAction } from '../types';
-import { ACTIONS_PRIORITY, DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
+import {
+  ACTIONS_PRIORITY,
+  DEFAULT_PRIORITY,
+  SECTION_ACTIONS,
+  SECTION_PAGES,
+  SECTION_PREFERENCES,
+  PREFERENCES_PRIORITY,
+} from '../values';
 
 // TODO: Clean this once ID is mandatory on nav items
 function idForNavItem(navItem: NavModelItem) {
@@ -57,6 +68,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
     const section = isCreateAction
       ? t('command-palette.section.actions', 'Actions')
       : t('command-palette.section.pages', 'Pages');
+    const sectionId = isCreateAction ? SECTION_ACTIONS : SECTION_PAGES;
 
     const priority = isCreateAction ? ACTIONS_PRIORITY : DEFAULT_PRIORITY;
 
@@ -65,6 +77,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
       id: idForNavItem(navItem),
       name: text,
       section,
+      sectionId,
       url: urlOrCallback,
       target,
       parent: parents.length > 0 && !isCreateAction ? idForNavItem(parents[parents.length - 1]) : undefined,
@@ -92,6 +105,7 @@ function getGlobalActions(): CommandPaletteAction[] {
       name: t('command-palette.action.change-theme', 'Change theme'),
       keywords: 'interface color dark light',
       section: t('command-palette.section.preferences', 'Preferences'),
+      sectionId: SECTION_PREFERENCES,
       priority: PREFERENCES_PRIORITY,
     },
     {
@@ -149,11 +163,14 @@ export function useStaticActions(): CommandPaletteAction[] {
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
+  const { queryLibraryEnabled, openDrawer } = useQueryLibraryContext();
 
   return useMemo(() => {
     let navBarActions = navTreeToActions(navBarTree);
 
-    if (isTemplateDashboardsAvailable) {
+    const canCreateDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+
+    if (isTemplateDashboardsAvailable && canCreateDashboard) {
       const navBarActionsWithoutActions = navBarActions.filter((action) => action.priority !== ACTIONS_PRIORITY);
       const navBarActionsWithActions = navBarActions.filter((action) => action.priority === ACTIONS_PRIORITY);
 
@@ -161,6 +178,7 @@ export function useStaticActions(): CommandPaletteAction[] {
         id: 'browse-template-dashboard',
         name: t('command-palette.action.dashboard-from-template', 'Dashboard from template'),
         section: t('command-palette.section.actions', 'Actions'),
+        sectionId: SECTION_ACTIONS,
         priority: ACTIONS_PRIORITY,
         perform: () => {
           isAnalyticsFrameworkEnabled
@@ -190,12 +208,34 @@ export function useStaticActions(): CommandPaletteAction[] {
         id: 'invite-user',
         name: t('navigation.invite-user.invite-new-user-button', 'Invite new user'),
         section: t('command-palette.section.actions', 'Actions'),
+        sectionId: SECTION_ACTIONS,
         priority: ACTIONS_PRIORITY,
         perform: () => {
           performInviteUserClick('command_palette_actions', 'invite-user-command-palette');
         },
       });
     }
+
+    const canReadQueries = hasSavedQueryReadPermissions();
+
+    if (queryLibraryEnabled && canReadQueries) {
+      navBarActions.push({
+        id: 'open-saved-queries',
+        name: t('command-palette.action.open-saved-queries', 'Open saved queries'),
+        section: t('command-palette.section.actions', 'Actions'),
+        sectionId: SECTION_ACTIONS,
+        priority: ACTIONS_PRIORITY,
+        perform: () => openDrawer({ options: { context: 'command-palette' } }),
+      });
+    }
+
     return [...getGlobalActions(), ...navBarActions];
-  }, [isAnalyticsFrameworkEnabled, isCustomDashboardTemplatesEnabled, isTemplateDashboardsAvailable, navBarTree]);
+  }, [
+    isAnalyticsFrameworkEnabled,
+    isCustomDashboardTemplatesEnabled,
+    isTemplateDashboardsAvailable,
+    navBarTree,
+    queryLibraryEnabled,
+    openDrawer,
+  ]);
 }

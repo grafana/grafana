@@ -11,6 +11,14 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
 import { SharedPreferencesFunctional } from './SharedPreferencesFunctional';
+import { homeDashboardChanged } from './analytics/main';
+
+jest.mock('./analytics/main', () => ({
+  saveButtonClicked: jest.fn(),
+  themeChanged: jest.fn(),
+  languageChanged: jest.fn(),
+  homeDashboardChanged: jest.fn(),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -41,6 +49,7 @@ const originalLocation = window.location;
 
 beforeEach(() => {
   mockReload.mockClear();
+  jest.mocked(homeDashboardChanged).mockClear();
 });
 
 beforeAll(() => {
@@ -224,5 +233,50 @@ describe('SharedPreferencesFunctional', () => {
     await waitFor(() => expect(themeSelect).toBeDisabled());
 
     expect(screen.getByText('Save preferences').closest('button')).not.toBeDisabled();
+  });
+
+  it('fires home_dashboard_changed with action set when a new home dashboard is saved', async () => {
+    const { user } = await setup();
+
+    await selectComboboxOptionInTest(
+      await screen.findByRole('combobox', { name: /home dashboard/i }),
+      new RegExp(dashbdE.item.title)
+    );
+    await user.click(screen.getByText('Save preferences'));
+
+    await waitFor(() => {
+      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
+        preferenceType: 'user',
+        action: 'set',
+      });
+    });
+  });
+
+  it('does not fire home_dashboard_changed when the home dashboard is unchanged', async () => {
+    const { user } = await setup();
+
+    await selectOptionInTest(screen.getByLabelText('Timezone'), 'Sydney');
+    await user.click(screen.getByText('Save preferences'));
+
+    await waitFor(() => expect(mockReload).toHaveBeenCalled());
+    expect(jest.mocked(homeDashboardChanged)).not.toHaveBeenCalled();
+  });
+
+  it('fires home_dashboard_changed with action cleared when the dashboard is cleared', async () => {
+    const { user } = await setup();
+
+    const dashboardSelect = screen.getByTestId('User preferences home dashboard drop down');
+    // The Clear value button only renders once the loaded dashboard (dashbdD) resolves, so awaiting it
+    // guarantees a non-empty starting value to clear.
+    await within(dashboardSelect).findByRole('button', { name: 'Clear value' });
+    await user.click(within(dashboardSelect).getByRole('button', { name: 'Clear value' }));
+    await user.click(screen.getByText('Save preferences'));
+
+    await waitFor(() => {
+      expect(jest.mocked(homeDashboardChanged)).toHaveBeenCalledWith({
+        preferenceType: 'user',
+        action: 'cleared',
+      });
+    });
   });
 });

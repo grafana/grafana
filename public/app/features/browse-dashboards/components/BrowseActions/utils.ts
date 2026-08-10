@@ -25,7 +25,7 @@ export function getFolderIsEmpty(
     affectedItems.folders -
     selectedFolderCount +
     (affectedItems.dashboards - selectedDashboardCount) +
-    affectedItems.library_elements +
+    affectedItems.librarypanels +
     affectedItems.alertrules;
 
   return remaining <= 0;

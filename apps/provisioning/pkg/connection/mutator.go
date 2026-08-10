@@ -13,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // AdmissionMutator handles mutation for Connection resources
@@ -44,6 +45,12 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		c.SetName(cmp.Or(c.GetGenerateName(), namePrefix) + generateShortUID())
 	}
 
+	if a.GetOperation() == admission.Update {
+		if old, ok := a.GetOldObject().(*provisioning.Connection); ok && oauthCredentialsChanged(c, old) {
+			c.Secure.Token = common.InlineSecureValue{Remove: true}
+		}
+	}
+
 	return m.factory.Mutate(ctx, c)
 }
 
@@ -62,6 +69,20 @@ func CopySecureValues(new, old *provisioning.Connection) {
 	if new.Secure.ClientSecret.IsZero() {
 		new.Secure.ClientSecret = old.Secure.ClientSecret
 	}
+}
+
+// oauthCredentialsChanged reports whether an update changes the OAuth app
+// credentials the stored token was minted with. The token is removed in that
+// case: it belongs to the previous app and the user must authorize again.
+func oauthCredentialsChanged(new, old *provisioning.Connection) bool {
+	if new.Spec.OAuth == nil || old.Spec.OAuth == nil {
+		return false
+	}
+	if new.Spec.OAuth.ClientID != old.Spec.OAuth.ClientID {
+		return true
+	}
+	return !new.Secure.ClientSecret.Create.IsZero() ||
+		(new.Secure.ClientSecret.Name != "" && new.Secure.ClientSecret.Name != old.Secure.ClientSecret.Name)
 }
 
 /*

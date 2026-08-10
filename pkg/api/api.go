@@ -301,10 +301,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 			userRoute.Put("/password", routing.Wrap(hs.ChangeUserPassword))
 			userRoute.Get("/quotas", routing.Wrap(hs.GetUserQuotas))
-			userRoute.Put("/helpflags/:id", routing.Wrap(hs.SetHelpFlag))
-			// For dev purpose
-			userRoute.Get("/helpflags/clear", routing.Wrap(hs.ClearHelpFlags))
-
 			userRoute.Get("/preferences", routing.Wrap(hs.GetUserPreferences))
 			userRoute.Put("/preferences", routing.Wrap(hs.UpdateUserPreferences))
 			userRoute.Patch("/preferences", routing.Wrap(hs.PatchUserPreferences))
@@ -505,6 +501,18 @@ func (hs *HTTPServer) registerRoutes() {
 		// metrics
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.getDSQueryEndpoint())
+
+		// On-demand datasource diagnostics. Admin-only, on-prem-only, experimental.
+		// Two deliberate, independent gates:
+		// 1. on-prem only (empty StackID => never on Grafana Cloud)
+		// 2. grafana.onDemandDiagnostics flag at request time
+		if hs.Cfg.StackID == "" {
+			apiRoute.Post("/ds/diagnostics", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqGrafanaAdmin, routing.Wrap(hs.QueryDiagnostics))
+			// Dashboard-level diagnostics: async create/poll/download (support-bundle style).
+			apiRoute.Post("/ds/dashboard-diagnostics", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqGrafanaAdmin, routing.Wrap(hs.QueryDashboardDiagnostics))
+			apiRoute.Get("/ds/dashboard-diagnostics/:uid", reqGrafanaAdmin, routing.Wrap(hs.GetDashboardDiagnosticsStatus))
+			apiRoute.Get("/ds/dashboard-diagnostics/:uid/download", reqGrafanaAdmin, routing.Wrap(hs.DownloadDashboardDiagnostics))
+		}
 
 		// Unified Alerting
 		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(

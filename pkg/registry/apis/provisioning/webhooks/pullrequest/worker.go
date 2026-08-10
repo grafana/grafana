@@ -54,14 +54,6 @@ func ProvidePullRequestWorker(
 	return NewPullRequestWorker(evaluator, commenter, registry)
 }
 
-//go:generate mockery --name=PullRequestRepo --structname=MockPullRequestRepo --inpackage --filename=mock_pullrequest_repo.go --with-expecter
-type PullRequestRepo interface {
-	Config() *provisioning.Repository
-	Read(ctx context.Context, path, ref string) (*repository.FileInfo, error)
-	CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error)
-	CommentPullRequest(ctx context.Context, pr int, comment string) error
-}
-
 //go:generate mockery --name=Evaluator --structname=MockEvaluator --inpackage --filename=mock_evaluator.go --with-expecter
 type Evaluator interface {
 	Evaluate(ctx context.Context, repo repository.Reader, opts provisioning.PullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder) (changeInfo, error)
@@ -69,7 +61,7 @@ type Evaluator interface {
 
 //go:generate mockery --name=Commenter --structname=MockCommenter --inpackage --filename=mock_commenter.go --with-expecter
 type Commenter interface {
-	Comment(ctx context.Context, repo PullRequestRepo, pr int, changeInfo changeInfo) error
+	Comment(ctx context.Context, repo repository.PullRequestRepo, pr int, changeInfo changeInfo) error
 }
 
 type PullRequestWorker struct {
@@ -96,7 +88,6 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	job provisioning.Job,
 	progress jobs.JobProgressRecorder,
 ) (processErr error) {
-	cfg := repo.Config().Spec
 	opts := job.Spec.PullRequest
 	startTime := time.Now()
 	outcome := utils.ErrorOutcome
@@ -129,19 +120,13 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return apierrors.NewBadRequest("missing spec.ref")
 	}
 
-	// FIXME: this is leaky because it's supposed to be already a PullRequestRepo
-	if cfg.GitHub == nil {
-		logger.Debug("expecting github configuration")
-		return apierrors.NewBadRequest("expecting github configuration")
-	}
-
 	reader, ok := repo.(repository.Reader)
 	if !ok {
 		logger.Debug("pull request job submitted targeting repository that is not a Reader")
 		return errors.New("pull request job submitted targeting repository that is not a Reader")
 	}
 
-	prRepo, ok := repo.(PullRequestRepo)
+	prRepo, ok := repo.(repository.PullRequestRepo)
 	if !ok {
 		logger.Debug("pull request job submitted targeting repository that is not a PullRequestRepo")
 		return fmt.Errorf("repository is not a pull request repository")
@@ -151,8 +136,12 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	defer logger.Info("pull request processed")
 
 	progress.SetMessage(ctx, "listing pull request files")
-	// FIXME: this is leaky because it's supposed to be already a PullRequestRepo
-	base := cfg.GitHub.Branch
+	base, err := prRepo.MergeBase(ctx, opts.Ref)
+	if err != nil {
+		base = prRepo.Config().Branch()
+		logger.Warn("failed to resolve pull request base, falling back to the configured branch", "error", err, "branch", base)
+	}
+
 	files, err := prRepo.CompareFiles(ctx, base, opts.Ref)
 	if err != nil {
 		logger.Error("failed to list pull request files", "error", err)

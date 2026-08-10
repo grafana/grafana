@@ -11,22 +11,34 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
+	authlib "github.com/grafana/authlib/types"
 	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func setKubernetesSnapshotsToggle(t *testing.T, enabled bool) {
+// ctxForOrg returns a context whose namespace resolves to the given org, mirroring
+// how the apiserver sets the namespace before reaching the store.
+func ctxForOrg(orgID int64) context.Context {
+	return k8srequest.WithNamespace(context.Background(), authlib.OrgNamespaceFormatter(orgID))
+}
+
+func setExternalSnapshotsK8SAPIPushToggle(t *testing.T, enabled bool) {
 	t.Helper()
 	variant := "disabled"
 	if enabled {
 		variant = "enabled"
 	}
 	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagKubernetesSnapshots: {
-			Key:            featuremgmt.FlagKubernetesSnapshots,
+		featuremgmt.FlagExternalSnapshotsK8SAPIPush: {
+			Key:            featuremgmt.FlagExternalSnapshotsK8SAPIPush,
 			DefaultVariant: variant,
 			Variants: map[string]any{
 				"enabled":  true,
@@ -48,6 +60,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 			Return(&dashboardsnapshots.DashboardSnapshot{
 				Key:               "snap-1",
 				DeleteKey:         deleteKey,
+				OrgID:             1,
 				External:          true,
 				ExternalDeleteURL: externalDeleteURL,
 			}, nil)
@@ -62,8 +75,8 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		}
 	}
 
-	t.Run("with kubernetesSnapshots ON sends DELETE to new k8s endpoint", func(t *testing.T) {
-		setKubernetesSnapshotsToggle(t, true)
+	t.Run("with externalSnapshotsK8SAPIPush ON sends DELETE to new k8s endpoint", func(t *testing.T) {
+		setExternalSnapshotsK8SAPIPushToggle(t, true)
 
 		var receivedReq *http.Request
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +89,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		// the URL from the domain + deleteKey rather than using it as-is.
 		store := makeStore(t, server.URL+"/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/"+deleteKey)
 
-		_, _, err := store.Delete(context.Background(), "snap-1", nil, &metav1.DeleteOptions{})
+		_, _, err := store.Delete(ctxForOrg(1), "snap-1", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, receivedReq)
 		assert.Equal(t, http.MethodDelete, receivedReq.Method)
@@ -84,8 +97,8 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		assert.Equal(t, "Bearer test-token", receivedReq.Header.Get("Authorization"))
 	})
 
-	t.Run("with kubernetesSnapshots OFF sends GET to legacy endpoint", func(t *testing.T) {
-		setKubernetesSnapshotsToggle(t, false)
+	t.Run("with externalSnapshotsK8SAPIPush OFF sends GET to legacy endpoint", func(t *testing.T) {
+		setExternalSnapshotsK8SAPIPushToggle(t, false)
 
 		var receivedReq *http.Request
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +109,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 
 		store := makeStore(t, server.URL+"/api/snapshots-delete/"+deleteKey)
 
-		_, _, err := store.Delete(context.Background(), "snap-1", nil, &metav1.DeleteOptions{})
+		_, _, err := store.Delete(ctxForOrg(1), "snap-1", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, receivedReq)
 		assert.Equal(t, http.MethodGet, receivedReq.Method)
@@ -105,7 +118,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 	})
 
 	t.Run("rebuilds URL using domain from ExternalDeleteURL even when stored path is wrong", func(t *testing.T) {
-		setKubernetesSnapshotsToggle(t, true)
+		setExternalSnapshotsK8SAPIPushToggle(t, true)
 
 		var receivedReq *http.Request
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -118,7 +131,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		// extract just the domain and rebuild the new k8s path.
 		store := makeStore(t, server.URL+"/api/snapshots-delete/"+deleteKey)
 
-		_, _, err := store.Delete(context.Background(), "snap-1", nil, &metav1.DeleteOptions{})
+		_, _, err := store.Delete(ctxForOrg(1), "snap-1", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, receivedReq)
 		assert.Equal(t, http.MethodDelete, receivedReq.Method)
@@ -126,11 +139,86 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 	})
 
 	t.Run("returns error on invalid ExternalDeleteURL", func(t *testing.T) {
-		setKubernetesSnapshotsToggle(t, true)
+		setExternalSnapshotsK8SAPIPushToggle(t, true)
 
 		store := makeStore(t, "not-a-url")
 
-		_, _, err := store.Delete(context.Background(), "snap-1", nil, &metav1.DeleteOptions{})
+		_, _, err := store.Delete(ctxForOrg(1), "snap-1", nil, &metav1.DeleteOptions{})
 		require.Error(t, err)
+	})
+}
+
+// Snapshots are org-scoped but the store looks them up by global key. A caller in
+// one org must not be able to delete a snapshot owned by another org.
+func TestSnapshotLegacyStore_Delete_CrossOrg(t *testing.T) {
+	mockService := dashboardsnapshots.NewMockService(t)
+	mockService.On("GetDashboardSnapshot", mock.Anything, mock.Anything).
+		Return(&dashboardsnapshots.DashboardSnapshot{
+			Key:       "snap-1",
+			DeleteKey: "abc123",
+			OrgID:     1,
+		}, nil)
+	// The delete must never be reached for a cross-org target.
+	mockService.On("DeleteDashboardSnapshot", mock.Anything, mock.Anything).
+		Return(nil).
+		Run(func(mock.Arguments) { t.Fatal("DeleteDashboardSnapshot should not be called for a cross-org snapshot") }).
+		Maybe()
+
+	store := &SnapshotLegacyStore{
+		ResourceInfo: dashV0.SnapshotResourceInfo,
+		Service:      mockService,
+	}
+
+	// Caller is in org 2, snapshot belongs to org 1.
+	_, deleted, err := store.Delete(ctxForOrg(2), "snap-1", nil, &metav1.DeleteOptions{})
+	require.Error(t, err)
+	assert.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
+	assert.False(t, deleted)
+}
+
+func TestSnapshotLegacyStore_List_DeleteKey(t *testing.T) {
+	const deleteKey = "abc123"
+
+	makeStore := func(t *testing.T) *SnapshotLegacyStore {
+		mockService := dashboardsnapshots.NewMockService(t)
+		mockService.On("GetDashboardSnapshot", mock.Anything, &dashboardsnapshots.GetDashboardSnapshotQuery{DeleteKey: deleteKey}).
+			Return(&dashboardsnapshots.DashboardSnapshot{
+				Key:       "snap-1",
+				DeleteKey: deleteKey,
+				OrgID:     1,
+				Dashboard: simplejson.New(),
+			}, nil)
+		return &SnapshotLegacyStore{
+			ResourceInfo: dashV0.SnapshotResourceInfo,
+			Service:      mockService,
+			Namespacer:   authlib.OrgNamespaceFormatter,
+		}
+	}
+
+	listByDeleteKey := func(ctx context.Context, store *SnapshotLegacyStore) (*dashV0.SnapshotList, error) {
+		obj, err := store.List(ctx, &internalversion.ListOptions{
+			FieldSelector: fields.OneTermEqualSelector("spec.deleteKey", deleteKey),
+		})
+		if err != nil {
+			return nil, err
+		}
+		list, ok := obj.(*dashV0.SnapshotList)
+		require.True(t, ok)
+		return list, nil
+	}
+
+	t.Run("returns the snapshot for a same-org caller", func(t *testing.T) {
+		store := makeStore(t)
+		list, err := listByDeleteKey(ctxForOrg(1), store)
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		assert.Equal(t, "snap-1", list.Items[0].Name)
+	})
+
+	t.Run("returns an empty list for a cross-org caller", func(t *testing.T) {
+		store := makeStore(t)
+		list, err := listByDeleteKey(ctxForOrg(2), store)
+		require.NoError(t, err)
+		assert.Empty(t, list.Items)
 	})
 }

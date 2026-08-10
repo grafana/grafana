@@ -49,6 +49,7 @@ func RegisterAPIService(
 	sql := legacy.NewLegacySQL(legacysql.NewDatabaseProvider(db))
 	builder := &APIBuilder{
 		authorizer: &utils.AuthorizeFromName{
+			AllowOrgAdmin: true,
 			Resource: map[string][]utils.ResourceOwner{
 				"stars": {utils.UserResourceOwner},
 			},

@@ -88,7 +88,7 @@ func (s *PostgreSQLStore) ListTags(ctx context.Context, namespace string, opts T
 	query := `
 		SELECT tag, COUNT(*) as count
 		FROM annotations, unnest(tags) as tag
-		WHERE namespace = $1
+		WHERE namespace = $1 AND deleted_at IS NULL
 	`
 
 	args := []any{namespace}
@@ -103,7 +103,7 @@ func (s *PostgreSQLStore) ListTags(ctx context.Context, namespace string, opts T
 
 	query += `
 		GROUP BY tag
-		ORDER BY count DESC, tag
+		ORDER BY tag
 	`
 
 	// Add limit

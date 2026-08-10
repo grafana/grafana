@@ -6,7 +6,16 @@ import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
 import type { CodeMirrorCompletionSource, CodeMirrorEditorLanguage } from './types';
 
-const languageOptions: CodeMirrorEditorLanguage[] = ['sql', 'json'];
+const languageOptions: CodeMirrorEditorLanguage[] = [
+  'go',
+  'html',
+  'json',
+  'markdown',
+  'sql',
+  'typescript',
+  'xml',
+  'yaml',
+];
 
 const keywordCompletionSource: CodeMirrorCompletionSource = (context) => {
   const word = context.matchBefore(/\w*/);

@@ -177,26 +177,24 @@ type RepositoryWithURLs interface {
 
 // WebhookRepository is implemented by repositories that can receive and handle
 // incoming webhook requests from their git provider.
+//
+//go:generate mockery --name WebhookRepository --structname MockWebhookRepository --inpackage --filename webhook_repository_mock.go --with-expecter
 type WebhookRepository interface {
 	Repository
 
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
-}
+	// Slug is the repository the webhook is configured for; the dispatcher uses
+	// it to reject events for anything else.
+	Slug() string
 
-// Hooks called after the repository has been created, updated or deleted
-type Hooks interface {
-	Repository
+	// VerifyRequest authenticates the inbound request and returns its verified form.
+	VerifyRequest(req *http.Request) (*VerifiedWebhookRequest, error)
 
-	OnCreate(ctx context.Context) ([]map[string]interface{}, error)
-	OnUpdate(ctx context.Context) ([]map[string]interface{}, error)
-	OnDelete(ctx context.Context) error
-}
+	// ProcessRequest normalizes an already-verified request into an event.
+	ProcessRequest(ctx context.Context, req *VerifiedWebhookRequest) (WebhookEvent, error)
 
-// WebhookSecretRotator is implemented by repositories that support periodic
-// webhook secret rotation. The controller calls RotateWebhookSecret when the
-// secret is due for rotation based on the configured interval.
-type WebhookSecretRotator interface {
-	RotateWebhookSecret(ctx context.Context) ([]map[string]any, error)
+	WebhookClient() WebhookClient
+	WebhookURL() string
+	SubscribedEvents() []string
 }
 
 type FileAction string
@@ -237,4 +235,16 @@ type BranchHandler interface {
 	GetDefaultBranch(ctx context.Context) (string, error)
 	GetCurrentBranch() string
 	SetBranch(branch string)
+}
+
+// PullRequestRepo is implemented by repositories that can be evaluated and
+// commented on as part of a pull request preview job.
+//
+//go:generate mockery --name PullRequestRepo --structname MockPullRequestRepo --inpackage --filename pull_request_repo_mock.go --with-expecter
+type PullRequestRepo interface {
+	Config() *provisioning.Repository
+	Read(ctx context.Context, path, ref string) (*FileInfo, error)
+	MergeBase(ctx context.Context, headRef string) (string, error)
+	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
+	CommentPullRequest(ctx context.Context, prNumber int, comment string) error
 }

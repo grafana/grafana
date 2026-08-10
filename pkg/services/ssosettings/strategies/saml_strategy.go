@@ -21,7 +21,7 @@ func NewSAMLStrategy(settingsProvider setting.Provider) *SAMLStrategy {
 	}
 }
 
-func (s *SAMLStrategy) IsMatch(provider string) bool {
+func (s *SAMLStrategy) IsMatch(_ context.Context, provider string) bool {
 	return provider == social.SAMLProviderName
 }
 

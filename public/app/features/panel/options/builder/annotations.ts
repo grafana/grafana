@@ -1,10 +1,9 @@
 import { DataTopic, type PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import type * as common from '@grafana/schema';
 
 import { CanvasControlsSwitchEditor } from './CanvasControlsSwitchEditor';
-import { ClusteringSwitchEditor, DEFAULT_CLUSTERING_ANNOTATION_SPACING_DISABLED } from './ClusteringSwitchEditor';
+import { ClusteringSwitchEditor } from './ClusteringSwitchEditor';
 
 /**
  * Adds common text control options to a visualization options
@@ -18,12 +17,11 @@ export function addAnnotationOptions<T extends common.OptionsWithAnnotations>(bu
   builder.addBooleanSwitch({
     path: 'annotations.multiLane',
     category,
-    name: t('grafana-ui.builder.annotations.multi-lane-name', 'Enable multi-row annotations'),
+    name: t('grafana-ui.builder.annotation-options.multi-lane-name', 'Enable multi-row annotations'),
     description: t(
-      'grafana-ui.builder.annotations.multi-row-desc',
+      'grafana-ui.builder.annotation-options.multi-row-desc',
       'Breaks each annotation frame into a separate row in the visualization'
     ),
-    defaultValue: false,
     showIf: (_, __, annotations) =>
       annotations &&
       annotations?.filter((df) => df.meta?.dataTopic === DataTopic.Annotations && df.length > 0).length > 1,
@@ -34,15 +32,12 @@ export function addAnnotationOptions<T extends common.OptionsWithAnnotations>(bu
     id: 'clusteringSwitchEditor',
     path: 'annotations.clustering',
     category,
-    name: t('grafana-ui.builder.annotations.clustering.name', 'Enable annotation clustering'),
+    name: t('grafana-ui.builder.annotation-options.clustering-name', 'Enable annotation clustering'),
     description: t(
-      'grafana-ui.builder.annotations.clustering.desc',
+      'grafana-ui.builder.annotation-options.clustering-desc',
       'Combines high density point annotations into region annotations'
     ),
-    defaultValue: DEFAULT_CLUSTERING_ANNOTATION_SPACING_DISABLED,
-    showIf: (_, __, annotations) =>
-      config.featureToggles.annotationsClustering &&
-      annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
+    showIf: (_, __, annotations) => annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
   });
 
   builder.addCustomEditor({
@@ -50,14 +45,12 @@ export function addAnnotationOptions<T extends common.OptionsWithAnnotations>(bu
     id: 'canvasSwitchEditor',
     path: 'annotations',
     category,
-    name: t('grafana-ui.builder.annotations.canvasControls.name', 'Hide lines and areas'),
+    name: t('grafana-ui.builder.annotation-options.canvas-controls-name', 'Hide lines and areas'),
     description: t(
-      'grafana-ui.builder.annotations.canvasControls.desc',
+      'grafana-ui.builder.annotation-options.canvas-controls-desc',
       'Hides annotation indicator lines and shaded regions'
     ),
     defaultValue: undefined,
-    showIf: (_, __, annotations) =>
-      config.featureToggles.annotationsClustering &&
-      annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
+    showIf: (_, __, annotations) => annotations?.some((df) => df.meta?.dataTopic === DataTopic.Annotations),
   });
 }

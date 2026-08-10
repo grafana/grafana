@@ -55,6 +55,23 @@ func TestIntegrationServerBatchCheck(t *testing.T) {
 		assert.True(t, res.GetResults()["check1"].GetAllowed())
 	})
 
+	t.Run("pipe in correlation id is rejected by OpenFGA", func(t *testing.T) {
+		// OpenFGA validates CorrelationId against ^[\w\d-]{1,36}$; '|' fails
+		items := []*authzv1.BatchCheckItem{
+			newItem("newFolder|get", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),
+		}
+		_, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
+		require.Error(t, err)
+
+		// '-' separator satisfies the regex; the request succeeds.
+		items = []*authzv1.BatchCheckItem{
+			newItem("newFolder-get", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
+		require.NoError(t, err)
+		require.Contains(t, res.GetResults(), "newFolder-get")
+	})
+
 	t.Run("multiple items with mixed permissions", func(t *testing.T) {
 		items := []*authzv1.BatchCheckItem{
 			newItem("check1", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"), // user:1 has access
@@ -317,6 +334,81 @@ func TestIntegrationServerBatchCheck(t *testing.T) {
 		assert.False(t, res.GetResults()["dash-no"].GetAllowed())
 		assert.False(t, res.GetResults()["sub"].GetAllowed())
 		assert.False(t, res.GetResults()["sa"].GetAllowed())
+	})
+
+	// Typed `create` batch checks. user / service-account have no per-object `create`, so an
+	// unresolved create item must resolve to denied rather than error the whole batch.
+	t.Run("create on user/service-account is denied, not errored", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("user-create", utils.VerbCreate, userGroup, userResource, "", "", "someuser"),
+			newItem("sa-create", utils.VerbCreate, serviceAccountGroup, serviceAccountResource, "", "", "some-sa"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 2)
+		assert.False(t, res.GetResults()["user-create"].GetAllowed())
+		assert.False(t, res.GetResults()["sa-create"].GetAllowed())
+	})
+
+	t.Run("invalid create item does not poison other checks in the batch", func(t *testing.T) {
+		// The original symptom: one such create item used to error the entire batch, dropping
+		// unrelated valid results like the dashboard check below.
+		items := []*authzv1.BatchCheckItem{
+			newItem("dash", utils.VerbGet, dashboardGroup, dashboardResource, "", "1", "1"),       // user:1 has access
+			newItem("user-create", utils.VerbCreate, userGroup, userResource, "", "", "someuser"), // invalid per-object relation
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 2)
+		assert.True(t, res.GetResults()["dash"].GetAllowed())
+		assert.False(t, res.GetResults()["user-create"].GetAllowed())
+	})
+
+	t.Run("user:20 create on users is allowed via group_resource", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("user-create", utils.VerbCreate, userGroup, userResource, "", "", ""),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:20", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 1)
+		assert.True(t, res.GetResults()["user-create"].GetAllowed())
+	})
+
+	t.Run("user:21 (team admin) create on their team is denied: team create is group_resource only", func(t *testing.T) {
+		items := []*authzv1.BatchCheckItem{
+			newItem("team-create", utils.VerbCreate, teamGroup, teamResource, "", "", "admin-team"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:21", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 1)
+		assert.False(t, res.GetResults()["team-create"].GetAllowed())
+	})
+
+	t.Run("subresource create on a user is allowed via resource_create", func(t *testing.T) {
+		// user has no base `create`, but the subresource branch is gated independently on
+		// resource_create, so a subresource create grant still resolves allowed.
+		items := []*authzv1.BatchCheckItem{
+			newItem("user-sub-create", utils.VerbCreate, userGroup, userResource, statusSubresource, "", "1"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:22", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 1)
+		assert.True(t, res.GetResults()["user-sub-create"].GetAllowed())
+	})
+
+	t.Run("subresource get/set_permissions on user/team is denied, not errored", func(t *testing.T) {
+		// user/team have no subresource get/set_permissions in the model (folder-only).
+		// resolveTypedItems gates the subresource branch on the subresource relation, so these
+		// resolve to denied rather than erroring the batch on an undefined relation.
+		items := []*authzv1.BatchCheckItem{
+			newItem("user-sub-getperm", utils.VerbGetPermissions, userGroup, userResource, statusSubresource, "", "1"),
+			newItem("team-sub-setperm", utils.VerbSetPermissions, teamGroup, teamResource, statusSubresource, "", "1"),
+		}
+		res, err := server.BatchCheck(newContextWithNamespace(), newBatchReq("user:1", items))
+		require.NoError(t, err)
+		require.Len(t, res.GetResults(), 2)
+		assert.False(t, res.GetResults()["user-sub-getperm"].GetAllowed())
+		assert.False(t, res.GetResults()["team-sub-setperm"].GetAllowed())
 	})
 
 	t.Run("folder subresource access via set_edit", func(t *testing.T) {

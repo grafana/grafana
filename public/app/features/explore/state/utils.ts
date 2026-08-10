@@ -21,7 +21,7 @@ import {
   type URLRange,
   type URLRangeValue,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery, type DataSourceJsonData, type DataSourceRef, type TimeZone } from '@grafana/schema';
 import { getLocalRichHistoryStorage } from 'app/core/history/richHistoryStorageProvider';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
@@ -30,7 +30,6 @@ import { type ExploreItemState, type ExplorePanelData, type RichHistoryQuery } f
 import { type StoreState } from 'app/types/store';
 
 import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
 import { DEFAULT_RANGE } from './constants';
@@ -106,12 +105,12 @@ export async function loadAndInitDatasource(
   let instance: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
   try {
     // let datasource be a ref if we have the info, otherwise a name or uid will do for lookup
-    instance = await getDatasourceSrv().get(datasource);
+    instance = await getDataSourceInstance(datasource);
   } catch (error) {
     // Falling back to the default data source in case the provided data source was not found.
     // It may happen if last used data source or the data source provided in the URL has been
     // removed or it is not provisioned anymore.
-    instance = await getDatasourceSrv().get();
+    instance = await getDataSourceInstance();
   }
   if (instance.init) {
     try {
@@ -295,7 +294,7 @@ export async function getCorrelationsData(state: StoreState, exploreId: string) 
   const isCorrelationEditorMode = state.explore.correlationEditorDetails?.editorMode || false;
   const isLeftPane = Object.keys(state.explore.panes)[0] === exploreId;
   const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
-  const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
+  const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceInstance() : undefined;
   const interpolateCorrelationHelperVars =
     isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
 

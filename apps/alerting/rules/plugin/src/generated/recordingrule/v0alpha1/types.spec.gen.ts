@@ -16,13 +16,10 @@ export type TemplateString = string;
 
 export const defaultTemplateString = (): TemplateString => ("");
 
-// TODO(@moustafab): validate the metric name regex
 export type MetricName = string;
 
 export const defaultMetricName = (): MetricName => ("");
 
-// TODO: validate that only one can specify source=true
-// & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
 export type ExpressionMap = Record<string, Expression>;
 
 export const defaultExpressionMap = (): ExpressionMap => ({});

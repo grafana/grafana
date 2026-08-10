@@ -544,21 +544,17 @@ func TestReceiverService_Create(t *testing.T) {
 				),
 			)),
 			expectedStored: &v1.PostableApiReceiver{
-				Receiver: definitions.Receiver{
-					Name: lineIntegration.Name,
-				},
-				PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-						{
-							UID:                   lineIntegration.UID,
-							Name:                  lineIntegration.Name,
-							Type:                  string(lineIntegration.Config.Type()),
-							Version:               string(lineIntegration.Config.Version),
-							DisableResolveMessage: lineIntegration.DisableResolveMessage,
-							Settings:              definitions.RawMessage(`{}`), // Empty settings, not nil.
-							SecureSettings: map[string]string{
-								"token": "c2VjcmV0", // base64 encoded "secret".
-							},
+				Name: lineIntegration.Name,
+				GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+					{
+						UID:                   lineIntegration.UID,
+						Name:                  lineIntegration.Name,
+						Type:                  string(lineIntegration.Config.Type()),
+						Version:               string(lineIntegration.Config.Version),
+						DisableResolveMessage: lineIntegration.DisableResolveMessage,
+						Settings:              definitions.RawMessage(`{}`), // Empty settings, not nil.
+						SecureSettings: map[string]string{
+							"token": "c2VjcmV0", // base64 encoded "secret".
 						},
 					},
 				},
@@ -1057,8 +1053,8 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
 		require.NoError(t, err)
 
-		assert.Falsef(t, revision.ReceiverNameUsedByRoutes(receiverName, false), "old receiver name '%s' should not be used by routes", receiverName)
-		assert.Truef(t, revision.ReceiverNameUsedByRoutes(newReceiverName, false), "new receiver name '%s' should be used by routes", newReceiverName)
+		assert.Falsef(t, revision.ReceiverNameUsedByRoutes(receiverName), "old receiver name '%s' should not be used by routes", receiverName)
+		assert.Truef(t, revision.ReceiverNameUsedByRoutes(newReceiverName), "new receiver name '%s' should be used by routes", newReceiverName)
 	})
 
 	t.Run("returns ErrReceiverDependentResourcesProvenance if route has different provenance status", func(t *testing.T) {

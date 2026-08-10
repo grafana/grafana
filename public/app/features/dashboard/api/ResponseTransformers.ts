@@ -62,6 +62,7 @@ import {
   DeprecatedInternalId,
   type ObjectMeta,
 } from 'app/features/apiserver/types';
+import { convertRowsToGridPanels, type LegacyRow } from 'app/features/dashboard/state/convertRowsToGridPanels';
 import { transformV2ToV1AnnotationQuery } from 'app/features/dashboard-scene/serialization/annotations';
 import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
 import { validateFiltersOrigin } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
@@ -176,7 +177,8 @@ export function ensureV2Response(
 
   const timeSettingsDefaults = defaultTimeSettingsSpec();
   const dashboardDefaults = defaultDashboardV2Spec();
-  const [elements, layout] = getElementsFromPanels(dashboard.panels || []);
+
+  const [elements, layout] = getElementsFromPanels(getPanels(dashboard));
   // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
   // that would allow accessing unique properties for each variable type that the API returns
   const variables = getVariables(dashboard.templating?.list || []);
@@ -317,6 +319,19 @@ function getElementsFromPanels(
   }
 
   return [elements, layout];
+}
+
+/**
+ * Dashboards stored on the backend are migrated to the latest schema version before they reach us,
+ * but client side ones (scripted dashboards) are not. Pre-schema-version-16 dashboards keep their
+ * panels inside `rows`, so run the same rows to grid conversion the v16 migration does.
+ */
+function getPanels(dashboard: DashboardDataDTO & { rows?: LegacyRow[] }): Array<Panel | RowPanel> {
+  if (dashboard.panels) {
+    return dashboard.panels;
+  }
+
+  return dashboard.rows ? convertRowsToGridPanels(dashboard.rows) : [];
 }
 
 function convertToRowsLayout(
@@ -670,6 +685,7 @@ export function buildPanelKind(p: Panel): PanelKind {
             ...(p.queryCachingTTL !== undefined && { queryCachingTTL: p.queryCachingTTL }),
             ...(p.timeFrom !== undefined && { timeFrom: p.timeFrom }),
             ...(p.timeShift !== undefined && { timeShift: p.timeShift }),
+            ...(p.timeCompare !== undefined && { timeCompare: p.timeCompare }),
           },
         },
       },
@@ -1232,6 +1248,9 @@ function transformV2PanelToV1Panel(
       ...(panel.data.spec.queryOptions.timeFrom !== undefined && { timeFrom: panel.data.spec.queryOptions.timeFrom }),
       ...(panel.data.spec.queryOptions.timeShift !== undefined && {
         timeShift: panel.data.spec.queryOptions.timeShift,
+      }),
+      ...(panel.data.spec.queryOptions.timeCompare !== undefined && {
+        timeCompare: panel.data.spec.queryOptions.timeCompare,
       }),
       ...(panel.transparent !== undefined && { transparent: panel.transparent }),
       ...(repeat?.value !== undefined && { repeat: repeat.value }),

@@ -77,21 +77,21 @@ func (GitHubEnterpriseConnectionConfig) OpenAPIModelName() string {
 }
 
 type BitbucketConnectionConfig struct {
-	// App client ID
-	ClientID string `json:"clientID"`
+	// The workspace the OAuth consumer belongs to
+	Workspace string `json:"workspace"`
 }
 
 func (BitbucketConnectionConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "BitbucketConnectionConfig"
 }
 
-type GitlabConnectionConfig struct {
-	// App client ID
+type ConnectionOAuthConfig struct {
+	// The OAuth app client ID
 	ClientID string `json:"clientID"`
 }
 
-func (GitlabConnectionConfig) OpenAPIModelName() string {
-	return OpenAPIPrefix + "GitlabConnectionConfig"
+func (ConnectionOAuthConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ConnectionOAuthConfig"
 }
 
 type ConnectionWebhookConfig struct {
@@ -140,9 +140,9 @@ type ConnectionSpec struct {
 	// Bitbucket connection configuration
 	// Only applicable when provider is "bitbucket"
 	Bitbucket *BitbucketConnectionConfig `json:"bitbucket,omitempty"`
-	// Gitlab connection configuration
-	// Only applicable when provider is "gitlab"
-	Gitlab *GitlabConnectionConfig `json:"gitlab,omitempty"`
+
+	// OAuth app configuration shared by all OAuth app providers
+	OAuth *ConnectionOAuthConfig `json:"oauth,omitempty"`
 
 	// Webhook configuration for this connection
 	Webhook *ConnectionWebhookConfig `json:"webhook,omitempty"`
@@ -176,6 +176,10 @@ type ConnectionStatus struct {
 
 	// The connection health status
 	Health HealthStatus `json:"health"`
+
+	// Token holds metadata about the last generated connection token, used to avoid
+	// regenerating a token whose secret was written recently but is not yet readable.
+	Token TokenStatus `json:"token,omitempty"`
 }
 
 func (ConnectionStatus) OpenAPIModelName() string {

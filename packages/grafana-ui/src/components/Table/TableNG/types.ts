@@ -19,21 +19,22 @@ import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
-import { type ApplyFilterResult, type TextAlign } from './utils';
+import { type TextAlign } from './styles';
+import { type ApplyFilterResult } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
 
 type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
 export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
-type TableFilterActionCallback = (item: AdHocFilterItem) => void;
+export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number, fieldScope?: MatcherScope) => void;
 type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 type FooterItem = Array<KeyValue<string>> | string | undefined;
 
 type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
 
-type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
+export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
 
 export enum FilterOperator {
   CONTAINS = 'Contains',
@@ -70,7 +71,7 @@ export interface TableColumn extends Column<TableRow, TableSummaryRow> {
 }
 
 // Possible values for table cells based on field types
-export type TableCellValue =
+type TableCellValue =
   | string // FieldType.string, FieldType.enum
   | number // FieldType.number
   | boolean // FieldType.boolean
@@ -125,6 +126,8 @@ interface BaseTableProps {
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
+  /** When pagination is enabled, fixes the number of rows per page instead of deriving it from the panel height. */
+  pageSize?: number;
   cellHeight?: TableCellHeight;
   maxRowHeight?: number;
   structureRev?: number;
@@ -144,8 +147,6 @@ interface BaseTableProps {
   disableSanitizeHtml?: boolean;
   // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
   disableKeyboardEvents?: boolean;
-  // temporary feature toggle to manage rollout of the proto-based parser
-  protoParserEnabled?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */

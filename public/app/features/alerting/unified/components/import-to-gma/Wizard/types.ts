@@ -3,9 +3,16 @@
  */
 
 export enum StepKey {
+  Method = 'method',
   Notifications = 'notifications',
   Rules = 'rules',
   Review = 'review',
+  ReviewEnable = 'review-enable',
+}
+
+export type ImportMethod = 'stage' | 'promote' | 'autosync' | 'legacy-datasource-rules';
+export interface WizardFormValues {
+  importMethod: ImportMethod;
 }
 
 export enum StepState {

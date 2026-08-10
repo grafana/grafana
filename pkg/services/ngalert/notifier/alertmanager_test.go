@@ -93,7 +93,7 @@ func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *test
 			},
 			Receivers: []*v1.PostableApiReceiver{
 				{
-					Receiver: definitions.Receiver{Name: "default-receiver"},
+					Name: "default-receiver",
 				},
 			},
 		},
@@ -160,9 +160,7 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			},
 			Receivers: []*v1.PostableApiReceiver{
 				{
-					Receiver: definitions.Receiver{
-						Name: "default-receiver",
-					},
+					Name: "default-receiver",
 				},
 			},
 		}
@@ -219,7 +217,7 @@ receivers:
 		},
 		{
 			name:     "invalid config fails",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 			config: &v1.AMConfigV1{
 				AlertmanagerConfig: basicConfig(),
 				ExtraConfigs: []v1.ExtraConfiguration{
@@ -263,7 +261,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 		postableReceivers := make([]*v1.PostableApiReceiver, 0, len(receivers))
 		for _, r := range receivers {
 			postableReceivers = append(postableReceivers, &v1.PostableApiReceiver{
-				Receiver: definitions.Receiver{Name: r},
+				Name: r,
 			})
 		}
 		return &v1.AMConfigV1{
@@ -332,13 +330,13 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 			},
 			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
 				cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
-					Receiver: definitions.Receiver{Name: "new-receiver"},
+					Name: "new-receiver",
 				})
 			},
 		},
 		{
 			name:     "extra config changes affect hash",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "extra-receiver")
 				cfg.ExtraConfigs = []v1.ExtraConfiguration{
@@ -362,7 +360,7 @@ receivers:
 		},
 		{
 			name:     "managed routes changes affect hash",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
+			features: featuremgmt.WithFeatures(),
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "team-a", "team-b", "team-c")
 				cfg.ManagedRoutes = v1.ManagedRoutes{
@@ -377,7 +375,7 @@ receivers:
 		},
 		{
 			name:     "managed inhibition rule changes affect hash",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
+			features: featuremgmt.WithFeatures(),
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "team-receiver")
 				rule := v1.NewInhibitionRule(
@@ -427,7 +425,7 @@ receivers:
 		},
 		{
 			name:     "extra config with v0mimir email config",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI, featuremgmt.FlagAlertingMultiplePolicies),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 			initialConfig: func() *v1.AMConfigV1 {
 				cfg := baseConfig("default-receiver", "extra-receiver")
 				cfg.ExtraConfigs = []v1.ExtraConfiguration{

@@ -22,11 +22,11 @@ import (
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
-func TestTagsHandler(t *testing.T) {
+func TestIntegrationTagsHandler(t *testing.T) {
 	ctx := t.Context()
 
 	// create several test annotations with different tags in multiple namespaces
-	store := NewMemoryStore()
+	store := newTestPostgresStore(t)
 	annotations := []*annotationV0.Annotation{
 		// namespace default annotations
 		{
@@ -63,6 +63,15 @@ func TestTagsHandler(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "a-8", Namespace: "namespace2"},
 			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag3"}},
 		},
+		// namespace3 annotations
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "a-9", Namespace: "namespace3"},
+			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"aardvark", "zebra"}},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Name: "a-10", Namespace: "namespace3"},
+			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"zebra"}},
+		},
 	}
 	for _, anno := range annotations {
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(ctx, 1), anno.Namespace)
@@ -71,14 +80,15 @@ func TestTagsHandler(t *testing.T) {
 	}
 
 	allowAll := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return true }}
-	handler := newTagsHandler(store.(TagProvider), allowAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+	handler := newTagsHandler(store, allowAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
 
 	tests := []struct {
-		name         string
-		namespace    string
-		queryParams  url.Values
-		expectedTags map[string]int64
-		maxResults   int
+		name          string
+		namespace     string
+		queryParams   url.Values
+		expectedTags  map[string]int64
+		expectedOrder []string
+		maxResults    int
 	}{
 		{
 			name:        "No filters - returns all tags with default limit",
@@ -91,6 +101,7 @@ func TestTagsHandler(t *testing.T) {
 				"incident":    1,
 				"release":     1,
 			},
+			expectedOrder: []string{"deployment", "env-prod", "env-staging", "incident", "release"},
 		},
 		{
 			name:      "Filter by prefix matching one tag",
@@ -127,7 +138,12 @@ func TestTagsHandler(t *testing.T) {
 			queryParams: url.Values{
 				"limit": []string{"2"},
 			},
-			maxResults: 2,
+			expectedTags: map[string]int64{
+				"deployment": 3,
+				"env-prod":   2,
+			},
+			expectedOrder: []string{"deployment", "env-prod"},
+			maxResults:    2,
 		},
 		{
 			name:      "Invalid limit (not a number) - uses default of 100",
@@ -150,7 +166,23 @@ func TestTagsHandler(t *testing.T) {
 				"prefix": []string{"env-"},
 				"limit":  []string{"1"},
 			},
-			maxResults: 1,
+			expectedTags: map[string]int64{
+				"env-prod": 2,
+			},
+			expectedOrder: []string{"env-prod"},
+			maxResults:    1,
+		},
+		{
+			name:      "Limit keeps alphabetically-first tag over higher-count tags",
+			namespace: "namespace3",
+			queryParams: url.Values{
+				"limit": []string{"1"},
+			},
+			expectedTags: map[string]int64{
+				"aardvark": 1,
+			},
+			expectedOrder: []string{"aardvark"},
+			maxResults:    1,
 		},
 		{
 			name:        "Namespace isolation - namespace1 only sees its own tags",
@@ -220,12 +252,21 @@ func TestTagsHandler(t *testing.T) {
 
 				assert.Equal(t, tt.expectedTags, actualTags, "Tags and counts should match expected values")
 			}
+
+			if tt.expectedOrder != nil {
+				actualOrder := make([]string, 0, len(result.Tags))
+				for _, tag := range result.Tags {
+					actualOrder = append(actualOrder, tag.Tag)
+				}
+
+				assert.Equal(t, tt.expectedOrder, actualOrder, "Tags should be ordered by name")
+			}
 		})
 	}
 }
 
-func TestTagsHandlerAuthorization(t *testing.T) {
-	store := NewMemoryStore()
+func TestIntegrationTagsHandlerAuthorization(t *testing.T) {
+	store := newTestPostgresStore(t)
 	anno := &annotationV0.Annotation{
 		ObjectMeta: metav1.ObjectMeta{Name: "a-1", Namespace: metav1.NamespaceDefault},
 		Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"secret-canary"}},
@@ -253,7 +294,7 @@ func TestTagsHandlerAuthorization(t *testing.T) {
 
 	t.Run("denies callers without organization annotation read", func(t *testing.T) {
 		denyAll := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return false }}
-		handler := newTagsHandler(store.(TagProvider), denyAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+		handler := newTagsHandler(store, denyAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
 
 		req, writer := newRequest()
 		err := handler(ctx, writer, req)
@@ -272,7 +313,7 @@ func TestTagsHandlerAuthorization(t *testing.T) {
 				item.Name == "organization" &&
 				item.Verb == utils.VerbList
 		}}
-		handler := newTagsHandler(store.(TagProvider), orgReader, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+		handler := newTagsHandler(store, orgReader, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
 
 		req, writer := newRequest()
 		err := handler(ctx, writer, req)

@@ -11,7 +11,8 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
@@ -40,15 +41,13 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
 
   useEffect(() => {
     setDataSource(null);
-    getDataSourceSrv()
-      .get(traceRef.dsUID)
-      .then((dataSource) => {
-        if (dataSource) {
-          setDataSource(dataSource);
-        } else {
-          setDataFrames(null);
-        }
-      });
+    getDataSourceInstance(traceRef.dsUID).then((dataSource) => {
+      if (dataSource) {
+        setDataSource(dataSource);
+      } else {
+        setDataFrames(null);
+      }
+    });
   }, [traceRef.dsUID]);
 
   useEffect(() => {

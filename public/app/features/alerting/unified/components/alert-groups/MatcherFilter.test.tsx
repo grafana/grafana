@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import * as analytics from '../../Analytics';
 
 import { MatcherFilter } from './MatcherFilter';
@@ -11,7 +13,7 @@ describe('Analytics', () => {
   it('Sends log info when filtering alert instances by label', async () => {
     render(<MatcherFilter onFilterChange={jest.fn()} />);
 
-    const searchInput = screen.getByTestId('search-query-input');
+    const searchInput = screen.getByTestId(selectors.pages.Alerting.searchInput);
     await userEvent.type(searchInput, 'job=', { delay: 600 }); // Delay waits for the MatcherFilter debounce
 
     expect(logInfoSpy).toHaveBeenCalledWith(analytics.LogMessages.filterByLabel);
@@ -22,7 +24,7 @@ describe('Analytics', () => {
 
     render(<MatcherFilter defaultQueryString="foo" onFilterChange={onFilterMock} />);
 
-    const searchInput = screen.getByTestId('search-query-input');
+    const searchInput = screen.getByTestId(selectors.pages.Alerting.searchInput);
     await userEvent.type(searchInput, '=bar', { delay: 600 }); // Delay waits for the MatcherFilter debounce
 
     expect(onFilterMock).toHaveBeenLastCalledWith('foo=bar');

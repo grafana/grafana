@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
@@ -50,8 +50,11 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       }),
 
       border: z.object({
+        /** Use for decoration */
         weak: z.string().optional(),
+        /** Use for widget borders */
         medium: z.string().optional(),
+        /** Use for active/focused widget borders */
         strong: z.string().optional(),
       }),
 
@@ -127,9 +130,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgb(54, 57, 64)`,
-    medium: `rgb(68, 70, 78)`,
-    strong: `rgb(85, 87, 96)`,
+    weak: `rgba(${this.whiteBase}, 0.12)`,
+    medium: `rgba(${this.whiteBase}, 0.2)`,
+    strong: `rgba(${this.whiteBase}, 0.30)`,
   };
 
   text = {
@@ -230,9 +233,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   border = {
-    weak: `rgb(229, 229, 230)`,
-    medium: `rgb(189, 191, 192)`,
-    strong: `rgb(167, 169, 171)`,
+    weak: `rgba(${this.blackBase}, 0.12)`,
+    medium: `rgba(${this.blackBase}, 0.3)`,
+    strong: `rgba(${this.blackBase}, 0.4)`,
   };
 
   secondary = {
@@ -337,20 +340,40 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     if (!color.main) {
       color.main = base[name].main;
     }
+    if (!color.mainEmphasis) {
+      color.mainEmphasis = emphasize(color.main, tonalOffset);
+    }
+    if (!color.contrastText) {
+      color.contrastText = getContrastText(color.main);
+    }
+
+    if (!color.background) {
+      color.background = alpha(color.main, 0.15);
+    }
+    if (!color.backgroundEmphasis) {
+      color.backgroundEmphasis = emphasize(color.background, tonalOffset);
+    }
+
     if (!color.text) {
       color.text = color.main;
     }
+    if (!color.textEmphasis) {
+      color.textEmphasis = base.mode === 'light' ? darken(color.text, tonalOffset) : lighten(color.text, tonalOffset);
+    }
+
     if (!color.border) {
       color.border = color.text;
     }
+    if (!color.borderEmphasis) {
+      color.borderEmphasis = emphasize(color.border, tonalOffset);
+    }
+
+    // deprecated properties, we should remove these in the future
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
     }
     if (!color.transparent) {
       color.transparent = alpha(color.main, 0.15);
-    }
-    if (!color.contrastText) {
-      color.contrastText = getContrastText(color.main);
     }
     if (!color.borderTransparent) {
       color.borderTransparent = alpha(color.border, 0.25);

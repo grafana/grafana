@@ -1,12 +1,8 @@
 import { type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 
-import {
-  aggregateDashboardTotals,
-  aggregateFolderCounts,
-  aggregatePlaylistTotals,
-  computeBreakdowns,
-  percent,
-} from './stats';
+import { resourceKindInfos } from '../utils/resourceKinds';
+
+import { computeFolderCounts, computeKindTotals, percent } from './stats';
 
 // 100 dashboards total, 40 managed by Git Sync, 10 by Terraform => 50 managed,
 // 50 unmanaged. 8 folders total, 6 managed (4 git sync + 2 terraform). 20
@@ -36,99 +32,59 @@ const stats: ResourceStats = {
   ],
 };
 
-describe('computeBreakdowns', () => {
-  it('always emits a folder, dashboard and playlist row even with no data', () => {
-    const breakdowns = computeBreakdowns(undefined);
-    const groups = breakdowns.map((b) => b.group).sort();
-    expect(groups).toEqual(['dashboard.grafana.app', 'folder.grafana.app', 'playlist.grafana.app']);
-    breakdowns.forEach((b) => {
-      expect(b.total).toBe(0);
-      expect(b.gitSyncCount).toBe(0);
-      expect(b.otherManagedCount).toBe(0);
-      expect(b.unmanagedCount).toBe(0);
-    });
+describe('computeKindTotals', () => {
+  it('returns one totals entry per kind, in order', () => {
+    const totals = computeKindTotals(stats, [resourceKindInfos.dashboard, resourceKindInfos.playlist]);
+    expect(totals.map((t) => t.kind.kind)).toEqual(['Dashboard', 'Playlist']);
   });
 
-  it('splits counts into git sync, other managed, and unmanaged', () => {
-    const breakdowns = computeBreakdowns(stats);
-    const dashboards = breakdowns.find((b) => b.group === 'dashboard.grafana.app')!;
-    expect(dashboards.total).toBe(100);
-    expect(dashboards.gitSyncCount).toBe(40);
-    expect(dashboards.otherManagedCount).toBe(10);
-    expect(dashboards.unmanagedCount).toBe(50);
-
-    const folders = breakdowns.find((b) => b.group === 'folder.grafana.app')!;
-    expect(folders.total).toBe(8);
-    expect(folders.gitSyncCount).toBe(4);
-    expect(folders.otherManagedCount).toBe(2);
-    expect(folders.unmanagedCount).toBe(2);
+  it('sums instance and managed (git sync + other) counts per kind', () => {
+    const totals = computeKindTotals(stats, [resourceKindInfos.dashboard, resourceKindInfos.playlist]);
+    expect(totals[0].totals).toEqual({ instanceTotal: 100, managed: 50 });
+    expect(totals[1].totals).toEqual({ instanceTotal: 20, managed: 5 });
   });
 
-  it('ignores non-dashboard resources in the dashboard group', () => {
-    const breakdowns = computeBreakdowns({
-      instance: [
-        { group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 },
-        // Same group, different resource — must not count toward dashboards.
-        { group: 'dashboard.grafana.app', resource: 'variables', count: 7 },
-        { group: 'dashboard.grafana.app', resource: 'librarypanels', count: 3 },
-      ],
-      managed: [
-        {
-          kind: 'repo',
-          stats: [
-            { group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 },
-            { group: 'dashboard.grafana.app', resource: 'variables', count: 2 },
-          ],
-        },
-      ],
-    });
-    const dashboards = breakdowns.find((b) => b.group === 'dashboard.grafana.app')!;
-    expect(dashboards.total).toBe(10);
-    expect(dashboards.gitSyncCount).toBe(4);
-    expect(dashboards.unmanagedCount).toBe(6);
+  it('matches on BOTH group and resource so same-group siblings do not leak in', () => {
+    // librarypanels share the dashboard group but must not count as dashboards.
+    const totals = computeKindTotals(
+      {
+        instance: [
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 },
+          { group: 'dashboard.grafana.app', resource: 'variables', count: 7 },
+          { group: 'dashboard.grafana.app', resource: 'librarypanels', count: 3 },
+        ],
+        managed: [
+          {
+            kind: 'repo',
+            stats: [
+              { group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 },
+              { group: 'dashboard.grafana.app', resource: 'variables', count: 2 },
+            ],
+          },
+        ],
+      },
+      [resourceKindInfos.dashboard]
+    );
+    expect(totals[0].totals).toEqual({ instanceTotal: 10, managed: 4 });
+  });
+
+  it('reports zeros when there is no data', () => {
+    const totals = computeKindTotals(undefined, [resourceKindInfos.dashboard]);
+    expect(totals[0].totals).toEqual({ instanceTotal: 0, managed: 0 });
+  });
+});
+
+describe('computeFolderCounts', () => {
+  it('reports managed and total folder counts', () => {
+    expect(computeFolderCounts(stats)).toEqual({ managed: 6, total: 8 });
   });
 
   it('folds the legacy `folders` group into folder.grafana.app', () => {
-    const breakdowns = computeBreakdowns({
+    const counts = computeFolderCounts({
       instance: [{ group: 'folders', resource: 'folders', count: 5 }],
       managed: [{ kind: 'repo', stats: [{ group: 'folders', resource: 'folders', count: 3 }] }],
     });
-    const folders = breakdowns.find((b) => b.group === 'folder.grafana.app')!;
-    expect(folders.total).toBe(5);
-    expect(folders.gitSyncCount).toBe(3);
-    expect(folders.unmanagedCount).toBe(2);
-  });
-});
-
-describe('aggregateDashboardTotals', () => {
-  it('reports dashboard-only totals', () => {
-    const totals = aggregateDashboardTotals(computeBreakdowns(stats));
-    expect(totals).toEqual({ instanceTotal: 100, managed: 50 });
-  });
-});
-
-describe('aggregatePlaylistTotals', () => {
-  it('reports playlist-only totals', () => {
-    const totals = aggregatePlaylistTotals(computeBreakdowns(stats));
-    expect(totals).toEqual({ instanceTotal: 20, managed: 5 });
-  });
-
-  it('ignores non-playlist resources in the playlist group', () => {
-    const breakdowns = computeBreakdowns({
-      instance: [
-        { group: 'playlist.grafana.app', resource: 'playlists', count: 12 },
-        // Same group, different resource — must not count toward playlists.
-        { group: 'playlist.grafana.app', resource: 'somethingelse', count: 4 },
-      ],
-    });
-    expect(aggregatePlaylistTotals(breakdowns)).toEqual({ instanceTotal: 12, managed: 0 });
-  });
-});
-
-describe('aggregateFolderCounts', () => {
-  it('reports managed and total folder counts', () => {
-    const folderCounts = aggregateFolderCounts(computeBreakdowns(stats));
-    expect(folderCounts).toEqual({ managed: 6, total: 8 });
+    expect(counts).toEqual({ managed: 3, total: 5 });
   });
 });
 

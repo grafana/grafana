@@ -549,7 +549,40 @@ describe('VisualizationSuggestions', () => {
     expect(screen.queryByTestId('suggestion-card-gauge-hash')).not.toBeInTheDocument();
   });
 
-  it('should show empty search result when no suggestions match the search query', async () => {
+  it('should fall back to all panel types when no suggestions match the search query', async () => {
+    mockGetAllSuggestions.mockResolvedValue({
+      suggestions: [
+        { pluginId: 'timeseries', name: 'Time series', hash: 'ts-hash', options: {} },
+        { pluginId: 'table', name: 'Table', hash: 'table-hash', options: {} },
+      ],
+      hasErrors: false,
+    });
+
+    const data: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+            { name: 'value', type: FieldType.number, values: [10, 20, 30] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    render(<VisualizationSuggestions onChange={jest.fn()} data={data} panel={undefined} searchQuery="text" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Text')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByTestId('suggestion-card-ts-hash')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('suggestion-card-table-hash')).not.toBeInTheDocument();
+  });
+
+  it('should show empty search result when neither suggestions nor panel types match the search query', async () => {
     mockGetAllSuggestions.mockResolvedValue({
       suggestions: [
         { pluginId: 'timeseries', name: 'Time series', hash: 'ts-hash', options: {} },
@@ -743,6 +776,19 @@ describe('VisualizationSuggestions', () => {
 
       expect(screen.queryByText('Dashboard list')).not.toBeInTheDocument();
       expect(screen.queryByText('Alert list')).not.toBeInTheDocument();
+    });
+
+    it('should fall back to all panel types when no no-data panels match the search query', async () => {
+      render(<VisualizationSuggestions onChange={jest.fn()} data={emptyData} panel={undefined} searchQuery="time" />);
+
+      await waitForSuggestionsToLoad();
+
+      await waitFor(() => {
+        expect(screen.getByText('Time series')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText('Start without data')).not.toBeInTheDocument();
+      expect(screen.queryByText('Text')).not.toBeInTheDocument();
     });
   });
 });

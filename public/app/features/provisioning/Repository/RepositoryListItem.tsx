@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2, dateTimeFormatTimeAgo } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
@@ -63,7 +64,7 @@ export function RepositoryListItem({ repository }: Props) {
   return (
     <Card noMargin key={name} className={styles.card}>
       <Card.Figure className={styles.figure}>
-        <RepoIcon type={spec?.type} />
+        <RepoIcon type={spec?.type} autoHeight />
       </Card.Figure>
       <Card.Heading>
         <Stack gap={2} direction="row" alignItems="center" wrap>
@@ -105,7 +106,13 @@ export function RepositoryListItem({ repository }: Props) {
 
       <Card.Actions>
         <Stack gap={1} direction="row">
-          <LinkButton icon="eye" href={`${PROVISIONING_URL}/${name}`} variant="primary" size="md">
+          <LinkButton
+            icon="eye"
+            href={`${PROVISIONING_URL}/${name}`}
+            variant="primary"
+            size="md"
+            data-testid={selectors.pages.Provisioning.RepositoryList.viewLink(name)}
+          >
             <Trans i18nKey="provisioning.repository-card.view">View</Trans>
           </LinkButton>
           <SyncRepository repository={repository} />

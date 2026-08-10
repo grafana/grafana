@@ -46,6 +46,7 @@ func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 		testcases.NewShortURLsTestCase(),
 		testcases.NewStarsTestCase(),
 		testcases.NewPreferencesTestCase(),
+		testcases.NewSnapshotsTestCase(),
 	}
 	// TODO: fix datasource migration tests on sqlite, see:
 	// https://github.com/grafana/grafana-enterprise/issues/11313
@@ -351,15 +352,17 @@ const (
 	starsID                = "stars migration"
 	preferencesID          = "preferences migration"
 	datasourceID           = "datasources migration"
+	snapshotsID            = "snapshots migration"
 )
 
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
-	shorturlsID:            false,
+	shorturlsID:            true,
 	datasourceID:           false,
 	starsID:                false,
 	preferencesID:          false,
+	snapshotsID:            false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool, extraMigrationIDs map[string]bool) {

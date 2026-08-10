@@ -14,6 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// NotifyThrottleInterval is the minimum time between two persisted "immediate"
+// progress notifications; SetMessage/SetTotal calls closer together are
+// coalesced. Callers that need every update to persist must space them at least
+// this far apart.
+const NotifyThrottleInterval = 500 * time.Millisecond
+
 // maybeNotifyProgress will only notify if a certain amount of time has passed
 // or if the job completed
 func maybeNotifyProgress(threshold time.Duration, fn ProgressFn) ProgressFn {
@@ -62,7 +68,7 @@ type jobProgressRecorder struct {
 func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
 	return &jobProgressRecorder{
 		started:             time.Now(),
-		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, progressFn),
+		notifyImmediatelyFn: maybeNotifyProgress(NotifyThrottleInterval, progressFn),
 		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, progressFn),
 		summaries:           make(map[string]*provisioning.JobResourceSummary),
 		resultReasons:       make(map[string]struct{}),
@@ -304,6 +310,22 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 			summary.Create++
 		}
 		summary.Write = summary.Create + summary.Update
+
+		// Action-aware total, kept in sync with the counters above so the driver can
+		// sum it without re-deriving per action. Each single-purpose worker records
+		// one FileAction type: push writes, delete deletes, move renames (recorded as
+		// create+delete, so count creates only to avoid double-counting). Everything
+		// else (pull, migrate) sums create+update+delete.
+		switch r.action {
+		case provisioning.JobActionPush:
+			summary.TotalChanges = summary.Write
+		case provisioning.JobActionDelete:
+			summary.TotalChanges = summary.Delete
+		case provisioning.JobActionMove:
+			summary.TotalChanges = summary.Create
+		default:
+			summary.TotalChanges = summary.Create + summary.Update + summary.Delete
+		}
 	}
 }
 

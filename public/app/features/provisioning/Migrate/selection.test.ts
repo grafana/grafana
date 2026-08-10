@@ -1,6 +1,6 @@
 import { resourceKindInfos } from '../utils/resourceKinds';
 
-import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type FolderRow } from './hooks/useMigrationData';
 import { resolveSelection } from './selection';
 
 // Composite selection keys, matching `resourceKey` — selection is keyed by
@@ -13,6 +13,7 @@ function folder(uid: string, dashboardUids: string[]): FolderRow {
   return {
     uid,
     title: uid,
+    path: [],
     resourceCount: directResources.length,
     directResources,
   };
@@ -25,6 +26,7 @@ function playlistFolder(uid: string, playlistUids: string[]): FolderRow {
   return {
     uid,
     title: 'Playlists',
+    path: [],
     resourceCount: directResources.length,
     directResources,
   };

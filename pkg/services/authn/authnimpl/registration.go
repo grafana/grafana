@@ -108,8 +108,7 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features, tracer))
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	if cfg.ProvisioningEnabled {
 		authnSvc.RegisterClient(clients.ProvideProvisioning())
 	}
 
@@ -133,10 +132,10 @@ func ProvideRegistration(
 		authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
 	}
 
-	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)
+	rbacSync := sync.ProvideRBACSync(cfg, accessControlService, tracer, permRegistry, features)
+	authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
-		authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
 		authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
 	}
 

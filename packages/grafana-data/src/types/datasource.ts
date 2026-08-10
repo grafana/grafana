@@ -151,6 +151,13 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setErrorsAndNoticesInspector(
+    ErrorsAndNoticesInspector: ComponentType<ErrorsAndNoticesInspectorProps<DSType, TQuery, TOptions>>
+  ) {
+    this.components.ErrorsAndNoticesInspector = ErrorsAndNoticesInspector;
+    return this;
+  }
+
   setComponentsFromLegacyExports(pluginExports: System.Module) {
     throwIfAngular(pluginExports);
 
@@ -213,6 +220,7 @@ export interface DataSourcePluginComponents<
   QueryEditorHelp?: ComponentType<QueryEditorHelpProps<TQuery>>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
+  ErrorsAndNoticesInspector?: ComponentType<ErrorsAndNoticesInspectorProps<DSType, TQuery, TOptions>>;
 }
 
 // Only exported for tests
@@ -497,6 +505,18 @@ export interface MetadataInspectorProps<
 
   // All Data from this DataSource
   data: DataFrame[];
+}
+
+export interface ErrorsAndNoticesInspectorProps<
+  DSType extends DataSourceApi<TQuery, TOptions>,
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+> {
+  datasource: DSType;
+
+  data: DataFrame[];
+
+  errors?: DataQueryError[];
 }
 
 export interface LegacyMetricFindQueryOptions {

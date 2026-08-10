@@ -415,6 +415,7 @@ describe('Plugins/Helpers', () => {
           enabled: false,
           strategy: undefined,
         },
+        category: 'Custom category',
         distributionType: undefined,
       });
     });
@@ -475,6 +476,7 @@ describe('Plugins/Helpers', () => {
           enabled: false,
           strategy: undefined,
         },
+        category: 'Custom category',
         distributionType: undefined,
       });
     });

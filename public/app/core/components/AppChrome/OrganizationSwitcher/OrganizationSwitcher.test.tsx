@@ -142,7 +142,7 @@ describe('OrganisationSwitcher', () => {
 
     expect(setUserOrganization).toHaveBeenCalledWith(2);
     expect(mockDispatch).toHaveBeenCalledWith({ type: 'setUserOrganization', orgId: 2 });
-    expect(assignMock).toHaveBeenCalledWith('/grafana/?orgId=2');
+    expect(assignMock).toHaveBeenCalledWith('/grafana/');
   });
 
   it('does not navigate when setUserOrganization rejects', async () => {

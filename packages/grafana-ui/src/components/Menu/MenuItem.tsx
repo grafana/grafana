@@ -207,6 +207,10 @@ export const MenuItem = React.memo(
         data-testid={testId}
         aria-label={ariaLabel}
         aria-checked={ariaChecked}
+        // Announce to screen readers that this item opens a submenu, and whether it is
+        // currently expanded, so nested items (e.g. under "More...") are discoverable.
+        aria-haspopup={hasSubMenu ? 'menu' : undefined}
+        aria-expanded={hasSubMenu ? isSubMenuOpen : undefined}
         tabIndex={tabIndex}
         {...disabledProps}
       >
@@ -255,6 +259,7 @@ export const MenuItem = React.memo(
 MenuItem.displayName = 'MenuItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const menuPadding = theme.components.menu.padding * theme.spacing.gridSize;
 
   return {
@@ -262,7 +267,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: 'none',
       cursor: 'pointer',
       whiteSpace: 'nowrap',
-      color: theme.colors.text.secondary,
+      color: visualRefreshEnabled ? theme.colors.text.primary : theme.colors.text.secondary,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'stretch',
@@ -277,15 +282,17 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover, &:focus-visible': {
         background: theme.colors.action.hover,
-        color: theme.colors.text.primary,
+        color: visualRefreshEnabled ? theme.colors.text.maxContrast : theme.colors.text.primary,
         textDecoration: 'none',
       },
 
       '&:focus-visible': getFocusStyles(theme),
     }),
-    label: css({
-      color: theme.colors.text.primary,
-    }),
+    label: css(
+      !visualRefreshEnabled && {
+        color: theme.colors.text.primary,
+      }
+    ),
     active: css({
       background: theme.colors.action.hover,
       // needed to show active items in forced colors mode
@@ -293,22 +300,34 @@ const getStyles = (theme: GrafanaTheme2) => {
         outline: '1px solid transparent',
       },
     }),
-    destructive: css({
-      color: theme.colors.error.text,
-
-      svg: {
+    destructive: css(
+      {
         color: theme.colors.error.text,
-      },
-
-      '&:hover, &:focus, &:focus-visible': {
-        background: theme.colors.error.main,
-        color: theme.colors.error.contrastText,
 
         svg: {
+          color: theme.colors.error.text,
+        },
+
+        '&:hover, &:focus, &:focus-visible': {
+          background: theme.colors.error.main,
           color: theme.colors.error.contrastText,
+
+          svg: {
+            color: theme.colors.error.contrastText,
+          },
         },
       },
-    }),
+      visualRefreshEnabled && {
+        '&:hover, &:focus, &:focus-visible': {
+          background: theme.colors.error.backgroundEmphasis,
+          color: theme.colors.error.textEmphasis,
+
+          svg: {
+            color: theme.colors.error.textEmphasis,
+          },
+        },
+      }
+    ),
     disabled: css({
       color: theme.colors.action.disabledText,
       label: 'menu-item-disabled',

@@ -8,6 +8,7 @@ import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alph
 
 import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
 import { type RepoType } from '../Wizard/types';
+import { isGitHubBased } from '../utils/repositoryTypes';
 
 import { DashboardPreviewField } from './DashboardPreviewField';
 
@@ -41,11 +42,13 @@ export function PullRequestOptionsSection<T extends FieldValues>({
 }: Props<T>) {
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
   // Previews are GitHub-only, so skip the settings query for other providers.
-  const settings = useGetFrontendSettingsQuery(!dashboardPreviewName || repoType !== 'github' ? skipToken : undefined);
+  const settings = useGetFrontendSettingsQuery(
+    !dashboardPreviewName || !isGitHubBased(repoType) ? skipToken : undefined
+  );
 
   // Dashboard previews currently apply only to GitHub and require image rendering to be allowed.
   const showDashboardPreviews = Boolean(
-    repoType === 'github' && dashboardPreviewName && checkImageRenderingAllowed(settings.data)
+    isGitHubBased(repoType) && dashboardPreviewName && checkImageRenderingAllowed(settings.data)
   );
 
   if (!gitConventionsEnabled && !showDashboardPreviews) {

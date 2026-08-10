@@ -3,7 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, type SubmitErrorHandler, type UseFormWatch, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, store } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
@@ -30,7 +31,6 @@ import {
   LogMessages,
   logInfo,
   logWarning,
-  trackAlertRuleFormCancelled,
   trackAlertRuleFormError,
   trackAlertRuleFormSaved,
   trackNewGrafanaAlertRuleFormCancelled,
@@ -292,7 +292,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   const cancelRuleCreation = () => {
     logInfo(LogMessages.cancelSavingAlertRule);
-    trackAlertRuleFormCancelled({ formAction: existing ? 'update' : 'create' });
     if (!existing && grafanaTypeRule) {
       // new Grafana-managed rule
       trackNewGrafanaAlertRuleFormCancelled();
@@ -352,7 +351,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
             {/* actions */}
             <Stack direction="row" alignItems="center">
               <Button
-                data-testid="save-rule"
+                data-testid={selectors.components.AlertRules.saveRuleButton}
                 variant="primary"
                 type="button"
                 onClick={handleSubmit((values) => submit(values), onInvalid)}
@@ -464,16 +463,16 @@ function storeInLocalStorageValues(values: RuleFormValues) {
   const { manualRouting, editorSettings } = values;
 
   if (manualRouting) {
-    localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+    store.set(MANUAL_ROUTING_KEY, 'true');
   } else {
-    localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
+    store.set(MANUAL_ROUTING_KEY, 'false');
   }
 
   if (editorSettings) {
     if (editorSettings.simplifiedQueryEditor) {
-      localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'true');
+      store.set(SIMPLIFIED_QUERY_EDITOR_KEY, 'true');
     } else {
-      localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');
+      store.set(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');
     }
   }
 }

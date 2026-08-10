@@ -42,6 +42,7 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       instanceState: _pluginInstanceState,
       currentOptions: options,
       currentFieldConfig: fieldConfig,
+      reportInteractionUI: 'panel-edit',
     });
   }, [data, panel, options, fieldConfig, _pluginInstanceState]);
 

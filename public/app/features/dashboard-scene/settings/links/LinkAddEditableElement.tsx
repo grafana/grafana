@@ -8,11 +8,11 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { type DashboardScene } from '../../scene/DashboardScene';
 import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
+import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
 import {
   LinkBooleanSwitch,
@@ -31,12 +31,12 @@ export function createDefaultLink(): DashboardLink {
   return { ...NEW_LINK, asDropdown: true };
 }
 
-function createLinkEdit(dashboard: DashboardScene, linkIndex: number): LinkEdit {
+function createLinkEdit(dashboard: DashboardSceneLike, linkIndex: number): LinkEdit {
   const selectionId = linkSelectionId(linkIndex);
   return new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: selectionId });
 }
 
-export function openAddLinkPane(dashboard: DashboardScene) {
+export function openAddLinkPane(dashboard: DashboardSceneLike) {
   const newLink = createDefaultLink();
   const linkIndex = (dashboard.state.links ?? []).length;
   const element = createLinkEdit(dashboard, linkIndex);
@@ -48,13 +48,13 @@ export function linkSelectionId(linkIndex: number) {
   return `dashboard-link-${linkIndex}`;
 }
 
-export function openLinkEditPane(dashboard: DashboardScene, linkIndex: number) {
+export function openEditLinkPane(dashboard: DashboardSceneLike, linkIndex: number) {
   const element = createLinkEdit(dashboard, linkIndex);
-  dashboard.state.editPane.selectObject(element, { force: true, multi: false });
+  dashboard.state.sidebar.selectObject(element, { force: true, multi: false });
 }
 
 export interface LinkEditState extends SceneObjectState {
-  dashboardRef: SceneObjectRef<DashboardScene>;
+  dashboardRef: SceneObjectRef<DashboardSceneLike>;
   linkIndex: number;
 }
 
@@ -67,7 +67,7 @@ function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {
   return link?.type === type;
 }
 
-function useEditPaneOptions(
+function useSidebarOptions(
   this: LinkEditEditableElement,
   linkEdit: LinkEdit,
   isNewElement: boolean
@@ -199,15 +199,15 @@ export class LinkEditEditableElement implements EditableDashboardElement {
     const dashboard = this.linkEdit.state.dashboardRef.resolve();
     const links = dashboard.state.links ?? [];
     const link = links[this.linkEdit.state.linkIndex];
-    const instanceName = link?.title ?? t('dashboard-scene.add-link.inline-instance-name', 'New link');
+    const instanceName = link?.title ?? t('dashboard.sidebar.links.new-link', 'New link');
     return {
-      typeName: t('dashboard-scene.add-link.label-link', 'Link'),
+      typeName: t('dashboard.sidebar.elements.link', 'Link'),
       icon: 'external-link-alt',
       instanceName,
     };
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.linkEdit);
+  public useSidebarOptions = useSidebarOptions.bind(this, this.linkEdit);
 
   public onDuplicate() {
     const dashboard = this.linkEdit.state.dashboardRef.resolve();
@@ -218,7 +218,7 @@ export class LinkEditEditableElement implements EditableDashboardElement {
     const linkEdit = createLinkEdit(dashboard, this.linkEdit.state.linkIndex);
 
     linkEditActions.addLink({ dashboard, link, addedObject: linkEdit });
-    openLinkEditPane(dashboard, links.length);
+    openEditLinkPane(dashboard, links.length);
   }
 
   public onConfirmDelete(): void {
@@ -242,16 +242,16 @@ export class LinkEditEditableElement implements EditableDashboardElement {
 
   public onDelete(): void {
     const dashboard = this.linkEdit.state.dashboardRef.resolve();
-    const editPane = dashboard.state.editPane;
+    const sidebar = dashboard.state.sidebar;
     const linkIndex = this.linkEdit.state.linkIndex;
     const currentLinks = dashboard.state.links ?? [];
 
     if (linkIndex < 0 || linkIndex >= currentLinks.length) {
-      editPane.selectObject(dashboard);
+      sidebar.selectObject(dashboard);
       return;
     }
 
     linkEditActions.removeLink({ dashboard, linkIndex });
-    editPane.selectObject(dashboard);
+    sidebar.selectObject(dashboard);
   }
 }

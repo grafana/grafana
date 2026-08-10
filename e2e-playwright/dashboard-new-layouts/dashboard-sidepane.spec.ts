@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { Panel, Sidebar } from './page-objects';
+import { Panels, Sidebar } from './page-objects';
 
 test.use({
   featureToggles: {
@@ -21,11 +21,11 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Can go back to previous selection or pane', async ({ gotoDashboardPage, selectors, page }) => {
+    test('Can go back to previous selection or pane', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({});
 
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
-      const panel = new Panel(page, dashboardPage, selectors);
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
 
       await sidebar.addOptions.clickNewPanelButton();
       await sidebar.panelOptions.setTitle('Panel 1');
@@ -40,7 +40,7 @@ test.describe(
 
       await sidebar.addOptions.clickNewPanelButton();
 
-      await panel.selectByTitle('Panel 2');
+      await panels.selectByTitle('Panel 2');
 
       await sidebar.clickDeleteButton({ confirm: true });
 

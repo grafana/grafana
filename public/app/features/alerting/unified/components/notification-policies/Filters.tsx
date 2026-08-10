@@ -6,9 +6,9 @@ import {
   ContactPointSelector as GrafanaManagedContactPointSelector,
   RoutingTreeSelector,
 } from '@grafana/alerting/unstable';
-import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip } from '@grafana/ui';
 import { ContactPointAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { type ObjectMatcher, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -99,7 +99,7 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
         error={!inputValid ? 'Query must use valid matcher syntax' : null}
       >
         <Input
-          data-testid="search-query-input"
+          data-testid={selectors.pages.Alerting.searchInput}
           placeholder={t('alerting.notification-policies-filter.search-query-input-placeholder-search', 'Search')}
           width={46}
           prefix={<Icon name="search" />}
@@ -153,7 +153,7 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
           )}
         </Field>
       )}
-      {isGrafanaAlertmanager && config.featureToggles.alertingMultiplePolicies && (
+      {isGrafanaAlertmanager && (
         <Field label={t('alerting.multiple-policies-view.policy-tree-filter-label', 'Policy')} noMargin>
           <RoutingTreeSelector
             multi

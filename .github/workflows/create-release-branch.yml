@@ -59,7 +59,7 @@ jobs:
       # grafana/grafana is too large for GitHub's pre-receive workflow-file scan to finish
       # within its timeout, so every push is rejected with "workflows scope may be required"
       # unless the token has workflows:write. grafana-writer is the only app installed with
-      # that scope; commits go through the Git Data API via kminehart/ghcommit-action so
+      # that scope; commits go through the Git Data API via planetscale/ghcommit-action so
       # they're auto-signed under grafana-writer[bot]'s identity.
       - name: Get GitHub App token (writer)
         id: get-writer-app-token
@@ -90,7 +90,7 @@ jobs:
             -f "sha=${BASE_SHA}"
       - if: ${{ !inputs.dry_run }}
         name: Commit version pin to release branch
-        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
         with:
           commit_message: "Release: set version to ${{ env.RELEASE_VERSION }}"
           repo: ${{ github.repository }}
@@ -147,7 +147,7 @@ jobs:
             -f "sha=${BASE_SHA}"
       - if: ${{ !inputs.dry_run }}
         name: Commit bump-version changes
-        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
         with:
           commit_message: "Release: bump version to ${{ env.NEXT_VERSION }}"
           repo: ${{ github.repository }}
