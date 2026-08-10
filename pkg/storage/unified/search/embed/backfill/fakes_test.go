@@ -227,10 +227,18 @@ func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
+func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+	key := resource
+	if isExternal {
+		key += "_external"
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}, nil
+}
+
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }
-func (f *fakeVector) UpsertReplaceSubresources(ctx context.Context, _, _, _, _ string, changed []vector.Vector, _ []string) error {
+func (f *fakeVector) UpsertReplaceSubresources(ctx context.Context, _, _, _, _ string, changed []vector.Vector, _ []vector.VectorMeta, _ []string) error {
 	return f.Upsert(ctx, changed)
 }
 func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
@@ -242,11 +250,13 @@ func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	f.upserts = append(f.upserts, vs)
 	return nil
 }
-func (f *fakeVector) Delete(_ context.Context, namespace, model, res, uid string) error {
+func (f *fakeVector) DeleteRows(_ context.Context, namespace, model, res string, sel vector.DeleteSelector) (int64, bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.deletes = append(f.deletes, deleteCall{namespace, model, res, uid})
-	return nil
+	for _, uid := range sel.UIDs {
+		f.deletes = append(f.deletes, deleteCall{namespace, model, res, uid})
+	}
+	return int64(len(sel.UIDs)), false, nil
 }
 func (f *fakeVector) DeleteSubresources(_ context.Context, namespace, model, res, uid string, subs []string) error {
 	f.mu.Lock()
@@ -333,6 +343,9 @@ func (f *fakeVector) TryAcquireBackfillLock(context.Context) (func(), bool, erro
 		defer f.mu.Unlock()
 		f.lockReleases++
 	}, true, nil
+}
+func (f *fakeVector) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
+	return fn(ctx)
 }
 
 // fakeText is a deterministic embedder: returns one fixed-dim vector per text.

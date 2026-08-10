@@ -30,7 +30,9 @@ func mustTemplate(filename string) *template.Template {
 
 var (
 	sqlVectorCollectionUpsert            = mustTemplate("vector_collection_upsert.sql")
-	sqlVectorCollectionDelete            = mustTemplate("vector_collection_delete.sql")
+	sqlVectorCollectionRefreshMeta       = mustTemplate("vector_collection_refresh_meta.sql")
+	sqlVectorCollectionDeleteUIDs        = mustTemplate("vector_collection_delete_uids.sql")
+	sqlVectorCollectionDeleteAll         = mustTemplate("vector_collection_delete_all.sql")
 	sqlVectorCollectionDeleteSubresource = mustTemplate("vector_collection_delete_subresources.sql")
 	sqlVectorNamespaceDeleteEmbeddings   = mustTemplate("vector_namespace_delete_embeddings.sql")
 	sqlVectorNamespaceDeleteQueryCache   = mustTemplate("vector_namespace_delete_query_cache.sql")
@@ -51,6 +53,7 @@ var (
 	sqlRateBucketIncrement               = mustTemplate("rate_bucket_increment.sql")
 	sqlRateBucketSweep                   = mustTemplate("rate_bucket_sweep.sql")
 	sqlVectorCatalogList                 = mustTemplate("vector_catalog_list.sql")
+	sqlVectorCatalogInsert               = mustTemplate("vector_catalog_insert.sql")
 )
 
 // All queries target `embeddings` and include `resource = $1 AND
@@ -73,17 +76,68 @@ func (r *sqlVectorCollectionUpsertRequest) Validate() error {
 	return nil
 }
 
-type sqlVectorCollectionDeleteRequest struct {
+type sqlVectorCollectionRefreshMetaRequest struct {
 	sqltemplate.SQLTemplate
 	Resource  string
 	Namespace string
 	Model     string
 	UID       string
+	Rows      []VectorMeta
 }
 
-func (r *sqlVectorCollectionDeleteRequest) Validate() error {
+func (r *sqlVectorCollectionRefreshMetaRequest) Validate() error {
 	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
 		return fmt.Errorf("missing required fields")
+	}
+	if len(r.Rows) == 0 {
+		return fmt.Errorf("rows must not be empty")
+	}
+	for i := range r.Rows {
+		if r.Rows[i].Title == "" {
+			return fmt.Errorf("rows[%d]: missing title", i)
+		}
+	}
+	return nil
+}
+
+type sqlVectorCollectionDeleteUIDsRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	AllModels bool
+	UIDs      []string
+}
+
+func (r *sqlVectorCollectionDeleteUIDsRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || (r.Model == "" && !r.AllModels) {
+		return fmt.Errorf("missing required fields")
+	}
+	if len(r.UIDs) == 0 {
+		return fmt.Errorf("uids must not be empty")
+	}
+	return nil
+}
+
+func (r *sqlVectorCollectionDeleteUIDsRequest) UIDsSlice() reflect.Value {
+	return reflect.ValueOf(r.UIDs)
+}
+
+type sqlVectorCollectionDeleteAllRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	AllModels bool
+	Limit     int
+}
+
+func (r *sqlVectorCollectionDeleteAllRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || (r.Model == "" && !r.AllModels) {
+		return fmt.Errorf("missing required fields")
+	}
+	if r.Limit <= 0 {
+		return fmt.Errorf("limit must be positive")
 	}
 	return nil
 }
@@ -196,6 +250,21 @@ type sqlVectorCatalogListResponse struct {
 	Resource     string
 	PartitionKey string
 	IsExternal   bool
+}
+
+type sqlVectorCatalogInsertRequest struct {
+	sqltemplate.SQLTemplate
+	GroupName    string
+	Resource     string
+	PartitionKey string
+	IsExternal   bool
+}
+
+func (r *sqlVectorCatalogInsertRequest) Validate() error {
+	if r.GroupName == "" || r.Resource == "" || r.PartitionKey == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	return nil
 }
 
 type sqlVectorBackfillJobsCreateRequest struct {
