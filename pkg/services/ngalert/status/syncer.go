@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
@@ -51,6 +52,7 @@ type Syncer struct {
 	namespacer request.NamespaceMapper
 	interval   time.Duration
 	log        log.Logger
+	metrics    *ngmetrics.StatusSyncer
 
 	// lastHash bounds write churn: a rule's status is only written when it changed
 	// since the last sync, so a steady state does not re-issue loopback writes.
@@ -60,7 +62,7 @@ type Syncer struct {
 	recordingRuleClient *v0alpha1.RecordingRuleClient
 }
 
-func NewSyncer(orgs OrgStore, states StateReader, status StatusReader, namespacer request.NamespaceMapper, interval time.Duration, logger log.Logger, clientGenerator resource.ClientGenerator) (*Syncer, error) {
+func NewSyncer(orgs OrgStore, states StateReader, status StatusReader, namespacer request.NamespaceMapper, interval time.Duration, logger log.Logger, metrics *ngmetrics.StatusSyncer, clientGenerator resource.ClientGenerator) (*Syncer, error) {
 	alertRuleClient, err := v0alpha1.NewAlertRuleClientFromGenerator(clientGenerator)
 	if err != nil {
 		return nil, fmt.Errorf("alert rule client: %w", err)
@@ -77,6 +79,7 @@ func NewSyncer(orgs OrgStore, states StateReader, status StatusReader, namespace
 		namespacer:          namespacer,
 		interval:            interval,
 		log:                 logger,
+		metrics:             metrics,
 		lastHash:            make(map[ngmodels.AlertRuleKey]uint64),
 		alertRuleClient:     alertRuleClient,
 		recordingRuleClient: recordingRuleClient,
@@ -93,9 +96,12 @@ func (s *Syncer) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
+			start := time.Now()
 			if err := s.sync(ctx); err != nil {
 				s.log.Error("Rule status sync failed", "error", err)
+				s.metrics.SyncFailures.Inc()
 			}
+			s.metrics.SyncDuration.Observe(time.Since(start).Seconds())
 		}
 	}
 }
@@ -196,6 +202,7 @@ func (s *Syncer) persist(ctx context.Context, key ngmodels.AlertRuleKey, status 
 		return
 	}
 	s.lastHash[key] = h
+	s.metrics.Writes.Inc()
 }
 
 // recoverRule contains a panic while syncing a single rule so status sync never

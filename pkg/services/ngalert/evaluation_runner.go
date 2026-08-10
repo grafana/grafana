@@ -76,6 +76,7 @@ func (r *evaluationRunner) startEvaluation(ctx context.Context) {
 			request.GetNamespaceMapper(r.ng.Cfg),
 			r.ng.Cfg.UnifiedAlerting.RuleStatusSyncInterval,
 			r.ng.Log.New("ngalert.status.syncer"),
+			r.ng.Metrics.GetStatusSyncerMetrics(),
 			r.ng.clientGenerator,
 		); err != nil {
 			r.ng.Log.Error("Failed to initialize status syncer", "error", err)
