@@ -1,17 +1,6 @@
-import { type Page } from 'playwright-core';
-
 import { test, expect, type E2ESelectorGroups, type DashboardPage } from '@grafana/plugin-e2e';
 
-import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
-
-import {
-  groupIntoRow,
-  groupIntoTab,
-  saveDashboard,
-  selectRow,
-  stripMetadataNameFromImportJson,
-  toggleRow,
-} from './utils';
+import { groupIntoRow, groupIntoTab, importTestDashboard, saveDashboard, selectRow, toggleRow } from './utils';
 
 test.use({
   featureToggles: {
@@ -32,18 +21,6 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    async function importTestDashboard(page: Page, selectors: E2ESelectorGroups, title: string) {
-      await page.goto(selectors.pages.ImportDashboard.url);
-      await page
-        .getByTestId(selectors.components.DashboardImportPage.textarea)
-        .fill(stripMetadataNameFromImportJson(JSON.stringify(testV2Dashboard)));
-      await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
-      await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
-      await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-      await page.locator('div[data-testid="data-source-card"]').first().click();
-      await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
-    }
-
     async function ungroupPanels(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
       await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.ungroup).click();
     }

@@ -94,8 +94,7 @@ type kvStorageBackend struct {
 	gcGate                  *GCGate
 	lastImportStore         *lastImportStore
 	lastImportTimeMaxAge    time.Duration
-	//reg     prometheus.Registerer
-	metrics *kvBackendMetrics
+	metrics                 *kvBackendMetrics
 
 	watchOpts WatchOptions
 
@@ -130,9 +129,11 @@ type kvStorageBackend struct {
 }
 
 type kvBackendMetrics struct {
-	ConflictErrors      *prometheus.CounterVec
-	EventEmitFailures   *prometheus.CounterVec
-	NatsNotifierDropped *prometheus.CounterVec
+	ConflictErrors                   *prometheus.CounterVec
+	EventEmitFailures                *prometheus.CounterVec
+	NatsNotifierDropped              *prometheus.CounterVec
+	WatchNotificationsPublished      *prometheus.CounterVec
+	WatchNotificationPublishFailures *prometheus.CounterVec
 }
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
@@ -151,6 +152,14 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name: "storage_server_nats_notifier_dropped_events_total",
 			Help: "Notifications dropped by the NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
 		}, []string{"reason"}),
+		WatchNotificationsPublished: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_watch_notifications_published_total",
+			Help: "Watch notifications successfully published to NATS, by group, resource, and action. The denominator for consumer delivery completeness: compare against the consumers' live-received totals to measure events missed in flight.",
+		}, []string{"group", "resource", "action"}),
+		WatchNotificationPublishFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_watch_notifications_publish_failures_total",
+			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
+		}, []string{"group", "resource", "action"}),
 	}
 }
 
@@ -166,6 +175,20 @@ func (m *kvBackendMetrics) recordEventEmitFailure(event WriteEvent) {
 		return
 	}
 	m.EventEmitFailures.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
+}
+
+func (m *kvBackendMetrics) recordWatchNotificationPublished(event Event) {
+	if m == nil {
+		return
+	}
+	m.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
+}
+
+func (m *kvBackendMetrics) recordWatchNotificationPublishFailure(event Event) {
+	if m == nil {
+		return
+	}
+	m.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
 
 var _ KVBackend = &kvStorageBackend{}
@@ -201,9 +224,9 @@ type KVBackendOptions struct {
 	// Nil preserves existing behavior.
 	ExperimentalKV       *ExperimentalKVOptions
 	DisablePruner        bool
-	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
-	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
-	Reg                  prometheus.Registerer // TODO add metrics
+	EventRetentionPeriod time.Duration // How long to keep events (default: 1 hour)
+	EventPruningInterval time.Duration // How often to run the event pruning (default: 5 minutes)
+	Reg                  prometheus.Registerer
 	Log                  log.Logger
 	GarbageCollection    GarbageCollectionConfig
 
@@ -368,7 +391,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		cancel:                  cancel,
 		metrics:                 metrics,
 	}
-	err = backend.initPruner(ctx)
+	err = backend.initPruner(ctx, opts.Reg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
@@ -541,7 +564,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 	return nil
 }
 
-func (k *kvStorageBackend) initPruner(ctx context.Context) error {
+func (k *kvStorageBackend) initPruner(ctx context.Context, reg prometheus.Registerer) error {
 	if k.disablePruner {
 		k.log.Debug("Pruner disabled, using noop pruner")
 		k.historyPruner = &NoopPruner{}
@@ -563,6 +586,7 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 				"name", key.Name,
 				"error", err)
 		},
+		Reg: reg,
 	})
 	if err != nil {
 		return err
@@ -2378,7 +2402,7 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			Value:           data,
 			ResourceVersion: event.ResourceVersion,
 			PreviousRV:      event.PreviousRV,
-			Timestamp:       resourceVersionTime(event.ResourceVersion).Unix(),
+			Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
 		}:
 		case <-ctx.Done():
 			return false

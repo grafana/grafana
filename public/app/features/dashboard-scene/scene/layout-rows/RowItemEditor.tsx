@@ -14,13 +14,14 @@ import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks
 import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../sidebar/SectionFiltersList';
 import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../sidebar/SectionVariablesList';
 import { dashboardEditActions } from '../../sidebar/shared';
+import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
+import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
 import { type RowItem } from './RowItem';
 
-export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+export function useSidebarOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
   const { layout } = model.useState();
 
@@ -77,7 +78,7 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
   const sectionVariablesCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.rows-layout.row-options.section-variables.title', 'Variables'),
-      id: 'dash-row-section-variables',
+      id: SidebarCategoryType.RowSectionVariables,
       isOpenDefault: true,
       renderTitle: (isExpanded: boolean) => (
         <SectionVariablesCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
@@ -87,7 +88,7 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
-        id: 'dash-row-section-variables-list',
+        id: SidebarCategoryType.RowSectionVariablesList,
         skipField: true,
         render: () => <SectionVariablesList sectionOwner={model} />,
       })
@@ -99,7 +100,7 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
   const sectionFiltersCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.rows-layout.row-options.section-filters.title', 'Filters'),
-      id: 'dash-row-section-filters',
+      id: SidebarCategoryType.RowSectionFilters,
       isOpenDefault: true,
       renderTitle: () => <SectionFiltersCategoryTitle />,
     });
@@ -107,7 +108,7 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
-        id: 'dash-row-section-filters-list',
+        id: SidebarCategoryType.RowSectionFiltersList,
         skipField: true,
         render: () => <SectionFiltersList sectionOwner={model} />,
       })
@@ -140,7 +141,7 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
   const { title } = row.useState();
   const prevTitle = useRef('');
 
-  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
+  const ref = useSidebarInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = row.hasUniqueTitle();
 
   return (

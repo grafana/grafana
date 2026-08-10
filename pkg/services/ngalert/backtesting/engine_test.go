@@ -252,8 +252,8 @@ type fakeStateManager struct {
 	stateCallback func(now time.Time) []state.StateTransition
 }
 
-func (f *fakeStateManager) ProcessEvalResults(_ context.Context, evaluatedAt time.Time, _ *models.AlertRule, _ eval.Results, _ data.Labels, _ state.Sender) state.StateTransitions {
-	return f.stateCallback(evaluatedAt)
+func (f *fakeStateManager) ProcessEvalResults(_ context.Context, evaluatedAt time.Time, _ *models.AlertRule, _ eval.Results, _ data.Labels, _ state.Sender) (state.StateTransitions, error) {
+	return f.stateCallback(evaluatedAt), nil
 }
 
 func (f *fakeStateManager) GetStatesForRuleUID(_ context.Context, orgID int64, alertRuleUID string) []*state.State {

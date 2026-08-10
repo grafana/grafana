@@ -124,11 +124,6 @@ export interface FeatureToggles {
   */
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   /**
-  * Enables Git Sync and as-code provisioning for Grafana resources
-  * @default true
-  */
-  provisioning?: boolean;
-  /**
   * Enable export functionality for provisioned resources
   * @default false
   */
@@ -304,6 +299,12 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.
+  * @deprecated
+  * @default true
+  */
+  disableScriptedDashboards?: boolean;
+  /**
   * Enables undo/redo in dynamic dashboards
   * @default false
   */
@@ -389,11 +390,6 @@ export interface FeatureToggles {
   */
   alertingSaveStatePeriodic?: boolean;
   /**
-  * Enables the compressed protobuf-based alert state storage. Default is enabled.
-  * @default true
-  */
-  alertingSaveStateCompressed?: boolean;
-  /**
   * In-development feature flag for the scope api using the app platform.
   * @default false
   */
@@ -475,7 +471,7 @@ export interface FeatureToggles {
   grafanaManagedRecordingRules?: boolean;
   /**
   * Enables Saved queries (query library) feature
-  * @default false
+  * @default true
   */
   queryLibrary?: boolean;
   /**
@@ -485,12 +481,12 @@ export interface FeatureToggles {
   playlistsRBAC?: boolean;
   /**
   * Enables Saved queries (query library) RBAC permissions
-  * @default false
+  * @default true
   */
   savedQueriesRBAC?: boolean;
   /**
   * Enables the new Saved queries (query library) modal experience
-  * @default false
+  * @default true
   */
   newSavedQueriesExperience?: boolean;
   /**
@@ -1079,11 +1075,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingTriage?: boolean;
-  /**
-  * Shows a promotional banner for the Alerts Activity feature on the Rule List page
-  * @default false
-  */
-  alertingAlertsActivityBanner?: boolean;
   /**
   * Enables the Graphite data source full backend mode
   * @default false

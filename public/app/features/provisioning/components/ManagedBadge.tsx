@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Badge, type BadgeColor, Dropdown, Icon, type IconName, Menu, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
@@ -47,7 +48,7 @@ interface ManagedBadgeProps {
 export function ManagedBadge({ managerKind, name, isOrphaned = false, repositoryName, sourcePath }: ManagedBadgeProps) {
   // The interactive variant is a separate component so the RTK Query hook only runs (and only
   // requires a store context) when a repository lookup can actually yield actions.
-  if (managerKind === ManagerKind.Repo && repositoryName && !isOrphaned) {
+  if (config.provisioningEnabled && managerKind === ManagerKind.Repo && repositoryName && !isOrphaned) {
     return <RepoManagedBadge name={name} repositoryName={repositoryName} sourcePath={sourcePath} />;
   }
 

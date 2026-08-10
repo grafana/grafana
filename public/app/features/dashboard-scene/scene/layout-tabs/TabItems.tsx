@@ -14,7 +14,7 @@ export class TabItems implements EditableDashboardElement {
     return { typeName: t('dashboard.sidebar.elements.tabs', 'Tabs'), icon: 'folder', instanceName: '' };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+  public useSidebarOptions(): OptionsPaneCategoryDescriptor[] {
     return [];
   }
 

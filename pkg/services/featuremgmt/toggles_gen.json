@@ -178,6 +178,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.stateManagerRequireWarm",
+        "resourceVersion": "1785789740487",
+        "creationTimestamp": "2026-08-03T20:42:20Z"
+      },
+      "spec": {
+        "description": "Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.syncExternalAlertmanager",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -279,7 +293,8 @@
       "metadata": {
         "name": "alertingAlertsActivityBanner",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-05T11:22:32Z"
       },
       "spec": {
         "description": "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
@@ -792,7 +807,8 @@
       "metadata": {
         "name": "alertingSaveStateCompressed",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-01-27T17:47:33Z"
+        "creationTimestamp": "2025-01-27T17:47:33Z",
+        "deletionTimestamp": "2026-07-23T18:10:32Z"
       },
       "spec": {
         "description": "Enables the compressed protobuf-based alert state storage. Default is enabled.",
@@ -1038,6 +1054,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-catalog",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "assistant.dashboardPlanning",
+        "resourceVersion": "1785916087451",
+        "creationTimestamp": "2026-08-05T07:48:07Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -1583,6 +1613,21 @@
     },
     {
       "metadata": {
+        "name": "dashboard.generation",
+        "resourceVersion": "1785840164813",
+        "creationTimestamp": "2026-08-04T10:42:44Z",
+        "deletionTimestamp": "2026-08-05T07:48:07Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard prompt",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.notebooks",
         "resourceVersion": "1783509818865",
         "creationTimestamp": "2026-07-08T11:23:38Z"
@@ -1648,6 +1693,36 @@
       "spec": {
         "description": "Enables the dashboard filters overview pane",
         "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardGeneration",
+        "resourceVersion": "1785828839880",
+        "creationTimestamp": "2026-08-04T07:33:59Z",
+        "deletionTimestamp": "2026-08-04T10:42:44Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard prompt",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardGenerationWizard",
+        "resourceVersion": "1783598235144",
+        "creationTimestamp": "2026-07-09T11:57:15Z",
+        "deletionTimestamp": "2026-08-04T07:33:59Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard wizard",
+        "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "false"
@@ -2096,6 +2171,21 @@
     },
     {
       "metadata": {
+        "name": "datetime.useLuxon",
+        "resourceVersion": "1785947524842",
+        "creationTimestamp": "2026-08-05T16:32:04Z"
+      },
+      "spec": {
+        "description": "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "deletedFolderResourceCleanup",
         "resourceVersion": "1783997108632",
         "creationTimestamp": "2026-07-14T02:45:08Z"
@@ -2133,6 +2223,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "disableScriptedDashboards",
+        "resourceVersion": "1785944490040",
+        "creationTimestamp": "2026-08-05T15:41:30Z"
+      },
+      "spec": {
+        "description": "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
+        "stage": "deprecated",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -2618,7 +2722,8 @@
       "metadata": {
         "name": "frontendService.settingsSourceFilter",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-06T11:53:39Z"
       },
       "spec": {
         "description": "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
@@ -2725,6 +2830,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.dashboardGlobalVariables",
+        "resourceVersion": "1785434853665",
+        "creationTimestamp": "2026-07-30T18:07:33Z"
+      },
+      "spec": {
+        "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },
@@ -2979,6 +3097,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.ofrepRootUrl",
+        "resourceVersion": "1786015306366",
+        "creationTimestamp": "2026-08-06T11:21:46Z"
+      },
+      "spec": {
+        "description": "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.onDemandDiagnostics",
         "resourceVersion": "1782469062023",
         "creationTimestamp": "2026-06-26T10:14:02Z",
@@ -3131,7 +3263,8 @@
       "metadata": {
         "name": "grafana.unifiedHomepage",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-22T21:47:47Z"
       },
       "spec": {
         "description": "Replaces the bundled home dashboard with the unified homepage React page",
@@ -4372,15 +4505,18 @@
     {
       "metadata": {
         "name": "newSavedQueriesExperience",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1784725458981",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-22 13:04:18.981698 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new Saved queries (query library) modal experience",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4573,6 +4709,21 @@
         "description": "Search for dashboards using panel title",
         "stage": "preview",
         "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "paneledit.buttonLabels",
+        "resourceVersion": "1785381918358",
+        "creationTimestamp": "2026-07-30T03:25:18Z"
+      },
+      "spec": {
+        "description": "Shows text labels on the add and stacked view buttons in PanelEditNext",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -4949,7 +5100,8 @@
       "metadata": {
         "name": "provisioning",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-11-22T09:03:50Z"
+        "creationTimestamp": "2024-11-22T09:03:50Z",
+        "deletionTimestamp": "2026-08-03T14:10:33Z"
       },
       "spec": {
         "description": "Enables Git Sync and as-code provisioning for Grafana resources",
@@ -5174,15 +5326,18 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1779440584464",
+        "resourceVersion": "1784725239984",
         "creationTimestamp": "2022-10-07T18:31:45Z",
-        "deletionTimestamp": "2023-03-20T16:00:14Z"
+        "deletionTimestamp": "2023-03-20T16:00:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-22 13:00:39.984125 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Saved queries (query library) feature",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5436,13 +5591,17 @@
     {
       "metadata": {
         "name": "reporting.redirectReportsToK8SApi",
-        "resourceVersion": "1785214026884",
-        "creationTimestamp": "2026-07-28T04:47:06Z"
+        "resourceVersion": "1786008381487",
+        "creationTimestamp": "2026-07-28T04:47:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-06 09:26:21.487357 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Redirect legacy report CRUD API endpoints to the Kubernetes reporting API",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
         "expression": "false"
       }
     },
@@ -5549,14 +5708,17 @@
     {
       "metadata": {
         "name": "savedQueriesRBAC",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1784725458981",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-22 13:04:18.981698 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Saved queries (query library) RBAC permissions",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5882,6 +6044,36 @@
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.autoColumnWidths",
+        "resourceVersion": "1784908309843",
+        "creationTimestamp": "2026-07-24T15:51:49Z"
+      },
+      "spec": {
+        "description": "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.paginationPageSize",
+        "resourceVersion": "1785352708239",
+        "creationTimestamp": "2026-07-29T19:18:28Z"
+      },
+      "spec": {
+        "description": "Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
