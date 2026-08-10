@@ -989,4 +989,12 @@ const (
 	// FlagAlertingStateManagerRequireWarm
 	// Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.
 	FlagAlertingStateManagerRequireWarm = "alerting.stateManagerRequireWarm"
+
+	// FlagGrafanaRspackBuild
+	// Switches the backend to load frontend assets built with rspack instead of webpack
+	FlagGrafanaRspackBuild = "grafana.rspackBuild"
+
+	// FlagPluginsForceTls13
+	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client
+	FlagPluginsForceTls13 = "pluginsForceTls13"
 )
