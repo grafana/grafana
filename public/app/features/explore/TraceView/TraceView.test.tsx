@@ -175,28 +175,34 @@ describe('TraceView', () => {
 
   it('correctly shows processes for each span', async () => {
     renderTraceView();
-    let table: HTMLElement;
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
 
     const firstSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(firstSpan);
-    await userEvent.click(screen.getByText(/Resource/));
-    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
-    expect(table.innerHTML).toContain('client-uuid-1');
+    // Resource attributes are open by default alongside span attributes
+    expect(
+      screen.getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' }).some((table) =>
+        table.innerHTML.includes('client-uuid-1')
+      )
+    ).toBe(true);
     await userEvent.click(firstSpan);
 
     const secondSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[1];
     await userEvent.click(secondSpan);
-    await userEvent.click(screen.getByText(/Resource/));
-    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
-    expect(table.innerHTML).toContain('client-uuid-2');
+    expect(
+      screen.getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' }).some((table) =>
+        table.innerHTML.includes('client-uuid-2')
+      )
+    ).toBe(true);
     await userEvent.click(secondSpan);
 
     const thirdSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
     await userEvent.click(thirdSpan);
-    await userEvent.click(screen.getByText(/Resource/));
-    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
-    expect(table.innerHTML).toContain('client-uuid-3');
+    expect(
+      screen.getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' }).some((table) =>
+        table.innerHTML.includes('client-uuid-3')
+      )
+    ).toBe(true);
   });
 
   it('resets detail view for new trace with the identical spanID', async () => {

@@ -59,7 +59,8 @@ import SpanDetail, { getAbsoluteTime, type SpanDetailProps } from './index';
 describe('<SpanDetail>', () => {
   // use `transformTraceData` on a fake trace to get a fully processed span
   const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 }))!.spans[0];
-  const detailState = new DetailState().toggleLogs().toggleProcess().toggleReferences().toggleTags();
+  // Span/resource attributes default open; only open the sections that start collapsed.
+  const detailState = new DetailState().toggleLogs().toggleReferences();
   const traceStartTime = 5;
   const topOfExploreViewRef = jest.fn();
   const request = {
@@ -389,8 +390,12 @@ describe('<SpanDetail>', () => {
         { key: 'aggregation.span_count', value: '3' },
       ],
     };
-    // All accordions collapsed so each renders its abbreviated key preview.
-    const summaryTagsProps = { ...props, span: summarySpanWithTags, detailState: new DetailState() };
+    // Collapse span/resource attributes (open by default) so each accordion renders its abbreviated key preview.
+    const summaryTagsProps = {
+      ...props,
+      span: summarySpanWithTags,
+      detailState: new DetailState().toggleTags().toggleProcess(),
+    };
 
     beforeEach(() => {
       jest.mocked(formatDuration).mockImplementation((duration: number) => `${duration}us`);
