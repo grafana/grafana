@@ -57,9 +57,7 @@ export function NotebooksListPage() {
             // nominally distinct; a new notebook has no elements, so state that here rather
             // than casting the whole spec across the seam.
             elements: {},
-            title: t('notebooks.list.new-notebook-title', 'Investigation — {{date}}', {
-              date: new Date().toLocaleDateString(),
-            }),
+            title: t('notebooks.list.new-notebook-title', 'New notebook'),
           },
         },
       }).unwrap();
@@ -105,7 +103,10 @@ export function NotebooksListPage() {
             <>
               <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
                 <Stack alignItems="center" gap={1} wrap="wrap">
+                  {/* Without an explicit width FilterInput fills the row and pushes the author
+                      filter onto the next line. */}
                   <FilterInput
+                    width={40}
                     value={searchQuery}
                     onChange={setSearchQuery}
                     escapeRegex={false}

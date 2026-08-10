@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
@@ -12,6 +13,7 @@ import {
   TagList,
   TextLink,
   Tooltip,
+  useStyles2,
 } from '@grafana/ui';
 
 import { notebookViewUrl } from '../urls';
@@ -29,6 +31,9 @@ export function NotebooksTable({ notebooks }: Props) {
         id: 'title',
         header: t('notebooks.list.table.title', 'Title'),
         sortType: 'string',
+        // Capped so the title stops absorbing all the table's slack; tags take the remainder.
+        width: 320,
+        maxWidth: 320,
         cell: ({ row: { original } }) => (
           <TextLink color="primary" inline={false} href={notebookViewUrl(original.uid)} title={original.title}>
             {original.title}
@@ -39,10 +44,12 @@ export function NotebooksTable({ notebooks }: Props) {
         id: 'authorName',
         header: t('notebooks.list.table.author', 'Author'),
         sortType: 'string',
+        width: 180,
       },
       {
         id: 'tags',
         header: t('notebooks.list.table.tags', 'Tags'),
+        minWidth: 160,
         cell: ({ row: { original } }) => <TagList tags={original.tags} displayMax={3} />,
       },
       {
@@ -50,6 +57,7 @@ export function NotebooksTable({ notebooks }: Props) {
         header: t('notebooks.list.table.created', 'Created'),
         sortType: 'string',
         disableGrow: true,
+        width: 120,
         cell: ({ row: { original } }) => <RelativeTime timestamp={original.created} />,
       },
       {
@@ -57,6 +65,7 @@ export function NotebooksTable({ notebooks }: Props) {
         header: t('notebooks.list.table.updated', 'Updated'),
         sortType: 'string',
         disableGrow: true,
+        width: 120,
         cell: ({ row: { original } }) => <RelativeTime timestamp={original.updated} />,
       },
       {
@@ -80,13 +89,16 @@ export function NotebooksTable({ notebooks }: Props) {
 }
 
 function RelativeTime({ timestamp }: { timestamp: string }) {
+  // Keeps "2 minutes ago" on one line instead of wrapping mid-phrase in a narrow column.
+  const nowrap = useStyles2(() => css({ whiteSpace: 'nowrap' }));
+
   if (!timestamp) {
     return null;
   }
 
   return (
     <Tooltip content={dateTimeFormat(timestamp)}>
-      <span>{dateTimeFormatTimeAgo(timestamp)}</span>
+      <span className={nowrap}>{dateTimeFormatTimeAgo(timestamp)}</span>
     </Tooltip>
   );
 }

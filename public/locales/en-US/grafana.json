@@ -12452,7 +12452,7 @@
       "title": "New folder"
     },
     "notebooks": {
-      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents",
+      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
       "title": "Notebooks"
     },
     "oncall": {
@@ -12762,7 +12762,7 @@
       "empty-title": "You haven't created any notebooks yet",
       "load-error": "Failed to load notebooks",
       "new-notebook": "New notebook",
-      "new-notebook-title": "Investigation — {{date}}",
+      "new-notebook-title": "New notebook",
       "no-results": "No notebooks found",
       "search-placeholder": "Search notebooks by title...",
       "table": {
