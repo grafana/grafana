@@ -23,7 +23,7 @@ review_date: 2026-08-10
 Annotations overlay event data on your dashboard graphs, helping you correlate log events with metrics.
 You can use Elasticsearch as a data source for annotations to display events such as deployments, alerts, or other significant occurrences on your visualizations.
 
-For general information about annotations, refer to [Annotate visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/).
+For general information about annotations, refer to [Annotate visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/).
 
 ## Before you begin
 
