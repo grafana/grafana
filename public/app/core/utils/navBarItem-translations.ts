@@ -219,7 +219,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'notebooks':
       return t(
         'nav.notebooks.subtitle',
-        'Investigation notebooks created from workspaces, dashboards, alerts, and incidents'
+        'Investigation notebooks created from workspaces, dashboards, alerts, and incidents.'
       );
     case 'manage-folder':
       return t('nav.manage-folder.subtitle', 'Manage folder dashboards and permissions');
