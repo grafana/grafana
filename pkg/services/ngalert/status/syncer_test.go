@@ -12,6 +12,7 @@ import (
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
@@ -130,6 +131,7 @@ func newTestSyncer(t *testing.T, gen *fakeGenerator, states *fakeStates, status 
 		func(int64) string { return "default" },
 		time.Minute,
 		log.NewNopLogger(),
+		ngmetrics.NewStatusSyncerMetrics(nil),
 		gen,
 	)
 	require.NoError(t, err)

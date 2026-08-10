@@ -29,6 +29,7 @@ type NGAlert struct {
 	remoteAlertmanagerMetrics    *RemoteAlertmanager
 	remoteWriterMetrics          *RemoteWriter
 	senderMetrics                *Sender
+	statusSyncerMetrics          *StatusSyncer
 }
 
 // NewNGAlert manages the metrics of all the alerting components.
@@ -44,6 +45,7 @@ func NewNGAlert(r prometheus.Registerer) *NGAlert {
 		remoteAlertmanagerMetrics:    NewRemoteAlertmanagerMetrics(r),
 		remoteWriterMetrics:          NewRemoteWriterMetrics(r),
 		senderMetrics:                NewSenderMetrics(r),
+		statusSyncerMetrics:          NewStatusSyncerMetrics(r),
 	}
 }
 
@@ -81,4 +83,8 @@ func (ng *NGAlert) GetRemoteWriterMetrics() *RemoteWriter {
 
 func (ng *NGAlert) GetSenderMetrics() *Sender {
 	return ng.senderMetrics
+}
+
+func (ng *NGAlert) GetStatusSyncerMetrics() *StatusSyncer {
+	return ng.statusSyncerMetrics
 }
