@@ -1,9 +1,8 @@
 import { useCallback } from 'react';
-import { useAsync } from 'react-use';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Button, Field, Modal, Stack } from '@grafana/ui';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -85,12 +84,8 @@ function AnnotationDataSourcePicker({ layer }: { layer: AnnotationLayer }) {
 
 function AnnotationQueryEditor({ layer }: { layer: AnnotationLayer }) {
   const { query } = layer.useState();
-
-  const { value: ds } = useAsync(() => {
-    return getDataSourceSrv().get(query?.datasource);
-  }, [query?.datasource]);
-
-  const dsi = getDataSourceSrv().getInstanceSettings(query?.datasource);
+  const { dataSource: ds } = useDataSourceInstance(query?.datasource);
+  const { settings: dsi } = useDataSourceInstanceSettings(query?.datasource);
 
   const onChange = useCallback(
     (newQuery: typeof query) => {
