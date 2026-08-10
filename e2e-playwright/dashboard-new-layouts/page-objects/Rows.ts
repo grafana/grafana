@@ -1,4 +1,4 @@
-import { type Locator } from '@playwright/test';
+import test, { type Locator } from '@playwright/test';
 
 import { PageObject } from './PageObject';
 
@@ -16,5 +16,20 @@ export class Rows extends PageObject {
     return this.page
       .getByTestId(this.selectors.components.DashboardRow.wrapper(rowTitle))
       .locator('> .dashboard-row-header + div');
+  }
+
+  async select(rowTitle: string | string[]) {
+    if (!Array.isArray(rowTitle)) {
+      await test.step(`Select row "${rowTitle}"`, async () => {
+        await this.getTitle(rowTitle).click();
+      });
+    } else {
+      await test.step(`Select multiple rows: ${rowTitle.join(', ')}`, async () => {
+        for (const [index, title] of rowTitle.entries()) {
+          // first click selects; subsequent shift-clicks extend the multi-selection
+          await this.getTitle(title).click(index === 0 ? undefined : { modifiers: ['Shift'] });
+        }
+      });
+    }
   }
 }
