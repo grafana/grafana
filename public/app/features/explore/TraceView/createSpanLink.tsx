@@ -24,7 +24,6 @@ import { type PromQuery } from '@grafana/prometheus';
 import { getTemplateSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { type LokiQuery } from '../../loki-helpers/types';
 import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
@@ -36,6 +35,9 @@ import { type Trace, type TraceSpan, type TraceSpanReference } from './component
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
  * the trace view won't create any links and to capture the datasource and split function making it easier to memoize
  * with useMemo.
+ *
+ * Linked datasource settings must be resolved by the caller (e.g. via {@link useDataSourceInstanceSettings})
+ * because the datasource APIs are async.
  */
 export function createSpanLinkFactory({
   splitOpenFn,
@@ -46,6 +48,9 @@ export function createSpanLinkFactory({
   createFocusSpanLink,
   trace,
   dataLinkPostProcessor,
+  logsDataSourceSettings,
+  metricsDataSourceSettings,
+  profilesDataSourceSettings,
 }: {
   splitOpenFn: SplitOpen;
   traceToLogsOptions?: TraceToLogsOptionsV2;
@@ -55,6 +60,9 @@ export function createSpanLinkFactory({
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
   trace: Trace;
   dataLinkPostProcessor?: DataLinkPostProcessor;
+  logsDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>;
+  metricsDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>;
+  profilesDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>;
 }): SpanLinkFunc | undefined {
   if (!dataFrame) {
     return undefined;
@@ -72,7 +80,9 @@ export function createSpanLinkFactory({
     createFocusSpanLink,
     scopedVars,
     dataFrame,
-    dataLinkPostProcessor
+    dataLinkPostProcessor,
+    logsDataSourceSettings,
+    metricsDataSourceSettings
   );
 
   return function SpanLink(span: TraceSpan): SpanLinkDef[] | undefined {
@@ -87,10 +97,6 @@ export function createSpanLinkFactory({
       // We should be here only if there are some links in the dataframe
       const fields = dataFrame.fields.filter((f) => Boolean(f.config.links?.length))!;
       try {
-        let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-        if (traceToProfilesOptions?.datasourceUid) {
-          profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
-        }
         const hasConfiguredPyroscopeDS = profilesDataSourceSettings?.type === 'grafana-pyroscope-datasource';
         const hasPyroscopeProfile = span.tags.some((tag) => tag.key === pyroscopeProfileIdTagKey);
         const shouldCreatePyroscopeLink = hasConfiguredPyroscopeDS && hasPyroscopeProfile;
@@ -154,18 +160,11 @@ function legacyCreateSpanLinkFactory(
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
   scopedVars?: ScopedVars,
   dataFrame?: DataFrame,
-  dataLinkPostProcessor?: DataLinkPostProcessor
+  dataLinkPostProcessor?: DataLinkPostProcessor,
+  logsDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>,
+  metricsDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>
 ) {
-  let logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-  if (traceToLogsOptions?.datasourceUid) {
-    logsDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToLogsOptions.datasourceUid);
-  }
   const isSplunkDS = logsDataSourceSettings?.type === 'grafana-splunk-datasource';
-
-  let metricsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
-  if (traceToMetricsOptions?.datasourceUid) {
-    metricsDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToMetricsOptions.datasourceUid);
-  }
 
   return function SpanLink(span: TraceSpan): SpanLinkDef[] {
     scopedVars = {
