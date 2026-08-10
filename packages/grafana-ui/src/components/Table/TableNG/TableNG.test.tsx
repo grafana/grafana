@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
+import { fromLonLat } from 'ol/proj';
 
 import {
   applyFieldOverrides,
@@ -258,7 +259,12 @@ const createGeoDataFrame = (): DataFrame =>
       length: 1,
       fields: [
         { name: 'Label', type: FieldType.string, values: ['NYC'], config: { custom: {} } },
-        { name: 'Location', type: FieldType.geo, values: [new Point([-74.0445, 40.6892])], config: { custom: {} } },
+        {
+          name: 'Location',
+          type: FieldType.geo,
+          values: [new Point(fromLonLat([-74.0445, 40.6892]))],
+          config: { custom: {} },
+        },
       ],
     })
   );
@@ -1031,11 +1037,14 @@ describe('TableNG', () => {
   });
 
   describe('Geo cells', () => {
-    it('routes through the lazy OpenLayers provider when a geo cell is present', async () => {
+    it('renders the geo cell as WKT once the lazy OpenLayers provider loads', async () => {
       render(<TableNG enableVirtualization={false} data={createGeoDataFrame()} width={800} height={600} />);
-      // A geo field sends TableNG down the Suspense/LazyOpenLayersProvider branch rather than
-      // rendering the plain table directly; the non-geo column still renders while it loads.
-      expect(await screen.findByText('NYC')).toBeInTheDocument();
+
+      // A geo field sends TableNG down the Suspense/LazyOpenLayersProvider branch. Until the
+      // provider resolves, GeoCell has no formatGeometry and just stringifies the raw geometry;
+      // once it loads the cell renders the geometry as WKT (EPSG:3857 -> 4326). Waiting for that
+      // WKT proves the geo cell rendered through the lazily-loaded provider, not the fallback.
+      expect(await screen.findByText(/POINT\(-74\.0445 40\.6891/)).toBeInTheDocument();
     });
   });
 
