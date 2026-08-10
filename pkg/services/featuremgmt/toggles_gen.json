@@ -3097,6 +3097,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.ofrepRootUrl",
+        "resourceVersion": "1786015306366",
+        "creationTimestamp": "2026-08-06T11:21:46Z"
+      },
+      "spec": {
+        "description": "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.onDemandDiagnostics",
         "resourceVersion": "1782469062023",
         "creationTimestamp": "2026-06-26T10:14:02Z",
@@ -3155,6 +3169,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.rspackBuild",
+        "resourceVersion": "1786019246422",
+        "creationTimestamp": "2026-08-06T12:27:26Z"
+      },
+      "spec": {
+        "description": "Switches the backend to load frontend assets built with rspack instead of webpack",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
       }
     },
     {
@@ -4941,6 +4968,19 @@
     },
     {
       "metadata": {
+        "name": "pluginsForceTls13",
+        "resourceVersion": "1786362691770",
+        "creationTimestamp": "2026-08-10T11:51:31Z"
+      },
+      "spec": {
+        "description": "Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsSriChecks",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-10-04T12:55:09Z"
@@ -6269,6 +6309,34 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorage.vectorStore",
+        "resourceVersion": "1785880163909",
+        "creationTimestamp": "2026-08-04T21:49:23Z",
+        "deletionTimestamp": "2026-08-04T22:01:34Z"
+      },
+      "spec": {
+        "description": "Enables the VectorStore write RPCs on the unified storage server",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageVectorStore",
+        "resourceVersion": "1785880096317",
+        "creationTimestamp": "2026-08-04T21:48:16Z",
+        "deletionTimestamp": "2026-08-04T21:49:23Z"
+      },
+      "spec": {
+        "description": "Enables the VectorStore write RPCs on the unified storage server",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "expression": "false"
       }
     },

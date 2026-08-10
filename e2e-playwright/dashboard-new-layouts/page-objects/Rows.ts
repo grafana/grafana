@@ -2,12 +2,14 @@ import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from './PageObject';
 
-// A row of a rows layout in the dashboard canvas
+/** A row of a rows layout in the dashboard canvas */
 export class Rows extends PageObject {
+  /** Returns the row's title element in the row header */
   getTitle(rowTitle: string): Locator {
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardRow.title(rowTitle));
   }
 
+  /** Returns the row's content wrapper (grid or nested tabs) right after the row header */
   getContent(rowTitle: string): Locator {
     // The row's content (grid or nested tabs) is the direct sibling right after the
     // row header, inside the row wrapper.
@@ -18,13 +20,14 @@ export class Rows extends PageObject {
       .locator('> .dashboard-row-header + div');
   }
 
+  /** Selects the row by clicking its title */
   async select(rowTitle: string) {
     await test.step(`Select row "${rowTitle}"`, async () => {
       await this.getTitle(rowTitle).click();
     });
   }
 
-  // Collapses an expanded row, expands a collapsed one
+  /** Collapses an expanded row, expands a collapsed one */
   async toggle(rowTitle: string) {
     await test.step(`Toggle row "${rowTitle}"`, async () => {
       await this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardRow.toggle(rowTitle)).click();
