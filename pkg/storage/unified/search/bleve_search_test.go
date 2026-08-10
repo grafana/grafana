@@ -301,6 +301,31 @@ func TestCanSearchByTitle(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("ash"), []string{"name2", "name3", "name1"})
 		checkSearchQuery(t, index, newTestQuery("ome"), []string{"name3"})
 	})
+
+	// A free-text query with no explicit response fields must still return the
+	// full all-fields column set. buildTextQuery appends the _score sentinel to
+	// the bleve field list, so the default-expansion check must key off the
+	// caller's original req.Fields — not the mutated bleve slice — or it sees a
+	// length of 1 and returns only the _score column.
+	t.Run("free-text query without explicit fields returns all-fields columns", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "hello world",
+			"name2": "hello there",
+		})
+
+		q := newTestQuery("hello")
+		res, err := index.Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+
+		cols := make([]string, 0, len(res.Results.Columns))
+		for _, c := range res.Results.Columns {
+			cols = append(cols, c.Name)
+		}
+		require.Greater(t, len(cols), 1, "expected all-fields column set, got %v", cols)
+		require.Contains(t, cols, resource.SEARCH_FIELD_TITLE, "expected title column, got %v", cols)
+		require.NotContains(t, cols, resource.SEARCH_FIELD_SCORE, "all-fields default must not return the _score column")
+	})
 }
 
 // TestTitleNgramFieldSearch queries exclusively against the title_ngram field
