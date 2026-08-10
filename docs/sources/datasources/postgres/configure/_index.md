@@ -207,7 +207,7 @@ datasources:
       maxIdleConns: 100
       maxIdleConnsAuto: true
       connMaxLifetime: 14400
-      postgresVersion: 903 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
+      postgresVersion: 903 # 900=9.0 ... 906=9.6, 1000=10, 1100=11, 1200=12, 1300=13, 1400=14, 1500=15
       timescaledb: false
 ```
 
@@ -311,8 +311,9 @@ The following table lists all `jsonData` and `secureJsonData` fields supported w
 | `maxIdleConns`           | `jsonData`       | Maximum idle connections. Default: `100`.                                              |
 | `maxIdleConnsAuto`       | `jsonData`       | Set max idle to max open automatically. Default: `true`.                               |
 | `connMaxLifetime`        | `jsonData`       | Connection max lifetime in seconds. Default: `14400`.                                  |
-| `postgresVersion`        | `jsonData`       | Server version code: `903` (9.3), `904` (9.4), `905` (9.5), `906` (9.6), `1000` (10+). |
+| `postgresVersion`        | `jsonData`       | Server version code for the query builder. Examples: `900` (9.0), `903` (9.3), `1000` (10), `1100` (11), `1200` (12), `1300` (13), `1400` (14), `1500` (15). Grafana auto-detects this on save when possible. |
 | `timescaledb`            | `jsonData`       | Enable TimescaleDB support. Default: `false`.                                          |
+| `timeInterval`           | `jsonData`       | Lower limit for `$__interval` and `$__interval_ms`. Same format as **Min time interval** (for example, `1m`). |
 | `tlsConfigurationMethod` | `jsonData`       | TLS cert method: `file-path` or `file-content`.                                        |
 | `sslRootCertFile`        | `jsonData`       | Path to root CA certificate (when using `file-path` method).                           |
 | `sslCertFile`            | `jsonData`       | Path to client certificate (when using `file-path` method).                            |

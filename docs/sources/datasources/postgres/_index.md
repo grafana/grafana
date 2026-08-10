@@ -20,9 +20,9 @@ review_date: 2026-08-10
 
 # PostgreSQL data source
 
-Grafana ships with the PostgreSQL data source out of the box. It's preinstalled in Grafana OSS and Enterprise, so you don't need to install a plugin to add it. The data source is packaged as a standalone plugin that can update independently of Grafana releases.
+Query and visualize data from any PostgreSQL-compatible database. Build dashboards with the visual query builder or raw SQL, explore tables in real time, overlay annotations, and create alerts from the same connection. The data source works with self-managed PostgreSQL and managed services such as Amazon RDS, Amazon Aurora, Azure Database for PostgreSQL, and Google Cloud SQL.
 
-Grafana offers several configuration options for this data source as well as a visual and code-based query editor.
+Grafana ships with the PostgreSQL data source out of the box. It's preinstalled in Grafana OSS and Enterprise, so you don't need to install a plugin to add it. The data source is packaged as a standalone plugin that can update independently of Grafana releases.
 
 ## Supported databases
 

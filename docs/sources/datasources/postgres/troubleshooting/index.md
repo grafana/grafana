@@ -230,13 +230,13 @@ The following errors occur when there are issues with SQL syntax or query execut
 
 **Error message:** Unexpected syntax errors or truncated results when string values contain `--` (double dash).
 
-**Cause:** In Grafana versions before 13.1, the SQL comment-stripping parser didn't correctly handle `--` inside single-quoted strings. A query like `WHERE name = 'value--suffix'` would be truncated at the `--`, causing the rest of the query to be silently dropped. This also affected strings with consecutive hyphens (for example, `'10YDE-VE-------2'` would be truncated to `'10YDE-VE`).
+**Cause:** In older Grafana versions, the SQL comment-stripping parser didn't correctly handle `--` inside single-quoted strings. A query like `WHERE name = 'value--suffix'` would be truncated at the `--`, causing the rest of the query to be silently dropped. This also affected strings with consecutive hyphens (for example, `'10YDE-VE-------2'` would be truncated to `'10YDE-VE`).
 
-This was fixed in Grafana 13.1 with a quote-aware comment-stripping parser (PR #121772). The fix also handles PostgreSQL dollar-quoted strings (`$$...$$`).
+This was fixed with a quote-aware comment-stripping parser (PR #121772). The fix also handles PostgreSQL dollar-quoted strings (`$$...$$`). It is available in Grafana 13.1 and later, Grafana 13.0.2 and later, and these 12.x patch releases: 12.1.11, 12.2.9, 12.3.7, and 12.4.3.
 
 **Solution:**
 
-1. Upgrade to Grafana 13.1 or later, which includes the fix.
+1. Upgrade to a Grafana release that includes the fix (13.1+, 13.0.2+, or one of the 12.x patch releases listed above).
 1. If you can't upgrade immediately, work around the issue by using PostgreSQL string concatenation to avoid literal `--` in your queries:
 
    ```sql

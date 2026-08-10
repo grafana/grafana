@@ -213,6 +213,10 @@ The available fill modes are:
 
 For example, `$__timeGroupAlias("CreatedAt",'5m', 0)` groups data into 5-minute intervals and fills any gaps with `0`.
 
+{{< admonition type="note" >}}
+As of Grafana 13.0, fill mode in `$__timeGroup` and `$__unixEpochGroup` includes additional safeguards to prevent incorrect data points when the query returns no rows or the time range falls outside the data boundaries.
+{{< /admonition >}}
+
 ### Row limits
 
 Grafana applies a server-side row limit to query results to protect against excessive memory usage. If your query returns more rows than the limit, the result is truncated. To reduce the number of rows returned, narrow the dashboard time range, increase the `$__timeGroup` interval, or add a `LIMIT` clause to your query.
