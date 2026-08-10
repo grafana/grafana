@@ -363,19 +363,26 @@ export async function checkRepeatedRowTitles(
   });
 }
 
-export async function selectRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  // Keep the signature unchanged for unmigrated callers: build the
-  // `components` fixture equivalent from the page context
-  const components = new Components(dashboardPage.ctx);
-  const rows = new Rows({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
-  await rows.select(rowTitle);
+// Asserts the tab title and content are visible, and returns the content
+// locator so the caller can scope further lookups to it
+export async function expectVisibleTab(tabTitle: string, tabs: Tabs): Promise<Locator> {
+  return test.step(`Expect tab "${tabTitle}" to be visible`, async () => {
+    await expect(tabs.getTitle(tabTitle)).toBeVisible();
+    const tabContent = tabs.getContent(tabTitle);
+    await expect(tabContent).toBeVisible();
+    return tabContent;
+  });
 }
-export async function toggleRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
-  // Keep the signature unchanged for unmigrated callers: build the
-  // `components` fixture equivalent from the page context
-  const components = new Components(dashboardPage.ctx);
-  const rows = new Rows({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
-  await rows.toggle(rowTitle);
+
+// Asserts the row title and content are visible, and returns the content
+// locator so the caller can scope further lookups to it
+export async function expectVisibleRow(rowTitle: string, rows: Rows): Promise<Locator> {
+  return test.step(`Expect row "${rowTitle}" to be visible`, async () => {
+    await expect(rows.getTitle(rowTitle)).toBeVisible();
+    const rowContent = rows.getContent(rowTitle);
+    await expect(rowContent).toBeVisible();
+    return rowContent;
+  });
 }
 
 export async function fillVariableValue(
