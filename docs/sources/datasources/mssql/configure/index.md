@@ -16,7 +16,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Configure
-review_date: 2026-05-19
+review_date: 2026-08-10
 title: Configure the Microsoft SQL Server data source
 weight: 200
 ---
@@ -47,7 +47,7 @@ Before configuring the Microsoft SQL Server data source, ensure you have the fol
 - **Security certificates:** If using encrypted connections, gather any necessary TLS/SSL certificates.
 
 {{< admonition type="note" >}}
-Grafana ships with a built-in Microsoft SQL Server data source plugin. No additional installation is required.
+The Microsoft SQL Server data source plugin is preinstalled in Grafana, so no additional installation is required. As of Grafana 13.2, it's packaged as a standalone plugin that updates independently of Grafana releases. Refer to [Plugin updates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/#plugin-updates) for details.
 {{< /admonition >}}
 
 {{< admonition type="tip" >}}
@@ -64,7 +64,7 @@ To add the MSSQL data source, complete the following steps:
 1. Select **Microsoft SQL Server** under data source.
 1. Click **Add new data source** in the upper right.
 
-Grafana takes you to the **Settings** tab, where you will set up your Microsoft SQL Server configuration.
+Grafana takes you to the **Settings** tab, where you set up your Microsoft SQL Server configuration.
 
 ## Configure the data source in the UI
 
@@ -143,7 +143,7 @@ Grafana builds using BoringCrypto (FIPS-compliant builds) enforce FIPS 140-3 cip
 | **Windows AD** (Keytab)                               | Authenticates a domain user using a keytab file.                                                                                | **Username**: `user@example.com`. **Keytab file path**: Path to your keytab file.                                                                                                         |
 | **Windows AD** (Credential Cache)                     | Uses a Kerberos credential cache already loaded in memory (for example, from a prior `kinit` command). No file needed.          | **Credential cache path**: Path to in-memory credential (for example, `/tmp/krb5cc_1000`).                                                                                                |
 | **Windows AD** (Credential Cache File)                | Authenticates a domain user using a credential cache file (`.ccache`).                                                          | **Username**: `user@example.com`. **Credential cache file path**: for example, `/home/grot/cache.json`.                                                                                   |
-| **Azure Entra ID (formerly Azure AD) Authentication** | Authenticates the data source using Azure authentication methods.                                                               | Details on the supported authentication methods and how to configure them can be found in the [Azure authentication section](./index.md#azure-entra-id-formerly-azure-ad-authentication). |
+| **Azure Entra ID (formerly Azure AD) Authentication** | Authenticates the data source using Azure authentication methods. The UI label is **Azure AD Authentication**.                  | For supported methods and configuration steps, refer to [Azure Entra ID authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/configure/#azure-entra-id-formerly-azure-ad-authentication). |
 
 <!-- vale Grafana.Spelling = YES -->
 
@@ -174,7 +174,7 @@ If **Max open** is set too low, concurrent dashboard panels and alert rule evalu
 
 | **Setting**            | **Description**                                                                                                                                                                                                                                                |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Min time interval**  | Specifies the lower bound for the auto-generated `GROUP BY` time interval. Grafana recommends matching this value to the data write frequency—for example, `1m` if data is written every minute. Refer to [Min time interval](#min-time-interval) for details. |
+| **Min time interval**  | Specifies the lower bound for the auto-generated `GROUP BY` time interval. Grafana recommends matching this value to the data write frequency. For example, use `1m` if data is written every minute. Refer to [Min time interval](#min-time-interval) for details. |
 | **Connection timeout** | Specifies the maximum number of seconds to wait when attempting to connect to the database before timing out. A value of `0` (the default) disables the timeout.                                                                                               |
 
 **Windows AD Advanced settings:**
@@ -395,7 +395,7 @@ You can connect to an Azure SQL database using the username and password of a us
 
 ### Min time interval
 
-The **Min time interval** setting defines a lower limit for the [`$__interval`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval) and [`$__interval_ms`][add-template-variables-interval_ms] variables.
+The **Min time interval** setting defines a lower limit for the [`$__interval`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval) and [`$__interval_ms`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__interval_ms) variables.
 
 This value _must_ be formatted as a number followed by a valid time identifier:
 

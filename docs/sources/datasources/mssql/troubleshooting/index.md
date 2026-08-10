@@ -13,7 +13,7 @@ labels:
     - enterprise
     - oss
 menuTitle: Troubleshooting
-review_date: 2026-05-19
+review_date: 2026-08-10
 title: Troubleshoot Microsoft SQL Server data source issues
 weight: 600
 ---
@@ -197,7 +197,7 @@ These errors occur when there are issues with authentication credentials or perm
 
 ### Login failed for user '' (empty username)
 
-**Error message:** "Login failed for user ''"—the saved username appears blank when Grafana connects to SQL Server.
+**Error message:** "Login failed for user ''". The saved username appears blank when Grafana connects to SQL Server.
 
 **Cause:** A known issue on certain Grafana release channels caused the SQL Server Authentication username to appear saved in the UI but send an empty string to the server during connection. This was identified on the "fast" release channel.
 
@@ -357,7 +357,7 @@ These errors occur when there are issues with query syntax or configuration.
 **Solution:**
 
 1. Verify macro syntax: use `$__timeFilter(column)` not `$_timeFilter(column)`.
-1. Macros don't work inside stored procedures—use explicit date parameters instead.
+1. Macros don't work inside stored procedures. Use explicit date parameters instead.
 1. Check that the column name passed to macros exists in your table.
 1. View the expanded query by clicking **Generated SQL** after running the query to debug macro expansion.
 
@@ -378,7 +378,7 @@ These errors occur when there are issues with query syntax or configuration.
    FROM your_table
    ```
 
-1. Don't pass timezone parameters to time macros—they're not supported.
+1. Don't pass timezone parameters to time macros. They're not supported.
 
 ### Query returns too many rows
 
@@ -538,6 +538,7 @@ If you continue to experience issues after following this troubleshooting guide:
 When reporting issues, include:
 
 - Grafana version
+- Microsoft SQL Server data source plugin version, found on the **Administration > Plugins** page. The plugin updates independently of Grafana releases.
 - SQL Server version
 - Error messages (redact sensitive information)
 - Steps to reproduce
