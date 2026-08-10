@@ -135,6 +135,12 @@ var openfeatureTestMutex sync.Mutex
 func setOpenFeatureFlags(t *testing.T, flags map[string]bool) {
 	t.Helper()
 	openfeatureTestMutex.Lock()
+	// Registered before anything that can FailNow, so a failed assertion below cannot leave the
+	// mutex locked and deadlock the rest of the package.
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
 
 	inMem := make(map[string]memprovider.InMemoryFlag, len(flags))
 	for name, value := range flags {
@@ -143,11 +149,6 @@ func setOpenFeatureFlags(t *testing.T, flags map[string]bool) {
 	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(inMem)
 	require.NoError(t, err)
 	require.NoError(t, openfeature.SetProviderAndWait(provider))
-
-	t.Cleanup(func() {
-		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
-		openfeatureTestMutex.Unlock()
-	})
 }
 
 func TestBuildNotebooksNavLink(t *testing.T) {
