@@ -71,5 +71,14 @@ module.exports = createNoRestrictedSyntax(
     ].join(', '),
     message:
       "Zod imports must use exactly `import * as z from 'zod'` or `import type * as z from 'zod'`. Imports from zod subpaths are not allowed.",
+  },
+  {
+    name: 'no-get-data-source-srv',
+    selector: [
+      'ImportDeclaration[source.value="@grafana/runtime"] > ImportSpecifier[imported.name="getDataSourceSrv"]',
+      'Program:has(ImportDeclaration[source.value="@grafana/runtime"] > ImportDefaultSpecifier, ImportDeclaration[source.value="@grafana/runtime"] > ImportNamespaceSpecifier) MemberExpression[property.name="getDataSourceSrv"]',
+    ].join(', '),
+    message:
+      'getDataSourceSrv is being phased out in Grafana core. Use the async data source APIs from @grafana/runtime/unstable instead (getDataSourceInstance, getDataSourceInstanceSettings, getDataSourceInstanceList). See the migration guide https://github.com/grafana/grafana/issues/125083.',
   }
 );

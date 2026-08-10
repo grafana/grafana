@@ -368,3 +368,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-24,authz.listFoldersViaSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-06-24,libraryElements.folderTreeViaSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-08-03,alerting.stateManagerRequireWarm,experimental,@grafana/alerting-squad,false,false,false
+2026-08-06,grafana.rspackBuild,experimental,@grafana/grafana-frontend-platform,false,false,false
