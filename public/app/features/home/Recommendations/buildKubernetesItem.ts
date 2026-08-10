@@ -14,7 +14,8 @@ import {
   KUBERNETES_APP_ID,
   type KubernetesHealth,
   type KubernetesInventory,
-} from './kubernetesData';
+} from '../solutions/kubernetesData';
+
 import { type ExistingItem } from './types';
 
 const formatUsageNumber = getValueFormat('short');

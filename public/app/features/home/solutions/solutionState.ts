@@ -2,6 +2,8 @@ import { useAsync } from 'react-use';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 
+import { type SignalStatus, type SolutionState } from '../Recommendations/solutionsMatrix';
+
 import { resolveKubernetesDatasource } from './kubernetesData';
 import {
   createTtlCachedPromise,
@@ -12,7 +14,6 @@ import {
 } from './probeUtils';
 import { readScalar, runInstantQueries } from './promQuery';
 import { DATA_LOOKBACK_HOURS, probeFound, SPAN_METRICS_PROBE, tempoHasTraces } from './solutionDataProbes';
-import { type SignalStatus, type SolutionState } from './solutionsMatrix';
 
 // Platform telemetry, never the org's product data: excluded unconditionally.
 const CLOUD_UTILITY_PROM_DATASOURCE_UIDS: ReadonlySet<string> = new Set([

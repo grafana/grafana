@@ -3,17 +3,23 @@ import { act, render, waitFor } from 'test/test-utils';
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
-import { useSolutionState } from './solutionState';
+import { useSolutionState } from '../solutions/solutionState';
+import {
+  fetchLogsActivity,
+  fetchMetricsActivity,
+  fetchTracesActivity,
+  fetchTracesServices,
+} from '../solutions/telemetryData';
+
 import { type SolutionState } from './solutionsMatrix';
-import { fetchLogsActivity, fetchMetricsActivity, fetchTracesActivity, fetchTracesServices } from './telemetryData';
 import { useTelemetrySolutions, type TelemetrySolutions } from './useTelemetrySolutions';
 
-jest.mock('./solutionState', () => ({
+jest.mock('../solutions/solutionState', () => ({
   useSolutionState: jest.fn(),
 }));
 
-jest.mock('./telemetryData', () => ({
-  ...jest.requireActual('./telemetryData'),
+jest.mock('../solutions/telemetryData', () => ({
+  ...jest.requireActual('../solutions/telemetryData'),
   fetchLogsActivity: jest.fn(),
   fetchMetricsActivity: jest.fn(),
   fetchTracesActivity: jest.fn(),

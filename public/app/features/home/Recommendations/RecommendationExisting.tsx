@@ -3,9 +3,10 @@ import Skeleton from 'react-loading-skeleton';
 
 import { Stack } from '@grafana/ui';
 
+import { useSolutionState } from '../solutions/solutionState';
+
 import { ExistingSolutionCard } from './ExistingSolutionCard';
 import { NoDataCard } from './NoDataCard';
-import { useSolutionState } from './solutionState';
 import { type ExistingSolutionId } from './solutionsMatrix';
 import { type ExistingItem } from './types';
 import { useExistingSolutions } from './useExistingSolutions';

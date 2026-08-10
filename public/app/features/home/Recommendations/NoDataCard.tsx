@@ -8,9 +8,8 @@ import { createBridgeURL } from 'app/features/alerting/unified/components/Plugin
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 
 import { ctaClicked } from '../analytics/main';
-
-import { SYNTHETIC_MONITORING_APP_ID } from './appPluginIds';
-import { KUBERNETES_APP_ID } from './kubernetesData';
+import { SYNTHETIC_MONITORING_APP_ID } from '../solutions/appPluginIds';
+import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 
 interface PopularSolution {
   id: string; // stable telemetry id (solution_id), aligned with pluginRecommendations ids

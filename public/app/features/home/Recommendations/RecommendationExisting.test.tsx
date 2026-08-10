@@ -13,8 +13,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
 import { ctaClicked } from '../analytics/main';
-
-import { RecommendationExisting } from './RecommendationExisting';
 import {
   KUBERNETES_APP_ID,
   fetchClusterCpuSeries,
@@ -23,19 +21,26 @@ import {
   resolveKubernetesDatasource,
   type KubernetesHealth,
   type KubernetesInventory,
-} from './kubernetesData';
-import { readSeries } from './promQuery';
-import { useSolutionState } from './solutionState';
+} from '../solutions/kubernetesData';
+import { readSeries } from '../solutions/promQuery';
+import { useSolutionState } from '../solutions/solutionState';
+import {
+  fetchLogsActivity,
+  fetchMetricsActivity,
+  fetchTracesActivity,
+  fetchTracesServices,
+} from '../solutions/telemetryData';
+
+import { RecommendationExisting } from './RecommendationExisting';
 import { type SolutionState } from './solutionsMatrix';
-import { fetchLogsActivity, fetchMetricsActivity, fetchTracesActivity, fetchTracesServices } from './telemetryData';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
   ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
   usePluginBridge: jest.fn(),
 }));
 
-jest.mock('./kubernetesData', () => ({
-  ...jest.requireActual('./kubernetesData'),
+jest.mock('../solutions/kubernetesData', () => ({
+  ...jest.requireActual('../solutions/kubernetesData'),
   resolveKubernetesDatasource: jest.fn(),
   fetchKubernetesInventory: jest.fn(),
   fetchKubernetesHealth: jest.fn(),
@@ -46,12 +51,12 @@ jest.mock('../analytics/main', () => ({
   ctaClicked: jest.fn(),
 }));
 
-jest.mock('./solutionState', () => ({
+jest.mock('../solutions/solutionState', () => ({
   useSolutionState: jest.fn(),
 }));
 
-jest.mock('./telemetryData', () => ({
-  ...jest.requireActual('./telemetryData'),
+jest.mock('../solutions/telemetryData', () => ({
+  ...jest.requireActual('../solutions/telemetryData'),
   fetchLogsActivity: jest.fn(),
   fetchMetricsActivity: jest.fn(),
   fetchTracesActivity: jest.fn(),

@@ -3,14 +3,15 @@ import { useAsync } from 'react-use';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
-import { buildKubernetesItem } from './buildKubernetesItem';
 import {
   KUBERNETES_APP_ID,
   fetchClusterCpuSeries,
   fetchKubernetesHealth,
   fetchKubernetesInventory,
   resolveKubernetesDatasource,
-} from './kubernetesData';
+} from '../solutions/kubernetesData';
+
+import { buildKubernetesItem } from './buildKubernetesItem';
 import { type ExistingSolutionProviderResult } from './types';
 
 /**

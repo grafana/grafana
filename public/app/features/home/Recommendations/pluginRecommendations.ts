@@ -6,8 +6,9 @@ import { createBridgeURL } from 'app/features/alerting/unified/components/Plugin
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
-import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from './appPluginIds';
-import { KUBERNETES_APP_ID } from './kubernetesData';
+import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
+import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
+
 import { type RecommendedCardId } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
 

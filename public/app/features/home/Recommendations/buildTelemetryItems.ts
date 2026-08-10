@@ -2,8 +2,9 @@ import { type FieldSparkline, formattedValueToString, getValueFormat, locationUt
 import { t } from '@grafana/i18n';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
-import { HOSTED_TRACES_APP_ID, LOGS_DRILLDOWN_APP_ID, METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
-import { type MetricsDiskPressure } from './telemetryData';
+import { HOSTED_TRACES_APP_ID, LOGS_DRILLDOWN_APP_ID, METRICS_DRILLDOWN_APP_ID } from '../solutions/appPluginIds';
+import { type MetricsDiskPressure } from '../solutions/telemetryData';
+
 import { type ExistingItem } from './types';
 
 const formatUsageNumber = getValueFormat('short');

@@ -9,19 +9,19 @@ import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { ctaClicked, recommendationsShown } from '../analytics/main';
-
-import { Recommendations } from './Recommendations';
-import { HOSTED_TRACES_APP_ID } from './appPluginIds';
+import { HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
 import {
   fetchClusterCpuSeries,
   fetchKubernetesHealth,
   fetchKubernetesInventory,
   KUBERNETES_APP_ID,
   resolveKubernetesDatasource,
-} from './kubernetesData';
-import { useSolutionState } from './solutionState';
+} from '../solutions/kubernetesData';
+import { useSolutionState } from '../solutions/solutionState';
+import { fetchLogsActivity, fetchMetricsActivity, type MetricsActivity } from '../solutions/telemetryData';
+
+import { Recommendations } from './Recommendations';
 import { type SolutionState } from './solutionsMatrix';
-import { fetchLogsActivity, fetchMetricsActivity, type MetricsActivity } from './telemetryData';
 
 const mockGet = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -41,8 +41,8 @@ jest.mock('../analytics/main', () => ({
 
 // The RecommendationExisting child fetches its overview from Prometheus; resolve to no
 // datasource so tests exercise the (deterministic) no-data card instead of hitting one.
-jest.mock('./kubernetesData', () => ({
-  ...jest.requireActual('./kubernetesData'),
+jest.mock('../solutions/kubernetesData', () => ({
+  ...jest.requireActual('../solutions/kubernetesData'),
   resolveKubernetesDatasource: jest.fn().mockResolvedValue(null),
   fetchKubernetesInventory: jest.fn().mockResolvedValue({ clusters: 0, pods: 0 }),
   fetchKubernetesHealth: jest.fn().mockResolvedValue({
@@ -54,12 +54,12 @@ jest.mock('./kubernetesData', () => ({
   fetchClusterCpuSeries: jest.fn().mockResolvedValue(null),
 }));
 
-jest.mock('./solutionState', () => ({
+jest.mock('../solutions/solutionState', () => ({
   useSolutionState: jest.fn(),
 }));
 
-jest.mock('./telemetryData', () => ({
-  ...jest.requireActual('./telemetryData'),
+jest.mock('../solutions/telemetryData', () => ({
+  ...jest.requireActual('../solutions/telemetryData'),
   fetchLogsActivity: jest.fn(),
   fetchMetricsActivity: jest.fn(),
   fetchTracesActivity: jest.fn(),

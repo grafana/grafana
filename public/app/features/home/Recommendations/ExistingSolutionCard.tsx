@@ -6,8 +6,8 @@ import { t, Trans } from '@grafana/i18n';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { ctaClicked } from '../analytics/main';
+import { SolutionSparkline } from '../solutions/SolutionSparkline';
 
-import { SolutionSparkline } from './SolutionSparkline';
 import { type ExistingSolutionId } from './solutionsMatrix';
 import { type ExistingItem } from './types';
 

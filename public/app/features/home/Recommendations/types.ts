@@ -1,6 +1,7 @@
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 
-import { type SolutionSparklineData } from './SolutionSparkline';
+import { type SolutionSparklineData } from '../solutions/SolutionSparkline';
+
 import { type ExistingSolutionId } from './solutionsMatrix';
 
 export interface RecommendationItem {

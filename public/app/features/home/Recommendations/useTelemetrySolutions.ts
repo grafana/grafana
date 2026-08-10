@@ -2,10 +2,16 @@ import { useAsync } from 'react-use';
 
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
-import { HOSTED_TRACES_APP_ID, LOGS_DRILLDOWN_APP_ID, METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
+import { HOSTED_TRACES_APP_ID, LOGS_DRILLDOWN_APP_ID, METRICS_DRILLDOWN_APP_ID } from '../solutions/appPluginIds';
+import { useSolutionState } from '../solutions/solutionState';
+import {
+  fetchLogsActivity,
+  fetchMetricsActivity,
+  fetchTracesActivity,
+  fetchTracesServices,
+} from '../solutions/telemetryData';
+
 import { buildLogsItem, buildMetricsItem, buildTracesItem } from './buildTelemetryItems';
-import { useSolutionState } from './solutionState';
-import { fetchLogsActivity, fetchMetricsActivity, fetchTracesActivity, fetchTracesServices } from './telemetryData';
 import { type ExistingItem, type ExistingSolutionProviderResult } from './types';
 
 export interface TelemetrySolutions {

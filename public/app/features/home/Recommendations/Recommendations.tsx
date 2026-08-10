@@ -6,10 +6,11 @@ import { useStoredBoolean } from 'app/core/hooks/useStored';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { useSolutionState } from '../solutions/solutionState';
+
 import { RecommendationsSkeleton } from './RecommendationsSkeleton';
 import { RecommendationsView } from './RecommendationsView';
 import { fetchInstalledPlugins, getRecommendationCards, type PluginRecommendationCard } from './pluginRecommendations';
-import { useSolutionState } from './solutionState';
 import {
   type ExistingSolutionId,
   orderCardsForSolution,
