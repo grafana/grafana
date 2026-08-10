@@ -1,0 +1,22 @@
+import { t } from '@grafana/i18n';
+import { TextLink } from '@grafana/ui';
+
+import { type SolutionLearnMore } from './model';
+
+interface LearnMoreLinkProps extends SolutionLearnMore {
+  onClick?: () => void;
+}
+
+export function LearnMoreLink({
+  href,
+  label = t('home.learn-more', 'Learn more'),
+  ariaLabel,
+  external = true,
+  onClick,
+}: LearnMoreLinkProps) {
+  return (
+    <TextLink external={external} href={href} aria-label={ariaLabel} onClick={onClick}>
+      {label}
+    </TextLink>
+  );
+}
