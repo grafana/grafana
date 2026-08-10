@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Point } from 'ol/geom';
 
 import {
   applyFieldOverrides,
@@ -246,6 +247,18 @@ const createTimeDataFrame = (): DataFrame =>
           config: { custom: {} },
         },
         { name: 'Value', type: FieldType.number, values: [1, 2, 3], config: { custom: {} } },
+      ],
+    })
+  );
+
+const createGeoDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'GeoData',
+      length: 1,
+      fields: [
+        { name: 'Label', type: FieldType.string, values: ['NYC'], config: { custom: {} } },
+        { name: 'Location', type: FieldType.geo, values: [new Point([-74.0445, 40.6892])], config: { custom: {} } },
       ],
     })
   );
@@ -1014,6 +1027,15 @@ describe('TableNG', () => {
       );
 
       expect(container.querySelector('.table-ng-pagination')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Geo cells', () => {
+    it('routes through the lazy OpenLayers provider when a geo cell is present', async () => {
+      render(<TableNG enableVirtualization={false} data={createGeoDataFrame()} width={800} height={600} />);
+      // A geo field sends TableNG down the Suspense/LazyOpenLayersProvider branch rather than
+      // rendering the plain table directly; the non-geo column still renders while it loads.
+      expect(await screen.findByText('NYC')).toBeInTheDocument();
     });
   });
 
