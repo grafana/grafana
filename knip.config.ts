@@ -139,6 +139,12 @@ const config: KnipConfig = {
     'packages/grafana-plugin-configs': {
       // this package contains shared code that isn't immediately used by the package
       webpack: false,
+      // knip's rspack plugin globs `rspack.config*` — which also matches the
+      // config's test file — and executes them without the arguments the
+      // plugin build passes in
+      rspack: false,
+      // the fixture plugin is only ever referenced by path from the config tests
+      ignore: ['__fixtures__/**'],
       ignoreDependencies: ['.*'],
     },
   },

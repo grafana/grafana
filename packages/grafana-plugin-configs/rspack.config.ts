@@ -50,7 +50,7 @@ class BuildModeRspackPlugin {
 // watch rebuild (it was ~16s on 2.1.1). Emitting the file directly avoids the
 // scan. Plugins that ship their own LICENSE copy it normally — that `from`
 // resolves inside the plugin directory.
-export class EmitLicenseRspackPlugin {
+class EmitLicenseRspackPlugin {
   apply(compiler: Compiler) {
     const licensePath = path.resolve(import.meta.dirname, '../../LICENSE');
     compiler.hooks.compilation.tap('EmitLicenseRspackPlugin', (compilation) => {
