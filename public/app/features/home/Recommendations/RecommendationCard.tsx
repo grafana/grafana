@@ -4,6 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { ctaClicked } from '../analytics/main';
+import { LearnMoreLink } from '../solutions/LearnMoreLink';
 
 import type { RecommendationItem } from './types';
 
@@ -16,6 +17,15 @@ interface RecommendationCardProps {
 
 export function RecommendationCard({ recommendation, startingState, solution }: RecommendationCardProps) {
   const styles = useStyles2(getStyles, recommendation.color);
+  const trackClick = () =>
+    ctaClicked({
+      surface: 'recommendations',
+      action: recommendation.external ? 'learn_more' : (recommendation.cta ?? 'enable'),
+      placement: 'card',
+      recommendation_id: recommendation.id,
+      starting_state: startingState,
+      solution,
+    });
 
   return (
     <Stack direction="column" justifyContent="space-between" gap={2} flex={1}>
@@ -35,26 +45,21 @@ export function RecommendationCard({ recommendation, startingState, solution }: 
       </Stack>
 
       <Stack direction="row" alignItems="center" gap={1}>
-        <LinkButton
-          variant="primary"
-          size="md"
-          fill="solid"
-          icon="arrow-right"
-          iconPlacement="right"
-          href={recommendation.href}
-          onClick={() =>
-            ctaClicked({
-              surface: 'recommendations',
-              action: recommendation.cta ?? 'enable',
-              placement: 'card',
-              recommendation_id: recommendation.id,
-              starting_state: startingState,
-              solution,
-            })
-          }
-        >
-          {recommendation.action}
-        </LinkButton>
+        {recommendation.external ? (
+          <LearnMoreLink href={recommendation.href} onClick={trackClick} />
+        ) : (
+          <LinkButton
+            variant="primary"
+            size="md"
+            fill="solid"
+            icon="arrow-right"
+            iconPlacement="right"
+            href={recommendation.href}
+            onClick={trackClick}
+          >
+            {recommendation.action}
+          </LinkButton>
+        )}
       </Stack>
     </Stack>
   );

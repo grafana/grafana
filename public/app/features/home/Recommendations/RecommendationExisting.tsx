@@ -1,32 +1,44 @@
 import { useLayoutEffect, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
+import { useAsync } from 'react-use';
 
 import { Stack } from '@grafana/ui';
 
-import { useSolutionState } from '../solutions/solutionState';
+import { type Solution, type SolutionId } from '../solutions/model';
+import { type SignalStatus } from '../solutions/solutionState';
 
 import { ExistingSolutionCard } from './ExistingSolutionCard';
 import { NoDataCard } from './NoDataCard';
-import { type ExistingSolutionId } from './solutionsMatrix';
-import { type ExistingItem } from './types';
-import { useExistingSolutions } from './useExistingSolutions';
 
 interface RecommendationExistingProps {
   /** Selection the card displays: undefined while providers settle, null when none exists, else the id. */
-  onSelectionChange?: (id: ExistingSolutionId | null | undefined) => void;
+  onSelectionChange?: (id: SolutionId | null | undefined) => void;
+  /** Order used after filtering to solutions with data; signals decide the no-data copy. */
+  solutions: Solution[];
 }
 
-export function RecommendationExisting({ onSelectionChange }: RecommendationExistingProps) {
-  const [selectedId, setSelectedId] = useState<ExistingSolutionId>();
-  const { loading, solutions } = useExistingSolutions();
-  // Shares the TTL-cached resolution with useExistingSolutions — no extra probes.
-  const { value: resolution } = useSolutionState();
+export function RecommendationExisting({ onSelectionChange, solutions }: RecommendationExistingProps) {
+  const [selectedId, setSelectedId] = useState<SolutionId>();
+  // Wait only for the facts that choose this card and its no-data copy.
+  const resolved = useAsync(
+    async () =>
+      Promise.all(
+        solutions.map(async (solution) => ({
+          solution,
+          hasData: (await solution.datasource().catch(() => null)) !== null,
+          signal: await solution.signal().catch(() => 'unknown' as const),
+        }))
+      ),
+    [solutions]
+  );
+  const loading = resolved.value === undefined;
+  const existing = (resolved.value ?? []).filter(({ hasData }) => hasData).map(({ solution }) => solution);
 
   // The effective selection (explicit pick ?? default) is computed before the early returns so
   // the report effect runs unconditionally (Rules of Hooks). While loading it reports undefined
   // (the parent holds the carousel skeleton); settled with no solution it reports null (the
   // parent shows the global list).
-  const selected: ExistingItem | undefined = solutions.find((item) => item.id === selectedId) ?? solutions[0];
+  const selected: Solution | undefined = existing.find((item) => item.id === selectedId) ?? existing[0];
   const effectiveId = loading ? undefined : (selected?.id ?? null);
   // useLayoutEffect: the parent's carousel swap commits before paint, so the list never
   // flashes the global order once the default selection settles.
@@ -40,10 +52,9 @@ export function RecommendationExisting({ onSelectionChange }: RecommendationExis
 
   if (!selected) {
     // NoDataCard's hard claim is only true when every core signal settled inactive; a confirmed
-    // active signal earns the "already flowing" copy; anything else (all unknown, resolution
+    // active signal earns the "already flowing" copy; anything else (all unknown, solutions
     // missing) gets the neutral inconclusive variant so the card never overclaims.
-    const s = resolution?.state;
-    const core = s ? [s.metrics, s.logs, s.traces, s.kubernetes] : [];
+    const core: SignalStatus[] = (resolved.value ?? []).map(({ signal }) => signal);
     const variant =
       core.length > 0 && core.every((v) => v === 'inactive')
         ? 'empty'
@@ -53,7 +64,7 @@ export function RecommendationExisting({ onSelectionChange }: RecommendationExis
     return <NoDataCard variant={variant} />;
   }
 
-  return <ExistingSolutionCard existing={solutions} selected={selected} onSelect={setSelectedId} />;
+  return <ExistingSolutionCard key={selected.id} existing={existing} selected={selected} onSelect={setSelectedId} />;
 }
 
 // Mirrors the card body (dropdown pill, icon + title, stats, CTA) while the solution

@@ -16,6 +16,15 @@ interface RecommendationPillProps {
 
 export function RecommendationPill({ recommendation, startingState, solution }: RecommendationPillProps) {
   const styles = useStyles2(getStyles, recommendation.color);
+  const trackClick = () =>
+    ctaClicked({
+      surface: 'recommendations',
+      action: recommendation.external ? 'learn_more' : (recommendation.cta ?? 'enable'),
+      placement: 'pill',
+      recommendation_id: recommendation.id,
+      starting_state: startingState,
+      solution,
+    });
 
   return (
     <LinkButton
@@ -24,16 +33,9 @@ export function RecommendationPill({ recommendation, startingState, solution }: 
       fill="solid"
       icon={recommendation.icon}
       href={recommendation.href}
-      onClick={() =>
-        ctaClicked({
-          surface: 'recommendations',
-          action: recommendation.cta ?? 'enable',
-          placement: 'pill',
-          recommendation_id: recommendation.id,
-          starting_state: startingState,
-          solution,
-        })
-      }
+      target={recommendation.external ? '_blank' : undefined}
+      rel={recommendation.external ? 'noopener noreferrer' : undefined}
+      onClick={trackClick}
       className={styles.pill}
     >
       {recommendation.action}

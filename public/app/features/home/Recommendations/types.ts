@@ -1,9 +1,5 @@
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 
-import { type SolutionSparklineData } from '../solutions/SolutionSparkline';
-
-import { type ExistingSolutionId } from './solutionsMatrix';
-
 export interface RecommendationItem {
   id: string; // stable telemetry id (recommendation_id)
   title: string;
@@ -13,35 +9,8 @@ export interface RecommendationItem {
   description: string;
   action: string; // CTA label, e.g. "Enable Hosted Traces"
   href: string;
+  /** Opens documentation or another external destination in a new tab. */
+  external?: boolean;
   /** CTA intent for analytics: enable a disabled app (default) or set up an enabled-but-silent one. */
   cta?: 'enable' | 'setup';
-}
-
-export interface ExistingItem {
-  id: ExistingSolutionId; // stable telemetry id (solution)
-  title: string;
-  icon: IconName;
-  subtitle?: string;
-  stats?: { primary: string; secondary: string };
-  statsLoading?: boolean;
-  sparkline?: SolutionSparklineData;
-  sparklineLoading?: boolean;
-  alert?: {
-    primary: string;
-    details?: string[];
-    action: string;
-    href: string;
-  };
-  action: string;
-  href: string;
-}
-
-/**
- * Result contract for a solution provider hook in the useExistingSolutions registry.
- * Providers fail closed: a probe error reports as `item: null` (rendered as no data),
- * never as a user-visible error.
- */
-export interface ExistingSolutionProviderResult {
-  loading: boolean;
-  item: ExistingItem | null;
 }
