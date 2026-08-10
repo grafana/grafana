@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 
 import { type DataSourceApi, type DataSourceRef, LoadingState } from '@grafana/data';
-import { config, type getDataSourceSrv, setDataSourceSrv, setRunRequest } from '@grafana/runtime';
+import { type DataSourceSrv, config, setDataSourceSrv, setRunRequest } from '@grafana/runtime';
 import {
   type AdHocFiltersVariable,
   EmbeddedScene,
@@ -35,7 +35,7 @@ setRunRequest(runRequest);
 setDataSourceSrv({
   get: getDataSource,
   getInstanceSettings: () => ({ uid: DATASOURCE_UID }),
-} as unknown as ReturnType<typeof getDataSourceSrv>);
+} as unknown as DataSourceSrv);
 
 /**
  * Runs a query against DATASOURCE_UID inside a scene carrying the given filters variable, and returns
