@@ -127,8 +127,19 @@ type MultiOrgAlertmanager struct {
 	// only delegates to it; the sync surface is intentionally kept off this struct.
 	externalAMSyncer *ExternalAMSyncer
 
+	// autogenTimingsReader reads per-org autogen route timings from the Config
+	// resource. May be nil (tests, or when the Config API isn't wired) — the
+	// autogen root then uses the Alertmanager route defaults.
+	autogenTimingsReader autogenTimingsReader
+
 	receiverResourcePermissions ac.ReceiverPermissionsService
 	routesResourcePermissions   ac.RoutePermissionsService
+}
+
+// autogenTimingsReader reads the per-org autogen route timings from the Config
+// k8s resource. Implemented by *ConfigAutogenReader.
+type autogenTimingsReader interface {
+	ReadAutogenRouteTimings(ctx context.Context, orgID int64) (*autogenRouteTimings, error)
 }
 
 type OrgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager, error)
@@ -158,6 +169,7 @@ func NewMultiOrgAlertmanager(
 	notificationHistorian nfstatus.NotificationHistorian,
 	skipClustering bool,
 	externalAMSyncer *ExternalAMSyncer,
+	autogenTimingsReader autogenTimingsReader,
 	opts ...Option,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
@@ -179,7 +191,8 @@ func NewMultiOrgAlertmanager(
 		peer:                        &NilPeer{},
 		// Fetch responsibilities live on ExternalAMSyncer; MOA drives it per-org inside
 		// SyncAlertmanagersForOrgs and owns the save+apply via SaveAndApplyExtraConfiguration.
-		externalAMSyncer: externalAMSyncer,
+		externalAMSyncer:     externalAMSyncer,
+		autogenTimingsReader: autogenTimingsReader,
 	}
 
 	if skipClustering {

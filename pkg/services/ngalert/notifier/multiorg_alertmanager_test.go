@@ -399,6 +399,7 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 		false,
 		// Sync deps are nil — this test does not enable the sync feature flag.
 		NewExternalAMSyncer(nil, nil, &validations.OSSDataSourceRequestValidator{}, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"), nil, nil, nil),
+		nil, // no autogen timings reader
 	)
 	require.NoError(t, err)
 	return mam
