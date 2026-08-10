@@ -5943,9 +5943,12 @@
     },
     "new-panel-title": "New panel",
     "notebook-layout": {
+      "code-copied": "Code copied",
+      "copy-code": "Copy code",
       "description": "A vertical sequence of panels, text, and code cells",
+      "locked-range": "Locked: {{range}}",
       "name": "Notebook",
-      "pill": "Published Notebook",
+      "pill": "Notebook",
       "time": "Time"
     },
     "on-create-new-row": {
