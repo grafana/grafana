@@ -284,6 +284,12 @@ describe('findActivePageItem', () => {
         { id: 'starred/def', text: 'A folder', url: '/dashboards/f/def/?orgId=1' },
       ],
     },
+    {
+      id: 'create',
+      text: 'Create',
+      url: '/create',
+      children: [{ id: 'dashboards/import', text: 'Import dashboard', url: '/dashboard/import', isCreateAction: true }],
+    },
   ];
 
   it('matches a starred dashboard by uid despite a slug on the pathname', () => {
@@ -303,6 +309,12 @@ describe('findActivePageItem', () => {
     // The query keeps /dashboards?starred distinct from /dashboards, so the Starred section — not
     // Dashboards — is returned.
     expect(findActivePageItem(tree, '/dashboards?starred')?.id).toBe('starred');
+  });
+
+  it('ignores create actions so the page falls back to its parent section (e.g. import → Dashboards)', () => {
+    // The Import create action carries /dashboard/import but is dropped from the rendered menu, so it
+    // must not claim the highlight — leaving the sectionNav fallback to resolve the page to Dashboards.
+    expect(findActivePageItem(tree, '/dashboard/import')).toBeUndefined();
   });
 
   it('returns undefined when nothing carries the current page url', () => {

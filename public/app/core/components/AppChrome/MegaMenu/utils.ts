@@ -164,6 +164,10 @@ const toPageKey = (url?: string): string | undefined => {
  * url. Children are matched before their parent, so `/dashboards` resolves to the Browse child rather
  * than the Dashboards section, while a section still matches on its own url when no child does. Returns
  * the matched element by reference, so downstream reference-equality highlighting works.
+ *
+ * Create actions (e.g. "Import dashboard" → `/dashboard/import`) are skipped: they're dropped from the
+ * rendered menu, so matching one would claim the highlight for a row that isn't shown and suppress the
+ * sectionNav fallback (which correctly resolves such a page to its parent section, e.g. Dashboards).
  */
 export const findActivePageItem = (nodes: NavModelItem[], currentUrl: string): NavModelItem | undefined => {
   const target = toPageKey(currentUrl);
@@ -175,7 +179,7 @@ export const findActivePageItem = (nodes: NavModelItem[], currentUrl: string): N
     if (childMatch) {
       return childMatch;
     }
-    if (toPageKey(item.url) === target) {
+    if (!item.isCreateAction && toPageKey(item.url) === target) {
       return item;
     }
   }
