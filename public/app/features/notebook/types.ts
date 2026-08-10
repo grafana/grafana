@@ -17,12 +17,10 @@ import {
   type NotebookElement as GeneratedNotebookElement,
   type NotebookLayoutItemKind as GeneratedNotebookLayoutItemKind,
   type NotebookLayoutKind as GeneratedNotebookLayoutKind,
-  type NotebookPanelKind,
   type Spec as GeneratedSpec,
 } from '@grafana/schema/apis/notebook/v2beta1';
 
 // Forked by the notebook spec so it can carry the dashboard v2 shape.
-export type PanelKind = NotebookPanelKind;
 export const defaultPanelKind = defaultNotebookPanelKind;
 
 // Shared with the dashboard spec, or notebook-only. Either way the generated name is already right.
