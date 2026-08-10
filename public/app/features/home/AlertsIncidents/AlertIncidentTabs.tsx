@@ -58,14 +58,18 @@ export function AlertIncidentTabs({
     canViewIncidents && !incidentsLoading && !incidentsError && activeTab === INCIDENTS_TAB_ID;
 
   const containerRef = useRef<HTMLDivElement>(null);
-  useImperativeHandle(switchRef, () => ({
-    switch: (tab: TabId, scroll = true) => {
-      setActiveTab(tab);
-      if (scroll) {
-        containerRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }
-    },
-  }));
+  useImperativeHandle(
+    switchRef,
+    () => ({
+      switch: (tab: TabId, scroll = true) => {
+        setActiveTab(tab);
+        if (scroll) {
+          containerRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+      },
+    }),
+    []
+  );
 
   // Hide the tabs if neither alerts nor incidents are available
   if (!canViewAlerts && !canViewIncidents) {
