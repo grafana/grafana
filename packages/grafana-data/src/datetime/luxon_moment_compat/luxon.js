@@ -1,8 +1,7 @@
 /* eslint-disable */
-// Vendored from the performance-patched Luxon build at commit 452e941394b9ece833dacba63f5466dfe2a3e742:
-// https://github.com/leeoniya/luxon/tree/452e941394b9ece833dacba63f5466dfe2a3e742/dist
+// Vendored from the performance-patched Luxon build: https://github.com/leeoniya/luxon/blob/6dad268c3de47a484deb72238ebbceaac5e392b9/dist/luxon-plaid.mjs
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/errors.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/errors.js
 class LuxonError extends Error {
 }
 
@@ -42,7 +41,7 @@ class ZoneIsAbstractError extends LuxonError {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/impl/formats.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/impl/formats.js
 var n = "numeric";
 var s = "short";
 var l = "long";
@@ -194,7 +193,7 @@ var DATETIME_HUGE_WITH_SECONDS = {
   timeZoneName: l
 };
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/zone.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/zone.js
 class Zone {
   get type() {
     throw new ZoneIsAbstractError;
@@ -225,7 +224,7 @@ class Zone {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/zones/systemZone.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/zones/systemZone.js
 var singleton = null;
 var probe = new Date(0);
 
@@ -263,30 +262,14 @@ class SystemZone extends Zone {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/zones/IANAZone.js
-var dtfCache = new Map;
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/zones/IANAZone.js
 var scanCache = new Map;
-var intervalCache = new Map;
-function offsetInterval(zoneName) {
-  let st = intervalCache.get(zoneName);
-  if (st === undefined)
-    intervalCache.set(zoneName, st = newInterval());
-  return st;
-}
 var callScan = (scan, t) => scan(t);
-function daysFromCivil(y, m, d) {
-  y -= m <= 2 ? 1 : 0;
-  const era = Math.floor(y / 400);
-  const yoe = y - era * 400;
-  const doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 | 0;
-  const doe = yoe * 365 + (yoe / 4 | 0) - (yoe / 100 | 0) + doy + d - 1;
-  return era * 146097 + doe - 719468;
-}
 function makeScanner(zoneName) {
   const dtf = makeDTF(zoneName);
   const layout = [];
   for (const part of dtf.formatToParts(Date.UTC(2020, 5, 15, 12, 34, 56))) {
-    if (part.type !== "era" && typeToPos[part.type] !== undefined)
+    if (part.type !== "era" && typeToPos[part.type] != null)
       layout.push(part.type);
   }
   if (layout.join() !== "month,day,year,hour,minute,second")
@@ -322,14 +305,11 @@ function makeScanner(zoneName) {
     if (run !== 6)
       return NaN;
     if (bc)
-      year = -Math.abs(year) + 1;
+      year = 1 - year;
     if (hour === 24)
       hour = 0;
     const asUTC = (daysFromCivil(year, month, day) * 86400 + hour * 3600 + minute * 60 + second) * 1000;
-    if (!(Math.abs(asUTC) <= 8640000000000000))
-      return NaN;
-    const over = t % 1000;
-    return (asUTC - (t - (over >= 0 ? over : 1000 + over))) / 60000;
+    return (asUTC - Math.floor(t / 1000) * 1000) / 60000;
   };
 }
 function zoneScanner(zoneName) {
@@ -339,22 +319,17 @@ function zoneScanner(zoneName) {
   return scan;
 }
 function makeDTF(zoneName) {
-  let dtf = dtfCache.get(zoneName);
-  if (dtf === undefined) {
-    dtf = new Intl.DateTimeFormat("en-US", {
-      hour12: false,
-      timeZone: zoneName,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      era: "short"
-    });
-    dtfCache.set(zoneName, dtf);
-  }
-  return dtf;
+  return getCachedDTF("en-US", {
+    hour12: false,
+    timeZone: zoneName,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    era: "short"
+  });
 }
 var typeToPos = {
   year: 0,
@@ -395,9 +370,8 @@ class IANAZone extends Zone {
   }
   static resetCache() {
     ianaZoneCache.clear();
-    dtfCache.clear();
+    resetCachedDTF();
     scanCache.clear();
-    intervalCache.clear();
   }
   static isValidSpecifier(s2) {
     return this.isValidZone(s2);
@@ -440,11 +414,11 @@ class IANAZone extends Zone {
     if (!this.valid)
       return NaN;
     const scan = zoneScanner(this.name);
-    if (scan !== null) {
+    if (scan != null) {
       const t = Math.trunc(ts);
-      if (!(Math.abs(t) <= 8640000000000000))
+      if (Number.isNaN(t) || Math.abs(t) > 8640000000000000)
         return NaN;
-      return intervalLookup(offsetInterval(this.name), callScan, scan, t);
+      return intervalLookup(scan.iv || (scan.iv = newInterval()), callScan, scan, t);
     }
     const date = new Date(ts);
     if (isNaN(date))
@@ -477,7 +451,7 @@ class IANAZone extends Zone {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/impl/locale.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/impl/locale.js
 var intlLFCache = {};
 function getCachedLF(locString, opts = {}) {
   const key = JSON.stringify([locString, opts]);
@@ -485,16 +459,6 @@ function getCachedLF(locString, opts = {}) {
   if (!dtf) {
     dtf = new Intl.ListFormat(locString, opts);
     intlLFCache[key] = dtf;
-  }
-  return dtf;
-}
-var intlDTCache = new Map;
-function getCachedDTF(locString, opts = {}) {
-  const key = JSON.stringify([locString, opts]);
-  let dtf = intlDTCache.get(key);
-  if (dtf === undefined) {
-    dtf = new Intl.DateTimeFormat(locString, opts);
-    intlDTCache.set(key, dtf);
   }
   return dtf;
 }
@@ -527,15 +491,6 @@ function systemLocale() {
     sysLocaleCache = new Intl.DateTimeFormat().resolvedOptions().locale;
     return sysLocaleCache;
   }
-}
-var intlResolvedOptionsCache = new Map;
-function getCachedIntResolvedOptions(locString) {
-  let opts = intlResolvedOptionsCache.get(locString);
-  if (opts === undefined) {
-    opts = new Intl.DateTimeFormat(locString).resolvedOptions();
-    intlResolvedOptionsCache.set(locString, opts);
-  }
-  return opts;
 }
 var weekInfoCache = new Map;
 function getCachedWeekInfo(locString) {
@@ -760,11 +715,14 @@ class Locale {
   }
   static create(locale, numberingSystem, outputCalendar, weekSettings, defaultToEN = false) {
     localeSettingsGen();
-    const cache = numberingSystem || weekSettings || outputCalendar && outputCalendar !== "gregory" ? null : outputCalendar ? gregoryLocaleCache : localeCache;
-    const cacheKey = cache === null ? null : defaultToEN ? "!" + (locale || "") : locale || "";
-    if (cache !== null) {
+    let cache = null;
+    if (!numberingSystem && !weekSettings && (!outputCalendar || outputCalendar === "gregory")) {
+      cache = outputCalendar ? gregoryLocaleCache : localeCache;
+    }
+    const cacheKey = cache == null ? null : defaultToEN ? "!" + (locale || "") : locale || "";
+    if (cache != null) {
       const interned = cache.get(cacheKey);
-      if (interned !== undefined) {
+      if (interned != null) {
         return interned;
       }
     }
@@ -774,7 +732,7 @@ class Locale {
     const outputCalendarR = outputCalendar || Settings.defaultOutputCalendar;
     const weekSettingsR = validateWeekSettings(weekSettings) || Settings.defaultWeekSettings;
     const built = new Locale(localeR, numberingSystemR, outputCalendarR, weekSettingsR, specifiedLocale);
-    if (cache !== null && cache.size < LOCALE_CACHE_MAX) {
+    if (cache != null && cache.size < LOCALE_CACHE_MAX) {
       cache.set(cacheKey, built);
     }
     return built;
@@ -784,10 +742,9 @@ class Locale {
     localeCache.clear();
     gregoryLocaleCache.clear();
     localeGen++;
-    intlDTCache.clear();
+    resetCachedDTF();
     intlNumCache.clear();
     intlRelCache.clear();
-    intlResolvedOptionsCache.clear();
     weekInfoCache.clear();
     resetZoneNameCache();
   }
@@ -906,14 +863,14 @@ class Locale {
   }
   humanNumberFormatter(unit) {
     let nf = this.humanNum.get(unit);
-    if (nf === undefined) {
+    if (nf == null) {
       nf = this.numberFormatter({ style: "unit", unitDisplay: "long", unit: unit.slice(0, -1) });
       this.humanNum.set(unit, nf);
     }
     return nf;
   }
   humanListFormatter() {
-    if (this.humanList === undefined) {
+    if (this.humanList == null) {
       this.humanList = this.listFormatter({ type: "conjunction", style: "narrow" });
     }
     return this.humanList;
@@ -947,7 +904,7 @@ class Locale {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/zones/fixedOffsetZone.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/zones/fixedOffsetZone.js
 var singleton2 = null;
 
 class FixedOffsetZone extends Zone {
@@ -972,6 +929,7 @@ class FixedOffsetZone extends Zone {
   constructor(offset) {
     super();
     this.fixed = offset;
+    this.valid = Number.isInteger(offset);
   }
   get type() {
     return "fixed";
@@ -1002,11 +960,11 @@ class FixedOffsetZone extends Zone {
     return otherZone.type === "fixed" && otherZone.fixed === this.fixed;
   }
   get isValid() {
-    return true;
+    return this.valid;
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/zones/invalidZone.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/zones/invalidZone.js
 class InvalidZone extends Zone {
   constructor(zoneName) {
     super();
@@ -1038,7 +996,7 @@ class InvalidZone extends Zone {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/impl/zoneUtil.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/impl/zoneUtil.js
 function normalizeZone(input, defaultZone) {
   let offset;
   if (isUndefined(input) || input === null) {
@@ -1064,63 +1022,42 @@ function normalizeZone(input, defaultZone) {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/impl/digits.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/impl/digits.js
 var numberingSystems = {
-  arab: "[٠-٩]",
-  arabext: "[۰-۹]",
-  bali: "[᭐-᭙]",
-  beng: "[০-৯]",
-  deva: "[०-९]",
-  fullwide: "[０-９]",
-  gujr: "[૦-૯]",
-  hanidec: "[〇|一|二|三|四|五|六|七|八|九]",
-  khmr: "[០-៩]",
-  knda: "[೦-೯]",
-  laoo: "[໐-໙]",
-  limb: "[᥆-᥏]",
-  mlym: "[൦-൯]",
-  mong: "[᠐-᠙]",
-  mymr: "[၀-၉]",
-  orya: "[୦-୯]",
-  tamldec: "[௦-௯]",
-  telu: "[౦-౯]",
-  thai: "[๐-๙]",
-  tibt: "[༠-༩]",
-  latn: "\\d"
+  arab: ["[٠-٩]", 1632, 1641],
+  arabext: ["[۰-۹]", 1776, 1785],
+  bali: ["[᭐-᭙]", 6992, 7001],
+  beng: ["[০-৯]", 2534, 2543],
+  deva: ["[०-९]", 2406, 2415],
+  fullwide: ["[０-９]", 65296, 65303],
+  gujr: ["[૦-૯]", 2790, 2799],
+  hanidec: ["[〇|一|二|三|四|五|六|七|八|九]"],
+  khmr: ["[០-៩]", 6112, 6121],
+  knda: ["[೦-೯]", 3302, 3311],
+  laoo: ["[໐-໙]", 3792, 3801],
+  limb: ["[᥆-᥏]", 6470, 6479],
+  mlym: ["[൦-൯]", 3430, 3439],
+  mong: ["[᠐-᠙]", 6160, 6169],
+  mymr: ["[၀-၉]", 4160, 4169],
+  orya: ["[୦-୯]", 2918, 2927],
+  tamldec: ["[௦-௯]", 3046, 3055],
+  telu: ["[౦-౯]", 3174, 3183],
+  thai: ["[๐-๙]", 3664, 3673],
+  tibt: ["[༠-༩]", 3872, 3881],
+  latn: ["\\d"]
 };
-var numberingSystemsUTF16 = {
-  arab: [1632, 1641],
-  arabext: [1776, 1785],
-  bali: [6992, 7001],
-  beng: [2534, 2543],
-  deva: [2406, 2415],
-  fullwide: [65296, 65303],
-  gujr: [2790, 2799],
-  khmr: [6112, 6121],
-  knda: [3302, 3311],
-  laoo: [3792, 3801],
-  limb: [6470, 6479],
-  mlym: [3430, 3439],
-  mong: [6160, 6169],
-  mymr: [4160, 4169],
-  orya: [2918, 2927],
-  tamldec: [3046, 3055],
-  telu: [3174, 3183],
-  thai: [3664, 3673],
-  tibt: [3872, 3881]
-};
-var hanidecChars = numberingSystems.hanidec.replace(/[\[|\]]/g, "").split("");
+var hanidecChars = numberingSystems.hanidec[0].replace(/[\[|\]]/g, "").split("");
 function parseDigits(str) {
   let value = parseInt(str, 10);
   if (isNaN(value)) {
     value = "";
     for (let i = 0;i < str.length; i++) {
       const code = str.charCodeAt(i);
-      if (str[i].search(numberingSystems.hanidec) !== -1) {
+      if (str[i].search(numberingSystems.hanidec[0]) !== -1) {
         value += hanidecChars.indexOf(str[i]);
       } else {
-        for (const key in numberingSystemsUTF16) {
-          const [min, max] = numberingSystemsUTF16[key];
+        for (const key in numberingSystems) {
+          const [, min, max] = numberingSystems[key];
           if (code >= min && code <= max) {
             value += code - min;
           }
@@ -1145,13 +1082,13 @@ function digitRegex({ numberingSystem }, append = "") {
   }
   let regex = appendCache.get(append);
   if (regex === undefined) {
-    regex = new RegExp(`${numberingSystems[ns]}${append}`);
+    regex = new RegExp(`${numberingSystems[ns]?.[0]}${append}`);
     appendCache.set(append, regex);
   }
   return regex;
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/impl/tokenParser.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/impl/tokenParser.js
 var MISSING_FTP = "missing Intl.DateTimeFormat.formatToParts support";
 function intUnit(regex, post = (i) => i) {
   return { regex, deser: ([s2]) => post(parseDigits(s2)) };
@@ -1382,14 +1319,12 @@ function match(input, regex, handlers) {
   if (matches) {
     const all = {};
     let matchIndex = 1;
-    for (const i in handlers) {
-      if (hasOwnProperty(handlers, i)) {
-        const h = handlers[i], groups = h.groups ? h.groups + 1 : 1;
-        if (!h.literal && h.token) {
-          all[h.token.val[0]] = h.deser(matches.slice(matchIndex, matchIndex + groups));
-        }
-        matchIndex += groups;
+    for (const h of handlers) {
+      const groups = h.groups ? h.groups + 1 : 1;
+      if (!h.literal && h.token) {
+        all[h.token.val[0]] = h.deser(matches.slice(matchIndex, matchIndex + groups));
       }
+      matchIndex += groups;
     }
     return [matches, all];
   } else {
@@ -1444,8 +1379,11 @@ function dateTimeFromMatches(matches) {
   if (!isUndefined(matches.q)) {
     matches.M = (matches.q - 1) * 3 + 1;
   }
+  let hourInvalidReason;
   if (!isUndefined(matches.h)) {
-    if (matches.h < 12 && matches.a === 1) {
+    if (!isUndefined(matches.a) && (matches.h < 1 || matches.h > 12)) {
+      hourInvalidReason = `the 12-hour value "${matches.h}" is not in the [1, 12] range`;
+    } else if (matches.h < 12 && matches.a === 1) {
       matches.h += 12;
     } else if (matches.h === 12 && matches.a === 0) {
       matches.h = 0;
@@ -1464,7 +1402,7 @@ function dateTimeFromMatches(matches) {
     }
     return r;
   }, {});
-  return [vals, zone, specificOffset];
+  return [vals, zone, specificOffset, hourInvalidReason];
 }
 var dummyDateTimeCache = null;
 function getDummyDateTime() {
@@ -1505,7 +1443,7 @@ class TokenParser {
     if (!this.isValid) {
       return { input, tokens: this.tokens, invalidReason: this.invalidReason };
     } else {
-      const [rawMatches, matches] = match(input, this.regex, this.handlers), [result, zone, specificOffset] = matches ? dateTimeFromMatches(matches) : [null, null, undefined];
+      const [rawMatches, matches] = match(input, this.regex, this.handlers), [result, zone, specificOffset, parseInvalidReason] = matches ? dateTimeFromMatches(matches) : [null, null, undefined, undefined];
       if (hasOwnProperty(matches, "a") && hasOwnProperty(matches, "H")) {
         throw new ConflictingSpecificationError("Can't include meridiem when specifying 24-hour format");
       }
@@ -1517,7 +1455,8 @@ class TokenParser {
         matches,
         result,
         zone,
-        specificOffset
+        specificOffset,
+        invalidReason: parseInvalidReason
       };
     }
   }
@@ -1529,14 +1468,17 @@ class TokenParser {
   }
 }
 var parserCache = new Map;
+var PARSER_CACHE_MAX = 1000;
 function resetTokenParserCache() {
   parserCache.clear();
 }
 function cachedTokenParser(locale, format) {
   const key = JSON.stringify([locale.locale, locale.numberingSystem, locale.outputCalendar, format]);
   let parser = parserCache.get(key);
-  if (parser === undefined) {
-    parserCache.set(key, parser = new TokenParser(locale, format));
+  if (parser == null) {
+    parser = new TokenParser(locale, format);
+    if (parserCache.size < PARSER_CACHE_MAX)
+      parserCache.set(key, parser);
   }
   return parser;
 }
@@ -1558,7 +1500,7 @@ function formatOptsToTokens(formatOpts, locale) {
   return parts.map((p) => tokenForPart(p, formatOpts, resolvedOpts));
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/settings.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/settings.js
 var now = () => Date.now();
 var defaultZone = "system";
 var defaultLocale = null;
@@ -1626,7 +1568,7 @@ class Settings {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/impl/invalid.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/impl/invalid.js
 class Invalid {
   constructor(reason, explanation) {
     this.reason = reason;
@@ -1641,18 +1583,14 @@ class Invalid {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/impl/conversions.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/impl/conversions.js
 var nonLeapLadder = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
 var leapLadder = [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
 function unitOutOfRange(unit, value) {
   return new Invalid("unit out of range", `you specified ${value} (of type ${typeof value}) as a ${unit}, which is invalid`);
 }
 function dayOfWeek(year, month, day) {
-  const d = new Date(Date.UTC(year, month - 1, day));
-  if (year < 100 && year >= 0) {
-    d.setUTCFullYear(d.getUTCFullYear() - 1900);
-  }
-  const js = d.getUTCDay();
+  const js = ((daysFromCivil(year, month, day) + 4) % 7 + 7) % 7;
   return js === 0 ? 7 : js;
 }
 function computeOrdinal(year, month, day) {
@@ -1774,7 +1712,30 @@ function hasInvalidTimeData(obj) {
     return false;
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/impl/util.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/impl/util.js
+var intlDTCache = new Map;
+var intlResolvedOptionsCache = new Map;
+function getCachedDTF(locString, opts = {}) {
+  const key = JSON.stringify([locString, opts]);
+  let dtf = intlDTCache.get(key);
+  if (dtf === undefined) {
+    dtf = new Intl.DateTimeFormat(locString, opts);
+    intlDTCache.set(key, dtf);
+  }
+  return dtf;
+}
+function getCachedIntResolvedOptions(locString) {
+  let opts = intlResolvedOptionsCache.get(locString);
+  if (opts === undefined) {
+    opts = getCachedDTF(locString).resolvedOptions();
+    intlResolvedOptionsCache.set(locString, opts);
+  }
+  return opts;
+}
+function resetCachedDTF() {
+  intlDTCache.clear();
+  intlResolvedOptionsCache.clear();
+}
 function isUndefined(o) {
   return typeof o === "undefined";
 }
@@ -1787,6 +1748,34 @@ function isInteger(o) {
 function isString(o) {
   return typeof o === "string";
 }
+var unitIndexes = {
+  year: 0,
+  years: 0,
+  quarter: 1,
+  quarters: 1,
+  month: 2,
+  months: 2,
+  week: 3,
+  weeks: 3,
+  day: 4,
+  days: 4,
+  hour: 5,
+  hours: 5,
+  minute: 6,
+  minutes: 6,
+  second: 7,
+  seconds: 7,
+  millisecond: 8,
+  milliseconds: 8,
+  weekday: 9,
+  weekdays: 9,
+  weeknumber: 10,
+  weeksnumber: 10,
+  weeknumbers: 10,
+  weekyear: 11,
+  weekyears: 11,
+  ordinal: 12
+};
 function isDate(o) {
   return Object.prototype.toString.call(o) === "[object Date]";
 }
@@ -1853,7 +1842,7 @@ function integerBetween(thing, bottom, top) {
 function floorMod(x, n2) {
   return x - n2 * Math.floor(x / n2);
 }
-var PAD_TO_2 = Array.from({ length: 100 }, (_, i) => (i < 10 ? "0" : "") + i);
+var PAD_TO_2 = Array.from({ length: 100 }, (_, i) => String(i).padStart(2, "0"));
 function padStart(input, n2 = 2) {
   if (n2 === 2 && Number.isInteger(input) && input >= 0 && input < 100) {
     return PAD_TO_2[input];
@@ -1909,6 +1898,10 @@ function roundTo(number, digits, rounding = "round") {
       throw new RangeError(`Value rounding ${rounding} is out of range`);
   }
 }
+function snapFloatingPoint(val) {
+  const r = Math.round(val);
+  return Math.abs(val - r) < 4 * Number.EPSILON * Math.max(1, Math.abs(r)) ? r : val;
+}
 function isLeapYear(year) {
   return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 }
@@ -1922,6 +1915,30 @@ function daysInMonth(year, month) {
   } else {
     return [31, null, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][modMonth - 1];
   }
+}
+function daysFromCivil(y, m, d) {
+  y -= m <= 2 ? 1 : 0;
+  const era = Math.floor(y / 400);
+  const yoe = y - era * 400;
+  const doy = Math.floor((153 * (m + (m > 2 ? -3 : 9)) + 2) / 5);
+  const doe = yoe * 365 + Math.floor(yoe / 4) - Math.floor(yoe / 100) + doy + d - 1;
+  return era * 146097 + doe - 719468;
+}
+function civilDayDiff(a, b) {
+  return daysFromCivil(b.year, b.month, b.day) - daysFromCivil(a.year, a.month, a.day);
+}
+function civilFromDays(days, result) {
+  const z = days + 719468;
+  const era = Math.floor(z / 146097);
+  const doe = z - era * 146097;
+  const yoe = Math.floor((doe - Math.floor(doe / 1460) + Math.floor(doe / 36524) - Math.floor(doe / 146096)) / 365);
+  const doy = doe - (365 * yoe + Math.floor(yoe / 4) - Math.floor(yoe / 100));
+  const mp = Math.floor((5 * doy + 2) / 153);
+  const month = mp < 10 ? mp + 3 : mp - 9;
+  result.year = yoe + era * 400 + (month <= 2 ? 1 : 0);
+  result.month = month;
+  result.day = doy - Math.floor((153 * mp + 2) / 5) + 1;
+  return result;
 }
 function objToLocalTS(obj) {
   let d = Date.UTC(obj.year, obj.month - 1, obj.day, obj.hour, obj.minute, obj.second, obj.millisecond);
@@ -1961,6 +1978,9 @@ function newInterval() {
     lo1: 1,
     hi1: 0,
     val1: null,
+    lo2: 1,
+    hi2: 0,
+    val2: null,
     reach: 0,
     hits: 0
   };
@@ -1981,7 +2001,24 @@ function intervalLookup(st, lookup, ctx, t) {
     st.val1 = v;
     return st.val0;
   }
+  if (t >= st.lo2 && t <= st.hi2) {
+    st.hits++;
+    const { lo1: lo, hi1: hi, val1: v } = st;
+    st.lo1 = st.lo0;
+    st.hi1 = st.hi0;
+    st.val1 = st.val0;
+    st.lo0 = st.lo2;
+    st.hi0 = st.hi2;
+    st.val0 = st.val2;
+    st.lo2 = lo;
+    st.hi2 = hi;
+    st.val2 = v;
+    return st.val0;
+  }
   const val = lookup(ctx, t);
+  st.lo2 = st.lo1;
+  st.hi2 = st.hi1;
+  st.val2 = st.val1;
   st.lo1 = st.lo0;
   st.hi1 = st.hi0;
   st.val1 = st.val0;
@@ -1991,13 +2028,13 @@ function intervalLookup(st, lookup, ctx, t) {
   const side = (st.reach >> 1) + 1;
   for (let k = 1;k <= side; k++) {
     const p = t + k * INTERVAL_PROBE_MS;
-    if (!(Math.abs(p) <= INTERVAL_MAX_TS) || lookup(ctx, p) !== val)
+    if (Math.abs(p) > INTERVAL_MAX_TS || lookup(ctx, p) !== val)
       break;
     st.hi0 = p;
   }
   for (let k = 1;k <= side; k++) {
     const p = t - k * INTERVAL_PROBE_MS;
-    if (!(Math.abs(p) <= INTERVAL_MAX_TS) || lookup(ctx, p) !== val)
+    if (Math.abs(p) > INTERVAL_MAX_TS || lookup(ctx, p) !== val)
       break;
     st.lo0 = p;
   }
@@ -2047,7 +2084,7 @@ function scanName(scan, ts) {
 }
 function parseZoneInfo(ts, offsetFormat, locale, timeZone = null) {
   const scan = zoneNameScanner(locale, offsetFormat, timeZone);
-  if (scan !== null) {
+  if (scan != null) {
     return intervalLookup(scan.iv, scanName, scan, ts);
   }
   const date = new Date(ts), intlOpts = {
@@ -2108,7 +2145,7 @@ function timeObject(obj) {
   return pick(obj, ["hour", "minute", "second", "millisecond"]);
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/impl/english.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/impl/english.js
 var monthsLong = [
   "January",
   "February",
@@ -2237,36 +2274,37 @@ function formatRelativeTime(unit, count, numeric = "always", narrow = false) {
   return isInPast ? `${fmtValue} ${fmtUnit} ago` : `in ${fmtValue} ${fmtUnit}`;
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/impl/formatter.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/impl/formatter.js
 var cfPrograms = new Map;
 var cfDurationPrograms = new Map;
 var CF_CACHE_MAX = 1000;
 var cfExtract = (f, dt, opts, field) => f.loc.extract(dt, opts, field);
 var cfNames = new WeakMap;
-var cfCalendars = new WeakMap;
 function cfMemo(f, dt, opts, field, key, size, at) {
   let per = cfNames.get(f.loc);
-  if (per === undefined)
-    cfNames.set(f.loc, per = new Map);
+  if (per == null) {
+    per = new Map;
+    cfNames.set(f.loc, per);
+  }
   let slots = per.get(key);
-  if (slots === undefined)
-    per.set(key, slots = new Array(size));
+  if (slots == null) {
+    slots = new Array(size);
+    per.set(key, slots);
+  }
   const hit = slots[at];
-  return hit !== undefined ? hit : slots[at] = f.loc.extract(dt, opts, field);
+  if (hit !== undefined)
+    return hit;
+  return slots[at] = f.loc.extract(dt, opts, field);
 }
 function cfGregorian(loc) {
-  let ok = cfCalendars.get(loc);
-  if (ok === undefined) {
-    cfCalendars.set(loc, ok = new Intl.DateTimeFormat(loc.intl).resolvedOptions().calendar === "gregory");
-  }
-  return ok;
+  return getCachedIntResolvedOptions(loc.intl).calendar === "gregory";
 }
 function cfOffset(format) {
   return (f, dt) => {
     if (dt.isOffsetFixed && dt.offset === 0 && f.opts.allowZ) {
       return "Z";
     }
-    return dt.isValid ? dt.zone.formatOffset(dt.ts, format) : "";
+    return dt.zone.formatOffset(dt.ts, format);
   };
 }
 function cfMonth(length, standalone) {
@@ -2366,7 +2404,7 @@ function cfCompile(fmt) {
       continue;
     }
     const handler = cfHandlers[token.val];
-    if (handler !== undefined) {
+    if (handler != null) {
       lits.push(lit);
       lit = "";
       fns.push(handler);
@@ -2386,7 +2424,7 @@ function cfCompile(fmt) {
 }
 function cfRun(f, dt, fmt) {
   let program = cfPrograms.get(fmt);
-  if (program === undefined) {
+  if (program == null) {
     program = cfCompile(fmt);
     if (cfPrograms.size < CF_CACHE_MAX) {
       cfPrograms.set(fmt, program);
@@ -2418,7 +2456,7 @@ function cfCompileDuration(fmt) {
   let lit = "";
   for (const token of Formatter.parseFormat(fmt)) {
     const field = token.literal ? undefined : cfDurationFields[token.val[0]];
-    if (field === undefined) {
+    if (field == null) {
       lit += token.val;
     } else {
       lits.push(lit);
@@ -2432,7 +2470,7 @@ function cfCompileDuration(fmt) {
 }
 function cfRunDuration(f, dur, fmt) {
   let program = cfDurationPrograms.get(fmt);
-  if (program === undefined) {
+  if (program == null) {
     program = cfCompileDuration(fmt);
     if (cfDurationPrograms.size < CF_CACHE_MAX) {
       cfDurationPrograms.set(fmt, program);
@@ -2447,8 +2485,19 @@ function cfRunDuration(f, dur, fmt) {
   for (let i = 0;i < fields.length; i++) {
     const field = fields[i];
     const secondaryNegative = signMode === "negativeLargestOnly" && negative && field !== largest;
-    const signDisplay = signMode === "negativeLargestOnly" && field !== largest ? "never" : signMode === "all" ? "always" : "auto";
-    s2 += f.num(collapsed.get(field) * (secondaryNegative ? -1 : 1), widths[i], signDisplay) + lits[i + 1];
+    let signDisplay;
+    if (signMode === "negativeLargestOnly" && field !== largest) {
+      signDisplay = "never";
+    } else if (signMode === "all") {
+      signDisplay = "always";
+    } else {
+      signDisplay = "auto";
+    }
+    let value = (collapsed.values[field] || 0) * (secondaryNegative ? -1 : 1);
+    if (signMode === "negativeLargestOnly" && field === largest && negative && value === 0) {
+      value = -0;
+    }
+    s2 += f.num(value, widths[i], signDisplay) + lits[i + 1];
   }
   return s2;
 }
@@ -2483,7 +2532,7 @@ class Formatter {
   }
   static parseFormat(fmt) {
     let cached = parseFormatCache.get(fmt);
-    if (cached === undefined) {
+    if (cached == null) {
       cached = Formatter.parseFormatUncached(fmt);
       if (parseFormatCache.size < PARSE_FORMAT_CACHE_MAX) {
         parseFormatCache.set(fmt, cached);
@@ -2520,11 +2569,6 @@ class Formatter {
     }
     if (currentFull.length > 0) {
       splits.push({ literal: bracketed || /^\s+$/.test(currentFull), val: currentFull });
-    }
-    for (const token of splits) {
-      if (!token.literal && !/[A-Za-z]/.test(token.val)) {
-        token.verbatim = true;
-      }
     }
     return splits;
   }
@@ -2563,8 +2607,8 @@ class Formatter {
     if (this.opts.forceSimple) {
       return padStart(n2, p);
     }
-    if (signDisplay === undefined) {
-      if (this.simpleNumsCached === undefined) {
+    if (signDisplay == null) {
+      if (this.simpleNumsCached == null) {
         this.simpleNumsCached = this.loc.fastNumbers && Object.keys(this.opts).length === 0;
       }
       if (this.simpleNumsCached) {
@@ -2588,7 +2632,7 @@ class Formatter {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/impl/regexParser.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/impl/regexParser.js
 var ianaRegex = /[A-Za-z_+-]{1,256}(?::?\/[A-Za-z0-9_+-]{1,256}(?:\/[A-Za-z0-9_+-]{1,256})?)?/;
 function combineRegexes(...regexes) {
   const full = regexes.reduce((f, r) => f + r.source, "");
@@ -2686,6 +2730,7 @@ function extractISODuration(match2) {
 }
 var obsOffsets = {
   GMT: 0,
+  UT: 0,
   EDT: -4 * 60,
   EST: -5 * 60,
   CDT: -5 * 60,
@@ -2788,7 +2833,7 @@ function parseSQL(s2) {
   return parse(s2, [sqlYmdWithTimeExtensionRegex, extractISOYmdTimeAndOffset], [sqlTimeCombinedRegex, extractISOTimeOffsetAndIANAZone]);
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/duration.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/duration.js
 var INVALID = "Invalid Duration";
 var lowOrderMatrix = {
   weeks: {
@@ -2882,26 +2927,27 @@ var orderedUnits = [
   "milliseconds"
 ];
 var reverseUnits = orderedUnits.slice(0).reverse();
-var normalizedUnits = {
-  year: "years",
-  years: "years",
-  quarter: "quarters",
-  quarters: "quarters",
-  month: "months",
-  months: "months",
-  week: "weeks",
-  weeks: "weeks",
-  day: "days",
-  days: "days",
-  hour: "hours",
-  hours: "hours",
-  minute: "minutes",
-  minutes: "minutes",
-  second: "seconds",
-  seconds: "seconds",
-  millisecond: "milliseconds",
-  milliseconds: "milliseconds"
-};
+var normalizedUnits = [
+  "years",
+  "quarters",
+  "months",
+  "weeks",
+  "days",
+  "hours",
+  "minutes",
+  "seconds",
+  "milliseconds"
+];
+function combineValues(mine, theirs, subtract) {
+  const result = {};
+  for (const k of orderedUnits) {
+    if (hasOwnProperty(theirs, k) || hasOwnProperty(mine, k)) {
+      const a = mine[k] || 0, b = theirs[k] || 0;
+      result[k] = subtract ? a - b : b + a;
+    }
+  }
+  return result;
+}
 var humanizeUnitConversion = {
   months: "quarters",
   quarters: null
@@ -2924,35 +2970,6 @@ function durationToMillis(matrix, vals) {
   }
   return sum;
 }
-function normalizeValues(matrix, vals) {
-  const factor = durationToMillis(matrix, vals) < 0 ? -1 : 1;
-  orderedUnits.reduceRight((previous, current) => {
-    if (!isUndefined(vals[current])) {
-      if (previous) {
-        const previousVal = vals[previous] * factor;
-        const conv = matrix[current][previous];
-        const rollUp = Math.floor(previousVal / conv);
-        vals[current] += rollUp * factor;
-        vals[previous] -= rollUp * conv * factor;
-      }
-      return current;
-    } else {
-      return previous;
-    }
-  }, null);
-  orderedUnits.reduce((previous, current) => {
-    if (!isUndefined(vals[current])) {
-      if (previous) {
-        const fraction = vals[previous] % 1;
-        vals[previous] -= fraction;
-        vals[current] += fraction * matrix[previous][current];
-      }
-      return current;
-    } else {
-      return previous;
-    }
-  }, null);
-}
 function removeZeroes(vals) {
   const newVals = {};
   for (const [key, value] of Object.entries(vals)) {
@@ -2961,6 +2978,10 @@ function removeZeroes(vals) {
     }
   }
   return newVals;
+}
+function toISONumber(value) {
+  const str = `${value}`;
+  return str.includes("e") ? value.toFixed(20).replace(/\.?0+$/, "") : str;
 }
 
 class Duration {
@@ -3030,7 +3051,7 @@ class Duration {
     }
   }
   static normalizeUnit(unit) {
-    const normalized = normalizedUnits[unit ? unit.toLowerCase() : unit];
+    const normalized = normalizedUnits[unitIndexes[unit ? unit.toLowerCase() : unit]];
     if (!normalized)
       throw new InvalidUnitError(unit);
     return normalized;
@@ -3055,7 +3076,12 @@ class Duration {
     if (!this.isValid)
       return INVALID;
     const showZeros = opts.showZeros !== false;
-    const memo = Object.keys(opts).length === 0 ? this.loc.humanFormatters() : null;
+    let hasOpts = false;
+    for (const k in opts) {
+      hasOpts = true;
+      break;
+    }
+    const memo = hasOpts ? null : this.loc.humanFormatters();
     const l2 = [];
     for (const unit of orderedUnits) {
       const convertUnit = humanizeUnitConversion[unit];
@@ -3071,9 +3097,9 @@ class Duration {
       if (isUndefined(val) || val === 0 && !showZeros) {
         continue;
       }
-      l2.push((memo === null ? this.loc.numberFormatter({ style: "unit", unitDisplay: "long", ...opts, unit: unit.slice(0, -1) }) : memo.humanNumberFormatter(unit)).format(val));
+      l2.push((memo == null ? this.loc.numberFormatter({ style: "unit", unitDisplay: "long", ...opts, unit: unit.slice(0, -1) }) : memo.humanNumberFormatter(unit)).format(val));
     }
-    return (memo === null ? this.loc.listFormatter({ type: "conjunction", style: opts.listStyle || "narrow", ...opts }) : memo.humanListFormatter()).format(l2);
+    return (memo == null ? this.loc.listFormatter({ type: "conjunction", style: opts.listStyle || "narrow", ...opts }) : memo.humanListFormatter()).format(l2);
   }
   toObject() {
     if (!this.isValid)
@@ -3085,21 +3111,21 @@ class Duration {
       return null;
     let s2 = "P";
     if (this.years !== 0)
-      s2 += this.years + "Y";
+      s2 += toISONumber(this.years) + "Y";
     if (this.months !== 0 || this.quarters !== 0)
-      s2 += this.months + this.quarters * 3 + "M";
+      s2 += toISONumber(this.months + this.quarters * 3) + "M";
     if (this.weeks !== 0)
-      s2 += this.weeks + "W";
+      s2 += toISONumber(this.weeks) + "W";
     if (this.days !== 0)
-      s2 += this.days + "D";
+      s2 += toISONumber(this.days) + "D";
     if (this.hours !== 0 || this.minutes !== 0 || this.seconds !== 0 || this.milliseconds !== 0)
       s2 += "T";
     if (this.hours !== 0)
-      s2 += this.hours + "H";
+      s2 += toISONumber(this.hours) + "H";
     if (this.minutes !== 0)
-      s2 += this.minutes + "M";
+      s2 += toISONumber(this.minutes) + "M";
     if (this.seconds !== 0 || this.milliseconds !== 0)
-      s2 += roundTo(this.seconds + this.milliseconds / 1000, 3) + "S";
+      s2 += toISONumber(roundTo(this.seconds + this.milliseconds / 1000, 3)) + "S";
     if (s2 === "P")
       s2 += "T0S";
     return s2;
@@ -3145,23 +3171,13 @@ class Duration {
   plus(duration) {
     if (!this.isValid)
       return this;
-    const dur = Duration.fromDurationLike(duration), mine = this.values, theirs = dur.values, result = {};
-    for (const k of orderedUnits) {
-      if (hasOwnProperty(dur.values, k) || hasOwnProperty(this.values, k)) {
-        result[k] = (theirs[k] || 0) + (mine[k] || 0);
-      }
-    }
+    const dur = Duration.fromDurationLike(duration), mine = this.values, theirs = dur.values, result = combineValues(mine, theirs, false);
     return clone(this, { values: result }, true);
   }
   minus(duration) {
     if (!this.isValid)
       return this;
-    const dur = Duration.fromDurationLike(duration), mine = this.values, theirs = dur.values, result = {};
-    for (const k of orderedUnits) {
-      if (hasOwnProperty(dur.values, k) || hasOwnProperty(this.values, k)) {
-        result[k] = (mine[k] || 0) - (theirs[k] || 0);
-      }
-    }
+    const dur = Duration.fromDurationLike(duration), mine = this.values, theirs = dur.values, result = combineValues(mine, theirs, true);
     return clone(this, { values: result }, true);
   }
   mapUnits(fn) {
@@ -3193,75 +3209,161 @@ class Duration {
     const u = Duration.normalizeUnit(unit);
     const at = orderedUnits.indexOf(u);
     if (at < 0)
-      return this.shiftTo(unit).get(unit);
+      throw new InvalidUnitError(unit);
     const vals = this.values;
     const matrix = this.matrix;
     let own = 0;
-    for (let i = 0;i < at; i++) {
-      const higher = orderedUnits[i];
-      if (isNumber(vals[higher]))
-        own += matrix[higher][u] * vals[higher];
+    for (const key in vals) {
+      const value = vals[key];
+      if (key === u) {
+        own += value;
+      } else {
+        const from = orderedUnits.indexOf(key);
+        if (at > from) {
+          own += matrix[key][u] * value;
+        } else {
+          own += Math.trunc(value / matrix[u][key]);
+        }
+      }
     }
-    if (isNumber(vals[u]))
-      own += vals[u];
-    const whole = Math.trunc(own);
-    const rest = (own * 1000 - whole * 1000) / 1000;
-    let out = whole;
-    if (rest !== 0)
-      out += rest;
-    for (let i = at + 1;i < orderedUnits.length; i++) {
-      const lower = orderedUnits[i];
-      if (isNumber(vals[lower]) && vals[lower] !== 0)
-        out += vals[lower] / matrix[u][lower];
+    own = snapFloatingPoint(own);
+    let out = Math.trunc(own);
+    let ownSeen = false;
+    for (const key in vals) {
+      if (key === u) {
+        const rest2 = own % 1;
+        if (rest2 !== 0)
+          out += rest2;
+        ownSeen = true;
+        continue;
+      }
+      const from = orderedUnits.indexOf(key);
+      if (at > from)
+        continue;
+      const conv = matrix[u][key];
+      const value = vals[key];
+      const rest = (value - Math.trunc(value / conv) * conv) / conv;
+      if (rest !== 0)
+        out += rest;
     }
-    return out || 0;
+    if (!ownSeen) {
+      const rest = own % 1;
+      if (rest !== 0)
+        out += rest;
+    }
+    return out;
   }
   normalize() {
     if (!this.isValid)
       return this;
-    const vals = this.toObject();
-    normalizeValues(this.matrix, vals);
-    return clone(this, { values: vals }, true);
+    return this.shiftTo();
   }
   rescale() {
     if (!this.isValid)
       return this;
-    const vals = removeZeroes(this.normalize().shiftToAll().toObject());
+    const vals = removeZeroes(this.shiftToAll().toObject());
     return clone(this, { values: vals }, true);
   }
   shiftTo(...units) {
     if (!this.isValid)
       return this;
     if (units.length === 0) {
-      return this;
+      units = Object.keys(this.values);
+    } else {
+      units = units.map((u) => Duration.normalizeUnit(u));
     }
-    units = units.map((u) => Duration.normalizeUnit(u));
-    const built = {}, accumulated = {}, vals = this.toObject();
+    const built = {}, accumulated = this.toObject();
     let lastUnit;
-    for (const k of orderedUnits) {
-      if (units.indexOf(k) >= 0) {
+    let lastUnitTotal = 0;
+    for (let i = 0;i < orderedUnits.length; i++) {
+      const k = orderedUnits[i];
+      if (units.includes(k)) {
+        if (lastUnit) {
+          lastUnitTotal *= this.matrix[lastUnit][k];
+        }
         lastUnit = k;
         let own = 0;
         for (const ak in accumulated) {
-          own += this.matrix[ak][k] * accumulated[ak];
-          accumulated[ak] = 0;
+          const av = accumulated[ak];
+          if (ak === k) {
+            own += av;
+          } else if (i > orderedUnits.indexOf(ak)) {
+            const converted = this.matrix[ak][k] * av;
+            own += converted;
+            accumulated[ak] = 0;
+          } else {
+            const conv = this.matrix[k][ak];
+            const toConvert = Math.trunc(av / conv);
+            accumulated[ak] -= toConvert * conv;
+            own += toConvert;
+          }
         }
-        if (isNumber(vals[k])) {
-          own += vals[k];
-        }
-        const i = Math.trunc(own);
-        built[k] = i;
-        accumulated[k] = (own * 1000 - i * 1000) / 1000;
-      } else if (isNumber(vals[k])) {
-        accumulated[k] = vals[k];
+        own = snapFloatingPoint(own);
+        accumulated[k] = own % 1;
+        lastUnitTotal += built[k] = Math.trunc(own);
       }
     }
     for (const key in accumulated) {
       if (accumulated[key] !== 0) {
-        built[lastUnit] += key === lastUnit ? accumulated[key] : accumulated[key] / this.matrix[lastUnit][key];
+        const toAdd = key === lastUnit ? accumulated[key] : accumulated[key] / this.matrix[lastUnit][key];
+        built[lastUnit] += toAdd;
+        lastUnitTotal += toAdd;
       }
     }
-    normalizeValues(this.matrix, built);
+    const overallSign = Math.sign(lastUnitTotal);
+    if (overallSign !== 0) {
+      for (let i = 0;i < reverseUnits.length; i++) {
+        const unit = reverseUnits[i];
+        if (unit in built) {
+          const unitValue = built[unit];
+          const unitSign = Math.sign(unitValue);
+          if (unitSign !== 0 && unitSign !== overallSign) {
+            for (let j = i + 1;j < reverseUnits.length; j++) {
+              const higherUnit = reverseUnits[j];
+              if (higherUnit in built) {
+                const conv = this.matrix[higherUnit][unit];
+                const toBorrow = Math.trunc((unitValue + (conv - 1) * unitSign) / conv);
+                built[higherUnit] += toBorrow;
+                built[unit] -= toBorrow * conv;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+    for (let i = 0;i < orderedUnits.length; i++) {
+      const unit = orderedUnits[i];
+      if (unit !== lastUnit && unit in built) {
+        const unitValue = built[unit];
+        if (!Number.isInteger(unitValue)) {
+          for (let j = i + 1;j < orderedUnits.length; j++) {
+            const smallerUnit = orderedUnits[j];
+            if (smallerUnit in built) {
+              const conv = this.matrix[unit][smallerUnit];
+              const unitFrac = unitValue % 1;
+              built[unit] = Math.trunc(unitValue);
+              built[smallerUnit] += unitFrac * conv;
+              break;
+            }
+          }
+        }
+      }
+    }
+    for (let i = 0;i < reverseUnits.length; i++) {
+      const unit = reverseUnits[i];
+      if (units.includes(unit)) {
+        for (const ak in built) {
+          if (i > reverseUnits.indexOf(ak)) {
+            const conv = this.matrix[unit][ak];
+            const av = built[ak];
+            const toConvert = Math.trunc(av / conv);
+            built[unit] += toConvert;
+            built[ak] -= toConvert * conv;
+          }
+        }
+      }
+    }
     return clone(this, { values: built }, true);
   }
   shiftToAll() {
@@ -3341,7 +3443,7 @@ class Duration {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/interval.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/interval.js
 var INVALID2 = "Invalid Interval";
 function validateStartEnd(start, end) {
   if (!start || !start.isValid) {
@@ -3479,7 +3581,9 @@ class Interval {
     return Math.floor(end.diff(start, unit).get(unit)) + (end.valueOf() !== this.end.valueOf());
   }
   hasSame(unit) {
-    return this.isValid ? this.isEmpty() || this.e.minus(1).hasSame(this.s, unit) : false;
+    if (!this.isValid)
+      return false;
+    return this.isEmpty() ? this.s.hasSame(this.e, unit) : this.e.minus(1).hasSame(this.s, unit);
   }
   isEmpty() {
     return this.s.valueOf() === this.e.valueOf();
@@ -3661,7 +3765,7 @@ class Interval {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/info.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/info.js
 class Info {
   static hasDST(zone = Settings.defaultZone) {
     const proto = DateTime.now().setZone(zone).set({ month: 12 });
@@ -3705,19 +3809,9 @@ class Info {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/impl/diff.js
-var utcDayStart = (dt) => objToLocalTS({
-  year: dt.c.year,
-  month: dt.c.month,
-  day: dt.c.day,
-  hour: 0,
-  minute: 0,
-  second: 0,
-  millisecond: 0
-});
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/impl/diff.js
 function dayDiff(earlier, later) {
-  const ms = utcDayStart(later) - utcDayStart(earlier);
-  return Number.isFinite(ms) ? Math.floor(ms / 86400000) : Math.floor(Duration.fromMillis(ms).as("days"));
+  return civilDayDiff(earlier.c, later.c);
 }
 function highOrderDiffs(cursor, later, units) {
   const differs = [
@@ -3784,14 +3878,14 @@ function diff_default(earlier, later, units, opts) {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/datetime.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/datetime.js
 var INVALID3 = "Invalid DateTime";
 var MAX_DATE = 8640000000000000;
-var oneOfCache = new Map;
+var oneOfCache = Object.create(null);
 function oneOf2(unit) {
-  let one = oneOfCache.get(unit);
-  if (one === undefined) {
-    oneOfCache.set(unit, one = { [unit]: 1 });
+  let one = oneOfCache[unit];
+  if (one == null) {
+    one = oneOfCache[unit] = { [unit]: 1 };
   }
   return one;
 }
@@ -3821,11 +3915,11 @@ function clone2(inst, alts) {
     wasHole: inst.wasHole
   };
   return new DateTime({
-    ts: alts.ts === undefined ? current.ts : alts.ts,
-    zone: alts.zone === undefined ? current.zone : alts.zone,
-    loc: alts.loc === undefined ? current.loc : alts.loc,
-    invalid: alts.invalid === undefined ? current.invalid : alts.invalid,
-    wasHole: alts.wasHole === undefined ? current.wasHole : alts.wasHole,
+    ts: alts.ts == null ? current.ts : alts.ts,
+    zone: alts.zone == null ? current.zone : alts.zone,
+    loc: alts.loc == null ? current.loc : alts.loc,
+    invalid: current.invalid,
+    wasHole: alts.wasHole == null ? current.wasHole : alts.wasHole,
     old: current
   });
 }
@@ -3847,22 +3941,12 @@ function tsToObj(ts, offset2) {
   ts = Math.abs(clipped) > MAX_DATE ? NaN : Math.trunc(clipped);
   const days = Math.floor(ts / 86400000);
   const msOfDay = ts - days * 86400000;
-  const z = days + 719468;
-  const era = Math.floor(z / 146097);
-  const doe = z - era * 146097;
-  const yoe = Math.floor((doe - Math.floor(doe / 1460) + Math.floor(doe / 36524) - Math.floor(doe / 146096)) / 365);
-  const doy = doe - (365 * yoe + Math.floor(yoe / 4) - Math.floor(yoe / 100));
-  const mp = Math.floor((5 * doy + 2) / 153);
-  const month = mp < 10 ? mp + 3 : mp - 9;
-  return {
-    year: yoe + era * 400 + (month <= 2 ? 1 : 0),
-    month,
-    day: doy - Math.floor((153 * mp + 2) / 5) + 1,
+  return civilFromDays(days, {
     hour: Math.floor(msOfDay / 3600000),
     minute: Math.floor(msOfDay / 60000) % 60,
     second: Math.floor(msOfDay / 1000) % 60,
     millisecond: msOfDay % 1000
-  };
+  });
 }
 function objToTS(obj, offset2, zone) {
   return fixOffset(objToLocalTS(obj), offset2, zone);
@@ -3881,12 +3965,12 @@ function durationValues(durationLike, negate) {
   };
   if (typeof durationLike === "number") {
     v.milliseconds = asNumber(durationLike);
-  } else if (durationLike !== null && typeof durationLike === "object" && durationLike.isLuxonDuration !== true) {
+  } else if (durationLike != null && typeof durationLike === "object" && durationLike.isLuxonDuration !== true) {
     for (const u in durationLike) {
       if (!hasOwnProperty(durationLike, u))
         continue;
       const raw = durationLike[u];
-      if (raw === undefined || raw === null)
+      if (raw == null)
         continue;
       const unit = Duration.normalizeUnit(u);
       v[unit] = asNumber(raw);
@@ -3904,21 +3988,21 @@ function durationValues(durationLike, negate) {
     v.milliseconds = dur.milliseconds;
   }
   if (negate) {
-    v.years = v.years === 0 ? 0 : -v.years;
-    v.quarters = v.quarters === 0 ? 0 : -v.quarters;
-    v.months = v.months === 0 ? 0 : -v.months;
-    v.weeks = v.weeks === 0 ? 0 : -v.weeks;
-    v.days = v.days === 0 ? 0 : -v.days;
-    v.hours = v.hours === 0 ? 0 : -v.hours;
-    v.minutes = v.minutes === 0 ? 0 : -v.minutes;
-    v.seconds = v.seconds === 0 ? 0 : -v.seconds;
-    v.milliseconds = v.milliseconds === 0 ? 0 : -v.milliseconds;
+    v.years = -v.years;
+    v.quarters = -v.quarters;
+    v.months = -v.months;
+    v.weeks = -v.weeks;
+    v.days = -v.days;
+    v.hours = -v.hours;
+    v.minutes = -v.minutes;
+    v.seconds = -v.seconds;
+    v.milliseconds = -v.milliseconds;
   }
   return v;
 }
 function adjustTime(inst, dur) {
-  const { c: ic, o: oPre } = inst, durYears = dur.years, durQuarters = dur.quarters, durMonths = dur.months, durWeeks = dur.weeks, durDays = dur.days, durHours = dur.hours, durMinutes = dur.minutes, durSeconds = dur.seconds, durMilliseconds = dur.milliseconds, wholeSum = Number.isInteger(durYears) && Number.isInteger(durQuarters) && Number.isInteger(durMonths) && Number.isInteger(durWeeks) && Number.isInteger(durDays) && Number.isInteger(durHours) && Number.isInteger(durMinutes) && Number.isInteger(durSeconds) && Number.isInteger(durMilliseconds) ? durHours * 3600000 + durMinutes * 60000 + durSeconds * 1000 + durMilliseconds : NaN;
-  if (durYears === 0 && durQuarters === 0 && durMonths === 0 && durWeeks === 0 && durDays === 0 && Number.isFinite(wholeSum * 1000)) {
+  const { c: ic, o: oPre } = inst, durYears = dur.years, durQuarters = dur.quarters, durMonths = dur.months, durWeeks = dur.weeks, durDays = dur.days, durHours = dur.hours, durMinutes = dur.minutes, durSeconds = dur.seconds, durMilliseconds = dur.milliseconds, whole = Number.isInteger(durYears) && Number.isInteger(durQuarters) && Number.isInteger(durMonths) && Number.isInteger(durWeeks) && Number.isInteger(durDays) && Number.isInteger(durHours) && Number.isInteger(durMinutes) && Number.isInteger(durSeconds) && Number.isInteger(durMilliseconds), wholeSum = whole ? durHours * 3600000 + durMinutes * 60000 + durSeconds * 1000 + durMilliseconds : 0;
+  if (durYears === 0 && durQuarters === 0 && durMonths === 0 && durWeeks === 0 && durDays === 0 && whole) {
     const only = inst.ts + wholeSum;
     return { ts: only, o: wholeSum === 0 ? oPre : inst.zone.offset(only), wasHole: false };
   }
@@ -3930,7 +4014,7 @@ function adjustTime(inst, dur) {
     minute: ic.minute,
     second: ic.second,
     millisecond: ic.millisecond
-  }, millisToAdd = Number.isFinite(wholeSum * 1000) ? wholeSum : Duration.fromObject({
+  }, millisToAdd = whole ? wholeSum : Duration.fromObject({
     years: durYears - Math.trunc(durYears),
     quarters: durQuarters - Math.trunc(durQuarters),
     months: durMonths - Math.trunc(durMonths),
@@ -4082,34 +4166,23 @@ var orderedWeekUnits = [
   "millisecond"
 ];
 var orderedOrdinalUnits = ["year", "ordinal", "hour", "minute", "second", "millisecond"];
-var normalizedUnits2 = {
-  year: "year",
-  years: "year",
-  month: "month",
-  months: "month",
-  day: "day",
-  days: "day",
-  hour: "hour",
-  hours: "hour",
-  minute: "minute",
-  minutes: "minute",
-  quarter: "quarter",
-  quarters: "quarter",
-  second: "second",
-  seconds: "second",
-  millisecond: "millisecond",
-  milliseconds: "millisecond",
-  weekday: "weekday",
-  weekdays: "weekday",
-  weeknumber: "weekNumber",
-  weeksnumber: "weekNumber",
-  weeknumbers: "weekNumber",
-  weekyear: "weekYear",
-  weekyears: "weekYear",
-  ordinal: "ordinal"
-};
+var normalizedUnits2 = [
+  "year",
+  "quarter",
+  "month",
+  undefined,
+  "day",
+  "hour",
+  "minute",
+  "second",
+  "millisecond",
+  "weekday",
+  "weekNumber",
+  "weekYear",
+  "ordinal"
+];
 function normalizeUnit(unit) {
-  const normalized = normalizedUnits2[unit.toLowerCase()];
+  const normalized = normalizedUnits2[unitIndexes[unit.toLowerCase()]];
   if (!normalized)
     throw new InvalidUnitError(unit);
   return normalized;
@@ -4175,8 +4248,7 @@ var relativeFloor = {
   weeks: 7 * 86400000 - 26 * 3600000,
   hours: 3600000,
   minutes: 60000,
-  seconds: 1000,
-  milliseconds: 1
+  seconds: 1000
 };
 function diffRelative(start, end, opts) {
   const round = isUndefined(opts.round) ? true : opts.round, rounding = isUndefined(opts.rounding) ? "trunc" : opts.rounding, format = (c, unit) => {
@@ -4185,6 +4257,22 @@ function diffRelative(start, end, opts) {
     return formatter.format(c, unit);
   }, differ = (unit) => {
     if (opts.calendary) {
+      const zoneType = start.zone.type;
+      if (start.isValid && end.isValid && (zoneType === "iana" || zoneType === "fixed" || zoneType === "system") && start.zone.equals(end.zone)) {
+        const sc = start.c;
+        const ec = end.c;
+        switch (unit) {
+          case "year":
+          case "years":
+            return ec.year - sc.year;
+          case "month":
+          case "months":
+            return (ec.year - sc.year) * 12 + ec.month - sc.month;
+          case "day":
+          case "days":
+            return civilDayDiff(sc, ec);
+        }
+      }
       if (!end.hasSame(start, unit)) {
         return end.startOf(unit).diff(start.startOf(unit), unit).get(unit);
       } else
@@ -4254,6 +4342,11 @@ class DateTime {
     return new DateTime({});
   }
   static local() {
+    if (arguments.length === 0)
+      return quickDT({}, {});
+    if (arguments.length === 1 && typeof arguments[0] === "object") {
+      return quickDT({}, arguments[0]);
+    }
     const [opts, args] = lastOpts(arguments), [year, month, day, hour, minute, second, millisecond] = args;
     return quickDT({ year, month, day, hour, minute, second, millisecond }, opts);
   }
@@ -4685,7 +4778,8 @@ class DateTime {
         }
         o.weekday = startOfWeek;
       } else {
-        o.weekday = 1;
+        const c = this.c;
+        o.day = c.day - (dayOfWeek(c.year, c.month, c.day) - 1);
       }
     }
     if (normalizedUnit === "quarters") {
@@ -4698,36 +4792,57 @@ class DateTime {
     if (!this.isValid)
       return this;
     const normalized = typeof unit === "string" ? unit.toLowerCase() : unit;
-    let boundary;
+    let year, month, day;
     if (opts === undefined) {
+      const c = this.c;
       switch (normalized) {
         case "year":
         case "years":
-          boundary = { year: this.c.year + 1, month: 1 };
+          year = c.year + 1;
+          month = 1;
+          day = 1;
           break;
         case "quarter":
         case "quarters": {
-          const month = Math.floor((this.c.month - 1) / 3) * 3 + 4;
-          boundary = month > 12 ? { year: this.c.year + 1, month: 1 } : { year: this.c.year, month };
+          const next = Math.floor((c.month - 1) / 3) * 3 + 4;
+          if (next > 12) {
+            year = c.year + 1;
+            month = 1;
+          } else {
+            year = c.year;
+            month = next;
+          }
+          day = 1;
           break;
         }
         case "month":
         case "months":
-          boundary = this.c.month === 12 ? { year: this.c.year + 1, month: 1 } : { year: this.c.year, month: this.c.month + 1 };
+          if (c.month === 12) {
+            year = c.year + 1;
+            month = 1;
+          } else {
+            year = c.year;
+            month = c.month + 1;
+          }
+          day = 1;
+          break;
+        case "week":
+        case "weeks":
+          year = c.year;
+          month = c.month;
+          day = c.day + 8 - dayOfWeek(c.year, c.month, c.day);
+          break;
+        case "day":
+        case "days":
+          year = c.year;
+          month = c.month;
+          day = c.day + 1;
           break;
       }
     }
-    if (boundary !== undefined) {
-      const { year, month } = boundary;
-      return this.set({
-        year,
-        month,
-        day: 1,
-        hour: 0,
-        minute: 0,
-        second: 0,
-        millisecond: 0
-      }).minus(1);
+    if (year !== undefined) {
+      const boundaryTS = fixOffset(objToLocalTS({ year, month, day, hour: 0, minute: 0, second: 0, millisecond: 0 }), this.o, this.zone)[0];
+      return clone2(this, { ts: boundaryTS - 1, wasHole: false });
     }
     return this.plus(oneOf2(unit)).startOf(unit, opts).minus(1);
   }
@@ -5038,18 +5153,18 @@ function friendlyDateTime(dateTimeish) {
   }
 }
 
-// benchmarks/.tmp/builds/arithDirect+compileFormat+localeIntern+numericPath+offsetScan+relativeSkip+tokenParserCache+transitionInterval+trimAllocs+zoneInfoCache+zoneNameScan/src/luxon.js
+// benchmarks/.tmp/builds/arithDirect+boundaryMath+compileFormat+localeIntern+numberingTable+offsetScan+relativeSkip+tokenParserCache+transitionInterval+zoneInfoCache/src/luxon.js
 var VERSION = "3.7.2";
 export {
-  Zone,
-  VERSION,
-  SystemZone,
-  Settings,
-  InvalidZone,
-  Interval,
-  Info,
-  IANAZone,
-  FixedOffsetZone,
+  DateTime,
   Duration,
-  DateTime
+  FixedOffsetZone,
+  IANAZone,
+  Info,
+  Interval,
+  InvalidZone,
+  Settings,
+  SystemZone,
+  VERSION,
+  Zone
 };
