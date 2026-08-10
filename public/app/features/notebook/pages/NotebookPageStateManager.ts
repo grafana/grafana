@@ -32,16 +32,17 @@ export interface NotebookPageState {
  * query profile) and forced the notebook through the dashboard envelope/transform.
  */
 export class NotebookPageStateManager extends StateManagerBase<NotebookPageState> {
-  // Scene cache so navigating away and back doesn't rebuild (and re-run) the whole document.
-  // Invalidated by resource generation, so a save elsewhere produces a fresh scene.
   private cache = new Map<string, { generation?: number; scene: NotebookScene }>();
 
+  // Navigating A -> B while A is still in
+  // flight can therefore leave B's URL showing A, and it sticks, because nothing else fires after.
+  private latestRequestedUid?: string;
+
   public async loadNotebook(uid: string): Promise<void> {
+    this.latestRequestedUid = uid;
     this.setState({ isLoading: true, loadError: undefined });
 
     try {
-      // One-shot loader fetch (same imperative-dispatch pattern the dashboard loaders use);
-      // subscribe: false avoids leaving an RTK cache subscription open per opened notebook.
       const result = await dispatch(
         dashboardAPIv2beta1.endpoints.getNotebook.initiate({ name: uid }, { subscribe: false })
       );
@@ -61,6 +62,9 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
       const cached = this.cache.get(uid);
       if (cached && cached.generation === notebook.metadata.generation) {
+        if (this.isSuperseded(uid)) {
+          return;
+        }
         this.setState({ scene: cached.scene, isLoading: false });
         return;
       }
@@ -69,9 +73,21 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
       // fieldConfig (e.g. threshold base → -Infinity), so clone before transforming.
       const scene = transformNotebookToScene(structuredClone(notebook));
 
+      // Cache even when superseded: the work is already paid for, so a later visit to this uid can
+      // reuse it. Only the state write has to be suppressed.
       this.cache.set(uid, { generation: notebook.metadata.generation, scene });
+
+      if (this.isSuperseded(uid)) {
+        return;
+      }
       this.setState({ scene, isLoading: false });
     } catch (error) {
+      // A superseded failure must not surface either, or a stale 404 would replace the notebook the
+      // page has already loaded.
+      if (this.isSuperseded(uid)) {
+        return;
+      }
+
       this.setState({
         isLoading: false,
         loadError: {
@@ -83,8 +99,24 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     }
   }
 
+  /** Whether a newer load (or a page teardown) has taken over since this one started. */
+  private isSuperseded(uid: string): boolean {
+    return this.latestRequestedUid !== uid;
+  }
+
   public clearState(): void {
+    // Also discards anything in flight: without this a load that resolves after the page is gone
+    // repopulates the singleton, and the next notebook opened flashes the previous one first.
+    this.latestRequestedUid = undefined;
     this.setState({ scene: undefined, isLoading: false, loadError: undefined });
+  }
+
+  public removeSceneCache(uid: string): void {
+    this.cache.delete(uid);
+  }
+
+  public clearSceneCache(): void {
+    this.cache.clear();
   }
 }
 

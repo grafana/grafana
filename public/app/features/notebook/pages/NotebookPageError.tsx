@@ -18,14 +18,21 @@ interface NotebookPageErrorProps {
  * directly rather than re-derived from an unknown value.
  */
 export function NotebookPageError({ error }: NotebookPageErrorProps) {
+  // Shared by the breadcrumb and the body so the two cannot describe the failure differently.
+  const isNotFound = error.status === 404;
+
   return (
     <Page
       navId="dashboards/browse"
       layout={PageLayoutType.Canvas}
-      pageNav={{ text: t('notebook.errors.not-found-title', 'Not found') }}
+      pageNav={{
+        text: isNotFound
+          ? t('notebook.errors.not-found-title', 'Not found')
+          : t('notebook.errors.failed-to-load', 'Failed to load notebook'),
+      }}
     >
       <Box paddingY={4} display="flex" direction="column" alignItems="center">
-        {error.status === 404 ? (
+        {isNotFound ? (
           <EntityNotFound entity="Notebook" />
         ) : (
           <Alert

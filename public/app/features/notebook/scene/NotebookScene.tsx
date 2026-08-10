@@ -15,6 +15,7 @@ import {
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
+import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
 
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 
@@ -85,14 +86,14 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     });
   }
 
-  /**
-   * Stamps every query fired from this scene. Deliberately no `dashboardUID`: notebook queries
-   * must not be attributed to dashboards in datasource analytics/usage insights. A dedicated
-   * CoreApp.Notebook needs a @grafana/data change — follow-up.
-   */
-  public enrichDataRequest(): Partial<DataQueryRequest> {
+  public enrichDataRequest(source: SceneObject): Partial<DataQueryRequest> {
+    const panel = getClosestVizPanel(source);
+
     return {
       app: CoreApp.Unknown,
+      panelId: (panel && getPanelIdForVizPanel(panel)) ?? 0,
+      panelName: panel?.state.title,
+      panelPluginId: panel?.state.pluginId,
     };
   }
 

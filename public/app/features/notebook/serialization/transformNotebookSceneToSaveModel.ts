@@ -10,15 +10,21 @@ import {
 import { type NotebookScene } from '../scene/NotebookScene';
 
 /**
- * Serializes a notebook scene back to a NotebookSpec — the notebook's save boundary, and the
- * payload the Mutation API's GET_NOTEBOOK_SPEC consumes.
- *
  * Element names come off NotebookCellItem.state.elementName (recorded by the deserializer), so
- * names round-trip without a generation scheme. Inserting new cells will need one.
+ * names round-trip without a generation scheme.
  *
- * DS-reference fidelity note: vizPanelToSchemaV2 is called without a DSReferencesMapping, so
- * queries that omitted an explicit datasource in the saved spec serialize with the runtime-resolved
- * one. Acceptable while the notebook is read-only; must be revisited with autosave.
+ * Identity is owned per cell, deliberately not in a scene-level registry like the dashboard's
+ * DashboardSceneSerializer.elementPanelMap. That map exists to bridge an arbitrary string element key
+ * to a numeric panel id, because a VizPanel's only identity in the scene is `panel-<id>` and it cannot
+ * carry the spec's key; a notebook cell carries it directly, so a registry would just be a second,
+ * driftable copy.
+ *
+ * Inserting, duplicating or pasting cells will need a name generator instead — belonging on
+ * NotebookLayoutManager, which owns `cells` and can therefore check candidates against the names
+ * already in use. It has to stay collision-proof after a delete, so a bare counter is not enough.
+ * Note duplicate names are not inherently wrong: two layout items may legally reference one element,
+ * and that round-trips correctly today (one `elements` entry, two layout items). The hazard is
+ * specifically two cells sharing a name with *different* content, where one would silently win here.
  */
 export function transformNotebookSceneToSaveModel(scene: NotebookScene): NotebookSpec {
   const { title, description, tags, body, timePicker, refreshPicker, hideTimeControls } = scene.state;
@@ -31,8 +37,7 @@ export function transformNotebookSceneToSaveModel(scene: NotebookScene): Noteboo
 
   return {
     title,
-    // Optional on a notebook: keep it absent rather than writing an empty string.
-    ...(description ? { description } : {}),
+    ...(description !== undefined ? { description } : {}),
     tags: tags ?? [],
     // TimeSettingsSpec is structurally identical across the two schemas, so no cast is needed.
     // The shared builder leaves fiscalYearStartMonth absent when the scene doesn't carry it (so

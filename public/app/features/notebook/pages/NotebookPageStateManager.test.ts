@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { type UnknownAction } from 'redux';
-import { of, throwError } from 'rxjs';
+import { delay, of, throwError } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
@@ -33,11 +33,11 @@ jest.mock('app/store/store', () => {
   };
 });
 
-function notebookResource(): Resource<NotebookSpec> {
+function notebookResource(name = 'nb-1'): Resource<NotebookSpec> {
   return {
     apiVersion: 'dashboard.grafana.app/v2beta1',
     kind: 'Notebook',
-    metadata: { name: 'nb-1', resourceVersion: '1', generation: 1, creationTimestamp: '2026-07-01T00:00:00Z' },
+    metadata: { name, resourceVersion: '1', generation: 1, creationTimestamp: '2026-07-01T00:00:00Z' },
     spec: {
       ...defaultNotebookSpec(),
       title: 'My notebook',
@@ -87,10 +87,102 @@ describe('NotebookPageStateManager', () => {
     const manager = new NotebookPageStateManager({ isLoading: false });
 
     await manager.loadNotebook('nb-1');
-    const first = manager.state.scene;
+    const first = manager.state.scene?.state.key;
     await manager.loadNotebook('nb-1');
 
-    expect(manager.state.scene).toBe(first);
+    expect(manager.state.scene?.state.key).toBe(first);
+  });
+
+  it('rebuilds the scene after removeSceneCache, even at an unchanged generation', async () => {
+    setBackendSrv({
+      fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource()))),
+    } as unknown as BackendSrv);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    const first = manager.state.scene?.state.key;
+    manager.removeSceneCache('nb-1');
+    await manager.loadNotebook('nb-1');
+
+    expect(manager.state.scene).toBeInstanceOf(NotebookScene);
+    expect(manager.state.scene?.state.key).not.toBe(first);
+  });
+
+  it('rebuilds every notebook after clearSceneCache', async () => {
+    setBackendSrv({
+      fetch: jest.fn((options: { url: string }) =>
+        of(createFetchResponse(notebookResource(options.url.endsWith('nb-2') ? 'nb-2' : 'nb-1')))
+      ),
+    } as unknown as BackendSrv);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    const firstOne = manager.state.scene?.state.key;
+    await manager.loadNotebook('nb-2');
+    const firstTwo = manager.state.scene?.state.key;
+    // Guards the mock: if both loads resolved to the same cache entry the test below would pass
+    // trivially without ever proving two entries were cleared.
+    expect(firstTwo).not.toBe(firstOne);
+
+    manager.clearSceneCache();
+
+    await manager.loadNotebook('nb-1');
+    expect(manager.state.scene?.state.key).not.toBe(firstOne);
+    await manager.loadNotebook('nb-2');
+    expect(manager.state.scene?.state.key).not.toBe(firstTwo);
+  });
+
+  it('ignores removeSceneCache for an unknown uid and leaves other entries cached', async () => {
+    setBackendSrv({
+      fetch: jest.fn().mockReturnValue(of(createFetchResponse(notebookResource()))),
+    } as unknown as BackendSrv);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    const first = manager.state.scene?.state.key;
+
+    expect(() => manager.removeSceneCache('does-not-exist')).not.toThrow();
+
+    await manager.loadNotebook('nb-1');
+    expect(manager.state.scene?.state.key).toBe(first);
+  });
+
+  // `await` does not cancel, so a load started for an earlier uid still resumes. If it wrote its
+  // scene the page would end up on B's URL showing A, and stay there — nothing fires afterwards.
+  // The slow/fast split reproduces the ordering inversion an RTK cache hit causes in practice.
+  it('ignores a superseded load so fast navigation cannot show the previous notebook', async () => {
+    setBackendSrv({
+      fetch: jest.fn((options: { url: string }) => {
+        const isSlow = options.url.endsWith('nb-slow');
+        return of(createFetchResponse(notebookResource(isSlow ? 'nb-slow' : 'nb-fast'))).pipe(delay(isSlow ? 50 : 0));
+      }),
+    } as unknown as BackendSrv);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    const slow = manager.loadNotebook('nb-slow');
+    const fast = manager.loadNotebook('nb-fast');
+    await Promise.all([fast, slow]);
+
+    expect(manager.state.scene?.state.uid).toBe('nb-fast');
+    expect(manager.state.loadError).toBeUndefined();
+  });
+
+  it('ignores a superseded failure so a stale error cannot replace a loaded notebook', async () => {
+    setBackendSrv({
+      fetch: jest.fn((options: { url: string }) =>
+        options.url.endsWith('nb-slow')
+          ? throwError(() => ({ status: 404, data: { message: 'gone' } })).pipe(delay(50))
+          : of(createFetchResponse(notebookResource('nb-fast')))
+      ),
+    } as unknown as BackendSrv);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    const slow = manager.loadNotebook('nb-slow');
+    const fast = manager.loadNotebook('nb-fast');
+    await Promise.all([fast, slow]);
+
+    expect(manager.state.loadError).toBeUndefined();
+    expect(manager.state.scene?.state.uid).toBe('nb-fast');
   });
 
   it('surfaces a fetch failure as loadError instead of a scene', async () => {
