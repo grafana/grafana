@@ -5,7 +5,7 @@ import { QueryVariableEditorModal } from './QueryVariableEditor/QueryVariableEdi
 
 /**
  * Renders the modal editor matching the variable type, used by the controls
- * "Edit query" / "Edit options" actions and the sidebar edit pane.
+ * "Edit query" / "Edit values" actions and the sidebar edit pane.
  */
 export function VariableEditorModal({ variable, onClose }: { variable: SceneVariable; onClose: () => void }) {
   if (variable instanceof QueryVariable) {

@@ -1,6 +1,6 @@
 import { createEvent, fireEvent, render, screen } from 'test/test-utils';
 
-import { CustomVariable, QueryVariable, SceneVariableSet } from '@grafana/scenes';
+import { ConstantVariable, CustomVariable, QueryVariable, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -187,6 +187,11 @@ function buildQueryVariable() {
   new SceneVariableSet({ variables: [variable] }); // just to set variable.parent
   return variable;
 }
+function buildConstantVariable() {
+  const variable = new ConstantVariable({ name: 'constVar', value: '42' });
+  new SceneVariableSet({ variables: [variable] }); // just to set variable.parent
+  return variable;
+}
 function buildDataLayer() {
   return new DashboardAnnotationsDataLayer({
     name: 'Test annotation',
@@ -203,7 +208,7 @@ describe('<VariableEditActions />', () => {
     jest.clearAllMocks();
   });
 
-  function renderVariableEditActions(variable: CustomVariable | QueryVariable) {
+  function renderVariableEditActions(variable: SceneVariable) {
     const onClickEdit = jest.fn();
     const onClickEditQuery = jest.fn();
     const onClickDuplicate = jest.fn();
@@ -227,6 +232,16 @@ describe('<VariableEditActions />', () => {
 
     expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit values' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit query' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+  });
+
+  test('renders settings, duplicate, and delete controls for a constant variable without edit query or edit values', () => {
+    renderVariableEditActions(buildConstantVariable());
+
+    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit values' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit query' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
