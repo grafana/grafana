@@ -608,12 +608,6 @@
       "title-restore-version": "버전 복구",
       "title-restoring-alertmanager-configuration": "Alertmanager 구성 복원 중"
     },
-    "alerts-activity-banner": {
-      "description": "이제 Grafana 관리 경고 규칙에 대한 운영 작업을 처리할 수 있는 완전히 새로운 페이지를 사용할 수 있습니다. 어떤 경고가 발동되는지 확인하고, 과거 정보를 탐색하고, 필터링 및 그룹화를 통해 분류 및 근본 원인 분석을 강화하세요.",
-      "open-button": "경고 활동 보기",
-      "open-button-aria": "경고 활동 열기",
-      "title": "이제 경고 활동을 사용할 수 있게 되었습니다!"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "정렬",
       "label-filter-placeholder-search-alerts-by-labels": "라벨로 경고 검색",
@@ -788,7 +782,9 @@
         "value-in-transition": "전환 중인 값"
       },
       "error": {
-        "server-error": "경고 상태 이력 쿼리 실패 — 서버에서 오류를 반환했습니다."
+        "server-error": "경고 상태 이력 쿼리 실패 — 서버에서 오류를 반환했습니다.",
+        "server-error-description": "",
+        "title": ""
       },
       "filter": {
         "clear": "필터 초기화",
@@ -3266,6 +3262,8 @@
         "title": ""
       },
       "import": {
+        "any": "",
+        "collapse-all": "",
         "empty-body": "",
         "empty-cta": "",
         "empty-learn-more": "",
@@ -3273,9 +3271,25 @@
         "error-body": "",
         "error-retry": "",
         "error-title": "",
+        "expand-all": "",
+        "inhibition-equal": "",
         "loading": "",
+        "no-matchers": "",
+        "parse-error-body": "",
+        "parse-error-title": "",
+        "resources": "",
+        "section": {
+          "contact-points": "",
+          "inhibition-rules": "",
+          "notification-policy": "",
+          "templates": "",
+          "time-intervals": ""
+        },
+        "staged-badge": "",
         "staged-description": "",
-        "staged-title": ""
+        "staged-title": "",
+        "view": "",
+        "policy-tree-routes_other": ""
       },
       "tabs": {
         "alert-managers": "경고 관리자",
@@ -4387,6 +4401,9 @@
     "create-new": {
       "dashboard-group": ""
     },
+    "create-new-button": {
+      "generate-dashboard": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "이 항목은 선택한 항목과는 다른 리포지토리에 있습니다."
@@ -5362,6 +5379,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "자동",
       "options": {
         "custom-min-height": {
@@ -5379,6 +5397,11 @@
         "min-width-custom": "사용자 지정 최소 너비",
         "min-width-custom-clear": "표준 최소 열 너비로 돌아가기",
         "min-width-error": "50에서 2000 사이의 숫자여야 합니다"
+      },
+      "resize-intercept": {
+        "edit": "",
+        "header": "",
+        "switch": ""
       }
     },
     "canvas-actions": {
@@ -5526,6 +5549,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "사용자 지정",
       "row-actions": {
         "delete": "행 삭제",
@@ -5850,8 +5874,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "중첩된 모든 그룹이 해제됩니다.",
-      "ungroup-nested-title": "중첩된 그룹을 해제하시겠습니까?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{numberOfPages}} 중 {{currentPage}}",
@@ -6694,6 +6722,21 @@
       "title": "아직 추가된 대시보드 링크 없음"
     }
   },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": ""
+    },
+    "modal": {
+      "title": ""
+    },
+    "prompt": {
+      "cancel": "",
+      "description": "",
+      "input-label": "",
+      "placeholder": "",
+      "submit": ""
+    }
+  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "이 데이터 소스는 필터를 지원하지 않습니다.",
@@ -7511,6 +7554,14 @@
       "disabled-tooltip": "경고 규칙을 생성하기 전에 대시보드를 저장하세요.",
       "new-alert-rule": "새 경고 규칙",
       "title-no-alerting-capable-query-found": "경고 기능이 있는 쿼리를 찾을 수 없습니다"
+    },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "",
+      "title": ""
+    },
+    "scripted-dashboards-disabled": {
+      "body": "",
+      "title": ""
     },
     "section-placement": {
       "top-row": "",
@@ -8796,6 +8847,7 @@
       "open-in-profiles-drilldown": "",
       "profiles-for-this-span": "",
       "related-logs": "",
+      "related-logs-no-logs-tooltip": "",
       "related-logs-tooltip": "",
       "session-for-this-span": ""
     },
@@ -9219,9 +9271,9 @@
     "description-mouse-wheel-zoom": "마우스 휠을 통한 확대/축소 제어 활성화",
     "description-no-repeat": "지도가 가로로 반복되지 않도록 합니다",
     "description-share-view": "여러 패널에서 동일한 보기를 사용합니다.  참고: 이 경우 대시보드를 다시 로드해야 할 수 있습니다.",
-    "description-show-attribution": "오른쪽 하단에 지도 소스 속성 정보 표시",
     "description-show-debug": "지도 정보 표시",
     "description-show-measure": "지도에 측정 도구 표시",
+    "description-show-optional-attribution": "",
     "description-show-scale": "지도 배율 표시",
     "description-show-zoom": "왼쪽 상단에 확대/축소 제어 버튼 표시",
     "description-sync-view-variable": "쿼리에서 사용할 수 있도록 대시보드 변수에 보기 범위 저장",
@@ -9282,9 +9334,9 @@
     "name-mouse-wheel-zoom": "마우스 휠 확대/축소",
     "name-no-repeat": "지도 반복 없음",
     "name-share-view": "보기 공유",
-    "name-show-attribution": "속성 표시",
     "name-show-debug": "디버그 표시",
     "name-show-measure": "측정 도구 표시",
+    "name-show-optional-attribution": "",
     "name-show-scale": "배율 표시",
     "name-show-zoom": "확대/축소 제어 표시",
     "name-sync-view-variable": "보기를 대시보드 변수에 동기화",
@@ -9956,6 +10008,14 @@
       "log-base": "로그 베이스"
     },
     "builder": {
+      "annotation-options": {
+        "canvas-controls-desc": "",
+        "canvas-controls-name": "",
+        "clustering-desc": "",
+        "clustering-name": "",
+        "multi-lane-name": "",
+        "multi-row-desc": ""
+      },
       "annotations": "주석",
       "axis": {
         "category-axis": "축",
@@ -10291,9 +10351,13 @@
     "matchers": {
       "groups": {
         "annotation": "주석",
+        "annotation-description": "",
         "exemplar": "예제",
+        "exemplar-description": "",
         "nested": "중첩됨",
-        "series": "데이터 프레임"
+        "nested-description": "",
+        "series": "데이터 프레임",
+        "series-description": ""
       },
       "labels": {
         "base-field-name": "{{name}}(기본 필드 이름)",
@@ -12490,6 +12554,7 @@
     },
     "quick-add": {
       "aria-label": "신규",
+      "generate-dashboard-button": "",
       "new-template-dashboard-button": ""
     },
     "rss-button": "블로그 최근 글"
@@ -13324,7 +13389,7 @@
         "repository-label": "리포지토리",
         "repository-read-write-admin": "읽기 및 쓰기",
         "webhooks-label": "웹훅",
-        "webhooks-read-write": "읽기 및 쓰기"
+        "webhooks-read-write-delete": ""
       },
       "pr-workflow-description": "사용자가 변경 사항을 저장할 때 풀 요청을 열 것인지 여부를 선택할 수 있습니다. 리포지토리에서 메인 브랜치에 대한 직접 변경을 허용하지 않는 경우에도 풀 요청이 필요할 수 있습니다.",
       "pr-workflow-label": "저장 시 풀 요청 옵션 활성화",
@@ -14577,7 +14642,6 @@
     },
     "header": {
       "alert": "경고",
-      "expression": "표현식",
       "pending-expression": "",
       "pending-expression-cancel": "취소",
       "pending-transformation": "",
@@ -14591,6 +14655,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },
@@ -14599,6 +14664,7 @@
       "message": ""
     },
     "sidebar": {
+      "add": "",
       "add-below": "{{id}} 아래에 추가",
       "add-expression": "표현식 추가",
       "add-expression-disabled": "대시보드 데이터 소스에서는 표현식이 지원되지 않습니다.",
@@ -14618,6 +14684,7 @@
       "new-type": "새 {{type}}",
       "queries-empty": "",
       "queries-expressions": "쿼리 및 표현식",
+      "stacked": "",
       "toggle-size": "사이드바 크기 토글",
       "transformations": "변환",
       "transformations-empty": "",
@@ -15613,6 +15680,7 @@
     "description-column-filter": "테이블에서 필드 필터 활성화/비활성화",
     "description-frozen-columns": "",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
+    "description-page-size": "",
     "description-styling-from-field": "CSS 속성이 있는 JSON 객체가 포함된 필드",
     "description-tooltip-from-field": "",
     "frame-picker": {
@@ -15646,6 +15714,7 @@
     "name-hide-in-table": "테이블에서 숨기기",
     "name-max-height": "",
     "name-min-column-width": "열 최소 너비",
+    "name-page-size": "",
     "name-show-table-header": "테이블 머리말 표시",
     "name-styling-from-field": "필드에서 스타일링",
     "name-tooltip-from-field": "",
@@ -15656,6 +15725,7 @@
     "placeholder-column-width": "자동",
     "placeholder-frozen-columns": "없음",
     "placeholder-max-height": "",
+    "placeholder-page-size": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

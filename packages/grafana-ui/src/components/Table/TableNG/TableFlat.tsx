@@ -22,6 +22,7 @@ import {
   useScrollbarWidth,
   useSortedRows,
   useRowCompiler,
+  useTypographyCtx,
 } from './hooks';
 import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
 import {
@@ -34,8 +35,6 @@ import {
 } from './types';
 import {
   calculateFooterHeight,
-  createTypographyContext,
-  extractPixelValue,
   getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
@@ -62,6 +61,7 @@ export function TableFlat(props: TableNGProps) {
     frozenColumns: _frozenColumns = 0,
     getActions = () => [],
     height,
+    pageSize,
     maxRowHeight: _maxRowHeight,
     noHeader,
     noValue,
@@ -139,8 +139,7 @@ export function TableFlat(props: TableNGProps) {
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  // `width` may already be debounced by RefactoredTableNG. scrollbarWidth never is, so a scrollbar
-  // appearing/disappearing re-sizes columns immediately instead of lagging behind that debounce.
+  // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out.
   const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
@@ -150,15 +149,7 @@ export function TableFlat(props: TableNGProps) {
   );
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
-  const typographyCtx = useMemo(
-    () =>
-      createTypographyContext(
-        theme.typography.fontSize,
-        theme.typography.fontFamily,
-        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize
-      ),
-    [theme]
-  );
+  const typographyCtx = useTypographyCtx(theme);
 
   const frozenColumns = _frozenColumns;
 
@@ -222,6 +213,7 @@ export function TableFlat(props: TableNGProps) {
     footerHeight,
     headerHeight: hasHeader ? headerHeight : 0,
     rowHeight,
+    pageSize,
   });
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {

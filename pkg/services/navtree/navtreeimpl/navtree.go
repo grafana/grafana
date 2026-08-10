@@ -405,14 +405,13 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 					Id:       "alert-activity",
 					Url:      s.cfg.AppSubURL + "/alerting/alerts",
 					Icon:     "bell",
-					IsNew:    true,
 				})
 			}
 		} else {
 			// Legacy: Show Alert activity as standalone
 			if alertRulesAccess {
 				alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-					Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell", IsNew: true,
+					Text: "Alert activity", SubTitle: "Visualize active and pending alerts", Id: "alert-alerts", Url: s.cfg.AppSubURL + "/alerting/alerts", Icon: "bell",
 				})
 			}
 		}

@@ -39,7 +39,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	_ "github.com/grafana/grafana/pkg/services/ssosettings/api"
 	_ "github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
-	_ "github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	_ "github.com/grafana/grafana/pkg/services/team/teamtest"
 	_ "github.com/grafana/grafana/pkg/services/user/usertest"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource/kv/test"
