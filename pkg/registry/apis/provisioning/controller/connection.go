@@ -405,6 +405,11 @@ func (cc *ConnectionController) shouldGenerateToken(
 	c connection.TokenConnection,
 ) bool {
 	if obj.Secure.Token.IsZero() {
+		// An OAuth connection has no token until the user completes the authorization
+		// flow after creation; there is nothing to generate until one is stored.
+		if _, ok := c.(connection.OAuthConnection); ok {
+			return false
+		}
 		cc.tokenMetrics.recordRefreshReason(refreshReasonMissing)
 		return true
 	}
@@ -439,7 +444,7 @@ func (cc *ConnectionController) shouldGenerateToken(
 func (cc *ConnectionController) generateConnectionToken(
 	ctx context.Context,
 	conn connection.TokenConnection,
-) (common.RawSecureValue, []map[string]interface{}, error) {
+) (token common.RawSecureValue, patchOperations []map[string]interface{}, err error) {
 	logger := logging.FromContext(ctx)
 
 	start := time.Now()
@@ -452,7 +457,7 @@ func (cc *ConnectionController) generateConnectionToken(
 		}
 	}()
 
-	token, err := conn.GenerateConnectionToken(ctx)
+	token, err = conn.GenerateConnectionToken(ctx)
 	if err != nil {
 		failed = true
 		logger.Error("failed to generate connection token", "error", err)
@@ -461,7 +466,7 @@ func (cc *ConnectionController) generateConnectionToken(
 
 	logger.Info("successfully generated new connection token")
 
-	patchOperations := []map[string]interface{}{
+	patchOperations = []map[string]interface{}{
 		{
 			"op":   "replace",
 			"path": "/secure/token",
