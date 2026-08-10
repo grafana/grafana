@@ -3,14 +3,15 @@ import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { CodeMirrorEditor, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
-import { CodeLanguage, defaultCodeLanguage, TextMode } from '../../panelcfg.gen';
+import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
+import { interpolateTemplate } from '../renderContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
@@ -35,6 +36,9 @@ export interface TextNGEditorProps {
   mode: TextMode;
   showLineNumbers: boolean;
   codeLanguage?: CodeLanguage;
+  /** Owned by the options pane, read here only so the preview matches the panel. */
+  renderMode?: RenderMode;
+  series?: DataFrame[];
   replaceVariables: InterpolateFunction;
   suggestions?: VariableSuggestion[];
   onChange: (change: TextNGEditorChange) => void;
@@ -62,6 +66,8 @@ export function TextNGEditor({
   mode,
   showLineNumbers,
   codeLanguage,
+  renderMode,
+  series,
   replaceVariables,
   suggestions,
   onChange,
@@ -125,8 +131,11 @@ export function TextNGEditor({
   const showPreview = view !== 'write';
 
   const interpolatedContent = useMemo(
-    () => (showPreview ? replaceVariables(previewSource, {}, format) : ''),
-    [showPreview, replaceVariables, previewSource, format]
+    () =>
+      showPreview
+        ? interpolateTemplate({ content: previewSource, mode, series, renderMode, format }, replaceVariables)
+        : '',
+    [showPreview, previewSource, mode, series, renderMode, format, replaceVariables]
   );
 
   const previewHtml = useMemo(

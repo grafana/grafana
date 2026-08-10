@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp } from '@grafana/data';
+import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
-import { CodeLanguage, TextMode } from '../panelcfg.gen';
+import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { type Props, TextNGPanel } from './TextNGPanel';
-import { createProps, renderPanel } from './test-utils';
+import { createData, createProps, renderPanel } from './test-utils';
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
@@ -306,6 +306,45 @@ describe('TextNGPanel', () => {
       );
 
       expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toContain('Edited');
+    });
+  });
+
+  describe('render mode', () => {
+    const series = [
+      toDataFrame({
+        fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
+      }),
+    ];
+
+    // Reports the row context it was handed, so these assert the wiring rather
+    // than re-testing macro resolution (covered in renderContent.test.ts).
+    const reportRowContext: InterpolateFunction = (target, scopedVars) => {
+      const context = scopedVars?.__dataContext?.value;
+      return context ? `row-${context.rowIndex}` : target;
+    };
+
+    function setupWithData(renderMode?: RenderMode) {
+      const props = createProps(reportRowContext, {
+        data: createData(series),
+        options: { content: 'no row context', mode: TextMode.Markdown, renderMode },
+      });
+
+      setup(props, CoreApp.Dashboard);
+      return screen.getByTestId('TextNGPanel-converted-content').innerHTML;
+    }
+
+    it('renders the content once per row in every row mode', () => {
+      const html = setupWithData(RenderMode.EveryRow);
+
+      expect(html).toContain('row-0');
+      expect(html).toContain('row-1');
+    });
+
+    it.each([
+      ['all rows mode', RenderMode.AllRows],
+      ['an unset render mode', undefined],
+    ])('renders once with no row context in %s', (_name, renderMode) => {
+      expect(setupWithData(renderMode)).toContain('no row context');
     });
   });
 });

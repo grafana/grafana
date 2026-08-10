@@ -1,32 +1,66 @@
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin, type PanelOptionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { defaultCodeOptions, defaultOptions, type Options } from '../panelcfg.gen';
+import { defaultCodeOptions, defaultOptions, type Options, RenderMode } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
+import { hasRenderableData } from './renderContent';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
+export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
+  const category = [t('textng.category-text', 'Text')];
+
+  // Everything is edited in the panel itself, so options are registered here
+  // only so their defaults are applied.
+  const addHiddenOption = <T,>(path: string, defaultValue: T) =>
+    builder.addCustomEditor({
+      id: path,
+      path,
+      name: '',
+      category,
+      editor: () => null,
+      defaultValue,
+      showIf: () => false,
+    });
+
+  addHiddenOption('mode', defaultOptions.mode);
+  addHiddenOption('content', defaultOptions.content);
+  addHiddenOption('code.language', defaultCodeOptions.language);
+  addHiddenOption('code.showLineNumbers', defaultCodeOptions.showLineNumbers);
+
+  builder.addSelect({
+    path: 'renderMode',
+    name: t('textng.options.render-mode', 'Render template'),
+    description: t(
+      'textng.options.render-mode-description',
+      'Render the content once, or once for every row of query data.'
+    ),
+    category: [t('textng.category-data', 'Data')],
+    defaultValue: defaultOptions.renderMode,
+    settings: {
+      options: [
+        {
+          value: RenderMode.AllRows,
+          label: t('textng.render-mode.all-rows', 'All rows'),
+          icon: 'book',
+          description: t('textng.render-mode.all-rows-description', 'The content renders once.'),
+        },
+        {
+          value: RenderMode.EveryRow,
+          label: t('textng.render-mode.every-row', 'Every row'),
+          icon: 'list-ul',
+          description: t(
+            'textng.render-mode.every-row-description',
+            'The content renders once per row, and can reference that row with ${__data.fields.<name>}.'
+          ),
+        },
+      ],
+    },
+    showIf: (_options, data) => hasRenderableData(data),
+  });
+};
+
 export const plugin = new PanelPlugin<Options>(TextNGPanel)
-  .setPanelOptions((builder) => {
-    const category = [t('textng.category-text', 'Text')];
-
-    // Everything is edited in the panel itself, so options are registered here
-    // only so their defaults are applied.
-    const addHiddenOption = <T,>(path: string, defaultValue: T) =>
-      builder.addCustomEditor({
-        id: path,
-        path,
-        name: '',
-        category,
-        editor: () => null,
-        defaultValue,
-        showIf: () => false,
-      });
-
-    addHiddenOption('mode', defaultOptions.mode);
-    addHiddenOption('content', defaultOptions.content);
-    addHiddenOption('code.language', defaultCodeOptions.language);
-    addHiddenOption('code.showLineNumbers', defaultCodeOptions.showLineNumbers);
-  })
+  .setPanelOptions(textNGPanelOptions)
   .setMigrationHandler(textPanelMigrationHandler)
   .setSuggestionsSupplier(() => []);

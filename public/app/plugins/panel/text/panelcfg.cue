@@ -25,6 +25,9 @@ composableKinds: PanelCfg: {
 
 				CodeLanguage: "json" | "yaml" | "xml" | "typescript" | "sql" | "go" | "markdown" | "html" | *"plaintext" @cuetsy(kind="enum")
 
+				// Whether the content template renders once, or once per row of query data.
+				RenderMode: *"allRows" | "everyRow" @cuetsy(kind="enum",memberNames="AllRows|EveryRow")
+
 				CodeOptions: {
 					// The language passed to monaco code editor
 					language:        CodeLanguage
@@ -33,8 +36,9 @@ composableKinds: PanelCfg: {
 				} @cuetsy(kind="interface")
 
 				Options: {
-					mode:  TextMode & (*"markdown" | _)
-					code?: CodeOptions
+					mode:        TextMode & (*"markdown" | _)
+					renderMode?: RenderMode & (*"allRows" | _)
+					code?:       CodeOptions
 					content: string | *"""
 						# Title
 

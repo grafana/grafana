@@ -2,9 +2,10 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
+import { type InterpolateFunction, toDataFrame } from '@grafana/data';
 import config from 'app/core/config';
 
-import { CodeLanguage, TextMode } from '../../panelcfg.gen';
+import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
 
 import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
 import { FOOTER_TEST_ID } from './TextNGEditorFooter';
@@ -519,5 +520,60 @@ describe('TextNGEditor', () => {
       expect(onChange).toHaveBeenLastCalledWith({ showLineNumbers: true, content: 'const b = 2;' });
       expect(screen.getByRole('textbox')).toHaveValue('const b = 2;');
     });
+  });
+});
+
+describe('TextNGEditor render mode preview', () => {
+  const series = [
+    toDataFrame({
+      fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
+    }),
+  ];
+
+  // Reports the row context it was handed, so these assert the preview wiring
+  // rather than re-testing macro resolution (covered in renderContent.test.ts).
+  const reportRowContext: InterpolateFunction = (target, scopedVars) => {
+    const context = scopedVars?.__dataContext?.value;
+    return context ? `row-${context.rowIndex}` : target;
+  };
+
+  const previewFor = (renderMode?: RenderMode) => (
+    <TextNGEditor
+      content="no row context"
+      mode={TextMode.Markdown}
+      showLineNumbers={false}
+      renderMode={renderMode}
+      series={series}
+      replaceVariables={reportRowContext}
+      onChange={jest.fn()}
+    />
+  );
+
+  const previewHtml = () => screen.getByTestId(PREVIEW_TEST_ID).innerHTML;
+
+  it('previews one block per row in every row mode, matching the panel', () => {
+    render(previewFor(RenderMode.EveryRow));
+
+    expect(previewHtml()).toContain('row-0');
+    expect(previewHtml()).toContain('row-1');
+  });
+
+  it.each([
+    ['all rows mode', RenderMode.AllRows],
+    ['an unset render mode', undefined],
+  ])('previews a single render with no row context in %s', (_name, renderMode) => {
+    render(previewFor(renderMode));
+
+    expect(previewHtml()).toContain('no row context');
+  });
+
+  it('updates the preview when the pane changes the render mode', () => {
+    const { rerender } = render(previewFor(RenderMode.AllRows));
+    expect(previewHtml()).toContain('no row context');
+
+    rerender(previewFor(RenderMode.EveryRow));
+
+    expect(previewHtml()).toContain('row-0');
+    expect(previewHtml()).toContain('row-1');
   });
 });

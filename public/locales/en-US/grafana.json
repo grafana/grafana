@@ -16012,6 +16012,7 @@
     "name-show-mini-map": "Show mini map"
   },
   "textng": {
+    "category-data": "Data",
     "category-text": "Text",
     "code-view": {
       "aria-label-code-content": "Code content"
@@ -16040,6 +16041,19 @@
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
+    },
+    "options": {
+      "render-mode": "Render template",
+      "render-mode-description": "Render the content once, or once for every row of query data."
+    },
+    "render": {
+      "truncated": "Showing the first {{maxRows}} rows."
+    },
+    "render-mode": {
+      "all-rows": "All rows",
+      "all-rows-description": "The content renders once.",
+      "every-row": "Every row",
+      "every-row-description": "The content renders once per row, and can reference that row with ${__data.fields.<name>}."
     }
   },
   "theme-playground": {
