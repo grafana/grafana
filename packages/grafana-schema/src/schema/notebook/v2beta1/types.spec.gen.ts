@@ -68,12 +68,12 @@ export const defaultTimeRangeOption = (): TimeRangeOption => ({
 // A notebook element is a narrative cell, a panel, or a library panel. Unlike the dashboard
 // Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec.
 // CellKind is listed first so it is the generated default (a notebook is narrative-first).
-export type NotebookElement = CellKind | PanelKind | LibraryPanelKind;
+export type NotebookElement = CellKind | V2PanelKind | LibraryPanelKind;
 
 export const defaultNotebookElement = (): NotebookElement => (defaultCellKind());
 
 // A cell holds non-panel narrative content (markdown text, code) in a notebook layout.
-// Panel cells are not represented here — they reuse PanelKind.
+// Panel cells are not represented here — they reuse V2PanelKind.
 export interface CellKind {
 	kind: "Cell";
 	spec: CellSpec;
@@ -138,17 +138,22 @@ export const defaultCodeCellContentSpec = (): CodeCellContentSpec => ({
 	code: "",
 });
 
-export interface PanelKind {
+// The notebook's own panel chain. It is a copy of the dashboard one down to the transformation,
+// which follows the dashboard v2 shape rather than the v2beta1 shape in this package. The chain has
+// to be forked rather than shared because PanelKind reaches TransformationKind through
+// QueryGroupKind, and those three are what Dashboard v2beta1 serves. Everything the chain does not
+// change (DataLink, VizConfigKind, PanelQueryKind, QueryOptionsSpec) stays shared.
+export interface V2PanelKind {
 	kind: "Panel";
-	spec: PanelSpec;
+	spec: V2PanelSpec;
 }
 
-export const defaultPanelKind = (): PanelKind => ({
+export const defaultV2PanelKind = (): V2PanelKind => ({
 	kind: "Panel",
-	spec: defaultPanelSpec(),
+	spec: defaultV2PanelSpec(),
 });
 
-export interface PanelSpec {
+export interface V2PanelSpec {
 	id: number;
 	title: string;
 	// Shown in a info icon tooltip next to panel title
@@ -156,16 +161,16 @@ export interface PanelSpec {
 	// Shown in a sub header below the title.
 	subtitle?: string;
 	links: DataLink[];
-	data: QueryGroupKind;
+	data: V2QueryGroupKind;
 	vizConfig: VizConfigKind;
 	transparent?: boolean;
 }
 
-export const defaultPanelSpec = (): PanelSpec => ({
+export const defaultV2PanelSpec = (): V2PanelSpec => ({
 	id: 0,
 	title: "",
 	links: [],
-	data: defaultQueryGroupKind(),
+	data: defaultV2QueryGroupKind(),
 	vizConfig: defaultVizConfigKind(),
 });
 
@@ -180,23 +185,23 @@ export const defaultDataLink = (): DataLink => ({
 	url: "",
 });
 
-export interface QueryGroupKind {
+export interface V2QueryGroupKind {
 	kind: "QueryGroup";
-	spec: QueryGroupSpec;
+	spec: V2QueryGroupSpec;
 }
 
-export const defaultQueryGroupKind = (): QueryGroupKind => ({
+export const defaultV2QueryGroupKind = (): V2QueryGroupKind => ({
 	kind: "QueryGroup",
-	spec: defaultQueryGroupSpec(),
+	spec: defaultV2QueryGroupSpec(),
 });
 
-export interface QueryGroupSpec {
+export interface V2QueryGroupSpec {
 	queries: PanelQueryKind[];
-	transformations: TransformationKind[];
+	transformations: V2TransformationKind[];
 	queryOptions: QueryOptionsSpec;
 }
 
-export const defaultQueryGroupSpec = (): QueryGroupSpec => ({
+export const defaultV2QueryGroupSpec = (): V2QueryGroupSpec => ({
 	queries: [],
 	transformations: [],
 	queryOptions: defaultQueryOptionsSpec(),
@@ -244,23 +249,22 @@ export const defaultDataQueryKind = (): DataQueryKind => ({
 	spec: {},
 });
 
-export interface TransformationKind {
-	// The kind of a TransformationKind is the transformation ID
-	kind: string;
-	spec: DataTransformerConfig;
+// Dashboard v2 shape: the transformation ID moved from `kind` to `group`.
+export interface V2TransformationKind {
+	kind: "Transformation";
+	// The group is the transformation ID
+	group: string;
+	spec: V2TransformationSpec;
 }
 
-export const defaultTransformationKind = (): TransformationKind => ({
-	kind: "",
-	spec: defaultDataTransformerConfig(),
+export const defaultV2TransformationKind = (): V2TransformationKind => ({
+	kind: "Transformation",
+	group: "",
+	spec: defaultV2TransformationSpec(),
 });
 
-// Transformations allow to manipulate data returned by a query before the system applies a visualization.
-// Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
-// use the output of one transformation as the input to another transformation, etc.
-export interface DataTransformerConfig {
-	// Unique identifier of transformer
-	id: string;
+// Dashboard v2 shape: no `id`, it is carried by the parent's `group`.
+export interface V2TransformationSpec {
 	// Disabled transformations are skipped
 	disabled?: boolean;
 	// Optional frame matcher. When missing it will be applied to all results
@@ -272,8 +276,7 @@ export interface DataTransformerConfig {
 	options: any;
 }
 
-export const defaultDataTransformerConfig = (): DataTransformerConfig => ({
-	id: "",
+export const defaultV2TransformationSpec = (): V2TransformationSpec => ({
 	options: {},
 });
 
@@ -780,7 +783,7 @@ export const defaultNotebookLayoutItemKind = (): NotebookLayoutItemKind => ({
 });
 
 // One ordered item in a notebook layout. `element` references either a CellKind
-// (markdown/code content) or a PanelKind in the notebook's elements map. `source`
+// (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
 // records who authored the cell; `collapsed` hides the body in the UI.
 export interface NotebookLayoutItemSpec {
 	element: ElementReference;

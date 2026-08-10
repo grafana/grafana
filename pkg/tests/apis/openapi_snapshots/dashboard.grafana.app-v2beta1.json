@@ -5825,7 +5825,7 @@
         }
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookCellKind": {
-        "description": "A cell holds non-panel narrative content (markdown text, code) in a notebook layout. Panel cells are not represented here — they reuse PanelKind.",
+        "description": "A cell holds non-panel narrative content (markdown text, code) in a notebook layout. Panel cells are not represented here — they reuse V2PanelKind.",
         "type": "object",
         "required": [
           "kind",
@@ -5846,7 +5846,7 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookCellKindOrPanelKindOrLibraryPanelKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookCellKindOrV2PanelKindOrLibraryPanelKind": {
         "type": "object",
         "properties": {
           "CellKind": {
@@ -5855,8 +5855,8 @@
           "LibraryPanelKind": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookLibraryPanelKind"
           },
-          "PanelKind": {
-            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookPanelKind"
+          "V2PanelKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookV2PanelKind"
           }
         }
       },
@@ -5981,41 +5981,6 @@
           "version": {
             "type": "string",
             "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookDataTransformerConfig": {
-        "description": "Transformations allow to manipulate data returned by a query before the system applies a visualization. Using transformations you can: rename fields, join time series data, perform mathematical operations across queries, use the output of one transformation as the input to another transformation, etc.",
-        "type": "object",
-        "required": [
-          "id",
-          "options"
-        ],
-        "properties": {
-          "disabled": {
-            "description": "Disabled transformations are skipped",
-            "type": "boolean"
-          },
-          "filter": {
-            "description": "Optional frame matcher. When missing it will be applied to all results",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookMatcherConfig"
-              }
-            ]
-          },
-          "id": {
-            "description": "Unique identifier of transformer",
-            "type": "string",
-            "default": ""
-          },
-          "options": {
-            "description": "Options to be passed to the transformer Valid options depend on the transformer id",
-            "type": "object"
-          },
-          "topic": {
-            "description": "Where to pull DataFrames from as input to transformation",
-            "type": "string"
           }
         }
       },
@@ -6506,7 +6471,7 @@
         }
       },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookNotebookLayoutItemSpec": {
-        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
+        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
         "type": "object",
         "required": [
           "element",
@@ -6570,27 +6535,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookPanelKind": {
-        "type": "object",
-        "required": [
-          "kind",
-          "spec"
-        ],
-        "properties": {
-          "kind": {
-            "type": "string",
-            "default": ""
-          },
-          "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookPanelSpec"
-              }
-            ]
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookPanelQueryKind": {
         "type": "object",
         "required": [
@@ -6635,126 +6579,6 @@
           "refId": {
             "type": "string",
             "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookPanelSpec": {
-        "type": "object",
-        "required": [
-          "id",
-          "title",
-          "links",
-          "data",
-          "vizConfig"
-        ],
-        "properties": {
-          "data": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookQueryGroupKind"
-              }
-            ]
-          },
-          "description": {
-            "description": "Shown in a info icon tooltip next to panel title",
-            "type": "string"
-          },
-          "id": {
-            "type": "number",
-            "format": "double",
-            "default": 0
-          },
-          "links": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookDataLink"
-                }
-              ]
-            }
-          },
-          "subtitle": {
-            "description": "Shown in a sub header below the title.",
-            "type": "string"
-          },
-          "title": {
-            "type": "string",
-            "default": ""
-          },
-          "transparent": {
-            "type": "boolean"
-          },
-          "vizConfig": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookVizConfigKind"
-              }
-            ]
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookQueryGroupKind": {
-        "type": "object",
-        "required": [
-          "kind",
-          "spec"
-        ],
-        "properties": {
-          "kind": {
-            "type": "string",
-            "default": ""
-          },
-          "spec": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookQueryGroupSpec"
-              }
-            ]
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookQueryGroupSpec": {
-        "type": "object",
-        "required": [
-          "queries",
-          "transformations",
-          "queryOptions"
-        ],
-        "properties": {
-          "queries": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookPanelQueryKind"
-                }
-              ]
-            }
-          },
-          "queryOptions": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookQueryOptionsSpec"
-              }
-            ]
-          },
-          "transformations": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookTransformationKind"
-                }
-              ]
-            }
           }
         }
       },
@@ -6855,7 +6679,7 @@
           "elements": {
             "type": "object",
             "additionalProperties": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookCellKindOrPanelKindOrLibraryPanelKind"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookCellKindOrV2PanelKindOrLibraryPanelKind"
             }
           },
           "layout": {
@@ -7049,7 +6873,8 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookTransformationKind": {
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookV2PanelKind": {
+        "description": "The notebook's own panel chain. It is a copy of the dashboard one down to the transformation, which follows the dashboard v2 shape rather than the v2beta1 shape in this package. The chain has to be forked rather than shared because PanelKind reaches TransformationKind through QueryGroupKind, and those three are what Dashboard v2beta1 serves. Everything the chain does not change (DataLink, VizConfigKind, PanelQueryKind, QueryOptionsSpec) stays shared.",
         "type": "object",
         "required": [
           "kind",
@@ -7057,7 +6882,6 @@
         ],
         "properties": {
           "kind": {
-            "description": "The kind of a TransformationKind is the transformation ID",
             "type": "string",
             "default": ""
           },
@@ -7065,9 +6889,186 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookDataTransformerConfig"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookV2PanelSpec"
               }
             ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookV2PanelSpec": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "links",
+          "data",
+          "vizConfig"
+        ],
+        "properties": {
+          "data": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookV2QueryGroupKind"
+              }
+            ]
+          },
+          "description": {
+            "description": "Shown in a info icon tooltip next to panel title",
+            "type": "string"
+          },
+          "id": {
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookDataLink"
+                }
+              ]
+            }
+          },
+          "subtitle": {
+            "description": "Shown in a sub header below the title.",
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          },
+          "transparent": {
+            "type": "boolean"
+          },
+          "vizConfig": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookVizConfigKind"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookV2QueryGroupKind": {
+        "type": "object",
+        "required": [
+          "kind",
+          "spec"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookV2QueryGroupSpec"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookV2QueryGroupSpec": {
+        "type": "object",
+        "required": [
+          "queries",
+          "transformations",
+          "queryOptions"
+        ],
+        "properties": {
+          "queries": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookPanelQueryKind"
+                }
+              ]
+            }
+          },
+          "queryOptions": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookQueryOptionsSpec"
+              }
+            ]
+          },
+          "transformations": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookV2TransformationKind"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookV2TransformationKind": {
+        "description": "Dashboard v2 shape: the transformation ID moved from `kind` to `group`.",
+        "type": "object",
+        "required": [
+          "kind",
+          "group",
+          "spec"
+        ],
+        "properties": {
+          "group": {
+            "description": "The group is the transformation ID",
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
+          },
+          "spec": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookV2TransformationSpec"
+              }
+            ]
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookV2TransformationSpec": {
+        "description": "Dashboard v2 shape: no `id`, it is carried by the parent's `group`.",
+        "type": "object",
+        "required": [
+          "options"
+        ],
+        "properties": {
+          "disabled": {
+            "description": "Disabled transformations are skipped",
+            "type": "boolean"
+          },
+          "filter": {
+            "description": "Optional frame matcher. When missing it will be applied to all results",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookMatcherConfig"
+              }
+            ]
+          },
+          "options": {
+            "description": "Options to be passed to the transformer Valid options depend on the transformer id",
+            "type": "object"
+          },
+          "topic": {
+            "description": "Where to pull DataFrames from as input to transformation",
+            "type": "string"
           }
         }
       },
