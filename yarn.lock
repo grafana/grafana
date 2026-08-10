@@ -2382,7 +2382,7 @@ __metadata:
     "@types/d3-interpolate": "npm:^3.0.0"
     "@types/history": "npm:4.7.11"
     "@types/lodash": "npm:4.17.20"
-    "@types/luxon": "npm:^3"
+    "@types/luxon": "npm:^3.0.0"
     "@types/node": "npm:24.10.1"
     "@types/papaparse": "npm:5.3.16"
     "@types/react": "npm:19.2.18"
@@ -10856,7 +10856,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/luxon@npm:^3":
+"@types/luxon@npm:^3.0.0":
   version: 3.7.4
   resolution: "@types/luxon@npm:3.7.4"
   checksum: 10/f062cbf6cfac319b88abcedd253308c6dc98e0b76e1ab991fb9fb1573c602097f2d54a95ea874d3678f3963a73478bcce260c621deb6c779c83ff891611e46d7
