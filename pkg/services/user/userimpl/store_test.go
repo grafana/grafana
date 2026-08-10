@@ -903,6 +903,46 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		require.Equal(t, "loginuser3", result.Login)
 		require.Equal(t, "user3@test.com", result.Email)
 	})
+
+	t.Run("Testing DB - update to a login taken by another user conflicts", func(t *testing.T) {
+		err := userStore.Update(context.Background(), &user.UpdateUserCommand{
+			Login:  "loginUSER0",
+			Email:  "USER1@test.com",
+			UserID: users[1].ID,
+		})
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+
+		result, err := userStore.GetByID(context.Background(), users[1].ID)
+		require.NoError(t, err)
+		require.Equal(t, "loginuser1", result.Login)
+	})
+
+	t.Run("Testing DB - update to an email taken by another user conflicts", func(t *testing.T) {
+		err := userStore.Update(context.Background(), &user.UpdateUserCommand{
+			Login:  "loginUSER1",
+			Email:  "USER0@test.com",
+			UserID: users[1].ID,
+		})
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+
+		result, err := userStore.GetByID(context.Background(), users[1].ID)
+		require.NoError(t, err)
+		require.Equal(t, "user1@test.com", result.Email)
+	})
+
+	t.Run("Testing DB - update keeping the user's own login and email succeeds", func(t *testing.T) {
+		err := userStore.Update(context.Background(), &user.UpdateUserCommand{
+			Login:  "loginUSER1",
+			Email:  "USER1@test.com",
+			Name:   "Renamed",
+			UserID: users[1].ID,
+		})
+		require.NoError(t, err)
+
+		result, err := userStore.GetByID(context.Background(), users[1].ID)
+		require.NoError(t, err)
+		require.Equal(t, "Renamed", result.Name)
+	})
 }
 
 func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.CreateUserCommand) []user.User {

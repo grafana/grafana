@@ -260,7 +260,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 		setOptional(cmd.HelpFlags1, func(v user.HelpFlags1) { usr.HelpFlags1 = *cmd.HelpFlags1 })
 
 		if _, err := q.Update(&usr); err != nil {
-			return err
+			return handleSQLError(ss.dialect, err)
 		}
 
 		if cmd.IsGrafanaAdmin != nil && !*cmd.IsGrafanaAdmin {
