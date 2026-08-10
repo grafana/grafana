@@ -36,26 +36,34 @@ export const FieldValidationMessage = ({
 };
 
 const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
-  const baseStyle = css({
-    fontSize: theme.typography.size.sm,
-    fontWeight: theme.typography.fontWeightMedium,
-    padding: theme.spacing(0.5, 1),
-    color: theme.colors.error.contrastText,
-    background: theme.colors.error.main,
-    borderRadius: theme.shape.radius.lg,
-    position: 'relative',
-    display: 'inline-block',
-    alignSelf: 'flex-start',
-
-    a: {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const baseStyle = css(
+    {
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightMedium,
+      padding: theme.spacing(0.5, 1),
       color: theme.colors.error.contrastText,
-      textDecoration: 'underline',
+      background: theme.colors.error.main,
+      borderRadius: theme.shape.radius.lg,
+      position: 'relative',
+      display: 'inline-block',
+      alignSelf: 'flex-start',
 
-      '&:hover': {
-        textDecoration: 'none',
+      a: {
+        color: theme.colors.error.contrastText,
+        textDecoration: 'underline',
+
+        '&:hover': {
+          textDecoration: 'none',
+        },
       },
     },
-  });
+    visualRefreshEnabled && {
+      background: theme.colors.error.background,
+      border: `1px solid ${theme.colors.error.border}`,
+      color: theme.colors.error.text,
+    }
+  );
 
   return {
     vertical: css(baseStyle, {
@@ -69,7 +77,7 @@ const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
         width: 0,
         height: 0,
         borderWidth: '0 4px 5px 4px',
-        borderColor: `transparent transparent ${theme.colors.error.main} transparent`,
+        borderColor: `transparent transparent ${visualRefreshEnabled ? theme.colors.error.border : theme.colors.error.main} transparent`,
         borderStyle: 'solid',
       },
     }),
@@ -84,7 +92,7 @@ const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
         width: 0,
         height: 0,
         borderWidth: '4px 5px 4px 0',
-        borderColor: 'transparent #e02f44 transparent transparent',
+        borderColor: `transparent ${visualRefreshEnabled ? theme.colors.error.border : '#e02f44'} transparent transparent`,
         borderStyle: 'solid',
       },
     }),
