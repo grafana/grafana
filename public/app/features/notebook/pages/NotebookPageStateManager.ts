@@ -34,12 +34,20 @@ export interface NotebookPageState {
 export class NotebookPageStateManager extends StateManagerBase<NotebookPageState> {
   private cache = new Map<string, { generation?: number; scene: NotebookScene }>();
 
-  // Navigating A -> B while A is still in
-  // flight can therefore leave B's URL showing A, and it sticks, because nothing else fires after.
-  private latestRequestedUid?: string;
+  // Identifies the load the page currently wants. `await` does not cancel, so a load started for an
+  // earlier request still resumes and would write over a newer one — the page renders whatever is in
+  // this singleton, with nothing tying that to the route. Navigating A -> B while A is in flight would
+  // otherwise leave B's URL showing A, and it would stick, because nothing fires afterwards.
+  //
+  // A counter rather than the requested uid, so two loads of the *same* notebook are distinguishable
+  // too: clearState() followed by a re-request of the same uid would otherwise let the abandoned load
+  // through, because its uid matches again. That case is currently unobservable — RTK Query collapses
+  // concurrent initiate() calls sharing a cache key into one request, so both loads see the same
+  // outcome — but the counter is correct by construction and does not depend on that.
+  private requestSeq = 0;
 
   public async loadNotebook(uid: string): Promise<void> {
-    this.latestRequestedUid = uid;
+    const seq = ++this.requestSeq;
     this.setState({ isLoading: true, loadError: undefined });
 
     try {
@@ -62,7 +70,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
       const cached = this.cache.get(uid);
       if (cached && cached.generation === notebook.metadata.generation) {
-        if (this.isSuperseded(uid)) {
+        if (this.isSuperseded(seq)) {
           return;
         }
         this.setState({ scene: cached.scene, isLoading: false });
@@ -77,14 +85,14 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
       // reuse it. Only the state write has to be suppressed.
       this.cache.set(uid, { generation: notebook.metadata.generation, scene });
 
-      if (this.isSuperseded(uid)) {
+      if (this.isSuperseded(seq)) {
         return;
       }
       this.setState({ scene, isLoading: false });
     } catch (error) {
       // A superseded failure must not surface either, or a stale 404 would replace the notebook the
       // page has already loaded.
-      if (this.isSuperseded(uid)) {
+      if (this.isSuperseded(seq)) {
         return;
       }
 
@@ -99,15 +107,15 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     }
   }
 
-  /** Whether a newer load (or a page teardown) has taken over since this one started. */
-  private isSuperseded(uid: string): boolean {
-    return this.latestRequestedUid !== uid;
+  /** Whether a newer load (or a page teardown) has taken over since the given one started. */
+  private isSuperseded(seq: number): boolean {
+    return seq !== this.requestSeq;
   }
 
   public clearState(): void {
-    // Also discards anything in flight: without this a load that resolves after the page is gone
-    // repopulates the singleton, and the next notebook opened flashes the previous one first.
-    this.latestRequestedUid = undefined;
+    // Bumping the counter discards anything in flight: without it a load that resolves after the page
+    // is gone repopulates the singleton, and the next notebook opened flashes the previous one first.
+    this.requestSeq++;
     this.setState({ scene: undefined, isLoading: false, loadError: undefined });
   }
 
