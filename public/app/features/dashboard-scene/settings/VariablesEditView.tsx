@@ -22,6 +22,7 @@ import {
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { SidebarCategoryType } from '../sidebar/types';
 import { DashboardInteractions } from '../utils/interactions';
 import { isPredefinedOrigin } from '../utils/predefinedVariables';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -264,11 +265,11 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const goToSidebar = () => {
     // close settings and open dashboard sidebar
     const dashboard = getDashboardSceneFor(model);
-    dashboard.state.editPane.selectObject(dashboard);
+    dashboard.state.sidebar.selectObject(dashboard);
     locationService.partial({
       editview: null,
-      [HIGHLIGHT_CATEGORY_PARAM_NAME]: 'dashboard-variables',
-      [CATEGORY_PARAM_NAME]: 'dashboard-variables',
+      [HIGHLIGHT_CATEGORY_PARAM_NAME]: SidebarCategoryType.DashboardVariables,
+      [CATEGORY_PARAM_NAME]: SidebarCategoryType.DashboardVariables,
     });
 
     DashboardInteractions.takeMeToSidebarClicked({ item: 'variables' });

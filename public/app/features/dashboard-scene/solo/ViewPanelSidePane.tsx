@@ -67,7 +67,7 @@ function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSideP
    */
   useEffect(() => {
     if (!viewPanel) {
-      dashboard.state.editPane.closePane();
+      dashboard.state.sidebar.closePane();
     }
   }, [viewPanel, dashboard]);
 

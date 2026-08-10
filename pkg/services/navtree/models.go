@@ -136,13 +136,16 @@ func (root *NavTreeRoot) Sort() {
 	Sort(root.Children)
 }
 
-// RemoveEmptyAdminSections removes the Users and access section if it has no children
-// (e.g. grafana-auth-app was not injected), then removes the entire Administration
-// section if it ended up empty. This must be called AFTER all hooks have had a chance
-// to add their nav items.
+// RemoveEmptyAdminSections removes the General, Plugins and data, and Users and access
+// sections if they have no children (their children can be injected by hooks, e.g.
+// banner settings, recorded queries or grafana-auth-app), then removes the entire
+// Administration section if it ended up empty. This must be called AFTER all hooks
+// have had a chance to add their nav items.
 func (root *NavTreeRoot) RemoveEmptyAdminSections() {
-	if sec := root.FindById(NavIDCfgAccess); sec != nil && len(sec.Children) == 0 {
-		root.RemoveSectionByID(NavIDCfgAccess)
+	for _, id := range []string{NavIDCfgGeneral, NavIDCfgPlugins, NavIDCfgAccess} {
+		if sec := root.FindById(id); sec != nil && len(sec.Children) == 0 {
+			root.RemoveSectionByID(id)
+		}
 	}
 	if sec := root.FindById(NavIDCfg); sec != nil && len(sec.Children) == 0 {
 		root.RemoveSectionByID(NavIDCfg)

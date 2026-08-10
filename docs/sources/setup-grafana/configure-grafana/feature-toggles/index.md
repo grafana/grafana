@@ -29,18 +29,19 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `lokiQuerySplitting`                         | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
 | `renderAuthJWT`                              | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                          | Yes                |
 | `awsDatasourcesTempCredentials`              | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
-| `provisioning`                               | Enables Git Sync and as-code provisioning for Grafana resources                                                                                               | Yes                |
 | `provisioningFolderMetadata`                 | Allow setting folder metadata for provisioned folders                                                                                                         | Yes                |
 | `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled                           | Yes                |
 | `useKubernetesShortURLsAPI`                  | Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs                                                     | Yes                |
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                                                 | Yes                |
-| `dashboardDefaultLayoutSelector`             | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                                           | Yes                |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
+| `queryLibrary`                               | Enables Saved queries (query library) feature                                                                                                                 | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                                                    |                    |
+| `savedQueriesRBAC`                           | Enables Saved queries (query library) RBAC permissions                                                                                                        | Yes                |
+| `newSavedQueriesExperience`                  | Enables the new Saved queries (query library) modal experience                                                                                                | Yes                |
 | `alertingListViewV2`                         | Enables the new alert list view design                                                                                                                        | Yes                |
 | `alertingNavigationV2`                       | Enables the new Alerting navigation structure with improved menu grouping                                                                                     | Yes                |
 | `pluginProxyPreserveTrailingSlash`           | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
@@ -63,7 +64,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                                          | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
-| `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
 | `react19`                                    | Whether to use the new React 19 runtime                                                                                                                       | Yes                |
 | `grafana.newPreferencesPage`                 | Whether to use the new SharedPreferences functional component                                                                                                 | Yes                |
@@ -88,10 +88,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                             |
 | `timeComparison`                  | Enables time comparison option in supported panels                                             |
 | `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                  |
-| `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                 |
-| `queryLibrary`                    | Enables Saved queries (query library) feature                                                  |
-| `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                         |
-| `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                 |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                             |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                         |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                |

@@ -78,6 +78,11 @@
       "description-basic-logs": "启用此功能后，在查询表配置为<2>基本日志</2>的数据面板上，Azure Monitor 会产生每次查询的费用。",
       "label-enable-basic-logs": "启用基本日志"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "附加设置是可选设置，通过配置，可对数据源进行更精细的控制。这包括安全 Socks 代理、请求超时和转发的 Cookie。",
       "title-additional-settings": "附加设置"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "指标命名空间"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "加载中..."
     },
@@ -204,6 +216,10 @@
       "label-by": "方式",
       "label-order-by": "排序根据",
       "tooltip-order-by": "根据一列或多列以升序或降序对结果进行排序。"
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "从 Azure Monitor 请求元数据时发生错误"

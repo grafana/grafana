@@ -6,25 +6,46 @@ import {
   type SceneObjectState,
   SceneObjectUrlSyncConfig,
   type SceneObjectUrlValues,
+  type SceneVariable,
+  type SceneVariables,
+  SceneVariableSet,
   type VizPanel,
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { ObjectsReorderedOnCanvasEvent } from '../../edit-pane/events';
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getLegacySlugForRowOrTab } from '../../utils/utils';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { convertRowToTab } from '../layouts-shared/convertRowToTab';
+import { convertTabToRow } from '../layouts-shared/convertTabToRow';
+import { moveSectionVariablesUp } from '../layouts-shared/moveSectionVariablesUp';
 import { getTabFromClipboard } from '../layouts-shared/paste';
-import { showConvertMixedGridsModal, showUngroupConfirmation } from '../layouts-shared/ungroupConfirmation';
-import { generateUniqueTitle, ungroupLayout, GridLayoutType, mapIdToGridLayoutType } from '../layouts-shared/utils';
+import {
+  showConvertMixedGridsModal,
+  showRepeatLossConfirmation,
+  showUngroupConfirmation,
+  showUngroupGroupsModal,
+} from '../layouts-shared/ungroupConfirmation';
+import {
+  deduplicateTitles,
+  generateUniqueTitle,
+  ungroupLayout,
+  GridLayoutType,
+  mapIdToGridLayoutType,
+} from '../layouts-shared/utils';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { type DashboardLayoutGroup, isDashboardLayoutGroup } from '../types/DashboardLayoutGroup';
+import {
+  type DashboardLayoutGroup,
+  isDashboardLayoutGroup,
+  type NestedGroupsTarget,
+} from '../types/DashboardLayoutGroup';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -263,19 +284,49 @@ export class TabsLayoutManager
   }
 
   public ungroupTabs() {
-    const hasNonGridLayout = this.state.tabs.some((tab) => !tab.getLayout().descriptor.isGridLayout);
+    const layouts = this.state.tabs.map((tab) => tab.getLayout());
+    const hasNestedRows = layouts.some((layout) => layout instanceof RowsLayoutManager);
+    const hasNestedTabs = layouts.some((layout) => layout instanceof TabsLayoutManager);
     const gridTypes = new Set(this.getAllGridTypes());
 
-    showUngroupConfirmation({
-      hasNonGridLayout,
-      gridTypes,
-      onConfirm: (gridLayoutType) => {
-        this.wrapUngroupTabsInEdit(gridLayoutType);
-      },
-      onConvertMixedGrids: (availableIds) => {
-        this._confirmConvertMixedGrids(availableIds);
-      },
-    });
+    // Grids only: merge them into a single grid, asking for the grid type when grids are mixed
+    if (!hasNestedRows && !hasNestedTabs) {
+      showUngroupConfirmation({
+        gridTypes,
+        onConfirm: (gridLayoutType) => {
+          this._wrapUngroupInEdit(() => this.ungroup(gridLayoutType));
+        },
+        onConvertMixedGrids: (availableIds) => {
+          this._confirmConvertMixedGrids(availableIds);
+        },
+      });
+      return;
+    }
+
+    const willLoseRepeatOptions = this.state.tabs.some(
+      (tab) => !tab.getLayout().descriptor.isGridLayout && Boolean(tab.state.repeatByVariable)
+    );
+
+    // Mixed nested groups: ask whether to convert them to rows or to tabs
+    if (hasNestedRows && hasNestedTabs) {
+      showUngroupGroupsModal({
+        showRepeatLossWarning: willLoseRepeatOptions,
+        onSelect: (target) => {
+          this._wrapUngroupInEdit(() => this.hoistNestedGroups(target));
+        },
+      });
+      return;
+    }
+
+    // Single nested group type: hoist gracefully, confirming first if repeat options would be lost
+    const target: NestedGroupsTarget = hasNestedRows ? 'rows' : 'tabs';
+    const perform = () => this._wrapUngroupInEdit(() => this.hoistNestedGroups(target));
+
+    if (willLoseRepeatOptions) {
+      showRepeatLossConfirmation(perform);
+    } else {
+      perform();
+    }
   }
 
   /**
@@ -309,28 +360,56 @@ export class TabsLayoutManager
     showConvertMixedGridsModal(availableIds, (id: string) => {
       const selected = mapIdToGridLayoutType(id);
       if (selected) {
-        this.wrapUngroupTabsInEdit(selected);
+        this._wrapUngroupInEdit(() => this.ungroup(selected));
       }
     });
   }
 
-  private wrapUngroupTabsInEdit(gridLayoutType: GridLayoutType) {
+  private _wrapUngroupInEdit(performUngroup: () => void) {
     const parent = this.parent;
     if (!parent || !isLayoutParent(parent)) {
       throw new Error('Ungroup tabs failed: parent is not a layout container');
     }
 
     const previousLayout = this.clone({});
+    // Ungrouping moves the section-level variables of the dissolved tabs up to the parent,
+    // so undo needs to restore the parent's variables in addition to restoring the layout
+    const previousVariableSet = parent.state.$variables;
+    const previousVariables =
+      previousVariableSet instanceof SceneVariableSet ? [...previousVariableSet.state.variables] : undefined;
     const scene = getDashboardSceneFor(this);
+
+    // Undo replaces this layout with a detached clone, so redo cannot run the ungroup again
+    // (it would mutate this detached original while leaking variables into the live parent).
+    // Instead, the result of the first run is captured and redo re-installs it.
+    let nextLayout: DashboardLayoutManager | undefined;
+    let nextVariableSet: SceneVariables | undefined;
+    let nextVariables: SceneVariable[] | undefined;
 
     dashboardEditActions.edit({
       description: t('dashboard.tabs-layout.edit.ungroup-tabs', 'Ungroup tabs'),
       source: scene,
       perform: () => {
-        this.ungroup(gridLayoutType);
+        if (nextLayout) {
+          parent.switchLayout(nextLayout, true);
+          if (nextVariableSet instanceof SceneVariableSet && nextVariables) {
+            nextVariableSet.setState({ variables: nextVariables });
+          }
+          parent.setState({ $variables: nextVariableSet });
+          return;
+        }
+
+        performUngroup();
+        nextLayout = parent.getLayout();
+        nextVariableSet = parent.state.$variables;
+        nextVariables = nextVariableSet instanceof SceneVariableSet ? [...nextVariableSet.state.variables] : undefined;
       },
       undo: () => {
-        parent.switchLayout(previousLayout);
+        parent.switchLayout(previousLayout, true);
+        if (previousVariableSet instanceof SceneVariableSet && previousVariables) {
+          previousVariableSet.setState({ variables: previousVariables });
+        }
+        parent.setState({ $variables: previousVariableSet });
       },
     });
   }
@@ -351,6 +430,9 @@ export class TabsLayoutManager
       }
     }
 
+    // All tabs are dissolved when merging into a single grid, so their variables move up a level
+    moveSectionVariablesUp(this.state.tabs, this);
+
     this.convertAllGridLayouts(gridLayoutType);
 
     const firstTab = this.state.tabs[0];
@@ -368,6 +450,82 @@ export class TabsLayoutManager
 
     this.setState({ tabs: [firstTab] });
     ungroupLayout(this, firstTab.state.layout, true);
+  }
+
+  /**
+   * Removes the tabs level while preserving content structure:
+   * nested groups are hoisted up a level and other tabs are converted to the target group type.
+   */
+  public hoistNestedGroups(target: NestedGroupsTarget) {
+    // Tabs holding nested groups are dissolved (their content is hoisted),
+    // so their section-level variables move up a level instead of being lost
+    moveSectionVariablesUp(
+      this.state.tabs.filter((tab) => !tab.getLayout().descriptor.isGridLayout && !tab.state.repeatSourceKey),
+      this
+    );
+
+    if (target === 'rows') {
+      const rows: RowItem[] = [];
+
+      for (const tab of this.state.tabs) {
+        if (tab.state.repeatSourceKey) {
+          continue;
+        }
+
+        const layout = tab.getLayout();
+
+        if (layout instanceof RowsLayoutManager) {
+          for (const row of layout.state.rows) {
+            if (!row.state.repeatSourceKey) {
+              row.clearParent();
+              rows.push(row);
+            }
+          }
+        } else if (layout instanceof TabsLayoutManager) {
+          for (const innerTab of layout.state.tabs) {
+            if (!innerTab.state.repeatSourceKey) {
+              rows.push(convertTabToRow(innerTab));
+            }
+          }
+        } else {
+          rows.push(convertTabToRow(tab));
+        }
+      }
+
+      deduplicateTitles(rows);
+      ungroupLayout(this, new RowsLayoutManager({ rows }), true);
+      return;
+    }
+
+    const tabs: TabItem[] = [];
+
+    for (const tab of this.state.tabs) {
+      if (tab.state.repeatSourceKey) {
+        continue;
+      }
+
+      const layout = tab.getLayout();
+
+      if (layout instanceof TabsLayoutManager) {
+        for (const innerTab of layout.state.tabs) {
+          if (!innerTab.state.repeatSourceKey) {
+            innerTab.clearParent();
+            tabs.push(innerTab);
+          }
+        }
+      } else if (layout instanceof RowsLayoutManager) {
+        for (const row of layout.state.rows) {
+          if (!row.state.repeatSourceKey) {
+            tabs.push(convertRowToTab(row));
+          }
+        }
+      } else {
+        tabs.push(tab);
+      }
+    }
+
+    deduplicateTitles(tabs);
+    this.setState({ tabs, currentTabSlug: undefined });
   }
 
   public removeTab(tab: TabItem, skipUndo?: boolean) {
