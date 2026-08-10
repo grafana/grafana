@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { CoreApp } from '@grafana/data';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
@@ -60,6 +61,21 @@ describe('TextNGPanel', () => {
 
     expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML.trim()).toBe('');
   });
+
+  // Markdown renders these to '', which DangerouslySetHtmlContent throws on.
+  it.each(['\n', '\n\n', '   \n  ', '<!-- just a comment -->'])(
+    'renders empty content for markdown that renders to nothing: %j',
+    (content) => {
+      replaceVariablesMock.mockReturnValueOnce(content);
+      const props = Object.assign({}, defaultProps, {
+        options: { content, mode: TextMode.Markdown },
+      });
+
+      setup(props);
+
+      expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML.trim()).toBe('');
+    }
+  );
 
   it('sanitizes content in html mode', () => {
     const contentTest = '<form><p>Form tags are sanitized.</p></form>\n<script>Script tags are sanitized.</script>';
@@ -192,6 +208,67 @@ describe('TextNGPanel', () => {
 
       expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
       expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
+    });
+
+    it('merges a language change made in the editor into the existing code options', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const onOptionsChange = jest.fn();
+      const props = Object.assign({}, defaultProps, {
+        options: {
+          content: 'SELECT 1',
+          mode: TextMode.Code,
+          code: { language: CodeLanguage.Plaintext, showLineNumbers: true, showMiniMap: false },
+        },
+        onOptionsChange,
+      });
+
+      setup(props, CoreApp.PanelEditor);
+
+      await userEvent.click(await screen.findByRole('button', { name: /^Text mode/ }));
+      await userEvent.hover(screen.getByRole('menuitem', { name: 'Code' }));
+      await userEvent.click(await screen.findByRole('menuitemradio', { name: 'SQL' }));
+
+      expect(onOptionsChange).toHaveBeenCalledWith({
+        content: 'SELECT 1',
+        mode: TextMode.Code,
+        code: { language: CodeLanguage.Sql, showLineNumbers: true, showMiniMap: false },
+      });
+    });
+
+    describe('line numbers toggled in the editor footer', () => {
+      const toggleLineNumbers = async (options: Props['options']) => {
+        replaceVariablesMock.mockImplementation((str: string) => str);
+        const onOptionsChange = jest.fn();
+
+        setup(Object.assign({}, defaultProps, { options, onOptionsChange }), CoreApp.PanelEditor);
+        await userEvent.click(await screen.findByRole('switch', { name: 'Line numbers' }));
+
+        return onOptionsChange;
+      };
+
+      it('keeps the existing code options', async () => {
+        const onOptionsChange = await toggleLineNumbers({
+          content: 'SELECT 1',
+          mode: TextMode.Code,
+          code: { language: CodeLanguage.Sql, showLineNumbers: false, showMiniMap: false },
+        });
+
+        expect(onOptionsChange).toHaveBeenCalledWith({
+          content: 'SELECT 1',
+          mode: TextMode.Code,
+          code: { language: CodeLanguage.Sql, showLineNumbers: true, showMiniMap: false },
+        });
+      });
+
+      it('fills in the defaults when no code options are set', async () => {
+        const onOptionsChange = await toggleLineNumbers({ content: 'SELECT 1', mode: TextMode.Code });
+
+        expect(onOptionsChange).toHaveBeenCalledWith({
+          content: 'SELECT 1',
+          mode: TextMode.Code,
+          code: { language: CodeLanguage.Plaintext, showLineNumbers: true, showMiniMap: false },
+        });
+      });
     });
 
     it('does not render the inline editor in view mode', () => {

@@ -58,7 +58,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
 }
 
 export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
-  const provisioningEnabled = config.featureToggles.provisioning;
+  const provisioningEnabled = config.provisioningEnabled;
   if (!provisioningEnabled || 'kiosk' in queryParams || !path || route !== DashboardRoutes.Provisioning || !slug) {
     return null;
   }

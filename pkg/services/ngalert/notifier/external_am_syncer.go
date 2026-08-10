@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 
-	alertingnotifv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	alertingnotifv1beta1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -38,11 +38,11 @@ import (
 // origin field on Config.status.externalAlertmanagerSync. The
 // generated name is unwieldy in expressions; the alias keeps call sites
 // readable without obscuring the underlying type.
-type externalSyncOrigin = alertingnotifv0alpha1.ConfigV0alpha1StatusExternalAlertmanagerSyncOrigin
+type externalSyncOrigin = alertingnotifv1beta1.ConfigV1beta1StatusExternalAlertmanagerSyncOrigin
 
 const (
-	originAPI = alertingnotifv0alpha1.ConfigV0alpha1StatusExternalAlertmanagerSyncOriginApi
-	originIni = alertingnotifv0alpha1.ConfigV0alpha1StatusExternalAlertmanagerSyncOriginIni
+	originAPI = alertingnotifv1beta1.ConfigV1beta1StatusExternalAlertmanagerSyncOriginApi
+	originIni = alertingnotifv1beta1.ConfigV1beta1StatusExternalAlertmanagerSyncOriginIni
 )
 
 // mimirConfigResponse is the Mimir/Cortex alertmanager configuration API response.
@@ -204,7 +204,7 @@ type ExternalAMSyncer struct {
 	configReader amConfigReader
 
 	cfgClientMu sync.Mutex
-	cfgClient   *alertingnotifv0alpha1.ConfigClient
+	cfgClient   *alertingnotifv1beta1.ConfigClient
 }
 
 // NewExternalAMSyncer constructs an ExternalAMSyncer. requestValidator may
@@ -242,7 +242,7 @@ func NewExternalAMSyncer(
 // is cached, but construction failures are NOT: the next call retries, so a
 // transient apiserver-not-ready at the first tick doesn't disable sync until
 // the process restarts.
-func (s *ExternalAMSyncer) resolveCfgClient() (*alertingnotifv0alpha1.ConfigClient, error) {
+func (s *ExternalAMSyncer) resolveCfgClient() (*alertingnotifv1beta1.ConfigClient, error) {
 	s.cfgClientMu.Lock()
 	defer s.cfgClientMu.Unlock()
 	if s.cfgClient != nil {
@@ -251,7 +251,7 @@ func (s *ExternalAMSyncer) resolveCfgClient() (*alertingnotifv0alpha1.ConfigClie
 	if s.clientGenerator == nil {
 		return nil, fmt.Errorf("no client generator configured")
 	}
-	c, err := alertingnotifv0alpha1.NewConfigClientFromGenerator(s.clientGenerator)
+	c, err := alertingnotifv1beta1.NewConfigClientFromGenerator(s.clientGenerator)
 	if err != nil {
 		return nil, fmt.Errorf("construct Config client: %w", err)
 	}
@@ -402,7 +402,7 @@ func (s *ExternalAMSyncer) writeSyncStatusFor(ctx context.Context, orgID int64, 
 // Config.status.
 func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, syncErr error) {
 	now := time.Now()
-	s.writeStatus(ctx, orgID, func(prev *alertingnotifv0alpha1.ConfigStatus) alertingnotifv0alpha1.ConfigStatus {
+	s.writeStatus(ctx, orgID, func(prev *alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigStatus {
 		return computeSyncStatus(prev, uid, origin, syncErr, now)
 	})
 }
@@ -411,7 +411,7 @@ func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, ui
 // external config has been merged into the org's Grafana config (sync stops).
 func (s *ExternalAMSyncer) recordMergeCommitted(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin) {
 	now := time.Now()
-	s.writeStatus(ctx, orgID, func(prev *alertingnotifv0alpha1.ConfigStatus) alertingnotifv0alpha1.ConfigStatus {
+	s.writeStatus(ctx, orgID, func(prev *alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigStatus {
 		return computeCommittedStatus(prev, uid, origin, now)
 	})
 }
@@ -420,7 +420,7 @@ func (s *ExternalAMSyncer) recordMergeCommitted(ctx context.Context, orgID int64
 // the singleton if absent (writeStatus creates on missing). Best-effort.
 func (s *ExternalAMSyncer) recordNotConfigured(ctx context.Context, orgID int64) {
 	now := time.Now()
-	s.writeStatus(ctx, orgID, func(prev *alertingnotifv0alpha1.ConfigStatus) alertingnotifv0alpha1.ConfigStatus {
+	s.writeStatus(ctx, orgID, func(prev *alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigStatus {
 		return computeNotConfiguredStatus(prev, now)
 	})
 }
@@ -428,7 +428,7 @@ func (s *ExternalAMSyncer) recordNotConfigured(ctx context.Context, orgID int64)
 // writeStatus upserts the org's Config.status using compute(prev), creating the
 // resource if absent. Optimistic via RetryOnConflict; best-effort (failures are
 // logged). Unchanged status produces no physical write (unified storage dedup).
-func (s *ExternalAMSyncer) writeStatus(ctx context.Context, orgID int64, compute func(prev *alertingnotifv0alpha1.ConfigStatus) alertingnotifv0alpha1.ConfigStatus) {
+func (s *ExternalAMSyncer) writeStatus(ctx context.Context, orgID int64, compute func(prev *alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigStatus) {
 	c, err := s.resolveCfgClient()
 	if err != nil {
 		s.logger.Warn("Failed to resolve Config client for status write", "org_id", orgID, "error", err)
@@ -438,7 +438,7 @@ func (s *ExternalAMSyncer) writeStatus(ctx context.Context, orgID int64, compute
 	if ns == "" {
 		return
 	}
-	id := resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.ConfigSingletonName}
+	id := resource.Identifier{Namespace: ns, Name: alertingnotifv1beta1.ConfigSingletonName}
 
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		existing, getErr := c.Get(nsCtx, id)
@@ -446,15 +446,15 @@ func (s *ExternalAMSyncer) writeStatus(ctx context.Context, orgID int64, compute
 			// Seed .Status on Create. Unified storage persists the whole object
 			// on Create today; a future migration to a real /status subresource
 			// would silently drop this — at that point swap to UpdateStatus.
-			r := &alertingnotifv0alpha1.Config{
-				ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: alertingnotifv0alpha1.ConfigSingletonName},
+			r := &alertingnotifv1beta1.Config{
+				ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: alertingnotifv1beta1.ConfigSingletonName},
 				Status:     compute(nil),
 			}
 			if _, createErr := c.Create(nsCtx, r, resource.CreateOptions{}); createErr != nil {
 				// AlreadyExists → another writer raced us. Surface as a conflict
 				// so RetryOnConflict re-enters and sees the existing object.
 				if k8serrors.IsAlreadyExists(createErr) {
-					return k8serrors.NewConflict(alertingnotifv0alpha1.ConfigKind().GroupVersionResource().GroupResource(), id.Name, createErr)
+					return k8serrors.NewConflict(alertingnotifv1beta1.ConfigKind().GroupVersionResource().GroupResource(), id.Name, createErr)
 				}
 				return createErr
 			}
@@ -473,17 +473,17 @@ func (s *ExternalAMSyncer) writeStatus(ctx context.Context, orgID int64, compute
 
 // computeSyncStatus maps a sync outcome (nil = success) to the
 // ExternalAlertmanagerSynced condition and folds it into prev.
-func computeSyncStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time) alertingnotifv0alpha1.ConfigStatus {
+func computeSyncStatus(prev *alertingnotifv1beta1.ConfigStatus, uid string, origin externalSyncOrigin, syncErr error, now time.Time) alertingnotifv1beta1.ConfigStatus {
 	if syncErr == nil {
-		return buildSyncStatus(prev, uid, origin, alertingnotifv0alpha1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now)
+		return buildSyncStatus(prev, uid, origin, alertingnotifv1beta1.ConfigConditionStatusTrue, conditionReasonSyncSucceeded, "", now)
 	}
-	return buildSyncStatus(prev, uid, origin, alertingnotifv0alpha1.ConfigConditionStatusFalse, reasonOf(syncErr).ConditionReason(), syncErr.Error(), now)
+	return buildSyncStatus(prev, uid, origin, alertingnotifv1beta1.ConfigConditionStatusFalse, reasonOf(syncErr).ConditionReason(), syncErr.Error(), now)
 }
 
 // computeCommittedStatus is the terminal status once the config was merged:
 // stays True (so the synced-at timestamp is kept), reason flips to MergeCommitted.
-func computeCommittedStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, now time.Time) alertingnotifv0alpha1.ConfigStatus {
-	return buildSyncStatus(prev, uid, origin, alertingnotifv0alpha1.ConfigConditionStatusTrue, conditionReasonMergeCommitted, mergeCommittedMessage, now)
+func computeCommittedStatus(prev *alertingnotifv1beta1.ConfigStatus, uid string, origin externalSyncOrigin, now time.Time) alertingnotifv1beta1.ConfigStatus {
+	return buildSyncStatus(prev, uid, origin, alertingnotifv1beta1.ConfigConditionStatusTrue, conditionReasonMergeCommitted, mergeCommittedMessage, now)
 }
 
 // computeNotConfiguredStatus returns prev with only the ExternalAlertmanagerSynced
@@ -494,22 +494,22 @@ func computeCommittedStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string
 // snapshot — no preserved MergeCommitted/SyncSucceeded — and its lastTransitionTime
 // advances only on a flip to Unknown, so consecutive not-configured ticks produce
 // an identical status that dedups to no write.
-func computeNotConfiguredStatus(prev *alertingnotifv0alpha1.ConfigStatus, now time.Time) alertingnotifv0alpha1.ConfigStatus {
-	st := alertingnotifv0alpha1.ConfigStatus{}
+func computeNotConfiguredStatus(prev *alertingnotifv1beta1.ConfigStatus, now time.Time) alertingnotifv1beta1.ConfigStatus {
+	st := alertingnotifv1beta1.ConfigStatus{}
 	if prev != nil {
 		st = *prev
-		st.Conditions = append([]alertingnotifv0alpha1.ConfigCondition(nil), prev.Conditions...)
+		st.Conditions = append([]alertingnotifv1beta1.ConfigCondition(nil), prev.Conditions...)
 	}
 
-	synced := alertingnotifv0alpha1.ConfigCondition{
+	synced := alertingnotifv1beta1.ConfigCondition{
 		Type:               conditionTypeExternalAlertmanagerSynced,
-		Status:             alertingnotifv0alpha1.ConfigConditionStatusUnknown,
+		Status:             alertingnotifv1beta1.ConfigConditionStatusUnknown,
 		LastTransitionTime: now.UTC().Format(time.RFC3339),
 		Reason:             conditionReasonNotConfigured,
 	}
 	for i, c := range st.Conditions {
 		if c.Type == conditionTypeExternalAlertmanagerSynced {
-			if c.Status == alertingnotifv0alpha1.ConfigConditionStatusUnknown {
+			if c.Status == alertingnotifv1beta1.ConfigConditionStatusUnknown {
 				synced.LastTransitionTime = c.LastTransitionTime // no flip → keep the timestamp
 			}
 			st.Conditions[i] = synced
@@ -523,11 +523,11 @@ func computeNotConfiguredStatus(prev *alertingnotifv0alpha1.ConfigStatus, now ti
 // buildSyncStatus folds an ExternalAlertmanagerSynced condition into prev. k8s
 // condition FSM: lastTransitionTime advances only on status flip. Preserves
 // other condition types so future controllers aren't clobbered.
-func buildSyncStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string, origin externalSyncOrigin, condStatus alertingnotifv0alpha1.ConfigConditionStatus, reason, message string, now time.Time) alertingnotifv0alpha1.ConfigStatus {
+func buildSyncStatus(prev *alertingnotifv1beta1.ConfigStatus, uid string, origin externalSyncOrigin, condStatus alertingnotifv1beta1.ConfigConditionStatus, reason, message string, now time.Time) alertingnotifv1beta1.ConfigStatus {
 	uidCopy := uid
 	originCopy := origin
-	st := alertingnotifv0alpha1.ConfigStatus{
-		ExternalAlertmanagerSync: &alertingnotifv0alpha1.ConfigV0alpha1StatusExternalAlertmanagerSync{
+	st := alertingnotifv1beta1.ConfigStatus{
+		ExternalAlertmanagerSync: &alertingnotifv1beta1.ConfigV1beta1StatusExternalAlertmanagerSync{
 			DatasourceUid: &uidCopy,
 			Origin:        &originCopy,
 		},
@@ -544,7 +544,7 @@ func buildSyncStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string, origi
 		}
 	}
 
-	synced := alertingnotifv0alpha1.ConfigCondition{
+	synced := alertingnotifv1beta1.ConfigCondition{
 		Type:               conditionTypeExternalAlertmanagerSynced,
 		Status:             condStatus,
 		LastTransitionTime: transitionTime,
@@ -565,7 +565,7 @@ func buildSyncStatus(prev *alertingnotifv0alpha1.ConfigStatus, uid string, origi
 	return st
 }
 
-func prevConditions(prev *alertingnotifv0alpha1.ConfigStatus) []alertingnotifv0alpha1.ConfigCondition {
+func prevConditions(prev *alertingnotifv1beta1.ConfigStatus) []alertingnotifv1beta1.ConfigCondition {
 	if prev == nil {
 		return nil
 	}
@@ -612,7 +612,7 @@ func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, ui
 
 // externalSyncDatasourceUIDFromConfig returns the configured UID or ""
 // when any level in the nested optional chain is unset.
-func externalSyncDatasourceUIDFromConfig(c *alertingnotifv0alpha1.Config) string {
+func externalSyncDatasourceUIDFromConfig(c *alertingnotifv1beta1.Config) string {
 	if c == nil ||
 		c.Spec.ExternalAlertmanagerSync == nil ||
 		c.Spec.ExternalAlertmanagerSync.DatasourceUid == nil {
@@ -652,7 +652,7 @@ func (s *ExternalAMSyncer) resolveExternalAMUIDForOrg(ctx context.Context, orgID
 		return "", "", err
 	}
 	nsCtx, ns := s.orgServiceContext(ctx, orgID)
-	ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.ConfigSingletonName})
+	ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv1beta1.ConfigSingletonName})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return "", originAPI, nil
@@ -676,7 +676,7 @@ func (s *ExternalAMSyncer) IsConfiguredForOrg(ctx context.Context, orgID int64) 
 		return false, err
 	}
 	nsCtx, ns := s.orgServiceContext(ctx, orgID)
-	ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.ConfigSingletonName})
+	ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv1beta1.ConfigSingletonName})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return false, nil

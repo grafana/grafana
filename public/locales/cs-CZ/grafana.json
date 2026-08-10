@@ -270,6 +270,7 @@
       "placeholder-search-devices-by-ip-address": "Hledat zařízení podle IP adresy."
     },
     "user-list-page": {
+      "label-active-users": "",
       "label-all-users": "Všichni uživatelé",
       "label-anonymous-devices": "Anonymní zařízení",
       "label-organization-users": "Uživatelé organizace",
@@ -622,12 +623,6 @@
       "title-restore-version": "Obnovit verzi",
       "title-restoring-alertmanager-configuration": "Probíhá obnovení konfigurace správce výstrah"
     },
-    "alerts-activity-banner": {
-      "description": "Nyní je k dispozici zcela nová stránka pro zpracování provozních úkonů souvisejících s pravidly výstrah spravovanými Grafanou. Zjistěte, které výstrahy se spouštějí, prozkoumejte historické informace, filtrujte a sdružujte výstrahy, abyste zlepšili třídění a analýzu hlavních příčin.",
-      "open-button": "Zobrazit aktivitu výstrahy",
-      "open-button-aria": "Otevřít aktivitu výstrah",
-      "title": "Aktivita výstrahy je nyní k dispozici!"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "Třídit",
       "label-filter-placeholder-search-alerts-by-labels": "Hledat výstrahy podle štítků",
@@ -802,7 +797,9 @@
         "value-in-transition": "Hodnota v přechodu"
       },
       "error": {
-        "server-error": "Dotaz na historii stavu výstrahy se nezdařil, server vrátil chybu"
+        "server-error": "Dotaz na historii stavu výstrahy se nezdařil, server vrátil chybu",
+        "server-error-description": "",
+        "title": ""
       },
       "filter": {
         "clear": "Vymazat filtry",
@@ -3340,6 +3337,8 @@
         "title": ""
       },
       "import": {
+        "any": "",
+        "collapse-all": "",
         "empty-body": "",
         "empty-cta": "",
         "empty-learn-more": "",
@@ -3347,9 +3346,28 @@
         "error-body": "",
         "error-retry": "",
         "error-title": "",
+        "expand-all": "",
+        "inhibition-equal": "",
         "loading": "",
+        "no-matchers": "",
+        "parse-error-body": "",
+        "parse-error-title": "",
+        "resources": "",
+        "section": {
+          "contact-points": "",
+          "inhibition-rules": "",
+          "notification-policy": "",
+          "templates": "",
+          "time-intervals": ""
+        },
+        "staged-badge": "",
         "staged-description": "",
-        "staged-title": ""
+        "staged-title": "",
+        "view": "",
+        "policy-tree-routes_one": "",
+        "policy-tree-routes_few": "",
+        "policy-tree-routes_many": "",
+        "policy-tree-routes_other": ""
       },
       "tabs": {
         "alert-managers": "Správci výstrah",
@@ -4052,6 +4070,9 @@
       "trace-id": "ID trasování: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Nastavení ověření"
@@ -4488,6 +4509,9 @@
     "create-new": {
       "dashboard-group": ""
     },
+    "create-new-button": {
+      "generate-dashboard": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Tato položka není ve stejném úložišti jako vybrané položky."
@@ -4904,6 +4928,7 @@
       "not-found": "<0>Nenalezeno: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + pravé tlačítko myši",
       "middle-mouse": "Prostřední tlačítko myši",
       "pan-title": "Posouvání:",
@@ -5474,6 +5499,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Auto.",
       "options": {
         "custom-min-height": {
@@ -5491,6 +5517,11 @@
         "min-width-custom": "Vlastní min. šířka",
         "min-width-custom-clear": "Zpět na standardní min. šířku sloupce",
         "min-width-error": "Zadejte číslo mezi 50 a 2000"
+      },
+      "resize-intercept": {
+        "edit": "",
+        "header": "",
+        "switch": ""
       }
     },
     "canvas-actions": {
@@ -5638,6 +5669,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Vlastní",
       "row-actions": {
         "delete": "Odstranit řádek",
@@ -5962,8 +5994,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Tímto zrušíte seskupení všech vnořených skupin.",
-      "ungroup-nested-title": "Zrušit seskupení vnořených skupin?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} z {{numberOfPages}}",
@@ -6256,13 +6292,10 @@
         "show-in": ""
       },
       "annotations": {
-        "add-annotation": "",
         "add-annotation-query": "",
         "name-builtin": "",
         "name-disabled": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-annotation": "",
         "title-above-dashboard-count_one": "",
         "title-above-dashboard-count_few": "",
         "title-above-dashboard-count_many": "",
@@ -6360,10 +6393,7 @@
       "links": {
         "add-link": "",
         "new-link": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-link": "",
-        "untitled": "",
         "title-above-dashboard_one": "",
         "title-above-dashboard_few": "",
         "title-above-dashboard_many": "",
@@ -6467,11 +6497,9 @@
       "variables": {
         "add-variable": "",
         "change-type": "",
-        "reorder": "",
         "reorder-description": "",
         "select-type": "",
         "select-type-card-tooltip": "",
-        "select-variable": "",
         "top-placement-default": "",
         "title-controls-menu_one": "",
         "title-controls-menu_few": "",
@@ -6856,6 +6884,21 @@
       "title": "Nejsou k dispozici žádné odkazy na nástěnku"
     }
   },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": ""
+    },
+    "modal": {
+      "title": ""
+    },
+    "prompt": {
+      "cancel": "",
+      "description": "",
+      "input-label": "",
+      "placeholder": "",
+      "submit": ""
+    }
+  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "Tento zdroj dat nepodporuje filtry.",
@@ -6918,11 +6961,6 @@
       "delete-confirm": "Odstranit dotaz na vysvětlivky",
       "delete-text": "Opravdu chcete odstranit: {{name}}?",
       "delete-title": "Odstranit dotaz na vysvětlivky"
-    },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Vysvětlivky"
-      }
     },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Použít uložený dotaz"
@@ -7349,11 +7387,6 @@
       "delete-title": "Odstranit odkaz",
       "unnamed": "Nepojmenovaný odkaz"
     },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Odkaz"
-      }
-    },
     "link-options": {
       "icon": "Ikona",
       "include-time-range": "Zahrnout aktuální časový rozsah",
@@ -7689,6 +7722,14 @@
       "disabled-tooltip": "Před vytvořením pravidel výstrah uložte nástěnku",
       "new-alert-rule": "Nové pravidlo výstrahy",
       "title-no-alerting-capable-query-found": "Nebyl nalezen žádný dotaz, který by spustil upozorňování"
+    },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "",
+      "title": ""
+    },
+    "scripted-dashboards-disabled": {
+      "body": "",
+      "title": ""
     },
     "section-placement": {
       "top-row": "",
@@ -8724,7 +8765,24 @@
       "body-no-logs-volume-available": "Nejsou dostupné žádné informace o objemu pro aktuální dotazy a časový rozsah."
     },
     "metrics-list": {
-      "search-placeholder": ""
+      "collapse-metric": "",
+      "error": "",
+      "expand-metric": "",
+      "filter-values": "",
+      "hide-values": "",
+      "labels-error": "",
+      "loading": "",
+      "loading-labels": "",
+      "loading-values": "",
+      "no-metrics": "",
+      "search-placeholder": "",
+      "show-more": "",
+      "show-more-metrics": "",
+      "show-more-values": "",
+      "show-values": "",
+      "sort-ascending": "",
+      "sort-descending": "",
+      "values-error": ""
     },
     "next-prev-result": {
       "aria-label-next": "Tlačítko Další výsledek",
@@ -8975,6 +9033,7 @@
       "open-in-profiles-drilldown": "",
       "profiles-for-this-span": "",
       "related-logs": "",
+      "related-logs-no-logs-tooltip": "",
       "related-logs-tooltip": "",
       "session-for-this-span": ""
     },
@@ -9368,6 +9427,7 @@
       "name-lookup-field": "Pole vyhledávání"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Automaticky identifikovat údaje o umístění na základě výchozích názvů polí",
         "description-coords": "Zadejte pole pro zeměpisnou šířku a délku",
@@ -9397,9 +9457,9 @@
     "description-mouse-wheel-zoom": "Povolit ovládání přiblížení pomocí kolečka myši",
     "description-no-repeat": "Zabránit opakování mapy v horizontálním směru",
     "description-share-view": "Použijte stejné zobrazení na více panelech.  Poznámka: Může být nutné znovu načíst nástěnku.",
-    "description-show-attribution": "Zobrazit informace o přiřazení zdroje mapy v pravém dolním rohu",
     "description-show-debug": "Zobrazit informace o mapě",
     "description-show-measure": "Zobrazit nástroje pro měření na mapě",
+    "description-show-optional-attribution": "",
     "description-show-scale": "Uveďte měřítko mapy",
     "description-show-zoom": "Zobrazit tlačítka pro ovládání přiblížení v levém horním rohu",
     "description-sync-view-variable": "Uložit hranice zobrazení do proměnné nástěnky pro použití v dotazech",
@@ -9460,9 +9520,9 @@
     "name-mouse-wheel-zoom": "Přiblížení pomocí kolečka myši",
     "name-no-repeat": "Žádné opakování mapy",
     "name-share-view": "Sdílet zobrazení",
-    "name-show-attribution": "Zobrazit přiřazení",
     "name-show-debug": "Zobrazit ladění",
     "name-show-measure": "Zobrazit nástroje pro měření",
+    "name-show-optional-attribution": "",
     "name-show-scale": "Zobrazit měřítko",
     "name-show-zoom": "Zobrazit ovládání přiblížení",
     "name-sync-view-variable": "Synchronizujte zobrazení s proměnnou nástěnky",
@@ -10164,6 +10224,14 @@
       "log-base": "Základ protokolu"
     },
     "builder": {
+      "annotation-options": {
+        "canvas-controls-desc": "",
+        "canvas-controls-name": "",
+        "clustering-desc": "",
+        "clustering-name": "",
+        "multi-lane-name": "",
+        "multi-row-desc": ""
+      },
       "annotations": "Vysvětlivky",
       "axis": {
         "category-axis": "Osa",
@@ -10499,9 +10567,13 @@
     "matchers": {
       "groups": {
         "annotation": "Vysvětlivky",
+        "annotation-description": "",
         "exemplar": "Příklady",
+        "exemplar-description": "",
         "nested": "Vnořené",
-        "series": "Datový rám"
+        "nested-description": "",
+        "series": "Datový rám",
+        "series-description": ""
       },
       "labels": {
         "base-field-name": "{{name}} (název základního pole)",
@@ -11075,6 +11147,83 @@
       "read-more": "",
       "title": ""
     },
+    "overview": {
+      "get-started": {
+        "cards": {
+          "app-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "cloud-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "database-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "demo-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "hosted-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "infra-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "kubernetes": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "logs": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "opentelemetry": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "prometheus": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "visualize-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "website-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          }
+        },
+        "show-less": "",
+        "show-more": "",
+        "title": ""
+      },
+      "options": {
+        "all": "",
+        "attention": "",
+        "available": "",
+        "enabled": "",
+        "get-started": ""
+      },
+      "title": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -11095,14 +11244,25 @@
       },
       "carousel-label": "",
       "carousel-roledescription": "",
-      "existing": "",
-      "frontend-observability": {
+      "connect-metrics": {
         "action": "",
         "context": "",
         "description": "",
-        "setup-action": "",
         "title": ""
       },
+      "enable-logs": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "enable-logs-k8s": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "existing": "",
       "go-to": "",
       "health": {
         "nodes_one": "",
@@ -11145,16 +11305,69 @@
         "pods_many": "",
         "pods_other": ""
       },
+      "kubernetes-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
+      "logs": {
+        "action": "",
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "title": "",
+        "volume": "",
+        "stats-sources_one": "",
+        "stats-sources_few": "",
+        "stats-sources_many": "",
+        "stats-sources_other": ""
+      },
+      "metrics": {
+        "action": "",
+        "action-explore": "",
+        "data-points-per-minute": "",
+        "datasource": "",
+        "disk-worst": "",
+        "series-trend": "",
+        "stats": "",
+        "title": "",
+        "view": "",
+        "disk-eta_one": "",
+        "disk-eta_few": "",
+        "disk-eta_many": "",
+        "disk-eta_other": "",
+        "disk-hosts_one": "",
+        "disk-hosts_few": "",
+        "disk-hosts_many": "",
+        "disk-hosts_other": "",
+        "names_one": "",
+        "names_few": "",
+        "names_many": "",
+        "names_other": "",
+        "series_one": "",
+        "series_few": "",
+        "series_many": "",
+        "series_other": "",
+        "stats-hosts_one": "",
+        "stats-hosts_few": "",
+        "stats-hosts_many": "",
+        "stats-hosts_other": ""
+      },
       "next": "",
       "no-data": {
         "badge": "",
         "connect": "",
         "description": "",
+        "description-partial": "",
+        "description-unknown": "",
         "popular-solutions": "",
         "solution-k6": "",
         "solution-kubernetes": "",
         "solution-synthetics": "",
-        "title": ""
+        "title": "",
+        "title-partial": ""
       },
       "pause": "",
       "previous": "",
@@ -11163,14 +11376,23 @@
       "show": "",
       "switch": "",
       "switchSolution": "",
-      "synthetic-monitoring": {
+      "title": "",
+      "traces": {
         "action": "",
-        "context": "",
-        "description": "",
-        "setup-action": "",
-        "title": ""
-      },
-      "title": ""
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "throughput": "",
+        "title": "",
+        "spans_one": "",
+        "spans_few": "",
+        "spans_many": "",
+        "spans_other": "",
+        "stats-services_one": "",
+        "stats-services_few": "",
+        "stats-services_many": "",
+        "stats-services_other": ""
+      }
     },
     "starred-dashboards-tab": {
       "empty": "",
@@ -12617,6 +12839,7 @@
     },
     "quick-add": {
       "aria-label": "Nové",
+      "generate-dashboard-button": "",
       "new-template-dashboard-button": ""
     },
     "rss-button": "Novinky z blogu"
@@ -13460,7 +13683,7 @@
         "repository-label": "Úložiště",
         "repository-read-write-admin": "Čtení a zápis",
         "webhooks-label": "Webhooky",
-        "webhooks-read-write": "Čtení a zápis"
+        "webhooks-read-write-delete": ""
       },
       "pr-workflow-description": "Umožňuje uživatelům zvolit, zda při ukládání změn otevřít žádost o stažení. Pokud úložiště neumožňuje přímé změny v hlavní větvi, může být žádost o stažení stále vyžadována.",
       "pr-workflow-label": "Povolit možnost žádost o stažení při ukládání",
@@ -14776,7 +14999,6 @@
     },
     "header": {
       "alert": "Výstraha",
-      "expression": "Výraz",
       "pending-expression": "",
       "pending-expression-cancel": "Zrušit",
       "pending-transformation": "",
@@ -14790,6 +15012,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },
@@ -14798,6 +15021,7 @@
       "message": ""
     },
     "sidebar": {
+      "add": "",
       "add-below": "Přidat {{id}} níže",
       "add-expression": "Přidat výraz",
       "add-expression-disabled": "Výrazy nejsou podporovány u zdroje dat nástěnky",
@@ -14817,6 +15041,7 @@
       "new-type": "Nový {{type}}",
       "queries-empty": "",
       "queries-expressions": "Dotazy a výrazy",
+      "stacked": "",
       "toggle-size": "Přepnout velikost postranního panelu",
       "transformations": "Transformace",
       "transformations-empty": "",
@@ -15839,6 +16064,7 @@
     "description-column-filter": "Povolit/zakázat filtry polí v tabulce",
     "description-frozen-columns": "",
     "description-min-column-width": "Minimální šířka pro automatickou změnu velikosti sloupce",
+    "description-page-size": "",
     "description-styling-from-field": "Pole obsahující objekty JSON s vlastnostmi CSS",
     "description-tooltip-from-field": "",
     "frame-picker": {
@@ -15872,6 +16098,7 @@
     "name-hide-in-table": "Skrýt v tabulce",
     "name-max-height": "",
     "name-min-column-width": "Minimální šířka sloupce",
+    "name-page-size": "",
     "name-show-table-header": "Zobrazit záhlaví tabulky",
     "name-styling-from-field": "Styling z pole",
     "name-tooltip-from-field": "",
@@ -15882,6 +16109,7 @@
     "placeholder-column-width": "auto.",
     "placeholder-frozen-columns": "žádná",
     "placeholder-max-height": "",
+    "placeholder-page-size": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
@@ -16038,18 +16266,29 @@
     },
     "editor": {
       "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
       "view-preview": "",
       "view-split": "",
       "view-write": ""
-    },
-    "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
-    },
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "Základní motiv",
@@ -17369,6 +17608,7 @@
       "delete-modal-confirm": "",
       "delete-modal-title": "",
       "folder-description": "",
+      "folder-description-folder-only": "",
       "folder-label": "",
       "moved": "",
       "name-exists": "",
@@ -17390,7 +17630,11 @@
       "body_one": "",
       "body_few": "",
       "body_many": "",
-      "body_other": ""
+      "body_other": "",
+      "body-folder-only_one": "",
+      "body-folder-only_few": "",
+      "body-folder-only_many": "",
+      "body-folder-only_other": ""
     },
     "page": {
       "delete": "",

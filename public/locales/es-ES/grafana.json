@@ -270,6 +270,7 @@
       "placeholder-search-devices-by-ip-address": "Buscar dispositivos por dirección IP."
     },
     "user-list-page": {
+      "label-active-users": "",
       "label-all-users": "Todos los usuarios",
       "label-anonymous-devices": "Dispositivos anónimos",
       "label-organization-users": "Usuarios de la organización",
@@ -612,12 +613,6 @@
       "title-restore-version": "Restaurar versión",
       "title-restoring-alertmanager-configuration": "Restaurando la configuración de Alertmanager"
     },
-    "alerts-activity-banner": {
-      "description": "Ya está disponible una página completamente nueva para gestionar el trabajo operativo de tus reglas de alerta gestionadas por Grafana. Comprueba qué alertas se están activando, analiza la información histórica, filtra y agrupa para mejorar la clasificación y el análisis de las causas raíz.",
-      "open-button": "Ver actividad de alertas",
-      "open-button-aria": "Abrir actividad de alertas",
-      "title": "¡La actividad de alertas ya está disponible!"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "Ordenar",
       "label-filter-placeholder-search-alerts-by-labels": "Buscar alertas por etiquetas",
@@ -792,7 +787,9 @@
         "value-in-transition": "Valor en transición"
       },
       "error": {
-        "server-error": "Error en la consulta del historial de estado de alerta: el servidor ha devuelto un error,"
+        "server-error": "Error en la consulta del historial de estado de alerta: el servidor ha devuelto un error,",
+        "server-error-description": "",
+        "title": ""
       },
       "filter": {
         "clear": "Borrar filtros",
@@ -3290,6 +3287,8 @@
         "title": ""
       },
       "import": {
+        "any": "",
+        "collapse-all": "",
         "empty-body": "",
         "empty-cta": "",
         "empty-learn-more": "",
@@ -3297,9 +3296,26 @@
         "error-body": "",
         "error-retry": "",
         "error-title": "",
+        "expand-all": "",
+        "inhibition-equal": "",
         "loading": "",
+        "no-matchers": "",
+        "parse-error-body": "",
+        "parse-error-title": "",
+        "resources": "",
+        "section": {
+          "contact-points": "",
+          "inhibition-rules": "",
+          "notification-policy": "",
+          "templates": "",
+          "time-intervals": ""
+        },
+        "staged-badge": "",
         "staged-description": "",
-        "staged-title": ""
+        "staged-title": "",
+        "view": "",
+        "policy-tree-routes_one": "",
+        "policy-tree-routes_other": ""
       },
       "tabs": {
         "alert-managers": "Administradores de alertas",
@@ -3996,6 +4012,9 @@
       "trace-id": "ID de seguimiento: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Ajustes de autenticación"
@@ -4418,6 +4437,9 @@
     "create-new": {
       "dashboard-group": ""
     },
+    "create-new-button": {
+      "generate-dashboard": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Este elemento no está en el mismo repositorio que los elementos seleccionados."
@@ -4828,6 +4850,7 @@
       "not-found": "<0>No se ha encontrado: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + botón derecho del ratón",
       "middle-mouse": "Botón central del ratón",
       "pan-title": "Desplazamiento:",
@@ -5396,6 +5419,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Automático",
       "options": {
         "custom-min-height": {
@@ -5413,6 +5437,11 @@
         "min-width-custom": "Ancho mínimo personalizado",
         "min-width-custom-clear": "Volver al ancho mínimo de columna estándar",
         "min-width-error": "Se requiere un número entre 50 y 2000"
+      },
+      "resize-intercept": {
+        "edit": "",
+        "header": "",
+        "switch": ""
       }
     },
     "canvas-actions": {
@@ -5560,6 +5589,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Personalizados",
       "row-actions": {
         "delete": "Eliminar fila",
@@ -5884,8 +5914,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Esto desagrupará todos los grupos anidados.",
-      "ungroup-nested-title": "¿Desagrupar grupos anidados?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} de {{numberOfPages}}",
@@ -6176,13 +6210,10 @@
         "show-in": ""
       },
       "annotations": {
-        "add-annotation": "",
         "add-annotation-query": "",
         "name-builtin": "",
         "name-disabled": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-annotation": "",
         "title-above-dashboard-count_one": "",
         "title-above-dashboard-count_other": "",
         "title-controls-menu-count_one": "",
@@ -6268,10 +6299,7 @@
       "links": {
         "add-link": "",
         "new-link": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-link": "",
-        "untitled": "",
         "title-above-dashboard_one": "",
         "title-above-dashboard_other": "",
         "title-controls-menu_one": "",
@@ -6371,11 +6399,9 @@
       "variables": {
         "add-variable": "",
         "change-type": "",
-        "reorder": "",
         "reorder-description": "",
         "select-type": "",
         "select-type-card-tooltip": "",
-        "select-variable": "",
         "top-placement-default": "",
         "title-controls-menu_one": "",
         "title-controls-menu_other": "",
@@ -6750,6 +6776,21 @@
       "title": "Aún no se han añadido enlaces del panel de control"
     }
   },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": ""
+    },
+    "modal": {
+      "title": ""
+    },
+    "prompt": {
+      "cancel": "",
+      "description": "",
+      "input-label": "",
+      "placeholder": "",
+      "submit": ""
+    }
+  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "Esta fuente de datos no admite filtros.",
@@ -6812,11 +6853,6 @@
       "delete-confirm": "Eliminar consulta de anotación",
       "delete-text": "¿Seguro que quieres eliminar: {{name}}?",
       "delete-title": "Eliminar consulta de anotación"
-    },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Notas"
-      }
     },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Utilizar consulta guardada"
@@ -7241,11 +7277,6 @@
       "delete-title": "Eliminar enlace",
       "unnamed": "Enlace sin nombre"
     },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Enlace"
-      }
-    },
     "link-options": {
       "icon": "Icono",
       "include-time-range": "Incluir el rango de tiempo actual",
@@ -7579,6 +7610,14 @@
       "disabled-tooltip": "Guarda el dashboard antes de crear reglas de alerta.",
       "new-alert-rule": "Nueva regla de alerta",
       "title-no-alerting-capable-query-found": "No se ha encontrado ninguna consulta con capacidad de alerta"
+    },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "",
+      "title": ""
+    },
+    "scripted-dashboards-disabled": {
+      "body": "",
+      "title": ""
     },
     "section-placement": {
       "top-row": "",
@@ -8610,7 +8649,24 @@
       "body-no-logs-volume-available": "No hay información de volumen disponible para las consultas y el intervalo de tiempo actuales."
     },
     "metrics-list": {
-      "search-placeholder": ""
+      "collapse-metric": "",
+      "error": "",
+      "expand-metric": "",
+      "filter-values": "",
+      "hide-values": "",
+      "labels-error": "",
+      "loading": "",
+      "loading-labels": "",
+      "loading-values": "",
+      "no-metrics": "",
+      "search-placeholder": "",
+      "show-more": "",
+      "show-more-metrics": "",
+      "show-more-values": "",
+      "show-values": "",
+      "sort-ascending": "",
+      "sort-descending": "",
+      "values-error": ""
     },
     "next-prev-result": {
       "aria-label-next": "Botón de siguiente resultado",
@@ -8853,6 +8909,7 @@
       "open-in-profiles-drilldown": "",
       "profiles-for-this-span": "",
       "related-logs": "",
+      "related-logs-no-logs-tooltip": "",
       "related-logs-tooltip": "",
       "session-for-this-span": ""
     },
@@ -9246,6 +9303,7 @@
       "name-lookup-field": "Campo de búsqueda"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Identificar automáticamente los datos de ubicación en función de los nombres de campo predeterminados",
         "description-coords": "Especificar campos de latitud y longitud",
@@ -9275,9 +9333,9 @@
     "description-mouse-wheel-zoom": "Habilitar el control del zoom a través de la rueda del ratón",
     "description-no-repeat": "Evita que el mapa se repita horizontalmente",
     "description-share-view": "Utiliza la misma vista en varios paneles. Nota: Es posible que sea necesario volver a cargar el dashboard.",
-    "description-show-attribution": "Mostrar la información de atribución de la fuente del mapa en la parte inferior derecha",
     "description-show-debug": "Mostrar información del mapa",
     "description-show-measure": "Mostrar herramientas para realizar mediciones en el mapa",
+    "description-show-optional-attribution": "",
     "description-show-scale": "Indicar la escala del mapa",
     "description-show-zoom": "Mostrar los botones de control del zoom en la esquina superior izquierda",
     "description-sync-view-variable": "Almacenar los límites de la vista en una variable del dashboard para usarlos en las consultas",
@@ -9338,9 +9396,9 @@
     "name-mouse-wheel-zoom": "Zoom con la rueda del ratón",
     "name-no-repeat": "Sin repetición de mapa",
     "name-share-view": "Compartir vista",
-    "name-show-attribution": "Mostrar atribución",
     "name-show-debug": "Mostrar depuración",
     "name-show-measure": "Mostrar herramientas de medición",
+    "name-show-optional-attribution": "",
     "name-show-scale": "Mostrar escala",
     "name-show-zoom": "Mostrar control de zoom",
     "name-sync-view-variable": "Sincronizar la vista con la variable del dashboard",
@@ -10022,6 +10080,14 @@
       "log-base": "Base de registro"
     },
     "builder": {
+      "annotation-options": {
+        "canvas-controls-desc": "",
+        "canvas-controls-name": "",
+        "clustering-desc": "",
+        "clustering-name": "",
+        "multi-lane-name": "",
+        "multi-row-desc": ""
+      },
       "annotations": "Anotaciones",
       "axis": {
         "category-axis": "Eje",
@@ -10357,9 +10423,13 @@
     "matchers": {
       "groups": {
         "annotation": "Anotaciones",
+        "annotation-description": "",
         "exemplar": "Ejemplos",
+        "exemplar-description": "",
         "nested": "Anidado",
-        "series": "Marco de datos"
+        "nested-description": "",
+        "series": "Marco de datos",
+        "series-description": ""
       },
       "labels": {
         "base-field-name": "{{name}} (nombre del campo base)",
@@ -10929,6 +10999,83 @@
       "read-more": "",
       "title": ""
     },
+    "overview": {
+      "get-started": {
+        "cards": {
+          "app-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "cloud-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "database-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "demo-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "hosted-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "infra-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "kubernetes": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "logs": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "opentelemetry": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "prometheus": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "visualize-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "website-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          }
+        },
+        "show-less": "",
+        "show-more": "",
+        "title": ""
+      },
+      "options": {
+        "all": "",
+        "attention": "",
+        "available": "",
+        "enabled": "",
+        "get-started": ""
+      },
+      "title": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10949,14 +11096,25 @@
       },
       "carousel-label": "",
       "carousel-roledescription": "",
-      "existing": "",
-      "frontend-observability": {
+      "connect-metrics": {
         "action": "",
         "context": "",
         "description": "",
-        "setup-action": "",
         "title": ""
       },
+      "enable-logs": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "enable-logs-k8s": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "existing": "",
       "go-to": "",
       "health": {
         "nodes_one": "",
@@ -10987,16 +11145,57 @@
         "pods_one": "",
         "pods_other": ""
       },
+      "kubernetes-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
+      "logs": {
+        "action": "",
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "title": "",
+        "volume": "",
+        "stats-sources_one": "",
+        "stats-sources_other": ""
+      },
+      "metrics": {
+        "action": "",
+        "action-explore": "",
+        "data-points-per-minute": "",
+        "datasource": "",
+        "disk-worst": "",
+        "series-trend": "",
+        "stats": "",
+        "title": "",
+        "view": "",
+        "disk-eta_one": "",
+        "disk-eta_other": "",
+        "disk-hosts_one": "",
+        "disk-hosts_other": "",
+        "names_one": "",
+        "names_other": "",
+        "series_one": "",
+        "series_other": "",
+        "stats-hosts_one": "",
+        "stats-hosts_other": ""
+      },
       "next": "",
       "no-data": {
         "badge": "",
         "connect": "",
         "description": "",
+        "description-partial": "",
+        "description-unknown": "",
         "popular-solutions": "",
         "solution-k6": "",
         "solution-kubernetes": "",
         "solution-synthetics": "",
-        "title": ""
+        "title": "",
+        "title-partial": ""
       },
       "pause": "",
       "previous": "",
@@ -11005,14 +11204,19 @@
       "show": "",
       "switch": "",
       "switchSolution": "",
-      "synthetic-monitoring": {
+      "title": "",
+      "traces": {
         "action": "",
-        "context": "",
-        "description": "",
-        "setup-action": "",
-        "title": ""
-      },
-      "title": ""
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "throughput": "",
+        "title": "",
+        "spans_one": "",
+        "spans_other": "",
+        "stats-services_one": "",
+        "stats-services_other": ""
+      }
     },
     "starred-dashboards-tab": {
       "empty": "",
@@ -12445,6 +12649,7 @@
     },
     "quick-add": {
       "aria-label": "Nuevo",
+      "generate-dashboard-button": "",
       "new-template-dashboard-button": ""
     },
     "rss-button": "Últimas entradas del blog"
@@ -13282,7 +13487,7 @@
         "repository-label": "Repositorios",
         "repository-read-write-admin": "Leer y escribir",
         "webhooks-label": "Webhooks",
-        "webhooks-read-write": "Leer y escribir"
+        "webhooks-read-write-delete": ""
       },
       "pr-workflow-description": "Permite a los usuarios elegir si desean abrir una solicitud de extracción al guardar los cambios. Si el repositorio no permite cambios directos en la rama principal, es posible que se siga requiriendo una solicitud de extracción.",
       "pr-workflow-label": "Habilitar la opción de solicitud de extracción al guardar",
@@ -14556,7 +14761,6 @@
     },
     "header": {
       "alert": "Alerta",
-      "expression": "Expresión",
       "pending-expression": "",
       "pending-expression-cancel": "Cancelar",
       "pending-transformation": "",
@@ -14570,6 +14774,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },
@@ -14578,6 +14783,7 @@
       "message": ""
     },
     "sidebar": {
+      "add": "",
       "add-below": "Añadir debajo de {{id}}",
       "add-expression": "Añadir expresión",
       "add-expression-disabled": "Las expresiones no son compatibles con la fuente de datos del dashboard.",
@@ -14597,6 +14803,7 @@
       "new-type": "Nueva {{type}}",
       "queries-empty": "",
       "queries-expressions": "Consultas y expresiones",
+      "stacked": "",
       "toggle-size": "Alternar tamaño de la barra lateral",
       "transformations": "Transformaciones",
       "transformations-empty": "",
@@ -15601,6 +15808,7 @@
     "description-column-filter": "Habilita/deshabilita los filtros de campo en la tabla",
     "description-frozen-columns": "",
     "description-min-column-width": "El ancho mínimo para el cambio de tamaño automático de las columnas",
+    "description-page-size": "",
     "description-styling-from-field": "Un campo que contiene objetos JSON con propiedades CSS",
     "description-tooltip-from-field": "",
     "frame-picker": {
@@ -15634,6 +15842,7 @@
     "name-hide-in-table": "Ocultar en la tabla",
     "name-max-height": "",
     "name-min-column-width": "Ancho mínimo de columna",
+    "name-page-size": "",
     "name-show-table-header": "Mostrar encabezado de tabla",
     "name-styling-from-field": "Estilo desde el campo",
     "name-tooltip-from-field": "",
@@ -15644,6 +15853,7 @@
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "ninguno",
     "placeholder-max-height": "",
+    "placeholder-page-size": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",
@@ -15800,18 +16010,29 @@
     },
     "editor": {
       "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
       "view-preview": "",
       "view-split": "",
       "view-write": ""
-    },
-    "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
-    },
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "Tema base",
@@ -17123,6 +17344,7 @@
       "delete-modal-confirm": "",
       "delete-modal-title": "",
       "folder-description": "",
+      "folder-description-folder-only": "",
       "folder-label": "",
       "moved": "",
       "name-exists": "",
@@ -17142,7 +17364,9 @@
       "moving": "",
       "title": "",
       "body_one": "",
-      "body_other": ""
+      "body_other": "",
+      "body-folder-only_one": "",
+      "body-folder-only_other": ""
     },
     "page": {
       "delete": "",

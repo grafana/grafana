@@ -6,11 +6,10 @@ import { Provider } from 'react-redux';
 import { type DataFrame, MutableDataFrame } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
 import {
-  type DataSourceSrv,
-  setDataSourceSrv,
   setPluginLinksHook,
   setPluginComponentsHook,
   useAppPluginInstalled,
+  reportInteraction,
 } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
@@ -22,6 +21,20 @@ import { transformDataFrames } from './utils/transform';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useAppPluginInstalled: jest.fn(),
+  reportInteraction: jest.fn(),
+}));
+
+// The summary-span minimap gradient emits fractional rgb() channels that real browsers accept
+// but jest-canvas-mock rejects. The canvas render is not exercised by these tests, so stub it.
+jest.mock('./components/TracePageHeader/SpanGraph/render-into-canvas', () => ({
+  ...jest.requireActual('./components/TracePageHeader/SpanGraph/render-into-canvas'),
+  __esModule: true,
+  default: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
 const mockUseAppPluginInstalled = jest.mocked(useAppPluginInstalled);
@@ -85,12 +98,6 @@ describe('TraceView', () => {
       isLoading: false,
       components: [],
     }));
-
-    setDataSourceSrv({
-      getInstanceSettings() {
-        return undefined;
-      },
-    } as DataSourceSrv);
   });
 
   it('renders TraceTimelineViewer', () => {
@@ -127,6 +134,34 @@ describe('TraceView', () => {
     await userEvent.click(spanView);
     screen.debug(screen.queryAllByText(/Span attributes/));
     expect(screen.queryByText(/Span attributes/)).toBeFalsy();
+  });
+
+  it('reports opening the detail of a summary span', async () => {
+    renderTraceView([frameSummary]);
+    const summarySpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
+    await userEvent.click(summarySpan);
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_traces_summary_span_detail_opened',
+      expect.objectContaining({ spanCount: 4 })
+    );
+  });
+
+  it('does not report a summary detail open for a normal span', async () => {
+    renderTraceViewNew();
+    const normalSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
+    await userEvent.click(normalSpan);
+    expect(reportInteraction).not.toHaveBeenCalledWith('grafana_traces_summary_span_detail_opened', expect.anything());
+  });
+
+  it('reports toggling the Summary attributes accordion', async () => {
+    renderTraceView([frameSummary]);
+    const summarySpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
+    await userEvent.click(summarySpan);
+    await userEvent.click(screen.getByText(/Summary attributes/));
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_traces_summary_attributes_toggled',
+      expect.objectContaining({ isOpen: true })
+    );
   });
 
   it('shows timeline ticks', () => {
@@ -446,6 +481,34 @@ const restoredResponse: TraceData & { spans: TraceSpanData[] } = {
       : span
   ),
 };
+
+const summaryResponse: TraceData & { spans: TraceSpanData[] } = {
+  ...response,
+  spans: response.spans.map((span, index) =>
+    index === 0
+      ? {
+          ...span,
+          tags: [
+            ...(span.tags ?? []),
+            { key: 'aggregation.is_summary', type: 'bool', value: true },
+            { key: 'aggregation.span_count', type: 'int64', value: 4 },
+          ],
+        }
+      : span
+  ),
+};
+
+const frameSummary = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      values: [summaryResponse],
+    },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
 
 const frameRestoredByAdaptiveTraces = new MutableDataFrame({
   fields: [

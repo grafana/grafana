@@ -5,7 +5,7 @@ import { type StackedEditorItem } from '../QueryEditorContext';
 import { getStackedItemKey, parseStackedItemType } from './utils';
 
 interface UseActiveStackedItemObserverArgs {
-  containerRef: RefObject<HTMLDivElement>;
+  containerRef: RefObject<HTMLDivElement | null>;
   itemsKey: string;
   onActiveItemChange: (item: StackedEditorItem) => void;
 }

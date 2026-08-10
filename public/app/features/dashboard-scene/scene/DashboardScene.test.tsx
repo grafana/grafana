@@ -2017,11 +2017,11 @@ describe('DashboardScene', () => {
 
   describe('When checking dashboard managed by an external system', () => {
     beforeEach(() => {
-      config.featureToggles.provisioning = true;
+      config.provisioningEnabled = true;
     });
 
     afterEach(() => {
-      config.featureToggles.provisioning = false;
+      config.provisioningEnabled = false;
     });
 
     it('should return true if the dashboard is managed', () => {
@@ -2699,7 +2699,7 @@ describe('DashboardScene', () => {
 
   describe('refreshPredefinedVariables', () => {
     beforeEach(() => {
-      setTestFlags({ globalDashboardVariables: true });
+      setTestFlags({ 'grafana.dashboardGlobalVariables': true });
       mockFetchPredefinedVariables.mockReset();
     });
 
