@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useFlagGlobalDashboardVariables } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 import { AnnoKeyIgnorePredefinedVariables, type ObjectMeta } from 'app/features/apiserver/types';
 
@@ -44,11 +44,8 @@ export function updateDashboardDenyList(dashboard: PredefinedVariablesDashboard,
   const meta = dashboard.state.meta;
   const annotations = readAnnotationMap(dashboard);
 
-  if (nextDenyList === undefined) {
-    delete annotations[AnnoKeyIgnorePredefinedVariables];
-  } else {
-    annotations[AnnoKeyIgnorePredefinedVariables] = serializeIgnorePredefinedVariables(nextDenyList);
-  }
+  // Mode 'all' maps to undefined (no denylist); persist [] so resolve treats it as explicit opt-in.
+  annotations[AnnoKeyIgnorePredefinedVariables] = serializeIgnorePredefinedVariables(nextDenyList ?? []);
 
   const nextMetaK8s: Partial<ObjectMeta> = {
     ...(meta.k8s ?? {}),
@@ -84,7 +81,7 @@ interface Props {
 export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
   const { meta } = dashboard.useState();
   const canEditDenyList = Boolean(meta.canSave) && !dashboard.managedResourceCannotBeEdited();
-  const globalDashboardVariablesEnabled = useFlagGlobalDashboardVariables();
+  const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
 
   const annotationValue = meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
   const mode = useMemo(() => {
@@ -125,7 +122,7 @@ export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
       label={t('dashboard.sidebar.predefined-variables.label', 'Predefined variables')}
       description={t(
         'dashboard.sidebar.predefined-variables.description',
-        'This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.'
+        'This dashboard does not receive global or folder-scoped variables by default. Choose which ones to include.'
       )}
       noMargin
       disabled={!canEditDenyList}

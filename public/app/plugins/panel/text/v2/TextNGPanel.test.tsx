@@ -235,6 +235,42 @@ describe('TextNGPanel', () => {
       });
     });
 
+    describe('line numbers toggled in the editor footer', () => {
+      const toggleLineNumbers = async (options: Props['options']) => {
+        replaceVariablesMock.mockImplementation((str: string) => str);
+        const onOptionsChange = jest.fn();
+
+        setup(Object.assign({}, defaultProps, { options, onOptionsChange }), CoreApp.PanelEditor);
+        await userEvent.click(await screen.findByRole('switch', { name: 'Line numbers' }));
+
+        return onOptionsChange;
+      };
+
+      it('keeps the existing code options', async () => {
+        const onOptionsChange = await toggleLineNumbers({
+          content: 'SELECT 1',
+          mode: TextMode.Code,
+          code: { language: CodeLanguage.Sql, showLineNumbers: false, showMiniMap: false },
+        });
+
+        expect(onOptionsChange).toHaveBeenCalledWith({
+          content: 'SELECT 1',
+          mode: TextMode.Code,
+          code: { language: CodeLanguage.Sql, showLineNumbers: true, showMiniMap: false },
+        });
+      });
+
+      it('fills in the defaults when no code options are set', async () => {
+        const onOptionsChange = await toggleLineNumbers({ content: 'SELECT 1', mode: TextMode.Code });
+
+        expect(onOptionsChange).toHaveBeenCalledWith({
+          content: 'SELECT 1',
+          mode: TextMode.Code,
+          code: { language: CodeLanguage.Plaintext, showLineNumbers: true, showMiniMap: false },
+        });
+      });
+    });
+
     it('does not render the inline editor in view mode', () => {
       const props = Object.assign({}, defaultProps, {
         options: { content: '# Hello', mode: TextMode.Markdown },

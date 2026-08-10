@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/foldertitle"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -110,6 +111,9 @@ type Reconciler struct {
 	log               log.Logger
 	metrics           *resource.VectorMetrics
 
+	// folderTitleResolver is uncached: event rate is low and fresh titles beat cache staleness.
+	folderTitleResolver *foldertitle.Resolver
+
 	// broadcaster is attached after construction by the resource server,
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
 
@@ -142,17 +146,18 @@ func New(opts Options) (*Reconciler, error) {
 		opts.LockRetryInterval = defaultLockRetryInterval
 	}
 	return &Reconciler{
-		storage:           opts.Storage,
-		vectorBackend:     opts.VectorBackend,
-		batchEmbedder:     opts.BatchEmbedder,
-		builders:          builders,
-		backfiller:        opts.Backfiller,
-		interval:          opts.Interval,
-		lockRetryInterval: opts.LockRetryInterval,
-		log:               log.New("embeddings_reconciler"),
-		metrics:           opts.Metrics,
-		pending:           make(map[string]*pendingEvent),
-		ensuredResources:  make(map[string]struct{}),
+		storage:             opts.Storage,
+		vectorBackend:       opts.VectorBackend,
+		batchEmbedder:       opts.BatchEmbedder,
+		builders:            builders,
+		backfiller:          opts.Backfiller,
+		interval:            opts.Interval,
+		lockRetryInterval:   opts.LockRetryInterval,
+		log:                 log.New("embeddings_reconciler"),
+		metrics:             opts.Metrics,
+		pending:             make(map[string]*pendingEvent),
+		ensuredResources:    make(map[string]struct{}),
+		folderTitleResolver: foldertitle.NewResolver(opts.Storage),
 	}, nil
 }
 
@@ -341,7 +346,7 @@ func (s *Reconciler) ensureResourceInitialized(ctx context.Context, b embed.Buil
 		return fmt.Errorf("ensure partition for %q: %w", r, err)
 	}
 
-	if err := s.vectorBackend.CreateBackfillJob(ctx, s.batchEmbedder.Model(), r, stoppingRV); err != nil {
+	if err := s.vectorBackend.CreateBackfillJob(ctx, s.batchEmbedder.Model(), r, stoppingRV, b.Version()); err != nil {
 		return fmt.Errorf("create backfill job for %q: %w", r, err)
 	}
 	s.ensuredResources[r] = struct{}{}
@@ -656,7 +661,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 
 	switch ev.action {
 	case resourcepb.WatchEvent_DELETED:
-		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+		if _, _, err := s.vectorBackend.DeleteRows(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
 			statusLabel = "delete_error"
 			return err
 		}
@@ -683,7 +688,13 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		Name:      ev.name,
 	}
 
-	items, err := builder.Extract(ctx, key, ev.value, "")
+	folderTitle, err := s.folderTitleResolver.Title(ctx, ev.namespace, embed.FolderUIDFromValue(ev.value))
+	if err != nil {
+		statusLabel = "folder_title_error"
+		return fmt.Errorf("resolve folder title: %w", err)
+	}
+
+	items, err := builder.Extract(ctx, key, ev.value, folderTitle)
 	if err != nil {
 		statusLabel = "extract_error"
 		return fmt.Errorf("extract: %w", err)
@@ -698,7 +709,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	// drop everything stored under this UID rather than leaving orphans.
 	if len(items) == 0 {
 		s.log.Info("skipping empty extract", "namespace", ev.namespace, "group", ev.group, "resource", ev.resource, "name", ev.name)
-		if err := s.vectorBackend.Delete(ctx, ev.namespace, model, builder.Resource(), ev.name); err != nil {
+		if _, _, err := s.vectorBackend.DeleteRows(ctx, ev.namespace, model, builder.Resource(), vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
 			statusLabel = "delete_error"
 			return err
 		}
@@ -753,7 +764,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 
 	var changed []vector.Vector
 	if len(toEmbed) > 0 {
-		changed, err = s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, toEmbed)
+		changed, err = s.batchEmbedder.Embed(ctx, ev.namespace, builder.Resource(), ev.rv, builder.Version(), toEmbed)
 		if err != nil {
 			statusLabel = "embed_error"
 			return fmt.Errorf("embed: %w", err)
@@ -763,7 +774,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	// UpsertReplaceSubresources commits the stale-delete and the new
 	// inserts atomically — a failure mid-way leaves the dashboard in
 	// its previous self-consistent state.
-	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, ev.namespace, model, builder.Resource(), uid, changed, desired); err != nil {
+	if err := s.vectorBackend.UpsertReplaceSubresources(ctx, ev.namespace, model, builder.Resource(), uid, changed, nil, desired); err != nil {
 		statusLabel = "upsert_error"
 		return fmt.Errorf("upsert: %w", err)
 	}

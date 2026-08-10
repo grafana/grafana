@@ -59,7 +59,7 @@ describe('parseIgnorePredefinedVariables', () => {
     ).toEqual([DENY_ALL_PREDEFINED]);
   });
 
-  it('treats invalid JSON as fail-open (undefined)', () => {
+  it('treats invalid JSON as undefined (same as absent)', () => {
     expect(
       parseIgnorePredefinedVariables({
         [AnnoKeyIgnorePredefinedVariables]: '{not-json',
@@ -119,12 +119,8 @@ describe('applyPredefinedVariableDenyList', () => {
 });
 
 describe('resolvePredefinedVariablesForDashboard', () => {
-  it('injects all when annotation is absent', () => {
-    expect(resolvePredefinedVariablesForDashboard(globalsAndFolder, {}).map((v) => v.spec.name)).toEqual([
-      'region',
-      'env',
-      'cluster',
-    ]);
+  it('injects none when annotation is absent', () => {
+    expect(resolvePredefinedVariablesForDashboard(globalsAndFolder, {})).toEqual([]);
   });
 
   it('injects all for empty denylist', () => {
@@ -159,8 +155,8 @@ describe('resolvePredefinedVariablesForDashboard', () => {
 });
 
 describe('mayInjectAnyPredefinedVariables', () => {
-  it('is true for absent annotation', () => {
-    expect(mayInjectAnyPredefinedVariables({})).toBe(true);
+  it('is false for absent annotation', () => {
+    expect(mayInjectAnyPredefinedVariables({})).toBe(false);
   });
 
   it('is true for empty denylist', () => {

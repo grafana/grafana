@@ -11,6 +11,7 @@ import (
 type VectorMetrics struct {
 	SearchDuration               *prometheus.HistogramVec
 	EmbedDuration                *prometheus.HistogramVec
+	EmbedTokensTotal             *prometheus.CounterVec
 	RerankDuration               *prometheus.HistogramVec
 	RerankCandidatesTotal        *prometheus.CounterVec
 	RerankDroppedResultsTotal    *prometheus.CounterVec
@@ -28,6 +29,9 @@ type VectorMetrics struct {
 	QueryCacheEvictionsTotal             prometheus.Counter
 	RateLimitedRequestsTotal             prometheus.Counter
 	RateLimiterErrorsTotal               prometheus.Counter
+
+	WriteDuration  *prometheus.HistogramVec
+	WriteRowsTotal *prometheus.CounterVec
 }
 
 func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
@@ -48,6 +52,10 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"model", "task", "status"}),
+		EmbedTokensTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_embed_tokens_total",
+			Help: "Total input tokens sent to the embedding provider, as reported by the provider. Multiply by the model's per-token price for spend.",
+		}, []string{"model", "task"}),
 		RerankDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "vector_storage_rerank_duration_seconds",
 			Help:                            "Time (in seconds) spent in a single rerank Scorer call to the provider (Vertex/Bedrock), labeled by model and status (ok|error|timeout).",
@@ -124,5 +132,17 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			Name: "vector_storage_rate_limiter_errors_total",
 			Help: "Total number of fail-closed VectorSearch rejections caused by the rate-limiter backend being unavailable. Distinct from rate_limited_total (genuine over-quota rejections).",
 		}),
+		WriteDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "vector_storage_write_duration_seconds",
+			Help:                            "Time (in seconds) spent serving VectorStore write RPCs, labeled by rpc and gRPC status code.",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"rpc", "status_code"}),
+		WriteRowsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_write_rows_total",
+			Help: "Rows written or deleted by VectorStore RPCs, labeled by rpc, group, and resource.",
+		}, []string{"rpc", "group", "resource"}),
 	}
 }

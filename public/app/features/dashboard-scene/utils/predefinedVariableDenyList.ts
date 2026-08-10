@@ -77,9 +77,9 @@ export function countPredefinedVariableOrigins(variables: VariableKind[]): {
 /**
  * Parse the dashboard ignore/deny annotation.
  *
- * - Missing / empty annotation → `undefined` (inject all; fail-open default)
- * - Present but invalid JSON / non-string-array → `undefined` (fail open)
- * - Valid JSON array of strings → that deny list
+ * - Missing / empty annotation → `undefined` (opted out; inject none)
+ * - Present but invalid JSON / non-string-array → `undefined` (same as absent)
+ * - Valid JSON array of strings → that deny list (`[]` means inject all)
  */
 export function parseIgnorePredefinedVariables(
   annotations?: Record<string, string | undefined> | null
@@ -139,14 +139,19 @@ export function applyPredefinedVariableDenyList(variables: VariableKind[], denyL
 /**
  * Resolve which predefined variables to inject for a dashboard.
  *
- * Absent or empty deny list → inject all. Otherwise apply the deny filter.
+ * Absent / invalid annotation → inject none (opt-out by default).
+ * Empty deny list (`[]`) → inject all (explicit opt-in).
+ * Otherwise apply the deny filter.
  */
 export function resolvePredefinedVariablesForDashboard(
   variables: VariableKind[],
   input: PredefinedVariableResolutionInput
 ): VariableKind[] {
   const denyList = parseIgnorePredefinedVariables(input.annotations);
-  if (denyList === undefined || denyList.length === 0) {
+  if (denyList === undefined) {
+    return [];
+  }
+  if (denyList.length === 0) {
     return variables;
   }
   return applyPredefinedVariableDenyList(variables, denyList);
@@ -158,7 +163,10 @@ export function resolvePredefinedVariablesForDashboard(
  */
 export function mayInjectAnyPredefinedVariables(input: PredefinedVariableResolutionInput): boolean {
   const denyList = parseIgnorePredefinedVariables(input.annotations);
-  if (denyList === undefined || denyList.length === 0) {
+  if (denyList === undefined) {
+    return false;
+  }
+  if (denyList.length === 0) {
     return true;
   }
   return !denyList.includes(DENY_ALL_PREDEFINED);

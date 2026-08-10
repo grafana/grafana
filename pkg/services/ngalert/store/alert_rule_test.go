@@ -2738,14 +2738,19 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 				expectedRules: []*models.AlertRule{rule1, rule2, rule3, rule4},
 			},
 			{
-				name:          "should not find rules when word order is reversed",
+				name:          "should find rules when word order is reversed",
 				titleSearch:   "usage cpu",
-				expectedRules: []*models.AlertRule{},
+				expectedRules: []*models.AlertRule{rule1},
 			},
 			{
-				name:          "should find multiple rules matching sequential words",
+				name:          "should find multiple rules matching every word",
 				titleSearch:   "usage alert",
 				expectedRules: []*models.AlertRule{rule1, rule2},
+			},
+			{
+				name:          "should not find rules when only some words match",
+				titleSearch:   "cpu nonexistent",
+				expectedRules: []*models.AlertRule{},
 			},
 			{
 				name:          "should handle extra whitespace between words",
@@ -2755,6 +2760,16 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 			{
 				name:          "should handle multiple words with partial matches",
 				titleSearch:   "aPp erR",
+				expectedRules: []*models.AlertRule{rule4},
+			},
+			{
+				name:          "should ignore words below the minimum term length",
+				titleSearch:   "cpu is",
+				expectedRules: []*models.AlertRule{rule1},
+			},
+			{
+				name:          "should still filter when every word is below the minimum term length",
+				titleSearch:   "ra on",
 				expectedRules: []*models.AlertRule{rule4},
 			},
 		}
