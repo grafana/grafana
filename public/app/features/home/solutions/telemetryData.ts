@@ -180,10 +180,9 @@ export interface MetricsDiskPressure {
   /** Hosts whose fullest filesystem exceeds the pressure threshold. */
   hostsAbove: number;
   worstInstance: string | null;
+  worstMount: string | null;
   /** 0..1 fill ratio of the worst host. */
   worstRatio: number | null;
-  /** Linear fill ETA for the shown filesystem; null when it cannot be identified, is not shrinking, or is beyond the clamp. */
-  hoursToFull: number | null;
 }
 
 export interface MetricsActivity {
@@ -197,17 +196,18 @@ export interface MetricsActivity {
   hosts: number | null;
   /** Active-series trend over the last 24h. */
   seriesSparkline: FieldSparkline | null;
-  /** null when below threshold or node metrics absent. */
-  disk: MetricsDiskPressure | null;
 }
 
 // Threshold and ETA clamp for the disk-pressure alert row (design/judgment constants).
 const DISK_PRESSURE_RATIO = 0.9;
 const DISK_ETA_MAX_HOURS = 48;
+const METRICS_ALERT_TIMEOUT_MS = 30_000;
 
 const FS_EXCLUDE = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
 // Per-filesystem fill ratio; pseudo filesystems excluded.
 const FS_USED = `(1 - node_filesystem_avail_bytes{${FS_EXCLUDE}} / node_filesystem_size_bytes{${FS_EXCLUDE}})`;
+/** Counts hosts whose fullest real filesystem exceeds the card threshold. */
+export const METRICS_DISK_PRESSURE_QUERY = `max by (instance) (${FS_USED}) > ${DISK_PRESSURE_RATIO}`;
 
 // Active series, cloud-first: Mimir's cardinality API, then vanilla Prometheus TSDB head stats.
 // Both absent/broken → null and the metric-name count carries the card instead.
@@ -234,7 +234,7 @@ async function fetchActiveSeries(instance: DataSourceWithBackend): Promise<numbe
 
 // Linear ETA until the shown (fullest) filesystem fills. Growing/steady filesystems drop
 // out via `> 0`; past the clamp a linear estimate is noise.
-async function fetchDiskHoursToFull(
+export async function fetchMetricsDiskHoursToFull(
   instanceLabel: string,
   mountpoint: string,
   ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
@@ -245,11 +245,45 @@ async function fetchDiskHoursToFull(
     {
       eta: `min((node_filesystem_avail_bytes${selector} / -deriv(node_filesystem_avail_bytes${selector}[6h])) > 0) / 3600`,
     },
-    ds
+    ds,
+    PROBE_TIMEOUT_MS
   )
     .then((frames) => readScalar(frames, 'eta'))
     .catch(() => null);
   return hours != null && hours > 0 && hours <= DISK_ETA_MAX_HOURS ? hours : null;
+}
+
+export async function fetchMetricsDiskPressure(
+  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
+): Promise<MetricsDiskPressure | null> {
+  const frames = await runInstantQueries(
+    {
+      diskHosts: `count(${METRICS_DISK_PRESSURE_QUERY})`,
+      diskWorst: `topk(1, ${FS_USED})`,
+    },
+    ds,
+    METRICS_ALERT_TIMEOUT_MS,
+    true
+  ).catch(() => null);
+  if (!frames) {
+    return null;
+  }
+
+  // Empty diskHosts vector (nobody above threshold) reads as null — zero here.
+  const hostsAbove = readScalar(frames, 'diskHosts') ?? 0;
+  if (hostsAbove < 1) {
+    return null;
+  }
+
+  const worst = readLabeledScalar(frames, 'diskWorst', 'instance');
+  const worstMount = readLabeledScalar(frames, 'diskWorst', 'mountpoint')?.label ?? null;
+  const worstInstance = worst?.label ?? null;
+  return {
+    hostsAbove,
+    worstInstance,
+    worstMount,
+    worstRatio: worst?.value ?? null,
+  };
 }
 
 // prometheus_tsdb_head_series is a Prometheus self-monitoring metric. On multi-tenant
@@ -307,10 +341,9 @@ async function resolveUsageQueries(): Promise<UsageQueries | null> {
 }
 
 /**
- * Active-series count, metric-name count, node_exporter host count, the 24h active-series
- * sparkline, and disk pressure for the worst host. Every field fails soft to null; the card
- * drops when nothing renderable remains. Never a matcher-less series query — cardinality on
- * large tenants is prohibitive.
+ * Active-series count, metric-name count, node_exporter host count, and the 24h active-series
+ * sparkline. Every field fails soft to null; the card drops when nothing renderable remains.
+ * Never a matcher-less series query — cardinality on large tenants is prohibitive.
  */
 export async function fetchMetricsActivity(
   ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
@@ -321,7 +354,6 @@ export async function fetchMetricsActivity(
     names: null,
     hosts: null,
     seriesSparkline: null,
-    disk: null,
   };
   const instance = await resolveBackendInstance(ds.uid);
   if (!instance) {
@@ -347,8 +379,6 @@ export async function fetchMetricsActivity(
       {
         ...(mimir ? {} : { dpm: PROM_DPM_QUERY }),
         hosts: 'count(node_uname_info)',
-        diskHosts: `count(max by (instance) (${FS_USED}) > ${DISK_PRESSURE_RATIO})`,
-        diskWorst: `topk(1, ${FS_USED})`,
       },
       ds,
       undefined,
@@ -375,19 +405,5 @@ export async function fetchMetricsActivity(
   const usageDpm = usageStats?.dpm != null && usageStats.dpm > 0 ? usageStats.dpm : null;
   const dataPointsPerMinute = usageDpm ?? (promDpm != null && promDpm > 0 ? promDpm : null);
   const hosts = healthFrames ? readScalar(healthFrames, 'hosts') : null;
-  // Empty diskHosts vector (nobody above threshold) reads as null — zero here.
-  const hostsAbove = healthFrames ? (readScalar(healthFrames, 'diskHosts') ?? 0) : 0;
-  const worst = healthFrames ? readLabeledScalar(healthFrames, 'diskWorst', 'instance') : null;
-  const worstMount = healthFrames ? (readLabeledScalar(healthFrames, 'diskWorst', 'mountpoint')?.label ?? null) : null;
-  let disk: MetricsDiskPressure | null = null;
-  if (hostsAbove >= 1) {
-    const worstInstance = worst?.label ?? null;
-    disk = {
-      hostsAbove,
-      worstInstance,
-      worstRatio: worst?.value ?? null,
-      hoursToFull: worstInstance && worstMount ? await fetchDiskHoursToFull(worstInstance, worstMount, ds) : null,
-    };
-  }
-  return { series: usageSeries ?? series, dataPointsPerMinute, names, hosts, seriesSparkline, disk };
+  return { series: usageSeries ?? series, dataPointsPerMinute, names, hosts, seriesSparkline };
 }
