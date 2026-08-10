@@ -1469,13 +1469,17 @@ const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx
 // extra height instead, the same as a wrapped free-text column.
 const measureMarkdownColWidth: MeasureColWidth = () => 0;
 
-// JSON cells pretty-print their value to a multi-line block rendered as `pre`. Its total character
-// count is dominated by newlines and indentation, so measuring it like plain text pins the column to
-// MAX_AUTO_WIDTH; size it to its widest line instead — what the cell actually shows per line of the
-// block. Measuring the line rather than the raw value also keeps the width stable regardless of how
-// field.display was formatted, so it doesn't jump when the column is remeasured (e.g. on sort).
-const measureJsonColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
-  measureLongestLineWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
+// JSON cells pretty-print their value to a multi-line block, but how that block lays out depends on
+// wrapping. With wrapText on it renders as `pre`/`pre-line` — newlines preserved, one visible line
+// per JSON line — so the width is the widest line. Without wrapping the newlines collapse and it
+// renders on a single line, so the width is the whole value (bounded by MAX_AUTO_WIDTH). Sizing an
+// unwrapped column to its widest line would under-measure the collapsed text and clip it, so pick
+// the measurement to match the layout. Counting the pretty text (indentation included) slightly
+// over-estimates the collapsed width, which errs roomier — the safe direction against clipping.
+const measureJsonColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) => {
+  const measure = shouldTextWrap(field) ? measureLongestLineWidth : measureLongestContentWidth;
+  return measure(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
+};
 
 // Singleton registry mirroring the buildCellHeightMeasurers factory map: cell types that size
 // differently from the default text measurement register here; anything absent falls back to
