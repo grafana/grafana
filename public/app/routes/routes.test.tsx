@@ -52,10 +52,4 @@ describe('admin route guards', () => {
 
     expect(getRouteRolesGuard('/admin/users')()).toEqual([]);
   });
-
-  // The /admin landing page mirrors the backend `reqOrgAdmin` middleware (an org-role check),
-  // so it guards on roles rather than an RBAC action.
-  it('restricts /admin landing page to org admins and server admins', () => {
-    expect(getRouteRolesGuard('/admin')()).toEqual(['Admin', 'ServerAdmin']);
-  });
 });

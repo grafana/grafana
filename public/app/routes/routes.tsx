@@ -357,7 +357,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     // ADMIN
     {
       path: '/admin',
-      roles: () => ['Admin', 'ServerAdmin'],
       component: () => <NavLandingPage navId="cfg" header={<ConnectionsRedirectNotice />} />,
     },
     {
