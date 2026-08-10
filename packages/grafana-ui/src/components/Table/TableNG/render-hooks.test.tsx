@@ -21,7 +21,12 @@ import { getTextColorForBackground } from '../../../utils/colors';
 import { type PanelContext } from '../../PanelChrome';
 
 import { type HeaderCell } from './components/HeaderCell';
-import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
+import {
+  type ColumnBuildConfig,
+  prepareFieldsForDisplay,
+  useColumnBuilderFromFields,
+  useDataGridRows,
+} from './render-hooks';
 import { type FilterType, type NestedRowEntry, type TableColumn, type TableRow, type TableSummaryRow } from './types';
 import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from './utils';
 
@@ -499,5 +504,62 @@ describe('useColumnBuilderFromFields', () => {
       const headerProps = getHeaderCellProps(result.columns[0]);
       expect(headerProps.crossFilterTailRows).toEqual(topLevelScope);
     });
+  });
+});
+
+// -----------------------------------------------------------------------------
+// prepareFieldsForDisplay
+// -----------------------------------------------------------------------------
+
+describe('prepareFieldsForDisplay', () => {
+  const baseDisplay = (v: unknown) => ({ text: String(v), numeric: NaN });
+
+  it('attaches the JSON pretty-printer to an `other` field without mutating the original', () => {
+    const field: Field = {
+      name: 'j',
+      type: FieldType.other,
+      values: [{ a: 1 }],
+      config: {},
+      display: baseDisplay,
+    };
+    const originalDisplay = field.display;
+
+    const [prepared] = prepareFieldsForDisplay([field], createTheme());
+
+    // the original field is left untouched — no shared-object mutation
+    expect(field.display).toBe(originalDisplay);
+    // the prepared field is a copy carrying the JSON display
+    expect(prepared).not.toBe(field);
+    expect(prepared.display).not.toBe(originalDisplay);
+    expect(prepared.display!({ a: 1 }).text).toBe(JSON.stringify({ a: 1 }, null, ' '));
+  });
+
+  it('attaches the JSON pretty-printer to an explicit JSONView cell', () => {
+    const field: Field = {
+      name: 'j',
+      type: FieldType.string,
+      values: ['{"a":1}'],
+      config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+      display: baseDisplay,
+    };
+
+    const [prepared] = prepareFieldsForDisplay([field], createTheme());
+
+    expect(prepared).not.toBe(field);
+    expect(prepared.display!('{"a":1}').text).toBe('{\n "a": 1\n}');
+  });
+
+  it('returns fields that need no display processor by reference, unchanged', () => {
+    const field: Field = {
+      name: 's',
+      type: FieldType.string,
+      values: ['x'],
+      config: { custom: { cellOptions: { type: TableCellDisplayMode.Auto } } },
+      display: baseDisplay,
+    };
+
+    const [prepared] = prepareFieldsForDisplay([field], createTheme());
+
+    expect(prepared).toBe(field);
   });
 });
