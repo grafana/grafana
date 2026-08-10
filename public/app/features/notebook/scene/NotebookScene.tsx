@@ -30,24 +30,10 @@ export interface NotebookSceneState extends SceneObjectState {
   timePicker: SceneTimePicker;
   refreshPicker: SceneRefreshPicker;
   hideTimeControls?: boolean;
-  /** Slot for notebook-owned drawers and modals; nothing renders here in the read-only POC. */
   overlay?: SceneObject;
-  /** Always present — required for the time pickers and panel queries. Narrowed from the base's optional. */
   $timeRange: SceneTimeRange;
 }
 
-/**
- * The notebook scene root, composed from @grafana/scenes primitives — deliberately NOT a
- * DashboardScene (team decision, Notebook × Assistant 2026-08-05, point 1). A notebook shares the
- * dashboard's rendering stack (VizPanel, query runners, time propagation, cursor sync) but none of
- * its product surface: no edit-mode transaction, no save drawer, no dashboard panel menu, no
- * dashboard URL keys, and none of the dashboard tracking (a notebook open must not emit
- * dashboard-view analytics or start a dashboard-edit journey).
- *
- * Time range and refresh sync to the URL through SceneTimeRange (`from`/`to`/`timezone`) and
- * SceneRefreshPicker (`refresh`) themselves — no scene-level URL sync handler is needed, and no
- * dashboard chrome keys (`editPanel`, `editview`, `shareView`, `inspect`) exist at all.
- */
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
   public static Component = NotebookSceneRenderer;
 
@@ -55,10 +41,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     super({
       ...state,
       $behaviors: [
-        // Shared crosshair across the notebook's panels. The notebook spec has no cursorSync
-        // field yet, so this is a fixed default rather than a persisted preference.
         new behaviors.CursorSync({ sync: DashboardCursorSync.Crosshair }),
-        // Coordinated query cancellation across all panels in the document.
         new behaviors.SceneQueryController(),
         ...(state.$behaviors ?? []),
       ],

@@ -16,11 +16,6 @@ interface NotebookHeader {
 
 /**
  * Builds the notebook layout manager from the spec's layout + elements.
- *
- * Panels are constructed from the shared dashboard-free core (buildVizPanelState /
- * buildLibraryPanelState): no panel menu, no header actions, no dashboard panel context — those
- * are dashboard chrome that resolves the root via getDashboardSceneFor and would throw under the
- * composed NotebookScene. The notebook's own cell affordances replace them later.
  */
 export function deserializeNotebookLayout(
   layout: NotebookLayoutKind,

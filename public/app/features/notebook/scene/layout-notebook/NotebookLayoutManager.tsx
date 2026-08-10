@@ -28,8 +28,6 @@ interface NotebookLayoutManagerState extends SceneObjectState {
   // dependency cycle.
   title?: string;
   tags?: string[];
-  // Mirrored from the scene's edit mode so cell chrome (drag handles, insert buttons, inline
-  // editors) can be gated without reaching up to the scene. Nothing reads it yet.
   isEditing?: boolean;
 }
 
