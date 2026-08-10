@@ -224,13 +224,9 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
 export function MaxDataPointsOption({
   value,
   onChange,
-  onBlur,
-  onKeyDown,
 }: {
   value: string;
   onChange: (value: string) => void;
-  onBlur: () => void;
-  onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 }) {
   return (
     <InlineField
@@ -247,8 +243,6 @@ export function MaxDataPointsOption({
         placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
         onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        onBlur={onBlur}
-        onKeyDown={onKeyDown}
         value={value}
       />
     </InlineField>
@@ -258,13 +252,13 @@ export function MaxDataPointsOption({
 export function MinIntervalOption({
   value,
   onChange,
-  onBlur,
-  onKeyDown,
+  invalid,
+  error,
 }: {
   value: string;
   onChange: (value: string) => void;
-  onBlur: () => void;
-  onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  invalid?: boolean;
+  error?: string;
 }) {
   return (
     <InlineField
@@ -276,6 +270,8 @@ export function MinIntervalOption({
           your data is written every minute.
         </Trans>
       }
+      invalid={invalid}
+      error={error}
     >
       <Input
         type="text"
@@ -283,8 +279,6 @@ export function MinIntervalOption({
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
         onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
-        onBlur={onBlur}
-        onKeyDown={onKeyDown}
         value={value}
       />
     </InlineField>

@@ -1,9 +1,18 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2, type RelativeTimeRange, getDefaultRelativeTimeRange, rangeUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, InlineField, RelativeTimeRangePicker, Toggletip, clearButtonStyles, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Icon,
+  InlineField,
+  RelativeTimeRangePicker,
+  Stack,
+  Toggletip,
+  clearButtonStyles,
+  useStyles2,
+} from '@grafana/ui';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { TimeRangeLabel } from '../TimeRangeLabel';
@@ -28,33 +37,38 @@ export const QueryOptions = ({
   const styles = useStyles2(getStyles);
 
   const [showOptions, setShowOptions] = useState(false);
-  const [localMaxDataPoints, setLocalMaxDataPoints] = useState(queryOptions.maxDataPoints?.toString() ?? '');
-  const [localMinInterval, setLocalMinInterval] = useState(queryOptions.minInterval ?? '');
+  const [localMaxDataPoints, setLocalMaxDataPoints] = useState(queryOptions?.maxDataPoints?.toString() ?? '');
+  const [localMinInterval, setLocalMinInterval] = useState(queryOptions?.minInterval ?? '');
+  const [intervalError, setIntervalError] = useState<string | undefined>(undefined);
 
-  // Keep local state in sync when external props change
   useEffect(() => {
     setLocalMaxDataPoints(queryOptions.maxDataPoints?.toString() ?? '');
     setLocalMinInterval(queryOptions.minInterval ?? '');
+    setIntervalError(undefined);
   }, [queryOptions.maxDataPoints, queryOptions.minInterval]);
 
-  const stateRef = useRef({ localMaxDataPoints, localMinInterval, queryOptions, onChangeQueryOptions, index });
-  stateRef.current = { localMaxDataPoints, localMinInterval, queryOptions, onChangeQueryOptions, index };
+  const handleMinIntervalChange = (value: string) => {
+    setLocalMinInterval(value);
+    setIntervalError(undefined);
+  };
 
-  const commitOptions = useCallback(() => {
-    const { localMaxDataPoints, localMinInterval, queryOptions, onChangeQueryOptions, index } = stateRef.current;
-    
-    let validatedMaxDataPoints = queryOptions.maxDataPoints;
-    let validatedMinInterval = queryOptions.minInterval;
-    let newLocalMaxDataPoints = localMaxDataPoints;
-    let newLocalMinInterval = localMinInterval;
+  const resetOptions = () => {
+    setLocalMaxDataPoints(queryOptions?.maxDataPoints?.toString() ?? '');
+    setLocalMinInterval(queryOptions?.minInterval ?? '');
+    setIntervalError(undefined);
+  };
+
+  const applyOptions = () => {
+    let validatedMaxDataPoints: number | undefined = queryOptions.maxDataPoints;
+    let validatedMinInterval: string | undefined = queryOptions.minInterval;
+    let nextLocalMaxDataPoints = localMaxDataPoints;
 
     const maxDataPointsNumber = parseInt(localMaxDataPoints, 10);
     if (!isNaN(maxDataPointsNumber) && maxDataPointsNumber !== 0) {
       validatedMaxDataPoints = maxDataPointsNumber;
     } else {
-      // Clear the value if the input is intentionally empty, or if an invalid number/zero was entered
       validatedMaxDataPoints = undefined;
-      newLocalMaxDataPoints = '';
+      nextLocalMaxDataPoints = '';
     }
 
     if (localMinInterval !== '') {
@@ -62,42 +76,28 @@ export const QueryOptions = ({
         rangeUtil.intervalToMs(localMinInterval);
         validatedMinInterval = localMinInterval;
       } catch (e) {
-        // Invalid interval, revert input to last valid value
-        newLocalMinInterval = queryOptions.minInterval ?? '';
-        validatedMinInterval = queryOptions.minInterval;
+        setIntervalError(
+          t('alerting.query-options.invalid-interval-error', 'Invalid interval format. Examples: 1s, 5m, 1h')
+        );
+        return;
       }
     } else {
       validatedMinInterval = undefined;
-      newLocalMinInterval = '';
     }
 
-    if (newLocalMaxDataPoints !== localMaxDataPoints) {
-      setLocalMaxDataPoints(newLocalMaxDataPoints);
-    }
-    
-    if (newLocalMinInterval !== localMinInterval) {
-      setLocalMinInterval(newLocalMinInterval);
-    }
+    setLocalMaxDataPoints(nextLocalMaxDataPoints);
+    setIntervalError(undefined);
 
-    if (validatedMaxDataPoints !== queryOptions.maxDataPoints || validatedMinInterval !== queryOptions.minInterval) {
-      onChangeQueryOptions(
-        {
-          maxDataPoints: validatedMaxDataPoints,
-          minInterval: validatedMinInterval,
-        },
-        index
-      );
-    }
-  }, []);
+    onChangeQueryOptions(
+      {
+        maxDataPoints: validatedMaxDataPoints,
+        minInterval: validatedMinInterval,
+      },
+      index
+    );
 
-  const onKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === 'Enter') {
-        commitOptions();
-      }
-    },
-    [commitOptions]
-  );
+    setShowOptions(false);
+  };
 
   const separator = <span>, </span>;
 
@@ -114,25 +114,36 @@ export const QueryOptions = ({
                 />
               </InlineField>
             )}
-            <MaxDataPointsOption 
-              value={localMaxDataPoints} 
-              onChange={setLocalMaxDataPoints} 
-              onBlur={commitOptions}
-              onKeyDown={onKeyDown}
+            <MaxDataPointsOption
+              value={localMaxDataPoints}
+              onChange={setLocalMaxDataPoints}
             />
-            <MinIntervalOption 
-              value={localMinInterval} 
-              onChange={setLocalMinInterval} 
-              onBlur={commitOptions}
-              onKeyDown={onKeyDown}
+            <MinIntervalOption
+              value={localMinInterval}
+              onChange={handleMinIntervalChange}
+              invalid={!!intervalError}
+              error={intervalError}
             />
+            <Stack direction="row" justifyContent="flex-end">
+              <Button
+                size="sm"
+                onClick={applyOptions}
+              >
+                <Trans i18nKey="alerting.query-options.apply-button">Apply</Trans>
+              </Button>
+            </Stack>
           </div>
         }
         closeButton={true}
         placement="bottom-start"
-        onClose={commitOptions}
+        show={showOptions}
+        onOpen={() => setShowOptions(true)}
+        onClose={() => {
+          resetOptions();
+          setShowOptions(false);
+        }}
       >
-        <button type="button" className={styles.actionLink} onClick={() => setShowOptions(!showOptions)}>
+        <button type="button" className={styles.actionLink}>
           <Trans i18nKey="alerting.query-options.button-options">Options</Trans>{' '}
           {showOptions ? <Icon name="angle-right" /> : <Icon name="angle-down" />}
         </button>
@@ -172,7 +183,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     queryOptions: css({
-      '> div': {
+      '> div:not(:last-child)': {
         justifyContent: 'space-between',
       },
     }),
@@ -192,3 +203,4 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
