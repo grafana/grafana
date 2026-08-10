@@ -293,7 +293,8 @@
       "metadata": {
         "name": "alertingAlertsActivityBanner",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-05T11:22:32Z"
       },
       "spec": {
         "description": "Shows a promotional banner for the Alerts Activity feature on the Rule List page",
@@ -1058,6 +1059,20 @@
     },
     {
       "metadata": {
+        "name": "assistant.dashboardPlanning",
+        "resourceVersion": "1785916087451",
+        "creationTimestamp": "2026-08-05T07:48:07Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "assistant.frontend.tools.dashboardTemplates",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -1598,6 +1613,21 @@
     },
     {
       "metadata": {
+        "name": "dashboard.generation",
+        "resourceVersion": "1785840164813",
+        "creationTimestamp": "2026-08-04T10:42:44Z",
+        "deletionTimestamp": "2026-08-05T07:48:07Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard prompt",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.notebooks",
         "resourceVersion": "1783509818865",
         "creationTimestamp": "2026-07-08T11:23:38Z"
@@ -1663,6 +1693,36 @@
       "spec": {
         "description": "Enables the dashboard filters overview pane",
         "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardGeneration",
+        "resourceVersion": "1785828839880",
+        "creationTimestamp": "2026-08-04T07:33:59Z",
+        "deletionTimestamp": "2026-08-04T10:42:44Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard prompt",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardGenerationWizard",
+        "resourceVersion": "1783598235144",
+        "creationTimestamp": "2026-07-09T11:57:15Z",
+        "deletionTimestamp": "2026-08-04T07:33:59Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard wizard",
+        "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "false"
@@ -2111,6 +2171,21 @@
     },
     {
       "metadata": {
+        "name": "datetime.useLuxon",
+        "resourceVersion": "1785947524842",
+        "creationTimestamp": "2026-08-05T16:32:04Z"
+      },
+      "spec": {
+        "description": "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "deletedFolderResourceCleanup",
         "resourceVersion": "1783997108632",
         "creationTimestamp": "2026-07-14T02:45:08Z"
@@ -2148,6 +2223,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "disableScriptedDashboards",
+        "resourceVersion": "1785944490040",
+        "creationTimestamp": "2026-08-05T15:41:30Z"
+      },
+      "spec": {
+        "description": "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
+        "stage": "deprecated",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -2633,7 +2722,8 @@
       "metadata": {
         "name": "frontendService.settingsSourceFilter",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-06T11:53:39Z"
       },
       "spec": {
         "description": "Adds a label filter for source=us when fetching settings from the settings service in the frontend service",
@@ -2740,6 +2830,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.dashboardGlobalVariables",
+        "resourceVersion": "1785434853665",
+        "creationTimestamp": "2026-07-30T18:07:33Z"
+      },
+      "spec": {
+        "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },
@@ -2994,6 +3097,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.ofrepRootUrl",
+        "resourceVersion": "1786015306366",
+        "creationTimestamp": "2026-08-06T11:21:46Z"
+      },
+      "spec": {
+        "description": "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.onDemandDiagnostics",
         "resourceVersion": "1782469062023",
         "creationTimestamp": "2026-06-26T10:14:02Z",
@@ -3052,6 +3169,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.rspackBuild",
+        "resourceVersion": "1786019246422",
+        "creationTimestamp": "2026-08-06T12:27:26Z"
+      },
+      "spec": {
+        "description": "Switches the backend to load frontend assets built with rspack instead of webpack",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
       }
     },
     {
@@ -4597,6 +4727,21 @@
     },
     {
       "metadata": {
+        "name": "paneledit.buttonLabels",
+        "resourceVersion": "1785381918358",
+        "creationTimestamp": "2026-07-30T03:25:18Z"
+      },
+      "spec": {
+        "description": "Shows text labels on the add and stacked view buttons in PanelEditNext",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pdfTables",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-11-06T13:39:22Z"
@@ -4968,7 +5113,8 @@
       "metadata": {
         "name": "provisioning",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-11-22T09:03:50Z"
+        "creationTimestamp": "2024-11-22T09:03:50Z",
+        "deletionTimestamp": "2026-08-03T14:10:33Z"
       },
       "spec": {
         "description": "Enables Git Sync and as-code provisioning for Grafana resources",
@@ -5458,13 +5604,17 @@
     {
       "metadata": {
         "name": "reporting.redirectReportsToK8SApi",
-        "resourceVersion": "1785214026884",
-        "creationTimestamp": "2026-07-28T04:47:06Z"
+        "resourceVersion": "1786008381487",
+        "creationTimestamp": "2026-07-28T04:47:06Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-06 09:26:21.487357 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Redirect legacy report CRUD API endpoints to the Kubernetes reporting API",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
         "expression": "false"
       }
     },

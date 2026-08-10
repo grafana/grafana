@@ -6,7 +6,7 @@ import { type SnapshotCreateResponse } from '../../public/app/features/dashboard
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
 import { Controls, Panels, Sidebar } from './page-objects';
-import { importTestDashboard, saveDashboard } from './utils';
+import { importTestDashboard, saveDashboardAndCloseToast } from './utils';
 
 const repeatTitleBase = 'repeat - ';
 const repeatOptions = [1, 2, 3, 4];
@@ -104,8 +104,8 @@ test.describe(
       // Convert layout to auto grid and persist it, then snapshot.
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Options');
-      await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
-      await saveDashboard(dashboardPage, page, selectors);
+      await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await expectRepeatPanelsRendered(panels, repeatOptions.length);
