@@ -431,13 +431,13 @@ export type DashboardV2Beta1DataQueryKindDatasource = {
   name?: string;
 };
 export type DashboardDataQueryKind = {
+  labels?: {
+    [key: string]: string;
+  };
   /** New type for datasource reference Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS. */
   datasource?: DashboardV2Beta1DataQueryKindDatasource;
   group: string;
   kind: string;
-  labels?: {
-    [key: string]: string;
-  };
   spec: {
     [key: string]: object;
   };
@@ -977,12 +977,12 @@ export type DashboardAdhocVariableSpec = {
   skipUrlSync: boolean;
 };
 export type DashboardAdhocVariableKind = {
-  datasource?: DashboardV2Beta1AdhocVariableKindDatasource;
-  group: string;
-  kind: string;
   labels?: {
     [key: string]: string;
   };
+  datasource?: DashboardV2Beta1AdhocVariableKindDatasource;
+  group: string;
+  kind: string;
   spec: DashboardAdhocVariableSpec;
 };
 export type DashboardStringOrArrayOfString = {
@@ -1068,12 +1068,12 @@ export type DashboardGroupByVariableSpec = {
   skipUrlSync: boolean;
 };
 export type DashboardGroupByVariableKind = {
-  datasource?: DashboardV2Beta1GroupByVariableKindDatasource;
-  group: string;
-  kind: string;
   labels?: {
     [key: string]: string;
   };
+  datasource?: DashboardV2Beta1GroupByVariableKindDatasource;
+  group: string;
+  kind: string;
   spec: DashboardGroupByVariableSpec;
 };
 export type DashboardIntervalVariableSpec = {
