@@ -5,7 +5,6 @@ import { action } from 'storybook/actions';
 import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
 import type { CodeMirrorCompletionSource, CodeMirrorEditorLanguage } from './types';
-import { useMarkdownLivePreview } from './useMarkdownLivePreview';
 
 const languageOptions: CodeMirrorEditorLanguage[] = [
   'go',
@@ -111,32 +110,6 @@ WithCompletions.args = {
   height: '240px',
   completionMode: 'override',
   completionSources: [keywordCompletionSource],
-};
-
-const storyVariables: Record<string, string> = {
-  '${cluster}': 'prod-eu-west-1',
-  $service: 'checkout-api',
-};
-
-const MarkdownLivePreviewEditor: StoryFn<typeof CodeEditor> = (args) => {
-  const extensions = useMarkdownLivePreview(true, (text: string) => storyVariables[text] ?? text);
-
-  return <ControlledEditor {...args} extensions={extensions} />;
-};
-
-export const MarkdownLivePreview = MarkdownLivePreviewEditor.bind({});
-MarkdownLivePreview.args = {
-  value: `# Rollback steps for \${cluster}
-
-Scale $service **down to zero**, then revert the config to \`v4.2\`.
-
-> Page the on-call SRE before step 3.
-
-See the [runbook](https://example.com/runbook) for the ~~old~~ current process.`,
-  language: 'markdown',
-  height: '320px',
-  lineWrapping: true,
-  basicSetup: { lineNumbers: false, foldGutter: false, highlightActiveLine: false },
 };
 
 export default meta;
