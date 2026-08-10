@@ -422,26 +422,11 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelAccess(ctx context.Context, a
 		obj = a.GetObject()
 		verb = utils.VerbCreate
 	case admission.Update:
-		obj = a.GetObject()
-		verb = utils.VerbUpdate
 		oldObj := a.GetOldObject()
 		if oldObj == nil {
-			return fmt.Errorf("existing library panel object is required for %s authorization", verb)
+			return fmt.Errorf("existing library panel object is required for %s authorization", utils.VerbUpdate)
 		}
-		if err := b.authorizeLibraryPanel(ctx, oldObj, verb, a.GetNamespace()); err != nil {
-			return err
-		}
-		oldName, oldFolder, err := libraryPanelAuthorizationTarget(oldObj)
-		if err != nil {
-			return err
-		}
-		newName, newFolder, err := libraryPanelAuthorizationTarget(obj)
-		if err != nil {
-			return err
-		}
-		if oldName == newName && oldFolder == newFolder {
-			return nil
-		}
+		return b.authorizeLibraryPanelUpdate(ctx, oldObj, a.GetObject(), a.GetNamespace())
 	case admission.Delete:
 		obj = a.GetOldObject()
 		verb = utils.VerbDelete
@@ -452,6 +437,32 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelAccess(ctx context.Context, a
 		return fmt.Errorf("library panel object is required for %s authorization", verb)
 	}
 	return b.authorizeLibraryPanel(ctx, obj, verb, a.GetNamespace())
+}
+
+// authorizeLibraryPanelUpdate requires write access to the existing panel and,
+// when an update changes its name or folder, to the destination as well. Keeping
+// this in one helper lets admission and the standalone storage boundary enforce
+// identical move semantics.
+func (b *DashboardsAPIBuilder) authorizeLibraryPanelUpdate(ctx context.Context, oldObj, newObj runtime.Object, namespace string) error {
+	if oldObj == nil || newObj == nil {
+		return fmt.Errorf("both existing and updated library panel objects are required for %s authorization", utils.VerbUpdate)
+	}
+	if err := b.authorizeLibraryPanel(ctx, oldObj, utils.VerbUpdate, namespace); err != nil {
+		return err
+	}
+
+	oldName, oldFolder, err := libraryPanelAuthorizationTarget(oldObj)
+	if err != nil {
+		return err
+	}
+	newName, newFolder, err := libraryPanelAuthorizationTarget(newObj)
+	if err != nil {
+		return err
+	}
+	if oldName == newName && oldFolder == newFolder {
+		return nil
+	}
+	return b.authorizeLibraryPanel(ctx, newObj, utils.VerbUpdate, namespace)
 }
 
 func (b *DashboardsAPIBuilder) authorizeLibraryPanel(ctx context.Context, obj runtime.Object, verb, namespace string) error {
@@ -1133,10 +1144,15 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		// unified storage directly (no dual writer).
 		if libraryPanels != nil {
 			// status.missing preserves legacy model fields that have no typed spec field.
-			storage[libraryPanels.StoragePath()], err = grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
-			if err != nil {
-				return err
+			unifiedLibraryStore, storeErr := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+			if storeErr != nil {
+				return storeErr
 			}
+			storage[libraryPanels.StoragePath()] = newLibraryPanelAccessStorage(
+				unifiedLibraryStore,
+				b.authorizeLibraryPanel,
+				b.authorizeLibraryPanelUpdate,
+			)
 		}
 
 		return nil
