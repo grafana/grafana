@@ -13,8 +13,14 @@ const loadHtml = async (): Promise<CodeMirrorExtension> =>
 const loadJson = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-json" */ '@codemirror/lang-json')).json();
 
-const loadMarkdown = async (): Promise<CodeMirrorExtension> =>
-  (await import(/* webpackChunkName: "codemirror-lang-markdown" */ '@codemirror/lang-markdown')).markdown();
+// `markdown()` defaults to strict CommonMark, which does not parse tables, task
+// lists or strikethrough. `markdownLanguage` is the GFM base, a superset.
+const loadMarkdown = async (): Promise<CodeMirrorExtension> => {
+  const { markdown, markdownLanguage } = await import(
+    /* webpackChunkName: "codemirror-lang-markdown" */ '@codemirror/lang-markdown'
+  );
+  return markdown({ base: markdownLanguage });
+};
 
 const loadTypescript = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-javascript" */ '@codemirror/lang-javascript')).javascript({

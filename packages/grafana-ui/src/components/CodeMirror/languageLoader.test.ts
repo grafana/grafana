@@ -98,6 +98,29 @@ describe('loadLanguageExtension', () => {
     }
   );
 
+  // The toolbar inserts GFM tables and `- [ ] ` checklists, which strict
+  // CommonMark does not parse.
+  it.each([
+    ['Table', '| a | b |\n| - | - |\n| 1 | 2 |'],
+    ['Strikethrough', '~~gone~~'],
+    ['TaskMarker', '- [ ] todo'],
+  ])('parses the GFM %s node', async (nodeName, doc) => {
+    await jest.isolateModulesAsync(async () => {
+      const { loadLanguageExtension } = await import('./languageLoader');
+      const { ensureSyntaxTree } = await import('@codemirror/language');
+      const { EditorState } = await import('@codemirror/state');
+
+      const extension = await loadLanguageExtension('markdown');
+      const state = EditorState.create({ doc, extensions: extension ? [extension] : [] });
+      const tree = ensureSyntaxTree(state, state.doc.length);
+
+      const names: string[] = [];
+      tree?.iterate({ enter: (node) => void names.push(node.name) });
+
+      expect(names).toContain(nodeName);
+    });
+  });
+
   it('configures the typescript loader for TypeScript syntax', async () => {
     await jest.isolateModulesAsync(async () => {
       const { loadLanguageExtension } = await import('./languageLoader');

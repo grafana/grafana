@@ -14,6 +14,7 @@ import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 // stub it with a plain textarea so these tests stay fast and deterministic.
 jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
+  useMarkdownLivePreview: () => [],
   CodeMirrorEditor: ({
     value,
     onChange,
@@ -100,6 +101,8 @@ const setup = (
 
 const enterWriteMode = () => userEvent.click(screen.getByRole('radio', { name: 'Write' }));
 
+const enterPreviewMode = () => userEvent.click(screen.getByRole('radio', { name: 'Preview' }));
+
 const openModeMenu = () => userEvent.click(screen.getByRole('button', { name: /^Text mode/ }));
 
 const selectMode = async (name: string) => {
@@ -115,45 +118,74 @@ const selectLanguage = async (name: string) => {
 
 describe('TextNGEditor', () => {
   describe('default (view-first) state', () => {
-    it('lands on the rendered preview, not the editor', () => {
+    // Markdown renders its own formatting as you type, so there is nothing to
+    // land on a separate preview for.
+    it('lands in the editor for markdown', () => {
       setup('# Hello', TextMode.Markdown);
 
-      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
+      expect(screen.getByRole('textbox')).toHaveValue('# Hello');
+      expect(screen.getByRole('radio', { name: 'Write' })).toBeChecked();
+      expect(screen.queryByTestId(PREVIEW_TEST_ID)).not.toBeInTheDocument();
+    });
+
+    it('lands on the rendered preview for other modes', () => {
+      setup('<p>Hello</p>', TextMode.HTML);
+
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<p>');
       expect(screen.getByRole('radio', { name: 'Preview' })).toBeChecked();
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     });
 
     it('opens straight into the editor when content is empty', () => {
-      setup('', TextMode.Markdown);
+      setup('', TextMode.HTML);
 
       expect(screen.getByRole('textbox')).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: 'Write' })).toBeChecked();
     });
 
     it('reveals the editor after selecting Write', async () => {
-      setup('# Hello', TextMode.Markdown);
+      setup('<p>Hello</p>', TextMode.HTML);
 
       await enterWriteMode();
-      expect(screen.getByRole('textbox')).toHaveValue('# Hello');
+      expect(screen.getByRole('textbox')).toHaveValue('<p>Hello</p>');
       expect(screen.queryByTestId(PREVIEW_TEST_ID)).not.toBeInTheDocument();
     });
   });
 
   describe('views', () => {
-    it('shows only the rendered preview in Preview view', () => {
+    it('shows only the rendered preview in Preview view', async () => {
       setup('# Hello', TextMode.Markdown);
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Preview' }));
 
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
       expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
     });
 
     it('shows editor and preview side by side in Split view', async () => {
-      setup('# Hello', TextMode.Markdown);
+      setup('<p>Hello</p>', TextMode.HTML);
 
       await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
 
       expect(screen.getByRole('textbox')).toBeInTheDocument();
       expect(screen.getByTestId(PREVIEW_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('offers no split in markdown, where the two panes would match', async () => {
+      setup('# Hello', TextMode.Markdown);
+
+      expect(screen.queryByRole('radio', { name: 'Split' })).not.toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'Preview' })).toBeInTheDocument();
+    });
+
+    it('leaves split when switching into markdown', async () => {
+      setup('<p>Hello</p>', TextMode.HTML);
+      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+
+      await selectMode('Markdown');
+
+      expect(screen.getByRole('radio', { name: 'Write' })).toBeChecked();
+      expect(screen.queryByRole('radio', { name: 'Split' })).not.toBeInTheDocument();
     });
 
     it('sanitizes script tags in the HTML mode preview', () => {
@@ -197,10 +229,10 @@ describe('TextNGEditor', () => {
       const replaceVariables = (value: string) => value.replace('$datacenter', 'A, B, C');
       setup('# Data center = $datacenter', TextMode.Markdown, jest.fn(), false, undefined, replaceVariables);
 
-      expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Data center = A, B, C');
-
-      await userEvent.click(screen.getByRole('radio', { name: 'Write' }));
       expect(screen.getByRole('textbox')).toHaveValue('# Data center = $datacenter');
+
+      await enterPreviewMode();
+      expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Data center = A, B, C');
     });
 
     it('forwards editor changes via a debounced onChange', async () => {
@@ -261,9 +293,11 @@ describe('TextNGEditor', () => {
       expect(onChange).not.toHaveBeenCalledWith({ content: 'updated' });
     });
 
-    it('interpolates with the json format when code language is json, regardless of mode', () => {
+    it('interpolates with the json format when code language is json, regardless of mode', async () => {
       const replaceVariables = jest.fn((value: string) => value);
       setup('# Hello', TextMode.Markdown, jest.fn(), false, CodeLanguage.Json, replaceVariables);
+
+      await enterPreviewMode();
 
       // Matches the panel render path, which keys the interpolation format off
       // code.language alone.
@@ -272,18 +306,17 @@ describe('TextNGEditor', () => {
   });
 
   describe('content that renders to nothing', () => {
-    // Deleting everything and pressing enter in Split view: markdown renders a
-    // lone newline to '', which the space fallback keeps DangerouslySetHtmlContent
-    // from throwing on.
+    // Deleting everything and previewing it: markdown renders a lone newline to
+    // '', which the space fallback keeps DangerouslySetHtmlContent from throwing on.
     it.each(['\n', '\n\n', '   \n  ', '<!-- just a comment -->'])(
       'renders the empty space fallback in the preview for %j',
       async (content) => {
         setup('# Hello', TextMode.Markdown);
-        await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
 
         // fireEvent, because userEvent.type() does not reproduce a value that is
         // only whitespace. A throw here fails the test.
         fireEvent.change(screen.getByRole('textbox'), { target: { value: content } });
+        await enterPreviewMode();
 
         // Debounced preview settles from the '# Hello' <h1> to the space fallback.
         await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML.trim()).toBe(''));
@@ -292,11 +325,13 @@ describe('TextNGEditor', () => {
   });
 
   describe('preview updates', () => {
+    // Split is the only view where the preview updates while typing, and markdown
+    // does not offer it.
     it('re-renders the preview once typing settles', async () => {
-      setup('# Hello', TextMode.Markdown);
+      setup('<h1>Hello</h1>', TextMode.HTML);
       await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
 
-      fireEvent.change(screen.getByRole('textbox'), { target: { value: '## Updated' } });
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: '<h2>Updated</h2>' } });
 
       // Still the old preview: the update is debounced.
       expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
@@ -316,8 +351,8 @@ describe('TextNGEditor', () => {
     it('shows externally replaced content immediately, e.g. after a discard', async () => {
       const { rerender } = render(
         <TextNGEditor
-          content="# Hello"
-          mode={TextMode.Markdown}
+          content="<h1>Hello</h1>"
+          mode={TextMode.HTML}
           showLineNumbers={false}
           replaceVariables={(value: string) => value}
           onChange={jest.fn()}
@@ -326,8 +361,8 @@ describe('TextNGEditor', () => {
 
       rerender(
         <TextNGEditor
-          content="## Reverted"
-          mode={TextMode.Markdown}
+          content="<h2>Reverted</h2>"
+          mode={TextMode.HTML}
           showLineNumbers={false}
           replaceVariables={(value: string) => value}
           onChange={jest.fn()}
@@ -347,15 +382,17 @@ describe('TextNGEditor', () => {
     });
 
     it('renders in Split view', async () => {
-      setup('hello', TextMode.Markdown);
+      setup('hello', TextMode.HTML);
 
       await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
 
       expect(screen.getByTestId(FORMAT_TOOLBAR_TEST_ID)).toBeInTheDocument();
     });
 
-    it('is hidden in Preview view, where there is nothing to format', () => {
+    it('is hidden in Preview view, where there is nothing to format', async () => {
       setup('hello', TextMode.Markdown);
+
+      await enterPreviewMode();
 
       expect(screen.queryByTestId(FORMAT_TOOLBAR_TEST_ID)).not.toBeInTheDocument();
     });
@@ -391,6 +428,7 @@ describe('TextNGEditor', () => {
       const { onChange } = setup('# Hello', TextMode.Markdown);
 
       await selectMode('HTML');
+      await enterPreviewMode();
 
       expect(onChange).toHaveBeenCalledWith({ mode: TextMode.HTML, content: '# Hello' });
       // HTML mode does not turn '#' into a heading, it renders the text as-is.
