@@ -181,27 +181,27 @@ describe('TraceView', () => {
     await userEvent.click(firstSpan);
     // Resource attributes are open by default alongside span attributes
     expect(
-      screen.getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' }).some((table) =>
-        table.innerHTML.includes('client-uuid-1')
-      )
+      screen
+        .getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' })
+        .some((table) => table.innerHTML.includes('client-uuid-1'))
     ).toBe(true);
     await userEvent.click(firstSpan);
 
     const secondSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[1];
     await userEvent.click(secondSpan);
     expect(
-      screen.getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' }).some((table) =>
-        table.innerHTML.includes('client-uuid-2')
-      )
+      screen
+        .getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' })
+        .some((table) => table.innerHTML.includes('client-uuid-2'))
     ).toBe(true);
     await userEvent.click(secondSpan);
 
     const thirdSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
     await userEvent.click(thirdSpan);
     expect(
-      screen.getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' }).some((table) =>
-        table.innerHTML.includes('client-uuid-3')
-      )
+      screen
+        .getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' })
+        .some((table) => table.innerHTML.includes('client-uuid-3'))
     ).toBe(true);
   });
 
