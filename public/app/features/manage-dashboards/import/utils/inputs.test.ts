@@ -457,6 +457,140 @@ describe('applyV1Inputs', () => {
     expect(dsVariable.current?.value).toBe('ds-uid');
   });
 
+  it('keeps selections independent for multiple inputs of the same plugin type', () => {
+    const dashboard = {
+      title: 'two prom inputs',
+      uid: 'old',
+      schemaVersion: 41,
+      panels: [
+        {
+          datasource: { type: 'prometheus', uid: '${DS_PROM_A}' },
+          targets: [{ datasource: { type: 'prometheus', uid: '${DS_PROM_A}' }, expr: 'up', refId: 'A' }],
+        },
+        {
+          datasource: { type: 'prometheus', uid: '${DS_PROM_B}' },
+          targets: [{ datasource: { type: 'prometheus', uid: '${DS_PROM_B}' }, expr: 'up', refId: 'A' }],
+        },
+      ],
+    } as unknown as Dashboard;
+
+    const inputs: DashboardInputs = {
+      dataSources: [
+        {
+          name: 'DS_PROM_A',
+          label: 'Prometheus A',
+          description: '',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'prometheus',
+        },
+        {
+          name: 'DS_PROM_B',
+          label: 'Prometheus B',
+          description: '',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'prometheus',
+        },
+      ],
+      constants: [],
+      libraryPanels: [],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'two prom inputs',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [
+        { uid: 'prom-a', type: 'prometheus', name: 'Prom A' } as DataSourceInstanceSettings,
+        { uid: 'prom-b', type: 'prometheus', name: 'Prom B' } as DataSourceInstanceSettings,
+      ],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, inputs, form);
+
+    expect(result.panels?.[0].datasource?.uid).toBe('prom-a');
+    expect(result.panels?.[1].datasource?.uid).toBe('prom-b');
+
+    const panelA = result.panels?.[0] as PanelWithTargets;
+    const panelB = result.panels?.[1] as PanelWithTargets;
+    expect(panelA.targets?.[0].datasource?.uid).toBe('prom-a');
+    expect(panelB.targets?.[0].datasource?.uid).toBe('prom-b');
+  });
+
+  it('falls back to matching by plugin type when selections are not index-aligned', () => {
+    // interpolateV1Dashboard dedupes selections per plugin type, so the selections
+    // array can be shorter than the inputs array.
+    const dashboard = {
+      title: 'dedup selections',
+      uid: 'old',
+      schemaVersion: 41,
+      panels: [
+        {
+          datasource: { type: 'loki', uid: '${DS_LOKI}' },
+          targets: [],
+        },
+      ],
+    } as unknown as Dashboard;
+
+    const inputs: DashboardInputs = {
+      dataSources: [
+        {
+          name: 'DS_PROM_A',
+          label: 'Prometheus A',
+          description: '',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'prometheus',
+        },
+        {
+          name: 'DS_PROM_B',
+          label: 'Prometheus B',
+          description: '',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'prometheus',
+        },
+        {
+          name: 'DS_LOKI',
+          label: 'Loki',
+          description: '',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'loki',
+        },
+      ],
+      constants: [],
+      libraryPanels: [],
+    };
+
+    // Only one selection per plugin type; DS_LOKI (index 2) has no entry at its index.
+    const form: ImportDashboardDTO = {
+      title: 'dedup selections',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [
+        { uid: 'prom-a', type: 'prometheus', name: 'Prom A' } as DataSourceInstanceSettings,
+        { uid: 'loki-1', type: 'loki', name: 'Loki' } as DataSourceInstanceSettings,
+      ],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, inputs, form);
+
+    expect(result.panels?.[0].datasource?.uid).toBe('loki-1');
+  });
+
   it('replaces constant variable query, current, and options with user-provided values', () => {
     const dashboard = {
       title: 'old',
