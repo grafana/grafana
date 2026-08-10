@@ -1,7 +1,6 @@
 ---
 aliases:
   - ../../data-sources/elasticsearch/query-editor/
-  - ../../data-sources/elasticsearch/template-variables/
 description: Guide for using the Elasticsearch data source's query editor
 keywords:
   - grafana
@@ -17,10 +16,10 @@ labels:
     - cloud
     - enterprise
     - oss
-    - data source
 menuTitle: Query editor
 title: Elasticsearch query editor
 weight: 300
+review_date: 2026-08-10
 ---
 
 # Elasticsearch query editor
@@ -50,6 +49,8 @@ Elasticsearch groups aggregations into three categories:
 
 There are two types of queries you can create with the Elasticsearch query builder. Each type is explained in detail below.
 
+Use the **Preserve query** toggle to keep your Lucene query when you switch between **Metrics**, **Logs**, **Raw Data**, and **Raw Document**. When the toggle is off (the default for new queries), switching query types clears the Lucene query. Grafana remembers your last Preserve query choice in the browser for new queries.
+
 ### Metrics query type
 
 Metrics queries aggregate data and produce calculations such as count, min, max, and more. Click the metric box to view options in the drop-down menu. The default is `count`.
@@ -67,6 +68,12 @@ Metrics queries aggregate data and produce calculations such as count, min, max,
   - unique count - refer to [Cardinality aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-cardinality-aggregation.html)
   - top metrics - refer to [Top metrics aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-top-metrics.html)
   - rate - refer to [Rate aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-rate-aggregation.html)
+
+- **Sibling bucket aggregations** - These metrics compute an outer statistic over a per-group inner statistic within each time bucket. For example, **Sum Bucket** with an inner **Max** produces a sum of maxima across hosts. The following options are available:
+  - Sum Bucket - refer to [Sum bucket aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-sum-bucket-aggregation.html)
+  - Max Bucket - refer to [Max bucket aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-max-bucket-aggregation.html)
+  - Min Bucket - refer to [Min bucket aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-min-bucket-aggregation.html)
+  - Average Bucket - refer to [Avg bucket aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-avg-bucket-aggregation.html)
 
 - **Pipeline aggregations** - Pipeline aggregations work on the output of other aggregations rather than on documents. The following pipeline aggregations are available:
   - moving function - Calculates a value based on a sliding window of aggregated values. Refer to [Moving function aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-movfn-aggregation.html).
@@ -132,11 +139,16 @@ Logs queries analyze Elasticsearch log data. You can configure the following opt
 
 - **Logs Options/Limit** - Limits the number of logs to analyze. The default is `500`.
 
+## Query options
+
+Open the **Options** section in the query editor to configure query-level settings:
+
+- **Limit** or **Size** - For Logs and Raw Data queries, sets the maximum number of documents to return. The default is `500`.
+- **Include runtime fields** - When enabled, runtime fields defined in the index mapping are included in the response. This option is available in Builder mode.
+
 ## Raw query editor
 
-{{< docs/experimental product="The raw query editor" featureFlag="elasticsearchRawDSLQuery" >}}
-
-The raw query editor allows you to write Elasticsearch queries using the native [Elasticsearch Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html).
+The raw query editor lets you write Elasticsearch queries using the native [Elasticsearch Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html).
 
 ### Switch between Builder and Code modes
 
@@ -189,11 +201,11 @@ The raw query editor supports all query types:
 
 ## ES|QL query editor
 
-{{< docs/experimental product="The ES|QL query editor" featureFlag="elasticsearchESQLQuery" >}}
-
-Introduced in Grafana v13.0, the ES|QL query editor lets you query Elasticsearch using [ES|QL (Elasticsearch Query Language)](https://www.elastic.co/docs/reference/query-languages/esql), a pipe-based query language. Unlike Lucene queries that rely on aggregation configuration in the builder UI, ES|QL lets you express filtering, aggregation, and transformation in a single query string.
+The ES|QL query editor lets you query Elasticsearch using [ES|QL (Elasticsearch Query Language)](https://www.elastic.co/docs/reference/query-languages/esql), a pipe-based query language. Unlike Lucene queries that rely on aggregation configuration in the builder UI, ES|QL lets you express filtering, aggregation, and transformation in a single query string.
 
 For an introduction to ES|QL syntax and concepts, refer to [Get started with ES|QL queries](https://www.elastic.co/docs/reference/query-languages/esql/esql-getting-started) in the Elasticsearch documentation.
+
+When an ES|QL query does not include a time filter, Grafana automatically adds a time range filter based on the dashboard or Explore time picker.
 
 ### Index selection
 
@@ -206,9 +218,9 @@ How the editor handles index selection depends on your data source configuration
 
 The ES|QL code editor provides:
 
-- **Code suggestions** -- Auto-complete for ES|QL commands and functions
-- **Error highlighting** -- Syntax errors are highlighted in the editor and error messages from Elasticsearch are displayed directly
-- **Syntax highlighting** -- ES|QL keywords, operators, and values are color-coded for readability
+- **Code suggestions** - Auto-complete for ES|QL commands and functions
+- **Error highlighting** - Syntax errors are highlighted in the editor and error messages from Elasticsearch are displayed directly
+- **Syntax highlighting** - ES|QL keywords, operators, and values are color-coded for readability
 
 ### Example queries
 
@@ -248,14 +260,24 @@ FROM logs-*
 | LIMIT 100
 ```
 
+#### PromQL metrics queries
+
+When you select the **Metrics** query type, ES|QL also accepts PromQL source commands. Grafana processes the response as time series frames, the same way it does for ES|QL `STATS` queries:
+
+```esql
+FROM metrics-*
+| WHERE service.name == "api-gateway"
+| PROMQL "rate(http_requests_total[5m])"
+```
+
 ### Learn more about ES|QL
 
 For more information about ES|QL syntax, commands, and functions, refer to the following Elasticsearch documentation:
 
-- [ES|QL reference](https://www.elastic.co/docs/reference/query-languages/esql) -- Overview of the ES|QL query language
-- [ES|QL commands](https://www.elastic.co/docs/reference/query-languages/esql/commands) -- Source and processing commands (`FROM`, `WHERE`, `STATS`, `EVAL`, `KEEP`, `SORT`, `LIMIT`, and more)
-- [ES|QL functions and operators](https://www.elastic.co/docs/reference/query-languages/esql/functions-operators) -- Aggregation, math, string, date, and other functions
-- [ES|QL syntax](https://www.elastic.co/docs/reference/query-languages/esql/esql-syntax) -- Identifiers, literals, operators, and special characters
+- [ES|QL reference](https://www.elastic.co/docs/reference/query-languages/esql) - Overview of the ES|QL query language
+- [ES|QL commands](https://www.elastic.co/docs/reference/query-languages/esql/commands) - Source and processing commands (`FROM`, `WHERE`, `STATS`, `EVAL`, `KEEP`, `SORT`, `LIMIT`, and more)
+- [ES|QL functions and operators](https://www.elastic.co/docs/reference/query-languages/esql/functions-operators) - Aggregation, math, string, date, and other functions
+- [ES|QL syntax](https://www.elastic.co/docs/reference/query-languages/esql/esql-syntax) - Identifiers, literals, operators, and special characters
 
 ## Use template variables
 

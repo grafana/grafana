@@ -15,12 +15,12 @@ labels:
 menuTitle: Configure
 title: Configure the Elasticsearch data source
 weight: 200
+review_date: 2026-08-10
 ---
 
 # Configure the Elasticsearch data source
 
-Grafana ships with built-in support for Elasticsearch.
-You can create a variety of queries to visualize logs or metrics stored in Elasticsearch, and annotate graphs with log events stored in Elasticsearch.
+Grafana ships with the Elasticsearch data source preinstalled. You can create a variety of queries to visualize logs or metrics stored in Elasticsearch, and annotate graphs with log events stored in Elasticsearch. For details about updating the standalone plugin, refer to [Plugin updates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/#plugin-updates).
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/).
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
@@ -68,11 +68,13 @@ Configure the following basic settings for the Elasticsearch data source:
 
 ## Connection
 
+Set the HTTP endpoint Grafana uses to reach your Elasticsearch cluster.
+
 - **URL** - The URL of your Elasticsearch server, including the port. Examples: `http://localhost:9200`, `http://elasticsearch.example.com:9200`.
 
 ## Authentication
 
-Select an authentication method from the drop-down menu:
+Choose how Grafana authenticates to Elasticsearch. Select an authentication method from the drop-down menu:
 
 - **Basic authentication** - Enter the username and password for your Elasticsearch user.
 
@@ -92,20 +94,17 @@ To authenticate using an Elasticsearch API key, select **No authentication** and
 
 For information about creating API keys, refer to the [Elasticsearch API keys documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api-create-api-key.html).
 
-### Amazon Elasticsearch Service
+### Amazon OpenSearch Service and SigV4
 
-If you use Amazon Elasticsearch Service, you can use Grafana's Elasticsearch data source to visualize data from it.
+Amazon OpenSearch Service is the successor to Amazon Elasticsearch Service. For Amazon OpenSearch Service, use the [OpenSearch data source](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/) instead of this Elasticsearch data source.
 
-If you use an AWS Identity and Access Management (IAM) policy to control access to your Amazon Elasticsearch Service domain, you must use AWS Signature Version 4 (AWS SigV4) to sign all requests to that domain.
+If you still connect Grafana's Elasticsearch data source to a domain that requires AWS Signature Version 4 (AWS SigV4), for example a legacy Amazon Elasticsearch Service domain or another SigV4-protected OpenSearch-compatible endpoint, you must sign all requests with SigV4.
 
 For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
 
-To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled).
+To sign requests, enable SigV4 in Grafana's [configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled). After SigV4 is enabled, configure it on the Elasticsearch data source configuration page. For more information about AWS authentication options, refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
 
-Once AWS SigV4 is enabled, you can configure it on the Elasticsearch data source configuration page.
-For more information about AWS authentication options, refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
-
-{{< figure src="/static/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}
+{{< figure src="/static/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS-hosted Elasticsearch-compatible domains" >}}
 
 ### TLS settings
 
@@ -145,6 +144,7 @@ The following settings are specific to the Elasticsearch data source.
   - **Wildcard patterns** - Use `*` to match multiple indices. Examples: `logs-*`, `metrics-*`, `filebeat-*`.
   - **Time patterns** - Use date placeholders for time-based indices. Wrap the fixed portion in square brackets. Examples: `[logstash-]YYYY.MM.DD`, `[metrics-]YYYY.MM`.
   - **Specific index** - Enter the exact index name. Example: `application-logs`.
+  - **Cross-cluster search** - Use the `cluster:index` pattern to query remote clusters configured in Elasticsearch. Example: `logs-cluster:logs-*`. Cross-cluster search is always available. No feature toggle is required.
 
 - **Pattern** - Select the matching pattern if you use a time pattern in your index name. Options include:
   - no pattern
