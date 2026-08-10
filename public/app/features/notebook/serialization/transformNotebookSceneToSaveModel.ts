@@ -54,9 +54,7 @@ function getElements(scene: NotebookScene): Record<string, NotebookElement> {
     const { elementName, body: panel, content } = cell.state;
 
     if (panel) {
-      // vizPanelToSchemaV2 is dashboard-typed, and its result is assignable as-is: the notebook panel
-      // chain carries the dashboard v2 shape, so no wire-shape conversion is needed.
-      elements[elementName] = vizPanelToSchemaV2(panel) satisfies NotebookElement;
+      elements[elementName] = vizPanelToSchemaV2(panel);
     } else if (content) {
       elements[elementName] = { kind: 'Cell', spec: { content } };
     }
