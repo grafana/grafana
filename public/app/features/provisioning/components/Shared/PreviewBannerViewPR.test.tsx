@@ -195,7 +195,12 @@ describe('PreviewBannerViewPR', () => {
       expect(screen.getByText('Open in Git')).toBeInTheDocument();
       expect(screen.queryByText('Open pull request in Git')).not.toBeInTheDocument();
       expect(screen.queryByText('View pull request in Git')).not.toBeInTheDocument();
-      expect(screen.getByText(/This connection cannot open pull requests from Grafana/i)).toBeInTheDocument();
+      // Body has no trailing period; join must insert one before the hint sentence.
+      expect(
+        screen.getByText(
+          /until this branch is merged\. This connection cannot open pull requests from Grafana/i
+        )
+      ).toBeInTheDocument();
     });
 
     it('should not show the no-PR hint for GitHub when the PR URL is missing', () => {

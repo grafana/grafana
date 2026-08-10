@@ -105,12 +105,12 @@ export const supportsWebhooks = (type?: RepoType): type is 'github' | 'githubEnt
   return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
 };
 
-// Providers whose repositories can open pull/merge requests. Mirrors the backend, where only
-// hosting providers implement RepositoryWithURLs and pass spec.pullRequest validation.
+// Providers whose repositories can open pull/merge requests. Same hosting providers as
+// webhooks — backend only those implement RepositoryWithURLs / pullRequest validation.
 export const supportsPullRequests = (
   type?: RepoType
 ): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' => {
-  return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
+  return supportsWebhooks(type);
 };
 
 /**

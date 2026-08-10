@@ -141,7 +141,8 @@ function noPullRequestSupportBody(): string {
 }
 
 function withNoPullRequestHint(body: string, showNoPullRequestHint: boolean): string {
-  return showNoPullRequestHint ? `${body} ${noPullRequestSupportBody()}` : body;
+  // Body i18n strings have no trailing period; join as two sentences.
+  return showNoPullRequestHint ? `${body}. ${noPullRequestSupportBody()}` : body;
 }
 
 function openInRepoButton(repoType: string): string {
