@@ -16,12 +16,14 @@ labels:
 menuTitle: MySQL
 title: MySQL data source
 weight: 1000
-review_date: 2026-05-11
+review_date: 2026-08-10
 ---
 
 # MySQL data source
 
-Grafana ships with built-in support for MySQL.
+Grafana ships with the MySQL data source out of the box. It's preinstalled in both Grafana OSS and Grafana Enterprise, so there's nothing for you to install.
+Starting with Grafana 13.2, the data source is packaged as a standalone plugin that can be updated independently of Grafana releases. Refer to [Plugin updates](#plugin-updates) for details.
+
 You can query and visualize data from MySQL-compatible databases like [MariaDB](https://mariadb.org/) or [Percona Server](https://www.percona.com/).
 
 Use this data source to create dashboards, explore SQL data, and monitor MySQL-based workloads in real time.
@@ -64,6 +66,30 @@ The following documentation helps you get started with the MySQL data source:
 - [MySQL annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/annotations/)
 - [MySQL alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/alerting/)
 - [Troubleshoot MySQL data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mysql/troubleshooting/)
+
+## Plugin updates
+
+Starting with Grafana 13.2, the MySQL data source is a standalone plugin, preinstalled in both Grafana OSS and Grafana Enterprise. This enables more frequent updates independent of Grafana releases. Grafana automatically checks the plugin catalog and installs the latest version on each server restart.
+
+To adjust this behavior:
+
+- **Opt out of auto-updates:** Set `preinstall_auto_update` to `false` in your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
+- **Update manually:** Update at any time from the **Administration > Plugins** page without restarting Grafana.
+
+The standalone plugin requires Grafana 12.3.0 or later. The MySQL data source bundled with Grafana 13.1 and earlier continues to work as before. These versions are unaffected by the change.
+
+Users running Grafana 12.3.x through 13.1.x can install the standalone plugin from the plugin catalog if they want the latest features before upgrading to Grafana 13.2. To use the standalone plugin with Grafana 12.3.x through 13.1.x, add the following to your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/):
+
+```ini
+[plugin.mysql]
+as_external = true
+
+[plugins]
+; Install the latest version on startup:
+preinstall_sync = mysql
+; Or install a specific version:
+; preinstall_sync = mysql@<version>
+```
 
 ## Additional resources
 
