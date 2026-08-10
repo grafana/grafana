@@ -421,8 +421,11 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelAccess(ctx context.Context, a
 		obj = a.GetObject()
 		verb = utils.VerbCreate
 	case admission.Update:
-		obj = a.GetObject()
-		verb = utils.VerbUpdate
+		oldObj := a.GetOldObject()
+		if oldObj == nil {
+			return fmt.Errorf("existing library panel object is required for %s authorization", utils.VerbUpdate)
+		}
+		return b.authorizeLibraryPanelUpdate(ctx, oldObj, a.GetObject(), a.GetNamespace())
 	case admission.Delete:
 		obj = a.GetOldObject()
 		verb = utils.VerbDelete
@@ -435,14 +438,36 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelAccess(ctx context.Context, a
 	return b.authorizeLibraryPanel(ctx, obj, verb, a.GetNamespace())
 }
 
-func (b *DashboardsAPIBuilder) authorizeLibraryPanel(ctx context.Context, obj runtime.Object, verb, namespace string) error {
-	accessor, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return fmt.Errorf("get library panel metadata for authorization: %w", err)
+// authorizeLibraryPanelUpdate requires write access to the existing panel and,
+// when an update changes its name or folder, to the destination as well. Keeping
+// this in one helper lets admission and the standalone storage boundary enforce
+// identical move semantics.
+func (b *DashboardsAPIBuilder) authorizeLibraryPanelUpdate(ctx context.Context, oldObj, newObj runtime.Object, namespace string) error {
+	if oldObj == nil || newObj == nil {
+		return fmt.Errorf("both existing and updated library panel objects are required for %s authorization", utils.VerbUpdate)
 	}
-	folderUID := accessor.GetFolder()
-	if folderUID == "" {
-		folderUID = accesscontrol.GeneralFolderUID
+	if err := b.authorizeLibraryPanel(ctx, oldObj, utils.VerbUpdate, namespace); err != nil {
+		return err
+	}
+
+	oldName, oldFolder, err := libraryPanelAuthorizationTarget(oldObj)
+	if err != nil {
+		return err
+	}
+	newName, newFolder, err := libraryPanelAuthorizationTarget(newObj)
+	if err != nil {
+		return err
+	}
+	if oldName == newName && oldFolder == newFolder {
+		return nil
+	}
+	return b.authorizeLibraryPanel(ctx, newObj, utils.VerbUpdate, namespace)
+}
+
+func (b *DashboardsAPIBuilder) authorizeLibraryPanel(ctx context.Context, obj runtime.Object, verb, namespace string) error {
+	name, folderUID, err := libraryPanelAuthorizationTarget(obj)
+	if err != nil {
+		return err
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -455,15 +480,27 @@ func (b *DashboardsAPIBuilder) authorizeLibraryPanel(ctx context.Context, obj ru
 		Group:     gvr.Group,
 		Resource:  gvr.Resource,
 		Namespace: namespace,
-		Name:      accessor.GetName(),
+		Name:      name,
 	}, folderUID)
 	if err != nil {
 		return err
 	}
 	if !resp.Allowed {
-		return apierrors.NewForbidden(gvr.GroupResource(), accessor.GetName(), errors.New("access denied"))
+		return apierrors.NewForbidden(gvr.GroupResource(), name, errors.New("access denied"))
 	}
 	return nil
+}
+
+func libraryPanelAuthorizationTarget(obj runtime.Object) (string, string, error) {
+	accessor, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return "", "", fmt.Errorf("get library panel metadata for authorization: %w", err)
+	}
+	folderUID := accessor.GetFolder()
+	if folderUID == "" {
+		folderUID = accesscontrol.GeneralFolderUID
+	}
+	return accessor.GetName(), folderUID, nil
 }
 
 // validateDelete checks if a dashboard can be deleted
@@ -1106,10 +1143,15 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		// unified storage directly (no dual writer).
 		if libraryPanels != nil {
 			// status.missing preserves legacy model fields that have no typed spec field.
-			storage[libraryPanels.StoragePath()], err = grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
-			if err != nil {
-				return err
+			unifiedLibraryStore, storeErr := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+			if storeErr != nil {
+				return storeErr
 			}
+			storage[libraryPanels.StoragePath()] = newLibraryPanelAccessStorage(
+				unifiedLibraryStore,
+				b.authorizeLibraryPanel,
+				b.authorizeLibraryPanelUpdate,
+			)
 		}
 
 		return nil
