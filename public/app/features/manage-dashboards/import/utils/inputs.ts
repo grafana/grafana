@@ -434,9 +434,17 @@ function replaceVariableDatasources(
         return variable;
       }
 
+      // remove ephemeral export label; keep any other labels
+      const { labels, ...variableWithoutLabels } = variable;
+      const remainingLabels = labels ? { ...labels } : undefined;
+      if (remainingLabels) {
+        delete remainingLabels[ExportLabel];
+      }
+
       return {
-        ...variable,
+        ...variableWithoutLabels,
         datasource: { name: ds.uid },
+        ...(remainingLabels && Object.keys(remainingLabels).length > 0 && { labels: remainingLabels }),
       };
     }
 

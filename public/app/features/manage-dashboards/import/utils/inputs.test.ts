@@ -979,10 +979,11 @@ describe('replaceDatasourcesInDashboard', () => {
   });
 
   describe('AdhocVariable', () => {
-    const createAdhocVariable = (group: string, datasourceName: string) => ({
+    const createAdhocVariable = (group: string, datasourceName: string, labels?: { [key: string]: string }) => ({
       kind: 'AdhocVariable' as const,
       group,
       datasource: { name: datasourceName },
+      ...(labels ? { labels } : {}),
       spec: {
         name: 'Filters',
         hide: 'dontHide' as const,
@@ -1010,13 +1011,36 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(variable).toBeDefined();
       expect(variable?.datasource?.name).toBe(expectedDs);
     });
+
+    it('strips ExportLabel after remapping datasource', () => {
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          createAdhocVariable('loki', 'old-loki-uid', {
+            [ExportLabel]: 'loki-1',
+            keep: 'me',
+          }),
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, {
+        'loki-1': { uid: 'new-loki-uid', type: 'loki', name: 'New Loki' },
+      });
+      const variable = getAdhocVariable(result);
+
+      expect(variable?.datasource?.name).toBe('new-loki-uid');
+      expect(variable?.labels?.[ExportLabel]).toBeUndefined();
+      expect(variable?.labels?.keep).toBe('me');
+    });
   });
 
   describe('GroupBy variable', () => {
-    const createGroupByVariable = (group: string, datasourceName: string) => ({
+    const createGroupByVariable = (group: string, datasourceName: string, labels?: { [key: string]: string }) => ({
       kind: 'GroupByVariable' as const,
       group,
       datasource: { name: datasourceName },
+      ...(labels ? { labels } : {}),
       spec: {
         name: 'groupby',
         hide: 'dontHide' as const,
@@ -1043,6 +1067,22 @@ describe('replaceDatasourcesInDashboard', () => {
 
       expect(variable).toBeDefined();
       expect(variable?.datasource?.name).toBe(expectedDs);
+    });
+
+    it('strips ExportLabel after remapping datasource', () => {
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [createGroupByVariable('prometheus', 'old-prom-uid', { [ExportLabel]: 'prometheus-1' })],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, {
+        'prometheus-1': { uid: 'new-prom-uid', type: 'prometheus', name: 'New Prometheus' },
+      });
+      const variable = getGroupByVariable(result);
+
+      expect(variable?.datasource?.name).toBe('new-prom-uid');
+      expect(variable?.labels).toBeUndefined();
     });
   });
 
