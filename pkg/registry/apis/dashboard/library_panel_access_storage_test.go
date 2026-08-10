@@ -35,8 +35,8 @@ func TestLibraryPanelAccessStorageMaterializesAndAuthorizesUpdate(t *testing.T) 
 	)
 
 	patchInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _ runtime.Object, oldObj runtime.Object) (runtime.Object, error) {
-		require.Same(t, oldPanel, oldObj, "PATCH must receive the fetched object")
-		updated := oldObj.DeepCopyObject().(*unstructured.Unstructured)
+		require.NotSame(t, oldPanel, oldObj, "PATCH must not mutate the authorization source object")
+		updated := oldObj.(*unstructured.Unstructured)
 		updated.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "destination"})
 		require.NoError(t, unstructured.SetNestedField(updated.Object, "patched", "spec", "description"))
 		return updated, nil
@@ -48,6 +48,7 @@ func TestLibraryPanelAccessStorageMaterializesAndAuthorizesUpdate(t *testing.T) 
 	require.False(t, created)
 	require.True(t, backend.updateCalled)
 	require.Same(t, oldPanel, authorizedOld)
+	require.Equal(t, "source", authorizedOld.(*unstructured.Unstructured).GetAnnotations()[utils.AnnoKeyFolder])
 	require.Equal(t, "destination", authorizedNew.(*unstructured.Unstructured).GetAnnotations()[utils.AnnoKeyFolder])
 	require.Equal(t, "stacks-1", authorizedNamespace)
 	description, found, err := unstructured.NestedString(updated.(*unstructured.Unstructured).Object, "spec", "description")

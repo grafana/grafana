@@ -90,7 +90,9 @@ func (s *libraryPanelAccessStorage) Update(ctx context.Context, name string, obj
 	if err != nil {
 		return nil, false, err
 	}
-	newObj, err := objInfo.UpdatedObject(ctx, oldObj)
+	// Keep the fetched object immutable so a patch transformer that mutates its
+	// input cannot erase the source folder before move authorization runs.
+	newObj, err := objInfo.UpdatedObject(ctx, oldObj.DeepCopyObject())
 	if err != nil {
 		return nil, false, err
 	}
