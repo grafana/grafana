@@ -586,14 +586,15 @@ func TestIntegrationVectorContentVersion(t *testing.T) {
 			{Namespace: "integration-test", Resource: testResource, UID: "cv-dash", Title: "T",
 				Subresource: "panel/1", Content: "p1 v2", Metadata: json.RawMessage(`{}`),
 				Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 9},
-		}, []string{"panel/1", "panel/2"}))
+		}, nil, []string{"panel/1", "panel/2"}))
 
 	version, exists, err = backend.ContentVersion(ctx, "integration-test", testModel, testResource, "cv-dash")
 	require.NoError(t, err)
 	assert.True(t, exists)
 	assert.Equal(t, 5, version, "panel/1 now 9, panel/2 unchanged at 5, so MIN is 5")
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "cv-dash"))
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"cv-dash"}})
+	require.NoError(t, err)
 }
 
 // TestIntegrationVectorUpdateContentVersion pins the round-trip contract:
@@ -629,7 +630,8 @@ func TestIntegrationVectorUpdateContentVersion(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"panel/1": "p1", "panel/2": "p2"}, stored)
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "uv-dash"))
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"uv-dash"}})
+	require.NoError(t, err)
 }
 
 func TestIntegrationVectorGetLatestRV(t *testing.T) {

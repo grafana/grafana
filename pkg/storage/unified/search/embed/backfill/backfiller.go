@@ -463,7 +463,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 				statusLabel = outcome.status
 				return nil
 			}
-			if err := b.vectorBackend.Delete(ctx, namespace, job.Model, res, name); err != nil {
+			if _, _, err := b.vectorBackend.DeleteRows(ctx, namespace, job.Model, res, vector.DeleteSelector{UIDs: []string{name}}); err != nil {
 				return fmt.Errorf("delete empty extract %s/%s: %w", namespace, name, err)
 			}
 			statusLabel = "deleted_empty_extract"
@@ -513,7 +513,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		desired = append(desired, it.Subresource)
 	}
 
-	if err := b.vectorBackend.UpsertReplaceSubresources(ctx, namespace, job.Model, res, name, vectors, desired); err != nil {
+	if err := b.vectorBackend.UpsertReplaceSubresources(ctx, namespace, job.Model, res, name, vectors, nil, desired); err != nil {
 		if isPermanentItemError(err) {
 			b.skipPermanentItem("upsert", namespace, group, res, name, err)
 			statusLabel = "skipped_permanent_error"
