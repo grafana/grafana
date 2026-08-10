@@ -587,7 +587,9 @@ func TestIntegrationVectorCountStoredEmbeddings(t *testing.T) {
 	assert.Equal(t, before+2, countFor(t, testModel))
 	assert.Equal(t, beforeOther+1, countFor(t, "other-model"), "rows must be grouped per model")
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "count-dash"))
+	_, _, err := backend.DeleteRows(ctx, "integration-test", testModel, testResource,
+		DeleteSelector{UIDs: []string{"count-dash"}})
+	require.NoError(t, err)
 	assert.Equal(t, before, countFor(t, testModel))
 	assert.Equal(t, beforeOther+1, countFor(t, "other-model"))
 }
