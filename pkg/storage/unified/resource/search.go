@@ -102,17 +102,20 @@ type BulkIndexRequest struct {
 }
 
 type IndexBuildInfo struct {
-	BuildTime        time.Time       // Timestamp when the index was built. This value doesn't change on subsequent index updates.
-	BuildVersion     *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
-	SelectableFields []string        // List of selectable fields used when index was built.
-	SearchFieldsHash string          // Hash captured at build time over the SearchFieldDefinition slices registered for (group, resource), across all versions. Empty when no SearchFieldsProvider was in use.
-	Features         []IndexFeature  // Index features the index was built with. Empty on indexes built before index features existed.
+	BuildTime          time.Time       // Timestamp when the index was built. This value doesn't change on subsequent index updates.
+	BuildVersion       *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
+	SelectableFields   []string        // List of selectable fields used when index was built.
+	SearchFieldsHash   string          // Hash captured at build time over the SearchFieldDefinition slices registered for (group, resource), across all versions. Empty when no SearchFieldsProvider was in use.
+	Features           []IndexFeature  // Index features the index was built with. Empty on indexes built before index features existed.
+	ReaderRequirements []IndexFeature  // Features a reader must understand before using this index. Empty on indexes built before requirements were recorded.
 }
 
-// IndexFeature names a mapping change an older index cannot satisfy. Only for
-// changes no declared search field describes, such as an internal marker: a
-// declared field already moves IndexAffectingHash. Choosing wrong is silent — no
-// rebuild, missing data, no error.
+// IndexFeature names something about an index the search fields hash does not
+// capture: an internal marker no field declares, a storage choice a declaration
+// does not describe, or fields kept out of the hash on purpose (see
+// TrashSearchFieldDefinitions). Changes the hash covers already force a rebuild.
+// Making such a change without adding a feature for it is silent: nothing
+// rebuilds, and older indexes keep serving without the mapping.
 type IndexFeature string
 
 // IndexFeatureTrashFields means the index maps TrashSearchFieldDefinitions. An
@@ -145,11 +148,31 @@ func TrashIndexFeatures() []IndexFeature {
 }
 
 // currentIndexFeatures is recorded in every index this binary builds.
+//
+// A feature that changes which documents the index holds, not just how they are
+// mapped, belongs in readerRequiredFeatures too, and must not be enabled here
+// until that check has shipped for longer than the compatibility window —
+// instances without the check ignore the requirement and read the index anyway.
 var currentIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureStoredFacets,
 	IndexFeatureTrashFields,
 }
+
+// knownIndexFeatures is every feature this binary can read. A feature belongs here
+// from the release that implements its reading side, even if nothing builds indexes
+// with it yet. Only ever grows.
+var knownIndexFeatures = []IndexFeature{
+	IndexFeatureDeletedMarker,
+	IndexFeatureStoredFacets,
+	IndexFeatureTrashFields,
+}
+
+// readerRequiredFeatures name features an instance must understand before using an
+// index that has them. Empty today. A mapping alone is not enough to add one:
+// deleted documents are only kept when a config option says so, so a requirement
+// declared from the mapping would make older instances refuse safe indexes.
+var readerRequiredFeatures = []IndexFeature{}
 
 // requiredIndexFeatures is the subset an index must already have to be used. An
 // index without one of these features is rebuilt before it serves anything, even
@@ -189,6 +212,26 @@ func MissingIndexFeatures(buildInfo IndexBuildInfo, requiredFeatures []IndexFeat
 		}
 	}
 	return missing
+}
+
+// IndexReaderRequirements returns the requirements an index built by this binary
+// declares.
+func IndexReaderRequirements() []IndexFeature {
+	return slices.Sorted(slices.Values(readerRequiredFeatures))
+}
+
+// UnknownIndexRequirements returns declared requirements this binary does not
+// recognise; a non-empty result means the index must not be used. Matching on known
+// names rather than required ones is what lets an instance refuse a feature added
+// after it shipped.
+func UnknownIndexRequirements(requirements []IndexFeature) []IndexFeature {
+	var unknown []IndexFeature
+	for _, feature := range requirements {
+		if !slices.Contains(knownIndexFeatures, feature) {
+			unknown = append(unknown, feature)
+		}
+	}
+	return unknown
 }
 
 type ResourceIndex interface {
