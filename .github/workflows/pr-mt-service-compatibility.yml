@@ -37,6 +37,7 @@ jobs:
               - 'public/**'
               - 'packages/**'
               - 'scripts/webpack/**'
+              - 'scripts/rspack/**'
               - '.eslintrc*'
               - '.prettierrc*'
               - '.stylelintrc*'
