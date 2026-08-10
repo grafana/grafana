@@ -1,4 +1,10 @@
-import { type FieldSparkline, type PluginMeta, locationUtil } from '@grafana/data';
+import {
+  formattedValueToString,
+  getValueFormat,
+  type FieldSparkline,
+  type PluginMeta,
+  locationUtil,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage } from 'app/features/alerting/unified/hooks/usePluginBridge';
@@ -11,8 +17,7 @@ import {
 } from './kubernetesData';
 import { type ExistingItem } from './types';
 
-// Browser locale is the deliberate choice: the homepage number format follows the user's environment.
-const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
+const formatUsageNumber = getValueFormat('short');
 
 export interface KubernetesItemParts {
   inventory: KubernetesInventory | undefined;
@@ -71,6 +76,7 @@ export function buildKubernetesItem(parts: KubernetesItemParts, settings: Plugin
   const hasInventoryStats = inventory !== undefined && (clusterCount > 0 || podCount > 0);
 
   return {
+    id: 'kubernetes',
     title: t('home.recommendations.kubernetes.title', 'Kubernetes Monitoring'),
     icon: 'kubernetes',
     subtitle: t('home.recommendations.kubernetes.datasource', 'via {{name}}', { name: parts.datasourceName }),
@@ -78,13 +84,13 @@ export function buildKubernetesItem(parts: KubernetesItemParts, settings: Plugin
       ? {
           primary: t('home.recommendations.kubernetes.clusters', '', {
             count: clusterCount,
-            value: compactFormatter.format(clusterCount),
+            value: formattedValueToString(formatUsageNumber(clusterCount)),
             defaultValue_one: '{{value}} cluster',
             defaultValue_other: '{{value}} clusters',
           }),
           secondary: t('home.recommendations.kubernetes.pods', '', {
             count: podCount,
-            value: compactFormatter.format(podCount),
+            value: formattedValueToString(formatUsageNumber(podCount)),
             defaultValue_one: '{{value}} pod',
             defaultValue_other: '{{value}} pods',
           }),
@@ -104,7 +110,7 @@ export function buildKubernetesItem(parts: KubernetesItemParts, settings: Plugin
             alertsFiring > 0
               ? t('home.recommendations.kubernetes.alerts-firing', '', {
                   count: Math.ceil(alertsFiring),
-                  value: compactFormatter.format(Math.ceil(alertsFiring)),
+                  value: formattedValueToString(formatUsageNumber(Math.ceil(alertsFiring))),
                   defaultValue_one: '{{value}} alert firing',
                   defaultValue_other: '{{value}} alerts firing',
                 })

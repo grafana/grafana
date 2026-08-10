@@ -31,10 +31,6 @@ import (
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/loki"
-	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -140,13 +136,9 @@ func TestIntegrationPluginManager(t *testing.T) {
 	am := azuremonitor.ProvideService(hcp)
 	cw := cloudwatch.ProvideService()
 	grap := graphite.ProvideService(hcp, tracer)
-	idb := influxdb.ProvideService(hcp)
-	lk := loki.ProvideService(hcp, tracer)
-	pr := prometheus.ProvideService(hcp)
 	td := testdatasource.ProvideService()
-	my := mysql.ProvideService()
 	graf := grafanads.ProvideService(nil, features)
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, grap, idb, lk, pr, td, my, graf)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, grap, td, graf)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
@@ -222,11 +214,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"cloudwatch":                       {},
 		"grafana-azure-monitor-datasource": {},
 		"graphite":                         {},
-		"influxdb":                         {},
-		"loki":                             {},
-		"prometheus":                       {},
 		"grafana-testdata-datasource":      {},
-		"mysql":                            {},
 		"grafana":                          {},
 		"alertmanager":                     {},
 		"dashboard":                        {},

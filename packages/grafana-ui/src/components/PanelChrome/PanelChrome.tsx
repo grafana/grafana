@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
+import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
 import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
@@ -169,7 +169,6 @@ export function PanelChrome({
   subtitle,
 }: PanelChromeProps) {
   const theme = useTheme2();
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
@@ -477,9 +476,7 @@ export function PanelChrome({
           <div
             id={panelContentId}
             data-testid={selectors.components.Panels.Panel.content}
-            className={cx(styles.content, height === undefined && styles.containNone, {
-              [styles.contentTransparent]: visualRefreshEnabled && isPanelTransparent,
-            })}
+            className={cx(styles.content, height === undefined && styles.containNone)}
             style={contentStyle}
             onPointerDown={onContentPointerDown}
           >
@@ -603,15 +600,23 @@ const getStyles = (theme: GrafanaTheme2) => {
         border: `1px solid ${borderColor}`,
       },
     }),
-    contentTransparent: css({
-      backgroundColor: 'transparent',
-      border: '1px solid transparent',
-    }),
     loadingBarContainer: css({
       label: 'panel-loading-bar-container',
       position: 'absolute',
-      top: 0,
-      width: '100%',
+      // inset by the panel border width, so the bar sits on the panel's padding box
+      // rather than on top of the border itself
+      top: 1,
+      left: 1,
+      right: 1,
+      // the clip box has to be at least as tall as the corner radius. On a 1px-tall box the
+      // corner-overlap rule scales the radii down to 1px and nothing is rounded
+      // see https://drafts.csswg.org/css-backgrounds/#corner-overlap
+      height: theme.shape.radius.lg,
+      overflow: 'hidden',
+      borderTopLeftRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
+      borderTopRightRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
+      // the container is taller than the bar it clips, so let hover and clicks through to the header
+      pointerEvents: 'none',
       // this is to force the loading bar container to create a new stacking context
       // otherwise, in webkit browsers on windows/linux, the aliasing of panel text changes when the loading bar is shown
       // see https://github.com/grafana/grafana/issues/88104

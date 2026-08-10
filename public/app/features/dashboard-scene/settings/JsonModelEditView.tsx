@@ -16,8 +16,6 @@ import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { DashboardCodePane } from '../edit-pane/DashboardCodePane';
-import { getDashboardResourceText, validateDashboardResourceEnvelope } from '../edit-pane/codePaneUtils';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import {
   NameAlreadyExistsError,
@@ -31,6 +29,8 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { DashboardCodePane } from '../sidebar/DashboardCodePane';
+import { getDashboardResourceText, validateDashboardResourceEnvelope } from '../sidebar/codePaneUtils';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
@@ -80,7 +80,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 
   // v2 dashboards are edited as the full resource envelope but only spec edits are supported.
   // Validate the envelope before saving so metadata/kind/apiVersion changes fail loudly rather
-  // than being silently dropped by getEditedSaveModel() (consistent with the edit-pane code editor).
+  // than being silently dropped by getEditedSaveModel() (consistent with the sidebar code editor).
   public validateEditedResource(): { success: boolean; error?: string } {
     if (!isDashboardV2Spec(this.getSaveModel())) {
       return { success: true };
@@ -190,7 +190,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const goToSidebar = () => {
     // close settings and open the "Edit as code" sidebar pane
     const dashboard = getDashboardSceneFor(model);
-    dashboard.state.editPane.openPane(new DashboardCodePane({}));
+    dashboard.state.sidebar.openPane(new DashboardCodePane({}));
     locationService.partial({ editview: null });
 
     DashboardInteractions.takeMeToSidebarClicked({ item: 'json-model' });

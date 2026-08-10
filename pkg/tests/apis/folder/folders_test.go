@@ -1468,7 +1468,7 @@ func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagKubernetesLibraryPanels,
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
 		},
 	})
 
@@ -1534,7 +1534,7 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagKubernetesLibraryPanels,
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
 		},
 	})
 
@@ -2477,6 +2477,20 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 			expectedMessageID: "folder.cannot-be-parent-of-itself",
 		},
 		{
+			name: "create inside k6 folder",
+			setup: func(t *testing.T) string {
+				out, err := client.Resource.Create(context.Background(),
+					makeFolder(accesscontrol.K6FolderUID, "k6", ""), metav1.CreateOptions{})
+				require.NoError(t, err, "creating the k6 folder itself should succeed")
+				return out.GetName()
+			},
+			folder: func(parentUID string) *unstructured.Unstructured {
+				return makeFolder("child-of-k6", "Child of k6", parentUID)
+			},
+			expectedMsg:       "Folders cannot be created inside the k6 project",
+			expectedMessageID: "folder.cannot-be-created-in-k6",
+		},
+		{
 			name: "max depth exceeded",
 			setup: func(t *testing.T) string {
 				parentUID := ""
@@ -2572,4 +2586,50 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 			require.Equal(t, uc.expectedMessageID, string(statusErr.ErrStatus.Details.UID))
 		})
 	}
+}
+
+// The k6 app provisions its own subfolders through a service account, so that
+// identity is exempt from the k6 create restriction.
+func TestIntegrationK6SubfolderCreateByServiceAccount(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+	})
+
+	makeFolder := func(name, title, parentUID string) *unstructured.Unstructured {
+		md := map[string]any{"name": name}
+		if parentUID != "" {
+			md["annotations"] = map[string]any{utils.AnnoKeyFolder: parentUID}
+		}
+		return &unstructured.Unstructured{Object: map[string]any{
+			"metadata": md,
+			"spec":     map[string]any{"title": title},
+		}}
+	}
+
+	saToken := helper.Org1.AdminServiceAccountToken
+	require.NotEmpty(t, saToken)
+	saClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		ServiceAccountToken: saToken,
+		Namespace:           helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+		GVR:                 gvr,
+	})
+
+	_, err := saClient.Resource.Create(context.Background(),
+		makeFolder(accesscontrol.K6FolderUID, "k6", ""), metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	child, err := saClient.Resource.Create(context.Background(),
+		makeFolder("k6-sa-child", "k6 child", accesscontrol.K6FolderUID), metav1.CreateOptions{})
+	require.NoError(t, err, "a service account must be able to create folders inside the k6 tree")
+
+	_, err = saClient.Resource.Create(context.Background(),
+		makeFolder("k6-sa-grandchild", "k6 grandchild", child.GetName()), metav1.CreateOptions{})
+	require.NoError(t, err, "a service account must be able to create folders deeper in the k6 tree")
 }

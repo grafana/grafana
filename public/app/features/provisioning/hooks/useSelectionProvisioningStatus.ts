@@ -22,7 +22,7 @@ export function useSelectionProvisioningStatus(
   const isProvisionedInstance = useIsProvisionedInstance();
   const [, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
-  const provisioningEnabled = config.featureToggles.provisioning;
+  const provisioningEnabled = config.provisioningEnabled;
 
   const [status, setStatus] = useState({ hasProvisioned: false, hasNonProvisioned: false });
   const [folderCache, setFolderCache] = useState<Record<string, boolean>>({});

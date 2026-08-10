@@ -18,7 +18,7 @@ import {
 import { Box, Combobox, type ComboboxOption, Field, Input, Stack } from '@grafana/ui';
 import { ALL_VARIABLE_TEXT } from 'app/features/variables/constants';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { useUserDefinedVariables } from '../../utils/variables';
 import { getLowerTranslatedObjectType } from '../object';
 
@@ -318,6 +318,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
           <Combobox
             width="auto"
             minWidth={10}
+            data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.operatorSelection}
             options={operatorOptions}
             value={operator}
             onChange={(option) => {

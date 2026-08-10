@@ -21,7 +21,7 @@
  * `z.toJSONSchema()` and are used by LLM tool consumers for guidance.
  */
 
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { FieldMatcherID } from '@grafana/data';
 import type { GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';

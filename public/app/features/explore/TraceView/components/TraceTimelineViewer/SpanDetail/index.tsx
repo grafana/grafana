@@ -51,9 +51,9 @@ import AccordionKeyValues from './AccordionKeyValues';
 import AccordionLogs from './AccordionLogs';
 import AccordionReferences from './AccordionReferences';
 import type DetailState from './DetailState';
-import { ShareSpanButton } from './ShareSpanButton';
 import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
+import { useAttributePluginPromoGetter } from './pluginPromo/attributePluginPromos';
 
 const useResourceAttributesExtensionLinks = ({
   process,
@@ -456,6 +456,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     spanID,
     spanStartTime: startTime,
   });
+  const promoGetter = useAttributePluginPromoGetter();
 
   const listOfContentCards = [];
 
@@ -467,6 +468,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         isOpen={isSummaryAttributesOpen}
         linksGetter={resourceLinksGetter}
         onToggle={() => summaryAttributesToggle(spanID)}
+        promoGetter={promoGetter}
       />
     );
   }
@@ -479,6 +481,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       isOpen={isTagsOpen}
       linksGetter={resourceLinksGetter}
       onToggle={() => tagsToggle(spanID)}
+      promoGetter={promoGetter}
     />
   );
 
@@ -502,6 +505,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         linksGetter={resourceLinksGetter}
         isOpen={isProcessOpen}
         onToggle={() => processToggle(spanID)}
+        promoGetter={promoGetter}
       />
     );
   }
@@ -616,7 +620,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             traceToProfilesOptions={traceToProfilesOptions}
             timeRange={timeRange}
             app={app}
-            shareButton={<ShareSpanButton focusSpanLink={focusSpanLink} />}
+            focusSpanLink={focusSpanLink}
           />
         </div>
         <div className={styles.listWrapper}>

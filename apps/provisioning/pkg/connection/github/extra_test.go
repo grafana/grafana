@@ -212,7 +212,7 @@ func TestExtra_Build(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 
 			mockFactory := github.NewMockGithubFactory(t)
 			decrypter := tt.setupDecrypter()
@@ -285,7 +285,7 @@ func TestExtra_Mutate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GitlabConnectionType,
-					Gitlab: &provisioning.GitlabConnectionConfig{
+					OAuth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "clientID",
 					},
 				},
@@ -347,7 +347,7 @@ func TestExtra_Mutate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 
 			mockFactory := github.NewMockGithubFactory(t)
 			decrypter := func(c *provisioning.Connection) connection.SecureValues {

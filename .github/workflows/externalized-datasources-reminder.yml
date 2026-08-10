@@ -4,15 +4,10 @@ on:
   pull_request:
     types: [opened]
     paths:
-      - "packages/grafana-prometheus/**"
       - "public/app/plugins/datasource/cloudwatch/**"
       - "public/app/plugins/datasource/graphite/**"
-      - "public/app/plugins/datasource/influxdb/**"
-      - "public/app/plugins/datasource/prometheus/**"
       - "pkg/tsdb/cloudwatch/**"
       - "pkg/tsdb/graphite/**"
-      - "pkg/tsdb/influxdb/**"
-      - "pkg/tsdb/prometheus/**"
 
 jobs:
   add-comment:

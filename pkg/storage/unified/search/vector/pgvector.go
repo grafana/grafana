@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"text/template"
 	"time"
 	"unicode/utf8"
 
@@ -323,6 +324,58 @@ func (b *pgvectorBackend) DeleteSubresources(ctx context.Context, namespace, mod
 	return err
 }
 
+func (b *pgvectorBackend) DeleteNamespace(ctx context.Context, namespace string) (deleted int64, retErr error) {
+	if namespace == "" {
+		return 0, fmt.Errorf("namespace must not be empty")
+	}
+
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.DeleteNamespace")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+	span.SetAttributes(attribute.String("namespace", namespace))
+
+	// The four tables are keyed by namespace; wipe them atomically so a tenant
+	// leaves no vector data behind.
+	// ponytail: leaves empty per-tenant partial HNSW indexes
+	// (<resource>_<namespace>_hnsw); near-zero storage with 0 matching rows.
+	// Drop via dynamic catalog SQL in a follow-up if they accumulate.
+	templates := []*template.Template{
+		sqlVectorNamespaceDeleteEmbeddings,
+		sqlVectorNamespaceDeleteQueryCache,
+		sqlVectorNamespaceDeleteRateBuckets,
+		sqlVectorNamespaceDeletePromoted,
+	}
+	err := b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
+		for i, tmpl := range templates {
+			req := &sqlVectorNamespaceDeleteRequest{
+				SQLTemplate: sqltemplate.New(b.dialect),
+				Namespace:   namespace,
+			}
+			res, err := dbutil.Exec(ctx, tx, tmpl, req)
+			if err != nil {
+				return fmt.Errorf("delete namespace %q (%s): %w", namespace, tmpl.Name(), err)
+			}
+			// Report rows removed from the embeddings table (first template).
+			if i == 0 {
+				if n, err := res.RowsAffected(); err == nil {
+					deleted = n
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	span.SetAttributes(attribute.Int64("embeddings_deleted", deleted))
+	return deleted, nil
+}
+
 func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, string, error) {
 	if err := b.validateResource(ctx, resource); err != nil {
 		return nil, "", err
@@ -413,9 +466,19 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		case "folder":
 			req.FolderValues = f.Values
 		default:
-			// JSONB containment: metadata @> '{"field":["v1","v2"]}'
-			j, _ := json.Marshal(map[string][]string{f.Field: f.Values})
-			req.MetadataFilters = append(req.MetadataFilters, MetadataFilterEntry{JSON: string(j)})
+			// An empty group would render as "AND ()" — invalid SQL.
+			if len(f.Values) == 0 {
+				continue
+			}
+			// Writers store metadata values as scalars (embed extractor) or
+			// arrays (external collections); match either shape per value.
+			group := MetadataFilterGroup{JSONs: make([]string, 0, 2*len(f.Values))}
+			for _, v := range f.Values {
+				s, _ := json.Marshal(map[string]string{f.Field: v})
+				a, _ := json.Marshal(map[string][]string{f.Field: {v}})
+				group.JSONs = append(group.JSONs, string(s), string(a))
+			}
+			req.MetadataFilterGroups = append(req.MetadataFilterGroups, group)
 		}
 	}
 
