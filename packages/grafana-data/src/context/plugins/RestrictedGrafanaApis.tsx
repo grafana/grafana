@@ -9,6 +9,7 @@ interface ZodSchema {
 export interface DashboardMutationResult {
   success: boolean;
   error?: string; // structured validation/execution error message
+  code?: string; // machine-readable failure reason
   changes: Array<{ path: string; previousValue: unknown; newValue: unknown }>;
   warnings?: string[];
   data?: unknown; // command-specific return data
