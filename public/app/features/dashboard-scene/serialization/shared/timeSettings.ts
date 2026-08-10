@@ -8,9 +8,7 @@ import { defaultTimeSettingsSpec, type TimeSettingsSpec } from '@grafana/schema/
 
 /**
  * Shared scene ⇄ save-model pieces for `timeSettings`, composed by both the dashboard transforms
- * and sibling resources that render through the scene runtime with their own root (the notebook).
- * The notebook's generated TimeSettingsSpec is structurally identical (same OpenAPI source), so it
- * satisfies these signatures without bridging.
+ * and sibling resources that render through the scene runtime with their own root.
  */
 
 /** spec → scene. Extracted verbatim from transformSaveModelSchemaV2ToScene. */

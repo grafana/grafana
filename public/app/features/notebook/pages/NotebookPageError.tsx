@@ -10,13 +10,6 @@ interface NotebookPageErrorProps {
   error: NotebookLoadError;
 }
 
-/**
- * Renders a notebook load failure. Mirrors DashboardPageError, but with notebook copy — a missing
- * notebook must not tell the user a dashboard was not found.
- *
- * The error arrives already normalized by NotebookPageStateManager, so status and message are read
- * directly rather than re-derived from an unknown value.
- */
 export function NotebookPageError({ error }: NotebookPageErrorProps) {
   // Shared by the breadcrumb and the body so the two cannot describe the failure differently.
   const isNotFound = error.status === 404;
