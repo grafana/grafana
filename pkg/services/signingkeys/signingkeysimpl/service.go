@@ -178,8 +178,10 @@ func (s *Service) addPrivateKey(ctx context.Context, keyID string, alg jose.Sign
 		return nil, err
 	}
 
+	// Set expiration to a bit over a month to account for things like
+	// 31-day months or longer-lived tokens.
 	now := time.Now()
-	expiry := now.Add(30 * 24 * time.Hour)
+	expiry := now.Add(33 * 24 * time.Hour)
 	key, err := s.store.Add(ctx, &signingkeys.SigningKey{
 		KeyID:      keyID,
 		PrivateKey: string(encoded),
