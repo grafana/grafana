@@ -9,6 +9,15 @@ export function itemToString<T extends string | number>(item?: ComboboxOption<T>
   return item.label ?? item.value.toString();
 }
 
+/**
+ * Returns the string to fuzzy search against for an option - the label concatenated
+ * with the description (when present) so users can filter by either.
+ */
+export function itemToSearchableString<T extends string | number>(item: ComboboxOption<T>) {
+  const label = itemToString(item);
+  return item.description ? `${label}|${item.description}` : label;
+}
+
 export function fuzzyFind<T extends string | number>(
   options: Array<ComboboxOption<T>>,
   haystack: string[],
