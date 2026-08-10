@@ -21,7 +21,7 @@ export class ConditionalRenderingOptions extends PageObject {
   }
 
   /** Selects whether all rules or any rule must match */
-  async selectMatch(matchType: 'all' | 'any') {
+  async selectMatchType(matchType: 'all' | 'any') {
     await test.step(`Select conditional rendering match: "Match ${matchType}"`, async () => {
       await this.dashboardPage
         .getByGrafanaSelector(this.selectors.components.RadioButton.container, {
