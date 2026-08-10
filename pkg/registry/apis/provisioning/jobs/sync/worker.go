@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -90,11 +89,9 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	)
 	defer span.End()
 
-	start := time.Now()
 	outcome := utils.ErrorOutcome
 	totalChangesMade := 0
 	defer func() {
-		r.metrics.RecordJob(string(provisioning.JobActionPull), outcome, totalChangesMade, time.Since(start).Seconds())
 		span.SetAttributes(
 			attribute.String("outcome", outcome),
 			attribute.Int("changes_made", totalChangesMade),
@@ -106,10 +103,11 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		err := fmt.Errorf("sync job submitted for repository that does not support read-write")
 		return tracing.Error(span, err)
 	}
-	// Enforce max_file_size at the repo boundary so oversized files are
-	// surfaced as per-file errors during pull instead of being silently
-	// applied. Mirrors the cap enforced on the files API in [filesConnector].
-	rw = repository.NewSizeLimitedReaderWriter(rw, r.maxFileSize)
+	if r.maxFileSize > 0 {
+		if m, ok := rw.(repository.SizeLimitedReader); ok {
+			m.WithMaxFileSize(r.maxFileSize)
+		}
+	}
 
 	syncStatus := job.Status.ToSyncStatus(job.Name)
 	// Preserve last ref

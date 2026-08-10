@@ -66,7 +66,7 @@ func TestAuthenticate(t *testing.T) {
 		resp, err := svc.Authenticate(context.Background(), req)
 		require.NoError(t, err)
 		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK, resp.Code)
-		assert.Equal(t, "bespoke-token", resp.Token)
+		assert.Equal(t, "bespoke-token", resp.Token) //nolint:staticcheck
 	})
 
 	t.Run("single client Test false returns NOT_HANDLED", func(t *testing.T) {
@@ -125,7 +125,7 @@ func TestAuthenticate(t *testing.T) {
 		resp, err := svc.Authenticate(context.Background(), req)
 		require.NoError(t, err)
 		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK, resp.Code)
-		assert.Equal(t, "handled", resp.Token)
+		assert.Equal(t, "handled", resp.Token) //nolint:staticcheck
 	})
 
 	t.Run("multiple clients first declines via Test second handles", func(t *testing.T) {
@@ -146,7 +146,7 @@ func TestAuthenticate(t *testing.T) {
 		resp, err := svc.Authenticate(context.Background(), req)
 		require.NoError(t, err)
 		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK, resp.Code)
-		assert.Equal(t, "from-second", resp.Token)
+		assert.Equal(t, "from-second", resp.Token) //nolint:staticcheck
 	})
 
 	t.Run("client returning error propagates without fallthrough", func(t *testing.T) {

@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { renderLimitedComponents } from '@grafana/runtime';
 import { ToolbarButton } from '@grafana/ui';
 import { useGetCurrentOrgQuotaQuery } from 'app/api/clients/legacy';
+import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
@@ -27,7 +28,7 @@ export function NavRightButton() {
       props: {},
       components,
       limit: 1,
-      pluginId: 'grafana-setupguide-app',
+      pluginId: SETUPGUIDE_PLUGIN_ID,
     }) ?? <InviteUserButton />
   );
 }

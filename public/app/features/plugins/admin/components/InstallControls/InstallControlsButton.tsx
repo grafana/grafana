@@ -21,7 +21,7 @@ import {
   useUnsetInstall,
   useFetchDetailsLazy,
 } from '../../state/hooks';
-import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
+import { trackPluginInstalled } from '../../tracking';
 import { type CatalogPlugin, PluginStatus, PluginTabIds, type Version } from '../../types';
 
 const PLUGIN_UPDATE_INTERACTION_EVENT_NAME = 'plugin_update_clicked';
@@ -92,7 +92,6 @@ export function InstallControlsButton({
 
   const onUninstall = async () => {
     hideConfirmModal();
-    trackPluginUninstalled(trackingProps);
     await uninstall(plugin.id);
     if (!errorUninstalling) {
       // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
@@ -208,21 +207,14 @@ export function InstallControlsButton({
   }
 
   if (isMarketplacePlugin(plugin)) {
-    if (entitlement?.isLoading) {
-      return (
-        <Button disabled icon="spinner">
-          <Trans i18nKey="plugins.install-controls.install">Install</Trans>
-        </Button>
-      );
-    }
-
     if (!entitlement?.entitled) {
       return (
         <LinkButton
           href={`${getExternalManageLink(plugin.id)}?tab=installation`}
           target="_blank"
           rel="noopener noreferrer"
-          icon="external-link-alt"
+          icon={entitlement?.isLoading ? 'spinner' : 'external-link-alt'}
+          disabled={entitlement?.isLoading}
         >
           <Trans i18nKey="plugins.install-controls.contact-us">Contact us</Trans>
         </LinkButton>

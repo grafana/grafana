@@ -20,7 +20,7 @@ export interface DashboardMutationAPI {
   getAvailableCommands(): string[];
 }
 
-export interface RestrictedGrafanaApisContextTypeInternal {
+interface RestrictedGrafanaApisContextTypeInternal {
   // Add types for restricted Grafana APIs here
   // (Make sure that they are typed as optional properties)
   alertingAlertRuleFormSchema?: ZodSchema;

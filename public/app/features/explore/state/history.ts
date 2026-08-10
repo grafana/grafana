@@ -1,6 +1,3 @@
-import { createAction } from '@reduxjs/toolkit';
-
-import { type HistoryItem } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 import {
   addToRichHistory,
@@ -25,15 +22,6 @@ import {
   richHistoryStorageFullAction,
   richHistoryUpdatedAction,
 } from './main';
-
-//
-// Actions and Payloads
-//
-
-export interface HistoryUpdatedPayload {
-  history: HistoryItem[];
-}
-export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');
 
 //
 // Action creators
@@ -188,7 +176,11 @@ export const updateHistorySearchFilters = (filters: RichHistorySearchFilters): T
   return async (dispatch, getState) => {
     await dispatch(richHistorySearchFiltersUpdatedAction({ filters: { ...filters } }));
     const currentSettings = getState().explore.richHistorySettings!;
-    if (supportedFeatures().lastUsedDataSourcesAvailable) {
+    // Only persist the datasource filter as "last used" when it reflects a user choice.
+    // In active-datasources-only mode the datasource multiselect is hidden, so the only
+    // writer is the mount-seed forcing the active datasource — persisting it would clobber
+    // the filter the user set while the setting was off.
+    if (supportedFeatures().lastUsedDataSourcesAvailable && !currentSettings.activeDatasourcesOnly) {
       await dispatch(
         updateHistorySettings({
           ...currentSettings,

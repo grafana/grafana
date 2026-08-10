@@ -6,7 +6,6 @@ import (
 	context "context"
 
 	identity "github.com/grafana/grafana/pkg/apimachinery/identity"
-	datasources "github.com/grafana/grafana/pkg/services/datasources"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -53,24 +52,6 @@ func (_m *MockService) InvalidateOAuthTokens(_a0 context.Context, _a1 identity.R
 		r0 = rf(_a0, _a1, _a2)
 	} else {
 		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// IsOAuthPassThruEnabled provides a mock function with given fields: _a0
-func (_m *MockService) IsOAuthPassThruEnabled(_a0 *datasources.DataSource) bool {
-	ret := _m.Called(_a0)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IsOAuthPassThruEnabled")
-	}
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(*datasources.DataSource) bool); ok {
-		r0 = rf(_a0)
-	} else {
-		r0 = ret.Get(0).(bool)
 	}
 
 	return r0

@@ -44,3 +44,8 @@ type LogGroupField struct {
 	Percent int64  `json:"percent"`
 	Name    string `json:"name"`
 }
+
+type LogDataSource struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}

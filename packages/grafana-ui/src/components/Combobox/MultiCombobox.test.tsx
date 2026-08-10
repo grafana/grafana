@@ -2,8 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
-import { mockComboboxRect } from '@grafana/test-utils';
-
+import { mockComboboxRect } from '../../test-utils/mockDom';
 import { Drawer } from '../Drawer/Drawer';
 import { Modal } from '../Modal/Modal';
 
@@ -252,6 +251,21 @@ describe('MultiCombobox', () => {
     const clearAllButton = await screen.findByTitle('Clear all');
     await user.click(clearAllButton);
     expect(onChange).toHaveBeenCalledWith([]);
+  });
+
+  it('should open the menu when clicking the toggle button', async () => {
+    const options = [
+      { label: 'Option 1', value: 'a' },
+      { label: 'Option 2', value: 'b' },
+      { label: 'Option 3', value: 'c' },
+    ];
+    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
+
+    const toggleIcon = screen.getByTestId('icon-angle-down'); // the input element is the interactive element in the a11y tree - this is just decoration
+    await userEvent.click(toggleIcon);
+
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
   });
 
   describe('all option', () => {

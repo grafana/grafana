@@ -79,7 +79,7 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
   return {};
 };
 
-export function graphToTimeseriesOptions(angular: any): {
+function graphToTimeseriesOptions(angular: any): {
   fieldConfig: FieldConfigSource;
   options: Options;
   annotations: AnnotationQuery[];

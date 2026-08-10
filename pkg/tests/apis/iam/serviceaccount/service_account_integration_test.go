@@ -8,10 +8,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -48,6 +52,7 @@ func TestIntegrationServiceAccounts(t *testing.T) {
 				},
 			})
 			doServiceAccountCRUDTestsUsingTheNewAPIs(t, helper)
+			doServiceAccountListFilteringTest(t, helper)
 
 			if mode < 3 {
 				doServiceAccountCRUDTestsUsingTheLegacyAPIs(t, helper)
@@ -216,6 +221,69 @@ func doServiceAccountCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTest
 		require.Equal(t, createdUID, fetched.GetName())
 		require.Equal(t, "default", fetched.GetNamespace())
 	})
+}
+
+// doServiceAccountListFilteringTest verifies that a nameless collection list is
+// allowed at the API layer (allowListAuthorizer) and that the backend filters the
+// result to only the service accounts the caller can read.
+func doServiceAccountListFilteringTest(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("list returns only the service accounts the user can read", func(t *testing.T) {
+		ctx := context.Background()
+
+		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			GVR:       gvrServiceAccounts,
+		})
+
+		visible := createNamedServiceAccount(t, ctx, helper, adminClient, "list-filter-visible", "Visible SA")
+		hidden := createNamedServiceAccount(t, ctx, helper, adminClient, "list-filter-hidden", "Hidden SA")
+		t.Cleanup(func() {
+			cleanupCtx := context.Background()
+			_ = adminClient.Resource.Delete(cleanupCtx, visible.GetName(), metav1.DeleteOptions{})
+			_ = adminClient.Resource.Delete(cleanupCtx, hidden.GetName(), metav1.DeleteOptions{})
+		})
+
+		visibleID := visible.GetLabels()[utils.LabelKeyDeprecatedInternalID]
+		require.NotEmpty(t, visibleID, "service account should expose its internal ID label")
+
+		// A user with no basic role and read access to only the "visible" SA.
+		lister := helper.CreateUser("sa-list-filter-user", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+			{
+				Actions:           []string{serviceaccounts.ActionRead},
+				Resource:          "serviceaccounts",
+				ResourceAttribute: "id",
+				ResourceID:        visibleID,
+			},
+		})
+
+		listerClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      lister,
+			Namespace: helper.Namespacer(lister.Identity.GetOrgID()),
+			GVR:       gvrServiceAccounts,
+		})
+
+		list, err := listerClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		names := make([]string, 0, len(list.Items))
+		for _, item := range list.Items {
+			names = append(names, item.GetName())
+		}
+		require.Contains(t, names, visible.GetName(), "user should see the service account they can read")
+		require.NotContains(t, names, hidden.GetName(), "user must not see service accounts they cannot read")
+	})
+}
+
+func createNamedServiceAccount(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper, client *apis.K8sResourceClient, name, title string) *unstructured.Unstructured {
+	t.Helper()
+	obj := helper.LoadYAMLOrJSONFile("../testdata/serviceaccount-test-create-v0.yaml")
+	obj.Object["metadata"].(map[string]any)["name"] = name
+	obj.Object["spec"].(map[string]any)["title"] = title
+	created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, created)
+	return created
 }
 
 func doServiceAccountCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper) {

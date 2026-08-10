@@ -8,7 +8,7 @@ on:
 jobs:
   add-comment:
     if: ${{ ! github.event.pull_request.head.repo.fork }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       pull-requests: write
     steps:
@@ -16,9 +16,9 @@ jobs:
         with:
           message: |
             Hi there! 👋 This PR modifies `conf/defaults.ini`.
-            
+
             If this change introduces user-facing configuration options or modifies existing ones, please remember to update [`docs/sources/setup-grafana/configure-grafana/_index.md`](https://github.com/grafana/grafana/blob/main/docs/sources/setup-grafana/configure-grafana/_index.md).
-            
+
             If this change is internal-only (experimental flags, internal refactoring, etc.), you can ignore this reminder.
-            
+
             Questions? Reach out to the #docs channel on Slack.

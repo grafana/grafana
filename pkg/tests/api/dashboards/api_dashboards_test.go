@@ -226,46 +226,20 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	dashboardWithDuplicatedLegacyAnnotation := "new-uid"
 	t.Run("When saving a dashboard with an already used legacy ID", func(t *testing.T) {
 		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
 			"dashboard": map[string]interface{}{
 				"id":    savedDashInFolder.ID, // nolint:staticcheck
-				"uid":   dashboardWithDuplicatedLegacyAnnotation,
+				"uid":   "new-uid",
 				"title": "Updated title",
 			},
 			"folderUid": savedDashInFolder.FolderUID,
 			"overwrite": true,
 		})
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusConflict, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
-	})
-
-	t.Run("When updating a dashboard with legacy ID in multiple dashboards", func(t *testing.T) {
-		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
-			"dashboard": map[string]interface{}{
-				"id":    savedDashInFolder.ID, // nolint:staticcheck
-				"uid":   savedDashInGeneralFolder.UID,
-				"title": "Updated title",
-			},
-			"folderUid": savedDashInFolder.FolderUID,
-			"overwrite": true,
-		})
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-		err = resp.Body.Close()
-		require.NoError(t, err)
-		// Delete the dashboard with duplicated legacy ID annotation
-		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/%s", grafanaListedAddr, dashboardWithDuplicatedLegacyAnnotation)
-		req, err := http.NewRequest("DELETE", u, nil)
-		require.NoError(t, err)
-		resp, err = http.DefaultClient.Do(req)
-		require.NoError(t, err)
-		err = resp.Body.Close()
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
 	t.Run("When updating a dashboard already using that uid", func(t *testing.T) {

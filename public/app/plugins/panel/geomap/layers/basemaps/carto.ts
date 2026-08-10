@@ -1,8 +1,7 @@
-import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
-import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, type EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem } from '@grafana/data';
 
 // https://carto.com/help/building-maps/basemap-list/
 
@@ -17,7 +16,7 @@ export interface CartoConfig {
   showLabels?: boolean;
 }
 
-export const defaultCartoConfig: CartoConfig = {
+const defaultCartoConfig: CartoConfig = {
   theme: LayerTheme.Auto,
   showLabels: true,
 };
@@ -27,18 +26,14 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
   name: 'CARTO basemap',
   description: 'Add layer CARTO Raster basemaps',
   isBaseMap: true,
+  requiresAttribution: true,
   defaultOptions: defaultCartoConfig,
 
   /**
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (
-    map: OpenLayersMap,
-    options: MapLayerOptions<CartoConfig>,
-    eventBus: EventBus,
-    theme: GrafanaTheme2
-  ) => ({
+  create: async (_map, options, _eventBus, theme) => ({
     init: () => {
       const cfg = { ...defaultCartoConfig, ...options.config };
       let style: string | undefined = cfg.theme;

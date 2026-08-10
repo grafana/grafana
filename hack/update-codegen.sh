@@ -89,7 +89,6 @@ grafana:codegen:lsdirs() {
 
 grafana::codegen:run pkg
 grafana::codegen:run pkg/apimachinery
-grafana::codegen:run pkg/aggregator
 grafana::codegen:run apps/dashboard/pkg
 grafana::codegen:run apps/provisioning/pkg
 grafana::codegen:run apps/folder/pkg
@@ -97,6 +96,7 @@ grafana::codegen:run apps/preferences/pkg
 grafana::codegen:run apps/collections/pkg
 grafana::codegen:run apps/scope/pkg
 grafana::codegen:run apps/alerting/alertenrichment/pkg
+grafana::codegen:run apps/alerting/alertrulequality/pkg
 
 if [ -d "pkg/extensions/apis" ]; then
   grafana::codegen:run pkg/extensions

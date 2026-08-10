@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,18 +34,20 @@ func ProvideProvisioningOSSRepositoryExtras(
 	reg prometheus.Registerer,
 ) []repository.Extra {
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(reg))
-	folderMetadataEnabled := resources.IsFolderMetadataEnabled(cfg)
+	// http:// URLs with a token are only allowed in development or when explicitly opted in,
+	// since the token would otherwise travel in cleartext.
+	allowInsecure := cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,
 			cfg.PermittedProvisioningPaths,
 		),
-		git.Extra(decrypter),
+		git.Extra(decrypter, allowInsecure),
 		github.Extra(
 			decrypter,
 			ghFactory,
 			webhooksBuilder,
-			repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges),
+			allowInsecure,
 		),
 	}
 }
@@ -94,10 +95,6 @@ func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, extras []connection.Ex
 		// Enforcing default connection values if settings are not set
 		types = []string{"github"}
 	}
-	enabledTypes := make(map[apisprovisioning.ConnectionType]struct{}, len(types))
-	for _, e := range types {
-		enabledTypes[apisprovisioning.ConnectionType(e)] = struct{}{}
-	}
 
-	return connection.ProvideFactory(enabledTypes, extras)
+	return connection.ProvideFactory(connection.ToConnectionTypes(types), extras)
 }

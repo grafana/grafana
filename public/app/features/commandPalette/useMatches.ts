@@ -7,7 +7,7 @@ import { fuzzySearch } from '@grafana/data';
 // From https://github.dev/timc1/kbar/blob/main/src/useMatches.tsx
 // We are using fuzzySearch here instead of kbar's implementation as it's more performant
 
-export const NO_GROUP = {
+const NO_GROUP = {
   name: 'none',
   priority: Priority.NORMAL,
 };

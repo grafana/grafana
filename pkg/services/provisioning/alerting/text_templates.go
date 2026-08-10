@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
@@ -31,7 +30,7 @@ func (c *defaultTextTemplateProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, template := range file.Templates {
-			template.Data.Provenance = definitions.Provenance(models.ProvenanceFile)
+			template.Data.Provenance = models.ProvenanceFile
 			_, err := c.templateService.UpsertTemplate(ctx, template.OrgID, template.Data)
 			if err != nil {
 				return err
@@ -45,7 +44,7 @@ func (c *defaultTextTemplateProvisioner) Unprovision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, deleteTemplate := range file.DeleteTemplates {
-			err := c.templateService.DeleteTemplate(ctx, deleteTemplate.OrgID, deleteTemplate.Name, definitions.Provenance(models.ProvenanceFile), "")
+			err := c.templateService.DeleteTemplate(ctx, deleteTemplate.OrgID, deleteTemplate.Name, models.ProvenanceFile, "")
 			if err != nil {
 				return err
 			}

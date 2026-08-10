@@ -1,5 +1,6 @@
 import type OpenLayersMap from 'ol/Map';
 import type View from 'ol/View';
+import Attribution from 'ol/control/Attribution';
 import { transformExtent } from 'ol/proj';
 import { type ComponentProps } from 'react';
 
@@ -93,6 +94,10 @@ jest.mock('./utils/layers', () => ({
     options: {},
   }),
   applyLayerFilter: jest.fn(),
+}));
+
+jest.mock('./utils/attribution', () => ({
+  updateAttributionVisibility: jest.fn(),
 }));
 
 jest.mock('./view', () => ({
@@ -573,6 +578,44 @@ describe('GeomapPanel - View Listener', () => {
       expect(ViewConstructor).toHaveBeenCalled();
     });
 
+    it('should call setMinZoom when minZoom is configured', async () => {
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+
+      // Clear any calls from initMapAsync before testing initMapView directly
+      mockView.setMinZoom!.mockClear();
+      mockView.setMaxZoom!.mockClear();
+
+      const viewConfig = {
+        ...props.options.view,
+        maxZoom: undefined,
+        minZoom: 3,
+      };
+      panel.initMapView(viewConfig);
+
+      expect(mockView.setMinZoom).toHaveBeenCalledWith(3);
+      expect(mockView.setMaxZoom).not.toHaveBeenCalled();
+    });
+
+    it('should call both setMinZoom and setMaxZoom when both are configured', async () => {
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+
+      // Clear any calls from initMapAsync before testing initMapView directly
+      mockView.setMinZoom!.mockClear();
+      mockView.setMaxZoom!.mockClear();
+
+      const viewConfig = {
+        ...props.options.view,
+        minZoom: 3,
+        maxZoom: 18,
+      };
+      panel.initMapView(viewConfig);
+
+      expect(mockView.setMinZoom).toHaveBeenCalledWith(3);
+      expect(mockView.setMaxZoom).toHaveBeenCalledWith(18);
+    });
+
     it('should handle shared view configuration', async () => {
       const div = document.createElement('div');
       await panel.initMapAsync(div);
@@ -669,6 +712,9 @@ describe('GeomapPanel - View Listener', () => {
 
       panel.optionsChanged(oldOptions, newOptions);
       expect(mockMap.getControls).toHaveBeenCalled();
+
+      const { updateAttributionVisibility } = require('./utils/attribution');
+      expect(updateAttributionVisibility).toHaveBeenCalledWith(panel.layers, newOptions.controls);
     });
 
     it('should register view listener when dashboardVariable is enabled via options change', async () => {
@@ -793,7 +839,6 @@ describe('GeomapPanel - View Listener', () => {
           },
           options: { name: 'Test Layer', type: 'test' },
           onChange: jest.fn(),
-          mouseEvents: { next: jest.fn(), subscribe: jest.fn() },
           getName: () => 'Test Layer',
         },
       ] as unknown as typeof panel.layers;
@@ -870,6 +915,19 @@ describe('GeomapPanel - View Listener', () => {
       });
 
       expect(setStateSpy).toHaveBeenCalled();
+    });
+
+    it('adds the attribution control even when optional attribution is hidden', async () => {
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+      (mockMap.addControl as jest.Mock).mockClear();
+
+      panel.initControls({
+        showZoom: false,
+        showAttribution: false,
+      });
+
+      expect(mockMap.addControl).toHaveBeenCalledWith(expect.any(Attribution));
     });
 
     it('should handle controls when map is not initialized', () => {

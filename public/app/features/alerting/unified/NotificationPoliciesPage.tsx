@@ -3,6 +3,7 @@ import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSet } from 'react-use';
 
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { type GrafanaTheme2, type UrlQueryMap } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -19,7 +20,12 @@ import {
   useCreatePolicyAction,
   useListNotificationPolicyRoutes,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
-import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
+import { isGranted } from 'app/features/alerting/unified/hooks/abilities/abilityUtils';
+import {
+  AlertGroupAction,
+  NotificationPolicyAction,
+  TimeIntervalAction,
+} from 'app/features/alerting/unified/hooks/abilities/types';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
@@ -35,6 +41,9 @@ import {
   trackNotificationPoliciesFilterPolicyTree,
   trackNotificationPoliciesToggledAll,
 } from './components/notification-policies/notificationPolicyAnalytics';
+import { useAlertGroupAbility } from './hooks/abilities/alertmanager/useAlertGroupAbility';
+import { useNotificationPolicyAbility } from './hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { useTimeIntervalAbility } from './hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { useNotificationPoliciesNav } from './navigation/useNotificationConfigNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { ROOT_ROUTE_NAME } from './utils/k8s/constants';
@@ -55,15 +64,19 @@ const NotificationPoliciesTabs = () => {
 
   // Alertmanager logic and data hooks
   const { selectedAlertmanager = '' } = useAlertmanager();
-  const [policiesSupported, canSeePoliciesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationPolicyTree);
-  const [timingsSupported, canSeeTimingsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
+  const policiesAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.ViewTree });
+  const timingsAbility = useTimeIntervalAbility({ action: TimeIntervalAction.View });
+  const canAccessPolicies = isGranted(policiesAbility);
+  const canAccessTimings = isGranted(timingsAbility);
+
   const availableTabs = [
-    canSeePoliciesTab && ActiveTab.NotificationPolicies,
-    canSeeTimingsTab && ActiveTab.TimeIntervals,
+    canAccessPolicies && ActiveTab.NotificationPolicies,
+    canAccessTimings && ActiveTab.TimeIntervals,
   ].filter((tab) => !!tab);
+
   const { data: muteTimings = [] } = useMuteTimings({
     alertmanager: selectedAlertmanager,
-    skip: !canSeeTimingsTab,
+    skip: !canAccessTimings,
   });
 
   // Tab state management
@@ -93,7 +106,7 @@ const NotificationPoliciesTabs = () => {
       <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
       <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />
       <TabsBar>
-        {policiesSupported && canSeePoliciesTab && (
+        {canAccessPolicies && (
           <Tab
             label={t('alerting.notification-policies-tabs.label-notification-policies', 'Notification Policies')}
             active={policyTreeTabActive}
@@ -103,7 +116,7 @@ const NotificationPoliciesTabs = () => {
             }}
           />
         )}
-        {timingsSupported && canSeeTimingsTab && (
+        {canAccessTimings && (
           <Tab
             label={t('alerting.notification-policies-tabs.label-time-intervals', 'Time intervals')}
             active={muteTimingsTabActive}
@@ -127,13 +140,12 @@ const NotificationPoliciesTabs = () => {
  * Unified policy tree view that handles both single and multiple policy trees.
  * Owns the single Web Worker instance and alert groups query shared by all PoliciesTree children.
  *
- * When the `alertingMultiplePolicies` feature toggle is enabled (Grafana AM only),
- * lists all policy trees with create/filter/expand controls.
- * Otherwise, renders a single default policy tree.
+ * For the Grafana Alertmanager, lists all policy trees with create/filter/expand controls.
+ * Otherwise (external Alertmanagers), renders a single default policy tree.
  */
 function PolicyTreeTab() {
   const { selectedAlertmanager = '', isGrafanaAlertmanager } = useAlertmanager();
-  const [, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
+  const { granted: canSeeAlertGroups } = useAlertGroupAbility(AlertGroupAction.View);
 
   // Single worker + alert groups query shared by all PoliciesTree instances
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
@@ -142,7 +154,7 @@ function PolicyTreeTab() {
     { skip: !canSeeAlertGroups || !selectedAlertmanager }
   );
 
-  const useMultiplePolicies = isGrafanaAlertmanager && config.featureToggles.alertingMultiplePolicies;
+  const useMultiplePolicies = isGrafanaAlertmanager;
 
   const {
     currentData: allPolicies,
@@ -228,10 +240,11 @@ function PolicyTreeTab() {
     if (selectedPolicyTreeNames.length === 0) {
       return sortedPolicies;
     }
-    return sortedPolicies.filter((policy) => {
-      const name = policy.name ?? ROOT_ROUTE_NAME;
-      return selectedPolicyTreeNames.includes(name);
-    });
+    // The filter selector stores the raw backend tree name (e.g. "default"), while listed policies carry the
+    // canonicalized name ("user-defined"). Canonicalize both sides so selecting the default tree matches it.
+    const canonicalize = (name?: string) => (isDefaultRoutingTreeName(name) ? ROOT_ROUTE_NAME : name);
+    const selectedCanonical = new Set(selectedPolicyTreeNames.map(canonicalize));
+    return sortedPolicies.filter((policy) => selectedCanonical.has(canonicalize(policy.name)));
   }, [sortedPolicies, selectedPolicyTreeNames]);
 
   const hasActiveFilters = Boolean(contactPointFilter) || labelMatchersFilter.length > 0;
@@ -363,13 +376,13 @@ interface QueryParamValues {
 /**
  * Sort policies so that the default policy (ROOT_ROUTE_NAME or unnamed) comes first
  */
-function sortPoliciesDefaultFirst<T extends { name?: string }>(policies: T[] | undefined): T[] {
+export function sortPoliciesDefaultFirst<T extends { name?: string }>(policies: T[] | undefined): T[] {
   if (!policies) {
     return [];
   }
   return [...policies].sort((a, b) => {
-    const aIsDefault = a.name === ROOT_ROUTE_NAME || !a.name;
-    const bIsDefault = b.name === ROOT_ROUTE_NAME || !b.name;
+    const aIsDefault = isDefaultRoutingTreeName(a.name);
+    const bIsDefault = isDefaultRoutingTreeName(b.name);
     if (aIsDefault && !bIsDefault) {
       return -1;
     }

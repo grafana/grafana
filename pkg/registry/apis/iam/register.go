@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
@@ -70,7 +71,6 @@ const MaxConcurrentZanzanaWrites = 20
 func RegisterAPIService(
 	cfg *setting.Cfg,
 	cfgProvider configprovider.ConfigProvider,
-	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
 	sql db.DB,
@@ -81,10 +81,9 @@ func RegisterAPIService(
 	roleApiInstaller RoleApiInstaller,
 	globalRoleApiInstaller GlobalRoleApiInstaller,
 	teamLBACApiInstaller TeamLBACApiInstaller,
-	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller,
 	tracing *tracing.TracingService,
 	roleBindingsApiInstaller RoleBindingApiInstaller,
-	teamGroupsHandlerImpl externalgroupmapping.TeamGroupsHandler,
+	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider,
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler,
 	externalGroupReconciler legacy.ExternalGroupReconciler,
 	dual dualwrite.Service,
@@ -104,7 +103,6 @@ func RegisterAPIService(
 		roleApiInstaller,
 		globalRoleApiInstaller,
 		teamLBACApiInstaller,
-		externalGroupMappingApiInstaller,
 		roleBindingsApiInstaller,
 	)
 	registerMetrics(reg)
@@ -129,6 +127,15 @@ func RegisterAPIService(
 		resourcePermsSearchAuthorizer = iamauthorizer.NewResourcePermissionsAuthorizer(accessClient, resourceParentProvider)
 	}
 
+	// Mode lever for the SSO settings migration: any configured storage mode
+	// above 0 hands the SSOSetting kind to the MT-Settings store.
+	ssoUseMTSettings := false
+	if cfg != nil {
+		if resCfg, ok := cfg.UnifiedStorage[legacyiamv0.SSOSettingResourceInfo.GroupResource().String()]; ok && resCfg.DualWriterMode > grafanarest.Mode0 {
+			ssoUseMTSettings = true
+		}
+	}
+
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                             store,
 		userLegacyStore:                   user.NewLegacyStore(store, accessClient, tracing),
@@ -137,14 +144,14 @@ func RegisterAPIService(
 		externalGroupReconciler:           externalGroupReconciler,
 		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
+		ssoUseMTSettings:                  ssoUseMTSettings,
 		roleApiInstaller:                  roleApiInstaller,
 		globalRoleApiInstaller:            globalRoleApiInstaller,
 		teamLBACApiInstaller:              teamLBACApiInstaller,
-		externalGroupMappingApiInstaller:  externalGroupMappingApiInstaller,
 		resourcePermissionsStorage:        rpStorage,
 		mappers:                           mappers,
 		roleBindingsApiInstaller:          roleBindingsApiInstaller,
-		teamGroupsHandler:                 teamGroupsHandlerImpl,
+		teamGroupsHandlerProvider:         teamGroupsHandlerProvider,
 		externalGroupMappingSearchHandler: externalGroupMappingSearchHandler,
 		sso:                               ssoService,
 		resourceParentProvider:            resourceParentProvider,
@@ -154,23 +161,28 @@ func RegisterAPIService(
 		ac:                                ac,
 		zClient:                           zClient,
 		zTickets:                          make(chan bool, MaxConcurrentZanzanaWrites),
-		display:                           user.NewLegacyDisplayREST(store),
 		reg:                               reg,
 		logger:                            log.New("iam.apis"),
-		features:                          features,
 		dual:                              dual,
 		unified:                           unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg)),
-		teamSearch:                       NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), unified, features, accessClient),
+		teamSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.TeamResourceInfo.GroupResource(),
+			unified, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing)),
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
 		tracing:                          tracing,
 		cfgProvider:                      cfgProvider,
 		apiConfig: Config{
 			SingleOrganization: cfg.RBAC.SingleOrganization,
 		},
+		display: display.NewDisplayHandler(
+			display.NewLegacyDisplayProvider(store),   // Do legacy first
+			display.NewSearchDisplayProvider(unified), // then use search index
+		),
+		ofClient: openfeature.NewDefaultClient(),
 	}
-	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, features, cfg, accessClient)
+	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, cfg, accessClient)
+	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, accessClient)
 
 	apiregistration.RegisterAPI(builder)
 
@@ -184,7 +196,6 @@ func NewAPIService(
 	roleApiInstaller RoleApiInstaller,
 	globalRoleApiInstaller GlobalRoleApiInstaller,
 	teamLBACApiInstaller TeamLBACApiInstaller,
-	features featuremgmt.FeatureToggles,
 	zClient zanzana.Client,
 	reg prometheus.Registerer,
 	tokenExchanger authn.TokenExchanger,
@@ -203,6 +214,7 @@ func NewAPIService(
 	serviceAccountAuthorizer := newServiceAccountAuthorizer(accessClient)
 	teamLBACAuthorizer := teamLBACApiInstaller.GetAuthorizer()
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
+	userAuthorizer := newUserAuthorizer(accessClient)
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -210,17 +222,20 @@ func NewAPIService(
 	)
 
 	return &IdentityAccessManagementAPIBuilder{
-		store:                      store,
-		userLegacyStore:            user.NewLegacyStore(store, accessClient, tracingService),
-		saLegacyStore:              serviceaccount.NewLegacyStore(store, accessClient, tracingService),
-		teamBindingLegacyStore:     teambinding.NewLegacyBindingStore(store, tracingService),
-		display:                    user.NewLegacyDisplayREST(store),
+		ofClient:               openfeature.NewDefaultClient(),
+		store:                  store,
+		userLegacyStore:        user.NewLegacyStore(store, accessClient, tracingService),
+		saLegacyStore:          serviceaccount.NewLegacyStore(store, accessClient, tracingService),
+		teamBindingLegacyStore: teambinding.NewLegacyBindingStore(store, tracingService),
+		display: display.NewDisplayHandler(
+			display.NewLegacyDisplayProvider(store),
+			// TODO: include the search client here
+		),
 		tracing:                    tracingService,
 		resourcePermissionsStorage: resourcePermissionsStorage,
 		mappers:                    mappers,
 		roleBindingsApiInstaller:   roleBindingsApiInstaller,
 		logger:                     log.New("iam.apis"),
-		features:                   features,
 		accessClient:               accessClient,
 		resourceParentProvider:     resourceParentProvider,
 		zClient:                    zClient,
@@ -276,11 +291,15 @@ func NewAPIService(
 					return authorizer.DecisionAllow, "", nil
 				}
 
-				if a.GetResource() == "users" {
+				if a.GetResource() == iamv0.TeamResourceInfo.GetName() {
 					if user.GetIdentityType() != types.TypeAccessPolicy {
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
 					return resourceAuthorizer.Authorize(ctx, a)
+				}
+
+				if a.GetResource() == "users" {
+					return userAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == iamv0.ServiceAccountResourceInfo.GetName() {
@@ -300,7 +319,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersi
 }
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	client := openfeature.NewDefaultClient()
+	client := b.ofClient
 	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancelFn()
 
@@ -309,6 +328,7 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
 	enableGlobalRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzGlobalRolesApi, false, openfeature.TransactionContext(ctx))
 	enableTeamLBACRuleApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi, false, openfeature.TransactionContext(ctx))
+	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
 
 	if enableRolesApi || enableRoleBindingsApi {
 		if err := iamv0.AddAuthZKnownTypes(scheme); err != nil {
@@ -328,8 +348,7 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 		}
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
+	if enableResourcePermissionsApi {
 		if err := iamv0.AddResourcePermissionKnownTypes(scheme, iamv0.SchemeGroupVersion); err != nil {
 			return err
 		}
@@ -357,12 +376,11 @@ func (b *IdentityAccessManagementAPIBuilder) AllowedV0Alpha1Resources() []string
 func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
-	client := openfeature.NewDefaultClient()
+	client := b.ofClient
 	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancelFn()
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	enableZanzanaSync := b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzZanzanaSync)
+	enableZanzanaSync := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzZanzanaSync, false, openfeature.TransactionContext(ctx))
 
 	enableRolesApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRolesApi, false, openfeature.TransactionContext(ctx))
 	enableRoleBindingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzRoleBindingsApi, false, openfeature.TransactionContext(ctx))
@@ -372,27 +390,40 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
 	enableServiceAccountsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountsApi, false, openfeature.TransactionContext(ctx))
 	enableServiceAccountTokensApi := client.Boolean(ctx, featuremgmt.FlagKubernetesServiceAccountTokensApi, false, openfeature.TransactionContext(ctx))
-	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
 	enableSsoSettingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesSsoSettingsApi, false, openfeature.TransactionContext(ctx))
 	enableSaResourcePermissions := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, false, openfeature.TransactionContext(ctx))
+	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
 
 	// teams + users must have shorter names because they are often used as part of another name
 	opts.StorageOptsRegister(iamv0.TeamResourceInfo.GroupResource(), apistore.StorageOptions{
-		MaximumNameLength: 80,
+		MaximumNameLength:    80,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
 	})
 	opts.StorageOptsRegister(iamv0.UserResourceInfo.GroupResource(), apistore.StorageOptions{
-		MaximumNameLength:           80,
-		RequireDeprecatedInternalID: true,
+		MaximumNameLength:    80,
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+	})
+	opts.StorageOptsRegister(iamv0.ServiceAccountResourceInfo.GroupResource(), apistore.StorageOptions{
+		Index:                b.unified,
+		DeprecatedInternalID: apistore.DeprecatedID_Required,
+	})
+	// Cap the apiserver name at 253 characters so callers get a clear
+	// validation error instead of a silent truncation/error at the storage
+	// layer. 253 is the Kubernetes DNS-1123 subdomain limit for metadata.name
+	// and also matches the size of the `name` column in the unified storage
+	// `resource`/`resource_history` tables, as well as the `role.uid` column
+	// expansion done by the legacy migration in this PR.
+	opts.StorageOptsRegister(iamv0.RoleInfo.GroupResource(), apistore.StorageOptions{
+		MaximumNameLength: 253,
+	})
+	opts.StorageOptsRegister(iamv0.GlobalRoleInfo.GroupResource(), apistore.StorageOptions{
+		MaximumNameLength: 253,
 	})
 
 	if enableTeamsApi {
-		if err := b.UpdateTeamsAPIGroup(opts, storage, enableExternalGroupMappingsApi, enableZanzanaSync); err != nil {
-			return err
-		}
-	}
-
-	if enableTeamsApi {
-		if err := b.UpdateTeamBindingsAPIGroup(opts, storage); err != nil {
+		if err := b.UpdateTeamsAPIGroup(opts, storage, enableZanzanaSync); err != nil {
 			return err
 		}
 	}
@@ -412,12 +443,16 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	// SSO settings apis
 	if enableSsoSettingsApi && b.ssoLegacyStore != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
-		storage[ssoResource.StoragePath()] = b.ssoLegacyStore
-	}
-
-	if enableExternalGroupMappingsApi {
-		if err := b.externalGroupMappingApiInstaller.RegisterStorage(apiGroupInfo, &opts, storage); err != nil {
-			return err
+		// The storage mode of [unified_storage.ssosettings.iam.grafana.app]
+		// decides which store serves the kind: at mode 0 (the default) the
+		// legacy store behaves as before; any higher mode engages the
+		// MT-Settings store, which fails loudly until it is implemented.
+		// The standard dual-writer cannot wrap this kind yet: it requires
+		// rest.CreaterUpdater and SSO settings are update-only.
+		if b.ssoUseMTSettings {
+			storage[ssoResource.StoragePath()] = sso.NewMTSettingsStore()
+		} else {
+			storage[ssoResource.StoragePath()] = b.ssoLegacyStore
 		}
 	}
 
@@ -447,8 +482,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
+	if enableResourcePermissionsApi {
 		if enableSaResourcePermissions {
 			// BasicRole is excluded: built-in roles already cover all service accounts globally,
 			// so granting a ResourcePermission to a BasicRole on a specific SA is not permitted.
@@ -471,7 +505,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	return nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableExternalGroupMappingsApi bool, enableZanzanaSync bool) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.APIGroupOptions, storage map[string]rest.Storage, enableZanzanaSync bool) error {
 	teamResource := iamv0.TeamResourceInfo
 	teamUniStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, teamResource, opts.OptsGetter)
 	if err != nil {
@@ -504,10 +538,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 		}
 	}
 
-	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing, b.features)
+	storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(b.teamGetter, b.tracing)
 
-	if b.teamSearch != nil {
-		b.teamSearch.teamGetter = b.teamGetter
+	if b.teamSearchHandler != nil {
+		b.teamSearchHandler.SetTeamGetter(b.teamGetter)
 	}
 
 	// addmember / removemember mutate a single Spec.Members entry through
@@ -515,9 +549,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 	storage[teamResource.StoragePath("addmember")] = team.NewTeamAddMemberREST(teamStorage, b.tracing)
 	storage[teamResource.StoragePath("removemember")] = team.NewTeamRemoveMemberREST(teamStorage, b.tracing)
 
-	if b.teamGroupsHandler != nil {
-		b.teamGroupsHandler.SetTeamGetter(b.teamGetter)
-		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandler
+	if b.teamGroupsHandlerProvider != nil {
+		storage[teamResource.StoragePath("groups")] = b.teamGroupsHandlerProvider(b.teamGetter)
 	}
 
 	return nil
@@ -624,7 +657,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 				b.store,
 			)
 		}
-		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing, b.features)
+		storage[userResource.StoragePath("teams")] = user.NewUserTeamREST(teamSearchClient, b.teamGetter, b.tracing)
 	}
 
 	return nil
@@ -893,29 +926,28 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 
-	client := openfeature.NewDefaultClient()
+	client := b.ofClient
 	ctx, cancelFn := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancelFn()
 
 	enableTeamsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesTeamsApi, false, openfeature.TransactionContext(ctx))
 	enableUserApi := b.isSingleOrgSetup() && client.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, openfeature.TransactionContext(ctx))
-	enableExternalGroupMappingsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesExternalGroupMappingsApi, false, openfeature.TransactionContext(ctx))
 	enableResourcePermissionsApi := client.Boolean(ctx, featuremgmt.FlagKubernetesAuthzResourcePermissionApis, false, openfeature.TransactionContext(ctx))
 
-	searchRoutes := make([]*builder.APIRoutes, 0, 3)
+	searchRoutes := make([]*builder.APIRoutes, 0, 4)
 	if enableUserApi && b.userSearchHandler != nil {
 		searchRoutes = append(searchRoutes, b.userSearchHandler.GetAPIRoutes(defs))
 	}
 
-	if enableTeamsApi && b.teamSearch != nil {
-		searchRoutes = append(searchRoutes, b.teamSearch.GetAPIRoutes(defs))
+	if enableTeamsApi && b.teamSearchHandler != nil {
+		searchRoutes = append(searchRoutes, b.teamSearchHandler.GetAPIRoutes(defs))
 	}
 
 	if enableResourcePermissionsApi && b.resourcePermissionsSearchHandler != nil {
 		searchRoutes = append(searchRoutes, b.resourcePermissionsSearchHandler.GetAPIRoutes(defs))
 	}
 
-	if enableExternalGroupMappingsApi && b.externalGroupMappingSearchHandler != nil {
+	if enableTeamsApi && b.externalGroupMappingSearchHandler != nil {
 		searchRoutes = append(searchRoutes, b.externalGroupMappingSearchHandler.GetAPIRoutes(defs))
 	}
 
@@ -953,13 +985,11 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 	case *iamv0.ServiceAccount:
 		return serviceaccount.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.Team:
-		return team.ValidateOnCreate(ctx, typedObj, b.externalGroupReconciler)
+		return team.ValidateOnCreate(ctx, b.teamSearchClient, typedObj, b.externalGroupReconciler)
 	case *iamv0.TeamBinding:
 		return teambinding.ValidateOnCreate(ctx, typedObj, b.teamGetter, b.userGetter)
 	case *iamv0.ResourcePermission:
 		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj, b.mappers)
-	case *iamv0.ExternalGroupMapping:
-		return b.externalGroupMappingApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.Role:
 		return b.roleApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.RoleBinding:
@@ -993,7 +1023,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 		if !ok {
 			return fmt.Errorf("expected old object to be a Team, got %T", oldObj)
 		}
-		return team.ValidateOnUpdate(ctx, typedObj, oldTeamObj, b.externalGroupReconciler)
+		return team.ValidateOnUpdate(ctx, b.teamSearchClient, typedObj, oldTeamObj, b.externalGroupReconciler)
 	case *iamv0.TeamBinding:
 		oldTeamBindingObj, ok := oldObj.(*iamv0.TeamBinding)
 		if !ok {
@@ -1030,6 +1060,8 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 
 func (b *IdentityAccessManagementAPIBuilder) validateDelete(ctx context.Context, a admission.Attributes) error {
 	switch oldObj := a.GetOldObject().(type) {
+	case *iamv0.Team:
+		return team.ValidateOnDelete(ctx, b.unified, oldObj)
 	case *iamv0.Role:
 		return b.roleApiInstaller.ValidateOnDelete(ctx, oldObj)
 	case *iamv0.GlobalRole:

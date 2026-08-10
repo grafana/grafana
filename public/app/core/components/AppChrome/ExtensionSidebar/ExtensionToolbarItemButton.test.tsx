@@ -1,16 +1,6 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from 'test/test-utils';
 
 import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
-
-// Mock the t function
-jest.mock('@grafana/i18n', () => ({
-  t: (_: string, fallback: string, values?: Record<string, string>) => {
-    if (values) {
-      return fallback.replace('{{title}}', values.title);
-    }
-    return fallback;
-  },
-}));
 
 describe('ExtensionToolbarItemButton', () => {
   it('renders open button with default tooltip when no title is provided', () => {
@@ -48,5 +38,22 @@ describe('ExtensionToolbarItemButton', () => {
     fireEvent.click(button);
 
     expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the default button for the assistant plugin', () => {
+    render(<ExtensionToolbarItemButton isOpen={false} pluginId="grafana-assistant-app" />);
+
+    const button = screen.getByTestId('extension-toolbar-button-open');
+    expect(button).toHaveAttribute('aria-label', 'Open AI assistants and sidebar apps');
+  });
+
+  it.each([
+    ['grafana-grafanadocsplugin-app', 'book'],
+    ['grafana-pathfinder-app', 'book'],
+    ['grafana-grotfood-app', 'gf-grotfood'],
+  ])('renders the correct icon for pluginId "%s" (%s)', (pluginId, iconName) => {
+    render(<ExtensionToolbarItemButton isOpen={false} pluginId={pluginId} />);
+
+    expect(screen.getByTestId(`icon-${iconName}`)).toBeInTheDocument();
   });
 });

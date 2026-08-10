@@ -3,6 +3,7 @@ package historian
 import (
 	"context"
 
+	authtypes "github.com/grafana/authlib/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
@@ -10,9 +11,9 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 
-	"github.com/grafana/grafana/apps/alerting/historian/pkg/apis"
-	historianApp "github.com/grafana/grafana/apps/alerting/historian/pkg/app"
-	historianAppConfig "github.com/grafana/grafana/apps/alerting/historian/pkg/app/config"
+	"github.com/grafana/alerting/apps/historian/pkg/apis"
+	historianApp "github.com/grafana/alerting/apps/historian/pkg/app"
+	historianAppConfig "github.com/grafana/alerting/apps/historian/pkg/app/config"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
@@ -38,6 +39,7 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
+	accessClient authtypes.AccessClient,
 ) (*AppInstaller, error) {
 	appSpecificConfig := historianAppConfig.RuntimeConfig{}
 
@@ -57,6 +59,12 @@ func RegisterAppInstaller(
 				Loki: historianAppConfig.LokiConfig{
 					LokiConfig: lokiConfig,
 				},
+				// Restrict notification history to the folders whose alert rules the
+				// caller can read. RBAC resolves accessible folders via the folder API
+				// and the multi-tenant authz service, so it works in the standalone
+				// (multi-tenant) historian deployment.
+				RBACEnabled:  true,
+				AccessClient: accessClient,
 			}
 		}
 	}

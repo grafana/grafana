@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import { type DraggableProvided } from '@hello-pangea/dnd';
-import { type MouseEventHandler } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
@@ -16,7 +16,6 @@ export interface QueryOperationRowHeaderProps {
   headerElement?: React.ReactNode;
   isContentVisible: boolean;
   onRowToggle: () => void;
-  reportDragMousePosition: MouseEventHandler<HTMLDivElement>;
   title?: string;
   id: string;
   expanderMessages?: ExpanderMessages;
@@ -36,7 +35,6 @@ export const QueryOperationRowHeader = ({
   headerElement,
   isContentVisible,
   onRowToggle,
-  reportDragMousePosition,
   title,
   id,
   expanderMessages,
@@ -82,7 +80,7 @@ export const QueryOperationRowHeader = ({
       <Stack gap={1} alignItems="center">
         {actionsElement}
         {draggable && (
-          <div onMouseMove={reportDragMousePosition} {...dragHandleProps}>
+          <div className={styles.dragHandle} {...dragHandleProps}>
             <Icon title={dragAndDropLabel} name="draggabledots" size="lg" className={styles.dragIcon} />
           </div>
         )}
@@ -114,6 +112,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     overflow: 'hidden',
   }),
+  dragHandle: css({
+    borderRadius: theme.shape.radius.default,
+    '&:focus-visible': {
+      ...getFocusStyles(theme),
+    },
+  }),
   dragIcon: css({
     cursor: 'grab',
     color: theme.colors.text.disabled,
@@ -136,7 +140,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   title: css({
     fontWeight: theme.typography.fontWeightBold,
-    color: theme.colors.text.link,
+    color: theme.colors.accent.text,
     marginLeft: theme.spacing(0.5),
     overflow: 'hidden',
     textOverflow: 'ellipsis',

@@ -39,12 +39,18 @@ connection: {
 					serverUrl: string
 				}
 				#BitbucketConnectionConfig: {
-					// The app clientID
+					// The workspace the OAuth consumer belongs to
+					workspace: string
+				}
+				#ConnectionOAuthConfig: {
+					// The OAuth app clientID
 					clientID: string
 				}
-				#GitlabConnectionConfig: {
-					// The app clientID
-					clientID: string
+				#ConnectionWebhookConfig: {
+					// Disabled disables webhook integration for this connection. When true, the GitHub
+					// App does not require webhooks:write permission and Grafana will not register or receive
+					// webhook events. Use this when Grafana is not reachable from the public internet.
+					disabled?: bool
 				}
 				#HealthStatus: {
 					// When not healthy, requests will not be executed
@@ -69,9 +75,10 @@ connection: {
 					// Bitbucket connection configuration
 					// Only applicable when provider is "bitbucket"
 					bitbucket?: #BitbucketConnectionConfig
-					// Gitlab connection configuration
-					// Only applicable when provider is "gitlab"
-					gitlab?: #GitlabConnectionConfig
+					// OAuth app configuration shared by all OAuth app providers
+					oauth?: #ConnectionOAuthConfig
+					// Webhook configuration for this connection
+					webhook?: #ConnectionWebhookConfig
 				}
 				status: {
 					// The generation of the spec last time reconciliation ran

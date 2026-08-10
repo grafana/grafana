@@ -7,15 +7,14 @@ import type uPlot from 'uplot';
 import { type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
-import { type AdHocFilterModel } from '../../../internal';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { type RangeSelection1D, type RangeSelection2D, type OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
+import { type AdHocFilterModel } from '../../VizTooltip';
 import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
-export const DEFAULT_TOOLTIP_WIDTH = undefined;
 export const TOOLTIP_OFFSET = 10;
 
 // todo: barchart? histogram?
@@ -781,7 +780,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
     left: 0,
     zIndex: theme.zIndex.tooltip,
     whiteSpace: 'pre',
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     position: 'fixed',
     background: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,

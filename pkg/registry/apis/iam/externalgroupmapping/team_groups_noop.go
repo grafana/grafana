@@ -14,8 +14,10 @@ var _ TeamGroupsHandler = (*NoopTeamGroupsREST)(nil)
 
 type NoopTeamGroupsREST struct{}
 
-func ProvideNoopTeamGroupsREST() *NoopTeamGroupsREST {
-	return &NoopTeamGroupsREST{}
+func ProvideNoopTeamGroupsHandlerProvider() TeamGroupsHandlerProvider {
+	return func(rest.Getter) TeamGroupsHandler {
+		return &NoopTeamGroupsREST{}
+	}
 }
 
 // Connect implements rest.Connecter.
@@ -57,6 +59,3 @@ func (s *NoopTeamGroupsREST) NewConnectOptions() (runtime.Object, bool, string) 
 func (s *NoopTeamGroupsREST) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
-
-// SetTeamGetter implements TeamGroupsHandler.
-func (s *NoopTeamGroupsREST) SetTeamGetter(rest.Getter) {}

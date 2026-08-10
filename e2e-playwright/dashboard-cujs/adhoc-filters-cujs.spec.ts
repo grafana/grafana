@@ -22,6 +22,7 @@ test.use({
     scopeFilters: true,
     groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
+    dashboardUnifiedDrilldownControls: false,
   },
 });
 

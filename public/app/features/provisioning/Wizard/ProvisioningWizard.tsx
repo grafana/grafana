@@ -14,6 +14,7 @@ import { getDefaultValues } from '../Config/defaults';
 import { ProvisioningAlert } from '../Shared/ProvisioningAlert';
 import { PROVISIONING_URL } from '../constants';
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
+import { isGitHubBased, isGitProvider } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
 import { Stepper } from './Stepper';
@@ -52,7 +53,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       migrate: {
         history: true,
       },
-      githubAuthType: type === 'github' ? 'github-app' : 'pat',
+      githubAuthType: isGitHubBased(type) ? 'github-app' : 'pat',
       githubAppMode: 'existing',
       githubApp: {},
     },
@@ -66,12 +67,13 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     handleSubmit,
   } = methods;
 
-  const [repoName = '', repoType, syncTarget, githubAuthType, githubAppMode] = watch([
+  const [repoName = '', repoType, syncTarget, githubAuthType, githubAppMode, branch] = watch([
     'repositoryName',
     'repository.type',
     'repository.sync.target',
     'githubAuthType',
     'githubAppMode',
+    'repository.branch',
   ]);
 
   const steps = useMemo(() => getSteps(repoType), [repoType]);
@@ -115,7 +117,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     activeStep === 'finish' && (isStepSuccess || completedSteps.includes('synchronize'));
   const shouldUseCancelBehavior =
     activeStep === 'authType' ||
-    (activeStep === 'connection' && repoType !== 'github') ||
+    (activeStep === 'connection' && !isGitHubBased(repoType)) ||
     isSyncCompleted ||
     isFinishWithSyncCompleted;
 
@@ -221,7 +223,12 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
               <ProvisioningAlert error={stepStatusInfo.error} action={stepStatusInfo.action} />
             )}
             {'warning' in stepStatusInfo && stepStatusInfo.warning && (
-              <ProvisioningAlert warning={stepStatusInfo.warning} />
+              <ProvisioningAlert
+                warning={stepStatusInfo.warning}
+                // Only attach the action to standalone warnings; an 'error' status may also
+                // carry a warning + a retry action meant for the error alert, not this one.
+                action={stepStatusInfo.status === 'warning' ? stepStatusInfo.action : undefined}
+              />
             )}
             {isStepSuccess && 'success' in stepStatusInfo && <ProvisioningAlert success={stepStatusInfo.success} />}
 
@@ -241,7 +248,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
               previousText={previousButtonText}
               nextText={nextButtonText}
               isPreviousDisabled={isPreviousDisabled}
-              isNextDisabled={isNextDisabled}
+              isNextDisabled={isNextDisabled || (activeStep === 'connection' && isGitProvider(repoType) && !branch)}
               isSubmitting={isSubmitting}
               onPrevious={handlePrevious}
             />

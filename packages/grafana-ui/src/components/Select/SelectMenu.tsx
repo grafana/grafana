@@ -15,7 +15,7 @@ import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { ToggleAllState } from './types';
 
-export interface ToggleAllOptions {
+interface ToggleAllOptions {
   state: ToggleAllState;
   selectAllClicked: () => void;
   selectedCount?: number;

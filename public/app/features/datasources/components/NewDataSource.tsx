@@ -1,7 +1,9 @@
 import { type Action } from 'redux';
 
 import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
@@ -38,7 +40,7 @@ export function NewDataSource() {
   );
 }
 
-export type ViewProps = {
+type ViewProps = {
   dataSources: DataSourcePluginMeta[];
   dataSourceCategories: DataSourcePluginCategory[];
   searchQuery: string;
@@ -47,7 +49,7 @@ export type ViewProps = {
   onSetSearchQuery: (q: string) => Action;
 };
 
-export function NewDataSourceView({
+function NewDataSourceView({
   dataSources,
   dataSourceCategories,
   searchQuery,
@@ -70,9 +72,16 @@ export function NewDataSourceView({
             'datasources.new-data-source-view.placeholder-filter-by-name-or-type',
             'Filter by name or type'
           )}
+          data-testid={selectors.pages.AddDataSource.searchInput}
         />
         <div className="page-action-bar__spacer" />
-        <LinkButton href={ROUTES.DataSources} fill="outline" variant="secondary" icon="arrow-left">
+        <LinkButton
+          href={ROUTES.DataSources}
+          fill="outline"
+          variant="secondary"
+          icon="arrow-left"
+          onClick={() => reportInteraction('connections_new_datasource_cancelled', {}, { silent: true })}
+        >
           <Trans i18nKey="datasources.new-data-source-view.cancel">Cancel</Trans>
         </LinkButton>
       </div>

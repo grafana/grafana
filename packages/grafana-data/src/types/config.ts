@@ -107,7 +107,7 @@ export interface GrafanaJavascriptAgentConfig {
   tracingInstrumentalizationEnabled: boolean;
 }
 
-export interface UnifiedAlertingStateHistoryConfig {
+interface UnifiedAlertingStateHistoryConfig {
   backend?: string;
   primary?: string;
   prometheusTargetDatasourceUID?: string;
@@ -310,6 +310,7 @@ export interface GrafanaConfig {
   sharedWithMeFolderUID: string;
   rootFolderUID: string;
   localFileSystemAvailable: boolean;
+  provisioningEnabled: boolean;
   cloudMigrationEnabled: boolean;
   cloudMigrationIsTarget: boolean;
   cloudMigrationPollIntervalMs: number;
@@ -346,10 +347,11 @@ export interface GrafanaConfig {
   };
   analytics: {
     enabled: boolean;
+    presenceIndicatorsDisabled?: boolean;
   };
 }
 
-export interface SqlConnectionLimits {
+interface SqlConnectionLimits {
   maxOpenConns: number;
   maxIdleConns: number;
   connMaxLifetime: number;

@@ -108,8 +108,7 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features, tracer))
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	if cfg.ProvisioningEnabled {
 		authnSvc.RegisterClient(clients.ProvideProvisioning())
 	}
 
@@ -124,15 +123,19 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer, features).SyncOauthTokenHook, 60)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
 
+	// Surface external groups as the identity's groups under the flag (see hook doc).
+	// After FetchSyncedUserHook (100) so it overrides stored team memberships.
+	authnSvc.RegisterPostAuthHook(sync.ProvideGroupsClaimSync(cfg).SyncGroupsClaimHook, 115)
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagEnableSCIM) {
 		authnSvc.RegisterPostAuthHook(userSync.ValidateUserProvisioningHook, 30)
 	}
 
-	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)
+	rbacSync := sync.ProvideRBACSync(cfg, accessControlService, tracer, permRegistry, features)
+	authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
-		authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
 		authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
 	}
 

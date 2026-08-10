@@ -13,8 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -72,6 +75,27 @@ func validateOwnerReferencesOnManagedFolder(obj *folders.Folder, old *folders.Fo
 	return nil
 }
 
+// the k6 app manages its own subfolders through a service account, so only
+// other identities are kept out of the k6 tree (same rule as k6 visibility)
+func isServiceAccount(ctx context.Context) bool {
+	user, err := identity.GetRequester(ctx)
+	return err == nil && user.IsIdentityType(authlib.TypeServiceAccount)
+}
+
+// hasK6Ancestor checks the whole chain, not just the immediate parent: folders
+// created under k6 before it was restricted must not become parents themselves.
+func hasK6Ancestor(info *folders.FolderInfoList, self string) bool {
+	if info == nil {
+		return false
+	}
+	for _, item := range info.Items {
+		if item.Name == accesscontrol.K6FolderUID && item.Name != self {
+			return true
+		}
+	}
+	return false
+}
+
 func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int) error {
 	id := f.Name
 
@@ -109,7 +133,13 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	}
 
 	parentName := meta.GetFolder()
-	if parentName == "" {
+
+	// checked before resolving the tree so it also rejects a k6 parent we cannot read
+	if parentName == accesscontrol.K6FolderUID && !isServiceAccount(ctx) {
+		return folder.ErrFolderCannotBeCreatedInK6.Errorf("folders may not be created in the k6 project")
+	}
+
+	if folder.IsRootFolderUID(parentName) {
 		return nil // OK, we do not need to validate the tree
 	}
 
@@ -121,6 +151,10 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	parents, err := getter(ctx, f)
 	if err != nil {
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
+	}
+
+	if hasK6Ancestor(parents, f.Name) && !isServiceAccount(ctx) {
+		return folder.ErrFolderCannotBeCreatedInK6.Errorf("folders may not be created in the k6 project")
 	}
 
 	// Can not create a folder that will be too deep.
@@ -138,6 +172,7 @@ func validateOnUpdate(ctx context.Context,
 	getter rest.Getter,
 	parents parentsGetter,
 	searcher resourcepb.ResourceIndexClient,
+	accessClient authlib.AccessClient,
 	maxDepth int,
 ) error {
 	folderObj, err := utils.MetaAccessor(obj)
@@ -163,20 +198,40 @@ func validateOnUpdate(ctx context.Context,
 		return nil
 	}
 
+	// the k6 folder itself may not be moved (matches legacy folder.Service.Move)
+	if obj.Name == accesscontrol.K6FolderUID {
+		return folder.ErrBadRequest.Errorf("k6 project may not be moved")
+	}
+
 	// Validate the move operation
 	newParent := folderObj.GetFolder()
+
+	// folder cannot be moved to a k6 folder
+	if newParent == accesscontrol.K6FolderUID {
+		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
+	}
+
+	// k6 folders stay together, so folders under k6 may not be moved out either
+	if !folder.IsRootFolderUID(oldFolder.GetFolder()) {
+		oldInfo, err := parents(ctx, old)
+		if err != nil {
+			return err
+		}
+		if hasK6Ancestor(oldInfo, obj.Name) {
+			return folder.ErrBadRequest.Errorf("k6 project may not be moved")
+		}
+	}
+
+	if err := checkMoveAccess(ctx, obj.Namespace, obj.Name, oldFolder.GetFolder(), newParent, accessClient); err != nil {
+		return err
+	}
 
 	// If we move to root, we don't need to validate the depth, because the folder already existed
 	// before and wasn't too deep. This move will make it more shallow.
 	//
 	// We also don't need to validate circular references because the root folder cannot have a parent.
-	if newParent == folder.RootFolderUID {
+	if folder.IsRootFolderUID(newParent) {
 		return nil
-	}
-
-	// folder cannot be moved to a k6 folder
-	if newParent == accesscontrol.K6FolderUID {
-		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
 	}
 
 	parentObj, err := getter.Get(ctx, newParent, &metav1.GetOptions{})
@@ -190,6 +245,11 @@ func validateOnUpdate(ctx context.Context,
 	info, err := parents(ctx, parent)
 	if err != nil {
 		return err
+	}
+
+	// nothing may be moved into the k6 tree, at any depth
+	if hasK6Ancestor(info, obj.Name) {
+		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
 	}
 
 	// Check that the folder being moved is not an ancestor of the target parent.
@@ -224,11 +284,143 @@ func validateOnUpdate(ctx context.Context,
 	return checkSubtreeDepth(ctx, searcher, obj.Namespace, obj.Name, allowedDepth, maxDepth)
 }
 
+// folderTier (declared in sub_access.go) is the Viewer/Editor/Admin level used
+// by the /access subresource. Comparing tiers across the move catches
+// role-level escalations without firing on per-verb churn.
+//
+// Only the folder tier is compared. Built-in roles bundle dashboard, library
+// panel, alert, and annotation actions with the folder tier, so a folder-tier
+// jump catches them transitively. Custom roles that grant sub-resource
+// actions directly at folder scope without folder access are not caught here.
+
+// tierProbes are the verbs we ask Zanzana about to resolve a tier. setperms
+// signals Admin, the Editor verbs (create/update/delete) collectively signal
+// Editor, and get alone signals Viewer.
+var tierProbes = []struct {
+	suffix string
+	verb   string
+}{
+	{"get", utils.VerbGet},
+	{"create", utils.VerbCreate},
+	{"update", utils.VerbUpdate},
+	{"delete", utils.VerbDelete},
+	{"setperms", utils.VerbSetPermissions},
+}
+
+func checkMoveAccess(
+	ctx context.Context,
+	namespace string,
+	sourceUID string,
+	oldParentUID string,
+	newParentUID string,
+	accessClient authlib.AccessClient,
+) error {
+	if accessClient == nil {
+		return nil
+	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+
+	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
+
+	// Separators must keep correlation IDs within OpenFGA's regex pattern ^[\w\d-]{1,36}$
+	const (
+		writeDestKey    = "writeDest"
+		newFolderPrefix = "newFolder-"
+		oldFolderPrefix = "oldFolder-"
+	)
+
+	checks := make([]authlib.BatchCheckItem, 0, 1+2*len(tierProbes))
+
+	// Destination-write check: can the user create folders under newParentUID?
+	checks = append(checks, authlib.BatchCheckItem{
+		CorrelationID: writeDestKey,
+		Verb:          utils.VerbCreate,
+		Group:         folderGVR.Group,
+		Resource:      folderGVR.Resource,
+		Folder:        newParentUID,
+	})
+
+	// Folder escalation context: source folder permissions under new vs old parent.
+	for _, p := range tierProbes {
+		checks = append(checks,
+			authlib.BatchCheckItem{
+				CorrelationID: newFolderPrefix + p.suffix,
+				Verb:          p.verb,
+				Group:         folderGVR.Group,
+				Resource:      folderGVR.Resource,
+				Name:          sourceUID,
+				Folder:        newParentUID,
+			},
+			authlib.BatchCheckItem{
+				CorrelationID: oldFolderPrefix + p.suffix,
+				Verb:          p.verb,
+				Group:         folderGVR.Group,
+				Resource:      folderGVR.Resource,
+				Name:          sourceUID,
+				Folder:        oldParentUID,
+			},
+		)
+	}
+
+	batchResp, err := accessClient.BatchCheck(ctx, user, authlib.BatchCheckRequest{
+		Namespace: namespace,
+		Checks:    checks,
+	})
+	if err != nil {
+		return err
+	}
+
+	writeRes, ok := batchResp.Results[writeDestKey]
+	if !ok {
+		return fmt.Errorf("access check returned no result for destination write")
+	}
+	if writeRes.Error != nil {
+		return writeRes.Error
+	}
+	if !writeRes.Allowed {
+		destLabel := newParentUID
+		if folder.IsRootFolderUID(destLabel) {
+			destLabel = folder.GeneralFolderUID
+		}
+		return folder.ErrMoveAccessDenied.Errorf("user does not have permissions to move a folder to folder with UID %s", destLabel)
+	}
+
+	// Fail closed on any missing result — we built every correlation ID
+	// ourselves, so an absent key is a server bug.
+	newFolder := make(map[string]bool, len(tierProbes))
+	oldFolder := make(map[string]bool, len(tierProbes))
+	for _, p := range tierProbes {
+		nf, nfOk := batchResp.Results[newFolderPrefix+p.suffix]
+		of, ofOk := batchResp.Results[oldFolderPrefix+p.suffix]
+		if !nfOk || !ofOk {
+			return fmt.Errorf("access escalation check returned no result for verb %q", p.verb)
+		}
+		if nf.Error != nil {
+			return nf.Error
+		}
+		if of.Error != nil {
+			return of.Error
+		}
+		newFolder[p.suffix] = nf.Allowed
+		oldFolder[p.suffix] = of.Allowed
+	}
+
+	if resolveTier(newFolder) > resolveTier(oldFolder) {
+		return folder.ErrAccessEscalation.Errorf("user cannot move a folder to another folder where they have higher permissions")
+	}
+
+	return nil
+}
+
 // canSkipChildrenCheck determines if we can skip the expensive children depth check.
 // If the old parent depth is >= the new parent depth, the folder was already valid
 // and this move won't make descendants exceed max depth.
 func canSkipChildrenCheck(ctx context.Context, oldFolder utils.GrafanaMetaAccessor, getter rest.Getter, parents parentsGetter, newParentDepth int) bool {
-	if oldFolder.GetFolder() == folder.RootFolderUID {
+	if folder.IsRootFolderUID(oldFolder.GetFolder()) {
 		return false
 	}
 
@@ -352,15 +544,31 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		}
 	}
 
-	hasMore := resp.Results.NextPageToken != ""
+	// The bleve Search path populates TotalHits but not Results.NextPageToken, so
+	// pagination must be driven off TotalHits + offset rather than the token.
+	hasMore := resp.Results.NextPageToken != "" || offset+int64(len(resp.Results.Rows)) < resp.TotalHits
 	return children, hasMore, nil
 }
 
 func validateOnDelete(ctx context.Context,
 	f *folders.Folder,
 	searcher resourcepb.ResourceIndexClient,
+	deleteOptions *metav1.DeleteOptions,
+	cascadeDeleteEnabled bool,
 ) error {
-	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Folder: f.Name})
+	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
+	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
+	// check; the cascade in Delete then removes the subtree.
+	if cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
+		logging.FromContext(ctx).Warn(
+			"folder force-delete bypassing empty check; its subtree (child folders and dashboards) will be cascade-deleted, along with alert rules and library elements when running in-process (monolith)",
+			"folder", f.Name,
+			"namespace", f.Namespace,
+		)
+		return nil
+	}
+
+	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
 	if err != nil {
 		return err
 	}

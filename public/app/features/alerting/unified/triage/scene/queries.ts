@@ -107,14 +107,6 @@ export function summaryInstanceCountQuery(filter: string): SceneDataQuery {
   return getDataQuery(getAlertsSummariesQuery('alertstate', filter), { instant: true, format: 'table' });
 }
 
-/** Deduplicated instant count by rule fields + alertstate for summary rule counts */
-export function summaryRuleCountQuery(filter: string): SceneDataQuery {
-  return getDataQuery(getAlertsSummariesQuery('alertname, grafana_folder, grafana_rule_uid, alertstate', filter), {
-    instant: true,
-    format: 'table',
-  });
-}
-
 /** Instance timeseries for a specific alert rule, optionally scoped to parent group labels. */
 export function alertRuleInstancesQuery(
   ruleUID: string,

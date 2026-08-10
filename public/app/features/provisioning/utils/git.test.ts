@@ -248,6 +248,17 @@ describe('getRepoFileUrl', () => {
       })
     ).toBe('https://bitbucket.org/workspace/repo/src/main/docs');
   });
+
+  it('treats githubEnterprise the same as github', () => {
+    expect(
+      getRepoFileUrl({
+        repoType: 'githubEnterprise',
+        url: 'https://ghe.example.com/owner/repo',
+        branch: 'main',
+        filePath: 'dashboards/team-a/',
+      })
+    ).toBe('https://ghe.example.com/owner/repo/tree/main/dashboards/team-a');
+  });
 });
 
 describe('getRepoEditFileUrl', () => {

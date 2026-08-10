@@ -44,7 +44,7 @@ export async function buildSegments(state: GraphiteQueryEditorState, modifyLastS
 /**
  * Add "select metric" segment at the end
  */
-export function addSelectMetricSegment(state: GraphiteQueryEditorState): void {
+function addSelectMetricSegment(state: GraphiteQueryEditorState): void {
   state.queryModel.addSelectMetricSegment();
   state.segments.push({ value: 'select metric', fake: true });
 }

@@ -12,7 +12,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "13.1.0-pre";
+export const pluginVersion = "13.2.0-pre";
 
 /**
  * Controls the color mode of the heatmap
@@ -160,9 +160,17 @@ export interface HeatmapTooltip {
  */
 export interface HeatmapLegend {
   /**
+   * Controls where the legend is shown
+   */
+  placement?: ui.LegendPlacement;
+  /**
    * Controls if the legend is shown
    */
   show: boolean;
+  /**
+   * Controls legend width when shown on the right
+   */
+  width?: (number | string);
 }
 
 /**
@@ -284,6 +292,7 @@ export const defaultOptions: Partial<Options> = {
   },
   legend: {
     show: true,
+    placement: 'bottom',
   },
   selectionMode: HeatmapSelectionMode.X,
   showValue: ui.VisibilityMode.Auto,

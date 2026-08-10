@@ -11,8 +11,13 @@ export const getFocusStyle = (theme: GrafanaTheme2) =>
   });
 
 export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
-  const borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
-  const borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  let borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
+  let borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
+  if (visualRefreshEnabled) {
+    borderColor = invalid ? theme.colors.error.main : theme.components.input.borderColor;
+    borderColorHover = invalid ? theme.colors.error.mainEmphasis : theme.components.input.borderHover;
+  }
   const background = theme.components.input.background;
   const textColor = theme.components.input.text;
 
@@ -72,37 +77,6 @@ export const inputPadding = (theme: GrafanaTheme2) => {
   return css({
     padding: theme.spacing(0, 1, 0, 1),
   });
-};
-
-export const inputSizes = () => {
-  return {
-    sm: css({
-      width: inputSizesPixels('sm'),
-    }),
-    md: css({
-      width: inputSizesPixels('md'),
-    }),
-    lg: css({
-      width: inputSizesPixels('lg'),
-    }),
-    auto: css({
-      width: inputSizesPixels('auto'),
-    }),
-  };
-};
-
-export const inputSizesPixels = (size: string) => {
-  switch (size) {
-    case 'sm':
-      return '200px';
-    case 'md':
-      return '320px';
-    case 'lg':
-      return '580px';
-    case 'auto':
-    default:
-      return 'auto';
-  }
 };
 
 export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTheme2) {

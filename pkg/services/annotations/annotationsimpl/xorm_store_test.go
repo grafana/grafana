@@ -620,6 +620,47 @@ func TestIntegrationAnnotations(t *testing.T) {
 			require.Equal(t, int64(1), result.Tags[1].Count)
 		})
 
+		t.Run("Should filter tags by annotation type", func(t *testing.T) {
+			alertAnnotation := &annotations.Item{
+				OrgID:   1,
+				UserID:  1,
+				AlertID: 1, // alert_id > 0 is what makes a row an alert annotation
+				Text:    "alerting",
+				Epoch:   30,
+				Tags:    []string{"alert-only", "server:server-1"},
+			}
+			require.NoError(t, store.Add(context.Background(), alertAnnotation))
+			t.Cleanup(func() {
+				require.NoError(t, store.Delete(context.Background(),
+					&annotations.DeleteParams{ID: alertAnnotation.ID, OrgID: 1}))
+			})
+
+			byTag := func(query annotations.TagsQuery) map[string]int64 {
+				result, err := store.GetTags(context.Background(), query)
+				require.NoError(t, err)
+				counts := map[string]int64{}
+				for _, tag := range result.Tags {
+					counts[tag.Tag] = tag.Count
+				}
+				return counts
+			}
+
+			alertTags := byTag(annotations.TagsQuery{OrgID: 1, Type: "alert"})
+			assert.Equal(t, int64(1), alertTags["alert-only"])
+			assert.Equal(t, int64(1), alertTags["server:server-1"], "only the alert row contributes")
+			assert.NotContains(t, alertTags, "deploy", "org annotations are excluded")
+
+			userTags := byTag(annotations.TagsQuery{OrgID: 1, Type: "annotation"})
+			assert.NotContains(t, userTags, "alert-only")
+			assert.Contains(t, userTags, "deploy")
+
+			allTags := byTag(annotations.TagsQuery{OrgID: 1})
+			for tag, count := range allTags {
+				assert.Equal(t, count, alertTags[tag]+userTags[tag],
+					"alert and annotation counts should sum to the unfiltered count for %q", tag)
+			}
+		})
+
 		t.Run("Should not find tags in other org", func(t *testing.T) {
 			result, err := store.GetTags(context.Background(), annotations.TagsQuery{
 				OrgID: 0,
@@ -636,6 +677,30 @@ func TestIntegrationAnnotations(t *testing.T) {
 			})
 			require.NoError(t, err)
 			require.Len(t, result.Tags, 0)
+		})
+
+		t.Run("insertTagsIgnoringConflicts tolerates duplicate annotation_tag rows", func(t *testing.T) {
+			annotation := &annotations.Item{
+				OrgID:  1,
+				UserID: 1,
+				Text:   "test duplicate tags",
+				Epoch:  10,
+				Tags:   []string{"alertname:cpu", "severity:critical"},
+			}
+			err := store.Add(t.Context(), annotation)
+			require.NoError(t, err)
+
+			var existingTags []annotationTag
+			err = sql.WithDbSession(t.Context(), func(sess *sqlstore.DBSession) error {
+				return sess.SQL("SELECT annotation_id, tag_id FROM annotation_tag WHERE annotation_id = ?", annotation.ID).Find(&existingTags)
+			})
+			require.NoError(t, err)
+			require.Len(t, existingTags, 2)
+
+			err = sql.WithDbSession(t.Context(), func(sess *sqlstore.DBSession) error {
+				return store.insertTagsIgnoringConflicts(sess, existingTags)
+			})
+			require.NoError(t, err)
 		})
 	})
 }

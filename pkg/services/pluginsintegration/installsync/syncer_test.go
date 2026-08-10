@@ -3,6 +3,7 @@ package installsync
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -136,15 +137,17 @@ func TestSyncer_Sync(t *testing.T) {
 				}
 			}
 
-			// Setup fake client and registrar
+			// Setup stateful fake client so the sync's convergence pass sees its own writes
 			syncCalls := 0
+			stateByNamespace := map[string][]pluginsv0alpha1.Plugin{}
 			fakeClient := &fakePluginInstallClient{
 				createFunc: func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
 					syncCalls++
+					stateByNamespace[obj.Namespace] = append(stateByNamespace[obj.Namespace], *obj)
 					return obj, nil
 				},
 				listAllFunc: func(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginList, error) {
-					return &pluginsv0alpha1.PluginList{}, nil
+					return &pluginsv0alpha1.PluginList{Items: stateByNamespace[namespace]}, nil
 				},
 			}
 			clientGen := &fakeClientGenerator{client: fakeClient}
@@ -153,10 +156,9 @@ func TestSyncer_Sync(t *testing.T) {
 			// Create syncer
 			s := newSyncer(
 				ft,
-				clientGen,
 				registrar,
 				orgService,
-				func(orgID int64) string { return "org-1" },
+				func(orgID int64) string { return fmt.Sprintf("org-%d", orgID) },
 				serverLock,
 				nil,
 				nil,
@@ -189,6 +191,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		expectedUnregCalls int
 		registeredIDs      []string
 		unregisteredIDs    []string
+		updatedIDs         []string
 	}{
 		{
 			name:               "no installed plugins, no API plugins",
@@ -209,6 +212,74 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			expectedRegCalls:   2,
 			expectedUnregCalls: 0,
 			registeredIDs:      []string{"plugin-1", "plugin-2"},
+		},
+		{
+			name: "child plugins are ignored",
+			installedPlugins: []pluginstore.Plugin{
+				{
+					JSONData: plugins.JSONData{ID: "parent-plugin", Info: plugins.Info{Version: "1.0.0"}},
+					Class:    plugins.ClassExternal,
+				},
+				{
+					JSONData:        plugins.JSONData{ID: "child-plugin", Info: plugins.Info{Version: "1.0.0"}},
+					Class:           plugins.ClassExternal,
+					IncludedInAppID: "parent-plugin",
+				},
+			},
+			apiPlugins: []pluginsv0alpha1.Plugin{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "child-plugin",
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "child-plugin"},
+				},
+			},
+			expectedError:      nil,
+			expectedRegCalls:   1,
+			expectedUnregCalls: 1,
+			registeredIDs:      []string{"parent-plugin"},
+			unregisteredIDs:    []string{"child-plugin"},
+		},
+		{
+			name: "directly installed dependency plugin is registered",
+			installedPlugins: []pluginstore.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "parent-datasource",
+						Type: plugins.TypeDataSource,
+						Info: plugins.Info{Version: "1.0.0"},
+						Dependencies: plugins.Dependencies{
+							Plugins: []plugins.Dependency{{ID: "dependency-panel"}},
+						},
+					},
+					Class: plugins.ClassExternal,
+				},
+				{
+					JSONData: plugins.JSONData{ID: "dependency-panel", Info: plugins.Info{Version: "2.0.0"}},
+					Class:    plugins.ClassExternal,
+				},
+			},
+			apiPlugins: []pluginsv0alpha1.Plugin{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "parent-datasource",
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "parent-datasource", Version: "1.0.0"},
+				},
+			},
+			expectedError:      nil,
+			expectedRegCalls:   1,
+			expectedUnregCalls: 0,
+			registeredIDs:      []string{"dependency-panel"},
+			// the parent's applied-dependencies annotation is missing, so the
+			// sync updates the parent to trigger dependency reconciliation
+			updatedIDs: []string{"parent-datasource"},
 		},
 		{
 			name:             "API plugins only",
@@ -287,30 +358,51 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			// Track calls
 			var registeredIDs []string
 			var unregisteredIDs []string
+			var updatedIDs []string
 
-			// Setup fake client
+			// Setup stateful fake client so the sync's convergence pass sees its own writes
+			state := make([]pluginsv0alpha1.Plugin, 0, len(tt.apiPlugins))
+			for i := range tt.apiPlugins {
+				state = append(state, *tt.apiPlugins[i].DeepCopy())
+			}
 			fakeClient := &fakePluginInstallClient{
 				listAllFunc: func(ctx context.Context, namespace string, opts resource.ListOptions) (*pluginsv0alpha1.PluginList, error) {
 					if tt.clientListError != nil {
 						return nil, tt.clientListError
 					}
-					return &pluginsv0alpha1.PluginList{
-						Items: tt.apiPlugins,
-					}, nil
+					items := make([]pluginsv0alpha1.Plugin, len(state))
+					copy(items, state)
+					return &pluginsv0alpha1.PluginList{Items: items}, nil
 				},
 				createFunc: func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.CreateOptions) (*pluginsv0alpha1.Plugin, error) {
 					registeredIDs = append(registeredIDs, obj.Spec.Id)
+					state = append(state, *obj)
+					return obj, nil
+				},
+				updateFunc: func(ctx context.Context, obj *pluginsv0alpha1.Plugin, opts resource.UpdateOptions) (*pluginsv0alpha1.Plugin, error) {
+					updatedIDs = append(updatedIDs, obj.Spec.Id)
+					for i := range state {
+						if state[i].Name == obj.Name {
+							state[i] = *obj
+							break
+						}
+					}
 					return obj, nil
 				},
 				deleteFunc: func(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
 					unregisteredIDs = append(unregisteredIDs, identifier.Name)
+					for i := range state {
+						if state[i].Name == identifier.Name {
+							state = append(state[:i], state[i+1:]...)
+							break
+						}
+					}
 					return nil
 				},
 				getFunc: func(ctx context.Context, identifier resource.Identifier) (*pluginsv0alpha1.Plugin, error) {
-					// Check if plugin exists in apiPlugins
-					for i := range tt.apiPlugins {
-						if tt.apiPlugins[i].Name == identifier.Name {
-							return &tt.apiPlugins[i], nil
+					for i := range state {
+						if state[i].Name == identifier.Name {
+							return state[i].DeepCopy(), nil
 						}
 					}
 					return nil, errorsK8s.NewNotFound(schema.GroupResource{
@@ -326,7 +418,6 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			// Create syncer
 			s := newSyncer(
 				featuremgmt.NewMockFeatureToggles(t),
-				clientGen,
 				registrar,
 				orgtest.NewOrgServiceFake(),
 				func(orgID int64) string { return "org-1" },
@@ -359,8 +450,51 @@ func TestSyncer_syncNamespace(t *testing.T) {
 					require.ElementsMatch(t, tt.unregisteredIDs, unregisteredIDs)
 				}
 			}
+
+			require.ElementsMatch(t, tt.updatedIDs, updatedIDs)
 		})
 	}
+}
+
+func TestSyncer_syncAllNamespaces_ContinuesAfterNamespaceError(t *testing.T) {
+	ctx := context.Background()
+
+	var listedNamespaces []string
+	fakeClient := &fakePluginInstallClient{
+		listAllFunc: func(_ context.Context, namespace string, _ resource.ListOptions) (*pluginsv0alpha1.PluginList, error) {
+			listedNamespaces = append(listedNamespaces, namespace)
+			if namespace == "org-1" {
+				return nil, errors.New("list failed")
+			}
+			return &pluginsv0alpha1.PluginList{Items: []pluginsv0alpha1.Plugin{{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace:   namespace,
+					Name:        "plugin-1",
+					Annotations: map[string]string{install.PluginInstallSourceAnnotation: install.SourcePluginStore},
+				},
+				Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-1", Version: "1.0.0"},
+			}}}, nil
+		},
+	}
+	clientGen := &fakeClientGenerator{client: fakeClient}
+	orgService := orgtest.NewOrgServiceFake()
+	orgService.ExpectedOrgs = []*org.OrgDTO{{ID: 1}, {ID: 2}}
+
+	s := newSyncer(
+		featuremgmt.NewMockFeatureToggles(t),
+		install.NewInstallRegistrar(&logging.NoOpLogger{}, clientGen),
+		orgService,
+		func(orgID int64) string { return fmt.Sprintf("org-%d", orgID) },
+		&fakeServerLock{},
+		nil,
+		nil,
+	)
+
+	err := s.syncAllNamespaces(ctx, install.SourcePluginStore, []pluginstore.Plugin{
+		{JSONData: plugins.JSONData{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore},
+	})
+	require.ErrorContains(t, err, `sync namespace "org-1"`)
+	require.Equal(t, []string{"org-1", "org-2"}, listedNamespaces)
 }
 
 func TestInstallRegistrar_GetClient(t *testing.T) {
@@ -379,7 +513,6 @@ func TestInstallRegistrar_GetClient(t *testing.T) {
 
 			s := newSyncer(
 				featuremgmt.NewMockFeatureToggles(t),
-				clientGen,
 				install.NewInstallRegistrar(&logging.NoOpLogger{}, clientGen),
 				orgtest.NewOrgServiceFake(),
 				func(orgID int64) string { return "org-1" },

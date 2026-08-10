@@ -3,15 +3,20 @@ package resource
 import (
 	"cmp"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"math/rand"
+	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	gocache "github.com/patrickmn/go-cache"
 	"go.opentelemetry.io/otel/attribute"
@@ -29,14 +34,28 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/debouncer"
 )
 
 const maxBatchSize = 1000
+
+// listEverything is the limit an index build passes to say "no limit". Backends
+// take req.Limit+1 to spot a next page, so MaxInt64 would overflow; this is far
+// past any real resource count.
+const listEverything = 1000000000000
+
+// openIndexStatsMaxAge is how far back startup accepts the local open index list.
+const openIndexStatsMaxAge = time.Hour
+
+// unknownBuildSize is passed when the caller does not have a cheap size hint.
+// Backends should treat it as unknown, not as an empty resource.
+const unknownBuildSize int64 = -1
 
 const (
 	defaultVectorSearchLimit = 50
@@ -57,7 +76,11 @@ func (s *NamespacedResource) Valid() bool {
 }
 
 func (s *NamespacedResource) String() string {
-	return fmt.Sprintf("%s/%s/%s", s.Namespace, s.Group, s.Resource)
+	return fmt.Sprintf("%s/%s", s.Namespace, s.GroupResource())
+}
+
+func (s *NamespacedResource) GroupResource() string {
+	return fmt.Sprintf("%s/%s", s.Group, s.Resource)
 }
 
 type IndexAction int
@@ -82,6 +105,90 @@ type IndexBuildInfo struct {
 	BuildTime        time.Time       // Timestamp when the index was built. This value doesn't change on subsequent index updates.
 	BuildVersion     *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
 	SelectableFields []string        // List of selectable fields used when index was built.
+	SearchFieldsHash string          // Hash captured at build time over the SearchFieldDefinition slices registered for (group, resource), across all versions. Empty when no SearchFieldsProvider was in use.
+	Features         []IndexFeature  // Index features the index was built with. Empty on indexes built before index features existed.
+}
+
+// IndexFeature names a mapping change an older index cannot satisfy. Only for
+// changes no declared search field describes, such as an internal marker: a
+// declared field already moves IndexAffectingHash. Choosing wrong is silent — no
+// rebuild, missing data, no error.
+type IndexFeature string
+
+// IndexFeatureTrashFields means the index maps TrashSearchFieldDefinitions. An
+// index without them drops the values, so trash would come back missing the
+// deleter and in arbitrary order. Checked by writers alongside
+// IndexFeatureDeletedMarker, so an older index keeps no deleted documents until it
+// rebuilds.
+const IndexFeatureTrashFields IndexFeature = "trash-fields"
+
+// IndexFeatureDeletedMarker means the index maps the markers on deleted
+// documents, SEARCH_FIELD_IS_DELETED and SEARCH_FIELD_IS_PROVISIONED. An index
+// without them drops the values, so a deleted document indexed there would look
+// live, and a provisioned one would show up in trash. Recorded but not required:
+// rather than reindex every existing index to add the mapping, writers check for
+// this feature before keeping a deleted document.
+const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
+
+// IndexFeatureStoredFacets means every facet-capable field is stored, so the
+// post-rank authorization path can aggregate facets app-side. Native bleve
+// faceting reads the index, not the stored values, so this is required only
+// where post-rank authorization runs — see RequiredIndexFeatures. Without it,
+// that path reports facet-capable but unstored fields as missing values.
+const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
+
+// TrashIndexFeatures are the features an index needs before a deleted document may
+// be kept in it. Both writers read this one list, so the producer and the
+// BulkIndex backstop cannot disagree about what makes an index usable for trash.
+func TrashIndexFeatures() []IndexFeature {
+	return []IndexFeature{IndexFeatureDeletedMarker, IndexFeatureTrashFields}
+}
+
+// currentIndexFeatures is recorded in every index this binary builds.
+var currentIndexFeatures = []IndexFeature{
+	IndexFeatureDeletedMarker,
+	IndexFeatureStoredFacets,
+	IndexFeatureTrashFields,
+}
+
+// requiredIndexFeatures is the subset an index must already have to be used. An
+// index without one of these features is rebuilt before it serves anything, even
+// on startup, so only require a feature whose absence gives wrong answers — not
+// one that only makes results incomplete. Requiring a feature also makes every
+// existing index rebuild once.
+//
+// Every required feature must also be current, otherwise indexes rebuild forever
+// (TestRequiredIndexFeaturesAreCurrent).
+var requiredIndexFeatures = []IndexFeature{}
+
+// CurrentIndexFeatures returns the features sorted, so declaration order cannot
+// change what an index records.
+func CurrentIndexFeatures() []IndexFeature {
+	return slices.Sorted(slices.Values(currentIndexFeatures))
+}
+
+// RequiredIndexFeatures returns the features an index must have to be used.
+// postRankAuthz adds the features only that path depends on, so deployments
+// serving facets from bleve itself are not rebuilt for it.
+func RequiredIndexFeatures(postRankAuthz bool) []IndexFeature {
+	features := requiredIndexFeatures
+	if postRankAuthz {
+		features = append(slices.Clone(features), IndexFeatureStoredFacets)
+	}
+	return slices.Sorted(slices.Values(features))
+}
+
+// MissingIndexFeatures returns the required features the index does not have.
+// Features the index has and this binary does not require are ignored: an index
+// from a newer binary is the build version check's business.
+func MissingIndexFeatures(buildInfo IndexBuildInfo, requiredFeatures []IndexFeature) []IndexFeature {
+	var missing []IndexFeature
+	for _, feature := range requiredFeatures {
+		if !slices.Contains(buildInfo.Features, feature) {
+			missing = append(missing, feature)
+		}
+	}
+	return missing
 }
 
 type ResourceIndex interface {
@@ -115,13 +222,21 @@ type BuildFn func(index ResourceIndex) (int64, error)
 // UpdateFn is responsible for updating index with changes since given RV. It should return new RV (to be used as next sinceRV), number of updated documents and error, if any.
 type UpdateFn func(context context.Context, index ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error)
 
-// SearchBackend contains the technology specific logic to support search
+// SearchBackend contains the technology specific logic to support search.
 type SearchBackend interface {
+	// LoadOpenIndexStats returns recently-open indexes from local backend state.
+	// Empty stats means no usable state exists, and callers should fall back to storage stats.
+	LoadOpenIndexStats(now time.Time, maxAge time.Duration) ([]ResourceStats, error)
+
+	// WriteOpenIndexStats persists currently-open indexes to local backend state.
+	WriteOpenIndexStats(now time.Time) error
+
 	// GetIndex returns existing index, or nil.
 	GetIndex(key NamespacedResource) ResourceIndex
 
 	// BuildIndex builds an index from scratch.
-	// Depending on the size, the backend may choose different options (eg: memory vs disk).
+	// Depending on the size hint, the backend may choose different options (eg: memory vs disk).
+	// A negative size means the caller does not have a cheap size hint.
 	// The last known resource version can be used to detect that nothing has changed, and existing on-disk index can be reused.
 	// The builder will write all documents before returning.
 	// Updater function is used to update the index before performing the search.
@@ -134,7 +249,6 @@ type SearchBackend interface {
 		ctx context.Context,
 		key NamespacedResource,
 		size int64,
-		nonStandardFields SearchableDocumentFields,
 		indexBuildReason string,
 		builder BuildFn,
 		updater UpdateFn,
@@ -146,8 +260,17 @@ type SearchBackend interface {
 	// TotalDocs returns the total number of documents across all indexes.
 	TotalDocs() int64
 
+	// SnapshotCountThreshold returns the document count at or above which
+	// BuildIndex uses remote snapshots, or 0 when snapshots are inactive (no
+	// store configured). The startup prebuild uses it to cap counting without
+	// changing the snapshot decision.
+	SnapshotCountThreshold() int64
+
 	// GetOpenIndexes returns the list of indexes that are currently open.
 	GetOpenIndexes() []NamespacedResource
+
+	// Stop closes indexes and stops backend background tasks.
+	Stop()
 }
 
 // searchServer supports indexing+search regardless of implementation.
@@ -156,12 +279,21 @@ type searchServer struct {
 	storage       StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
+	reranker      *rerank.Reranker
 	search        SearchBackend
 	indexMetrics  *BleveIndexMetrics
+	vectorMetrics *VectorMetrics
 	access        types.AccessClient
 	builders      *builderCache
 	initWorkers   int
 	initMinSize   int
+
+	queryCache             vector.QueryEmbeddingCache
+	queryCacheMaxPerTenant int
+	rateLimiter            vector.RateLimiter
+	rateLimitPerTenant     int
+	rateLimitWindow        time.Duration
+	collectionAllowlist    vector.CollectionAllowlist
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
 
@@ -173,7 +305,8 @@ type searchServer struct {
 	maxIndexAge          time.Duration
 	minBuildVersion      *semver.Version
 	buildVersion         *semver.Version
-	selectableFields     map[string][]string
+	searchFields         *SearchFieldsRegistry
+	requiredFeatures     []IndexFeature
 
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
@@ -192,6 +325,7 @@ type searchServer struct {
 
 	injectFailuresPercent     int
 	indexModificationCacheTTL time.Duration
+	indexDeletedDocuments     bool
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 }
@@ -222,7 +356,7 @@ var (
 )
 
 // newSearchServer creates a new search server implementation.
-func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, embedder *embedder.Embedder, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
+func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend vector.VectorBackend, embedder *embedder.Embedder, reranker *rerank.Reranker, access types.AccessClient, blob BlobSupport, indexMetrics *BleveIndexMetrics, vectorMetrics *VectorMetrics, ownsIndexFn func(key NamespacedResource) (bool, error)) (*searchServer, error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -242,32 +376,48 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		}
 	}
 
+	searchFields := opts.SearchFields
+	if searchFields == nil {
+		searchFields = NewSearchFieldsRegistry(nil, nil, nil)
+	}
+
 	s := &searchServer{
 		access:         access,
 		storage:        storage,
 		vectorBackend:  vectorBackend,
 		embedder:       embedder,
+		reranker:       reranker,
 		search:         opts.Backend,
 		log:            log.New("resource-search"),
 		initWorkers:    opts.InitWorkerThreads,
 		rebuildWorkers: opts.IndexRebuildWorkers,
 		initMinSize:    opts.InitMinCount,
 		indexMetrics:   indexMetrics,
+		vectorMetrics:  vectorMetrics,
 		ownsIndexFn:    ownsIndexFn,
 
 		dashboardIndexMaxAge:      opts.DashboardIndexMaxAge,
 		maxIndexAge:               opts.MaxIndexAge,
 		minBuildVersion:           opts.MinBuildVersion,
 		buildVersion:              opts.BuildVersion,
-		selectableFields:          opts.SelectableFieldsForKinds,
+		searchFields:              searchFields,
+		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
+		indexDeletedDocuments:     opts.IndexDeletedDocuments,
+
+		queryCache:             opts.QueryCache,
+		queryCacheMaxPerTenant: opts.QueryCacheMaxPerTenant,
+		rateLimiter:            opts.RateLimiter,
+		rateLimitPerTenant:     opts.RateLimitPerTenant,
+		rateLimitWindow:        opts.RateLimitWindow,
+		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
 	s.inFlightRebuilds = map[NamespacedResource]*rebuildState{}
 
-	info, err := opts.Resources.GetDocumentBuilders()
+	info, err := opts.Resources.GetDocumentBuilders(searchFields)
 	if err != nil {
 		return nil, err
 	}
@@ -305,6 +455,14 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 
 	ret.selectableFields = mergeSelectableFields(a.selectableFields, b.selectableFields)
 
+	// Both requests should carry the same expected hash because it is derived
+	// per (group, resource). Prefer the non-empty value; if both are non-empty
+	// and differ, take b’s as the more recent observation.
+	ret.expectedSearchFieldsHash = b.expectedSearchFieldsHash
+	if ret.expectedSearchFieldsHash == "" {
+		ret.expectedSearchFieldsHash = a.expectedSearchFieldsHash
+	}
+
 	// Combine complete channels
 	ret.completeChannels = append(a.completeChannels, b.completeChannels...)
 
@@ -336,10 +494,16 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 	}
 
 	rsp := &resourcepb.ListManagedObjectsResponse{}
+	if req.Namespace == "" {
+		rsp.Error = NewBadRequestError("missing namespace")
+		return rsp, nil
+	}
 	nsr := NamespacedResource{
 		Namespace: req.Namespace,
 	}
-	resourceStats, err := s.storage.GetResourceStats(ctx, nsr, 0)
+	// Discover which resource types exist in the namespace, then query each
+	// managed-object index. Discovery avoids the cost of counting via stats.
+	stored, err := s.storage.ListStoredResources(ctx, nsr)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -348,7 +512,7 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 	stats := NewSearchStats("ListManagedObjects")
 	defer s.logStats(ctx, stats, span, "namespace", req.Namespace)
 
-	for _, info := range resourceStats {
+	for _, info := range stored {
 		idx, err := s.getOrCreateIndex(ctx, stats, NamespacedResource{
 			Namespace: req.Namespace,
 			Group:     info.Group,
@@ -422,16 +586,22 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 	defer s.logStats(ctx, stats, span, "namespace", req.Namespace)
 
 	rsp := &resourcepb.CountManagedObjectsResponse{}
+	if req.Namespace == "" {
+		rsp.Error = NewBadRequestError("missing namespace")
+		return rsp, nil
+	}
 	nsr := NamespacedResource{
 		Namespace: req.Namespace,
 	}
-	resourceStats, err := s.storage.GetResourceStats(ctx, nsr, 0)
+	// Discover which resource types exist in the namespace, then count
+	// managed objects from each index. Discovery avoids the cost of counting via stats.
+	stored, err := s.storage.ListStoredResources(ctx, nsr)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
 	}
 
-	for _, info := range resourceStats {
+	for _, info := range stored {
 		idx, err := s.getOrCreateIndex(ctx, stats, NamespacedResource{
 			Namespace: req.Namespace,
 			Group:     info.Group,
@@ -498,6 +668,16 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 		}, nil
 	}
 
+	// Trash authorizes each hit against one index's group and resource, so hits
+	// federated in from another index would be checked against the wrong one.
+	// Refused here rather than further in because resolving a federated index below
+	// can build one.
+	if req.IsDeleted && len(req.Federated) > 0 {
+		return &resourcepb.ResourceSearchResponse{
+			Error: NewBadRequestError("searching deleted resources does not support federated queries"),
+		}, nil
+	}
+
 	stats := NewSearchStats("Search")
 	defer s.logStats(ctx, stats, span, "namespace", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "query", req.Query)
 
@@ -535,30 +715,46 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 // (lower score = closer match — passes through pgvector's <=> output).
 //
 // Returns Unimplemented when no embedding provider or vector backend is configured
-func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (*resourcepb.VectorSearchResponse, error) {
+func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (resp *resourcepb.VectorSearchResponse, retErr error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.VectorSearch")
 	defer span.End()
+
+	start := time.Now()
+	// Default labels are "unknown"; refined once we read the request key.
+	// We capture them before validation so the histogram is labeled even
+	// for the missing-key early return.
+	group, resource := "unknown", "unknown"
+	if req != nil && req.Key != nil {
+		if g := req.Key.GetGroup(); g != "" {
+			group = g
+		}
+		if r := req.Key.GetResource(); r != "" {
+			resource = r
+		}
+	}
+
+	// record metrics at the end
+	defer func() {
+		code := vectorSearchResponseCode(resp, retErr)
+		if s.vectorMetrics != nil {
+			metricutil.ObserveWithExemplar(ctx,
+				s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
+				time.Since(start).Seconds(),
+			)
+		}
+	}()
 
 	if s.embedder == nil || s.vectorBackend == nil {
 		return nil, status.Error(codes.Unimplemented, "vector search not configured")
 	}
 
-	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("missing namespace, group or resource"),
-		}, nil
-	}
-	if strings.TrimSpace(req.Query) == "" {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("query must not be empty"),
-		}, nil
+	if errResp := validateVectorSearchRequest(req); errResp != nil {
+		return errResp, nil
 	}
 
-	// TODO decide on appropriate max query length. Using 1k for now.
-	if len(req.Query) > 1000 {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("query exceeds maximum length of 1000 bytes"),
-		}, nil
+	// External collections skip the per-result BatchCheck, so this namespace check is their only cross-tenant guard.
+	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
+		return &resourcepb.VectorSearchResponse{Error: errRes}, nil
 	}
 
 	limit := int(req.Limit)
@@ -576,29 +772,33 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		attribute.Int("limit", limit),
 	)
 
-	// Embed the query as a retrieval *query* (different task hint than the
-	// retrieval *document* hint used at index time — providers tune
-	// projections per side of the retrieval pair).
-	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
-		Texts:     []string{req.Query},
-		Normalize: s.embedder.ShouldNormalize(),
-		Task:      embedder.TaskRetrievalQuery,
-	})
-	if err != nil {
-		s.log.Error("vector search: embed query", "err", err)
-		return nil, status.Error(codes.Internal, "embed query")
-	}
-	if len(out.Embeddings) != 1 || len(out.Embeddings[0].Dense) == 0 {
-		s.log.Error("vector search: embedder returned no vectors")
-		return nil, status.Error(codes.Internal, "embed query: empty result")
+	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
+		return nil, err
 	}
 
-	filters := translateVectorSearchFilters(req.Filters)
+	// An unprovisioned (group, resource) pair — no catalog row, so no
+	// partition to search — is NOT_FOUND before we spend an embedding on
+	// the query.
+	coll, collAllowed, err := s.resolveAllowedCollection(ctx, req.Key.Group, req.Key.Resource)
+	if err != nil {
+		return nil, s.grpcStatusError(ctx, "vector search: resolve collection", err)
+	}
+	if !collAllowed {
+		return &resourcepb.VectorSearchResponse{Error: NewNotFoundError(req.Key)}, nil
+	}
+
+	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, req.Query)
+	if err != nil {
+		return nil, err
+	}
 
 	results, err := s.vectorBackend.Search(ctx,
-		req.Key.Namespace, s.embedder.Model, req.Key.Resource,
-		out.Embeddings[0].Dense, limit, filters...)
+		req.Key.Namespace, s.embedder.Model, coll.PartitionKey,
+		dense, limit, translateVectorSearchFilters(req.Filters)...)
 	if err != nil {
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
 		s.log.Error("vector search: backend", "err", err)
 		return nil, status.Error(codes.Internal, "vector search backend")
 	}
@@ -611,52 +811,26 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Unauthenticated, "no user in context")
 	}
 
-	// Dedupe per-(UID, Folder) so sub-resources of the same parent (e.g. dashboard panels) share a single batch-check entry.
-	type checkKey struct{ uid, folder string }
-	correlationIDs := make(map[checkKey]string, len(results))
-	checks := make([]types.BatchCheckItem, 0, len(results))
-	for _, r := range results {
-		key := checkKey{r.UID, r.Folder}
-		if _, ok := correlationIDs[key]; ok {
-			continue
-		}
-		id := fmt.Sprintf("%d", len(checks))
-		correlationIDs[key] = id
-		checks = append(checks, types.BatchCheckItem{
-			CorrelationID: id,
-			Verb:          utils.VerbGet,
-			Group:         req.Key.Group,
-			Resource:      req.Key.Resource,
-			Name:          r.UID,
-			Folder:        r.Folder,
-		})
-	}
-
-	checkResults := make(map[string]types.BatchCheckResult, len(checks))
-	for start := 0; start < len(checks); start += batchCheckChunkSize {
-		end := min(start+batchCheckChunkSize, len(checks))
-		batchResp, err := s.access.BatchCheck(ctx, user, types.BatchCheckRequest{
-			Namespace: req.Key.Namespace,
-			Checks:    checks[start:end],
-		})
+	// External rows aren't unified-storage resources — the authz service
+	// has nothing to answer for them, so per-result checks are skipped
+	// and the caller does its own post-filtering.
+	var allowed map[vectorAuthzKey]bool
+	if !coll.IsExternal {
+		allowed, err = s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
 		if err != nil {
+			if ctx.Err() != nil {
+				return nil, status.FromContextError(ctx.Err()).Err()
+			}
 			s.log.Error("vector search: authz batch check", "err", err)
 			return nil, status.Error(codes.Internal, "authz batch check")
 		}
-		for id, result := range batchResp.Results {
-			checkResults[id] = result
-		}
 	}
 
-	resp := &resourcepb.VectorSearchResponse{
+	resp = &resourcepb.VectorSearchResponse{
 		Results: make([]*resourcepb.VectorSearchResult, 0, len(results)),
 	}
 	for _, r := range results {
-		id, ok := correlationIDs[checkKey{r.UID, r.Folder}]
-		if !ok {
-			continue
-		}
-		if !checkResults[id].Allowed {
+		if !coll.IsExternal && !allowed[vectorAuthzKey{r.UID, r.Folder}] {
 			continue
 		}
 		resp.Results = append(resp.Results, &resourcepb.VectorSearchResult{
@@ -670,6 +844,218 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		})
 	}
 	return resp, nil
+}
+
+// vectorSearchResponseCode maps a VectorSearch outcome to the gRPC code label
+// on the search-duration metric. ErrorResult carries HTTP-style codes; an
+// unmapped code labels as Unknown — a signal to add a mapping, not a silent
+// mislabel.
+func vectorSearchResponseCode(resp *resourcepb.VectorSearchResponse, retErr error) codes.Code {
+	switch {
+	case retErr != nil:
+		return status.Code(retErr)
+	case resp == nil || resp.Error == nil:
+		return codes.OK
+	}
+	switch resp.Error.Code {
+	case http.StatusBadRequest:
+		return codes.InvalidArgument
+	case http.StatusNotFound:
+		return codes.NotFound
+	case http.StatusForbidden:
+		return codes.PermissionDenied
+	case http.StatusUnauthorized:
+		return codes.Unauthenticated
+	default:
+		return codes.Unknown
+	}
+}
+
+// validateVectorSearchRequest returns a non-nil response with a
+// BadRequestError when the request fails validation; nil means valid.
+// Pulled out of VectorSearch to keep that function under the cyclomatic
+// complexity threshold.
+func validateVectorSearchRequest(req *resourcepb.VectorSearchRequest) *resourcepb.VectorSearchResponse {
+	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("missing namespace, group or resource"),
+		}
+	}
+	if strings.TrimSpace(req.Query) == "" {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("query must not be empty"),
+		}
+	}
+	// TODO decide on appropriate max query length. Using 1k for now.
+	if len(req.Query) > 1000 {
+		return &resourcepb.VectorSearchResponse{
+			Error: NewBadRequestError("query exceeds maximum length of 1000 bytes"),
+		}
+	}
+	return nil
+}
+
+// checkVectorSearchRateLimit returns a gRPC status error when the
+// request must be rejected (over quota or limiter unreachable), nil
+// when it should proceed.
+func (s *searchServer) checkVectorSearchRateLimit(ctx context.Context, namespace string) error {
+	if s.rateLimiter == nil {
+		return nil
+	}
+	allowed, count, err := s.rateLimiter.Allow(ctx, namespace, s.rateLimitWindow, s.rateLimitPerTenant)
+	if err != nil {
+		s.log.Error("vector search: rate-limit check failed, fail-closed", "err", err, "namespace", namespace)
+		if s.vectorMetrics != nil {
+			s.vectorMetrics.RateLimiterErrorsTotal.Inc()
+		}
+		return status.Error(codes.Unavailable, "rate limiter unavailable")
+	}
+	if !allowed {
+		if s.vectorMetrics != nil {
+			s.vectorMetrics.RateLimitedRequestsTotal.Inc()
+		}
+		return status.Errorf(codes.ResourceExhausted, "tenant rate limit exceeded: %d requests in window", count)
+	}
+	return nil
+}
+
+// embedVectorSearchQuery returns the query embedding, fetching it from
+// the cache on hit or calling the embedder on miss (and best-effort
+// writing back into the cache, enforcing the per-tenant cap).
+func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, query string) ([]float32, error) {
+	queryHash := sha256Hex(query)
+	if dense, ok := s.lookupCachedQueryEmbedding(ctx, namespace, queryHash); ok {
+		return dense, nil
+	}
+
+	// Embed the query as a retrieval *query* (different task hint than
+	// the retrieval *document* hint used at index time — providers tune
+	// projections per side of the retrieval pair).
+	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
+		Texts:     []string{query},
+		Normalize: s.embedder.ShouldNormalize(),
+		Task:      embedder.TaskRetrievalQuery,
+	})
+	if err != nil {
+		// Client disconnects/timeouts must map to Canceled/DeadlineExceeded
+		// per the gRPC spec — reporting Internal here trips error SLOs.
+		if ctx.Err() != nil {
+			return nil, status.FromContextError(ctx.Err()).Err()
+		}
+		s.log.Error("vector search: embed query", "err", err)
+		return nil, status.Error(codes.Internal, "embed query")
+	}
+	if len(out.Embeddings) != 1 || len(out.Embeddings[0].Dense) == 0 {
+		s.log.Error("vector search: embedder returned no vectors")
+		return nil, status.Error(codes.Internal, "embed query: empty result")
+	}
+	dense := out.Embeddings[0].Dense
+	if s.vectorMetrics != nil {
+		s.vectorMetrics.QueryCacheMissesTotal.WithLabelValues(s.embedder.Model).Inc()
+	}
+	s.storeCachedQueryEmbedding(ctx, namespace, queryHash, dense)
+	return dense, nil
+}
+
+// lookupCachedQueryEmbedding returns (embedding, true) on hit; (nil,
+// false) on miss or any error (cache failures must not fail the search).
+func (s *searchServer) lookupCachedQueryEmbedding(ctx context.Context, namespace, queryHash string) ([]float32, bool) {
+	if s.queryCache == nil {
+		return nil, false
+	}
+	emb, hit, err := s.queryCache.Get(ctx, namespace, s.embedder.Model, queryHash)
+	if err != nil {
+		s.log.Warn("vector search: cache lookup failed, falling through", "err", err)
+		return nil, false
+	}
+	if !hit {
+		return nil, false
+	}
+	if s.vectorMetrics != nil {
+		s.vectorMetrics.QueryCacheHitsTotal.WithLabelValues(s.embedder.Model).Inc()
+	}
+	return emb, true
+}
+
+// vectorQueryCacheEvictTargetFraction is how full the cache is left
+// after an eviction round runs.
+const vectorQueryCacheEvictTargetFraction = 0.8
+
+// storeCachedQueryEmbedding writes the freshly-embedded vector into the
+// cache (best-effort). When the tenant is at or above the cap, eviction
+// trims down to vectorQueryCacheEvictTargetFraction of the cap in one
+// pass so we don't run a DELETE on every cache miss at steady state.
+func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace, queryHash string, dense []float32) {
+	if s.queryCache == nil || s.queryCacheMaxPerTenant <= 0 {
+		return
+	}
+	if n, err := s.queryCache.Count(ctx, namespace); err == nil && int(n) >= s.queryCacheMaxPerTenant {
+		target := int(float64(s.queryCacheMaxPerTenant) * vectorQueryCacheEvictTargetFraction)
+		evictN := int(n) - target
+		if deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN); err != nil {
+			s.log.Warn("vector search: cache evict failed", "err", err)
+		} else if deleted > 0 && s.vectorMetrics != nil {
+			s.vectorMetrics.QueryCacheEvictionsTotal.Add(float64(deleted))
+		}
+	}
+	if err := s.queryCache.Put(ctx, namespace, s.embedder.Model, queryHash, dense); err != nil {
+		s.log.Warn("vector search: cache put failed", "err", err)
+	}
+}
+
+// vectorAuthzKey de-dupes (UID, Folder) so sub-resources of the same
+// parent (e.g. dashboard panels) share a single batch-check entry.
+type vectorAuthzKey struct{ uid, folder string }
+
+// batchCheckVectorSearchResults runs authz checks in chunks of
+// batchCheckChunkSize over the unique (UID, Folder) pairs in `results`
+// and returns the set of pairs the user is allowed to read.
+func (s *searchServer) batchCheckVectorSearchResults(
+	ctx context.Context,
+	user types.AuthInfo,
+	key *resourcepb.ResourceKey,
+	results []vector.VectorSearchResult,
+) (map[vectorAuthzKey]bool, error) {
+	// seen de-dupes per (UID, Folder) so sub-resources share one entry.
+	// correlation maps the batch-check correlation ID back to its pair.
+	seen := make(map[vectorAuthzKey]struct{}, len(results))
+	correlation := make(map[string]vectorAuthzKey, len(results))
+	checks := make([]types.BatchCheckItem, 0, len(results))
+	for _, r := range results {
+		k := vectorAuthzKey{r.UID, r.Folder}
+		if _, dup := seen[k]; dup {
+			continue
+		}
+		seen[k] = struct{}{}
+		id := fmt.Sprintf("%d", len(checks))
+		correlation[id] = k
+		checks = append(checks, types.BatchCheckItem{
+			CorrelationID: id,
+			Verb:          utils.VerbGet,
+			Group:         key.Group,
+			Resource:      key.Resource,
+			Name:          r.UID,
+			Folder:        r.Folder,
+		})
+	}
+
+	allowed := make(map[vectorAuthzKey]bool, len(checks))
+	for start := 0; start < len(checks); start += batchCheckChunkSize {
+		end := min(start+batchCheckChunkSize, len(checks))
+		batchResp, err := s.access.BatchCheck(ctx, user, types.BatchCheckRequest{
+			Namespace: key.Namespace,
+			Checks:    checks[start:end],
+		})
+		if err != nil {
+			return nil, err
+		}
+		for id, result := range batchResp.Results {
+			if result.Allowed {
+				allowed[correlation[id]] = true
+			}
+		}
+	}
+	return allowed, nil
 }
 
 // translateVectorSearchFilters maps the proto Requirement shape into the
@@ -709,9 +1095,10 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 
 	stats := NewSearchStats("GetStats")
-	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", req.Folder)
+	defer s.logStats(ctx, stats, span, "namespace", req.Namespace, "group", strings.Join(req.Kinds, ","), "folder", strings.Join(req.Folder, ","))
 
 	rsp := &resourcepb.ResourceStatsResponse{}
+	folderSet := folderFilterSet(req)
 
 	// Explicit list of kinds
 	if len(req.Kinds) > 0 {
@@ -727,7 +1114,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
 			}
-			count, err := index.DocCount(ctx, req.Folder, stats)
+			count, err := sumDocCount(ctx, index, folderSet, stats)
 			if err != nil {
 				rsp.Error = AsErrorResult(err)
 				return rsp, nil
@@ -752,8 +1139,8 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 	rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(resourceStats))
 
-	// When not filtered by folder or repository, we can use the results directly
-	if req.Folder == "" {
+	// When not filtered by folder, we can use the results directly
+	if len(folderSet) == 0 {
 		for i, stat := range resourceStats {
 			rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 				Group:    stat.Group,
@@ -774,7 +1161,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
 		}
-		count, err := index.DocCount(ctx, req.Folder, stats)
+		count, err := sumDocCount(ctx, index, folderSet, stats)
 		if err != nil {
 			rsp.Error = AsErrorResult(err)
 			return rsp, nil
@@ -786,6 +1173,48 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 		}
 	}
 	return rsp, nil
+}
+
+// folderFilterSet returns req.Folder de-duplicated, with empty entries dropped.
+// Returns nil when no folder filter is set, which means "count everything in
+// the namespace".
+func folderFilterSet(req *resourcepb.ResourceStatsRequest) []string {
+	if len(req.Folder) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(req.Folder))
+	out := make([]string, 0, len(req.Folder))
+	for _, f := range req.Folder {
+		if f == "" {
+			continue
+		}
+		if _, ok := seen[f]; ok {
+			continue
+		}
+		seen[f] = struct{}{}
+		out = append(out, f)
+	}
+	return out
+}
+
+// sumDocCount returns the document count across the given folders. When
+// folders is empty it returns the total document count of the index. Bleve
+// has no native multi-folder count, so we issue one DocCount per folder and
+// sum — fine for the move/delete confirmation flow which only spans a
+// folder subtree.
+func sumDocCount(ctx context.Context, index ResourceIndex, folders []string, stats *SearchStats) (int64, error) {
+	if len(folders) == 0 {
+		return index.DocCount(ctx, "", stats)
+	}
+	var total int64
+	for _, f := range folders {
+		c, err := index.DocCount(ctx, f, stats)
+		if err != nil {
+			return 0, err
+		}
+		total += c
+	}
+	return total, nil
 }
 
 func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
@@ -855,12 +1284,40 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	}, nil
 }
 
+func (s *searchServer) startupIndexStats(ctx context.Context) ([]ResourceStats, error) {
+	stats, err := s.search.LoadOpenIndexStats(time.Now(), openIndexStatsMaxAge)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("failed to load open index stats, falling back to resource stats", "error", err)
+	} else if len(stats) > 0 {
+		// Do not apply initMinSize here: open index stats restore indexes that were recently open on this node,
+		// rather than discovering resources from storage.
+		s.log.FromContext(ctx).Info("using open index stats", "indexes", len(stats))
+		return stats, nil
+	} else {
+		s.log.FromContext(ctx).Debug("open index stats unavailable, falling back to resource stats")
+	}
+
+	// The prebuild only compares counts against thresholds, so cap counting above
+	// the highest one that consumes the count: init min size, plus the snapshot
+	// threshold when a snapshot store is active.
+	limit := s.initMinSize
+	if t := int(s.search.SnapshotCountThreshold()); t > limit {
+		limit = t
+	}
+	limit++
+
+	start := time.Now()
+	stats, err = s.storage.GetResourceStatsWithLimit(ctx, NamespacedResource{}, s.initMinSize, limit)
+	s.log.Debug("startupIndexStats: got resource stats from storage", "elapsed", time.Since(start).String(), "stats", len(stats), "err", err, "countLimit", limit)
+	return stats, err
+}
+
 func (s *searchServer) buildIndexes(ctx context.Context) (int, error) {
 	totalBatchesIndexed := 0
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
 
-	stats, err := s.storage.GetResourceStats(ctx, NamespacedResource{}, s.initMinSize)
+	stats, err := s.startupIndexStats(ctx)
 	if err != nil {
 		return 0, err
 	}
@@ -917,15 +1374,20 @@ func (s *searchServer) init(ctx context.Context) error {
 	s.bgTaskWg.Add(1)
 	go s.runPeriodicScanForIndexesToRebuild(subctx)
 
+	s.startRateBucketSweeper(subctx)
+
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
 	return nil
 }
 
 func (s *searchServer) stop() {
-	// Stop background tasks.
+	// This stops search-server tasks only: rebuild workers, rebuild scans, and rate-limit sweeping.
 	s.bgTaskCancel()
 	s.bgTaskWg.Wait()
+
+	// Stop the backend after search-server workers so no rebuild can race with closing indexes.
+	s.search.Stop()
 }
 
 // Init initializes the search server.
@@ -967,6 +1429,42 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
 		}
 	}
+}
+
+func sha256Hex(s string) string {
+	h := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(h[:])
+}
+
+// Old buckets never affect Allow() — sweeping is purely housekeeping.
+func (s *searchServer) startRateBucketSweeper(ctx context.Context) {
+	if s.rateLimiter == nil || s.rateLimitWindow <= 0 {
+		return
+	}
+	s.bgTaskWg.Go(func() {
+		interval := s.rateLimitWindow / 2
+		if interval < time.Minute {
+			interval = time.Minute
+		}
+		t := time.NewTicker(interval)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				cutoff := time.Now().Add(-2 * s.rateLimitWindow)
+				deleted, err := s.rateLimiter.SweepOlderThan(ctx, cutoff)
+				if err != nil {
+					s.log.Warn("rate-bucket sweep failed", "err", err)
+					continue
+				}
+				if deleted > 0 {
+					s.log.Debug("rate-bucket sweep", "deleted", deleted, "cutoff", cutoff)
+				}
+			}
+		}
+	})
 }
 
 // jitterForKey returns a deterministic jitter duration for the given key,
@@ -1023,13 +1521,13 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			continue
 		}
 
-		sfKey := fmt.Sprintf("%s/%s", strings.ToLower(key.Group), strings.ToLower(key.Resource))
-		sfields := s.selectableFields[sfKey]
+		sfKey := NewLowerGroupResource(key.Group, key.Resource)
+		sfields, expectedSearchFieldsHash, _ := s.searchFields.For(sfKey)
 
-		if shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, nil) {
+		if shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, expectedSearchFieldsHash, s.requiredFeatures, nil) {
 			completeCh := make(chan struct{})
 			completeChs = append(completeChs, completeCh)
-			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, completeCh)
+			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, expectedSearchFieldsHash, completeCh)
 			s.rebuildQueue.Add(rebuildReq)
 
 			if s.indexMetrics != nil {
@@ -1097,7 +1595,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		l.Error("failed to get build info for index to rebuild", "error", err)
 	}
 
-	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, s.buildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, l)
+	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, s.buildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, req.expectedSearchFieldsHash, s.requiredFeatures, l)
 	if !rebuild {
 		span.AddEvent("index not rebuilt")
 		l.Info("index doesn't need to be rebuilt")
@@ -1155,26 +1653,11 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		s.builders.clearNamespacedCache(req.NamespacedResource)
 	}
 
-	// Get the correct value of size + RV for building the index. This is important for our Bleve
-	// backend to decide whether to build index in-memory or as file-based.
-	nsr := NamespacedResource{
-		Namespace: req.Namespace,
-		Group:     req.Group,
-		Resource:  req.Resource,
-	}
-	stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
+	size, err := idx.DocCount(ctx, "", nil)
 	if err != nil {
-		span.RecordError(fmt.Errorf("failed to get resource stats: %w", err))
-		l.Error("failed to get resource stats", "error", err)
-		return
-	}
-
-	size := int64(0)
-	for _, stat := range stats {
-		if stat.Namespace == req.Namespace && stat.Group == req.Group && stat.Resource == req.Resource {
-			size = stat.Count
-			break
-		}
+		span.RecordError(fmt.Errorf("failed to get current index doc count: %w", err))
+		l.Warn("failed to get current index doc count, using unknown size", "error", err)
+		size = unknownBuildSize
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
@@ -1185,7 +1668,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 }
 
-func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, selectableFields []string, rebuildLogger log.Logger) bool {
+func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, selectableFields []string, expectedSearchFieldsHash string, requiredFeatures []IndexFeature, rebuildLogger log.Logger) bool {
 	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
 			if rebuildLogger != nil {
@@ -1232,6 +1715,30 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersi
 		return true
 	}
 
+	// Search-field metadata that affects what gets indexed (paths, types,
+	// capabilities, EmitZeroIfAbsent) has changed since the index was built.
+	// Rebuild so documents are re-extracted with the new declarations.
+	//
+	// An empty expected hash means "no opinion" for this kind: either no
+	// SearchFieldsProvider is registered today, or the running binary doesn't
+	// supply hashes yet. In that case we leave the stored hash alone (mirrors
+	// the SelectableFields semantics, which only triggers a rebuild on added
+	// fields). The stored hash gets refreshed naturally on the next rebuild
+	// triggered by another condition.
+	if expectedSearchFieldsHash != "" && expectedSearchFieldsHash != buildInfo.SearchFieldsHash {
+		if rebuildLogger != nil {
+			rebuildLogger.Info("search field metadata changed since the index was built, rebuilding the index")
+		}
+		return true
+	}
+
+	if missing := MissingIndexFeatures(buildInfo, requiredFeatures); len(missing) > 0 {
+		if rebuildLogger != nil {
+			rebuildLogger.Info("index is missing required features, rebuilding the index", "features", missing)
+		}
+		return true
+	}
+
 	return false
 }
 
@@ -1259,26 +1766,28 @@ type rebuildState struct {
 type rebuildRequest struct {
 	NamespacedResource
 
-	minBuildTime     time.Time       // if not zero, rebuild index if it has been built before this timestamp
-	lastImportTime   time.Time       // if not zero, rebuild index if it has been built before this timestamp.
-	minBuildVersion  *semver.Version // if not nil, rebuild index with build version older than this.
-	selectableFields []string        // rebuild index which is missing some of these selectable fields.
+	minBuildTime             time.Time       // if not zero, rebuild index if it has been built before this timestamp
+	lastImportTime           time.Time       // if not zero, rebuild index if it has been built before this timestamp.
+	minBuildVersion          *semver.Version // if not nil, rebuild index with build version older than this.
+	selectableFields         []string        // rebuild index which is missing some of these selectable fields.
+	expectedSearchFieldsHash string          // if non-empty, rebuild index whose stored SearchFieldsHash differs from this value.
 
 	completeChannels []chan<- struct{} // signal rebuild index is complete
 }
 
-func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, selectableFields []string, completeCh chan<- struct{}) rebuildRequest {
+func newRebuildRequest(key NamespacedResource, minBuildTime, lastImportTime time.Time, minBuildVersion *semver.Version, selectableFields []string, expectedSearchFieldsHash string, completeCh chan<- struct{}) rebuildRequest {
 	var completeChannels []chan<- struct{} // setup a list as requests can be combined
 	if completeCh != nil {
 		completeChannels = []chan<- struct{}{completeCh}
 	}
 	return rebuildRequest{
-		NamespacedResource: key,
-		minBuildTime:       minBuildTime,
-		minBuildVersion:    minBuildVersion,
-		lastImportTime:     lastImportTime,
-		selectableFields:   selectableFields,
-		completeChannels:   completeChannels,
+		NamespacedResource:       key,
+		minBuildTime:             minBuildTime,
+		minBuildVersion:          minBuildVersion,
+		lastImportTime:           lastImportTime,
+		selectableFields:         selectableFields,
+		expectedSearchFieldsHash: expectedSearchFieldsHash,
+		completeChannels:         completeChannels,
 	}
 }
 
@@ -1312,24 +1821,6 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				return idx, nil
 			}
 
-			// Get correct value of size + RV for building the index. This is important for our Bleve
-			// backend to decide whether to build index in-memory or as file-based.
-			nsr := NamespacedResource{
-				Namespace: key.Namespace,
-			}
-			stats, err := s.storage.GetResourceStats(ctx, nsr, 0)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get resource stats: %w", err)
-			}
-
-			size := int64(0)
-			for _, stat := range stats {
-				if stat.Namespace == key.Namespace && stat.Group == key.Group && stat.Resource == key.Resource {
-					size = stat.Count
-					break
-				}
-			}
-
 			// Get last import time to pass to BuildIndex, which will check if the file-based
 			// index needs to be rebuilt before opening it.
 			var lastImportTime time.Time
@@ -1341,7 +1832,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 				lastImportTime = importTimes[key]
 			}
 
-			idx, err = s.build(ctx, key, size, reason, false, lastImportTime)
+			idx, err = s.build(ctx, key, unknownBuildSize, reason, false, lastImportTime)
 			if err != nil {
 				return nil, fmt.Errorf("error building search index, %w", err)
 			}
@@ -1381,6 +1872,43 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	return idx, nil
 }
 
+// bulkIndexBatcher hands documents to an index in batches, so building an index
+// for a large resource does not hold every document in memory at once.
+type bulkIndexBatcher struct {
+	index ResourceIndex
+	span  trace.Span
+	items []*BulkIndexItem
+	total int
+}
+
+func newBulkIndexBatcher(index ResourceIndex, span trace.Span) *bulkIndexBatcher {
+	return &bulkIndexBatcher{index: index, span: span, items: make([]*BulkIndexItem, 0, maxBatchSize)}
+}
+
+func (b *bulkIndexBatcher) add(item *BulkIndexItem) error {
+	b.items = append(b.items, item)
+	if len(b.items) < maxBatchSize {
+		return nil
+	}
+	return b.flush()
+}
+
+func (b *bulkIndexBatcher) flush() error {
+	if len(b.items) == 0 {
+		return nil
+	}
+	b.span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(b.items))))
+	if err := b.index.BulkIndex(&BulkIndexRequest{Items: b.items}); err != nil {
+		return err
+	}
+	b.total += len(b.items)
+	b.items = b.items[:0]
+	return nil
+}
+
+// indexed returns how many documents have been handed to the index.
+func (b *bulkIndexBatcher) indexed() int { return b.total }
+
 //nolint:gocyclo
 func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.build")
@@ -1399,14 +1927,12 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	if err != nil {
 		return nil, err
 	}
-	fields := s.builders.GetFields(nsr)
 
 	builderFn := func(index ResourceIndex) (int64, error) {
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
 
 		listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
-			Limit: 1000000000000, // big number
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     nsr.Group,
@@ -1415,10 +1941,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				},
 			},
 		}, func(iter ListIterator) error {
-			// Process documents in batches to avoid memory issues
-			// When dealing with large collections (e.g., 100k+ documents),
-			// loading all documents into memory at once can cause OOM errors.
-			items := make([]*BulkIndexItem, 0, maxBatchSize)
+			batch := newBulkIndexBatcher(index, span)
 
 			for iter.Next() {
 				if err = iter.Error(); err != nil {
@@ -1442,33 +1965,31 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 					continue
 				}
 
-				// Add to bulk items
-				items = append(items, &BulkIndexItem{
-					Action: ActionIndex,
-					Doc:    doc,
-				})
-
-				// When we reach the batch size, perform bulk index and reset the batch.
-				if len(items) >= maxBatchSize {
-					span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-					if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
-						return err
-					}
-
-					items = items[:0]
-				}
-			}
-
-			// Index any remaining items in the final batch.
-			if len(items) > 0 {
-				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-				if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+				if err = batch.add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
 					return err
 				}
 			}
+
+			if err = batch.flush(); err != nil {
+				return err
+			}
 			return iter.Error()
 		})
-		return listRV, err
+		if err != nil {
+			return listRV, err
+		}
+
+		// Deleted objects are not on the list above, and nothing will re-announce
+		// them: an object is deleted once. Without this pass every rebuild would
+		// drop the whole trash for this resource.
+		//
+		// The resource version stays the one from the live pass, which is the older
+		// of the two, so anything that changed while this pass ran is replayed by
+		// the updater rather than missed.
+		if err := s.indexTrash(ctx, nsr, index, logger); err != nil {
+			return listRV, err
+		}
+		return listRV, nil
 	}
 
 	var dedupCache *gocache.Cache
@@ -1497,6 +2018,8 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		if lastSinceRV > 0 && sinceRV == lastSinceRV {
 			calledAt = lastCalledAt
 		}
+
+		keepDeleted := s.keepsDeletedDocuments(index, logger)
 
 		listModifiedTime := time.Now()
 		rv, it := s.storage.ListModifiedSince(ctx, NamespacedResource{
@@ -1552,10 +2075,30 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 					Doc:    doc,
 				})
 			case resourcepb.WatchEvent_DELETED:
-				span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
+				// The delete event carries the object as it was, so trash searches can
+				// find it. Two things send it to the index as a removal instead: an
+				// index that cannot hold the markers, and a body we cannot read.
+				var doc *IndexableDocument
+				if keepDeleted {
+					doc, err = buildDeletedDocument(key, res.ResourceVersion, res.Value)
+					if err != nil {
+						span.RecordError(err)
+						logger.Warn("error building search document for deleted resource, removing it from the index instead", "key", SearchID(key), "err", err)
+					}
+				}
+				if doc == nil {
+					span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
+					items = append(items, &BulkIndexItem{
+						Action: ActionDelete,
+						Key:    &res.Key,
+					})
+					break
+				}
+
+				span.AddEvent("marking document deleted", trace.WithAttributes(attribute.String("name", res.Key.Name)))
 				items = append(items, &BulkIndexItem{
-					Action: ActionDelete,
-					Key:    &res.Key,
+					Action: ActionIndex,
+					Doc:    doc,
 				})
 			default:
 				logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
@@ -1606,7 +2149,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	// within ~10% of the per-resource rebuild interval.
 	maxFreshSnapshotAge := s.getIndexMaxAge(nsr) / 10
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, fields, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime, maxFreshSnapshotAge)
+	index, err := s.search.BuildIndex(ctx, nsr, size, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime, maxFreshSnapshotAge)
 
 	if err != nil {
 		return nil, err
@@ -1626,15 +2169,152 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	return index, err
 }
 
+// keepsDeletedDocuments reports whether deleted objects should stay in this
+// index. They do not when the feature is switched off, or when the index predates
+// the marker mappings and would serve a marked document as live. Either way the
+// document is removed instead, as it was before trash search existed.
+func (s *searchServer) keepsDeletedDocuments(index ResourceIndex, logger log.Logger) bool {
+	if !s.indexDeletedDocuments {
+		return false
+	}
+	info, err := index.BuildInfo()
+	if err != nil {
+		logger.Warn("cannot read index features, removing deleted documents instead of keeping them", "err", err)
+		return false
+	}
+	missing := MissingIndexFeatures(info, TrashIndexFeatures())
+	if len(missing) > 0 {
+		logger.Debug("index does not map the markers on deleted documents, removing them until it is rebuilt", "missing", missing)
+		return false
+	}
+	return true
+}
+
+// indexTrash adds the currently-deleted objects of a resource to the index,
+// marked so only trash searches find them. Deleted objects are absent from the
+// live listing the build runs, so this is the only thing that puts them back
+// after a rebuild.
+func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, index ResourceIndex, logger log.Logger) error {
+	ctx, span := tracer.Start(ctx, "resource.searchServer.indexTrash")
+	defer span.End()
+
+	// Nothing to do when deleted objects are not kept: listing trash and building
+	// documents that get dropped would be wasted work.
+	if !s.keepsDeletedDocuments(index, logger) {
+		return nil
+	}
+
+	req := &resourcepb.ListRequest{
+		Limit:  listEverything,
+		Source: resourcepb.ListRequest_TRASH,
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     nsr.Group,
+				Resource:  nsr.Resource,
+				Namespace: nsr.Namespace,
+			},
+		},
+	}
+
+	batch := newBulkIndexBatcher(index, span)
+	_, err := s.storage.ListHistory(ctx, req, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+
+			key := &resourcepb.ResourceKey{
+				Group:     nsr.Group,
+				Resource:  nsr.Resource,
+				Namespace: nsr.Namespace,
+				Name:      iter.Name(),
+			}
+
+			doc, err := buildDeletedDocument(key, iter.ResourceVersion(), iter.Value())
+			if err != nil {
+				span.RecordError(err)
+				logger.Error("error building search document for deleted resource", "key", SearchID(key), "err", err)
+				continue
+			}
+
+			if err := batch.add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
+				return err
+			}
+		}
+
+		if err := batch.flush(); err != nil {
+			return err
+		}
+		return iter.Error()
+	})
+	if errors.Is(err, errUnimplemented) {
+		// The IAM backends (resourcepermission, noopstorage) embed
+		// UnimplementedStorageBackend and serve their resource from legacy SQL, so
+		// they have no history to list, and no trash to index either.
+		logger.Debug("storage backend does not support listing trash, skipping deleted resources")
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	span.SetAttributes(attribute.Int("documents", batch.indexed()))
+	if batch.indexed() > 0 {
+		logger.Debug("indexed deleted resources", "documents", batch.indexed())
+	}
+	return nil
+}
+
+// buildDeletedDocument builds the document for an object that is in the trash.
+// Trash serves a fixed field set, so the kind's builder is skipped: it would only
+// add live-only fields, at about twice the cost. Its title comes from the same
+// FindTitle, so trash and live search agree.
+//
+// Fields are listed rather than cleared, so a field added to IndexableDocument
+// later cannot reach trash documents by accident.
+func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
+	var u unstructured.Unstructured
+	if err := u.UnmarshalJSON(value); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal deleted object: %w", err)
+	}
+	obj, err := utils.MetaAccessor(&u)
+	if err != nil {
+		return nil, err
+	}
+
+	doc := &IndexableDocument{
+		Key: key,
+		// Searches sort on name as the final tie-breaker, so it has to be set.
+		Name:   key.Name,
+		RV:     rv,
+		Title:  obj.FindTitle(key.Name),
+		Folder: obj.GetFolder(),
+
+		IsDeleted: new(true),
+		DeletedRV: new(strconv.FormatInt(rv, 10)),
+	}
+	// The deletion marker records the deleting user as the last updater, which is
+	// also what listFromTrash reads, so both trash views name the same user.
+	if by := obj.GetUpdatedBy(); by != "" {
+		doc.DeletedBy = &by
+	}
+	if ts := obj.GetDeletionTimestamp(); ts != nil {
+		doc.DeletionTime = new(ts.UnixMilli())
+	}
+	// Only provisioned documents carry the marker, so absent means "not
+	// provisioned", matching how the deleted marker works.
+	if obj.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
+		doc.IsProvisioned = new(true)
+	}
+	return doc, nil
+}
+
 type builderCache struct {
 	// The default builder
 	defaultBuilder DocumentBuilder
 
 	// Possible blob support
 	blob BlobSupport
-
-	// searchable fields initialized once on startup
-	fields map[schema.GroupResource]SearchableDocumentFields
 
 	// lookup by group, then resource (namespace)
 	// This is only modified at startup, so we do not need mutex for access
@@ -1647,7 +2327,6 @@ type builderCache struct {
 
 func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Duration) (*builderCache, error) {
 	cache := &builderCache{
-		fields: make(map[schema.GroupResource]SearchableDocumentFields),
 		lookup: make(map[string]map[string]DocumentBuilderInfo),
 		ns:     expirable.NewLRU[NamespacedResource, DocumentBuilder](nsCacheSize, nil, ttl),
 	}
@@ -1670,15 +2349,8 @@ func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Durati
 			cache.lookup[b.GroupResource.Group] = g
 		}
 		g[b.GroupResource.Resource] = b
-
-		// Any custom fields
-		cache.fields[b.GroupResource] = b.Fields
 	}
 	return cache, nil
-}
-
-func (s *builderCache) GetFields(key NamespacedResource) SearchableDocumentFields {
-	return s.fields[schema.GroupResource{Group: key.Group, Resource: key.Resource}]
 }
 
 // context is typically background.  Holds an LRU cache for a
@@ -1804,7 +2476,7 @@ type TestDocumentBuilderSupplier struct {
 	GroupsResources map[string]string
 }
 
-func (s *TestDocumentBuilderSupplier) GetDocumentBuilders() ([]DocumentBuilderInfo, error) {
+func (s *TestDocumentBuilderSupplier) GetDocumentBuilders(_ *SearchFieldsRegistry) ([]DocumentBuilderInfo, error) {
 	builders := make([]DocumentBuilderInfo, 0, len(s.GroupsResources))
 
 	// Add builders for all possible group/resource combinations

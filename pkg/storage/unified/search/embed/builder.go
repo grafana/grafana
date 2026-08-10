@@ -13,7 +13,7 @@ type Item struct {
 	Title       string          // human-readable title for search results
 	Subresource string          // unique within the resource ("" for whole-resource, "panel/5" for sub-parts)
 	Content     string          // text to embed
-	Metadata    json.RawMessage // structured filter fields (datasource_uids, query_languages, ...)
+	Metadata    json.RawMessage // structured filter fields (datasourceUid, language, ...) — see embed/dashboard/extractor.go
 	Folder      string          // folder UID for authz filtering
 }
 
@@ -27,8 +27,8 @@ type Builder interface {
 	// MaxItemsPerResource caps the items returned by a single Extract
 	// call. 0 means uncapped.
 	MaxItemsPerResource() int
-	// Extract turns a stored value into embeddable items. folderTitle is
-	// resolved by the caller against the folder service since unified
-	// storage values don't carry it inline.
+	// Version identifies the content format Extract produces; bump on output changes to trigger re-embed backfills, never reuse a value.
+	Version() int
+	// Extract turns a stored value into embeddable items; folderTitle prefixes the breadcrumb.
 	Extract(ctx context.Context, key *resourcepb.ResourceKey, value []byte, folderTitle string) ([]Item, error)
 }

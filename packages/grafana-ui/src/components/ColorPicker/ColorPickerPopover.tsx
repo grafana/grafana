@@ -13,7 +13,7 @@ import { type PopoverContentProps } from '../Tooltip/types';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import SpectrumPalette from './SpectrumPalette';
 
-export type ColorPickerChangeHandler = (color: string) => void;
+type ColorPickerChangeHandler = (color: string) => void;
 
 export interface ColorPickerProps {
   color: string;
@@ -118,7 +118,7 @@ export const ColorPickerPopover = <T extends CustomPickersDescriptor>(props: Pro
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     colorPickerPopover: css({
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       boxShadow: theme.shadows.z3,
       background: theme.colors.background.elevated,
       padding: theme.spacing(0.5),
@@ -132,11 +132,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1),
       display: 'flex',
       flexDirection: 'column',
-    }),
-    colorPickerPopoverTabs: css({
-      display: 'flex',
-      width: '100%',
-      borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
     }),
   };
 };

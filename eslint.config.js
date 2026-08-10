@@ -17,11 +17,9 @@ const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
 const grafanaI18nPlugin = require('@grafana/i18n/eslint-plugin');
 
-const pluginsToTranslate = [
-  'public/app/plugins/panel',
-  'public/app/plugins/datasource/azuremonitor',
-  'public/app/plugins/datasource/mssql',
-];
+const jsTsFiles = '*.{js,jsx,ts,tsx,mjs,cjs,mts,cts}';
+
+const pluginsToTranslate = ['public/app/plugins/panel', 'public/app/plugins/datasource/azuremonitor'];
 
 const commonTestIgnores = [
   '**/*.{test,spec}.{ts,tsx}',
@@ -72,6 +70,11 @@ const baseImportConfig = {
       name: 'react-redux',
       importNames: ['useDispatch', 'useSelector'],
       message: 'Please import from app/types/store instead.',
+    },
+    {
+      name: 'react-use',
+      importNames: ['useObservable'],
+      message: 'react-use is being phased out. Import useObservable from @grafana/data/unstable instead.',
     },
   ],
 };
@@ -129,6 +132,9 @@ module.exports = [
       'public/build-swagger', // swagger build output
       'apps/plugins/plugin/src/generated/meta/v0alpha1',
       'apps/plugins/plugin/src/generated/plugin/v0alpha1',
+      'packages/get-document/index.js',
+      'packages/mapbox-jsonlint-lines-primitives/lib/jsonlint.js',
+      'packages/mapbox-jsonlint-lines-primitives/lib/formatter.js',
     ],
   },
   ...grafanaConfig,
@@ -143,7 +149,7 @@ module.exports = [
       // it also conflicts with the betterer eslint rules so disabled
       reportUnusedDisableDirectives: false,
     },
-    files: ['**/*.{ts,tsx,js}'],
+    files: [`**/${jsTsFiles}`],
     ignores: ['packages/grafana-ui/src/components/Forms/Legacy/**'],
     plugins: {
       '@emotion': emotionPlugin,
@@ -171,8 +177,10 @@ module.exports = [
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
       '@grafana/no-restricted-img-srcs': 'error',
+      '@grafana/zod-import-namespace': 'error',
       '@grafana/no-direct-date-fns': 'error',
       '@grafana/no-direct-create-monitoring-logger': 'error',
+      '@grafana/no-get-data-source-srv': 'error',
       'react-prefer-function-component/react-prefer-function-component': ['error', { allowJsxUtilityClass: true }],
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
@@ -264,6 +272,23 @@ module.exports = [
       '@emotion/jsx-import': 'off',
       'react/jsx-uses-react': 'off',
       'react/react-in-jsx-scope': 'off',
+    },
+  },
+  {
+    name: 'grafana/grafana-ui-no-test-utils',
+    files: ['packages/grafana-ui/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        withBaseRestrictedImportsConfig({
+          patterns: [
+            {
+              group: ['@grafana/test-utils'],
+              message: "'@grafana/test-utils' creates a circular dependency with '@grafana/ui'",
+            },
+          ],
+        }),
+      ],
     },
   },
   {
@@ -391,6 +416,17 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/i18n-plural-defaults',
+    plugins: {
+      '@grafana/i18n': grafanaI18nPlugin,
+    },
+    files: ['**/*.{ts,tsx,js}'],
+    rules: {
+      '@grafana/i18n/t-plural-defaults': 'error',
+      '@grafana/i18n/trans-plural-defaults': 'error',
+    },
+  },
+  {
     // Sections of codebase that have all translation markup issues fixed
     name: 'grafana/i18n-overrides',
     plugins: {
@@ -469,21 +505,9 @@ module.exports = [
     name: 'grafana/decoupled-plugins-overrides',
     files: [
       'public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/cloud-monitoring/**/*.{ts,tsx}',
       'public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/grafana-postgresql-datasource/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/grafana-pyroscope-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/graphite/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/influxdb/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/jaeger/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/loki/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/mssql/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/mysql/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/opentsdb/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/parca/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/tempo/**/*.{ts,tsx}',
     ],
     plugins: {
       import: importPlugin,
@@ -575,7 +599,7 @@ module.exports = [
 
   // Old betterer rules config:
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
+    files: [`**/${jsTsFiles}`],
     ignores: [
       // FIXME: Remove once all enterprise issues are fixed -
       // we don't have a suppressions file/approach for enterprise code yet
@@ -588,7 +612,7 @@ module.exports = [
     },
   },
   {
-    files: ['**/*.{js,jsx,ts,tsx}'],
+    files: [`**/${jsTsFiles}`],
     ignores: [
       ...commonTestIgnores,
       // FIXME: Remove once all enterprise issues are fixed -

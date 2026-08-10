@@ -1,14 +1,15 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
-import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
+import { AlertGroupAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { useRouteGroupsMatcher } from 'app/features/alerting/unified/useRouteGroupsMatcher';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { useAlertGroupAbility } from '../../hooks/abilities/alertmanager/useAlertGroupAbility';
 import { useNotificationPoliciesNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 import { Title } from '../common/Title';
@@ -18,7 +19,7 @@ import { PoliciesTree } from './PoliciesTree';
 const PoliciesTreeWrapper = () => {
   const { name = '' } = useParams();
   const { selectedAlertmanager = '' } = useAlertmanager();
-  const [, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
+  const { granted: canSeeAlertGroups } = useAlertGroupAbility(AlertGroupAction.View);
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
   const { currentData: alertGroups, refetch: refetchAlertGroups } = alertmanagerApi.useGetAlertmanagerAlertGroupsQuery(
     { amSourceName: selectedAlertmanager },
@@ -52,7 +53,7 @@ const PoliciesTreeWrapper = () => {
 
 function PolicyPage() {
   const { name = '' } = useParams();
-  const routeName = name === ROOT_ROUTE_NAME ? 'Default Policy' : decodeURIComponent(name);
+  const routeName = isDefaultRoutingTreeName(name) ? 'Default Policy' : decodeURIComponent(name);
   const { navId, pageNav } = useNotificationPoliciesNav();
 
   return (

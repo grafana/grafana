@@ -15,8 +15,6 @@ import {
   type QueryFixType,
 } from './datasource';
 import { type AbsoluteTimeRange } from './time';
-export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
-
 /**
  * Mapping of log level abbreviation to canonical log level.
  * Supported levels are reduce to limit color variation.
@@ -41,6 +39,7 @@ export enum LogLevel {
   debug = 'debug',
   trace = 'trace',
   unknown = 'unknown',
+  unspecified = '',
 }
 
 /**

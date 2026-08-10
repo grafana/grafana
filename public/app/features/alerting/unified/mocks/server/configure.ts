@@ -1,22 +1,31 @@
 import { type DefaultBodyType, HttpResponse, type HttpResponseResolver, type PathParams, http } from 'msw';
 
+import { type PluginMeta } from '@grafana/data';
+import { invalidatePluginSettingsCache } from '@grafana/runtime/internal';
 import server from '@grafana/test-utils/server';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
   getAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
-  updateAlertmanagerConfigHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
-import { getDisabledPluginHandler } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
+import {
+  getDisabledPluginHandler,
+  getPluginMissingHandler,
+  getSpecificPluginHandler,
+} from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import {
   ALERTING_API_SERVER_BASE_URL,
   getK8sResponse,
   paginatedHandlerFor,
 } from 'app/features/alerting/unified/mocks/server/utils';
+import {
+  installAppPluginMeta,
+  pluginMeta as pluginMetas,
+  uninstallAppPluginMeta,
+} from 'app/features/alerting/unified/testSetup/plugins';
 import { type SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import {
   type AlertmanagerAlert,
   type AlertmanagerChoice,
@@ -103,7 +112,6 @@ export const setReplaceGrafanaRuleResolver = (
     )
   );
 };
-
 export const setUpdateRulerRuleNamespaceResolver = (
   resolver: HttpResponseResolver<{ dataSourceUid: string; namespace: string }, RulerRuleGroupDTO, undefined>
 ) => {
@@ -177,7 +185,6 @@ export const echoBodyResolver = async ({
   const name = typeof rawName === 'string' ? rawName : 'new-uid';
   return HttpResponse.json({ ...body, metadata: { name } });
 };
-
 export const setRulerRuleGroupResolver = (
   resolver: HttpResponseResolver<
     { dataSourceUid: string; namespace: string; groupName: string },
@@ -215,6 +222,35 @@ export const setMuteTimingsListError = () => {
   const listMuteTimingsPath = listNamespacedTimeIntervalHandler().info.path;
   const handler = http.get(listMuteTimingsPath, () => {
     return HttpResponse.json({}, { status: 401 });
+  });
+
+  server.use(handler);
+  return handler;
+};
+
+/**
+ * Makes the mock server respond with an error when deleting a time interval,
+ * mirroring the API server conflict returned when the interval is still in use.
+ */
+export const setDeleteTimeIntervalError = (
+  message = 'Time interval is used',
+  messageId = 'alerting.notifications.time-intervals.used',
+  status = 409
+) => {
+  const handler = http.delete(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals/:name`, () => {
+    const errorResponse: ApiMachineryError = {
+      kind: 'Status',
+      apiVersion: 'v1',
+      metadata: {},
+      status: 'Failure',
+      message,
+      reason: 'Conflict',
+      details: {
+        uid: messageId,
+      },
+      code: status,
+    };
+    return HttpResponse.json<ApiMachineryError>(errorResponse, { status });
   });
 
   server.use(handler);
@@ -334,8 +370,34 @@ export const setAlertmanagerAlertsHandler = (alerts: AlertmanagerAlert[]) => {
 
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {
-  clearPluginSettingsCache(pluginId);
+  invalidatePluginSettingsCache(pluginId);
+  installAppPluginMeta(pluginMetas[pluginId]);
   server.use(getDisabledPluginHandler(pluginId));
+};
+
+/** Make a plugin respond with a 404, as if it is not installed */
+export const removePlugin = (pluginId: SupportedPlugin) => {
+  invalidatePluginSettingsCache(pluginId);
+  uninstallAppPluginMeta(pluginId);
+  server.use(getPluginMissingHandler(pluginId));
+};
+
+/** Make an additional plugin respond as installed and enabled */
+export const addPlugin = (pluginMeta: PluginMeta) => {
+  installAppPluginMeta(pluginMeta);
+  server.use(getSpecificPluginHandler(pluginMeta));
+};
+
+/** Make a plugin settings request fail with a given HTTP status code (default 500) */
+export const failPlugin = (pluginId: SupportedPlugin, status = 500) => {
+  invalidatePluginSettingsCache(pluginId);
+  // the plugin must look installed, otherwise the settings request is never made
+  installAppPluginMeta(pluginMetas[pluginId]);
+  server.use(
+    http.get(`/api/plugins/${pluginId}/settings`, () =>
+      HttpResponse.json({ message: 'Internal server error' }, { status })
+    )
+  );
 };
 
 /** Get an error response for use in a API response, in the format:
@@ -348,12 +410,6 @@ export const disablePlugin = (pluginId: SupportedPlugin) => {
 export const getErrorResponse = (message: string, status = 500) => HttpResponse.json({ message }, { status });
 
 const defaultError = getErrorResponse('Unknown error');
-/** Make alertmanager config update fail */
-export const makeAlertmanagerConfigUpdateFail = (
-  responseOverride: ReturnType<typeof getErrorResponse> = defaultError
-) => {
-  server.use(updateAlertmanagerConfigHandler(responseOverride));
-};
 
 /** Make fetching alertmanager config fail */
 export const makeAllAlertmanagerConfigFetchFail = (

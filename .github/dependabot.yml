@@ -18,7 +18,12 @@ updates:
       - "/hack"
       - "/scripts/go-workspace"
       - "/scripts/modowners"
+      - "/.citools/src/air"
+      - "/.citools/src/cue"
+      - "/.citools/src/golangci-lint"
       - "/.citools/src/govulncheck"
+      - "/.citools/src/lefthook"
+      - "/.citools/src/swagger"
     schedule:
       interval: "daily"
       time: "02:00"

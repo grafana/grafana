@@ -71,7 +71,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           data-testid={selectors.components.Alert.alertV2(severity)}
           display="flex"
           backgroundColor={severity}
-          borderRadius="default"
+          borderRadius="lg"
           paddingY={1}
           paddingX={2}
           borderStyle="solid"
@@ -122,7 +122,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
-export const getIconFromSeverity = (severity: AlertVariant): IconName => {
+const getIconFromSeverity = (severity: AlertVariant): IconName => {
   switch (severity) {
     case 'error':
       return 'exclamation-circle';
@@ -160,7 +160,7 @@ const getStyles = (
         bottom: 0,
         right: 0,
         background: theme.colors.background.primary,
-        borderRadius: theme.shape.radius.default,
+        borderRadius: theme.shape.radius.lg,
         zIndex: -1,
       },
     }),

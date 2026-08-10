@@ -345,7 +345,9 @@ export function RichHistoryCard(props: Props) {
           )}
           {activeUpdateComment && updateComment}
         </div>
-        {!activeUpdateComment && <RichHistoryAddToLibrary query={queryHistoryItem?.queries[0]} />}
+        {!activeUpdateComment && (
+          <RichHistoryAddToLibrary query={queryHistoryItem?.queries[0]} comment={queryHistoryItem.comment} />
+        )}
         {!activeUpdateComment && (
           <div className={styles.runButton}>
             <ExploreRunQueryButton queries={queryHistoryItem.queries} rootDatasourceUid={cardRootDatasource?.uid} />

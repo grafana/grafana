@@ -21,14 +21,6 @@ aliases:
 
 # Set up instantaneous pulling and dashboard previews in Pull Requests
 
-{{< admonition type="note" >}}
-
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
-
-{{< /admonition >}}
-
 After [setup](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/), you can optionally extend Git Sync by enabling pull request notifications and image previews of dashboard changes.
 
 | Capability                                       | Benefit                                                           | Requires                               |
@@ -60,6 +52,18 @@ root_url = https://<PUBLIC_DOMAIN>
 
 To check the configured webhooks, go to **Administration > General > Provisioning** and click the **View** link for your GitHub repository.
 
+{{< admonition type="warning" >}}
+
+GitHub limits each repository to **20 webhooks per event type** (for example, `push` and `pull_request`). Git Sync registers its own webhooks for each repository connection, so when several Grafana instances sync the same repository, each connection adds to this total. After the limit is exceeded, GitHub rejects new webhooks with an error such as:
+
+```
+GitHub API error (HTTP 422: Validation Failed: The "pull_request" event cannot have more than 20 hooks; The "push" event cannot have more than 20 hooks)
+```
+
+If you hit this limit, remove unused or duplicate webhooks from your repository's **Settings > Webhooks** page, or disable webhook integration for connections that don't need real-time sync so those instances poll on an interval instead. Refer to [Webhook options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/#webhook-options) to disable webhook integration.
+
+{{< /admonition >}}
+
 {{< admonition type="note" >}}
 
 If your `[server] root_url` must point at an internal address (for example, when Grafana runs behind a private ingress in a Kubernetes cluster), set the publicly-reachable URL with `[provisioning] public_root_url` instead. This URL is used both to register webhook callbacks with the Git provider and as the base for screenshot images embedded in pull-request comments, which the Git provider's servers fetch from the public internet.
@@ -78,7 +82,9 @@ The per-repository `spec.webhook.baseUrl` field still overrides `public_root_url
 
 ### Expose necessary paths only
 
-If your security setup doesn't permit publicly exposing the Grafana instance, you can either choose to allowlist the GitHub IP addresses, or expose only the necessary paths.
+If your security setup doesn't permit publicly exposing the Grafana instance, you can either choose to allowlist the Git provider's IP addresses, or expose only the necessary paths.
+
+For information about the traffic between Grafana and your Git server, refer to [Network connectivity and IP allowlisting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#network-connectivity-and-ip-allowlisting).
 
 The necessary paths required to be exposed are, in RegExp:
 

@@ -5,13 +5,52 @@
 package v2beta1
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaVariable = resource.NewSimpleSchema("dashboard.grafana.app", "v2beta1", NewVariable(), &VariableList{}, resource.WithKind("Variable"),
-		resource.WithPlural("variables"), resource.WithScope(resource.NamespacedScope))
+		resource.WithPlural("variables"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+			FieldSelector: "spec.spec.name",
+			FieldValueFunc: func(o resource.Object) (string, error) {
+				cast, ok := o.(*Variable)
+				if !ok {
+					return "", errors.New("provided object must be of type *Variable")
+				}
+				if cast.Spec.QueryVariableKind != nil {
+					return string(cast.Spec.QueryVariableKind.Spec.Name), nil
+				}
+				if cast.Spec.TextVariableKind != nil {
+					return string(cast.Spec.TextVariableKind.Spec.Name), nil
+				}
+				if cast.Spec.ConstantVariableKind != nil {
+					return string(cast.Spec.ConstantVariableKind.Spec.Name), nil
+				}
+				if cast.Spec.DatasourceVariableKind != nil {
+					return string(cast.Spec.DatasourceVariableKind.Spec.Name), nil
+				}
+				if cast.Spec.IntervalVariableKind != nil {
+					return string(cast.Spec.IntervalVariableKind.Spec.Name), nil
+				}
+				if cast.Spec.CustomVariableKind != nil {
+					return string(cast.Spec.CustomVariableKind.Spec.Name), nil
+				}
+				if cast.Spec.GroupByVariableKind != nil {
+					return string(cast.Spec.GroupByVariableKind.Spec.Name), nil
+				}
+				if cast.Spec.AdhocVariableKind != nil {
+					return string(cast.Spec.AdhocVariableKind.Spec.Name), nil
+				}
+				if cast.Spec.SwitchVariableKind != nil {
+					return string(cast.Spec.SwitchVariableKind.Spec.Name), nil
+				}
+				return "", nil
+			},
+		},
+		}))
 	kindVariable = resource.Kind{
 		Schema: schemaVariable,
 		Codecs: map[resource.KindEncoding]resource.Codec{

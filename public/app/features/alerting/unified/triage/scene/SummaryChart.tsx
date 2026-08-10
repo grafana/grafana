@@ -2,7 +2,7 @@ import { groupBy, map as lmap } from 'lodash';
 import { type Observable, map } from 'rxjs';
 
 import { type CustomTransformOperator, type DataFrame, FieldType } from '@grafana/data';
-import { SceneObjectBase, type SceneObjectState, VizConfigBuilders } from '@grafana/scenes';
+import { VizConfigBuilders } from '@grafana/scenes';
 import { VizPanel, useDataTransformer, useQueryRunner } from '@grafana/scenes-react';
 import { BarAlignment, GraphDrawStyle, VisibilityMode } from '@grafana/schema';
 import { StackingMode, TooltipDisplayMode } from '@grafana/ui';
@@ -16,7 +16,7 @@ import { cleanAlertStateFilter, useQueryFilter } from './utils';
 /**
  * Viz config for the summary chart - used by the React component
  */
-export const summaryChartVizConfig = VizConfigBuilders.timeseries()
+const summaryChartVizConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
   .setCustomFieldConfig('barWidthFactor', 1)
   .setCustomFieldConfig('barAlignment', BarAlignment.Center)
@@ -105,9 +105,4 @@ export function SummaryChartReact() {
   });
 
   return <VizPanel title="" viz={summaryChartVizConfig} dataProvider={dataProvider} hoverHeader={true} />;
-}
-
-// simple wrapper so we can render the Chart using a Scene parent
-export class SummaryChartScene extends SceneObjectBase<SceneObjectState> {
-  static Component = SummaryChartReact;
 }

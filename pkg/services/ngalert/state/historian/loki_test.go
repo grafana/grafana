@@ -63,6 +63,17 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.Contains(t, entry.Error, "oh no")
 		})
 
+		t.Run("includes error when state is Alerting with exec error", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			states := singleFromNormal(&state.State{State: eval.Alerting, Error: fmt.Errorf("datasource timeout")})
+
+			res := StatesToStream(rule, states, nil, l)
+
+			entry := requireSingleEntry(t, res)
+			require.Contains(t, entry.Error, "datasource timeout")
+		})
+
 		t.Run("maps NoData results", func(t *testing.T) {
 			rule := createTestRule()
 			l := log.NewNopLogger()

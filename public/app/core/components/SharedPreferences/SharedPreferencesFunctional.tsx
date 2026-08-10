@@ -4,7 +4,7 @@ import { memo, useState, useEffect } from 'react';
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -17,7 +17,6 @@ import {
   isWeekStart,
   Label,
   Stack,
-  TextLink,
   TimeZonePicker,
   useStyles2,
   type WeekStart,
@@ -28,7 +27,7 @@ import { changeTheme } from 'app/core/services/theme';
 import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
-import { languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
+import { homeDashboardChanged, languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
 import { useSharedPreferences } from './useSharedPreferences';
 import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState, type Props } from './utils';
 
@@ -91,6 +90,10 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
       });
     }
 
+    // Capture before the mutation: RTK refetches prefs after updatePreferences, so comparing afterwards would race.
+    const previousHomeDashboardUID = prefs?.homeDashboardUID ?? '';
+    const nextHomeDashboardUID = state.homeDashboardUID ?? '';
+
     const prefsData = state;
     // prevent page reload on save failure so the error banner remains visible
     try {
@@ -98,6 +101,13 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
     } catch {
       // error is surfaced via isUpdateError — just prevent the reload below
       return;
+    }
+
+    if (nextHomeDashboardUID !== previousHomeDashboardUID) {
+      homeDashboardChanged({
+        preferenceType: props.preferenceType,
+        action: nextHomeDashboardUID ? 'set' : 'cleared',
+      });
     }
 
     window.location.reload();
@@ -173,20 +183,6 @@ export const SharedPreferencesFunctional = memo((props: Props) => {
             loading={isLoading}
             disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
-            description={
-              config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
-                <Trans i18nKey="shared-preferences.fields.theme-description">
-                  Enjoying the experimental themes? Tell us what you&apos;d like to see{' '}
-                  <TextLink
-                    variant="bodySmall"
-                    external
-                    href="https://docs.google.com/forms/d/e/1FAIpQLSeRKAY8nUMEVIKSYJ99uOO-dimF6Y69_If1Q1jTLOZRWqK1cw/viewform?usp=dialog"
-                  >
-                    here.
-                  </TextLink>
-                </Trans>
-              ) : undefined
-            }
           >
             <Combobox
               options={themeOptions}

@@ -1,4 +1,4 @@
-export type UsePluginComponent<Props extends object = {}> = (componentId: string) => UsePluginComponentResult<Props>;
+type UsePluginComponent<Props extends object = {}> = (componentId: string) => UsePluginComponentResult<Props>;
 
 export type UsePluginComponentResult<Props = {}> = {
   component: React.ComponentType<Props> | undefined | null;

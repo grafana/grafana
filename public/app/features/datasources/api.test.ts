@@ -66,13 +66,14 @@ describe('Datasources / API', () => {
         },
         readOnly: true,
         withCredentials: false,
+        version: 2,
       };
 
       let k8sMetadata: K8sMetadata = {
         name: 'fortytwo',
         namespace: 'default',
         uid: 'fortytwo',
-        resourceVersion: '',
+        resourceVersion: '2',
         generation: 42,
         creationTimestamp: '1234',
         labels: { 'grafana.app/deprecatedInternalID': '42' },
@@ -99,6 +100,30 @@ describe('Datasources / API', () => {
       };
       expect(convertK8sDatasourceSettingsToLegacyDatasourceSettings(dsK8sSettings)).toEqual(dsLegacySettings);
     });
+
+    it('should default jsonData to an empty object when the apiserver omits it', () => {
+      const dsK8sSettings: DataSourceSettingsK8s = {
+        kind: 'DataSource',
+        metadata: {
+          name: 'fortytwo',
+          namespace: 'default',
+          resourceVersion: '2',
+          labels: { 'grafana.app/deprecatedInternalID': '42' },
+        },
+        spec: {
+          access: 'all areas',
+          title: 'slartybartfast',
+          url: 'example.com',
+          basicAuth: false,
+          basicAuthUser: '',
+          user: '',
+          database: '',
+        },
+        apiVersion: 'marvin.datasource.grafana.app/v0alpha1',
+      };
+
+      expect(convertK8sDatasourceSettingsToLegacyDatasourceSettings(dsK8sSettings).jsonData).toEqual({});
+    });
   });
 
   describe('deleteDataSource()', () => {
@@ -118,6 +143,7 @@ describe('Datasources / API', () => {
     it('should convert legacy datasource to k8s datasource', () => {
       let dsLegacySettings: DataSourceSettings = {
         id: 42,
+        version: 2,
         uid: 'fortytwo',
         orgId: 1,
         name: 'slartybartfast',
@@ -139,7 +165,7 @@ describe('Datasources / API', () => {
       let k8sMetadata: K8sMetadata = {
         name: 'fortytwo',
         namespace: 'default',
-        resourceVersion: '',
+        resourceVersion: '2',
         labels: { 'grafana.app/deprecatedInternalID': '42' },
         annotations: {},
       };

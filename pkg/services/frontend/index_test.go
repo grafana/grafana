@@ -68,6 +68,9 @@ func setupTestWebAssets(tb testing.TB) string {
 	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(manifest), 0644)
 	require.NoError(tb, err)
 
+	err = os.WriteFile(filepath.Join(buildDir, "boot.js"), []byte("// test boot stub"), 0644)
+	require.NoError(tb, err)
+
 	return publicDir
 }
 

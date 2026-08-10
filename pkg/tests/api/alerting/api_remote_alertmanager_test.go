@@ -39,7 +39,6 @@ func TestIntegrationRemoteAlertmanagerConfigUpload(t *testing.T) {
 		AppModeProduction:     true,
 		EnableFeatureToggles: []string{
 			"alertmanagerRemotePrimary",
-			"alertingMultiplePolicies",
 			"alertingImportAlertmanagerAPI",
 		},
 		RemoteAlertmanagerURL: mimirEndpoint,
@@ -85,7 +84,6 @@ receivers:
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": "external-system",
-		"X-Grafana-Alerting-Merge-Matchers":    "environment=production,team=backend",
 	}
 
 	amConfig := apimodels.AlertmanagerUserConfig{
@@ -150,7 +148,6 @@ func TestIntegrationRemoteAlertmanagerHistoricalConfigActivation(t *testing.T) {
 		AppModeProduction:     true,
 		EnableFeatureToggles: []string{
 			"alertmanagerRemotePrimary",
-			"alertingMultiplePolicies",
 			"alertingImportAlertmanagerAPI",
 		},
 		RemoteAlertmanagerURL: mimirEndpoint,
@@ -185,7 +182,6 @@ receivers:
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": "historical-system",
-		"X-Grafana-Alerting-Merge-Matchers":    "environment=test,team=platform",
 	}
 
 	amConfig := apimodels.AlertmanagerUserConfig{

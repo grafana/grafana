@@ -1,11 +1,15 @@
 package provisioning
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
@@ -14,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/perftest"
 	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
 	jobsync "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -24,12 +29,14 @@ import (
 )
 
 type driverConfig struct {
-	concurrentDrivers    int
-	maxJobTimeout        time.Duration
+	concurrentDrivers int
+	maxJobTimeout     time.Duration
+	// jobInterval is the jobs informer's resync cadence; the driver uses it as
+	// the post-claim cooldown so failed-run recovery tracks the configured
+	// pickup interval.
 	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
 	maxSyncWorkers       int
-	folderAPIVersion     string
 }
 
 // buildDriver constructs the full ConcurrentJobDriver including all workers.
@@ -42,9 +49,8 @@ func buildDriver(
 	dc driverConfig,
 	jobStore jobs.Store,
 	jobHistoryWriter jobs.HistoryWriter,
-	notifications chan struct{},
 ) (*jobs.ConcurrentJobDriver, error) {
-	workers, metrics, err := buildWorkers(cfg, controllerCfg, registry, tracer, dc.maxSyncWorkers, dc.folderAPIVersion)
+	workers, metrics, err := buildWorkers(cfg, controllerCfg, registry, tracer, dc.maxSyncWorkers)
 	if err != nil {
 		return nil, fmt.Errorf("build workers: %w", err)
 	}
@@ -72,14 +78,14 @@ func buildDriver(
 		jobStore,
 		repoGetter,
 		jobHistoryWriter,
-		notifications,
 		registry,
 		metrics,
+		nats.Enabled(controllerCfg.natsSubscriber),
 		workers...,
 	)
 }
 
-func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer, maxSyncWorkers int, folderAPIVersion string) ([]jobs.Worker, *jobs.JobMetrics, error) {
+func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer, maxSyncWorkers int) ([]jobs.Worker, *jobs.JobMetrics, error) {
 	featureManager, err := featuremgmt.ProvideManagerService(cfg)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to provide feature manager: %w", err)
@@ -87,6 +93,11 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	features := featuremgmt.ProvideToggles(featureManager)
 	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
+	// Evaluated per job via OpenFeature so the flag behaves consistently with the
+	// API server (see performanceEnabled in the provisioning apiserver package).
+	perfTestingEnabled := func(ctx context.Context) bool {
+		return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningPerformance, false, openfeature.TransactionContext(ctx))
+	}
 
 	clients, err := controllerCfg.Clients()
 	if err != nil {
@@ -105,7 +116,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		return nil, nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled, folderAPIVersion)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled)
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	urlProvider, err := controllerCfg.URLProvider()
@@ -115,7 +126,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 
 	metrics := jobs.RegisterJobMetrics(registry)
 
-	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, folderMetadataEnabled)
+	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, folderMetadataEnabled, cfg.ProvisioningSyncResourceTimeout)
 	syncWorker := jobsync.NewSyncWorker(
 		clients,
 		repositoryResources,
@@ -139,7 +150,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		stageIfPossible,
 		metrics,
 		exportEnabled,
-		folderAPIVersion,
 	)
 
 	// Migration export preserves original names so the takeover
@@ -152,7 +162,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		stageIfPossible,
 		metrics,
 		exportEnabled,
-		folderAPIVersion,
 	)
 	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -169,13 +178,16 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
 
 	// Fix Metadata
-	fixMetadataWorker := fixfoldermetadata.NewWorker(resources.FolderGVKForVersion(folderAPIVersion))
+	fixMetadataWorker := fixfoldermetadata.NewWorker(clients)
 
 	// Release Resources (orphan cleanup — removes ownership annotations)
 	releaseResourcesWorker := releaseresourcespkg.NewWorker(resourceLister, clients, 10)
 
 	// Delete Resources (orphan cleanup — deletes managed resources)
 	deleteResourcesWorker := deleteresourcespkg.NewWorker(resourceLister, clients, 10)
+
+	// Synthetic load-testing worker; a no-op unless provisioning.performance is enabled.
+	perfTestWorker := perftest.NewWorker(perfTestingEnabled)
 
 	// PullRequest
 	renderer := pullrequest.NewNoOpRenderer()
@@ -195,6 +207,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		fixMetadataWorker,
 		releaseResourcesWorker,
 		deleteResourcesWorker,
+		perfTestWorker,
 		prWorker,
 	}
 

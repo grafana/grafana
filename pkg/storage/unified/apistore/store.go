@@ -6,7 +6,6 @@
 package apistore
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -40,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -56,24 +56,49 @@ var (
 
 type DefaultPermissionSetter = func(ctx context.Context, key *resourcepb.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
 
+type DeprecatedIDState int
+
+const (
+	// The ID property will always be dropped
+	DeprecatedID_None DeprecatedIDState = iota
+	// The ID will always be added
+	DeprecatedID_Required
+	// OK if the value is sent, but not added automatically
+	DeprecatedID_Optional
+)
+
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	Scheme *runtime.Scheme
 
+	// Required to force unique constraints
+	Index resourcepb.ResourceIndexClient
+
 	// Allow writing objects with metadata.annotations[grafana.app/folder]
 	EnableFolderSupport bool
+
+	// RequireFolder rejects writes that omit the grafana.app/folder annotation
+	// or use the root/general folder. Orthogonal to EnableFolderSupport:
+	//   - EnableFolderSupport=false rejects writes that DO set the folder annotation.
+	//   - RequireFolder=true rejects writes that DO NOT set it (or set it to root).
+	// Only meaningful when EnableFolderSupport=true.
+	RequireFolder bool
 
 	// Some resources should not allow the absolute maximum (254 characters)
 	MaximumNameLength int
 
-	// Add internalID label when missing
-	RequireDeprecatedInternalID bool
+	// How should we handle deprecated internal IDs
+	DeprecatedInternalID DeprecatedIDState
 
 	// Process inline secure values
 	SecureValues secrets.InlineSecureValueSupport
 
 	// Temporary fix to support adding default permissions AfterCreate
 	Permissions DefaultPermissionSetter
+
+	// VersionPolicy rejects a write whose storage version outranks the group's maxAllowedVersion cap.
+	// Shared across resources (set via the RESTOptionsGetter); nil disables enforcement.
+	VersionPolicy *versionpolicy.VersionPolicyRegistry
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
@@ -171,7 +196,7 @@ func NewStorage(
 			"resource", config.GroupResource.String())
 	}
 
-	if opts.RequireDeprecatedInternalID {
+	if opts.DeprecatedInternalID == DeprecatedID_Required {
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		if err != nil {
 			return nil, nil, err
@@ -241,27 +266,56 @@ func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.
 	return obj, err
 }
 
+// cleanupSecretsAfterFailedPreparation deletes inline secrets a failed preparation created, but only
+// when cleanupSafe reports the write definitely did not persist; otherwise they may be referenced.
+func (s *Storage) cleanupSecretsAfterFailedPreparation(ctx context.Context, v objectForStorage, cleanupSafe bool, err error) error {
+	if err != nil && cleanupSafe {
+		return v.finish(ctx, err, s.opts.SecureValues)
+	}
+	return err
+}
+
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	ctx, span := tracer.Start(ctx, "apistore.Storage.Create")
 	defer span.End()
-	v, err := s.prepareObjectForStorage(ctx, obj)
-	if err != nil {
-		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
-	}
-	req := &resourcepb.CreateRequest{
-		Value: v.raw.Bytes(),
-	}
-	req.Key, err = s.getKey(key)
+
+	rkey, err := s.getKey(key)
 	if err != nil {
 		return err
 	}
 
-	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
+	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return err
+	}
+
+	// Make sure we are looking at the correct namespace
+	if meta.GetNamespace() != rkey.Namespace {
+		if meta.GetNamespace() == "" {
+			meta.SetNamespace(rkey.Namespace)
+		} else {
+			return apierrors.NewBadRequest("namespace mismatch")
+		}
+	}
+
+	v, err := s.prepareObjectForStorage(ctx, obj)
+	if err != nil {
+		// Re-route managed resources; clean up any secrets preparation created if the write failed.
+		cleanupSafe, err := s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
+		return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
+	}
+	req := &resourcepb.CreateRequest{
+		Value: v.raw.Bytes(),
+		Key:   rkey,
+	}
+
+	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
+	if err != nil {
+		// Nothing has been written yet, so clean up any inline secrets preparation created.
+		return v.finish(ctx, err, s.opts.SecureValues)
 	}
 
 	rsp, err := s.store.Create(ctx, req)
@@ -280,7 +334,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
-	meta, err := utils.MetaAccessor(out)
+	meta, err = utils.MetaAccessor(out)
 	if err != nil {
 		return err
 	}
@@ -319,58 +373,71 @@ func (s *Storage) Delete(
 		return errors.New("missing auth info")
 	}
 
-	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
-		return err
-	}
-
+	// The delete is conditional on the resource version read here, so a
+	// concurrent write (e.g. a controller status update) between the read and
+	// the delete produces a conflict. Callers of an unconditional delete never
+	// supplied that resource version, so re-read and retry rather than
+	// surfacing the conflict; explicit preconditions are re-checked against
+	// the fresh read each attempt. This mirrors the upstream etcd3
+	// conditionalDelete retry loop.
 	k, err := s.getKey(key)
 	if err != nil {
-		return err
+		return storage.NewKeyNotFoundError(key, 0)
 	}
-	cmd := &resourcepb.DeleteRequest{Key: k}
 
-	if preconditions != nil {
-		if err := preconditions.Check(key, out); err != nil {
+	for attempt := 1; attempt <= MaxUpdateAttempts; attempt++ {
+		if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 			return err
 		}
-		if preconditions.UID != nil {
-			cmd.Uid = string(*preconditions.UID)
-		}
-	}
 
-	if validateDeletion != nil {
-		if err := validateDeletion(ctx, out); err != nil {
+		cmd := &resourcepb.DeleteRequest{Key: k}
+
+		if preconditions != nil {
+			if err := preconditions.Check(key, out); err != nil {
+				return err
+			}
+			if preconditions.UID != nil {
+				cmd.Uid = string(*preconditions.UID)
+			}
+		}
+
+		if validateDeletion != nil {
+			if err := validateDeletion(ctx, out); err != nil {
+				return err
+			}
+		}
+
+		meta, err := utils.MetaAccessor(out)
+		if err != nil {
+			return fmt.Errorf("unable to read object %w", err)
+		}
+		if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
+			_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 			return err
 		}
+
+		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
+		if err != nil {
+			return resource.GetError(resource.AsErrorResult(err))
+		}
+		rsp, err := s.store.Delete(ctx, cmd)
+		if err != nil {
+			return resource.GetError(resource.AsErrorResult(err))
+		}
+		if rsp.Error != nil {
+			if rsp.Error.Code == http.StatusConflict && attempt < MaxUpdateAttempts {
+				continue
+			}
+			return resource.GetError(rsp.Error)
+		}
+
+		if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
+			logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
+		}
+
+		return s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion))
 	}
 
-	meta, err := utils.MetaAccessor(out)
-	if err != nil {
-		return fmt.Errorf("unable to read object %w", err)
-	}
-	if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
-		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
-	}
-
-	cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
-	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
-	}
-	rsp, err := s.store.Delete(ctx, cmd)
-	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
-	}
-	if rsp.Error != nil {
-		return resource.GetError(rsp.Error)
-	}
-
-	if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
-		logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
-	}
-
-	if err := s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion)); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -610,11 +677,10 @@ func (s *Storage) GuaranteedUpdate(
 	ctx, span := tracer.Start(ctx, "apistore.Storage.GuaranteedUpdate")
 	defer span.End()
 	var (
-		res           storage.ResponseMeta
-		updatedObj    runtime.Object
-		existingObj   runtime.Object
-		existingBytes []byte
-		err           error
+		res         storage.ResponseMeta
+		updatedObj  runtime.Object
+		existingObj runtime.Object
+		err         error
 	)
 	req := &resourcepb.UpdateRequest{}
 	req.Key, err = s.getKey(key)
@@ -670,10 +736,20 @@ func (s *Storage) GuaranteedUpdate(
 				}
 				continue
 			}
+
+			// A write that carries a resourceVersion is a conditional (optimistic
+			// concurrency) update, not a create. Reaching here means the object was
+			// deleted between the caller's read and this write, so the precondition can
+			// never hold. Report a Conflict so the caller re-reads and retries, rather
+			// than resurrecting the object or failing downstream with the opaque
+			// "resourceVersion should not be set on objects to be created" create error.
+			// Unconditional writes (no resourceVersion) still upsert as before.
+			if m, merr := utils.MetaAccessor(updatedObj); merr == nil && m.GetResourceVersion() != "" {
+				return apierrors.NewConflict(s.gr, req.Key.Name, errors.New("the object was deleted"))
+			}
 			return s.Create(ctx, key, updatedObj, destination, 0)
 		}
 
-		existingBytes = readResponse.Value
 		existingObj, err = s.convertToObject(ctx, readResponse.Value, s.newFunc())
 		if err != nil {
 			return err
@@ -703,37 +779,38 @@ func (s *Storage) GuaranteedUpdate(
 
 		v, err := s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 		if err != nil {
-			return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
+			// Re-route managed resources; clean up any secrets preparation created if the write failed.
+			cleanupSafe, err := s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
+			return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 		}
 
-		// Only update (for real) if the bytes have changed
-		var rv uint64
 		req.Value = v.raw.Bytes()
-		if !bytes.Equal(req.Value, existingBytes) {
-			req.ResourceVersion = readResponse.ResourceVersion
-			updateResponse, err := s.store.Update(ctx, req)
-			if err != nil {
-				err = resource.GetError(resource.AsErrorResult(err))
-			} else if updateResponse.Error != nil {
-				if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
-					continue // try the read again
-				}
-				err = resource.GetError(updateResponse.Error)
+		req.ResourceVersion = readResponse.ResourceVersion
+		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
+		if err != nil {
+			err = resource.GetError(resource.AsErrorResult(err))
+		} else if updateResponse.Error != nil {
+			if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
+				// Delete the secure values this attempt created; the next attempt recreates them.
+				// finish only echoes the conflict back and logs any cleanup failure itself, so we
+				// discard its return and retry instead of surfacing it.
+				_ = v.finish(ctx, resource.GetError(updateResponse.Error), s.opts.SecureValues)
+				continue // try the read again
 			}
+			err = resource.GetError(updateResponse.Error)
+		}
 
-			// Cleanup secure values
-			if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
-				return err
-			}
-
-			rv = uint64(updateResponse.ResourceVersion)
+		// Cleanup secure values
+		if err = v.finish(ctx, err, s.opts.SecureValues); err != nil {
+			return err
 		}
 
 		if _, err := s.convertToObject(ctx, req.Value, destination); err != nil {
 			return err
 		}
 
-		if rv > 0 {
+		if updateResponse.ResourceVersion > 0 {
+			rv := uint64(updateResponse.ResourceVersion)
 			if err := s.versioner.UpdateObject(destination, rv); err != nil {
 				return err
 			}

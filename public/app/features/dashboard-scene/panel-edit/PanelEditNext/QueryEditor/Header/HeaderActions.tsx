@@ -4,6 +4,8 @@ import { CoreApp } from '@grafana/data';
 import { Stack } from '@grafana/ui';
 
 import { Actions } from '../../Actions';
+import { ConfirmationStyle } from '../../DeleteConfirm';
+import { queryToActionItem, transformationToActionItem } from '../../actionItem';
 import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
@@ -15,7 +17,7 @@ import { TransformationActionButtons } from './TransformationActionButtons';
 import { WarningBadges } from './WarningBadges';
 
 interface HeaderActionsProps {
-  containerRef?: RefObject<HTMLDivElement>;
+  containerRef?: RefObject<HTMLDivElement | null>;
 }
 
 /**
@@ -48,16 +50,17 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
     }
   }, [selectedQuery, selectedTransformation, deleteQuery, deleteTransformation]);
 
-  const itemName =
-    selectedQuery?.refId ?? selectedTransformation?.registryItem?.name ?? selectedTransformation?.transformId ?? '';
-
-  const item = {
-    name: itemName,
-    type: cardType,
-    isHidden: selectedQuery?.hide || selectedTransformation?.transformConfig?.disabled || false,
-  };
-
   if (cardType === QueryEditorType.Alert) {
+    return null;
+  }
+
+  const item = selectedQuery
+    ? queryToActionItem(selectedQuery, { type: cardType })
+    : selectedTransformation
+      ? transformationToActionItem(selectedTransformation)
+      : null;
+
+  if (!item) {
     return null;
   }
 
@@ -68,6 +71,7 @@ export function HeaderActions({ containerRef }: HeaderActionsProps) {
       <PluginActions app={CoreApp.PanelEditor} />
       <Actions
         contentHeader={true}
+        confirmStyle={ConfirmationStyle.full}
         item={item}
         onDelete={onDelete}
         onToggleHide={onToggleHide}

@@ -1,9 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -14,13 +16,14 @@ import {
   TextBoxVariable,
   VizPanel,
 } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
-import { buildPanelEditScene, type PanelEditor } from '../panel-edit/PanelEditor';
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
@@ -64,7 +67,11 @@ function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
   if (kioskMode !== undefined) {
     context.chrome.update({ kioskMode: KioskMode.Full });
   }
-  return render(<GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>);
+  return render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>
+    </OpenFeatureProvider>
+  );
 }
 
 describe('DashboardControls', () => {
@@ -72,8 +79,12 @@ describe('DashboardControls', () => {
     setTestFlags({});
   });
 
-  afterEach(() => {
-    setTestFlags({});
+  afterEach(async () => {
+    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
+    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   describe('Given a standard scene', () => {
@@ -211,20 +222,21 @@ describe('DashboardControls', () => {
     });
 
     it('should render Table view toggle in panel edit mode even when all other controls are hidden', () => {
-      const controls = new DashboardControls({
-        hideTimeControls: true,
-        hideVariableControls: true,
-        hideLinksControls: true,
-        hideDashboardControls: true,
-      });
+      const panel = new VizPanel({ key: 'table-view-panel', pluginId: 'text' });
+      new DashboardGridItem({ body: panel });
 
       const dashboard = new DashboardScene({
         uid: 'test-dashboard',
-        controls,
-        editPanel: { state: { useQueryExperienceNext: false } } as unknown as PanelEditor,
+        controls: new DashboardControls({
+          hideTimeControls: true,
+          hideVariableControls: true,
+          hideLinksControls: true,
+          hideDashboardControls: true,
+        }),
       });
-
+      dashboard.setState({ editPanel: buildPanelEditScene(panel) });
       dashboard.activate();
+      const controls = dashboard.state.controls as DashboardControls;
 
       renderInGrafanaContext(<controls.Component model={controls} />);
 
@@ -293,35 +305,25 @@ describe('DashboardControls', () => {
     it.each([
       {
         title: 'should include only viewed panel ancestor section variables in panel view mode',
-        featureFlags: { dashboardSectionVariables: true },
         sceneBuilder: buildPanelViewVariablesScene,
         expectedVisible: ['ancestorVar', 'dashboardVar', 'dupVar'],
         expectedHidden: ['otherSectionVar'],
       },
       {
         title: 'should include only edited panel ancestor section variables in panel edit mode',
-        featureFlags: { dashboardSectionVariables: true },
         sceneBuilder: buildPanelEditVariablesScene,
         expectedVisible: ['ancestorVar', 'dashboardVar', 'dupVar'],
         expectedHidden: ['otherSectionVar'],
       },
       {
-        title: 'should not include section variables in panel edit mode when section feature is disabled',
-        sceneBuilder: buildPanelEditVariablesScene,
-        expectedVisible: ['dashboardVar'],
-        expectedHidden: ['ancestorVar', 'otherSectionVar'],
-      },
-      {
         title: 'should hide repeat local section variables in panel edit mode',
-        featureFlags: { dashboardSectionVariables: true },
         sceneBuilder: buildPanelEditSceneWithRepeatVariable,
         expectedVisible: ['repeatSource'],
         expectedUnique: ['repeatSource'],
       },
-    ])('$title', async ({ featureFlags, sceneBuilder, expectedVisible, expectedHidden, expectedUnique }) => {
+    ])('$title', async ({ sceneBuilder, expectedVisible, expectedHidden, expectedUnique }) => {
       await assertPanelEditVariableVisibility({
         sceneBuilder,
-        featureFlags,
         expectedVisible,
         expectedHidden,
         expectedUnique,
@@ -329,8 +331,6 @@ describe('DashboardControls', () => {
     });
 
     it('still mounts ScopesVariable.Component when panel edit variables override is active', async () => {
-      setTestFlags({ dashboardSectionVariables: true });
-
       const scopeVariable = new ScopesVariable({ enable: true });
 
       jest
@@ -605,6 +605,275 @@ describe('DashboardControls', () => {
       expect(screen.queryByText('Save as copy')).not.toBeInTheDocument();
     });
   });
+
+  describe('Panel edit buttons', () => {
+    const originalFeatureToggles = { ...config.featureToggles };
+
+    beforeEach(() => {
+      // Default most tests to new layouts on; the flag-off case overrides this explicitly.
+      config.featureToggles.dashboardNewLayouts = true;
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
+    });
+
+    afterEach(() => {
+      // Restore to a fresh copy so beforeEach mutations don't pollute the original snapshot.
+      config.featureToggles = { ...originalFeatureToggles };
+      jest.clearAllMocks();
+    });
+
+    it('renders Discard and Back buttons when editing a regular panel', () => {
+      const { controls } = buildPanelEditControlsScene({
+        uid: 'panel-edit-buttons',
+        editedPanelKey: 'edited-panel',
+        rows: [new RowItem({ title: 'Row' })],
+        dashboardVariables: [],
+      });
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+      ).toBeInTheDocument();
+    });
+
+    it('disables the Discard button until the edited panel is dirty', async () => {
+      const { controls, editPanel } = buildPanelEditControlsScene({
+        uid: 'panel-edit-dirty',
+        editedPanelKey: 'edited-panel',
+        rows: [new RowItem({ title: 'Row' })],
+        dashboardVariables: [],
+      });
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      // @grafana/ui Button signals the disabled state via aria-disabled rather than the native attribute.
+      expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton)).toHaveAttribute(
+        'aria-disabled',
+        'true'
+      );
+
+      await act(async () => {
+        editPanel.setState({ isDirty: true });
+      });
+
+      expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton)).toHaveAttribute(
+        'aria-disabled',
+        'false'
+      );
+    });
+
+    it('renders library panel actions instead of Discard/Back when editing a library panel', () => {
+      const { controls } = buildLibraryPanelEditControlsScene();
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton)
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+      ).not.toBeInTheDocument();
+    });
+
+    it('discards the panel changes via PanelEditor.onDiscard when Discard is clicked', async () => {
+      const { controls, editPanel } = buildPanelEditControlsScene({
+        uid: 'panel-edit-discard',
+        editedPanelKey: 'edited-panel',
+        rows: [new RowItem({ title: 'Row' })],
+        dashboardVariables: [],
+      });
+      const discardSpy = jest.spyOn(editPanel, 'onDiscard').mockImplementation(() => {});
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      await act(async () => {
+        editPanel.setState({ isDirty: true });
+      });
+      await act(async () => {
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton).click();
+      });
+
+      expect(discardSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('uses the shortened "Discard" label with the full tooltip', () => {
+      const { controls } = buildPanelEditControlsScene({
+        uid: 'panel-edit-discard-label',
+        editedPanelKey: 'edited-panel',
+        rows: [new RowItem({ title: 'Row' })],
+        dashboardVariables: [],
+      });
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      const discardButton = screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton);
+      expect(discardButton).toHaveTextContent('Discard');
+      expect(discardButton).not.toHaveTextContent('Discard panel');
+    });
+
+    it('navigates back to the dashboard when Back is clicked', async () => {
+      const partialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});
+      const { controls } = buildPanelEditControlsScene({
+        uid: 'panel-edit-back',
+        editedPanelKey: 'edited-panel',
+        rows: [new RowItem({ title: 'Row' })],
+        dashboardVariables: [],
+      });
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      await act(async () => {
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton).click();
+      });
+
+      expect(partialSpy).toHaveBeenCalledWith({ viewPanel: null, editPanel: null });
+    });
+
+    it('wires the library panel Unlink and Save buttons to their handlers', async () => {
+      const { dashboard, controls } = buildLibraryPanelEditControlsScene();
+      const editPanel = dashboard.state.editPanel!;
+      const unlinkSpy = jest.spyOn(editPanel, 'onUnlinkLibraryPanel').mockImplementation(() => {});
+      const saveSpy = jest.spyOn(editPanel, 'onSaveLibraryPanel').mockImplementation(() => {});
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      await act(async () => {
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton).click();
+      });
+      await act(async () => {
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton).click();
+      });
+
+      expect(unlinkSpy).toHaveBeenCalledTimes(1);
+      expect(saveSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('shortens the library panel action labels and keeps the full text in tooltips', async () => {
+      const user = userEvent.setup();
+      const { controls } = buildLibraryPanelEditControlsScene();
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      const discardButton = screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton);
+      const unlinkButton = screen.getByTestId(selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton);
+      const saveButton = screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton);
+
+      // Button faces are the shortened single-verb labels, not the full phrases.
+      expect(discardButton).toHaveTextContent('Discard');
+      expect(discardButton).not.toHaveTextContent('Discard library panel changes');
+      expect(unlinkButton).toHaveTextContent('Unlink');
+      expect(unlinkButton).not.toHaveTextContent('Unlink library panel');
+      expect(saveButton).toHaveTextContent('Save');
+      expect(saveButton).not.toHaveTextContent('Save library panel');
+
+      // The full description moves into the tooltip so the meaning is still discoverable on hover.
+      await user.hover(saveButton);
+      expect(await screen.findByRole('tooltip', { name: 'Save library panel' })).toBeInTheDocument();
+    });
+
+    it('swaps library actions for the regular Discard/Back set when the panel is unlinked', async () => {
+      const { dashboard, controls } = buildLibraryPanelEditControlsScene();
+      const panel = dashboard.state.editPanel!.state.panelRef.resolve();
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton)
+      ).toBeInTheDocument();
+
+      // Unlinking removes the library behavior from the panel.
+      await act(async () => {
+        panel.setState({ $behaviors: [] });
+      });
+
+      expect(
+        screen.queryByTestId(selectors.components.NavToolbar.editDashboard.unlinkLibraryPanelButton)
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+      ).toBeInTheDocument();
+    });
+
+    it('renders the panel edit actions even when new layouts is off', () => {
+      config.featureToggles.dashboardNewLayouts = false;
+      const { controls } = buildPanelEditControlsScene({
+        uid: 'panel-edit-flag-off',
+        editedPanelKey: 'edited-panel',
+        rows: [new RowItem({ title: 'Row' })],
+        dashboardVariables: [],
+      });
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+      ).toBeInTheDocument();
+    });
+
+    it('renders the panel edit actions even when the dashboard contributes no other controls', () => {
+      const panel = new VizPanel({ key: 'panel-no-controls', pluginId: 'text' });
+      new DashboardGridItem({ body: panel });
+      const dashboard = new DashboardScene({
+        uid: 'no-controls-panel-edit',
+        // hideTimeControls + no variables/links/dashboard-controls makes hasControls() return false.
+        controls: new DashboardControls({ hideTimeControls: true }),
+      });
+      dashboard.setState({ editPanel: buildPanelEditScene(panel) });
+      dashboard.activate();
+      const controls = dashboard.state.controls as DashboardControls;
+
+      expect(controls.hasControls()).toBe(false);
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.discardChangesButton)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+      ).toBeInTheDocument();
+    });
+
+    it('hides the dashboard save button while editing a library panel', () => {
+      jest.mocked(contextSrv).hasEditPermissionInFolders = false;
+      const { dashboard, controls } = buildLibraryPanelEditControlsScene();
+      dashboard.setState({ isEditing: true, meta: { canSave: true } });
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveLibraryPanelButton)
+      ).toBeInTheDocument();
+    });
+
+    it('shows the dashboard save button while editing a regular panel', () => {
+      jest.mocked(contextSrv).hasEditPermissionInFolders = false;
+      const { dashboard, controls } = buildPanelEditControlsScene({
+        uid: 'panel-edit-save',
+        editedPanelKey: 'edited-panel',
+        rows: [new RowItem({ title: 'Row' })],
+        dashboardVariables: [],
+      });
+      dashboard.setState({ isEditing: true, meta: { canSave: true } });
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).toBeInTheDocument();
+    });
+  });
 });
 
 function buildTestSceneWithEditable(options: {
@@ -701,18 +970,15 @@ function buildTestScene(state?: Partial<DashboardControlsState>): DashboardContr
 
 async function assertPanelEditVariableVisibility({
   sceneBuilder,
-  featureFlags,
   expectedVisible = [],
   expectedHidden = [],
   expectedUnique = [],
 }: {
   sceneBuilder: () => { controls: DashboardControls };
-  featureFlags?: Record<string, boolean>;
   expectedVisible?: string[];
   expectedHidden?: string[];
   expectedUnique?: string[];
 }) {
-  setTestFlags(featureFlags ?? {});
   const { controls } = sceneBuilder();
   renderInGrafanaContext(<controls.Component model={controls} />);
 
@@ -844,8 +1110,34 @@ function buildPanelEditControlsScene({
     controls: new DashboardControls({}),
   });
 
-  dashboard.setState({ editPanel: buildPanelEditScene(editedPanel) });
+  const editPanel = buildPanelEditScene(editedPanel);
+  dashboard.setState({ editPanel });
   dashboard.activate();
 
-  return { dashboard, controls: dashboard.state.controls as DashboardControls, editedPanel };
+  return { dashboard, controls: dashboard.state.controls as DashboardControls, editedPanel, editPanel };
+}
+
+function buildLibraryPanelEditControlsScene() {
+  const panel = new VizPanel({ key: 'lib-panel-1', pluginId: 'text' });
+  panel.setState({
+    $behaviors: [
+      new LibraryPanelBehavior({
+        isLoaded: true,
+        uid: 'uid',
+        name: 'libraryPanelName',
+        _loadedPanel: { uid: 'uid', name: 'libraryPanelName', model: { type: 'text' }, type: 'panel', version: 1 },
+      }),
+    ],
+  });
+  new DashboardGridItem({ body: panel });
+
+  const dashboard = new DashboardScene({
+    uid: 'library-panel-edit',
+    controls: new DashboardControls({}),
+  });
+
+  dashboard.setState({ editPanel: buildPanelEditScene(panel) });
+  dashboard.activate();
+
+  return { dashboard, controls: dashboard.state.controls as DashboardControls };
 }

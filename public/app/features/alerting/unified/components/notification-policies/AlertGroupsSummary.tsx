@@ -20,7 +20,11 @@ export const AlertGroupsSummary = ({ active = 0, suppressed = 0, unprocessed = 0
       <Badge
         color="red"
         key="firing"
-        text={t('alerting.alert-groups-summary.text-firing', '{{count}} firing', { count: active })}
+        text={t('alerting.alert-groups-summary.text-firing', '', {
+          count: active,
+          defaultValue_one: '{{count}} firing',
+          defaultValue_other: '{{count}} firing',
+        })}
       />
     );
   }
@@ -30,7 +34,11 @@ export const AlertGroupsSummary = ({ active = 0, suppressed = 0, unprocessed = 0
       <Badge
         color="blue"
         key="suppressed"
-        text={t('alerting.alert-groups-summary.text-suppressed', '{{count}} suppressed', { count: suppressed })}
+        text={t('alerting.alert-groups-summary.text-suppressed', '', {
+          count: suppressed,
+          defaultValue_one: '{{count}} suppressed',
+          defaultValue_other: '{{count}} suppressed',
+        })}
       />
     );
   }
@@ -40,7 +48,11 @@ export const AlertGroupsSummary = ({ active = 0, suppressed = 0, unprocessed = 0
       <Badge
         color="orange"
         key="unprocessed"
-        text={t('alerting.alert-groups-summary.text-unprocessed', '{{count}} unprocessed', { count: unprocessed })}
+        text={t('alerting.alert-groups-summary.text-unprocessed', '', {
+          count: unprocessed,
+          defaultValue_one: '{{count}} unprocessed',
+          defaultValue_other: '{{count}} unprocessed',
+        })}
       />
     );
   }

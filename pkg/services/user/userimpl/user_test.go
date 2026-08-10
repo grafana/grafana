@@ -6,17 +6,26 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	claims "github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -270,6 +279,232 @@ func TestMetrics(t *testing.T) {
 	})
 }
 
+func TestService_NoLegacyFallback(t *testing.T) {
+	enableK8sUsersRedirect(t)
+
+	k8sErr := errors.New("k8s boom")
+	legacyUser := &user.User{ID: 1, Login: "from-legacy"}
+
+	t.Run("GetByID", func(t *testing.T) {
+		t.Run("k8s hit is returned without consulting legacy", func(t *testing.T) {
+			s := newWrapperServiceForTest(
+				&usertest.FakeUserService{ExpectedUser: &user.User{ID: 2, Login: "from-k8s"}},
+				&usertest.FakeUserService{ExpectedUser: legacyUser},
+			)
+			got, err := s.GetByID(context.Background(), &user.GetUserByIDQuery{ID: 5})
+			require.NoError(t, err)
+			require.Equal(t, "from-k8s", got.Login)
+		})
+
+		t.Run("k8s error is surfaced, no fallback to legacy", func(t *testing.T) {
+			s := newWrapperServiceForTest(
+				&usertest.FakeUserService{ExpectedError: k8sErr},
+				&usertest.FakeUserService{ExpectedUser: legacyUser},
+			)
+			got, err := s.GetByID(context.Background(), &user.GetUserByIDQuery{ID: 5})
+			require.ErrorIs(t, err, k8sErr)
+			require.Nil(t, got)
+		})
+	})
+
+	t.Run("GetByUID", func(t *testing.T) {
+		t.Run("k8s hit is returned without consulting legacy", func(t *testing.T) {
+			s := newWrapperServiceForTest(
+				&usertest.FakeUserService{ExpectedUser: &user.User{ID: 2, Login: "from-k8s"}},
+				&usertest.FakeUserService{ExpectedUser: legacyUser},
+			)
+			got, err := s.GetByUID(context.Background(), &user.GetUserByUIDQuery{UID: "uid"})
+			require.NoError(t, err)
+			require.Equal(t, "from-k8s", got.Login)
+		})
+
+		t.Run("k8s error is surfaced, no fallback to legacy", func(t *testing.T) {
+			s := newWrapperServiceForTest(
+				&usertest.FakeUserService{ExpectedError: k8sErr},
+				&usertest.FakeUserService{ExpectedUser: legacyUser},
+			)
+			got, err := s.GetByUID(context.Background(), &user.GetUserByUIDQuery{UID: "uid"})
+			require.ErrorIs(t, err, k8sErr)
+			require.Nil(t, got)
+		})
+	})
+}
+
+func TestService_GetSignedInUser_FallbackOnlyOnNotFound(t *testing.T) {
+	enableK8sUsersRedirect(t)
+
+	legacyUser := &user.SignedInUser{UserID: 1, Login: "from-legacy"}
+
+	t.Run("k8s hit is returned without falling back to legacy", func(t *testing.T) {
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{UserID: 2, Login: "from-k8s"}},
+			&usertest.FakeUserService{ExpectedSignedInUser: legacyUser},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.NoError(t, err)
+		require.Equal(t, "from-k8s", got.Login)
+	})
+
+	t.Run("k8s not-found falls back to legacy", func(t *testing.T) {
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: user.ErrUserNotFound},
+			&usertest.FakeUserService{ExpectedSignedInUser: legacyUser},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.NoError(t, err)
+		require.Equal(t, "from-legacy", got.Login)
+	})
+
+	t.Run("k8s forbidden is surfaced, no fallback to legacy", func(t *testing.T) {
+		forbidden := apierrors.NewForbidden(schema.GroupResource{Group: "iam.grafana.app", Resource: "users"}, "u", errors.New("nope"))
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: forbidden},
+			&usertest.FakeUserService{ExpectedSignedInUser: legacyUser},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.True(t, apierrors.IsForbidden(err))
+		require.Nil(t, got)
+	})
+
+	t.Run("k8s generic error is surfaced, no fallback to legacy", func(t *testing.T) {
+		boom := errors.New("k8s boom")
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: boom},
+			&usertest.FakeUserService{ExpectedSignedInUser: legacyUser},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.ErrorIs(t, err, boom)
+		require.Nil(t, got)
+	})
+
+	t.Run("k8s lookup runs as the service identity, even for an end-user caller", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		caller := &identity.StaticRequester{Type: claims.TypeUser, UserID: 5, OrgID: 2}
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetSignedInUser(ctx, &user.GetSignedInUserQuery{OrgID: 2, UserID: 5})
+		require.NoError(t, err)
+		require.True(t, identity.IsServiceIdentity(k8s.gotCtx), "GetSignedInUser must resolve users as the service identity")
+	})
+}
+
+// ctxCapturingUserService records the context passed to GetProfile so tests can
+// assert which identity the k8s lookup runs as.
+type ctxCapturingUserService struct {
+	usertest.FakeUserService
+	gotCtx context.Context
+}
+
+func (f *ctxCapturingUserService) GetProfile(ctx context.Context, _ *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
+	f.gotCtx = ctx
+	return &user.UserProfileDTO{}, nil
+}
+
+func (f *ctxCapturingUserService) GetByID(ctx context.Context, _ *user.GetUserByIDQuery) (*user.User, error) {
+	f.gotCtx = ctx
+	return &user.User{}, nil
+}
+
+func (f *ctxCapturingUserService) GetSignedInUser(ctx context.Context, _ *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	f.gotCtx = ctx
+	return &user.SignedInUser{}, nil
+}
+
+func TestService_GetProfile_SelfReadElevatesToServiceIdentity(t *testing.T) {
+	enableK8sUsersRedirect(t)
+
+	const selfUID = "u-self"
+	const selfID int64 = 5
+
+	caller := &identity.StaticRequester{Type: claims.TypeUser, UserUID: selfUID, UserID: selfID, OrgID: 2}
+
+	t.Run("reading own profile runs as the service identity", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetProfile(ctx, &user.GetUserProfileQuery{UserID: selfID, UID: selfUID})
+		require.NoError(t, err)
+		require.True(t, identity.IsServiceIdentity(k8s.gotCtx), "self-read should be elevated to the service identity")
+	})
+
+	t.Run("reading own profile by internal ID only is elevated", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetProfile(ctx, &user.GetUserProfileQuery{UserID: selfID})
+		require.NoError(t, err)
+		require.True(t, identity.IsServiceIdentity(k8s.gotCtx))
+	})
+
+	t.Run("reading another user's profile keeps the caller identity", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetProfile(ctx, &user.GetUserProfileQuery{UserID: 99, UID: "u-other"})
+		require.NoError(t, err)
+		require.False(t, identity.IsServiceIdentity(k8s.gotCtx), "reading another user must not be elevated")
+		got, err := identity.GetRequester(k8s.gotCtx)
+		require.NoError(t, err)
+		require.Equal(t, selfUID, got.GetRawIdentifier())
+	})
+}
+
+func TestService_GetByID_SelfReadElevatesToServiceIdentity(t *testing.T) {
+	enableK8sUsersRedirect(t)
+
+	const selfID int64 = 5
+	caller := &identity.StaticRequester{Type: claims.TypeUser, UserUID: "u-self", UserID: selfID, OrgID: 2}
+
+	t.Run("reading own user runs as the service identity", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetByID(ctx, &user.GetUserByIDQuery{ID: selfID})
+		require.NoError(t, err)
+		require.True(t, identity.IsServiceIdentity(k8s.gotCtx))
+	})
+
+	t.Run("reading another user keeps the caller identity", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetByID(ctx, &user.GetUserByIDQuery{ID: 99})
+		require.NoError(t, err)
+		require.False(t, identity.IsServiceIdentity(k8s.gotCtx))
+	})
+}
+
+func newWrapperServiceForTest(k8sService, legacyService user.Service) *Service {
+	return &Service{
+		legacyService:     legacyService,
+		k8sService:        k8sService,
+		openFeatureClient: openfeature.NewDefaultClient(),
+		logger:            log.New("test"),
+		tracer:            tracing.InitializeTracerForTest(),
+		cfg:               setting.NewCfg(),
+	}
+}
+
+func enableK8sUsersRedirect(t *testing.T) {
+	t.Helper()
+	flag, err := setting.ParseFlag(featuremgmt.FlagKubernetesUsersRedirect, "true")
+	require.NoError(t, err)
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesUsersRedirect: flag,
+	})
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(nil))
+	})
+}
+
 func TestIntegrationCreateUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -281,6 +516,62 @@ func TestIntegrationCreateUser(t *testing.T) {
 		logger:  log.NewNopLogger(),
 		cfg:     cfg,
 	}
+
+	t.Run("SkipOrgSetup=true: InsertOrgUser is not called, DefaultOrgRole is ignored", func(t *testing.T) {
+		var inserted *org.OrgUser
+		userService := LegacyService{
+			store: userStore,
+			orgService: &orgtest.FakeOrgService{
+				InsertOrgUserFn: func(_ context.Context, orgUser *org.OrgUser) (int64, error) {
+					inserted = orgUser
+					return 1, nil
+				},
+			},
+			cacheService: localcache.ProvideService(),
+			teamService:  &teamtest.FakeService{},
+			tracer:       tracing.InitializeTracerForTest(),
+			cfg:          setting.NewCfg(),
+			db:           ss,
+		}
+		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
+			Email:          "skip@example.com",
+			Login:          "skipuser",
+			Name:           "skipuser",
+			DefaultOrgRole: "Editor",
+			SkipOrgSetup:   true,
+		})
+		require.NoError(t, err)
+		require.Nil(t, inserted, "InsertOrgUser must not be called when SkipOrgSetup=true")
+	})
+
+	t.Run("SkipOrgSetup=false, empty DefaultOrgRole: org_user inserted with AutoAssignOrgRole", func(t *testing.T) {
+		var inserted *org.OrgUser
+		cfg := setting.NewCfg()
+		cfg.AutoAssignOrg = true
+		cfg.AutoAssignOrgRole = string(org.RoleViewer)
+		userService := LegacyService{
+			store: userStore,
+			orgService: &orgtest.FakeOrgService{
+				InsertOrgUserFn: func(_ context.Context, orgUser *org.OrgUser) (int64, error) {
+					inserted = orgUser
+					return 1, nil
+				},
+			},
+			cacheService: localcache.ProvideService(),
+			teamService:  &teamtest.FakeService{},
+			tracer:       tracing.InitializeTracerForTest(),
+			cfg:          cfg,
+			db:           ss,
+		}
+		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
+			Email: "fallback@example.com",
+			Login: "fallbackuser",
+			Name:  "fallbackuser",
+		})
+		require.NoError(t, err)
+		require.NotNil(t, inserted, "InsertOrgUser must be called when SkipOrgSetup=false")
+		assert.Equal(t, org.RoleViewer, inserted.Role, "Role must come from cfg.AutoAssignOrgRole when DefaultOrgRole is empty")
+	})
 
 	t.Run("create user should roll back created user if OrgUser cannot be created", func(t *testing.T) {
 		userService := LegacyService{

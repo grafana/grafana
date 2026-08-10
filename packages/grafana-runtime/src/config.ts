@@ -15,6 +15,7 @@ import {
   type OAuthSettings,
   type PanelPluginMeta,
   type PreinstalledPlugin as PreinstalledPluginGrafanaData,
+  store,
   systemDateFormats,
   type SystemDateFormatSettings,
   getThemeById,
@@ -143,7 +144,7 @@ export class GrafanaBootConfig {
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  featureToggles: FeatureToggles & { kubernetesDashboards?: boolean } = {};
+  featureToggles: FeatureToggles = {};
   anonymousEnabled = false;
   anonymousDeviceLimit?: number;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
@@ -222,6 +223,7 @@ export class GrafanaBootConfig {
   };
   analytics = {
     enabled: true,
+    presenceIndicatorsDisabled: false,
   };
   googleAnalyticsId?: string;
   googleAnalytics4Id?: string;
@@ -232,9 +234,12 @@ export class GrafanaBootConfig {
   rudderstackV3SdkUrl?: string;
   rudderstackConfigUrl?: string;
   rudderstackIntegrationsUrl?: string;
+  postHogToken?: string;
+  postHogHost?: string;
   analyticsConsoleReporting = false;
   dashboardPerformanceMetrics: string[] = [];
   panelSeriesLimit = 0;
+  dashboardDefaultPreload = false;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,
@@ -247,6 +252,7 @@ export class GrafanaBootConfig {
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
   localFileSystemAvailable?: boolean;
+  provisioningEnabled = true;
   cloudMigrationEnabled?: boolean;
   cloudMigrationIsTarget?: boolean;
   cloudMigrationPollIntervalMs = 2000;
@@ -284,7 +290,6 @@ export class GrafanaBootConfig {
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
-    this.featureToggles.kubernetesDashboards = true; // Force true
     this.bootData.settings.featureToggles = this.featureToggles;
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
@@ -299,7 +304,7 @@ export class GrafanaBootConfig {
 function overrideFeatureTogglesFromLocalStorage(config: GrafanaBootConfig) {
   const featureToggles = config.featureToggles;
   const localStorageKey = 'grafana.featureToggles';
-  const localStorageValue = window.localStorage.getItem(localStorageKey);
+  const localStorageValue = store.get(localStorageKey);
   if (localStorageValue) {
     const features = localStorageValue.split(',');
     for (const feature of features) {

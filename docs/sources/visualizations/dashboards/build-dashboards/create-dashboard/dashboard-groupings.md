@@ -15,7 +15,7 @@ description: Group dashboard panels
 weight: 300
 image_maps:
   - key: panel-groupings
-    src: /media/docs/grafana/dashboards/screenshot-dashboard-w-groupings-v13.0.png
+    src: /media/docs/grafana/dashboards/screenshot-dashboard-w-groupings-v13.1.png
     alt: Dashboard with nested groupings
     points:
       - x_coord: 15
@@ -31,21 +31,21 @@ image_maps:
         content: |
           Also, you can have different panel layouts in within a row or tab. In this dashboard, one tab contains two rows that have two different layouts.
   - key: ungrouping
-    src: /media/docs/grafana/dashboards/screenshot-ungrouping-v13.0.png
+    src: /media/docs/grafana/dashboards/screenshot-ungrouping-v13.1.png
     alt: Dashboard with ungrouping behavior annotated
     points:
-      - x_coord: 24
-        y_coord: 63
+      - x_coord: 22.5
+        y_coord: 64
         content: |
           Ungroups all the rows inside **Nested tab with rows** leaving the panels in that tab.
-      - x_coord: 55.5
+      - x_coord: 52
         y_coord: 9.5
         content: |
-          Ungroups all the tabs inside **Row with tabs**, leaving the panels in that row.
-      - x_coord: 22
-        y_coord: 95
+          Ungroups the tabs inside **Row with tabs**. Nested rows move up a level and tabs that contain only panels are converted to rows.
+      - x_coord: 20.5
+        y_coord: 96
         content: |
-          Removes all groupings on the dashboard, leaving just the panels on the dashboard.
+          Ungroups the top-level rows. Nested tabs move up a level and rows that contain only panels are converted to tabs.
 ---
 
 # Dashboard panel groupings
@@ -62,12 +62,15 @@ You can nest:
 - Rows in a tab
 - Tabs in a row
 
-You can nest up to three levels deep, which means a dashboard can have a maximum of five configuration levels:
+You can't nest tabs directly inside a tab, but you can nest them inside a row that's within a tab (tab > row > tabs).
+
+You can nest up to four levels deep, which means a dashboard can have a maximum of six configuration levels:
 
 - Dashboard
 - Grouping 1 - Row or tab
 - Grouping 2 - Row or tab
 - Grouping 3 - Row or tab
+- Grouping 4 - Row or tab
 - Panels
 
 The following screenshot demonstrates how groupings work:
@@ -94,8 +97,8 @@ The following table describes the options you can set for a row or tab:
 | Title           | Title of the row or tab.                                                    |
 | Fill screen     | Toggle the switch on to make the row fill the screen. Rows only. |
 | Hide row header | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Rows only. |
-| Filters       | Add filters that apply to only the panels in the grouping. For more information, refer to [Grouping-level variables and filters](#grouping-level-variables-and-filters). For information on configuring the **Filter and Group by** feature, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#filter-and-group-by). |
-| Variables       | Add variables that apply to only the panels in the grouping. For more information, refer to [Grouping-level variables and filters](#grouping-level-variables-and-filters). For information on configuring variables, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables). |
+| Filters       | Add filters that apply to only the panels in the grouping. For more information, refer to [Section-level variables and filters](#grouping-level-variables-and-filters). For information on configuring the **Filter and Group by** feature, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls). |
+| Variables       | Add variables that apply to only the panels in the grouping. For more information, refer to [Section-level variables and filters](#grouping-level-variables-and-filters). For information on configuring variables, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables). |
 | Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts) or [Grouping layouts](#grouping-layouts). |
 | Repeat options > [Repeat by variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
 | Show / hide rules > [Panel/Row/Tab visibility](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variable values, a time range, or query results (panels only). |
@@ -106,12 +109,13 @@ The following table describes the options you can set for a row or tab:
 
 When you have panels grouped into rows or tabs, the **Layout** options available depend on which dashboard element is selected and the nesting level of that element.
 
-You can nest up to three levels deep, which means a dashboard can have a maximum of five configuration levels, with the following layout options:
+You can nest up to four levels deep, which means a dashboard can have a maximum of six configuration levels, with the following layout options:
 
 - **Dashboard**: Layout options allow you to choose between rows and tabs or custom and auto layouts.
 - **Grouping 1 (outer)**: Layout options allow you to choose between rows and tabs.
 - **Grouping 2 (middle)**: Layout options allow you to choose between rows and tabs.
-- **Grouping 3 (inner)**: Layout options allow you to choose between custom and auto grid (refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts)).
+- **Grouping 3 (middle)**: Layout options allow you to choose between rows and tabs.
+- **Grouping 4 (inner)**: Layout options allow you to choose between custom and auto grid (refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts)).
 - **Panels**: No layout options
 
 You can switch between rows and tabs or update the panel layout by clicking the parent container and changing the layout selection.
@@ -181,8 +185,18 @@ You can add more one more level of grouping if needed.
 
 You can ungroup some or all of the dashboard groupings without losing your panels.
 
-When you ungroup a row or tab, all the groupings inside it are ungrouped and the panels are moved into the next higher-level grouping.
-If there are no more groupings left, the panels are moved onto the dashboard.
+What happens when you ungroup rows or tabs depends on what they contain:
+
+- **Groupings that contain only panels**: The grouping level is removed and the panels are merged into the next higher-level grouping. If there are no groupings left, the panels are moved onto the dashboard.
+- **Groupings that contain nested groupings**: Only the grouping level you're ungrouping is removed. The nested groupings move up a level, and any groupings at the same level that contain only panels are converted to the same grouping type, so the structure of your dashboard content is preserved.
+
+When the groupings you're ungrouping contain nested groupings, the following rules apply:
+
+- If the nested groupings are all rows or all tabs, Grafana automatically converts everything at that level to that grouping type.
+- If the nested groupings are a mix of rows and tabs, or if converting to tabs isn't possible because tabs can't be directly nested inside a tab, you're prompted to choose between **Convert to rows** and **Convert to tabs**.
+- If any of the ungrouped groupings have repeat options configured, those repeat options are lost. Grafana warns you before making the change.
+
+Section-level variables and filters configured on the ungrouped groupings aren't lost; they move up to the next level.
 
 {{< image-map key="ungrouping" >}}
 
@@ -197,8 +211,9 @@ To remove groupings, follow these steps:
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to remove.
-1. Hover your mouse over the relevant area to show the **Ungroup rows** or **Ungroup tabs** button, then click it to ungroup all rows or tabs, including any nested groupings.
+1. Hover your mouse over the relevant area to show the **Ungroup rows** or **Ungroup tabs** button, then click it.
 1. If you've ungrouped panels that were previously in different panel layouts, you'll be prompted to select a common layout type for all the panels; click **Convert to Auto grid** or **Convert to Custom**.
+1. If the ungrouped groupings contain a mix of nested rows and tabs, you'll be prompted to select how to convert them; click **Convert to rows** or **Convert to tabs**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
@@ -216,30 +231,25 @@ If you have a row with panels, but you want the panels to appear ungrouped, you 
 In view mode, the row header is hidden, so that the panels in that row appear ungrouped.
 In the following image, the panels are grouped into two rows, but the header of the second row is hidden:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-headerless-row-v13.0.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-headerless-row-v13.1.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
 
 When you hide the header of a row, you can't collapse the row.
 
-## Grouping-level variables and filters
-
-{{< admonition type="note" >}}
-Grouping-level variables and filters is currently in [public preview](http://grafana.com/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-To use this feature, enable the `dashboardSectionVariables` feature toggle in your Grafana configuration file.
-{{< /admonition >}}
+## Section-level variables and filters {#grouping-level-variables-and-filters}
 
 You can add variables and filters to groupings that apply only to the panels in that grouping.
 
 For example, if your dashboard includes both an API gateway and a database, you might want to apply two different `$instance` variables.
-Grouping-level variables and filters address this by letting each row or tab have its own independent scope.
+Section-level variables and filters for address this by letting each row or tab have its own independent scope.
 In the API gateway and database scenario, the API gateway grouping can use one set of instances, while a database grouping uses another set.
 However, both groupings still share the same time range, and the underlying dashboard remains unchanged.
 
 The following image shows an example using two rows of panels:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-grouping-variables-v13.0.png" max-width="750px" alt="A dashboard with two rows, each with its own variable filter above the panels" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-section-variables-v13.1.png" max-width="750px" alt="A dashboard with two rows, each with its own variable filter above the panels" >}}
 
-Panels in the grouping resolve grouping-level variables and filters first, then fall back to dashboard-level variables.
+Panels in the grouping resolve section-level variables and filters first, then fall back to dashboard-level variables.
 
 The panel query editor is context-aware, so the autocomplete only shows the variables available to the panel you're editing.
-Also, grouping-level variables and filters carry over when you convert between rows and tabs, change layouts, and work with repeating rows and tabs.
+Also, section-level variables and filters carry over when you convert between rows and tabs, change layouts, and work with repeating rows and tabs.
+When you ungroup rows or tabs, their section-level variables and filters move up to the next level.

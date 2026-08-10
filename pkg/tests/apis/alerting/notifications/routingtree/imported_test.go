@@ -32,7 +32,6 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
-			featuremgmt.FlagAlertingMultiplePolicies,
 		},
 	})
 
@@ -46,12 +45,10 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 	require.NoError(t, err)
 
 	identifier := "test-create-get-config"
-	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": identifier,
-		"X-Grafana-Alerting-Merge-Matchers":    mergeMatchers,
 	}
 
 	amConfig := apimodels.AlertmanagerUserConfig{
@@ -121,27 +118,5 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 		err = client.Delete(ctx, toDelete.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
 		require.ErrorContains(t, err, "imported configuration")
-	})
-
-	t.Run("should not return if flag is disabled", func(t *testing.T) {
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagAlertingMultiplePolicies,
-			},
-		})
-
-		client, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
-		require.NoError(t, err)
-
-		routes, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, routes.Items, 1)
-		var importedRoute *v1beta1.RoutingTree
-		for _, r := range routes.Items {
-			if r.Name == identifier {
-				importedRoute = &r
-			}
-		}
-		require.Nil(t, importedRoute)
 	})
 }

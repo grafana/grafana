@@ -58,6 +58,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       // Match variable/annotation alignment in the controls row
       alignSelf: 'flex-start',
+      verticalAlign: 'middle',
     }),
   };
 }

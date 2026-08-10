@@ -41,7 +41,7 @@ export const DynamicTableWithGuidelines = <T extends object>({
   );
 };
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   relative: css({
     position: 'relative',
     height: '100%',

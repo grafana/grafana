@@ -244,6 +244,21 @@ import (
 //       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
+// swagger:route POST /convert/api/v1/alerts/{Identifier}/promote convert_prometheus RouteConvertPrometheusPromoteAlertmanagerConfig
+//
+// Promote an extra Alertmanager configuration into the main Grafana Alertmanager configuration.
+// The staged import is permanently merged: receivers, routes, time intervals, templates, and
+// inhibition rules are folded into the main config and become editable via regular APIs.
+// After promotion the ExtraConfiguration entry is removed.
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: ConvertAlertmanagerResponse
+//       403: ForbiddenError
+//       404: NotFound
+
 // swagger:parameters RouteConvertPrometheusPostRuleGroup RouteConvertPrometheusCortexPostRuleGroup
 type RouteConvertPrometheusPostRuleGroupParams struct {
 	// in: path
@@ -318,6 +333,8 @@ type ConvertAlertmanagerResponse struct {
 	Error     string `json:"error"`
 	// RenameResources contains information about renamed resources during configuration merge
 	RenameResources *RenameResources `json:"rename_resources,omitempty"`
+	// Stats contains information about what was added during configuration merge
+	Stats *MergeStats `json:"stats,omitempty"`
 }
 
 // RenameResources describes which resources were renamed to avoid conflicts
@@ -328,24 +345,35 @@ type RenameResources struct {
 	TimeIntervals map[string]string `json:"time_intervals,omitempty"`
 }
 
+// MergeStats describes which resources were added during configuration merge.
+type MergeStats struct {
+	// AddedRoute is the identifier of the routing sub-tree added to the configuration
+	AddedRoute string `json:"added_route,omitempty"`
+	// AddedReceivers contains the names of receivers added (post-rename if renamed)
+	AddedReceivers []string `json:"added_receivers,omitempty"`
+	// AddedTimeIntervals contains the names of time intervals added (post-rename if renamed)
+	AddedTimeIntervals []string `json:"added_time_intervals,omitempty"`
+	// AddedTemplates contains the names of templates added
+	AddedTemplates []string `json:"added_templates,omitempty"`
+	// AddedInhibitionRules contains the names of inhibition rules added
+	AddedInhibitionRules []string `json:"added_inhibition_rules,omitempty"`
+}
+
 // swagger:parameters RouteConvertPrometheusPostAlertmanagerConfig
 type RouteConvertPrometheusPostAlertmanagerConfigParams struct {
 	// Unique identifier for this Alertmanager configuration.
 	// This identifier is used to distinguish between different imported configurations.
 	// in: header
 	Identifier string `json:"x-grafana-alerting-config-identifier"`
-	// Comma-separated list of label matchers in 'key=value' format.
-	// These matchers determine which alerts this configuration should handle.
-	// For example: 'environment=production,team=backend' will only apply this
-	// configuration to alerts matching both environment=production AND team=backend.
-	// in: header
-	MergeMatchers string `json:"x-grafana-alerting-merge-matchers"`
 	// If true, the configuration will replace an existing configuration regardless of its identifier
 	// in: header
 	Replace bool `json:"x-grafana-alerting-config-force-replace"`
 	// If true, validates the configuration without saving it
 	// in: header
 	DryRun bool `json:"x-grafana-alerting-dry-run"`
+	// If true, immediately promotes the configuration into the main Grafana config, making it editable via regular APIs.
+	// in: header
+	Promote bool `json:"x-grafana-alerting-promote"`
 	// Alertmanager configuration including routing rules, receivers, and template files
 	// in:body
 	Body AlertmanagerUserConfig
@@ -363,6 +391,13 @@ type RouteConvertPrometheusDeleteAlertmanagerConfigParams struct {
 	// Unique identifier for the Alertmanager configuration to delete.
 	// in: header
 	Identifier string `json:"x-grafana-alerting-config-identifier"`
+}
+
+// swagger:parameters RouteConvertPrometheusPromoteAlertmanagerConfig
+type RouteConvertPrometheusPromoteAlertmanagerConfigParams struct {
+	// Unique identifier for the Alertmanager configuration to promote.
+	// in: path
+	Identifier string
 }
 
 // swagger:model

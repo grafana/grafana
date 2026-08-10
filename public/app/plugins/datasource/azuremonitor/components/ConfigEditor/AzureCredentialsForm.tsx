@@ -9,7 +9,7 @@ import { Field, Select, Stack } from '@grafana/ui';
 import { selectors } from '../../e2e/selectors';
 
 import { AppRegistrationCredentials } from './AppRegistrationCredentials';
-import CurrentUserFallbackCredentials from './CurrentUserFallbackCredentials';
+import { CurrentUserFallbackCredentials } from './CurrentUserFallbackCredentials';
 
 export interface Props {
   managedIdentityEnabled: boolean;
@@ -148,5 +148,3 @@ export const AzureCredentialsForm = (props: Props) => {
     </ConfigSection>
   );
 };
-
-export default AzureCredentialsForm;

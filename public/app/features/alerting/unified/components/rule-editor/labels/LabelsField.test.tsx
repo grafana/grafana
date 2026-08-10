@@ -2,7 +2,7 @@ import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, waitFor, within } from 'test/test-utils';
 
-import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
+import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 
 import { mockAlertRuleApi, setupMswServer } from '../../../mockApi';
 import { getGrafanaRule } from '../../../mocks';
@@ -70,7 +70,7 @@ const server = setupMswServer();
 describe('LabelsField with suggestions', () => {
   afterEach(() => {
     server.resetHandlers();
-    clearPluginSettingsCache();
+    invalidateCachedPromisesCache();
   });
   beforeEach(() => {
     mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, {

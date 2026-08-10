@@ -62,6 +62,12 @@ export async function initEchoSrv() {
   }
 
   try {
+    await initPostHogBackend();
+  } catch (error) {
+    console.error('Error initializing EchoSrv PostHog backend', error);
+  }
+
+  try {
     await initConsoleBackend();
   } catch (error) {
     console.error('Error initializing EchoSrv Console backend', error);
@@ -145,17 +151,11 @@ async function initRudderstackBackend() {
     return;
   }
 
-  // Logic: if only one of the sdk urls is provided, use respective code
-  // otherwise defer to the feature toggle.
-
-  const hasOldSdkUrl = Boolean(config.rudderstackSdkUrl);
+  // Prefer the v3 SDK when its URL is set.
+  // Fall back to the legacy SDK otherwise.
   const hasNewSdkUrl = Boolean(config.rudderstackV3SdkUrl);
-  const onlyOneSdkUrlSet = hasOldSdkUrl !== hasNewSdkUrl;
-  const useNewRudderstack = onlyOneSdkUrlSet ? hasNewSdkUrl : config.featureToggles.rudderstackUpgrade;
-
-  const sdkUrl = useNewRudderstack ? config.rudderstackV3SdkUrl : config.rudderstackSdkUrl;
-
-  const modulePromise = useNewRudderstack
+  const sdkUrl = hasNewSdkUrl ? config.rudderstackV3SdkUrl : config.rudderstackSdkUrl;
+  const modulePromise = hasNewSdkUrl
     ? import('./backends/analytics/RudderstackV3Backend')
     : import('./backends/analytics/RudderstackBackend');
 
@@ -184,6 +184,21 @@ async function initAzureAppInsightsBackend() {
       connectionString: config.applicationInsightsConnectionString,
       endpointUrl: config.applicationInsightsEndpointUrl,
       autoRouteTracking: config.applicationInsightsAutoRouteTracking,
+    })
+  );
+}
+
+async function initPostHogBackend() {
+  if (!config.postHogToken) {
+    return;
+  }
+
+  const { PostHogBackend } = await import('./backends/analytics/PostHogBackend');
+  registerEchoBackend(
+    new PostHogBackend({
+      postHogToken: config.postHogToken,
+      postHogHost: config.postHogHost,
+      user: contextSrv.user,
     })
   );
 }

@@ -42,7 +42,7 @@ export const AddCorrelationFormWrapper = ({ onClose, onCreated }: Props) => {
   return <AddCorrelationFormLegacy onClose={onClose} onCreated={onCreated} />;
 };
 
-export const AddCorrelationFormAppPlatform = ({ onClose, onCreated }: Props) => {
+const AddCorrelationFormAppPlatform = ({ onClose, onCreated }: Props) => {
   const styles = useStyles2(getStyles);
 
   const [createCorrelation, { data, isLoading, isError }] = useCreateCorrelationMutation();
@@ -82,7 +82,7 @@ export const AddCorrelationFormAppPlatform = ({ onClose, onCreated }: Props) => 
   );
 };
 
-export const AddCorrelationFormLegacy = ({ onClose, onCreated }: Props) => {
+const AddCorrelationFormLegacy = ({ onClose, onCreated }: Props) => {
   const styles = useStyles2(getStyles);
 
   const {

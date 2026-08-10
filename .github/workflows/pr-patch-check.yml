@@ -1,52 +1,52 @@
 name: Dispatch check for patch conflicts
 on:
-  workflow_call:
-    inputs:
-      head_ref:
-        type: string
-        required: true
-      base_ref:
-        type: string
-        required: true
-      repo:
-        type: string
-        required: true
-      sender_login:
-        type: string
-        required: true
-      sha:
-        type: string
-        required: true
-      pr_commit_sha:
-        type: string
-        required: true
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - "main"
+      - "release-*"
 
-permissions:
-  id-token: write
-  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # If a new commit is applied, just give up.
+  cancel-in-progress: true
+
+permissions: {}
 
 # Since this is run on a pull request, we want to apply the patches intended for the
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
-    # If the source is not from a fork then dispatch the job to the workflow.
-    # This will fail on forks when trying to broker a token, so instead, forks will create the required status and mark
-    # it as a success
-    if: ${{ ! github.event.pull_request.head.repo.fork }}
+    # Only runs in grafana/grafana; the workflow file is mirrored to other repos but the
+    # patch-check pipeline (security-patch-actions + grafana-security-patches) is specific
+    # to the OSS repo. Skipping here is acceptable to policy-bot, which allows `skipped`
+    # as a pass.
+    #
+    # Also: dispatching a workflow requires brokering an installation token, which fails on
+    # forks, so forks skip via the same check below and the dispatch-job-fork no-op records
+    # the required status as success.
+    if: ${{ github.repository == 'grafana/grafana' && ! github.event.pull_request.head.repo.fork }}
     env:
-      HEAD_REF: ${{ inputs.head_ref }}
+      HEAD_REF: ${{ github.head_ref }}
       BASE_REF: ${{ github.base_ref }}
-      REPO: ${{ inputs.repo }}
-      SENDER: ${{ inputs.sender_login }}
-      SHA: ${{ inputs.sha }}
-      PR_COMMIT_SHA: ${{ inputs.pr_commit_sha }}
-    runs-on: ubuntu-latest
+      REPO: ${{ github.repository }}
+      SENDER: ${{ github.event.sender.login }}
+      SHA: ${{ github.sha }}
+      PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+    runs-on: ubuntu-arm64-small
+    permissions:
+      id-token: write
+      contents: read
+      statuses: write
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@e5b7989c92b55fe3ac6dd006d6de49082ba8c507 # create-github-app-token (github-script/v9)
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          github_app: grafana-delivery-bot
+          github_app: grafana-releases-oss
       - name: "Dispatch job"
         uses: actions/github-script@v8
         with:
@@ -134,11 +134,12 @@ jobs:
 
   dispatch-job-fork:
     # If the source is from a fork then use the built-in workflow token to create the same status and unconditionally
-    # mark it as a success.
-    if: ${{ github.event.pull_request.head.repo.fork }}
+    # mark it as a success. Also only meaningful in grafana/grafana (the patch-check
+    # pipeline is OSS-only); in mirrored copies this skips alongside dispatch-job.
+    if: ${{ github.repository == 'grafana/grafana' && github.event.pull_request.head.repo.fork }}
     permissions:
       statuses: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     steps:
       - name: All good
         run: |

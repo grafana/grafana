@@ -42,7 +42,7 @@ export function makeScopedAbility(
   supported: boolean,
   anyOfPermissions: AccessControlAction[],
   entity: EntityToCheck,
-  canAccess?: (entity: EntityToCheck) => boolean
+  canAccess?: (entity: EntityToCheck) => Ability
 ): Ability {
   if (!supported) {
     return NotSupported;
@@ -51,7 +51,7 @@ export function makeScopedAbility(
     return Provisioned;
   }
   if (canAccess !== undefined) {
-    return canAccess(entity) ? Granted : InsufficientPermissions(anyOfPermissions);
+    return canAccess(entity);
   }
   return makeAbility(true, anyOfPermissions);
 }

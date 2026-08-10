@@ -382,6 +382,7 @@ describe('PanelQueryRunner', () => {
       });
 
       it('should not apply field config when applyFieldConfig option is false', async () => {
+        applyFieldOverridesMock.mockClear();
         ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
           next: (data: grafanaData.PanelData) => {
             return data;
@@ -425,6 +426,7 @@ describe('PanelQueryRunner', () => {
       });
 
       it('should not apply field config when applyFieldConfig option is false', async () => {
+        applyFieldOverridesMock.mockClear();
         ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
           next: (data: grafanaData.PanelData) => {
             return data;

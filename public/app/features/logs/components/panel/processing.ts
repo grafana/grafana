@@ -350,7 +350,7 @@ function logLevelToDisplayLevel(level = '') {
     case LogLevel.warning:
       return 'warn';
     case LogLevel.unknown:
-      return '';
+      return 'unk';
     default:
       return level;
   }

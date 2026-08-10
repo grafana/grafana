@@ -1,14 +1,13 @@
-import { type DataSourceApi, type MetricFindValue } from '@grafana/data';
+import { type DataSourceApi, type MetricFindValue, getDefaultTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import {
-  AdHocFiltersVariable,
-  EmbeddedScene,
-  GroupByVariable,
-  SceneTimeRange,
-  SceneVariableSet,
-} from '@grafana/scenes';
+import { AdHocFiltersVariable, EmbeddedScene, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 
-import { getAdHocTagKeysProvider, getAdHocTagValuesProvider, getGroupByTagKeysProvider } from './tagKeysProviders';
+import {
+  fetchTagValues,
+  getAdHocTagKeysProvider,
+  getAdHocTagValuesProvider,
+  getGroupByTagKeysProvider,
+} from './tagKeysProviders';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -26,7 +25,7 @@ function mockGetDataSourceSrv(dsOverrides: Partial<DataSourceApi> = {}) {
   } as ReturnType<typeof getDataSourceSrv>);
 }
 
-function activateWithScene(variable: GroupByVariable | AdHocFiltersVariable) {
+function activateWithScene(variable: AdHocFiltersVariable) {
   const scene = new EmbeddedScene({
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
     $variables: new SceneVariableSet({ variables: [variable] }),
@@ -49,7 +48,7 @@ describe('tagKeysProviders', () => {
         ] satisfies MetricFindValue[]),
       });
 
-      const variable = new GroupByVariable({ name: 'groupBy', datasource: { uid: 'test' } });
+      const variable = new AdHocFiltersVariable({ name: 'groupBy', datasource: { uid: 'test' } });
       activateWithScene(variable);
 
       const result = await getGroupByTagKeysProvider(variable, null);
@@ -69,7 +68,7 @@ describe('tagKeysProviders', () => {
         getTagKeys: jest.fn().mockResolvedValue([] satisfies MetricFindValue[]),
       });
 
-      const variable = new GroupByVariable({ name: 'groupBy', datasource: { uid: 'test' } });
+      const variable = new AdHocFiltersVariable({ name: 'groupBy', datasource: { uid: 'test' } });
       activateWithScene(variable);
 
       const result = await getGroupByTagKeysProvider(variable, null);
@@ -126,6 +125,19 @@ describe('tagKeysProviders', () => {
       expect(result.values).not.toEqual(
         expect.arrayContaining([{ text: 'namespace_extracted', value: 'namespace_extracted', group: 'All' }])
       );
+    });
+  });
+
+  describe('fetchTagValues', () => {
+    it('queries the datasource getTagValues with the key and no filters', async () => {
+      const getTagValues = jest.fn().mockResolvedValue([{ text: 'platform-monitoring' }] satisfies MetricFindValue[]);
+      mockGetDataSourceSrv({ getTagValues });
+
+      const timeRange = getDefaultTimeRange();
+      const result = await fetchTagValues(timeRange, 'team');
+
+      expect(result).toEqual([{ text: 'platform-monitoring' }]);
+      expect(getTagValues).toHaveBeenCalledWith(expect.objectContaining({ key: 'team', filters: [], timeRange }));
     });
   });
 
@@ -297,7 +309,7 @@ describe('tagKeysProviders', () => {
     it('should return promoted labels only when DS lacks getTagKeys', async () => {
       mockGetDataSourceSrv({});
 
-      const variable = new GroupByVariable({ name: 'groupBy', datasource: { uid: 'test' } });
+      const variable = new AdHocFiltersVariable({ name: 'groupBy', datasource: { uid: 'test' } });
       activateWithScene(variable);
 
       const result = await getGroupByTagKeysProvider(variable, null);

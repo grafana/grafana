@@ -134,7 +134,7 @@ describe('v0alpha1PanelMapper', () => {
   it('should only map specs with type panel', () => {
     const result = v0alpha1PanelMapper(v0alpha1Response);
 
-    expect(v0alpha1Response.items).toHaveLength(53);
+    expect(v0alpha1Response.items).toHaveLength(41);
     expect(Object.keys(result)).toHaveLength(28);
     expect(Object.keys(result)).toEqual(Object.keys(panels));
   });
@@ -159,7 +159,7 @@ describe('v0alpha1PanelMapper', () => {
 });
 
 const azureMeta = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'grafana-azure-monitor-datasource')!;
-const promMeta = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'prometheus')!;
+const promMeta = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'dashboard')!;
 
 describe('coreSpecMapper when called with a core plugin on cloud', () => {
   beforeEach(() => {
@@ -206,14 +206,14 @@ describe('coreSpecMapper when called with a core plugin on cloud', () => {
     const result = coreSpecMapper(promMeta.spec);
 
     expect(result.baseUrl).toBe(
-      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/prometheus'
+      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/dashboard'
     );
-    expect(result.module).toBe('core:plugin/prometheus');
+    expect(result.module).toBe('core:plugin/dashboard');
     expect(result.info.logos.large).toBe(
-      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg'
+      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/dashboard/dist/img/icn-reusequeries.svg'
     );
     expect(result.info.logos.small).toBe(
-      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg'
+      'https://grafana-assets.grafana-dev.net/grafana/13.0.0-24045599351/public/app/plugins/datasource/dashboard/dist/img/icn-reusequeries.svg'
     );
     expect(result.info.screenshots).toEqual([]);
   });
@@ -258,10 +258,10 @@ describe('coreSpecMapper when called with a core plugin on prem', () => {
   it('should resolve correct urls for a non decoupled plugin', () => {
     const result = coreSpecMapper(promMeta.spec);
 
-    expect(result.baseUrl).toBe('public/app/plugins/datasource/prometheus');
-    expect(result.module).toBe('core:plugin/prometheus');
-    expect(result.info.logos.large).toBe('public/app/plugins/datasource/prometheus/img/prometheus_logo.svg');
-    expect(result.info.logos.small).toBe('public/app/plugins/datasource/prometheus/img/prometheus_logo.svg');
+    expect(result.baseUrl).toBe('public/app/plugins/datasource/dashboard');
+    expect(result.module).toBe('core:plugin/dashboard');
+    expect(result.info.logos.large).toBe('public/app/plugins/datasource/dashboard/dist/img/icn-reusequeries.svg');
+    expect(result.info.logos.small).toBe('public/app/plugins/datasource/dashboard/dist/img/icn-reusequeries.svg');
     expect(result.info.screenshots).toEqual([]);
   });
 });

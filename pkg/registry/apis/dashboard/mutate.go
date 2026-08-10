@@ -31,16 +31,22 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	switch a.GetResource().Resource {
 	case dashboardV0.DASHBOARD_RESOURCE:
 		return b.mutateDashboard(ctx, a)
-	// Reachability invariant: this case only fires when the apiserver routes
-	// a request to the v2beta1 Variable storage, which is registered in
-	// UpdateAPIGroupInfo behind FlagGlobalDashboardVariables (see register.go).
-	// No other dashboard.grafana.app version registers a standalone Variable
-	// resource, so without the flag the apiserver has no route and admission
-	// never dispatches here. If Variable is ever added to another version or
-	// moved to a subresource, update both the storage registration and this
-	// switch in lockstep.
+	// Reachability invariant: Variable storage is always registered, but
+	// FlagGrafanaDashboardGlobalVariables is gated per request in GetAuthorizer. When
+	// the feature is disabled the authorizer denies the request (403) before
+	// admission runs, so this case only fires when global dashboard variables
+	// are enabled. If Variable is ever added to another version or moved to a
+	// subresource, update both the storage registration and this switch in
+	// lockstep.
 	case dashboardV2beta1.VariableResourceInfo.GroupVersionResource().Resource:
 		return mutateVariable(a)
+
+	// Reachability invariant: this case only fires when the apiserver routes a
+	// request to the v2beta1 Notebook storage, which is registered in
+	// UpdateAPIGroupInfo behind FlagDashboardNotebooks (see register.go).
+	// Notebooks need no mutation today; layout validation happens in Validate.
+	case dashboardV2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
+		return nil
 
 	case dashboardV0.LIBRARY_PANEL_RESOURCE:
 		return nil // nothing needed
@@ -195,6 +201,10 @@ func mutateVariable(a admission.Attributes) error {
 		delete(labels, variableFolderLabelKey)
 	}
 	variable.SetLabels(labels)
+
+	if a.GetOperation() == admission.Create && variable.GetName() == "" {
+		variable.SetName(deriveVariableMetadataName(getVariableName(variable.Spec), meta.GetFolder()))
+	}
 
 	return nil
 }

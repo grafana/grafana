@@ -26,7 +26,7 @@ import TracesQueryEditor from '../TracesQueryEditor/TracesQueryEditor';
 import { QueryHeader } from './QueryHeader';
 import usePreparedQuery from './usePreparedQuery';
 
-export type AzureMonitorQueryEditorProps = QueryEditorProps<
+type AzureMonitorQueryEditorProps = QueryEditorProps<
   AzureMonitorDatasource,
   AzureMonitorQuery,
   AzureMonitorDataSourceJsonData

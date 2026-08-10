@@ -11,6 +11,7 @@ manifest: {
 				go: {enabled: true}
 			}
 			kinds: [
+				configv0alpha1,
 				inhibitionRulev0alpha1,
 				receiverv0alpha1,
 				routeTreev0alpha1,
@@ -37,6 +38,7 @@ manifest: {
 				go: {enabled: true}
 			}
 			kinds: [
+				configv1beta1,
 				inhibitionRulev1beta1,
 				receiverv1beta1,
 				routeTreev1beta1,

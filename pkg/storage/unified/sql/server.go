@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/reconciler"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -38,6 +39,7 @@ type ServerOptions struct {
 	Backend          resource.StorageBackend
 	VectorBackend    vector.VectorBackend
 	Embedder         *embedder.Embedder
+	Reranker         *rerank.Reranker
 	OverridesService *resource.OverridesService
 	Cfg              *setting.Cfg
 	Tracer           trace.Tracer
@@ -47,6 +49,7 @@ type ServerOptions struct {
 	SearchClient     resourcepb.ResourceIndexClient
 	StorageMetrics   *resource.StorageMetrics
 	IndexMetrics     *resource.BleveIndexMetrics
+	VectorMetrics    *resource.VectorMetrics
 	Features         featuremgmt.FeatureToggles
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
@@ -73,6 +76,8 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
+		withReranker,
+		withVectorMetrics,
 		withVectorIndexers,
 		withQOSQueue,
 		withOverridesService,
@@ -80,6 +85,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withSearchClient,
 		withQuotaConfig,
 		withStorageMetrics,
+		withUsageStats,
 	)
 	if err != nil {
 		return nil, err
@@ -109,6 +115,8 @@ func NewUninitializedSearchServer(opts ServerOptions) (resource.SearchServer, er
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
+		withReranker,
+		withVectorMetrics,
 		withSearch,
 	)
 	if err != nil {
@@ -155,8 +163,16 @@ func withSecureValueService(opts *ServerOptions, resourceOpts *resource.Resource
 }
 
 func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	authzOpts := resource.AuthzOptions{
+		Registry:         opts.Reg,
+		ExemptionEnabled: opts.Cfg.UnifiedStorageAuthzExemptionEnabled,
+		ExemptResources:  opts.Cfg.UnifiedStorageAuthzExemptResources,
+	}
+	if err := resource.ValidateAuthzOptions(authzOpts); err != nil {
+		return err
+	}
 	if opts.AccessClient != nil {
-		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, resource.AuthzOptions{Registry: opts.Reg})
+		resourceOpts.AccessClient = resource.NewAuthzLimitedClient(opts.AccessClient, authzOpts)
 	}
 	return nil
 }
@@ -182,6 +198,12 @@ func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceSe
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
 	resourceOpts.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
+	return nil
+}
+
+func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
+	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
 	return nil
 }
 
@@ -212,6 +234,13 @@ func withEmbedder(opts *ServerOptions, resourceOpts *resource.ResourceServerOpti
 	return nil
 }
 
+// withReranker propagates the optional Reranker through. nil is allowed;
+// HybridSearch then returns RRF ordering and min_relevance is a no-op.
+func withReranker(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.Reranker = opts.Reranker
+	return nil
+}
+
 // withVectorIndexers builds the optional vector backfiller and
 // reconciler. Both providers return (nil, nil) when their feature is
 // off, so nil is normal and propagates through to the resource server
@@ -227,13 +256,13 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 	batchEmbedder := embedder.NewBatchEmbedder(*opts.Embedder)
 	builders := []embed.Builder{dashboard.New()}
 
-	var err error
-	resourceOpts.VectorBackfiller, err = backfill.NewVectorBackfiller(backfill.Options{
+	backfiller, err := backfill.NewVectorBackfiller(backfill.Options{
 		Storage:        opts.Backend,
 		VectorBackend:  opts.VectorBackend,
 		BatchEmbedder:  batchEmbedder,
 		Builders:       builders,
 		DashboardStats: opts.DashboardStats,
+		Metrics:        resourceOpts.VectorMetrics,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector backfiller: %w", err)
@@ -244,7 +273,11 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		VectorBackend: opts.VectorBackend,
 		BatchEmbedder: batchEmbedder,
 		Builders:      builders,
+		Backfiller:    backfiller,
 		Interval:      opts.Cfg.VectorReconcilerInterval,
+		Metrics:       resourceOpts.VectorMetrics,
+
+		EmbeddingCountInterval: opts.Cfg.VectorEmbeddingCountInterval,
 	})
 	if err != nil {
 		return fmt.Errorf("create vector reconciler: %w", err)
@@ -261,6 +294,24 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.Search = opts.SearchOptions
 	resourceOpts.IndexMetrics = opts.IndexMetrics
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
+
+	if opts.VectorBackend != nil {
+		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
+		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections
+		if opts.Cfg.VectorQueryCacheEnabled {
+			if cache, ok := opts.VectorBackend.(vector.QueryEmbeddingCache); ok {
+				resourceOpts.Search.QueryCache = cache
+				resourceOpts.Search.QueryCacheMaxPerTenant = opts.Cfg.VectorQueryCacheMaxPerTenant
+			}
+		}
+		if opts.Cfg.VectorRateLimitEnabled {
+			if rl, ok := opts.VectorBackend.(vector.RateLimiter); ok {
+				resourceOpts.Search.RateLimiter = rl
+				resourceOpts.Search.RateLimitPerTenant = opts.Cfg.VectorRateLimitPerTenant
+				resourceOpts.Search.RateLimitWindow = opts.Cfg.VectorRateLimitWindow
+			}
+		}
+	}
 	return nil
 }
 
@@ -288,6 +339,11 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 
 func withStorageMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.StorageMetrics = opts.StorageMetrics
+	return nil
+}
+
+func withVectorMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.VectorMetrics = opts.VectorMetrics
 	return nil
 }
 

@@ -14,10 +14,6 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
-jest.mock('../../api', () => ({
-  updatePluginSettings: jest.fn(),
-}));
-
 jest.mock('../../hooks/usePluginConfig', () => ({
   usePluginConfig: jest.fn(),
 }));

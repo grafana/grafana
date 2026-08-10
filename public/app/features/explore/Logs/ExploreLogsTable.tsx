@@ -178,7 +178,7 @@ export function ExploreLogsTable(props: Props) {
         eventBus={props.eventBus}
         onOptionsChange={onOptionsChange}
         onFieldConfigChange={handleFieldConfigChange}
-        replaceVariables={getTemplateSrv().replace}
+        replaceVariables={getTemplateSrv().replace.bind(getTemplateSrv())}
         onChangeTimeRange={props.onChangeTimeRange}
       />
     </PanelContextProvider>

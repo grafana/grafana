@@ -110,16 +110,17 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			t.Setenv("GF_AUTHORIZATION_CACHE_TTL", "0s")
 
 			// Provisioning requires dashboards/folders in unified storage (Mode4+).
-			var disableFlags []string
+			// modes here are always < Mode5, but keep the check for clarity.
+			provisioning := testinfra.FeatureEnabled
 			if mode < rest.Mode5 {
-				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
+				provisioning = testinfra.FeatureDisabled
 			}
 
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:     false,
-				DisableAnonymous:      true,
-				APIServerStorageType:  "unified",
-				DisableFeatureToggles: disableFlags,
+				AppModeProduction:    false,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				Provisioning:         provisioning,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"resourcepermissions.iam.grafana.app": {
 						DualWriterMode: mode,
@@ -513,6 +514,10 @@ func createTestFolder(t *testing.T, helper *apis.K8sTestHelper, user apis.User, 
 	if parentUID != "" {
 		metadata["annotations"] = map[string]interface{}{
 			utils.AnnoKeyFolder: parentUID,
+		}
+	} else {
+		metadata["annotations"] = map[string]interface{}{
+			utils.AnnoKeyGrantPermissions: utils.AnnoGrantPermissionsDefault,
 		}
 	}
 

@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -944,4 +945,61 @@ func getLabel(req *prompb.WriteRequest, labelName string) (string, bool) {
 	}
 
 	return "", false
+}
+
+func TestRecordingRuleNoRetryOnNonRetryableWrite(t *testing.T) {
+	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123), withQueryForHealth("ok"))
+	rule := gen.GenerateRef()
+	// FakeWriter only invokes WriteFunc when the target datasource UID is empty
+	// (it writes to the default remote-write target otherwise).
+	rule.Record.TargetDatasourceUID = ""
+
+	ruleStore := newFakeRulesStore()
+	reg := prometheus.NewPedanticRegistry()
+	sch := setupScheduler(t, ruleStore, nil, reg, nil, nil, nil)
+	// MaxAttempts: 3 means that, for a retryable write error, this rule would be
+	// attempted 3 times. We assert it is attempted exactly once.
+	sch.retryConfig = RetryConfig{
+		MaxAttempts:         3,
+		InitialRetryDelay:   1 * time.Second,
+		MaxRetryDelay:       1 * time.Second,
+		RandomizationFactor: 0,
+	}
+	// The write is rejected with a deterministic, non-retryable error, mirroring
+	// err-mimir-distributor-max-write-message-size on twiliouse1 recording rules.
+	sch.recordingWriter = writer.FakeWriter{
+		WriteFunc: func(_ context.Context, _ string, _ time.Time, _ data.Frames, _ int64, _ map[string]string) error {
+			return fmt.Errorf("%w: payload too large", writer.ErrNonRetryableWrite)
+		},
+	}
+	ruleStore.PutRule(context.Background(), rule)
+
+	process := ruleFactoryFromScheduler(sch).new(context.Background(), ruleWithFolder{rule: rule, folderTitle: ""})
+	rr := process.(*recordingRule)
+	evalDoneChan := make(chan time.Time, 1)
+	rr.evalAppliedHook = func(_ models.AlertRuleKey, t time.Time) {
+		evalDoneChan <- t
+	}
+
+	go func() {
+		_ = process.Run()
+	}()
+
+	process.Eval(&Evaluation{scheduledAt: time.Now(), rule: rule})
+
+	select {
+	case <-evalDoneChan:
+	case <-time.After(5 * time.Second):
+		t.Fatal("evaluation did not complete")
+	}
+
+	orgID := fmt.Sprint(rule.OrgID)
+	require.Equal(t, float64(1), testutil.ToFloat64(sch.metrics.EvalAttemptFailures.WithLabelValues(orgID)),
+		"a non-retryable write rejection must be attempted exactly once, not retried")
+	require.Equal(t, float64(1), testutil.ToFloat64(sch.metrics.EvalFailures.WithLabelValues(orgID)))
+
+	require.Equal(t, "error", rr.health.Load())
+	lastErr := rr.lastError.Load()
+	require.Error(t, lastErr)
+	require.ErrorIs(t, lastErr, writer.ErrNonRetryableWrite)
 }

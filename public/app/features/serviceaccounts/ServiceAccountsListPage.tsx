@@ -271,14 +271,14 @@ export const ServiceAccountsListPageUnconnected = ({
               isOpen={isRemoveModalOpen}
               body={
                 !!currentServiceAccount.tokens
-                  ? t(
-                      'serviceaccounts.service-accounts-list-page-unconnected.body-delete',
-                      'Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?',
-                      {
-                        serviceAccountName: currentServiceAccount.name,
-                        count: currentServiceAccount.tokens,
-                      }
-                    )
+                  ? t('serviceaccounts.service-accounts-list-page-unconnected.body-delete', '', {
+                      serviceAccountName: currentServiceAccount.name,
+                      count: currentServiceAccount.tokens,
+                      defaultValue_one:
+                        'Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?',
+                      defaultValue_other:
+                        'Are you sure you want to delete {{serviceAccountName}} and {{count}} accompanying tokens?',
+                    })
                   : t(
                       'serviceaccounts.service-accounts-list-page-unconnected.body-delete-with-tokens',
                       'Are you sure you want to delete {{serviceAccountName}}?',

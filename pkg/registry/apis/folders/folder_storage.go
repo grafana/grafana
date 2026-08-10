@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -153,10 +154,11 @@ func (s *folderStorage) Delete(ctx context.Context, name string, deleteValidatio
 func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID int64, user identity.Requester, uid, parentUID string) error {
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	isNested := parentUID != ""
-	//nolint:staticcheck // not yet migrated to OpenFeature
+	// treat both the legacy empty value and "general" as root so the
+	// editor/viewer default permissions are still granted on new root folders.
+	isNested := !folder.IsRootFolderUID(parentUID)
 	if isNested {
-		// No permissions on nested folders when kubernetesDashboards is enabled
+		// Creator permissions are only set on root-level folders.
 		return nil
 	}
 

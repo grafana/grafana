@@ -1,8 +1,7 @@
 import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
-import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
-import CodeMirror, { EditorView } from '@uiw/react-codemirror';
+import { EditorView, keymap } from '@codemirror/view';
+import CodeMirror from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -10,6 +9,7 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
+import { createCodeEditorTheme } from './theme';
 import {
   type CodeMirrorCompletionMode,
   type CodeMirrorCompletionSource,
@@ -17,6 +17,7 @@ import {
   type CodeMirrorExtension,
 } from './types';
 import { useLanguageExtension } from './useLanguageExtension';
+import { useShallowStable, useStableCallback } from './useStableProps';
 
 const getCompletionExtensions = (
   sources: readonly CodeMirrorCompletionSource[] | undefined,
@@ -85,26 +86,40 @@ const autocompleteSpaceKeymap = Prec.highest(
 export const CodeEditor = memo(function CodeEditor({
   value,
   language,
+  sqlDialect,
   height = '200px',
   onChange,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledby,
   completionSources,
   completionMode = 'merge',
-  extensions: additionalExtensions,
+  extensions: additionalExtensionsProp,
+  theme: themeOverride,
+  basicSetup: basicSetupProp,
+  indentWithTab = true,
+  readOnly = false,
+  lineWrapping = false,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
-  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language);
+  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
+  const editorTheme = useMemo(() => createCodeEditorTheme(theme), [theme]);
+
+  // A new identity on any of these reconfigures the whole editor — see useStableProps.
+  const additionalExtensions = useShallowStable(additionalExtensionsProp);
+  const sources = useShallowStable(completionSources);
+  const basicSetup = useShallowStable(basicSetupProp);
+  const handleChange = useStableCallback(onChange);
 
   const extensions = useMemo(
     () => [
       autocompleteTabKeymap,
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
-      ...getCompletionExtensions(completionSources, completionMode),
+      ...getCompletionExtensions(sources, completionMode),
+      ...(lineWrapping ? [EditorView.lineWrapping] : []),
       ...(additionalExtensions ?? []),
     ],
-    [ariaLabel, ariaLabelledby, languageExtension, completionSources, completionMode, additionalExtensions]
+    [ariaLabel, ariaLabelledby, languageExtension, sources, completionMode, lineWrapping, additionalExtensions]
   );
   return (
     <>
@@ -117,11 +132,14 @@ export const CodeEditor = memo(function CodeEditor({
         </Alert>
       )}
       <CodeMirror
-        theme={theme.isDark ? vscodeDark : vscodeLight}
+        theme={themeOverride ?? editorTheme}
         value={value}
         height={height}
         extensions={extensions}
-        onChange={onChange}
+        onChange={handleChange}
+        basicSetup={basicSetup}
+        indentWithTab={indentWithTab}
+        readOnly={readOnly}
       />
     </>
   );

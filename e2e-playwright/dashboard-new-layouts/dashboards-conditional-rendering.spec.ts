@@ -1,10 +1,11 @@
-import { type Page } from 'playwright-core';
+import { type Page } from '@playwright/test';
 
-import { test, expect, type E2ESelectorGroups, type DashboardPage } from '@grafana/plugin-e2e';
+import { test, expect, type Components, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import V2DashboardWithTabs from '../dashboards/V2DashWithTabs.json';
 
-import { fillVariableValue, importTestDashboard, saveDashboard } from './utils';
+import { Controls, Sidebar, Tabs } from './page-objects';
+import { fillVariableValue, importTestDashboard, saveDashboardAndCloseToast } from './utils';
 
 test.use({
   featureToggles: {
@@ -18,291 +19,281 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can hide tab according to variable value', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - hide tab by variable');
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
+    test.describe('Variable', () => {
+      test('can hide tab according to variable value', async ({ dashboardPage, selectors, page, components }) => {
+        const { controls, sidebar, tabs } = await importDashboardWithTabs(
+          page,
+          dashboardPage,
+          selectors,
+          components,
+          'Tab visibility - hide tab by variable'
+        );
 
-      await addConditionalVariableRule(dashboardPage, selectors, page, 'hideByVariable', 'Hide', '1');
+        await controls.enterEditMode();
+        await tabs.select('Tab 1');
 
-      await switchTabAndSave(dashboardPage, selectors, page);
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('hide');
+        await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
 
-      // set variable value to 1
-      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '1');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
+        await switchTabAndSave(page, controls, tabs);
 
-      // check that tab becomes visible when variable value is changed
-      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
-    });
-    test('can hide tab according to time range', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - hide tab by time range');
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
+        await fillVariableValue(page, controls, 'hideByVariable', '2');
+        await expect(tabs.getTitle('Tab 1')).toBeVisible();
 
-      await addConditionalTimeRangeRule(dashboardPage, selectors, page, 'Hide', '7 days');
+        await fillVariableValue(page, controls, 'hideByVariable', '1');
+        await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
+      });
 
-      await switchTabAndSave(dashboardPage, selectors, page);
+      test('can show tab according to variable value', async ({ dashboardPage, selectors, page, components }) => {
+        const { controls, sidebar, tabs } = await importDashboardWithTabs(
+          page,
+          dashboardPage,
+          selectors,
+          components,
+          'Tab visibility - show tab by variable'
+        );
 
-      // select time range less than 7 days
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 12 hours');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
+        await controls.enterEditMode();
+        await tabs.select('Tab 1');
 
-      // check that tab is visible when variable value is changed
-      await dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.openButton).click();
-      await page.getByText('Last 30 days').click();
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('show');
+        await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '2');
 
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
-    });
-    test('can show tab according to variable value', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - show tab by variable');
+        await switchTabAndSave(page, controls, tabs);
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
+        await fillVariableValue(page, controls, 'showByVariable', '1');
+        await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
 
-      await addConditionalVariableRule(dashboardPage, selectors, page, 'showByVariable', 'Show', '2');
-
-      await switchTabAndSave(dashboardPage, selectors, page);
-
-      // set var value to 1
-      await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '1');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
-
-      // check that tab is visible when variable value is changed
-      await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '2');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
-    });
-    test('can show tab according to time range', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - show tab by time range');
-
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
-
-      await addConditionalTimeRangeRule(dashboardPage, selectors, page, 'Show', '7 days');
-
-      await switchTabAndSave(dashboardPage, selectors, page);
-
-      // select time range more than 7 days and check tab is not visible
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 30 days');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
-
-      // check that tab is visible when time range changes
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 5 minutes');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
-    });
-    test('should hide tab when all conditional rendering rules are met', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - hide tab when all rules are met');
-
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
-
-      await addConditionalVariableRule(dashboardPage, selectors, page, 'hideByVariable', 'Hide', '1');
-
-      await addConditionalTimeRangeRule(dashboardPage, selectors, page, 'Hide', '7 days');
-
-      // add match all rule
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.RadioButton.container)
-        .getByRole('radio', { name: 'Match all' })
-        .click({ force: true });
-
-      await switchTabAndSave(dashboardPage, selectors, page);
-
-      // make sure tab is visible when no conditions are met
-      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
-
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 30 days');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
-
-      // set var value to 1, which satisfies the first rule condition
-      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '1');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
-
-      // select time range less than 7 days, which satisfies the second rule condition
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 12 hours');
-
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
-
-      // change variable value to make tab visible
-      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
-
-      // visible because not all conditions are met
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
-    });
-    test('should hide tab when at least one conditional rendering rule is met', async ({
-      dashboardPage,
-      selectors,
-      page,
-    }) => {
-      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - hide tab when one rule is met');
-
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
-
-      await addConditionalVariableRule(dashboardPage, selectors, page, 'hideByVariable', 'Hide', '1');
-      await addConditionalTimeRangeRule(dashboardPage, selectors, page, 'Hide', '7 days');
-
-      // add 'match any' rule
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.RadioButton.container)
-        .getByRole('radio', { name: 'Match any' })
-        .click({ force: true });
-
-      await switchTabAndSave(dashboardPage, selectors, page);
-
-      // make sure tab is visible when no conditions are met
-      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 30 days');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
-
-      // make sure variable value is set to 1, which satisfies the 'any' rule condition
-      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '1');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
-
-      // reset variable value to make tab visible again
-      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
-
-      // select time range less than 7 days, which should hide the tab
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 6 hours');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
+        await fillVariableValue(page, controls, 'showByVariable', '2');
+        await expect(tabs.getTitle('Tab 1')).toBeVisible();
+      });
     });
 
-    test('should show tab when all conditional rendering rules are met', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - show tab when all rules are met');
+    test.describe('Time range', () => {
+      test('can hide tab according to time range', async ({ dashboardPage, selectors, page, components }) => {
+        const { controls, sidebar, tabs } = await importDashboardWithTabs(
+          page,
+          dashboardPage,
+          selectors,
+          components,
+          'Tab visibility - hide tab by time range'
+        );
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
+        await controls.enterEditMode();
+        await tabs.select('Tab 1');
 
-      await addConditionalVariableRule(dashboardPage, selectors, page, 'showByVariable', 'Show', '1');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('hide');
+        await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
 
-      // add show by time range
-      await addConditionalTimeRangeRule(dashboardPage, selectors, page, 'Show', '7 days');
+        await switchTabAndSave(page, controls, tabs);
 
-      // add match all rule
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.RadioButton.container)
-        .getByRole('radio', { name: 'Match all' })
-        .click({ force: true });
+        await controls.timeRange.selectPreset('Last 12 hours');
+        await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
 
-      await switchTabAndSave(dashboardPage, selectors, page);
+        await controls.timeRange.selectPreset('Last 30 days');
+        await expect(tabs.getTitle('Tab 1')).toBeVisible();
+      });
 
-      // change conditions to hide the variable
-      await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '2');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
+      test('can show tab according to time range', async ({ dashboardPage, selectors, page, components }) => {
+        const { controls, sidebar, tabs } = await importDashboardWithTabs(
+          page,
+          dashboardPage,
+          selectors,
+          components,
+          'Tab visibility - show tab by time range'
+        );
 
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 30 days');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
+        await controls.enterEditMode();
+        await tabs.select('Tab 1');
 
-      // change variable value that satisfies the rule condition
-      await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '1');
-      // doesn't satisfy both conditions
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('show');
+        await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
 
-      // select time range less than 7 days, which should show the tab
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 5 minutes');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
+        await switchTabAndSave(page, controls, tabs);
+
+        await controls.timeRange.selectPreset('Last 30 days');
+        await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
+
+        await controls.timeRange.selectPreset('Last 5 minutes');
+        await expect(tabs.getTitle('Tab 1')).toBeVisible();
+      });
     });
-    test('should show tab when at least one conditional rendering rule is met', async ({
-      dashboardPage,
-      selectors,
-      page,
-    }) => {
-      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - show tab when at least one rule met');
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
+    test.describe('Match rules', () => {
+      test('should hide tab when all conditional rendering rules are met', async ({
+        dashboardPage,
+        selectors,
+        page,
+        components,
+      }) => {
+        const { controls, sidebar, tabs } = await importDashboardWithTabs(
+          page,
+          dashboardPage,
+          selectors,
+          components,
+          'Tab visibility - hide tab when all rules are met'
+        );
 
-      await addConditionalVariableRule(dashboardPage, selectors, page, 'showByVariable', 'Show', '2');
-      await addConditionalTimeRangeRule(dashboardPage, selectors, page, 'Show', '7 days');
+        await controls.enterEditMode();
+        await tabs.select('Tab 1');
 
-      // add match any rule
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.RadioButton.container)
-        .getByRole('radio', { name: 'Match any' })
-        .click({ force: true });
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('hide');
+        await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
+        await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectMatchType('all');
 
-      await switchTabAndSave(dashboardPage, selectors, page);
+        await switchTabAndSave(page, controls, tabs);
 
-      // make sure no conditions are met and tab is hidden
-      await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '1');
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 30 days');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
+        await fillVariableValue(page, controls, 'hideByVariable', '2');
+        await controls.timeRange.selectPreset('Last 30 days');
+        await expect(tabs.getTitle('Tab 1')).toBeVisible();
 
-      // select a variable value that shows the tab
-      await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '2');
-      // visible because at least one condition is met
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
+        await fillVariableValue(page, controls, 'hideByVariable', '1');
+        await expect(tabs.getTitle('Tab 1')).toBeVisible();
 
-      // reset to hide and check that changing just the time range also makes the tab visible
-      await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '1');
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 5 minutes');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
+        await controls.timeRange.selectPreset('Last 12 hours');
+        await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
+
+        await fillVariableValue(page, controls, 'hideByVariable', '2');
+        await expect(tabs.getTitle('Tab 1')).toBeVisible();
+      });
+
+      test('should hide tab when at least one conditional rendering rule is met', async ({
+        dashboardPage,
+        selectors,
+        page,
+        components,
+      }) => {
+        const { controls, sidebar, tabs } = await importDashboardWithTabs(
+          page,
+          dashboardPage,
+          selectors,
+          components,
+          'Tab visibility - hide tab when one rule is met'
+        );
+
+        await controls.enterEditMode();
+        await tabs.select('Tab 1');
+
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('hide');
+        await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
+        await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectMatchType('any');
+
+        await switchTabAndSave(page, controls, tabs);
+
+        await fillVariableValue(page, controls, 'hideByVariable', '2');
+        await controls.timeRange.selectPreset('Last 30 days');
+        await expect(tabs.getTitle('Tab 1')).toBeVisible();
+
+        await fillVariableValue(page, controls, 'hideByVariable', '1');
+        await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
+
+        await fillVariableValue(page, controls, 'hideByVariable', '2');
+        await expect(tabs.getTitle('Tab 1')).toBeVisible();
+
+        await controls.timeRange.selectPreset('Last 6 hours');
+        await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
+      });
+
+      test('should show tab when all conditional rendering rules are met', async ({
+        dashboardPage,
+        selectors,
+        page,
+        components,
+      }) => {
+        const { controls, sidebar, tabs } = await importDashboardWithTabs(
+          page,
+          dashboardPage,
+          selectors,
+          components,
+          'Tab visibility - show tab when all rules are met'
+        );
+
+        await controls.enterEditMode();
+        await tabs.select('Tab 1');
+
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('show');
+        await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '1');
+        await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectMatchType('all');
+
+        await switchTabAndSave(page, controls, tabs);
+
+        await fillVariableValue(page, controls, 'showByVariable', '2');
+        await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
+
+        await controls.timeRange.selectPreset('Last 30 days');
+        await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
+
+        await fillVariableValue(page, controls, 'showByVariable', '1');
+        await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
+
+        await controls.timeRange.selectPreset('Last 5 minutes');
+        await expect(tabs.getTitle('Tab 1')).toBeVisible();
+      });
+
+      test('should show tab when at least one conditional rendering rule is met', async ({
+        dashboardPage,
+        selectors,
+        page,
+        components,
+      }) => {
+        const { controls, sidebar, tabs } = await importDashboardWithTabs(
+          page,
+          dashboardPage,
+          selectors,
+          components,
+          'Tab visibility - show tab when at least one rule met'
+        );
+
+        await controls.enterEditMode();
+        await tabs.select('Tab 1');
+
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('show');
+        await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '2');
+        await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectMatchType('any');
+
+        await switchTabAndSave(page, controls, tabs);
+
+        await fillVariableValue(page, controls, 'showByVariable', '1');
+        await controls.timeRange.selectPreset('Last 30 days');
+        await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
+
+        await fillVariableValue(page, controls, 'showByVariable', '2');
+        await expect(tabs.getTitle('Tab 1')).toBeVisible();
+
+        await fillVariableValue(page, controls, 'showByVariable', '1');
+        await controls.timeRange.selectPreset('Last 5 minutes');
+        await expect(tabs.getTitle('Tab 1')).toBeVisible();
+      });
     });
   }
 );
 
-async function addConditionalVariableRule(
+async function importDashboardWithTabs(
+  page: Page,
   dashboardPage: DashboardPage,
   selectors: E2ESelectorGroups,
-  page: Page,
-  variableName: string,
-  visibility: 'Hide' | 'Show',
-  value: string
+  components: Components,
+  title: string
 ) {
-  await dashboardPage
-    .getByGrafanaSelector(selectors.components.RadioButton.container)
-    .getByRole('radio', { name: visibility })
-    .click({ force: true });
-  await dashboardPage.getByGrafanaSelector(selectors.components.ValuePicker.button('Add rule')).click();
-  await page.getByRole('option', { name: 'Template variable' }).click();
-
-  await dashboardPage
-    .getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.variableSelection)
-    .click();
-  await page.getByRole('option', { name: variableName }).click();
-
-  const valueInput = dashboardPage.getByGrafanaSelector(
-    selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.valueInput
-  );
-  await valueInput.fill(value);
-}
-
-async function addConditionalTimeRangeRule(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
-  page: Page,
-  visibility: 'Hide' | 'Show',
-  range: string
-) {
-  await dashboardPage
-    .getByGrafanaSelector(selectors.components.RadioButton.container)
-    .getByRole('radio', { name: visibility })
-    .click({ force: true });
-  await dashboardPage.getByGrafanaSelector(selectors.components.ValuePicker.button('Add rule')).click();
-  await page.getByRole('option', { name: 'Time range less than' }).click();
-
-  await dashboardPage
-    .getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.conditionalRendering.timeRange.select)
-    .click();
-  await page.getByRole('option', { name: range }).click();
-}
-
-async function selectTimeRange(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, page: Page, range: string) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.openButton).click();
-  await page.getByText(range).click();
-}
-
-async function switchTabAndSave(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, page: Page) {
-  // change active tab to tab 2 because we show the tab upon dashboard load if it's active, even if it's hidden by conditional rendering rules
-  // see TabItemRenderer.tsx
-  await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 2')).click();
-  await saveDashboard(dashboardPage, page, selectors);
-  await page.reload();
-}
-
-const importTestDashboardWithTabs = async (page: Page, selectors: E2ESelectorGroups, title: string) => {
   await importTestDashboard(page, selectors, title, JSON.stringify(V2DashboardWithTabs), {
     requiresDataSourceSelection: false,
   });
-};
+
+  const args = { page, dashboardPage, selectors, components };
+  return {
+    controls: new Controls(args),
+    sidebar: new Sidebar(args),
+    tabs: new Tabs(args),
+  };
+}
+
+async function switchTabAndSave(page: Page, controls: Controls, tabs: Tabs) {
+  // change active tab to tab 2 because we show the tab upon dashboard load if it's active, even if it's hidden by conditional rendering rules (see TabItemRenderer.tsx)
+  await tabs.select('Tab 2');
+  await saveDashboardAndCloseToast(page, controls);
+  await page.reload();
+}

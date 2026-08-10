@@ -134,7 +134,7 @@ export const getLayoutType = (obj?: SceneObject): 'row' | 'tab' | 'dashboard' =>
   return 'dashboard';
 };
 
-export const variableName = (type: string) => `variable_type_${type}_count`;
+const variableName = (type: string) => `variable_type_${type}_count`;
 const panelName = (type: string) => `panel_type_${type}_count`;
 
 const isAdhocVar: (v: VariableKind) => v is AdhocVariableKind = (v) => v.kind === 'AdhocVariable';
@@ -144,6 +144,6 @@ const isQueryVar: (v: VariableKind) => v is QueryVariableKind = (v) => v.kind ==
 const getDatasourceFromVar = (v: VariableKind) =>
   isAdhocVar(v) ? v.group : isDatasourceVar(v) ? v.spec.pluginId : isQueryVar(v) ? v.spec?.query.group : '';
 
-export function isCustomVariable(variable: VariableKind): variable is CustomVariableKind {
+function isCustomVariable(variable: VariableKind): variable is CustomVariableKind {
   return variable.kind === 'CustomVariable';
 }

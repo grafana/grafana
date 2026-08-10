@@ -1,11 +1,15 @@
 import { type Meta, type StoryFn } from '@storybook/react-webpack5';
 
 import { RangeSlider } from './RangeSlider';
+import mdx from './RangeSlider.mdx';
 
 const meta: Meta<typeof RangeSlider> = {
   title: 'Inputs/RangeSlider',
   component: RangeSlider,
   parameters: {
+    docs: {
+      page: mdx,
+    },
     controls: {
       exclude: ['tooltipAlwaysVisible'],
     },

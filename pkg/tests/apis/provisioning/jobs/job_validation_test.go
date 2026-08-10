@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -16,18 +15,27 @@ import (
 
 func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	// Create a test repository first
 	const repo = "job-validation-test-repo"
 	testRepo := common.TestRepo{
-		Name:               repo,
-		SyncTarget:         "folder",
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1, // folder sync creates a folder
+		Name:       repo,
+		SyncTarget: "folder",
+		Copies:     map[string]string{},
 	}
 	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireRepoDashboardCount(t, repo, 0)
+	helper.RequireRepoFolderCount(t, repo, 1)
+
+	// Build a resource list that exceeds the selective-export cap (100).
+	overLimitResources := make([]map[string]interface{}, 101)
+	for i := range overLimitResources {
+		overLimitResources[i] = map[string]interface{}{
+			"name": fmt.Sprintf("dash-%d", i),
+			"kind": "Dashboard",
+		}
+	}
 
 	tests := []struct {
 		name        string
@@ -152,20 +160,22 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 			expectedErr: "spec.migrate: Required value: migrate options required for migrate action",
 		},
 		{
-			name: "push job with non-Dashboard resource kind",
+			// Playlist is declared but disabled in the default config, so it is not part of
+			// the active supported set and must be rejected for export.
+			name: "push job with disabled resource kind",
 			jobSpec: map[string]interface{}{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
 				"push": map[string]interface{}{
 					"resources": []map[string]interface{}{
-						{"name": "some-folder", "kind": "Folder"},
+						{"name": "playlist-1", "kind": "Playlist"},
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[0].kind: Invalid value: \"Folder\": only Dashboard is supported for export",
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"Playlist\": kind is not supported for export",
 		},
 		{
-			name: "push job with non-dashboard resource group",
+			name: "push job with wrong group for supported kind",
 			jobSpec: map[string]interface{}{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
@@ -175,7 +185,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[0].group: Invalid value: \"folder.grafana.app\": only dashboard.grafana.app is supported for export",
+			expectedErr: "spec.push.resources[0].group: Invalid value: \"folder.grafana.app\": group \"folder.grafana.app\" is not supported for kind Dashboard",
 		},
 		{
 			name: "push job with resource missing name",
@@ -224,13 +234,14 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 				"push": map[string]interface{}{
 					"resources": []map[string]interface{}{
 						{"name": "dash-1", "kind": "Dashboard"},
-						{"name": "some-folder", "kind": "Folder"},
+						{"name": "playlist-1", "kind": "Playlist"},
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[1].kind: Invalid value: \"Folder\": only Dashboard is supported for export",
+			expectedErr: "spec.push.resources[1].kind: Invalid value: \"Playlist\": kind is not supported for export",
 		},
 		{
+			// Kind matching is case-sensitive: "dashboard" does not match the supported "Dashboard".
 			name: "push job with lowercase dashboard kind",
 			jobSpec: map[string]interface{}{
 				"action":     string(provisioning.JobActionPush),
@@ -241,9 +252,10 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[0].kind: Invalid value: \"dashboard\": only Dashboard is supported for export",
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"dashboard\": kind is not supported for export",
 		},
 		{
+			// LibraryPanel is declared but disabled in the default config.
 			name: "push job with LibraryPanel kind",
 			jobSpec: map[string]interface{}{
 				"action":     string(provisioning.JobActionPush),
@@ -254,7 +266,29 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[0].kind: Invalid value: \"LibraryPanel\": only Dashboard is supported for export",
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"LibraryPanel\": kind is not supported for export",
+		},
+		{
+			name: "push job exceeding the selective export resource limit",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": overLimitResources,
+				},
+			},
+			expectedErr: "spec.push.resources: Too many: 101: must have at most 100 items",
+		},
+		{
+			name: "migrate job exceeding the selective export resource limit",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionMigrate),
+				"repository": repo,
+				"migrate": map[string]interface{}{
+					"resources": overLimitResources,
+				},
+			},
+			expectedErr: "spec.migrate.resources: Too many: 101: must have at most 100 items",
 		},
 	}
 
@@ -274,7 +308,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 			}
 
 			// Try to create the job - should fail with validation error
-			_, err := helper.Jobs.Resource.Create(ctx, jobObj, metav1.CreateOptions{})
+			_, err := helper.Jobs.Resource.Create(t.Context(), jobObj, metav1.CreateOptions{})
 			require.Error(t, err, "expected validation error for invalid job spec")
 
 			// Verify it's a validation error with correct status code

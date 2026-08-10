@@ -1,6 +1,8 @@
+import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
 
 import {
   type AbsoluteTimeRange,
@@ -8,15 +10,19 @@ import {
   type EventBus,
   EventBusSrv,
   type FieldConfigSource,
+  FieldType,
   LogSortOrderChangeEvent,
   LogsSortOrder,
   type ScopedVars,
+  toDataFrame,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { defaultTableOptions } from '@grafana/schema';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME } from 'app/features/logs/logsFrame';
+import { DownloadFormat, downloadLogs } from 'app/features/logs/utils';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
+import { configureStore } from 'app/store/configureStore';
 
 import { LOG_LINE_BODY_FIELD_NAME } from '../../../features/logs/components/fieldSelector/logFields';
 
@@ -25,8 +31,9 @@ import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
 
-jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+jest.mock('app/features/logs/utils', () => ({
+  ...jest.requireActual('app/features/logs/utils'),
+  downloadLogs: jest.fn(),
 }));
 
 const fieldConfig: FieldConfigSource = {
@@ -75,6 +82,7 @@ const setUp = (
   app = CoreApp.Dashboard,
   panelContext?: Partial<PanelContext>
 ) => {
+  const store = configureStore();
   return render(
     <PanelContextProvider
       value={{
@@ -116,7 +124,14 @@ const setUp = (
         }}
         {...props}
       />
-    </PanelContextProvider>
+    </PanelContextProvider>,
+    {
+      wrapper: ({ children }) => (
+        <Provider store={store}>
+          <OpenFeatureTestProvider>{children}</OpenFeatureTestProvider>
+        </Provider>
+      ),
+    }
   );
 };
 
@@ -190,6 +205,37 @@ describe('LogsTable', () => {
           order: LogsSortOrder.Ascending,
         })
       );
+    });
+
+    it('downloads from the raw frame when displayed fields exclude the log body', async () => {
+      // Regression: organizeFields removes body from data.series for display. Download must use the
+      // raw frame — dataFrameToLogsModel needs body — or the export is empty.
+      const downloadLogsMock = jest.mocked(downloadLogs);
+      downloadLogsMock.mockClear();
+
+      const { container } = setUp(undefined, {
+        showControls: true,
+        allowDownload: true,
+        displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'level'],
+      });
+
+      await waitFor(() => expect(screen.getByLabelText('Download logs')).toBeInTheDocument());
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(Array.from(headers).map((h) => h.textContent)).toEqual(['timestamp', 'level']);
+
+      await userEvent.click(screen.getByLabelText('Download logs'));
+      await userEvent.click(await screen.findByText('json'));
+
+      expect(downloadLogsMock).toHaveBeenCalledTimes(1);
+      expect(downloadLogsMock).toHaveBeenCalledWith(DownloadFormat.Json, expect.any(Array), expect.anything(), [
+        LOGS_DATAPLANE_TIMESTAMP_NAME,
+        'level',
+      ]);
+
+      const rows = downloadLogsMock.mock.calls[0][1];
+      expect(rows.map((row) => row.entry)).toEqual(['log 1', 'log 2']);
+      expect(rows[0].dataFrame.fields.some((field) => field.name === LOGS_DATAPLANE_BODY_NAME)).toBe(true);
     });
   });
 
@@ -368,6 +414,22 @@ describe('LogsTable', () => {
         value: 'info',
         operator: '!=',
       });
+    });
+  });
+
+  describe('Missing time field', () => {
+    it('shows "Data is missing a time field" when frames have rows but no time field', async () => {
+      setUp({
+        data: getPanelData({
+          series: [
+            toDataFrame({
+              fields: [{ name: LOGS_DATAPLANE_BODY_NAME, type: FieldType.string, values: ['log 1', 'log 2'] }],
+            }),
+          ],
+        }),
+      });
+
+      expect(await screen.findByText('Data is missing a time field')).toBeInTheDocument();
     });
   });
 });

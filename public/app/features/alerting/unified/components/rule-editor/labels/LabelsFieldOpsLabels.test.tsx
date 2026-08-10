@@ -2,8 +2,8 @@ import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, waitFor, within } from 'test/test-utils';
 
+import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 
 import { mockAlertRuleApi, setupMswServer } from '../../../mockApi';
 import { getGrafanaRule } from '../../../mocks';
@@ -67,7 +67,7 @@ describe('LabelsField with ops labels', () => {
 
   afterEach(() => {
     server.resetHandlers();
-    clearPluginSettingsCache();
+    invalidateCachedPromisesCache();
   });
 
   async function renderLabelsWithOpsLabels(labels = existingOpsLabels) {

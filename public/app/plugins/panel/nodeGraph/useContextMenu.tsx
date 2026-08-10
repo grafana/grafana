@@ -260,7 +260,7 @@ function EdgeHeader(props: { edge: EdgeDatumLayout; edges: DataFrame }) {
   );
 }
 
-export const getLabelStyles = (theme: GrafanaTheme2) => {
+const getLabelStyles = (theme: GrafanaTheme2) => {
   return {
     label: css({
       label: 'Label',

@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.4.5, for Linux (x86_64)
 --
--- Host: localhost    Database: hg_dump
+-- Host: localhost    Database: grafana
 -- ------------------------------------------------------
 -- Server version	8.4.5
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
@@ -840,7 +840,27 @@ INSERT INTO `migration_log` (`migration_id`, `sql`, `success`, `error`, `timesta
   ('create table dashboard_public_email_share','CREATE TABLE IF NOT EXISTS `dashboard_public_email_share` (\n`uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci PRIMARY KEY NOT NULL\n, `public_dashboard_uid` VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `recipient` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `type` VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT \'email\'\n, `created_at` DATETIME NOT NULL\n, `updated_at` DATETIME NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
   ('create table dashboard_public_magic_link','CREATE TABLE IF NOT EXISTS `dashboard_public_magic_link` (\n`uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci PRIMARY KEY NOT NULL\n, `token_uuid` VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `public_dashboard_uid` VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `email` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `created_at` DATETIME NOT NULL\n, `updated_at` DATETIME NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
   ('create table dashboard_public_session','CREATE TABLE IF NOT EXISTS `dashboard_public_session` (\n`uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci PRIMARY KEY NOT NULL\n, `cookie_uuid` VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `public_dashboard_uid` VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `email` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL\n, `created_at` DATETIME NOT NULL\n, `updated_at` DATETIME NOT NULL\n) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;',1,'','2022-01-01 00:00:00'),
-  ('add last_seen_at column','alter table `dashboard_public_session` ADD COLUMN `last_seen_at` DATETIME NULL ',1,'','2022-01-01 00:00:00');
+  ('add last_seen_at column','alter table `dashboard_public_session` ADD COLUMN `last_seen_at` DATETIME NULL ',1,'','2022-01-01 00:00:00'),
+  ('Increase precision of team.updated to DATETIME(3)','ALTER TABLE team MODIFY updated DATETIME(3) NOT NULL;',1,'','2022-01-01 00:00:00'),
+  ('Add user_uid to user_auth','alter table `user_auth` ADD COLUMN `user_uid` VARCHAR(190) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
+  ('Populate user_uid in user_auth from user table','\n			UPDATE user_auth\n			INNER JOIN user ON user_auth.user_id = user.id\n			SET user_auth.user_uid = user.uid\n			WHERE user_auth.user_uid IS NULL\n		',1,'','2022-01-01 00:00:00'),
+  ('add index short_url.org_id-id','CREATE INDEX `IDX_short_url_org_id_id` ON `short_url` (`org_id`,`id`);',1,'','2022-01-01 00:00:00'),
+  ('add column external_alertmanager_uid in ngalert_configuration','alter table `ngalert_configuration` ADD COLUMN `external_alertmanager_uid` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
+  ('add permission role_id scope index','CREATE INDEX `IDX_permission_role_id_scope` ON `permission` (`role_id`,`scope`);',1,'','2022-01-01 00:00:00'),
+  ('alter permission.kind to length 80','ALTER TABLE permission MODIFY kind VARCHAR(80);',1,'','2022-01-01 00:00:00'),
+  ('add datasource_type column to permission table','alter table `permission` ADD COLUMN `datasource_type` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
+  ('populate datasource_type in permission table for uid-scoped datasource permissions','code migration',1,'','2022-01-01 00:00:00'),
+  ('replacing annotations:* scope with annotations:type:organization scope','code migration',1,'','2022-01-01 00:00:00'),
+  ('adding service account action set permissions','code migration',1,'','2022-01-01 00:00:00'),
+  ('add evaluation_duration_ns column to alert_instance table','alter table `alert_instance` ADD COLUMN `evaluation_duration_ns` BIGINT(20) NULL ',1,'','2022-01-01 00:00:00'),
+  ('add last_error column to alert_instance table','alter table `alert_instance` ADD COLUMN `last_error` VARCHAR(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
+  ('add last_result column to alert_instance table','alter table `alert_instance` ADD COLUMN `last_result` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
+  ('add \'alert.notifications.receivers.test:create\' to managed roles','code migration',1,'','2022-01-01 00:00:00'),
+  ('add folder_fullpath column to alert_rule','alter table `alert_rule` ADD COLUMN `folder_fullpath` VARCHAR(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
+  ('add index on folder_fullpath in alert_rule','CREATE INDEX `IDX_alert_rule_org_id_folder_fullpath` ON `alert_rule` (`org_id`,`folder_fullpath`);',1,'','2022-01-01 00:00:00'),
+  ('add alert_routing column to alert_rule table','alter table `alert_rule` ADD COLUMN `alert_routing_policy` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
+  ('add alert_routing column to alert_rule_version table','alter table `alert_rule_version` ADD COLUMN `alert_routing_policy` VARCHAR(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL ',1,'','2022-01-01 00:00:00'),
+  ('grant basic roles access to default notification policy','code migration',1,'','2022-01-01 00:00:00');
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

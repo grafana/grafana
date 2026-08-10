@@ -12,7 +12,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "13.1.0-pre";
+export const pluginVersion = "13.2.0-pre";
 
 /**
  * @deprecated - use common in /packages/grafana-schema/src/common/table.cue instead i.e. `import { TableOptions } from '@grafana/schema';`
@@ -44,6 +44,10 @@ export interface Options {
    * limits the maximum height of a row, if text wrapping or dynamic height is enabled
    */
   maxRowHeight?: number;
+  /**
+   * When pagination is enabled, sets a fixed number of rows per page. When unset, the page size is derived from the panel height.
+   */
+  pageSize?: number;
   /**
    * Controls whether the panel should show the header
    */

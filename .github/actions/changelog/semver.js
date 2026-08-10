@@ -16,7 +16,7 @@ export function semverParse(tag) {
 
 // semverCompare takes two parsed semver tags and comparest them more or less
 // according to the semver specs
-export function semverCompare(a, b) {
+function semverCompare(a, b) {
   for (let i = 0; i < 3; i++) {
     if (a[i] !== b[i]) {
       return a[i] < b[i] ? 1 : -1;

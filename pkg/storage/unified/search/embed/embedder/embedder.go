@@ -7,7 +7,17 @@ package embedder
 
 import (
 	"context"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder")
 
 // VectorType is dense or sparse. We only do dense in this package.
 type VectorType string
@@ -62,6 +72,8 @@ type EmbedTextInput struct {
 // EmbedTextOutput holds embeddings 1:1 with EmbedTextInput.Texts.
 type EmbedTextOutput struct {
 	Embeddings []Embedding
+	// InputTokens is the provider-reported input token total across chunks; zero when unreported. Feeds vector_storage_embed_tokens_total.
+	InputTokens int
 }
 
 // TextEmbedder is the provider-facing interface — a single method that
@@ -95,6 +107,48 @@ type Embedder struct {
 // provider doesn't already.
 func (e Embedder) ShouldNormalize() bool {
 	return e.VectorType == VectorTypeDense && e.Metric == CosineDistance && !e.Normalized
+}
+
+// Instrument wraps a TextEmbedder with an OTel span plus optional latency and token-spend observations; duration and tokensTotal may each be nil.
+func Instrument(inner TextEmbedder, model string, duration *prometheus.HistogramVec, tokensTotal *prometheus.CounterVec) TextEmbedder {
+	return &instrumentedTextEmbedder{inner: inner, model: model, duration: duration, tokensTotal: tokensTotal}
+}
+
+type instrumentedTextEmbedder struct {
+	inner       TextEmbedder
+	model       string
+	duration    *prometheus.HistogramVec
+	tokensTotal *prometheus.CounterVec
+}
+
+func (i *instrumentedTextEmbedder) EmbedText(ctx context.Context, input EmbedTextInput) (EmbedTextOutput, error) {
+	ctx, span := tracer.Start(ctx, "unified.embedder.EmbedText")
+	defer span.End()
+	span.SetAttributes(
+		attribute.String("model", i.model),
+		attribute.String("task", string(input.Task)),
+		attribute.Int("input_count", len(input.Texts)),
+	)
+
+	start := time.Now()
+	out, err := i.inner.EmbedText(ctx, input)
+	status := "success"
+	if err != nil {
+		status = "error"
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+	if i.duration != nil {
+		metricutil.ObserveWithExemplar(ctx,
+			i.duration.WithLabelValues(i.model, string(input.Task), status),
+			time.Since(start).Seconds(),
+		)
+	}
+	// Counted even on error: a failed batch's successful chunks were still billed.
+	if i.tokensTotal != nil && out.InputTokens > 0 {
+		i.tokensTotal.WithLabelValues(i.model, string(input.Task)).Add(float64(out.InputTokens))
+	}
+	return out, err
 }
 
 // Registry is a name → Embedder lookup, populated at wiring time. Multiple

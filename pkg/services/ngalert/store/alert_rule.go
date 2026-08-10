@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -172,15 +171,15 @@ func (st DBstore) IncreaseVersionForAllRulesInNamespaces(ctx context.Context, or
 	return keys, err
 }
 
-// getFolderFullpaths fetches fullpaths for multiple folders using a background user.
+// getFolderFullpaths fetches fullpaths for multiple folders using the Grafana service identity.
 // Returns a map of folder UID -> fullpath, or nil if FolderService is not configured.
 func (st DBstore) getFolderFullpaths(ctx context.Context, orgID int64, folderUIDs []string) (map[string]string, error) {
 	if st.FolderService == nil {
 		return nil, fmt.Errorf("folder service is not configured")
 	}
-	bgUser := accesscontrol.BackgroundUser("ngalert", orgID, org.RoleAdmin, []accesscontrol.Permission{
-		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll},
-	})
+	// Use the Grafana service identity so the call is authenticated as the system when the
+	// folder service is a (multi-tenant) app server reached through the aggregation layer.
+	ctx, bgUser := identity.WithServiceIdentity(ctx, orgID, identity.WithServiceIdentityName("ngalert"))
 	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 		OrgID:        orgID,
 		UIDs:         folderUIDs,
@@ -605,7 +604,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 				return fmt.Errorf("failed to convert alert rule %s to storage model: %w", r.New.UID, err)
 			}
 			// no way to update multiple rules at once
-			if updated, err := sess.ID(r.Existing.ID).AllCols().Omit("rule_guid").Update(converted); err != nil || updated == 0 {
+			if updated, err := sess.Table(alertRule{}).ID(r.Existing.ID).AllCols().Omit("guid").Update(converted); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
 						return ngmodels.ErrAlertRuleConflict(r.New.UID, r.New.OrgID, err)
@@ -707,7 +706,7 @@ func (st DBstore) preventIntermediateUniqueConstraintViolations(sess *db.Session
 			uniqueTempTitle = r.Title[:AlertRuleMaxTitleLength-len(u)] + uuid.New().String()
 		}
 
-		if updated, err := sess.ID(r.ID).Cols("title").Update(&alertRule{Title: uniqueTempTitle, Version: r.Version}); err != nil || updated == 0 {
+		if updated, err := sess.Table(alertRule{}).ID(r.ID).Cols("title").Update(&alertRule{Title: uniqueTempTitle, Version: r.Version}); err != nil || updated == 0 {
 			if err != nil {
 				return fmt.Errorf("failed to set temporary rule title [%s] %s: %w", r.UID, r.Title, err)
 			}
@@ -1310,11 +1309,8 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	}
 
 	if query.SearchTitle != "" {
-		words := strings.Fields(query.SearchTitle)
-		if len(words) > 0 {
-			// Build sequential pattern: %word1%word2%word3%
-			pattern := strings.Join(words, "%")
-			sql, param := st.SQLStore.GetDialect().LikeOperator("title", true, pattern, true)
+		for _, term := range searchTitleTerms(query.SearchTitle) {
+			sql, param := st.SQLStore.GetDialect().LikeOperator("title", true, term, true)
 			q = q.And(sql, param)
 		}
 	}
@@ -1370,6 +1366,30 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		q = applyListAlertRulesOrderByNamespace(q)
 	}
 	return q, groupsSet, nil
+}
+
+// searchTitleMinTerm mirrors the term-length floor unified search applies before
+// querying its title index. That check counts bytes rather than runes, so this
+// one does too instead of diverging on multibyte titles.
+const searchTitleMinTerm = 3
+
+// searchTitleTerms splits a title search into terms a title must all contain, in
+// any order, approximating how unified search matches title n-grams. The two
+// still differ where unified's analyzer strips punctuation and English stop
+// words and this does not. Terms below searchTitleMinTerm are dropped unless
+// every term is short, since dropping them all would match every rule.
+func searchTitleTerms(search string) []string {
+	words := strings.Fields(search)
+	terms := make([]string, 0, len(words))
+	for _, w := range words {
+		if len(w) >= searchTitleMinTerm {
+			terms = append(terms, w)
+		}
+	}
+	if len(terms) == 0 {
+		return words
+	}
+	return terms
 }
 
 func applyListAlertRulesOrderByNamespace(q *xorm.Session) *xorm.Session {
@@ -1611,14 +1631,11 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				om[r.NamespaceUID] = struct{}{}
 			}
 			for orgID, uids := range uids {
-				schedulerUser := accesscontrol.BackgroundUser("grafana_scheduler", orgID, org.RoleAdmin,
-					[]accesscontrol.Permission{
-						{
-							Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersAll,
-						},
-					})
+				// Use the Grafana service identity so the call is authenticated as the system when the
+				// folder service is a (multi-tenant) app server reached through the aggregation layer.
+				svcCtx, schedulerUser := identity.WithServiceIdentity(ctx, orgID, identity.WithServiceIdentityName("grafana_scheduler"))
 
-				folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+				folders, err := st.FolderService.GetFolders(svcCtx, folder.GetFoldersQuery{
 					OrgID:        orgID,
 					UIDs:         slices.Collect(maps.Keys(uids)),
 					WithFullpath: true,

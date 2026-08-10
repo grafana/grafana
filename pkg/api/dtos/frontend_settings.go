@@ -91,7 +91,8 @@ type FrontendSettingsReportingDTO struct {
 }
 
 type FrontendSettingsAnalyticsDTO struct {
-	Enabled bool `json:"enabled"`
+	Enabled                    bool `json:"enabled"`
+	PresenceIndicatorsDisabled bool `json:"presenceIndicatorsDisabled,omitempty"`
 }
 
 type FrontendSettingsUnifiedAlertingStateHistoryDTO struct {
@@ -208,10 +209,14 @@ type FrontendSettingsDTO struct {
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
 
+	PostHogToken string `json:"postHogToken"`
+	PostHogHost  string `json:"postHogHost"`
+
 	AnalyticsConsoleReporting bool `json:"analyticsConsoleReporting"`
 
 	DashboardPerformanceMetrics []string `json:"dashboardPerformanceMetrics"`
 	PanelSeriesLimit            int      `json:"panelSeriesLimit"`
+	DashboardDefaultPreload     bool     `json:"dashboardDefaultPreload"`
 
 	FeedbackLinksEnabled                 bool                `json:"feedbackLinksEnabled"`
 	ApplicationInsightsConnectionString  string              `json:"applicationInsightsConnectionString"`
@@ -314,6 +319,8 @@ type FrontendSettingsDTO struct {
 	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
 
 	LocalFileSystemAvailable bool `json:"localFileSystemAvailable"`
+
+	ProvisioningEnabled bool `json:"provisioningEnabled"`
 	// Experimental Scope settings
 	ListScopesEndpoint          string            `json:"listScopesEndpoint"`
 	ListDashboardScopesEndpoint string            `json:"listDashboardScopesEndpoint"`

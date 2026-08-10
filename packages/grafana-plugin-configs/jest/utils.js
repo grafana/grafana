@@ -28,4 +28,8 @@ export const grafanaESModules = [
   '@grafana/react-data-grid',
   '@grafana/llm',
   'pkce-challenge',
+  'uuid',
+  '@react-hookz/web',
+  '@ver0/deep-equal',
+  '@marcbachmann/cel-js',
 ];

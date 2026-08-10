@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/setting"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -24,18 +26,22 @@ type Worker struct {
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	keeperService              contracts.KeeperService
+	tracer                     trace.Tracer
 }
 
 func ProvideWorker(
 	cfg *setting.Cfg,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
-	keeperService contracts.KeeperService) *Worker {
+	keeperService contracts.KeeperService,
+	tracer trace.Tracer) *Worker {
 	return &Worker{
 		Cfg:                        cfg,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
-		keeperService:              keeperService}
+		keeperService:              keeperService,
+		tracer:                     tracer,
+	}
 }
 
 func (w *Worker) Run(ctx context.Context) error {
@@ -61,7 +67,15 @@ func (w *Worker) Run(ctx context.Context) error {
 	}
 }
 
-func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1beta1.SecureValue, error) {
+func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) (out []secretv1beta1.SecureValue, err error) {
+	ctx, span := w.tracer.Start(ctx, "Worker.CleanupInactiveSecureValues", trace.WithAttributes())
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+		}
+		span.End()
+	}()
+
 	secureValues, err := w.secureValueMetadataStorage.LeaseInactiveSecureValues(ctx, w.Cfg.SecretsManagement.GCWorkerMaxBatchSize)
 	if err != nil {
 		return nil, fmt.Errorf("fetching inactive secure values that need to be cleaned up: %w", err)
@@ -78,12 +92,19 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 	wg.Add(len(secureValues))
 
 	for i, sv := range secureValues {
+		span.AddEvent("waiting for semaphore")
 		if err := sema.Acquire(ctx, 1); err != nil {
 			return nil, fmt.Errorf("acquiring semaphore: %w", err)
 		}
+		span.AddEvent("semaphore acquire")
+
 		go func(i int, sv *secretv1beta1.SecureValue) {
-			defer sema.Release(1)
-			defer wg.Done()
+			defer func() {
+				sema.Release(1)
+				wg.Done()
+				span.AddEvent("semaphore released")
+			}()
+
 			errs[i] = w.Cleanup(ctx, sv)
 		}(i, &sv)
 	}
@@ -132,7 +153,20 @@ func (w *Worker) CleanupInactiveSecureValues(ctx context.Context) ([]secretv1bet
 	return secureValues, errors.Join(errs...)
 }
 
-func (w *Worker) Cleanup(ctx context.Context, sv *secretv1beta1.SecureValue) error {
+func (w *Worker) Cleanup(ctx context.Context, sv *secretv1beta1.SecureValue) (err error) {
+	ctx, span := w.tracer.Start(ctx, "Worker.Cleanup", trace.WithAttributes(
+		attribute.String("namespace", sv.Namespace),
+		attribute.String("name", sv.Name),
+		attribute.Int64("version", sv.Status.Version),
+		attribute.Bool("isRef", sv.Spec.Ref != nil),
+	))
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+		}
+		span.End()
+	}()
+
 	keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Status.Keeper, contracts.ReadOpts{ForUpdate: false})
 	if err != nil {
 		return fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", sv.Namespace, sv.Status.Keeper, err)

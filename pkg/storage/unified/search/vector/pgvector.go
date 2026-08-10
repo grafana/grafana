@@ -6,9 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"text/template"
 	"time"
+	"unicode/utf8"
 
 	pgvector "github.com/pgvector/pgvector-go"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
@@ -16,7 +21,16 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/vector")
+
 var _ VectorBackend = (*pgvectorBackend)(nil)
+
+// maxPartitionKeyLen keeps the LONGEST derived identifier —
+// `embeddings_<key>_metadata_idx` — under Postgres's 63-byte limit
+// (63 - len("embeddings_") - len("_metadata_idx") = 39). Postgres would
+// otherwise silently truncate the name, and the readiness check (which
+// uses the untruncated name) would re-attempt DDL on every write forever.
+const maxPartitionKeyLen = 39
 
 // backfillAdvisoryLockName is hashed by Postgres' hashtext() into the
 // 64-bit advisory-lock keyspace. Keeping the lock identity as a string in
@@ -77,24 +91,72 @@ func fitEmbedding(v []float32, dim int) ([]float32, error) {
 	}
 }
 
-// Just dashboards for now
-// TODO dynamically add new partition/table if resource doesnt exist
-func validateResource(resource string) error {
-	if resource != "dashboards" {
+// truncateRunes caps s at max runes, never splitting a multi-byte character
+// (Postgres VARCHAR(n) counts characters, not bytes). When it has to cut, the
+// result ends in "..." to signal truncation and still fits within max. No-op
+// when s already fits.
+func truncateRunes(s string, max int) string {
+	if utf8.RuneCountInString(s) <= max {
+		return s
+	}
+	const ellipsis = "..."
+	if max <= len(ellipsis) {
+		return string([]rune(s)[:max])
+	}
+	return string([]rune(s)[:max-len(ellipsis)]) + ellipsis
+}
+
+// validateResource rejects operations on partition keys that have no
+// catalog entry (unprovisioned — no partition to work with). `resource`
+// here is always the partition key: callers resolve caller-facing resource
+// names (which may contain chars a table name can't, e.g. hyphens) to
+// partition keys via ResolveCollection first; internal callers (reconciler,
+// backfill) work in partition keys directly.
+func (b *pgvectorBackend) validateResource(ctx context.Context, resource string) error {
+	ok, err := b.hasPartitionKey(ctx, resource)
+	if err != nil {
+		return fmt.Errorf("resolve resource %q: %w", resource, err)
+	}
+	if !ok {
 		return fmt.Errorf("unsupported resource %q (no embeddings sub-tree provisioned)", resource)
 	}
 	return nil
 }
 
-func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
+func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) (retErr error) {
 	if len(vectors) == 0 {
 		return nil
 	}
 
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.Upsert")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.Int("vector_count", len(vectors)),
+		attribute.String("resource", vectors[0].Resource),
+		attribute.String("namespace", vectors[0].Namespace),
+	)
+
+	// All validation — including the catalog lookup — happens before the
+	// transaction opens, so no extra DB queries run mid-transaction. A
+	// batch is single-resource, so one string compare per vector and one
+	// catalog lookup for the whole batch.
 	for i := range vectors {
 		if err := vectors[i].Validate(); err != nil {
 			return fmt.Errorf("vector[%d]: %w", i, err)
 		}
+		if vectors[i].Resource != vectors[0].Resource {
+			return fmt.Errorf("vector[%d]: resource %q does not match %q (batches are single-resource)",
+				i, vectors[i].Resource, vectors[0].Resource)
+		}
+	}
+	if err := b.validateResource(ctx, vectors[0].Resource); err != nil {
+		return err
 	}
 
 	return b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
@@ -102,70 +164,130 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) error {
 	})
 }
 
-func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, vectors []Vector) error {
-	if len(vectors) == 0 {
+func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, metadataOnly []VectorMeta, desired []string) (retErr error) {
+	// All empty = no-op; an empty desired must not be read as "delete
+	// all" (the reconciler uses Delete for a full wipe).
+	if len(changed) == 0 && len(metadataOnly) == 0 && len(desired) == 0 {
 		return nil
 	}
-	for i := range vectors {
-		if err := vectors[i].Validate(); err != nil {
-			return fmt.Errorf("vector[%d]: %w", i, err)
+	if model == "" {
+		return fmt.Errorf("model must not be empty")
+	}
+	if err := b.validateResource(ctx, resource); err != nil {
+		return err
+	}
+	// Enforce the documented contract that every changed vector belongs to
+	// the (namespace, model, resource, uid) tuple — cheap string compares,
+	// no catalog lookups. upsertAll does not re-validate per vector.
+	for i := range changed {
+		if changed[i].Resource != resource {
+			return fmt.Errorf("changed[%d]: resource %q does not match %q", i, changed[i].Resource, resource)
 		}
 	}
 
-	type uidKey struct{ resource, namespace, model, uid string }
-	groups := map[uidKey][]string{}
-	for _, v := range vectors {
-		k := uidKey{v.Resource, v.Namespace, v.Model, v.UID}
-		groups[k] = append(groups[k], v.Subresource)
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.UpsertReplaceSubresources")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.Int("changed_count", len(changed)),
+		attribute.Int("metadata_only_count", len(metadataOnly)),
+		attribute.Int("desired_count", len(desired)),
+		attribute.String("resource", resource),
+		attribute.String("namespace", namespace),
+	)
+
+	for i := range changed {
+		if err := changed[i].Validate(); err != nil {
+			return fmt.Errorf("vector[%d]: %w", i, err)
+		}
+		if changed[i].Namespace != namespace || changed[i].Model != model ||
+			changed[i].Resource != resource || changed[i].UID != uid {
+			return fmt.Errorf("vector[%d] does not belong to %s/%s/%s/%s", i, namespace, model, resource, uid)
+		}
+	}
+	for i := range metadataOnly {
+		if metadataOnly[i].Title == "" {
+			return fmt.Errorf("metadataOnly[%d]: title must not be empty", i)
+		}
+	}
+
+	keep := make(map[string]struct{}, len(desired))
+	for _, s := range desired {
+		keep[s] = struct{}{}
 	}
 
 	return b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
-		for k, kept := range groups {
-			if err := validateResource(k.resource); err != nil {
-				return err
-			}
-			stored, err := b.subresourceKeysTx(ctx, tx, k.namespace, k.model, k.resource, k.uid)
-			if err != nil {
-				return fmt.Errorf("read subresources %s/%s: %w", k.namespace, k.uid, err)
-			}
-			keep := make(map[string]struct{}, len(kept))
-			for _, s := range kept {
-				keep[s] = struct{}{}
-			}
-			var stale []string
-			for _, s := range stored {
-				if _, ok := keep[s]; !ok {
-					stale = append(stale, s)
-				}
-			}
-			if len(stale) > 0 {
-				req := &sqlVectorCollectionDeleteSubresourcesRequest{
-					SQLTemplate:  sqltemplate.New(b.dialect),
-					Resource:     k.resource,
-					Namespace:    k.namespace,
-					Model:        k.model,
-					UID:          k.uid,
-					Subresources: stale,
-				}
-				if _, err := dbutil.Exec(ctx, tx, sqlVectorCollectionDeleteSubresource, req); err != nil {
-					return fmt.Errorf("delete stale subresources %s/%s: %w", k.namespace, k.uid, err)
-				}
+		stored, err := b.subresourceKeysTx(ctx, tx, namespace, model, resource, uid)
+		if err != nil {
+			return fmt.Errorf("read subresources %s/%s: %w", namespace, uid, err)
+		}
+		var stale []string
+		for _, s := range stored {
+			if _, ok := keep[s]; !ok {
+				stale = append(stale, s)
 			}
 		}
-		return b.upsertAll(ctx, tx, vectors)
+		if len(stale) > 0 {
+			req := &sqlVectorCollectionDeleteSubresourcesRequest{
+				SQLTemplate:  sqltemplate.New(b.dialect),
+				Resource:     resource,
+				Namespace:    namespace,
+				Model:        model,
+				UID:          uid,
+				Subresources: stale,
+			}
+			if _, err := dbutil.Exec(ctx, tx, sqlVectorCollectionDeleteSubresource, req); err != nil {
+				return fmt.Errorf("delete stale subresources %s/%s: %w", namespace, uid, err)
+			}
+		}
+		if len(changed) > 0 {
+			if err := b.upsertAll(ctx, tx, changed); err != nil {
+				return err
+			}
+		}
+		if len(metadataOnly) > 0 {
+			rows := make([]VectorMeta, len(metadataOnly))
+			for i := range metadataOnly {
+				rows[i] = VectorMeta{
+					Subresource: metadataOnly[i].Subresource,
+					Title:       truncateRunes(metadataOnly[i].Title, maxTitleLen),
+					Metadata:    metadataOnly[i].Metadata,
+				}
+			}
+			req := &sqlVectorCollectionRefreshMetaRequest{
+				SQLTemplate: sqltemplate.New(b.dialect),
+				Resource:    resource,
+				Namespace:   namespace,
+				Model:       model,
+				UID:         uid,
+				Rows:        rows,
+			}
+			if _, err := dbutil.Exec(ctx, tx, sqlVectorCollectionRefreshMeta, req); err != nil {
+				return fmt.Errorf("refresh metadata %s: %w", uid, err)
+			}
+		}
+		return nil
 	})
 }
 
 // upsertAll does the per-vector INSERT/UPSERT loop. Caller owns the
-// transaction; called from both Upsert and UpsertReplaceSubresources.
+// transaction and must have validated every vector's resource against the
+// catalog BEFORE opening it — no catalog queries in here.
 func (b *pgvectorBackend) upsertAll(ctx context.Context, tx db.Tx, vectors []Vector) error {
 	for i := range vectors {
-		if err := validateResource(vectors[i].Resource); err != nil {
-			return fmt.Errorf("vector[%d]: %w", i, err)
-		}
 		emb, err := fitEmbedding(vectors[i].Embedding, EmbeddingDim)
 		if err != nil {
 			return fmt.Errorf("vector[%d]: %w", i, err)
+		}
+		vectors[i].Title = truncateRunes(vectors[i].Title, maxTitleLen)
+		// Floor unset versions to the baseline so an explicit 0 can't undercut DEFAULT 1.
+		if vectors[i].ContentVersion < 1 {
+			vectors[i].ContentVersion = 1
 		}
 		req := &sqlVectorCollectionUpsertRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -202,22 +324,77 @@ func (b *pgvectorBackend) subresourceKeysTx(ctx context.Context, tx db.Tx, names
 	return out, nil
 }
 
-func (b *pgvectorBackend) Delete(ctx context.Context, namespace, model, resource, uid string) error {
-	if model == "" {
-		return fmt.Errorf("model must not be empty")
+// defaultDeleteAllPageSize bounds one DeleteRows(All) statement so a huge
+// collection wipe can't hold a long-running delete; callers loop on hasMore.
+const defaultDeleteAllPageSize = 10000
+
+func (b *pgvectorBackend) DeleteRows(ctx context.Context, namespace, model, resource string, sel DeleteSelector) (int64, bool, error) {
+	if model == "" && !sel.AllModels {
+		return 0, false, fmt.Errorf("model must not be empty")
 	}
-	if err := validateResource(resource); err != nil {
-		return err
+	if (len(sel.UIDs) > 0) == sel.All {
+		return 0, false, fmt.Errorf("exactly one of UIDs or All must be set")
 	}
-	req := &sqlVectorCollectionDeleteRequest{
+	if err := b.validateResource(ctx, resource); err != nil {
+		return 0, false, err
+	}
+
+	if len(sel.UIDs) > 0 {
+		res, err := dbutil.Exec(ctx, b.db, sqlVectorCollectionDeleteUIDs, &sqlVectorCollectionDeleteUIDsRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Resource:    resource,
+			Namespace:   namespace,
+			Model:       model,
+			AllModels:   sel.AllModels,
+			UIDs:        sel.UIDs,
+		})
+		if err != nil {
+			return 0, false, err
+		}
+		n, err := res.RowsAffected()
+		return n, false, err
+	}
+
+	limit := sel.Limit
+	if limit <= 0 {
+		limit = defaultDeleteAllPageSize
+	}
+	res, err := dbutil.Exec(ctx, b.db, sqlVectorCollectionDeleteAll, &sqlVectorCollectionDeleteAllRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Resource:    resource,
 		Namespace:   namespace,
 		Model:       model,
-		UID:         uid,
+		AllModels:   sel.AllModels,
+		Limit:       limit,
+	})
+	if err != nil {
+		return 0, false, err
 	}
-	_, err := dbutil.Exec(ctx, b.db, sqlVectorCollectionDelete, req)
-	return err
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, false, err
+	}
+	// A full page doesn't prove more rows remain (the collection may hold
+	// exactly `limit` rows) — check instead of over-reporting has_more.
+	hasMore := false
+	if n == int64(limit) {
+		q := `SELECT EXISTS (
+				SELECT 1 FROM embeddings
+				WHERE resource = $1 AND namespace = $2 AND model = $3
+			)`
+		args := []any{resource, namespace, model}
+		if sel.AllModels {
+			q = `SELECT EXISTS (
+				SELECT 1 FROM embeddings
+				WHERE resource = $1 AND namespace = $2
+			)`
+			args = args[:2]
+		}
+		if err := b.db.QueryRowContext(ctx, q, args...).Scan(&hasMore); err != nil {
+			return n, false, fmt.Errorf("check remaining rows: %w", err)
+		}
+	}
+	return n, hasMore, nil
 }
 
 func (b *pgvectorBackend) DeleteSubresources(ctx context.Context, namespace, model, resource, uid string, subresources []string) error {
@@ -227,7 +404,7 @@ func (b *pgvectorBackend) DeleteSubresources(ctx context.Context, namespace, mod
 	if len(subresources) == 0 {
 		return nil
 	}
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return err
 	}
 	req := &sqlVectorCollectionDeleteSubresourcesRequest{
@@ -242,9 +419,61 @@ func (b *pgvectorBackend) DeleteSubresources(ctx context.Context, namespace, mod
 	return err
 }
 
-func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, error) {
-	if err := validateResource(resource); err != nil {
-		return nil, err
+func (b *pgvectorBackend) DeleteNamespace(ctx context.Context, namespace string) (deleted int64, retErr error) {
+	if namespace == "" {
+		return 0, fmt.Errorf("namespace must not be empty")
+	}
+
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.DeleteNamespace")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+	span.SetAttributes(attribute.String("namespace", namespace))
+
+	// The four tables are keyed by namespace; wipe them atomically so a tenant
+	// leaves no vector data behind.
+	// ponytail: leaves empty per-tenant partial HNSW indexes
+	// (<resource>_<namespace>_hnsw); near-zero storage with 0 matching rows.
+	// Drop via dynamic catalog SQL in a follow-up if they accumulate.
+	templates := []*template.Template{
+		sqlVectorNamespaceDeleteEmbeddings,
+		sqlVectorNamespaceDeleteQueryCache,
+		sqlVectorNamespaceDeleteRateBuckets,
+		sqlVectorNamespaceDeletePromoted,
+	}
+	err := b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
+		for i, tmpl := range templates {
+			req := &sqlVectorNamespaceDeleteRequest{
+				SQLTemplate: sqltemplate.New(b.dialect),
+				Namespace:   namespace,
+			}
+			res, err := dbutil.Exec(ctx, tx, tmpl, req)
+			if err != nil {
+				return fmt.Errorf("delete namespace %q (%s): %w", namespace, tmpl.Name(), err)
+			}
+			// Report rows removed from the embeddings table (first template).
+			if i == 0 {
+				if n, err := res.RowsAffected(); err == nil {
+					deleted = n
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	span.SetAttributes(attribute.Int64("embeddings_deleted", deleted))
+	return deleted, nil
+}
+
+func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, string, error) {
+	if err := b.validateResource(ctx, resource); err != nil {
+		return nil, "", err
 	}
 	req := &sqlVectorCollectionGetContentRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
@@ -256,20 +485,21 @@ func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, 
 	}
 	rows, err := dbutil.Query(ctx, b.db, sqlVectorCollectionGetContent, req)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	if len(rows) == 0 {
-		return nil, nil
+		return nil, "", nil
 	}
 	out := make(map[string]string, len(rows))
 	for _, r := range rows {
 		out[r.Subresource] = r.Content
 	}
-	return out, nil
+	// Folder is uniform across a resource's rows, so any row works.
+	return out, rows[0].Folder, nil
 }
 
 func (b *pgvectorBackend) Exists(ctx context.Context, namespace, model, resource, uid string) (bool, error) {
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return false, err
 	}
 	req := &sqlVectorCollectionExistsRequest{
@@ -287,9 +517,66 @@ func (b *pgvectorBackend) Exists(ctx context.Context, namespace, model, resource
 	return len(rows) > 0, nil
 }
 
+func (b *pgvectorBackend) ContentVersion(ctx context.Context, namespace, model, resource, uid string) (int, bool, error) {
+	if err := b.validateResource(ctx, resource); err != nil {
+		return 0, false, err
+	}
+	req := &sqlVectorCollectionContentVersionRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Resource:    resource,
+		Namespace:   namespace,
+		Model:       model,
+		UID:         uid,
+		Response:    &sqlVectorCollectionContentVersionResponse{},
+	}
+	row, err := dbutil.QueryRow(ctx, b.db, sqlVectorCollectionContentVersion, req)
+	if err != nil {
+		return 0, false, err
+	}
+	if !row.MinVersion.Valid {
+		return 0, false, nil
+	}
+	return int(row.MinVersion.Int64), true, nil
+}
+
+func (b *pgvectorBackend) UpdateContentVersion(ctx context.Context, namespace, model, resource, uid string, version int) error {
+	if model == "" {
+		return fmt.Errorf("model must not be empty")
+	}
+	if err := b.validateResource(ctx, resource); err != nil {
+		return err
+	}
+	req := &sqlVectorCollectionUpdateVersionRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Resource:    resource,
+		Namespace:   namespace,
+		Model:       model,
+		UID:         uid,
+		Version:     version,
+	}
+	_, err := dbutil.Exec(ctx, b.db, sqlVectorCollectionUpdateVersion, req)
+	return err
+}
+
 func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource string,
-	embedding []float32, limit int, filters ...SearchFilter) ([]VectorSearchResult, error) {
-	if err := validateResource(resource); err != nil {
+	embedding []float32, limit int, filters ...SearchFilter) (results []VectorSearchResult, retErr error) {
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.Search")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("model", model),
+		attribute.String("resource", resource),
+		attribute.Int("limit", limit),
+		attribute.Int("filter_count", len(filters)),
+	)
+
+	if err := b.validateResource(ctx, resource); err != nil {
 		return nil, err
 	}
 	queryEmb, err := fitEmbedding(embedding, EmbeddingDim)
@@ -315,9 +602,19 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		case "folder":
 			req.FolderValues = f.Values
 		default:
-			// JSONB containment: metadata @> '{"field":["v1","v2"]}'
-			j, _ := json.Marshal(map[string][]string{f.Field: f.Values})
-			req.MetadataFilters = append(req.MetadataFilters, MetadataFilterEntry{JSON: string(j)})
+			// An empty group would render as "AND ()" — invalid SQL.
+			if len(f.Values) == 0 {
+				continue
+			}
+			// Writers store metadata values as scalars (embed extractor) or
+			// arrays (external collections); match either shape per value.
+			group := MetadataFilterGroup{JSONs: make([]string, 0, 2*len(f.Values))}
+			for _, v := range f.Values {
+				s, _ := json.Marshal(map[string]string{f.Field: v})
+				a, _ := json.Marshal(map[string][]string{f.Field: {v}})
+				group.JSONs = append(group.JSONs, string(s), string(a))
+			}
+			req.MetadataFilterGroups = append(req.MetadataFilterGroups, group)
 		}
 	}
 
@@ -326,7 +623,7 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		return nil, err
 	}
 
-	results := make([]VectorSearchResult, len(rows))
+	results = make([]VectorSearchResult, len(rows))
 	for i, row := range rows {
 		results[i] = VectorSearchResult{
 			UID:         row.UID,
@@ -364,6 +661,123 @@ func (b *pgvectorBackend) ListIncompleteBackfillJobs(ctx context.Context, model 
 		})
 	}
 	return out, nil
+}
+
+// EnsureResourcePartition creates the embeddings_<resource> partition leaf and
+// its metadata index. The per-resource advisory lock serializes the attach
+// (ACCESS EXCLUSIVE on the parent) so concurrent replicas don't race it.
+func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource string) error {
+	// resource is interpolated unquoted into the DDL below; reject anything
+	// sanitizeIdentifier would alter to keep it injection-safe.
+	if resource == "" || sanitizeIdentifier(resource) != resource {
+		return fmt.Errorf("ensure partition: unsafe resource %q", resource)
+	}
+	if len(resource) > maxPartitionKeyLen {
+		return fmt.Errorf("ensure partition: resource %q too long (%d > %d chars)", resource, len(resource), maxPartitionKeyLen)
+	}
+	leaf := subtreeName(resource) // embeddings_<resource>
+	idx := leaf + "_metadata_idx"
+
+	// Fast path: skip the lock + DDL only when BOTH leaf and index exist.
+	// Checking the index too lets a retry finish a prior attempt that created
+	// the leaf but failed before the index.
+	ready, err := b.resourcePartitionReady(ctx, leaf, idx)
+	if err != nil {
+		return fmt.Errorf("check partition %s: %w", leaf, err)
+	}
+	if ready {
+		return nil
+	}
+
+	conn, err := b.db.SqlDB().Conn(ctx)
+	if err != nil {
+		return fmt.Errorf("ensure partition conn: %w", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	lockName := "vectorpartition_" + resource
+	if _, err := conn.ExecContext(ctx,
+		"SELECT pg_advisory_lock(hashtext($1)::bigint)", lockName); err != nil {
+		return fmt.Errorf("ensure partition lock: %w", err)
+	}
+	defer func() {
+		_, _ = conn.ExecContext(context.Background(),
+			"SELECT pg_advisory_unlock(hashtext($1)::bigint)", lockName)
+	}()
+
+	if _, err := conn.ExecContext(ctx, fmt.Sprintf(
+		`CREATE TABLE IF NOT EXISTS %s PARTITION OF %s FOR VALUES IN ('%s')`,
+		leaf, unifiedParent, resource,
+	)); err != nil {
+		return fmt.Errorf("create partition %s: %w", leaf, err)
+	}
+	if _, err := conn.ExecContext(ctx, fmt.Sprintf(
+		`CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (metadata)`,
+		idx, leaf,
+	)); err != nil {
+		return fmt.Errorf("create metadata index on %s: %w", leaf, err)
+	}
+	return nil
+}
+
+// resourcePartitionReady reports whether leaf is attached as a partition of
+// the parent (pg_inherits, not to_regclass, so a same-named unrelated table
+// can't match) AND its metadata index exists.
+func (b *pgvectorBackend) resourcePartitionReady(ctx context.Context, leaf, idx string) (bool, error) {
+	var ready bool
+	err := b.db.QueryRowContext(ctx, `
+		SELECT
+			EXISTS (
+				SELECT 1 FROM pg_inherits i
+				JOIN pg_class c ON c.oid = i.inhrelid
+				JOIN pg_class p ON p.oid = i.inhparent
+				WHERE p.relname = $1 AND c.relname = $2
+			)
+			AND EXISTS (
+				SELECT 1 FROM pg_class WHERE relname = $3 AND relkind = 'i'
+			)`, unifiedParent, leaf, idx).Scan(&ready)
+	if err != nil {
+		return false, err
+	}
+	return ready, nil
+}
+
+func (b *pgvectorBackend) CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64, contentVersion int) error {
+	// Floor unset versions to the baseline so an explicit 0 can't undercut DEFAULT 1.
+	if contentVersion < 1 {
+		contentVersion = 1
+	}
+	req := &sqlVectorBackfillJobsCreateRequest{
+		SQLTemplate:    sqltemplate.New(b.dialect),
+		Model:          model,
+		Resource:       resource,
+		StoppingRV:     stoppingRV,
+		ContentVersion: contentVersion,
+	}
+	if _, err := dbutil.Exec(ctx, b.db, sqlVectorBackfillJobsCreate, req); err != nil {
+		return fmt.Errorf("create backfill job (%s,%s): %w", model, resource, err)
+	}
+	return nil
+}
+
+// ReopenStaleBackfillJobs resets the cursor: a mid-flight bump makes already-scanned rows stale too.
+func (b *pgvectorBackend) ReopenStaleBackfillJobs(ctx context.Context, model, resource string, version int, stoppingRV int64) (bool, error) {
+	req := &sqlVectorBackfillJobsReopenRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Model:       model,
+		Resource:    resource,
+		Version:     version,
+		StoppingRV:  stoppingRV,
+	}
+	res, err := dbutil.Exec(ctx, b.db, sqlVectorBackfillJobsReopen, req)
+	if err != nil {
+		return false, fmt.Errorf("reopen stale backfill jobs (%s,%s): %w", model, resource, err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("reopen stale backfill jobs (%s,%s) rows affected: %w", model, resource, err)
+	}
+	return n > 0, nil
 }
 
 func (b *pgvectorBackend) UpdateBackfillJobCheckpoint(ctx context.Context, id int64, lastSeenKey string, lastErr string) error {
@@ -429,6 +843,47 @@ func (b *pgvectorBackend) TryAcquireBackfillLock(ctx context.Context) (func(), b
 	return release, true, nil
 }
 
+// CountStoredEmbeddings aggregates over the partitioned parent, so it covers
+// every leaf including ones attached at runtime. The PK leads with
+// (resource, namespace, model, ...) so Postgres can satisfy this with an
+// index-only scan, but it is still O(rows) — keep it off any hot path.
+func (b *pgvectorBackend) CountStoredEmbeddings(ctx context.Context) (counts []EmbeddingCount, retErr error) {
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.CountStoredEmbeddings")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+
+	rows, err := b.db.QueryContext(ctx,
+		`SELECT resource, model, COUNT(*) FROM embeddings GROUP BY resource, model`)
+	if err != nil {
+		return nil, fmt.Errorf("count stored embeddings: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []EmbeddingCount
+	var total int64
+	for rows.Next() {
+		var c EmbeddingCount
+		if err := rows.Scan(&c.Resource, &c.Model, &c.Count); err != nil {
+			return nil, fmt.Errorf("scan embedding count: %w", err)
+		}
+		total += c.Count
+		out = append(out, c)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	span.SetAttributes(
+		attribute.Int("groups", len(out)),
+		attribute.Int64("embeddings", total),
+	)
+	return out, nil
+}
+
 func (b *pgvectorBackend) GetLatestRV(ctx context.Context) (int64, error) {
 	var rv int64
 	row := b.db.QueryRowContext(ctx, `SELECT latest_rv FROM vector_latest_rv WHERE id = 1`)
@@ -478,4 +933,28 @@ func (b *pgvectorBackend) TryAcquireReconcilerLock(ctx context.Context) (func(),
 		_ = conn.Close()
 	}
 	return release, true, nil
+}
+
+// WithEntityLock serializes concurrent subresource syncs for one entity:
+// the caller's read-diff-embed-write sequence runs under a blocking session
+// advisory lock so two writers can't interleave stale diffs.
+func (b *pgvectorBackend) WithEntityLock(ctx context.Context, namespace, resource, uid string, fn func(context.Context) error) error {
+	conn, err := b.db.SqlDB().Conn(ctx)
+	if err != nil {
+		return fmt.Errorf("entity lock conn: %w", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	lockName := "vectorentity|" + namespace + "|" + resource + "|" + uid
+	if _, err := conn.ExecContext(ctx,
+		"SELECT pg_advisory_lock(hashtext($1)::bigint)", lockName); err != nil {
+		return fmt.Errorf("entity lock: %w", err)
+	}
+	defer func() {
+		// Background so a cancelled parent doesn't prevent unlock.
+		_, _ = conn.ExecContext(context.Background(),
+			"SELECT pg_advisory_unlock(hashtext($1)::bigint)", lockName)
+	}()
+
+	return fn(ctx)
 }

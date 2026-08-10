@@ -33,7 +33,7 @@ title: 'Snapshot API'
     POST /api/snapshots HTTP/1.1
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+    Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
     {
       "dashboard": {
@@ -111,7 +111,7 @@ Query parameters:
 ```http
 GET /api/dashboard/snapshots HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -145,7 +145,7 @@ Content-Type: application/json
 ```http
 GET /api/snapshots/YYYYYYY HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -202,7 +202,7 @@ Content-Type: application/json
 ```http
 DELETE /api/snapshots/YYYYYYY HTTP/1.1
 Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:

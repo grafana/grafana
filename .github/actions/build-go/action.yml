@@ -25,6 +25,12 @@ inputs:
       `version | sed s/pre/<build-number>/g`.
     required: false
     default: ''
+  commit:
+    description: >
+      Commit SHA to embed in the binary (-X main.commit). When empty, the
+      Makefile falls back to `git rev-parse HEAD` of the checkout.
+    required: false
+    default: ''
 
 outputs:
   version:
@@ -58,4 +64,7 @@ runs:
         GOARCH: ${{ inputs.arch }}
         GOARM: ${{ inputs.arm }}
         BUILD_VERSION: ${{ steps.version.outputs.value }}
-      run: make build-go BUILD_VERSION="$BUILD_VERSION"
+        # Empty is falsy in the Makefile's $(if $(COMMIT_SHA),...), so it falls back to
+        # `git rev-parse HEAD` — preserving behavior for callers that don't pass a commit.
+        COMMIT_SHA: ${{ inputs.commit }}
+      run: make build-go BUILD_VERSION="$BUILD_VERSION" COMMIT_SHA="$COMMIT_SHA"

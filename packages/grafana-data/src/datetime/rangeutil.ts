@@ -31,72 +31,82 @@ const spans: { [key: string]: { display: string; section?: number } } = {
 };
 
 const getLastNMinutesDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.lastNMinutes', 'Last {{count}} minutes', {
+  return t('grafana-data.datetime.rangeutils.lastNMinutes', '', {
     count,
     defaultValue_one: 'Last {{count}} minute',
+    defaultValue_other: 'Last {{count}} minutes',
   });
 };
 
 const getLastNHoursDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.lastNHours', 'Last {{count}} hours', {
+  return t('grafana-data.datetime.rangeutils.lastNHours', '', {
     count,
     defaultValue_one: 'Last {{count}} hour',
+    defaultValue_other: 'Last {{count}} hours',
   });
 };
 
 const getLastNDaysDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.lastNDays', 'Last {{count}} days', {
+  return t('grafana-data.datetime.rangeutils.lastNDays', '', {
     count,
     defaultValue_one: 'Last {{count}} day',
+    defaultValue_other: 'Last {{count}} days',
   });
 };
 
 const getLastNMonthsDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.lastNMonths', 'Last {{count}} months', {
+  return t('grafana-data.datetime.rangeutils.lastNMonths', '', {
     count,
     defaultValue_one: 'Last {{count}} month',
+    defaultValue_other: 'Last {{count}} months',
   });
 };
 
 const getLastNYearsDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.lastNYears', 'Last {{count}} years', {
+  return t('grafana-data.datetime.rangeutils.lastNYears', '', {
     count,
     defaultValue_one: 'Last {{count}} year',
+    defaultValue_other: 'Last {{count}} years',
   });
 };
 
 const getNextNMinutesDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.nextNMinutes', 'Next {{count}} minutes', {
+  return t('grafana-data.datetime.rangeutils.nextNMinutes', '', {
     count,
     defaultValue_one: 'Next {{count}} minute',
+    defaultValue_other: 'Next {{count}} minutes',
   });
 };
 
 const getNextNHoursDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.nextNHours', 'Next {{count}} hours', {
+  return t('grafana-data.datetime.rangeutils.nextNHours', '', {
     count,
     defaultValue_one: 'Next {{count}} hour',
+    defaultValue_other: 'Next {{count}} hours',
   });
 };
 
 const getNextNDaysDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.nextNDays', 'Next {{count}} days', {
+  return t('grafana-data.datetime.rangeutils.nextNDays', '', {
     count,
     defaultValue_one: 'Next {{count}} day',
+    defaultValue_other: 'Next {{count}} days',
   });
 };
 
 const getNextNMonthsDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.nextNMonths', 'Next {{count}} months', {
+  return t('grafana-data.datetime.rangeutils.nextNMonths', '', {
     count,
     defaultValue_one: 'Next {{count}} month',
+    defaultValue_other: 'Next {{count}} months',
   });
 };
 
 const getNextNYearsDisplay = (count: number) => {
-  return t('grafana-data.datetime.rangeutils.nextNYears', 'Next {{count}} years', {
+  return t('grafana-data.datetime.rangeutils.nextNYears', '', {
     count,
     defaultValue_one: 'Next {{count}} year',
+    defaultValue_other: 'Next {{count}} years',
   });
 };
 

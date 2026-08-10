@@ -5,12 +5,30 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/simple"
+
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 )
+
+type RuleRef struct {
+	UID       string
+	FolderUID string
+}
+
+type RuleSequenceMembership struct {
+	SequenceUID string
+	Found       bool
+}
 
 var (
 	ErrInvalidRuntimeConfig = errors.New("invalid runtime config provided to alerting/rules app")
 )
+
+// RuleSequenceMembershipResolver resolves which RuleSequence (if any) owns a
+// given set of rule UIDs. Implementations must be safe for concurrent use.
+type RuleSequenceMembershipResolver interface {
+	Resolve(ctx context.Context, uids []string) (map[string]RuleSequenceMembership, error)
+}
 
 // RuntimeConfig holds configuration values needed at runtime by the alerting/rules app from the running Grafana instance.
 type RuntimeConfig struct {
@@ -21,4 +39,17 @@ type RuntimeConfig struct {
 	// set of strings which are illegal for label keys on rules
 	ReservedLabelKeys             map[string]struct{}
 	NotificationSettingsValidator func(ctx context.Context, notificationSettings v0alpha1.AlertRuleNotificationSettings) error
+	ResolveRuleRef                func(ctx context.Context, uid string) (RuleRef, bool, error)
+	// MembershipResolver is used by admission validators to look up which
+	// RuleSequence (if any) owns a rule UID. The default implementation is a
+	// watch-backed in-memory index that provides O(1) lookups.
+	MembershipResolver RuleSequenceMembershipResolver
+	// WatchNamespace scopes the RuleSequence informer to one namespace. Empty
+	// watches all namespaces (on-prem default); in cloud it must be the stack
+	// namespace, else the all-namespace watch is rejected as a mismatch.
+	WatchNamespace string
+	// SearchRulesHandler is built by the registry with access to the alerting
+	// services. It backs the single namespaced POST /search custom route, which
+	// federates alert and recording rules into one result set.
+	SearchRulesHandler simple.AppCustomRouteHandler
 }

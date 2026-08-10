@@ -81,8 +81,8 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
       ).toBeVisible();
 
-      // Open Street Map
-      await input.fill('Open Street Map');
+      // OpenStreetMap
+      await input.fill('OpenStreetMap');
       await input.press('Enter');
       await expect(page.locator('[data-testid="layer-drag-drop-list"]')).toContainText('osm-standard');
       await expect(
@@ -208,14 +208,13 @@ test.describe(
       await expect(page.getByRole('dialog')).toBeHidden();
     });
 
-    // This test documents a known bug on this branch: switching the icon folder inside
-    // the ResourcePickerPopover and picking from the new folder does not persist correctly.
+    // Switching the icon folder and picking an icon from the new folder should persist the selection.
     test('ResourcePicker in GeoJSON Default style - switching icon folder', async ({
       gotoDashboardPage,
       selectors,
       page,
     }) => {
-      await setupGeomapWithAirportsGeoJSON({ gotoDashboardPage, selectors, page });
+      const dashboardPage = await setupGeomapWithAirportsGeoJSON({ gotoDashboardPage, selectors, page });
 
       const symbolInput = page.getByPlaceholder(/select a symbol/i);
       await expect(symbolInput).toBeVisible({ timeout: 15000 });
@@ -227,6 +226,10 @@ test.describe(
       // Switch from the default img/icons/marker folder to img/icons/unicons
       await resourcePickerDialog.getByRole('combobox').click();
       await page.getByText('img/icons/unicons', { exact: true }).click();
+
+      // Switching folders clears the grid; wait for the new folder's icons to load before searching
+      // so the filter + click run against the loaded folder rather than racing the in-flight request.
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.ResourcePicker.card).first()).toBeVisible();
 
       // Pick an icon from the new folder
       await resourcePickerDialog.getByPlaceholder('Search').fill('0-plus');

@@ -464,7 +464,7 @@ export const getDisplayValuesForCalcs = (calcs: string[], field: Field, theme: G
 // Dev helpers
 
 /** @internal */
-export const pluginLogger = createLogger('uPlot');
+const pluginLogger = createLogger('uPlot');
 export const pluginLog = pluginLogger.logger;
 // pluginLogger.enable();
 attachDebugger('graphng', undefined, pluginLogger);

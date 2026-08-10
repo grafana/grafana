@@ -266,15 +266,6 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	isAuthedReq := b.isAuthenticatedRequest(r)
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
-	// Unless the request is authenticated, we only allow public flags evaluations
-	if !isAuthedReq && !isPublicFlag(flagKey) {
-		_ = tracing.Errorf(span, "unauthorized to evaluate flag: %s", flagKey)
-		span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
-		b.logger.Error("Unauthorized to evaluate flag", "flagKey", flagKey)
-		http.Error(w, "unauthorized to evaluate flag", http.StatusUnauthorized)
-		return
-	}
-
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
 		evalCtx, err := b.readEvalContext(w, r)
 		if err != nil {
@@ -295,7 +286,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		b.proxyFlagReq(ctx, flagKey, isAuthedReq, w, r)
+		b.proxyFlagReq(ctx, flagKey, isAuthedReq, authNamespace, w, r)
 		return
 	}
 
@@ -332,11 +323,11 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		b.proxyAllFlagReq(ctx, isAuthedReq, w, r)
+		b.proxyAllFlagReq(ctx, isAuthedReq, authNamespace, w, r)
 		return
 	}
 
-	b.evalAllFlagsStatic(ctx, isAuthedReq, w)
+	b.evalAllFlagsStatic(ctx, w)
 }
 
 func writeResponse(statusCode int, result any, logger log.Logger, w http.ResponseWriter) {

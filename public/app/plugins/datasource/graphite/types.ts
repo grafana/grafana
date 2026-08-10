@@ -1,4 +1,4 @@
-import { type DataQueryRequest, type DataSourceJsonData, type TimeRange } from '@grafana/data';
+import { type DataSourceJsonData, type TimeRange } from '@grafana/data';
 import { type TemplateSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
@@ -48,11 +48,6 @@ export interface MetricTankSeriesMeta {
   count: number;
 }
 
-export interface MetricTankMeta {
-  request: MetricTankRequestMeta;
-  info: MetricTankSeriesMeta[];
-}
-
 export interface GraphiteParserError {
   message: string;
   pos: number;
@@ -62,7 +57,7 @@ export type GraphiteQueryImportConfiguration = {
   loki: GraphiteToLokiQueryImportConfiguration;
 };
 
-export type GraphiteToLokiQueryImportConfiguration = {
+type GraphiteToLokiQueryImportConfiguration = {
   mappings: GraphiteLokiMapping[];
 };
 
@@ -99,16 +94,6 @@ export type GraphiteQueryEditorDependencies = {
   // schedule onChange/onRunQuery after the reducer actions finishes
   refresh: () => void;
 };
-
-export interface GraphiteQueryRequest extends DataQueryRequest {
-  format: string;
-}
-
-export interface GraphiteEventsRequest {
-  from: number;
-  until: number;
-  tags: string;
-}
 
 export interface GraphiteEvents {
   when: number;

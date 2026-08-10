@@ -1,16 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getWrapper } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { CustomVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
-import { DashboardEditPaneRenderer } from '../../edit-pane/DashboardEditPaneRenderer';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
+import { DashboardSidebarRenderer } from '../../sidebar/DashboardSidebarRenderer';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
@@ -19,11 +20,16 @@ import { VariableTypeChangePane } from './VariableTypeSelectionPane';
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     variableActionButtonClicked: jest.fn(),
   },
 }));
 
 const variableActionButtonClickedMock = jest.mocked(DashboardInteractions.variableActionButtonClicked);
+
+const TestWrapper = getWrapper({ renderWithRouter: true });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 function buildTestVariables() {
   const var1 = new CustomVariable({ name: 'query0', query: 'a, b, c' });
@@ -142,10 +148,10 @@ describe('VariableEditableElement', () => {
     const { dashboard } = buildDashboardVariableScene();
     const user = userEvent.setup();
 
-    renderVariableEditPane(dashboard);
+    renderVariableSidebar(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.state.openPane).toBeInstanceOf(VariableTypeChangePane);
+    expect(dashboard.state.sidebar.state.openPane).toBeInstanceOf(VariableTypeChangePane);
     expect(screen.getByText('Change variable type')).toBeInTheDocument();
   });
 });
@@ -153,18 +159,18 @@ describe('VariableEditableElement', () => {
 function WrapSidebar({ children }: { children: ReactNode }) {
   const sidebarContext = useSidebar({});
 
-  return <Sidebar contextValue={sidebarContext}>{children}</Sidebar>;
+  return (
+    <TestWrapper>
+      <Sidebar contextValue={sidebarContext}>{children}</Sidebar>
+    </TestWrapper>
+  );
 }
 
-function renderVariableEditPane(dashboard: DashboardScene) {
-  const editPane = dashboard.state.editPane;
-
+function renderVariableSidebar(dashboard: DashboardScene) {
   render(
-    <TestProvider>
-      <WrapSidebar>
-        <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
-      </WrapSidebar>
-    </TestProvider>
+    <WrapSidebar>
+      <DashboardSidebarRenderer dashboard={dashboard} />
+    </WrapSidebar>
   );
 }
 
@@ -185,7 +191,7 @@ function buildDashboardVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(variable, { force: true });
+  dashboard.state.sidebar.selectObject(variable, { force: true });
 
   return { dashboard, variableSet };
 }

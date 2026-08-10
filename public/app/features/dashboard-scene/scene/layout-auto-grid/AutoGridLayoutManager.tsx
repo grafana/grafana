@@ -15,8 +15,9 @@ import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
-import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
+import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import {
@@ -35,7 +36,7 @@ import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayout } from './AutoGridLayout';
-import { getEditOptions } from './AutoGridLayoutManagerEditor';
+import { getSidebarOptions } from './AutoGridLayoutManagerEditor';
 
 interface AutoGridLayoutManagerState extends SceneObjectState {
   layout: AutoGridLayout;
@@ -52,7 +53,7 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
 export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
 export type AutoGridRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
 
-export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
+const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
 export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
 
@@ -301,7 +302,7 @@ export class AutoGridLayoutManager
   }
 
   public getOptions(): OptionsPaneItemDescriptor[] {
-    return getEditOptions(this);
+    return getSidebarOptions(this);
   }
 
   public onMaxColumnCountChanged(maxColumnCount: number) {

@@ -45,6 +45,7 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 		if len(r.Finalizers) == 0 {
 			r.Finalizers = []string{
 				RemoveOrphanResourcesFinalizer,
+				RemovePendingJobsFinalizer,
 				CleanFinalizer,
 			}
 		}
@@ -82,4 +83,11 @@ func CopySecureValues(new, old *provisioning.Repository) {
 	if new.Secure.WebhookSecret.IsZero() {
 		new.Secure.WebhookSecret = old.Secure.WebhookSecret
 	}
+	if new.Secure.CommitSigningKey.IsZero() {
+		new.Secure.CommitSigningKey = old.Secure.CommitSigningKey
+	}
+}
+
+func RequiresNewTokenForURLChange(new, old *provisioning.Repository) bool {
+	return old != nil && new.URL() != old.URL() && new.Secure.Token.IsZero()
 }

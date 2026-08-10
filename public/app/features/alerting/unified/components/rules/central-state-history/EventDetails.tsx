@@ -6,7 +6,6 @@ import { type DataFrame, type DataFrameJSON, type GrafanaTheme2, type TimeRange 
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import { type CombinedRule } from 'app/types/unified-alerting';
-import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { trackUseCentralHistoryExpandRow } from '../../../Analytics';
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
@@ -73,9 +72,7 @@ export function EventDetails({ record, addFilter, timeRange }: EventDetailsProps
         <StateTransition record={record} addFilter={addFilter} />
         <ValueInTransition record={record} />
       </Stack>
-      {mapStateWithReasonToBaseState(record.line.current) === GrafanaAlertState.Error && record.line.error && (
-        <ErrorMessageRow message={record.line.error} />
-      )}
+      {record.line.error && <ErrorMessageRow message={record.line.error} />}
       <Annotations rule={rule} />
       <StateVisualization ruleUID={ruleUID} timeRange={timeRange} labels={labelsInInstance ?? {}} />
     </Stack>

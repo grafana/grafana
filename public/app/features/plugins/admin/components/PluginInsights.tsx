@@ -125,7 +125,7 @@ export function PluginInsights(props: Props): React.ReactElement | null {
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     pluginVersionDetails: css({ wordBreak: 'break-word' }),
     pluginInsightsItems: css({ marginLeft: '26px', paddingTop: '0 !important' }),

@@ -18,6 +18,47 @@ teamv0alpha1: teamKind & {
 	schema: {
 		spec: v0alpha1.TeamSpec
 	}
+	searchFields: [
+		{
+			name: "email"
+			path: "spec.email"
+			type: "string"
+			// Sorted via the ?sort=email option in team search, and returned in
+			// results. Not filtered.
+			capabilities: ["sort", "retrieve"]
+			description: "Email of the team"
+		},
+		{
+			name: "provisioned"
+			path: "spec.provisioned"
+			type: "boolean"
+			capabilities: ["retrieve"]
+			description: "Whether the team is provisioned"
+		},
+		{
+			name: "externalUID"
+			path: "spec.externalUID"
+			type: "string"
+			capabilities: ["retrieve"]
+			description: "External UID of the team"
+		},
+		{
+			name:  "members"
+			path:  "spec.members[*].name"
+			type:  "string"
+			array: true
+			capabilities: ["filter", "retrieve"]
+			description: "UIDs of users that are members of the team"
+		},
+		{
+			name:  "externalGroups"
+			path:  "spec.externalGroups"
+			type:  "string"
+			array: true
+			capabilities: ["filter", "retrieve"]
+			description: "External group identifiers mapped to the team"
+		},
+	]
 	routes: {
 		"/groups": {
 			"GET": {

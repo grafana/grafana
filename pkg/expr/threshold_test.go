@@ -396,6 +396,11 @@ func TestIsHysteresisExpression(t *testing.T) {
 			expected: false,
 		},
 		{
+			name:     "false if unloadEvaluator is null",
+			input:    json.RawMessage(`{ "type": "threshold", "conditions": [{ "unloadEvaluator" : null}] }`),
+			expected: false,
+		},
+		{
 			name:     "true type is threshold and a single condition has unloadEvaluator field",
 			input:    json.RawMessage(`{ "type": "threshold", "conditions": [{ "unloadEvaluator" : {}}] }`),
 			expected: true,

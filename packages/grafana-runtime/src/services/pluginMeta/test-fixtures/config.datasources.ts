@@ -42,7 +42,7 @@ export const prometheusMeta: DataSourcePluginMeta = structuredClone({
   streaming: true,
 });
 
-export const lokiMeta: DataSourcePluginMeta = structuredClone({
+const lokiMeta: DataSourcePluginMeta = structuredClone({
   id: 'loki',
   name: 'Loki',
   info: {

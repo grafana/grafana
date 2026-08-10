@@ -33,5 +33,3 @@ export interface SQLLike {
 export function isSQLLikeQuery(model: AlertDataQuery): model is SQLLike {
   return 'rawSql' in model;
 }
-
-export default SQLQueryPreview;

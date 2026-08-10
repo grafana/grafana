@@ -70,10 +70,18 @@ export interface DashboardInput {
   info: string;
   value: string;
   type: InputType;
+  /** Layout path for V2 section-scoped constants (`/rows/0`). Undefined for dashboard-level. */
+  path?: string;
+  /** Human-readable section breadcrumb for import UI (e.g. `Row: Servers`). */
+  scopeLabel?: string;
 }
 
 export interface DataSourceInput extends DashboardInput {
   pluginId: string;
+  // A datasource on the importing instance whose name matches the original
+  // exported datasource name. Used to pre-select the import picker so users
+  // don't have to manually pick a same-named datasource.
+  matchedDatasource?: DatasourceSelection;
 }
 
 export interface LibraryPanelInput {

@@ -54,4 +54,23 @@ func TestDashboardsAPIBuilderMutateVariable(t *testing.T) {
 	), nil)
 	require.NoError(t, err)
 	require.NotContains(t, v.GetLabels(), variableFolderLabelKey)
+
+	// When metadata.name is omitted on create, mutation derives it from spec name + folder.
+	v = newCustomVariable("status", "")
+	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-z"})
+	err = builder.Mutate(context.Background(), admission.NewAttributesRecord(
+		v,
+		nil,
+		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
+		"stacks-1",
+		v.GetName(),
+		dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+		"",
+		admission.Create,
+		&metav1.CreateOptions{},
+		false,
+		nil,
+	), nil)
+	require.NoError(t, err)
+	require.Equal(t, "status--folder-z", v.GetName())
 }

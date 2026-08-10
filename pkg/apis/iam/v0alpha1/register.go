@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const (
-	GROUP      = "iam.grafana.app"
-	VERSION    = "v0alpha1"
-	APIVERSION = GROUP + "/" + VERSION
+	GROUP         = "iam.grafana.app"
+	VERSION       = "v0alpha1"
+	APIVERSION    = GROUP + "/" + VERSION
+	OpenAPIPrefix = "com.github.grafana.grafana.pkg.apis.iam.v0alpha1."
 )
 
 var SSOSettingResourceInfo = utils.NewResourceInfo(

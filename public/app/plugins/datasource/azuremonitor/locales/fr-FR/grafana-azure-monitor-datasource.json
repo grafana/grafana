@@ -78,6 +78,11 @@
       "description-basic-logs": "L’activation de cette fonctionnalité entraîne des coûts Azure Monitor par requête sur les panneaux du tableau de bord qui interrogent les tables configurées pour les <2>journaux de base</2>.",
       "label-enable-basic-logs": "Activer les journaux de base"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "Les paramètres supplémentaires sont des options facultatives que vous pouvez configurer pour un meilleur contrôle de votre source de données. Cela inclut le proxy Secure Socks, le délai d’expiration des requêtes et les cookies transférés.",
       "title-additional-settings": "Paramètres supplémentaires"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Espace de noms de métrique"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "Chargement en cours..."
     },
@@ -204,6 +216,10 @@
       "label-by": "PAR",
       "label-order-by": "Classer par",
       "tooltip-order-by": "Triez les résultats en fonction d’une ou plusieurs colonne(s) par ordre croissant ou décroissant."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Une erreur s’est produite lors de la demande de métadonnées à Azure Monitor"

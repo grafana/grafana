@@ -129,6 +129,48 @@ func (tapi *TeamAPI) setTeamMembershipsViaK8s(
 	return response.Success("Team memberships have been updated")
 }
 
+// addCreatorAsAdminViaK8s adds the user as Admin to Team.Spec.Members. Used
+// by createTeam when the K8s teams redirect is on — the team has no legacy ID.
+func (tapi *TeamAPI) addCreatorAsAdminViaK8s(c *contextmodel.ReqContext, teamUID string, userID int64) error {
+	ctx := c.Req.Context()
+	ctx, span := tracer.Start(ctx, "addCreatorAsAdminViaK8s", trace.WithAttributes(
+		attribute.String("team_uid", teamUID),
+		attribute.Int64("user_id", userID),
+		attribute.String("namespace", c.Namespace),
+	))
+	defer span.End()
+
+	usr, err := tapi.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+	if err != nil {
+		return fmt.Errorf("failed to resolve user %d: %w", userID, err)
+	}
+
+	teamClient, err := tapi.teamClientFactory.GetClient(c)
+	if err != nil {
+		return fmt.Errorf("team client not available: %w", err)
+	}
+
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		teamObj, err := teamClient.Get(ctx, resource.Identifier{
+			Namespace: c.Namespace,
+			Name:      teamUID,
+		})
+		if err != nil {
+			return err
+		}
+
+		teamObj.Spec.Members = append(teamObj.Spec.Members, iamv0alpha1.TeamTeamMember{
+			Kind:       subjectKindUser,
+			Name:       usr.UID,
+			Permission: iamv0alpha1.TeamTeamPermissionAdmin,
+			External:   false,
+		})
+
+		_, err = teamClient.Update(ctx, teamObj, resource.UpdateOptions{})
+		return err
+	})
+}
+
 // resolveDesiredMembers maps the caller's email lists to UIDs and the
 // permission each UID should end up with. Admin wins over Member on collision.
 // Returns the list of emails that couldn't be resolved so the caller can fail

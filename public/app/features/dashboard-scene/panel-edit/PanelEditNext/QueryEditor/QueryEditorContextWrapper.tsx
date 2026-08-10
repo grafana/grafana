@@ -11,21 +11,17 @@ import { getQueryRunnerFor } from '../../../utils/utils';
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 import { getQueryEditorTypeConfig } from '../constants';
 
-import {
-  type PendingExpression,
-  type PendingSavedQuery,
-  type PendingTransformation,
-  QueryEditorProvider,
-  type SelectionModifiers,
-} from './QueryEditorContext';
+import { type PendingSavedQuery, QueryEditorProvider, type SelectionModifiers } from './QueryEditorContext';
+import { useStackedModeOrchestration } from './StackedEditor/useStackedModeOrchestration';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { usePendingExpression } from './hooks/usePendingExpression';
+import { usePendingPickerSetters } from './hooks/usePendingPickerSetters';
 import { usePendingTransformation } from './hooks/usePendingTransformation';
 import { useQueryEditorUIToggles } from './hooks/useQueryEditorUIToggles';
 import { useQueryOptions } from './hooks/useQueryOptions';
 import { useSelectedCard } from './hooks/useSelectedCard';
 import { useSelectedQueryDatasource } from './hooks/useSelectedQueryDatasource';
-import { useSelectionState } from './hooks/useSelectionState';
+import { type CardSelectionOptions, useSelectionState } from './hooks/useSelectionState';
 import { useTransformations } from './hooks/useTransformations';
 import { type AlertRule, type Transformation } from './types';
 import { getEditorType, getTransformId } from './utils';
@@ -50,7 +46,7 @@ export function QueryEditorContextWrapper({
   const panel = panelRef.resolve();
   const queryRunner = getQueryRunnerFor(panel);
   const queryRunnerState = queryRunner?.useState();
-  const [pendingSavedQueryState, setPendingSavedQueryState] = useState<PendingSavedQuery | null>(null);
+  const [pendingSavedQueryState, setPendingSavedQueryRaw] = useState<PendingSavedQuery | null>(null);
   const { isDrawerOpen } = useQueryLibraryContext();
   const pendingSavedQuery = isDrawerOpen ? pendingSavedQueryState : null;
 
@@ -75,15 +71,22 @@ export function QueryEditorContextWrapper({
   const clearSideEffectsRef = useRef<() => void>(() => {});
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [confirmingDeleteActionKey, setConfirmingDeleteActionKey] = useState<string | null>(null);
 
   const {
+    activeQueryRefId,
+    activeTransformationId,
     selectedQueryRefIds,
     selectedTransformationIds,
     onCardSelectionChange: onCardSelectionChangeRaw,
     trackQueryRename,
+    activateQuery: activateQueryRaw,
+    activateTransformation: activateTransformationRaw,
     toggleQuerySelection: toggleQuerySelectionRaw,
     toggleTransformationSelection: toggleTransformationSelectionRaw,
     clearSelection: clearSelectionRaw,
+    clearMultiSelection: clearMultiSelectionRaw,
+    selectActiveInMultiSelection: selectActiveInMultiSelectionRaw,
     removeQueryFromSelection,
     removeTransformationFromSelection,
   } = useSelectionState({
@@ -93,42 +96,81 @@ export function QueryEditorContextWrapper({
     onClearSideEffects: useCallback(() => clearSideEffectsRef.current(), []),
   });
 
-  // Wrap each selection mutator to clear alert selection (cross-type exclusivity).
+  // Wrap each selection mutator to clear alert selection (cross-type exclusivity) and dismiss any
+  // open inline delete confirmation because both are selection-scoped UI state.
   const onCardSelectionChange = useCallback(
-    (queryRefId: string | null, transformationId: string | null) => {
+    (queryRefId: string | null, transformationId: string | null, options?: CardSelectionOptions) => {
       setSelectedAlertId(null);
-      onCardSelectionChangeRaw(queryRefId, transformationId);
+      setConfirmingDeleteActionKey(null);
+      onCardSelectionChangeRaw(queryRefId, transformationId, options);
     },
     [onCardSelectionChangeRaw]
   );
 
+  // Bulk-selection entry points, driven by the sidebar card checkboxes (plain card clicks go
+  // through setSelectedQuery / setSelectedTransformation instead). Ticking a checkbox means the
+  // same thing whether or not the stacked view is showing, so there is no stacked-specific branch.
   const toggleQuerySelection = useCallback(
     (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
-      toggleQuerySelectionRaw(query, modifiers);
+      setConfirmingDeleteActionKey(null);
+      if (modifiers?.multi || modifiers?.range) {
+        if (!multiSelectMode) {
+          return;
+        }
+        toggleQuerySelectionRaw(query, modifiers);
+        return;
+      }
+      activateQueryRaw(query);
     },
-    [toggleQuerySelectionRaw]
+    [multiSelectMode, activateQueryRaw, toggleQuerySelectionRaw]
   );
 
   const toggleTransformationSelection = useCallback(
     (transformation: Transformation, modifiers?: SelectionModifiers) => {
       setSelectedAlertId(null);
-      toggleTransformationSelectionRaw(transformation, modifiers);
+      setConfirmingDeleteActionKey(null);
+      if (modifiers?.multi || modifiers?.range) {
+        if (!multiSelectMode) {
+          return;
+        }
+        toggleTransformationSelectionRaw(transformation, modifiers);
+        return;
+      }
+      activateTransformationRaw(transformation);
     },
-    [toggleTransformationSelectionRaw]
+    [multiSelectMode, activateTransformationRaw, toggleTransformationSelectionRaw]
   );
 
-  const clearSelection = useCallback(() => {
-    setSelectedAlertId(null);
-    clearSelectionRaw();
-  }, [clearSelectionRaw]);
-
-  const selectAlert = useCallback(
+  const resetSelectionState = useCallback(
     (alertId: string | null) => {
       setSelectedAlertId(alertId);
+      setMultiSelectMode(false);
+      setConfirmingDeleteActionKey(null);
       clearSelectionRaw();
     },
     [clearSelectionRaw]
+  );
+
+  const clearSelection = useCallback(() => resetSelectionState(null), [resetSelectionState]);
+  const selectAlert = useCallback((alertId: string | null) => resetSelectionState(alertId), [resetSelectionState]);
+
+  const setMultiSelectModeState = useCallback(
+    (enabled: boolean) => {
+      if (enabled) {
+        // Nothing to select means multi-select would have an empty set, and a card added later
+        // would arrive unchecked — so refuse to enter the mode until there's a card to seed.
+        const hasCards = (queryRunnerState?.queries?.length ?? 0) + transformations.length > 0;
+        if (!hasCards) {
+          return;
+        }
+        selectActiveInMultiSelectionRaw();
+      } else {
+        clearMultiSelectionRaw();
+      }
+      setMultiSelectMode(enabled);
+    },
+    [queryRunnerState?.queries, transformations, clearMultiSelectionRaw, selectActiveInMultiSelectionRaw]
   );
 
   // Wraps onCardSelectionChange with a UI reset for use in finalizePendingExpression /
@@ -137,17 +179,21 @@ export function QueryEditorContextWrapper({
   // remain visible after the picker resolves.
   const onFinalizeCardSelection = useCallback(
     (queryRefId: string | null, transformationId: string | null) => {
-      onCardSelectionChange(queryRefId, transformationId);
+      onCardSelectionChange(queryRefId, transformationId, { bulk: multiSelectMode ? 'seed' : 'clear' });
       resetUIToggles();
     },
-    [onCardSelectionChange, resetUIToggles]
+    [onCardSelectionChange, multiSelectMode, resetUIToggles]
   );
 
-  const { pendingExpression, setPendingExpression, finalizePendingExpression, clearPendingExpression } =
-    usePendingExpression({
-      addQuery: dataPane.addQuery,
-      onCardSelectionChange: onFinalizeCardSelection,
-    });
+  const {
+    pendingExpression,
+    setPendingExpression: setPendingExpressionRaw,
+    finalizePendingExpression,
+    clearPendingExpression,
+  } = usePendingExpression({
+    addQuery: dataPane.addQuery,
+    onCardSelectionChange: onFinalizeCardSelection,
+  });
 
   const findTransformationIndex = useCallback(
     (transformId: string) => {
@@ -168,22 +214,70 @@ export function QueryEditorContextWrapper({
     [dataPane, findTransformationIndex]
   );
 
-  const { pendingTransformation, setPendingTransformation, finalizePendingTransformation, clearPendingTransformation } =
-    usePendingTransformation({
-      addTransformation: addTransformationAction,
-      onCardSelectionChange: onFinalizeCardSelection,
-    });
+  const {
+    pendingTransformation,
+    setPendingTransformation: setPendingTransformationRaw,
+    finalizePendingTransformation,
+    clearPendingTransformation,
+  } = usePendingTransformation({
+    addTransformation: addTransformationAction,
+    onCardSelectionChange: onFinalizeCardSelection,
+  });
+
+  const { setPendingExpression, setPendingTransformation, setPendingSavedQuery } = usePendingPickerSetters({
+    setPendingExpression: setPendingExpressionRaw,
+    setPendingTransformation: setPendingTransformationRaw,
+    setPendingSavedQuery: setPendingSavedQueryRaw,
+  });
 
   const clearSideEffects = useCallback(() => {
     resetUIToggles();
     clearPendingExpression();
     clearPendingTransformation();
-    setPendingSavedQueryState(null);
+    setPendingSavedQueryRaw(null);
   }, [resetUIToggles, clearPendingExpression, clearPendingTransformation]);
 
   // Update the ref every render so the stable callback inside useSelectionState
   // always delegates to the latest clearSideEffects.
   clearSideEffectsRef.current = clearSideEffects;
+
+  // Hoisted out of `uiState` so they stay referentially stable across selection changes —
+  // consumers that put these in a useEffect/useMemo dep array only re-fire when multi-select
+  // mode toggles, not on every active-card change.
+  const setSelectedQuery = useCallback(
+    (query: DataQuery | ExpressionQuery | null) => {
+      setSelectedAlertId(null);
+      if (multiSelectMode && query) {
+        // In multi-select mode we only move the active card; activateQueryRaw fires
+        // onClearSideEffects via the hook's ref, so no second clearSideEffects call is needed.
+        activateQueryRaw(query);
+        return;
+      }
+      onCardSelectionChange(query ? query.refId : null, null);
+      clearSideEffects();
+    },
+    [multiSelectMode, activateQueryRaw, onCardSelectionChange, clearSideEffects]
+  );
+
+  const setSelectedTransformation = useCallback(
+    (transformation: Transformation | null) => {
+      setSelectedAlertId(null);
+      if (multiSelectMode && transformation) {
+        activateTransformationRaw(transformation);
+        return;
+      }
+      onCardSelectionChange(null, transformation ? transformation.transformId : null);
+      clearSideEffects();
+    },
+    [multiSelectMode, activateTransformationRaw, onCardSelectionChange, clearSideEffects]
+  );
+
+  const setSelectedAlert = useCallback(
+    (alert: AlertRule | null) => {
+      selectAlert(alert?.alertId ?? null);
+    },
+    [selectAlert]
+  );
 
   const dsState = useMemo(
     () => ({
@@ -194,11 +288,9 @@ export function QueryEditorContextWrapper({
     [datasource, dsSettings, dsError]
   );
 
-  const primaryQueryRefId = selectedQueryRefIds[selectedQueryRefIds.length - 1] ?? null;
-
   const queryError = useMemo(() => {
-    return queryRunnerState?.data?.errors?.find(({ refId }) => refId === primaryQueryRefId);
-  }, [queryRunnerState?.data?.errors, primaryQueryRefId]);
+    return queryRunnerState?.data?.errors?.find(({ refId }) => refId === activeQueryRefId);
+  }, [queryRunnerState?.data?.errors, activeQueryRefId]);
 
   const qrState = useMemo(
     () => ({
@@ -221,8 +313,8 @@ export function QueryEditorContextWrapper({
   const queryOptions = useQueryOptions({ panel, queryRunner, dsSettings });
 
   const { selectedQuery, selectedTransformation, selectedAlert } = useSelectedCard(
-    selectedQueryRefIds,
-    selectedTransformationIds,
+    activeQueryRefId,
+    activeTransformationId,
     selectedAlertId,
     queryRunnerState?.queries ?? [],
     transformations,
@@ -230,7 +322,23 @@ export function QueryEditorContextWrapper({
     Boolean(pendingExpression) || Boolean(pendingTransformation)
   );
 
-  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
+  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings, panel);
+
+  // Scrolling the stack activates the card coming into view, which is navigation — so keep the
+  // bulk selection so checkboxes ticked in the sidebar survive scrolling the stack.
+  const activateStackedItem = useCallback(
+    (queryRefId: string | null, transformationId: string | null) => {
+      onCardSelectionChange(queryRefId, transformationId, { bulk: 'keep' });
+    },
+    [onCardSelectionChange]
+  );
+
+  // Composed after useSelectedCard so `isAlertView` reads the resolved alert card, matching the
+  // condition QueryEditorContent uses to hand the content pane over to the alerts view.
+  const stackedMode = useStackedModeOrchestration({
+    activateItem: activateStackedItem,
+    isAlertView: selectedAlert !== null,
+  });
 
   const uiState = useMemo(
     () => ({
@@ -243,18 +351,10 @@ export function QueryEditorContextWrapper({
       toggleQuerySelection,
       toggleTransformationSelection,
       clearSelection,
-      setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => {
-        onCardSelectionChange(query ? query.refId : null, null);
-        clearSideEffects();
-      },
-      setSelectedTransformation: (transformation: Transformation | null) => {
-        onCardSelectionChange(null, transformation ? transformation.transformId : null);
-        clearSideEffects();
-      },
-      setSelectedAlert: (alert: AlertRule | null) => {
-        selectAlert(alert?.alertId ?? null);
-      },
-      setMultiSelectMode,
+      setSelectedQuery,
+      setSelectedTransformation,
+      setSelectedAlert,
+      setMultiSelectMode: setMultiSelectModeState,
       queryOptions: {
         options: queryOptions,
         isQueryOptionsOpen,
@@ -267,7 +367,7 @@ export function QueryEditorContextWrapper({
       showingDatasourceHelp,
       toggleDatasourceHelp,
       cardType: getEditorType(
-        selectedQuery || selectedTransformation || selectedAlert,
+        selectedQuery ?? selectedTransformation ?? selectedAlert,
         pendingExpression,
         pendingTransformation
       ),
@@ -277,32 +377,17 @@ export function QueryEditorContextWrapper({
         toggleDebug,
       },
       pendingExpression,
-      setPendingExpression: (pending: PendingExpression | null) => {
-        if (pending) {
-          clearPendingTransformation();
-          setPendingSavedQueryState(null);
-        }
-        setPendingExpression(pending);
-      },
+      setPendingExpression,
       finalizePendingExpression,
       pendingSavedQuery,
-      setPendingSavedQuery: (pending: PendingSavedQuery | null) => {
-        if (pending) {
-          clearPendingExpression();
-          clearPendingTransformation();
-        }
-        setPendingSavedQueryState(pending);
-      },
+      setPendingSavedQuery,
       pendingTransformation,
-      setPendingTransformation: (pending: PendingTransformation | null) => {
-        if (pending) {
-          clearPendingExpression();
-          setPendingSavedQueryState(null);
-        }
-        setPendingTransformation(pending);
-      },
+      setPendingTransformation,
       finalizePendingTransformation,
+      stackedMode,
       showVersionBanner: Boolean(showVersionBanner),
+      confirmingDeleteActionKey,
+      setConfirmingDeleteActionKey,
     }),
     [
       selectedQuery,
@@ -314,9 +399,10 @@ export function QueryEditorContextWrapper({
       toggleQuerySelection,
       toggleTransformationSelection,
       clearSelection,
-      onCardSelectionChange,
-      selectAlert,
-      clearSideEffects,
+      setSelectedQuery,
+      setSelectedTransformation,
+      setSelectedAlert,
+      setMultiSelectModeState,
       queryOptions,
       isQueryOptionsOpen,
       openSidebar,
@@ -330,15 +416,16 @@ export function QueryEditorContextWrapper({
       toggleHelp,
       toggleDebug,
       pendingExpression,
+      stackedMode,
       setPendingExpression,
       finalizePendingExpression,
-      clearPendingExpression,
       pendingSavedQuery,
+      setPendingSavedQuery,
       pendingTransformation,
       setPendingTransformation,
       finalizePendingTransformation,
-      clearPendingTransformation,
       showVersionBanner,
+      confirmingDeleteActionKey,
     ]
   );
 
@@ -355,6 +442,9 @@ export function QueryEditorContextWrapper({
       deleteQuery: (refId: string) => {
         dataPane.deleteQuery(refId);
         removeQueryFromSelection(refId);
+        // Deleting a card from its header exits multi-select mode so the checkboxes and bulk-actions
+        // footer revert together instead of leaving a desynced multi-select state behind.
+        setMultiSelectModeState(false);
       },
       duplicateQuery: dataPane.duplicateQuery,
       toggleQueryHide: dataPane.toggleQueryHide,
@@ -370,6 +460,9 @@ export function QueryEditorContextWrapper({
           dataPane.deleteTransformation(index);
         }
         removeTransformationFromSelection(transformId);
+        // Deleting a card from its header exits multi-select mode so the checkboxes and bulk-actions
+        // footer revert together instead of leaving a desynced multi-select state behind.
+        setMultiSelectModeState(false);
       },
       toggleTransformationDisabled: (transformId: string) => {
         const index = findTransformationIndex(transformId);
@@ -400,6 +493,7 @@ export function QueryEditorContextWrapper({
       onSwitchToClassic,
       removeQueryFromSelection,
       removeTransformationFromSelection,
+      setMultiSelectModeState,
       trackQueryRename,
     ]
   );

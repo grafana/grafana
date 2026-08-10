@@ -655,6 +655,8 @@ export enum SortOrder {
   None = 'none',
 }
 
+export type LegendOverflow = ('ellipsis' | 'wrap');
+
 /**
  * TODO docs
  */
@@ -679,11 +681,12 @@ export interface VizLegendOptions {
   displayMode?: LegendDisplayMode;
   isVisible?: boolean;
   limit?: number;
+  overflow?: LegendOverflow;
   placement: LegendPlacement;
   showLegend: boolean;
   sortBy?: string;
   sortDesc?: boolean;
-  width?: number;
+  width?: (number | string);
 }
 
 export const defaultVizLegendOptions: Partial<VizLegendOptions> = {
@@ -1048,6 +1051,10 @@ export interface TableOptions {
    * limits the maximum height of a row, if text wrapping or dynamic height is enabled
    */
   maxRowHeight?: number;
+  /**
+   * When pagination is enabled, sets a fixed number of rows per page. When unset, the page size is derived from the panel height.
+   */
+  pageSize?: number;
   /**
    * Controls whether the panel should show the header
    */

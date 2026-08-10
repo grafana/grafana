@@ -52,6 +52,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
       ...getPositioningMiddleware(floatingUIPlacement),
       arrow({
         element: arrowRef,
+        padding: 12,
       }),
     ];
 
@@ -106,7 +107,14 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
         {isOpen && (
           <Portal>
             <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
-              <FloatingArrow className={style.arrow} ref={arrowRef} context={context} />
+              <FloatingArrow
+                width={8}
+                height={4}
+                tipRadius={2}
+                className={style.arrow}
+                ref={arrowRef}
+                context={context}
+              />
               <div
                 data-testid={selectors.components.Tooltip.container}
                 id={tooltipId}
@@ -127,7 +135,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 
 Tooltip.displayName = 'Tooltip';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(
     theme,
     theme.components.tooltip.background,

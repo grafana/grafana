@@ -3,9 +3,16 @@
  */
 
 export enum StepKey {
+  Method = 'method',
   Notifications = 'notifications',
   Rules = 'rules',
   Review = 'review',
+  ReviewEnable = 'review-enable',
+}
+
+export type ImportMethod = 'stage' | 'promote' | 'autosync' | 'legacy-datasource-rules';
+export interface WizardFormValues {
+  importMethod: ImportMethod;
 }
 
 export enum StepState {
@@ -21,7 +28,7 @@ export interface WizardStep {
 
 export type VisitedSteps = Partial<Record<StepKey, StepState>>;
 
-export type NotificationsSourceType = 'yaml' | 'datasource';
+type NotificationsSourceType = 'yaml' | 'datasource';
 
 export interface NotificationsSourceOption {
   label: string;
@@ -29,7 +36,7 @@ export interface NotificationsSourceOption {
   value: NotificationsSourceType;
 }
 
-export type RulesSourceType = 'datasource' | 'yaml';
+type RulesSourceType = 'datasource' | 'yaml';
 
 export interface RulesSourceOption {
   label: string;

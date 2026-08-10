@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
@@ -62,29 +62,14 @@ type staticContactPointValidator struct {
 	availableTimeIntervals map[string]struct{}
 }
 
-// apiAlertingConfig contains the methods required to validate NotificationSettings and create autogen routes.
-type apiAlertingConfig[R receiver] interface {
-	GetReceivers() []R
-	GetMuteTimeIntervals() []definitions.AmMuteTimeInterval
-	GetTimeIntervals() []definitions.TimeInterval
-	GetRoute() *definitions.Route
-}
-
-type receiver interface {
-	GetName() string
-}
-
-func newStaticContactPointValidator[R receiver](am apiAlertingConfig[R]) staticContactPointValidator {
+func newStaticContactPointValidator(am *v1.AMConfigV1) staticContactPointValidator {
 	availableReceivers := make(map[string]struct{})
-	for _, receiver := range am.GetReceivers() {
+	for _, receiver := range am.AlertmanagerConfig.GetReceivers() {
 		availableReceivers[receiver.GetName()] = struct{}{}
 	}
 
 	availableTimeIntervals := make(map[string]struct{})
-	for _, interval := range am.GetMuteTimeIntervals() {
-		availableTimeIntervals[interval.Name] = struct{}{}
-	}
-	for _, interval := range am.GetTimeIntervals() {
+	for _, interval := range am.AlertmanagerConfig.TimeIntervals {
 		availableTimeIntervals[interval.Name] = struct{}{}
 	}
 
@@ -96,19 +81,20 @@ func newStaticContactPointValidator[R receiver](am apiAlertingConfig[R]) staticC
 
 // NewContactPointRoutingValidator creates a new NotificationSettingsValidator from the given apiAlertingConfig that
 // only validates ContactPointRouting.
-func NewContactPointRoutingValidator[R receiver](am apiAlertingConfig[R]) ContactPointRoutingValidator {
+func NewContactPointRoutingValidator(am *v1.AMConfigV1) ContactPointRoutingValidator {
 	return newStaticContactPointValidator(am)
 }
 
 // NewNotificationSettingsValidator creates a new NotificationSettingsValidator from the given apiAlertingConfig.
-func NewNotificationSettingsValidator(cfg *definitions.PostableUserConfig) NotificationSettingsValidator {
-	validator := newStaticContactPointValidator(&cfg.AlertmanagerConfig)
+func NewNotificationSettingsValidator(cfg *v1.AMConfigV1) NotificationSettingsValidator {
+	validator := newStaticContactPointValidator(cfg)
 
 	availableRoutes := make(map[string]struct{}, len(cfg.ManagedRoutes)+1)
 	for routeName := range cfg.ManagedRoutes {
 		availableRoutes[routeName] = struct{}{}
 	}
 	availableRoutes[models.DefaultRoutingTreeName] = struct{}{}
+	availableRoutes[models.DefaultRoutingTreeNameAlias] = struct{}{}
 	if len(cfg.ExtraConfigs) > 0 {
 		availableRoutes[cfg.ExtraConfigs[0].Identifier] = struct{}{}
 	}

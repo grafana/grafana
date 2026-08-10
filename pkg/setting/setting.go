@@ -70,6 +70,35 @@ const DefaultRendererAuthToken = "-"
 // written to a provisioning repository through the files API.
 const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 
+// ProvisioningSyncResourceTimeoutDefault is the default value for the
+// [provisioning] sync_resource_timeout key. It bounds how long applying a
+// single resource (or folder) may take during a sync job before that
+// operation is cancelled. Large resources (e.g. multi-MB dashboards) can
+// exceed a short timeout, which is why it is configurable. 30s matches the
+// timeout used by the provisioning files write API.
+const ProvisioningSyncResourceTimeoutDefault = 30 * time.Second
+
+// ProvisioningControllerResyncIntervalDefault is the default value for the
+// [provisioning] resync_interval key. It sets how often the provisioning
+// controllers' informers re-list (repository, connection) as a fallback to the
+// live watch/NATS notifications. A shorter value reconciles stale state sooner
+// at the cost of more full LISTs. The jobs informer resyncs on
+// job_poll_interval instead.
+const ProvisioningControllerResyncIntervalDefault = 60 * time.Second
+
+// ProvisioningHistoryExpirationDefault is the default value for the
+// [provisioning] history_expiration key. It is both how long a HistoricJob is
+// retained before the resync-driven cleanup removes it and the resync interval
+// of the historic-job informer that feeds that cleanup.
+const ProvisioningHistoryExpirationDefault = 10 * time.Minute
+
+// ProvisioningJobPollIntervalDefault is the default value for the [provisioning]
+// job_poll_interval key: the jobs informer's resync/re-list interval, which is
+// how often unclaimed jobs missed by the live watch/NATS notifications are
+// picked up. The key predates the informer-driven job queue (it used to be a
+// poll loop) and keeps its name and default so existing config keeps its meaning.
+const ProvisioningJobPollIntervalDefault = 30 * time.Second
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -156,8 +185,15 @@ type Cfg struct {
 	// Grafana API Server
 	DisableControllers bool
 	// Provisioning config
-	ProvisioningAllowedTargets                []string
+	// ProvisioningEnabled: enable or disable Git Sync / as-code provisioning
+	// for Grafana resources. See [provisioning] enabled in defaults.ini.
+	ProvisioningEnabled        bool
+	ProvisioningAllowedTargets []string
+	// ProvisioningResources is the configured set of provisionable resources, each as a
+	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
+	ProvisioningResources                     []string
 	ProvisioningAllowImageRendering           bool
+	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
 	ProvisioningRepositoryTypes               []string
 	ProvisioningLokiURL                       string
@@ -166,14 +202,20 @@ type Cfg struct {
 	ProvisioningLokiTenantID                  string
 	ProvisioningMaxResourcesPerRepository     int64         // 0 = unlimited
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
-	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
+	ProvisioningSyncResourceTimeout           time.Duration // per-resource apply timeout during sync; default 30s; <=0 = default
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
+	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for the repo/connection controllers (jobs use ProvisioningJobPollInterval); default 60s; <=0 = default
+	ProvisioningHistoryExpiration             time.Duration // HistoricJob retention and historic-job informer resync; default 10m; <=0 = default
+	ProvisioningJobPollInterval               time.Duration // jobs informer resync/re-list interval (recovery for jobs missed by live notifications); default 30s; <=0 = default
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
+	ProvisioningWebhookTrustedIPHeader        string        // name of the proxy-set header carrying the real client IP for webhook rate-limiting; empty falls back to the real TCP peer
+	ProvisioningWebhookRateLimitRPS           int           // sustained requests per second allowed per client by the webhook rate limiter; <= 0 disables rate limiting
 	DataPath                                  string
 	LogsPath                                  string
 	EnterpriseLicensePath                     string
+	MarketplaceLicenseDirectory               string
 	// PluginsPaths: list of paths where Grafana will look for plugins.
 	// Order is important, if multiple paths contain the same plugin, only the first one will be used.
 	PluginsPaths []string
@@ -286,29 +328,31 @@ type Cfg struct {
 	DefaultHomeDashboardPath         string
 	DashboardPerformanceMetrics      []string
 	PanelSeriesLimit                 int
+	DashboardDefaultPreload          bool
 	DashboardSchemaMigrationCacheTTL time.Duration
 
 	// Auth
-	LoginCookieName               string
-	LoginMaxInactiveLifetime      time.Duration
-	LoginMaxLifetime              time.Duration
-	TokenRotationIntervalMinutes  int
-	SigV4AuthEnabled              bool
-	SigV4VerboseLogging           bool
-	AzureAuthEnabled              bool
-	AzureSkipOrgRoleSync          bool
-	BasicAuthEnabled              bool
-	BasicAuthStrongPasswordPolicy bool
-	AdminUser                     string
-	AdminPassword                 string
-	DisableLogin                  bool
-	AdminEmail                    string
-	DisableLoginForm              bool
-	SignoutRedirectUrl            string
-	IDResponseHeaderEnabled       bool
-	IDResponseHeaderPrefix        string
-	IDResponseHeaderNamespaces    map[string]struct{}
-	ManagedServiceAccountsEnabled bool
+	LoginCookieName                   string
+	LoginMaxInactiveLifetime          time.Duration
+	LoginMaxLifetime                  time.Duration
+	TokenRotationIntervalMinutes      int
+	SigV4AuthEnabled                  bool
+	SigV4VerboseLogging               bool
+	AzureAuthEnabled                  bool
+	AzureSkipOrgRoleSync              bool
+	BasicAuthEnabled                  bool
+	BasicAuthStrongPasswordPolicy     bool
+	AdminUser                         string
+	AdminPassword                     string
+	DisableLogin                      bool
+	AdminEmail                        string
+	DisableLoginForm                  bool
+	SignoutRedirectUrl                string
+	IDResponseHeaderEnabled           bool
+	IDResponseHeaderPrefix            string
+	IDResponseHeaderNamespaces        map[string]struct{}
+	ManagedServiceAccountsEnabled     bool
+	IDUseExternalGroupsForGroupsClaim bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders          []string
@@ -454,6 +498,8 @@ type Cfg struct {
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
+	PostHogToken                        string
+	PostHogHost                         string
 	FrontendAnalyticsConsoleReporting   bool
 	MeticulousAIRecordingToken          string
 
@@ -594,6 +640,9 @@ type Cfg struct {
 	// GRPC Server.
 	GRPCServer GRPCServerSettings
 
+	// NATS message bus.
+	NATS NATSSettings
+
 	CustomResponseHeaders map[string]string
 
 	// This is used to override the general error message shown to users when we want to obfuscate a sensitive backend error
@@ -639,6 +688,7 @@ type Cfg struct {
 	NewsFeedEnabled bool
 
 	// Experimental scope settings
+	ScopesApiEnabled        bool
 	ScopesListScopesURL     string
 	ScopesListDashboardsURL string
 
@@ -646,7 +696,9 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage map[string]UnifiedStorageConfig
+	UnifiedStorage                      map[string]UnifiedStorageConfig
+	UnifiedStorageAuthzExemptionEnabled bool
+	UnifiedStorageAuthzExemptResources  []string
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -656,6 +708,12 @@ type Cfg struct {
 	// This separates the read phase (legacy DB) from the write phase (unified storage)
 	// Default: false.
 	MigrationParquetBuffer bool
+	// MigrationChunkedWrites writes each migration chunk in its own transaction,
+	// bounded by migration_chunk_max_bytes. Requires migration_locking=true for HA. Default: false.
+	MigrationChunkedWrites bool
+	// MigrationChunkMaxBytes is the soft maximum byte budget per migration chunk
+	// when MigrationChunkedWrites is enabled. Default: 256 MiB.
+	MigrationChunkMaxBytes int64
 	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
 	// statements to appear in the processlist. Default: 1 minute.
 	RenameWaitDeadline time.Duration
@@ -671,13 +729,20 @@ type Cfg struct {
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
+	IndexDeletedDocuments                      bool          // Keep deleted objects in the search index, so trash searches can find them.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
 	IndexSnapshotBucketURL                     string        // Go CDK bucket URL for snapshot storage (s3://, gs://, azblob://, mem://, file:///)
+	IndexSnapshotStorageKV                     bool          // Store snapshots in the same KV used by the storage backend instead of an object-storage bucket. Mutually exclusive with index_snapshot_bucket_url; requires enable_kv_leases.
+	IndexSnapshotKVChunkConcurrency            int           // Per-file chunk I/O fan-out for KV-backed snapshots. 0 / 1 = serial. Used only when index_snapshot_storage_kv is true.
+	IndexSnapshotKVChunkSizeMiB                int           // Size in MiB of a single KV value used to store snapshot file data. Files larger than this are split into chunks. 0 = use built-in default. Valid range: 1..1024 MiB. Used only when index_snapshot_storage_kv is true.
 	IndexSnapshotThreshold                     int           // Min doc count to use remote snapshots (must be >= IndexFileThreshold, default: 5000)
 	IndexSnapshotMaxAge                        time.Duration // Max snapshot age before deletion (must be >= MaxFileIndexAge, default: 7d)
 	IndexSnapshotCleanupGracePeriod            time.Duration // Time a new snapshot must exist before its predecessor in the same Grafana-version group is eligible for cleanup (default: 30m)
+	DiskIndexCleanupInterval                   time.Duration // How often to scan the bleve index root for folders to reclaim. Zero disables the loop (default: 0).
+	DiskIndexCleanupGracePeriod                time.Duration // Minimum age a candidate folder must have before disk cleanup is allowed to delete it (default: 1h).
+	DiskIndexCleanupUnopenedGracePeriod        time.Duration // Longer grace applied to the newest on-disk index of a resource this pod owns but has not opened. Lets cold-start BuildIndex reuse it instead of rebuilding from scratch (default: 24h).
 	EnableSharding                             bool
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
@@ -689,6 +754,7 @@ type Cfg struct {
 	MemberlistClusterLabel                     string
 	MemberlistClusterLabelVerificationDisabled bool
 	SearchRingReplicationFactor                int
+	SearchRingExtendReplicaSet                 bool
 	InstanceID                                 string
 	SprinklesApiServer                         string
 	SprinklesApiServerPageLimit                int
@@ -698,29 +764,79 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
+	// SearchPostRankAuthz enables the post-filter authorization search path:
+	// bleve ranks without the in-searcher authz wrapper and authorization runs
+	// app-side in rank order with early exit once the page is filled.
+	SearchPostRankAuthz bool
+	// SearchPostRankAuthz tunables. Zero falls back to the defaults in
+	// search.PostRankAuthzConfig.effective().
+	SearchPostRankAuthzOverFetchFactor int
+	SearchPostRankAuthzMaxWindow       int
+	SearchPostRankAuthzMaxCandidates   int
+	// SearchPostRankAuthzFacetSampleSize bounds the candidate budget when
+	// aggregating facets on the post-filter path. Zero falls back to the
+	// default in search.PostRankAuthzConfig.effective().
+	SearchPostRankAuthzFacetSampleSize int
 
 	// Vector storage
-	EnableVectorBackend      bool
-	VectorDBHost             string
-	VectorDBPort             string
-	VectorDBName             string
-	VectorDBUser             string
-	VectorDBPassword         string
-	VectorDBSSLMode          string
-	VectorIndexingEnabled    bool          // run the embedding backfiller and reconciler
-	VectorReconcilerInterval time.Duration // reconciler tick interval; default 60s
-	VectorPromotionThreshold int           // row count per tenant to trigger promotion
-	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
+	EnableVectorBackend bool
+	// Vector API collection allowlists: "group/resource" entries. Internal
+	// defaults to dashboards; external defaults to none.
+	VectorAllowedInternalCollections []string
+	VectorAllowedExternalCollections []string
+	// Registers the VectorStore write RPCs on the storage server.
+	EnableVectorStore bool
+	// Service identities allowed to call the VectorStore write RPCs.
+	// Empty = no identity restriction.
+	VectorAllowedWriteServices   []string
+	VectorDBHost                 string
+	VectorDBPort                 string
+	VectorDBName                 string
+	VectorDBUser                 string
+	VectorDBPassword             string
+	VectorDBSSLMode              string
+	VectorIndexingEnabled        bool          // run the embedding backfiller and reconciler
+	VectorReconcilerInterval     time.Duration // reconciler tick interval; default 60s
+	VectorEmbeddingCountInterval time.Duration // stored-embedding gauge sample interval; 0 disables
+	VectorPromotionThreshold     int           // row count per tenant to trigger promotion
+	VectorPromoterInterval       time.Duration // promoter tick interval; 0 disables
+
+	// VectorSearch per-tenant query-embedding cache (DB-backed, FIFO).
+	VectorQueryCacheEnabled      bool
+	VectorQueryCacheMaxPerTenant int
+
+	// VectorSearch per-tenant rate limit (DB-backed, sliding window).
+	VectorRateLimitEnabled   bool
+	VectorRateLimitPerTenant int
+	VectorRateLimitWindow    time.Duration
 
 	// Embedding provider used by the VectorSearch RPC. "" = disabled.
-	EmbeddingProvider string // "vertex" | "bedrock" | ""
-	VertexProjectID   string
-	VertexLocation    string // default "us-central1"
-	VertexModel       string // default "gemini-embedding-001"
-	VertexDimensions  int    // default 768
-	BedrockRegion     string // default "us-east-1"
-	BedrockModel      string // default "cohere.embed-v4:0"
-	BedrockDimensions int    // default 1024
+	EmbeddingProvider  string // "vertex" | "bedrock" | "azure" | ""
+	VertexProjectID    string
+	VertexLocation     string // default "us-central1"
+	VertexModel        string // default "gemini-embedding-001"
+	VertexDimensions   int    // default 768
+	VertexBatchSize    int    // texts per Vertex predict call; default 50
+	BedrockRegion      string // default "us-east-1"
+	BedrockModel       string // default "cohere.embed-v4:0"
+	BedrockDimensions  int    // default 1024
+	BedrockBatchSize   int    // texts per Bedrock invoke call; default 50
+	BedrockMaxAttempts int    // max InvokeModel attempts per call under throttling; default 5
+	AzureEndpoint      string // Azure OpenAI resource endpoint, e.g. https://<resource>.openai.azure.com
+	AzureDeployment    string // Azure OpenAI embeddings deployment name; default "text-embedding-3-small"
+	AzureAPIVersion    string // Azure OpenAI REST API version; default "2024-02-01"
+	AzureDimensions    int    // requested output dimensionality; default 1024 (text-embedding-3-small reduced from native 1536)
+	AzureBatchSize     int    // texts per Azure embeddings call; default 50
+
+	// Rerank provider for the HybridSearch RPC ([vector_reranker] section).
+	// Empty = disabled (RRF ordering is returned as-is, min_relevance is a
+	// no-op).
+	RerankProvider        string
+	RerankVertexProjectID string
+	RerankVertexLocation  string
+	RerankVertexModel     string
+	RerankBedrockRegion   string
+	RerankBedrockModel    string
 
 	// Overrides/Quotas
 	OverridesFilePath             string
@@ -728,9 +844,17 @@ type Cfg struct {
 	EnforcedQuotaResources        []string
 	QuotasErrorMessageSupportInfo string
 
-	EnableSQLKVBackend                bool
-	EnableSQLKVCompatibilityMode      bool
+	EnableSQLKVBackend           bool
+	EnableSQLKVCompatibilityMode bool
+	// LogSQLBackendCalls, when true, logs every call that reaches an exported
+	// method of the legacy SQL backend. Temporary smoke-test instrumentation
+	// used to confirm no production traffic still reaches sql/backend before
+	// removing the sqlkv backwards-compatibility layer.
+	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
+	LogSQLBackendCalls                bool
 	EnableKVLeases                    bool
+	KVLeaseTTL                        time.Duration
+	KVLeaseAutoRenew                  bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -762,8 +886,34 @@ type Cfg struct {
 	TenantDeleterDryRun           bool
 	TenantDeleterInterval         time.Duration
 
+	ManifestApiServerAddress        string
+	ManifestWatcherAllowInsecureTLS bool
+	ManifestWatcherCAFile           string
+	ManifestWatcherPollInterval     time.Duration
+
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
+
+	// EnableKubernetesAggregator routes API traffic through a kube-aggregator layer
+	// (required for Kubernetes-style API aggregation, e.g. the service API builder).
+	EnableKubernetesAggregator bool
+
+	// Enable CAP token based authentication in grafana's embedded kube-aggregator
+	EnableKubernetesAggregatorCapTokenAuth bool
+
+	// EnableEmbeddedAPIExtensions runs the apiextensions apiserver and
+	// the AppManifest installer in-process inside single-tenant Grafana. Enterprise
+	// only; OSS keeps the no-op path. Default off.
+	EnableEmbeddedAPIExtensions bool
+
+	// EnableVersionPolicy turns on the global API version policy (preferred and
+	// max-allowed API version per group). Off leaves today's behavior unchanged.
+	// Temporary opt-in kill-switch while the feature is experimental; remove it and
+	// enforce unconditionally once the version policy is enabled by default.
+	EnableVersionPolicy bool
+
+	// Enable playlist reconciler
+	EnablePlaylistsReconciler bool
 }
 
 type UnifiedStorageConfig struct {
@@ -803,22 +953,9 @@ type CommandLineArgs struct {
 	Args     []string
 }
 
-func (cfg *Cfg) parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
-	appUrl := valueAsString(section, "root_url", "http://localhost:3000/")
-
-	if appUrl[len(appUrl)-1] != '/' {
-		appUrl += "/"
-	}
-
-	// Check if has app suburl.
-	url, err := url.Parse(appUrl)
-	if err != nil {
-		cfg.Logger.Error("Invalid root_url.", "url", appUrl, "error", err)
-		os.Exit(1)
-	}
-
-	appSubUrl := strings.TrimSuffix(url.Path, "/")
-	return appUrl, appSubUrl, nil
+func copyServerURLSettingsToGlobals(cfg *Cfg) {
+	AppUrl = cfg.AppURL
+	AppSubUrl = cfg.AppSubURL
 }
 
 func ToAbsUrl(relativeUrl string) string {
@@ -1030,7 +1167,11 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
-	cfg.AnnotationAppPlatform = loadAnnotationAppPlatformSettings(cfg.Raw)
+	annotationAppPlatformSettings, err := loadAnnotationAppPlatformSettings(cfg)
+	if err != nil {
+		return err
+	}
+	cfg.AnnotationAppPlatform = annotationAppPlatformSettings
 
 	switch {
 	case cfg.AnnotationMaximumTagsLength > 4096:
@@ -1091,47 +1232,6 @@ func (cfg *Cfg) readExpressionsSettings() {
 type AnnotationCleanupSettings struct {
 	MaxAge   time.Duration
 	MaxCount int64
-}
-
-type AnnotationAppPlatformSettings struct {
-	Enabled      bool
-	StoreBackend string        // "legacy-sql" (default), "grpc", or "postgres"
-	RetentionTTL time.Duration // Retention TTL for annotations
-
-	GRPCAddress       string // gRPC server address (e.g., "localhost:9090")
-	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
-	GRPCTLSCAFile     string // Path to CA certificate file (optional)
-	GRPCTLSSkipVerify bool   // Skip TLS verification (insecure, for testing)
-
-	// Postgres store configuration
-	PostgresConnectionString string        // PostgreSQL connection string
-	PostgresMaxConnections   int           // Maximum number of connections in the pool
-	PostgresMaxIdleConns     int           // Maximum number of idle connections
-	PostgresConnMaxLifetime  time.Duration // Maximum lifetime of a connection
-	PostgresTagCacheTTL      time.Duration // TTL for tag query cache
-	PostgresTagCacheSize     int           // Size of the tag query cache
-}
-
-func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
-	appPlatformSection := cfg.Section("annotations.app_platform")
-	return AnnotationAppPlatformSettings{
-		Enabled:      appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend: appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL: appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
-
-		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
-		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
-		GRPCTLSCAFile:     appPlatformSection.Key("grpc_tls_ca_file").MustString(""),
-		GRPCTLSSkipVerify: appPlatformSection.Key("grpc_tls_skip_verify").MustBool(false),
-
-		// Postgres configuration
-		PostgresConnectionString: appPlatformSection.Key("postgres_connection_string").MustString(""),
-		PostgresMaxConnections:   appPlatformSection.Key("postgres_max_connections").MustInt(10),
-		PostgresMaxIdleConns:     appPlatformSection.Key("postgres_max_idle_conns").MustInt(5),
-		PostgresConnMaxLifetime:  appPlatformSection.Key("postgres_conn_max_lifetime").MustDuration(time.Hour),
-		PostgresTagCacheTTL:      appPlatformSection.Key("postgres_tag_cache_ttl").MustDuration(60 * time.Second),
-		PostgresTagCacheSize:     appPlatformSection.Key("postgres_tag_cache_size").MustInt(1000),
-	}
 }
 
 // envNameFromIniName converts an ini-style name (section or key) to the
@@ -1504,6 +1604,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
+	if err := readNATSSettings(cfg); err != nil {
+		return err
+	}
+
 	if err := cfg.readProvisioningSettings(iniFile); err != nil {
 		return err
 	}
@@ -1517,6 +1621,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
+	cfg.DashboardDefaultPreload = dashboards.Key("default_preload").MustBool(false)
 	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
@@ -1561,6 +1666,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
+	cfg.PostHogToken = analytics.Key("posthog_token").String()
+	cfg.PostHogHost = analytics.Key("posthog_host").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
 	cfg.MeticulousAIRecordingToken = analytics.Key("meticulous_ai_recording_token").String()
 
@@ -1690,14 +1797,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
-	// check old key name
-	grafanaComUrl := valueAsString(iniFile.Section("grafana_net"), "url", "")
-	if grafanaComUrl == "" {
-		grafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
-	}
-	cfg.GrafanaComURL = grafanaComUrl
-
-	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
+	readGrafanaComSettings(iniFile, cfg)
 	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
 	cfg.GrafanaComProxyAPIToken = valueAsString(iniFile.Section("grafana_com"), "proxy_token", "")
 	imageUploadingSection := iniFile.Section("external_image_storage")
@@ -1705,6 +1805,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
+	marketplace := iniFile.Section("marketplace")
+	cfg.MarketplaceLicenseDirectory = valueAsString(marketplace, "license_directory", cfg.DataPath)
 
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
@@ -1741,6 +1843,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// read experimental scopes settings.
 	scopesSection := iniFile.Section("scopes")
+	cfg.ScopesApiEnabled = scopesSection.Key("api_enabled").MustBool(false)
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
 
@@ -1752,6 +1855,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
 
+	cfg.readStartupParams(iniFile)
 	return nil
 }
 
@@ -1842,6 +1946,14 @@ func (cfg *Cfg) initLogging(file *ini.File) error {
 	return log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
 }
 
+func (cfg *Cfg) readStartupParams(iniFile *ini.File) {
+	cfg.EnablePlaylistsReconciler = iniFile.Section("playlists").Key("enable_playlists_reconciler").MustBool(false)
+
+	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
+	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
+	cfg.EnableEmbeddedAPIExtensions = iniFile.Section("grafana-apiserver").Key("apiextensions_enabled").MustBool(false)
+	cfg.EnableVersionPolicy = iniFile.Section("grafana-apiserver").Key("version_policy_enabled").MustBool(false)
+}
 func (cfg *Cfg) LogConfigSources() {
 	var text bytes.Buffer
 
@@ -1918,7 +2030,7 @@ func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
 
 func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
-	cfg.SecretKey = valueAsString(security, "secret_key", "")
+	readSecretKey(iniFile, cfg)
 	cfg.DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.GravatarURL = security.Key("gravatar_url").MustString("https://secure.gravatar.com/avatar")
 
@@ -1932,29 +2044,9 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 		cfg.BruteForceLoginProtectionMaxAttempts = 1
 	}
 
-	CookieSecure = security.Key("cookie_secure").MustBool(false)
-	cfg.CookieSecure = CookieSecure
+	readCookieSecuritySettings(iniFile, cfg)
+	copyCookieSecuritySettingsToGlobals(cfg)
 
-	samesiteString := valueAsString(security, "cookie_samesite", "lax")
-
-	if samesiteString == "disabled" {
-		CookieSameSiteDisabled = true
-		cfg.CookieSameSiteDisabled = CookieSameSiteDisabled
-	} else {
-		validSameSiteValues := map[string]http.SameSite{
-			"lax":    http.SameSiteLaxMode,
-			"strict": http.SameSiteStrictMode,
-			"none":   http.SameSiteNoneMode,
-		}
-
-		if samesite, ok := validSameSiteValues[samesiteString]; ok {
-			CookieSameSiteMode = samesite
-			cfg.CookieSameSiteMode = CookieSameSiteMode
-		} else {
-			CookieSameSiteMode = http.SameSiteLaxMode
-			cfg.CookieSameSiteMode = CookieSameSiteMode
-		}
-	}
 	cfg.AllowEmbedding = security.Key("allow_embedding").MustBool(false)
 
 	cfg.ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
@@ -2001,32 +2093,25 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
-	auth := iniFile.Section("auth")
+func copyCookieSecuritySettingsToGlobals(cfg *Cfg) {
+	CookieSecure = cfg.CookieSecure
+	if cfg.CookieSameSiteDisabled {
+		CookieSameSiteDisabled = cfg.CookieSameSiteDisabled
+	} else {
+		CookieSameSiteMode = cfg.CookieSameSiteMode
+	}
+}
 
-	cfg.LoginCookieName = valueAsString(auth, "login_cookie_name", "grafana_session")
-	const defaultMaxInactiveLifetime = "7d"
-	maxInactiveDurationVal := valueAsString(auth, "login_maximum_inactive_lifetime_duration", defaultMaxInactiveLifetime)
-	cfg.LoginMaxInactiveLifetime, err = gtime.ParseDuration(maxInactiveDurationVal)
-	if err != nil {
+func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
+	if err := readSessionAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
+
+	auth := iniFile.Section("auth")
 
 	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
 
-	const defaultMaxLifetime = "30d"
-	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", defaultMaxLifetime)
-	cfg.LoginMaxLifetime, err = gtime.ParseDuration(maxLifetimeDurationVal)
-	if err != nil {
-		return err
-	}
-
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
-
-	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)
-	if cfg.TokenRotationIntervalMinutes < 2 {
-		cfg.TokenRotationIntervalMinutes = 2
-	}
 
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
@@ -2039,7 +2124,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// Default to the translation key used in the frontend
 	cfg.OAuthLoginErrorMessage = valueAsString(auth, "oauth_login_error_message", "oauth.login.error")
-	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
+	readOAuthCookieMaxAge(iniFile, cfg)
 	cfg.OAuthRefreshTokenServerLockMinWaitMs = auth.Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(1000)
 	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 
@@ -2064,6 +2149,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	for _, namespace := range idHeaderNamespaces {
 		cfg.IDResponseHeaderNamespaces[namespace] = struct{}{}
 	}
+
+	cfg.IDUseExternalGroupsForGroupsClaim = auth.Key("id_use_external_groups_for_groups_claim").MustBool(false)
 
 	// anonymous access
 	cfg.readAnonymousSettings()
@@ -2146,17 +2233,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
 	}
 
-	cfg.UserLastSeenUpdateInterval, err = gtime.ParseDuration(valueAsString(users, "last_seen_update_interval", "15m"))
-	if err != nil {
+	if err := readUserLastSeenUpdateInterval(iniFile, cfg); err != nil {
 		return err
-	}
-
-	if cfg.UserLastSeenUpdateInterval < time.Minute*5 {
-		cfg.Logger.Warn("the minimum supported value for the `last_seen_update_interval` configuration is 5m (5 minutes)")
-		cfg.UserLastSeenUpdateInterval = time.Minute * 5
-	} else if cfg.UserLastSeenUpdateInterval > time.Hour*1 {
-		cfg.Logger.Warn("the maximum supported value for the `last_seen_update_interval` configuration is 1h (1 hour)")
-		cfg.UserLastSeenUpdateInterval = time.Hour * 1
 	}
 
 	cfg.HiddenUsers = make(map[string]struct{})
@@ -2229,14 +2307,12 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 
 func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	server := iniFile.Section("server")
-	var err error
-	AppUrl, AppSubUrl, err = cfg.parseAppUrlAndSubUrl(server)
-	if err != nil {
-		return err
+	if err := readServerURLSettings(iniFile, cfg); err != nil {
+		cfg.Logger.Error("Invalid root_url.", "url", cfg.AppURL, "error", err)
+		os.Exit(1)
 	}
+	copyServerURLSettingsToGlobals(cfg)
 
-	cfg.AppURL = AppUrl
-	cfg.AppSubURL = AppSubUrl
 	cfg.Protocol = HTTPScheme
 	cfg.ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
 	cfg.CertWatchInterval = server.Key("certs_watch_interval").MustDuration(0)
@@ -2298,10 +2374,11 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 
 	cdnURL := valueAsString(server, "cdn_url", "")
 	if cdnURL != "" {
-		cfg.CDNRootURL, err = url.Parse(cdnURL)
+		parsedCDNURL, err := url.Parse(cdnURL)
 		if err != nil {
 			return err
 		}
+		cfg.CDNRootURL = parsedCDNURL
 	}
 
 	cfg.ReadTimeout = server.Key("read_timeout").MustDuration(0)
@@ -2465,19 +2542,30 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if !cfg.DisableControllers {
 		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
 	}
+	cfg.ProvisioningEnabled = iniFile.Section("provisioning").Key("enabled").MustBool(true)
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
-		cfg.ProvisioningAllowedTargets = []string{"folder"}
+		cfg.ProvisioningAllowedTargets = []string{"folder", "folderless"}
+	}
+	cfg.ProvisioningResources = iniFile.Section("provisioning").Key("resources").Strings(",")
+	if len(cfg.ProvisioningResources) == 0 {
+		cfg.ProvisioningResources = defaultProvisioningResources()
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
+	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
-	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
+	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
+	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)
+	cfg.ProvisioningHistoryExpiration = iniFile.Section("provisioning").Key("history_expiration").MustDuration(ProvisioningHistoryExpirationDefault)
+	cfg.ProvisioningJobPollInterval = iniFile.Section("provisioning").Key("job_poll_interval").MustDuration(ProvisioningJobPollIntervalDefault)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
+	cfg.ProvisioningWebhookTrustedIPHeader = iniFile.Section("provisioning").Key("webhook_trusted_ip_header").MustString("")
+	cfg.ProvisioningWebhookRateLimitRPS = iniFile.Section("provisioning").Key("webhook_rate_limit_rps").MustInt(0)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
@@ -2486,6 +2574,19 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningLokiTenantID = valueAsString(iniFile.Section("provisioning"), "loki_tenant_id", "")
 
 	return nil
+}
+
+// defaultProvisioningResources is the built-in set used when [provisioning] resources is
+// unset. Tokens use the shared "<group>/<Kind>[:cap...]" grammar (see
+// resources.ParseSupportedResources). Library panels and playlists are declared but
+// disabled by default.
+func defaultProvisioningResources() []string {
+	return []string{
+		"folder.grafana.app/Folder:folder",
+		"dashboard.grafana.app/Dashboard:folder",
+		"dashboard.grafana.app/LibraryPanel:folder:disabled",
+		"playlist.grafana.app/Playlist:disabled",
+	}
 }
 
 func (cfg *Cfg) readPublicDashboardsSettings() {

@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Point } from 'ol/geom';
+import { fromLonLat } from 'ol/proj';
 
 import {
   applyFieldOverrides,
@@ -134,6 +136,26 @@ const createNestedDataFrame = (meta?: DataFrame['meta']): DataFrame => {
 };
 
 /**
+ * A frame carrying a __nestedFrames field but with zero rows — the shape produced when a panel
+ * returns no data yet still runs a Group to nested tables transform. There is no first nested
+ * frame to derive nested fields from, so the table must fall back to its empty state.
+ */
+const createEmptyNestedDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 0,
+      fields: [
+        { name: 'Column A', type: FieldType.string, values: [], config: { custom: {} } },
+        { name: 'Column B', type: FieldType.number, values: [], config: { custom: {} } },
+        { name: '__depth', type: FieldType.number, values: [], config: { custom: { hideFrom: { viz: true } } } },
+        { name: '__index', type: FieldType.number, values: [], config: { custom: { hideFrom: { viz: true } } } },
+        { name: '__nestedFrames', type: FieldType.nestedFrames, values: [], config: { custom: {} } },
+      ],
+    })
+  );
+
+/**
  * Outer table has NO footer reducers; nested frame fields DO have footer reducers.
  * Used to verify that the nested table shows its own footer independent of the outer table.
  */
@@ -230,6 +252,23 @@ const createTimeDataFrame = (): DataFrame =>
     })
   );
 
+const createGeoDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'GeoData',
+      length: 1,
+      fields: [
+        { name: 'Label', type: FieldType.string, values: ['NYC'], config: { custom: {} } },
+        {
+          name: 'Location',
+          type: FieldType.geo,
+          values: [new Point(fromLonLat([-74.0445, 40.6892]))],
+          config: { custom: {} },
+        },
+      ],
+    })
+  );
+
 describe('TableNG', () => {
   let user: ReturnType<typeof userEvent.setup>;
   let origResizeObserver = global.ResizeObserver;
@@ -243,11 +282,11 @@ describe('TableNG', () => {
     origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
     // Mock ResizeObserver
     global.ResizeObserver = class ResizeObserver {
-      constructor(callback: any) {
+      constructor(callback: ResizeObserverCallback) {
         // Store the callback
         this.callback = callback;
       }
-      callback: any;
+      callback: ResizeObserverCallback;
       observe() {
         // Do nothing
       }
@@ -548,6 +587,18 @@ describe('TableNG', () => {
       ['N1', 'N2'].forEach((text) => {
         expect(screen.getAllByText(text)).toHaveLength(2);
       });
+    });
+
+    it('renders the empty state when there are no rows but a nested transform is present', () => {
+      // Regression: with zero rows the nested data is empty, so there is no first nested frame
+      // to read nested fields from. The table must render its empty state instead of throwing.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createEmptyNestedDataFrame()} width={800} height={600} />
+      );
+
+      expect(container.querySelector('[role="treegrid"]')).toBeInTheDocument();
+      expect(screen.getByText('No rows')).toBeInTheDocument();
+      expect(container.querySelector('[aria-label="Expand row"]')).not.toBeInTheDocument();
     });
   });
 
@@ -982,6 +1033,19 @@ describe('TableNG', () => {
       );
 
       expect(container.querySelector('.table-ng-pagination')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Geo cells', () => {
+    it('renders the geo cell as WKT once the lazy OpenLayers provider loads', async () => {
+      render(<TableNG enableVirtualization={false} data={createGeoDataFrame()} width={800} height={600} />);
+
+      // A geo field sends TableNG down the Suspense/LazyOpenLayersProvider branch. Until the
+      // provider resolves, GeoCell has no formatGeometry and stringifies the raw geometry (a plain
+      // object); once it loads, the cell renders the geometry as WKT. Matching the WKT *shape*
+      // (rather than exact coordinates, which drift through the projection round-trip) proves the
+      // geo cell rendered through the lazily-loaded provider rather than the Suspense fallback.
+      expect(await screen.findByText(/^POINT\([^)]+\)$/)).toBeInTheDocument();
     });
   });
 
@@ -1977,6 +2041,93 @@ describe('TableNG', () => {
         expect(cellStyle.backgroundColor).toBe('rgb(255, 0, 0)');
       }
     });
+
+    it('colors the entire row using the first column when multiple columns enable applyToRow', () => {
+      // Reproduces the global-cell-type case: every column is ColorBackground + applyToRow
+      // with its own color. The whole row should take the first (leftmost) column's color,
+      // rather than each cell painting its own color.
+      const frame = createBasicDataFrame();
+      frame.fields[0].config.custom = {
+        ...frame.fields[0].config.custom,
+        cellOptions: {
+          type: TableCellDisplayMode.ColorBackground,
+          applyToRow: true,
+          mode: TableCellBackgroundDisplayMode.Basic,
+        },
+      };
+      frame.fields[1].config.custom = {
+        ...frame.fields[1].config.custom,
+        cellOptions: {
+          type: TableCellDisplayMode.ColorBackground,
+          applyToRow: true,
+          mode: TableCellBackgroundDisplayMode.Basic,
+        },
+      };
+
+      const origA = frame.fields[0].display;
+      frame.fields[0].display = (value: unknown) => ({
+        ...(origA ? origA(value) : { text: String(value), numeric: 0 }),
+        color: '#ff0000', // first column: red
+      });
+      const origB = frame.fields[1].display;
+      frame.fields[1].display = (value: unknown) => ({
+        ...(origB ? origB(value) : { text: String(value), numeric: 0 }),
+        color: '#0000ff', // second column: blue, should be ignored in favor of the row color
+      });
+
+      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      const rows = container.querySelectorAll('[role="row"]');
+      const cells = rows[1].querySelectorAll('[role="gridcell"]'); // Skip header row
+      expect(cells.length).toBeGreaterThan(1);
+      for (const cell of cells) {
+        expect(window.getComputedStyle(cell).backgroundColor).toBe('rgb(255, 0, 0)');
+      }
+    });
+
+    it('applies the row color from a column that is hidden via an override', () => {
+      // The color-determining column is hidden (hideFrom.viz). The visible column also uses
+      // ColorBackground + applyToRow (global cell type) with its own color, but it should
+      // defer to the hidden (first) column's color for the whole row.
+      const frame = createBasicDataFrame();
+      frame.fields[0].config.custom = {
+        ...frame.fields[0].config.custom,
+        hideFrom: { viz: true, legend: false, tooltip: false },
+        cellOptions: {
+          type: TableCellDisplayMode.ColorBackground,
+          applyToRow: true,
+          mode: TableCellBackgroundDisplayMode.Basic,
+        },
+      };
+      frame.fields[1].config.custom = {
+        ...frame.fields[1].config.custom,
+        cellOptions: {
+          type: TableCellDisplayMode.ColorBackground,
+          applyToRow: true,
+          mode: TableCellBackgroundDisplayMode.Basic,
+        },
+      };
+
+      const origA = frame.fields[0].display;
+      frame.fields[0].display = (value: unknown) => ({
+        ...(origA ? origA(value) : { text: String(value), numeric: 0 }),
+        color: '#ff0000', // hidden column drives the row color
+      });
+      const origB = frame.fields[1].display;
+      frame.fields[1].display = (value: unknown) => ({
+        ...(origB ? origB(value) : { text: String(value), numeric: 0 }),
+        color: '#0000ff', // visible column's own color, should defer to the hidden column
+      });
+
+      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      const rows = container.querySelectorAll('[role="row"]');
+      const cells = rows[1].querySelectorAll('[role="gridcell"]'); // Skip header row
+      expect(cells.length).toBeGreaterThan(0);
+      for (const cell of cells) {
+        expect(window.getComputedStyle(cell).backgroundColor).toBe('rgb(255, 0, 0)');
+      }
+    });
   });
 
   describe('Row hover functionality for shared crosshair', () => {
@@ -2238,6 +2389,133 @@ describe('TableNG', () => {
       expect(screen.getByText('Up Link 1')).toBeInTheDocument();
       expect(screen.getByText('Up Link 2')).toBeInTheDocument();
       expect(screen.queryByText('Down Link 1')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('column width on resize', () => {
+    let origResizeObserver = global.ResizeObserver;
+
+    beforeEach(() => {
+      origResizeObserver = global.ResizeObserver;
+      global.ResizeObserver = class ResizeObserver {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      };
+    });
+
+    afterEach(() => {
+      global.ResizeObserver = origResizeObserver;
+    });
+
+    // react-data-grid lays the columns out with grid-template-columns, so it reflects the width the
+    // table has actually applied.
+    const columnTemplate = (container: HTMLElement) =>
+      container.querySelector<HTMLElement>('[role="grid"], [role="treegrid"]')!.style.gridTemplateColumns;
+
+    const frameWithFields = (fields: Array<Parameters<typeof toDataFrame>[0]['fields'][number]>): DataFrame =>
+      withFieldOverrides(toDataFrame({ name: 'WidthTestData', fields }));
+
+    const valueField = { name: 'Value', type: FieldType.number, values: [1, 2], config: { custom: {} } };
+    const pillField = (custom: Record<string, unknown> = {}) => ({
+      name: 'Tags',
+      type: FieldType.string,
+      values: ['a,b', 'c,d'],
+      config: { custom: { cellOptions: { type: TableCellDisplayMode.Pill }, ...custom } },
+    });
+
+    const renderAtWidth = (data: DataFrame, width: number) =>
+      render(<TableNG enableVirtualization={false} data={data} width={width} height={300} />);
+
+    it('applies width changes immediately when no auto-sized column is width-sensitive', () => {
+      const data = frameWithFields([
+        { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: {} },
+        valueField,
+      ]);
+      const { container, rerender } = renderAtWidth(data, 400);
+      expect(columnTemplate(container)).toBe('200px 200px');
+
+      rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
+      expect(columnTemplate(container)).toBe('450px 450px');
+    });
+
+    it('applies width changes immediately for an auto-sized pill column', () => {
+      const data = frameWithFields([pillField(), valueField]);
+      const { container, rerender } = renderAtWidth(data, 400);
+      expect(columnTemplate(container)).toBe('200px 200px');
+
+      rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
+      expect(columnTemplate(container)).toBe('450px 450px');
+    });
+
+    it('applies width changes immediately when an auto-sized column wraps its text', () => {
+      const data = frameWithFields([
+        {
+          name: 'Name',
+          type: FieldType.string,
+          values: ['a', 'b'],
+          config: { custom: { wrapText: true } },
+        },
+        valueField,
+      ]);
+      const { container, rerender } = renderAtWidth(data, 400);
+      expect(columnTemplate(container)).toBe('200px 200px');
+
+      rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
+      expect(columnTemplate(container)).toBe('450px 450px');
+    });
+
+    // Toggling text wrapping changes the field config but the same table component renders throughout,
+    // so it must not remount — a remount would recreate the grid DOM node and wipe local state like
+    // filters, pagination, and column resize.
+    it('does not remount the table when a width-sensitive config toggles', () => {
+      const gridNode = (container: HTMLElement) => container.querySelector('[role="grid"], [role="treegrid"]');
+
+      const insensitive = frameWithFields([
+        { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: {} },
+        valueField,
+      ]);
+      const sensitive = frameWithFields([
+        { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: { custom: { wrapText: true } } },
+        valueField,
+      ]);
+
+      const { container, rerender } = renderAtWidth(insensitive, 400);
+      const gridBefore = gridNode(container);
+
+      rerender(<TableNG enableVirtualization={false} data={sensitive} width={400} height={300} />);
+      expect(gridNode(container)).toBe(gridBefore);
+    });
+
+    it('applies width changes immediately when the pill column has a configured width', () => {
+      const data = frameWithFields([pillField({ width: 100 }), valueField]);
+      const { container, rerender } = renderAtWidth(data, 400);
+      expect(columnTemplate(container)).toBe('100px 300px');
+
+      rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
+      expect(columnTemplate(container)).toBe('100px 800px');
+    });
+
+    it('applies width changes immediately when only a nested table has a width-sensitive column', () => {
+      const nestedFrame = toDataFrame({
+        name: 'Nested',
+        fields: [pillField(), valueField],
+      });
+      const data = frameWithFields([
+        { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: { custom: {} } },
+        {
+          name: '__nestedFrames',
+          type: FieldType.nestedFrames,
+          values: [[nestedFrame], [nestedFrame]],
+          config: { custom: {} },
+        },
+      ]);
+
+      const { container, rerender } = renderAtWidth(data, 400);
+      const initialTemplate = columnTemplate(container);
+
+      rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
+      expect(columnTemplate(container)).not.toBe(initialTemplate);
     });
   });
 });

@@ -14,6 +14,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		FindDefaultScope{}.OpenAPIModelName():                  schema_pkg_apis_scope_v0alpha1_FindDefaultScope(ref),
 		FindScopeDashboardBindingsResults{}.OpenAPIModelName(): schema_pkg_apis_scope_v0alpha1_FindScopeDashboardBindingsResults(ref),
 		FindScopeNavigationsResults{}.OpenAPIModelName():       schema_pkg_apis_scope_v0alpha1_FindScopeNavigationsResults(ref),
 		FindScopeNodeChildrenResults{}.OpenAPIModelName():      schema_pkg_apis_scope_v0alpha1_FindScopeNodeChildrenResults(ref),
@@ -33,6 +34,46 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ScopeNodeList{}.OpenAPIModelName():                     schema_pkg_apis_scope_v0alpha1_ScopeNodeList(ref),
 		ScopeNodeSpec{}.OpenAPIModelName():                     schema_pkg_apis_scope_v0alpha1_ScopeNodeSpec(ref),
 		ScopeSpec{}.OpenAPIModelName():                         schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_FindDefaultScope(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"scope": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(Scope{}.OpenAPIModelName()),
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			Scope{}.OpenAPIModelName()},
 	}
 }
 

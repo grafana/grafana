@@ -12,7 +12,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Box, Button, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, Button, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { SqlExpressionCard } from '../../../dashboard/components/TransformationsEditor/SqlExpressionCard';
@@ -70,8 +70,9 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
   );
 }
 
-export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
+function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   const hasGoToQueries = props.onGoToQueries != null;
   const hasAddTransformation = props.onAddTransformation != null;
@@ -142,7 +143,7 @@ export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps)
                   'dashboard-scene.empty-transformations-message.sql-transformation-description',
                   'Manipulate your data using MySQL-like syntax'
                 )}
-                imageUrl={config.theme2.isDark ? sqlDarkImage : sqlLightImage}
+                imageUrl={theme.isDark ? sqlDarkImage : sqlLightImage}
                 onClick={handleSqlTransformationClick}
                 testId="transform-with-sql-card"
                 fullWidth

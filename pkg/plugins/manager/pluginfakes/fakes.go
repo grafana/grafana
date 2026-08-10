@@ -380,6 +380,7 @@ type FakeLicensingService struct {
 	LicensePath    string
 	LicenseAppURL  string
 	CDNPrefix      string
+	ValidLicense   bool
 }
 
 func NewFakeLicensingService() *FakeLicensingService {
@@ -404,6 +405,10 @@ func (s *FakeLicensingService) Environment() []string {
 
 func (s *FakeLicensingService) ContentDeliveryPrefix() string {
 	return s.CDNPrefix
+}
+
+func (s *FakeLicensingService) HasValidLicense() bool {
+	return s.ValidLicense
 }
 
 type FakeRoleRegistry struct {

@@ -314,7 +314,7 @@ export function getMarkerAsPath(shape?: string): string | undefined {
 }
 
 // Common expressions used across different style types
-export const colorExpression = ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue'], ['get', 'opacity']];
+const colorExpression = ['color', ['get', 'red'], ['get', 'green'], ['get', 'blue'], ['get', 'opacity']];
 export const sizeExpression = ['get', 'size'];
 export const opacityExpression = ['get', 'opacity'];
 export const rotationExpression = ['get', 'rotation'];

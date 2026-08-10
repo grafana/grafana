@@ -81,7 +81,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
       if (currentTransform && currentTransform.transformer.id !== DataTransformerID.noop) {
         const selectedDataFrame = this.state.selectedDataFrame;
         const dataFrameIndex = this.state.dataFrameIndex;
-        const subscription = transformDataFrame([currentTransform.transformer], this.props.data).subscribe((data) => {
+        const input =
+          currentTransform.transformer.id === DataTransformerID.joinByField
+            ? moveFirstNonEmptyFrameToFront(this.props.data)
+            : this.props.data;
+        const subscription = transformDataFrame([currentTransform.transformer], input).subscribe((data) => {
           this.setState({ transformedData: data, selectedDataFrame, dataFrameIndex }, () => subscription.unsubscribe());
         });
         return;
@@ -92,14 +96,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
   }
 
-  exportCsv(dataFrames: DataFrame[], hasLogs: boolean) {
+  exportCsv(dataFrames: DataFrame[]) {
     const { dataName } = this.props;
     const { transformId } = this.state;
     const dataFrame = dataFrames[this.state.dataFrameIndex];
-
-    if (hasLogs) {
-      reportInteraction('grafana_logs_download_clicked', { app: this.props.app, format: 'csv' });
-    }
 
     downloadDataFrameAsCsv(dataFrame, dataName, {}, transformId, this.state.excelCompatibilityMode);
   }
@@ -219,7 +219,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   renderActions(dataFrames: DataFrame[], hasLogs: boolean, hasTraces: boolean, hasServiceGraph: boolean) {
     return (
       <>
-        <Button variant="primary" onClick={() => this.exportCsv(dataFrames, hasLogs)} size="sm">
+        <Button variant="primary" onClick={() => this.exportCsv(dataFrames)} size="sm">
           <Trans i18nKey="dashboard.inspect-data.download-csv">Download CSV</Trans>
         </Button>
         {hasLogs && !config.exploreHideLogsDownload && (
@@ -303,6 +303,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
       </div>
     );
   }
+}
+
+function moveFirstNonEmptyFrameToFront(frames: DataFrame[]): DataFrame[] {
+  const idx = frames.findIndex((f) => f?.fields?.length);
+  if (idx <= 0) {
+    return frames;
+  }
+  return [frames[idx], ...frames.slice(0, idx), ...frames.slice(idx + 1)];
 }
 
 function buildTransformationOptions() {

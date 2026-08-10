@@ -45,8 +45,8 @@ func NewFolderTree(folders []*Folder) *FolderTree {
 		Accessible: true,
 	})
 	t.Index[GeneralFolderUID] = 0
-	t.Index[RootFolderUID] = 0 // Point RootFolderUID to root node
-	t.IDIndex[0] = 0           // ID 0 for General folder
+	t.Index[LegacyRootFolderUID] = 0 // Point legacy empty-string root sentinel to root node //nolint:staticcheck
+	t.IDIndex[0] = 0                 // ID 0 for General folder
 
 	for _, f := range folders {
 		var parentUID *string

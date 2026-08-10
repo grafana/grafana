@@ -8,7 +8,10 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/frontendsettings"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -16,6 +19,9 @@ import (
 // FSRequestConfig contains all configuration that can be overridden on a per-request basis.
 type FSRequestConfig struct {
 	FSFrontendSettings
+
+	// full settings object behind feature flag
+	FullFrontendSettings *dtos.FrontendSettingsDTO
 
 	CSPEnabled            bool
 	CSPTemplate           string
@@ -32,7 +38,7 @@ type FSRequestConfig struct {
 
 // NewFSRequestConfig creates a new FSRequestConfig from the global configuration.
 // This is used to create the base configuration at service startup.
-func NewFSRequestConfig(cfg *setting.Cfg, license licensing.Licensing) FSRequestConfig {
+func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing, pluginsCDN *pluginscdn.Service, fullFrontendSettingsEnabled bool) (FSRequestConfig, error) {
 	frontendSettings := FSFrontendSettings{
 		AnalyticsConsoleReporting:            cfg.FrontendAnalyticsConsoleReporting,
 		AnonymousEnabled:                     cfg.Anonymous.Enabled,
@@ -70,7 +76,7 @@ func NewFSRequestConfig(cfg *setting.Cfg, license licensing.Licensing) FSRequest
 	allowEmbeddingHosts := securitySection.Key("allow_embedding_hosts").Strings(" ")
 	formActionHosts := securitySection.Key("form_action_additional_hosts").Strings(" ")
 
-	return FSRequestConfig{
+	requestConfig := FSRequestConfig{
 		FSFrontendSettings:        frontendSettings,
 		CSPEnabled:                cfg.CSPEnabled,
 		CSPTemplate:               cfg.CSPTemplate,
@@ -80,6 +86,29 @@ func NewFSRequestConfig(cfg *setting.Cfg, license licensing.Licensing) FSRequest
 		AllowEmbeddingHosts:       allowEmbeddingHosts,
 		FormActionAdditionalHosts: formActionHosts,
 	}
+
+	if fullFrontendSettingsEnabled {
+		reqCtx := contexthandler.FromContext(ctx)
+		fullFrontendSettings, err := frontendsettings.GetBaseFrontendSettings(reqCtx, cfg, license, pluginsCDN)
+
+		if err != nil {
+			return FSRequestConfig{}, err
+		}
+
+		// TEMPORARY CODE
+		// Hardcode "Login with Grafana.com" until dynamic SSO settings are available
+		fullFrontendSettings.Oauth = map[string]any{
+			"grafana_com": map[string]any{
+				"icon": "grafana",
+				"name": "Grafana.com",
+			},
+		}
+		fullFrontendSettings.DisableLoginForm = true
+
+		requestConfig.FullFrontendSettings = fullFrontendSettings
+	}
+
+	return requestConfig, nil
 }
 
 type requestConfigKey struct{}
@@ -126,7 +155,7 @@ func getShortCommitHash(commitHash string, maxLength int) string {
 
 // ApplyOverrides merges tenant-specific settings from ini.File with this configuration.
 // It mutates the existing config, so ensure this object is not reused across multiple requests.
-func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger) {
+func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger, fullFrontendSettingsEnabled bool) {
 	// Apply overrides from the settings service ini to the config. Theoretically we could use setting.NewCfgFromINIFile, but
 	// because we only want overrides, and not default values, we need to manually get them out of the ini structure.
 
@@ -134,12 +163,30 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger) 
 	applyStringSlice(settings, "security", "allow_embedding_hosts", &c.AllowEmbeddingHosts, logger)
 	applyStringSlice(settings, "security", "form_action_additional_hosts", &c.FormActionAdditionalHosts, logger)
 
-	applyString(settings, "analytics", "rudderstack_write_key", &c.RudderstackWriteKey, logger)
-	applyString(settings, "analytics", "rudderstack_data_plane_url", &c.RudderstackDataPlaneUrl, logger)
-	applyString(settings, "analytics", "rudderstack_sdk_url", &c.RudderstackSdkUrl, logger)
-	applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.RudderstackV3SdkUrl, logger)
-	applyString(settings, "analytics", "rudderstack_config_url", &c.RudderstackConfigUrl, logger)
-	applyString(settings, "analytics", "rudderstack_integrations_url", &c.RudderstackIntegrationsUrl, logger)
+	if fullFrontendSettingsEnabled && c.FullFrontendSettings == nil {
+		// Guard against a misconfigured call: when the flag is enabled the caller is
+		// expected to have built FullFrontendSettings. Skip the overrides rather than
+		// panicking on a nil dereference.
+		logger.Error("full frontend settings enabled but FullFrontendSettings is nil, skipping analytics overrides")
+		return
+	}
+
+	if fullFrontendSettingsEnabled {
+		// when flag enabled, settings are in a different place
+		applyString(settings, "analytics", "rudderstack_write_key", &c.FullFrontendSettings.RudderstackWriteKey, logger)
+		applyString(settings, "analytics", "rudderstack_data_plane_url", &c.FullFrontendSettings.RudderstackDataPlaneUrl, logger)
+		applyString(settings, "analytics", "rudderstack_sdk_url", &c.FullFrontendSettings.RudderstackSdkUrl, logger)
+		applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.FullFrontendSettings.RudderstackV3SdkUrl, logger)
+		applyString(settings, "analytics", "rudderstack_config_url", &c.FullFrontendSettings.RudderstackConfigUrl, logger)
+		applyString(settings, "analytics", "rudderstack_integrations_url", &c.FullFrontendSettings.RudderstackIntegrationsUrl, logger)
+	} else {
+		applyString(settings, "analytics", "rudderstack_write_key", &c.RudderstackWriteKey, logger)
+		applyString(settings, "analytics", "rudderstack_data_plane_url", &c.RudderstackDataPlaneUrl, logger)
+		applyString(settings, "analytics", "rudderstack_sdk_url", &c.RudderstackSdkUrl, logger)
+		applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.RudderstackV3SdkUrl, logger)
+		applyString(settings, "analytics", "rudderstack_config_url", &c.RudderstackConfigUrl, logger)
+		applyString(settings, "analytics", "rudderstack_integrations_url", &c.RudderstackIntegrationsUrl, logger)
+	}
 }
 
 func getValue(settings *ini.File, section, key string) *ini.Key {

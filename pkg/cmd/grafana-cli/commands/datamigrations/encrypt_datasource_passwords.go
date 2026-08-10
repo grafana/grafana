@@ -21,7 +21,6 @@ var (
 		"elasticsearch",
 		"graphite",
 		"prometheus",
-		"opentsdb",
 	}
 )
 

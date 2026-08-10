@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
+	"github.com/grafana/grafana/pkg/services/folder/cleaner"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
@@ -34,11 +35,9 @@ var WireSetExts = wire.NewSet(
 	iam.ProvideNoopRoleApiInstaller,
 	inmemory.ProvideInMemoryGlobalRoleApiInstaller,
 	iam.ProvideNoopTeamLBACApiInstaller,
-	iam.ProvideNoopExternalGroupMappingApiInstaller,
 	iam.ProvideNoopRoleBindingApiInstaller,
 
-	externalgroupmapping.ProvideNoopTeamGroupsREST,
-	wire.Bind(new(externalgroupmapping.TeamGroupsHandler), new(*externalgroupmapping.NoopTeamGroupsREST)),
+	externalgroupmapping.ProvideNoopTeamGroupsHandlerProvider,
 
 	externalgroupmapping.ProvideNoopSearchREST,
 	wire.Bind(new(externalgroupmapping.SearchHandler), new(*externalgroupmapping.NoopSearchREST)),
@@ -53,7 +52,6 @@ var WireSetExts = wire.NewSet(
 var provisioningExtras = wire.NewSet(
 	pullrequest.ProvidePullRequestWorker,
 	webhooks.ProvideWebhooksWithImages,
-	extras.ProvideConnectionFactoryFromConfig,
 	extras.ProvideProvisioningExtraAPIs,
 	extras.ProvideExtraWorkers,
 	extras.ProvideQuotaGetter,
@@ -67,6 +65,7 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
 	wire.Bind(new(appplugin.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
+	datasource.ProvideProxyDependencies,
 
 	// Secrets
 	secret.RegisterDependencies,
@@ -80,6 +79,8 @@ var WireSet = wire.NewSet(
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,
 	datasource.RegisterAPIService,
+	cleaner.ProvideFolderContentsDeleter,
+	wire.Bind(new(folders.FolderContentsDeleter), new(*cleaner.ContentsCleaner)),
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
 	provisioning.RegisterAPIService,

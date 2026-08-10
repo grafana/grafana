@@ -17,6 +17,7 @@ import {
   type ExternalAlertmanagersStatusResponse,
   type GrafanaAlertingConfiguration,
   type Matcher,
+  type PostableGrafanaAlertingConfiguration,
 } from '../../../../plugins/datasource/alertmanager/types';
 import { withPerformanceLogging } from '../Analytics';
 import { matcherToMatcherField } from '../utils/alertmanager';
@@ -28,7 +29,7 @@ import {
 import { retryWhile } from '../utils/misc';
 import { messageFromError, withSerializedError } from '../utils/redux';
 
-import { alertingApi } from './alertingApi';
+import { type WithNotificationOptions, alertingApi } from './alertingApi';
 import { fetchAlertManagerConfig, fetchStatus } from './alertmanager';
 import { featureDiscoveryApi } from './featureDiscoveryApi';
 
@@ -41,10 +42,27 @@ export interface GrafanaAlertingConfigurationStatusResponse {
   numExternalAlertmanagers: number;
 }
 
+/**
+ * The state options are exclusions, not a selector: each one decides whether alerts in that state
+ * are *included*, and they all default to true. So `{ inhibited: true }` selects nothing on its own,
+ * and any state you don't exclude still comes back — notably "unprocessed" alerts, which have no
+ * marker entry yet and are therefore neither active, silenced nor inhibited. Check the alert's own
+ * `status` if you need to know which state it is actually in.
+ */
 interface AlertmanagerAlertsFilter {
+  /** Include active alerts (default: true when omitted) */
   active?: boolean;
+  /** Include silenced alerts (default: true when omitted). An alert can be both silenced and inhibited. */
   silenced?: boolean;
+  /** Include inhibited alerts (default: true when omitted) */
   inhibited?: boolean;
+  /**
+   * Include unprocessed alerts (default: true when omitted).
+   *
+   * Only honoured by external Alertmanager datasources, whose query string is proxied verbatim. The
+   * Grafana Alertmanager ignores it: neither the built-in handler nor the remote Alertmanager client
+   * reads or forwards this param, so unprocessed alerts are always returned there.
+   */
   unprocessed?: boolean;
   matchers?: Matcher[];
 }
@@ -67,7 +85,7 @@ export interface AlertGroupsFilter {
  *
  * i.e. "things that should be fetched fresh if the AM config has changed"
  */
-export const ALERTMANAGER_PROVIDED_ENTITY_TAGS = [
+const ALERTMANAGER_PROVIDED_ENTITY_TAGS = [
   'AlertingConfiguration',
   'AlertmanagerConfiguration',
   'AlertmanagerConnectionStatus',
@@ -84,7 +102,6 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       { amSourceName: string; filter?: AlertmanagerAlertsFilter; showErrorAlert?: boolean }
     >({
       query: ({ amSourceName, filter, showErrorAlert = true }) => {
-        // TODO Add support for active, silenced, inhibited, unprocessed filters
         const filterMatchers = filter?.matchers
           ?.filter((matcher) => matcher.name && matcher.value)
           .map((matcher) => {
@@ -197,12 +214,16 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       providesTags: ['AlertmanagerConnectionStatus'],
     }),
 
-    updateGrafanaAlertingConfiguration: build.mutation<{ message: string }, GrafanaAlertingConfiguration>({
-      query: (config) => ({
+    updateGrafanaAlertingConfiguration: build.mutation<
+      { message: string },
+      WithNotificationOptions<PostableGrafanaAlertingConfiguration>
+    >({
+      query: ({ notificationOptions, ...config }) => ({
         url: '/api/v1/ngalert/admin_config',
         method: 'POST',
         data: config,
         showSuccessAlert: false,
+        notificationOptions,
       }),
       invalidatesTags: [...ALERTMANAGER_PROVIDED_ENTITY_TAGS],
     }),

@@ -4,7 +4,7 @@ import tinycolor2 from 'tinycolor2';
 import { type MergeExclusive } from 'type-fest';
 
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
-import { Icon, Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, getTagColorsFromName, useStyles2, useTheme2 } from '@grafana/ui';
 
 export type LabelSize = 'md' | 'sm' | 'xs';
 
@@ -20,7 +20,8 @@ type Props = BaseProps & MergeExclusive<{ color?: string }, { colorBy?: 'key' | 
 
 const AlertLabel = (props: Props) => {
   const { labelKey, value, icon, color, colorBy, size = 'md', onClick, ...rest } = props;
-  const theColor = getColorFromProps({ color, colorBy, labelKey, value });
+  const theme = useTheme2();
+  const theColor = getColorFromProps({ color, colorBy, labelKey, value, theme });
   const styles = useStyles2(getStyles, theColor, size);
 
   const ariaLabel = `${labelKey}: ${value}`;
@@ -67,20 +68,21 @@ const AlertLabel = (props: Props) => {
   );
 };
 
-function getAccessibleTagColor(name?: string): string | undefined {
+function getAccessibleTagColor(name: string | undefined, theme: GrafanaTheme2): string | undefined {
   if (!name) {
     return;
   }
   const attempts = Array.from({ length: 6 }, (_, i) => name + '-'.repeat(i));
   const readableAttempt = attempts.find((attempt) => {
-    const candidate = getTagColorsFromName(attempt).color;
+    const { background } = getTagColorsFromName(attempt, theme);
     return (
-      tinycolor2.isReadable(candidate, '#000', { level: 'AA', size: 'small' }) ||
-      tinycolor2.isReadable(candidate, '#fff', { level: 'AA', size: 'small' })
+      tinycolor2.isReadable(background, '#000', { level: 'AA', size: 'small' }) ||
+      tinycolor2.isReadable(background, '#fff', { level: 'AA', size: 'small' })
     );
   });
   const chosen = readableAttempt ?? name;
-  return getTagColorsFromName(chosen).color;
+  const { background } = getTagColorsFromName(chosen, theme);
+  return background;
 }
 
 function getColorFromProps({
@@ -88,21 +90,22 @@ function getColorFromProps({
   colorBy,
   labelKey,
   value,
-}: Pick<Props, 'color' | 'colorBy' | 'labelKey' | 'value'>) {
+  theme,
+}: Pick<Props, 'color' | 'colorBy' | 'labelKey' | 'value'> & { theme: GrafanaTheme2 }) {
   if (color) {
-    return getAccessibleTagColor(color);
+    return getAccessibleTagColor(color, theme);
   }
 
   if (colorBy === 'key') {
-    return getAccessibleTagColor(labelKey);
+    return getAccessibleTagColor(labelKey, theme);
   }
 
   if (colorBy === 'value') {
-    return getAccessibleTagColor(value);
+    return getAccessibleTagColor(value, theme);
   }
 
   if (colorBy === 'both' && labelKey && value) {
-    return getAccessibleTagColor(labelKey + value);
+    return getAccessibleTagColor(labelKey + value, theme);
   }
 
   return;

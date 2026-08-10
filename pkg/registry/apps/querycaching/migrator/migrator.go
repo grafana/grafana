@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	apiGroup   = "querycaching.grafana.app"
-	apiVersion = "v1beta1"
-	resource   = "querycacheconfigs"
+	APIGroup   = "querycaching.grafana.app"
+	APIVersion = "v1beta1"
+	Resource   = "querycacheconfigs"
 )
 
 //go:embed query_querycacheconfigs.sql
@@ -71,7 +71,7 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 
 			name := fmt.Sprintf("%s.%s", row.pluginID, row.dataSourceUID)
 			body, err := json.Marshal(queryCacheConfigObject{
-				TypeMeta:   metav1.TypeMeta{APIVersion: apiGroup + "/" + apiVersion, Kind: "QueryCacheConfig"},
+				TypeMeta:   metav1.TypeMeta{APIVersion: APIGroup + "/" + APIVersion, Kind: "QueryCacheConfig"},
 				ObjectMeta: objectMeta{Name: name, Namespace: opts.Namespace, CreationTimestamp: metav1.NewTime(time.Unix(row.createdEpoch, 0))},
 				Spec: queryCacheConfigSpec{
 					DatasourceUID:  row.dataSourceUID,
@@ -90,8 +90,8 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 			if err = stream.Send(&resourcepb.BulkRequest{
 				Key: &resourcepb.ResourceKey{
 					Namespace: opts.Namespace,
-					Group:     apiGroup,
-					Resource:  resource,
+					Group:     APIGroup,
+					Resource:  Resource,
 					Name:      name,
 				},
 				Value:  body,
@@ -119,9 +119,9 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 
 // objectMeta holds the minimal ObjectMeta fields needed for the migration.
 type objectMeta struct {
-	Name              string      `json:"name"`
-	Namespace         string      `json:"namespace"`
-	CreationTimestamp metav1.Time `json:"creationTimestamp"`
+	Name              string      `json:"name,omitempty"`
+	Namespace         string      `json:"namespace,omitempty"`
+	CreationTimestamp metav1.Time `json:"creationTimestamp,omitempty"`
 }
 
 // queryCacheConfigSpec mirrors querycaching/v1beta1.QueryCacheConfigSpec.
@@ -136,10 +136,13 @@ type queryCacheConfigSpec struct {
 }
 
 // queryCacheConfigObject is the full K8s-style object sent to unified storage.
+// Status is emitted as an empty object to match the canonical serialization of
+// querycaching/v1beta1.QueryCacheConfig, whose Status field has no omitempty.
 type queryCacheConfigObject struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      objectMeta           `json:"metadata"`
 	Spec            queryCacheConfigSpec `json:"spec"`
+	Status          struct{}             `json:"status"`
 }
 
 type cacheConfigRow struct {
