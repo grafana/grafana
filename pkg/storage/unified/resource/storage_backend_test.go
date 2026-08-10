@@ -246,6 +246,42 @@ func TestKvStorageBackend_Accessors(t *testing.T) {
 	})
 }
 
+func TestKvStorageBackend_CurrentResourceVersion(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	// With an empty event store the RV must be fresh, not zero: it seeds the
+	// watch replay boundary, and a zero seed would accept every resume.
+	emptyStoreRV, err := backend.CurrentResourceVersion(ctx)
+	require.NoError(t, err)
+	require.Positive(t, emptyStoreRV)
+
+	testObj, err := createTestObject()
+	require.NoError(t, err)
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	writtenRV, err := backend.WriteEvent(ctx, WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "current-rv-test",
+		},
+		Value:      objectToJSONBytes(t, testObj),
+		Object:     metaAccessor,
+		ObjectOld:  metaAccessor,
+		PreviousRV: 0,
+	})
+	require.NoError(t, err)
+	require.Greater(t, writtenRV, emptyStoreRV)
+
+	currentRV, err := backend.CurrentResourceVersion(ctx)
+	require.NoError(t, err)
+	require.Equal(t, writtenRV, currentRV)
+}
+
 func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()

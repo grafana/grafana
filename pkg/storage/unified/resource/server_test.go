@@ -1795,14 +1795,17 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 
 	// Create two resources before the watch starts. The broadcaster will absorb
 	// these events into its replay cache and hand them to any future subscriber.
-	require.NoError(t, createTestPlaylist(ctx, srv))
+	firstRV, err := createTestPlaylistWithName(ctx, srv, "metrics-since-1")
+	require.NoError(t, err)
 	require.NoError(t, createTestPlaylist(ctx, srv))
 
 	// Wait until the broadcaster has received both events, so the cache is
 	// populated by the time we subscribe.
 	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
 
-	// Start a watch with a tiny Since RV.
+	// Start a watch resuming just before the first event, so both cached
+	// events replay. The RV must be past the seeded replay boundary or the
+	// resume is rejected as unprovable.
 	mock := newMockWatchServer(ctx)
 	var eg errgroup.Group
 	eg.Go(func() error {
@@ -1810,7 +1813,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
 			},
-			Since: 42,
+			Since: firstRV - 1,
 		}, mock)
 	})
 

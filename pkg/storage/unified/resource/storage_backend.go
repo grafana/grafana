@@ -1815,10 +1815,14 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 }
 
 // CurrentResourceVersion returns the newest event resource version in storage.
+// When no events exist (fresh install, or event retention emptied the store),
+// it returns a freshly generated resource version, mirroring ListIterator,
+// rather than 0: callers seed the watch replay boundary with this value, and a
+// zero seed would mark all of history as replayable from an empty cache.
 func (k *kvStorageBackend) CurrentResourceVersion(ctx context.Context) (int64, error) {
 	latestEvent, err := k.eventStore.LastEventKey(ctx)
 	if errors.Is(err, ErrNotFound) {
-		return 0, nil
+		return k.snowflake.Generate().Int64(), nil
 	}
 	if err != nil {
 		return 0, fmt.Errorf("fetching latest event: %w", err)

@@ -1991,7 +1991,6 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 	defer s.broadcaster.Unsubscribe(stream)
 
-	var lastEmittedRV int64 // tracks the most recent RV sent to the client
 	if !req.SendInitialEvents && req.Since > 0 {
 		if s.broadcaster.CanReplaySince(req.Since) {
 			// We can resume watch as we can replay all
@@ -2069,6 +2068,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		return nil
 	}
 
+	var lastEmittedRV int64 // tracks the most recent RV sent to the client
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
 		initialEventsRV, err := s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
