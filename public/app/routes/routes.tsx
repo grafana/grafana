@@ -14,6 +14,7 @@ import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
+import { NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -67,7 +68,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       // Notebooks reuse dashboard RBAC actions, so dashboards:read is what gates the list page.
       // The feature flag is enforced inside the page instead, since getAppRoutes cannot use hooks.
-      path: '/notebooks',
+      path: NOTEBOOKS_BASE_URL,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotebooksListPage" */ '../features/notebook/pages/NotebooksListPage')
