@@ -22,7 +22,6 @@ const appObservabilityAppID = "grafana-app-observability-app"
 const assistantAppID = "grafana-assistant-app"
 const assistantOnboardingAppID = "grafana-assistant-onboarding-app"
 const assistantAppHomePath = "/a/" + assistantAppID
-const assistantWatchersPath = assistantAppHomePath + "/watchers"
 
 var assistantOSSNavigationPaths = map[string]struct{}{
 	assistantAppHomePath:                 {},
@@ -95,10 +94,6 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		})
 	}
 
-	if assistantPlugin := enabledAccessibleAppPluginMap[assistantAppID]; assistantPlugin != nil {
-		s.addAssistantWatchersToAlerting(treeRoot, *assistantPlugin, c)
-	}
-
 	if adaptiveTelemetryPlugin := enabledAccessibleAppPluginMap["grafana-adaptivetelemetry-app"]; adaptiveTelemetryPlugin != nil {
 		if adaptiveTelemetrySection := treeRoot.FindById(navtree.NavIDAdaptiveTelemetry); adaptiveTelemetrySection != nil {
 			// If the adaptivetelemetry app is enabled, and the adaptiveTelemetrySection exists, then update the section to point to the plugin
@@ -136,68 +131,6 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	s.nestMaintenanceWindowsUnderSLO(treeRoot)
 
 	return nil
-}
-
-// addAssistantWatchersToAlerting adds the Assistant's Watchers page to the Alerting
-// section, right below Alert rules. The page belongs to the Assistant plugin, so the
-// entry is driven by that plugin's own "Watchers" include and passes through the same
-// checks the include gets under the Assistant section: it disappears on plugin versions
-// that don't ship the page, in the environments where the page is not offered, and for
-// users without the RBAC action guarding it.
-func (s *ServiceImpl) addAssistantWatchersToAlerting(treeRoot *navtree.NavTreeRoot, plugin pluginstore.Plugin, c *contextmodel.ReqContext) {
-	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
-	if alertingNode == nil {
-		return
-	}
-
-	var watchersInclude *plugins.Includes
-	for _, include := range plugin.Includes {
-		if include.Type == "page" && include.Path == assistantWatchersPath {
-			watchersInclude = include
-			break
-		}
-	}
-
-	if watchersInclude == nil {
-		return
-	}
-
-	if !s.shouldIncludeAssistantNavigation(plugin, watchersInclude, s.isAssistantTrialMode(plugin, c)) {
-		return
-	}
-
-	if !s.hasAccessToInclude(c, plugin.ID)(watchersInclude) {
-		return
-	}
-
-	watchersLink := &navtree.NavLink{
-		Text:     "Watchers",
-		SubTitle: "Let the Assistant watch your data and notify you when something needs attention",
-		Id:       "standalone-plugin-page-assistant-watchers",
-		Url:      s.cfg.AppSubURL + assistantWatchersPath,
-		Icon:     "eye",
-		IsNew:    true,
-	}
-
-	// Alert rules uses a different nav ID depending on whether the V2 navigation is enabled.
-	insertAt := -1
-	for i, child := range alertingNode.Children {
-		if child.Id == "alert-rules" || child.Id == "alert-list" {
-			insertAt = i + 1
-			break
-		}
-	}
-
-	if insertAt < 0 {
-		alertingNode.Children = append(alertingNode.Children, watchersLink)
-		return
-	}
-
-	children := make([]*navtree.NavLink, 0, len(alertingNode.Children)+1)
-	children = append(children, alertingNode.Children[:insertAt]...)
-	children = append(children, watchersLink)
-	children = append(children, alertingNode.Children[insertAt:]...)
-	alertingNode.Children = children
 }
 
 func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRoot) {

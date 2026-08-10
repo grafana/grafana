@@ -10,11 +10,12 @@ import {
   type SceneObjectState,
   type VizPanel,
 } from '@grafana/scenes';
-import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { useStyles2 } from '@grafana/ui';
 import { type DashboardLayoutManager } from 'app/features/dashboard-scene/scene/types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/types/LayoutRegistryItem';
 import { type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
+
+import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { NotebookCellRenderer } from './NotebookCellRenderer';

@@ -4,11 +4,11 @@ import { delay, of, throwError } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
-import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
 
 import { NotebookScene } from '../scene/NotebookScene';
+import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
 
 import { NotebookPageStateManager } from './NotebookPageStateManager';
 

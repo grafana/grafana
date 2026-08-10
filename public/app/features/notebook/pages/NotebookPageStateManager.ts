@@ -1,4 +1,3 @@
-import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -7,6 +6,7 @@ import { dispatch } from 'app/store/store';
 
 import { type NotebookScene } from '../scene/NotebookScene';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
+import { type Spec as NotebookSpec } from '../types';
 
 /**
  * A load failure normalized to the fields the error UI needs. RTK rejects with `{ status, data }`

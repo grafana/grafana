@@ -88,7 +88,7 @@ export const getTooltipContainerStyles = (theme: GrafanaTheme2) => ({
   boxShadow: theme.shadows.z2,
   maxWidth: '800px',
   padding: theme.spacing(1),
-  borderRadius: theme.shape.radius.default,
+  borderRadius: theme.shape.radius.lg,
   zIndex: theme.zIndex.tooltip,
 });
 

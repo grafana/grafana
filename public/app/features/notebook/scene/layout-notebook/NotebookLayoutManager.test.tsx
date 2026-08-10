@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { SceneTimeRange } from '@grafana/scenes';
-import { type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
+import { type NotebookLayoutKind } from 'app/features/notebook/types';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';

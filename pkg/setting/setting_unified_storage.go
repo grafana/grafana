@@ -35,7 +35,7 @@ var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:         true,  // Only Mode5!
 	FolderResource:           true,  // Only Mode5!
 	DashboardResource:        true,  // Only Mode5!
-	ShortURLResource:         false, // Requires kubernetesShortURLs to be enabled by default
+	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
 	StarsResource:            false,
 	PreferencesResource:      false,
@@ -189,11 +189,13 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SearchPostRankAuthzMaxCandidates = section.Key("search_post_rank_authz_max_candidates").MustInt(0)
 	cfg.SearchPostRankAuthzFacetSampleSize = section.Key("search_post_rank_authz_facet_sample_size").MustInt(0)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
+	cfg.EnableVectorStore = section.Key("vector_store_enabled").MustBool(false)
 	cfg.VectorAllowedInternalCollections = section.Key("vector_allowed_internal_collections").Strings(",")
 	if len(cfg.VectorAllowedInternalCollections) == 0 {
 		cfg.VectorAllowedInternalCollections = []string{"dashboard.grafana.app/dashboards"}
 	}
 	cfg.VectorAllowedExternalCollections = section.Key("vector_allowed_external_collections").Strings(",")
+	cfg.VectorAllowedWriteServices = section.Key("vector_allowed_write_services").Strings(",")
 	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
 	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)
 	cfg.applyMigrationEnforcements()

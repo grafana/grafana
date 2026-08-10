@@ -1,6 +1,4 @@
 import { VizPanel } from '@grafana/scenes';
-import { type PanelKind as DashboardPanelKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type NotebookElement, type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
 import {
   buildLibraryPanelState,
   buildVizPanelState,
@@ -8,6 +6,7 @@ import {
 
 import { NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
+import { type NotebookElement, type NotebookLayoutKind } from '../types';
 
 interface NotebookHeader {
   title?: string;
@@ -42,22 +41,10 @@ export function deserializeNotebookLayout(
     };
 
     if (element.kind === 'Panel') {
-      // The notebook and dashboard PanelKind are identical EXCEPT at
-      // spec.data.spec.transformations: notebook v2beta1 uses { kind: <transformId>, spec:
-      // DataTransformerConfig } while dashboard v2 uses { kind: 'Transformation', group:
-      // <transformId>, spec: TransformationSpec }. `group` is required on the dashboard side, so
-      // the assignment is genuinely unsound at the type level and needs the `unknown` bridge.
-      //
-      // It is sound at RUNTIME: buildVizPanelState → createPanelDataProvider maps every
-      // transformation through normalizeTransformation (serialization/transformationCompat.ts),
-      // which accepts both wire shapes. The bridge goes away when the notebook spec migrates to
-      // v2 (team decision 0).
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- transformations diverge between v2beta1 and v2; normalizeTransformation handles both at runtime
-      const panel = element as unknown as DashboardPanelKind;
-      cells.push(new NotebookCellItem({ ...base, body: new VizPanel(buildVizPanelState(panel)) }));
+      // buildVizPanelState is dashboard-typed and takes this directly: the notebook panel chain
+      // carries the dashboard v2 shape, so the two generated types are structurally identical.
+      cells.push(new NotebookCellItem({ ...base, body: new VizPanel(buildVizPanelState(element)) }));
     } else if (element.kind === 'LibraryPanel') {
-      // No bridge needed: LibraryPanelKind is structurally identical across the two schemas and
-      // carries no transformations, so it assigns directly.
       cells.push(new NotebookCellItem({ ...base, body: new VizPanel(buildLibraryPanelState(element)) }));
     } else if (element.kind === 'Cell') {
       cells.push(new NotebookCellItem({ ...base, content: element.spec.content }));

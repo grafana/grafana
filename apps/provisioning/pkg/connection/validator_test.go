@@ -358,11 +358,35 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 		dryRun          bool
 		factoryErrors   field.ErrorList
 		buildError      error
+		oauthConnection bool
 		testResults     *provisioning.TestResults
 		testError       error
 		wantErr         bool
 		wantErrContains string
 	}{
+		{
+			name: "dryRun skips runtime test for OAuth connection with a token",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GitlabConnectionType,
+					OAuth: &provisioning.ConnectionOAuthConfig{
+						ClientID: "client-123",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			operation:       admission.Create,
+			dryRun:          true,
+			factoryErrors:   field.ErrorList{},
+			oauthConnection: true,
+			wantErr:         false,
+		},
 		{
 			name: "dryRun with valid connection passes runtime validation",
 			obj: &provisioning.Connection{
@@ -568,6 +592,12 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 					if conn.DeletionTimestamp == nil {
 						if tt.buildError != nil {
 							factory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, tt.buildError).Once()
+						} else if tt.oauthConnection {
+							oauthConn := struct {
+								*MockConnection
+								*MockOAuthConnection
+							}{NewMockConnection(t), NewMockOAuthConnection(t)}
+							factory.EXPECT().Build(mock.Anything, mock.Anything).Return(oauthConn, nil).Once()
 						} else {
 							factory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnection, nil).Once()
 							if tt.testError != nil {

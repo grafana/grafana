@@ -1,7 +1,7 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { test, expect } from '@grafana/plugin-e2e';
 
-import testV2Dashboard from '../dashboards/V2DashboardWithTabsForSlugTest.json';
+import v2DashboardWithTabsForSlug from '../dashboards/V2DashboardWithTabsForSlugTest.json';
 
 import { Rows, Tabs } from './page-objects';
 import { importTestDashboard } from './utils';
@@ -98,7 +98,7 @@ test.describe(
     test.beforeAll(async ({ browser, baseURL }) => {
       const page = await browser.newPage({ baseURL });
       try {
-        await importTestDashboard(page, selectors, 'url-sync-tabs-test', JSON.stringify(testV2Dashboard));
+        await importTestDashboard(page, selectors, 'url-sync-tabs-test', JSON.stringify(v2DashboardWithTabsForSlug));
         const match = page.url().match(/\/d\/([^/?]+)/);
         dashboardUid = match![1];
       } finally {

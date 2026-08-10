@@ -1,13 +1,8 @@
-import { type PanelKind as DashboardPanelKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type NotebookElement, type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { buildTimeSettingsSpec } from 'app/features/dashboard-scene/serialization/shared/timeSettings';
 import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
-import {
-  normalizeTransformation,
-  toWireTransformation,
-} from 'app/features/dashboard-scene/serialization/transformationCompat';
 
 import { type NotebookScene } from '../scene/NotebookScene';
+import { type NotebookElement, type Spec as NotebookSpec } from '../types';
 
 /**
  * Element names come off NotebookCellItem.state.elementName (recorded by the deserializer), so
@@ -59,51 +54,13 @@ function getElements(scene: NotebookScene): Record<string, NotebookElement> {
     const { elementName, body: panel, content } = cell.state;
 
     if (panel) {
-      const element = vizPanelToSchemaV2(panel);
-      elements[elementName] = element.kind === 'Panel' ? toNotebookPanel(element) : (element satisfies NotebookElement);
+      // vizPanelToSchemaV2 is dashboard-typed, and its result is assignable as-is: the notebook panel
+      // chain carries the dashboard v2 shape, so no wire-shape conversion is needed.
+      elements[elementName] = vizPanelToSchemaV2(panel) satisfies NotebookElement;
     } else if (content) {
       elements[elementName] = { kind: 'Cell', spec: { content } };
     }
   }
 
   return elements;
-}
-
-/**
- * Converts a dashboard-v2 PanelKind to the notebook's v2beta1 shape.
- *
- * The only divergence between the two schemas is transformations: vizPanelToSchemaV2 always emits
- * the v2 stable form ({ kind: 'Transformation', group: <id>, spec }), while the notebook spec (and
- * the CUE schema the backend validates against) expects the v2beta1 wire form
- * ({ kind: <id>, spec: { id: <id>, ... } }). Without this conversion a panel carrying
- * transformations would be persisted in a shape the notebook schema does not describe.
- *
- * Dashboards do the equivalent in convertSpecToWireFormat; this is the notebook's version, pinned
- * to v2beta1 because that is the notebook resource's only version today. It goes away when the
- * notebook spec migrates to v2 (team decision 0).
- */
-function toNotebookPanel(panel: DashboardPanelKind): NotebookElement {
-  const wireTransformations = panel.spec.data.spec.transformations.map((transformation) =>
-    toWireTransformation(normalizeTransformation(transformation), 'v2beta1')
-  );
-
-  const notebookPanel = {
-    ...panel,
-    spec: {
-      ...panel.spec,
-      data: {
-        ...panel.spec.data,
-        spec: {
-          ...panel.spec.data.spec,
-          transformations: wireTransformations,
-        },
-      },
-    },
-  };
-
-  // Everything else is structurally identical; only `transformations` differs, and it has just
-  // been converted to the notebook's wire shape. TS still sees the two PanelKinds as
-  // non-overlapping because of that field's declared type, hence the bridge.
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- transformations converted to the v2beta1 wire shape above
-  return notebookPanel as unknown as NotebookElement;
 }

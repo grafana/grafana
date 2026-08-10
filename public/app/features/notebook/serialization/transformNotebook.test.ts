@@ -1,12 +1,10 @@
-import {
-  defaultDataQueryKind,
-  defaultSpec as defaultNotebookSpec,
-  type NotebookElement,
-  type Spec as NotebookSpec,
-} from '@grafana/schema/apis/notebook/v2beta1';
+// defaultDataQueryKind is not re-exported by ../types (that seam covers the notebook-specific and
+// forked names); it is a shared leaf type, so it comes straight from the generated module.
+import { defaultDataQueryKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
 
 import { NotebookScene } from '../scene/NotebookScene';
+import { defaultSpec as defaultNotebookSpec, type NotebookElement, type Spec as NotebookSpec } from '../types';
 
 import { transformNotebookSceneToSaveModel } from './transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from './transformNotebookToScene';
@@ -46,12 +44,11 @@ function notebookSpec(): NotebookSpec {
                 },
               },
             ],
-            // v2beta1 wire shape for transformations: `kind` holds the transform id and `spec.id`
-            // duplicates it. Dashboard v2 instead uses { kind: 'Transformation', group: <id> }.
-            // This is the one place the two schemas genuinely diverge, so it must round-trip
-            // through normalizeTransformation / toWireTransformation rather than leak the v2 shape
-            // into a notebook spec.
-            transformations: [{ kind: 'limit', spec: { id: 'limit', options: { limitField: 10 } } }],
+            // The notebook carries the dashboard v2 transformation shape: the transform id lives in
+            // `group`, and the spec has no `id`. Pinning it here is what would catch a regression to
+            // the old v2beta1 wire form ({ kind: <id>, spec: { id: <id> } }), which the notebook CUE
+            // schema no longer describes.
+            transformations: [{ kind: 'Transformation', group: 'limit', spec: { options: { limitField: 10 } } }],
             queryOptions: {},
           },
         },

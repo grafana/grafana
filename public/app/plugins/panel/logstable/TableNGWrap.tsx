@@ -1,7 +1,14 @@
 import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
-import { type GrafanaTheme2, LogSortOrderChangeEvent, LogsSortOrder, type PanelProps, store } from '@grafana/data';
+import {
+  type DataFrame,
+  type GrafanaTheme2,
+  LogSortOrderChangeEvent,
+  LogsSortOrder,
+  type PanelProps,
+  store,
+} from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
@@ -28,6 +35,7 @@ interface Props extends Omit<PanelProps<Options>, 'timeRange'> {
   logOptionsStorageKey: string;
   containerElement: HTMLDivElement;
   onWrapTextClick: () => void;
+  rawDataFrame: DataFrame | null;
 }
 
 export function TableNGWrap({
@@ -44,6 +52,7 @@ export function TableNGWrap({
   logOptionsStorageKey,
   containerElement,
   onWrapTextClick,
+  rawDataFrame,
 }: Props) {
   useCacheFieldDisplayNames(data.series);
 
@@ -76,11 +85,14 @@ export function TableNGWrap({
 
   const downloadLogs = useCallback(
     (format: DownloadFormat) => {
+      if (!rawDataFrame) {
+        return;
+      }
       // converting to logsModel is a lot of unnecessary compute, but since this is only called on user action it should work as a short-term solution
-      const { meta, rows } = dataFrameToLogsModel(data.series);
+      const { meta, rows } = dataFrameToLogsModel([rawDataFrame]);
       download(format, rows, meta, options.displayedFields);
     },
-    [data.series, options.displayedFields]
+    [options.displayedFields, rawDataFrame]
   );
 
   return (

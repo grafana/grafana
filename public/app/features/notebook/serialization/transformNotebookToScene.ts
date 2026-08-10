@@ -1,10 +1,10 @@
 import { config } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker } from '@grafana/scenes';
-import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
 import { buildSceneTimeRange } from 'app/features/dashboard-scene/serialization/shared/timeSettings';
 
 import { NotebookScene } from '../scene/NotebookScene';
+import { type Spec as NotebookSpec } from '../types';
 
 import { deserializeNotebookLayout } from './deserializeNotebookLayout';
 
