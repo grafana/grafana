@@ -81,10 +81,10 @@ export default (env: Env = {}) => {
        */
       new WebpackAssetsManifest({
         ...manifestPluginOptions,
-        output: env.react19 ? 'assets-manifest-react19.json' : 'assets-manifest.json',
+        output: 'assets-manifest.json',
       }),
       new WebpackManifestPlugin({
-        fileName: path.join(process.cwd(), env.react19 ? 'manifest-react19.json' : 'manifest.json'),
+        fileName: path.join(process.cwd(), 'manifest.json'),
         filter: (file) => !file.name.endsWith('.map'),
       }),
       function () {
@@ -98,10 +98,6 @@ export default (env: Env = {}) => {
     ],
   };
   const mergedProdConfig = merge(common(env), prodConfig);
-  const multipleConfigs = Object.assign([mergedProdConfig], { parallelism: 2 });
-  // TODO: this is temporary until we've split react 19 out into its own webpack config.
-  if (!env.react19) {
-    multipleConfigs.push(swaggerConfig(env));
-  }
+  const multipleConfigs = Object.assign([mergedProdConfig, swaggerConfig(env)], { parallelism: 2 });
   return multipleConfigs;
 };
