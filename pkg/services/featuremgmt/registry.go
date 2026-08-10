@@ -3089,6 +3089,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "grafana.ofrepRootUrl",
+			Description:  "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "assistant.dashboardPlanning",
 			Description: "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
 			Stage:       FeatureStageExperimental,
