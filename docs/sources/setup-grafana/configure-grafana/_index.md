@@ -473,7 +473,17 @@ Defaults to `private`.
 
 #### `wal`
 
-For "sqlite3" only. Setting to enable/disable [Write-Ahead Logging](https://sqlite.org/wal.html). The default value is `false` (disabled).
+For "sqlite3" only. Controls [Write-Ahead Logging](https://sqlite.org/wal.html) (WAL). The default value is `auto`.
+
+As the SQLite documentation puts it, all processes using a database must be on the same host computer, and WAL doesn't work over a network filesystem, because WAL requires all processes to share a small amount of memory and processes on separate host machines can't share memory with each other. Enabling WAL on a network mount such as NFS, Amazon EFS or SMB can stop Grafana from starting or corrupt the database.
+
+Supported values:
+
+- **`auto`**: Grafana enables WAL only when the database file is on storage local to the host. When Grafana doesn't enable WAL, it logs the storage it detected and reverts a database that already uses WAL.
+- **`true`**: Grafana always enables WAL. Use this when you know the database file is on storage that only one Grafana instance uses, even if Grafana doesn't recognize the filesystem.
+- **`false`**: Grafana disables WAL. This also reverts a database that already uses WAL, because SQLite stores the journal mode in the database file.
+
+Grafana detects the storage on Linux and Windows. On other operating systems, `auto` assumes local storage and enables WAL.
 
 #### `query_retries`
 

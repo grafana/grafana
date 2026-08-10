@@ -37,6 +37,7 @@ type DatabaseConfig struct {
 	ConnMaxLifetime             int
 	CacheMode                   string
 	WALEnabled                  bool
+	wal                         walSetting
 	UrlQueryParams              map[string][]string
 	SkipMigrations              bool
 	EnsureDefaultOrgAndUser     bool
@@ -117,7 +118,22 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	dbCfg.IsolationLevel = sec.Key("isolation_level").String()
 
 	dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
-	dbCfg.WALEnabled = sec.Key("wal").MustBool(false)
+	// auto needs the resolved database path, so it is decided in buildConnectionString.
+	walRaw := strings.TrimSpace(sec.Key("wal").String())
+	switch {
+	case walRaw == "" || strings.EqualFold(walRaw, walAutoValue):
+		dbCfg.wal = walAuto
+	default:
+		enabled, err := sec.Key("wal").Bool()
+		if err != nil {
+			return fmt.Errorf("invalid value %q for [database] wal, expected auto, true or false", walRaw)
+		}
+		dbCfg.wal = walOff
+		if enabled {
+			dbCfg.wal = walOn
+		}
+	}
+
 	dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
 	dbCfg.EnsureDefaultOrgAndUser = sec.Key("ensure_default_org_and_user").MustBool(true)
 	dbCfg.MigrationLock = sec.Key("migration_locking").MustBool(true)
@@ -202,8 +218,15 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 
 		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", dbCfg.Path, dbCfg.CacheMode)
 
+		fsName, fsSupportsWAL := filesystemSupportsWAL(walFilesystemPath(dbCfg.Path))
+		dbCfg.WALEnabled = resolveWAL(dbCfg.wal, fsName, fsSupportsWAL)
+
+		// SQLite stores the journal mode in the database file, so a database converted to
+		// WAL earlier stays in WAL unless we set it back.
 		if dbCfg.WALEnabled {
 			cnnstr += "&_journal_mode=WAL"
+		} else {
+			cnnstr += "&_journal_mode=DELETE"
 		}
 
 		cnnstr += buildExtraConnectionString('&', dbCfg.UrlQueryParams)

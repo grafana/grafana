@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"errors"
 	"net/url"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -211,6 +212,76 @@ func TestBuildConnectionStringPostgres(t *testing.T) {
 			err := tc.dbCfg.buildConnectionString(&setting.Cfg{}, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedConnStr, tc.dbCfg.ConnectionString)
+		})
+	}
+}
+
+func TestReadConfigWAL(t *testing.T) {
+	testCases := []struct {
+		value    string
+		expected walSetting
+		expErr   bool
+	}{
+		{value: "auto", expected: walAuto},
+		{value: "AUTO", expected: walAuto},
+		{value: "", expected: walAuto},
+		{value: "true", expected: walOn},
+		{value: "1", expected: walOn},
+		{value: "on", expected: walOn},
+		{value: "yes", expected: walOn},
+		{value: "false", expected: walOff},
+		{value: "0", expected: walOff},
+		{value: "off", expected: walOff},
+		{value: "no", expected: walOff},
+		{value: "sometimes", expErr: true},
+	}
+
+	for _, tc := range testCases {
+		t.Run("wal = "+tc.value, func(t *testing.T) {
+			// nolint:staticcheck
+			cfg := setting.NewCfgWithFeatures(featuremgmt.WithFeatures().IsEnabledGlobally)
+			sec, err := cfg.Raw.NewSection("database")
+			require.NoError(t, err)
+			_, err = sec.NewKey("type", migrator.SQLite)
+			require.NoError(t, err)
+			_, err = sec.NewKey("wal", tc.value)
+			require.NoError(t, err)
+
+			dbCfg := &DatabaseConfig{}
+			err = dbCfg.readConfig(cfg)
+			if tc.expErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, dbCfg.wal)
+		})
+	}
+}
+
+func TestBuildConnectionStringSQLiteJournalMode(t *testing.T) {
+	testCases := []struct {
+		name        string
+		wal         walSetting
+		expJournal  string
+		expWALValue bool
+	}{
+		{name: "WAL enabled", wal: walOn, expJournal: "_journal_mode=WAL", expWALValue: true},
+		{name: "WAL disabled reverts a converted database", wal: walOff, expJournal: "_journal_mode=DELETE", expWALValue: false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			dbCfg := &DatabaseConfig{
+				Type:      migrator.SQLite,
+				Path:      filepath.Join(t.TempDir(), "grafana.db"),
+				CacheMode: "private",
+				wal:       tc.wal,
+			}
+
+			require.NoError(t, dbCfg.buildConnectionString(&setting.Cfg{}, nil))
+			assert.Contains(t, dbCfg.ConnectionString, tc.expJournal)
+			assert.Equal(t, tc.expWALValue, dbCfg.WALEnabled)
 		})
 	}
 }
