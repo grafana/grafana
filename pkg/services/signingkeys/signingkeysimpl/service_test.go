@@ -129,6 +129,62 @@ func TestEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
 	require.Len(t, cacheStorage.Storage, 1)
 }
 
+func TestKeyExpiry(t *testing.T) {
+	testCases := []struct {
+		name string
+		now  time.Time
+		want time.Time
+	}{
+		{
+			name: "created at the start of a 31 day month",
+			now:  time.Date(2026, 7, 1, 0, 0, 3, 0, time.UTC),
+			want: time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "created at the start of a 30 day month",
+			now:  time.Date(2026, 6, 1, 0, 0, 3, 0, time.UTC),
+			want: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "created at the start of a 28 day month",
+			now:  time.Date(2026, 2, 1, 0, 0, 3, 0, time.UTC),
+			want: time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "created on a leap day",
+			now:  time.Date(2028, 2, 29, 23, 59, 59, 0, time.UTC),
+			want: time.Date(2028, 4, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "created mid month",
+			now:  time.Date(2026, 10, 14, 12, 30, 0, 0, time.UTC),
+			want: time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "rolls over the year",
+			now:  time.Date(2026, 12, 3, 0, 0, 0, 0, time.UTC),
+			want: time.Date(2027, 2, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "uses the UTC month regardless of the local zone",
+			now:  time.Date(2026, 4, 1, 1, 0, 0, 0, time.FixedZone("UTC+13", 13*60*60)),
+			want: time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			expiry := keyExpiry(tc.now)
+			assert.Equal(t, tc.want, expiry)
+
+			utc := tc.now.UTC()
+			lastInstantOfKeyIDMonth := time.Date(utc.Year(), utc.Month()+1, 1, 0, 0, 0, 0, time.UTC)
+			assert.True(t, expiry.After(lastInstantOfKeyIDMonth),
+				"key expires at %s, before its key ID stops being used at %s", expiry, lastInstantOfKeyIDMonth)
+		})
+	}
+}
+
 func TestExposeJWKS(t *testing.T) {
 	// create a new service instance
 	mockStore := signingkeystore.NewFakeStore()

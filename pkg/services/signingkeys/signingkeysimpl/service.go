@@ -117,7 +117,8 @@ func (s *Service) buildJWKS(ctx context.Context, keys []signingkeys.SigningKey) 
 
 // GetOrCreatePrivateKey returns the private key with the specified key ID. If the key does not exist, it will be
 // created with the specified algorithm.
-// The key will be automatically rotated at the beginning of each month. The previous key will be kept for 30 days.
+// The key will be automatically rotated at the beginning of each month. The previous key is kept
+// until the start of the month after next.
 func (s *Service) GetOrCreatePrivateKey(ctx context.Context,
 	keyPrefix string, alg jose.SignatureAlgorithm) (string, crypto.Signer, error) {
 	if alg != jose.ES256 {
@@ -179,7 +180,7 @@ func (s *Service) addPrivateKey(ctx context.Context, keyID string, alg jose.Sign
 	}
 
 	now := time.Now()
-	expiry := now.Add(30 * 24 * time.Hour)
+	expiry := keyExpiry(now)
 	key, err := s.store.Add(ctx, &signingkeys.SigningKey{
 		KeyID:      keyID,
 		PrivateKey: string(encoded),
@@ -276,6 +277,11 @@ func (s *Service) decodePrivateKey(ctx context.Context, privateKey string) (cryp
 func keyMonthScopedID(keyPrefix string, alg jose.SignatureAlgorithm) string {
 	keyID := keyPrefix + "-" + time.Now().UTC().Format("2006-01") + "-" + strings.ToLower(string(alg))
 	return keyID
+}
+
+func keyExpiry(now time.Time) time.Time {
+	utc := now.UTC()
+	return time.Date(utc.Year(), utc.Month()+2, 1, 0, 0, 0, 0, time.UTC)
 }
 
 func (s *Service) registerAPIEndpoints(router routing.RouteRegister) {
