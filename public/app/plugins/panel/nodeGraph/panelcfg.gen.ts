@@ -44,6 +44,10 @@ export interface Options {
     secondaryStatUnit?: string;
   };
   /**
+   * Automatically fit and center the graph when its layout or panel size changes
+   */
+  fitToView?: boolean;
+  /**
    * How to layout the nodes in the node graph
    */
   layoutAlgorithm?: LayoutAlgorithm;
