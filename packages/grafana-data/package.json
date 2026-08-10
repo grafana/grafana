@@ -69,7 +69,7 @@
     "@leeoniya/ufuzzy": "^1.0.19",
     "@react-hookz/web": "^25.2.0",
     "@types/d3-interpolate": "^3.0.0",
-    "@types/luxon": "^3",
+    "@types/luxon": "^3.0.0",
     "@types/string-hash": "^1.1.3",
     "@types/systemjs": "^6.15.3",
     "d3-interpolate": "^3.0.1",
