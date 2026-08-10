@@ -121,6 +121,34 @@ describe('DashboardSceneUrlSync', () => {
       expect(scrollIntoViewSpy.mock.instances[1]).toBe(topLevelElement);
     });
 
+    it('distinguishes a row titled with a slash from a nested row with the same path segments', () => {
+      const nestedRow = new RowItem({ title: 'Bar' });
+      const parentRow = new RowItem({ title: 'Foo', layout: new RowsLayoutManager({ rows: [nestedRow] }) });
+      const slashTitleRow = new RowItem({ title: 'Foo/Bar' });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: new RowsLayoutManager({ rows: [slashTitleRow, parentRow] }),
+      });
+
+      const slashTitleElement = document.createElement('div');
+      document.body.appendChild(slashTitleElement);
+      slashTitleRow.containerRef.current = slashTitleElement;
+
+      const nestedElement = document.createElement('div');
+      document.body.appendChild(nestedElement);
+      nestedRow.containerRef.current = nestedElement;
+
+      // Encoded slash in the title segment must not match nested Foo/Bar path
+      scene.urlSync?.updateFromUrl({ srow: 'Foo%2FBar' });
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      expect(scrollIntoViewSpy.mock.instances[0]).toBe(slashTitleElement);
+
+      scene.urlSync?.updateFromUrl({ srow: 'Foo/Bar' });
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(2);
+      expect(scrollIntoViewSpy.mock.instances[1]).toBe(nestedElement);
+    });
+
     it('clears parameter but does not scroll when no row matches the slug', () => {
       const { scene } = buildTestSceneWithRow('Traces Instance Stats');
 

@@ -6,6 +6,9 @@ import { isRowItem, isTabItem, type RowItemLike } from '../types/LayoutItemTypeG
 /**
  * Row slugs are only unique among siblings, so the url value is the row's slug prefixed
  * with the slugs of all ancestor rows/tabs, e.g. `Row-2/Row-1` for a row nested in another row.
+ *
+ * Each segment is encodeURIComponent'd so a title containing `/` (e.g. `Foo/Bar` → `Foo%2FBar`)
+ * cannot collide with a nested path (`Foo` + `Bar` → `Foo/Bar`).
  */
 export function getRowSlugPath(row: RowItemLike): string {
   const segments = [row.getSlug()];
@@ -18,7 +21,7 @@ export function getRowSlugPath(row: RowItemLike): string {
     ancestor = ancestor.parent;
   }
 
-  return segments.join('/');
+  return segments.map(encodeURIComponent).join('/');
 }
 
 export function scrollToRow(srow: string, layout: DashboardLayoutManager) {

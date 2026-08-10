@@ -84,4 +84,15 @@ describe('RowItemRenderer', () => {
     const copiedUrl = new URL(await navigator.clipboard.readText());
     expect(copiedUrl.searchParams.get('srow')).toBe('Row-2/Row-1');
   });
+
+  it('encodes slashes in row titles so they do not look like nested paths', async () => {
+    Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true });
+
+    renderRow({ title: 'Foo/Bar' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Copy link to row' }));
+
+    const copiedUrl = new URL(await navigator.clipboard.readText());
+    expect(copiedUrl.searchParams.get('srow')).toBe('Foo%2FBar');
+  });
 });
