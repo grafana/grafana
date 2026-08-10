@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { customAlphabet } from 'nanoid';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -28,7 +29,7 @@ import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../u
 import { type ResourceBranchAction } from '../../utils/redirect';
 import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
-import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow, shouldEnforceBranchTemplate } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { slugifyForFilename } from '../utils/path';
 
@@ -148,7 +149,7 @@ function FormContent({
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues, mode: 'onBlur' });
   const { handleSubmit, watch, formState } = methods;
-  const [workflow] = watch(['workflow']);
+  const [workflow, ref] = watch(['workflow', 'ref']);
 
   // Default the success handlers to the kind's list navigation (invalidate + navigate); a caller can
   // override either. `create`/`update`/`delete` differ only by the PR-banner action param.
@@ -178,7 +179,7 @@ function FormContent({
     repository,
     vars: templateVars,
     workflow,
-    value: watch('ref') ?? '',
+    value: ref ?? '',
     setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
   const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
@@ -208,7 +209,7 @@ function FormContent({
     },
   });
 
-  const doSave = async ({ ref, workflow, path }: BaseProvisionedFormData) => {
+  const doSave = async ({ path }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     // Use the submitted path: for new resources the path field is editable, so the user may have
@@ -220,6 +221,8 @@ function FormContent({
     }
 
     // For the write workflow we commit to the configured branch; otherwise use the selected branch.
+    // Read the branch from the watched form value, not the submit payload: an enforced template
+    // renders the field read-only and react-hook-form drops that value from the handler arguments.
     const branchRef = workflow === 'write' ? undefined : ref;
 
     reportInteraction('grafana_provisioning_resource_save_submitted', {
@@ -352,6 +355,7 @@ function ResourceDrawerContent({
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
+  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   // Title combines a shared translated template with the kind's translated noun (interpolated, so
   // translators control word order), instead of a per-kind "Save/Delete provisioned <kind>" string.
@@ -372,9 +376,13 @@ function ResourceDrawerContent({
       ref: getDefaultRef(repository, prefix),
       repo: repository.name || '',
       path: sourcePath || '',
-      workflow: getDefaultWorkflow(repository),
+      // When the branch name template is enforced, push through the branch workflow so the templated
+      // branch is created and sent as `ref`; useBranchTemplate then fills it.
+      workflow: shouldEnforceBranchTemplate(repository, gitConventionsEnabled)
+        ? ('branch' as const)
+        : getDefaultWorkflow(repository),
     };
-  }, [repository, isLoading, title, sourcePath, prefix]);
+  }, [repository, isLoading, title, sourcePath, prefix, gitConventionsEnabled]);
 
   return (
     <Drawer

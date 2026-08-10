@@ -178,9 +178,7 @@ describe('useBranchTemplate', () => {
     // field is read-only, the hook must treat that as a reset (not a user edit) and reassert the
     // template instead of freezing on the generated branch.
     const repository = makeRepo({ nameTemplate: TEMPLATE, enforceTemplate: true });
-    const { user } = render(
-      <Host repository={repository} vars={dashboardVars} resetTo="dashboard/2023-01-01-xyz" />
-    );
+    const { user } = render(<Host repository={repository} vars={dashboardVars} resetTo="dashboard/2023-01-01-xyz" />);
 
     const input = screen.getByRole('textbox', { name: /branch/i });
     await waitFor(() => expect(input).toHaveValue('grafana/create-test'));

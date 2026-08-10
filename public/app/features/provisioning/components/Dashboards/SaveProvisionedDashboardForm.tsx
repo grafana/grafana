@@ -429,8 +429,10 @@ export function SaveProvisionedDashboardForm({
       const data = await createOrUpdateFile({
         // Use the watched `ref`, not the submit payload: when the branch template is enforced the
         // field renders read-only/disabled, and react-hook-form drops that value from the submit
-        // handler's arguments even though it is in the form state. Skip the ref on the default branch.
-        ref: ref === repository?.branch ? undefined : ref,
+        // handler's arguments even though it is in the form state. Drop the ref only for a direct
+        // write to the configured branch; the branch workflow must always send it (even when an
+        // enforced template renders to the configured branch name).
+        ref: workflow !== 'branch' && ref === repository?.branch ? undefined : ref,
         name: repo,
         path,
         message,
