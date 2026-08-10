@@ -48,6 +48,8 @@ interface Props {
   onAccept: (query: DataQuery) => void;
 }
 
+type CoauthoringVisibility = 'expanded' | 'minimized';
+
 const VIEWPORT_MARGIN = 8;
 const ASSISTANT_FEEDBACK_URL = '/api/plugins/grafana-assistant-app/resources/api/v1/feedback';
 
@@ -79,10 +81,12 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
   const [feedbackError, setFeedbackError] = useState<string>();
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [availableHeight, setAvailableHeight] = useState<number>();
+  const [visibility, setVisibility] = useState<CoauthoringVisibility>('expanded');
   const generationIdRef = useRef(0);
   const identificationIdRef = useRef(0);
   const invocationRef = useRef<QueryEditorCoauthoringInvocation>();
   const contextPromiseRef = useRef<Promise<QueryEditorCoauthoringContext>>();
+  const visibilityRef = useRef<CoauthoringVisibility>('expanded');
 
   const clearSession = useCallback(() => {
     generationIdRef.current++;
@@ -123,6 +127,41 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
     setInvocation(undefined);
     capability.focus();
   }, [capability, clearSession]);
+
+  const hide = useCallback(() => {
+    capability.clearPreview();
+    visibilityRef.current = 'minimized';
+    setVisibility('minimized');
+    capability.focus();
+  }, [capability]);
+
+  const resume = useCallback(() => {
+    if (proposal) {
+      if (capability.getValue() !== proposal.baseline) {
+        setProposal(undefined);
+        setError(
+          t(
+            'query-editor-coauthoring.error-query-changed-while-hidden',
+            'The query changed while this suggestion was hidden. Select it again and retry.'
+          )
+        );
+        visibilityRef.current = 'expanded';
+        setVisibility('expanded');
+        return;
+      }
+      const preview = capability.stagePreview(proposal.proposedQuery);
+      if (!preview) {
+        setProposal(undefined);
+        setError(
+          t('query-editor-coauthoring.error-preview-failed', 'The query proposal could not be previewed. Try again.')
+        );
+      } else {
+        setProposal({ ...proposal, preview });
+      }
+    }
+    visibilityRef.current = 'expanded';
+    setVisibility('expanded');
+  }, [capability, proposal]);
 
   const loadContext = useCallback(() => {
     setContext(undefined);
@@ -186,6 +225,8 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
       clearSession();
       invocationRef.current = nextInvocation;
       setInvocation(nextInvocation);
+      visibilityRef.current = 'expanded';
+      setVisibility('expanded');
       loadContext();
     });
 
@@ -384,6 +425,9 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           );
           return;
         }
+        if (visibilityRef.current === 'minimized') {
+          capability.clearPreview();
+        }
         setProposal({ ...submittedProposal, baseline, context: submittedContext, preview });
       },
       onError: () => {
@@ -465,32 +509,46 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
         if (feedback) {
           closeFeedback();
         } else {
-          dismiss();
+          hide();
         }
-      } else if (event.key === 'Enter' && proposal && !feedback) {
+      } else if (event.key === 'Enter' && proposal && !feedback && visibility === 'expanded') {
         event.preventDefault();
         accept();
       }
     };
-    const onPointerDown = (event: PointerEvent) => {
-      if (feedback) {
-        return;
-      }
-      if (!(event.target instanceof Node) || !invocation.anchorElement.contains(event.target)) {
-        dismiss();
-      }
-    };
-
     document.addEventListener('keydown', onKeyDown, true);
-    document.addEventListener('pointerdown', onPointerDown, true);
     return () => {
       document.removeEventListener('keydown', onKeyDown, true);
-      document.removeEventListener('pointerdown', onPointerDown, true);
     };
-  }, [accept, closeFeedback, dismiss, feedback, invocation, proposal]);
+  }, [accept, closeFeedback, feedback, hide, invocation, proposal, visibility]);
 
   if (!invocation) {
     return null;
+  }
+
+  if (visibility === 'minimized') {
+    return createPortal(
+      <div className={styles.minimized}>
+        <Button size="sm" variant="secondary" icon="ai-sparkle" onClick={resume}>
+          {proposal ? (
+            <Trans i18nKey="query-editor-coauthoring.resume-suggestion">Resume suggestion</Trans>
+          ) : isGenerating ? (
+            <Trans i18nKey="query-editor-coauthoring.working">Working…</Trans>
+          ) : (
+            <Trans i18nKey="query-editor-coauthoring.continue-session">Continue coauthoring</Trans>
+          )}
+        </Button>
+        <IconButton
+          name="trash-alt"
+          size="sm"
+          variant="secondary"
+          tooltip={t('query-editor-coauthoring.discard', 'Discard coauthoring')}
+          aria-label={t('query-editor-coauthoring.discard', 'Discard coauthoring')}
+          onClick={dismiss}
+        />
+      </div>,
+      invocation.anchorElement
+    );
   }
 
   return createPortal(
@@ -500,6 +558,15 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
       aria-label={t('query-editor-coauthoring.dialog', 'Query coauthor')}
       style={availableHeight === undefined ? undefined : { maxHeight: availableHeight }}
     >
+      <div className={styles.closeRow}>
+        <IconButton
+          name="times"
+          size="sm"
+          tooltip={t('query-editor-coauthoring.close', 'Close coauthoring')}
+          aria-label={t('query-editor-coauthoring.close', 'Close coauthoring')}
+          onClick={hide}
+        />
+      </div>
       {isAssistantAvailable && !proposal && !fallback && !clarification && !error && (
         <div className={styles.promptRow}>
           <TextArea
@@ -596,20 +663,34 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           </div>
         )}
       {isAssistantAvailable && isGenerating && (
-        <div className={styles.status}>
-          <Spinner size="sm" />
-          <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="query-editor-coauthoring.building">Building query…</Trans>
-          </Text>
+        <div className={styles.building}>
+          <div className={styles.status}>
+            <Spinner size="sm" />
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="query-editor-coauthoring.building">Building query…</Trans>
+            </Text>
+          </div>
           {context && (
-            <div
-              className={styles.workingFocus}
-              aria-label={t('query-editor-coauthoring.working-focus', 'Query focus')}
-            >
-              <Text variant="bodySmall" color="secondary">
-                <Trans i18nKey="query-editor-coauthoring.focus">Focus:</Trans>
-              </Text>
-              <code>{workingFocusSummary(context)}</code>
+            <div className={styles.workingFlow}>
+              <div
+                className={styles.workingStep}
+                aria-label={t('query-editor-coauthoring.working-focus', 'Query focus')}
+              >
+                <Text variant="bodySmall" color="secondary" weight="medium">
+                  <Trans i18nKey="query-editor-coauthoring.focus">FOCUS</Trans>
+                </Text>
+                <code>{workingFocusSummary(context)}</code>
+              </div>
+              <Icon name="arrow-right" />
+              <div
+                className={styles.workingStep}
+                aria-label={t('query-editor-coauthoring.relevant-metric', 'Relevant metric')}
+              >
+                <Text variant="bodySmall" color="secondary" weight="medium">
+                  <Trans i18nKey="query-editor-coauthoring.metric">METRIC</Trans>
+                </Text>
+                <code>{workingMetricSummary(context)}</code>
+              </div>
             </div>
           )}
         </div>
@@ -780,7 +861,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
             </Stack>
             <Stack gap={1}>
               <Button size="sm" variant="secondary" icon="ai-sparkle" onClick={() => continueInAssistant()}>
-                <Trans i18nKey="query-editor-coauthoring.chat">Chat about it</Trans>
+                <Trans i18nKey="query-editor-coauthoring.continue-in-assistant">Continue in Assistant</Trans>
               </Button>
               <Button size="sm" icon="check" onClick={accept}>
                 <Trans i18nKey="query-editor-coauthoring.accept">Accept</Trans>
@@ -935,6 +1016,7 @@ function buildAssistantHandoffPrompt(
     `Focused text: ${JSON.stringify(context.focusRanges.map((range) => context.query.slice(range.from, range.to)))}`,
     `Relevant metric metadata: ${JSON.stringify(context.metricMetadata)}`,
     proposal ? `Inline proposal: ${JSON.stringify(proposal.proposedQuery)}` : undefined,
+    proposal ? `Inline explanation: ${JSON.stringify(proposal.why)}` : undefined,
     reason ? `Why the inline flow handed off: ${JSON.stringify(reason)}` : undefined,
   ]
     .filter(Boolean)
@@ -985,6 +1067,14 @@ function workingFocusSummary(context: QueryEditorCoauthoringContext): string {
   return (focusedText || context.query.replace(/\s+/g, ' ').trim()).slice(0, 160);
 }
 
+function workingMetricSummary(context: QueryEditorCoauthoringContext): string {
+  const [metric, ...remainingMetrics] = context.metricMetadata;
+  if (!metric) {
+    return t('query-editor-coauthoring.promql-query', 'PromQL query');
+  }
+  return remainingMetrics.length > 0 ? `${metric.name} +${remainingMetrics.length}` : metric.name;
+}
+
 function invalidPromQLResponseMessage(): string {
   return t(
     'query-editor-coauthoring.error-invalid-promql-response',
@@ -1015,6 +1105,16 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(1),
       overflow: 'hidden',
     }),
+    closeRow: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+      marginBottom: theme.spacing(-0.5),
+    }),
+    minimized: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+    }),
     promptRow: css({
       display: 'grid',
       gridTemplateColumns: '1fr auto',
@@ -1027,13 +1127,25 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(0.75),
       padding: theme.spacing(0.5),
     }),
-    workingFocus: css({
+    building: css({
       display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.5),
+    }),
+    workingFlow: css({
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)',
       alignItems: 'center',
       gap: theme.spacing(0.5),
       minWidth: 0,
-      marginLeft: 'auto',
-      padding: theme.spacing(0.25, 0.75),
+      padding: theme.spacing(0, 0.5, 0.5),
+    }),
+    workingStep: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(0.25),
+      minWidth: 0,
+      padding: theme.spacing(0.5, 0.75),
       border: `1px dashed ${theme.colors.border.medium}`,
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
