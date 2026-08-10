@@ -4,7 +4,7 @@ import * as z from 'zod';
 import { type ThemeColors } from './createColors';
 import type { Radii } from './createShape';
 import type { ThemeSpacingTokens } from './createSpacing';
-import { resolvePaletteRefs } from './palette_new';
+import { palette, resolvePaletteRefs } from './palette_new';
 import { type DeepRequired } from './types';
 
 interface MenuComponentTokens {
@@ -121,6 +121,17 @@ export const ThemeComponentsInputSchema = z
     tag: z.object({
       colors: z.array(z.object({ background: z.string(), text: z.string() })).optional(),
     }),
+    home: z.object({
+      background: z
+        .object({
+          base: z.string(),
+          fade: z.string(),
+          highlight: z.string(),
+          right: z.string(),
+          left: z.string(),
+        })
+        .optional(),
+    }),
   })
   .partial();
 
@@ -207,6 +218,15 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     },
     tag: {
       colors: DEFAULT_TAG_COLORS,
+    },
+    home: {
+      background: {
+        base: colors.background.page,
+        fade: colors.mode === 'dark' ? palette.violet950 : palette.violet100,
+        highlight: colors.mode === 'dark' ? palette.violet900 : palette.violet200,
+        right: colors.mode === 'dark' ? palette.orange900 : palette.orange200,
+        left: colors.mode === 'dark' ? palette.blue900 : palette.blue200,
+      },
     },
   };
 

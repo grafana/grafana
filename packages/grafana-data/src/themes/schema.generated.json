@@ -1186,6 +1186,40 @@
             }
           },
           "additionalProperties": false
+        },
+        "home": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "object",
+              "properties": {
+                "base": {
+                  "type": "string"
+                },
+                "fade": {
+                  "type": "string"
+                },
+                "highlight": {
+                  "type": "string"
+                },
+                "right": {
+                  "type": "string"
+                },
+                "left": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "base",
+                "fade",
+                "highlight",
+                "right",
+                "left"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

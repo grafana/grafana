@@ -184,27 +184,27 @@ function getGradientBackgroundForTheme(theme: GrafanaTheme2, visualRefreshEnable
   if (visualRefreshEnabled) {
     return `
 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 3840 2160">
-  <rect width="3840" height="2160" fill="${theme.colors.background.page}" />
-  <rect width="3840" height="2160" fill="url(#full)" fill-opacity="0.5"/>
+  <rect width="3840" height="2160" fill="${theme.components.home.background.base}" />
+  <rect width="3840" height="2160" fill="url(#fade)" fill-opacity="0.5"/>
   <rect width="3840" height="2160" fill="url(#highlight)" fill-opacity="0.25"/>
   <rect width="3840" height="2160" fill="url(#right)" fill-opacity="0.20"/>
   <rect width="3840" height="2160" fill="url(#left)" fill-opacity="0.25"/>
   <defs>
-    <linearGradient id="full" x1="1920" x2="1920" y1="0" y2="2160" gradientUnits="userSpaceOnUse">
-      <stop stop-color="${theme.colors.tertiary.background}"/>
-      <stop offset="1" stop-color="${theme.colors.tertiary.background}" stop-opacity="0.5"/>
+    <linearGradient id="fade" x1="1920" x2="1920" y1="0" y2="2160" gradientUnits="userSpaceOnUse">
+      <stop stop-color="${theme.components.home.background.fade}"/>
+      <stop offset="1" stop-color="${theme.components.home.background.fade}" stop-opacity="0.5"/>
     </linearGradient>
     <radialGradient id="highlight" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1920 2160) rotate(90) scale(684.5 3891.29)">
-      <stop stop-color="${theme.colors.tertiary.backgroundEmphasis}"/>
-      <stop offset="1" stop-color="${theme.colors.tertiary.backgroundEmphasis}" stop-opacity="0"/>
+      <stop stop-color="${theme.components.home.background.highlight}"/>
+      <stop offset="1" stop-color="${theme.components.home.background.highlight}" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="right" x1="3728.97" y1="41.797" x2="2775.64" y2="1368.31" gradientUnits="userSpaceOnUse">
-      <stop stop-color="${theme.colors.accent.backgroundEmphasis}"/>
-      <stop offset="1" stop-color="${theme.colors.accent.backgroundEmphasis}" stop-opacity="0"/>
+      <stop stop-color="${theme.components.home.background.right}"/>
+      <stop offset="1" stop-color="${theme.components.home.background.right}" stop-opacity="0"/>
     </linearGradient>
     <linearGradient id="left" x1="-18.9569" y1="14.831" x2="884.72" y2="850.544" gradientUnits="userSpaceOnUse">
-      <stop stop-color="${theme.colors.info.backgroundEmphasis}"/>
-      <stop offset="1" stop-color="${theme.colors.info.backgroundEmphasis}" stop-opacity="0"/>
+      <stop stop-color="${theme.components.home.background.left}"/>
+      <stop offset="1" stop-color="${theme.components.home.background.left}" stop-opacity="0"/>
     </linearGradient>
   </defs>
 </svg>
