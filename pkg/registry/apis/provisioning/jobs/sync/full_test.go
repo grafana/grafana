@@ -1834,24 +1834,44 @@ func TestApplyChanges_SortsFolderUpdatesShallowestFirst(t *testing.T) {
 	}, callOrder)
 }
 
-func TestCollectRelocatingFolderUIDs(t *testing.T) {
+func TestCollectFolderMoves(t *testing.T) {
 	changes := []ResourceFileChange{
-		// In-place UID move of a folder — old UID must be collected.
+		// Stable-UID moves (in-place update of a directory) — collected.
 		{Action: repository.FileActionUpdated, Path: "parent/", Existing: &provisioning.ResourceListItem{Name: "parent-uid"}},
-		// Metadata-driven rename — old UID must be collected.
-		{Action: repository.FileActionCreated, Path: "parent/child/", FolderRenamed: true, Existing: &provisioning.ResourceListItem{Name: "child-uid"}},
-		// Duplicate of an already-collected UID — must be deduped.
-		{Action: repository.FileActionUpdated, Path: "parent/", Existing: &provisioning.ResourceListItem{Name: "parent-uid"}},
-		// Brand-new folder (no existing resource) — must be ignored.
-		{Action: repository.FileActionCreated, Path: "brand/new/", Existing: nil},
-		// Folder update without an existing name — must be ignored.
-		{Action: repository.FileActionUpdated, Path: "noname/", Existing: &provisioning.ResourceListItem{Name: ""}},
-		// A plain created folder that is not a rename — must be ignored.
+		{Action: repository.FileActionUpdated, Path: "parent/child/", Existing: &provisioning.ResourceListItem{Name: "child-uid"}},
+		// FolderRenamed (the UID itself changed) — excluded: the old UID is not relocating.
+		{Action: repository.FileActionUpdated, Path: "renamed/", FolderRenamed: true, Existing: &provisioning.ResourceListItem{Name: "old-renamed-uid"}},
+		// A plain created folder — excluded.
 		{Action: repository.FileActionCreated, Path: "created/", Existing: &provisioning.ResourceListItem{Name: "created-uid"}},
+		// Folder update without an existing name — excluded.
+		{Action: repository.FileActionUpdated, Path: "noname/", Existing: &provisioning.ResourceListItem{Name: ""}},
 	}
 
-	got := collectRelocatingFolderUIDs(changes)
-	require.ElementsMatch(t, []string{"parent-uid", "child-uid"}, got)
+	moves := collectFolderMoves(changes)
+	require.ElementsMatch(t, []folderMove{
+		{Path: "parent/", UID: "parent-uid"},
+		{Path: "parent/child/", UID: "child-uid"},
+	}, moves)
+}
+
+func TestRelocatingUIDsForPath(t *testing.T) {
+	moves := []folderMove{
+		{Path: "parent/", UID: "parent-uid"},
+		{Path: "parent/child/", UID: "child-uid"},
+		{Path: "sibling/", UID: "sibling-uid"},
+	}
+
+	// Ensuring the child exempts the child and its relocating ancestor, but never
+	// an unrelated sibling relocation.
+	require.ElementsMatch(t, []string{"parent-uid", "child-uid"},
+		relocatingUIDsForPath("parent/child/", moves))
+
+	// Ensuring the parent exempts only the parent — its descendant is not an ancestor.
+	require.ElementsMatch(t, []string{"parent-uid"},
+		relocatingUIDsForPath("parent/", moves))
+
+	// A path with no relocating ancestors gets nothing.
+	require.Empty(t, relocatingUIDsForPath("unrelated/", moves))
 }
 
 func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {

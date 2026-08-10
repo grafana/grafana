@@ -184,9 +184,10 @@ func shouldSkipChange(ctx context.Context, change ResourceFileChange, progress j
 }
 
 // applyChange applies a single resource or folder change, handling delete/create/update and recording progress.
-// relocatingUIDs carries the old UIDs of every folder relocating in this batch so the
-// folder-path ensure can tolerate the same stable UID temporarily existing at both
-// its old and new path (see applyChanges); it is empty for non-folder changes.
+// folderMoves lists the stable-UID folder relocations in this batch so the
+// folder-path ensure can tolerate the same UID temporarily existing at both its
+// old and new path — but only for the current folder and its relocating ancestors
+// (see relocatingUIDsForPath). It is empty for non-folder changes.
 func applyChange(
 	ctx context.Context,
 	change ResourceFileChange,
@@ -197,7 +198,7 @@ func applyChange(
 	tracer tracing.Tracer,
 	quotaTracker quotas.QuotaTracker,
 	folderMetadataEnabled bool,
-	relocatingUIDs []string,
+	folderMoves []folderMove,
 ) {
 	if ctx.Err() != nil {
 		return
@@ -269,12 +270,13 @@ func applyChange(
 			// stale tree entry is not skipped by the early-return optimisation.
 			ensureOpts = append(ensureOpts, resources.WithForceWalk())
 		}
-		if len(relocatingUIDs) > 0 {
-			// Mark every folder relocating in this batch (not just the current
-			// change's own old UID) so the ID conflict check is bypassed for all of
-			// them. A commit that renames a parent and a child at once resolves the
-			// parent's still-old-path UID during the child's ancestor walk; without
-			// the full set that ancestor trips the duplicate-UID guard.
+		// Exempt only the moving folders on this path's own ancestor chain from the
+		// duplicate-UID guard. A commit that renames a parent and a child at once
+		// resolves the parent's still-old-path UID during the child's ancestor walk,
+		// so the child's ensure must tolerate the parent's UID. Exempting unrelated
+		// relocations elsewhere in the batch would instead let a folder that
+		// accidentally claims another folder's UID hijack that folder's object.
+		if relocatingUIDs := relocatingUIDsForPath(change.Path, folderMoves); len(relocatingUIDs) > 0 {
 			ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(relocatingUIDs...))
 		}
 
@@ -370,14 +372,12 @@ func applyChanges(
 
 	buckets := categorizeChanges(changes)
 
-	// Collect the old UIDs of every folder relocating in this batch (an in-place
-	// UID move or a metadata-driven rename). Threading the full set into each
-	// folder-path ensure lets the ID-conflict check tolerate the same stable UID
-	// temporarily existing at both its old and new path for ALL relocating folders
-	// — not just the one whose change is currently being applied. Without it a
-	// commit that renames a parent and a child at once fails because the child's
-	// ancestor walk resolves the parent's still-old-path UID.
-	relocatingUIDs := collectRelocatingFolderUIDs(buckets.folderCreations)
+	// Collect the stable-UID folder relocations in this batch. Each folder ensure
+	// then exempts only the moving folders on its own ancestor chain from the
+	// duplicate-UID guard, so a commit that renames a parent and a child at once
+	// no longer fails when the child's ancestor walk resolves the parent's
+	// still-old-path UID.
+	folderMoves := collectFolderMoves(buckets.folderCreations)
 
 	// Folder renames (FolderRenamed) are net-zero: each creates a new folder
 	// and deletes the old one in the cleanup phase. Temporarily raise the
@@ -408,7 +408,7 @@ func applyChanges(
 		// before children are walked to ensure consistency in moves and renames.
 		safepath.SortByDepth(buckets.folderCreations, func(c ResourceFileChange) string { return c.Path }, true)
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
-			return applyFoldersSerially(ctx, buckets.folderCreations, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, resourceTimeout, relocatingUIDs)
+			return applyFoldersSerially(ctx, buckets.folderCreations, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, resourceTimeout, folderMoves)
 		}, metrics); err != nil {
 			return err
 		}
@@ -424,7 +424,7 @@ func applyChanges(
 
 	if len(buckets.folderDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
-			// Folder deletions do not ensure a folder path, so no relocating set is needed.
+			// Folder deletions do not ensure a folder path, so no relocations are needed.
 			return applyFoldersSerially(ctx, buckets.folderDeletions, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, resourceTimeout, nil)
 		}, metrics); err != nil {
 			return err
@@ -449,26 +449,51 @@ func applyChanges(
 	return cleanupOrphanFolders(ctx, orphanFolders, repositoryResources, progress, tracer, metrics)
 }
 
-// collectRelocatingFolderUIDs returns the deduplicated old UIDs of every folder
-// change that relocates a folder — an in-place UID move (FileActionUpdated on a
-// directory) or a metadata-driven rename (FolderRenamed). These UIDs legitimately
+// folderMove is a stable-UID folder relocation: the folder keeps its UID but its
+// path changes. Path is the destination (new) path; UID is the folder's UID.
+type folderMove struct {
+	Path string
+	UID  string
+}
+
+// collectFolderMoves returns the stable-UID folder relocations in the batch: a
+// folder whose UID is unchanged (an in-place FileActionUpdated on a directory)
+// but whose path differs from where it currently lives. These UIDs legitimately
 // resolve to both the old and the new path during reconcile until the deferred
-// cleanup deletes the old folder, so the ID-conflict check must tolerate them.
-func collectRelocatingFolderUIDs(folderChanges []ResourceFileChange) []string {
-	seen := make(map[string]struct{})
-	var uids []string
+// cleanup deletes the old folder, so the duplicate-UID guard must tolerate them.
+//
+// FolderRenamed changes are excluded: there the folder's UID itself changed
+// (a _folder.json UID edit or a revert to a hash-based ID), so the OLD UID is not
+// relocating to a new path — exempting it would suppress a genuine conflict on
+// that UID elsewhere in the same batch.
+func collectFolderMoves(folderChanges []ResourceFileChange) []folderMove {
+	var moves []folderMove
 	for _, change := range folderChanges {
+		if change.FolderRenamed || change.Action != repository.FileActionUpdated {
+			continue
+		}
 		if change.Existing == nil || change.Existing.Name == "" {
 			continue
 		}
-		if change.Action != repository.FileActionUpdated && !change.FolderRenamed {
-			continue
+		moves = append(moves, folderMove{Path: change.Path, UID: change.Existing.Name})
+	}
+	return moves
+}
+
+// relocatingUIDsForPath returns the UIDs of the batch's folder moves whose
+// destination path is an ancestor of (or equal to) the given path. Ensuring a
+// folder walks its ancestors, so only the current folder and its relocating
+// ancestors legitimately need the duplicate-UID guard bypassed. Scoping the
+// exemption this way keeps an unrelated folder that accidentally claims another
+// folder's UID from hijacking that folder's object.
+func relocatingUIDsForPath(path string, moves []folderMove) []string {
+	var uids []string
+	for _, m := range moves {
+		// InDir is a prefix check; for directory paths (trailing slash) this
+		// matches m.Path == path and any descendant of m.Path.
+		if safepath.InDir(path, m.Path) {
+			uids = append(uids, m.UID)
 		}
-		if _, ok := seen[change.Existing.Name]; ok {
-			continue
-		}
-		seen[change.Existing.Name] = struct{}{}
-		uids = append(uids, change.Existing.Name)
 	}
 	return uids
 }
@@ -600,9 +625,9 @@ func cleanupOrphanFolders(
 	}, metrics)
 }
 
-// applyFoldersSerially processes folder changes one by one. relocatingUIDs is the
-// set of old UIDs of folders relocating in this batch, forwarded to each folder
-// ensure (empty for deletion phases).
+// applyFoldersSerially processes folder changes one by one. folderMoves lists the
+// stable-UID folder relocations in this batch, forwarded to each folder ensure
+// (empty for deletion phases).
 func applyFoldersSerially(
 	ctx context.Context,
 	folders []ResourceFileChange,
@@ -614,7 +639,7 @@ func applyFoldersSerially(
 	quotaTracker quotas.QuotaTracker,
 	folderMetadataEnabled bool,
 	resourceTimeout time.Duration,
-	relocatingUIDs []string,
+	folderMoves []folderMove,
 ) error {
 	for _, folder := range folders {
 		if ctx.Err() != nil {
@@ -626,7 +651,7 @@ func applyFoldersSerially(
 		}
 
 		wrapWithTimeout(ctx, resourceTimeout, func(timeoutCtx context.Context) {
-			applyChange(timeoutCtx, folder, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, relocatingUIDs)
+			applyChange(timeoutCtx, folder, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled, folderMoves)
 		})
 	}
 
