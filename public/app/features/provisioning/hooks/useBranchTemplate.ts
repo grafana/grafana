@@ -54,21 +54,25 @@ export function useBranchTemplate({ repository, vars, workflow, value, setBranch
       userEdited.current = false;
       return;
     }
-    // When the template is enforced the field is read-only (`locked`), so the user can never edit
-    // it: any divergence from the value we last wrote is a form reset overwriting our non-dirty ref,
-    // not a manual edit. The Save drawer runs reset(defaultValues, { keepDirtyValues }) whenever the
-    // parent re-renders (e.g. selecting a target folder), so we must keep re-applying the rendered
-    // name rather than latching off — otherwise the enforced branch is lost from `ref`.
-    if (!enforce) {
-      // Field no longer holds the value we last wrote → the user edited it; freeze from now on.
-      if (lastApplied.current !== undefined && value !== lastApplied.current) {
-        userEdited.current = true;
+    // Enforced templates render the field read-only, so a value diverging from what the hook last
+    // wrote is a form reset (the Save drawer re-runs reset on parent re-renders, e.g. selecting a
+    // target folder), never a user edit. Keep re-applying the rendered name so the enforced branch
+    // survives the reset instead of latching off.
+    if (enforce) {
+      if (rendered !== value) {
+        lastApplied.current = rendered;
+        setBranch(rendered);
       }
-      if (userEdited.current) {
-        return;
-      }
+      return;
     }
-    if (rendered !== value) {
+    // Field no longer holds the value we last wrote → the user edited it; freeze from now on.
+    if (lastApplied.current !== undefined && value !== lastApplied.current) {
+      userEdited.current = true;
+    }
+    if (userEdited.current) {
+      return;
+    }
+    if (rendered !== lastApplied.current) {
       lastApplied.current = rendered;
       setBranch(rendered);
     }

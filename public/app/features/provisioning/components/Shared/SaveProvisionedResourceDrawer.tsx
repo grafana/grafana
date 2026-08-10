@@ -154,7 +154,7 @@ function FormContent({
 
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues, mode: 'onBlur' });
   const { handleSubmit, watch, formState } = methods;
-  const [workflow, ref] = watch(['workflow', 'ref']);
+  const [workflow] = watch(['workflow']);
 
   // Default the success handlers to the kind's list navigation (invalidate + navigate); a caller can
   // override either. `create`/`update`/`delete` differ only by the PR-banner action param.
@@ -184,7 +184,7 @@ function FormContent({
     repository,
     vars: templateVars,
     workflow,
-    value: ref ?? '',
+    value: watch('ref') ?? '',
     setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
   const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
@@ -214,7 +214,7 @@ function FormContent({
     },
   });
 
-  const doSave = async ({ path }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, workflow, path }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     // Use the submitted path: for new resources the path field is editable, so the user may have
@@ -226,8 +226,6 @@ function FormContent({
     }
 
     // For the write workflow we commit to the configured branch; otherwise use the selected branch.
-    // Read the branch from the watched form value, not the submit payload: an enforced template
-    // renders the field read-only and react-hook-form drops that value from the handler arguments.
     const branchRef = workflow === 'write' ? undefined : ref;
 
     reportInteraction('grafana_provisioning_resource_save_submitted', {
