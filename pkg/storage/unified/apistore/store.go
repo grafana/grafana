@@ -740,6 +740,10 @@ func (s *Storage) GuaranteedUpdate(
 		if err != nil {
 			return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
 		}
+		v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, updatedObj, s.opts.Permissions)
+		if err != nil {
+			return err
+		}
 
 		req.Value = v.raw.Bytes()
 		req.ResourceVersion = readResponse.ResourceVersion

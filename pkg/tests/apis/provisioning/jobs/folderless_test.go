@@ -14,6 +14,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -65,6 +66,13 @@ func TestIntegrationProvisioning_FolderlessSyncPlacement(t *testing.T) {
 	require.Empty(t, rootDash.GetAnnotations()[utils.AnnoKeyFolder],
 		"root-level dashboard must have no parent folder")
 	require.Equal(t, repo, rootDash.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+
+	viewerDashboards := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Viewer,
+		GVR:  helper.DashboardsV1.Args.GVR,
+	})
+	_, err = viewerDashboards.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+	require.NoError(t, err, "Viewer should be able to read a root-level dashboard")
 
 	// Nested dashboard must live inside the top-level folder.
 	nestedDash, err := helper.DashboardsV1.Resource.Get(ctx, timelineUID, metav1.GetOptions{})
@@ -384,19 +392,51 @@ func TestIntegrationProvisioning_FolderlessFileMove(t *testing.T) {
 		SyncTarget: "folderless",
 		Workflows:  []string{"write"},
 		Copies: map[string]string{
-			"../testdata/all-panels.json": "dashboard.json",
+			"../testdata/all-panels.json": "team-y/dashboard.json",
 		},
 		ExpectedDashboards: 1,
-		ExpectedFolders:    0, // top-level resource, no folders yet
+		ExpectedFolders:    1,
 	})
 
-	// Initially top-level: no parent folder.
+	// Initially in a top-level folder.
 	dash, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
 	require.NoError(t, err)
-	require.Empty(t, dash.GetAnnotations()[utils.AnnoKeyFolder], "dashboard should start at the top level")
+	require.NotEmpty(t, dash.GetAnnotations()[utils.AnnoKeyFolder], "dashboard should start in the subfolder")
+
+	// Move subdirectory -> root (reparent to the top level).
+	resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+		TargetPath:   "dashboard.json",
+		OriginalPath: "team-y/dashboard.json",
+		Message:      "move dashboard to the repository root",
+	})
+	_ = resp.Body.Close()
+	require.Equal(t, 200, resp.StatusCode, "move to root should succeed")
+
+	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard.json")
+	require.NoError(t, err, "file should exist at the repository root")
+	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "team-y", "dashboard.json")
+	require.Error(t, err, "file should no longer exist in the subdirectory")
+
+	// The dashboard is reparented to the top level and gains its own default ACL.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		moved, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		assert.Empty(collect, moved.GetAnnotations()[utils.AnnoKeyFolder],
+			"dashboard should be parented to the root after the move")
+		assert.Equal(collect, repo, moved.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be reparented to the root")
+
+	viewerDashboards := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Viewer,
+		GVR:  helper.DashboardsV1.Args.GVR,
+	})
+	_, err = viewerDashboards.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
+	require.NoError(t, err, "Viewer should be able to read a dashboard moved to the repository root")
 
 	// Move root -> subdirectory (reparent into a top-level folder).
-	resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+	resp = helper.PostFilesRequest(t, repo, common.FilesPostOptions{
 		TargetPath:   "team-y/dashboard.json",
 		OriginalPath: "dashboard.json",
 		Message:      "move dashboard into a subfolder",
@@ -405,39 +445,14 @@ func TestIntegrationProvisioning_FolderlessFileMove(t *testing.T) {
 	require.Equal(t, 200, resp.StatusCode, "move into subfolder should succeed")
 
 	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "team-y", "dashboard.json")
-	require.NoError(t, err, "file should exist at the new subdirectory path")
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard.json")
-	require.Error(t, err, "file should no longer exist at the repo root")
-
-	// The dashboard is reparented into the (now top-level) subfolder.
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		moved, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
-		if !assert.NoError(collect, err) {
-			return
-		}
-		assert.NotEmpty(collect, moved.GetAnnotations()[utils.AnnoKeyFolder],
-			"dashboard should be parented to the subfolder after the move")
-		assert.Equal(collect, repo, moved.GetAnnotations()[utils.AnnoKeyManagerIdentity])
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be reparented into the subfolder")
-
-	// Move subdirectory -> root (reparent back to the top level).
-	resp = helper.PostFilesRequest(t, repo, common.FilesPostOptions{
-		TargetPath:   "dashboard.json",
-		OriginalPath: "team-y/dashboard.json",
-		Message:      "move dashboard back to the top level",
-	})
-	_ = resp.Body.Close()
-	require.Equal(t, 200, resp.StatusCode, "move back to root should succeed")
-
-	_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard.json")
-	require.NoError(t, err, "file should exist back at the repo root")
+	require.NoError(t, err, "file should exist in the subdirectory")
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		back, err := helper.DashboardsV1.Resource.Get(ctx, allPanelsUID, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
-		assert.Empty(collect, back.GetAnnotations()[utils.AnnoKeyFolder],
-			"dashboard should be back at the top level after moving to root")
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should return to the top level")
+		assert.NotEmpty(collect, back.GetAnnotations()[utils.AnnoKeyFolder],
+			"dashboard should be parented to the subfolder after the move")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should return to the subfolder")
 }

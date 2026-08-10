@@ -299,10 +299,18 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return v, fmt.Errorf("name mismatch between existing and updated object")
 	}
 
+	// A resource moved to the root has no parent folder left to inherit access from, so it needs
+	// its own default ACL or it becomes invisible to everyone but admins. Only service identities
+	// (provisioning) may trigger this: a user could otherwise gain admin on somebody else's
+	// resource just by moving it to the root.
+	if !folder.IsRootFolderUID(previous.GetFolder()) && folder.IsRootFolderUID(obj.GetFolder()) && identity.IsServiceIdentity(ctx) {
+		v.grantPermissions = obj.GetAnnotation(utils.AnnoKeyGrantPermissions)
+	}
+
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
 	obj.SetResourceVersion("")                           // removed from saved JSON because the RV is not yet calculated
-	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // Grant is ignored for update requests
+	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // Grant is otherwise ignored for update requests
 
 	// Make sure the deprecated internalID does not change
 	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck
