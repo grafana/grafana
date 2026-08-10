@@ -10,25 +10,20 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 
 import type { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
+import { djb2Hash } from '../utils/djb2Hash';
 
 /** Returned when expectedRevision no longer matches the live scene. */
 export const REVISION_MISMATCH = 'REVISION_MISMATCH';
 
-/** FNV-1a, two 32-bit lanes → 64-bit hex token. */
-function hashString(value: string): string {
-  let low = 0x811c9dc5;
-  let high = 0x01000193;
-  for (let i = 0; i < value.length; i++) {
-    const code = value.charCodeAt(i);
-    low = Math.imul(low ^ code, 0x01000193);
-    high = Math.imul(high ^ code, 0x85ebca6b);
-  }
-  return (low >>> 0).toString(16).padStart(8, '0') + (high >>> 0).toString(16).padStart(8, '0');
-}
-
-/** Hash of a spec already produced by transformSceneToSaveModelSchemaV2. */
+/**
+ * Hash of a spec already produced by transformSceneToSaveModelSchemaV2.
+ *
+ * Length is part of the token so a djb2 collision only goes undetected if the
+ * two specs also serialize to the same number of characters.
+ */
 export function computeRevisionToken(spec: DashboardV2Spec): string {
-  return hashString(JSON.stringify(spec));
+  const json = JSON.stringify(spec);
+  return `${djb2Hash(json).toString(16)}-${json.length.toString(16)}`;
 }
 
 /** Hash of the live scene. Throws if the scene cannot serialize. */
