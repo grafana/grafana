@@ -63,7 +63,7 @@ function readEntrypoints(assets: Record<string, string>): Record<string, { asset
 
 describe('AssetsManifestPlugin', () => {
   it('emits the entrypoints shape the backend decodes', async () => {
-    const { outputFs } = await compile(createConfig([new AssetsManifestPlugin({ mode: 'prod' })]));
+    const { outputFs } = await compile(createConfig([new AssetsManifestPlugin()]));
     const entrypoints = readEntrypoints(readAssets(outputFs, OUTPUT_PATH));
 
     expect(entrypoints).toEqual({
@@ -72,7 +72,7 @@ describe('AssetsManifestPlugin', () => {
   });
 
   it('gives every entry a { src, integrity } value matching the emitted bytes', async () => {
-    const { outputFs } = await compile(createConfig([new AssetsManifestPlugin({ mode: 'prod' })]));
+    const { outputFs } = await compile(createConfig([new AssetsManifestPlugin()]));
     const assets = readAssets(outputFs, OUTPUT_PATH);
     const manifest = readManifest(assets);
 
@@ -86,14 +86,14 @@ describe('AssetsManifestPlugin', () => {
   });
 
   it('keys chunk assets by chunk name rather than output filename', async () => {
-    const { outputFs } = await compile(createConfig([new AssetsManifestPlugin({ mode: 'prod' })]));
+    const { outputFs } = await compile(createConfig([new AssetsManifestPlugin()]));
     const manifest = readManifest(readAssets(outputFs, OUTPUT_PATH));
 
     expect(Object.keys(manifest).sort()).toEqual(['main.css', 'main.js']);
   });
 
-  it('limits prod entries to entrypoint-reachable files', async () => {
-    const { outputFs } = await compile(createConfig([new AssetsManifestPlugin({ mode: 'prod' })]));
+  it('limits entries to entrypoint-reachable files', async () => {
+    const { outputFs } = await compile(createConfig([new AssetsManifestPlugin()]));
     const assets = readAssets(outputFs, OUTPUT_PATH);
     const manifest = readManifest(assets);
 
@@ -104,39 +104,8 @@ describe('AssetsManifestPlugin', () => {
     expect(Object.keys(manifest)).not.toContain('lazy.chunk.js');
   });
 
-  it('lists every emitted asset in dev mode', async () => {
-    const { outputFs } = await compile(createConfig([new AssetsManifestPlugin({ mode: 'dev' })]));
-    const manifest = readManifest(readAssets(outputFs, OUTPUT_PATH));
-    const srcs = Object.values(manifest).map((entry) => entry.src);
-
-    expect(srcs).toEqual(
-      expect.arrayContaining([
-        'public/build/main.js',
-        'public/build/main.css',
-        'public/build/image.png',
-        'public/build/lazy.chunk.js',
-      ])
-    );
-    expect(Object.keys(manifest)).not.toContain(MANIFEST_NAME);
-  });
-
-  it('hashes binary assets from their bytes, not a utf-8 round trip', async () => {
-    const { stats, outputFs } = await compile(createConfig([new AssetsManifestPlugin({ mode: 'dev' })]));
-
-    const raw = outputFs.readFileSync(path.join(OUTPUT_PATH, 'image.png'));
-    const bytes = typeof raw === 'string' ? Buffer.from(raw) : raw;
-    // Guard against the fixture degrading into something utf-8 safe, which would
-    // let a string-based implementation pass this test.
-    expect(bytes.toString('utf-8')).not.toBe(bytes.toString('latin1'));
-
-    const manifest = readManifest(readAssets(outputFs, OUTPUT_PATH));
-    const png = Object.values(manifest).find((entry) => entry.src.endsWith('image.png'));
-    expect(png?.integrity).toBe(expectedIntegrity(bytes));
-    expect(stats.hasErrors()).toBe(false);
-  });
-
   it('excludes sourcemaps from the entrypoint file lists', async () => {
-    const config = createConfig([new AssetsManifestPlugin({ mode: 'prod' })]);
+    const config = createConfig([new AssetsManifestPlugin()]);
     const { outputFs } = await compile({ ...config, devtool: 'source-map' });
     const assets = readAssets(outputFs, OUTPUT_PATH);
     const entrypoints = readEntrypoints(assets);

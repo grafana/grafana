@@ -7,18 +7,14 @@ import { createHash } from 'node:crypto';
 // { src, integrity } and `entrypoints.<name>.assets.{js,css}` lists the entry files in
 // order, prefixed with the public path.
 //
-// mode 'dev': every emitted asset gets a top-level entry (matches webpack.dev.ts, which
-// configures the manifest without a transform).
-// mode 'prod': top-level entries are filtered to files reachable from entrypoints
-// (matches manifestTransform in scripts/webpack/plugins/assetsManifest.ts).
+// Only entrypoint-reachable files get an entry. readWebAssets resolves integrity for the
+// files listed under `entrypoints` and never reads anything else, so a broader manifest
+// is dead weight. webpack emits every asset in dev only because webpack.dev.ts omits the
+// transform that webpack.prod.ts applies — an omission rather than a decision.
 
 const MANIFEST_NAME = 'assets-manifest.json';
 const INTEGRITY_HASHES = ['sha384', 'sha512'] as const;
 const PLUGIN_NAME = 'AssetsManifestPlugin';
-
-export interface AssetsManifestPluginOptions {
-  mode: 'dev' | 'prod';
-}
 
 interface ManifestEntry {
   src: string;
@@ -30,12 +26,6 @@ function isHotUpdate(file: string): boolean {
 }
 
 export default class AssetsManifestPlugin {
-  options: AssetsManifestPluginOptions;
-
-  constructor(options: AssetsManifestPluginOptions) {
-    this.options = options;
-  }
-
   apply(compiler: Compiler): void {
     compiler.hooks.thisCompilation.tap(PLUGIN_NAME, (compilation: Compilation) => {
       compilation.hooks.processAssets.tap(
@@ -91,22 +81,13 @@ export default class AssetsManifestPlugin {
       }
     }
 
-    let files: string[];
-    if (this.options.mode === 'prod') {
-      const entryFiles = new Set<string>();
-      for (const entrypoint of compilation.entrypoints.values()) {
-        for (const file of entrypoint.getFiles()) {
-          if (!file.endsWith('.map') && !isHotUpdate(file)) {
-            entryFiles.add(file);
-          }
+    const files = new Set<string>();
+    for (const entrypoint of compilation.entrypoints.values()) {
+      for (const file of entrypoint.getFiles()) {
+        if (!file.endsWith('.map') && !isHotUpdate(file)) {
+          files.add(file);
         }
       }
-      files = [...entryFiles];
-    } else {
-      files = compilation
-        .getAssets()
-        .map((asset) => asset.name)
-        .filter((name) => name !== MANIFEST_NAME && !isHotUpdate(name));
     }
 
     const entries: Record<string, ManifestEntry> = {};
