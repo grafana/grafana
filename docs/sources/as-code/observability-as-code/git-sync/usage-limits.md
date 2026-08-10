@@ -124,10 +124,6 @@ As the number of resources grows, add `shard-2`, `shard-3`, and later shards, an
 
 If sharding isn't practical for your setup, try raising the per-connection resource limit modestly, for example from 1,000 to a limit in the 1,200 - 1,500 range. This is a small adjustment for a bit of extra headroom, not an order-of-magnitude increase. Still, do not go beyond 1,500 resources per connection because of the performance impact on Grafana. For substantially larger scales, sharding remains the recommended approach.
 
-### Nested folders
-
-Git Sync supports up to four nested folders within a repository.
-
 ## Git Sync across multiple organizations
 
 Git Sync works across multiple organizations for self-managed Grafana instances. You can set up Git Sync independently in each of your organizations, and what you sync in one organization does not affect another. Teams that share a single Grafana instance across separate organizations can each manage their own provisioning from Git.
@@ -188,6 +184,10 @@ A resource can be:
 | ---------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | **Supported**    | The resource can be managed with Git Sync.                                 | The resource is supported but has compatibility issues. It **cannot** be managed with Git Sync. |
 | **Unsupported**  | The resource is **not** supported and **cannot** be managed with Git Sync. | Not applicable.                                                                                 |
+
+### Nested folders
+
+Git Sync supports up to four nested folders within a repository.
 
 ## Known limitations
 
