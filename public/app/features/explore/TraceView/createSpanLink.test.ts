@@ -8,7 +8,7 @@ import {
   type DataFrame,
 } from '@grafana/data';
 import { type TraceToLogsOptionsV2, type TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
-import { type DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import { type DataSourceSrv, getDataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { LinkSrv, setLinkSrv } from '../../panel/panellinks/link_srv';
@@ -493,6 +493,7 @@ describe('createSpanLinkFactory', () => {
           datasourceUid: 'prom1Uid',
           queries: [{ query: 'customQuery' }],
         },
+        metricsDataSourceSettings: getDataSourceSrv().getInstanceSettings('prom1Uid'),
         trace: dummyTraceData,
         dataFrame: dummyDataFrame,
       });
@@ -516,6 +517,7 @@ describe('createSpanLinkFactory', () => {
         traceToMetricsOptions: {
           datasourceUid: 'prom1',
         } as TraceToMetricsOptions,
+        metricsDataSourceSettings: getDataSourceSrv().getInstanceSettings('prom1'),
         trace: dummyTraceData,
         dataFrame: dummyDataFrame,
       });
@@ -538,6 +540,7 @@ describe('createSpanLinkFactory', () => {
             { query: 'no_name_here' },
           ],
         },
+        metricsDataSourceSettings: getDataSourceSrv().getInstanceSettings('prom1Uid'),
         trace: dummyTraceData,
         dataFrame: dummyDataFrame,
       });
@@ -588,6 +591,7 @@ describe('createSpanLinkFactory', () => {
           spanStartTimeShift: '-1h',
           spanEndTimeShift: '1h',
         },
+        metricsDataSourceSettings: getDataSourceSrv().getInstanceSettings('prom1Uid'),
         trace: dummyTraceData,
         dataFrame: dummyDataFrame,
       });
@@ -617,6 +621,7 @@ describe('createSpanLinkFactory', () => {
           { key: 'k8s.pod', value: 'pod' },
         ],
       },
+      metricsDataSourceSettings: getDataSourceSrv().getInstanceSettings('prom1Uid'),
       trace: dummyTraceData,
       dataFrame: dummyDataFrame,
     });
@@ -1656,6 +1661,7 @@ function setupSpanLinkFactory(
   dummyDataFrameForProfiles?: DataFrame
 ) {
   const splitOpenFn = jest.fn();
+  const dsSrv = getDataSourceSrv();
   return createSpanLinkFactory({
     splitOpenFn,
     traceToLogsOptions: {
@@ -1675,6 +1681,8 @@ function setupSpanLinkFactory(
     },
     trace: dummyTraceData,
     dataFrame: dummyDataFrameForProfiles ? dummyDataFrameForProfiles : dummyDataFrame,
+    logsDataSourceSettings: datasourceUid ? dsSrv.getInstanceSettings(datasourceUid) : undefined,
+    profilesDataSourceSettings: dsSrv.getInstanceSettings('pyroscopeUid'),
   });
 }
 

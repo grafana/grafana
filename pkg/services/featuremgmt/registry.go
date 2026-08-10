@@ -3097,6 +3097,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "grafana.ofrepRootUrl",
+			Description:  "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "assistant.dashboardPlanning",
 			Description: "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
 			Stage:       FeatureStageExperimental,
@@ -3172,6 +3181,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:        "grafana.rspackBuild",
+			Description: "Switches the backend to load frontend assets built with rspack instead of webpack",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+			Generate:    Generate{Go: true},
+			Expression:  "false",
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
