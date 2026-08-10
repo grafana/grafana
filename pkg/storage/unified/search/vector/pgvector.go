@@ -285,6 +285,10 @@ func (b *pgvectorBackend) upsertAll(ctx context.Context, tx db.Tx, vectors []Vec
 			return fmt.Errorf("vector[%d]: %w", i, err)
 		}
 		vectors[i].Title = truncateRunes(vectors[i].Title, maxTitleLen)
+		// Floor unset versions to the baseline so an explicit 0 can't undercut DEFAULT 1.
+		if vectors[i].ContentVersion < 1 {
+			vectors[i].ContentVersion = 1
+		}
 		req := &sqlVectorCollectionUpsertRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Resource:    vectors[i].Resource,
@@ -513,6 +517,47 @@ func (b *pgvectorBackend) Exists(ctx context.Context, namespace, model, resource
 	return len(rows) > 0, nil
 }
 
+func (b *pgvectorBackend) ContentVersion(ctx context.Context, namespace, model, resource, uid string) (int, bool, error) {
+	if err := b.validateResource(ctx, resource); err != nil {
+		return 0, false, err
+	}
+	req := &sqlVectorCollectionContentVersionRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Resource:    resource,
+		Namespace:   namespace,
+		Model:       model,
+		UID:         uid,
+		Response:    &sqlVectorCollectionContentVersionResponse{},
+	}
+	row, err := dbutil.QueryRow(ctx, b.db, sqlVectorCollectionContentVersion, req)
+	if err != nil {
+		return 0, false, err
+	}
+	if !row.MinVersion.Valid {
+		return 0, false, nil
+	}
+	return int(row.MinVersion.Int64), true, nil
+}
+
+func (b *pgvectorBackend) UpdateContentVersion(ctx context.Context, namespace, model, resource, uid string, version int) error {
+	if model == "" {
+		return fmt.Errorf("model must not be empty")
+	}
+	if err := b.validateResource(ctx, resource); err != nil {
+		return err
+	}
+	req := &sqlVectorCollectionUpdateVersionRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Resource:    resource,
+		Namespace:   namespace,
+		Model:       model,
+		UID:         uid,
+		Version:     version,
+	}
+	_, err := dbutil.Exec(ctx, b.db, sqlVectorCollectionUpdateVersion, req)
+	return err
+}
+
 func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource string,
 	embedding []float32, limit int, filters ...SearchFilter) (results []VectorSearchResult, retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.Search")
@@ -697,17 +742,42 @@ func (b *pgvectorBackend) resourcePartitionReady(ctx context.Context, leaf, idx 
 	return ready, nil
 }
 
-func (b *pgvectorBackend) CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64) error {
+func (b *pgvectorBackend) CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64, contentVersion int) error {
+	// Floor unset versions to the baseline so an explicit 0 can't undercut DEFAULT 1.
+	if contentVersion < 1 {
+		contentVersion = 1
+	}
 	req := &sqlVectorBackfillJobsCreateRequest{
-		SQLTemplate: sqltemplate.New(b.dialect),
-		Model:       model,
-		Resource:    resource,
-		StoppingRV:  stoppingRV,
+		SQLTemplate:    sqltemplate.New(b.dialect),
+		Model:          model,
+		Resource:       resource,
+		StoppingRV:     stoppingRV,
+		ContentVersion: contentVersion,
 	}
 	if _, err := dbutil.Exec(ctx, b.db, sqlVectorBackfillJobsCreate, req); err != nil {
 		return fmt.Errorf("create backfill job (%s,%s): %w", model, resource, err)
 	}
 	return nil
+}
+
+// ReopenStaleBackfillJobs resets the cursor: a mid-flight bump makes already-scanned rows stale too.
+func (b *pgvectorBackend) ReopenStaleBackfillJobs(ctx context.Context, model, resource string, version int, stoppingRV int64) (bool, error) {
+	req := &sqlVectorBackfillJobsReopenRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Model:       model,
+		Resource:    resource,
+		Version:     version,
+		StoppingRV:  stoppingRV,
+	}
+	res, err := dbutil.Exec(ctx, b.db, sqlVectorBackfillJobsReopen, req)
+	if err != nil {
+		return false, fmt.Errorf("reopen stale backfill jobs (%s,%s): %w", model, resource, err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("reopen stale backfill jobs (%s,%s) rows affected: %w", model, resource, err)
+	}
+	return n > 0, nil
 }
 
 func (b *pgvectorBackend) UpdateBackfillJobCheckpoint(ctx context.Context, id int64, lastSeenKey string, lastErr string) error {

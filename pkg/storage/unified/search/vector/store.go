@@ -75,10 +75,14 @@ type VectorBackend interface {
 	// authz folder but not content.
 	GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (content map[string]string, folder string, err error)
 
-	// Exists returns true if any row exists for the (namespace, model,
-	// resource, uid). Cheap indexed lookup; backfill uses it to skip
-	// resources that already have embeddings.
+	// Exists reports whether any row exists for the uid. Unused in production since ContentVersion replaced it; kept for tooling/tests.
 	Exists(ctx context.Context, namespace, model, resource, uid string) (bool, error)
+
+	// ContentVersion returns MIN(content_version) across the uid's rows (a partially-updated uid counts as its oldest row); exists=false when no rows.
+	ContentVersion(ctx context.Context, namespace, model, resource, uid string) (version int, exists bool, err error)
+
+	// UpdateContentVersion stamps every row of the uid so version-stale scans stop revisiting content a version bump didn't change.
+	UpdateContentVersion(ctx context.Context, namespace, model, resource, uid string, version int) error
 
 	// GetLatestRV is the reconciler checkpoint. 0 if never advanced.
 	GetLatestRV(ctx context.Context) (int64, error)
@@ -103,9 +107,11 @@ type VectorBackend interface {
 	// EnsureResourcePartition creates the embeddings_<resource> partition leaf (idempotent).
 	EnsureResourcePartition(ctx context.Context, resource string) error
 
-	// CreateBackfillJob creates a backfill job for (model, resource, stoppingRV).
-	// No-op if a job already exists for (model, resource).
-	CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64) error
+	// CreateBackfillJob creates a job stamped with the builder's contentVersion; no-op if one exists for (model, resource).
+	CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64, contentVersion int) error
+
+	// ReopenStaleBackfillJobs reopens (cursor reset) the resource-specific and ''-catch-all jobs whose content_version trails version.
+	ReopenStaleBackfillJobs(ctx context.Context, model, resource string, version int, stoppingRV int64) (reopened bool, err error)
 
 	// UpdateBackfillJobCheckpoint writes the cursor + optional error after
 	// each processed resource. Best-effort — race with another writer is
@@ -170,6 +176,7 @@ type Vector struct {
 	Metadata        json.RawMessage
 	Embedding       []float32
 	Model           string
+	ContentVersion  int
 }
 
 // VectorMeta is a title/metadata-only rewrite of an existing row.
