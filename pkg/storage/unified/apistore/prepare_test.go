@@ -716,6 +716,79 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 	})
 }
 
+// audienceAuthInfo overrides the audience, which StaticRequester derives from the org ID and
+// therefore cannot express. Multi-tenant provisioning is identified this way rather than by UID.
+type audienceAuthInfo struct {
+	*identity.StaticRequester
+	uid      string
+	audience []string
+}
+
+func (a audienceAuthInfo) GetUID() string        { return a.uid }
+func (a audienceAuthInfo) GetAudience() []string { return a.audience }
+
+func TestPrepareObjectForUpdateGrantPermissions(t *testing.T) {
+	_ = dashv1.AddToScheme(rtscheme)
+	node, err := snowflake.NewNode(rand.Int64N(1024))
+	require.NoError(t, err)
+
+	provisioningCtx, _, err := identity.WithProvisioningIdentity(context.Background(), "default")
+	require.NoError(t, err)
+	userCtx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+	)
+	multiTenantCtx := authlib.WithAuthInfo(context.Background(), audienceAuthInfo{
+		StaticRequester: &identity.StaticRequester{},
+		uid:             "access-policy:some-tenant-policy",
+		audience:        []string{"org:1", "provisioning.grafana.app"},
+	})
+
+	tests := []struct {
+		name      string
+		ctx       context.Context
+		oldFolder string
+		newFolder string
+		expected  string
+	}{
+		{"provisioning move to root grants", provisioningCtx, "folder-a", "", utils.AnnoGrantPermissionsDefault},
+		{"multi-tenant provisioning move to root grants", multiTenantCtx, "folder-a", "", utils.AnnoGrantPermissionsDefault},
+		{"user move to root does not grant", userCtx, "folder-a", "", ""},
+		{"provisioning move between root aliases does not grant", provisioningCtx, folder.GeneralFolderUID, "", ""},
+		{"provisioning move into a folder does not grant", provisioningCtx, "", "folder-a", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := &Storage{
+				gr:        dashv1.DashboardResourceInfo.GroupResource(),
+				codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+				snowflake: node,
+				opts: StorageOptions{
+					Scheme:              rtscheme,
+					EnableFolderSupport: true,
+				},
+			}
+
+			oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}}
+			oldMeta, err := utils.MetaAccessor(oldDash)
+			require.NoError(t, err)
+			oldMeta.SetFolder(tt.oldFolder)
+
+			newDash := oldDash.DeepCopy()
+			newMeta, err := utils.MetaAccessor(newDash)
+			require.NoError(t, err)
+			newMeta.SetFolder(tt.newFolder)
+			newMeta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+
+			stored, err := s.prepareObjectForUpdate(tt.ctx, newDash, oldDash)
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, stored.grantPermissions)
+			require.Empty(t, newMeta.GetAnnotation(utils.AnnoKeyGrantPermissions),
+				"annotation must never be persisted")
+		})
+	}
+}
+
 func TestVerifyFolder(t *testing.T) {
 	_ = dashv1.AddToScheme(rtscheme)
 
