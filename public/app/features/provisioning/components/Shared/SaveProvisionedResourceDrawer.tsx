@@ -29,7 +29,12 @@ import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../u
 import { type ResourceBranchAction } from '../../utils/redirect';
 import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
-import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow, shouldEnforceBranchTemplate } from '../defaults';
+import {
+  getCanPushToConfiguredBranch,
+  getDefaultRef,
+  getDefaultWorkflow,
+  shouldEnforceBranchTemplate,
+} from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { slugifyForFilename } from '../utils/path';
 
