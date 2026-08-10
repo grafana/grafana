@@ -255,9 +255,12 @@ function generateMarkdown(mainCoverage, prCoverage) {
     failureDetails = generateFailureDetailsSection(decreasedFiles, artifactUrl, prSha, repo);
   }
 
-  const toleranceNote = tolerated
-    ? `\n_Drops of ${formatPercentage(DROP_TOLERANCE_PCT)} or less are tolerated and do not fail the check._\n`
-    : '';
+  // Only explain the tolerance when it is what let the check pass. On a failure the
+  // note would contradict the result and draw attention away from the real regression.
+  const toleranceNote =
+    overallPass && tolerated
+      ? `\n_Drops of ${formatPercentage(DROP_TOLERANCE_PCT)} or less are tolerated and do not fail the check._\n`
+      : '';
 
   return `## Test Coverage Checks ${overallStatus} for \`${teamName}\`
 

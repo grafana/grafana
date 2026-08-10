@@ -78,6 +78,18 @@ describe('compare-coverage-by-codeowner', () => {
       expect(markdown).not.toContain('are tolerated');
     });
 
+    it('omits the tolerance note when another metric failed', () => {
+      const markdown = generateMarkdown(
+        coverage({ branches: 64.58, lines: 79.94 }),
+        coverage({ branches: 64.57, lines: 79.4 })
+      );
+
+      expect(markdown).toContain('## Test Coverage Checks ❌ Failed');
+      expect(markdown).toContain('| Branches | 64.58% | 64.57% | -0.01% | 🟡 Within tolerance |');
+      expect(markdown).toContain('| Lines | 79.94% | 79.40% | -0.54% | ❌ Fail |');
+      expect(markdown).not.toContain('are tolerated');
+    });
+
     it('reports unchanged coverage as passing', () => {
       const markdown = generateMarkdown(coverage(), coverage());
 
