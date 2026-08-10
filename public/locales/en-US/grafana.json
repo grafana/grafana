@@ -12805,6 +12805,11 @@
       "target-label": "Target notebook",
       "title-label": "Notebook name"
     },
+    "add-from-explore": {
+      "origin": "From Explore ({{datasource}})",
+      "panel-title": "Explore query",
+      "source": "Explore"
+    },
     "add-from-panel": {
       "origin": "From dashboard: {{title}}",
       "unnamed-dashboard": "this dashboard"
