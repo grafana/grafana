@@ -40,9 +40,12 @@ var (
 	sqlVectorNamespaceDeletePromoted     = mustTemplate("vector_namespace_delete_promoted.sql")
 	sqlVectorCollectionGetContent        = mustTemplate("vector_collection_get_content.sql")
 	sqlVectorCollectionExists            = mustTemplate("vector_collection_exists.sql")
+	sqlVectorCollectionContentVersion    = mustTemplate("vector_collection_content_version.sql")
+	sqlVectorCollectionUpdateVersion     = mustTemplate("vector_collection_update_version.sql")
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
 	sqlVectorBackfillJobsList            = mustTemplate("vector_backfill_jobs_list.sql")
 	sqlVectorBackfillJobsCreate          = mustTemplate("vector_backfill_jobs_create.sql")
+	sqlVectorBackfillJobsReopen          = mustTemplate("vector_backfill_jobs_reopen.sql")
 	sqlVectorBackfillJobsUpdate          = mustTemplate("vector_backfill_jobs_update.sql")
 	sqlVectorBackfillJobsSetError        = mustTemplate("vector_backfill_jobs_set_error.sql")
 	sqlVectorBackfillJobsComplete        = mustTemplate("vector_backfill_jobs_complete.sql")
@@ -205,6 +208,51 @@ func (r *sqlVectorCollectionExistsRequest) Results() (*sqlVectorCollectionExists
 	return &cp, nil
 }
 
+// MinVersion is NULL (Valid=false) when the uid has no rows: MIN() over zero rows still returns one row.
+type sqlVectorCollectionContentVersionResponse struct {
+	MinVersion sql.NullInt64
+}
+
+type sqlVectorCollectionContentVersionRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	UID       string
+	Response  *sqlVectorCollectionContentVersionResponse
+}
+
+func (r *sqlVectorCollectionContentVersionRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	return nil
+}
+
+func (r *sqlVectorCollectionContentVersionRequest) Results() (*sqlVectorCollectionContentVersionResponse, error) {
+	cp := *r.Response
+	return &cp, nil
+}
+
+type sqlVectorCollectionUpdateVersionRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	UID       string
+	Version   int
+}
+
+func (r *sqlVectorCollectionUpdateVersionRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	if r.Version < 1 {
+		return fmt.Errorf("version must be at least 1")
+	}
+	return nil
+}
+
 type sqlVectorBackfillJobsListResponse struct {
 	ID          int64
 	Model       string
@@ -269,9 +317,10 @@ func (r *sqlVectorCatalogInsertRequest) Validate() error {
 
 type sqlVectorBackfillJobsCreateRequest struct {
 	sqltemplate.SQLTemplate
-	Model      string
-	Resource   string
-	StoppingRV int64
+	Model          string
+	Resource       string
+	StoppingRV     int64
+	ContentVersion int
 }
 
 func (r *sqlVectorBackfillJobsCreateRequest) Validate() error {
@@ -280,6 +329,34 @@ func (r *sqlVectorBackfillJobsCreateRequest) Validate() error {
 	}
 	if r.Resource == "" {
 		return fmt.Errorf("missing resource")
+	}
+	if r.StoppingRV <= 0 {
+		return fmt.Errorf("stopping_rv must be positive")
+	}
+	if r.ContentVersion < 1 {
+		return fmt.Errorf("content_version must be at least 1")
+	}
+	return nil
+}
+
+// Reopens jobs whose content_version trails Version; the IN clause also matches the ”-catch-all job.
+type sqlVectorBackfillJobsReopenRequest struct {
+	sqltemplate.SQLTemplate
+	Model      string
+	Resource   string
+	Version    int
+	StoppingRV int64
+}
+
+func (r *sqlVectorBackfillJobsReopenRequest) Validate() error {
+	if r.Model == "" {
+		return fmt.Errorf("missing model")
+	}
+	if r.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	if r.Version < 1 {
+		return fmt.Errorf("version must be at least 1")
 	}
 	if r.StoppingRV <= 0 {
 		return fmt.Errorf("stopping_rv must be positive")

@@ -174,6 +174,22 @@ func TestReconciler_HappyPath_PerDashboardEmbed(t *testing.T) {
 	assert.Equal(t, int64(200), vec.latestRV)
 }
 
+func TestReconciler_HappyPath_StampsBuilderVersion(t *testing.T) {
+	// Upserted vectors carry the builder's content-format version, not
+	// whatever the RV or an arbitrary literal happens to be.
+	vec := newFakeVector()
+	s, _ := newReconciler(t, &fakeStorage{}, vec)
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1)
+	require.NotEmpty(t, vec.upserts[0])
+	for _, v := range vec.upserts[0] {
+		assert.Equal(t, dashboard.New().Version(), v.ContentVersion)
+	}
+}
+
 func TestReconciler_MultiPanelDashboard_SingleEmbedCall(t *testing.T) {
 	// All panels of one dashboard go through BatchEmbedder.Embed in
 	// a single call (provider-side chunking handles panel count).
@@ -341,6 +357,44 @@ func TestReconciler_PartialReembed_FolderMoveReembeds(t *testing.T) {
 	require.Len(t, vec.upserts, 2, "folder move re-embeds despite unchanged content")
 	assert.Equal(t, "folder-b", vec.upserts[1][0].Folder, "stored folder refreshed to the new folder")
 	assert.Equal(t, 2, text.calls)
+}
+
+// TestReconciler_FolderTitle_PrefixesBreadcrumb covers the wiring: the
+// reconciler resolves the folder title via storage and passes it to Extract,
+// which prefixes the breadcrumb.
+func TestReconciler_FolderTitle_PrefixesBreadcrumb(t *testing.T) {
+	vec := newFakeVector()
+	storage := &fakeStorage{}
+	storage.setFolderTitle("ns", "folder-a", "Production")
+	s, _ := newReconciler(t, storage, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, dashboardInFolder("dash-1", "Dash", "folder-a")))
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1)
+	require.NotEmpty(t, vec.upserts[0])
+	assert.Contains(t, vec.upserts[0][0].Content, "Production → Dash")
+}
+
+// TestReconciler_FolderTitleResolveError_BlocksAdvance covers the retry
+// contract: a folder-title storage error is treated like any other
+// per-event failure — it blocks the cursor and re-queues the event, rather
+// than being swallowed.
+func TestReconciler_FolderTitleResolveError_BlocksAdvance(t *testing.T) {
+	vec := newFakeVector()
+	storage := &fakeStorage{readErr: errBoom}
+	s, text := newReconciler(t, storage, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, dashboardInFolder("dash-1", "Dash", "folder-a")))
+	s.processPending(context.Background())
+
+	assert.Empty(t, vec.upserts)
+	assert.Equal(t, 0, text.calls, "resolver error must short-circuit before embedding")
+
+	s.pendingMu.Lock()
+	_, hasPending := s.pending[pendingKey(dashGroup, dashRes, "ns", "dash-1")]
+	s.pendingMu.Unlock()
+	assert.True(t, hasPending, "resolver error re-queues the event for retry")
 }
 
 // A panel removed with no other change must delete the stale row without
@@ -1305,6 +1359,7 @@ func TestReconciler_EnsureResourceInitialized_UsesEventRV(t *testing.T) {
 	assert.Equal(t, dashRes, vec.backfillJobs[0].Resource)
 	assert.Equal(t, testModel, vec.backfillJobs[0].Model)
 	assert.Equal(t, snowflakeRV(777), vec.backfillJobs[0].StoppingRV)
+	assert.Equal(t, b.Version(), vec.backfillJobs[0].ContentVersion, "job is stamped with the builder's content version")
 
 	// Second event for the same resource: no-op (no new partition or job).
 	require.NoError(t, s.ensureResourceInitialized(context.Background(), b, snowflakeRV(999)))

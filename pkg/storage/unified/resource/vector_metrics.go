@@ -11,6 +11,7 @@ import (
 type VectorMetrics struct {
 	SearchDuration               *prometheus.HistogramVec
 	EmbedDuration                *prometheus.HistogramVec
+	EmbedTokensTotal             *prometheus.CounterVec
 	RerankDuration               *prometheus.HistogramVec
 	RerankCandidatesTotal        *prometheus.CounterVec
 	RerankDroppedResultsTotal    *prometheus.CounterVec
@@ -51,6 +52,10 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"model", "task", "status"}),
+		EmbedTokensTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_embed_tokens_total",
+			Help: "Total input tokens sent to the embedding provider, as reported by the provider. Multiply by the model's per-token price for spend.",
+		}, []string{"model", "task"}),
 		RerankDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "vector_storage_rerank_duration_seconds",
 			Help:                            "Time (in seconds) spent in a single rerank Scorer call to the provider (Vertex/Bedrock), labeled by model and status (ok|error|timeout).",
