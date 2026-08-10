@@ -1,8 +1,7 @@
-import { type Locator } from '@playwright/test';
-
 import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { Canvas, Panels, Rows, Sidebar, Tabs } from './page-objects';
+import { expectVisibleRow, expectVisibleTab } from './utils';
 
 test.use({
   featureToggles: {
@@ -27,24 +26,6 @@ async function addPanelFromSidebar(sidebar: Sidebar, clickAddButton = true) {
       await sidebar.toolbar.clickButton('Add');
     }
     await sidebar.addOptions.clickNewPanelButton();
-  });
-}
-
-async function expectVisibleTab(tabTitle: string, tabs: Tabs): Promise<Locator> {
-  return test.step(`Expect tab "${tabTitle}" to be visible`, async () => {
-    await expect(tabs.getTitle(tabTitle)).toBeVisible();
-    const tabContent = tabs.getContent(tabTitle);
-    await expect(tabContent).toBeVisible();
-    return tabContent;
-  });
-}
-
-async function expectVisibleRow(rowTitle: string, rows: Rows): Promise<Locator> {
-  return test.step(`Expect row "${rowTitle}" to be visible`, async () => {
-    await expect(rows.getTitle(rowTitle)).toBeVisible();
-    const rowContent = rows.getContent(rowTitle);
-    await expect(rowContent).toBeVisible();
-    return rowContent;
   });
 }
 

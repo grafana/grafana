@@ -6,17 +6,17 @@ import { PageObject } from '../../PageObject';
 // element's grid between auto and custom layout, and edits the auto grid
 // sizing options (min column width, max columns, row height, fill screen)
 export class GridLayoutOptions extends PageObject {
-  getLayoutType(layoutType: 'Auto' | 'Custom'): Locator {
+  getLayoutType(layoutType: 'Auto' | 'Custom' | 'Rows' | 'Tabs'): Locator {
     return this.dashboardPage
       .getByGrafanaSelector(this.selectors.components.Sidebar.container)
       .getByTestId(this.selectors.components.OptionsGroup.group('layout'))
       .getByLabel(`layout-selection-option-${layoutType}`);
   }
 
-  async switchLayout(layoutType: 'Auto' | 'Custom', { confirm = false }: { confirm?: boolean } = {}) {
+  async switchLayout(layoutType: 'Auto' | 'Custom' | 'Rows' | 'Tabs', { confirm = false }: { confirm?: boolean } = {}) {
     const stepTitle = confirm
-      ? `Switch layout to ${layoutType} grid (with confirmation)`
-      : `Switch layout to ${layoutType} grid`;
+      ? `Switch layout to "${layoutType}" (with confirmation)`
+      : `Switch layout to "${layoutType}"`;
 
     await test.step(stepTitle, async () => {
       await this.getLayoutType(layoutType).click();
