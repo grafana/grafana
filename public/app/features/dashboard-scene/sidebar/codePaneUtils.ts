@@ -50,7 +50,13 @@ export function validateDashboardResourceEnvelope(
   if (!spec) {
     return {
       success: false,
-      error: t('dashboard.schema-editor.missing-spec', 'Missing spec. Expected a valid dashboard spec.', { kind }),
+      error: t('dashboard.schema-editor.missing-spec', 'Missing spec. Expected a valid dashboard spec.'),
+    };
+  }
+  if (kind && kind !== 'Dashboard') {
+    return {
+      success: false,
+      error: t('dashboard.schema-editor.invalid-kind', "Invalid kind: {{kind}}. Expected 'Dashboard'.", { kind }),
     };
   }
   if (apiVersion && apiVersion !== expectedAPIVersion) {
