@@ -16,6 +16,7 @@ labels:
 menuTitle: Template variables
 title: Elasticsearch template variables
 weight: 400
+review_date: 2026-08-10
 ---
 
 # Elasticsearch template variables

@@ -15,6 +15,7 @@ labels:
 menuTitle: Annotations
 title: Elasticsearch annotations
 weight: 500
+review_date: 2026-08-10
 ---
 
 # Elasticsearch annotations

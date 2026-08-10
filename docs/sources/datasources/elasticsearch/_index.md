@@ -108,4 +108,4 @@ After you have configured the Elasticsearch data source, you can:
 ## Related data sources
 
 - [OpenSearch](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/) - For Amazon OpenSearch Service.
-- [Loki](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/) - Grafana's log aggregation system.
+- [Loki](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/) - The Grafana log aggregation system.

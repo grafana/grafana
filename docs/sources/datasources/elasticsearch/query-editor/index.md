@@ -89,12 +89,12 @@ Use the **+ sign** to the right to add multiple metrics to your query. Click on 
 - **Group by options** - Create multiple group by options when constructing your Elasticsearch query. Date histogram is the default option. The following options are available in the drop-down menu:
   - terms - refer to [Terms aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html).
   - filter - refer to [Filter aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-filter-aggregation.html).
-  - geo hash grid - refer to [Geohash grid aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html).
+  - `geo hash grid` - refer to the [`geohash_grid` aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html).
   - date histogram - for time series queries. Refer to [Date histogram aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-datehistogram-aggregation.html).
   - histogram - Depicts frequency distributions. Refer to [Histogram aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-histogram-aggregation.html).
   - nested (experimental) - Refer to [Nested aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-nested-aggregation.html).
 
-Each group by option will have a different subset of options to further narrow your query.
+Each group by option has a different subset of options to further narrow your query.
 
 The following options are specific to the **date histogram** bucket aggregation option.
 
@@ -108,7 +108,7 @@ The following options are specific to the **date histogram** bucket aggregation 
 Configure the following options for the **terms** bucket aggregation option:
 
 - **Order** - Sets the order of data. Options are `top` or `bottom.`
-- **Size** - Limits the number of documents, or size of the data set. You can set a custom number or `no limit`.
+- **Size** - Limits the number of documents, or size of the dataset. You can set a custom number or `no limit`.
 - **Min doc count** - The minimum amount of data to include in your query. The default is `0`.
 - **Order by** - Order terms by `term value`, `doc count` or `count`.
 - **Missing** - Defines how documents missing a value should be treated. Missing values are ignored by default, but they can be treated as if they had a value. Refer to [Missing value](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#_missing_value_5) in the Elasticsearch documentation for more information.
@@ -118,9 +118,9 @@ Configure the following options for the **filters** bucket aggregation option:
 - **Query** - Specify the query to create a bucket of documents (data). Examples are `hostname:"hostname1"`, `product:"widget5"`. Use the \* wildcard to match any number of characters.
 - **Label** - Add a label or name to the bucket.
 
-Configure the following options for the **geo hash grid** bucket aggregation option:
+Configure the following options for the **`geo hash grid`** bucket aggregation option:
 
-- **Precision** - Specifies the number of characters of the geo hash.
+- **Precision** - Specifies the number of characters of the `geo hash`.
 
 Configure the following options for the **histogram** bucket aggregation option:
 
@@ -129,7 +129,7 @@ Configure the following options for the **histogram** bucket aggregation option:
 
 The **nested** group by option is currently experimental, you can select a field and then settings specific to that field.
 
-Click the **+ sign** to add multiple group by options. The data will grouped in order (first by, then by).
+Click the **+ sign** to add multiple group by options. The data is grouped in order (first by, then by).
 
 {{< figure src="/static/img/docs/elasticsearch/group-by-then-by-10.2.png" max-width="850px" class="docs-image--no-shadow" caption="Group by options" >}}
 
@@ -164,7 +164,7 @@ When in Code mode, you can write complete Elasticsearch query DSL in JSON format
 - **Syntax highlighting** for JSON
 - **Auto-formatting** - Click the **Format** button or press `Shift+Alt+F` to format your query
 - **Keyboard shortcuts** - Press `Ctrl+Enter` (or `Cmd+Enter` on Mac) to run the query
-- **Real-time validation** - Invalid JSON will be highlighted with error messages
+- **Real-time validation** - Invalid JSON is highlighted with error messages
 
 ### Time range handling
 
@@ -196,7 +196,7 @@ An example query applying dashboard time range using the `@timestamp` field:
 
 The raw query editor supports all query types:
 
-- **Metrics queries** are used to query time series data with aggregations. The query parser will automatically extract bucket and metric aggregations from your DSL and use them for response processing.
+- **Metrics queries** are used to query time series data with aggregations. The query parser automatically extracts bucket and metric aggregations from your DSL and uses them for response processing.
 - **Logs queries** are used to query log data.
 
 ## ES|QL query editor
@@ -262,12 +262,10 @@ FROM logs-*
 
 #### PromQL metrics queries
 
-When you select the **Metrics** query type, ES|QL also accepts PromQL source commands. Grafana processes the response as time series frames, the same way it does for ES|QL `STATS` queries:
+When you select the **Metrics** query type, ES|QL also accepts the `PROMQL` source command. Grafana processes the response as time series frames, the same way it does for ES|QL `STATS` queries. `PROMQL` must be the first command in the query (leading comments are allowed):
 
 ```esql
-FROM metrics-*
-| WHERE service.name == "api-gateway"
-| PROMQL "rate(http_requests_total[5m])"
+PROMQL index=metrics-* step=1m avg(metrics.system.cpu.logical.count)
 ```
 
 ### Learn more about ES|QL

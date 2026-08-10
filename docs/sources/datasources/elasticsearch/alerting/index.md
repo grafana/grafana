@@ -15,6 +15,7 @@ labels:
 menuTitle: Alerting
 title: Elasticsearch alerting
 weight: 550
+review_date: 2026-08-10
 ---
 
 # Elasticsearch alerting
@@ -44,12 +45,11 @@ Queries that return time series data allow Grafana to evaluate values over time 
 
 | Query type                     | Alerting support | Notes                                                       |
 | ------------------------------ | ---------------- | ----------------------------------------------------------- |
-| Metrics with Date histogram    | ✅ Full support  | Recommended for alerting                                    |
-| Metrics without Date histogram | ⚠️ Limited       | May not evaluate correctly over time                        |
-| Logs                           | ❌ Not supported | Use metrics queries instead                                 |
-| Raw data                       | ❌ Not supported | Use metrics queries instead                                 |
-| Raw document (deprecated)      | ❌ Not supported | Deprecated since Grafana v10.1. Use metrics queries instead |
-
+| Metrics with Date histogram    | Supported        | Recommended for alerting                                    |
+| Metrics without Date histogram | Limited          | May not evaluate correctly over time                        |
+| Logs                           | Not supported    | Use metrics queries instead                                 |
+| Raw data                       | Not supported    | Use metrics queries instead                                 |
+| Raw document (deprecated)      | Not supported    | Deprecated since Grafana v10.1. Use metrics queries instead |
 ## Create an alert rule
 
 To create an alert rule using Elasticsearch:

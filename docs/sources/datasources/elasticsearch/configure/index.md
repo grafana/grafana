@@ -23,7 +23,7 @@ review_date: 2026-08-10
 Grafana ships with the Elasticsearch data source preinstalled. You can create a variety of queries to visualize logs or metrics stored in Elasticsearch, and annotate graphs with log events stored in Elasticsearch. For details about updating the standalone plugin, refer to [Plugin updates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/elasticsearch/#plugin-updates).
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/).
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
 ## Before you begin
 
@@ -56,7 +56,7 @@ To add the Elasticsearch data source, complete the following steps:
 1. Click **Elasticsearch** under the **Data source** section.
 1. Click **Add new data source** in the upper right.
 
-You will be taken to the **Settings** tab where you will set up your Elasticsearch configuration.
+You are taken to the **Settings** tab where you set up your Elasticsearch configuration.
 
 ## Configuration options
 
@@ -98,11 +98,11 @@ For information about creating API keys, refer to the [Elasticsearch API keys do
 
 Amazon OpenSearch Service is the successor to Amazon Elasticsearch Service. For Amazon OpenSearch Service, use the [OpenSearch data source](https://grafana.com/docs/plugins/grafana-opensearch-datasource/latest/) instead of this Elasticsearch data source.
 
-If you still connect Grafana's Elasticsearch data source to a domain that requires AWS Signature Version 4 (AWS SigV4), for example a legacy Amazon Elasticsearch Service domain or another SigV4-protected OpenSearch-compatible endpoint, you must sign all requests with SigV4.
+If you still connect the Grafana Elasticsearch data source to a domain that requires AWS Signature Version 4 (AWS SigV4), for example a legacy Amazon Elasticsearch Service domain or another SigV4-protected OpenSearch-compatible endpoint, you must sign all requests with SigV4.
 
 For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
 
-To sign requests, enable SigV4 in Grafana's [configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled). After SigV4 is enabled, configure it on the Elasticsearch data source configuration page. For more information about AWS authentication options, refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
+To sign requests, enable SigV4 in the Grafana [configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled). After SigV4 is enabled, configure it on the Elasticsearch data source configuration page. For more information about AWS authentication options, refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
 
 {{< figure src="/static/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS-hosted Elasticsearch-compatible domains" >}}
 
@@ -196,13 +196,13 @@ Configure which fields the data source uses for log messages and log levels.
 
 ### Data links
 
-Data links create a link from a specified field that can be accessed in Explore's logs view. You can add multiple data links by clicking **+ Add**.
+Data links create a link from a specified field that can be accessed in the Explore logs view. You can add multiple data links by clicking **+ Add**.
 
 Each data link configuration consists of:
 
 - **Field** - Sets the name of the field used by the data link.
 
-- **URL/query** - Sets the full link URL if the link is external. If the link is internal, this input serves as a query for the target data source.<br/>In both cases, you can interpolate the value from the field with the `${__value.raw }` macro.
+- **URL/query** - Sets the full link URL if the link is external. If the link is internal, this input serves as a query for the target data source. In both cases, you can interpolate the value from the field with the `${__value.raw }` macro.
 
 - **URL Label** (Optional) - Sets a custom display label for the link. The link label defaults to the full external URL or name of the linked internal data source and is overridden by this setting.
 
@@ -216,13 +216,13 @@ If you use PDC with SigV4 (AWS Signature Version 4 Authentication), the PDC agen
 
 - **Private data source connect** - Click in the box to set the default PDC connection from the drop-down menu or create a new connection.
 
-Once you have configured your Elasticsearch data source options, click **Save & test** to test the connection. A successful connection displays the following message:
+After you have configured your Elasticsearch data source options, click **Save & test** to test the connection. A successful connection displays the following message:
 
 `Elasticsearch data source is healthy.`
 
 ## Provision the data source
 
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
+You can define and configure the data source in YAML files as part of the Grafana provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
 
 {{< admonition type="note" >}}
