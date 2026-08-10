@@ -65,6 +65,15 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      // Notebooks reuse dashboard RBAC actions, so dashboards:read is what gates the list page.
+      // The feature flag is enforced inside the page instead, since getAppRoutes cannot use hooks.
+      path: '/notebooks',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebooksListPage" */ '../features/notebook/pages/NotebooksListPage')
+      ),
+    },
+    {
       path: '/dashboard/assistant-preview/*',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
