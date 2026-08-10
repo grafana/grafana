@@ -107,15 +107,6 @@ export function initPluginMetas(): Promise<PluginMetasResponse | null> {
   return cachedPluginMetas().catch(() => null);
 }
 
-/**
- * Like {@link initPluginMetas} but without the null fallback: a failed fetch
- * rejects. Both share the same cache entry, so a successful fetch is only
- * made once either way.
- */
-export function fetchPluginMetas(): Promise<PluginMetasResponse> {
-  return cachedPluginMetas();
-}
-
 export function refetchPluginMetas(): Promise<PluginMetasResponse | null> {
   return cachedPluginMetas(true).catch(() => null);
 }
