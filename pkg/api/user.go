@@ -289,6 +289,9 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 		if errors.Is(err, user.ErrCaseInsensitive) {
 			return response.Error(http.StatusConflict, "Update would result in user login conflict", err)
 		}
+		if errors.Is(err, user.ErrUserAlreadyExists) {
+			return response.Error(http.StatusConflict, "Login or email is already in use", err)
+		}
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update user", err)
 	}
 

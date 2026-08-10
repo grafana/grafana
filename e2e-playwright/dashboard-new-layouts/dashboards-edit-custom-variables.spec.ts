@@ -2,7 +2,7 @@ import { type Locator } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { Controls, Panel, Sidebar } from './page-objects';
+import { Controls, Panels, Sidebar } from './page-objects';
 import { flows, type Variable } from './utils';
 
 test.use({
@@ -40,6 +40,7 @@ test.describe(
 
       const controls = new Controls({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
 
       const variable: Variable & { label: string } = {
         type: 'custom',
@@ -48,7 +49,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.custom.openEditor();
       await sidebar.variableOptions.custom.selectFormat('CSV');
@@ -67,9 +68,9 @@ test.describe(
       await expect(controls.variables.getDropdownTrigger(variable.label)).toContainText('first value');
 
       // Assert the variable values are correctly displayed in the panel
-      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-      await expect(panelContent).toBeVisible();
-      const markdownContent = panelContent.locator('.markdown-html');
+      const panelBody = panels.getBodies().first();
+      await expect(panelBody).toBeVisible();
+      const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText(`${variable.name}: first value`);
 
       await sidebar.clickDeleteButton({ confirm: true });
@@ -82,6 +83,7 @@ test.describe(
 
       const controls = new Controls({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
 
       const variable: Variable & { label: string } = {
         type: 'custom',
@@ -90,7 +92,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.custom.openEditor();
       await sidebar.variableOptions.custom.selectFormat('CSV');
@@ -123,9 +125,9 @@ test.describe(
       await expect(controls.variables.getDropdownTrigger(variable.label)).toContainText('first value updated');
 
       // Assert the variable values are correctly displayed in the panel
-      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-      await expect(panelContent).toBeVisible();
-      const markdownContent = panelContent.locator('.markdown-html');
+      const panelBody = panels.getBodies().first();
+      await expect(panelBody).toBeVisible();
+      const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText(`${variable.name}: first value updated`);
     });
 
@@ -140,6 +142,7 @@ test.describe(
 
       const controls = new Controls({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
 
       const variable: Variable & { label: string } = {
         type: 'custom',
@@ -148,7 +151,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
       const options = [
         { value: 'dev', text: 'Development', aws: 'us-east-1' },
@@ -176,15 +179,14 @@ test.describe(
       await expect(variableLabel).toContainText(variable.label);
 
       // The first option is selected by default; the panels interpolate its value and text
-      const panelContents = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
-      await expect(panelContents.first().locator('.markdown-html')).toContainText(`${variable.name}: dev`);
-      await expect(panelContents.nth(1).locator('.markdown-html')).toContainText(`${variable.name}Text: Development`);
+      const panelBodies = panels.getBodies();
+      await expect(panelBodies.first().locator('.markdown-html')).toContainText(`${variable.name}: dev`);
+      await expect(panelBodies.nth(1).locator('.markdown-html')).toContainText(`${variable.name}Text: Development`);
 
       // Retitle the first panel to verify the aws property can be interpolated via ${var.property}
-      const panel = new Panel({ page, dashboardPage, selectors, components });
-      await panel.selectByTitle('Panel Title');
+      await panels.selectByTitle('Panel Title');
       await sidebar.panelOptions.setTitle(`Panel Title - aws: \${${variable.name}.aws}`);
-      await expect(panel.getHeaderByTitle(`Panel Title - aws: ${options[0].aws}`)).toBeVisible();
+      await expect(panels.getHeader(`Panel Title - aws: ${options[0].aws}`)).toBeVisible();
     });
   }
 );

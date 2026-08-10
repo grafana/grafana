@@ -65,7 +65,7 @@ func ProvideService(cfg *setting.Cfg,
 			continue
 		}
 
-		conn, err := createOAuthConnector(ssoSetting.Provider, info, cfg, orgRoleMapper, ssoSettings, features, cache)
+		conn, err := NewOAuthConnector(ssoSetting.Provider, info, cfg, orgRoleMapper, ssoSettings, features, cache)
 		if err != nil {
 			ss.log.Error("Failed to create OAuth provider", "error", err, "provider", ssoSetting.Provider)
 			continue
@@ -102,6 +102,25 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	if !info.Enabled {
 		return nil, fmt.Errorf("oauth provider %q is not enabled", name)
 	}
+	client, err := NewOAuthHTTPClient(name, info)
+	if err != nil {
+		ss.log.Error("Failed to create OAuth HTTP client", "oauth", name, "error", err)
+		return nil, err
+	}
+	return client, nil
+}
+
+// NewOAuthHTTPClient builds the HTTP client for one immutable OAuth provider
+// snapshot. Callers that resolve provider settings per request can use this
+// without constructing or mutating a SocialService.
+func NewOAuthHTTPClient(name string, info *social.OAuthInfo) (*http.Client, error) {
+	name = strings.TrimPrefix(name, "oauth_")
+	if info == nil {
+		return nil, fmt.Errorf("oauth provider %q has no settings", name)
+	}
+	if !info.Enabled {
+		return nil, fmt.Errorf("oauth provider %q is not enabled", name)
+	}
 
 	timeout := 15 * time.Second
 	if info.TokenExchangeTimeout > 0 {
@@ -132,7 +151,6 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	if info.TlsClientCert != "" || info.TlsClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(info.TlsClientCert, info.TlsClientKey)
 		if err != nil {
-			ss.log.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
 			return nil, fmt.Errorf("failed to setup TlsClientCert: %w", err)
 		}
 
@@ -142,7 +160,6 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	if info.TlsClientCa != "" {
 		caCert, err := os.ReadFile(info.TlsClientCa)
 		if err != nil {
-			ss.log.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
 			return nil, fmt.Errorf("failed to setup TlsClientCa: %w", err)
 		}
 		caCertPool := x509.NewCertPool()
@@ -204,7 +221,9 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]any, err
 	return m, nil
 }
 
-func createOAuthConnector(name string, info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *connectors.OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) (social.SocialConnector, error) {
+// NewOAuthConnector builds one connector from a coherent provider-settings
+// snapshot. It does not register the connector in a shared SocialService.
+func NewOAuthConnector(name string, info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *connectors.OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) (social.SocialConnector, error) {
 	switch name {
 	case social.AzureADProviderName:
 		return connectors.NewAzureADProvider(info, cfg, orgRoleMapper, ssoSettings, features, cache), nil

@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { CustomVariable } from '@grafana/scenes';
 import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana/ui';
-import { dashboardEditActions } from 'app/features/dashboard-scene/edit-pane/shared';
+import { dashboardEditActions } from 'app/features/dashboard-scene/sidebar/shared';
 
 import { ValuesFormatSelector } from '../../components/CustomVariableForm';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
@@ -30,7 +30,7 @@ export function ModalEditor(props: ModalEditorProps) {
 
   return (
     <Modal
-      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom options')}
+      title={t('dashboard.sidebar.variable.custom-options.modal-title', 'Custom options')}
       isOpen={true}
       onDismiss={onCloseModal}
       closeOnBackdropClick={false}
@@ -68,7 +68,7 @@ export function ModalEditor(props: ModalEditorProps) {
           onClick={onCloseModal}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton}
         >
-          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.discard">Discard</Trans>
+          <Trans i18nKey="dashboard.sidebar.variable.custom-options.discard">Discard</Trans>
         </Button>
         <Button
           variant="primary"
@@ -76,7 +76,7 @@ export function ModalEditor(props: ModalEditorProps) {
           disabled={Boolean(queryValidationError)}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton}
         >
-          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.apply">Apply</Trans>
+          <Trans i18nKey="dashboard.sidebar.variable.custom-options.apply">Apply</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>
@@ -84,7 +84,7 @@ export function ModalEditor(props: ModalEditorProps) {
 }
 
 function useDraftVariable(variable: CustomVariable) {
-  const draftVariableRef = useRef<CustomVariable>(undefined);
+  const draftVariableRef = useRef<CustomVariable | undefined>(undefined);
   if (!draftVariableRef.current) {
     draftVariableRef.current = new CustomVariable(variable.state);
   }

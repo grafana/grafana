@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -268,7 +270,7 @@ func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 	require.Len(t, results, 1)
 	assert.Equal(t, "panel/1", results[0].Subresource)
 
-	err = backend.Delete(ctx, "integration-test", testModel, testResource, "dash")
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash"}})
 	require.NoError(t, err)
 }
 
@@ -368,7 +370,7 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 	err := backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash-a", []Vector{
 		mk("dash-a", "panel/1", "a-1 updated"),
 		mk("dash-a", "panel/4", "a-4 new"),
-	}, []string{"panel/1", "panel/4"})
+	}, nil, []string{"panel/1", "panel/4"})
 	require.NoError(t, err)
 
 	stored, folder, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-a")
@@ -387,8 +389,10 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 		"panel/2": "b-2",
 	}, storedB, "neighbor UID is isolated from the replace")
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-a"))
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-b"))
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash-a"}})
+	require.NoError(t, err)
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash-b"}})
+	require.NoError(t, err)
 }
 
 // changed ⊊ desired: only `changed` rows are rewritten, panels in
@@ -415,6 +419,7 @@ func TestIntegrationVectorUpsertReplaceSubresources_PartialUpdate(t *testing.T) 
 			mk("dash", "panel/2", "p2 v2"), // changed
 			mk("dash", "panel/9", "p9"),    // new
 		},
+		nil,
 		[]string{"panel/1", "panel/2", "panel/3", "panel/9"},
 	))
 
@@ -427,7 +432,8 @@ func TestIntegrationVectorUpsertReplaceSubresources_PartialUpdate(t *testing.T) 
 		"panel/9": "p9",    // new
 	}, stored)
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash"}})
+	require.NoError(t, err)
 }
 
 // Empty `changed`: a panel is dropped from `desired` and deleted, with nothing to upsert.
@@ -449,13 +455,14 @@ func TestIntegrationVectorUpsertReplaceSubresources_DeleteOnlyNoChange(t *testin
 
 	// No changed vectors; desired drops panel/2.
 	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash",
-		nil, []string{"panel/1"}))
+		nil, nil, []string{"panel/1"}))
 
 	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"panel/1": "p1"}, stored)
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash"}})
+	require.NoError(t, err)
 }
 
 // TestIntegrationVectorUpsertReplaceSubresources_EmptyInput is the
@@ -469,13 +476,14 @@ func TestIntegrationVectorUpsertReplaceSubresources_EmptyInput(t *testing.T) {
 		Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
 	}}))
 
-	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash", nil, nil))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash", nil, nil, nil))
 
 	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"panel/1": "untouched"}, stored)
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash"}})
+	require.NoError(t, err)
 }
 
 // TestIntegrationVectorUpsertReplaceSubresources_AtomicOnValidationError
@@ -505,7 +513,7 @@ func TestIntegrationVectorUpsertReplaceSubresources_AtomicOnValidationError(t *t
 	err := backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash", []Vector{
 		mk("dash", "panel/1", "v2"),
 		bad,
-	}, []string{"panel/1", "panel/2"})
+	}, nil, []string{"panel/1", "panel/2"})
 	require.Error(t, err)
 
 	// State is unchanged: panel/1 still has v1 content, panel/2 still present.
@@ -514,7 +522,8 @@ func TestIntegrationVectorUpsertReplaceSubresources_AtomicOnValidationError(t *t
 	assert.Equal(t, map[string]string{"panel/1": "v1", "panel/2": "v1"}, stored,
 		"failed batch leaves no half-applied state")
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash"}})
+	require.NoError(t, err)
 }
 
 func TestIntegrationVectorExists(t *testing.T) {
@@ -752,7 +761,8 @@ func TestIntegrationVectorTimestamps(t *testing.T) {
 	require.Equal(t, created1, created2, "created_at must not change on re-embed")
 	require.True(t, updated2.After(updated1), "updated_at must advance on re-embed")
 
-	require.NoError(t, backend.Delete(ctx, v.Namespace, testModel, testResource, v.UID))
+	_, _, err := backend.DeleteRows(ctx, v.Namespace, testModel, testResource, DeleteSelector{UIDs: []string{v.UID}})
+	require.NoError(t, err)
 }
 
 func readEmbeddingTimestamps(t *testing.T, engine *xorm.Engine, namespace, model, uid, subresource string) (createdAt, updatedAt time.Time) {
@@ -803,4 +813,307 @@ func TestIntegrationVectorCollectionCatalog(t *testing.T) {
 	_, err = backend.Search(ctx, "ns", testModel, "not-provisioned", make([]float32, 3), 5)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported resource")
+}
+
+func TestIntegrationVectorMetadataOnlyRefresh(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	orig := Vector{
+		Namespace: "ns-meta", Resource: testResource, UID: "meta-uid",
+		Title: "Before", Subresource: "chunk/1", Content: "hello",
+		Metadata: json.RawMessage(`{"embeddedAt":1}`), Embedding: makeEmbedding(0.1, 0.1), Model: testModel,
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{orig}))
+	// (test lives in package vector, so Vector/VectorMeta are unqualified)
+
+	// metadataOnly rewrite: title+metadata change, embedding and content stay.
+	err := backend.UpsertReplaceSubresources(ctx, "ns-meta", testModel, testResource, "meta-uid",
+		nil,
+		[]VectorMeta{{Subresource: "chunk/1", Title: "After", Metadata: json.RawMessage(`{"embeddedAt":2}`)}},
+		[]string{"chunk/1"})
+	require.NoError(t, err)
+
+	content, _, err := backend.GetSubresourceContent(ctx, "ns-meta", testModel, testResource, "meta-uid")
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{"chunk/1": "hello"}, content, "content untouched")
+
+	// Row-level check: title/metadata updated, embedding unchanged.
+	rows, err := backend.Search(ctx, "ns-meta", testModel, testResource, makeEmbedding(0.1, 0.1), 5)
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	require.Equal(t, "After", rows[0].Title)
+	require.JSONEq(t, `{"embeddedAt":2}`, string(rows[0].Metadata))
+}
+
+func TestIntegrationVectorDeleteRows(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	mk := func(uid, sub string) Vector {
+		return Vector{
+			Namespace: "ns-del", Resource: testResource, UID: uid, Title: "T",
+			Subresource: sub, Content: "c", Embedding: makeEmbedding(0.2, 0.2), Model: testModel,
+		}
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("u1", ""), mk("u1", "chunk/1"), mk("u2", ""), mk("u3", ""),
+	}))
+
+	// UIDs selector: whole entities including subresources.
+	n, more, err := backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{UIDs: []string{"u1", "u2"}})
+	require.NoError(t, err)
+	require.False(t, more)
+	require.EqualValues(t, 3, n)
+
+	// All selector with tiny page to exercise hasMore.
+	require.NoError(t, backend.Upsert(ctx, []Vector{mk("u4", ""), mk("u5", "")}))
+	n, more, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{All: true, Limit: 2})
+	require.NoError(t, err)
+	require.EqualValues(t, 2, n)
+	require.True(t, more) // u3 remains
+	n, more, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{All: true, Limit: 2})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n)
+	require.False(t, more)
+
+	// Exact-boundary page: collection holds exactly `limit` rows, so the
+	// full page is also the last one — has_more must be false.
+	require.NoError(t, backend.Upsert(ctx, []Vector{mk("u6", ""), mk("u7", "")}))
+	n, more, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{All: true, Limit: 2})
+	require.NoError(t, err)
+	require.EqualValues(t, 2, n)
+	require.False(t, more)
+
+	// Selector validation.
+	_, _, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{})
+	require.Error(t, err)
+	_, _, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{UIDs: []string{"x"}, All: true})
+	require.Error(t, err)
+
+	// AllModels spans embedding models; model-scoped deletes leave other
+	// models' rows (orphans from a model change) behind.
+	oldModel := mk("u8", "")
+	oldModel.Model = "old-model"
+	require.NoError(t, backend.Upsert(ctx, []Vector{mk("u8", ""), oldModel}))
+	n, _, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{UIDs: []string{"u8"}})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n)
+	n, more, err = backend.DeleteRows(ctx, "ns-del", "", testResource, DeleteSelector{UIDs: []string{"u8"}, AllModels: true})
+	require.NoError(t, err)
+	require.False(t, more)
+	require.EqualValues(t, 1, n)
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{mk("u9", ""), func() Vector { v := mk("u9", ""); v.Model = "old-model"; return v }()}))
+	n, more, err = backend.DeleteRows(ctx, "ns-del", "", testResource, DeleteSelector{All: true, AllModels: true, Limit: 2})
+	require.NoError(t, err)
+	require.EqualValues(t, 2, n)
+	require.False(t, more)
+}
+
+func TestIntegrationEnsureCollection(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	t.Cleanup(func() {
+		_, _ = engine.DB().ExecContext(context.Background(),
+			`DELETE FROM embedding_collections WHERE group_name = 'prov.example.com'`)
+		_, _ = engine.DB().ExecContext(context.Background(), `DROP TABLE IF EXISTS embeddings_prov_things_external`)
+	})
+
+	// First call provisions: catalog row + partition + GIN index.
+	c, err := backend.EnsureCollection(ctx, "prov.example.com", "prov-things", true)
+	require.NoError(t, err)
+	require.Equal(t, "prov_things_external", c.PartitionKey)
+	require.True(t, c.IsExternal)
+
+	var ready bool
+	require.NoError(t, engine.DB().QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM pg_inherits i
+			JOIN pg_class c ON c.oid = i.inhrelid
+			JOIN pg_class p ON p.oid = i.inhparent
+			WHERE p.relname = 'embeddings' AND c.relname = 'embeddings_prov_things_external'
+		) AND EXISTS (
+			SELECT 1 FROM pg_class WHERE relname = 'embeddings_prov_things_external_metadata_idx' AND relkind = 'i'
+		)`).Scan(&ready))
+	require.True(t, ready, "partition leaf + GIN index exist")
+
+	// Idempotent.
+	c2, err := backend.EnsureCollection(ctx, "prov.example.com", "prov-things", true)
+	require.NoError(t, err)
+	require.Equal(t, c, c2)
+
+	// Writes to the new collection work end-to-end.
+	require.NoError(t, backend.Upsert(ctx, []Vector{{
+		Namespace: "ns-prov", Resource: c.PartitionKey, UID: "u1", Title: "T",
+		Content: "c", Embedding: makeEmbedding(0.3, 0.3), Model: testModel,
+	}}))
+
+	// Over-long resource names are rejected before any DB write.
+	_, err = backend.EnsureCollection(ctx, "prov.example.com", strings.Repeat("x", 60), true)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "too long")
+
+	// Concurrent provisioning converges on one row.
+	var wg sync.WaitGroup
+	errs := make([]error, 4)
+	for i := range errs {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			_, errs[i] = backend.EnsureCollection(ctx, "prov.example.com", "prov-race", true)
+		}(i)
+	}
+	wg.Wait()
+	for _, e := range errs {
+		require.NoError(t, e)
+	}
+	var n int
+	require.NoError(t, engine.DB().QueryRowContext(ctx,
+		`SELECT count(*) FROM embedding_collections WHERE group_name = 'prov.example.com' AND resource = 'prov-race'`).Scan(&n))
+	require.Equal(t, 1, n)
+	t.Cleanup(func() {
+		_, _ = engine.DB().ExecContext(context.Background(), `DROP TABLE IF EXISTS embeddings_prov_race_external`)
+	})
+}
+
+// TestIntegrationEnsureCollection_FoundPathEnsuresPartition pins the fix for
+// the wedged-collection bug: a catalog row can exist (e.g. the INSERT half of
+// a prior provision committed) while its partition DDL never ran (transient
+// failure, or a bounced replica racing the retry). Before the fix, the found
+// path returned early and the collection stayed permanently unwritable
+// ("no partition of relation embeddings found for row"). EnsureCollection
+// must create the missing leaf on every call, not just first provision.
+func TestIntegrationEnsureCollection_FoundPathEnsuresPartition(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	const group, resource, key = "prov.example.com", "prov-wedged", "prov_wedged_external"
+	leaf := "embeddings_" + key
+	t.Cleanup(func() {
+		_, _ = engine.DB().ExecContext(context.Background(),
+			`DELETE FROM embedding_collections WHERE group_name = $1`, group)
+		_, _ = engine.DB().ExecContext(context.Background(), fmt.Sprintf(`DROP TABLE IF EXISTS %s`, leaf))
+	})
+
+	// Simulate the wedge: catalog row present, partition never created.
+	_, err := engine.DB().ExecContext(ctx, `
+		INSERT INTO embedding_collections (group_name, resource, partition_key, is_external)
+		VALUES ($1, $2, $3, true)`, group, resource, key)
+	require.NoError(t, err)
+
+	var existsBefore bool
+	require.NoError(t, engine.DB().QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM pg_inherits i
+			JOIN pg_class c ON c.oid = i.inhrelid
+			JOIN pg_class p ON p.oid = i.inhparent
+			WHERE p.relname = 'embeddings' AND c.relname = $1
+		)`, leaf).Scan(&existsBefore))
+	require.False(t, existsBefore, "partition must not exist yet")
+
+	// The found path must still provision the partition leaf.
+	c, err := backend.EnsureCollection(ctx, group, resource, true)
+	require.NoError(t, err)
+	require.Equal(t, key, c.PartitionKey)
+
+	var existsAfter bool
+	require.NoError(t, engine.DB().QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM pg_inherits i
+			JOIN pg_class c ON c.oid = i.inhrelid
+			JOIN pg_class p ON p.oid = i.inhparent
+			WHERE p.relname = 'embeddings' AND c.relname = $1
+		)`, leaf).Scan(&existsAfter))
+	require.True(t, existsAfter, "found path must create the missing partition leaf")
+
+	// Collection is now actually writable, not permanently wedged.
+	require.NoError(t, backend.Upsert(ctx, []Vector{{
+		Namespace: "ns-wedged", Resource: c.PartitionKey, UID: "u1", Title: "T",
+		Content: "c", Embedding: makeEmbedding(0.4, 0.4), Model: testModel,
+	}}))
+}
+
+// TestIntegrationEnsureCollection_IsExternalMismatch guards against a
+// fat-fingered vector_allowed_external_collections entry: an operator who
+// accidentally lists an internal (group, resource) pair must not have
+// EnsureCollection silently hand back that internal collection for external
+// writes to land in.
+func TestIntegrationEnsureCollection_IsExternalMismatch(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	// The migration seeds dashboard.grafana.app/dashboards as internal
+	// (is_external=false). Calling EnsureCollection with isExternal=true
+	// must reject it rather than returning the internal collection.
+	_, err := backend.EnsureCollection(ctx, "dashboard.grafana.app", "dashboards", true)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "is internal, not writable through the external API")
+}
+
+func TestIntegrationWithEntityLock(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	var order []string
+	var mu sync.Mutex
+	record := func(s string) { mu.Lock(); order = append(order, s); mu.Unlock() }
+
+	firstInside := make(chan struct{})
+	release := make(chan struct{})
+	done := make(chan struct{})
+
+	go func() {
+		_ = backend.WithEntityLock(ctx, "ns-lock", testResource, "u-lock", func(context.Context) error {
+			record("first-in")
+			close(firstInside)
+			<-release
+			record("first-out")
+			return nil
+		})
+		close(done)
+	}()
+
+	<-firstInside
+	second := make(chan struct{})
+	go func() {
+		_ = backend.WithEntityLock(ctx, "ns-lock", testResource, "u-lock", func(context.Context) error {
+			record("second-in")
+			return nil
+		})
+		close(second)
+	}()
+
+	// Second must not enter while first holds the lock.
+	select {
+	case <-second:
+		t.Fatal("second acquired lock while first held it")
+	case <-time.After(300 * time.Millisecond):
+	}
+
+	close(release)
+	<-done
+	<-second
+	require.Equal(t, []string{"first-in", "first-out", "second-in"}, order)
+
+	// Different entity does not contend.
+	err := backend.WithEntityLock(ctx, "ns-lock", testResource, "other-uid", func(context.Context) error { return nil })
+	require.NoError(t, err)
+}
+
+func TestIntegrationEnsureCollection_PartitionKeyConflict(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	t.Cleanup(func() {
+		_, _ = engine.DB().ExecContext(context.Background(),
+			`DELETE FROM embedding_collections WHERE partition_key = 'clash_things_external'`)
+		_, _ = engine.DB().ExecContext(context.Background(), `DROP TABLE IF EXISTS embeddings_clash_things_external`)
+	})
+
+	_, err := backend.EnsureCollection(ctx, "one.example.com", "clash-things", true)
+	require.NoError(t, err)
+
+	// Sanitize collision within a group: clash_things derives the same key.
+	_, err = backend.EnsureCollection(ctx, "one.example.com", "clash_things", true)
+	require.ErrorContains(t, err, `partition key "clash_things_external" is already owned by one.example.com/clash-things`)
+
+	// Cross-group collision on the same resource name.
+	_, err = backend.EnsureCollection(ctx, "two.example.com", "clash-things", true)
+	require.ErrorContains(t, err, `already owned by one.example.com/clash-things`)
+
+	// The owning collection keeps working.
+	_, err = backend.EnsureCollection(ctx, "one.example.com", "clash-things", true)
+	require.NoError(t, err)
 }

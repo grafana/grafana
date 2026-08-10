@@ -86,6 +86,14 @@ func (f *fakeVectorBackend) ResolveCollection(_ context.Context, group, resource
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
+func (f *fakeVectorBackend) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+	key := resource
+	if isExternal {
+		key += "_external"
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}, nil
+}
+
 func (f *fakeVectorBackend) Search(_ context.Context, namespace, model, resource string,
 	embedding []float32, limit int, filters ...vector.SearchFilter,
 ) ([]vector.VectorSearchResult, error) {
@@ -100,11 +108,11 @@ func (f *fakeVectorBackend) Search(_ context.Context, namespace, model, resource
 
 // stub the rest of VectorBackend; not exercised by these tests.
 func (f *fakeVectorBackend) Upsert(context.Context, []vector.Vector) error { return nil }
-func (f *fakeVectorBackend) UpsertReplaceSubresources(context.Context, string, string, string, string, []vector.Vector, []string) error {
+func (f *fakeVectorBackend) UpsertReplaceSubresources(context.Context, string, string, string, string, []vector.Vector, []vector.VectorMeta, []string) error {
 	return nil
 }
-func (f *fakeVectorBackend) Delete(context.Context, string, string, string, string) error {
-	return nil
+func (f *fakeVectorBackend) DeleteRows(context.Context, string, string, string, vector.DeleteSelector) (int64, bool, error) {
+	return 0, false, nil
 }
 func (f *fakeVectorBackend) DeleteSubresources(context.Context, string, string, string, string, []string) error {
 	return nil
@@ -139,6 +147,9 @@ func (f *fakeVectorBackend) MarkBackfillJobError(context.Context, int64, string)
 func (f *fakeVectorBackend) CompleteBackfillJob(context.Context, int64) error { return nil }
 func (f *fakeVectorBackend) TryAcquireBackfillLock(context.Context) (func(), bool, error) {
 	return func() {}, true, nil
+}
+func (f *fakeVectorBackend) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
+	return fn(ctx)
 }
 
 // newTestSearchServer builds a searchServer with just the fields the

@@ -3,13 +3,13 @@ package v1beta1
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	commonapi "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -21,9 +21,6 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -74,9 +71,12 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 	// Secure values should not be returned (Create should be empty)
 	require.Empty(t, createdConn.Secure.PrivateKey.Create)
 
-	// Clean up
-	err = client.Resource.Delete(t.Context(), connection.Name, metav1.DeleteOptions{})
-	require.NoError(t, err)
+	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
+	// current RV, which the ConnectionController's async /status patches keep bumping.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		err := client.Resource.Delete(t.Context(), connection.Name, metav1.DeleteOptions{})
+		require.NoError(collect, err)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 }
 
 func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
@@ -85,9 +85,6 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -106,7 +103,7 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test GitLab Connection",
 			Type:  provisioning.GitlabConnectionType,
-			Gitlab: &provisioning.GitlabConnectionConfig{
+			OAuth: &provisioning.ConnectionOAuthConfig{
 				ClientID: "gitlab-client-123",
 			},
 		},
@@ -127,11 +124,14 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 	createdConn, err := common.FromUnstructured[provisioning.Connection](created)
 	require.NoError(t, err)
 	require.Equal(t, provisioning.GitlabConnectionType, createdConn.Spec.Type)
-	require.Equal(t, "gitlab-client-123", createdConn.Spec.Gitlab.ClientID)
+	require.Equal(t, "gitlab-client-123", createdConn.Spec.OAuth.ClientID)
 
-	// Clean up
-	err = client.Resource.Delete(t.Context(), connection.Name, metav1.DeleteOptions{})
-	require.NoError(t, err)
+	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
+	// current RV, which the ConnectionController's async /status patches keep bumping.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		err := client.Resource.Delete(t.Context(), connection.Name, metav1.DeleteOptions{})
+		require.NoError(collect, err)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 }
 
 func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
@@ -140,9 +140,6 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -161,7 +158,7 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Bitbucket Connection",
 			Type:  provisioning.BitbucketConnectionType,
-			Bitbucket: &provisioning.BitbucketConnectionConfig{
+			OAuth: &provisioning.ConnectionOAuthConfig{
 				ClientID: "bitbucket-client-456",
 			},
 		},
@@ -182,11 +179,14 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 	createdConn, err := common.FromUnstructured[provisioning.Connection](created)
 	require.NoError(t, err)
 	require.Equal(t, provisioning.BitbucketConnectionType, createdConn.Spec.Type)
-	require.Equal(t, "bitbucket-client-456", createdConn.Spec.Bitbucket.ClientID)
+	require.Equal(t, "bitbucket-client-456", createdConn.Spec.OAuth.ClientID)
 
-	// Clean up
-	err = client.Resource.Delete(t.Context(), connection.Name, metav1.DeleteOptions{})
-	require.NoError(t, err)
+	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
+	// current RV, which the ConnectionController's async /status patches keep bumping.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		err := client.Resource.Delete(t.Context(), connection.Name, metav1.DeleteOptions{})
+		require.NoError(collect, err)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 }
 
 func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
@@ -194,9 +194,6 @@ func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -245,9 +242,12 @@ func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
 	require.Equal(t, namespace, retrievedConn.Namespace)
 	require.Equal(t, provisioning.GithubConnectionType, retrievedConn.Spec.Type)
 
-	// Clean up
-	err = client.Resource.Delete(t.Context(), connection.Name, metav1.DeleteOptions{})
-	require.NoError(t, err)
+	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
+	// current RV, which the ConnectionController's async /status patches keep bumping.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		err := client.Resource.Delete(t.Context(), connection.Name, metav1.DeleteOptions{})
+		require.NoError(collect, err)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 }
 
 func TestIntegrationV1Beta1Connection_List(t *testing.T) {
@@ -255,9 +255,6 @@ func TestIntegrationV1Beta1Connection_List(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -311,9 +308,12 @@ func TestIntegrationV1Beta1Connection_List(t *testing.T) {
 	}
 	require.True(t, found, "Created connection should be in the list")
 
-	// Clean up
-	err = client.Resource.Delete(t.Context(), connection.Name, metav1.DeleteOptions{})
-	require.NoError(t, err)
+	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
+	// current RV, which the ConnectionController's async /status patches keep bumping.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		err := client.Resource.Delete(t.Context(), connection.Name, metav1.DeleteOptions{})
+		require.NoError(collect, err)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 }
 
 func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
@@ -321,9 +321,6 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -389,9 +386,12 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "999999", retrievedConn.Spec.GitHub.AppID)
 
-	// Clean up
-	err = client.Resource.Delete(t.Context(), connection.Name, metav1.DeleteOptions{})
-	require.NoError(t, err)
+	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
+	// current RV, which the ConnectionController's async /status patches keep bumping.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		err := client.Resource.Delete(t.Context(), connection.Name, metav1.DeleteOptions{})
+		require.NoError(collect, err)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 }
 
 func TestIntegrationV1Beta1Connection_Delete(t *testing.T) {
@@ -399,9 +399,6 @@ func TestIntegrationV1Beta1Connection_Delete(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -439,9 +436,12 @@ func TestIntegrationV1Beta1Connection_Delete(t *testing.T) {
 	_, err = client.Resource.Create(t.Context(), unstructuredObj, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	// Delete the connection
-	err = client.Resource.Delete(t.Context(), "test-delete-connection", metav1.DeleteOptions{})
-	require.NoError(t, err)
+	// Delete the connection. Retry on transient 409 conflicts: unified storage guards the delete with the
+	// object's current RV, which the ConnectionController's async /status patches keep bumping.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		err := client.Resource.Delete(t.Context(), "test-delete-connection", metav1.DeleteOptions{})
+		require.NoError(collect, err)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	// Verify it's deleted
 	_, err = client.Resource.Get(t.Context(), "test-delete-connection", metav1.GetOptions{})

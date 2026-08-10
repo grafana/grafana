@@ -2,6 +2,7 @@ import { render, type RenderResult, waitFor, within } from '@testing-library/rea
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType, escapeStringForRegex } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
@@ -287,7 +288,7 @@ describe('Browse list of plugins', () => {
         getCatalogPluginMock({ id: 'acesvg', name: 'ACE.SVG' }),
       ]);
 
-      const pluginList = await findByTestId('plugin-list');
+      const pluginList = await findByTestId(selectors.pages.PluginsList.list);
       const pluginHeadings = within(pluginList).queryAllByRole('heading');
       expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
         'ACE.SVG',
@@ -307,7 +308,7 @@ describe('Browse list of plugins', () => {
         getCatalogPluginMock({ id: 'acesvg', name: 'ACE.SVG' }),
       ]);
 
-      const pluginList = await findByTestId('plugin-list');
+      const pluginList = await findByTestId(selectors.pages.PluginsList.list);
       const pluginHeadings = within(pluginList).queryAllByRole('heading');
       expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
         'Zabbix',
@@ -327,7 +328,7 @@ describe('Browse list of plugins', () => {
         getCatalogPluginMock({ id: '5', name: 'ACE.SVG', updatedAt: '2021-02-01T00:00:00.000Z' }),
       ]);
 
-      const pluginList = await findByTestId('plugin-list');
+      const pluginList = await findByTestId(selectors.pages.PluginsList.list);
       const pluginHeadings = within(pluginList).queryAllByRole('heading');
       expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
         'Diagram',
@@ -347,7 +348,7 @@ describe('Browse list of plugins', () => {
         getCatalogPluginMock({ id: '5', name: 'ACE.SVG', publishedAt: '2021-02-01T00:00:00.000Z' }),
       ]);
 
-      const pluginList = await findByTestId('plugin-list');
+      const pluginList = await findByTestId(selectors.pages.PluginsList.list);
       const pluginHeadings = within(pluginList).queryAllByRole('heading');
       expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
         'Diagram',
@@ -367,7 +368,7 @@ describe('Browse list of plugins', () => {
         getCatalogPluginMock({ id: '5', name: 'ACE.SVG', downloads: 40 }),
       ]);
 
-      const pluginList = await findByTestId('plugin-list');
+      const pluginList = await findByTestId(selectors.pages.PluginsList.list);
       const pluginHeadings = within(pluginList).queryAllByRole('heading');
       expect(pluginHeadings.map((heading) => heading.innerHTML)).toStrictEqual([
         'Zabbix',

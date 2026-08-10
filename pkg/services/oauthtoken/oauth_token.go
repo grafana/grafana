@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -40,13 +41,13 @@ var (
 )
 
 type Service struct {
-	Cfg             *setting.Cfg
-	SocialService   social.Service
-	AuthInfoService login.AuthInfoService
-	sessionService  auth.UserTokenService
-	features        featuremgmt.FeatureToggles
-	serverLock      *serverlock.ServerLockService
-	tracer          tracing.Tracer
+	Cfg                     *setting.Cfg
+	AuthInfoService         login.AuthInfoService
+	sessionService          auth.UserTokenService
+	features                featuremgmt.FeatureToggles
+	serverLock              *serverlock.ServerLockService
+	tracer                  tracing.Tracer
+	refreshProviderResolver OAuthRefreshProviderResolver
 
 	tokenRefreshDuration *prometheus.HistogramVec
 }
@@ -60,6 +61,54 @@ type OAuthTokenService interface {
 	InvalidateOAuthTokens(context.Context, identity.Requester, *TokenRefreshMetadata) error
 }
 
+// OAuthRefreshProvider is an immutable snapshot of the provider dependencies
+// used by one token refresh attempt.
+type OAuthRefreshProvider struct {
+	UseRefreshToken bool
+	Connector       social.SocialConnector
+	HTTPClient      *http.Client
+}
+
+// OAuthRefreshProviderResolver resolves a coherent provider snapshot at the
+// point a refresh is required. Multi-tenant callers can resolve settings from
+// the request context; OSS uses the already-constructed social service.
+type OAuthRefreshProviderResolver interface {
+	ResolveOAuthRefreshProvider(context.Context, string) (*OAuthRefreshProvider, error)
+}
+
+type socialServiceOAuthRefreshProviderResolver struct {
+	socialService social.Service
+}
+
+func (r socialServiceOAuthRefreshProviderResolver) ResolveOAuthRefreshProvider(_ context.Context, provider string) (*OAuthRefreshProvider, error) {
+	if r.socialService == nil {
+		return nil, fmt.Errorf("resolve OAuth refresh provider %q: %w", provider, ErrNotAnOAuthProvider)
+	}
+
+	info := r.socialService.GetOAuthInfoProvider(provider)
+	if info == nil {
+		return nil, fmt.Errorf("resolve OAuth refresh provider %q: %w", provider, ErrNotAnOAuthProvider)
+	}
+
+	resolved := &OAuthRefreshProvider{UseRefreshToken: info.UseRefreshToken}
+	if !resolved.UseRefreshToken {
+		return resolved, nil
+	}
+
+	connector, err := r.socialService.GetConnector(provider)
+	if err != nil {
+		return nil, fmt.Errorf("get OAuth connector for %q: %w", provider, err)
+	}
+	client, err := r.socialService.GetOAuthHttpClient(provider)
+	if err != nil {
+		return nil, fmt.Errorf("get OAuth HTTP client for %q: %w", provider, err)
+	}
+
+	resolved.Connector = connector
+	resolved.HTTPClient = client
+	return resolved, nil
+}
+
 type TokenRefreshMetadata struct {
 	ExternalSessionID int64
 	AuthModule        string
@@ -69,15 +118,30 @@ type TokenRefreshMetadata struct {
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer,
 	serverLockService *serverlock.ServerLockService, tracer tracing.Tracer, sessionService auth.UserTokenService, features featuremgmt.FeatureToggles,
 ) *Service {
+	return ProvideServiceWithOAuthRefreshProviderResolver(
+		socialServiceOAuthRefreshProviderResolver{socialService: socialService},
+		authInfoService,
+		cfg,
+		registerer,
+		serverLockService,
+		tracer,
+		sessionService,
+		features,
+	)
+}
+
+func ProvideServiceWithOAuthRefreshProviderResolver(refreshProviderResolver OAuthRefreshProviderResolver, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer,
+	serverLockService *serverlock.ServerLockService, tracer tracing.Tracer, sessionService auth.UserTokenService, features featuremgmt.FeatureToggles,
+) *Service {
 	return &Service{
-		AuthInfoService:      authInfoService,
-		sessionService:       sessionService,
-		Cfg:                  cfg,
-		SocialService:        socialService,
-		features:             features,
-		serverLock:           serverLockService,
-		tokenRefreshDuration: newTokenRefreshDurationMetric(registerer),
-		tracer:               tracer,
+		AuthInfoService:         authInfoService,
+		sessionService:          sessionService,
+		Cfg:                     cfg,
+		features:                features,
+		serverLock:              serverLockService,
+		tokenRefreshDuration:    newTokenRefreshDurationMetric(registerer),
+		tracer:                  tracer,
+		refreshProviderResolver: refreshProviderResolver,
 	}
 }
 
@@ -268,17 +332,6 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 	}
 
 	provider := strings.TrimPrefix(tokenRefreshMetadata.AuthModule, "oauth_")
-	currentOAuthInfo := o.SocialService.GetOAuthInfoProvider(provider)
-	if currentOAuthInfo == nil {
-		ctxLogger.Warn("OAuth provider not found", "provider", provider)
-		return nil, nil
-	}
-
-	// if refresh token handling is disabled for this provider, we can skip the refresh
-	if !currentOAuthInfo.UseRefreshToken {
-		ctxLogger.Debug("Skipping token refresh", "provider", provider)
-		return nil, nil
-	}
 
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d", userID)
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -344,7 +397,29 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 			return
 		}
 
-		newToken, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, persistedToken, usr, tokenRefreshMetadata)
+		if o.refreshProviderResolver == nil {
+			cmdErr = fmt.Errorf("resolve OAuth refresh provider %q: resolver is nil", provider)
+			return
+		}
+		refreshProvider, err := o.refreshProviderResolver.ResolveOAuthRefreshProvider(ctx, provider)
+		if err != nil {
+			if errors.Is(err, ErrNotAnOAuthProvider) {
+				ctxLogger.Warn("OAuth provider not found", "provider", provider)
+				return
+			}
+			cmdErr = fmt.Errorf("resolve OAuth refresh provider %q: %w", provider, err)
+			return
+		}
+		if refreshProvider == nil {
+			cmdErr = fmt.Errorf("resolve OAuth refresh provider %q: empty provider", provider)
+			return
+		}
+		if !refreshProvider.UseRefreshToken {
+			ctxLogger.Debug("Skipping token refresh", "provider", provider)
+			return
+		}
+
+		newToken, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, persistedToken, usr, tokenRefreshMetadata, refreshProvider)
 	}, retryOpt)
 	if lockErr != nil {
 		ctxLogger.Error("Failed to obtain token refresh lock", "error", lockErr)
@@ -391,7 +466,7 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr identity.Reques
 	})
 }
 
-func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken *oauth2.Token, usr identity.Requester, tokenRefreshMetadata *TokenRefreshMetadata) (*oauth2.Token, error) {
+func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken *oauth2.Token, usr identity.Requester, tokenRefreshMetadata *TokenRefreshMetadata, refreshProvider *OAuthRefreshProvider) (*oauth2.Token, error) {
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.tryGetOrRefreshOAuthToken")
 	defer span.End()
 
@@ -419,24 +494,23 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 		return persistedToken, nil
 	}
 
-	connect, err := o.SocialService.GetConnector(tokenRefreshMetadata.AuthModule)
-	if err != nil {
+	if refreshProvider.Connector == nil {
+		err := fmt.Errorf("OAuth refresh provider %q has no connector", tokenRefreshMetadata.AuthModule)
 		ctxLogger.Error("Failed to get oauth connector", "provider", tokenRefreshMetadata.AuthModule, "error", err)
-		span.SetStatus(codes.Error, "Failed to get oauth connector: "+err.Error())
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
-
-	client, err := o.SocialService.GetOAuthHttpClient(tokenRefreshMetadata.AuthModule)
-	if err != nil {
+	if refreshProvider.HTTPClient == nil {
+		err := fmt.Errorf("OAuth refresh provider %q has no HTTP client", tokenRefreshMetadata.AuthModule)
 		ctxLogger.Error("Failed to get oauth http client", "provider", tokenRefreshMetadata.AuthModule, "error", err)
-		span.SetStatus(codes.Error, "Failed to get oauth http client")
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
-	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, refreshProvider.HTTPClient)
 
 	start := time.Now()
 	// TokenSource handles refreshing the token if it has expired
-	token, refreshErr := connect.TokenSource(ctx, persistedToken).Token()
+	token, refreshErr := refreshProvider.Connector.TokenSource(ctx, persistedToken).Token()
 	duration := time.Since(start)
 	o.tokenRefreshDuration.WithLabelValues(tokenRefreshMetadata.AuthModule, tokenRefreshSuccessLabel(refreshErr)).Observe(duration.Seconds())
 

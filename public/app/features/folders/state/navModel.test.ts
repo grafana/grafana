@@ -1,15 +1,19 @@
 import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO } from 'app/types/folders';
 
-import { buildNavModel, getAlertingTabID } from './navModel';
+import { buildNavModel, getAlertingTabID, getVariablesTabID } from './navModel';
+
+const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'grafana.dashboardGlobalVariables';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     unifiedAlertingEnabled: true,
+    featureToggles: {},
   },
 }));
 
@@ -41,6 +45,11 @@ describe('buildNavModel', () => {
     jest.clearAllMocks();
     (contextSrv.hasPermission as jest.Mock).mockReturnValue(true);
     config.unifiedAlertingEnabled = true;
+    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: false });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
   });
 
   describe('Alerts tab visibility', () => {
@@ -90,6 +99,39 @@ describe('buildNavModel', () => {
       expect(alertingTab).toBeDefined();
       expect(alertingTab?.icon).toBe('bell');
       expect(alertingTab?.url).toBe(`${mockFolder.url}/alerting`);
+    });
+  });
+
+  describe('Variables tab visibility', () => {
+    it('should hide Variables tab when grafana.dashboardGlobalVariables is off', () => {
+      const navModel = buildNavModel(mockFolder);
+      const variablesTab = navModel.children?.find((child) => child.id === getVariablesTabID(mockFolder.uid));
+
+      expect(variablesTab).toBeUndefined();
+    });
+
+    it('should show Variables tab when grafana.dashboardGlobalVariables is on', () => {
+      setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
+
+      const navModel = buildNavModel(mockFolder);
+      const variablesTab = navModel.children?.find((child) => child.id === getVariablesTabID(mockFolder.uid));
+
+      expect(variablesTab).toBeDefined();
+      expect(variablesTab?.icon).toBe('brackets-curly');
+      expect(variablesTab?.url).toBe(`${mockFolder.url}/variables`);
+    });
+
+    it('should hide Variables tab for Git-synced folders even when the toggle is on', () => {
+      setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
+      const gitSyncedFolder: FolderDTO = {
+        ...mockFolder,
+        managedBy: ManagerKind.Repo,
+      };
+
+      const navModel = buildNavModel(gitSyncedFolder);
+      const variablesTab = navModel.children?.find((child) => child.id === getVariablesTabID(mockFolder.uid));
+
+      expect(variablesTab).toBeUndefined();
     });
   });
 });

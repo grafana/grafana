@@ -1,82 +1,45 @@
 import { createTheme } from '../themes/createTheme';
-import { FieldType } from '../types/dataFrame';
+import { type FieldDTO, FieldType } from '../types/dataFrame';
 import { type TimeRange } from '../types/time';
 
 import { createDataFrame, toDataFrame } from './processDataFrame';
 import { anySeriesWithTimeField, addRow, alignTimeRangeCompareData, shouldAlignTimeCompare } from './utils';
 
 describe('anySeriesWithTimeField', () => {
-  describe('single frame', () => {
-    test('without time field', () => {
-      const frameA = toDataFrame({
-        fields: [
-          { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
-          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
-        ],
-      });
-      expect(anySeriesWithTimeField([frameA])).toBeFalsy();
-    });
+  const TIME_FIELD: FieldDTO<number> = { name: 'time', type: FieldType.time, values: [100, 200, 300] };
+  const STRING_FIELD: FieldDTO<string> = { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] };
+  const NUMBER_FIELD: FieldDTO<number> = { name: 'value', type: FieldType.number, values: [1, 2, 3] };
+  // A field can be *named* time while being typed as something else; only the type counts.
+  const TIME_NAMED_NUMBER_FIELD: FieldDTO<number> = { name: 'time', type: FieldType.number, values: [1, 2, 3] };
 
-    test('with time field', () => {
-      const frameA = toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [100, 200, 300] },
-          { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
-          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
-        ],
-      });
-      expect(anySeriesWithTimeField([frameA])).toBeTruthy();
-    });
-  });
+  const frameOf = (...fields: Array<FieldDTO<string | number>>) => toDataFrame({ fields });
+  const withTime = () => frameOf(TIME_FIELD, STRING_FIELD, NUMBER_FIELD);
+  const withoutTime = () => frameOf(STRING_FIELD, NUMBER_FIELD);
 
-  describe('multiple frames', () => {
-    test('without time field', () => {
-      const frameA = toDataFrame({
-        fields: [
-          { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
-          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
-        ],
-      });
-      const frameB = toDataFrame({
-        fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
-      });
-      expect(anySeriesWithTimeField([frameA, frameB])).toBeFalsy();
-    });
-
-    test('with time field in any frame', () => {
-      const frameA = toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [100, 200, 300] },
-          { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
-          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
-        ],
-      });
-      const frameB = toDataFrame({
-        fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
-      });
-      const frameC = toDataFrame({
-        fields: [{ name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] }],
-      });
-
-      expect(anySeriesWithTimeField([frameA, frameB, frameC])).toBeTruthy();
-    });
-
-    test('with time field in a all frames', () => {
-      const frameA = toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [100, 200, 300] },
-          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
-        ],
-      });
-      const frameB = toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [100, 200, 300] },
-          { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
-          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
-        ],
-      });
-      expect(anySeriesWithTimeField([frameA, frameB])).toBeTruthy();
-    });
+  it.each([
+    { desc: 'an empty list of frames', frames: [], expected: false },
+    { desc: 'a single frame with no time field', frames: [withoutTime()], expected: false },
+    { desc: 'a single frame with a time field', frames: [withTime()], expected: true },
+    { desc: 'several frames, none with a time field', frames: [withoutTime(), withoutTime()], expected: false },
+    {
+      desc: 'the time field in the first of several frames',
+      frames: [withTime(), withoutTime(), withoutTime()],
+      expected: true,
+    },
+    {
+      // The loop must keep scanning past frames that have no time field, so put the only time
+      // field last - a check that inspected just the first frame would still pass otherwise.
+      desc: 'the time field only in the last of several frames',
+      frames: [withoutTime(), withoutTime(), withTime()],
+      expected: true,
+    },
+    {
+      desc: 'a frame whose only time-named field is typed as a number',
+      frames: [frameOf(TIME_NAMED_NUMBER_FIELD, STRING_FIELD)],
+      expected: false,
+    },
+  ])('returns $expected for $desc', ({ frames, expected }) => {
+    expect(anySeriesWithTimeField(frames)).toBe(expected);
   });
 });
 
@@ -220,6 +183,77 @@ describe('alignTimeRangeCompareData', () => {
     expect(second.fields[0].values).toEqual(first.fields[0].values);
     expect(second.fields[0].config).toEqual(first.fields[0].config);
     expect(second.fields).toHaveLength(2);
+  });
+
+  // #126189 acceptance criteria — "compare is dashed, current is solid".
+  // The compare frame is the only one passed through alignTimeRangeCompareData; the current-period frame
+  // never gets a lineStyle, so leaving the current frame's config untouched is what keeps it solid.
+  // Assert on the returned frame — alignTimeRangeCompareData is non-mutating (#128796).
+  describe('dashed styling for comparison series (#126189)', () => {
+    const DASH_LINE_STYLE = { fill: 'dash', dash: [1, 5, 4, 5] };
+
+    it.each([FieldType.number, FieldType.boolean, FieldType.enum])(
+      'applies the dashed lineStyle to %s value fields',
+      (fieldType) => {
+        const frame = toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000] },
+            { name: 'value', type: fieldType, values: [10, 20] },
+          ],
+        });
+
+        const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+        expect(result.fields[1].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+      }
+    );
+
+    it('does not add a lineStyle to the time field', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'value', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+      expect(result.fields[0].config.custom?.lineStyle).toBeUndefined();
+    });
+
+    it('does not add a lineStyle to string fields', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'label', type: FieldType.string, values: ['a', 'b'] },
+          { name: 'value', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+      expect(result.fields[1].config.custom?.lineStyle).toBeUndefined();
+      expect(result.fields[2].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+    });
+
+    it('preserves an existing lineStyle-adjacent custom config while adding the dash', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20],
+            config: { custom: { lineWidth: 2 } },
+          },
+        ],
+      });
+
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+      expect(result.fields[1].config.custom?.lineWidth).toBe(2);
+      expect(result.fields[1].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+    });
   });
 });
 

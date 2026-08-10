@@ -3,12 +3,14 @@ package oauthtoken
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
 	claims "github.com/grafana/authlib/types"
@@ -25,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -78,6 +81,91 @@ type environment struct {
 	service *Service
 }
 
+type recordingOAuthRefreshProviderResolver struct {
+	provider     *OAuthRefreshProvider
+	err          error
+	calls        int
+	lastProvider string
+}
+
+func (r *recordingOAuthRefreshProviderResolver) ResolveOAuthRefreshProvider(_ context.Context, provider string) (*OAuthRefreshProvider, error) {
+	r.calls++
+	r.lastProvider = provider
+	return r.provider, r.err
+}
+
+func TestIntegration_OAuthRefreshProviderResolver(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	newService := func(t *testing.T, resolver OAuthRefreshProviderResolver, authInfoService login.AuthInfoService, sessionService auth.UserTokenService) *Service {
+		t.Helper()
+		store := db.InitTestDB(t)
+		return ProvideServiceWithOAuthRefreshProviderResolver(
+			resolver,
+			authInfoService,
+			setting.NewCfg(),
+			prometheus.NewRegistry(),
+			serverlock.ProvideService(legacysql.NewDatabaseProvider(store), tracing.InitializeTracerForTest()),
+			tracing.InitializeTracerForTest(),
+			sessionService,
+			featuremgmt.WithFeatures(),
+		)
+	}
+
+	usr := &authn.Identity{AuthenticatedBy: login.GenericOAuthModule, ID: "1234", Type: claims.TypeUser}
+	metadata := &TokenRefreshMetadata{AuthModule: login.GenericOAuthModule}
+
+	t.Run("does not resolve a provider when the token re-read under the lock is current", func(t *testing.T) {
+		authInfoService := authinfotest.NewMockAuthInfoService(t)
+		authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+			AuthModule:        login.GenericOAuthModule,
+			OAuthAccessToken:  unexpiredToken.AccessToken,
+			OAuthRefreshToken: unexpiredToken.RefreshToken,
+			OAuthExpiry:       unexpiredToken.Expiry,
+			OAuthTokenType:    unexpiredToken.TokenType,
+		}, nil).Once()
+		resolver := &recordingOAuthRefreshProviderResolver{}
+		svc := newService(t, resolver, authInfoService, authtest.NewMockUserAuthTokenService(t))
+
+		token, err := svc.TryTokenRefresh(t.Context(), usr, metadata)
+
+		require.NoError(t, err)
+		assert.Equal(t, unexpiredToken, token)
+		assert.Zero(t, resolver.calls)
+	})
+
+	t.Run("refreshes with one coherent provider snapshot", func(t *testing.T) {
+		authInfoService := authinfotest.NewMockAuthInfoService(t)
+		authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+			AuthModule:        login.GenericOAuthModule,
+			AuthId:            "subject",
+			OAuthAccessToken:  expiredToken.AccessToken,
+			OAuthRefreshToken: expiredToken.RefreshToken,
+			OAuthExpiry:       expiredToken.Expiry,
+			OAuthTokenType:    expiredToken.TokenType,
+		}, nil).Once()
+		authInfoService.On("UpdateAuthInfo", mock.Anything, mock.MatchedBy(func(cmd *login.UpdateAuthInfoCommand) bool {
+			return cmd.UserId == 1234 && tokensEq(cmd.OAuthToken, unexpiredTokenWithIDToken)
+		})).Return(nil).Once()
+
+		connector := socialtest.NewMockSocialConnector(t)
+		connector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(unexpiredTokenWithIDToken)).Once()
+		resolver := &recordingOAuthRefreshProviderResolver{provider: &OAuthRefreshProvider{
+			UseRefreshToken: true,
+			Connector:       connector,
+			HTTPClient:      http.DefaultClient,
+		}}
+		svc := newService(t, resolver, authInfoService, authtest.NewMockUserAuthTokenService(t))
+
+		token, err := svc.TryTokenRefresh(t.Context(), usr, metadata)
+
+		require.NoError(t, err)
+		assert.Equal(t, unexpiredTokenWithIDToken, token)
+		assert.Equal(t, 1, resolver.calls)
+		assert.Equal(t, social.GenericOAuthProviderName, resolver.lastProvider)
+	})
+}
+
 func TestIntegration_TryTokenRefresh(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -118,6 +206,12 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			identity:        userIdentity,
 			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+					AuthModule:        login.GenericOAuthModule,
+					OAuthAccessToken:  expiredToken.AccessToken,
+					OAuthRefreshToken: expiredToken.RefreshToken,
+					OAuthExpiry:       expiredToken.Expiry,
+				}, nil).Once()
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: false,
 				}
@@ -140,6 +234,12 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			identity:        userIdentity,
 			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+					AuthModule:        login.GenericOAuthModule,
+					OAuthAccessToken:  expiredToken.AccessToken,
+					OAuthRefreshToken: "",
+					OAuthExpiry:       expiredToken.Expiry,
+				}, nil).Once()
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: false,
 				}
@@ -332,10 +432,11 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			env := environment{
 				sessionService:  authtest.NewMockUserAuthTokenService(t),
 				authInfoService: authinfotest.NewMockAuthInfoService(t),
-				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
+				serverLock:      serverlock.ProvideService(legacysql.NewDatabaseProvider(store), tracing.InitializeTracerForTest()),
 				socialConnector: socialConnector,
 				socialService: &socialtest.FakeSocialService{
-					ExpectedConnector: socialConnector,
+					ExpectedConnector:  socialConnector,
+					ExpectedHttpClient: http.DefaultClient,
 				},
 				store: store,
 			}
@@ -446,6 +547,13 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			identity:        userIdentity,
 			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:           1,
+					UserID:       1234,
+					AccessToken:  expiredToken.AccessToken,
+					RefreshToken: expiredToken.RefreshToken,
+					ExpiresAt:    expiredToken.Expiry,
+				}, nil).Once()
 				env.socialService.ExpectedAuthInfoProvider = nil
 			},
 		},
@@ -454,6 +562,13 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			identity:        userIdentity,
 			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:           1,
+					UserID:       1234,
+					AccessToken:  expiredToken.AccessToken,
+					RefreshToken: expiredToken.RefreshToken,
+					ExpiresAt:    expiredToken.Expiry,
+				}, nil).Once()
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: false,
 				}
@@ -483,6 +598,12 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			identity:        userIdentity,
 			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
 			setup: func(env *environment) {
+				env.sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+					ID:          1,
+					UserID:      1234,
+					AccessToken: expiredToken.AccessToken,
+					ExpiresAt:   expiredToken.Expiry,
+				}, nil).Once()
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: false,
 				}
@@ -632,10 +753,11 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			env := environment{
 				sessionService:  authtest.NewMockUserAuthTokenService(t),
 				authInfoService: authinfotest.NewMockAuthInfoService(t),
-				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
+				serverLock:      serverlock.ProvideService(legacysql.NewDatabaseProvider(store), tracing.InitializeTracerForTest()),
 				socialConnector: socialConnector,
 				socialService: &socialtest.FakeSocialService{
-					ExpectedConnector: socialConnector,
+					ExpectedConnector:  socialConnector,
+					ExpectedHttpClient: http.DefaultClient,
 				},
 				store: store,
 			}
@@ -1094,10 +1216,11 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 			env := environment{
 				sessionService:  authtest.NewMockUserAuthTokenService(t),
 				authInfoService: authinfotest.NewMockAuthInfoService(t),
-				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
+				serverLock:      serverlock.ProvideService(legacysql.NewDatabaseProvider(store), tracing.InitializeTracerForTest()),
 				socialConnector: socialConnector,
 				socialService: &socialtest.FakeSocialService{
-					ExpectedConnector: socialConnector,
+					ExpectedConnector:  socialConnector,
+					ExpectedHttpClient: http.DefaultClient,
 				},
 				store: store,
 			}
@@ -1394,10 +1517,11 @@ func TestIntegration_GetCurrentOAuthToken_WithExternalSessions(t *testing.T) {
 			env := environment{
 				sessionService:  authtest.NewMockUserAuthTokenService(t),
 				authInfoService: authinfotest.NewMockAuthInfoService(t),
-				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
+				serverLock:      serverlock.ProvideService(legacysql.NewDatabaseProvider(store), tracing.InitializeTracerForTest()),
 				socialConnector: socialConnector,
 				socialService: &socialtest.FakeSocialService{
-					ExpectedConnector: socialConnector,
+					ExpectedConnector:  socialConnector,
+					ExpectedHttpClient: http.DefaultClient,
 				},
 				store: store,
 			}

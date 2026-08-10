@@ -25,6 +25,8 @@ import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
 
 import jsonMarkup from './jsonMarkup';
+import { AttributePluginPromoTip } from './pluginPromo/AttributePluginPromoTip';
+import { type AttributePluginPromoGetter } from './pluginPromo/attributePluginPromos';
 
 const getStyles = (theme: GrafanaTheme2) => {
   const keyColor = theme.colors.text.secondary;
@@ -83,7 +85,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     linkValue: css({
       display: 'inline-flex',
-      alignItems: 'center',
+      // values wrap, so keep the icon on the first line instead of centering it across all of them
+      alignItems: 'flex-start',
       gap: theme.spacing(0.5),
     }),
     linkIcon: css({
@@ -91,7 +94,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     multiLinkValue: css({
       display: 'inline-flex',
-      alignItems: 'center',
+      // values wrap, so keep the chevron on the first line instead of centering it across all of them
+      alignItems: 'flex-start',
       gap: theme.spacing(0.25),
     }),
     multiLinkContent: css({
@@ -122,7 +126,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexShrink: 0,
     }),
     jsonTable: css({
-      display: 'inline-block',
+      display: 'block',
+      // `word-break: break-word` also shrinks min-content, which lets the table column narrow enough
+      // to wrap long unbroken values. `overflow-wrap: break-word` does not, and restores the scrollbar.
+      wordBreak: 'break-word',
     }),
   };
 };
@@ -233,10 +240,11 @@ export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
   linksGetter?: (pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[];
   onlyValues?: boolean;
+  promoGetter?: AttributePluginPromoGetter;
 };
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {
-  const { data, linksGetter, onlyValues } = props;
+  const { data, linksGetter, onlyValues, promoGetter } = props;
   const styles = useStyles2(getStyles);
   return (
     <div className={cx(styles.KeyValueTable)} data-testid="KeyValueTable">
@@ -256,7 +264,7 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
               <div className={styles.jsonTable} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />
             );
             const links = linksGetter?.(data, i) ?? [];
-            const valueMarkup =
+            let valueMarkup =
               links.length > 1 ? (
                 <LinkValuesMenu links={links}>{jsonTable}</LinkValuesMenu>
               ) : links.length === 1 ? (
@@ -264,6 +272,13 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
               ) : (
                 jsonTable
               );
+
+            // Skip promo when value markup already has an anchor (jsonMarkup auto-linkifies
+            // http(s) strings) to avoid nesting interactive content inside the promo <button>.
+            const promo = links.length === 0 && !html.includes('<a ') ? promoGetter?.(row.key) : undefined;
+            if (promo) {
+              valueMarkup = <AttributePluginPromoTip promo={promo}>{valueMarkup}</AttributePluginPromoTip>;
+            }
 
             return (
               // `i` is necessary in the key because row.key can repeat

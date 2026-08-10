@@ -36,7 +36,6 @@ import { COLUMN, TABLE } from './constants';
 import { type TextAlign } from './styles';
 import {
   type TableRow,
-  type TableCellValue,
   type ColumnTypes,
   type FrameToRowsConverter,
   type Comparator,
@@ -51,7 +50,7 @@ import {
 /* ---------------------------- Pill inference ----------------------------- */
 const SPLIT_RE = /\s*,\s*/;
 
-export function inferPills(rawValue: TableCellValue): unknown[] {
+function inferPillsImpl(rawValue: unknown): unknown[] {
   if (rawValue === '' || rawValue == null) {
     return [];
   }
@@ -71,6 +70,76 @@ export function inferPills(rawValue: TableCellValue): unknown[] {
   }
 
   return value.trim().split(SPLIT_RE);
+}
+
+/**
+ * @internal
+ * A bounded cache with O(1) inserts and no per-insert eviction scan. It keeps two generations:
+ * writes go to `primary`; when `primary` fills, it becomes `secondary` (whatever was in the old
+ * `secondary` is dropped) and a fresh `primary` starts. Reads check both generations and promote a
+ * survivor back into `primary`, which approximates LRU. Total live entries stay within ~2x maxSize.
+ */
+export function createBoundedCache<K, V>(maxSize: number) {
+  let primary = new Map<K, V>();
+  let secondary = new Map<K, V>();
+
+  // Every write to `primary` — whether a fresh `set` or a promotion from `secondary` in `get` — goes
+  // through here so the rotation check runs on all growth paths. (Rotating only in `set` let `get`'s
+  // promotions grow `primary` past `maxSize` between writes, breaking the ~2x bound.)
+  const put = (key: K, value: V): void => {
+    primary.set(key, value);
+    if (primary.size >= maxSize) {
+      secondary = primary;
+      primary = new Map<K, V>();
+    }
+  };
+
+  return {
+    get(key: K): V | undefined {
+      const fromPrimary = primary.get(key);
+      if (fromPrimary !== undefined) {
+        return fromPrimary;
+      }
+      const fromSecondary = secondary.get(key);
+      if (fromSecondary !== undefined) {
+        put(key, fromSecondary); // promote into the current generation, keeping the size bound
+      }
+      return fromSecondary;
+    },
+    set: put,
+  };
+}
+
+// inferPills is pure and its inputs are stable across resizes, so we cache results. Array/object
+// values are cached by reference in a WeakMap (unbounded-safe, auto-GC'd). Primitive (string) values
+// persist for the whole app lifetime across every table, so they use a generational bounded cache
+// (see createBoundedCache) sized generously enough that a large table mostly hits.
+const arrayPillCache = new WeakMap<object, unknown[]>();
+const primitivePillCache = createBoundedCache<string, unknown[]>(15000);
+
+// Accepts an arbitrary raw cell value: pill columns hold string arrays (not in TableCellValue), and
+// values can be null, so this is deliberately typed `unknown` and narrowed at runtime.
+export function inferPills(rawValue: unknown): unknown[] {
+  if (rawValue == null || rawValue === '') {
+    return [];
+  }
+
+  if (typeof rawValue === 'object') {
+    let cached = arrayPillCache.get(rawValue);
+    if (cached === undefined) {
+      cached = inferPillsImpl(rawValue);
+      arrayPillCache.set(rawValue, cached);
+    }
+    return cached;
+  }
+
+  const key = String(rawValue);
+  let cached = primitivePillCache.get(key);
+  if (cached === undefined) {
+    cached = inferPillsImpl(rawValue);
+    primitivePillCache.set(key, cached);
+  }
+  return cached;
 }
 
 /* ---------------------------- Cell calculations --------------------------- */
@@ -221,30 +290,45 @@ const PILLS_SPACING = 12; // 6px horizontal padding on each side
 const PILLS_GAP = 4; // gap between pills
 
 export function getPillCellHeightMeasurer(measureWidth: (value: string) => number): MeasureCellHeight {
-  const widthCache: Record<string, number> = {};
+  // Per-pill intrinsic width, keyed by the pill string — shared across values (e.g. an actor who
+  // appears in many rows) and across column widths, so a resize never re-measures pill text.
+  const pillWidthCache: Record<string, number> = {};
+  // Per-value laid-out pill widths (intrinsic width + chip padding), keyed by the cell value and
+  // therefore width-independent: on a resize we reuse these and skip both inferPills and text
+  // measurement, redoing only the cheap wrap arithmetic below. Neither cache needs eviction: the
+  // whole closure is rebuilt when fields/typography/maxHeight change, so they live only as long as
+  // the current table structure and are bounded by its distinct values.
+  const pillWidthsByValue = new Map<string, number[]>();
 
   return (value, width, _field, _rowIdx, lineHeight) => {
     if (value == null) {
       return 0;
     }
 
-    const pillValues = inferPills(String(value));
-    if (pillValues.length === 0) {
+    const strValue = String(value);
+    let pillWidths = pillWidthsByValue.get(strValue);
+    if (pillWidths === undefined) {
+      pillWidths = inferPills(strValue).map((pill) => {
+        const strPill = String(pill);
+        let rawWidth = pillWidthCache[strPill];
+        if (rawWidth === undefined) {
+          rawWidth = measureWidth(strPill);
+          pillWidthCache[strPill] = rawWidth;
+        }
+        return rawWidth + PILLS_SPACING;
+      });
+      pillWidthsByValue.set(strValue, pillWidths);
+    }
+
+    if (pillWidths.length === 0) {
       return 0;
     }
 
+    // wrap arithmetic over the (cached) pill widths. This is cheap enough to run per cell; the
+    // expensive parts — parsing and text measurement — are what the caches above eliminate.
     let lines = 0;
     let currentLineUse = width;
-
-    for (const pillValue of pillValues) {
-      const strPill = String(pillValue);
-      let rawWidth = widthCache[strPill];
-      if (rawWidth === undefined) {
-        rawWidth = measureWidth(strPill);
-        widthCache[strPill] = rawWidth;
-      }
-      const pillWidth = rawWidth + PILLS_SPACING;
-
+    for (const pillWidth of pillWidths) {
       if (currentLineUse + pillWidth + PILLS_GAP > width) {
         lines++;
         currentLineUse = pillWidth;
@@ -310,10 +394,7 @@ export function buildCellHeightMeasurers(
         typographyCtx.fontFamily,
         typographyCtx.letterSpacing
       );
-      return [
-        getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width),
-        getPillCellHeightMeasurer((value) => value.length * pillTypographyCtx.avgCharWidth),
-      ];
+      return [getPillCellHeightMeasurer((value) => pillTypographyCtx.ctx.measureText(value).width), undefined];
     },
   } as const;
 
@@ -385,6 +466,11 @@ export function getRowHeight(
   let maxWidth = 0;
   let maxField: Field | undefined;
   let preciseMeasurer: MeasureCellHeight | undefined;
+  // Tallest height from measurers that already ran precisely (pills, data links). The estimated
+  // winner is remeasured below and can shrink beneath one of these, so we clamp back up to it —
+  // otherwise an over-estimating Auto column could beat a precise pill height and then discard it,
+  // sizing the row too short and clipping the pills.
+  let maxPreciseHeight = -1;
 
   for (const { estimate, measure, fieldIdxs } of measurers) {
     // for some of the cell height measurers, getting the precise height is expensive. those entries set
@@ -408,6 +494,9 @@ export function getRowHeight(
             : cellValueRaw;
         const colWidth = columnWidths[fieldIdx];
         const estimatedHeight = measurer(cellValueForMeasuring, colWidth, field, row.__index, lineHeight);
+        if (!isEstimating && estimatedHeight > maxPreciseHeight) {
+          maxPreciseHeight = estimatedHeight;
+        }
         if (estimatedHeight > maxHeight) {
           maxHeight = estimatedHeight;
           maxValue = cellValueForMeasuring;
@@ -426,9 +515,10 @@ export function getRowHeight(
   }
 
   // if we finished this row height loop with an estimate, we need to call
-  // the `preciseMeasurer` method to get the exact line count.
+  // the `preciseMeasurer` method to get the exact line count. the remeasured winner can come back
+  // shorter than a column we already measured precisely, so never drop below that height.
   if (preciseMeasurer !== undefined) {
-    maxHeight = preciseMeasurer(maxValue, maxWidth, maxField, row.__index, lineHeight);
+    maxHeight = Math.max(preciseMeasurer(maxValue, maxWidth, maxField, row.__index, lineHeight), maxPreciseHeight);
   }
 
   // adjust for vertical padding, and clamp to a minimum default height
@@ -1033,9 +1123,6 @@ export function getVisibleFields(fields: Field[]): Field[] {
   return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hideFrom?.viz !== true);
 }
 
-export const getIsNestedTable = (fields: Field[]): boolean =>
-  fields.some(({ type }) => type === FieldType.nestedFrames);
-
 /**
  * @internal
  * returns a map of column types by display name
@@ -1082,6 +1169,40 @@ export function computeColWidths(fields: Field[], availWidth: number) {
           Math.max(fields[i].config.custom?.minWidth ?? COLUMN.DEFAULT_WIDTH, (availWidth - definedWidth) / autoCount)
       )
   );
+}
+
+// cells which have to re-measure or re-draw themselves when their column width changes. pills
+// re-wrap, sparklines and gauges re-render their viz against the new width. every other cell type
+// just re-flows text, which the browser handles without us recomputing anything.
+// the legacy basic/gradient/lcd gauge modes aren't listed: getCellOptions migrates them to Gauge.
+const WIDTH_SENSITIVE_CELL_TYPES = new Set<TableCellOptions['type']>([
+  TableCellDisplayMode.Pill,
+  TableCellDisplayMode.Sparkline,
+  TableCellDisplayMode.Gauge,
+]);
+
+/**
+ * @internal
+ * Whether panel width changes should be debounced before they drive the column layout. Debouncing
+ * trades a moment of staleness for fewer layout passes, so it only pays off when applying a width
+ * is actually expensive: some column has to be both auto-sized (a configured width doesn't move
+ * with the panel) and width-sensitive - either a cell which redraws itself against the new width,
+ * or wrapped text, which makes us re-measure every row height.
+ */
+export function shouldDebounceWidth(fields: Field[]): boolean {
+  return fields.some((field) => {
+    if (field.config.custom?.width) {
+      return false;
+    }
+    if (shouldTextWrap(field)) {
+      return true;
+    }
+    const cellType = getCellOptions(field).type;
+    return WIDTH_SENSITIVE_CELL_TYPES.has(
+      // auto cells resolve to a sparkline when the field holds time series frames.
+      cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType
+    );
+  });
 }
 
 export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {
