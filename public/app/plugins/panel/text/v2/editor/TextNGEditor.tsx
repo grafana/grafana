@@ -6,7 +6,7 @@ import { useDebounce } from 'react-use';
 import { type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
+import { CodeMirrorEditor, useMarkdownLivePreview, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
 import { CodeLanguage, defaultCodeLanguage, TextMode } from '../../panelcfg.gen';
@@ -68,7 +68,22 @@ export function TextNGEditor({
 }: TextNGEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
+  // Markdown renders its formatting as you type, so it opens in the editor and
+  // has no split — the two panes would show the same thing. Preview remains for
+  // what live preview cannot do: resolve variables and render tables.
+  const isMarkdown = mode === TextMode.Markdown;
+
+  const viewOptions = [
+    { label: t('textng.editor.view-preview', 'Preview'), value: 'preview' as const },
+    ...(isMarkdown ? [] : [{ label: t('textng.editor.view-split', 'Split'), value: 'split' as const }]),
+    { label: t('textng.editor.view-write', 'Write'), value: 'write' as const },
+  ];
+
+  const [selectedView, setView] = useState<ViewMode>(() =>
+    isMarkdown || content.trim().length === 0 ? 'write' : 'preview'
+  );
+  // Changing mode can retire the selected view, e.g. markdown has no split.
+  const view = viewOptions.some((option) => option.value === selectedView) ? selectedView : 'write';
 
   const [draft, setDraft] = useState(content);
   // a blur can fire before React re-renders with the new draft.
@@ -145,16 +160,22 @@ export function TextNGEditor({
 
   const completionSources = useMemo(() => [variableCompletion(suggestions ?? [])], [suggestions]);
 
-  const basicSetup = useMemo(
-    () => ({ lineNumbers: mode === TextMode.Code ? showLineNumbers : false }),
-    [mode, showLineNumbers]
-  );
+  // Markdown is edited as a document: formatting renders in place, the syntax
+  // markers only surface on the line being edited, and variables show their
+  // values — so the editor already reads the way the panel will.
+  const livePreviewExtensions = useMarkdownLivePreview(isMarkdown, (text) => replaceVariables(text, {}, format));
 
-  const viewOptions = [
-    { label: t('textng.editor.view-preview', 'Preview'), value: 'preview' as const },
-    { label: t('textng.editor.view-split', 'Split'), value: 'split' as const },
-    { label: t('textng.editor.view-write', 'Write'), value: 'write' as const },
-  ];
+  const basicSetup = useMemo(
+    () => ({
+      lineNumbers: mode === TextMode.Code ? showLineNumbers : false,
+      // Code chrome reads as a bug on a prose surface: an empty fold column, and
+      // a grey band behind whichever line happens to be revealed.
+      foldGutter: !isMarkdown,
+      highlightActiveLine: !isMarkdown,
+      highlightActiveLineGutter: !isMarkdown,
+    }),
+    [mode, showLineNumbers, isMarkdown]
+  );
 
   const modeLabels: Record<TextMode, string> = {
     [TextMode.Markdown]: t('textng.editor.mode-markdown', 'Markdown'),
@@ -248,6 +269,7 @@ export function TextNGEditor({
               onChange={handleDraftChange}
               language={editorLanguage}
               completionSources={completionSources}
+              extensions={livePreviewExtensions}
               lineWrapping
               basicSetup={basicSetup}
               height="100%"

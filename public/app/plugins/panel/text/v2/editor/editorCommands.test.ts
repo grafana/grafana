@@ -1,14 +1,22 @@
-import { EditorState } from '@codemirror/state';
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { EditorState, type Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+
+import { createTheme } from '@grafana/data';
+import { markdownLivePreview } from '@grafana/ui/unstable';
 
 import { insertAtCursor, toggleLinePrefix, toggleOrderedList, toggleSurround } from './editorCommands';
 
 let views: EditorView[] = [];
 
-function createView(doc: string, selection?: { anchor: number; head?: number }): EditorView {
+function createView(
+  doc: string,
+  selection?: { anchor: number; head?: number },
+  extensions: Extension[] = []
+): EditorView {
   const view = new EditorView({
     parent: document.body,
-    state: EditorState.create({ doc, selection }),
+    state: EditorState.create({ doc, selection, extensions }),
   });
   views.push(view);
   return view;
@@ -364,5 +372,36 @@ describe('toggleOrderedList', () => {
     // Still between `ta` and `sk`.
     expect(view.state.doc.toString()).toBe('1. task');
     expect(view.state.selection.main.head).toBe(5);
+  });
+});
+
+// The toolbar edits markdown source, and live preview only decorates the view,
+// so every command must behave identically with it installed.
+describe('with markdown live preview installed', () => {
+  const createPreviewView = (doc: string, selection?: { anchor: number; head?: number }) =>
+    createView(doc, selection, [markdown({ base: markdownLanguage }), markdownLivePreview(createTheme())]);
+
+  it('wraps a selection whose markers are hidden', () => {
+    const view = createPreviewView('hello world', { anchor: 0, head: 5 });
+
+    toggleSurround(view, '**');
+
+    expect(view.state.doc.toString()).toBe('**hello** world');
+  });
+
+  it('unwraps a selection whose markers are hidden', () => {
+    const view = createPreviewView('**hello** world', { anchor: 2, head: 7 });
+
+    toggleSurround(view, '**');
+
+    expect(view.state.doc.toString()).toBe('hello world');
+  });
+
+  it('toggles a heading prefix off a rendered heading', () => {
+    const view = createPreviewView('# Title', { anchor: 4 });
+
+    toggleLinePrefix(view, '# ');
+
+    expect(view.state.doc.toString()).toBe('Title');
   });
 });

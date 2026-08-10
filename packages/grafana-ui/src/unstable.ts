@@ -12,6 +12,8 @@
 export * from './utils/skeleton';
 
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
+export { markdownLivePreview } from './components/CodeMirror/markdownLivePreview';
+export { useMarkdownLivePreview } from './components/CodeMirror/useMarkdownLivePreview';
 export { signatureHelp } from './components/CodeMirror/signatureHelp';
 export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
 export type {

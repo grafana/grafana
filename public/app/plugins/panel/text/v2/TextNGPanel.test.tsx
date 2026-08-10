@@ -12,6 +12,7 @@ import { createProps, renderPanel } from './test-utils';
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
+  useMarkdownLivePreview: () => [],
   CodeMirrorEditor: ({
     value,
     basicSetup,
