@@ -81,7 +81,7 @@ Kerberos is not supported in Grafana Cloud.
 | **Setting** | **Description**                                                                                                                            |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Name**    | The data source name. Sets the name you use to refer to the data source in panels and queries. Examples: `MSSQL-1`, `MSSQL_Sales1`.        |
-| **Default** | Toggle to select as the default name in dashboard panels. When you go to a dashboard panel, this will be the default selected data source. |
+| **Default** | Toggle to select as the default name in dashboard panels. When you go to a dashboard panel, this is the default selected data source. |
 
 **Connection:**
 
@@ -162,7 +162,7 @@ Grafana maintains a connection pool for each configured MSSQL data source. These
 | Setting           | Description                                                                                                                                                                                  |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Max open**      | The maximum number of open connections to the database. If set to `0`, there is no limit. If `max open` is greater than `0` and less than `max idle`, `max idle` is adjusted to match.       |
-| **Auto max idle** | When enabled, automatically sets `max idle` to match `max open`. If `max open` isn’t set, it defaults to `100`.                                                                              |
+| **Auto max idle** | When enabled, automatically sets `max idle` to match `max open`. If `max open` isn't set, it defaults to `100`.                                                                              |
 | **Max idle**      | The maximum number of idle connections in the pool. If `max open` is set and is lower than `max idle`, then `max idle` is reduced to match. If set to `0`, no idle connections are retained. |
 | **Max lifetime**  | The maximum time (in seconds) a connection can be reused before being closed and replaced. If set to `0`, connections are reused indefinitely.                                               |
 
@@ -268,7 +268,7 @@ Depending on the method you choose, additional flags are required (documented in
 
 This is the recommended authentication mechanism when working with SQL Server instances that are hosted in Azure. It allows users to be authenticated to and query the database using their own credentials rather than long-lived credentials.
 
-This authentication method requires your Grafana instance to be configured with Azure Entra ID (formerly Active Directory) authentication for login. With Azure Entra ID login, this method can be used to forward the currently logged in user’s credentials to the data source. The users credentials will then be used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/).
+This authentication method requires your Grafana instance to be configured with Azure Entra ID (formerly Active Directory) authentication for login. With Azure Entra ID login, this method can be used to forward the currently logged in user's credentials to the data source. The user's credentials are then used when requesting data from the data source. For details on how to configure your Grafana instance using Azure Entra, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/azuread/).
 
 {{< admonition type="note" >}}
 Additional configuration is required to ensure that the App Registration used to login a user via Azure provides an access token with the permissions required by the data source.
@@ -436,7 +436,7 @@ Grafana recommends that you use the latest available service pack for optimal co
 
 You can define and configure the data source in YAML files as part of the Grafana provisioning system. For more information about provisioning, and for available configuration options, refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/).
 
-#### Provisioning example
+#### Example
 
 ```yaml
 apiVersion: 1

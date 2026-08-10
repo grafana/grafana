@@ -257,7 +257,7 @@ These errors occur when there are issues with authentication credentials or perm
 Kerberos authentication is not supported in Grafana Cloud. Use SQL Server Authentication or Azure Entra ID instead.
 {{< /admonition >}}
 
-### KDC_ERR_C_PRINCIPAL_UNKNOWN with Availability Group Listeners
+### `KDC_ERR_C_PRINCIPAL_UNKNOWN` with Availability Group listeners
 
 **Error message:** "KDC_ERR_C_PRINCIPAL_UNKNOWN" when connecting through a SQL Server Availability Group Listener
 
