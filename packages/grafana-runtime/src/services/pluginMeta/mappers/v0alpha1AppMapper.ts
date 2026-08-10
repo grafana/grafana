@@ -70,7 +70,6 @@ export const v0alpha1AppMapper: AppPluginMetasMapper<PluginMetasResponse> = (res
   const result: Record<string, AppPluginMetaConfig> = {};
 
   return response.items.reduce((acc, curr) => {
-    // Defensive: a malformed meta must not fail the whole mapping
     if (curr.spec?.pluginJson?.type !== 'app') {
       return acc;
     }
