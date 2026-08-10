@@ -272,7 +272,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 		})
 
 		if _, err := q.Update(&usr); err != nil {
-			return err
+			return handleSQLError(ss.dialect, err)
 		}
 
 		if cmd.IsGrafanaAdmin != nil && !*cmd.IsGrafanaAdmin {
