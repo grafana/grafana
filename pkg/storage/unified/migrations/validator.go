@@ -54,25 +54,19 @@ func filterResponse(response *resourcepb.BulkResponse, resources []schema.GroupR
 }
 
 type CountValidator struct {
-	name       string
-	client     resourcepb.ResourceIndexClient
-	resource   schema.GroupResource
-	opts       CountValidationOptions
-	driverName string
+	name     string
+	resource schema.GroupResource
+	opts     CountValidationOptions
 }
 
 func newCountValidator(
-	client resourcepb.ResourceIndexClient,
 	resource schema.GroupResource,
 	opts CountValidationOptions,
-	driverName string,
 ) Validator {
 	return &CountValidator{
-		name:       "CountValidator",
-		client:     client,
-		resource:   resource,
-		opts:       opts,
-		driverName: driverName,
+		name:     "CountValidator",
+		resource: resource,
+		opts:     opts,
 	}
 }
 
@@ -130,32 +124,21 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 	}
 
 	var unifiedCount int64
-	if v.driverName == migrator.SQLite {
-		unifiedCount, err = sess.Table("resource").
-			Where("namespace = ? AND `group` = ? AND resource = ?",
-				summary.Namespace, summary.Group, summary.Resource).
-			Count()
-		if err != nil {
-			return fmt.Errorf("failed to count resource table for %s/%s in namespace %s: %w",
-				summary.Group, summary.Resource, summary.Namespace, err)
-		}
-	} else {
-		// Get unified storage count using GetStats API
-		statsResp, err := v.client.GetStats(ctx, &resourcepb.ResourceStatsRequest{
-			Namespace: summary.Namespace,
-			Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
-		})
-		if err != nil {
-			return fmt.Errorf("failed to get stats for %s/%s in namespace %s: %w",
-				summary.Group, summary.Resource, summary.Namespace, err)
-		}
-		// Find the count for this specific resource type
-		for _, stat := range statsResp.Stats {
-			if stat.Group == summary.Group && stat.Resource == summary.Resource {
-				unifiedCount = stat.Count
-				break
-			}
-		}
+	// Always count the resource table. GetStats routes to Bleve DocCount on
+	// non-SQLite, which can lag the table after large bulk migrations and
+	// produce false count mismatches (see #128985). Migrations only run for
+	// in-proc unified storage, so the table is always visible on this session.
+	// map Where quotes the reserved "group" column via the session dialect.
+	unifiedCount, err = sess.Table("resource").
+		Where(map[string]any{
+			"namespace": summary.Namespace,
+			"group":     summary.Group,
+			"resource":  summary.Resource,
+		}).
+		Count()
+	if err != nil {
+		return fmt.Errorf("failed to count resource table for %s/%s in namespace %s: %w",
+			summary.Group, summary.Resource, summary.Namespace, err)
 	}
 
 	// Account for rejected items in validation
@@ -429,8 +412,8 @@ type CountValidationOptions struct {
 // CountValidation creates a ValidatorFactory for count-based validation.
 // It compares the count of resources in the legacy table with unified storage.
 func CountValidation(resource schema.GroupResource, opts CountValidationOptions) ValidatorFactory {
-	return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
-		return newCountValidator(client, resource, opts, driverName)
+	return func(_ resourcepb.ResourceIndexClient, _ string) Validator {
+		return newCountValidator(resource, opts)
 	}
 }
 
