@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 
 import { type GrafanaTheme2, renderTextPanelMarkdown } from '@grafana/data';
-import { type CellContentKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { useStyles2 } from '@grafana/ui';
+import { type CellContentKind } from 'app/features/notebook/types';
 
 // Mirrors the text panel: renderTextPanelMarkdown sanitizes its output (XSS-safe) and the
 // result is rendered via DangerouslySetHtmlContent with the shared `markdown-html` class.

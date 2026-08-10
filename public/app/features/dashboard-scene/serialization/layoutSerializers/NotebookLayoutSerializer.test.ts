@@ -5,7 +5,7 @@ import {
   defaultPanelKind,
   type NotebookElement,
   type NotebookLayoutKind,
-} from '@grafana/schema/apis/notebook/v2beta1';
+} from 'app/features/notebook/types';
 
 import { deserializeNotebookLayout } from './NotebookLayoutSerializer';
 
