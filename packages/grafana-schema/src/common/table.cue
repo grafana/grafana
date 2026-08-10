@@ -118,6 +118,8 @@ TableOptions: {
 	showHeader: bool | *true
 	// Controls whether the header should show icons for the column types
 	showTypeIcons?: bool | *false
+	// Controls whether the header should show a visualization summarizing each column
+	showHeaderVisualizations?: bool | *false
 	// Used to control row sorting
 	sortBy?: [...TableSortByFieldState]
 	// Enable pagination on the table

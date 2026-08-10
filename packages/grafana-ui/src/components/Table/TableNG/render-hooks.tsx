@@ -44,6 +44,8 @@ import { HeaderCell, HeaderCellContainer } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
+import { TABLE } from './constants';
+import { getHeaderDistribution } from './headerVisualizations';
 import {
   getCellActionStyles,
   getDefaultCellStyles,
@@ -170,6 +172,7 @@ export interface ColumnBuildConfig {
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
   settlingColumnKeys?: ReadonlySet<string>;
   showTypeIcons?: boolean;
+  showHeaderVisualizations?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
 }
@@ -217,6 +220,7 @@ function buildColumnsFromFields(
     disableSanitizeHtml,
     enableColumnReorder,
     showTypeIcons,
+    showHeaderVisualizations,
     timeRange,
     groupedFieldName,
     onGroupByColumn,
@@ -311,6 +315,7 @@ function buildColumnsFromFields(
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
     const showActions = cellInspect || showFilters;
     const width = widths[i];
+    const headerDistribution = showHeaderVisualizations ? getHeaderDistribution(field) : undefined;
 
     // helps us avoid string cx and emotion per-cell
     const cellActionClassName = showActions
@@ -541,6 +546,8 @@ function buildColumnsFromFields(
             disableKeyboardEvents={disableKeyboardEvents}
             direction={sortDirection}
             showTypeIcons={showTypeIcons}
+            distribution={headerDistribution}
+            visualizationWidth={Math.max(0, width - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT)}
             parentIndex={parentIndex}
             crossFilterRows={crossFilterRows}
             crossFilterTailRows={crossFilterTailRows}

@@ -52,6 +52,64 @@ describe('HeaderCell', () => {
     expect(container.querySelector('svg')).not.toBeInTheDocument();
   });
 
+  it('renders a noninteractive categorical visualization below the label', () => {
+    const { container } = render(
+      <HeaderCell
+        {...baseProps}
+        field={makeField()}
+        distribution={{
+          kind: 'categories',
+          segments: [
+            { label: 'a', count: 2, type: 'value' },
+            { label: 'b', count: 1, type: 'value' },
+          ],
+          totalCount: 3,
+        }}
+        visualizationWidth={100}
+      />
+    );
+
+    const visualization = container.querySelector('[data-table-header-visualization="categories"]');
+    expect(visualization).toBeInTheDocument();
+    expect(visualization).toHaveStyle({ pointerEvents: 'none', width: '96px' });
+    expect(container.querySelector('[data-table-header-layout]')).toHaveStyle({
+      boxSizing: 'border-box',
+      overflow: 'hidden',
+      paddingInline: '2px',
+      width: '100%',
+    });
+    expect(container.querySelector('[data-table-header-title-row]')).toHaveStyle({
+      display: 'flex',
+      overflow: 'hidden',
+      width: '100%',
+    });
+    expect(container.querySelector('[data-table-header-chart-row]')).toHaveStyle({
+      marginTop: '8px',
+      overflow: 'hidden',
+      width: '100%',
+    });
+    expect(screen.getByText('Field1')).toBeInTheDocument();
+  });
+
+  it('keeps filter interaction available when a visualization is shown', async () => {
+    render(
+      <HeaderCell
+        {...baseProps}
+        field={makeField({ config: { custom: { filterable: true } } })}
+        distribution={{
+          kind: 'categories',
+          segments: [{ label: 'a', count: 3, type: 'value' }],
+          totalCount: 3,
+        }}
+        visualizationWidth={100}
+      />
+    );
+
+    const filterButton = screen.getByLabelText('Filter Field1');
+    await userEvent.click(filterButton);
+    expect(filterButton).toHaveAttribute('aria-expanded', 'true');
+  });
+
   it('renders an ascending sort arrow', () => {
     const { container } = render(<HeaderCell {...baseProps} field={makeField()} direction="ASC" />);
     expect(container.querySelector('[class*="css"]')).toBeInTheDocument();

@@ -20,6 +20,7 @@ jest.mock('@grafana/ui/unstable', () => ({
     groupedFieldName,
     onUngroup,
     ungroupDisabledReason,
+    showHeaderVisualizations,
   }: {
     data: {
       fields: Array<{
@@ -32,6 +33,7 @@ jest.mock('@grafana/ui/unstable', () => ({
     groupedFieldName?: string;
     onUngroup?: () => void;
     ungroupDisabledReason?: string;
+    showHeaderVisualizations?: boolean;
   }) => {
     const nestedFrame = data.fields.find((field) => field.type === FieldType.nestedFrames)?.values[0]?.[0];
     const firstNestedField = nestedFrame?.fields[0];
@@ -46,6 +48,7 @@ jest.mock('@grafana/ui/unstable', () => ({
           data-first-nested-display={typeof firstNestedField?.display}
           data-grouped-field-name={groupedFieldName}
           data-ungroup-disabled-reason={ungroupDisabledReason}
+          data-header-visualizations={String(showHeaderVisualizations ?? false)}
           onClick={() => onGroupByColumn?.('Category')}
         >
           Group
@@ -74,6 +77,21 @@ describe('createEphemeralGroupTransformation', () => {
 });
 
 describe('TablePanel ephemeral grouping', () => {
+  it.each([
+    { configured: undefined, expected: 'false' },
+    { configured: true, expected: 'true' },
+  ])('forwards the header visualization option as $expected', ({ configured, expected }) => {
+    const props = getPanelProps<TableOptions>(
+      { frameIndex: 0, showHeader: true, showHeaderVisualizations: configured },
+      { fieldConfig: { defaults: {}, overrides: [] } }
+    );
+    const frame = toDataFrame({ fields: [{ name: 'Value', values: [1, 2] }] });
+
+    render(<TablePanel {...props} data={{ ...props.data, series: [frame] }} />);
+
+    expect(screen.getByTestId('table-ng')).toHaveAttribute('data-header-visualizations', expected);
+  });
+
   it('applies field display processors to the grouped frame', async () => {
     const user = userEvent.setup();
     const props = getPanelProps<TableOptions>(

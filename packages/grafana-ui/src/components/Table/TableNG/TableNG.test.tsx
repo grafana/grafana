@@ -486,6 +486,20 @@ describe('TableNG', () => {
   });
 
   describe('Nested tables', () => {
+    it('does not render header visualizations for nested tables', () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createNestedDataFrame()}
+          width={800}
+          height={600}
+          showHeaderVisualizations
+        />
+      );
+
+      expect(container.querySelector('[data-table-header-visualization]')).not.toBeInTheDocument();
+    });
+
     it('renders table with nested data structure', () => {
       const { container } = render(
         <TableNG enableVirtualization={false} data={createNestedDataFrame()} width={800} height={600} />
@@ -1176,12 +1190,19 @@ describe('TableNG', () => {
   describe('Sorting', () => {
     it('allows sorting when clicking on column headers', async () => {
       const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          showHeaderVisualizations
+        />
       );
 
       // Ensure there are column headers
       const columnHeader = container.querySelector('[role="columnheader"]');
       expect(columnHeader).toBeInTheDocument();
+      expect(columnHeader?.querySelector('[data-table-header-visualization]')).toBeInTheDocument();
 
       // Find the sort button within the first header
       if (!columnHeader) {

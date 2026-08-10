@@ -49,6 +49,10 @@ export interface Options {
    */
   showHeader: boolean;
   /**
+   * Controls whether the header should show a visualization summarizing each column
+   */
+  showHeaderVisualizations?: boolean;
+  /**
    * Controls whether the header should show icons for the column types
    */
   showTypeIcons?: boolean;
@@ -62,6 +66,7 @@ export const defaultOptions: Partial<Options> = {
   cellHeight: ui.TableCellHeight.Sm,
   frameIndex: 0,
   showHeader: true,
+  showHeaderVisualizations: false,
   showTypeIcons: false,
   sortBy: [],
 };

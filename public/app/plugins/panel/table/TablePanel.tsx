@@ -144,6 +144,7 @@ export function TablePanel(props: Props) {
       width={width}
       data={displayedFrame}
       sortByBehavior={sortByBehavior}
+      showHeaderVisualizations={options.showHeaderVisualizations}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth, fieldScope) =>
         onColumnResize(displayName, resizedWidth, fieldScope, props)

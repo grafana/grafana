@@ -118,6 +118,7 @@ interface BaseTableProps {
   columnMinWidth?: number;
   noHeader?: boolean;
   showTypeIcons?: boolean;
+  showHeaderVisualizations?: boolean;
   resizable?: boolean;
   sortBy?: TableSortByFieldState[];
   sortByBehavior?: SortByBehavior;

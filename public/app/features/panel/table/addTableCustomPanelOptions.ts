@@ -14,6 +14,17 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
       category,
       defaultValue: defaultTableOptions.showHeader,
     })
+    .addBooleanSwitch({
+      path: 'showHeaderVisualizations',
+      name: t('table.name-show-header-visualizations', 'Show header visualizations'),
+      description: t(
+        'table.description-show-header-visualizations',
+        'Show a visualization summarizing the values in each column'
+      ),
+      category,
+      defaultValue: defaultTableOptions.showHeaderVisualizations,
+      showIf: (config) => config.showHeader,
+    })
     .addNumberInput({
       path: 'frozenColumns.left',
       name: t('table.name-frozen-columns', 'Frozen columns'),

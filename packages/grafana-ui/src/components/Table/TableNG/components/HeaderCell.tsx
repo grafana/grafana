@@ -13,11 +13,14 @@ import { Icon } from '../../../Icon/Icon';
 import { IconButton } from '../../../IconButton/IconButton';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Filter } from '../Filter/Filter';
+import { TABLE } from '../constants';
+import { type HeaderDistribution } from '../headerVisualizations';
 import { getJustifyContent } from '../styles';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 import { getAlignment, getDisplayName } from '../utils';
 
 import { HeaderColumnMenu } from './HeaderColumnMenu';
+import { HeaderMiniChart } from './HeaderMiniChart';
 
 interface HeaderCellContainerProps {
   column: Column<TableRow, TableSummaryRow>;
@@ -73,6 +76,8 @@ interface HeaderCellProps {
   onGroupByColumn?: () => void;
   onUngroup?: () => void;
   ungroupDisabledReason?: string;
+  distribution?: HeaderDistribution;
+  visualizationWidth?: number;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -95,6 +100,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   onGroupByColumn,
   onUngroup,
   ungroupDisabledReason,
+  distribution,
+  visualizationWidth = 0,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -120,6 +127,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     <div
       ref={ref}
       className={styles.headerCellRoot}
+      data-table-header-layout=""
       onKeyDown={
         disableKeyboardEvents
           ? undefined
@@ -141,8 +149,14 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               const headerContent = ref.current;
               const headerCell = ref.current?.parentNode?.parentNode;
               const row = headerCell?.parentNode;
+              const tabbableElements = headerContent?.querySelectorAll<HTMLElement>(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+              );
+              const lastTabbableElement = tabbableElements?.item((tabbableElements?.length ?? 0) - 1);
               const isLastElementInHeader =
-                headerContent?.lastElementChild?.contains(tableTabbedElement) && headerCell === row?.lastElementChild;
+                (lastTabbableElement?.contains(tableTabbedElement) ??
+                  Boolean(headerContent?.contains(tableTabbedElement))) &&
+                headerCell === row?.lastElementChild;
 
               if (isLastElementInHeader) {
                 selectFirstCell();
@@ -150,67 +164,78 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
             }
       }
     >
-      <div className={styles.headerCellContent}>
-        <Stack direction="row" gap={0.5} alignItems="center" justifyContent={justifyContent} width="100%">
-          {showTypeIcons && (
-            <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
-          )}
-          <span className={clsx(styles.headerCellLabel, 'table-ng-header-label')} title={displayName}>
-            {displayName}
-            {direction && (
-              <Icon
-                className={styles.headerCellIcon}
-                size="lg"
-                name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'}
+      <div className={styles.headerCellTopRow} data-table-header-title-row="">
+        <div className={styles.headerCellContent}>
+          <Stack direction="row" gap={0.5} alignItems="center" justifyContent={justifyContent} width="100%">
+            {showTypeIcons && (
+              <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
+            )}
+            <span className={clsx(styles.headerCellLabel, 'table-ng-header-label')} title={displayName}>
+              {displayName}
+              {direction && (
+                <Icon
+                  className={styles.headerCellIcon}
+                  size="lg"
+                  name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'}
+                />
+              )}
+            </span>
+          </Stack>
+        </div>
+
+        {(filterable || onHideColumn || onTogglePin || onGroupByColumn || onUngroup || ungroupDisabledReason) && (
+          <div className={styles.headerCellActions}>
+            {filterable && (
+              <Filter
+                name={column.key}
+                rows={rows}
+                filter={filter}
+                setFilter={setFilter}
+                field={field}
+                iconClassName={styles.headerCellIcon}
+                parentIndex={parentIndex}
+                crossFilterRows={crossFilterRows}
+                crossFilterTailRows={crossFilterTailRows}
               />
             )}
-          </span>
-        </Stack>
+
+            {(onHideColumn || onGroupByColumn) && (
+              <HeaderColumnMenu
+                displayName={displayName}
+                onHideColumn={onHideColumn}
+                canHideColumn={canHideColumn}
+                isPinned={isPinned}
+                onTogglePin={onTogglePin}
+                onGroupByColumn={onGroupByColumn}
+              />
+            )}
+            {(onUngroup || ungroupDisabledReason) && (
+              <IconButton
+                className={styles.ungroupButton}
+                name="layers-slash"
+                size="sm"
+                tooltip={
+                  ungroupDisabledReason ??
+                  t('grafana-ui.table.ungroup-column', 'Ungroup {{name}}', { name: displayName })
+                }
+                disabled={Boolean(ungroupDisabledReason)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onUngroup?.();
+                }}
+                onMouseDown={(event) => event.stopPropagation()}
+              />
+            )}
+          </div>
+        )}
       </div>
-
-      {(filterable || onHideColumn || onTogglePin || onGroupByColumn || onUngroup || ungroupDisabledReason) && (
-        <div className={styles.headerCellActions}>
-          {filterable && (
-            <Filter
-              name={column.key}
-              rows={rows}
-              filter={filter}
-              setFilter={setFilter}
-              field={field}
-              iconClassName={styles.headerCellIcon}
-              parentIndex={parentIndex}
-              crossFilterRows={crossFilterRows}
-              crossFilterTailRows={crossFilterTailRows}
-            />
-          )}
-
-          {(onHideColumn || onGroupByColumn) && (
-            <HeaderColumnMenu
-              displayName={displayName}
-              onHideColumn={onHideColumn}
-              canHideColumn={canHideColumn}
-              isPinned={isPinned}
-              onTogglePin={onTogglePin}
-              onGroupByColumn={onGroupByColumn}
-            />
-          )}
-          {(onUngroup || ungroupDisabledReason) && (
-            <IconButton
-              className={styles.ungroupButton}
-              name="layers-slash"
-              size="sm"
-              tooltip={
-                ungroupDisabledReason ??
-                t('grafana-ui.table.ungroup-column', 'Ungroup {{name}}', { name: displayName })
-              }
-              disabled={Boolean(ungroupDisabledReason)}
-              onClick={(event) => {
-                event.stopPropagation();
-                onUngroup?.();
-              }}
-              onMouseDown={(event) => event.stopPropagation()}
-            />
-          )}
+      {distribution && (
+        <div className={styles.headerVisualization} data-table-header-chart-row="">
+          <HeaderMiniChart
+            distribution={distribution}
+            field={field}
+            width={Math.max(0, visualizationWidth - 2 * TABLE.HEADER_CONTENT_INSET)}
+          />
         </div>
       )}
     </div>
@@ -221,10 +246,24 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
   headerCellRoot: css({
     label: 'headerCellRoot',
     display: 'flex',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    justifyContent: 'center',
     flex: 1,
+    width: '100%',
     minWidth: 0,
+    boxSizing: 'border-box',
+    paddingInline: TABLE.HEADER_CONTENT_INSET,
+    overflow: 'hidden',
     pointerEvents: 'none',
+  }),
+  headerCellTopRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    width: '100%',
+    minWidth: 0,
+    overflow: 'hidden',
   }),
   headerCellContent: css({
     label: 'headerCellContent',
@@ -260,6 +299,15 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
   }),
   headerCellIcon: css({
     color: theme.colors.text.secondary,
+    pointerEvents: 'none',
+  }),
+  headerVisualization: css({
+    height: TABLE.HEADER_VISUALIZATION_HEIGHT,
+    marginTop: TABLE.HEADER_VISUALIZATION_GAP,
+    width: '100%',
+    minWidth: 0,
+    maxWidth: '100%',
+    overflow: 'hidden',
     pointerEvents: 'none',
   }),
 }));

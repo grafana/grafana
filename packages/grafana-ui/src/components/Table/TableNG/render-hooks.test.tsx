@@ -348,6 +348,33 @@ describe('useColumnBuilderFromFields', () => {
     expect(result.columns[1].key).toBe('B');
   });
 
+  it('keeps header visualizations off by default', () => {
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+    const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+    const column = result.columns[0];
+    const headerProps = { column } as unknown as Parameters<NonNullable<typeof column.renderHeaderCell>>[0];
+
+    const { container } = render(<>{column.renderHeaderCell?.(headerProps)}</>);
+
+    expect(container.querySelector('[data-table-header-visualization]')).not.toBeInTheDocument();
+  });
+
+  it('renders an opted-in categorical visualization from the field full values', () => {
+    const hook = renderColumnBuilderHook({
+      filterResult: makeFilterResult(),
+      config: makeConfig({ showHeaderVisualizations: true }),
+    });
+    const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows.slice(0, 1));
+    const column = result.columns[0];
+    const headerProps = { column } as unknown as Parameters<NonNullable<typeof column.renderHeaderCell>>[0];
+
+    const { container } = render(<>{column.renderHeaderCell?.(headerProps)}</>);
+
+    expect(container.querySelector('[data-table-header-visualization="categories"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-segment-label="x"][data-segment-count="1"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-segment-label="y"][data-segment-count="1"]')).toBeInTheDocument();
+  });
+
   it('marks columns frozen when index is within frozen range', () => {
     const config = makeConfig({ frozenColumns: 1, numFrozenColsFullyInView: 2 });
     const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config });

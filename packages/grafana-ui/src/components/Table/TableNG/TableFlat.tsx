@@ -78,6 +78,7 @@ export function TableFlat(props: TableNGProps) {
     onColumnResize,
     onGroupByColumn,
     onSortByChange,
+    showHeaderVisualizations = false,
     showTypeIcons,
     structureRev,
     timeRange,
@@ -339,6 +340,7 @@ export function TableFlat(props: TableNGProps) {
     enabled: hasHeader,
     sortColumns,
     showTypeIcons: showTypeIcons ?? false,
+    showHeaderVisualizations,
     typographyCtx,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
@@ -414,6 +416,7 @@ export function TableFlat(props: TableNGProps) {
       disableSanitizeHtml,
       enableColumnReorder: true,
       showTypeIcons,
+      showHeaderVisualizations,
       timeRange,
       onHideColumn: handleHideColumn,
       onGroupByColumn,
@@ -444,6 +447,7 @@ export function TableFlat(props: TableNGProps) {
       setFilter,
       settlingColumnKeys,
       showTypeIcons,
+      showHeaderVisualizations,
       timeRange,
     ]
   );

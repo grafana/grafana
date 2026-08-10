@@ -340,6 +340,7 @@ interface UseHeaderHeightOptions {
   sortColumns: SortColumn[];
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
+  showHeaderVisualizations?: boolean;
 }
 
 export function useHeaderHeight({
@@ -349,6 +350,7 @@ export function useHeaderHeight({
   sortColumns,
   typographyCtx,
   showTypeIcons = false,
+  showHeaderVisualizations = false,
 }: UseHeaderHeightOptions): number {
   const perIconSpace = ICON_WIDTH + ICON_GAP;
 
@@ -386,7 +388,7 @@ export function useHeaderHeight({
     if (!enabled) {
       return 0;
     }
-    return getRowHeight(
+    const labelHeight = getRowHeight(
       fields,
       { __index: -1, __depth: 0 },
       columnAvailableWidths,
@@ -395,7 +397,10 @@ export function useHeaderHeight({
       TABLE.LINE_HEIGHT,
       TABLE.CELL_PADDING
     );
-  }, [fields, enabled, columnAvailableWidths, measurers]);
+    return showHeaderVisualizations
+      ? labelHeight + TABLE.HEADER_VISUALIZATION_GAP + TABLE.HEADER_VISUALIZATION_HEIGHT
+      : labelHeight;
+  }, [fields, enabled, columnAvailableWidths, measurers, showHeaderVisualizations]);
 
   return headerHeight;
 }

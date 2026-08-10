@@ -519,6 +519,26 @@ describe('TableNG hooks', () => {
       expect(result.current).toBe(TABLE.HEADER_HEIGHT);
     });
 
+    it('adds the fixed mini-chart area only when header visualizations are enabled', () => {
+      const { fields } = setupData();
+      const { result, rerender } = renderHook(
+        ({ showHeaderVisualizations }) =>
+          useHeaderHeight({
+            fields,
+            columnWidths: [100, 100, 100],
+            enabled: true,
+            typographyCtx,
+            sortColumns: [],
+            showHeaderVisualizations,
+          }),
+        { initialProps: { showHeaderVisualizations: false } }
+      );
+
+      expect(result.current).toBe(34);
+      rerender({ showHeaderVisualizations: true });
+      expect(result.current).toBe(94);
+    });
+
     it('should return the appropriate height for wrapped text', () => {
       const { fields } = setupData();
       const { result } = renderHook(() => {
@@ -547,6 +567,31 @@ describe('TableNG hooks', () => {
       });
 
       expect(result.current).toBe(50);
+    });
+
+    it('preserves wrapped label height when adding the mini-chart area', () => {
+      const { fields } = setupData();
+      const wrappedFields = fields.map((field) =>
+        field.name === 'name'
+          ? {
+              ...field,
+              name: 'Longer name that needs wrapping',
+              config: { ...field.config, custom: { ...field.config.custom, wrapHeaderText: true } },
+            }
+          : field
+      );
+      const { result } = renderHook(() =>
+        useHeaderHeight({
+          fields: wrappedFields,
+          columnWidths: [100, 100, 100],
+          enabled: true,
+          typographyCtx: { ...typographyCtx, measureHeight: jest.fn(() => 44) },
+          sortColumns: [],
+          showHeaderVisualizations: true,
+        })
+      );
+
+      expect(result.current).toBe(110);
     });
 
     it('should calculate the available width for a header cell based on the icons rendered within it', () => {
