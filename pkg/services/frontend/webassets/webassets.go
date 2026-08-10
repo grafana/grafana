@@ -35,10 +35,10 @@ func getCDNRoot(cfg *setting.Cfg, license licensing.Licensing) string {
 }
 
 // New codepath for retrieving web assets URLs for the frontend-service
-func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing) (dtos.EntryPointAssets, error) {
+func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing, buildDir string) (dtos.EntryPointAssets, error) {
 	assetsFilename := "assets-manifest.json"
 
-	assetsManifest, err := webassets.ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", assetsFilename))
+	assetsManifest, err := webassets.ReadWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, buildDir, assetsFilename))
 	if err != nil {
 		return dtos.EntryPointAssets{}, err
 	}

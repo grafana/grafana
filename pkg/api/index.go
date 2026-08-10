@@ -143,7 +143,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme)
-	assets, err := webassets.GetWebAssets(c.Req.Context(), "build", hs.Cfg, hs.License)
+	assets, err := webassets.GetWebAssets(ctx, hs.buildDir, hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
 	}

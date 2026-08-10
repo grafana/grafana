@@ -11,14 +11,39 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/httpclient"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api/webassets")
+
+const (
+	// WebpackBuildDir holds the frontend assets built by webpack.
+	WebpackBuildDir = "build"
+	// RspackBuildDir holds the frontend assets built by rspack.
+	RspackBuildDir = "build-rspack"
+)
+
+// ResolveBuildDir returns the directory under the static root holding the frontend
+// assets to serve: the rspack output when grafana.rspackBuild is enabled, the webpack
+// output otherwise. Both are served under the public/build URL prefix, so only the
+// on-disk directory changes. Callers that serve a fixed asset set, such as swagger,
+// pass their own directory instead.
+//
+// Call this once at startup and keep the result. The rollout is per instance, and each
+// Hosted Grafana stack is its own deployment, so per instance is per tenant.
+func ResolveBuildDir(ctx context.Context) string {
+	rspack := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaRspackBuild, false, openfeature.TransactionContext(ctx))
+	if rspack {
+		return RspackBuildDir
+	}
+	return WebpackBuildDir
+}
 
 type ManifestInfo struct {
 	FilePath  string `json:"src,omitempty"`

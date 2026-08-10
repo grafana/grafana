@@ -32,8 +32,12 @@ type IndexProvider struct {
 	hooksService *hooks.HooksService
 	config       *setting.Cfg
 	license      licensing.Licensing
-	bootScript   template.JS
 	previewCfg   fswebassets.PreviewAssetsConfig
+	bootScript   template.JS
+
+	// buildDir is the static root subdirectory the frontend assets are read from,
+	// resolved once at startup because the rspack rollout is per instance.
+	buildDir string
 }
 
 type IndexViewData struct {
@@ -96,13 +100,14 @@ var (
 	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `index.html`))
 )
 
-func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService, previewCfg fswebassets.PreviewAssetsConfig) (*IndexProvider, error) {
+func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService, previewCfg fswebassets.PreviewAssetsConfig, buildDir string) (*IndexProvider, error) {
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
 	}
 
-	bootScriptRaw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, "build", "boot.js"))
+	//nolint:gosec
+	bootScriptRaw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, buildDir, "boot.js"))
 	if err != nil {
 		return nil, fmt.Errorf("read boot.js: %w", err)
 	}
@@ -121,6 +126,7 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		previewCfg:   previewCfg,
 		//nolint:gosec
 		bootScript: template.JS(bootScriptRaw),
+		buildDir:   buildDir,
 	}, nil
 }
 
@@ -246,7 +252,7 @@ func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request) (d
 		}
 	}
 
-	assets, err := fswebassets.GetWebAssets(ctx, p.config, p.license)
+	assets, err := fswebassets.GetWebAssets(ctx, p.config, p.license, p.buildDir)
 	return assets, "", err
 }
 

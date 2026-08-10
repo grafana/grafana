@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -232,6 +233,10 @@ type HTTPServer struct {
 	dsEndpointRedirects             *prometheus.CounterVec
 	dsConnectionClient              datasource.ConnectionClient
 	publicDashboardsService         publicdashboards.Service
+
+	// buildDir is the static root subdirectory the frontend assets are read and served
+	// from. It is resolved once at startup because the rspack rollout is per instance.
+	buildDir string
 }
 
 type TLSCerts struct {
@@ -394,6 +399,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
 		publicDashboardsService:      publicDashboardsService,
+		buildDir:                     webassets.ResolveBuildDir(context.Background()),
 		htmlHandlerRequestsDuration: metricutil.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "grafana",
 			Name:      "html_handler_requests_duration_seconds",
@@ -698,10 +704,11 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.UseMiddleware(middleware.Gziper())
 	}
 
-	m.UseMiddleware(middleware.Recovery(hs.Cfg, hs.License))
+	m.UseMiddleware(middleware.Recovery(hs.Cfg, hs.License, hs.buildDir))
 	m.UseMiddleware(hs.Csrf.Middleware())
 
-	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
+	// The build directory varies with the rspack flag, the URL prefix never does.
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, hs.buildDir, "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "mockServiceWorker.js", "mockServiceWorker.js")

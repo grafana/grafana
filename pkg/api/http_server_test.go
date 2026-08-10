@@ -1,14 +1,21 @@
 package api
 
 import (
+	"context"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/api/webassets"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestHTTPServer_MetricsBasicAuth(t *testing.T) {
@@ -388,4 +395,58 @@ func TestHTTPServer_getListeners(t *testing.T) {
 		assert.Len(t, listeners, 1)
 		_ = listeners[0].Close()
 	})
+}
+
+// The rspack flag picks the on-disk build directory; the URL prefix, and with it the
+// immutable cache header, stay the same.
+func TestHTTPServer_mapStaticBuildDir(t *testing.T) {
+	staticRoot := t.TempDir()
+	for dir, body := range map[string]string{"build": "webpack", "build-rspack": "rspack"} {
+		require.NoError(t, os.MkdirAll(filepath.Join(staticRoot, dir), 0o750))
+		require.NoError(t, os.WriteFile(filepath.Join(staticRoot, dir, "app.js"), []byte(body), 0o644))
+	}
+
+	tests := []struct {
+		desc             string
+		enabledFlags     []string
+		expectedBuildDir string
+		expectedBody     string
+	}{
+		{
+			desc:             "flag off serves the webpack build",
+			expectedBuildDir: "build",
+			expectedBody:     "webpack",
+		},
+		{
+			desc:             "flag on serves the rspack build",
+			enabledFlags:     []string{featuremgmt.FlagGrafanaRspackBuild},
+			expectedBuildDir: "build-rspack",
+			expectedBody:     "rspack",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			if len(tt.enabledFlags) > 0 {
+				featuremgmt.WithEnabledFlags(t, tt.enabledFlags...)
+			}
+
+			cfg := setting.NewCfg()
+			cfg.Env = setting.Prod
+			cfg.StaticRootPath = staticRoot
+
+			hs := &HTTPServer{Cfg: cfg, buildDir: webassets.ResolveBuildDir(context.Background())}
+			require.Equal(t, tt.expectedBuildDir, hs.buildDir)
+
+			m := web.New()
+			hs.mapStatic(m, cfg.StaticRootPath, hs.buildDir, "public/build")
+
+			recorder := httptest.NewRecorder()
+			m.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/public/build/app.js", nil))
+
+			require.Equal(t, http.StatusOK, recorder.Code)
+			require.Equal(t, tt.expectedBody, recorder.Body.String())
+			require.Equal(t, "public, max-age=31536000", recorder.Header().Get("Cache-Control"))
+		})
+	}
 }

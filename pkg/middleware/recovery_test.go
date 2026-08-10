@@ -63,7 +63,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		require.NoError(t, err)
 
 		sc.m = web.New()
-		sc.m.UseMiddleware(Recovery(cfg, &licensing.OSSLicensingService{}))
+		sc.m.UseMiddleware(Recovery(cfg, &licensing.OSSLicensingService{}, "build"))
 
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
