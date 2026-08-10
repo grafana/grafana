@@ -112,7 +112,7 @@ test.describe(
         await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('hide');
         await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
         await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
-        await sidebar.tabOptions.conditionalRenderingOptions.selectMatch('all');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectMatchType('all');
 
         await switchTabAndSave(page, controls, tabs);
 
@@ -145,7 +145,7 @@ test.describe(
         await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('hide');
         await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
         await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
-        await sidebar.tabOptions.conditionalRenderingOptions.selectMatch('any');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectMatchType('any');
 
         await switchTabAndSave(page, controls, tabs);
 
@@ -178,7 +178,7 @@ test.describe(
         await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('show');
         await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '1');
         await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
-        await sidebar.tabOptions.conditionalRenderingOptions.selectMatch('all');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectMatchType('all');
 
         await switchTabAndSave(page, controls, tabs);
 
@@ -210,7 +210,7 @@ test.describe(
         await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('show');
         await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '2');
         await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
-        await sidebar.tabOptions.conditionalRenderingOptions.selectMatch('any');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectMatchType('any');
 
         await switchTabAndSave(page, controls, tabs);
 

@@ -79,30 +79,16 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 
 				if ok && namespace != "" {
 					// Fetch tenant overrides for relevant sections only
-					sourceFilterEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceSettingsSourceFilter, false, openfeature.TransactionContext(ctx))
-
-					var sourceExpression metav1.LabelSelectorRequirement
-					if sourceFilterEnabled {
-						sourceExpression = metav1.LabelSelectorRequirement{
-							Key:      "source",
-							Operator: metav1.LabelSelectorOpIn,
-							Values:   []string{"us"},
-						}
-					} else {
-						// don't return values from defaults.ini as they conflict with the service's own defaults
-						sourceExpression = metav1.LabelSelectorRequirement{
-							Key:      "source",
-							Operator: metav1.LabelSelectorOpNotIn,
-							Values:   []string{"defaults"},
-						}
-					}
-
 					selector := metav1.LabelSelector{
 						MatchExpressions: []metav1.LabelSelectorRequirement{{
 							Key:      "section",
 							Operator: metav1.LabelSelectorOpIn,
 							Values:   []string{"security", "analytics"},
-						}, sourceExpression},
+						}, {
+							Key:      "source",
+							Operator: metav1.LabelSelectorOpIn,
+							Values:   []string{"us"},
+						}},
 					}
 
 					settings, err := settingsService.ListAsIni(ctx, selector)
