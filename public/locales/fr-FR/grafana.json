@@ -5914,8 +5914,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Cette action dissociera tous les groupes imbriqués.",
-      "ungroup-nested-title": "Dissocier les groupes imbriqués ?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} sur {{numberOfPages}}",
@@ -14757,7 +14761,6 @@
     },
     "header": {
       "alert": "Alerte",
-      "expression": "Expression",
       "pending-expression": "",
       "pending-expression-cancel": "Annuler",
       "pending-transformation": "",
@@ -14771,6 +14774,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

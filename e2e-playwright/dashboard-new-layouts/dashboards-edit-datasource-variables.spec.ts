@@ -35,7 +35,7 @@ test.describe(
         value: 'gdev-cloudwatch',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.datasource.selectType('CloudWatch');
       await sidebar.variableOptions.datasource.setNameFilter('cloud');
