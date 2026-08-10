@@ -71,9 +71,8 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
           ...(promote ? { 'X-Grafana-Alerting-Promote': 'true' } : {}),
         },
       }),
-      // Importing writes into the AM config (staged imports land on its extra_config), so the config
-      // query has to refetch — otherwise the Import tab the wizard redirects to renders its cached,
-      // pre-import config and shows the empty state instead of the freshly staged one.
+      // Staged imports land on the AM config's extra_config, so the config query has to refetch —
+      // otherwise the Import tab renders its cached, pre-import config and shows the empty state.
       invalidatesTags: ['AlertmanagerConfiguration'],
     }),
 
@@ -101,11 +100,8 @@ export const convertToGMAApi = alertingApi.injectEndpoints({
         headers: {
           'X-Grafana-Alerting-Config-Identifier': configIdentifier,
           'X-Grafana-Alerting-Dry-Run': 'true',
-          // Always force-replace during dry-run to avoid 409 conflicts —
-          // we want to validate the config regardless of existing identifiers
+          // Force-replace so validation isn't blocked by a 409 from an existing identifier.
           'X-Grafana-Alerting-Config-Force-Replace': 'true',
-          // When promoting, the dry-run also validates the merge and the caller's
-          // create-permissions for every resource type in the config.
           ...(promote ? { 'X-Grafana-Alerting-Promote': 'true' } : {}),
         },
       }),

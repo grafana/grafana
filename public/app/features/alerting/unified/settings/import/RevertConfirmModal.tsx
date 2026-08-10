@@ -7,7 +7,6 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { logError } from '../../Analytics';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
-import { useSingleFlight } from '../../hooks/useSingleFlight';
 import { stringifyErrorLike } from '../../utils/misc';
 
 import { type StagedExtraConfig } from './stagedConfig';
@@ -36,8 +35,7 @@ export function RevertConfirmModal({ stagedConfig, onDismiss }: Props) {
   const notifyApp = useAppNotification();
   const [deleteStaged, { isLoading }] = convertToGMAApi.useDeleteStagedAlertmanagerConfigMutation();
 
-  // A second DELETE would 404 and show a failure toast for a revert that actually succeeded.
-  const onConfirm = useSingleFlight(async () => {
+  const onConfirm = async () => {
     try {
       await deleteStaged({ configIdentifier: stagedConfig.identifier }).unwrap();
       notifyApp.success(t('alerting.settings.import.revert.success', 'Staged configuration reverted'));
@@ -49,7 +47,7 @@ export function RevertConfirmModal({ stagedConfig, onDismiss }: Props) {
         stringifyErrorLike(err)
       );
     }
-  });
+  };
 
   return (
     <ConfirmModal

@@ -1,6 +1,8 @@
 import { HttpResponse, http } from 'msw';
-import { act, render, waitFor } from 'test/test-utils';
+import { render, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
+
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 
 import { setupMswServer } from '../../mockApi';
 
@@ -22,7 +24,19 @@ const ui = {
   reassurePromoted: byText(/already promoted stays in place/i),
   reassureReimport: byText(/import this configuration again/i),
   confirm: byRole('button', { name: /^revert$/i }),
+  errorTitle: byText(/failed to revert configuration/i),
+  errorDetail: byText(/user is not permitted to delete this import/i),
 };
+
+// Notifications render through the app-wide list, so it has to be mounted for the toasts to appear.
+function renderModal(onDismiss: () => void) {
+  return render(
+    <>
+      <AppNotificationList />
+      <RevertConfirmModal stagedConfig={stagedConfig} onDismiss={onDismiss} />
+    </>
+  );
+}
 
 describe('RevertConfirmModal', () => {
   it('shows reassuring copy and reverts the staged config on confirm', async () => {
@@ -35,7 +49,7 @@ describe('RevertConfirmModal', () => {
     );
 
     const onDismiss = jest.fn();
-    const { user } = render(<RevertConfirmModal stagedConfig={stagedConfig} onDismiss={onDismiss} />);
+    const { user } = renderModal(onDismiss);
 
     expect(ui.body.get()).toBeInTheDocument();
     expect(ui.reassureLive.get()).toBeInTheDocument();
@@ -48,27 +62,23 @@ describe('RevertConfirmModal', () => {
     expect(deletedIdentifier).toBe('config-min');
   });
 
-  it('reverts only once when the user submits the confirm button twice', async () => {
-    let deleteCount = 0;
-
+  // A user scoped to a different import passes the client-side permission check and is rejected here,
+  // so the modal has to stay open with the reason rather than report a revert that didn't happen.
+  it('keeps the modal open and surfaces the reason when the revert is rejected', async () => {
     server.use(
-      http.delete(DELETE_URL, () => {
-        deleteCount++;
-        return new HttpResponse(null, { status: 202 });
-      })
+      http.delete(DELETE_URL, () =>
+        HttpResponse.json({ message: 'user is not permitted to delete this import' }, { status: 403 })
+      )
     );
 
     const onDismiss = jest.fn();
-    render(<RevertConfirmModal stagedConfig={stagedConfig} onDismiss={onDismiss} />);
+    const { user } = renderModal(onDismiss);
 
-    // Both clicks must land before React re-renders the button as disabled; userEvent would flush
-    // between them and miss the race. See useSingleFlight for why the two submits overlap at all.
-    await act(async () => {
-      ui.confirm.get().click();
-      ui.confirm.get().click();
-    });
+    await user.click(ui.confirm.get());
 
-    await waitFor(() => expect(onDismiss).toHaveBeenCalled());
-    expect(deleteCount).toBe(1);
+    expect(await ui.errorTitle.find()).toBeInTheDocument();
+    expect(await ui.errorDetail.find()).toBeInTheDocument();
+    expect(ui.body.get()).toBeInTheDocument();
+    expect(onDismiss).not.toHaveBeenCalled();
   });
 });
