@@ -63,6 +63,18 @@ function getExportLabel(labels?: { [ExportLabel]?: string }): string | undefined
   return labels[ExportLabel];
 }
 
+type ExportLabels = { [key: string]: string } | undefined;
+
+/** Drop grafana.app/export-label used only for import pickers. */
+function stripExportOnlyLabels(labels: ExportLabels): ExportLabels {
+  if (!labels) {
+    return undefined;
+  }
+  const remaining = { ...labels };
+  delete remaining[ExportLabel];
+  return Object.keys(remaining).length > 0 ? remaining : undefined;
+}
+
 /**
  * Extract library panel inputs from dashboard __elements
  */
@@ -344,14 +356,25 @@ function replaceAnnotationDatasources(
     const dsLabel = getExportLabel(annotation.spec.query.labels);
     const currentDsName = annotation.spec.query?.datasource?.name;
     const ds = dsLabel ? mappings[dsLabel] : dsType ? mappings[dsType] : undefined;
+    const remainingLabels = stripExportOnlyLabels(annotation.spec.query?.labels);
+    const shouldRemap = !isVariableRef(currentDsName) && !!dsType && !!ds;
 
-    if (isVariableRef(currentDsName) || !dsType || !ds) {
-      return annotation;
-    }
+    const { labels: _droppedLabels, ...queryWithoutLabels } = annotation.spec.query ?? {};
 
-    // remove export label
-    if (annotation.spec.query?.labels) {
-      delete annotation.spec.query.labels[ExportLabel];
+    if (!shouldRemap) {
+      if (!annotation.spec.query?.labels || remainingLabels === annotation.spec.query.labels) {
+        return annotation;
+      }
+      return {
+        ...annotation,
+        spec: {
+          ...annotation.spec,
+          query: {
+            ...queryWithoutLabels,
+            ...(remainingLabels && { labels: remainingLabels }),
+          },
+        },
+      };
     }
 
     return {
@@ -359,9 +382,9 @@ function replaceAnnotationDatasources(
       spec: {
         ...annotation.spec,
         query: {
-          ...annotation.spec.query,
+          ...queryWithoutLabels,
           datasource: { name: ds.uid },
-          ...(Object.keys(annotation.spec.query?.labels ?? {}).length > 0 && { labels: annotation.spec.query.labels }),
+          ...(remainingLabels && { labels: remainingLabels }),
         },
       },
     };
@@ -378,14 +401,25 @@ function replaceVariableDatasources(
       const dsLabel = getExportLabel(variable.spec.query.labels);
       const currentDsName = variable.spec.query?.datasource?.name;
       const ds = dsLabel ? mappings[dsLabel] : dsType ? mappings[dsType] : undefined;
+      const remainingLabels = stripExportOnlyLabels(variable.spec.query?.labels);
+      const shouldRemap = !isVariableRef(currentDsName) && !!dsType && !!ds;
 
-      if (isVariableRef(currentDsName) || !dsType || !ds) {
-        return variable;
-      }
+      const { labels: _droppedLabels, ...queryWithoutLabels } = variable.spec.query ?? {};
 
-      // remove export label
-      if (variable.spec.query?.labels) {
-        delete variable.spec.query.labels[ExportLabel];
+      if (!shouldRemap) {
+        if (!variable.spec.query?.labels || remainingLabels === variable.spec.query.labels) {
+          return variable;
+        }
+        return {
+          ...variable,
+          spec: {
+            ...variable.spec,
+            query: {
+              ...queryWithoutLabels,
+              ...(remainingLabels && { labels: remainingLabels }),
+            },
+          },
+        };
       }
 
       return {
@@ -393,9 +427,9 @@ function replaceVariableDatasources(
         spec: {
           ...variable.spec,
           query: {
-            ...variable.spec.query,
+            ...queryWithoutLabels,
             datasource: { name: ds.uid },
-            ...(Object.keys(variable.spec.query?.labels ?? {}).length > 0 && { labels: variable.spec.query.labels }),
+            ...(remainingLabels && { labels: remainingLabels }),
           },
           options: [],
           current: { text: '', value: '' },
@@ -429,22 +463,24 @@ function replaceVariableDatasources(
       const dsLabel = getExportLabel(variable.labels);
       const currentDsName = variable.datasource?.name;
       const ds = dsLabel ? mappings[dsLabel] : dsType ? mappings[dsType] : undefined;
-
-      if (isVariableRef(currentDsName) || !dsType || !ds) {
-        return variable;
-      }
-
-      // remove ephemeral export label; keep any other labels
       const { labels, ...variableWithoutLabels } = variable;
-      const remainingLabels = labels ? { ...labels } : undefined;
-      if (remainingLabels) {
-        delete remainingLabels[ExportLabel];
+      const remainingLabels = stripExportOnlyLabels(labels);
+      const shouldRemap = !isVariableRef(currentDsName) && !!dsType && !!ds;
+
+      if (!shouldRemap) {
+        if (remainingLabels === labels) {
+          return variable;
+        }
+        return {
+          ...variableWithoutLabels,
+          ...(remainingLabels ? { labels: remainingLabels } : {}),
+        };
       }
 
       return {
         ...variableWithoutLabels,
         datasource: { name: ds.uid },
-        ...(remainingLabels && Object.keys(remainingLabels).length > 0 && { labels: remainingLabels }),
+        ...(remainingLabels ? { labels: remainingLabels } : {}),
       };
     }
 
@@ -470,14 +506,25 @@ function replaceElementDatasources(
             const queryLabel = getExportLabel(query.spec.query.labels);
             const currentDsName = query.spec.query?.datasource?.name;
             const ds = queryLabel ? mappings[queryLabel] : queryType ? mappings[queryType] : undefined;
+            const remainingLabels = stripExportOnlyLabels(query.spec.query?.labels);
+            const shouldRemap = !isVariableRef(currentDsName) && !!queryType && !!ds;
 
-            if (isVariableRef(currentDsName) || !queryType || !ds) {
-              return query;
-            }
+            const { labels: _droppedLabels, ...queryWithoutLabels } = query.spec.query ?? {};
 
-            // remove export label
-            if (query.spec.query?.labels) {
-              delete query.spec.query.labels[ExportLabel];
+            if (!shouldRemap) {
+              if (!query.spec.query?.labels || remainingLabels === query.spec.query.labels) {
+                return query;
+              }
+              return {
+                ...query,
+                spec: {
+                  ...query.spec,
+                  query: {
+                    ...queryWithoutLabels,
+                    ...(remainingLabels && { labels: remainingLabels }),
+                  },
+                },
+              };
             }
 
             return {
@@ -485,9 +532,9 @@ function replaceElementDatasources(
               spec: {
                 ...query.spec,
                 query: {
-                  ...query.spec.query,
+                  ...queryWithoutLabels,
                   datasource: { name: ds.uid },
-                  ...(Object.keys(query.spec.query?.labels ?? {}).length > 0 && { labels: query.spec.query.labels }),
+                  ...(remainingLabels && { labels: remainingLabels }),
                 },
               },
             };

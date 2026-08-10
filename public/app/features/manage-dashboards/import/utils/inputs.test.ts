@@ -612,9 +612,11 @@ describe('applyV2Inputs', () => {
 
     const updatedAnnotation = result.annotations?.[0] as AnnotationQueryKind;
     expect(updatedAnnotation.spec.query?.datasource?.name).toBe('ds-uid');
+    expect(updatedAnnotation.spec.query?.labels?.[ExportLabel]).toBeUndefined();
 
     const updatedVariable = result.variables?.[0] as QueryVariableKind;
     expect(updatedVariable.spec.query?.datasource?.name).toBe('ds-uid');
+    expect(updatedVariable.spec.query?.labels?.[ExportLabel]).toBeUndefined();
 
     const updatedPanel = result.elements.panel as PanelKind;
     const queries = updatedPanel.spec.data?.kind === 'QueryGroup' ? updatedPanel.spec.data.spec.queries : [];
@@ -622,6 +624,38 @@ describe('applyV2Inputs', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const querySpec = updatedQuery?.spec as any;
     expect(querySpec?.query?.datasource?.name).toBe('ds-uid');
+    expect(querySpec?.query?.labels?.[ExportLabel]).toBeUndefined();
+  });
+
+  it('strips ExportLabel from built-in annotations even without a mapping', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [
+        {
+          kind: 'AnnotationQuery',
+          spec: {
+            builtIn: true,
+            query: {
+              group: 'grafana',
+              labels: { [ExportLabel]: 'grafana-1' },
+              datasource: { name: '-- Grafana --' },
+            },
+          },
+        },
+      ],
+      variables: [],
+    } as unknown as DashboardV2Spec;
+
+    const result = applyV2Inputs(dashboard, {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+    });
+
+    const annotation = result.annotations?.[0] as AnnotationQueryKind;
+    expect(annotation.spec.query?.labels?.[ExportLabel]).toBeUndefined();
+    expect(annotation.spec.query?.datasource?.name).toBe('-- Grafana --');
   });
 
   it('uses datasource labels to keep selections independent', () => {
