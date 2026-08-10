@@ -14,7 +14,7 @@ import { getTelemetrySetupCta, getTelemetrySetupLearnMore } from './telemetrySet
 
 const formatUsageNumber = getValueFormat('short');
 
-function buildTracesStats(spans: number | null, services: number | null) {
+function buildTracesStats(spans: number | null, services: number | null, lookbackHours: number) {
   if (spans == null) {
     return null;
   }
@@ -29,10 +29,11 @@ function buildTracesStats(spans: number | null, services: number | null) {
       services != null
         ? t('home.solutions.traces.stats-services', '', {
             count: services,
-            defaultValue_one: 'traced · 24h · {{count}} service',
-            defaultValue_other: 'traced · 24h · {{count}} services',
+            hours: lookbackHours,
+            defaultValue_one: 'traced · {{hours}}h · {{count}} service',
+            defaultValue_other: 'traced · {{hours}}h · {{count}} services',
           })
-        : t('home.solutions.traces.stats', 'traced · 24h'),
+        : t('home.solutions.traces.stats', 'traced · {{hours}}h', { hours: lookbackHours }),
   };
 }
 
@@ -70,15 +71,23 @@ export function tracesSolution(): Solution {
     }),
     alert: async () => null,
     // Render the span total immediately; the slower service count only refines the secondary line.
-    stats: async () => buildTracesStats((await activity())?.spans ?? null, null),
+    stats: async () => {
+      const traces = await activity();
+      return traces ? buildTracesStats(traces.spans, null, traces.lookbackHours) : null;
+    },
     refinedStats: async () => {
       const [spans, serviceCount] = await Promise.all([activity(), services().catch(() => null)]);
-      return serviceCount != null ? buildTracesStats(spans?.spans ?? null, serviceCount) : null;
+      return spans && serviceCount != null ? buildTracesStats(spans.spans, serviceCount, spans.lookbackHours) : null;
     },
     sparkline: async () => {
       const traces = await activity();
       return traces?.series
-        ? { series: traces.series, caption: t('home.solutions.traces.throughput', 'Span throughput · last 24h') }
+        ? {
+            series: traces.series,
+            caption: t('home.solutions.traces.throughput', 'Span throughput · last {{hours}}h', {
+              hours: traces.lookbackHours,
+            }),
+          }
         : null;
     },
     cta: async () => {

@@ -36,7 +36,7 @@ beforeEach(() => {
   mockDetectSignal.mockReset();
   mockDetectSignal.mockResolvedValue({ status: 'active', datasource: ds });
   mockFetchActivity.mockReset();
-  mockFetchActivity.mockResolvedValue({ spans: 4_800_000, series: null });
+  mockFetchActivity.mockResolvedValue({ spans: 4_800_000, series: null, lookbackHours: 24 });
   mockFetchServices.mockReset();
   mockFetchServices.mockResolvedValue(34);
   mockDrilldownActiveCta.mockReset();
@@ -96,7 +96,7 @@ describe('tracesSolution', () => {
     });
 
     it('returns no stats without a span count', async () => {
-      mockFetchActivity.mockResolvedValue({ spans: null, series: null });
+      mockFetchActivity.mockResolvedValue({ spans: null, series: null, lookbackHours: 24 });
 
       await expect(tracesSolution().stats()).resolves.toBeNull();
     });
@@ -126,7 +126,7 @@ describe('tracesSolution', () => {
   describe('sparkline', () => {
     it('carries the span-throughput trend when present', async () => {
       const series = { x: { values: [1] }, y: { values: [2] } } as never;
-      mockFetchActivity.mockResolvedValue({ spans: null, series });
+      mockFetchActivity.mockResolvedValue({ spans: null, series, lookbackHours: 24 });
 
       await expect(tracesSolution().sparkline()).resolves.toEqual({
         series,
@@ -135,9 +135,18 @@ describe('tracesSolution', () => {
     });
 
     it('omits the sparkline when the trend is unavailable', async () => {
-      mockFetchActivity.mockResolvedValue({ spans: null, series: null });
+      mockFetchActivity.mockResolvedValue({ spans: null, series: null, lookbackHours: 24 });
 
       await expect(tracesSolution().sparkline()).resolves.toBeNull();
+    });
+
+    it('labels a Tempo 2.x fallback with its shorter lookback', async () => {
+      const series = { x: { values: [1] }, y: { values: [2] } } as never;
+      mockFetchActivity.mockResolvedValue({ spans: 120, series, lookbackHours: 3 });
+      const solution = tracesSolution();
+
+      await expect(solution.stats()).resolves.toEqual({ primary: '120 spans', secondary: 'traced · 3h' });
+      await expect(solution.sparkline()).resolves.toEqual({ series, caption: 'Span throughput · last 3h' });
     });
   });
 

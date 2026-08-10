@@ -286,6 +286,7 @@ describe('fetchTracesActivity', () => {
     expect(activity.spans).toBe(600);
     expect(activity.series?.x?.values).toEqual([1000, 2000, 3000]);
     expect(activity.series?.y.values).toEqual([100, 200, 300]);
+    expect(activity.lookbackHours).toBe(24);
     const end = Math.floor(Date.now() / 1000);
     expect(mockProxyGet).toHaveBeenCalledWith(
       '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
@@ -298,7 +299,53 @@ describe('fetchTracesActivity', () => {
   it('reports null spans when the response has no samples', async () => {
     mockProxyGet.mockResolvedValue({ series: [] });
 
-    await expect(fetchTracesActivity(tempo)).resolves.toEqual({ spans: null, series: null });
+    await expect(fetchTracesActivity(tempo)).resolves.toEqual({ spans: null, series: null, lookbackHours: 24 });
+  });
+
+  it('retries the known Tempo 2.x duration limit with a three-hour lookback', async () => {
+    mockProxyGet
+      .mockRejectedValueOnce({
+        status: 400,
+        data: { message: 'metrics query time range exceeds the maximum allowed duration of 3h0m0s' },
+      })
+      .mockResolvedValueOnce({
+        series: [
+          {
+            samples: [
+              { timestampMs: '1000', value: 100 },
+              { timestampMs: '2000', value: 200 },
+            ],
+          },
+        ],
+      });
+
+    await expect(fetchTracesActivity(tempo)).resolves.toEqual(
+      expect.objectContaining({ spans: 300, lookbackHours: 3 })
+    );
+
+    const end = Math.floor(Date.now() / 1000);
+    expect(mockProxyGet).toHaveBeenNthCalledWith(
+      1,
+      '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
+      { q: '{} | count_over_time()', start: end - DATA_LOOKBACK_HOURS * 3600, end, step: '30m' },
+      undefined,
+      { showErrorAlert: false }
+    );
+    expect(mockProxyGet).toHaveBeenNthCalledWith(
+      2,
+      '/api/datasources/proxy/uid/tempo-uid/api/metrics/query_range',
+      { q: '{} | count_over_time()', start: end - 3 * 3600, end, step: '30m' },
+      undefined,
+      { showErrorAlert: false }
+    );
+  });
+
+  it('does not retry unrelated Tempo errors', async () => {
+    const error = { status: 400, data: { message: 'invalid TraceQL query' } };
+    mockProxyGet.mockRejectedValue(error);
+
+    await expect(fetchTracesActivity(tempo)).rejects.toBe(error);
+    expect(mockProxyGet).toHaveBeenCalledTimes(1);
   });
 });
 

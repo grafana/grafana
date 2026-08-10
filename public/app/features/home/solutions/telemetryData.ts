@@ -6,7 +6,7 @@ import {
   FieldType,
   getMinMaxAndDelta,
 } from '@grafana/data';
-import { type DataSourceWithBackend } from '@grafana/runtime';
+import { type DataSourceWithBackend, isFetchError } from '@grafana/runtime';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -32,6 +32,7 @@ export interface LogsActivity {
 export interface TracesActivity {
   spans: number | null;
   series: FieldSparkline | null;
+  lookbackHours: number;
 }
 
 interface LokiVolumeResponse {
@@ -144,21 +145,47 @@ interface TempoQueryRangeResponse {
   series?: Array<{ samples?: Array<{ timestampMs?: string | number; value?: number }> }>;
 }
 
-/**
- * Span throughput over the last 24h via Tempo's TraceQL-metrics HTTP API: the summed series
- * feeds the sparkline, its integral is the span count. Datasource proxy on purpose — the
- * frontend query path rebuilds raw targets on some plugin versions. Needs the
- * metrics-generator; callers fail soft on rejection.
- */
-export async function fetchTracesActivity(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<TracesActivity> {
-  const end = Math.floor(Date.now() / 1000);
-  const start = end - DATA_LOOKBACK_HOURS * 3600;
-  const res = await probeProxyGet<TempoQueryRangeResponse>(ds.uid, 'api/metrics/query_range', {
+const TEMPO_V2_METRICS_LOOKBACK_HOURS = 3;
+const TEMPO_V2_METRICS_DURATION_ERROR = 'maximum allowed duration of 3h0m0s';
+
+function isTempoV2MetricsDurationError(error: unknown): boolean {
+  return (
+    isFetchError<{ message?: unknown }>(error) &&
+    error.status === 400 &&
+    typeof error.data?.message === 'string' &&
+    error.data.message.includes(TEMPO_V2_METRICS_DURATION_ERROR)
+  );
+}
+
+function queryTracesActivity(dsUid: string, end: number, lookbackHours: number): Promise<TempoQueryRangeResponse> {
+  return probeProxyGet<TempoQueryRangeResponse>(dsUid, 'api/metrics/query_range', {
     q: '{} | count_over_time()',
-    start,
+    start: end - lookbackHours * 3600,
     end,
     step: '30m',
   });
+}
+
+/**
+ * Span throughput over the last 24h via Tempo's TraceQL-metrics HTTP API, falling back to the
+ * Tempo 2.x three-hour maximum. The summed series feeds the sparkline, its integral is the span
+ * count. Datasource proxy on purpose — the frontend query path rebuilds raw targets on some
+ * plugin versions. Needs the metrics-generator; callers fail soft on rejection.
+ */
+export async function fetchTracesActivity(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<TracesActivity> {
+  const end = Math.floor(Date.now() / 1000);
+  let lookbackHours = DATA_LOOKBACK_HOURS;
+  let res: TempoQueryRangeResponse;
+  try {
+    res = await queryTracesActivity(ds.uid, end, lookbackHours);
+  } catch (error) {
+    if (!isTempoV2MetricsDurationError(error)) {
+      throw error;
+    }
+    // Tempo 2.x defaults TraceQL metrics queries to a three-hour maximum.
+    lookbackHours = TEMPO_V2_METRICS_LOOKBACK_HOURS;
+    res = await queryTracesActivity(ds.uid, end, lookbackHours);
+  }
   const buckets = new Map<number, number>();
   for (const series of res?.series ?? []) {
     for (const sample of series.samples ?? []) {
@@ -173,6 +200,7 @@ export async function fetchTracesActivity(ds: Pick<DataSourceInstanceListItem, '
   return {
     spans: buckets.size > 0 ? [...buckets.values()].reduce((total, value) => total + value, 0) : null,
     series: toSparkline([...buckets.entries()], 'Span throughput'),
+    lookbackHours,
   };
 }
 

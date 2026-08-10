@@ -11303,10 +11303,10 @@
         "setup-hint": "requires instrumentation",
         "spans_one": "{{value}} span",
         "spans_other": "{{value}} spans",
-        "stats": "traced · 24h",
-        "stats-services_one": "traced · 24h · {{count}} service",
-        "stats-services_other": "traced · 24h · {{count}} services",
-        "throughput": "Span throughput · last 24h",
+        "stats": "traced · {{hours}}h",
+        "stats-services_one": "traced · {{hours}}h · {{count}} service",
+        "stats-services_other": "traced · {{hours}}h · {{count}} services",
+        "throughput": "Span throughput · last {{hours}}h",
         "title": "Traces"
       },
       "via-datasource": "via {{name}}"
