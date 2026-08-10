@@ -102,6 +102,8 @@ export const {
   useUpdateVariableMutation,
   useDeleteVariableMutation,
   useReplaceVariableMutation,
+  useListNotebookQuery,
+  useDeleteNotebookMutation,
 } = dashboardAPIv2beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
@@ -112,4 +114,5 @@ export type {
   ListVariableApiResponse,
   CreateVariableApiArg,
   UpdateVariableApiArg,
+  Notebook,
 } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
