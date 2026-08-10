@@ -178,6 +178,7 @@ export {
   type PanelChromeLoadingIndicatorProps,
   PanelContextProvider,
   type PanelContext,
+  type PanelInlineEditChannel,
   PanelContextRoot,
   usePanelContext,
 } from './components/PanelChrome';

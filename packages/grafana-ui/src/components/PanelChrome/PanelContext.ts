@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 import {
   type AnnotationEventUIModel,
@@ -13,6 +13,24 @@ import {
 import { type AdHocFilterItem } from '../Table/types';
 
 import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
+
+/**
+ * Lets a panel plugin offer editing of its own options in place. Read it with
+ * {@link usePanelCanEditInline}.
+ *
+ * @alpha
+ */
+export interface PanelInlineEditChannel {
+  /** Whether the panel may be edited in place right now. */
+  getState: () => boolean;
+  subscribe: (onStoreChange: () => void) => () => void;
+  /**
+   * Marks the span of one editing session, returning its end. The host snapshots the options at the
+   * start and records a single undo entry at the end, so a paragraph of typing does not bury the
+   * rest of the host's undo history.
+   */
+  beginOptionsEditSession?: () => () => void;
+}
 
 /** @alpha */
 export interface PanelContext {
@@ -69,6 +87,13 @@ export interface PanelContext {
    */
   onOpenInspector?: () => void;
 
+  /**
+   * Lets a panel plugin edit its own options in place. Only set by hosts that support it.
+   *
+   * @alpha
+   */
+  inlineEdit?: PanelInlineEditChannel;
+
   /** For instance state that can be shared between panel & options UI  */
   instanceState?: any;
 
@@ -108,3 +133,31 @@ export const PanelContextProvider = PanelContextRoot.Provider;
  * @alpha
  */
 export const usePanelContext = () => useContext(PanelContextRoot);
+
+/**
+ * Whether the current panel may be edited in place right now. False when the host provides no
+ * channel, so panels can call it unconditionally. Pass `enabled: false` to skip subscribing at all,
+ * for panels that gate in-place editing behind a feature flag.
+ *
+ * @alpha
+ */
+export const usePanelCanEditInline = (enabled = true): boolean => {
+  const { inlineEdit } = usePanelContext();
+  const channel = enabled ? inlineEdit : undefined;
+  const [canEdit, setCanEdit] = useState(() => channel?.getState() ?? false);
+
+  useEffect(() => {
+    if (!channel) {
+      setCanEdit(false);
+      return;
+    }
+
+    const read = () => setCanEdit(channel.getState());
+    // The state can change between the render that read it and this subscription.
+    read();
+
+    return channel.subscribe(read);
+  }, [channel]);
+
+  return canEdit;
+};

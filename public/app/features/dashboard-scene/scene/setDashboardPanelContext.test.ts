@@ -7,13 +7,18 @@ import {
 } from '@grafana/data';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
+import { GroupByVariable, sceneGraph, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
+import { PanelEditor } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { DashboardEditActionEvent } from '../sidebar/events';
 import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
 
+import { type DashboardScene } from './DashboardScene';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { type DashboardGridItem } from './layout-default/DashboardGridItem';
 import { getAdHocFilterVariableFor, setDashboardPanelContext } from './setDashboardPanelContext';
 
 jest.mock('../../annotations/isAnnotationApiAvailable');
@@ -507,6 +512,161 @@ describe('setDashboardPanelContext', () => {
 
       context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([]);
+    });
+  });
+
+  describe('inlineEdit', () => {
+    function contextFor(panel: VizPanel) {
+      const context: PanelContext = { eventBus: new EventBusSrv(), eventsScope: 'global' };
+      setDashboardPanelContext(panel, context);
+      return context;
+    }
+
+    function select(scene: DashboardScene, ...keys: string[]) {
+      const { sidebar } = scene.state;
+      sidebar.setState({
+        selectionContext: { ...sidebar.state.selectionContext, selected: keys.map((id) => ({ id })) },
+      });
+    }
+
+    function editAndSelect(scene: DashboardScene) {
+      scene.onEnterEditMode();
+      select(scene, 'panel-4');
+    }
+
+    it('may be edited once the dashboard is editing and the panel is the only selection', () => {
+      const { scene, context } = buildTestScene({ dashboardCanEdit: true });
+      expect(context.inlineEdit!.getState()).toBe(false);
+
+      editAndSelect(scene);
+      expect(context.inlineEdit!.getState()).toBe(true);
+
+      scene.exitEditMode({ skipConfirm: true });
+      expect(context.inlineEdit!.getState()).toBe(false);
+    });
+
+    it.each([
+      ['nothing is selected', (scene: DashboardScene) => select(scene)],
+      ['another panel is selected', (scene: DashboardScene) => select(scene, 'panel-5')],
+      ['several panels are selected', (scene: DashboardScene) => select(scene, 'panel-4', 'panel-5')],
+      ['a panel is maximized', (scene: DashboardScene) => scene.setState({ viewPanel: 'panel-4' })],
+      [
+        'the panel editor is open',
+        (scene: DashboardScene) =>
+          scene.setState({
+            editPanel: new PanelEditor({ panelRef: findVizPanelByKey(scene, 'panel-4')!.getRef(), isNewPanel: false }),
+          }),
+      ],
+    ])('may not be edited when %s', (_, act) => {
+      const { scene, context } = buildTestScene({ dashboardCanEdit: true });
+      editAndSelect(scene);
+
+      act(scene);
+
+      expect(context.inlineEdit!.getState()).toBe(false);
+    });
+
+    it('may not be edited without dashboard edit permission', () => {
+      const { scene, context } = buildTestScene({ dashboardCanEdit: false });
+      editAndSelect(scene);
+
+      expect(context.inlineEdit!.getState()).toBe(false);
+    });
+
+    it('may not be edited as a repeat clone, whose edits would be discarded on the next repeat', () => {
+      const { scene } = buildTestScene({ dashboardCanEdit: true });
+      const gridItem = findVizPanelByKey(scene, 'panel-4')!.parent as DashboardGridItem;
+      const clone = new VizPanel({ key: 'panel-4-clone-1', repeatSourceKey: 'panel-4' });
+      gridItem.setState({ repeatedPanels: [clone] });
+      const context = contextFor(clone);
+
+      scene.onEnterEditMode();
+      select(scene, 'panel-4-clone-1');
+
+      expect(context.inlineEdit!.getState()).toBe(false);
+    });
+
+    it('may not be edited as a library panel, whose options are saved to the library', () => {
+      const { scene, vizPanel } = buildTestScene({ dashboardCanEdit: true });
+      vizPanel.setState({ $behaviors: [new LibraryPanelBehavior({ uid: 'lib-1', name: 'Lib panel' })] });
+      const context = contextFor(vizPanel);
+
+      editAndSelect(scene);
+
+      expect(context.inlineEdit!.getState()).toBe(false);
+    });
+
+    it('notifies subscribers of dashboard and selection changes, and stops on unsubscribe', () => {
+      const { scene, context } = buildTestScene({ dashboardCanEdit: true });
+      const onStoreChange = jest.fn();
+
+      const unsubscribe = context.inlineEdit!.subscribe(onStoreChange);
+
+      scene.onEnterEditMode();
+      expect(onStoreChange).toHaveBeenCalled();
+
+      onStoreChange.mockClear();
+      select(scene, 'panel-4');
+      expect(onStoreChange).toHaveBeenCalled();
+
+      unsubscribe();
+      onStoreChange.mockClear();
+      select(scene);
+      expect(onStoreChange).not.toHaveBeenCalled();
+    });
+
+    it('keeps tracking selection after the sidebar is swapped by discarding changes', () => {
+      const { scene, context } = buildTestScene({ dashboardCanEdit: true });
+      scene.onEnterEditMode();
+
+      const onStoreChange = jest.fn();
+      context.inlineEdit!.subscribe(onStoreChange);
+
+      const sidebarBefore = scene.state.sidebar;
+      scene.discardChangesAndKeepEditing();
+      expect(scene.state.sidebar).not.toBe(sidebarBefore);
+
+      onStoreChange.mockClear();
+      select(scene, 'panel-4');
+
+      expect(onStoreChange).toHaveBeenCalled();
+      expect(context.inlineEdit!.getState()).toBe(true);
+    });
+
+    describe('beginOptionsEditSession', () => {
+      it('records one undoable action that swaps the options back and forth', () => {
+        const { scene, vizPanel, context } = buildTestScene({ dashboardCanEdit: true });
+        const actions: DashboardEditActionEvent[] = [];
+        scene.subscribeToEvent(DashboardEditActionEvent, (event) => actions.push(event));
+
+        // `onOptionsChange` needs a loaded plugin to apply defaults, which the test scene has not
+        // got, so the applied options are checked through the call rather than through panel state.
+        const onOptionsChange = jest.spyOn(vizPanel, 'onOptionsChange').mockImplementation(() => {});
+
+        const before = vizPanel.state.options;
+        const endSession = context.inlineEdit!.beginOptionsEditSession!();
+        vizPanel.setState({ options: { content: '# Edited' } });
+        endSession();
+
+        expect(actions).toHaveLength(1);
+        expect(actions[0].payload.source).toBe(vizPanel);
+
+        actions[0].payload.undo();
+        expect(onOptionsChange).toHaveBeenLastCalledWith(before, true);
+
+        actions[0].payload.perform();
+        expect(onOptionsChange).toHaveBeenLastCalledWith({ content: '# Edited' }, true);
+      });
+
+      it('records nothing when the options did not change', () => {
+        const { scene, context } = buildTestScene({ dashboardCanEdit: true });
+        const actions: DashboardEditActionEvent[] = [];
+        scene.subscribeToEvent(DashboardEditActionEvent, (event) => actions.push(event));
+
+        context.inlineEdit!.beginOptionsEditSession!()();
+
+        expect(actions).toHaveLength(0);
+      });
     });
   });
 });

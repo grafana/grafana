@@ -1,13 +1,13 @@
-import { EditorView } from '@codemirror/view';
+import { type EditorView } from '@codemirror/view';
 import { type ReactNode, type RefObject } from 'react';
 
 import { type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Stack, ToolbarButton } from '@grafana/ui';
+import { Dropdown, Menu, Stack, ToolbarButton } from '@grafana/ui';
 
 import { TextMode } from '../../panelcfg.gen';
 
-import { insertAtCursor, toggleLinePrefix, toggleOrderedList, toggleSurround } from './editorCommands';
+import { getEditorView, insertAtCursor, toggleLinePrefix, toggleOrderedList, toggleSurround } from './editorCommands';
 
 const TABLE_SNIPPET = '\n| Column | Column |\n| ------ | ------ |\n| Value  | Value  |\n';
 
@@ -121,14 +121,13 @@ function getFormatActions(mode: TextMode): FormatAction[] {
 
 export interface TextNGFormatToolbarProps {
   mode: TextMode;
-  /**
-   * Wrapper the CodeMirror editor is mounted into. The lazily-loaded bundle does
-   * not expose its `EditorView`, so it is looked up from this container's DOM.
-   */
+  /** Wrapper the CodeMirror editor is mounted into. */
   editorContainerRef: RefObject<HTMLDivElement | null>;
+  /** Collapse into a single menu button, for panels with no room for a row of buttons. */
+  compact?: boolean;
 }
 
-export function TextNGFormatToolbar({ mode, editorContainerRef }: TextNGFormatToolbarProps) {
+export function TextNGFormatToolbar({ mode, editorContainerRef, compact }: TextNGFormatToolbarProps) {
   const actions = getFormatActions(mode);
 
   if (actions.length === 0) {
@@ -136,12 +135,35 @@ export function TextNGFormatToolbar({ mode, editorContainerRef }: TextNGFormatTo
   }
 
   const runAction = (action: FormatAction) => {
-    const container = editorContainerRef.current;
-    const view = container ? EditorView.findFromDOM(container) : null;
+    const view = getEditorView(editorContainerRef);
     if (view) {
       action.run(view);
     }
   };
+
+  if (compact) {
+    const formatting = t('textng.editor.formatting', 'Formatting');
+
+    return (
+      <Dropdown
+        placement="bottom-start"
+        overlay={() => (
+          <Menu>
+            {actions.map((action) => (
+              <Menu.Item key={action.key} icon={action.icon} label={action.tooltip} onClick={() => runAction(action)} />
+            ))}
+          </Menu>
+        )}
+      >
+        <ToolbarButton
+          icon="text-fields"
+          tooltip={formatting}
+          aria-label={formatting}
+          data-testid={FORMAT_TOOLBAR_TEST_ID}
+        />
+      </Dropdown>
+    );
+  }
 
   return (
     <Stack gap={0.5} wrap="wrap" alignItems="center" data-testid={FORMAT_TOOLBAR_TEST_ID}>

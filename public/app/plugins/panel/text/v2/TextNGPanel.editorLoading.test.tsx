@@ -11,7 +11,7 @@ import { createProps, renderPanel } from './test-utils';
 
 // Stub the lazy CodeMirror bundle used by the inline editor.
 jest.mock('@grafana/ui/unstable', () => ({
-  __esModule: true,
+  ...jest.requireActual('@grafana/ui/unstable'),
   CodeMirrorEditor: ({ value, 'aria-label': ariaLabel }: { value: string; 'aria-label'?: string }) => (
     <textarea aria-label={ariaLabel} value={value} readOnly />
   ),

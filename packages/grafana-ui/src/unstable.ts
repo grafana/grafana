@@ -11,6 +11,7 @@
 
 export * from './utils/skeleton';
 
+export { usePanelCanEditInline } from './components/PanelChrome/PanelContext';
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
 export { signatureHelp } from './components/CodeMirror/signatureHelp';
 export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
