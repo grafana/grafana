@@ -114,6 +114,21 @@
     "input": {
       "background": "palette.ink850"
     },
+    "codeEditor": {
+      "keyword": "palette.blue300",
+      "controlKeyword": "palette.violet300",
+      "variable": "palette.sky300",
+      "type": "palette.teal300",
+      "function": "palette.amber300",
+      "number": "palette.peach300",
+      "string": "palette.sage300",
+      "operator": "palette.ink250",
+      "regexp": "palette.rose300",
+      "comment": "palette.ink350",
+      "heading": "palette.blue300",
+      "link": "palette.blue300",
+      "invalid": "palette.red300"
+    },
     "tag": {
       "colors": [
         { "background": "palette.coral900", "text": "palette.coral300" },
