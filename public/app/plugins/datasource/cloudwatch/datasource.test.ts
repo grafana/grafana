@@ -374,13 +374,14 @@ describe('datasource', () => {
         matchExact: false,
         statistic: '',
         sqlExpression: `$${variableName}`,
+        promqlExpression: `$${variableName}`,
       };
 
       datasource.interpolateVariablesInQueries([metricsQuery], {});
 
-      // We interpolate `expression`, `sqlExpression`, `region`, `period`, `alias`, `metricName`, `dimensions`, `statistic`, `id`, and `nameSpace` in CloudWatchMetricsQuery
+      // We interpolate `expression`, `sqlExpression`, `promqlExpression`, `region`, `period`, `alias`, `metricName`, `dimensions`, `statistic`, `id`, and `namespace` in CloudWatchMetricsQuery
       expect(templateService.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateService.replace).toHaveBeenCalledTimes(10);
+      expect(templateService.replace).toHaveBeenCalledTimes(11);
 
       expect(mockGetVariableName).toHaveBeenCalledWith(`$${variableName}`);
       expect(mockGetVariableName).toHaveBeenCalledTimes(1);
