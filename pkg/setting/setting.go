@@ -1797,8 +1797,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 
 	readGrafanaComSettings(iniFile, cfg)
-	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
-	cfg.GrafanaComProxyAPIToken = valueAsString(iniFile.Section("grafana_com"), "proxy_token", "")
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 

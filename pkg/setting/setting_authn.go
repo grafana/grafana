@@ -123,6 +123,8 @@ func readGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
 	}
 	cfg.GrafanaComURL = grafanaComURL
 	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComURL+"/api")
+	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
+	cfg.GrafanaComProxyAPIToken = valueAsString(iniFile.Section("grafana_com"), "proxy_token", "")
 }
 
 func readUserLastSeenUpdateInterval(iniFile *ini.File, cfg *Cfg) error {
