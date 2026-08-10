@@ -139,6 +139,55 @@ describe('HeaderCell', () => {
     expect(setFilter).not.toHaveBeenCalled();
   });
 
+  describe('table.refresh', () => {
+    const filterableField = () => makeField({ config: { custom: { filterable: true } } });
+    const menuLabel = 'Column options for Field1';
+
+    it('keeps the inline filter button and renders no column menu when the flag is off', () => {
+      render(<HeaderCell {...baseProps} field={filterableField()} />);
+      expect(screen.getByLabelText('Filter Field1')).toBeInTheDocument();
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
+    it('replaces the inline filter button with a column menu when the flag is on', () => {
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+      expect(screen.queryByLabelText('Filter Field1')).not.toBeInTheDocument();
+      expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
+    });
+
+    it('renders no column menu for a non-filterable column', () => {
+      render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
+    it('opens the filter popup from the column menu', async () => {
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      const filterItem = await screen.findByText('Filter values');
+
+      await userEvent.click(filterItem);
+      // FilterPopup renders the value list with its own Ok/Cancel controls
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+    });
+
+    it('keeps the column menu visible while the column is filtered', () => {
+      const { rerender } = render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+      // hidden until the header cell is hovered or focused
+      expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '0' });
+
+      rerender(
+        <HeaderCell
+          {...baseProps}
+          field={filterableField()}
+          filter={{ Field1: { filtered: [{ value: 'a' }] } } as unknown as FilterType}
+          tableRefreshEnabled
+        />
+      );
+      expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '1' });
+    });
+  });
+
   describe('keyboard handling', () => {
     // These tests dispatch a keydown against a *specific* target (a particular button, an SVG icon,
     // or a cell in a specific position) to exercise the handler's target/DOM-position logic. userEvent's

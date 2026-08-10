@@ -161,6 +161,8 @@ export interface ColumnBuildConfig {
   setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
   showTypeIcons?: boolean;
+  /** `table.refresh`: left-align header labels and move the filter into the header column menu. */
+  tableRefreshEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
 }
@@ -207,6 +209,7 @@ function buildColumnsFromFields(
     disableKeyboardEvents,
     disableSanitizeHtml,
     showTypeIcons,
+    tableRefreshEnabled,
     timeRange,
   } = config;
 
@@ -286,7 +289,9 @@ function buildColumnsFromFields(
     const textAlign = getAlignment(field);
     const justifyContent = getJustifyContent(textAlign);
     const displayName = getDisplayName(field);
-    const headerCellClass = getHeaderCellStyles(theme, justifyContent);
+    // the refreshed header always left-aligns its label, independent of how the body cells align,
+    // so the column menu has a stable trailing edge to sit against
+    const headerCellClass = getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent);
     const CellType = getCellRenderer(field, cellOptions);
 
     const cellInspect = isCellInspectEnabled(field);
@@ -525,6 +530,7 @@ function buildColumnsFromFields(
           parentIndex={parentIndex}
           crossFilterRows={crossFilterRows}
           crossFilterTailRows={crossFilterTailRows}
+          tableRefreshEnabled={tableRefreshEnabled}
           selectFirstCell={() => {
             gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
           }}

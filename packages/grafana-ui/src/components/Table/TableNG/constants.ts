@@ -38,3 +38,12 @@ export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGH
 const HEADER_ICON_WIDTH = 18;
 const HEADER_ICON_GAP = 4;
 export const HEADER_ICON_SPACE = HEADER_ICON_WIDTH + HEADER_ICON_GAP;
+
+// Space the `table.refresh` header column menu reserves. It replaces the inline filter icon, but is
+// an IconButton rather than a bare Icon, so it needs its own measurement: a size="sm" IconButton is
+// a 14px glyph plus the 4px trailing margin the component sets on itself. Keep in step with the
+// `size` prop in HeaderCellMenu — changing one without the other silently mis-sizes auto columns.
+// The menu button stays in flow while hover-hidden (it fades with opacity rather than unmounting),
+// so this reserves the same space whether or not it happens to be visible.
+const HEADER_MENU_BUTTON_WIDTH = 14 + 4;
+export const HEADER_MENU_SPACE = HEADER_MENU_BUTTON_WIDTH + HEADER_ICON_GAP;

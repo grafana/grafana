@@ -91,6 +91,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     sortBy,
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
+    tableRefreshEnabled = false,
   } = props;
 
   const uniqueId = useId();
@@ -228,6 +229,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     showTypeIcons,
     getActions: getCellActions,
     sortColumns,
+    tableRefreshEnabled,
   });
 
   const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
@@ -399,6 +401,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       disableSanitizeHtml,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
     }),
     [
       applyToRowBgFn,
@@ -416,6 +419,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       showTypeIcons,
       theme,
       timeRange,
+      tableRefreshEnabled,
     ]
   );
 

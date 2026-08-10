@@ -78,6 +78,7 @@ export function TableFlat(props: TableNGProps) {
     sortBy,
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
+    tableRefreshEnabled = false,
   } = props;
 
   const theme = useTheme2();
@@ -175,6 +176,7 @@ export function TableFlat(props: TableNGProps) {
     showTypeIcons,
     getActions: getCellActions,
     sortColumns,
+    tableRefreshEnabled,
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
@@ -267,6 +269,7 @@ export function TableFlat(props: TableNGProps) {
       disableSanitizeHtml,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
     }),
     [
       theme,
@@ -286,6 +289,7 @@ export function TableFlat(props: TableNGProps) {
       setFilter,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
     ]
   );
 
