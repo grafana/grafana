@@ -473,7 +473,7 @@ Defaults to `private`.
 
 #### `wal`
 
-For "sqlite3" only. Setting to enable/disable [Write-Ahead Logging](https://sqlite.org/wal.html). The default value is `false` (disabled).
+For "sqlite3" only. Setting to enable/disable [Write-Ahead Logging](https://sqlite.org/wal.html). The default value is `true` (enabled).
 
 #### `query_retries`
 
