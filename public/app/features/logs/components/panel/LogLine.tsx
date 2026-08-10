@@ -541,7 +541,8 @@ export const getStyles = (
     critical: theme.visualization.getColorByName('purple'),
     error: theme.colors.error.text,
     warning: theme.colors.warning.text,
-    debug: theme.visualization.getColorByName('dimgray'),
+    // dimgray fails WCAG AA contrast on dark backgrounds, so use a lighter gray in dark theme
+    debug: theme.isDark ? '#9e9e9e' : theme.visualization.getColorByName('dimgray'),
     trace: '#6ed0e0',
     info: theme.visualization.getColorByName('blue'),
     metadata: theme.colors.text.secondary,
