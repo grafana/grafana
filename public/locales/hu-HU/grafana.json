@@ -5914,8 +5914,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Ez megszünteti az összes beágyazott csoport csoportosítását.",
-      "ungroup-nested-title": "Megszünteti a beágyazott csoportok csoportosítását?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{numberOfPages}}/{{currentPage}}",
@@ -14757,7 +14761,6 @@
     },
     "header": {
       "alert": "Riasztás",
-      "expression": "Kifejezés",
       "pending-expression": "",
       "pending-expression-cancel": "Mégse",
       "pending-transformation": "",
@@ -14771,6 +14774,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

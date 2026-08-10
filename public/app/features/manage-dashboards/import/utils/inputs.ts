@@ -963,9 +963,19 @@ function checkUserInputMatch(
   userDsInputs: DataSourceInstanceSettings[]
 ) {
   const dsName = templateizedUid.replace(/\$\{(.*)\}/, '$1');
-  const input = datasourceInputs?.find((ds) => ds.name === dsName);
-  const userInput = input && userDsInputs.find((ds) => ds.type === input.pluginId);
-  return userInput;
+  const inputIndex = datasourceInputs?.findIndex((ds) => ds.name === dsName) ?? -1;
+  if (inputIndex < 0) {
+    return undefined;
+  }
+
+  const input = datasourceInputs[inputIndex];
+
+  const selectionByIndex = userDsInputs[inputIndex];
+  if (selectionByIndex?.type === input.pluginId) {
+    return selectionByIndex;
+  }
+
+  return userDsInputs.find((ds) => ds.type === input.pluginId);
 }
 
 function processAnnotation(

@@ -49,7 +49,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.custom.openEditor();
       await sidebar.variableOptions.custom.selectFormat('CSV');
@@ -92,7 +92,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.custom.openEditor();
       await sidebar.variableOptions.custom.selectFormat('CSV');
@@ -151,7 +151,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
       const options = [
         { value: 'dev', text: 'Development', aws: 'us-east-1' },
