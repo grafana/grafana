@@ -15,7 +15,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { Alert, Button, FeatureBadge, useStyles2 } from '@grafana/ui';
+import { Alert, Button, FeatureBadge, TextLink, useStyles2 } from '@grafana/ui';
 import {
   type DashboardDiagnosticsPanel,
   diagnosticsErrorMessage,
@@ -246,7 +246,15 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
         title={t('dashboard.diagnostics.size-limit-warning-title', 'Very large responses are truncated')}
       >
         <Trans i18nKey="dashboard.diagnostics.size-limit-warning-body">
-          A response that&apos;s too large has its captured query data truncated to keep the bundle a manageable size.
+          A response that&apos;s too large has its captured data truncated to keep the bundle a manageable size. For the
+          limits and how truncation appears in the bundle, refer to{' '}
+          <TextLink
+            href="https://grafana.com/docs/grafana/latest/troubleshooting/generate-diagnostic-bundle/#limitations"
+            external
+          >
+            the documentation
+          </TextLink>
+          .
         </Trans>
       </Alert>
 
