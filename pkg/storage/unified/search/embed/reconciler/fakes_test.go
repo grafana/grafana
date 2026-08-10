@@ -2,8 +2,10 @@ package reconciler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"iter"
+	"net/http"
 	"sync"
 	"time"
 
@@ -26,6 +28,22 @@ type fakeStorage struct {
 	watchCh  chan *resource.WrittenEvent
 	itemErr  error // returned from the iterator partway through
 	itemErrI int   // index after which to inject itemErr
+
+	// folders backs ReadResource for FolderTitleResolver: namespace+"/"+uid
+	// -> title. An unset entry reads as NotFound.
+	folders map[string]string
+	readErr error
+}
+
+// setFolderTitle makes ReadResource resolve namespace/uid to title, so the
+// reconciler's (uncached) FolderTitleResolver can look it up.
+func (f *fakeStorage) setFolderTitle(namespace, uid, title string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.folders == nil {
+		f.folders = map[string]string{}
+	}
+	f.folders[namespace+"/"+uid] = title
 }
 
 // emit synchronously delivers a watch event on the channel set up by
@@ -43,8 +61,22 @@ func (f *fakeStorage) emit(ev *resource.WrittenEvent) {
 func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, error) {
 	panic("not implemented")
 }
-func (f *fakeStorage) ReadResource(context.Context, *resourcepb.ReadRequest) *resource.BackendReadResponse {
-	panic("not implemented")
+
+// ReadResource backs FolderTitleResolver.Title. Titles are seeded via
+// setFolderTitle; anything else reads as NotFound, matching a folder that
+// doesn't exist rather than a real storage fault (use readErr for that).
+func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.readErr != nil {
+		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: f.readErr.Error()}}
+	}
+	title, ok := f.folders[req.Key.Namespace+"/"+req.Key.Name]
+	if !ok {
+		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
+	}
+	value, _ := json.Marshal(map[string]any{"spec": map[string]any{"title": title}})
+	return &resource.BackendReadResponse{Value: value}
 }
 func (f *fakeStorage) ListIterator(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
 	panic("not implemented")
@@ -187,9 +219,10 @@ type fakeVector struct {
 }
 
 type backfillJobCall struct {
-	Model      string
-	Resource   string
-	StoppingRV int64
+	Model          string
+	Resource       string
+	StoppingRV     int64
+	ContentVersion int
 }
 
 type deleteCall struct{ Namespace, Model, Resource, UID string }
@@ -211,6 +244,14 @@ func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
+func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+	key := resource
+	if isExternal {
+		key += "_external"
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}, nil
+}
+
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }
@@ -220,7 +261,7 @@ func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	return f.upsertLocked(vs)
 }
 
-func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, desired []string) error {
+func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, _ []vector.VectorMeta, desired []string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	// Mirror the real backend: delete subresources not in `desired`, then upsert `changed`.
@@ -268,15 +309,17 @@ func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
 	}
 	return nil
 }
-func (f *fakeVector) Delete(_ context.Context, ns, model, res, uid string) error {
+func (f *fakeVector) DeleteRows(_ context.Context, ns, model, res string, sel vector.DeleteSelector) (int64, bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.deleteErr != nil {
-		return f.deleteErr
+		return 0, false, f.deleteErr
 	}
-	f.deletes = append(f.deletes, deleteCall{ns, model, res, uid})
-	delete(f.storedSubs, subsKey(ns, model, res, uid))
-	return nil
+	for _, uid := range sel.UIDs {
+		f.deletes = append(f.deletes, deleteCall{ns, model, res, uid})
+		delete(f.storedSubs, subsKey(ns, model, res, uid))
+	}
+	return int64(len(sel.UIDs)), false, nil
 }
 func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid string, subs []string) error {
 	f.mu.Lock()
@@ -307,6 +350,12 @@ func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, ui
 }
 func (f *fakeVector) Exists(context.Context, string, string, string, string) (bool, error) {
 	return false, nil
+}
+func (f *fakeVector) ContentVersion(context.Context, string, string, string, string) (int, bool, error) {
+	return 0, false, nil
+}
+func (f *fakeVector) UpdateContentVersion(context.Context, string, string, string, string, int) error {
+	return nil
 }
 func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	f.mu.Lock()
@@ -340,14 +389,18 @@ func (f *fakeVector) EnsureResourcePartition(_ context.Context, res string) erro
 	f.ensuredPartitions = append(f.ensuredPartitions, res)
 	return nil
 }
-func (f *fakeVector) CreateBackfillJob(_ context.Context, model, res string, stoppingRV int64) error {
+func (f *fakeVector) CreateBackfillJob(_ context.Context, model, res string, stoppingRV int64, contentVersion int) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.createBackfillErr != nil {
 		return f.createBackfillErr
 	}
-	f.backfillJobs = append(f.backfillJobs, backfillJobCall{Model: model, Resource: res, StoppingRV: stoppingRV})
+	f.backfillJobs = append(f.backfillJobs, backfillJobCall{Model: model, Resource: res, StoppingRV: stoppingRV, ContentVersion: contentVersion})
 	return nil
+}
+
+func (f *fakeVector) ReopenStaleBackfillJobs(context.Context, string, string, int, int64) (bool, error) {
+	return false, nil
 }
 func (f *fakeVector) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
 	return nil
@@ -369,6 +422,9 @@ func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, er
 		defer f.mu.Unlock()
 		f.lockReleases++
 	}, true, nil
+}
+func (f *fakeVector) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
+	return fn(ctx)
 }
 
 // fakeBackfiller records that Run was invoked and blocks until ctx is
