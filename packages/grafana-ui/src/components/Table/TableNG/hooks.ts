@@ -16,6 +16,7 @@ import {
   type Field,
   FieldType,
   formattedValueToString,
+  type GrafanaTheme2,
   reduceField,
   ReducerID,
 } from '@grafana/data';
@@ -737,10 +738,10 @@ const pickColWidths = (fields: Field[], availWidth: number, contentAware?: Conte
   contentAware ? computeContentAwareColWidths(fields, availWidth, contentAware) : computeColWidths(fields, availWidth);
 
 /**
- * Typography context for measuring body text, derived from the current theme.
+ * Builds the typography context the table uses to measure text (row heights, header heights). Shared
+ * by the flat and nested tables so the memoization lives in one place.
  */
-export function useTypographyCtx(): TypographyCtx {
-  const theme = useTheme2();
+export function useTypographyCtx(theme: GrafanaTheme2): TypographyCtx {
   return useMemo(
     () =>
       createTypographyContext(

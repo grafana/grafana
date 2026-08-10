@@ -5,12 +5,11 @@ import V2DashWithTabRepeats from '../dashboards/V2DashWithTabRepeats.json';
 import { Canvas, Controls, Panels, Rows, Sidebar, Tabs } from './page-objects';
 import {
   verifyChanges,
-  saveDashboard,
+  saveDashboardAndCloseToast,
   importTestDashboard,
   goToEmbeddedPanel,
-  groupIntoTab,
   moveTab,
-  getTabPosition,
+  getTabBox,
   checkRepeatedTabTitles,
 } from './utils';
 
@@ -39,12 +38,13 @@ test.describe(
       const controls = new Controls({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
       const tabs = new Tabs({ page, dashboardPage, selectors, components });
+      const canvas = new Canvas({ page, dashboardPage, selectors, components });
 
       await importTestDashboard(page, selectors, 'Tabs layout repeats - add repeats');
 
       await controls.enterEditMode();
 
-      await groupIntoTab(page, dashboardPage, selectors);
+      await canvas.groupPanels('tab');
 
       await sidebar.tabOptions.setTitle(`${REPEAT_TITLE_BASE}$c1`);
 
@@ -54,7 +54,7 @@ test.describe(
 
       await checkRepeatedTabTitles(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await checkRepeatedTabTitles(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
@@ -103,7 +103,7 @@ test.describe(
 
       await checkRepeatedTabTitles(tabs, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await checkRepeatedTabTitles(tabs, NEW_TITLE_BASE, REPEAT_OPTIONS);
@@ -136,7 +136,7 @@ test.describe(
       // verify edited panel title updated in repeated tab
       await expect(panels.getPanel('New edited panel')).toBeVisible();
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await expect(panels.getPanel('New edited panel')).toBeVisible();
@@ -180,7 +180,7 @@ test.describe(
       // verify edited panel title updated in repeated tab
       await expect(panels.getPanel('New edited panel')).toBeVisible();
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       // verify edited panel title updated in repeated tab
@@ -210,6 +210,7 @@ test.describe(
 
     test('can move repeated tabs', async ({ dashboardPage, selectors, page, components }) => {
       const controls = new Controls({ page, dashboardPage, selectors, components });
+      const tabs = new Tabs({ page, dashboardPage, selectors, components });
 
       await importTestDashboard(
         page,
@@ -219,30 +220,23 @@ test.describe(
       );
       await controls.enterEditMode();
 
-      await moveTab(dashboardPage, page, selectors, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New tab');
+      await moveTab(page, tabs, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New tab');
 
       // The tab order is only updated after the drop animation finishes (onDragEnd),
       // so retry the position check until the reorder has been applied
       await expect(async () => {
-        const repeatedTab = await getTabPosition(
-          dashboardPage,
-          selectors,
-          `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`
-        ); // note: -1 (the last repeated tab) because we have to wait for the whole repeated group to move ;)
-        const normalTab = await getTabPosition(dashboardPage, selectors, 'New tab');
-        expect(normalTab?.x).toBeLessThan(repeatedTab!.x);
+        // note: -1 (the last repeated tab) because we have to wait for the whole repeated group to move ;)
+        const repeatedTab = await getTabBox(tabs, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`);
+        const normalTab = await getTabBox(tabs, 'New tab');
+        expect(normalTab.x).toBeLessThan(repeatedTab.x);
       }).toPass();
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
-      const repeatedTab2 = await getTabPosition(
-        dashboardPage,
-        selectors,
-        `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`
-      );
-      const normalTab2 = await getTabPosition(dashboardPage, selectors, 'New tab');
-      expect(normalTab2?.x).toBeLessThan(repeatedTab2?.x || 0);
+      const repeatedTab2 = await getTabBox(tabs, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
+      const normalTab2 = await getTabBox(tabs, 'New tab');
+      expect(normalTab2.x).toBeLessThan(repeatedTab2.x);
     });
 
     test('can load into repeated tab', async ({ dashboardPage, selectors, page, components }) => {
@@ -387,7 +381,7 @@ test.describe(
       await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(2)}`)).toBeHidden();
       await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(3)}`)).toBeHidden();
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();

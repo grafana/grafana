@@ -120,6 +120,7 @@ func toGroupVersionRoutes(byGroupVersion map[schema.GroupVersion][]searchapi.Rou
 				Path:    r.Path,
 				Spec:    r.Spec,
 				Handler: r.Handler,
+				Schemas: r.Schemas,
 			})
 		}
 		out = append(out, builder.GroupVersionRoutes{
