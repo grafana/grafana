@@ -22,6 +22,7 @@ import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
+import { computeRevisionToken, REVISION_MISMATCH } from '../dashboardRevision';
 
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -34,6 +35,14 @@ const applySpecPayloadSchema = z.object({
     .optional()
     .default(false)
     .describe('When true, validate the spec against the v2 schema and reject the mutation if it is invalid.'),
+  expectedRevision: z
+    .string()
+    .optional()
+    .describe(
+      'The revision token this spec was derived from (from GET_SPEC or a previous APPLY_SPEC). When given, the ' +
+        'mutation is rejected with code REVISION_MISMATCH if the dashboard has changed since, instead of ' +
+        'overwriting those changes. Omit to apply unconditionally.'
+    ),
 });
 
 export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
@@ -114,7 +123,8 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   name: 'APPLY_SPEC',
   description:
     'Replace the dashboard with a complete v2 DashboardSpec. The scene is rebuilt from the spec ' +
-    '(settings, variables, annotations, panels, and nested rows/tabs layout).',
+    '(settings, variables, annotations, panels, and nested rows/tabs layout). Pass expectedRevision ' +
+    'to reject the apply instead of overwriting changes made since the spec was read.',
 
   payloadSchema: applySpecPayloadSchema,
   // Rebuilds the layout tree, so gate on the same toggle as the layout commands.
@@ -124,6 +134,40 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     try {
+      if (payload.expectedRevision !== undefined) {
+        let currentSpec: DashboardV2Spec;
+        let currentRevision: string;
+        try {
+          currentSpec = transformSceneToSaveModelSchemaV2(scene);
+          currentRevision = computeRevisionToken(currentSpec);
+        } catch (error) {
+          // A scene that cannot serialize cannot be checked, and applying anyway
+          // would give the caller the overwrite it explicitly asked to avoid.
+          return {
+            success: false,
+            error: `Could not read the current dashboard revision: ${error instanceof Error ? error.message : String(error)}`,
+            changes: [],
+          };
+        }
+        if (currentRevision !== payload.expectedRevision) {
+          return {
+            success: false,
+            code: REVISION_MISMATCH,
+            error:
+              'The dashboard has changed since the spec was read, so applying it would discard those changes. ' +
+              'Re-read the dashboard with GET_SPEC, reapply your edit to the new spec, and retry.',
+            changes: [],
+            data: {
+              // Live snapshot so the caller can rebuild its working document
+              // without a follow-up GET_SPEC — the CAS check already serialized it.
+              expectedRevision: payload.expectedRevision,
+              currentRevision,
+              spec: currentSpec,
+            },
+          };
+        }
+      }
+
       // Opt-in structural validation (default off to avoid breaking existing
       // callers). When enabled, reject an invalid spec before mutating anything.
       // On success we apply the *parsed* spec: the schema normalizes Go's
@@ -167,7 +211,15 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
         appliedSpec = undefined;
       }
 
-      return { success: true, data: { applied: true, spec: appliedSpec }, changes: [] };
+      return {
+        success: true,
+        data: {
+          applied: true,
+          spec: appliedSpec,
+          revision: appliedSpec === undefined ? undefined : computeRevisionToken(appliedSpec),
+        },
+        changes: [],
+      };
     } catch (error) {
       return {
         success: false,

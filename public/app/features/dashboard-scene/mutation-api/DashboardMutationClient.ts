@@ -17,6 +17,7 @@ import type { DashboardScene } from '../scene/DashboardScene';
 
 import { ALL_COMMANDS, validatePayload } from './commands/registry';
 import type { MutationCommand, MutationContext } from './commands/types';
+import { getDashboardRevision } from './dashboardRevision';
 import type { MutationClient, MutationRequest, MutationResult } from './types';
 
 type MutationHandler = (payload: unknown, context: MutationContext) => Promise<MutationResult>;
@@ -60,7 +61,7 @@ export class DashboardMutationClient implements MutationClient {
     // so downstream code (e.g. getPanelOptionsWithDefaults) can mutate in-place.
     const payload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
 
-    const context: MutationContext = { scene: this.scene };
+    const context: MutationContext = { scene: this.scene, getRevision: () => getDashboardRevision(this.scene) };
 
     try {
       const result = await registration.handler(payload, context);

@@ -50,7 +50,7 @@ const invalidSpec = { cursorSync: 'nope', timeSettings: {} };
 
 // The scene is only reached after validation passes, so an invalid-spec test
 // never touches it.
-const stubContext = { scene: {} as DashboardScene } satisfies MutationContext;
+const stubContext = { scene: {} as DashboardScene, getRevision: () => 'rev' } satisfies MutationContext;
 
 // A scene stub with just the surface APPLY_SPEC touches on the success path
 // (edit-mode entry, metadata envelope, state swap), so the rebuild is reached.
@@ -65,7 +65,7 @@ function makeSceneContext(): MutationContext {
     setState: jest.fn(),
   };
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structural stub of the DashboardScene surface this command reads
-  return { scene: scene as unknown as DashboardScene } satisfies MutationContext;
+  return { scene: scene as unknown as DashboardScene, getRevision: () => 'rev' } satisfies MutationContext;
 }
 
 describe('APPLY_SPEC validate flag', () => {
@@ -133,7 +133,7 @@ describe('GET_SPEC validate flag', () => {
     mockTransformSceneToSaveModelSchemaV2.mockReturnValue(invalidSpec);
     const result = await getSpecCommand.handler({ validate: false }, stubContext);
     expect(result.success).toBe(true);
-    expect(result.data).toEqual({ spec: invalidSpec });
+    expect(result.data).toMatchObject({ spec: invalidSpec });
   });
 
   it('fails with a structured error when validate is true and the spec is invalid', async () => {
@@ -147,6 +147,6 @@ describe('GET_SPEC validate flag', () => {
     mockTransformSceneToSaveModelSchemaV2.mockReturnValue(validSpec);
     const result = await getSpecCommand.handler({ validate: true }, stubContext);
     expect(result.success).toBe(true);
-    expect(result.data).toEqual({ spec: validSpec });
+    expect(result.data).toMatchObject({ spec: validSpec });
   });
 });
