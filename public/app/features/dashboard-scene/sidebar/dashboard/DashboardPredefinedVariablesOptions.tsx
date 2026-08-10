@@ -44,7 +44,7 @@ export function updateDashboardDenyList(dashboard: PredefinedVariablesDashboard,
   const meta = dashboard.state.meta;
   const annotations = readAnnotationMap(dashboard);
 
-  // Mode 'all' maps to undefined (no denylist); persist [] so resolve treats it as explicit opt-in.
+  // Mode 'all' maps to [] (explicit opt-in). Persist the list (including empty) as JSON.
   annotations[AnnoKeyIgnorePredefinedVariables] = serializeIgnorePredefinedVariables(nextDenyList ?? []);
 
   const nextMetaK8s: Partial<ObjectMeta> = {

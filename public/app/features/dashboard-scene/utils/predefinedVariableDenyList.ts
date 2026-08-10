@@ -18,14 +18,18 @@ export type GlobalVariablesMode = 'none' | 'all' | 'global' | 'folder';
 /**
  * Map a deny list to the coarse mode used by the sidebar radio and load analytics.
  *
- * - Missing / empty → `all`
+ * - Missing annotation (`undefined`) → `none` (opt-out by default)
+ * - Empty list (`[]`) → `all` (explicit opt-in)
  * - `*` → `none`
  * - `folder:*` only → `global` (keep globals)
  * - `global:*` only → `folder` (keep folder)
  * - Name-level / mixed denylists → `undefined` (no radio selected; per-name UI is not shipped yet)
  */
 export function getGlobalVariablesMode(denyList: string[] | undefined): GlobalVariablesMode | undefined {
-  if (denyList === undefined || denyList.length === 0) {
+  if (denyList === undefined) {
+    return 'none';
+  }
+  if (denyList.length === 0) {
     return 'all';
   }
   if (denyList.includes(DENY_ALL_PREDEFINED)) {
@@ -43,8 +47,9 @@ export function getGlobalVariablesMode(denyList: string[] | undefined): GlobalVa
 
 export function denyListFromGlobalVariablesMode(mode: GlobalVariablesMode): string[] | undefined {
   switch (mode) {
+    // Empty list is the explicit opt-in persisted by the sidebar (`[]` annotation).
     case 'all':
-      return undefined;
+      return [];
     case 'none':
       return [DENY_ALL_PREDEFINED];
     // Mode names the bucket to KEEP, so we deny the *other* bucket.

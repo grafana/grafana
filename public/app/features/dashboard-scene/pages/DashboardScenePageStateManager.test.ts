@@ -991,7 +991,7 @@ describe('DashboardScenePageStateManager v2', () => {
           mockFetchPredefinedVariables.mockResolvedValueOnce([predefinedVariable, folderPredefinedVariable]);
           const loader = new DashboardScenePageStateManagerV2({});
 
-          await loader.enrichLoadOptions(v2Response({ 'grafana.app/folder': 'folder-uid' }), {
+          await loader.enrichLoadOptions(v2Response(optedInAnnotations({ 'grafana.app/folder': 'folder-uid' })), {
             uid: 'fake-dash',
             route: DashboardRoutes.Normal,
           });
@@ -1026,11 +1026,28 @@ describe('DashboardScenePageStateManager v2', () => {
           });
         });
 
-        it('does not report when the feature flag is off', async () => {
-          setTestFlags({ globalDashboardVariables: false });
+        it('reports zero counts and mode none when the denylist annotation is absent', async () => {
           const loader = new DashboardScenePageStateManagerV2({});
 
           await loader.enrichLoadOptions(v2Response(), {
+            uid: 'fake-dash',
+            route: DashboardRoutes.Normal,
+          });
+
+          expect(mockFetchPredefinedVariables).not.toHaveBeenCalled();
+          expect(loadedSpy).toHaveBeenCalledWith({
+            global_count: 0,
+            folder_count: 0,
+            total_count: 0,
+            mode: 'none',
+          });
+        });
+
+        it('does not report when the feature flag is off', async () => {
+          setTestFlags({ 'grafana.dashboardGlobalVariables': false });
+          const loader = new DashboardScenePageStateManagerV2({});
+
+          await loader.enrichLoadOptions(v2Response(optedInAnnotations()), {
             uid: 'fake-dash',
             route: DashboardRoutes.Normal,
           });

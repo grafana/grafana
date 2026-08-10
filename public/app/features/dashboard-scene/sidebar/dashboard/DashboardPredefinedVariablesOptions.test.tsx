@@ -45,7 +45,10 @@ describe('updateDashboardDenyList', () => {
   }
 
   it('reports mode change from all to none', () => {
-    const dashboard = createDashboard();
+    // Explicit opt-in (`[]`) is mode all; absent annotation is opt-out (none).
+    const dashboard = createDashboard({
+      [AnnoKeyIgnorePredefinedVariables]: serializeIgnorePredefinedVariables([]),
+    });
 
     updateDashboardDenyList(dashboard, 'none');
 

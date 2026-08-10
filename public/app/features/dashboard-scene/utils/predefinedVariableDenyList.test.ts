@@ -191,8 +191,8 @@ describe('mayInjectAnyPredefinedVariables', () => {
 });
 
 describe('getGlobalVariablesMode', () => {
-  it('maps missing and empty denylist to all', () => {
-    expect(getGlobalVariablesMode(undefined)).toBe('all');
+  it('maps missing denylist to none (opt-out by default) and empty list to all', () => {
+    expect(getGlobalVariablesMode(undefined)).toBe('none');
     expect(getGlobalVariablesMode([])).toBe('all');
   });
 
@@ -213,7 +213,7 @@ describe('getGlobalVariablesMode', () => {
 
 describe('denyListFromGlobalVariablesMode', () => {
   it('round-trips coarse radio modes', () => {
-    expect(denyListFromGlobalVariablesMode('all')).toBeUndefined();
+    expect(denyListFromGlobalVariablesMode('all')).toEqual([]);
     expect(denyListFromGlobalVariablesMode('none')).toEqual([DENY_ALL_PREDEFINED]);
     expect(denyListFromGlobalVariablesMode('global')).toEqual([DENY_ALL_FOLDER_PREDEFINED]);
     expect(denyListFromGlobalVariablesMode('folder')).toEqual([DENY_ALL_GLOBAL_PREDEFINED]);
