@@ -380,6 +380,27 @@ describe('DataSourceWithBackend', () => {
     `);
   });
 
+  test('sanitizes non-ASCII characters in dashboard and panel title headers', async () => {
+    const { mock, ds } = createMockDatasource();
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }],
+        dashboardUID: 'dashA',
+        dashboardTitle: 'Cotações Diárias 2026',
+        panelId: 123,
+        panelName: 'Painel de Vendas 🚀',
+        range: getDefaultTimeRange(),
+      } as DataQueryRequest)
+    );
+
+    const args = mock.calls[0][0];
+    expect(args.headers?.['X-Dashboard-Title']).toBe('Cotaes Dirias 2026');
+    expect(args.headers?.['X-Panel-Title']).toBe('Painel de Vendas ');
+    expect(args.headers?.['X-Dashboard-Title']).toBe(args.headers?.['X-Dashboard-Title'].replace(/[^\x20-\x7E]/g, ''));
+  });
+
   test('correctly creates expression queries', async () => {
     const { mock, ds } = createMockDatasource();
     await firstValueFrom(
