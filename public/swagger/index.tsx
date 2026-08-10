@@ -7,10 +7,10 @@ if (window.public_cdn_path) {
   __webpack_public_path__ = window.public_cdn_path;
 }
 
-// This is a path to the public folder without '/build-swagger'
-window.__grafana_public_path__ =
-  __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build-swagger/')) ||
-  __webpack_public_path__;
+// This is a path to the public folder, i.e. the parent of the build directory. Dropping the
+// last path segment rather than searching for a literal 'build-swagger/' keeps this correct
+// for build directories named something else, such as 'build-swagger-rspack'.
+window.__grafana_public_path__ = __webpack_public_path__.replace(/[^/]+\/$/, '') || __webpack_public_path__;
 
 if (window.nonce) {
   __webpack_nonce__ = window.nonce;

@@ -56,6 +56,17 @@
       "outputs": ["{workspaceRoot}/public/build-rspack"],
       "cache": true
     },
+    "build:rspack": {
+      "dependsOn": [
+        "themes-generate",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "outputs": ["{workspaceRoot}/public/build-rspack", "{workspaceRoot}/public/build-swagger-rspack"],
+      "cache": true
+    },
     "build:swagger": {
       "dependsOn": ["themes-generate"],
       "outputs": ["{workspaceRoot}/public/build-swagger"],
