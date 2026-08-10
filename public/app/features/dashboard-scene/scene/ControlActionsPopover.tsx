@@ -53,7 +53,11 @@ export function ControlActionsPopover({
         <Portal>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.popover} {...getFloatingProps()}>
             <ControlActionsPopoverContext.Provider value={popoverContextValue}>
-              {content}
+              {/* Stops pointerdown from all actions reaching ancestors, e.g. element selection.
+              It cannot live on the icon buttons because their wrapping Tooltip overrides their pointerdown handlers */}
+              <div className={styles.hoverActions} onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}>
+                {content}
+              </div>
             </ControlActionsPopoverContext.Provider>
           </div>
         </Portal>
@@ -62,8 +66,75 @@ export function ControlActionsPopover({
   );
 }
 
-function stopPointerDownPropagation(event: React.PointerEvent) {
-  event.stopPropagation();
+function SettingsActionButton({ onClick }: { onClick: () => void }) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <Button
+      fill="text"
+      variant="secondary"
+      size="sm"
+      className={cx(styles.action, styles.editAction, styles.textAction)}
+      onClick={onClick}
+    >
+      {t('dashboard-scene.control-edit-actions.settings-tooltip', 'Settings')}
+    </Button>
+  );
+}
+
+function DuplicateActionButton({ onClick }: { onClick: () => void }) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <IconButton
+      name="copy"
+      variant="secondary"
+      size="md"
+      className={styles.action}
+      onClick={onClick}
+      tooltip={t('dashboard-scene.control-edit-actions.duplicate-tooltip', 'Duplicate')}
+      tooltipPlacement="top"
+    />
+  );
+}
+
+function DeleteActionButton({
+  title,
+  text,
+  yesText,
+  onConfirm,
+}: {
+  title: string;
+  text: string;
+  yesText: string;
+  onConfirm: () => void;
+}) {
+  const styles = useStyles2(getStyles);
+  const { closePopover } = useControlActionsPopover();
+
+  const onClickInternal = useCallback(() => {
+    closePopover();
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title,
+        text,
+        yesText,
+        onConfirm,
+      })
+    );
+  }, [closePopover, title, text, yesText, onConfirm]);
+
+  return (
+    <IconButton
+      name="trash-alt"
+      variant="destructive"
+      size="md"
+      className={cx(styles.action, styles.deleteAction)}
+      onClick={onClickInternal}
+      tooltip={t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete')}
+      tooltipPlacement="top"
+    />
+  );
 }
 
 export function VariableEditActions({
@@ -87,48 +158,10 @@ export function VariableEditActions({
     closePopover();
     onClickEditQuery();
   }, [onClickEditQuery, closePopover]);
-  const onClickDuplicateInternal = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      onClickDuplicate();
-    },
-    [onClickDuplicate]
-  );
-  const onClickDeleteInternal = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      closePopover();
-      appEvents.publish(
-        new ShowConfirmModalEvent({
-          title: t('dashboard-scene.variable-editable-element.delete-title', 'Delete variable'),
-          text: t(
-            'dashboard-scene.variable-editable-element.delete-text',
-            'Are you sure you want to delete: {{name}}?',
-            {
-              name: variable.state.name,
-            }
-          ),
-          yesText: t('dashboard-scene.variable-editable-element.delete-confirm', 'Delete variable'),
-          onConfirm: onClickDelete,
-        })
-      );
-    },
-    [variable.state.name, onClickDelete, closePopover]
-  );
 
   return (
-    // Stops pointerdown from all actions reaching ancestors, e.g. element selection.
-    // It cannot live on the icon buttons: their wrapping Tooltip overrides their pointerdown handlers
-    <div className={styles.hoverActions} onPointerDown={stopPointerDownPropagation}>
-      <Button
-        fill="text"
-        variant="secondary"
-        size="sm"
-        className={cx(styles.action, styles.editAction, styles.textAction)}
-        onPointerDown={onClickEdit}
-      >
-        {t('dashboard-scene.variable-edit-actions.settings', 'Settings')}
-      </Button>
+    <>
+      <SettingsActionButton onClick={onClickEdit} />
       {hasQueryEditor && (
         <>
           <div className={styles.actionsDivider} />
@@ -137,7 +170,7 @@ export function VariableEditActions({
             variant="secondary"
             size="sm"
             className={cx(styles.action, styles.textAction)}
-            onPointerDown={onClickEditQueryInternal}
+            onClick={onClickEditQueryInternal}
           >
             {variable instanceof CustomVariable
               ? t('dashboard-scene.variable-edit-actions.edit-custom-values', 'Edit values')
@@ -146,25 +179,16 @@ export function VariableEditActions({
         </>
       )}
       <div className={styles.actionsDivider} />
-      <IconButton
-        name="copy"
-        variant="secondary"
-        size="md"
-        className={styles.action}
-        onClick={onClickDuplicateInternal}
-        tooltip={t('dashboard-scene.control-edit-actions.aria-label-duplicate', 'Duplicate')}
-        tooltipPlacement="top"
+      <DuplicateActionButton onClick={onClickDuplicate} />
+      <DeleteActionButton
+        title={t('dashboard-scene.variable-editable-element.delete-title', 'Delete variable')}
+        text={t('dashboard-scene.variable-editable-element.delete-text', 'Are you sure you want to delete: {{name}}?', {
+          name: variable.state.name,
+        })}
+        yesText={t('dashboard-scene.variable-editable-element.delete-confirm', 'Delete variable')}
+        onConfirm={onClickDelete}
       />
-      <IconButton
-        name="trash-alt"
-        variant="destructive"
-        size="md"
-        className={cx(styles.action, styles.deleteAction)}
-        onClick={onClickDeleteInternal}
-        tooltip={t('dashboard-scene.control-edit-actions.aria-label-delete', 'Delete')}
-        tooltipPlacement="top"
-      />
-    </div>
+    </>
   );
 }
 
@@ -188,78 +212,33 @@ export function AnnotationEditActions({
     closePopover();
     onClickEditQuery();
   }, [onClickEditQuery, closePopover]);
-  const onClickDuplicateInternal = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      onClickDuplicate();
-    },
-    [onClickDuplicate]
-  );
-  const onClickDeleteInternal = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      closePopover();
-      appEvents.publish(
-        new ShowConfirmModalEvent({
-          title: t('dashboard-scene.annotation-editable-element.delete-title', 'Delete annotation query'),
-          text: t(
-            'dashboard-scene.annotation-editable-element.delete-text',
-            'Are you sure you want to delete: {{name}}?',
-            {
-              name: layer.state.name,
-            }
-          ),
-          yesText: t('dashboard-scene.annotation-editable-element.delete-confirm', 'Delete annotation query'),
-          onConfirm: onClickDelete,
-        })
-      );
-    },
-    [layer.state.name, onClickDelete, closePopover]
-  );
 
   return (
-    // Stops pointerdown from all actions reaching ancestors, e.g. element selection.
-    // It cannot live on the icon buttons: their wrapping Tooltip overrides their pointerdown handlers
-    <div className={styles.hoverActions} onPointerDown={stopPointerDownPropagation}>
-      <Button
-        fill="text"
-        variant="secondary"
-        size="sm"
-        className={cx(styles.action, styles.editAction, styles.textAction)}
-        onPointerDown={onClickEdit}
-      >
-        {t('dashboard-scene.annotation-edit-actions.settings', 'Settings')}
-      </Button>
+    <>
+      <SettingsActionButton onClick={onClickEdit} />
       <div className={styles.actionsDivider} />
       <Button
         fill="text"
         variant="secondary"
         size="sm"
         className={cx(styles.action, styles.textAction)}
-        onPointerDown={onClickEditQueryInternal}
+        onClick={onClickEditQueryInternal}
       >
         {t('dashboard-scene.annotation-edit-actions.edit-query', 'Edit query')}
       </Button>
       <div className={styles.actionsDivider} />
-      <IconButton
-        name="copy"
-        variant="secondary"
-        size="md"
-        className={styles.action}
-        onClick={onClickDuplicateInternal}
-        tooltip={t('dashboard-scene.control-edit-actions.aria-label-duplicate', 'Duplicate')}
-        tooltipPlacement="top"
+      <DuplicateActionButton onClick={onClickDuplicate} />
+      <DeleteActionButton
+        title={t('dashboard-scene.annotation-editable-element.delete-title', 'Delete annotation query')}
+        text={t(
+          'dashboard-scene.annotation-editable-element.delete-text',
+          'Are you sure you want to delete: {{name}}?',
+          { name: layer.state.name }
+        )}
+        yesText={t('dashboard-scene.annotation-editable-element.delete-confirm', 'Delete annotation query')}
+        onConfirm={onClickDelete}
       />
-      <IconButton
-        name="trash-alt"
-        variant="destructive"
-        size="md"
-        className={cx(styles.action, styles.deleteAction)}
-        onClick={onClickDeleteInternal}
-        tooltip={t('dashboard-scene.control-edit-actions.aria-label-delete', 'Delete')}
-        tooltipPlacement="top"
-      />
-    </div>
+    </>
   );
 }
 
@@ -275,66 +254,21 @@ export function LinkEditActions({
   onClickDelete: () => void;
 }) {
   const styles = useStyles2(getStyles);
-  const { closePopover } = useControlActionsPopover();
-
-  const onClickDuplicateInternal = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      onClickDuplicate();
-    },
-    [onClickDuplicate]
-  );
-  const onClickDeleteInternal = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      closePopover();
-      appEvents.publish(
-        new ShowConfirmModalEvent({
-          title: t('dashboard-scene.link-editable-element.delete-title', 'Delete link'),
-          text: t('dashboard-scene.link-editable-element.delete-text', 'Are you sure you want to delete: {{name}}?', {
-            name,
-          }),
-          yesText: t('dashboard-scene.link-editable-element.delete-confirm', 'Delete link'),
-          onConfirm: onClickDelete,
-        })
-      );
-    },
-    [name, onClickDelete, closePopover]
-  );
 
   return (
-    // Stops pointerdown from all actions reaching ancestors, e.g. element selection.
-    // It cannot live on the icon buttons: their wrapping Tooltip overrides their pointerdown handlers
-    <div className={styles.hoverActions} onPointerDown={stopPointerDownPropagation}>
-      <Button
-        fill="text"
-        variant="secondary"
-        size="sm"
-        className={cx(styles.action, styles.editAction, styles.textAction)}
-        onPointerDown={onClickEdit}
-      >
-        {t('dashboard-scene.link-edit-actions.settings', 'Settings')}
-      </Button>
+    <>
+      <SettingsActionButton onClick={onClickEdit} />
       <div className={styles.actionsDivider} />
-      <IconButton
-        name="copy"
-        variant="secondary"
-        size="md"
-        className={styles.action}
-        onClick={onClickDuplicateInternal}
-        tooltip={t('dashboard-scene.control-edit-actions.aria-label-duplicate', 'Duplicate')}
-        tooltipPlacement="top"
+      <DuplicateActionButton onClick={onClickDuplicate} />
+      <DeleteActionButton
+        title={t('dashboard-scene.link-editable-element.delete-title', 'Delete link')}
+        text={t('dashboard-scene.link-editable-element.delete-text', 'Are you sure you want to delete: {{name}}?', {
+          name,
+        })}
+        yesText={t('dashboard-scene.link-editable-element.delete-confirm', 'Delete link')}
+        onConfirm={onClickDelete}
       />
-      <IconButton
-        name="trash-alt"
-        variant="destructive"
-        size="md"
-        className={cx(styles.action, styles.deleteAction)}
-        onClick={onClickDeleteInternal}
-        tooltip={t('dashboard-scene.control-edit-actions.aria-label-delete', 'Delete')}
-        tooltipPlacement="top"
-      />
-    </div>
+    </>
   );
 }
 

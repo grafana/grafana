@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from 'test/test-utils';
+import { createEvent, fireEvent, render, screen } from 'test/test-utils';
 
 import { CustomVariable, QueryVariable, SceneVariableSet } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
@@ -64,6 +64,24 @@ describe('<ControlActionsPopover />', () => {
 
       expect(screen.queryByText('popover-actions')).not.toBeInTheDocument();
     });
+
+    test('pointerdown stops event propagation', async () => {
+      const { user } = render(
+        <ControlActionsPopover isEditable={true} content={<button>action</button>}>
+          <div data-testid="reference-child">control</div>
+        </ControlActionsPopover>
+      );
+
+      await user.hover(screen.getByTestId('reference-child'));
+
+      const actionButton = screen.getByRole('button', { name: 'action' });
+      const pointerDownEvent = createEvent.pointerDown(actionButton);
+      const stopPropagation = jest.spyOn(pointerDownEvent, 'stopPropagation');
+
+      fireEvent(actionButton, pointerDownEvent);
+
+      expect(stopPropagation).toHaveBeenCalled();
+    });
   });
 
   describe('when a popover action opens a modal', () => {
@@ -89,7 +107,7 @@ describe('<ControlActionsPopover />', () => {
         />
       );
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Edit query' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Edit query' }));
 
       expect(screen.queryByRole('button', { name: 'Edit query' })).not.toBeInTheDocument();
     });
@@ -120,7 +138,7 @@ describe('<ControlActionsPopover />', () => {
         />
       );
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Edit query' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Edit query' }));
 
       expect(screen.queryByRole('button', { name: 'Edit query' })).not.toBeInTheDocument();
     });
@@ -136,7 +154,7 @@ describe('<ControlActionsPopover />', () => {
         />
       );
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Settings' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
       expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
     });
@@ -190,21 +208,18 @@ describe('<VariableEditActions />', () => {
     const onClickEditQuery = jest.fn();
     const onClickDuplicate = jest.fn();
     const onClickDelete = jest.fn();
-    const onAncestorPointerDown = jest.fn();
 
     const renderResult = render(
-      <div onPointerDown={onAncestorPointerDown}>
-        <VariableEditActions
-          variable={variable}
-          onClickEdit={onClickEdit}
-          onClickEditQuery={onClickEditQuery}
-          onClickDuplicate={onClickDuplicate}
-          onClickDelete={onClickDelete}
-        />
-      </div>
+      <VariableEditActions
+        variable={variable}
+        onClickEdit={onClickEdit}
+        onClickEditQuery={onClickEditQuery}
+        onClickDuplicate={onClickDuplicate}
+        onClickDelete={onClickDelete}
+      />
     );
 
-    return { ...renderResult, onClickEdit, onClickEditQuery, onClickDuplicate, onClickDelete, onAncestorPointerDown };
+    return { ...renderResult, onClickEdit, onClickEditQuery, onClickDuplicate, onClickDelete };
   }
 
   test('renders variable settings, edit values, duplicate, and delete controls for a custom variable', () => {
@@ -226,65 +241,56 @@ describe('<VariableEditActions />', () => {
   });
 
   describe('when the user clicks on Variable settings', () => {
-    test('calls onClickEdit and the event does not bubble to ancestors', () => {
-      const { onClickEdit, onClickDelete, onAncestorPointerDown } = renderVariableEditActions(buildVariable());
+    test('calls onClickEdit', () => {
+      const { onClickEdit, onClickDelete } = renderVariableEditActions(buildVariable());
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Settings' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
       expect(onClickEdit).toHaveBeenCalledTimes(1);
       expect(onClickDelete).not.toHaveBeenCalled();
-      expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on Edit query', () => {
-    test('calls onClickEditQuery and the event does not bubble to ancestors', () => {
-      const { onClickEdit, onClickEditQuery, onAncestorPointerDown } = renderVariableEditActions(buildQueryVariable());
+    test('calls onClickEditQuery', () => {
+      const { onClickEdit, onClickEditQuery } = renderVariableEditActions(buildQueryVariable());
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Edit query' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Edit query' }));
 
       expect(onClickEditQuery).toHaveBeenCalledTimes(1);
       expect(onClickEdit).not.toHaveBeenCalled();
-      expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on Edit values', () => {
-    test('calls onClickEditQuery and the event does not bubble to ancestors', () => {
-      const { onClickEdit, onClickEditQuery, onAncestorPointerDown } = renderVariableEditActions(buildVariable());
+    test('calls onClickEditQuery', () => {
+      const { onClickEdit, onClickEditQuery } = renderVariableEditActions(buildVariable());
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Edit values' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Edit values' }));
 
       expect(onClickEditQuery).toHaveBeenCalledTimes(1);
       expect(onClickEdit).not.toHaveBeenCalled();
-      expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on Duplicate', () => {
-    test('calls onClickDuplicate and the event does not bubble to ancestors', () => {
-      const { onClickEdit, onClickDuplicate, onClickDelete, onAncestorPointerDown } =
-        renderVariableEditActions(buildVariable());
+    test('calls onClickDuplicate', () => {
+      const { onClickEdit, onClickDuplicate, onClickDelete } = renderVariableEditActions(buildVariable());
 
-      const duplicateButton = screen.getByRole('button', { name: 'Duplicate' });
-      fireEvent.click(duplicateButton);
+      fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
 
       expect(onClickDuplicate).toHaveBeenCalledTimes(1);
       expect(onClickEdit).not.toHaveBeenCalled();
       expect(onClickDelete).not.toHaveBeenCalled();
-
-      fireEvent.pointerDown(duplicateButton);
-      expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on the delete action', () => {
-    test('publishes a ShowConfirmModalEvent and the click event does not bubble to ancestors', () => {
+    test('publishes a ShowConfirmModalEvent', () => {
       const variable = buildVariable();
-      const { onClickDelete, onAncestorPointerDown } = renderVariableEditActions(variable);
+      const { onClickDelete } = renderVariableEditActions(variable);
 
-      const deleteButton = screen.getByRole('button', { name: 'Delete' });
-      fireEvent.click(deleteButton);
+      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
       expect(mockPublishAppEvent).toHaveBeenCalledTimes(1);
 
@@ -300,9 +306,6 @@ describe('<VariableEditActions />', () => {
           },
         })
       );
-
-      fireEvent.pointerDown(deleteButton);
-      expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
 });
@@ -316,20 +319,17 @@ describe('<LinkEditActions />', () => {
     const onClickEdit = jest.fn();
     const onClickDuplicate = jest.fn();
     const onClickDelete = jest.fn();
-    const onAncestorPointerDown = jest.fn();
 
     const renderResult = render(
-      <div onPointerDown={onAncestorPointerDown}>
-        <LinkEditActions
-          name="Test link"
-          onClickEdit={onClickEdit}
-          onClickDuplicate={onClickDuplicate}
-          onClickDelete={onClickDelete}
-        />
-      </div>
+      <LinkEditActions
+        name="Test link"
+        onClickEdit={onClickEdit}
+        onClickDuplicate={onClickDuplicate}
+        onClickDelete={onClickDelete}
+      />
     );
 
-    return { ...renderResult, onClickEdit, onClickDuplicate, onClickDelete, onAncestorPointerDown };
+    return { ...renderResult, onClickEdit, onClickDuplicate, onClickDelete };
   }
 
   test('renders link settings, duplicate, and delete controls', () => {
@@ -341,39 +341,33 @@ describe('<LinkEditActions />', () => {
   });
 
   describe('when the user clicks on Link settings', () => {
-    test('calls onClickEdit and the event does not bubble to ancestors', () => {
-      const { onClickEdit, onClickDelete, onAncestorPointerDown } = renderLinkEditActions();
+    test('calls onClickEdit', () => {
+      const { onClickEdit, onClickDelete } = renderLinkEditActions();
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Settings' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
       expect(onClickEdit).toHaveBeenCalledTimes(1);
       expect(onClickDelete).not.toHaveBeenCalled();
-      expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on Duplicate', () => {
-    test('calls onClickDuplicate and the event does not bubble to ancestors', () => {
-      const { onClickEdit, onClickDuplicate, onClickDelete, onAncestorPointerDown } = renderLinkEditActions();
+    test('calls onClickDuplicate', () => {
+      const { onClickEdit, onClickDuplicate, onClickDelete } = renderLinkEditActions();
 
-      const duplicateButton = screen.getByRole('button', { name: 'Duplicate' });
-      fireEvent.click(duplicateButton);
+      fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
 
       expect(onClickDuplicate).toHaveBeenCalledTimes(1);
       expect(onClickEdit).not.toHaveBeenCalled();
       expect(onClickDelete).not.toHaveBeenCalled();
-
-      fireEvent.pointerDown(duplicateButton);
-      expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on the delete action', () => {
-    test('publishes a ShowConfirmModalEvent and the click event does not bubble to ancestors', () => {
-      const { onClickDelete, onAncestorPointerDown } = renderLinkEditActions();
+    test('publishes a ShowConfirmModalEvent', () => {
+      const { onClickDelete } = renderLinkEditActions();
 
-      const deleteButton = screen.getByRole('button', { name: 'Delete' });
-      fireEvent.click(deleteButton);
+      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
       expect(mockPublishAppEvent).toHaveBeenCalledTimes(1);
 
@@ -389,9 +383,6 @@ describe('<LinkEditActions />', () => {
           },
         })
       );
-
-      fireEvent.pointerDown(deleteButton);
-      expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
 });
@@ -406,21 +397,18 @@ describe('<AnnotationEditActions />', () => {
     const onClickEditQuery = jest.fn();
     const onClickDuplicate = jest.fn();
     const onClickDelete = jest.fn();
-    const onAncestorPointerDown = jest.fn();
 
     const renderResult = render(
-      <div onPointerDown={onAncestorPointerDown}>
-        <AnnotationEditActions
-          layer={dataLayer}
-          onClickEdit={onClickEdit}
-          onClickEditQuery={onClickEditQuery}
-          onClickDuplicate={onClickDuplicate}
-          onClickDelete={onClickDelete}
-        />
-      </div>
+      <AnnotationEditActions
+        layer={dataLayer}
+        onClickEdit={onClickEdit}
+        onClickEditQuery={onClickEditQuery}
+        onClickDuplicate={onClickDuplicate}
+        onClickDelete={onClickDelete}
+      />
     );
 
-    return { ...renderResult, onClickEdit, onClickEditQuery, onClickDuplicate, onClickDelete, onAncestorPointerDown };
+    return { ...renderResult, onClickEdit, onClickEditQuery, onClickDuplicate, onClickDelete };
   }
 
   test('renders annotation settings, edit query, duplicate, and delete controls', () => {
@@ -433,52 +421,45 @@ describe('<AnnotationEditActions />', () => {
   });
 
   describe('when the user clicks on Annotation settings', () => {
-    test('calls onClickEdit and the event does not bubble to ancestors', () => {
-      const { onClickEdit, onClickDelete, onAncestorPointerDown } = renderAnnotationEditActions();
+    test('calls onClickEdit', () => {
+      const { onClickEdit, onClickDelete } = renderAnnotationEditActions();
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Settings' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
 
       expect(onClickEdit).toHaveBeenCalledTimes(1);
       expect(onClickDelete).not.toHaveBeenCalled();
-      expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on Edit query', () => {
-    test('calls onClickEditQuery and the event does not bubble to ancestors', () => {
-      const { onClickEdit, onClickEditQuery, onAncestorPointerDown } = renderAnnotationEditActions();
+    test('calls onClickEditQuery', () => {
+      const { onClickEdit, onClickEditQuery } = renderAnnotationEditActions();
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Edit query' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Edit query' }));
 
       expect(onClickEditQuery).toHaveBeenCalledTimes(1);
       expect(onClickEdit).not.toHaveBeenCalled();
-      expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on Duplicate', () => {
-    test('calls onClickDuplicate and the event does not bubble to ancestors', () => {
-      const { onClickEdit, onClickDuplicate, onClickDelete, onAncestorPointerDown } = renderAnnotationEditActions();
+    test('calls onClickDuplicate', () => {
+      const { onClickEdit, onClickDuplicate, onClickDelete } = renderAnnotationEditActions();
 
-      const duplicateButton = screen.getByRole('button', { name: 'Duplicate' });
-      fireEvent.click(duplicateButton);
+      fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
 
       expect(onClickDuplicate).toHaveBeenCalledTimes(1);
       expect(onClickEdit).not.toHaveBeenCalled();
       expect(onClickDelete).not.toHaveBeenCalled();
-
-      fireEvent.pointerDown(duplicateButton);
-      expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
 
   describe('when the user clicks on the delete action', () => {
-    test('publishes a ShowConfirmModalEvent and the click event does not bubble to ancestors', () => {
+    test('publishes a ShowConfirmModalEvent', () => {
       const dataLayer = buildDataLayer();
-      const { onClickDelete, onAncestorPointerDown } = renderAnnotationEditActions(dataLayer);
+      const { onClickDelete } = renderAnnotationEditActions(dataLayer);
 
-      const deleteButton = screen.getByRole('button', { name: 'Delete' });
-      fireEvent.click(deleteButton);
+      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
       expect(mockPublishAppEvent).toHaveBeenCalledTimes(1);
 
@@ -494,9 +475,6 @@ describe('<AnnotationEditActions />', () => {
           },
         })
       );
-
-      fireEvent.pointerDown(deleteButton);
-      expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
 });

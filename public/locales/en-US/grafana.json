@@ -6844,8 +6844,7 @@
         "change-annotation-name": "Change annotation name",
         "change-annotation-panel-filter": "Change annotation panel filter"
       },
-      "edit-query": "Edit query",
-      "settings": "Settings"
+      "edit-query": "Edit query"
     },
     "annotation-editable-element": {
       "delete-confirm": "Delete annotation query",
@@ -6921,8 +6920,9 @@
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Delete",
-      "aria-label-duplicate": "Duplicate"
+      "delete-tooltip": "Delete",
+      "duplicate-tooltip": "Duplicate",
+      "settings-tooltip": "Settings"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -7262,7 +7262,6 @@
     "link-edit-actions": {
       "add-link": "Add link",
       "remove-link": "Remove link",
-      "settings": "Settings",
       "update-link": "Update link"
     },
     "link-editable-element": {
@@ -7725,8 +7724,7 @@
     },
     "variable-edit-actions": {
       "edit-custom-values": "Edit values",
-      "edit-query": "Edit query",
-      "settings": "Settings"
+      "edit-query": "Edit query"
     },
     "variable-editable-element": {
       "delete-confirm": "Delete variable",
