@@ -68,13 +68,13 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/lodash": "^4",
-    "@types/react": "18.3.18",
-    "@types/react-dom": "18.3.5",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
     "@types/tinycolor2": "^1",
     "@typescript/native": "npm:typescript@^7.0.2",
     "i18next-cli": "^1.48.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "react-redux": "^9.2.0",
     "rimraf": "^6.0.1",
     "rollup": "^4.60.1",
@@ -88,8 +88,8 @@
     "@grafana/runtime": ">=11.6 <= 12.x",
     "@grafana/ui": ">=11.6 <= 12.x",
     "msw": "^2.0.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": ">=19",
+    "react-dom": ">=19"
   },
   "dependencies": {
     "@emotion/css": "^11.13.5",

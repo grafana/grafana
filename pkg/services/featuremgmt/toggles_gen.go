@@ -834,10 +834,6 @@ const (
 	// Whether to use the new React 19 runtime
 	FlagReact19 = "react19"
 
-	// FlagFrontendServiceSettingsSourceFilter
-	// Adds a label filter for source=us when fetching settings from the settings service in the frontend service
-	FlagFrontendServiceSettingsSourceFilter = "frontendService.settingsSourceFilter"
-
 	// FlagManagedPluginsV2
 	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
 	FlagManagedPluginsV2 = "managedPluginsV2"
@@ -970,6 +966,10 @@ const (
 	// Controls whether the frontend blocks calls to legacy /api/ endpoints
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
 
+	// FlagGrafanaOfrepRootUrl
+	// Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route
+	FlagGrafanaOfrepRootUrl = "grafana.ofrepRootUrl"
+
 	// FlagFeaturesBulkFlagEvalFiltering
 	// Filters bulk OFREP flag evaluations to public-metadata flags only
 	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
@@ -989,4 +989,8 @@ const (
 	// FlagAlertingStateManagerRequireWarm
 	// Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.
 	FlagAlertingStateManagerRequireWarm = "alerting.stateManagerRequireWarm"
+
+	// FlagGrafanaRspackBuild
+	// Switches the backend to load frontend assets built with rspack instead of webpack
+	FlagGrafanaRspackBuild = "grafana.rspackBuild"
 )
