@@ -2148,6 +2148,61 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		require.ErrorAs(t, err, &validationErr, "UID conflict should be a ResourceValidationError")
 		require.ErrorContains(t, err, `folder UID "shared-uid" defined in "team-a" is already used by folder at path "team-b"`)
 	})
+
+	// Reproduces the folder-rename bug: a single commit renames a parent
+	// ("oldparent" -> "newparent") and its child ("oldchild" -> "newchild"),
+	// both keeping their stable _folder.json UID. During reconcile the old
+	// folders are still in the tree at their old paths, so ensuring the new
+	// child path walks its ancestors and resolves the parent's UID at the old
+	// path. Only when EVERY relocating UID is supplied can the walk avoid a
+	// false duplicate-UID conflict.
+	t.Run("simultaneous parent and child relocation needs the full relocating set", func(t *testing.T) {
+		newManager := func() (*FolderManager, *fakeDynamicResourceClient) {
+			config := newTestRepoConfig("test-repo")
+			rw := repository.NewMockReaderWriter(t)
+			rw.On("Config").Return(config)
+			rw.On("Read", mock.Anything, "newparent/newchild/_folder.json", "test-ref").
+				Return(&repository.FileInfo{Data: folderJSON("child-uid", "Child"), Hash: "child-hash"}, nil)
+			rw.On("Read", mock.Anything, "newparent/_folder.json", "test-ref").
+				Return(&repository.FileInfo{Data: folderJSON("parent-uid", "Parent"), Hash: "parent-hash"}, nil)
+
+			// Old state: both folders present at their old paths under their stable UIDs.
+			tree := NewEmptyFolderTree()
+			tree.Add(Folder{ID: "parent-uid", Path: "oldparent", Title: "Parent", MetadataHash: "parent-hash"}, "")
+			tree.Add(Folder{ID: "child-uid", Path: "oldparent/oldchild", Title: "Child", MetadataHash: "child-hash"}, "parent-uid")
+
+			client := &fakeDynamicResourceClient{
+				getFn: func(name string) (*unstructured.Unstructured, error) {
+					if name == "parent-uid" || name == "child-uid" {
+						return managedFolder(name, "Folder", config.Name), nil
+					}
+					return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
+				},
+				updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) { return obj, nil },
+				createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) { return obj, nil },
+			}
+			return NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true)), client
+		}
+
+		t.Run("an incomplete relocating set still conflicts on the parent ancestor", func(t *testing.T) {
+			fm, _ := newManager()
+			_, err := fm.EnsureFolderPathExist(ctx, "newparent/newchild/dashboard.json", "test-ref",
+				WithForceWalk(), WithRelocatingUIDs("child-uid"))
+			require.Error(t, err)
+			require.ErrorContains(t, err, `folder UID "parent-uid" defined in "newparent" is already used by folder at path "oldparent"`)
+		})
+
+		t.Run("the full relocating set relocates both folders without conflict", func(t *testing.T) {
+			fm, client := newManager()
+			leaf, err := fm.EnsureFolderPathExist(ctx, "newparent/newchild/dashboard.json", "test-ref",
+				WithForceWalk(), WithRelocatingUIDs("parent-uid", "child-uid"))
+			require.NoError(t, err)
+			require.Equal(t, "child-uid", leaf)
+			// Both relocating folders were re-ensured (re-parented) at their new paths.
+			require.Contains(t, client.updateCalls, "parent-uid")
+			require.Contains(t, client.updateCalls, "child-uid")
+		})
+	})
 }
 
 func TestEnsureFolderTreeExists(t *testing.T) {
