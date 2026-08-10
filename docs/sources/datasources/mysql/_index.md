@@ -21,12 +21,10 @@ review_date: 2026-08-10
 
 # MySQL data source
 
-Grafana ships with the MySQL data source out of the box. It's preinstalled in both Grafana OSS and Grafana Enterprise, so there's nothing for you to install.
-Starting with Grafana 13.2, the data source is packaged as a standalone plugin that can be updated independently of Grafana releases. Refer to [Plugin updates](#plugin-updates) for details.
+The MySQL data source lets you query and visualize data from MySQL and MySQL-compatible databases like [MariaDB](https://mariadb.org/) or [Percona Server](https://www.percona.com/).
+Use it to create dashboards, explore SQL data, and monitor MySQL-based workloads in real time.
 
-You can query and visualize data from MySQL-compatible databases like [MariaDB](https://mariadb.org/) or [Percona Server](https://www.percona.com/).
-
-Use this data source to create dashboards, explore SQL data, and monitor MySQL-based workloads in real time.
+The data source ships with Grafana out of the box. It's preinstalled in both Grafana OSS and Grafana Enterprise, so there's nothing for you to install. Starting with Grafana 13.2, it's packaged as a standalone plugin that updates independently of Grafana releases. Refer to [Plugin updates](#plugin-updates) for details.
 
 Watch the following video to learn more about using the Grafana MySQL data source plugin: {{< youtube id="p_RDHfHS-P8">}}
 
