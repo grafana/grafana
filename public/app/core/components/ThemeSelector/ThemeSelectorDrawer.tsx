@@ -29,7 +29,7 @@ export function ThemeSelectorDrawer({ onClose }: Props) {
 
   const subTitle = (
     <Trans i18nKey="shared-preferences.fields.theme-description">
-      Enjoying the experimental themes? Tell us what you'd like to see{' '}
+      Enjoying the experimental themes? Tell us what you&apos;d like to see{' '}
       <TextLink
         variant="bodySmall"
         external

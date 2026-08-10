@@ -162,6 +162,7 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			assert.Equal(t, 0, cfg.SearchPostRankAuthzOverFetchFactor)
 			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxWindow)
 			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxCandidates)
+			assert.Equal(t, 0, cfg.SearchPostRankAuthzFacetSampleSize)
 		})
 
 		t.Run("reads configured values", func(t *testing.T) {
@@ -172,11 +173,13 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			setSectionKey(cfg, "search_post_rank_authz_over_fetch_factor", "20")
 			setSectionKey(cfg, "search_post_rank_authz_max_window", "5000")
 			setSectionKey(cfg, "search_post_rank_authz_max_candidates", "12345")
+			setSectionKey(cfg, "search_post_rank_authz_facet_sample_size", "8000")
 			cfg.setUnifiedStorageConfig()
 			assert.True(t, cfg.SearchPostRankAuthz)
 			assert.Equal(t, 20, cfg.SearchPostRankAuthzOverFetchFactor)
 			assert.Equal(t, 5000, cfg.SearchPostRankAuthzMaxWindow)
 			assert.Equal(t, 12345, cfg.SearchPostRankAuthzMaxCandidates)
+			assert.Equal(t, 8000, cfg.SearchPostRankAuthzFacetSampleSize)
 		})
 	})
 
@@ -229,6 +232,51 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		assert.Equal(t, 2000000, cfg.MigrationCacheSizeKB)
 		assert.True(t, cfg.MigrationParquetBuffer)
 		assert.Equal(t, 3, cfg.IndexWorkers)
+	})
+
+	t.Run("authorization defaults preserve allowlist behavior", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.False(t, cfg.UnifiedStorageAuthzExemptionEnabled)
+		assert.Empty(t, cfg.UnifiedStorageAuthzExemptResources)
+	})
+
+	t.Run("authorization config reads INI controls", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		section := cfg.Raw.Section("unified_storage")
+		section.Key("authz_exemption_enabled").SetValue("true")
+		section.Key("authz_exempt_resources").SetValue(" example.grafana.app/widgets,querycaching.grafana.app/querycacheconfigs, ")
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.True(t, cfg.UnifiedStorageAuthzExemptionEnabled)
+		assert.Equal(t, []string{
+			"example.grafana.app/widgets",
+			"querycaching.grafana.app/querycacheconfigs",
+		}, cfg.UnifiedStorageAuthzExemptResources)
+	})
+
+	t.Run("authorization config supports unified storage env overrides", func(t *testing.T) {
+		t.Setenv("GF_UNIFIED_STORAGE_AUTHZ_EXEMPTION_ENABLED", "true")
+		t.Setenv("GF_UNIFIED_STORAGE_AUTHZ_EXEMPT_RESOURCES", "example.grafana.app/widgets,querycaching.grafana.app/querycacheconfigs")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.True(t, cfg.UnifiedStorageAuthzExemptionEnabled)
+		assert.Equal(t, []string{
+			"example.grafana.app/widgets",
+			"querycaching.grafana.app/querycacheconfigs",
+		}, cfg.UnifiedStorageAuthzExemptResources)
 	})
 
 	t.Run("chunked writes config defaults", func(t *testing.T) {

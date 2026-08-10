@@ -1,15 +1,19 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, lazy, Suspense, useMemo, useState } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Menu, Dropdown, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
+import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
@@ -22,14 +26,23 @@ import {
   findCreateActionGroups,
 } from './utils';
 
+const GenerateDashboardModal = lazy(() =>
+  import('app/features/dashboard-prompt/GenerateDashboardModal').then((module) => ({
+    default: module.GenerateDashboardModal,
+  }))
+);
+
 export interface Props {}
 
 export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const [isOpen, setIsOpen] = useState(false);
+  const [showGenerateDashboardPrompt, setShowGenerateDashboardPrompt] = useState(false);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
+  const isGenerateDashboardAvailable =
+    useDashboardGenerationAvailable() && contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
 
   const theme = useTheme2();
 
@@ -67,8 +80,28 @@ export const QuickAdd = ({}: Props) => {
       }
     }
 
+    if (isGenerateDashboardAvailable) {
+      const generateItem: NavModelItem = {
+        id: 'generate-dashboard',
+        text: t('navigation.quick-add.generate-dashboard-button', 'Generate dashboard'),
+        onClick: () => setShowGenerateDashboardPrompt(true),
+      };
+
+      const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
+      if (dashboardGroup) {
+        const newDashboardIndex = dashboardGroup.items.findIndex((item) => item.id === 'dashboards/new');
+        dashboardGroup.items.splice(newDashboardIndex + 1, 0, generateItem);
+      }
+    }
+
     return groups;
-  }, [isAnalyticsFrameworkEnabled, isCustomDashboardTemplatesEnabled, isTemplateDashboardsAvailable, navBarTree]);
+  }, [
+    isAnalyticsFrameworkEnabled,
+    isCustomDashboardTemplatesEnabled,
+    isTemplateDashboardsAvailable,
+    isGenerateDashboardAvailable,
+    navBarTree,
+  ]);
 
   const showQuickAdd = actionGroups.some((g) => g.items.length > 0);
 
@@ -134,9 +167,15 @@ export const QuickAdd = ({}: Props) => {
           icon={'plus'}
           isOpen={isOpen}
           aria-label={t('navigation.quick-add.aria-label', 'New')}
+          data-testid={selectors.components.NavToolbar.quickAddButton}
         />
       </Dropdown>
       <NavToolbarSeparator />
+      {showGenerateDashboardPrompt && (
+        <Suspense fallback={null}>
+          <GenerateDashboardModal onDismiss={() => setShowGenerateDashboardPrompt(false)} />
+        </Suspense>
+      )}
     </>
   );
 };

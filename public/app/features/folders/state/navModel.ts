@@ -1,6 +1,7 @@
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
 import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
@@ -12,6 +13,7 @@ export const FOLDER_ID = 'manage-folder';
 export const getDashboardsTabID = (folderUID: string) => `folder-dashboards-${folderUID}`;
 export const getLibraryPanelsTabID = (folderUID: string) => `folder-library-panels-${folderUID}`;
 export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folderUID}`;
+export const getVariablesTabID = (folderUID: string) => `folder-variables-${folderUID}`;
 
 export function buildNavModel(
   folder: FolderDTO | FolderParent,
@@ -67,6 +69,16 @@ export function buildNavModel(
       text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
       url: `${folder.url}/alerting`,
       tabCounter: counts ? counts.rules : undefined,
+    });
+  }
+
+  if (!isProvisioned && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false)) {
+    model.children!.push({
+      active: false,
+      icon: 'brackets-curly',
+      id: getVariablesTabID(folder.uid),
+      text: t('browse-dashboards.manage-folder-nav.variables', 'Variables'),
+      url: `${folder.url}/variables`,
     });
   }
 

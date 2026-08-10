@@ -50,6 +50,15 @@ type ZanzanaClientSettings struct {
 	// PrimaryEngine selects which engine is on the hot path when the shadow
 	// client is active. Accepted values: "rbac" (default) and "zanzana".
 	PrimaryEngine ZanzanaPrimaryEngine
+	// KeepaliveTime is the gRPC client keepalive ping interval, used to detect dead
+	// connections. Must exceed the server's keepalive enforcement min_time (gRPC default
+	// is 5m) or the server closes the connection. Zero disables keepalive pings.
+	// Only used when mode is set to client.
+	KeepaliveTime time.Duration
+	// CallTimeout is the deadline applied to calls whose context has none, so background
+	// callers cannot block indefinitely on an unresponsive connection. It spans all retry
+	// attempts. Zero disables the default deadline. Only used when mode is set to client.
+	CallTimeout time.Duration
 }
 
 type ZanzanaReconcilerMode string
@@ -136,6 +145,9 @@ type ZanzanaServerSettings struct {
 }
 
 type OpenFgaServerSettings struct {
+	// OpenFGA experimental features to enable
+	Experimentals []string
+
 	// ListObjects settings
 	// Max number of concurrent datastore reads for ListObjects queries
 	MaxConcurrentReadsForListObjects uint32
@@ -297,6 +309,8 @@ func (cfg *Cfg) readZanzanaSettings() {
 
 	zc.Addr = clientSec.Key("address").MustString("")
 	zc.ServerCertFile = clientSec.Key("tls_cert").MustString("")
+	zc.KeepaliveTime = clientSec.Key("grpc_client_keepalive_time").MustDuration(6 * time.Minute)
+	zc.CallTimeout = clientSec.Key("grpc_client_timeout").MustDuration(30 * time.Second)
 
 	grpcClientAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
 	zc.Token = grpcClientAuthSection.Key("token").MustString("")
@@ -353,6 +367,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.CacheSettings.SharedIteratorTTL = serverSec.Key("shared_iterator_ttl").MustDuration(10 * time.Second)
 
 	openfgaSec := cfg.SectionWithEnvOverrides("openfga")
+	zs.OpenFgaServerSettings.Experimentals = openfgaSec.Key("experimentals").Strings(",")
 
 	// ListObjects settings
 	zs.OpenFgaServerSettings.MaxConcurrentReadsForListObjects = uint32(openfgaSec.Key("max_concurrent_reads_for_list_objects").MustUint(0))

@@ -20,6 +20,9 @@ service ResourceIndex {
 
   // Semantic search
   rpc VectorSearch(VectorSearchRequest) returns (VectorSearchResponse);
+
+  // Hybrid search: RRF fuse lexical and vector with optional reranker
+  rpc HybridSearch(HybridSearchRequest) returns (HybridSearchResponse);
 }
 
 // Get statistics across multiple resources
@@ -58,8 +61,8 @@ message ResourceStatsResponse {
   repeated Stats stats = 2;
 }
 
-// This controls what query and analyzers are applied to the specified field
-// See: https://blevesearch.com/docs/Analyzers/
+// Obsolete: the server derives the query and analyzer from how the field is
+// mapped, so this is ignored. Goes away once no client sends it.
 enum QueryFieldType {
   // Picks a reasonable analyzer given the input.  Currently this always uses TEXT
   // In the future, it may change to depend on the indexed field type
@@ -93,6 +96,7 @@ message ResourceSearchRequest {
     // The field name in the index to query
     string name = 1;
 
+    // Obsolete: ignored by the server. Kept because older clients still set it.
     QueryFieldType type = 2;
 
     // Boost value for this field
@@ -136,9 +140,10 @@ message ResourceSearchRequest {
   int64 permission = 12;
 
   // Optionally specify which fields are included in the query.
-  // For non-wildcard queries, type and boost control how each field is searched.
+  // For non-wildcard queries, boost weights how much each field contributes to
+  // the score; the query type comes from the field's mapping.
   // For wildcard queries (containing '*'), only the field name is used;
-  // type and boost are ignored because bleve wildcards don't support analyzers
+  // boost is ignored because bleve wildcards don't support analyzers
   // or meaningful relevance scoring.
   repeated QueryField query_fields = 13;
 
@@ -178,6 +183,13 @@ message ResourceSearchResponse {
 
   // The total hit count
   int64 total_hits = 4;
+
+  // Whether total_hits is exact. When false, total_hits is a best-effort
+  // approximation because the exact count could not be determined cheaply. For
+  // example, a bounded post-ranking authz scan that does not run to exhaustion
+  // reports the pre-authorization match count, which over-counts the authorized
+  // total.
+  bool total_hits_exact = 9;
 
   // indicates how expensive was the query with respect to bytes read
   double query_cost = 5;
@@ -276,5 +288,91 @@ message VectorSearchResult {
 
   // Structured metadata as raw JSON; caller unmarshals as needed.
   bytes metadata = 7;
+}
+
+message HybridSearchRequest {
+  // Resource type to search (namespace + group + resource).
+  ResourceKey key = 1;
+
+  // Required. Feeds the lexical leg verbatim; also embedded for the
+  // semantic leg unless semantic_query is set. Max 1000 bytes.
+  string query = 2;
+
+  // Optional richer phrasing embedded for the semantic leg instead of
+  // query. Max 1000 bytes.
+  string semantic_query = 3;
+
+  // Top-k: maximum results. Defaults to 50 when zero, capped at 200.
+  int64 limit = 4;
+
+  // Exact-match filters, IN semantics for multiple values, each key at
+  // most once. Supported keys: "uid" and "folder" (all kinds),
+  // "datasource_uid" and "language" (dashboards; language values:
+  // promql, logql, traceql, sql). Every key is enforced natively by
+  // BOTH legs. Any other key or language fails the request.
+  repeated Requirement filters = 5;
+
+  // Minimum relevance a result must reach to be returned. One of:
+  // "lowest", "low", "medium", "high", "highest"; empty keeps every
+  // result. Levels resolve to server-calibrated, model-specific score
+  // thresholds targeting ~95/85/70/50/30% recall respectively.
+  // Best-effort: ignored (nothing dropped) when the server has no
+  // reranker configured or the rerank call fails. Unknown values are
+  // INVALID_ARGUMENT.
+  string min_relevance = 6;
+
+  // Skip the reranking stage even when the server has a reranker
+  // configured, returning RRF-fused ordering directly. For callers that
+  // prefer fusion latency over cross-encoder quality. Setting this
+  // together with min_relevance is INVALID_ARGUMENT (thresholds are
+  // meaningless without reranking).
+  bool skip_rerank = 7;
+}
+
+message HybridSearchResponse {
+  // Top-k fused results, descending score, one row per resource.
+  // Request failures are gRPC status errors (e.g. INVALID_ARGUMENT for
+  // bad filters), never payload-embedded errors.
+  repeated HybridSearchResult results = 1;
+}
+
+message HybridSearchResult {
+  // Full identity (namespace, group, resource, name).
+  ResourceKey key = 1;
+
+  // Display title, from the lexical index when available.
+  string title = 2;
+
+  // Folder UID.
+  string folder = 3;
+
+  // Folder display title, resolved fresh at query time from the folder
+  // index (one batched lookup per request). Empty for the root folder or
+  // when resolution fails — best-effort display data, never an error.
+  string folder_title = 6;
+
+  // Relevance: higher = higher quality/score threshold. High thresholds may return far less results. `low` is a recommended starting point.
+  // With a reranker configured this is the calibrated cross-encoder relevance (roughly
+  // 0-1); otherwise it is the RRF fusion score.
+  // This is NOT comparable to VectorSearchResult.score (raw cosine distance).
+  double score = 4;
+
+  // Matching embedded chunks, best first, capped at 10 per result.
+  // One entry with subresource "" for resources embedded whole. For
+  // lexical-only hits the server synthesizes a single chunk with
+  // content = title and no metadata so rerankers always have text.
+  // Only the best chunk influences score.
+  repeated HybridSearchChunk chunks = 5;
+}
+
+message HybridSearchChunk {
+  // Chunk id within the resource (e.g. "panel/5"); "" = whole resource.
+  string subresource = 1;
+
+  // The text that was embedded (or the title for synthesized chunks).
+  string content = 2;
+
+  // Structured chunk metadata as raw JSON; empty for synthesized chunks.
+  bytes metadata = 3;
 }
 

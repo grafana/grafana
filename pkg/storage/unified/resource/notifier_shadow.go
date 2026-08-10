@@ -77,7 +77,7 @@ func (s *natsShadow) start(ctx context.Context) {
 
 func (s *natsShadow) observe(evt Event) {
 	s.metrics.eventsReceived.WithLabelValues(evt.Group, evt.Resource, string(evt.Action)).Inc()
-	latency := time.Since(resourceVersionTime(evt.ResourceVersion)).Seconds()
+	latency := time.Since(ResourceVersionTime(evt.ResourceVersion)).Seconds()
 	if latency > 0 {
 		s.metrics.latency.WithLabelValues(evt.Resource).Observe(latency)
 	}

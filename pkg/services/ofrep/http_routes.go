@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
@@ -178,33 +179,47 @@ func (b *APIBuilder) validateNamespace(r *http.Request, evalCtx evalContext) (st
 	// namespace-scoped — mirroring the apiserver's useNamespaceFromPath handling. This
 	// does not authenticate the request; access stays gated to public flags downstream.
 	if authNamespace == "" {
-		pathNamespace := mux.Vars(r)["namespace"]
-		span.SetAttributes(
-			attribute.String("path_namespace", pathNamespace),
-			attribute.String("eval_ctx_namespace", evalCtx.namespace),
-		)
-		// Reject a body claiming a namespace other than the one in the path.
-		if pathNamespace != "" && evalCtx.namespace != "" && evalCtx.namespace != pathNamespace {
-			span.SetAttributes(attribute.Bool("validation.success", false))
-			return pathNamespace, false
+		if pathNamespace := mux.Vars(r)["namespace"]; pathNamespace != "" {
+			span.SetAttributes(
+				attribute.String("path_namespace", pathNamespace),
+				attribute.String("eval_ctx_namespace", evalCtx.namespace),
+			)
+			// Reject a body claiming a namespace other than the one in the path.
+			valid := evalCtx.namespace == "" || evalCtx.namespace == pathNamespace
+			span.SetAttributes(attribute.Bool("validation.success", valid))
+			return pathNamespace, valid
 		}
-		span.SetAttributes(attribute.Bool("validation.success", true))
-		return pathNamespace, true
 	}
 
+	resolvedNamespace := resolveTargetNamespace(authNamespace, evalCtx.namespace)
 	span.SetAttributes(
 		attribute.String("auth_namespace", authNamespace),
 		attribute.String("eval_ctx_namespace", evalCtx.namespace),
 	)
 
-	// Only cross-check when both sides declare a namespace. A wildcard auth namespace
-	// grants cluster-wide access and matches any specific namespace.
-	if evalCtx.namespace == "" || authNamespace == "*" {
+	// Only cross-check when both sides declare a concrete namespace. A wildcard auth
+	// namespace grants cluster-wide access and matches any specific namespace, and an
+	// empty auth namespace has no identity to check against (public-flag gated downstream).
+	if evalCtx.namespace == "" || authNamespace == "" || authNamespace == "*" {
 		span.SetAttributes(attribute.Bool("validation.success", true))
-		return authNamespace, true
+		return resolvedNamespace, true
 	}
 
 	valid := evalCtx.namespace == authNamespace
 	span.SetAttributes(attribute.Bool("validation.success", valid))
-	return authNamespace, valid
+	return resolvedNamespace, valid
+}
+
+// resolveTargetNamespace picks the namespace used in the User-Agent when proxying
+// downstream. A concrete authNamespace wins; otherwise (empty, or wildcard "*" for
+// callers acting across tenants) fall back to the per-request namespace from the eval
+// context body, so calls don't all collapse into one shared bucket.
+func resolveTargetNamespace(authNamespace, evalCtxNamespace string) string {
+	if authNamespace != "" && authNamespace != "*" {
+		return authNamespace
+	}
+	if evalCtxNamespace != "" && len(validation.IsValidNamespace(evalCtxNamespace)) == 0 {
+		return evalCtxNamespace
+	}
+	return authNamespace
 }

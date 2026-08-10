@@ -64,7 +64,7 @@ func TestExtractor_Classic(t *testing.T) {
 	value, _ := json.Marshal(body)
 
 	items, err := New().Extract(context.Background(),
-		&resourcepb.ResourceKey{Resource: "dashboards", Name: "dash-uid-1"}, value, "Production")
+		&resourcepb.ResourceKey{Resource: "dashboards", Name: "dash-uid-1"}, value)
 	require.NoError(t, err)
 	require.Len(t, items, 2)
 
@@ -72,7 +72,7 @@ func TestExtractor_Classic(t *testing.T) {
 	assert.Equal(t, "API Latency — p99 latency", items[0].Title)
 	assert.Equal(t, "panel/1", items[0].Subresource)
 	assert.Equal(t, "folder-prod", items[0].Folder)
-	assert.Contains(t, items[0].Content, "Production → API Latency → p99 latency")
+	assert.Contains(t, items[0].Content, "API Latency → p99 latency")
 	assert.Contains(t, items[0].Content, "histogram_quantile")
 	assert.Contains(t, items[0].Content, "Tags: production, latency")
 
@@ -83,7 +83,6 @@ func TestExtractor_Classic(t *testing.T) {
 	require.NoError(t, json.Unmarshal(items[0].Metadata, &md))
 	assert.Equal(t, "API Latency", md["dashboardTitle"])
 	assert.Equal(t, []any{float64(1)}, md["panelIds"])
-	assert.Equal(t, "Production", md["folderTitle"])
 	assert.Equal(t, "prom-1", md["datasourceUid"])
 	assert.Equal(t, "promql", md["language"])
 }
@@ -111,7 +110,7 @@ func TestExtractor_CollapsedRow(t *testing.T) {
 	}
 	value, _ := json.Marshal(body)
 	items, err := New().Extract(context.Background(),
-		&resourcepb.ResourceKey{Name: "dash-collapsed"}, value, "")
+		&resourcepb.ResourceKey{Name: "dash-collapsed"}, value)
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 	assert.Equal(t, "panel/5", items[0].Subresource)
@@ -172,7 +171,7 @@ func TestExtractor_V2_Structural(t *testing.T) {
 	}
 	value, _ := json.Marshal(body)
 	items, err := New().Extract(context.Background(),
-		&resourcepb.ResourceKey{Name: "v2-dash"}, value, "Engineering")
+		&resourcepb.ResourceKey{Name: "v2-dash"}, value)
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 
@@ -180,7 +179,7 @@ func TestExtractor_V2_Structural(t *testing.T) {
 	assert.Equal(t, "Service Health — Request rate", items[0].Title)
 	assert.Equal(t, "panel/1", items[0].Subresource)
 	assert.Equal(t, "folder-eng", items[0].Folder)
-	assert.Contains(t, items[0].Content, "Engineering → Service Health → Request rate")
+	assert.Contains(t, items[0].Content, "Service Health → Request rate")
 	assert.Contains(t, items[0].Content, "Per-route request rate")
 	assert.Contains(t, items[0].Content, "Tags: v2")
 	assert.Contains(t, items[0].Content, "sum(rate(http_requests_total[5m]))")
@@ -238,7 +237,7 @@ func TestExtractor_V2_RowLayout(t *testing.T) {
 	}
 	value, _ := json.Marshal(body)
 	items, err := New().Extract(context.Background(),
-		&resourcepb.ResourceKey{Name: "v2-rows"}, value, "")
+		&resourcepb.ResourceKey{Name: "v2-rows"}, value)
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 	assert.Contains(t, items[0].Content, "Grouped → Latency → Inside row")
@@ -255,7 +254,7 @@ func TestExtractor_DashboardWithoutPanels(t *testing.T) {
 	}
 	value, _ := json.Marshal(body)
 	items, err := New().Extract(context.Background(),
-		&resourcepb.ResourceKey{Name: "empty"}, value, "")
+		&resourcepb.ResourceKey{Name: "empty"}, value)
 	require.NoError(t, err)
 	assert.Empty(t, items)
 }
@@ -273,7 +272,7 @@ func TestExtractor_MissingUIDFallsBackToKeyName(t *testing.T) {
 	}
 	value, _ := json.Marshal(body)
 	items, err := New().Extract(context.Background(),
-		&resourcepb.ResourceKey{Name: "from-key"}, value, "")
+		&resourcepb.ResourceKey{Name: "from-key"}, value)
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 	assert.Equal(t, "from-key", items[0].UID)
@@ -299,7 +298,7 @@ func TestExtractor_SQLQueries(t *testing.T) {
 	}
 	value, _ := json.Marshal(body)
 	items, err := New().Extract(context.Background(),
-		&resourcepb.ResourceKey{Name: "sql-dash"}, value, "")
+		&resourcepb.ResourceKey{Name: "sql-dash"}, value)
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 	var md map[string]any
@@ -325,7 +324,7 @@ func TestExtractor_CapsHugePanelContent(t *testing.T) {
 	}
 	value, _ := json.Marshal(body)
 	items, err := New().Extract(context.Background(),
-		&resourcepb.ResourceKey{Name: "huge-dash"}, value, "")
+		&resourcepb.ResourceKey{Name: "huge-dash"}, value)
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 	assert.LessOrEqual(t, len(items[0].Content), maxItemContentBytes)
@@ -351,7 +350,7 @@ func TestExtractor_LongDescriptionKeepsQuery(t *testing.T) {
 	}
 	value, _ := json.Marshal(body)
 	items, err := New().Extract(context.Background(),
-		&resourcepb.ResourceKey{Name: "desc-dash"}, value, "")
+		&resourcepb.ResourceKey{Name: "desc-dash"}, value)
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 	assert.LessOrEqual(t, len(items[0].Content), maxItemContentBytes)
@@ -370,7 +369,7 @@ func TestTruncateUTF8_RuneBoundary(t *testing.T) {
 
 func TestExtractor_InvalidJSON(t *testing.T) {
 	_, err := New().Extract(context.Background(),
-		&resourcepb.ResourceKey{Name: "bad"}, []byte(`{not json`), "")
+		&resourcepb.ResourceKey{Name: "bad"}, []byte(`{not json`))
 	require.Error(t, err)
 }
 
@@ -379,7 +378,7 @@ func TestExtractorV2Dash(t *testing.T) {
 	require.NoError(t, err)
 
 	items, extractErr := New().Extract(context.Background(),
-		&resourcepb.ResourceKey{Resource: "dashboards", Name: "ow8csz6"}, value, "")
+		&resourcepb.ResourceKey{Resource: "dashboards", Name: "ow8csz6"}, value)
 	require.NoError(t, extractErr)
 	require.Len(t, items, 2)
 
@@ -406,7 +405,6 @@ func TestExtractorV2Dash(t *testing.T) {
 	assert.Equal(t, []any{float64(1)}, md0["panelIds"])
 	assert.Equal(t, "grafanacloud-usage", md0["datasourceUid"])
 	assert.Equal(t, "promql", md0["language"])
-	assert.Nil(t, md0["folderTitle"])
 	assert.Nil(t, md0["rowName"])
 
 	// Panel 2: dashboard counts
@@ -427,7 +425,7 @@ func TestExtractorV1Dash(t *testing.T) {
 
 	items, extractErr := New().Extract(context.Background(),
 		&resourcepb.ResourceKey{Resource: "dashboards", Name: "p_YnyR34k"},
-		value, "")
+		value)
 	require.NoError(t, extractErr)
 	require.Len(t, items, 1)
 
@@ -458,6 +456,5 @@ func TestExtractorV1Dash(t *testing.T) {
 	assert.Equal(t, []any{float64(2)}, md["panelIds"])
 	assert.Equal(t, "grafanacloud-prom", md["datasourceUid"])
 	assert.Equal(t, "promql", md["language"])
-	assert.Nil(t, md["folderTitle"])
 	assert.Nil(t, md["rowName"])
 }
