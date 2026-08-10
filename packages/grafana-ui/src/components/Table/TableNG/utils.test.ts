@@ -1880,6 +1880,32 @@ describe('TableNG utils', () => {
       expect(compute(fields, 50)).toEqual([50]);
     });
 
+    it('sizes a JSON column to its widest line, not the whole pretty-printed blob', () => {
+      // render-hooks attaches displayJsonValue to JSONView / `other` fields, so the value renders as
+      // a multi-line pretty-printed block. Measuring its total length (newlines + indentation) would
+      // pin the column to MAX_AUTO_WIDTH; we size it to its widest line instead. Measuring the line
+      // rather than the raw value also keeps the width stable when the column is remeasured on sort.
+      const value = { name: 'x', nested: { alpha: 1, beta: 2 } };
+      const field: Field = {
+        name: 'j',
+        type: FieldType.other,
+        values: [value],
+        config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+        display: (v) => ({ text: String(v), numeric: NaN }),
+      };
+      field.display = displayJsonValue(field);
+
+      const pretty = JSON.stringify(value, null, ' ');
+      const longestLine = Math.max(...pretty.split('\n').map((line) => line.length));
+      const expected = longestLine * CHAR_W + CELL_CHROME;
+
+      // availWidth below the content so it can't grow to fill (which would mask the difference).
+      expect(compute([field], 40)).toEqual([expected]);
+      // the fix matters: the widest line is far narrower than the whole blob, which would hit the cap.
+      expect(expected).toBeLessThan(COLUMN.MAX_AUTO_WIDTH);
+      expect(pretty.length * CHAR_W + CELL_CHROME).toBeGreaterThan(COLUMN.MAX_AUTO_WIDTH);
+    });
+
     it('sizes an actions column to fit its buttons via getActions (fuzzy width)', () => {
       const fields: Field[] = [
         {

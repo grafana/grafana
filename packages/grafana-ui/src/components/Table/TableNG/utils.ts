@@ -1264,6 +1264,22 @@ function measureLongestContentWidth(field: Field, sampleSize: number, avgCharWid
 }
 
 /**
+ * Like {@link measureLongestContentWidth} but measures the longest single line rather than the whole
+ * string. For content that renders as a pre-formatted multi-line block (JSON), the total length is
+ * dominated by newlines and indentation and would wildly over-size the column; the rendered width is
+ * the widest line.
+ */
+function measureLongestLineWidth(field: Field, sampleSize: number, avgCharWidth: number): number {
+  let maxLen = 0;
+  for (const i of sampleIndices(field.values.length, sampleSize)) {
+    for (const line of formatCellValue(field, field.values[i]).split('\n')) {
+      maxLen = Math.max(maxLen, line.length);
+    }
+  }
+  return maxLen * avgCharWidth;
+}
+
+/**
  * Width a column of inline "runs" wants — cells that render several chips/links/buttons flowing
  * horizontally and wrapping (pills, data links, actions). Measuring the single longest value like a
  * text cell is wrong: it ignores that a cell holds several items. Instead we size to fit an
@@ -1453,6 +1469,14 @@ const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx
 // extra height instead, the same as a wrapped free-text column.
 const measureMarkdownColWidth: MeasureColWidth = () => 0;
 
+// JSON cells pretty-print their value to a multi-line block rendered as `pre`. Its total character
+// count is dominated by newlines and indentation, so measuring it like plain text pins the column to
+// MAX_AUTO_WIDTH; size it to its widest line instead — what the cell actually shows per line of the
+// block. Measuring the line rather than the raw value also keeps the width stable regardless of how
+// field.display was formatted, so it doesn't jump when the column is remeasured (e.g. on sort).
+const measureJsonColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
+  measureLongestLineWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
+
 // Singleton registry mirroring the buildCellHeightMeasurers factory map: cell types that size
 // differently from the default text measurement register here; anything absent falls back to
 // measureTextColWidth.
@@ -1553,9 +1577,14 @@ export function computeContentAwareColWidths(
     // stays wider than a sparse one — the cap keeps it bounded and it wraps to extra height within.
     // The cell type's registered measurer handles pills/links/actions/graphical; text is default.
     const cellType = getCellOptions(field).type;
-    const measure =
-      COL_WIDTH_MEASURERS[cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType] ??
-      measureTextColWidth;
+    const resolvedType = cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType;
+    // A cell renders as JSON when it's an explicit JSONView cell or the field is untyped (`other`),
+    // mirroring the displayJsonValue attachment in render-hooks. JSON pretty-prints to a multi-line
+    // block, so it needs measureJsonColWidth (widest line) rather than plain-text total-length
+    // sizing. A registered measurer still wins — pills/actions/etc. set an explicit cell type whose
+    // renderer ignores the JSON display — so JSON is only the fallback for otherwise-unmeasured cells.
+    const rendersAsJson = cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other;
+    const measure = COL_WIDTH_MEASURERS[resolvedType] ?? (rendersAsJson ? measureJsonColWidth : measureTextColWidth);
     const cellWidth = measure(field, effectiveSampleSize, measureCtx);
     const footerWidth = measureFooterWidth(field, typographyCtx.avgCharWidth);
 
