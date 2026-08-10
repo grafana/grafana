@@ -96,6 +96,18 @@ var databaseConfigTestCases = []databaseConfigTest{
 		dbURL: "://invalid.com/",
 		err:   &url.Error{Op: "parse", URL: "://invalid.com/", Err: errors.New("missing protocol scheme")},
 	},
+	{
+		name:       "SQLite with WAL enabled by default",
+		dbType:     "sqlite3",
+		dbHost:     "",
+		expConnStr: "file:data/grafana.db?cache=private&mode=rwc&_journal_mode=WAL",
+	},
+	{
+		name:       "SQLite with WAL explicitly disabled",
+		dbType:     "sqlite3",
+		dbHost:     "",
+		expConnStr: "file:data/grafana.db?cache=private&mode=rwc",
+	},
 }
 
 func TestIntegrationSQLConnectionString(t *testing.T) {
@@ -136,6 +148,12 @@ func makeDatabaseTestConfig(t *testing.T, tc databaseConfigTest) *setting.Cfg {
 	require.NoError(t, err)
 	_, err = sec.NewKey("password", tc.dbPwd)
 	require.NoError(t, err)
+
+	// Set wal explicitly for the test case that needs it disabled
+	if tc.name == "SQLite with WAL explicitly disabled" {
+		_, err = sec.NewKey("wal", "false")
+		require.NoError(t, err)
+	}
 
 	return cfg
 }
