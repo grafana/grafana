@@ -250,11 +250,11 @@ func TestKvStorageBackend_CurrentResourceVersion(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
 
-	// With an empty event store the RV must be fresh, not zero: it seeds the
-	// watch replay boundary, and a zero seed would accept every resume.
+	// An empty event store reports 0: everything is trivially replayable,
+	// matching etcd semantics for watching from the beginning.
 	emptyStoreRV, err := backend.CurrentResourceVersion(ctx)
 	require.NoError(t, err)
-	require.Positive(t, emptyStoreRV)
+	require.Zero(t, emptyStoreRV)
 
 	testObj, err := createTestObject()
 	require.NoError(t, err)
@@ -275,7 +275,7 @@ func TestKvStorageBackend_CurrentResourceVersion(t *testing.T) {
 		PreviousRV: 0,
 	})
 	require.NoError(t, err)
-	require.Greater(t, writtenRV, emptyStoreRV)
+	require.Positive(t, writtenRV)
 
 	currentRV, err := backend.CurrentResourceVersion(ctx)
 	require.NoError(t, err)
