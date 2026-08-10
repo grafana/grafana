@@ -136,10 +136,13 @@ func NewAppInstaller(
 		// We could consider combining the TagProvider with the Store interface to avoid this type assertion?
 		return nil, fmt.Errorf("store does not implement TagProvider, cannot serve tags API")
 	}
-	tagHandler := newTagsHandler(tagProvider, accessClient, installer.tracer, installer.metrics, logger)
+	tagHandler := withAPIStatusErrorResponse(newTagsHandler(tagProvider, accessClient, installer.tracer, installer.metrics, logger))
 
 	// Create the search handler
-	searchHandler := newSearchHandler(instrumentedStore, accessClient, folderResolver, installer.tracer, installer.metrics, logger)
+	searchHandler := withAPIStatusErrorResponse(newSearchHandler(instrumentedStore, accessClient, folderResolver, installer.tracer, installer.metrics, logger))
+
+	// Create the graphite handler
+	graphiteHandler := withAPIStatusErrorResponse(newGraphiteHandler(installer.k8sAdapter, installer.tracer, installer.metrics, logger))
 
 	provider := simple.NewAppProvider(apis.LocalManifest(), nil, annotationapp.New)
 
@@ -147,8 +150,9 @@ func NewAppInstaller(
 		KubeConfig:   restclient.Config{},
 		ManifestData: *apis.LocalManifest().ManifestData,
 		SpecificConfig: &annotationapp.AnnotationConfig{
-			TagHandler:    tagHandler,
-			SearchHandler: searchHandler,
+			TagHandler:      tagHandler,
+			SearchHandler:   searchHandler,
+			GraphiteHandler: graphiteHandler,
 		},
 	}
 	i, err := appsdkapiserver.NewDefaultAppInstaller(provider, appConfig, apis.NewGoTypeAssociator())

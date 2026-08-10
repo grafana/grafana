@@ -303,8 +303,7 @@ export function getDefaultVizPanel(): VizPanel {
       $behaviors: [panelMenuBehavior],
     }),
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction:
-        !config.featureToggles.panelGroupBy && !config.featureToggles.dashboardUnifiedDrilldownControls,
+      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     $data: datasourceSettings
       ? new SceneDataTransformer({
@@ -562,7 +561,7 @@ export const dashboardLog = createLogger('Dashboard');
  */
 export function hasActualSaveChanges(dashboard: DashboardScene) {
   const changes = dashboard.getDashboardChanges();
-  return !!changes.diffCount;
+  return !!changes.diffCount || !!changes.hasFolderChanges || !!changes.hasPredefinedVariablesChanges;
 }
 
 export function useScenesFlickeringFix() {

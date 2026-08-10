@@ -71,8 +71,8 @@ type publisherMetrics struct {
 	publishErrors     prometheus.Counter
 }
 
-func newPublisherMetrics(reg prometheus.Registerer) *publisherMetrics {
-	m := &publisherMetrics{
+func newPublisherMetrics() *publisherMetrics {
+	return &publisherMetrics{
 		connectionMetrics: newConnectionMetrics(rolePublisher),
 		messagesPublished: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
@@ -87,10 +87,10 @@ func newPublisherMetrics(reg prometheus.Registerer) *publisherMetrics {
 			Help:      "Total number of NATS publish errors.",
 		}),
 	}
+}
 
-	reg.MustRegister(append(m.collectors(), m.messagesPublished, m.publishErrors)...)
-
-	return m
+func (m *publisherMetrics) collectors() []prometheus.Collector {
+	return append(m.connectionMetrics.collectors(), m.messagesPublished, m.publishErrors)
 }
 
 // subscriberMetrics covers the subscriber connection plus its delivery counters.
@@ -102,8 +102,8 @@ type subscriberMetrics struct {
 	slowConsumers    prometheus.Counter
 }
 
-func newSubscriberMetrics(reg prometheus.Registerer) *subscriberMetrics {
-	m := &subscriberMetrics{
+func newSubscriberMetrics() *subscriberMetrics {
+	return &subscriberMetrics{
 		connectionMetrics: newConnectionMetrics(roleSubscriber),
 		messagesReceived: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
@@ -136,10 +136,10 @@ func newSubscriberMetrics(reg prometheus.Registerer) *subscriberMetrics {
 			Help:      "Total number of NATS slow-consumer errors (messages dropped because the client could not keep up).",
 		}),
 	}
+}
 
-	reg.MustRegister(append(m.collectors(), m.messagesReceived, m.subscribeErrors, m.handlerDuration, m.slowConsumers)...)
-
-	return m
+func (m *subscriberMetrics) collectors() []prometheus.Collector {
+	return append(m.connectionMetrics.collectors(), m.messagesReceived, m.subscribeErrors, m.handlerDuration, m.slowConsumers)
 }
 
 // serverMetrics covers the embedded NATS server. It is registered only in

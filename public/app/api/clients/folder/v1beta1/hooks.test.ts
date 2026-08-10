@@ -6,11 +6,13 @@ import { AppEvents } from '@grafana/data';
 import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   useDeleteFoldersMutation as useDeleteFoldersMutationLegacy,
   useMoveFoldersMutation as useMoveFoldersMutationLegacy,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
 
 import { AnnoKeyFolder, AnnoKeyGrantPermissions } from '../../../../features/apiserver/types';
 
@@ -53,6 +55,13 @@ jest.mock('../../../../types/store', () => {
     useDispatch: () => dispatchMockFn,
   };
 });
+
+// The folder mutations refresh the team folders tree as a side effect. listTeamFolders would error
+// here because this test mocks the app dispatch, so stub it out.
+jest.mock('app/features/browse-dashboards/api/services', () => ({
+  ...jest.requireActual('app/features/browse-dashboards/api/services'),
+  listTeamFolders: jest.fn(async () => []),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -132,6 +141,7 @@ afterAll(() => {
 
 describe('useGetFolderQueryFacade', () => {
   const originalAppSubUrl = String(config.appSubUrl);
+  const originalSharedWithMeFolderUID = config.sharedWithMeFolderUID;
 
   beforeEach(() => {
     config.appSubUrl = '/grafana';
@@ -140,6 +150,7 @@ describe('useGetFolderQueryFacade', () => {
   afterEach(() => {
     config.featureToggles = originalToggles;
     config.appSubUrl = originalAppSubUrl;
+    config.sharedWithMeFolderUID = originalSharedWithMeFolderUID;
   });
 
   it('merges multiple responses into a single FolderDTO-like object if flag is true', async () => {
@@ -176,6 +187,60 @@ describe('useGetFolderQueryFacade', () => {
         },
       ],
     });
+  });
+
+  it('runs a real access query for the root/general virtual folder', async () => {
+    config.featureToggles.foldersAppPlatformAPI = true;
+
+    const { result } = renderHook(() => useGetFolderQueryFacade('general'), {
+      wrapper: getWrapper({}),
+    });
+
+    await waitFor(() => {
+      expect(result.current.data).toBeDefined();
+    });
+
+    expect(result.current.data).toMatchObject({
+      uid: 'general',
+      title: 'Dashboards',
+      // The root folder has no URL — the backend leaves it blank.
+      url: '',
+      // Access comes from the real access query rather than being hardcoded to "no access".
+      canAdmin: true,
+      canDelete: true,
+      canEdit: true,
+      canSave: true,
+      accessControl: {
+        'dashboards.permissions:write': true,
+        'dashboards:create': true,
+        'folders:write': true,
+      },
+    });
+    // Virtual folders have no parents.
+    expect(result.current.data?.parents).toBeUndefined();
+  });
+
+  it('runs a real access query for the sharedwithme virtual folder (no access)', async () => {
+    config.featureToggles.foldersAppPlatformAPI = true;
+    config.sharedWithMeFolderUID = 'sharedwithme';
+
+    const { result } = renderHook(() => useGetFolderQueryFacade('sharedwithme'), {
+      wrapper: getWrapper({}),
+    });
+
+    await waitFor(() => {
+      expect(result.current.data).toBeDefined();
+    });
+
+    expect(result.current.data).toMatchObject({
+      uid: 'sharedwithme',
+      title: 'Shared with me',
+      canAdmin: false,
+      canDelete: false,
+      canEdit: false,
+      canSave: false,
+    });
+    expect(result.current.data?.accessControl).toBeUndefined();
   });
 
   it('returns legacy folder response if flag is false', async () => {
@@ -247,6 +312,7 @@ describe('useMoveMultipleFoldersMutationFacade', () => {
     jest.clearAllMocks();
     (useMoveFoldersMutationLegacy as jest.Mock).mockReturnValue([mockMoveFolders]);
     patchSpy.mockReset();
+    dispatchMockFn.mockReturnValue({ data: null });
   });
   afterEach(() => {
     folderAPIVersionResolver.reset();
@@ -393,6 +459,39 @@ describe.each([
 
       expect(await screen.findByText('Folder updated')).toBeInTheDocument();
     });
+  });
+});
+
+describe('useUpdateFolder app-platform starred nav update', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    config.featureToggles.foldersAppPlatformAPI = true;
+    folderAPIVersionResolver.set('v1beta1');
+    setupUpdateFolderHandler();
+  });
+
+  afterEach(() => {
+    config.featureToggles = originalToggles;
+    folderAPIVersionResolver.set('v1beta1');
+    dispatchMockFn.mockReset();
+  });
+
+  it('dispatches updateDashboardName with the request uid/title and folder URL on rename', async () => {
+    const { user } = await setupUpdateFolder(folderA_folderA.item.uid);
+
+    await user.clear(screen.getByLabelText('Folder Title'));
+    await user.type(screen.getByLabelText('Folder Title'), 'Updated Folder');
+    await user.click(screen.getByText('Update Folder'));
+
+    expect(await screen.findByText('Folder updated')).toBeInTheDocument();
+
+    expect(dispatchMockFn).toHaveBeenCalledWith(
+      updateDashboardName({
+        id: folderA_folderA.item.uid,
+        title: 'Updated Folder',
+        url: getStarredFolderURL(folderA_folderA.item.uid),
+      })
+    );
   });
 });
 

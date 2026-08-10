@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/server"
@@ -35,15 +35,13 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	informerFactory := newInformerFactory(provisioningClient, controllerCfg.ResyncInterval())
-
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {
 		return fmt.Errorf("failed to get unified storage client: %w", err)
 	}
 
 	resourceLister := resources.NewResourceLister(unified)
-	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
+	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -82,13 +80,13 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 		return fmt.Errorf("failed to get quota getter: %w", err)
 	}
 
-	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 	clients, err := controllerCfg.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
-	repoGetter := controller.NewCachedRepositoryGetter(repoInformer.Lister())
+	// The repository delta source and the getter it backs.
+	repoSource, repoGetter := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
 	controller := controller.NewRepositoryController(
 		provisioningClient.ProvisioningV0alpha1(),
 		repoGetter,
@@ -111,17 +109,16 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) er
 			resources.IsFolderMetadataEnabled(controllerCfg.Settings),
 			controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("max_incremental_changes").MustInt(100),
 		),
-		controllerCfg.Settings.SectionWithEnvOverrides("operator").Key("folders_api_version").MustString(folderv1beta1.APIVersion),
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30*24*time.Hour),
 	)
-	reg, err := repoInformer.Informer().AddEventHandler(controller.EventHandler())
+	reg, err := repoSource.AddEventHandler(controller.EventHandler())
 	if err != nil {
 		return fmt.Errorf("failed to add repository event handler: %w", err)
 	}
+	go repoSource.Run(ctx.Done())
 
-	informerFactory.Start(ctx.Done())
 	if !cache.WaitForCacheSync(ctx.Done(), reg.HasSynced) {
-		return fmt.Errorf("failed to sync informer cache")
+		return fmt.Errorf("failed to sync repository informer cache")
 	}
 
 	controller.Run(ctx, controllerCfg.NumberOfWorkers(), func() {

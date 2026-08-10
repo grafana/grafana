@@ -136,15 +136,15 @@ describe('TimeRangeForm', () => {
       return { from, to, raw: { from, to } };
     };
 
-    it('shows milliseconds by default when the range is absolute and has milliseconds', async () => {
+    it('renders milliseconds when the range carries a non-zero fraction (no toggle)', async () => {
       const { findByLabelText } = setup(msRange());
 
       expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00.123');
       expect(await findByLabelText('To')).toHaveValue('2021-06-19 23:59:00.456');
-      expect(screen.getByLabelText('Show milliseconds')).toBeChecked();
+      expect(screen.queryByText('Show milliseconds')).not.toBeInTheDocument();
     });
 
-    it('auto-enables and shows milliseconds when reopened with an absolute ISO-string range (scenes round-trip)', async () => {
+    it('renders milliseconds when reopened with an absolute ISO-string range (scenes round-trip)', async () => {
       // Scenes serializes an applied absolute range and returns raw as ISO strings with ms.
       const range: TimeRange = {
         from: dateTimeParse('2024-01-01T12:34:56.789Z', { timeZone: 'utc' }),
@@ -153,65 +153,15 @@ describe('TimeRangeForm', () => {
       };
       const { findByLabelText } = setup(range);
 
-      expect(screen.getByLabelText('Show milliseconds')).toBeChecked();
       expect(await findByLabelText('From')).toHaveValue('2024-01-01 12:34:56.789');
       expect(await findByLabelText('To')).toHaveValue('2024-01-02 01:02:03.456');
     });
 
-    it('hides milliseconds when the toggle is switched off', async () => {
-      const { findByLabelText } = setup(msRange());
-
-      await user.click(screen.getByLabelText('Show milliseconds'));
+    it('renders only seconds when the range has no fractional part', async () => {
+      const { findByLabelText } = setup(noMsRange());
 
       expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00');
       expect(await findByLabelText('To')).toHaveValue('2021-06-19 23:59:00');
-    });
-
-    it('is off by default when the range has no milliseconds and can be toggled on', async () => {
-      const { findByLabelText } = setup(noMsRange());
-
-      expect(screen.getByLabelText('Show milliseconds')).not.toBeChecked();
-      expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00');
-
-      await user.click(screen.getByLabelText('Show milliseconds'));
-
-      expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00.000');
-    });
-
-    it('preserves uncommitted absolute edits when toggling milliseconds on (does not revert to relative)', async () => {
-      const relativeRange: TimeRange = {
-        from: dateTimeParse('now-5m', { timeZone: 'utc' }),
-        to: dateTimeParse('now', { timeZone: 'utc' }),
-        raw: { from: 'now-5m', to: 'now' },
-      };
-      const { findByLabelText } = setup(relativeRange);
-
-      const fromInput = await findByLabelText('From');
-      const toInput = await findByLabelText('To');
-      // Simulate selecting an absolute range (as the calendar does) without applying.
-      await user.clear(fromInput);
-      await user.type(fromInput, '2021-06-17 00:00:00');
-      await user.clear(toInput);
-      await user.type(toInput, '2021-06-19 23:59:00');
-
-      await user.click(screen.getByText('Show milliseconds'));
-
-      expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00.000');
-      expect(await findByLabelText('To')).toHaveValue('2021-06-19 23:59:00.000');
-    });
-
-    it('leaves relative values untouched when toggling milliseconds on', async () => {
-      const relativeRange: TimeRange = {
-        from: dateTimeParse('now-5m', { timeZone: 'utc' }),
-        to: dateTimeParse('now', { timeZone: 'utc' }),
-        raw: { from: 'now-5m', to: 'now' },
-      };
-      const { findByLabelText } = setup(relativeRange);
-
-      await user.click(screen.getByText('Show milliseconds'));
-
-      expect(await findByLabelText('From')).toHaveValue('now-5m');
-      expect(await findByLabelText('To')).toHaveValue('now');
     });
 
     it('applies a manually entered millisecond value', async () => {

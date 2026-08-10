@@ -1,3 +1,4 @@
+import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
@@ -14,7 +15,7 @@ import { TeamDeleteModal } from './TeamDeleteModal';
 import TeamList from './TeamList';
 
 setBackendSrv(backendSrv);
-setupMockServer();
+const server = setupMockServer();
 
 describe('TeamList', () => {
   beforeEach(() => {
@@ -61,6 +62,61 @@ describe('TeamList', () => {
       render(<TeamList />);
 
       expect(await screen.findByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');
+    });
+  });
+
+  describe('when searching teams', () => {
+    it('sends the raw query to the backend without regex-escaping special characters', async () => {
+      let capturedQuery: string | null = null;
+      server.use(
+        http.get('/api/teams/search', ({ request }) => {
+          capturedQuery = new URL(request.url).searchParams.get('query');
+          const teams = MOCK_TEAMS.map((team) => ({
+            name: team.spec.title,
+            uid: team.metadata.name,
+            id: Number(team.metadata.labels['grafana.app/deprecatedInternalID']),
+            orgId: 1,
+            memberCount: 0,
+            permission: 0,
+            accessControl: null,
+          }));
+          return HttpResponse.json({ totalCount: teams.length, teams, page: 1, perPage: 20 });
+        })
+      );
+
+      const { user } = render(<TeamList />);
+      const input = await screen.findByPlaceholderText('Search teams');
+      // Regex-special characters like the hyphen must reach the backend unescaped (not "k8s\-test").
+      await user.click(input);
+      await user.paste('k8s-test alpha');
+
+      await waitFor(() => expect(capturedQuery).toBe('k8s-test alpha'));
+    });
+
+    it('finds a team whose name contains a hyphen', async () => {
+      // Mimic the backend substring match. With regex-escaping the query becomes
+      // "k8s\-test", which matches nothing; only the raw query "k8s-test" matches.
+      const searchableTeams = [
+        { name: 'k8s-test', uid: 'team-1', id: 1, orgId: 1, memberCount: 0, permission: 0, accessControl: null },
+        { name: 'production', uid: 'team-2', id: 2, orgId: 1, memberCount: 0, permission: 0, accessControl: null },
+      ];
+      server.use(
+        http.get('/api/teams/search', ({ request }) => {
+          const query = (new URL(request.url).searchParams.get('query') ?? '').toLowerCase();
+          const matches = searchableTeams.filter((team) => team.name.toLowerCase().includes(query));
+          return HttpResponse.json({ totalCount: matches.length, teams: matches, page: 1, perPage: 20 });
+        })
+      );
+
+      const { user } = render(<TeamList />);
+      const input = await screen.findByPlaceholderText('Search teams');
+      await user.click(input);
+      await user.paste('k8s-test');
+
+      // The initial (empty query) response lists all teams, so wait until the
+      // non-matching team is filtered out before asserting on the results.
+      await waitFor(() => expect(screen.queryByText('production')).not.toBeInTheDocument(), { timeout: 5000 });
+      expect(screen.getByText('k8s-test')).toBeInTheDocument();
     });
   });
 

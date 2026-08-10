@@ -18,12 +18,18 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"
 
 const (
 	connectionMaxAttempts = 3
+
+	// tokenWriteRetryDelay is how long to wait before re-checking a connection or
+	// repository whose token secret was written recently but is not yet readable from
+	// the secret store. It is shared by the connection and repository controllers.
+	tokenWriteRetryDelay = 2 * time.Second
 )
 
 type connectionQueueItem struct {
@@ -40,7 +46,7 @@ type ConnectionStatusPatcher interface {
 
 // ConnectionController controls Connection resources.
 type ConnectionController struct {
-	conns  ConnectionGetter
+	conns  informer.ConnectionGetter
 	logger logging.Logger
 
 	statusPatcher     ConnectionStatusPatcher
@@ -58,7 +64,7 @@ type ConnectionController struct {
 
 // NewConnectionController creates a new ConnectionController.
 func NewConnectionController(
-	conns ConnectionGetter,
+	conns informer.ConnectionGetter,
 	statusPatcher ConnectionStatusPatcher,
 	healthChecker *ConnectionHealthChecker,
 	connectionFactory connection.Factory,
@@ -203,8 +209,8 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Reconcile the object the read seam returns; how it is sourced and kept
-	// fresh is the ConnectionGetter's concern, not the controller's.
-	conn, err := cc.conns.Get(namespace, name)
+	// fresh is the informer.ConnectionGetter's concern, not the controller's.
+	conn, err := cc.conns.Get(ctx, namespace, name)
 	switch {
 	case apierrors.IsNotFound(err):
 		return errors.New("connection not found")
@@ -233,8 +239,29 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	c, err := cc.connectionFactory.Build(ctx, conn)
 	if err != nil {
-		logger.Error("failed to build connection", "error", err)
-		return err
+		// The token references a stored secret that could not be decrypted (e.g. an
+		// orphaned reference whose secret was deleted). Regenerate it from the private
+		// key by clearing the reference on a copy (the rebuild then skips token
+		// decryption and shouldGenerateToken re-mints it). Rebuild on a copy to avoid
+		// mutating the shared informer cache.
+		if errors.Is(err, connection.ErrTokenNotFound) {
+			// If we wrote a token for this connection very recently, its secret may not
+			// be readable from the store yet. Wait for it rather than regenerating, which
+			// would delete it and can loop under secret-store read-after-write lag.
+			if tokenRecentlyCreated(time.UnixMilli(conn.Status.Token.LastUpdated)) {
+				logger.Info("connection token secret not yet readable after recent write; will retry", "error", err)
+				cc.queue.AddAfter(&connectionQueueItem{key: item.key}, tokenWriteRetryDelay)
+				return nil
+			}
+			logger.Warn("connection token secret could not be decrypted, regenerating", "error", err)
+			conn = conn.DeepCopy()
+			conn.Secure.Token = common.InlineSecureValue{}
+			c, err = cc.connectionFactory.Build(ctx, conn)
+		}
+		if err != nil {
+			logger.Error("failed to build connection", "error", err)
+			return err
+		}
 	}
 
 	tokenConn, isTokenConnection := c.(connection.TokenConnection)
@@ -281,6 +308,15 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 		if len(tokenOps) > 0 {
 			patchOperations = append(patchOperations, tokenOps...)
+			// Record when the token was written so a not-yet-readable secret on the next
+			// reconcile is not mistaken for a missing one and regenerated in a loop. Use
+			// "add": status.token is a newly introduced field that may be absent on
+			// Connections created before this change, and "add" both creates and replaces.
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "add",
+				"path":  "/status/token",
+				"value": provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()},
+			})
 		}
 		conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
 	}

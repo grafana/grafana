@@ -6,19 +6,22 @@ This suite contains Playwright E2E tests for the V2 dashboard layout system. Tes
 
 ## Page Objects Reference
 
-All page objects live in `page-objects/` and are re-exported from `page-objects/index.ts`. Every page object extends the abstract `PageObject` base class (`PageObject.ts`), which holds the shared `page`, `dashboardPage`, and `selectors` dependencies as `protected` fields.
+All page objects live in `page-objects/` and are re-exported from `page-objects/index.ts`. Every page object extends the abstract `PageObject` base class (`PageObject.ts`), which holds the shared `page`, `dashboardPage`, `selectors`, and `components` dependencies as `protected` fields.
 
-| Class              | File                          | UI Region                                                              | Key Methods / Getters                                                                                                                                                                                               |
-| ------------------ | ----------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PageObject`       | `PageObject.ts`               | _(abstract base — not used directly)_                                  | Shared constructor (`page`, `dashboardPage`, `selectors`)                                                                                                                                                           |
-| `Controls`         | `Controls.ts`                 | Top nav bar (edit, save, ...)                                          | `enterEditMode()`, `exitEditMode()`                                                                                                                                                                                 |
-| `Sidebar`          | `sidebar/Sidebar.ts`          | Whole sidebar region (toolbar + open pane)                             | `.toolbar`, `.addOptions`, `.dashboardOptions`, `.panelOptions`, `.contentOutline` sub-objects; `getContainer()`, `clickGoBackButton()`, `getDockToggle()`, `clickCloseButton()`, `clickDeleteButton({ confirm? })` |
-| `Toolbar`          | `sidebar/Toolbar.ts`          | Icon strip — accessed via `sidebar.toolbar`                            | `getButton(name)`, `clickButton(name)`, `getVisibilityToggle()`                                                                                                                                                     |
-| `AddOptions`       | `sidebar/AddOptions.ts`       | "Add" pane (default pane on new dashboards) — via `sidebar.addOptions` | `clickNewPanelButton()`                                                                                                                                                                                             |
-| `ContentOutline`   | `sidebar/ContentOutline.ts`   | Content outline pane — via `sidebar.contentOutline`                    | `getTree()`, `clickItem(name)`, `toggleNode(name)`                                                                                                                                                                  |
-| `DashboardOptions` | `sidebar/DashboardOptions.ts` | Dashboard options pane — via `sidebar.dashboardOptions`                | `getTitleInput()`, `getDescriptionTextarea()`                                                                                                                                                                       |
-| `PanelOptions`     | `sidebar/PanelOptions.ts`     | Panel options pane — via `sidebar.panelOptions`                        | `getTitleInput()`, `setTitle(title)`, `getDescriptionTextarea()`, `toggleTransparentBackground()`                                                                                                                   |
-| `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                                   | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle(title \| titles[])`, `deselectAll()`, `clickMenuItem(panelTitle, menuPath[])`                                                                         |
+| Class              | File                          | UI Region                                                              | Key Methods / Getters                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------ | ----------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PageObject`       | `PageObject.ts`               | _(abstract base — not used directly)_                                  | Shared constructor taking a `PageObjectArgs` object (`page`, `dashboardPage`, `selectors`, `components`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `Controls`         | `Controls.ts`                 | Top nav bar (edit, save, timepicker, share, ...) and variable submenu  | `getContainer()`, `enterEditMode()`, `exitEditMode()`, `saveDashboard(title?)`, `setTimeRange(from, to)`, `openControlsMenu()`, `openShareSnapshotDrawer()`; `variables` sub-object: `getLabel(variableLabel)`, `getInput(variableLabel)`, `setValue(variableLabel, text)`, `getDropdownTrigger(variableLabel)`, `openDropdown(variableLabel)`, `getOption(optionLabel)`, `selectOption(variableLabel, optionLabel)`, `addFilter(variableLabel, [label, operator, value])`                                                                                                                                                                                                                     |
+| `Sidebar`          | `sidebar/Sidebar.ts`          | Whole sidebar region (toolbar + open pane)                             | `.toolbar`, `.addOptions`, `.dashboardOptions`, `.panelOptions`, `.variableOptions`, `.contentOutline` sub-objects; `getContainer()`, `clickGoBackButton()`, `getDockToggle()`, `clickCloseButton()`, `clickDeleteButton({ confirm? })`                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `Toolbar`          | `sidebar/Toolbar.ts`          | Icon strip — accessed via `sidebar.toolbar`                            | `getButton(name)`, `clickButton(name)`, `getVisibilityToggle()`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `AddOptions`       | `sidebar/AddOptions.ts`       | "Add" pane (default pane on new dashboards) — via `sidebar.addOptions` | `clickNewPanelButton()`, `clickNewVariableButton()`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `ContentOutline`   | `sidebar/ContentOutline.ts`   | Content outline pane — via `sidebar.contentOutline`                    | `getTree()`, `clickItem(name)`, `toggleNode(name)`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `DashboardOptions` | `sidebar/DashboardOptions.ts` | Dashboard options pane — via `sidebar.dashboardOptions`                | `getTitleInput()`, `getDescriptionTextarea()`, `switchLayout(layoutType, { confirm? })`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `PanelOptions`     | `sidebar/PanelOptions.ts`     | Panel options pane — via `sidebar.panelOptions`                        | `getTitleInput()`, `setTitle(title)`, `getDescriptionTextarea()`, `toggleTransparentBackground()`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `VariableOptions`  | `sidebar/VariableOptions.ts`  | Variable edit pane — via `sidebar.variableOptions`                     | `selectVariableType(type)`, `setName(name)`, `setLabel(label)`, `selectDisplay(displayLabel)`; type-specific sub-objects: `datasource.selectType(dsType)`, `datasource.setNameFilter(filter)`, `custom.openEditor()`, `custom.selectFormat(format)`, `custom.setValues(values)`, `custom.getPreviewOfValues()`, `custom.getPreviewTable()`, `custom.clickApplyButton()`, `groupby.selectDatasource(ds)`, `adhoc.selectDatasource(ds)`, `query.openEditor()`, `query.selectTargetDatasource(ds)`, `query.setTestDataQuery(query)`, `query.runQuery()`, `query.getPreviewOfValues()`, `query.clickApplyButton()`, `constant.setValue(value)`, `textbox.setValue(value)`, `interval.toggleAuto()` |
+| `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                                   | `getContainerByTitle()`, `getHeaderByTitle()`, `getHeadersByTitle()`, `selectByTitle(title \| titles[])`, `selectMenuItem(panelTitle, menuPath[])`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `Rows`             | `Rows.ts`                     | A row of a rows layout in the dashboard canvas                         | `getTitle(rowTitle)`, `getWrapper(rowTitle)`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `Tabs`             | `Tabs.ts`                     | Tab bar of a tabs layout (top-level or nested in a row)                | `getTab(tabTitle, scope?)` — pass `rows.getWrapper(rowTitle)` as `scope` to look up a tab inside a specific row                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 > The show/hide visibility toggle is a **Toolbar** control (`sidebar.toolbar.getVisibilityToggle()`), even though its selector lives under `components.Sidebar.*`. `Toolbar.getButton(name)` resolves buttons by accessible name, scoped to the sidebar container.
 
@@ -26,27 +29,32 @@ All page objects live in `page-objects/` and are re-exported from `page-objects/
 
 ### Base class & constructor
 
-All page objects inherit from `PageObject`, which provides the shared constructor:
+All page objects inherit from `PageObject`, which provides the shared constructor. It takes a single `PageObjectArgs` object:
 
 ```typescript
 // page-objects/PageObject.ts
+export interface PageObjectArgs {
+  page: Page;
+  dashboardPage: DashboardPage;
+  selectors: E2ESelectorGroups;
+  components: Components;
+}
+
 export abstract class PageObject {
-  constructor(
-    protected page: Page,
-    protected dashboardPage: DashboardPage,
-    protected selectors: E2ESelectorGroups
-  ) {}
+  constructor({ page, dashboardPage, selectors, components }: PageObjectArgs) {
+    // assigned to protected fields
+  }
 }
 ```
 
-Simple page objects (e.g. `Controls`, `Toolbar`) inherit the constructor directly — no override needed. Page objects that compose sub-objects (e.g. `Sidebar`) call `super(page, dashboardPage, selectors)` and initialize their children.
+Simple page objects (e.g. `Controls`, `Toolbar`) inherit the constructor directly — no override needed. Page objects that compose sub-objects (e.g. `Sidebar`) declare `constructor(args: PageObjectArgs)`, call `super(args)`, and pass the same `args` to their children.
 
-All three dependencies come from the Playwright test arguments:
+All four dependencies come from the Playwright test arguments:
 
 ```typescript
-test('example', async ({ gotoDashboardPage, selectors, page }) => {
+test('example', async ({ gotoDashboardPage, selectors, page, components }) => {
   const dashboardPage = await gotoDashboardPage({ uid: 'some-uid' });
-  const controls = new Controls(page, dashboardPage, selectors);
+  const controls = new Controls({ page, dashboardPage, selectors, components });
   // ...
 });
 ```
@@ -62,23 +70,17 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import { Controls, Sidebar } from './page-objects';
 
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
-
 test.describe(
   'Feature name',
   {
     tag: ['@dashboards'],
   },
   () => {
-    test('describes the user-visible behavior', async ({ gotoDashboardPage, selectors, page }) => {
+    test('describes the user-visible behavior', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: 'dashboard-uid' });
 
-      const controls = new Controls(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
       // ... test body using page objects (the toolbar is reached via sidebar.toolbar)
@@ -136,7 +138,7 @@ await expect(titleInput).toHaveValue(newTitle);
 
 ## Migration Status
 
-**9 of 30 specs migrated.** Non-migrated specs are listed by descending selectors usage count (a rough proxy for migration effort). "Selectors usage count" is the number of times the spec accesses the `selectors` object (`selectors.components...`, `selectors.pages...`, etc.).
+**21 of 30 specs migrated.** Non-migrated specs are listed by descending selectors usage count (a rough proxy for migration effort). "Selectors usage count" is the number of times the spec accesses the `selectors` object (`selectors.components...`, `selectors.pages...`, etc.).
 
 | Spec                                                  | Status      | Lines of code | Selectors usage count |
 | ----------------------------------------------------- | ----------- | ------------- | --------------------- |
@@ -157,18 +159,18 @@ await expect(titleInput).toHaveValue(newTitle);
 | `dashboard-repeats-row-layout.spec.ts`                | Not started | 546           | 61                    |
 | `dashboards-conditional-rendering.spec.ts`            | Not started | 308           | 53                    |
 | `dashboards-add-panel.spec.ts`                        | Not started | 134           | 27                    |
-| `dashboards-edit-variables.spec.ts`                   | Not started | 204           | 26                    |
-| `dashboards-edit-custom-variables.spec.ts`            | Not started | 213           | 22                    |
+| `dashboards-edit-variables.spec.ts`                   | Migrated    | —             | —                     |
 | `dashboard-tabs-scroll.spec.ts`                       | Not started | 150           | 12                    |
-| `dashboards-repeats-snapshots.spec.ts`                | Not started | 117           | 11                    |
-| `dashboards-move-panel.spec.ts`                       | Not started | 120           | 9                     |
-| `dashboard-conditional-rendering-load-change.spec.ts` | Not started | 459           | 8                     |
-| `dashboards-edit-query-variables.spec.ts`             | Not started | 83            | 6                     |
-| `dashboard-keybindings.spec.ts`                       | Not started | 60            | 6                     |
-| `dashboards-edit-adhoc-variables.spec.ts`             | Not started | 96            | 4                     |
-| `dashboards-edit-group-by-variables.spec.ts`          | Not started | 89            | 4                     |
-| `dashboards-edit-datasource-variables.spec.ts`        | Not started | 62            | 4                     |
-| `dashboard-url-syncing.spec.ts`                       | Not started | 128           | 3                     |
-| `dashboard-tabs-drag-drop.spec.ts`                    | Not started | 75            | 2                     |
+| `dashboards-repeats-snapshots.spec.ts`                | Migrated    | —             | —                     |
+| `dashboards-move-panel.spec.ts`                       | Migrated    | —             | —                     |
+| `dashboard-conditional-rendering-load-change.spec.ts` | Migrated    | —             | —                     |
+| `dashboards-edit-custom-variables.spec.ts`            | Migrated    | —             | —                     |
+| `dashboards-edit-query-variables.spec.ts`             | Migrated    | —             | —                     |
+| `dashboard-keybindings.spec.ts`                       | Migrated    | —             | —                     |
+| `dashboards-edit-adhoc-variables.spec.ts`             | Migrated    | —             | —                     |
+| `dashboards-edit-group-by-variables.spec.ts`          | Migrated    | —             | —                     |
+| `dashboards-edit-datasource-variables.spec.ts`        | Migrated    | —             | —                     |
+| `dashboard-url-syncing.spec.ts`                       | Migrated    | —             | —                     |
+| `dashboard-tabs-drag-drop.spec.ts`                    | Migrated    | —             | —                     |
 
 See [`_page_objects_strategy.md`](./_page_objects_strategy.md) for the full migration plan.

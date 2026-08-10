@@ -33,13 +33,13 @@ export interface ItemClickedProperties extends EventProperty {
   /** The specific UI location within the product where the click occurred. */
   eventLocation: EventLocation;
   /** How the user found the item — e.g. via search, browsing, or a suggestion. */
-  discoveryMethod: DiscoveryMethod;
+  discoveryMethod?: DiscoveryMethod;
   /** Whether the dashboard templates assistant is enabled. */
   isDashboardTemplatesAssistantEnabled?: boolean;
   /** Whether the suggested dashboards assistant is enabled. */
   isSuggestedDashboardAssistantButtonEnabled?: boolean;
   /** The action taken by the user on the library item. */
-  action?: 'view_template' | 'use_dashboard' | 'assistant' | 'edit_template';
+  action?: 'view_template' | 'use_dashboard' | 'assistant' | 'edit_template' | 'delete_template';
 }
 
 export interface SearchPerformedProperties extends EventProperty {
@@ -55,6 +55,11 @@ export interface SearchPerformedProperties extends EventProperty {
   hasResults: boolean;
   /** Number of items matching the query. */
   resultCount: number;
+}
+
+export interface DropdownMenuClickedProperties extends EventProperty {
+  /** The category of content the user clicked (e.g. custom template). */
+  contentKind: ContentKind;
 }
 
 export interface FiltersAppliedProperties extends EventProperty {

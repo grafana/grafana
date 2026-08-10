@@ -55,7 +55,7 @@
   "dependencies": {
     "@grafana/data": "13.2.0-pre",
     "@grafana/e2e-selectors": "13.2.0-pre",
-    "@grafana/faro-web-sdk": "^2.7.0",
+    "@grafana/faro-web-sdk": "^2.8.2",
     "@grafana/schema": "13.2.0-pre",
     "@grafana/ui": "13.2.0-pre",
     "@openfeature/core": "^1.10.0",
@@ -83,6 +83,7 @@
     "@types/lodash": "4.17.20",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "esbuild": "0.25.8",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -90,7 +91,7 @@
     "rollup": "^4.60.1",
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
-    "typescript": "6.0.2"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {
     "react": "^18.0.0",

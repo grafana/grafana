@@ -473,7 +473,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     titleItems.push(new PanelNotices());
   }
 
-  const timeOverrideShown = (panel.timeFrom || panel.timeShift) && !panel.hideTimeOverride;
+  const timeOverrideShown = (panel.timeFrom || panel.timeShift || panel.timeCompare) && !panel.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
@@ -491,8 +491,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $data: createPanelDataProvider(panel),
     titleItems,
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction:
-        !config.featureToggles.panelGroupBy && !config.featureToggles.dashboardUnifiedDrilldownControls,
+      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     subHeader: new VizPanelSubHeader({
       hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,

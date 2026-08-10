@@ -9,4 +9,5 @@
  * and be subject to the standard policies
  */
 
+export { useObservable } from './hooks/useObservable';
 export { DEFAULT_TAG_COLORS } from './themes/createComponents';

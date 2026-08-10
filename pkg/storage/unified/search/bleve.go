@@ -28,13 +28,12 @@ import (
 	bolterrors "go.etcd.io/bbolt/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -81,22 +80,17 @@ type BleveOptions struct {
 	// If nil, all indexes are owned by the current instance.
 	OwnsIndex func(key resource.NamespacedResource) (bool, error)
 
-	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
-	// Only given fields are indexed (have mapping).
-	SelectableFieldsForKinds map[string][]string
+	// SearchFields holds the per-kind search-field wiring: selectable fields,
+	// the hash of the SearchFieldDefinitions (recorded in each new index's
+	// IndexBuildInfo for drift detection), and the provider that drives the
+	// bleve mapping. Shared with the search server so both see the same set.
+	// May be nil in tests.
+	SearchFields *resource.SearchFieldsRegistry
 
-	// Map "group/resource" -> hash of the SearchFieldDefinition slices
-	// registered for that (group, resource), across every version. The
-	// value is recorded in each new index's IndexBuildInfo so a future run
-	// can detect drift and rebuild. Keys must be lower-case.
-	SearchFieldsHashesForKinds map[string]string
-
-	// Map "group/resource" -> SearchFieldsProvider that drives the bleve
-	// mapping for that (group, resource). When a provider is registered
-	// for a kind, the bleve mapping is built from the provider's
-	// SearchFieldDefinitions rather than from the legacy column-definition
-	// list carried by SearchableDocumentFields. Keys must be lower-case.
-	SearchFieldsProvidersForKinds map[string]resource.SearchFieldsProvider
+	// RequiredIndexFeatures overrides the index features an existing index must
+	// already have to be reused; nil means resource.RequiredIndexFeatures. Only
+	// tests set it. New indexes always record resource.CurrentIndexFeatures.
+	RequiredIndexFeatures []resource.IndexFeature
 
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
@@ -124,6 +118,16 @@ type BleveOptions struct {
 	// rebuild. Older siblings under the same resource still use
 	// DiskCleanupGracePeriod. Only consulted when DiskCleanupInterval > 0.
 	DiskCleanupUnopenedGracePeriod time.Duration
+
+	// PostRankAuthzEnabled enables the post-filter (post-rank) authorization
+	// path. Set from the search_post_rank_authz config option at backend init.
+	// When false, the in-searcher permissionScopedQuery path is used.
+	PostRankAuthzEnabled bool
+
+	// PostRankAuthz tunes the post-filter authorization path used when
+	// PostRankAuthzEnabled is true. Zero values fall back to the defaults in
+	// PostRankAuthzConfig.effective().
+	PostRankAuthz PostRankAuthzConfig
 }
 
 // SnapshotOptions configures remote index snapshot handling in BuildIndex and
@@ -181,9 +185,10 @@ type bleveBackend struct {
 
 	indexMetrics *resource.BleveIndexMetrics
 
-	selectableFields     map[string][]string
-	searchFieldsHashes   map[string]string
-	searchFieldsProvider map[string]resource.SearchFieldsProvider
+	fields *resource.SearchFieldsRegistry
+
+	// Index features an existing index must have to be reused. See BleveOptions.
+	requiredFeatures []resource.IndexFeature
 
 	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
 	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
@@ -257,15 +262,24 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		ownFn = func(key resource.NamespacedResource) (bool, error) { return true, nil }
 	}
 
+	fields := opts.SearchFields
+	if fields == nil {
+		fields = resource.NewSearchFieldsRegistry(nil, nil, nil)
+	}
+
+	requiredFeatures := opts.RequiredIndexFeatures
+	if requiredFeatures == nil {
+		requiredFeatures = resource.RequiredIndexFeatures()
+	}
+
 	be := &bleveBackend{
 		log:                     l,
 		cache:                   map[resource.NamespacedResource]*bleveIndex{},
 		opts:                    opts,
 		ownsIndexFn:             ownFn,
 		indexMetrics:            indexMetrics,
-		selectableFields:        opts.SelectableFieldsForKinds,
-		searchFieldsHashes:      opts.SearchFieldsHashesForKinds,
-		searchFieldsProvider:    opts.SearchFieldsProvidersForKinds,
+		fields:                  fields,
+		requiredFeatures:        requiredFeatures,
 		runningBuildVersion:     runningBuildVersion,
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
@@ -646,6 +660,7 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 		BuildVersion:     buildVersion,
 		SelectableFields: selectableFields,
 		SearchFieldsHash: searchFieldsHash,
+		Features:         resource.CurrentIndexFeatures(),
 	}
 
 	biBytes, err := json.Marshal(bi)
@@ -662,10 +677,23 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 }
 
 type buildInfo struct {
-	BuildTime        int64    `json:"build_time"`                   // Unix seconds timestamp of time when the index was built
-	BuildVersion     string   `json:"build_version"`                // Grafana version used when building the index
-	SelectableFields []string `json:"selectable_fields,omitempty"`  // List of selectable fields used when index was created.
-	SearchFieldsHash string   `json:"search_fields_hash,omitempty"` // Hash over the SearchFieldDefinition slices registered for (group, resource) at build time, across every version. Empty when no SearchFieldsProvider was in use.
+	// Unix seconds timestamp of time when the index was built.
+	BuildTime int64 `json:"build_time"`
+
+	// Grafana version used when building the index.
+	BuildVersion string `json:"build_version"`
+
+	// List of selectable fields used when index was created.
+	SelectableFields []string `json:"selectable_fields,omitempty"`
+
+	// Hash over the SearchFieldDefinition slices registered for (group, resource)
+	// at build time, across every version. Empty when no SearchFieldsProvider was
+	// in use.
+	SearchFieldsHash string `json:"search_fields_hash,omitempty"`
+
+	// Index features the index was built with. Absent on indexes built before
+	// index features existed.
+	Features []resource.IndexFeature `json:"features,omitempty"`
 }
 
 type buildIndexSource int
@@ -726,7 +754,6 @@ func (b *bleveBackend) BuildIndex(
 	ctx context.Context,
 	key resource.NamespacedResource,
 	docCount int64,
-	fields resource.SearchableDocumentFields,
 	indexBuildReason string,
 	builder resource.BuildFn,
 	updater resource.UpdateFn,
@@ -744,12 +771,17 @@ func (b *bleveBackend) BuildIndex(
 		attribute.String("reason", indexBuildReason),
 	)
 
-	sfKey := strings.ToLower(fmt.Sprintf("%s/%s", key.Group, key.Resource))
-	selectableFields := b.selectableFields[sfKey]
-	searchFieldsHash := b.searchFieldsHashes[sfKey]
-	searchFieldsProvider := b.searchFieldsProvider[sfKey]
+	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
+	selectableFields, searchFieldsHash, searchFieldsProvider := b.fields.For(sfKey)
 
 	mapper, err := GetBleveMappings(searchFieldsProvider, key.Group, key.Resource, selectableFields)
+	if err != nil {
+		return nil, err
+	}
+
+	// The kind's custom column fields come from the same provider that drives
+	// the mapping, so the index and its result columns stay in agreement.
+	fields, err := resource.SearchableFieldsFromProvider(searchFieldsProvider, key.Group, key.Resource)
 	if err != nil {
 		return nil, err
 	}
@@ -818,6 +850,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	idx := b.newBleveIndex(key, prepared.index, prepared.indexStorage, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
+	idx.searchFields = newKindSearchFields(searchFieldsProvider, key.Group, key.Resource, selectableFields)
 
 	if prepared.source.needsBuild() {
 		// Type-convert so buildIndexFromScratch can call updateResourceVersion after the builder returns.
@@ -1039,7 +1072,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 
 func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time.Time, logger log.Logger) (bleve.Index, string, int64, error) {
 	idx, name, rv, err := b.findPreviousFileBasedIndex(resourceDir)
-	if err != nil || idx == nil || lastImportTime.IsZero() {
+	if err != nil || idx == nil {
 		return idx, name, rv, err
 	}
 
@@ -1048,16 +1081,26 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 		logger.Warn("failed to get build info from existing index", "error", err)
 		return idx, name, rv, nil
 	}
-	if bi.BuildTime <= 0 {
+
+	indexBuildTime := time.Time{}
+	if bi.BuildTime > 0 {
+		indexBuildTime = time.Unix(bi.BuildTime, 0)
+	}
+
+	// Opening an outdated index is deliberate: startup stays fast and the rebuild
+	// scan replaces it shortly after. Only an index that would answer incorrectly
+	// is rejected. An index with no build time counts as older than any import.
+	reason := ""
+	if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
+		reason = fmt.Sprintf("index is missing required features %v", missing)
+	} else if !lastImportTime.IsZero() && indexBuildTime.Before(lastImportTime) {
+		reason = "index was built before the last import"
+	}
+	if reason == "" {
 		return idx, name, rv, nil
 	}
 
-	indexBuildTime := time.Unix(bi.BuildTime, 0)
-	if !indexBuildTime.Before(lastImportTime) {
-		return idx, name, rv, nil
-	}
-
-	logger.Info("File-based index needs rebuild before opening", "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
+	logger.Info("File-based index needs rebuild before opening", "reason", reason, "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
 	_ = idx.Close()
 	// Release the registration findPreviousFileBasedIndex installed on this
 	// directory: we are discarding the reused index, so cleanOldIndexes is
@@ -1231,6 +1274,7 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 	}
 
 	promoted := b.newBleveIndex(key, fileIndex, indexStorageFile, fields, allFields, standardSearchFields, updater, delegate.logger)
+	promoted.searchFields = delegate.searchFields
 	promoted.resourceVersion.Store(delegate.resourceVersion.Load())
 	cleanup = false
 
@@ -1476,6 +1520,16 @@ func isPathWithinRoot(path, absoluteRoot string) bool {
 }
 
 // TotalDocs returns the total number of documents across all indices
+// SnapshotCountThreshold returns the snapshot MinDocCount, or 0 when no snapshot
+// store is configured (in which case BuildIndex never uses snapshots and the
+// count is not consumed by that decision).
+func (b *bleveBackend) SnapshotCountThreshold() int64 {
+	if b.opts.Snapshot.Store == nil {
+		return 0
+	}
+	return b.opts.Snapshot.MinDocCount
+}
+
 func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
 	// We iterate over keys and call getCachedIndex for each index individually.
@@ -1528,6 +1582,11 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 		indexRV, err := getRV(idx)
 		if err != nil {
 			b.log.Error("error getting rv from index", "indexDir", indexDir, "err", err)
+			_ = idx.Close()
+			continue
+		}
+		if indexRV <= 0 {
+			b.log.Warn("index has non-positive rv, not reusing it", "indexDir", indexDir, "rv", indexRV)
 			_ = idx.Close()
 			continue
 		}
@@ -1592,6 +1651,9 @@ type bleveIndex struct {
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
+	// searchFields is what this kind's declarations mean for querying and
+	// indexing, so neither has to consult a hardcoded name list.
+	searchFields kindSearchFields
 
 	indexStorage string // memory or file, used when updating metrics
 
@@ -1623,6 +1685,11 @@ type bleveIndex struct {
 	// Guards read-modify-write updates of the persisted snapshot mutation count
 	// stored in Bleve internal data, so concurrent BulkIndex calls don't lose increments.
 	snapshotMutationMu sync.Mutex
+
+	// postRankAuthzEnabled enables the post-ranking authz path. When false,
+	// the in-searcher permissionScopedQuery path is used.
+	postRankAuthzEnabled bool
+	postRankAuthz        PostRankAuthzConfig
 }
 
 func (b *bleveBackend) newBleveIndex(
@@ -1636,16 +1703,18 @@ func (b *bleveBackend) newBleveIndex(
 	logger log.Logger,
 ) *bleveIndex {
 	bi := &bleveIndex{
-		key:               key,
-		index:             index,
-		indexStorage:      newIndexType,
-		fields:            fields,
-		allFields:         allFields,
-		standard:          standardSearchFields,
-		logger:            logger,
-		updaterFn:         updaterFn,
-		minUpdateInterval: b.opts.IndexMinUpdateInterval,
-		indexMetrics:      b.indexMetrics,
+		key:                  key,
+		index:                index,
+		indexStorage:         newIndexType,
+		fields:               fields,
+		allFields:            allFields,
+		standard:             standardSearchFields,
+		logger:               logger,
+		updaterFn:            updaterFn,
+		minUpdateInterval:    b.opts.IndexMinUpdateInterval,
+		indexMetrics:         b.indexMetrics,
+		postRankAuthzEnabled: b.opts.PostRankAuthzEnabled,
+		postRankAuthz:        b.opts.PostRankAuthz.effective(),
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -1662,6 +1731,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	}
 
 	batch := b.index.NewBatch()
+	var undeclaredFields map[string]struct{}
 	for _, item := range req.Items {
 		switch item.Action {
 		case resource.ActionIndex:
@@ -1669,6 +1739,19 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 				return fmt.Errorf("missing document")
 			}
 			doc := item.Doc.UpdateCopyFields()
+			populateFieldVariants(doc, b.searchFields.variants)
+
+			// The static fields.* mapping drops values written under an undeclared
+			// name; collect them so the loss is logged, not silent.
+			for name := range doc.Fields {
+				if b.isDeclaredField(name) {
+					continue
+				}
+				if undeclaredFields == nil {
+					undeclaredFields = map[string]struct{}{}
+				}
+				undeclaredFields[name] = struct{}{}
+			}
 
 			err := batch.Index(resource.SearchID(doc.Key), doc)
 			if err != nil {
@@ -1678,11 +1761,35 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			batch.Delete(resource.SearchID(item.Key))
 		}
 	}
+	for name := range undeclaredFields {
+		b.logger.Warn("search field written to document is not declared for this kind, so it is dropped from the index and cannot be stored or queried", "field", name)
+	}
 
 	if err := b.index.Batch(batch); err != nil {
 		return err
 	}
 	return b.addSnapshotMutationCount(int64(len(req.Items)))
+}
+
+// isDeclaredField reports whether name is a declared search field for this
+// index (per-kind or standard). The fields.* prefix is stripped, so a bare
+// doc.Fields key matches.
+func (b *bleveIndex) isDeclaredField(name string) bool {
+	if b.fields != nil && b.fields.Field(name) != nil {
+		return true
+	}
+	if b.standard != nil && b.standard.Field(name) != nil {
+		return true
+	}
+	// Variant fields are mapped but never named by a document builder, so they
+	// only show up here when a document is indexed twice.
+	bare := strings.TrimPrefix(name, resource.SEARCH_FIELD_PREFIX)
+	for _, v := range b.searchFields.variants {
+		if bare == v.keyword || bare == v.ngram {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *bleveIndex) updateResourceVersion(rv int64) error {
@@ -1790,7 +1897,13 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 	if err != nil {
 		return resource.IndexBuildInfo{}, err
 	}
+	return bi.resourceBuildInfo(), nil
+}
 
+// resourceBuildInfo converts the persisted form into the one the rebuild and
+// reuse checks consume. An unparseable build version reads as unknown, so it
+// cannot make an index look newer than it is.
+func (bi buildInfo) resourceBuildInfo() resource.IndexBuildInfo {
 	bt := time.Time{}
 	if bi.BuildTime > 0 {
 		bt = time.Unix(bi.BuildTime, 0)
@@ -1809,7 +1922,8 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 		BuildVersion:     bv,
 		SelectableFields: bi.SelectableFields,
 		SearchFieldsHash: bi.SearchFieldsHash,
-	}, nil
+		Features:         bi.Features,
+	}
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest, stats *resource.SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -1987,25 +2101,66 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
+	// postFilter is opt-in via the search_post_rank_authz config option. It
+	// covers normal paginated search and federated queries: bleve ranks, the
+	// runner authorizes app-side in rank order, and stops once the page is full.
+	// Count-only (Limit==0), facet, and SearchBefore requests stay on the
+	// in-searcher path (exact totals / exact facets).
+	postRank := b.postRankAuthzEnabled && access != nil &&
+		req.Limit > 0 && len(req.SearchBefore) == 0 && len(req.Facet) == 0
+
 	conversionStarts := time.Now()
 	// convert protobuf request to bleve request
-	searchrequest, e := b.toBleveSearchRequest(ctx, req, access)
+	searchrequest, e := b.toBleveSearchRequest(ctx, req, access, postRank)
 	if e != nil {
 		response.Error = e
 		return response, nil
 	}
 
-	// Show all fields when nothing is selected.
-	// Individual field names tell bleve which stored values to load.
-	// The sentinel triggers hitsToTable to use the curated allFields column list.
-	if len(searchrequest.Fields) < 1 && req.Limit > 0 {
-		f, err := b.index.Fields()
-		if err != nil {
+	if err := b.ensureSearchFields(searchrequest, req); err != nil {
+		return nil, err
+	}
+
+	// A SearchAfter cursor carries one sort value per field in the sort order
+	// that produced it. The post-rank path appends a SortDocID tie-breaker, so
+	// its sort order is one longer than the in-searcher path's. A cursor
+	// created before the flag was enabled (or after it was turned off) has the
+	// wrong length for the current path. runPostFilterAuthz calls
+	// SearchInContext directly, so bleve doesn't validate the mismatch before
+	// the collector indexes into the shorter cursor. Guard it here: if the
+	// cursor doesn't match the post-rank sort order, fall back to the in-searcher
+	// path; if it still doesn't match, reject the request.
+	if postRank && len(req.SearchAfter) > 0 && len(req.SearchAfter) != len(searchrequest.Sort) {
+		postRank = false
+		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank)
+		if e != nil {
+			response.Error = e
+			return response, nil
+		}
+		if err := b.ensureSearchFields(searchrequest, req); err != nil {
 			return nil, err
 		}
-		searchrequest.Fields = append(f, resource.SEARCH_FIELD_ALL_FIELDS)
+	}
+	if len(req.SearchAfter) > 0 && len(req.SearchAfter) != len(searchrequest.Sort) {
+		response.Error = resource.NewBadRequestError("search_after cursor does not match the current sort order")
+		return response, nil
+	}
+
+	// selectFields is the response column list, derived from the caller's
+	// requested fields (or the all-fields sentinel when none were requested).
+	// It is snapshotted before ensureAuthzFields so the folder field — which
+	// bleve loads only to authorize hits — is never returned to the caller.
+	// This keeps "fields loaded from bleve" (searchrequest.Fields) separate
+	// from "fields returned to the caller" (selectFields).
+	selectFields := slices.Clone(searchrequest.Fields)
+	if postRank {
+		b.ensureAuthzFields(searchrequest)
 	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
+
+	if postRank {
+		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, stats, response)
+	}
 
 	res, err := index.SearchInContext(ctx, searchrequest)
 	if err != nil {
@@ -2013,6 +2168,9 @@ func (b *bleveIndex) Search(
 	}
 
 	response.TotalHits = int64(res.Total)
+	// bleve counts matches exactly, and authz is applied in-searcher here, so the
+	// count is the exact authorized total.
+	response.TotalHitsExact = true
 	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
 	stats.AddSearchTime(res.Took)
@@ -2020,7 +2178,7 @@ func (b *bleveIndex) Search(
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
-	response.Results, err = b.hitsToTable(ctx, searchrequest.Fields, res.Hits, req.Explain)
+	response.Results, err = b.hitsToTable(ctx, selectFields, res.Hits, searchrequest.Sort, req.Explain)
 	if err != nil {
 		return nil, err
 	}
@@ -2028,6 +2186,11 @@ func (b *bleveIndex) Search(
 	// parse the facet fields
 	for k, v := range res.Facets {
 		f := newResponseFacet(v)
+		// Bleve reports the physical keyword-variant field. Keep that internal
+		// detail out of the API response.
+		if requested, ok := req.Facet[k]; ok {
+			f.Field = requested.Field
+		}
 		if response.Facet == nil {
 			response.Facet = make(map[string]*resourcepb.ResourceSearchResponse_Facet)
 		}
@@ -2110,14 +2273,17 @@ func (b *bleveIndex) getIndex(
 	return b.index, nil
 }
 
-// nolint:gocyclo
-func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
+func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRankAuthz bool) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
 
 	facets := bleve.FacetsRequest{}
-	for _, f := range req.Facet {
-		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
+	for name, facet := range req.Facet {
+		kf, ok := b.keywordFieldFor(facet.Field)
+		if !ok || !kf.facetable {
+			return nil, resource.NewBadRequestError(fmt.Sprintf("field %q does not support faceting", facet.Field))
+		}
+		facets[name] = bleve.NewFacetRequest(kf.name, int(facet.Limit))
 	}
 
 	// Convert resource-specific fields to bleve fields. Any field declared
@@ -2126,10 +2292,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// Skip inputs that already carry the prefix.
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
-		if b.fields != nil && !strings.HasPrefix(f, resource.SEARCH_FIELD_PREFIX) && b.fields.Field(f) != nil {
-			f = resource.SEARCH_FIELD_PREFIX + f
-		}
-		fields = append(fields, f)
+		fields = append(fields, resolveFieldName(b.fields, f))
 	}
 
 	size, err := safeInt64ToInt(req.Limit)
@@ -2141,10 +2304,21 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		return nil, resource.AsErrorResult(err)
 	}
 
+	// On the post-filter path bleve returns an unfiltered, bounded ranked window;
+	// authorization (and offset handling) happen afterward in bleveIndex.Search.
+	// The first window over-fetches via windowSize and pages with SearchAfter.
+	// From/offset are applied app-side (over authorized hits), so bleve starts at 0.
+	reqSize := size
+	reqFrom := offset
+	if postRankAuthz {
+		reqSize = b.postRankAuthz.windowSize(size)
+		reqFrom = 0
+	}
+
 	searchrequest := &bleve.SearchRequest{
 		Fields:  fields,
-		Size:    size,
-		From:    offset,
+		Size:    reqSize,
+		From:    reqFrom,
 		Explain: req.Explain,
 		Facets:  facets,
 	}
@@ -2158,195 +2332,34 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		searchrequest.From = 0
 	}
 
-	// Currently everything is within an AND query
-	queries := []query.Query{}
-	if len(req.Options.Labels) > 0 {
-		for _, v := range req.Options.Labels {
-			q, err := requirementQuery(v, "labels.")
-			if err != nil {
-				return nil, err
-			}
-			queries = append(queries, q)
-		}
+	// Label/field filters are constraints, not relevance signals, so they go into
+	// the boolean Filter clause (scored "none" by bleve) while the free-text query
+	// scores in Must. This keeps ranking driven by text relevance alone.
+	filters, errResult := b.filterQueries(req)
+	if errResult != nil {
+		return nil, errResult
 	}
-	// filters
-	if len(req.Options.Fields) > 0 {
-		for _, v := range req.Options.Fields {
-			// Temporarily expand a root-folder filter so it matches both the
-			// legacy empty sentinel ("") and the canonical "general" UID. This
-			// keeps results consistent whether the index was written before or
-			// after the apistore started stamping "general" on root-parented
-			// resources. Done here so every caller stays agnostic of the
-			// sentinel used on disk.
-			if v.Key == resource.SEARCH_FIELD_FOLDER &&
-				(v.Operator == string(selection.Equals) || v.Operator == string(selection.In)) {
-				expanded := false
-				values := make([]string, 0, len(v.Values)+1)
-				for _, val := range v.Values {
-					if !foldermodel.IsRootFolderUID(val) {
-						values = append(values, val)
-						continue
-					}
-					if !expanded {
-						values = append(values, "", foldermodel.GeneralFolderUID)
-						expanded = true
-					}
-				}
-				if expanded {
-					v.Operator = string(selection.In)
-					v.Values = values
-				}
-			}
+	textQuery := b.buildTextQuery(searchrequest, req)
+	searchrequest.Query = combineFilterAndTextQueries(filters, textQuery)
 
-			// Fields should already have correct prefix (either "fields." or "selectableFields.")
-			q, err := requirementQuery(v, "")
-			if err != nil {
-				return nil, err
-			}
-			queries = append(queries, q)
-		}
-	}
-
-	// Queries shorter than NGRAM_MIN_TOKEN can't hit the title_ngram index. Without this
-	// rewrite, 1-char queries fell through to MatchAllQuery and 2-char queries usually returned
-	// nothing. Treat them as a prefix wildcard ("f" → "f*") so search-as-you-type matches by
-	// prefix via the existing wildcard branch. Callers that already passed a wildcard are left
-	// alone.
-	if q := req.Query; q != "" && len(q) < NGRAM_MIN_TOKEN && !strings.Contains(q, "*") {
-		req.Query = q + "*"
-	}
-
-	if len(req.Query) > 1 {
-		if strings.Contains(req.Query, "*") {
-			// Wildcard query is expensive, should be used with caution.
-			// When QueryFields is set, search across each named field (only Name is
-			// used; Type and Boost are ignored because bleve wildcards don't support
-			// analyzers or meaningful relevance scoring).
-			// When QueryFields is empty, default to title + IAM identity fields
-			// (email, login) for backward compatibility with older clients that
-			// don't set QueryFields.
-			disjoin := bleve.NewDisjunctionQuery()
-			if len(req.QueryFields) > 0 {
-				for _, field := range req.QueryFields {
-					addWildcardQueries(disjoin, req.Query, field.Name)
-				}
-			} else {
-				// Default: search title and IAM identity fields (email, login).
-				// IAM user search wraps queries as "*<query>*" — older clients
-				// may not set QueryFields, so we include email/login here for
-				// backward compatibility during the deployment gap.
-				// TODO: remove email and login fields once IAM only sends requests with QueryFields.
-				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_TITLE)
-				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_PREFIX+"email")
-				addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_PREFIX+"login")
-			}
-			queries = append(queries, disjoin)
-		} else {
-			// Free-text search uses explicit query fields so each title field can use the query type that matches its analyzer.
-			searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
-			disjoin := bleve.NewDisjunctionQuery()
-			queries = append(queries, disjoin)
-
-			queryFields := req.QueryFields
-			if len(queryFields) == 0 {
-				queryFields = []*resourcepb.ResourceSearchRequest_QueryField{
-					{
-						Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
-						Type:  resourcepb.QueryFieldType_KEYWORD,
-						Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
-					}, {
-						Name:  resource.SEARCH_FIELD_TITLE,
-						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 2, // standard analyzer (word-level matching)
-					}, {
-						Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
-						Type:  resourcepb.QueryFieldType_TEXT,
-						Boost: 1, // ngram analyzer (partial/prefix matching)
-					},
-				}
-			}
-
-			for _, field := range queryFields {
-				switch field.Type {
-				case resourcepb.QueryFieldType_TEXT, resourcepb.QueryFieldType_DEFAULT:
-					q := bleve.NewMatchQuery(removeSmallTerms(req.Query)) // removeSmallTerms should be part of the analyzer
-					q.SetBoost(float64(field.Boost))
-					q.SetField(field.Name)
-					// Match the analyzer used to index each field: the ngram field
-					// must be analyzed with TITLE_ANALYZER, not the standard analyzer
-					// (which splits on punctuation and drops sub-ngram-length fragments).
-					if field.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
-						q.Analyzer = TITLE_ANALYZER
-					} else {
-						q.Analyzer = standard.Name
-					}
-					q.Operator = query.MatchQueryOperatorAnd // all terms must match
-					disjoin.AddQuery(q)
-
-				case resourcepb.QueryFieldType_KEYWORD:
-					// Bleve TermQuery is an exact token lookup: it does not analyze or lowercase the query.
-					q := bleve.NewTermQuery(strings.ToLower(req.Query))
-					q.SetBoost(float64(field.Boost))
-					q.SetField(field.Name)
-					disjoin.AddQuery(q)
-
-				case resourcepb.QueryFieldType_PHRASE:
-					// Bleve phrase queries are different from our title_phrase field: they match adjacent analyzed tokens.
-					q := bleve.NewMatchPhraseQuery(req.Query)
-					q.SetBoost(float64(field.Boost))
-					q.SetField(field.Name)
-					q.Analyzer = standard.Name
-					disjoin.AddQuery(q)
-				}
-			}
-		}
-	}
-
-	switch len(queries) {
-	case 0:
-		searchrequest.Query = bleve.NewMatchAllQuery()
-	case 1:
-		searchrequest.Query = queries[0]
-	default:
-		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
-	}
-
-	if access != nil {
-		verb := utils.VerbGet
-		if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
-			verb = utils.VerbUpdate
-		}
-
-		// Build resource -> verb mapping for batch authorization
-		resources := map[string]string{
-			b.key.Resource: verb,
-		}
-
-		// Handle federation
-		for _, federated := range req.Federated {
-			resources[federated.Resource] = utils.VerbGet
-		}
-
+	// postFilter applies authorization after ranking in runPostFilterAuthz, so
+	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
+	if access != nil && !postRankAuthz {
 		searchrequest.Query = newPermissionScopedQuery(searchrequest.Query, permissionScopedQueryConfig{
 			access:    access,
 			namespace: b.key.Namespace,
 			group:     b.key.Group,
-			resources: resources,
+			resources: b.authzResources(req),
 		})
 	}
 
-	for k, v := range req.Facet {
-		if searchrequest.Facets == nil {
-			searchrequest.Facets = make(bleve.FacetsRequest)
-		}
-		searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
-	}
-
 	// Add the sort fields
-	sorting := getSortFields(req, b.fields)
+	sorting := b.getSortFields(req)
 	searchrequest.SortBy(sorting)
 
-	// When no sort fields are provided, sort by score if there is a query, otherwise sort by title
+	// When no sort fields are provided, sort by score if there is a query,
+	// otherwise sort by title. Always add name as the final tie-breaker so
+	// offset pagination sees a total order.
 	if len(sorting) == 0 {
 		if req.Query != "" && req.Query != "*" {
 			searchrequest.Sort = append(searchrequest.Sort, &search.SortScore{
@@ -2358,9 +2371,284 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 				Desc:  false,
 			})
 		}
+		searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
+			Field: resource.SEARCH_FIELD_NAME,
+			Desc:  false,
+		})
+	}
+
+	if postRankAuthz {
+		// Total-order tie-breaker for stable SearchAfter cursors. The doc ID
+		// {namespace}/{group}/{resource}/{name} is globally unique across a
+		// federated alias (dashboards + folders differ by the resource segment),
+		// so this guarantees no skips/dupes over the merged result set. (For
+		// non-federated queries the name tie-breaker above already gives a total
+		// order; the doc ID is still harmless and keeps the cursor shape uniform
+		// across federated and non-federated post-rank searches.)
+		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{})
+		// The folder stored field (needed to authorize) is added to the bleve
+		// load list in Search, separate from the response column list.
 	}
 
 	return searchrequest, nil
+}
+
+// combineFilterAndTextQueries assembles the final bleve query from the filter
+// clauses and the optional free-text query.
+//
+// Filters are non-scoring only when there is a free-text query to rank by: they
+// go in the boolean Filter slot so text relevance alone drives the score, and the
+// text query drives iteration. Without a free-text query the results are ordered
+// by the sort fields (not score), so the filters go straight into the query,
+// which keeps bleve iterating their posting lists instead of scanning every
+// document (a filter-only boolean query wraps a match-all searcher).
+func combineFilterAndTextQueries(filters []query.Query, textQuery query.Query) query.Query {
+	if textQuery == nil {
+		switch len(filters) {
+		case 0:
+			return bleve.NewMatchAllQuery()
+		case 1:
+			return filters[0]
+		default:
+			return bleve.NewConjunctionQuery(filters...)
+		}
+	}
+
+	if len(filters) == 0 {
+		return textQuery
+	}
+
+	bq := bleve.NewBooleanQuery()
+	bq.AddMust(textQuery)
+	if len(filters) == 1 {
+		bq.AddFilter(filters[0])
+	} else {
+		bq.AddFilter(bleve.NewConjunctionQuery(filters...))
+	}
+	return bq
+}
+
+// resolveFieldName maps a public field name to its physical index name. Clients
+// pass public names; only the backend knows that per-kind fields live under the
+// fields.* sub-document. Standard and already-prefixed names are returned as-is.
+func resolveFieldName(fields resource.SearchableDocumentFields, key string) string {
+	if strings.HasPrefix(key, resource.SEARCH_FIELD_PREFIX) ||
+		strings.HasPrefix(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX) {
+		return key
+	}
+	// Leave reserved top-level names as-is so a per-kind set can't shadow them
+	// into fields.* (callers pass physical title variants directly, e.g. the
+	// legacy QueryFields trio).
+	if isReservedTopLevelField(key) {
+		return key
+	}
+	if fields == nil || fields.Field(key) == nil {
+		return key
+	}
+	return resource.SEARCH_FIELD_PREFIX + key
+}
+
+// isReservedTopLevelField reports whether key is a standard field or an internal
+// top-level variant (title_phrase/title_ngram) that must never be prefixed.
+func isReservedTopLevelField(key string) bool {
+	switch key {
+	case resource.SEARCH_FIELD_TITLE_PHRASE, resource.SEARCH_FIELD_TITLE_NGRAM:
+		return true
+	}
+	return resource.StandardSearchFields().Field(key) != nil
+}
+
+// filterQueries builds the label and field filter clauses (the AND terms that
+// are not the free-text query) for a search request.
+func (b *bleveIndex) filterQueries(req *resourcepb.ResourceSearchRequest) ([]query.Query, *resourcepb.ErrorResult) {
+	queries := []query.Query{}
+	if len(req.Options.Labels) > 0 {
+		for _, v := range req.Options.Labels {
+			// Build a fresh requirement rather than mutate the shared one: Search may
+			// re-run this builder (post-rank authz fallback), which would otherwise
+			// double-prefix the label key.
+			rq := &resourcepb.Requirement{
+				Key:      resource.SEARCH_FIELD_LABELS + "." + v.Key,
+				Operator: v.Operator,
+				Values:   v.Values,
+			}
+			q, err := b.requirementQuery(rq)
+			if err != nil {
+				return nil, err
+			}
+			queries = append(queries, q)
+		}
+	}
+	if len(req.Options.Fields) > 0 {
+		for _, v := range req.Options.Fields {
+			// Fresh requirement (not a proto value copy, which trips the lock check)
+			// so re-running the builder stays idempotent.
+			rq := &resourcepb.Requirement{
+				Key:      resolveFieldName(b.fields, v.Key),
+				Operator: v.Operator,
+				Values:   v.Values,
+			}
+			// Temporarily expand a root-folder filter so it matches both the
+			// legacy empty sentinel ("") and the canonical "general" UID. This
+			// keeps results consistent whether the index was written before or
+			// after the apistore started stamping "general" on root-parented
+			// resources. Done here so every caller stays agnostic of the
+			// sentinel used on disk.
+			if rq.Key == resource.SEARCH_FIELD_FOLDER &&
+				(rq.Operator == string(selection.Equals) || rq.Operator == string(selection.In)) {
+				expanded := false
+				values := make([]string, 0, len(rq.Values)+1)
+				for _, val := range rq.Values {
+					if !foldermodel.IsRootFolderUID(val) {
+						values = append(values, val)
+						continue
+					}
+					if !expanded {
+						values = append(values, "", foldermodel.GeneralFolderUID)
+						expanded = true
+					}
+				}
+				if expanded {
+					rq.Operator = string(selection.In)
+					rq.Values = values
+				}
+			}
+
+			q, err := b.requirementQuery(rq)
+			if err != nil {
+				return nil, err
+			}
+			queries = append(queries, q)
+		}
+	}
+	return queries, nil
+}
+
+// buildTextQuery builds the free-text (or wildcard) query clause from req.Query,
+// returning nil when the query is too short to search. It may append
+// SEARCH_FIELD_SCORE to searchrequest.Fields for free-text relevance scoring.
+func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) query.Query {
+	// Queries shorter than NGRAM_MIN_TOKEN can't hit the title_ngram index. Without this
+	// rewrite, 1-char queries fell through to MatchAllQuery and 2-char queries usually returned
+	// nothing. Treat them as a prefix wildcard ("f" → "f*") so search-as-you-type matches by
+	// prefix via the existing wildcard branch. Callers that already passed a wildcard are left
+	// alone.
+	if q := req.Query; q != "" && len(q) < NGRAM_MIN_TOKEN && !strings.Contains(q, "*") {
+		req.Query = q + "*"
+	}
+
+	if len(req.Query) <= 1 {
+		return nil
+	}
+
+	disjoin := bleve.NewDisjunctionQuery()
+	if strings.Contains(req.Query, "*") {
+		// Wildcard query is expensive, should be used with caution.
+		// When QueryFields is set, search across each named field (only Name is
+		// used; Type and Boost are ignored because bleve wildcards don't support
+		// analyzers or meaningful relevance scoring).
+		// When QueryFields is empty, default to title.
+		if len(req.QueryFields) > 0 {
+			for _, field := range req.QueryFields {
+				addWildcardQueries(disjoin, req.Query, resolveFieldName(b.fields, field.Name))
+			}
+		} else {
+			addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_TITLE)
+		}
+		return disjoin
+	}
+
+	// Free-text search uses explicit query fields so each title field can use the query type that matches its analyzer.
+	searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
+	queryFields := b.resolveQueryFields(req.QueryFields)
+
+	for _, field := range queryFields {
+		kind := b.textQueryKindFor(field.Name)
+		switch kind {
+		case textQueryTerm, textQueryTermLowered:
+			// Bleve TermQuery is an exact token lookup: it does not analyze or lowercase the query.
+			term := req.Query
+			if kind == textQueryTermLowered {
+				term = strings.ToLower(term)
+			}
+			q := bleve.NewTermQuery(term)
+			q.SetBoost(float64(field.Boost))
+			q.SetField(field.Name)
+			disjoin.AddQuery(q)
+
+		case textQueryNgram, textQueryStandard:
+			q := bleve.NewMatchQuery(removeSmallTerms(req.Query)) // removeSmallTerms should be part of the analyzer
+			q.SetBoost(float64(field.Boost))
+			q.SetField(field.Name)
+			// Match the analyzer used to index each field: the ngram variant
+			// must be analyzed with TITLE_ANALYZER, not the standard analyzer
+			// (which splits on punctuation and drops sub-ngram-length fragments).
+			if kind == textQueryNgram {
+				q.Analyzer = TITLE_ANALYZER
+			} else {
+				q.Analyzer = standard.Name
+			}
+			q.Operator = query.MatchQueryOperatorAnd // all terms must match
+			disjoin.AddQuery(q)
+		}
+	}
+	return disjoin
+}
+
+// textQueryKindFor reports how a physical index field has to be queried.
+func (b *bleveIndex) textQueryKindFor(name string) textQueryKind {
+	if kind, ok := b.searchFields.textQueryKinds[name]; ok {
+		return kind
+	}
+	if strings.HasPrefix(name, referenceFieldPrefix) {
+		return textQueryTerm
+	}
+	// Undeclared fields (dynamically indexed, or named by a client we don't know
+	// about) keep the analyzed default.
+	return textQueryStandard
+}
+
+// titleQueryFields expands a text query on the logical title field across its
+// three physical variants: exact (title_phrase), word-level (title), and partial
+// (title_ngram). The query each variant needs comes from its mapping.
+func titleQueryFields() []*resourcepb.ResourceSearchRequest_QueryField {
+	return []*resourcepb.ResourceSearchRequest_QueryField{
+		{Name: resource.SEARCH_FIELD_TITLE_PHRASE, Boost: 10}, // exact title match (case-insensitive via pre-lowered title_phrase)
+		{Name: resource.SEARCH_FIELD_TITLE, Boost: 2},         // standard analyzer (word-level matching)
+		{Name: resource.SEARCH_FIELD_TITLE_NGRAM, Boost: 1},   // ngram analyzer (partial/prefix matching)
+	}
+}
+
+// resolveQueryFields maps the requested (public-named) text query fields to
+// concrete bleve fields: title fans out to its variants, others resolve to their
+// physical name. An empty request defaults to title.
+func (b *bleveIndex) resolveQueryFields(requested []*resourcepb.ResourceSearchRequest_QueryField) []*resourcepb.ResourceSearchRequest_QueryField {
+	if len(requested) == 0 {
+		return titleQueryFields()
+	}
+	// If the caller already named physical title variants (legacy dashboard
+	// search sends all three), don't re-expand the logical title field, or we'd
+	// duplicate the phrase/ngram clauses and skew scoring.
+	hasTitleVariant := false
+	for _, f := range requested {
+		if f.Name == resource.SEARCH_FIELD_TITLE_PHRASE || f.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
+			hasTitleVariant = true
+			break
+		}
+	}
+	out := make([]*resourcepb.ResourceSearchRequest_QueryField, 0, len(requested))
+	for _, f := range requested {
+		if f.Name == resource.SEARCH_FIELD_TITLE && !hasTitleVariant {
+			out = append(out, titleQueryFields()...)
+			continue
+		}
+		// Type is dropped: the query comes from the field's mapping.
+		out = append(out, &resourcepb.ResourceSearchRequest_QueryField{
+			Name:  resolveFieldName(b.fields, f.Name),
+			Boost: f.Boost,
+		})
+	}
+	return out
 }
 
 func removeSmallTerms(query string) string {
@@ -2550,33 +2838,32 @@ func safeInt64ToInt(i64 int64) (int, error) {
 	return int(i64), nil
 }
 
-func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.SearchableDocumentFields) []string {
-	sorting := make([]string, 0, len(req.SortBy))
+func (b *bleveIndex) getSortFields(req *resourcepb.ResourceSearchRequest) []string {
+	if len(req.SortBy) == 0 {
+		return nil
+	}
+
+	sorting := make([]string, 0, len(req.SortBy)+1)
+	hasNameSort := false
 	for _, sort := range req.SortBy {
-		input := sort.Field
-		if field, ok := textSortFields[input]; ok {
-			input = field
+		input := resolveFieldName(b.fields, sort.Field)
+		// Sort on the keyword form, or the analyzed field would order by its first
+		// token instead of the whole value. Those copies are stored lowercased, so
+		// sorting is case-insensitive.
+		if kf, ok := b.keywordFieldFor(input); ok {
+			input = kf.name
 		}
 
-		// Per-kind sort fields live under the fields.* sub-document, prefix
-		// them by consulting this index's SearchableDocumentFields. Skip
-		// inputs that already carry the prefix (Field() would strip it and
-		// match again, leading to a double prefix).
-		if fields != nil && !strings.HasPrefix(input, resource.SEARCH_FIELD_PREFIX) && fields.Field(input) != nil {
-			input = resource.SEARCH_FIELD_PREFIX + input
-		}
-
+		hasNameSort = hasNameSort || input == resource.SEARCH_FIELD_NAME
 		if sort.Desc {
 			input = "-" + input
 		}
 		sorting = append(sorting, input)
 	}
+	if !hasNameSort {
+		sorting = append(sorting, resource.SEARCH_FIELD_NAME)
+	}
 	return sorting
-}
-
-// fields that we went to sort by the full text
-var textSortFields = map[string]string{
-	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE_PHRASE,
 }
 
 const (
@@ -2584,47 +2871,64 @@ const (
 	whitespaceCharacters = " \t\r\n"
 )
 
-// exactTermQueryFields are fields where filters use Bleve TermQuery directly.
-var exactTermQueryFields = []string{
-	resource.SEARCH_FIELD_OWNER_REFERENCES,
-	resource.SEARCH_FIELD_CREATED_BY,
-	// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
-	// This should be fixed by using the info from the schema
-	"login",
-	"email",
+// keywordFieldFor reports the keyword-analyzed index field backing a filter or
+// sort field, and false when the field has no keyword form.
+func (b *bleveIndex) keywordFieldFor(key string) (keywordField, bool) {
+	fields := b.searchFields.keywordFields
+	if fields == nil {
+		// Index opened without per-kind declarations; standard fields still apply.
+		fields = standardKeywordFields
+	}
+	kf, ok := fields[key]
+	return kf, ok
+}
+
+// usesExactTermFilter reports whether "=" or "in" on key matches the whole value
+// as one token rather than going through the analyzed path. That is what the
+// filter capability means: the field is keyword-analyzed. "==" does not ask,
+// being exact by definition.
+func (b *bleveIndex) usesExactTermFilter(key string) bool {
+	// "=" on title expands across its phrase, token and ngram variants instead,
+	// even though title is filter-capable. "in" on title is exact; see the caller.
+	if key == resource.SEARCH_FIELD_TITLE {
+		return false
+	}
+	// Selectable fields are keyword-mapped even for kinds that declare no search
+	// fields, so the prefix alone settles it.
+	if strings.HasPrefix(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX) {
+		return true
+	}
+	kf, ok := b.keywordFieldFor(key)
+	return ok && kf.filterable
 }
 
 // Convert a "requirement" into a bleve query
-func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
-	useExactTermQuery := slices.Contains(exactTermQueryFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
+func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	useExactTermQuery := b.usesExactTermFilter(req.Key)
 	switch selection.Operator(req.Operator) {
 	case selection.DoubleEquals:
 		// DoubleEquals does exact matching via TermQuery (single value only).
-		// For title, route to the pre-lowered title_phrase field.
 		if len(req.Values) == 1 {
-			key := req.Key
-			value := req.Values[0]
-			if key == resource.SEARCH_FIELD_TITLE {
-				key = resource.SEARCH_FIELD_TITLE_PHRASE
-				value = strings.ToLower(value)
-			}
-			return exactFieldTermQuery(key, value, prefix), nil
+			return b.exactFieldValueQuery(req.Key, req.Values[0]), nil
 		}
 
 	case selection.Equals:
 		return allRequirementValuesQuery(req.Values, func(v string) query.Query {
 			if useExactTermQuery {
-				return exactFieldTermQuery(req.Key, v, prefix)
+				return b.exactFieldValueQuery(req.Key, v)
 			}
-			return fieldFilterQuery(req.Key, filterValue(req.Key, v), prefix)
+			return fieldFilterQuery(req.Key, filterValue(req.Key, v))
 		}), nil
 
 	case selection.In:
+		// "in" is set membership: exact for keyword-analyzed fields and for title
+		// (via its populated title_phrase variant); other fields use the analyzed
+		// path, matching legacy behavior.
 		return anyRequirementValueQuery(req.Values, func(v string) query.Query {
-			if useExactTermQuery {
-				return exactFieldTermQuery(req.Key, v, prefix)
+			if useExactTermQuery || req.Key == resource.SEARCH_FIELD_TITLE {
+				return b.exactFieldValueQuery(req.Key, v)
 			}
-			return fieldFilterQuery(req.Key, filterValue(req.Key, v), prefix)
+			return fieldFilterQuery(req.Key, filterValue(req.Key, v))
 		}), nil
 
 	case selection.NotIn:
@@ -2632,7 +2936,17 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
-			q := fieldFilterQuery(req.Key, filterValue(req.Key, value), prefix)
+			var q query.Query
+			// notin stays on the analyzed path, unlike "=" and "in". On a keyword
+			// field that is already an exact exclusion, and it is what lets a
+			// wildcard value exclude a prefix, or "*" exclude everything. Only a
+			// field with both a text and a keyword form ends up asymmetric with
+			// "in"; title is handled here so the two agree on it.
+			if req.Key == resource.SEARCH_FIELD_TITLE {
+				q = b.exactFieldValueQuery(req.Key, value)
+			} else {
+				q = fieldFilterQuery(req.Key, filterValue(req.Key, value))
+			}
 			mustNotQueries = append(mustNotQueries, q)
 		}
 		boolQuery.AddMustNot(mustNotQueries...)
@@ -2709,55 +3023,66 @@ func addWildcardQueries(disjoin *query.DisjunctionQuery, pattern string, field s
 	}
 }
 
+// exactFieldValueQuery builds an exact term query for one filter value, against
+// the field's keyword form. Where that form is a separate copy (title_phrase, a
+// text field's <name>_keyword) the copy is stored lowercased, so the term has to
+// be lowercased too.
+func (b *bleveIndex) exactFieldValueQuery(key, value string) query.Query {
+	if kf, ok := b.keywordFieldFor(key); ok {
+		return exactFieldTermQuery(kf.name, kf.term(value))
+	}
+	return exactFieldTermQuery(key, value)
+}
+
 // fieldFilterQuery builds the query for one field-filter value after requirementQuery has handled the selector operator.
 // It applies public field semantics, so a title filter can expand to multiple internal title fields.
-func fieldFilterQuery(key string, value string, prefix string) query.Query {
+func fieldFilterQuery(key string, value string) query.Query {
 	if key == resource.SEARCH_FIELD_TITLE {
-		return titleFieldFilterQuery(value, prefix)
+		return titleFieldFilterQuery(value)
 	}
 	if value == "*" {
 		return bleve.NewMatchAllQuery()
 	}
 	if strings.Contains(value, "*") {
-		return fieldWildcardQuery(key, value, prefix)
+		return fieldWildcardQuery(key, value)
 	}
-	return fieldMatchQuery(key, value, prefix)
+	return fieldMatchQuery(key, value)
 }
 
 // titleFieldFilterQuery expands the public title filter across the internal title fields.
-func titleFieldFilterQuery(value string, prefix string) query.Query {
+func titleFieldFilterQuery(value string) query.Query {
 	// Title exact matching and partial matching live in separate index fields,
 	// but the title filter API predates those internal fields.
 	queries := []query.Query{
-		exactFieldTermQuery(resource.SEARCH_FIELD_TITLE_PHRASE, strings.ToLower(value), prefix),
-		titleFieldTokenQuery(value, prefix),
+		exactFieldTermQuery(resource.SEARCH_FIELD_TITLE_PHRASE, strings.ToLower(value)),
+		titleFieldTokenQuery(value),
 	}
 	// Only use title_ngram for single-token title filters. Multi-word filters are handled by title_phrase/title;
 	// adding title_ngram can broaden them after removeSmallTerms drops short words, for example "what\"s up" becomes "what".
 	if !strings.ContainsAny(value, whitespaceCharacters) {
-		queries = append(queries, titleFieldNgramQuery(value, prefix))
+		queries = append(queries, titleFieldNgramQuery(value))
 	}
 	return bleve.NewDisjunctionQuery(queries...)
 }
 
 // titleFieldTokenQuery builds the part of title filtering that targets the standard-analyzed title field.
-func titleFieldTokenQuery(value string, prefix string) query.Query {
+func titleFieldTokenQuery(value string) query.Query {
 	if value == "*" {
 		return bleve.NewMatchAllQuery()
 	}
 	if strings.Contains(value, "*") {
-		return fieldWildcardQuery(resource.SEARCH_FIELD_TITLE, value, prefix)
+		return fieldWildcardQuery(resource.SEARCH_FIELD_TITLE, value)
 	}
 	if delimiter, ok := firstTermSeparator(value); ok {
-		return fieldAllTokensQuery(resource.SEARCH_FIELD_TITLE, strings.Split(value, delimiter), prefix)
+		return fieldAllTokensQuery(resource.SEARCH_FIELD_TITLE, strings.Split(value, delimiter))
 	}
-	return fieldMatchQuery(resource.SEARCH_FIELD_TITLE, value, prefix)
+	return fieldMatchQuery(resource.SEARCH_FIELD_TITLE, value)
 }
 
 // titleFieldNgramQuery builds the partial-match part of title filtering against title_ngram.
-func titleFieldNgramQuery(value string, prefix string) query.Query {
+func titleFieldNgramQuery(value string) query.Query {
 	q := bleve.NewMatchQuery(removeSmallTerms(splitTermCharacters(value)))
-	q.SetField(prefix + resource.SEARCH_FIELD_TITLE_NGRAM)
+	q.SetField(resource.SEARCH_FIELD_TITLE_NGRAM)
 	q.Analyzer = TITLE_ANALYZER
 	q.Operator = query.MatchQueryOperatorAnd
 	return q
@@ -2772,33 +3097,33 @@ func splitTermCharacters(value string) string {
 }
 
 // fieldWildcardQuery builds a wildcard query against one concrete Bleve field.
-func fieldWildcardQuery(key string, value string, prefix string) query.Query {
+func fieldWildcardQuery(key string, value string) query.Query {
 	// wildcard query is expensive - should be used with caution
 	q := bleve.NewWildcardQuery(value)
-	q.SetField(prefix + key)
+	q.SetField(key)
 	return q
 }
 
 // fieldMatchQuery builds an analyzed match query against one concrete Bleve field.
-func fieldMatchQuery(key string, value string, prefix string) query.Query {
+func fieldMatchQuery(key string, value string) query.Query {
 	q := bleve.NewMatchQuery(value)
-	q.SetField(prefix + key)
+	q.SetField(key)
 	return q
 }
 
 // exactFieldTermQuery uses Bleve TermQuery for exact token matching.
 // The input must already match how the field was indexed; TermQuery does not run an analyzer.
-func exactFieldTermQuery(key string, value string, prefix string) query.Query {
+func exactFieldTermQuery(key string, value string) query.Query {
 	// won't match with ending space
 	value = strings.TrimSuffix(value, " ")
 
 	q := bleve.NewTermQuery(value)
-	q.SetField(prefix + key)
+	q.SetField(key)
 	return q
 }
 
 // fieldAllTokensQuery requires every token from a split filter value to match the same concrete Bleve field.
-func fieldAllTokensQuery(key string, tokens []string, prefix string) query.Query {
+func fieldAllTokensQuery(key string, tokens []string) query.Query {
 	cq := bleve.NewConjunctionQuery()
 	for _, token := range tokens {
 		if token == "" {
@@ -2807,11 +3132,11 @@ func fieldAllTokensQuery(key string, tokens []string, prefix string) query.Query
 		_, ok := firstTermSeparator(token)
 		if ok {
 			tq := bleve.NewTermQuery(token)
-			tq.SetField(prefix + key)
+			tq.SetField(key)
 			cq.AddQuery(tq)
 			continue
 		}
-		cq.AddQuery(fieldMatchQuery(key, token, prefix))
+		cq.AddQuery(fieldMatchQuery(key, token))
 	}
 	return cq
 }
@@ -2824,7 +3149,48 @@ func filterValue(field string, v string) string {
 	return v
 }
 
-func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resourcepb.ResourceTable, error) {
+// hitSortFields builds bleve SearchAfter / SearchBefore cursor values for a hit.
+// hit.Sort uses sentinel placeholders (_score); bleve pagination expects decoded
+// values (numeric score, doc ID, decoded field values).
+func hitSortFields(hit *search.DocumentMatch, sort search.SortOrder) []string {
+	if hit == nil {
+		return nil
+	}
+	if len(sort) > 0 {
+		fields := make([]string, len(sort))
+		for i, ss := range sort {
+			switch ss.(type) {
+			case *search.SortScore:
+				fields[i] = strconv.FormatFloat(hit.Score, 'f', -1, 64)
+			case *search.SortDocID:
+				fields[i] = hit.ID
+			default:
+				if i < len(hit.DecodedSort) && hit.DecodedSort[i] != "" {
+					fields[i] = hit.DecodedSort[i]
+				} else if i < len(hit.Sort) {
+					fields[i] = hit.Sort[i]
+				}
+			}
+		}
+		return fields
+	}
+	if len(hit.Sort) == 0 {
+		return nil
+	}
+	fields := make([]string, len(hit.Sort))
+	for i, v := range hit.Sort {
+		if v == "_score" {
+			fields[i] = strconv.FormatFloat(hit.Score, 'f', -1, 64)
+		} else if i < len(hit.DecodedSort) && hit.DecodedSort[i] != "" {
+			fields[i] = hit.DecodedSort[i]
+		} else {
+			fields[i] = v
+		}
+	}
+	return fields
+}
+
+func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hits search.DocumentMatchCollection, sort search.SortOrder, explain bool) (*resourcepb.ResourceTable, error) {
 	_, span := tracer.Start(ctx, "search.bleveIndex.hitsToTable")
 	defer span.End()
 
@@ -2873,7 +3239,7 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 		row := &resourcepb.ResourceTableRow{
 			Key:        &resourcepb.ResourceKey{},
 			Cells:      make([][]byte, len(fields)),
-			SortFields: match.Sort,
+			SortFields: hitSortFields(match, sort),
 		}
 		table.Rows[rowID] = row
 
@@ -2941,11 +3307,7 @@ func getAllFields(standard resource.SearchableDocumentFields, custom resource.Se
 
 	if custom != nil {
 		for _, name := range custom.Fields() {
-			f := custom.Field(name)
-			if f.Priority > 10 {
-				continue
-			}
-			fields = append(fields, f)
+			fields = append(fields, custom.Field(name))
 		}
 	}
 	for _, field := range fields {
@@ -3038,6 +3400,12 @@ type batchAuthzSearcher struct {
 	resources   map[string]string // resource -> verb mapping
 	log         log.Logger
 
+	// Traces the authz-filtered scan and records how many candidate documents
+	// were considered vs. how many survived authorization. Ended in Close.
+	span       trace.Span
+	candidates atomic.Int64
+	authorized atomic.Int64
+
 	// Pull iterator state (lazily initialized)
 	searchCtx *search.SearchContext
 	next      func() (docInfo, error, bool)
@@ -3055,8 +3423,14 @@ func newBatchAuthzSearcher(
 	resources map[string]string,
 	logger log.Logger,
 ) *batchAuthzSearcher {
+	ctx, span := tracer.Start(ctx, "search.batchAuthzSearcher", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("group", group),
+	))
+
 	return &batchAuthzSearcher{
 		ctx:         ctx,
+		span:        span,
 		searcher:    searcher,
 		indexReader: indexReader,
 		dvReader:    dvReader,
@@ -3105,6 +3479,7 @@ func (s *batchAuthzSearcher) initPullIterator() {
 			if !ok {
 				continue // Skip invalid documents
 			}
+			s.candidates.Add(1)
 
 			if !yield(info) {
 				return
@@ -3123,10 +3498,20 @@ func (s *batchAuthzSearcher) initPullIterator() {
 		}
 	}
 
-	authzIter := authz.FilterAuthorized(s.ctx, s.access, candidates, extractFn)
+	// WithTracer makes FilterAuthorized emit a span around the batched
+	// BatchCheck loop, so the authz phase is visible as a child of this
+	// searcher's span instead of an opaque gap.
+	authzIter := authz.FilterAuthorized(s.ctx, s.access, candidates, extractFn, authz.WithTracer(tracer))
 
 	s.next, s.stop = iter.Pull2(func(yield func(docInfo, error) bool) {
-		authzIter(yield)
+		for item, err := range authzIter {
+			if err == nil {
+				s.authorized.Add(1)
+			}
+			if !yield(item, err) {
+				return
+			}
+		}
 		if iterErr != nil {
 			var zero docInfo
 			yield(zero, iterErr)
@@ -3197,6 +3582,13 @@ func (s *batchAuthzSearcher) Advance(searchCtx *search.SearchContext, ID index.I
 func (s *batchAuthzSearcher) Close() error {
 	if s.stop != nil {
 		s.stop()
+	}
+	if s.span != nil {
+		s.span.SetAttributes(
+			attribute.Int64("search.candidates", s.candidates.Load()),
+			attribute.Int64("search.authorized", s.authorized.Load()),
+		)
+		s.span.End()
 	}
 	return s.searcher.Close()
 }

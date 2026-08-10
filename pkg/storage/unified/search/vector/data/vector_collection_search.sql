@@ -16,8 +16,8 @@ SELECT
     {{ if .FolderFilter }}
     AND {{ .Ident "folder" }} IN ({{ .ArgList .FolderFilterSlice }})
     {{ end }}
-    {{ range .MetadataFilters }}
-    AND {{ $.Ident "metadata" }} @> {{ $.Arg .JSON }}
+    {{ range .MetadataFilterGroups }}
+    AND ({{ range $i, $j := .JSONs }}{{ if $i }} OR {{ end }}{{ $.Ident "metadata" }} @> {{ $.Arg $j }}{{ end }})
     {{ end }}
     ORDER BY {{ .Ident "embedding" }} <=> {{ .Arg .QueryEmbedding }}
     LIMIT {{ .Arg .Limit }}

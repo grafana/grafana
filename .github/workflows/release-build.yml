@@ -120,7 +120,8 @@ jobs:
             const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, PUBLIC_COMMIT, SOURCE_EVENT, REPO} = process.env;
             // grafana-enterprise has no #patched branches, so dispatch it on the plain
             // release branch (e.g. release-13.0.0#patched -> release-13.0.0).
-            const enterpriseRef = REF.replace(/#patched$/, '');
+            let enterpriseRef = REF.replace(/#patched$/, '');
+
             let workflow = 'release-build-enterprise.yml';
 
             if (REF == 'main' && SOURCE_EVENT == 'push') {
@@ -147,6 +148,33 @@ jobs:
               // upstream-run-id is used with the github actions API and `gh run watch` to ensure coupled workflows
               // fail together.
               inputs["upstream-run-id"] = String(BUILD_ID);
+            }
+
+            // If the +security branch doesn't exist in grafana-enterprise yet, fall back to
+            // the base release branch (e.g. release-13.0.0+security-01 -> release-13.0.0).
+            // We probe by attempting the dispatch itself so no extra permission beyond
+            // actions:write is needed — a separate repos.getBranch call would require
+            // contents:read which the dispatch token does not have.
+            if (enterpriseRef.includes('+security-')) {
+              try {
+                await github.rest.actions.createWorkflowDispatch({
+                  owner: 'grafana',
+                  repo: 'grafana-enterprise',
+                  workflow_id: workflow,
+                  ref: enterpriseRef,
+                  inputs,
+                });
+                return;
+              } catch (e) {
+                // GitHub returns 422 "No ref found for <ref>" when the branch doesn't exist.
+                if (e.status === 422 && String(e.message).includes('No ref found')) {
+                  const fallback = enterpriseRef.replace(/\+security-[0-9]+$/, '');
+                  core.info(`Enterprise branch ${enterpriseRef} not found; falling back to ${fallback}`);
+                  enterpriseRef = fallback;
+                } else {
+                  throw e;
+                }
+              }
             }
 
             await github.rest.actions.createWorkflowDispatch({
@@ -968,21 +996,15 @@ jobs:
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
-      id-token: write
+      pull-requests: write
     needs:
       - setup
     steps:
-      - name: Get GitHub App token
-        id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
-        with:
-          github_app: grafana-releases-oss
-          permission_set: notify-pr
       - name: Find PR
         continue-on-error: true
         id: find-pr
         env:
-          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
           REPO: ${{ github.repository }}
         run: |
@@ -996,14 +1018,14 @@ jobs:
         continue-on-error: true
         with:
           issue-number: ${{ env.ISSUE_NUMBER }}
-          comment-author: 'grafana-releases-oss[bot]'
+          comment-author: 'github-actions[bot]'
           body-includes: GitHub Actions Build
-          token: ${{ steps.get-github-app-token.outputs.token }}
+          token: ${{ github.token }}
       - name: Create or update comment # zizmor: ignore[superfluous-actions]
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v4
         if: ${{ steps.find-pr.outcome == 'success' }}
         with:
-          token: ${{ steps.get-github-app-token.outputs.token }}
+          token: ${{ github.token }}
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ env.ISSUE_NUMBER }}
           body: |

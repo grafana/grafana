@@ -13,6 +13,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { useFlagDashboardVectorSearch, useFlagGrafanaVectorSearchCmdk } from '@grafana/runtime/internal';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 
+import { AskAssistantPill } from './AskAssistantPill';
 import { type DeepSearchNavHandle, DeepSearchResults } from './DeepSearchResults';
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
@@ -113,6 +114,14 @@ function CommandPaletteContents() {
     return () => clearTimeout(handle);
   }, [searchQuery]);
 
+  useDeepSearchResultsShownReporting(
+    isFetchingDeepSearchResults,
+    showDeepSearch,
+    deepSearchResults.length,
+    deepSearchEnabled,
+    searchQuery.length
+  );
+
   // Track input modality so onSelectAction (which doesn't see the originating
   // event) can report whether the activation came from keyboard or mouse.
   const onPointerDownCapture = useCallback(() => setCommandPaletteInputMode('mouse'), []);
@@ -139,6 +148,7 @@ function CommandPaletteContents() {
                 defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                 className={styles.search}
               />
+              {deepSearchEnabled && <AskAssistantPill />}
               <div className={styles.loadingBarContainer}>
                 {isFetchingSearchResults && <LoadingBar width={500} delay={0} />}
               </div>
@@ -255,7 +265,14 @@ const RenderResults = ({
   // Analytics: single place to assemble the command_palette_action_selected payload,
   // shared by the keyword list and the deep search column.
   const reportActionSelected = useCallback(
-    (params: { actionId?: string; actionName?: string; index: number; section?: string; deepSearch: boolean }) => {
+    (params: {
+      actionId?: string;
+      actionName?: string;
+      index: number;
+      section?: string;
+      deepSearch: boolean;
+      url?: string;
+    }) => {
       reportInteraction('command_palette_action_selected', {
         actionId: params.actionId,
         actionName: params.actionName,
@@ -264,6 +281,8 @@ const RenderResults = ({
         // Stable, language-agnostic section slug from the action's sectionId, e.g.
         // "recent-dashboards" / "pages" / "deep-search"
         section: params.section,
+        // Destination URL of the dashboard/page, unset for actions that don't navigate
+        target: params.url,
         isDeepSearchEnabled: deepSearchEnabled,
         isDeepSearchAction: params.deepSearch,
         // Whether the deep search column had finished loading at selection time
@@ -393,7 +412,8 @@ const RenderResults = ({
             focusDeepSearch();
           }
           handled = true;
-        } else if (event.key === 'Enter') {
+        } else if (event.key === 'Enter' && !event.shiftKey) {
+          // Shift+Enter is the ask-assistant shortcut owned by CommandPaletteContents
           // The active row is always scrolled into view, so its element exists
           document.getElementById(getListboxItemId(current))?.click();
           handled = true;
@@ -421,8 +441,9 @@ const RenderResults = ({
             focusKeywordList();
           }
           handled = true;
-        } else if (event.key === 'Enter') {
-          // Keep global handlers away but let the anchor's native activation run
+        } else if (event.key === 'Enter' && !event.shiftKey) {
+          // Keep global handlers away but let the anchor's native activation run.
+          // Shift+Enter falls through to the ask-assistant shortcut instead.
           event.stopImmediatePropagation();
           return;
         } else if (event.key === 'Escape') {
@@ -481,13 +502,14 @@ const RenderResults = ({
             maxHeight={650}
             scrollRef={keywordListRef}
             legacyKeyboard={!deepSearchEnabled}
-            onItemSelected={(item, rawIndex) =>
+            onItemSelected={(item, rawIndex, url) =>
               reportActionSelected({
                 actionId: item.id,
                 actionName: item.name,
                 index: items.slice(0, rawIndex).filter((entry) => typeof entry !== 'string').length,
                 section: getActionSectionId(item),
                 deepSearch: false,
+                url,
               })
             }
             onRender={({ item, active }) => {
@@ -518,6 +540,7 @@ const RenderResults = ({
                 index,
                 section: SECTION_DEEP_SEARCH,
                 deepSearch: true,
+                url: deepSearchResults[index]?.url,
               })
             }
             navRef={deepSearchNavRef}
@@ -535,6 +558,32 @@ const getCommandPalettePosition = () => {
   const lateralSpace = screenWidth - inputRightPosition;
   return lateralSpace;
 };
+
+// Denominator for Deep Search Discovery/Adoption: fire once per settled deep
+// search render. useDeepSearchResults already debounces the fetch, so keying
+// off its fetching flag settling to false gives one event per result set
+// rather than one per keystroke.
+function useDeepSearchResultsShownReporting(
+  isFetchingDeepSearchResults: boolean,
+  showDeepSearch: boolean,
+  deepSearchResultsLength: number,
+  deepSearchEnabled: boolean,
+  searchQueryLength: number
+) {
+  const deepSearchWasFetchingRef = useRef(false);
+  useEffect(() => {
+    const settled = deepSearchWasFetchingRef.current && !isFetchingDeepSearchResults;
+    deepSearchWasFetchingRef.current = isFetchingDeepSearchResults;
+    if (settled && showDeepSearch) {
+      reportInteraction('command_palette_deep_search_results_shown', {
+        isDeepSearchEnabled: deepSearchEnabled,
+        isDeepSearchLoaded: showDeepSearch && !isFetchingDeepSearchResults,
+        deepSearchItemsCount: deepSearchResultsLength,
+        queryLength: searchQueryLength,
+      });
+    }
+  }, [isFetchingDeepSearchResults, showDeepSearch, deepSearchResultsLength, deepSearchEnabled, searchQueryLength]);
+}
 
 const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
   return {

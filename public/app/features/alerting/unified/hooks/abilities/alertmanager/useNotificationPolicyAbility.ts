@@ -128,8 +128,8 @@ export function useNotificationPolicyAbility(payload: NotificationPolicyAbilityP
 
       case NotificationPolicyAction.Export: {
         // Provisioning export (/api/v1/provisioning/policies/export) is Grafana AM only.
-        // Supports multiple routing trees via the routeName query param when alertingMultiplePolicies
-        // is enabled. Export is read-only — provisioned policies can be exported (same as mute timings).
+        // Supports multiple routing trees via the routeName query param.
+        // Export is read-only — provisioned policies can be exported (same as mute timings).
         if (!hasConfigurationAPI) {
           return NotSupported;
         }

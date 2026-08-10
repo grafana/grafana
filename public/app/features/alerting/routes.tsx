@@ -13,7 +13,7 @@ import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
 } from './unified/hooks/abilities/alertmanager/useTimeIntervalAbility';
-import { evaluateAccess } from './unified/utils/access-control';
+import { evaluateAccess, evaluateAccessAll } from './unified/utils/access-control';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   const routes = [
@@ -99,14 +99,12 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/alerting/routes/policy/:name/edit',
       roles: evaluateAccess([AccessControlAction.AlertingNotificationsRead, ...PERMISSIONS_NOTIFICATION_POLICIES]),
-      component: config.featureToggles.alertingMultiplePolicies
-        ? importAlertingComponent(
-            () =>
-              import(
-                /* webpackChunkName: "PolicyPage" */ 'app/features/alerting/unified/components/notification-policies/PolicyPage'
-              )
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "PolicyPage" */ 'app/features/alerting/unified/components/notification-policies/PolicyPage'
           )
-        : () => <Navigate replace to="/alerting/routes" />,
+      ),
     },
     {
       path: '/alerting/silences',
@@ -309,7 +307,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/import-to-gma',
-      roles: () => ['Admin'],
+      roles: evaluateAccessAll([
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+      ]),
       component: config.featureToggles.alertingMigrationWizardUI
         ? importAlertingComponent(
             () =>

@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 import { autoUpdate, offset, useFloating } from '@floating-ui/react';
-import { isEqual } from 'lodash';
-import { createRef, PureComponent, useEffect, type PropsWithChildren } from 'react';
-import * as React from 'react';
+import { useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
 import { FixedSizeList } from 'react-window';
 
-import { type GrafanaTheme2, ThemeContext } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { type CompletionItem, type CompletionItemGroup, CompletionItemKind } from '../../types/completion';
 import { SelectionReference } from '../../utils/SelectionReference';
 import { getPositioningMiddleware } from '../../utils/floating';
@@ -22,157 +21,136 @@ interface Props {
   origin: string;
   groupedItems: CompletionItemGroup[];
   prefix?: string;
-  menuRef?: (el: Typeahead) => void;
+  menuRef?: (el: TypeaheadMenu) => void;
   onSelectSuggestion?: (suggestion: CompletionItem) => void;
   isOpen?: boolean;
 }
 
-export interface State {
-  allItems: CompletionItem[];
-  listWidth: number;
-  listHeight: number;
-  itemHeight: number;
-  hoveredItem: number | null;
-  typeaheadIndex: number | null;
+/** Imperative handle exposed via the `menuRef` prop so the keyboard plugin can drive the menu. */
+export interface TypeaheadMenu {
+  moveMenuIndex: (moveAmount: number) => void;
+  insertSuggestion: () => void;
 }
 
-export class Typeahead extends PureComponent<Props, State> {
-  static contextType = ThemeContext;
-  context!: React.ContextType<typeof ThemeContext>;
-  listRef = createRef<FixedSizeList>();
+function useTypeaheadList(groupedItems: CompletionItemGroup[]) {
+  const theme = useTheme2();
 
-  state: State = {
-    hoveredItem: null,
-    typeaheadIndex: null,
-    allItems: [],
-    listWidth: -1,
-    listHeight: -1,
-    itemHeight: -1,
-  };
-
-  componentDidMount = () => {
-    if (this.props.menuRef) {
-      this.props.menuRef(this);
-    }
-
-    const allItems = flattenGroupItems(this.props.groupedItems);
+  return useMemo(() => {
+    const allItems = flattenGroupItems(groupedItems);
     const longestLabel = calculateLongestLabel(allItems);
-    const { listWidth, listHeight, itemHeight } = calculateListSizes(this.context, allItems, longestLabel);
-    this.setState({
-      listWidth,
-      listHeight,
-      itemHeight,
-      allItems,
-    });
-  };
+    const { listWidth, listHeight, itemHeight } = calculateListSizes(theme, allItems, longestLabel);
+    return { allItems, listWidth, listHeight, itemHeight };
+  }, [groupedItems, theme]);
+}
 
-  componentDidUpdate = (prevProps: Readonly<Props>, prevState: Readonly<State>) => {
-    if (
-      this.state.typeaheadIndex !== null &&
-      prevState.typeaheadIndex !== this.state.typeaheadIndex &&
-      this.listRef &&
-      this.listRef.current
-    ) {
-      if (this.state.typeaheadIndex === 1) {
-        this.listRef.current.scrollToItem(0); // special case for handling the first group label
-        return;
-      }
-      this.listRef.current.scrollToItem(this.state.typeaheadIndex);
-    }
+export function Typeahead({ prefix, isOpen = false, groupedItems, menuRef, onSelectSuggestion }: Props) {
+  const listRef = useRef<FixedSizeList>(null);
 
-    if (isEqual(prevProps.groupedItems, this.props.groupedItems) === false) {
-      const allItems = flattenGroupItems(this.props.groupedItems);
-      const longestLabel = calculateLongestLabel(allItems);
-      const { listWidth, listHeight, itemHeight } = calculateListSizes(this.context, allItems, longestLabel);
-      this.setState({ listWidth, listHeight, itemHeight, allItems, typeaheadIndex: null });
-    }
-  };
+  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
+  const [typeaheadIndex, setTypeaheadIndex] = useState<number | null>(null);
+  const { allItems, listWidth, listHeight, itemHeight } = useTypeaheadList(groupedItems);
 
-  onMouseEnter = (index: number) => {
-    this.setState({
-      hoveredItem: index,
-    });
-  };
+  // Reset the highlighted suggestion whenever the items change. Assigning state during render is the
+  // React-recommended way to adjust state in response to a changed prop: it re-renders immediately
+  // instead of committing the stale selection first, which an effect would not avoid.
+  const [prevGroupedItems, setPrevGroupedItems] = useState(groupedItems);
+  if (groupedItems !== prevGroupedItems) {
+    setPrevGroupedItems(groupedItems);
+    setTypeaheadIndex(null);
+  }
 
-  onMouseLeave = () => {
-    this.setState({
-      hoveredItem: null,
-    });
-  };
+  // The menu handle is stable, but the keyboard plugin invokes it outside of render, so the methods
+  // read the latest props/state through a ref and functional state updates.
+  const latest = useRef({ allItems, typeaheadIndex, onSelectSuggestion });
+  latest.current = { allItems, typeaheadIndex, onSelectSuggestion };
 
-  moveMenuIndex = (moveAmount: number) => {
-    const itemCount = this.state.allItems.length;
-    if (itemCount) {
-      // Select next suggestion
-      const typeaheadIndex = this.state.typeaheadIndex || 0;
-      let newTypeaheadIndex = modulo(typeaheadIndex + moveAmount, itemCount);
+  const menu = useMemo<TypeaheadMenu>(
+    () => ({
+      moveMenuIndex: (moveAmount: number) => {
+        const itemCount = latest.current.allItems.length;
+        if (!itemCount) {
+          return;
+        }
+        setTypeaheadIndex((current) => {
+          // Select next suggestion
+          let newTypeaheadIndex = modulo((current || 0) + moveAmount, itemCount);
 
-      if (this.state.allItems[newTypeaheadIndex].kind === CompletionItemKind.GroupTitle) {
-        newTypeaheadIndex = modulo(newTypeaheadIndex + moveAmount, itemCount);
-      }
+          if (latest.current.allItems[newTypeaheadIndex].kind === CompletionItemKind.GroupTitle) {
+            newTypeaheadIndex = modulo(newTypeaheadIndex + moveAmount, itemCount);
+          }
 
-      this.setState({
-        typeaheadIndex: newTypeaheadIndex,
-      });
+          return newTypeaheadIndex;
+        });
+      },
+      insertSuggestion: () => {
+        const { onSelectSuggestion, allItems, typeaheadIndex } = latest.current;
+        if (onSelectSuggestion && typeaheadIndex !== null) {
+          onSelectSuggestion(allItems[typeaheadIndex]);
+        }
+      },
+    }),
+    []
+  );
 
+  useEffect(() => {
+    menuRef?.(menu);
+  }, [menuRef, menu]);
+
+  useEffect(() => {
+    if (typeaheadIndex === null || !listRef.current) {
       return;
     }
-  };
-
-  insertSuggestion = () => {
-    if (this.props.onSelectSuggestion && this.state.typeaheadIndex !== null) {
-      this.props.onSelectSuggestion(this.state.allItems[this.state.typeaheadIndex]);
+    if (typeaheadIndex === 1) {
+      listRef.current.scrollToItem(0); // special case for handling the first group label
+      return;
     }
-  };
+    listRef.current.scrollToItem(typeaheadIndex);
+  }, [typeaheadIndex]);
 
-  render() {
-    const { prefix, isOpen = false } = this.props;
-    const { allItems, listWidth, listHeight, itemHeight, hoveredItem, typeaheadIndex } = this.state;
-    const styles = getStyles(this.context);
+  const styles = useStyles2(getStyles);
 
-    const showDocumentation = hoveredItem || typeaheadIndex;
-    const documentationItem = allItems[hoveredItem ? hoveredItem : typeaheadIndex || 0];
+  const showDocumentation = hoveredItem || typeaheadIndex;
+  const documentationItem = allItems[hoveredItem ? hoveredItem : typeaheadIndex || 0];
 
-    return (
-      <TypeaheadPortal isOpen={isOpen}>
-        <ul role="menu" className={styles.typeahead} data-testid="typeahead">
-          <FixedSizeList
-            ref={this.listRef}
-            itemCount={allItems.length}
-            itemSize={itemHeight}
-            itemKey={(index) => {
-              const item = allItems && allItems[index];
-              const key = item ? `${index}-${item.label}` : `${index}`;
-              return key;
-            }}
-            width={listWidth}
-            height={listHeight}
-          >
-            {({ index, style }) => {
-              const item = allItems && allItems[index];
-              if (!item) {
-                return null;
-              }
+  return (
+    <TypeaheadPortal isOpen={isOpen}>
+      <ul role="menu" className={styles.typeahead} data-testid="typeahead">
+        <FixedSizeList
+          ref={listRef}
+          itemCount={allItems.length}
+          itemSize={itemHeight}
+          itemKey={(index) => {
+            const item = allItems && allItems[index];
+            const key = item ? `${index}-${item.label}` : `${index}`;
+            return key;
+          }}
+          width={listWidth}
+          height={listHeight}
+        >
+          {({ index, style }) => {
+            const item = allItems && allItems[index];
+            if (!item) {
+              return null;
+            }
 
-              return (
-                <TypeaheadItem
-                  onClickItem={() => (this.props.onSelectSuggestion ? this.props.onSelectSuggestion(item) : {})}
-                  isSelected={typeaheadIndex === null ? false : allItems[typeaheadIndex] === item}
-                  item={item}
-                  prefix={prefix}
-                  style={style}
-                  onMouseEnter={() => this.onMouseEnter(index)}
-                  onMouseLeave={this.onMouseLeave}
-                />
-              );
-            }}
-          </FixedSizeList>
-        </ul>
+            return (
+              <TypeaheadItem
+                onClickItem={() => (onSelectSuggestion ? onSelectSuggestion(item) : {})}
+                isSelected={typeaheadIndex === null ? false : allItems[typeaheadIndex] === item}
+                item={item}
+                prefix={prefix}
+                style={style}
+                onMouseEnter={() => setHoveredItem(index)}
+                onMouseLeave={() => setHoveredItem(null)}
+              />
+            );
+          }}
+        </FixedSizeList>
+      </ul>
 
-        {showDocumentation && <TypeaheadInfo height={listHeight} item={documentationItem} />}
-      </TypeaheadPortal>
-    );
-  }
+      {showDocumentation && <TypeaheadInfo height={listHeight} item={documentationItem} />}
+    </TypeaheadPortal>
+  );
 }
 
 /**

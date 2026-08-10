@@ -112,7 +112,10 @@ export const defaultPanelKind = (): PanelKind => ({
 export interface PanelSpec {
 	id: number;
 	title: string;
-	description: string;
+	// Shown in a info icon tooltip next to panel title
+	description?: string;
+	// Shown in a sub header below the title.
+	subtitle?: string;
 	links: DataLink[];
 	data: QueryGroupKind;
 	vizConfig: VizConfigKind;
@@ -122,7 +125,6 @@ export interface PanelSpec {
 export const defaultPanelSpec = (): PanelSpec => ({
 	id: 0,
 	title: "",
-	description: "",
 	links: [],
 	data: defaultQueryGroupKind(),
 	vizConfig: defaultVizConfigKind(),
@@ -496,6 +498,8 @@ export const defaultThresholdsMode = (): ThresholdsMode => ("absolute");
 export interface Threshold {
 	// Value null means -Infinity
 	value: number | null;
+	// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+	valueExpr?: string;
 	color: string;
 }
 
@@ -527,6 +531,9 @@ export const defaultFieldColor = (): FieldColor => ({
 // `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
 // `palette-colorblind`: Color blind safe palette. A discrete palette whose colors are distinguishable under common forms of color vision deficiency. Useful for categorical and multi-series data visualizations
+// `palette-categorical-next`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
+// `palette-categorical-next-2`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
+// `palette-categorical-next-3`: Experimental categorical palette. Useful for categorical and multi-series data visualizations
 // `continuous-viridis`: Continuous Viridis palette mode
 // `continuous-magma`: Continuous Magma palette mode
 // `continuous-plasma`: Continuous Plasma palette mode
@@ -545,7 +552,7 @@ export const defaultFieldColor = (): FieldColor => ({
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
 // `gradient`: Gradient color mode. Interpolate between two colors based on value order; the start color is taken from fixedColor and the end color from gradientColorTo.
-export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "palette-colorblind" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades" | "gradient";
+export type FieldColorModeId = "thresholds" | "palette-classic" | "palette-classic-by-name" | "palette-colorblind" | "palette-categorical-next" | "palette-categorical-next-2" | "palette-categorical-next-3" | "continuous-viridis" | "continuous-magma" | "continuous-plasma" | "continuous-inferno" | "continuous-cividis" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades" | "gradient";
 
 export const defaultFieldColorModeId = (): FieldColorModeId => ("thresholds");
 

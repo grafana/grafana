@@ -8,10 +8,8 @@ import (
 	"iter"
 	"math"
 	"math/rand"
-	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -33,11 +31,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -50,18 +48,6 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 
 const defaultPollingInterval = 100 * time.Millisecond
-
-// newTenantDeleterGcomClient returns a GCOM client for tenant-deleter verification when
-// [grafana_com] sso_api_token and api_url are configured.
-func newTenantDeleterGcomClient(cfg *setting.Cfg) gcom.Service {
-	token := strings.TrimSpace(cfg.GrafanaComSSOAPIToken)
-	apiURL := strings.TrimSpace(cfg.GrafanaComAPIURL)
-	if token == "" || apiURL == "" {
-		return nil
-	}
-	hc := &http.Client{Timeout: 30 * time.Second}
-	return gcom.New(gcom.Config{ApiURL: apiURL, Token: token}, hc)
-}
 
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultGarbageCollectionBatchWait = 1 * time.Second
@@ -104,6 +90,44 @@ type StorageBackendOption func(*resource.KVBackendOptions)
 // message bus (NATS) via the given publisher. Applies only to the KV backend.
 func WithEventPublisher(p resource.EventPublisher) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) { o.EventPublisher = p }
+}
+
+// WithVectorBackend lets the KV backend's tenant deleter remove a deleted
+// tenant's embeddings from the vector store. A nil vb (vector backend disabled)
+// leaves embedding cleanup off.
+func WithVectorBackend(vb vector.VectorBackend) StorageBackendOption {
+	return func(o *resource.KVBackendOptions) {
+		if vb == nil {
+			return
+		}
+		o.EmbeddingDeleter = vb
+	}
+}
+
+// WithNatsNotifierShadow runs a NATS-backed notifier in shadow mode beside the
+// primary notifier for testing: it records comparison metrics without feeding
+// the watch pipeline. KV backend only.
+func WithNatsNotifierShadow(s resource.EventSubscriber) StorageBackendOption {
+	return func(o *resource.KVBackendOptions) {
+		o.EventSubscriber = s
+		o.EnableNatsNotifierShadow = true
+	}
+}
+
+// WithNatsNotifier feeds the watch pipeline directly from the NATS bus instead
+// of polling. Delivery is at-most-once; the backend falls back to polling when
+// the subscriber is disabled. KV backend only.
+func WithNatsNotifier(s resource.EventSubscriber) StorageBackendOption {
+	return func(o *resource.KVBackendOptions) {
+		o.EventSubscriber = s
+		o.EnableNatsNotifier = true
+	}
+}
+
+// WithExperimentalKV routes flagged experimental use-cases to an alternative
+// KV. Nil preserves existing behavior. KV backend only.
+func WithExperimentalKV(e *resource.ExperimentalKVOptions) StorageBackendOption {
+	return func(o *resource.KVBackendOptions) { o.ExperimentalKV = e }
 }
 
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
@@ -177,13 +201,6 @@ func NewStorageBackend(
 		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 	}
 
-	tenantDeleterCfg := resource.NewTenantDeleterConfig(cfg)
-	if tenantDeleterCfg != nil {
-		if gcomClient := newTenantDeleterGcomClient(cfg); gcomClient != nil {
-			tenantDeleterCfg.Gcom = gcomClient
-		}
-	}
-
 	kvBackendOpts := resource.KVBackendOptions{
 		KvStore:              kvStore,
 		Reg:                  reg,
@@ -192,7 +209,7 @@ func NewStorageBackend(
 		DBKeepAlive:          eDB,
 		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
 		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
-		TenantDeleterConfig:  tenantDeleterCfg,
+		TenantDeleterConfig:  resource.NewTenantDeleterConfig(cfg),
 		GCGate:               gcGate,
 		GarbageCollection: resource.GarbageCollectionConfig{
 			Enabled:          cfg.EnableGarbageCollection,
@@ -230,6 +247,8 @@ func NewStorageBackend(
 	if cfg.EnableKVLeases {
 		kvBackendOpts.EnableKVLeases = true
 		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
+		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
+		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
@@ -775,6 +794,53 @@ func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedR
 			}
 		}
 		return err
+	})
+
+	return res, err
+}
+
+// GetResourceStatsWithLimit ignores countLimit and returns exact counts. The SQL
+// backend's stats query is not a history scan, so early exit is not needed here;
+// exact counts are valid for callers that only compare against thresholds.
+func (b *backend) GetResourceStatsWithLimit(ctx context.Context, nsr resource.NamespacedResource, minCount, _ int) ([]resource.ResourceStats, error) {
+	return b.GetResourceStats(ctx, nsr, minCount)
+}
+
+// ListStoredResources implements Backend.
+func (b *backend) ListStoredResources(ctx context.Context, filter resource.NamespacedResource) ([]resource.NamespacedResource, error) {
+	b.logCall("ListStoredResources")
+	ctx, span := tracer.Start(ctx, "sql.backend.ListStoredResources", trace.WithAttributes(
+		attribute.String("namespace", filter.Namespace),
+		attribute.String("group", filter.Group),
+		attribute.String("resource", filter.Resource),
+	))
+	defer span.End()
+
+	if filter.Namespace == "" {
+		return nil, fmt.Errorf("namespace is required")
+	}
+
+	req := &sqlStoredResourcesRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Namespace:   filter.Namespace,
+		Group:       filter.Group,
+		Resource:    filter.Resource,
+	}
+
+	res := make([]resource.NamespacedResource, 0, 100)
+	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
+		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceStoredList, req)
+		if err != nil {
+			return err
+		}
+		for rows.Next() {
+			row := resource.NamespacedResource{}
+			if err := rows.Scan(&row.Namespace, &row.Group, &row.Resource); err != nil {
+				return err
+			}
+			res = append(res, row)
+		}
+		return rows.Err()
 	})
 
 	return res, err

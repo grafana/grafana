@@ -411,7 +411,12 @@ func (*stubSearchClient) VectorSearch(_ context.Context, _ *resourcepb.VectorSea
 	return nil, nil
 }
 
+func (*stubSearchClient) HybridSearch(_ context.Context, _ *resourcepb.HybridSearchRequest, _ ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	return nil, nil
+}
+
 type fakeBackend struct {
+	UnimplementedStorageBackend
 	forbidden map[string]struct{}
 }
 
@@ -448,6 +453,7 @@ func (*fakeBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent,
 func (*fakeBackend) GetResourceStats(context.Context, NamespacedResource, int) ([]ResourceStats, error) {
 	return nil, nil
 }
+
 func (*fakeBackend) GetResourceLastImportTimes(context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(func(ResourceLastImportTime, error) bool) {}
 }

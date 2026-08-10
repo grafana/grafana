@@ -99,3 +99,4 @@ export {
 export { getListedPanelPluginIds, getPanelPluginVersion, isPanelPluginInstalled } from './services/pluginMeta/panels';
 export { isAppPluginEnabled } from './services/pluginSettings/settings';
 export { useAppPluginEnabled } from './services/pluginSettings/hooks';
+export { createOpenFeatureOFREPWebProvider, createOpenFeatureLocalStorageProvider } from './utils/openfeature';

@@ -10,28 +10,27 @@ import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { type NewsItem } from '../types';
 
 interface NewsItemProps {
-  width: number;
   showImage?: boolean;
   index: number;
   data: DataFrameView<NewsItem>;
+  className?: string;
 }
 
-function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
+function NewsComponent({ showImage, data, index, className }: NewsItemProps) {
   const titleId = useId();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
-  const useWideLayout = width > 600;
   const newsItem = data.get(index);
 
   return (
-    <article aria-labelledby={titleId} className={cx(styles.item, useWideLayout && styles.itemWide)}>
+    <article aria-labelledby={titleId} className={cx(styles.item, className)}>
       {showImage && newsItem.ogImage && (
         <a
           tabIndex={-1}
           href={textUtil.sanitizeUrl(newsItem.link)}
           target="_blank"
           rel="noopener noreferrer"
-          className={cx(styles.socialImage, useWideLayout && styles.socialImageWide)}
+          className={styles.socialImage}
           aria-hidden
         >
           <img src={newsItem.ogImage} alt={newsItem.title} />
@@ -53,23 +52,12 @@ function NewsComponent({ width, showImage, data, index }: NewsItemProps) {
   );
 }
 
-const NewsSkeleton: SkeletonComponent<Pick<NewsItemProps, 'width' | 'showImage'>> = ({
-  width,
-  showImage,
-  rootProps,
-}) => {
+const NewsSkeleton: SkeletonComponent<Pick<NewsItemProps, 'showImage'>> = ({ showImage, rootProps }) => {
   const styles = useStyles2(getStyles);
-  const useWideLayout = width > 600;
 
   return (
-    <div className={cx(styles.item, useWideLayout && styles.itemWide)} {...rootProps}>
-      {showImage && (
-        <Skeleton
-          containerClassName={cx(styles.socialImage, useWideLayout && styles.socialImageWide)}
-          width={useWideLayout ? '250px' : '100%'}
-          height={useWideLayout ? '150px' : width * 0.5}
-        />
-      )}
+    <div className={styles.item} {...rootProps}>
+      {showImage && <Skeleton containerClassName={styles.socialImage} width="100%" style={{ aspectRatio: '16 / 9' }} />}
       <div className={styles.body}>
         <Skeleton containerClassName={styles.date} width={60} />
         <Skeleton containerClassName={styles.title} width={250} />
@@ -88,16 +76,14 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled?: boolean) => ({
   item: css({
     display: 'flex',
     padding: theme.spacing(1),
+    gap: theme.spacing(2),
     position: 'relative',
     marginBottom: theme.spacing(0.5),
     marginRight: theme.spacing(1),
     borderBottom: `2px solid ${theme.colors.border.weak}`,
-    background: visualRefreshEnabled ? theme.components.panel.contentBackground : theme.colors.background.primary,
-    flexDirection: 'column',
-    flexShrink: 0,
-  }),
-  itemWide: css({
+    background: visualRefreshEnabled ? theme.components.panel.background : theme.colors.background.primary,
     flexDirection: 'row',
+    flexShrink: 0,
   }),
   body: css({
     display: 'flex',
@@ -107,17 +93,10 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled?: boolean) => ({
   socialImage: css({
     display: 'flex',
     alignItems: 'center',
-    marginBottom: theme.spacing(1),
+    width: '33.33%',
+    maxWidth: '250px',
     '> img': {
       width: '100%',
-      borderRadius: `${theme.shape.radius.lg} ${theme.shape.radius.lg} 0 0`,
-    },
-  }),
-  socialImageWide: css({
-    marginRight: theme.spacing(2),
-    marginBottom: 0,
-    '> img': {
-      width: '250px',
       borderRadius: theme.shape.radius.lg,
     },
   }),

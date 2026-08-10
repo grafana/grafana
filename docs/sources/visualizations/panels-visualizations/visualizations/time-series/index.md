@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../../../features/panels/histogram/ # /docs/grafana/next/features/panels/histogram/
   - ../../../panels/visualizations/time-series/ # /docs/grafana/next/panels/visualizations/time-series/
   - ../../../panels/visualizations/time-series/annotate-time-series/ # /docs/grafana/next/panels/visualizations/time-series/annotate-time-series/
   - ../../../panels/visualizations/time-series/change-axis-display/ # /docs/grafana/next/panels/visualizations/time-series/change-axis-display/

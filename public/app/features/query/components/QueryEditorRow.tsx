@@ -33,6 +33,8 @@ import {
   QueryOperationRow,
   type QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { QueryEditorType } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/constants';
+import { trackCardAction } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueriesType } from '../../explore/QueryLibrary/types';
@@ -42,6 +44,7 @@ import { type QueryActionComponent, RowActionComponents } from './QueryActionCom
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 import { QueryLibraryEditingContainer } from './QueryLibraryEditingContainer';
+import { pinScrollIntoView } from './pinScrollIntoView';
 
 export interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -80,6 +83,14 @@ export interface Props<TQuery extends DataQuery> {
    * Required to resolve section-scoped (row/tab) datasource variables
    */
   scopedVars?: ScopedVars;
+  /**
+   * When true, scrolls the row into view once it first renders. The row renders nothing until its
+   * datasource loads, so the scroll fires whenever the DOM node actually appears rather than after
+   * a fixed delay.
+   */
+  scrollIntoView?: boolean;
+  /** Called after the scroll happens so the owner can clear the flag. */
+  onScrollIntoView?: () => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -96,6 +107,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   dataSourceSrv = getDataSourceSrv();
   id = '';
   editorRef = createRef<HTMLDivElement>();
+  private hasStartedScrollIntoView = false;
+  private cancelScrollPin?: () => void;
 
   state: State<TQuery> = {
     datasource: null,
@@ -111,6 +124,23 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.setState({ data: dataFilteredByRefId });
 
     this.loadDatasource();
+    this.scrollIntoViewIfNeeded();
+  }
+
+  private scrollIntoViewIfNeeded() {
+    if (this.props.scrollIntoView && !this.hasStartedScrollIntoView && this.editorRef.current) {
+      this.hasStartedScrollIntoView = true;
+      // A single scroll is not enough: the other rows' editors load asynchronously and push this
+      // row away as they grow, so keep it pinned until the layout settles or the user scrolls.
+      this.cancelScrollPin = pinScrollIntoView(this.editorRef.current, () => {
+        this.cancelScrollPin = undefined;
+        this.props.onScrollIntoView?.();
+      });
+    }
+  }
+
+  componentWillUnmount() {
+    this.cancelScrollPin?.();
   }
 
   /**
@@ -164,6 +194,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
       this.setState({ data: dataFilteredByRefId });
     }
+
+    this.scrollIntoViewIfNeeded();
 
     // check if we need to load another datasource
     if (datasource && queriedDataSourceIdentifier !== this.getInterpolatedDataSourceUID()) {
@@ -252,6 +284,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       });
     }
 
+    trackCardAction(
+      'delete',
+      isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
+      'content_header',
+      { silent: true }
+    );
+
     onRemoveQuery(query);
 
     if (onQueryRemoved) {
@@ -274,6 +313,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onCopyQuery = () => {
     const { query, onAddQuery, onQueryCopied } = this.props;
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    trackCardAction(
+      'duplicate',
+      isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
+      'content_header',
+      { silent: true }
+    );
     const copy = cloneDeep(query);
     onAddQuery(copy);
 
@@ -284,16 +330,19 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onHideQuery = () => {
     const { query, onChange, onRunQuery, onQueryToggled } = this.props;
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    trackCardAction(
+      'toggle_hide',
+      isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
+      'content_header',
+      { silent: true }
+    );
     onChange({ ...query, hide: !query.hide });
     onRunQuery();
 
     if (onQueryToggled) {
       onQueryToggled(query.hide);
     }
-
-    reportInteraction('query_editor_row_hide_query_clicked', {
-      hide: !query.hide,
-    });
   };
 
   onToggleHelp = () => {
@@ -540,7 +589,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         isOpen={isOpen}
         onOpen={onQueryOpenChanged}
       >
-        <div className={rowClasses} id={this.id}>
+        <div
+          className={rowClasses}
+          id={this.id}
+          data-testid={selectors.components.Plugins.queryEditorRow(datasource.type, query.refId)}
+          data-plugin-id={datasource.type}
+        >
           <ErrorBoundaryAlert boundaryName="query-editor-operation-row">
             {showingHelp && DatasourceCheatsheet && (
               <OperationRowHelp>

@@ -189,11 +189,11 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	s.mu.Lock()
 	s.server = server
 	s.opts = &opts
-	// Wire peer discovery only when a KV is available. The monolith always injects a
-	// sqlStore, so production embedded servers cluster through discovery; module mode
-	// cannot enable embedded NATS (see module_server.go). A nil KV therefore only
+	// Wire peer discovery only when enabled and a KV is available. The monolith always
+	// injects a sqlStore, so production embedded servers cluster through discovery; module
+	// mode cannot enable embedded NATS (see module_server.go). A nil KV therefore only
 	// happens for a single standalone node (e.g. tests), which runs without clustering.
-	if s.kv != nil {
+	if s.cfg.DiscoveryEnabled && s.kv != nil {
 		s.discovery = newDiscovery(
 			s.log,
 			server,
@@ -215,7 +215,7 @@ func (s *Server) startEmbeddedServer(_ context.Context) error {
 	// resolves to the advertising node itself, so peers on other hosts can never
 	// dial it and clustering silently no-ops. Warn rather than fail: a single
 	// standalone node on default config is a legitimate case.
-	if s.kv != nil && isLoopbackRouteURL(routeURL) {
+	if s.cfg.DiscoveryEnabled && s.kv != nil && isLoopbackRouteURL(routeURL) {
 		s.log.Warn("embedded nats advertising a loopback route url; multi-host clustering will not form. "+
 			"Set listen_address to a routable address, or bind 0.0.0.0 and set advertise_address to a routable address",
 			"route_url", routeURL)

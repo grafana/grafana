@@ -3,19 +3,22 @@ import { useMemo } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
   shouldRenderInviteUserButton,
   performInviteUserClick,
 } from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
+import { contextSrv } from 'app/core/services/context_srv';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
 import { type CommandPaletteAction } from '../types';
@@ -159,11 +162,14 @@ export function useStaticActions(): CommandPaletteAction[] {
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
+  const { queryLibraryEnabled, openDrawer } = useQueryLibraryContext();
 
   return useMemo(() => {
     let navBarActions = navTreeToActions(navBarTree);
 
-    if (isTemplateDashboardsAvailable) {
+    const canCreateDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+
+    if (isTemplateDashboardsAvailable && canCreateDashboard) {
       const navBarActionsWithoutActions = navBarActions.filter((action) => action.priority !== ACTIONS_PRIORITY);
       const navBarActionsWithActions = navBarActions.filter((action) => action.priority === ACTIONS_PRIORITY);
 
@@ -208,6 +214,29 @@ export function useStaticActions(): CommandPaletteAction[] {
         },
       });
     }
+
+    const canReadQueries = config.featureToggles.savedQueriesRBAC
+      ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
+      : contextSrv.isSignedIn;
+
+    if (queryLibraryEnabled && canReadQueries) {
+      navBarActions.push({
+        id: 'open-saved-queries',
+        name: t('command-palette.action.open-saved-queries', 'Open saved queries'),
+        section: t('command-palette.section.actions', 'Actions'),
+        sectionId: SECTION_ACTIONS,
+        priority: ACTIONS_PRIORITY,
+        perform: () => openDrawer({ options: { context: 'command-palette' } }),
+      });
+    }
+
     return [...getGlobalActions(), ...navBarActions];
-  }, [isAnalyticsFrameworkEnabled, isCustomDashboardTemplatesEnabled, isTemplateDashboardsAvailable, navBarTree]);
+  }, [
+    isAnalyticsFrameworkEnabled,
+    isCustomDashboardTemplatesEnabled,
+    isTemplateDashboardsAvailable,
+    navBarTree,
+    queryLibraryEnabled,
+    openDrawer,
+  ]);
 }

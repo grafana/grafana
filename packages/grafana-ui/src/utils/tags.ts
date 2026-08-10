@@ -1,7 +1,7 @@
 import { type GrafanaTheme2 } from '@grafana/data';
 import { DEFAULT_TAG_COLORS } from '@grafana/data/unstable';
 
-function getTagColorIndexFromName(name = '', theme?: GrafanaTheme2): number {
+export function getTagColorIndexFromName(name = '', theme?: GrafanaTheme2): number {
   const colors = theme?.components.tag.colors ?? DEFAULT_TAG_COLORS;
   const hash = djb2(name.toLowerCase());
   return Math.abs(hash % colors.length);

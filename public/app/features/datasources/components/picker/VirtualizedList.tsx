@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type * as React from 'react';
 import type { Observable } from 'rxjs';
 
@@ -11,6 +11,7 @@ import { useStyles2 } from '@grafana/ui';
 import { useKeyboardNavigatableList } from '../../hooks';
 
 import { DataSourceCardItem } from './DataSourceCardItem';
+import { isDataSourceMatch } from './utils';
 
 const VIRTUAL_OVERSCAN_ITEMS = 4;
 const ESTIMATED_ITEM_HEIGHT = 48;
@@ -24,7 +25,13 @@ export type VirtualizedListProps = {
   onChange: (ds: DataSourceInstanceSettings) => void;
   pushRecentlyUsedDataSource: (ds: DataSourceInstanceSettings) => void;
   scrollRef: React.RefObject<HTMLDivElement | null>;
+  /** DOM id of the listbox, used to build option ids for aria-activedescendant */
+  listboxId?: string;
+  /** Reports the DOM id of the keyboard-highlighted option, for aria-activedescendant on the input */
+  onActiveItemChange?: (id: string | undefined) => void;
 };
+
+const optionId = (listboxId: string, uid: string) => `${listboxId}-${uid}`;
 
 export function VirtualizedList({
   sortedDataSources,
@@ -35,6 +42,8 @@ export function VirtualizedList({
   onChange,
   pushRecentlyUsedDataSource,
   scrollRef,
+  listboxId,
+  onActiveItemChange,
 }: VirtualizedListProps) {
   const styles = useStyles2(getStyles);
 
@@ -70,8 +79,19 @@ export function VirtualizedList({
     onSelect: handleSelect,
   });
 
+  useEffect(() => {
+    const ds = sortedDataSources[selectedIndex];
+    onActiveItemChange?.(listboxId && ds ? optionId(listboxId, ds.uid) : undefined);
+    // Clean up so aria-activedescendant never references a removed option
+    return () => onActiveItemChange?.(undefined);
+  }, [listboxId, onActiveItemChange, selectedIndex, sortedDataSources]);
+
   return (
-    <div className={styles.virtualizedContainer} style={{ height: rowVirtualizer.getTotalSize() }}>
+    <div
+      className={styles.virtualizedContainer}
+      style={{ height: rowVirtualizer.getTotalSize() }}
+      {...(enableKeyboardNavigation && { role: 'listbox', id: listboxId })}
+    >
       {rowVirtualizer.getVirtualItems().map((virtualRow) => {
         const ds = sortedDataSources[virtualRow.index];
         return (
@@ -82,6 +102,17 @@ export function VirtualizedList({
               height: virtualRow.size,
               transform: `translateY(${virtualRow.start}px)`,
             }}
+            {...(enableKeyboardNavigation && {
+              id: listboxId ? optionId(listboxId, ds.uid) : undefined,
+              role: 'option',
+              'aria-selected': isDataSourceMatch(ds, current),
+              'aria-label': ds.name,
+              // explicit position/size, since virtualization means only visible rows exist in the DOM
+              'aria-posinset': virtualRow.index + 1,
+              'aria-setsize': sortedDataSources.length,
+              // the option itself handles the click
+              onClick: () => handleSelect(virtualRow.index),
+            })}
           >
             <DataSourceCardItem
               ds={ds}

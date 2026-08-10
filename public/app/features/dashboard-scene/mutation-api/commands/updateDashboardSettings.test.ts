@@ -97,6 +97,7 @@ function buildTestScene(
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
+    activateEditPane: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);

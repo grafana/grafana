@@ -23,7 +23,9 @@ teamv0alpha1: teamKind & {
 			name: "email"
 			path: "spec.email"
 			type: "string"
-			capabilities: ["retrieve"]
+			// Sorted via the ?sort=email option in team search, and returned in
+			// results. Not filtered.
+			capabilities: ["sort", "retrieve"]
 			description: "Email of the team"
 		},
 		{

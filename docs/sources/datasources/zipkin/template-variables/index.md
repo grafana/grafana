@@ -40,12 +40,17 @@ A text box variable lets dashboard viewers enter a trace ID directly. This is th
 
 To create a text box variable:
 
-1. Navigate to **Dashboard settings** > **Variables**.
-1. Click **Add variable**.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Variable**.
 1. Select **Textbox** as the variable type.
 1. Set the **Name** to `traceId`.
-1. Optionally, set a **Default value** with a known trace ID for initial display.
-1. Click **Apply**.
+1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
+1. (Optional) Set a default **Value** with a known trace ID for initial display.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 The dashboard displays a text input where viewers can paste a trace ID.
 
@@ -55,10 +60,13 @@ A custom variable provides a predefined list of values. This is useful when you 
 
 To create a custom variable:
 
-1. Navigate to **Dashboard settings** > **Variables**.
-1. Click **Add variable**.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Variable**.
 1. Select **Custom** as the variable type.
 1. Set the **Name** to `traceId`.
+1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
+1. Click **Open variable editor** to open the **Custom options** dialog box.
 1. Enter trace IDs in the **Values separated by comma** field:
 
    ```
@@ -66,6 +74,10 @@ To create a custom variable:
    ```
 
 1. Click **Apply**.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 The dashboard displays a drop-down where viewers can select from the predefined trace IDs.
 
@@ -75,12 +87,17 @@ A data source variable lets viewers switch between multiple Zipkin instances. Th
 
 To create a data source variable:
 
-1. Navigate to **Dashboard settings** > **Variables**.
-1. Click **Add variable**.
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Variable**.
 1. Select **Data source** as the variable type.
 1. Set the **Name** to `zipkinDs`.
+1. Select an option in the **Display** drop-down list to control where on the dashboard the variable is displayed.
 1. Select **Zipkin** as the **Type**.
-1. Click **Apply**.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 Then, in your panel's query editor, select `${zipkinDs}` as the data source instead of a specific Zipkin instance.
 

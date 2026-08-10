@@ -23,32 +23,23 @@ weight: 500
 
 # Manage and inspect variables
 
-In the **Variables** tab, you can [add](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/) variables and [manage](#manage-variables) existing variables. You can also [inspect](#inspect-variables) variables to identify any dependencies between them.
+In the **Variables** section of the sidebar, you can [add](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/) variables and manage existing variables. You can also inspect variables to identify any dependencies between them.
 
-<!--whether a variable is being referenced (or used) in other variables or dashboard.-->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-manage-variables-v13.2.png" max-width="400px" alt="Variables section of the dashboard options in the sidebar" >}}
 
 ## Manage variables
 
-You can take the following actions in the **Variables** tab:
+You can take the following actions in the **Variables** section of the sidebar:
 
-- **Move**: Move a variable up or down the list using drag and drop.
-- **Clone**: Clone a variable by clicking the clone icon in the set of icons on the right. This creates a copy of the variable with the name of the original variable prefixed with `copy_of_`.
-- **Delete**: Delete a variable by clicking the trash icon in the set of icons on the right.
+- **Edit**: Click **Select** on the control to open it in the sidebar so you can make updates. Then you can access the following options:
+  - **Duplicate**: Duplicate a variable by clicking the clone icon the sidebar header. This creates a copy of the variable with the name of the original variable prefixed with `copy` and the number of the copy; for example, "copy1".
+  - **Delete**: Delete a variable by clicking the trash icon in sidebar header.
+- **Reorder**: Drag and drop controls to reorder them.
+- **Change display**: Drag and drop controls between sub-sections **Above dashboard**, **Controls menu**, and **Hidden** to update the control display option. Note that links can't be hidden.
 
 ## Inspect variables
 
-In addition to [managing variables](#manage-variables), the **Variables** tab lets you quickly identify whether variables have any dependencies. To check, click **Show dependencies** at the bottom of the list, which opens the dependencies diagram:
+In addition to managing variables, the **Variables** section lets you quickly identify whether variables have any dependencies.
+To check, click **Show dependencies** at the bottom of the list, which opens the dependencies diagram:
 
-<!-- Update and comment this back in when the reference functionality is working again
-
-The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/) and [manage variables](#manage-variables) on this page.
-
-![Variables list](/static/img/docs/variables-templates/variables-list-7-4.png)
-
-Any variable that is referenced or used has a green check mark next to it, while unreferenced variables have a orange caution icon next to them.
-
-![Variables list](/static/img/docs/variables-templates/variable-not-referenced-7-4.png)
-
-In addition, all referenced variables have a dependency icon next to the green check mark. You can click on the icon to view the dependency map. The dependency map can be moved. You can zoom in out with mouse wheel or track pad equivalent.-->
-
-![Dependency map showing relationships between dashboard variables](/static/img/docs/variables-templates/dependancy-map-7-4.png)
+{{< figure src="/media/docs/grafana/dashboards/screenshot-variable-dependencies-v13.2.png" max-width="600px" alt="Dependency map showing relationships between dashboard variables" >}}

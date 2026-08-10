@@ -9,6 +9,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
+import { ImportToGMABanner } from '../components/import-to-gma/ImportToGMABanner';
+import { useShowImportToGMARulesBanner } from '../components/import-to-gma/useShowImportToGMARulesBanner';
 import { useListViewMode } from '../components/rules/Filter/RulesViewModeSelector';
 import { AIAlertRuleButtonComponent } from '../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
@@ -16,7 +18,7 @@ import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
-import { isAdmin } from '../utils/misc';
+import { ALERTING_PATHS } from '../utils/navigation';
 
 import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
@@ -29,10 +31,12 @@ import { useApplyDefaultSearch } from './filter/useApplyDefaultSearch';
 function RuleList() {
   const { filterState } = useRulesFilter();
   const { viewMode, handleViewChange } = useListViewMode();
+  const showImportToGMABanner = useShowImportToGMARulesBanner();
 
   return (
     <Stack direction="column">
       <AlertsActivityBanner />
+      {showImportToGMABanner && <ImportToGMABanner />}
       <Stack direction="column" gap={2}>
         <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
         <Stack direction="row" grow={1} minHeight={0}>
@@ -65,13 +69,13 @@ export function RuleListActions() {
   const canExportRules = exportRulesSupported && exportRulesAllowed;
 
   const canCreateRules = canCreateGrafanaRules || canCreateCloudRules;
-  // Align import UI permission with convert endpoint requirements: rule create + provisioning set status
-  const canImportRulesToGMA =
-    config.featureToggles.alertingMigrationUI &&
+  const hasImportToGMAPermissions =
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
 
-  const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && isAdmin();
+  const canImportRulesToGMA = config.featureToggles.alertingMigrationUI && hasImportToGMAPermissions;
+
+  const canAccessMigrationWizardUI = config.featureToggles.alertingMigrationWizardUI && hasImportToGMAPermissions;
 
   const { disabled: importDisabled, reason: importDisabledReason } = useImportEntrypointState();
 
@@ -93,20 +97,19 @@ export function RuleListActions() {
               onClick={toggleShowExportDrawer}
             />
           )}
+          {/* Not gated on auto-sync: this imports rules only, which the sync worker never touches. */}
           {canImportRulesToGMA && (
             <Menu.Item
               label={t('alerting.rule-list-v2.import-to-gma', 'Import alert rules')}
               icon="upload"
-              url="/alerting/import-datasource-managed-rules"
-              disabled={importDisabled}
-              description={importDisabled ? importDisabledReason : undefined}
+              url={ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES}
             />
           )}
           {canAccessMigrationWizardUI && (
             <Menu.Item
               label={t('alerting.rule-list-v2.import-to-gma-tool', 'Import to Grafana Alerting')}
               icon="exchange-alt"
-              url="/alerting/import-to-gma"
+              url={ALERTING_PATHS.IMPORT_TO_GMA}
               disabled={importDisabled}
               description={importDisabled ? importDisabledReason : undefined}
             />

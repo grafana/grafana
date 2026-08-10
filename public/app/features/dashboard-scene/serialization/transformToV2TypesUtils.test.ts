@@ -76,6 +76,12 @@ describe('transformToV2TypesUtils', () => {
       expect(colorIdEnumToColorIdV2('gradient')).toBe('gradient');
     });
 
+    it('should preserve experimental categorical next palettes', () => {
+      expect(colorIdEnumToColorIdV2('palette-categorical-next')).toBe('palette-categorical-next');
+      expect(colorIdEnumToColorIdV2('palette-categorical-next-2')).toBe('palette-categorical-next-2');
+      expect(colorIdEnumToColorIdV2('palette-categorical-next-3')).toBe('palette-categorical-next-3');
+    });
+
     it('should return undefined for unknown color modes', () => {
       expect(colorIdEnumToColorIdV2('not-a-real-mode')).toBeUndefined();
     });

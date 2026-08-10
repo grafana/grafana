@@ -32,6 +32,9 @@ type CommitOptionsApplyConfiguration struct {
 	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
 	// When empty, commits are not signed.
 	SigningMethod *provisioningv0alpha1.SigningMethod `json:"signingMethod,omitempty"`
+	// When true, commits are authored by the signer identity
+	// (signerName/signerEmail).
+	SignerIsAuthor *bool `json:"signerIsAuthor,omitempty"`
 	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
 	// signingMethod is "smime". This is public (not a secret) and is embedded
 	// in the commit signature. Unused for the gpg and ssh formats.
@@ -81,6 +84,14 @@ func (b *CommitOptionsApplyConfiguration) WithSignerEmail(value string) *CommitO
 // If called multiple times, the SigningMethod field is set to the value of the last call.
 func (b *CommitOptionsApplyConfiguration) WithSigningMethod(value provisioningv0alpha1.SigningMethod) *CommitOptionsApplyConfiguration {
 	b.SigningMethod = &value
+	return b
+}
+
+// WithSignerIsAuthor sets the SignerIsAuthor field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the SignerIsAuthor field is set to the value of the last call.
+func (b *CommitOptionsApplyConfiguration) WithSignerIsAuthor(value bool) *CommitOptionsApplyConfiguration {
+	b.SignerIsAuthor = &value
 	return b
 }
 

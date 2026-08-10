@@ -3,7 +3,6 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, within } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
-import { config } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
@@ -109,13 +108,7 @@ const grantAlertmanagerAbilities = (allowed: readonly NotificationPolicyAction[]
 };
 
 describe('PoliciesList', () => {
-  const originalFeatureToggle = config.featureToggles.alertingMultiplePolicies;
-  afterAll(() => {
-    config.featureToggles.alertingMultiplePolicies = originalFeatureToggle;
-  });
-
   beforeEach(() => {
-    config.featureToggles.alertingMultiplePolicies = true;
     setupDataSources(...Object.values(dataSources));
     jest.clearAllMocks();
     jest.restoreAllMocks();

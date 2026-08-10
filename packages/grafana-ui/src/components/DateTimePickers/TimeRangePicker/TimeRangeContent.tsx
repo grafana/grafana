@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import { type KeyboardEvent, useCallback, useEffect, useId, useRef, useState } from 'react';
+import { type KeyboardEvent, useCallback, useEffect, useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import {
-  dateMath,
   type DateTime,
   dateTimeFormat,
   dateTimeParse,
@@ -19,7 +18,6 @@ import { type TimeZone } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Button } from '../../Button/Button';
-import { Checkbox } from '../../Forms/Checkbox';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { Input } from '../../Input/Input';
@@ -47,13 +45,12 @@ interface FormState {
 }
 
 const ERROR_MESSAGES = {
-  required: () => t('time-picker.range-content.required-error', 'This field is required'),
-  default: (dateExample: string) =>
+  default: () =>
     t(
       'time-picker.range-content.default-error',
       'Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})',
       {
-        dateExample,
+        dateExample: 'YYYY-MM-DD HH:mm:ss',
         relativeTimeExample1: 'now',
         relativeTimeExample2: 'now-1h',
       }
@@ -74,49 +71,28 @@ export const TimeRangeContent = (props: Props) => {
   } = props;
   const style = useStyles2(getStyles);
   const [isOpen, setOpen] = useState(false);
-  // Default to showing milliseconds when the range is absolute and carries a non-zero fraction, so a
-  // reopened ms range stays visible. Relative ranges (e.g. now-6h) never match, keeping the common case off.
-  const [showMs, setShowMs] = useState(() => hasMilliseconds(value.raw.from) || hasMilliseconds(value.raw.to));
 
   const {
     handleSubmit,
     register,
     formState: { errors },
-    getValues,
     setValue,
     watch,
   } = useForm<FormState>({
     defaultValues: {
-      from: valueAsString(value.raw.from, timeZone, showMs),
-      to: valueAsString(value.raw.to, timeZone, showMs),
+      from: valueAsString(value.raw.from, timeZone),
+      to: valueAsString(value.raw.to, timeZone),
     },
   });
 
   const fromFieldId = useId();
   const toFieldId = useId();
-  const dateExample = showMs ? 'YYYY-MM-DD HH:mm:ss.SSS' : 'YYYY-MM-DD HH:mm:ss';
-
-  // The external-value sync effect should not clobber in-progress edits when the toggle flips, so it
-  // reads the current toggle from a ref instead of depending on it.
-  const showMsRef = useRef(showMs);
-  showMsRef.current = showMs;
 
   // Synchronize internal state with external value
   useEffect(() => {
-    setValue('from', valueAsString(value.raw.from, timeZone, showMsRef.current));
-    setValue('to', valueAsString(value.raw.to, timeZone, showMsRef.current));
+    setValue('from', valueAsString(value.raw.from, timeZone));
+    setValue('to', valueAsString(value.raw.to, timeZone));
   }, [value.raw.from, value.raw.to, setValue, timeZone]);
-
-  // Reformat the current field values in place when the toggle changes, preserving edits that haven't
-  // been applied yet. Relative values (e.g. now-5m) are left untouched.
-  const onToggleMs = useCallback(
-    (next: boolean) => {
-      setShowMs(next);
-      setValue('from', reformatInput(getValues('from'), timeZone, next));
-      setValue('to', reformatInput(getValues('to'), timeZone, next));
-    },
-    [getValues, setValue, timeZone]
-  );
 
   const onOpen = () => setOpen(true);
 
@@ -130,10 +106,10 @@ export const TimeRangeContent = (props: Props) => {
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
-      setValue('from', valueAsString(from, timeZone, showMs));
-      setValue('to', valueAsString(to, timeZone, showMs));
+      setValue('from', valueAsString(from, timeZone));
+      setValue('to', valueAsString(to, timeZone));
     },
-    [setValue, timeZone, showMs]
+    [setValue, timeZone]
   );
 
   const submitOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -203,11 +179,11 @@ export const TimeRangeContent = (props: Props) => {
         >
           <Input
             {...register('from', {
-              required: ERROR_MESSAGES.required(),
+              required: ERROR_MESSAGES.default(),
 
               validate: (value, formValues) => {
                 if (!isValid(value, false, timeZone)) {
-                  return ERROR_MESSAGES.default(dateExample);
+                  return ERROR_MESSAGES.default();
                 }
                 if (
                   !!formValues.to &&
@@ -232,10 +208,10 @@ export const TimeRangeContent = (props: Props) => {
         <Field label={t('time-picker.range-content.to-input', 'To')} invalid={!!errors.to} error={errors.to?.message}>
           <Input
             {...register('to', {
-              required: ERROR_MESSAGES.required(),
+              required: ERROR_MESSAGES.default(),
               validate: (value, formValues) => {
                 if (!isValid(value, true, timeZone)) {
-                  return ERROR_MESSAGES.default(dateExample);
+                  return ERROR_MESSAGES.default();
                 }
                 if (
                   !!formValues.from &&
@@ -255,13 +231,6 @@ export const TimeRangeContent = (props: Props) => {
           />
         </Field>
         {fyTooltip}
-      </div>
-      <div className={style.msToggleContainer}>
-        <Checkbox
-          label={t('time-picker.range-content.milliseconds-label', 'Show milliseconds')}
-          value={showMs}
-          onChange={(event) => onToggleMs(event.currentTarget.checked)}
-        />
       </div>
       <div className={style.buttonsContainer}>
         <Button
@@ -309,38 +278,23 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
   return !valid;
 }
 
-function valueAsString(value: DateTime | string, timeZone?: TimeZone, withMs?: boolean): string {
+function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   if (isDateTime(value)) {
-    return dateTimeFormat(value, { timeZone, defaultWithMS: withMs });
+    return dateTimeFormat(value, { timeZone, defaultWithMS: hasMilliseconds(value) });
   }
 
   if (value.endsWith('Z')) {
     const dt = dateTimeParse(value);
-    return dateTimeFormat(dt, { timeZone, defaultWithMS: withMs });
+    return dateTimeFormat(dt, { timeZone, defaultWithMS: hasMilliseconds(dt) });
   }
 
   return value;
 }
 
-// Detects a non-zero millisecond fraction. `raw` may be a DateTime (legacy time srv) or an absolute
-// ISO string with ms (scenes serializes applied ranges as `YYYY-MM-DDTHH:mm:ss.SSSZ`), so both are
-// handled. Relative values (now, now-5m) never carry a fraction.
-function hasMilliseconds(value: DateTime | string): boolean {
-  if (typeof value === 'string' && dateMath.isMathString(value)) {
-    return false;
-  }
-  const parsed = isDateTime(value) ? value : dateTimeParse(value);
-  return parsed.isValid() && parsed.format('SSS') !== '000';
-}
-
-// Re-render an input value with or without milliseconds. Relative values (now, now-5m) and anything
-// that doesn't parse are returned unchanged so the toggle never rewrites them.
-function reformatInput(value: string, timeZone: TimeZone | undefined, withMs: boolean): string {
-  if (dateMath.isMathString(value)) {
-    return value;
-  }
-  const parsed = dateTimeParse(value, { timeZone });
-  return parsed.isValid() ? dateTimeFormat(parsed, { timeZone, defaultWithMS: withMs }) : value;
+// Milliseconds are shown only when the value actually carries a non-zero fraction — this keeps the
+// common (second-precision) case uncluttered while still surfacing ms ranges without any UI affordance.
+function hasMilliseconds(value: DateTime): boolean {
+  return value.isValid() && value.format('SSS') !== '000';
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -351,9 +305,6 @@ function getStyles(theme: GrafanaTheme2) {
     buttonsContainer: css({
       display: 'flex',
       gap: theme.spacing(0.5),
-      marginTop: theme.spacing(1),
-    }),
-    msToggleContainer: css({
       marginTop: theme.spacing(1),
     }),
     tooltip: css({

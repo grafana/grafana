@@ -36,16 +36,6 @@ func TestConfig(t *testing.T) {
 		require.Equal(t, []string{"nats://a:4222"}, c.URLs())
 	})
 
-	t.Run("decoupled from the config slice", func(t *testing.T) {
-		configured := []string{"nats://a:4222"}
-		c := newConfig(setting.NATSSettings{ClientURLs: configured}, nil)
-
-		// Mutating the original config slice must not leak into the Config.
-		configured[0] = "nats://tampered:4222"
-
-		require.Equal(t, []string{"nats://a:4222"}, c.URLs())
-	})
-
 	t.Run("DialOptions returns a defensive copy", func(t *testing.T) {
 		c := newConfig(setting.NATSSettings{}, &Server{server: startTestServer(t)})
 

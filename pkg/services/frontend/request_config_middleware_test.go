@@ -413,6 +413,56 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		// The plugins CDN base URL is sourced from the plugins CDN service.
 		assert.Equal(t, "https://cdn.example.com", capturedConfig.FullFrontendSettings.PluginsCDNBaseURL)
 	})
+
+	t.Run("merges the per-request OpenFeature evaluation context into the base context when the reduced boot data flag is enabled", func(t *testing.T) {
+		enableReducedBootDataToggle(t)
+
+		license := &licensing.OSSLicensingService{}
+		cfg := setting.NewCfg()
+		cfg.AppURL = "https://grafana.example.com"
+		// Base context attributes are configured globally and should be preserved.
+		cfg.OpenFeature.ContextAttrs = map[string]string{
+			"grafana_version": "12.0.0",
+			"hostname":        "base.example.com",
+		}
+
+		middleware := RequestConfigMiddleware(cfg, license, nil, nil)
+
+		var capturedConfig FSRequestConfig
+		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var err error
+			capturedConfig, err = FSRequestConfigFromContext(r.Context())
+			require.NoError(t, err)
+			w.WriteHeader(http.StatusOK)
+		})
+
+		handler := middleware(testHandler)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req = setupTestContextWithUser(req, "stacks-123")
+
+		// Simulate the per-request evaluation context that the context middleware
+		// sets earlier in the chain.
+		evalCtx := openfeature.NewEvaluationContext("stacks-123", map[string]any{
+			"namespace": "stacks-123",
+			"hostname":  "foo.example.com",
+		})
+		req = req.WithContext(openfeature.MergeTransactionContext(req.Context(), evalCtx))
+
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, req)
+
+		assert.Equal(t, http.StatusOK, recorder.Code)
+		require.NotNil(t, capturedConfig.FullFrontendSettings)
+		assert.Equal(t, map[string]string{
+			// Preserved from the base context.
+			"grafana_version": "12.0.0",
+			// Per-request value overrides the base context value.
+			"hostname": "foo.example.com",
+			// Added by the per-request context.
+			"namespace": "stacks-123",
+		}, capturedConfig.FullFrontendSettings.OpenFeatureContext)
+	})
 }
 
 // mockSettingsService is a simple mock for testing

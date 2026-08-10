@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	"fmt"
+	"maps"
 	"net/http"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -49,7 +51,26 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 			}
 
 			if fullFrontendSettingsEnabled && requestConfig.FullFrontendSettings != nil {
-				requestConfig.FullFrontendSettings.Namespace = request.NamespaceValue(ctx)
+				namespace := request.NamespaceValue(ctx)
+				requestConfig.FullFrontendSettings.Namespace = namespace
+
+				// Merge the per-request OpenFeature evaluation context into the base
+				// context already on the settings, so the frontend can evaluate feature
+				// flags with the same context. Per-request values take precedence.
+				evalCtx := openfeature.TransactionContext(ctx)
+				openFeatureContext := make(map[string]string, len(requestConfig.FullFrontendSettings.OpenFeatureContext)+len(evalCtx.Attributes())+1)
+				maps.Copy(openFeatureContext, requestConfig.FullFrontendSettings.OpenFeatureContext)
+				for key, value := range evalCtx.Attributes() {
+					if str, ok := value.(string); ok {
+						openFeatureContext[key] = str
+					} else {
+						openFeatureContext[key] = fmt.Sprintf("%v", value)
+					}
+				}
+
+				// Explicitly set namespace
+				openFeatureContext["namespace"] = namespace
+				requestConfig.FullFrontendSettings.OpenFeatureContext = openFeatureContext
 			}
 
 			// Fetch tenant-specific configuration if the settings service is configured and namespace is present

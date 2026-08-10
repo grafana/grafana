@@ -136,12 +136,22 @@ const getDefaultSearchHandler = () =>
     const nameFilter = new URL(request.url).searchParams.getAll('name');
     const mappedTypeFilters = typeFilters.map((f) => typeFilterMap[f] || f);
     const tagFilter = new URL(request.url).searchParams.getAll('tag');
+    const ownerReferenceFilter = new URL(request.url).searchParams.getAll('ownerReference');
 
     const filtered = mockTree.filter((filterItem) => {
       const filters: FilterArray = [
         // Filter UI items out of fixtures as... they're UI items 🤷
         ({ item }) => item.kind !== 'ui',
       ];
+
+      if (ownerReferenceFilter.length > 0) {
+        filters.push(({ item }) =>
+          Boolean(
+            item.kind === 'folder' &&
+              item.ownerReferences?.some((ownerReference) => ownerReferenceFilter.includes(ownerReference))
+          )
+        );
+      }
 
       if (nameFilter.length > 0) {
         const filteredNameFilter = nameFilter.filter((name) => name !== 'general');
@@ -176,11 +186,13 @@ const getDefaultSearchHandler = () =>
     const mapped = filtered.map(({ item }) => {
       const random = Chance(item.uid);
       const parentFolder = 'parentUID' in item ? item.parentUID : undefined;
+      const ownerReferences = 'ownerReferences' in item ? item.ownerReferences : undefined;
       return {
         resource: typeMap[item.kind],
         name: item.uid,
         title: item.title,
         folder: parentFolder,
+        ownerReferences,
         field: {
           // Generate mock deprecated IDs only in the mock handlers - not generating in
           // mock data as it would require updating/tracking in the types as well

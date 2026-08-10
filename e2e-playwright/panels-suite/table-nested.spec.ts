@@ -574,4 +574,30 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
       panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
     ).not.toBeVisible();
   });
+
+  test('no rows but nested transform renders empty state without crashing', async ({
+    gotoPanelEditPage,
+    selectors,
+    page,
+  }) => {
+    // Regression: when a panel returns zero rows but still carries a Group to nested tables
+    // transform, the nested data is empty so there is no "first nested frame" to derive nested
+    // fields from. The table must render its empty state instead of throwing.
+    const panelEditPage = await gotoPanelEditPage({
+      dashboard: {
+        uid: NESTED_COMPLEX_DASHBOARD_UID,
+      },
+      id: '3',
+    });
+
+    await waitForTableLoad(page);
+
+    // The empty-state placeholder proves the (nested) table rendered without crashing.
+    await expect(page.getByText('No rows')).toBeVisible();
+
+    // No data rows means no row expanders.
+    await expect(
+      panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
+    ).toHaveCount(0);
+  });
 });
