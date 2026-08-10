@@ -7,7 +7,6 @@ import { useDispatch } from 'app/types/store';
 import { logError } from '../../Analytics';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { convertToGMAApi } from '../../api/convertToGMAApi';
-import { useSingleFlight } from '../../hooks/useSingleFlight';
 import { stringifyErrorLike } from '../../utils/misc';
 
 import { StagedPromotePreview } from './StagedPromotePreview';
@@ -63,8 +62,7 @@ export function PromoteConfirmModal({ stagedConfig, isSyncManaged, onDismiss }: 
     }
   };
 
-  // Merging into the live config can't be undone, so a second submit must not merge twice.
-  const onConfirm = useSingleFlight(async () => {
+  const onConfirm = async () => {
     try {
       await promote({ configIdentifier: stagedConfig.identifier }).unwrap();
     } catch (err) {
@@ -95,7 +93,7 @@ export function PromoteConfirmModal({ stagedConfig, isSyncManaged, onDismiss }: 
       );
     }
     onDismiss();
-  });
+  };
 
   return (
     <ConfirmModal

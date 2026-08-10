@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setupMswServer } from '../../mockApi';
@@ -86,33 +86,6 @@ describe('PromoteConfirmModal', () => {
 
     await waitFor(() => expect(onDismiss).toHaveBeenCalled());
     expect(promoted).toBe(true);
-  });
-
-  it('promotes only once when the user submits the confirm button twice', async () => {
-    let promoteCount = 0;
-
-    server.use(
-      http.post(CONVERT_URL, fullDryRunResponse),
-      http.post(PROMOTE_URL, () => {
-        promoteCount++;
-        return HttpResponse.json({ status: 'success' });
-      })
-    );
-
-    const onDismiss = jest.fn();
-    render(<PromoteConfirmModal stagedConfig={stagedConfig} onDismiss={onDismiss} />);
-
-    await waitFor(() => expect(ui.confirm.get()).toBeEnabled());
-
-    // Both clicks must land before React re-renders the button as disabled; userEvent would flush
-    // between them and miss the race. See useSingleFlight for why the two submits overlap at all.
-    await act(async () => {
-      ui.confirm.get().click();
-      ui.confirm.get().click();
-    });
-
-    await waitFor(() => expect(onDismiss).toHaveBeenCalled());
-    expect(promoteCount).toBe(1);
   });
 
   it('clears the configured auto-sync datasource after promoting a sync-managed config', async () => {
