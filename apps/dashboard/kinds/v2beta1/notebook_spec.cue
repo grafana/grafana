@@ -10,7 +10,7 @@ package v2beta1
 // notebook follows v2, which is why the panel chain below is forked rather than shared.
 
 // A cell holds non-panel narrative content (markdown text, code) in a notebook layout.
-// Panel cells are not represented here — they reuse NotebookPanelKind.
+// Panel cells are not represented here — they reuse V2PanelKind.
 CellKind: {
 	kind: "Cell"
 	spec: CellSpec
@@ -60,7 +60,7 @@ NotebookLayoutItemKind: {
 }
 
 // One ordered item in a notebook layout. `element` references either a CellKind
-// (markdown/code content) or a NotebookPanelKind in the notebook's elements map. `source`
+// (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
 // records who authored the cell; `collapsed` hides the body in the UI.
 NotebookLayoutItemSpec: {
 	element:    ElementReference
@@ -73,12 +73,12 @@ NotebookLayoutItemSpec: {
 // to be forked rather than shared because PanelKind reaches TransformationKind through
 // QueryGroupKind, and those three are what Dashboard v2beta1 serves. Everything the chain does not
 // change (DataLink, VizConfigKind, PanelQueryKind, QueryOptionsSpec) stays shared.
-NotebookPanelKind: {
+V2PanelKind: {
 	kind: "Panel"
-	spec: NotebookPanelSpec
+	spec: V2PanelSpec
 }
 
-NotebookPanelSpec: {
+V2PanelSpec: {
 	id:    number
 	title: string
 	// Shown in a info icon tooltip next to panel title
@@ -86,32 +86,32 @@ NotebookPanelSpec: {
 	// Shown in a sub header below the title.
 	subtitle?: string
 	links: [...DataLink]
-	data:         NotebookQueryGroupKind
+	data:         V2QueryGroupKind
 	vizConfig:    VizConfigKind
 	transparent?: bool
 }
 
-NotebookQueryGroupKind: {
+V2QueryGroupKind: {
 	kind: "QueryGroup"
-	spec: NotebookQueryGroupSpec
+	spec: V2QueryGroupSpec
 }
 
-NotebookQueryGroupSpec: {
+V2QueryGroupSpec: {
 	queries: [...PanelQueryKind]
-	transformations: [...NotebookTransformationKind]
+	transformations: [...V2TransformationKind]
 	queryOptions: QueryOptionsSpec
 }
 
 // Dashboard v2 shape: the transformation ID moved from `kind` to `group`.
-NotebookTransformationKind: {
+V2TransformationKind: {
 	kind: "Transformation"
 	// The group is the transformation ID
 	group: string
-	spec:  NotebookTransformationSpec
+	spec:  V2TransformationSpec
 }
 
 // Dashboard v2 shape: no `id`, it is carried by the parent's `group`.
-NotebookTransformationSpec: {
+V2TransformationSpec: {
 	// Disabled transformations are skipped
 	disabled?: bool
 	// Optional frame matcher. When missing it will be applied to all results
@@ -126,7 +126,7 @@ NotebookTransformationSpec: {
 // A notebook element is a narrative cell, a panel, or a library panel. Unlike the dashboard
 // Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec.
 // CellKind is listed first so it is the generated default (a notebook is narrative-first).
-NotebookElement: CellKind | NotebookPanelKind | LibraryPanelKind
+NotebookElement: CellKind | V2PanelKind | LibraryPanelKind
 
 // A notebook spec is a dashboard spec with narrative content. It has a title, optional description, tags, time
 // settings, and a map of elements (panels and cells) referenced by the layout.

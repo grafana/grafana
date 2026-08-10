@@ -68,12 +68,12 @@ export const defaultTimeRangeOption = (): TimeRangeOption => ({
 // A notebook element is a narrative cell, a panel, or a library panel. Unlike the dashboard
 // Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec.
 // CellKind is listed first so it is the generated default (a notebook is narrative-first).
-export type NotebookElement = CellKind | NotebookPanelKind | LibraryPanelKind;
+export type NotebookElement = CellKind | V2PanelKind | LibraryPanelKind;
 
 export const defaultNotebookElement = (): NotebookElement => (defaultCellKind());
 
 // A cell holds non-panel narrative content (markdown text, code) in a notebook layout.
-// Panel cells are not represented here — they reuse NotebookPanelKind.
+// Panel cells are not represented here — they reuse V2PanelKind.
 export interface CellKind {
 	kind: "Cell";
 	spec: CellSpec;
@@ -143,17 +143,17 @@ export const defaultCodeCellContentSpec = (): CodeCellContentSpec => ({
 // to be forked rather than shared because PanelKind reaches TransformationKind through
 // QueryGroupKind, and those three are what Dashboard v2beta1 serves. Everything the chain does not
 // change (DataLink, VizConfigKind, PanelQueryKind, QueryOptionsSpec) stays shared.
-export interface NotebookPanelKind {
+export interface V2PanelKind {
 	kind: "Panel";
-	spec: NotebookPanelSpec;
+	spec: V2PanelSpec;
 }
 
-export const defaultNotebookPanelKind = (): NotebookPanelKind => ({
+export const defaultV2PanelKind = (): V2PanelKind => ({
 	kind: "Panel",
-	spec: defaultNotebookPanelSpec(),
+	spec: defaultV2PanelSpec(),
 });
 
-export interface NotebookPanelSpec {
+export interface V2PanelSpec {
 	id: number;
 	title: string;
 	// Shown in a info icon tooltip next to panel title
@@ -161,16 +161,16 @@ export interface NotebookPanelSpec {
 	// Shown in a sub header below the title.
 	subtitle?: string;
 	links: DataLink[];
-	data: NotebookQueryGroupKind;
+	data: V2QueryGroupKind;
 	vizConfig: VizConfigKind;
 	transparent?: boolean;
 }
 
-export const defaultNotebookPanelSpec = (): NotebookPanelSpec => ({
+export const defaultV2PanelSpec = (): V2PanelSpec => ({
 	id: 0,
 	title: "",
 	links: [],
-	data: defaultNotebookQueryGroupKind(),
+	data: defaultV2QueryGroupKind(),
 	vizConfig: defaultVizConfigKind(),
 });
 
@@ -185,23 +185,23 @@ export const defaultDataLink = (): DataLink => ({
 	url: "",
 });
 
-export interface NotebookQueryGroupKind {
+export interface V2QueryGroupKind {
 	kind: "QueryGroup";
-	spec: NotebookQueryGroupSpec;
+	spec: V2QueryGroupSpec;
 }
 
-export const defaultNotebookQueryGroupKind = (): NotebookQueryGroupKind => ({
+export const defaultV2QueryGroupKind = (): V2QueryGroupKind => ({
 	kind: "QueryGroup",
-	spec: defaultNotebookQueryGroupSpec(),
+	spec: defaultV2QueryGroupSpec(),
 });
 
-export interface NotebookQueryGroupSpec {
+export interface V2QueryGroupSpec {
 	queries: PanelQueryKind[];
-	transformations: NotebookTransformationKind[];
+	transformations: V2TransformationKind[];
 	queryOptions: QueryOptionsSpec;
 }
 
-export const defaultNotebookQueryGroupSpec = (): NotebookQueryGroupSpec => ({
+export const defaultV2QueryGroupSpec = (): V2QueryGroupSpec => ({
 	queries: [],
 	transformations: [],
 	queryOptions: defaultQueryOptionsSpec(),
@@ -250,21 +250,21 @@ export const defaultDataQueryKind = (): DataQueryKind => ({
 });
 
 // Dashboard v2 shape: the transformation ID moved from `kind` to `group`.
-export interface NotebookTransformationKind {
+export interface V2TransformationKind {
 	kind: "Transformation";
 	// The group is the transformation ID
 	group: string;
-	spec: NotebookTransformationSpec;
+	spec: V2TransformationSpec;
 }
 
-export const defaultNotebookTransformationKind = (): NotebookTransformationKind => ({
+export const defaultV2TransformationKind = (): V2TransformationKind => ({
 	kind: "Transformation",
 	group: "",
-	spec: defaultNotebookTransformationSpec(),
+	spec: defaultV2TransformationSpec(),
 });
 
 // Dashboard v2 shape: no `id`, it is carried by the parent's `group`.
-export interface NotebookTransformationSpec {
+export interface V2TransformationSpec {
 	// Disabled transformations are skipped
 	disabled?: boolean;
 	// Optional frame matcher. When missing it will be applied to all results
@@ -276,7 +276,7 @@ export interface NotebookTransformationSpec {
 	options: any;
 }
 
-export const defaultNotebookTransformationSpec = (): NotebookTransformationSpec => ({
+export const defaultV2TransformationSpec = (): V2TransformationSpec => ({
 	options: {},
 });
 
@@ -780,7 +780,7 @@ export const defaultNotebookLayoutItemKind = (): NotebookLayoutItemKind => ({
 });
 
 // One ordered item in a notebook layout. `element` references either a CellKind
-// (markdown/code content) or a NotebookPanelKind in the notebook's elements map. `source`
+// (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
 // records who authored the cell; `collapsed` hides the body in the UI.
 export interface NotebookLayoutItemSpec {
 	element: ElementReference;

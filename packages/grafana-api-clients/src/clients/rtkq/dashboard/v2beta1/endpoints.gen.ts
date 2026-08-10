@@ -1876,7 +1876,7 @@ export type NotebookMatcherConfig = {
   /** If set, limits this matcher to fields of that type. If not set, "series" mode is used. */
   scope?: string;
 };
-export type NotebookNotebookTransformationSpec = {
+export type NotebookV2TransformationSpec = {
   /** Disabled transformations are skipped */
   disabled?: boolean;
   /** Optional frame matcher. When missing it will be applied to all results */
@@ -1886,20 +1886,20 @@ export type NotebookNotebookTransformationSpec = {
   /** Where to pull DataFrames from as input to transformation */
   topic?: string;
 };
-export type NotebookNotebookTransformationKind = {
+export type NotebookV2TransformationKind = {
   /** The group is the transformation ID */
   group: string;
   kind: string;
-  spec: NotebookNotebookTransformationSpec;
+  spec: NotebookV2TransformationSpec;
 };
-export type NotebookNotebookQueryGroupSpec = {
+export type NotebookV2QueryGroupSpec = {
   queries: NotebookPanelQueryKind[];
   queryOptions: NotebookQueryOptionsSpec;
-  transformations: NotebookNotebookTransformationKind[];
+  transformations: NotebookV2TransformationKind[];
 };
-export type NotebookNotebookQueryGroupKind = {
+export type NotebookV2QueryGroupKind = {
   kind: string;
-  spec: NotebookNotebookQueryGroupSpec;
+  spec: NotebookV2QueryGroupSpec;
 };
 export type NotebookDataLink = {
   targetBlank?: boolean;
@@ -2092,8 +2092,8 @@ export type NotebookVizConfigKind = {
   spec: NotebookVizConfigSpec;
   version: string;
 };
-export type NotebookNotebookPanelSpec = {
-  data: NotebookNotebookQueryGroupKind;
+export type NotebookV2PanelSpec = {
+  data: NotebookV2QueryGroupKind;
   /** Shown in a info icon tooltip next to panel title */
   description?: string;
   id: number;
@@ -2104,14 +2104,14 @@ export type NotebookNotebookPanelSpec = {
   transparent?: boolean;
   vizConfig: NotebookVizConfigKind;
 };
-export type NotebookNotebookPanelKind = {
+export type NotebookV2PanelKind = {
   kind: string;
-  spec: NotebookNotebookPanelSpec;
+  spec: NotebookV2PanelSpec;
 };
-export type NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind = {
+export type NotebookCellKindOrV2PanelKindOrLibraryPanelKind = {
   CellKind?: NotebookCellKind;
   LibraryPanelKind?: NotebookLibraryPanelKind;
-  NotebookPanelKind?: NotebookNotebookPanelKind;
+  V2PanelKind?: NotebookV2PanelKind;
 };
 export type NotebookElementReference = {
   kind: string;
@@ -2163,7 +2163,7 @@ export type NotebookTimeSettingsSpec = {
 export type NotebookSpec = {
   description?: string;
   elements: {
-    [key: string]: NotebookCellKindOrNotebookPanelKindOrLibraryPanelKind;
+    [key: string]: NotebookCellKindOrV2PanelKindOrLibraryPanelKind;
   };
   layout: NotebookNotebookLayoutKind;
   tags: string[];

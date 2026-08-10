@@ -10,8 +10,8 @@
 
 import {
   defaultLibraryPanelKind as generatedDefaultLibraryPanelKind,
-  defaultNotebookPanelKind,
   defaultSpec as generatedDefaultSpec,
+  defaultV2PanelKind,
   type CellContentKind as GeneratedCellContentKind,
   type CellKind as GeneratedCellKind,
   type NotebookElement as GeneratedNotebookElement,
@@ -21,7 +21,7 @@ import {
 } from '@grafana/schema/apis/notebook/v2beta1';
 
 // Forked by the notebook spec so it can carry the dashboard v2 shape.
-export const defaultPanelKind = defaultNotebookPanelKind;
+export const defaultPanelKind = defaultV2PanelKind;
 
 // Shared with the dashboard spec, or notebook-only. Either way the generated name is already right.
 export type CellContentKind = GeneratedCellContentKind;
