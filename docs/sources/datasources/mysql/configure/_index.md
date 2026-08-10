@@ -28,7 +28,7 @@ Before configuring the MySQL data source, ensure you have the following:
 
 - **Grafana permissions:** You must have the Organization administrator role to configure data sources. Organization administrators can also [configure the data source via YAML](#provision-the-data-source) with the Grafana provisioning system.
 
-- **A running MySQL instance:** MySQL 5.7 or newer, MariaDB 10.2 or newer, or a compatible MySQL-based database such as Percona Server.
+- **A running MySQL instance:** MySQL 5.7 or newer, MariaDB 10.5 or newer, or a compatible MySQL-based database such as Percona Server.
 
 - **Network access:** Grafana must be able to reach your MySQL server. The default port is `3306`.
 

@@ -35,7 +35,7 @@ Watch the following video to learn more about using the Grafana MySQL data sourc
 This data source supports the following MySQL-compatible databases:
 
 - MySQL 5.7 and newer
-- MariaDB 10.2 and newer
+- MariaDB 10.5 and newer
 - Percona Server 5.7 and newer
 - Amazon Aurora MySQL
 - Azure Database for MySQL
