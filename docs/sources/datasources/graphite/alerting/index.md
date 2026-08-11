@@ -69,10 +69,10 @@ The following examples show common alerting scenarios with Graphite. Each query 
 
 ### Alert on high CPU usage
 
-Monitor CPU usage on a host and alert when it exceeds 90%:
+Average CPU usage across every core on a host and alert when it exceeds 90%:
 
 ```text
-averageSeries(servers.web01.cpu.percent.user)
+averageSeries(servers.web01.cpu.*.percent.user)
 ```
 
 **Condition:** Reduce with `Mean`, then alert when the value is above `90`.
@@ -134,6 +134,10 @@ Alert queries can't reference another query by letter, such as `#A`. Build a sel
 ### Consolidation affects results
 
 Grafana consolidates data points so that a query doesn't return more points than needed. Consolidation can change the value the alert evaluates. Use `consolidateBy()` or `summarize()` to control how Graphite aggregates points, and match the interval to your evaluation frequency.
+
+### Metrics that stop reporting
+
+When a metric stops reporting, the query returns no data rather than a zero value, so a threshold alone can't detect the gap. To alert when a service stops sending metrics, set the alert rule's **No Data** state to **Alerting**. Configure this behavior in the alert rule under the evaluation options. For more information, refer to [Configure no data and error handling](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling).
 
 ## Best practices
 
