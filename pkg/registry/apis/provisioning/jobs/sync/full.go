@@ -457,10 +457,18 @@ type folderMove struct {
 }
 
 // collectFolderMoves returns the stable-UID folder relocations in the batch: a
-// folder whose UID is unchanged (an in-place FileActionUpdated on a directory)
-// but whose path differs from where it currently lives. These UIDs legitimately
+// folder whose UID is unchanged but whose path differs from where it currently
+// lives. augmentChangesForFolderMoves rewrites a delete-old + create-new pair
+// that share a _folder.json UID into a single FileActionUpdated whose
+// Existing.Path is the old path and Path is the new path. These UIDs legitimately
 // resolve to both the old and the new path during reconcile until the deferred
 // cleanup deletes the old folder, so the duplicate-UID guard must tolerate them.
+//
+// Only proven path moves are collected. A FileActionUpdated whose Existing.Path
+// equals Path is a same-path metadata update (title/hash change or child
+// reparenting), not a relocation: it still needs WithForceWalk but must NOT
+// contribute a relocating UID, otherwise a genuine duplicate-UID conflict on that
+// path would be silently bypassed.
 //
 // FolderRenamed changes are excluded: there the folder's UID itself changed
 // (a _folder.json UID edit or a revert to a hash-based ID), so the OLD UID is not
@@ -475,7 +483,14 @@ func collectFolderMoves(folderChanges []ResourceFileChange) []folderMove {
 		if change.Existing == nil || change.Existing.Name == "" {
 			continue
 		}
-		moves = append(moves, folderMove{Path: change.Path, UID: change.Existing.Name})
+
+		oldPath := safepath.EnsureTrailingSlash(change.Existing.Path)
+		newPath := safepath.EnsureTrailingSlash(change.Path)
+		if oldPath == "" || newPath == "" || oldPath == newPath {
+			continue
+		}
+
+		moves = append(moves, folderMove{Path: newPath, UID: change.Existing.Name})
 	}
 	return moves
 }
@@ -487,11 +502,13 @@ func collectFolderMoves(folderChanges []ResourceFileChange) []folderMove {
 // exemption this way keeps an unrelated folder that accidentally claims another
 // folder's UID from hijacking that folder's object.
 func relocatingUIDsForPath(path string, moves []folderMove) []string {
+	path = safepath.EnsureTrailingSlash(path)
 	var uids []string
 	for _, m := range moves {
 		// InDir is a prefix check; for directory paths (trailing slash) this
-		// matches m.Path == path and any descendant of m.Path.
-		if safepath.InDir(path, m.Path) {
+		// matches movePath == path and any descendant of movePath.
+		movePath := safepath.EnsureTrailingSlash(m.Path)
+		if movePath != "" && safepath.InDir(path, movePath) {
 			uids = append(uids, m.UID)
 		}
 	}
