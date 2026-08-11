@@ -1,6 +1,7 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { NotebookLayoutManager } from '../../scene/layout-notebook/NotebookLayoutManager';
 import { NotebookMutationClient } from '../NotebookMutationClient';
 import {
   NOTEBOOKS_FLAG,
@@ -96,6 +97,44 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
 
     expect(result.success).toBe(true);
     expect(result.warnings).toEqual(['These cells were not applied and are missing from the notebook: ghost.']);
+  });
+
+  it('says so when it cannot tell which cells survived', async () => {
+    const scene = notebookScene();
+    const client = new NotebookMutationClient(scene);
+    // The write lands and the read-back does not, which is the one case where the dropped-cell check
+    // cannot run. An empty warnings list here would read as "every cell survived". Spied on the
+    // prototype because the rebuild swaps in a new layout manager, so the instance the scene starts
+    // with is not the one that gets serialized.
+    jest.spyOn(NotebookLayoutManager.prototype, 'serialize').mockImplementation(() => {
+      throw new Error('cannot serialize');
+    });
+
+    const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: notebookSpec() } });
+
+    expect(result.success).toBe(true);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrowing the command's own result shape
+    expect((result.data as { spec?: unknown }).spec).toBeUndefined();
+    expect(result.warnings).toEqual([
+      'The notebook could not be re-serialized after the write, so it is unknown which cells survived it.',
+    ]);
+  });
+
+  it('rejects an unknown payload key rather than ignoring it', async () => {
+    const scene = notebookScene();
+    const before = cellNamesOf(scene);
+    const client = new NotebookMutationClient(scene);
+
+    // A mistyped `validate` would otherwise apply the spec with validation off, which is the path that
+    // loses a cell — the failure this command exists to catch.
+    const result = await client.execute({
+      type: 'APPLY_NOTEBOOK_SPEC',
+      payload: { spec: notebookSpec(), validat: true },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Validation failed');
+    expect(cellNamesOf(scene)).toEqual(before);
   });
 
   it('rejects a dangling reference outright when asked to validate', async () => {

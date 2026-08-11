@@ -36,7 +36,9 @@ import { requiresNotebookEdit } from './permissions';
  */
 function droppedCellWarnings(requested: NotebookSpec, applied: NotebookSpec | undefined): string[] {
   if (!applied) {
-    return [];
+    // Say so rather than returning nothing. An empty list reads as "every cell survived", and the one
+    // check this command exists to run is the one that did not happen.
+    return ['The notebook could not be re-serialized after the write, so it is unknown which cells survived it.'];
   }
   const cellNames = (spec: NotebookSpec) => spec.layout.spec.cells.map((cell) => cell.spec.element.name);
   const survived = new Set(cellNames(applied));
@@ -47,16 +49,22 @@ function droppedCellWarnings(requested: NotebookSpec, applied: NotebookSpec | un
     : [];
 }
 
-const applyNotebookSpecPayloadSchema = z.object({
-  spec: z
-    .record(z.string(), z.unknown())
-    .describe('A complete notebook spec to apply (the same shape GET_NOTEBOOK_SPEC returns).'),
-  validate: z
-    .boolean()
-    .optional()
-    .default(false)
-    .describe('When true, validate the spec against the notebook schema and reject the mutation if it is invalid.'),
-});
+// Strict, unlike the dashboard APPLY_SPEC it otherwise mirrors. The cost of a silently ignored key is
+// not symmetric: mistype `validate` here and the spec applies with validation off, which is exactly the
+// path that loses a cell — the failure this command exists to catch. Rejecting `validat` is cheaper
+// than reporting the dropped cell afterwards.
+const applyNotebookSpecPayloadSchema = z
+  .object({
+    spec: z
+      .record(z.string(), z.unknown())
+      .describe('A complete notebook spec to apply (the same shape GET_NOTEBOOK_SPEC returns).'),
+    validate: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe('When true, validate the spec against the notebook schema and reject the mutation if it is invalid.'),
+  })
+  .strict();
 
 export type ApplyNotebookSpecPayload = z.infer<typeof applyNotebookSpecPayloadSchema>;
 
