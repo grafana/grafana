@@ -34,11 +34,9 @@ export const defaultCodeLanguage: CodeLanguage = CodeLanguage.Plaintext;
  * Whether the content template renders once, or once per row of query data.
  */
 export enum RenderMode {
-  AllRows = 'allRows',
-  EveryRow = 'everyRow',
+  Once = 'once',
+  PerRow = 'perRow',
 }
-
-export const defaultRenderMode: RenderMode = RenderMode.AllRows;
 
 export interface CodeOptions {
   /**
@@ -67,5 +65,5 @@ export const defaultOptions: Partial<Options> = {
 
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)`,
   mode: TextMode.Markdown,
-  renderMode: RenderMode.AllRows,
+  renderMode: RenderMode.Once,
 };

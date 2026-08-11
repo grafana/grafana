@@ -11,7 +11,7 @@ const CODE_PANEL = '5';
 
 // Render mode needs query data, which text-options.json has none of.
 const DATA_DASHBOARD_UID = 'adssfc8';
-const EVERY_ROW_PANEL = '4';
+const EVERY_ROW_PANEL = '6';
 
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true } } });
 
@@ -142,14 +142,14 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
 
       const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, {
-        root: dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Every row')),
+        root: dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Render mode: Per row')),
       });
 
-      // One list item per row of the panel's csv_content query.
-      await expect(panel.locator('li')).toHaveCount(3);
-      await expect(panel).toContainText('web-1');
-      await expect(panel).toContainText('84%');
-      await expect(panel).toContainText('db-1');
+      // One card per row of the panel's csv_content query.
+      await expect(panel.locator('.user-card')).toHaveCount(5);
+      await expect(panel).toContainText('Wei');
+      await expect(panel).toContainText('editor');
+      await expect(panel).toContainText('w.zhang@example.com');
     });
 
     test('switches back to a single render from the options pane', async ({ gotoDashboardPage, selectors, page }) => {
@@ -159,18 +159,17 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       });
 
       const preview = page.getByTestId('TextNGEditor-preview');
-      await expect(preview.locator('li')).toHaveCount(3);
+      await expect(preview.locator('.user-card')).toHaveCount(5);
 
       // Unlike Mode, Render mode lives in the options pane, not the toolbar.
       const renderMode = dashboardPage.getByGrafanaSelector(
         selectors.components.PanelEditor.OptionsPane.fieldLabel('Data Render mode')
       );
-      await renderMode.getByRole('combobox').click();
-      await page.getByRole('option').filter({ hasText: 'All rows' }).click();
+      await renderMode.getByRole('radio', { name: 'Once' }).click();
 
       // A single render cannot resolve per-row fields, so the macro stays literal.
-      await expect(preview.locator('li')).toHaveCount(1);
-      await expect(preview).toContainText('${__data.fields.host}');
+      await expect(preview.locator('.user-card')).toHaveCount(1);
+      await expect(preview).toContainText('${__data.fields.Id}');
     });
   });
 });

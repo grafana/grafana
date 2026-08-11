@@ -24,7 +24,7 @@ function getRenderModeItem() {
 
 describe('textNGPanelOptions', () => {
   it('registers renderMode with a default that preserves a single render', () => {
-    expect(getRenderModeItem().defaultValue).toBe(RenderMode.AllRows);
+    expect(getRenderModeItem().defaultValue).toBe(RenderMode.Once);
   });
 
   it('is the only option visible in the pane', () => {

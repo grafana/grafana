@@ -54,7 +54,7 @@ describe('hasRenderableData', () => {
 describe('interpolateTemplate', () => {
   describe('all rows', () => {
     it.each([
-      ['AllRows', RenderMode.AllRows],
+      ['Once', RenderMode.Once],
       ['an undefined render mode', undefined],
     ])('renders the content once for %s', (_name, renderMode) => {
       expect(interpolate('CPU is ${__data.fields.cpu}%', [hosts], renderMode)).toBe('CPU is ${__data.fields.cpu}%');
@@ -63,39 +63,37 @@ describe('interpolateTemplate', () => {
 
   describe('every row', () => {
     it('repeats the content once per row, resolving fields for that row', () => {
-      expect(interpolate('- ${__data.fields.host}: ${__data.fields.cpu}%', [hosts], RenderMode.EveryRow)).toBe(
+      expect(interpolate('- ${__data.fields.host}: ${__data.fields.cpu}%', [hosts], RenderMode.PerRow)).toBe(
         '- web-1: 84%\n\n- web-2: 12%'
       );
     });
 
     it('iterates every frame in series order', () => {
-      expect(interpolate('${__data.fields.host}', [hosts, regions], RenderMode.EveryRow)).toBe(
-        'web-1\n\nweb-2\n\ndb-1'
-      );
+      expect(interpolate('${__data.fields.host}', [hosts, regions], RenderMode.PerRow)).toBe('web-1\n\nweb-2\n\ndb-1');
     });
 
     it('resolves ${__series.name} so rows can name their frame', () => {
-      expect(interpolate('${__series.name} ${__data.fields.host}', [hosts, regions], RenderMode.EveryRow)).toBe(
+      expect(interpolate('${__series.name} ${__data.fields.host}', [hosts, regions], RenderMode.PerRow)).toBe(
         'frameA web-1\n\nframeA web-2\n\nframeB db-1'
       );
     });
 
     it('leaves references to unknown fields empty', () => {
-      expect(interpolate('[${__data.fields.nope}]', [regions], RenderMode.EveryRow)).toBe('[]');
+      expect(interpolate('[${__data.fields.nope}]', [regions], RenderMode.PerRow)).toBe('[]');
     });
 
     it.each([
       ['HTML', TextMode.HTML],
       ['code', TextMode.Code],
     ])('joins rows with a single newline in %s mode', (_name, mode) => {
-      expect(interpolate('${__data.fields.host}', [hosts], RenderMode.EveryRow, mode)).toBe('web-1\nweb-2');
+      expect(interpolate('${__data.fields.host}', [hosts], RenderMode.PerRow, mode)).toBe('web-1\nweb-2');
     });
 
     it.each([
       ['there is no data', undefined],
       ['every frame is empty', [{ fields: [], length: 0 }]],
     ])('falls back to a single render when %s', (_name, series) => {
-      expect(interpolate('CPU is ${__data.fields.cpu}%', series, RenderMode.EveryRow)).toBe(
+      expect(interpolate('CPU is ${__data.fields.cpu}%', series, RenderMode.PerRow)).toBe(
         'CPU is ${__data.fields.cpu}%'
       );
     });
@@ -107,7 +105,7 @@ describe('interpolateTemplate', () => {
         ],
       });
 
-      const blocks = interpolate('${__data.fields.n}', [big], RenderMode.EveryRow).split('\n\n');
+      const blocks = interpolate('${__data.fields.n}', [big], RenderMode.PerRow).split('\n\n');
 
       expect(blocks).toHaveLength(MAX_RENDERED_ROWS + 1);
       expect(blocks[MAX_RENDERED_ROWS - 1]).toBe(String(MAX_RENDERED_ROWS - 1));
@@ -122,7 +120,7 @@ describe('renderContent', () => {
   }
 
   it('renders repeated list items as a single list', () => {
-    const html = render('- ${__data.fields.host}', RenderMode.EveryRow);
+    const html = render('- ${__data.fields.host}', RenderMode.PerRow);
 
     // The blank line between rows makes it a loose list, so items carry a <p>.
     expect(html).toContain('<li><p>web-1</p>');
@@ -131,17 +129,17 @@ describe('renderContent', () => {
   });
 
   it('keeps each row a separate block rather than one run-on paragraph', () => {
-    const html = render('${__data.fields.host}', RenderMode.EveryRow);
+    const html = render('${__data.fields.host}', RenderMode.PerRow);
 
     expect(html.match(/<p>/g)).toHaveLength(2);
   });
 
   it('leaves code mode content untransformed', () => {
-    expect(render('${__data.fields.host},', RenderMode.EveryRow, TextMode.Code)).toBe('web-1,\nweb-2,');
+    expect(render('${__data.fields.host},', RenderMode.PerRow, TextMode.Code)).toBe('web-1,\nweb-2,');
   });
 
   it('sanitizes per-row HTML output', () => {
-    expect(render('<b>${__data.fields.host}</b><script>alert(1)</script>', RenderMode.EveryRow, TextMode.HTML)).toBe(
+    expect(render('<b>${__data.fields.host}</b><script>alert(1)</script>', RenderMode.PerRow, TextMode.HTML)).toBe(
       '<b>web-1</b>&lt;script&gt;alert(1)&lt;/script&gt;\n<b>web-2</b>&lt;script&gt;alert(1)&lt;/script&gt;'
     );
   });

@@ -552,14 +552,14 @@ describe('TextNGEditor render mode preview', () => {
   const previewHtml = () => screen.getByTestId(PREVIEW_TEST_ID).innerHTML;
 
   it('previews one block per row in every row mode, matching the panel', () => {
-    render(previewFor(RenderMode.EveryRow));
+    render(previewFor(RenderMode.PerRow));
 
     expect(previewHtml()).toContain('row-0');
     expect(previewHtml()).toContain('row-1');
   });
 
   it.each([
-    ['all rows mode', RenderMode.AllRows],
+    ['once mode', RenderMode.Once],
     ['an unset render mode', undefined],
   ])('previews a single render with no row context in %s', (_name, renderMode) => {
     render(previewFor(renderMode));
@@ -568,10 +568,10 @@ describe('TextNGEditor render mode preview', () => {
   });
 
   it('updates the preview when the pane changes the render mode', () => {
-    const { rerender } = render(previewFor(RenderMode.AllRows));
+    const { rerender } = render(previewFor(RenderMode.Once));
     expect(previewHtml()).toContain('no row context');
 
-    rerender(previewFor(RenderMode.EveryRow));
+    rerender(previewFor(RenderMode.PerRow));
 
     expect(previewHtml()).toContain('row-0');
     expect(previewHtml()).toContain('row-1');

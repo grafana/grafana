@@ -334,14 +334,14 @@ describe('TextNGPanel', () => {
     }
 
     it('renders the content once per row in every row mode', () => {
-      const html = setupWithData(RenderMode.EveryRow);
+      const html = setupWithData(RenderMode.PerRow);
 
       expect(html).toContain('row-0');
       expect(html).toContain('row-1');
     });
 
     it.each([
-      ['all rows mode', RenderMode.AllRows],
+      ['once mode', RenderMode.Once],
       ['an unset render mode', undefined],
     ])('renders once with no row context in %s', (_name, renderMode) => {
       expect(setupWithData(renderMode)).toContain('no row context');

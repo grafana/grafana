@@ -24,7 +24,7 @@ export function hasRenderableData(series?: DataFrame[]): series is DataFrame[] {
 export function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction): string {
   const { content, series, renderMode, format } = template;
 
-  if (renderMode === RenderMode.EveryRow && hasRenderableData(series)) {
+  if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
     return interpolateEveryRow(template, series, replaceVariables);
   }
 

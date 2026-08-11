@@ -144,7 +144,7 @@
         "kind": "Panel",
         "spec": {
           "id": 6,
-          "title": "Render mode: Every row",
+          "title": "Render mode: Per row",
           "description": "",
           "links": [],
           "data": {
@@ -187,7 +187,7 @@
                   "language": "plaintext",
                   "showLineNumbers": false
                 },
-                "renderMode": "everyRow"
+                "renderMode": "perRow"
               },
               "fieldConfig": {
                 "defaults": {},
