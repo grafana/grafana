@@ -170,13 +170,31 @@ describe('NotebooksListPage', () => {
     expect(screen.queryByText("You haven't created any notebooks yet")).not.toBeInTheDocument();
   });
 
-  it('says the count is a page when the server had more to give', async () => {
+  it('reports how many were loaded when the server had more to give', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     setList([makeNotebook('nb1', 'Checkout error spike')], { continueToken: 'next-page' });
 
     render(<NotebooksListPage />);
 
-    expect(await screen.findByText('Showing first 1 notebook')).toBeInTheDocument();
+    expect(await screen.findByText('First 1 notebook loaded')).toBeInTheDocument();
+    expect(screen.getByText('1 notebook')).toBeInTheDocument();
+  });
+
+  it('keeps the loaded count and the match count separate while filtering a truncated list', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setList([makeNotebook('nb1', 'Checkout error spike'), makeNotebook('nb2', 'Q2 latency regression')], {
+      continueToken: 'next-page',
+    });
+
+    render(<NotebooksListPage />);
+
+    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+    // The match count moves with the filter; the loaded count keeps describing the page we hold.
+    await waitFor(() => {
+      expect(screen.getByText('1 notebook')).toBeInTheDocument();
+    });
+    expect(screen.getByText('First 2 notebooks loaded')).toBeInTheDocument();
   });
 
   it('hides the create button without dashboards:create', async () => {

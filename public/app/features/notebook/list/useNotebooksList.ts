@@ -57,15 +57,19 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
 
   const authorNames = useMemo(() => {
     const map = new Map<string, string>();
-    // `display` is positional against the `keys` we asked with, so remap by index. Matching on
-    // the returned identity instead would miss any non-UID key, because the endpoint always
-    // reports identity.name as the user's UID regardless of the key form requested.
-    displayMapping?.keys?.forEach((key, index) => {
-      const displayName = displayMapping.display[index]?.displayName;
-      if (displayName) {
-        map.set(key, displayName);
+    // Keyed by identity rather than by position: the server builds `display` from its query
+    // results and appends constants, so it is neither in `keys` order nor the same length.
+    // Both key forms are indexed because a createdBy annotation may carry either the UID
+    // (`user:abc`) or the legacy numeric id (`user:1`), and only the UID form comes back as
+    // identity.name.
+    for (const entry of displayMapping?.display ?? []) {
+      if (entry.identity.name) {
+        map.set(`${entry.identity.type}:${entry.identity.name}`, entry.displayName);
       }
-    });
+      if (entry.internalId) {
+        map.set(`${entry.identity.type}:${entry.internalId}`, entry.displayName);
+      }
+    }
     return map;
   }, [displayMapping]);
 

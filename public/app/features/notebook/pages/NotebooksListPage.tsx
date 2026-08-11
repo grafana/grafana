@@ -143,20 +143,27 @@ export function NotebooksListPage() {
                     aria-label={t('notebooks.list.author-filter', 'Filter by author')}
                   />
                 </Stack>
-                <Text variant="bodySmall" color="secondary">
-                  {/* The server had more pages, so say the count is a page rather than a total. */}
-                  {isTruncated
-                    ? t('notebooks.list.count-truncated', '', {
-                        count: rows.length,
-                        defaultValue_one: 'Showing first {{count}} notebook',
-                        defaultValue_other: 'Showing first {{count}} notebooks',
-                      })
-                    : t('notebooks.list.count', '', {
-                        count: rows.length,
-                        defaultValue_one: '{{count}} notebook',
-                        defaultValue_other: '{{count}} notebooks',
+                {/* Two separate numbers: how many match the filters, and — when the server had
+                    more — how many were loaded at all. Filtering runs over the loaded page, so
+                    folding them into one count would misreport both. */}
+                <Stack alignItems="center" gap={1}>
+                  {isTruncated && (
+                    <Text variant="bodySmall" color="secondary">
+                      {t('notebooks.list.count-truncated', '', {
+                        count: totalCount,
+                        defaultValue_one: 'First {{count}} notebook loaded',
+                        defaultValue_other: 'First {{count}} notebooks loaded',
                       })}
-                </Text>
+                    </Text>
+                  )}
+                  <Text variant="bodySmall" color="secondary">
+                    {t('notebooks.list.count', '', {
+                      count: rows.length,
+                      defaultValue_one: '{{count}} notebook',
+                      defaultValue_other: '{{count}} notebooks',
+                    })}
+                  </Text>
+                </Stack>
               </Stack>
 
               {rows.length === 0 ? (

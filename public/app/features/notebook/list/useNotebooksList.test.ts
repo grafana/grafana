@@ -149,21 +149,65 @@ describe('useNotebooksList', () => {
       expect(result.current.authorOptions).toEqual([{ value: 'user:abc', label: 'Marcus Chen' }]);
     });
 
-    it('remaps by requested key, not by the returned identity', () => {
-      // The endpoint reports identity.name as the user's UID whatever key form was asked for, so
-      // reconstructing `${type}:${name}` would miss this row entirely.
+    it('matches on identity rather than position', () => {
+      // The server builds `display` from its query results and appends constants, so it is
+      // neither in `keys` order nor the same length. Pairing by index would swap these names.
+      setList([
+        makeNotebook({ name: 'nb1', title: 'One', createdBy: 'user:aaa' }),
+        makeNotebook({ name: 'nb2', title: 'Two', createdBy: 'user:bbb' }),
+      ]);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: {
+          keys: ['user:aaa', 'user:bbb'],
+          display: [
+            { identity: { type: 'user', name: 'bbb' }, displayName: 'Priya Mehta' },
+            { identity: { type: 'user', name: 'aaa' }, displayName: 'Marcus Chen' },
+          ],
+        },
+      } as unknown as ReturnType<typeof useGetDisplayMappingQuery>);
+
+      const { result } = setupHook();
+
+      const byUid = Object.fromEntries(result.current.rows.map((row) => [row.uid, row.authorName]));
+      expect(byUid).toEqual({ nb1: 'Marcus Chen', nb2: 'Priya Mehta' });
+    });
+
+    it('resolves a legacy numeric key through internalId', () => {
+      // A createdBy annotation can carry the numeric id, which never appears as identity.name.
       setList([makeNotebook({ name: 'nb1', title: 'One', createdBy: 'user:1' })]);
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
       mockUseGetDisplayMappingQuery.mockReturnValue({
         data: {
           keys: ['user:1'],
-          display: [{ identity: { type: 'user', name: 'abc' }, displayName: 'Marcus Chen' }],
+          display: [{ identity: { type: 'user', name: 'abc' }, displayName: 'Marcus Chen', internalId: 1 }],
         },
       } as unknown as ReturnType<typeof useGetDisplayMappingQuery>);
 
       const { result } = setupHook();
 
       expect(result.current.rows[0].authorName).toBe('Marcus Chen');
+    });
+
+    it('drops a name the server did not return, rather than shifting it onto another row', () => {
+      // Users the query cannot resolve are simply absent from `display`, so the arrays differ in
+      // length as well as order.
+      setList([
+        makeNotebook({ name: 'nb1', title: 'One', createdBy: 'user:missing' }),
+        makeNotebook({ name: 'nb2', title: 'Two', createdBy: 'user:bbb' }),
+      ]);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: {
+          keys: ['user:missing', 'user:bbb'],
+          display: [{ identity: { type: 'user', name: 'bbb' }, displayName: 'Priya Mehta' }],
+        },
+      } as unknown as ReturnType<typeof useGetDisplayMappingQuery>);
+
+      const { result } = setupHook();
+
+      const byUid = Object.fromEntries(result.current.rows.map((row) => [row.uid, row.authorName]));
+      expect(byUid).toEqual({ nb1: 'Anonymous', nb2: 'Priya Mehta' });
     });
 
     it('falls back to Anonymous rather than leaking the identity key', () => {
