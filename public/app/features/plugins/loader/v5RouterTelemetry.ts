@@ -2,19 +2,47 @@ import { createElement, type ComponentType } from 'react';
 
 import { getLogger } from '@grafana/runtime/unstable';
 
-// Plugin bundles are served from `public/plugins/<id>/`, both locally and from the
-// CDN. transformPluginSourceForCDN keeps that segment in CDN URLs, so one marker
-// covers both. See public/app/features/plugins/cdn/utils.ts.
+// Plugin bundles are served from `public/plugins/<id>/` regardless of host (CDN, filesystem).
 const PLUGIN_BUNDLE_PATH = /\/public\/plugins\/([^/]+)\//;
 
-// One entry per plugin and export. A single latched flag would hide a second
-// plugin that reaches the same export.
 const reported = new Set<string>();
 
-// Exports that react-router v6 removes. Plugins that call these break at the
-// upgrade, so these are the ones worth counting.
+// React-router v5 APIs that are removed in v6.
 const V5_ONLY_FUNCTIONS = ['useHistory', 'useRouteMatch', 'withRouter'] as const;
 const V5_ONLY_COMPONENTS = ['Switch', 'Redirect', 'Prompt'] as const;
+
+/**
+ * Returns the react-router-dom module with the "v6 removed" exports wrapped so
+ * we can report when a plugin uses them.
+ */
+export function withV5UsageTelemetry<T extends Record<string, unknown>>(module: T): T {
+  const wrappers: Record<string, UnknownFunction> = {};
+
+  for (const exportName of V5_ONLY_FUNCTIONS) {
+    const original = module[exportName];
+
+    if (isFunction(original)) {
+      wrappers[exportName] = reportingFunction(exportName, original);
+    }
+  }
+
+  for (const exportName of V5_ONLY_COMPONENTS) {
+    const original = module[exportName];
+
+    if (isComponent(original)) {
+      wrappers[exportName] = reportingComponent(exportName, original);
+    }
+  }
+
+  const wrapped = { ...module, ...wrappers };
+
+  // A spread copies enumerable properties only, and webpack marks `__esModule`
+  // as non-enumerable. SystemJS reads it when it registers a shared dependency
+  // and puts it on the namespace it hands to plugins, so carry it over by hand.
+  copyHiddenProperty(module, wrapped, '__esModule');
+
+  return wrapped;
+}
 
 /**
  * Reads the plugin id out of a captured stack.
@@ -91,46 +119,6 @@ function reportingComponent(exportName: string, Original: ComponentType<UnknownP
 
     return createElement(Original, props);
   };
-}
-
-/**
- * Returns the react-router-dom module with its v5-only exports wrapped, so that
- * a plugin calling one of them is reported.
- *
- * The wrappers replace the exports rather than watching reads of them. SystemJS
- * copies the values out of this object once, when it registers the shared
- * dependency, so a getter or a Proxy would fire at load and never again. A
- * wrapper survives, because the value that SystemJS copies is the wrapper.
- */
-export function withV5UsageTelemetry<T extends Record<string, unknown>>(module: T): T {
-  const wrappers: Record<string, UnknownFunction> = {};
-
-  for (const exportName of V5_ONLY_FUNCTIONS) {
-    const original = module[exportName];
-
-    if (isFunction(original)) {
-      wrappers[exportName] = reportingFunction(exportName, original);
-    }
-  }
-
-  for (const exportName of V5_ONLY_COMPONENTS) {
-    const original = module[exportName];
-
-    if (isComponent(original)) {
-      wrappers[exportName] = reportingComponent(exportName, original);
-    }
-  }
-
-  const wrapped = { ...module, ...wrappers };
-
-  // A spread copies enumerable properties only, and webpack marks the interop
-  // flags of a module namespace as non-enumerable. Carry them over by hand.
-  // SystemJS reads `__esModule` when it registers a shared dependency, and it
-  // keeps an object whose tag is 'Module' instead of copying it.
-  copyHiddenProperty(module, wrapped, '__esModule');
-  copyHiddenProperty(module, wrapped, Symbol.toStringTag);
-
-  return wrapped;
 }
 
 function copyHiddenProperty(source: object, target: object, key: string | symbol): void {
