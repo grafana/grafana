@@ -198,7 +198,7 @@ describe('BARGAUGE_CARD_OPTIONS.previewModifier', () => {
     expect(suggestion.options?.reduceOptions?.limit).toBeUndefined();
   });
 
-  it('leaves a suggestion without options untouched', () => {
+  it('does not modify a suggestion without options', () => {
     const suggestion: VisualizationSuggestion<Options> = { name: 'preview' };
 
     previewModifier(suggestion);
