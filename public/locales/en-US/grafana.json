@@ -8068,7 +8068,8 @@
       "title-missing-rights": "Missing rights"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Select a data source"
+      "aria-label-select-a-data-source": "Select a data source",
+      "clear-button": "Clear data source"
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Page not found: {{page}}"
