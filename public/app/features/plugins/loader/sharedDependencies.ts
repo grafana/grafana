@@ -130,7 +130,7 @@ export const sharedDependenciesMap = {
   // is reported before the upgrade removes it. Calls to a hook carry the plugin
   // id. Calls to a component do not, because React renders a component from its
   // own work loop, after the frames of the plugin have returned.
-  'react-router-dom': () => import('react-router-dom').then(withV5UsageTelemetry),
+  'react-router-dom': () => import('react-router-dom').then((module) => withV5UsageTelemetry(module)),
   'react-router': () => import('react-router-dom-v5-compat'),
   redux: () => import('redux'),
   rxjs: () => import('rxjs'),
