@@ -171,20 +171,75 @@ describe('HeaderCell', () => {
       expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
     });
 
-    it('keeps the column menu visible while the column is filtered', () => {
+    it('marks a filtered column with a persistent filter icon, leaving the menu hover-only', () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
       const { rerender } = render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
-      // hidden until the header cell is hovered or focused
+
+      expect(screen.queryByTitle('Filtered')).not.toBeInTheDocument();
+      // the menu stays hidden until the header cell is hovered or focused
       expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '0' });
 
       rerender(
+        <HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} tableRefreshEnabled />
+      );
+
+      expect(screen.getByTitle('Filtered')).toBeInTheDocument();
+      // an active filter is reported by the icon, so the menu is not pinned visible
+      expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '0' });
+    });
+
+    it('keys the filter icon by parent index on a nested table', () => {
+      const nested = { 'Field1-2': { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+
+      const { rerender } = render(
+        <HeaderCell {...baseProps} field={filterableField()} filter={nested} parentIndex={2} tableRefreshEnabled />
+      );
+      expect(screen.getByTitle('Filtered')).toBeInTheDocument();
+
+      // a sibling parent with no filter of its own shows no icon
+      rerender(
+        <HeaderCell {...baseProps} field={filterableField()} filter={nested} parentIndex={3} tableRefreshEnabled />
+      );
+      expect(screen.queryByTitle('Filtered')).not.toBeInTheDocument();
+    });
+
+    it('renders the filter icon at the type icon size, not the sort arrow size', () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      const { container } = render(
         <HeaderCell
           {...baseProps}
           field={filterableField()}
-          filter={{ Field1: { filtered: [{ value: 'a' }] } } as unknown as FilterType}
+          filter={activeFilter}
+          direction="ASC"
+          showTypeIcons
           tableRefreshEnabled
         />
       );
-      expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '1' });
+
+      const filterIcon = screen.getByTitle('Filtered').closest('svg')!;
+      const typeIcon = screen.getByTitle('string').closest('svg')!;
+      const sortArrow = [...container.querySelectorAll('svg')].find(
+        (svg) => svg !== filterIcon && svg !== typeIcon
+      )!;
+
+      // The funnel fills its box where the arrow is a thin glyph, so rendering both at the arrow's
+      // "lg" made the funnel read as oversized. It tracks the type icon's size instead.
+      // Icon puts its size on width/height, not the class — every Icon shares one emotion class.
+      expect(filterIcon).toHaveAttribute('width', typeIcon.getAttribute('width')!);
+      expect(filterIcon).toHaveAttribute('width', '14');
+      expect(sortArrow).toHaveAttribute('width', '18');
+      // still the same colour as the sort arrow: both report state
+      const sortColor = getComputedStyle(sortArrow).color;
+      expect(sortColor).not.toBe('');
+      expect(getComputedStyle(filterIcon).color).toBe(sortColor);
+      // and adjacent to it, ahead of the trailing menu
+      expect(filterIcon.closest('div')).toBe(sortArrow.closest('div'));
+    });
+
+    it('renders no filter icon when the flag is off', () => {
+      const activeFilter = { Field1: { filtered: [{ value: 'a' }], displayName: 'Field1' } } as unknown as FilterType;
+      render(<HeaderCell {...baseProps} field={filterableField()} filter={activeFilter} />);
+      expect(screen.queryByTitle('Filtered')).not.toBeInTheDocument();
     });
   });
 

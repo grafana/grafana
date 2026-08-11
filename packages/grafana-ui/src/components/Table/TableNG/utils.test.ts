@@ -2151,6 +2151,41 @@ describe('TableNG utils', () => {
       ).toEqual([50]);
     });
 
+    it('reserves header space for the filter icon on a filtered column when table.refresh is on', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
+      ];
+      const filter = { Name: { filtered: [{ value: 'a' }], displayName: 'Name' } } as unknown as FilterType;
+      // header "Name" (4) => 32, + menu 22 + chrome 13 = 67 unfiltered; the filter icon adds 22 => 89.
+      expect(
+        computeContentAwareColWidths(fields, 89, {
+          typographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          filter,
+        })
+      ).toEqual([89]);
+      // without the active filter the same column stops at 67 (availWidth 89 leaves it room to grow,
+      // so pin availWidth to 67 to show the header no longer demands the extra icon).
+      expect(
+        computeContentAwareColWidths(fields, 67, { typographyCtx: makeTypographyCtx(), tableRefreshEnabled: true })
+      ).toEqual([67]);
+    });
+
+    it('ignores a filter whose values were cleared', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { filterable: true } } },
+      ];
+      // an entry with no `filtered` values is not an active filter, so it reserves no icon space
+      const cleared = { Name: { displayName: 'Name' } } as unknown as FilterType;
+      expect(
+        computeContentAwareColWidths(fields, 67, {
+          typographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          filter: cleared,
+        })
+      ).toEqual([67]);
+    });
+
     it('measures header labels with the medium-weight header context when provided', () => {
       // Header labels render bolder than the body, so a wider (medium-weight) context is passed for
       // them. This mock context measures every glyph 2px wider than the body's CHAR_W.

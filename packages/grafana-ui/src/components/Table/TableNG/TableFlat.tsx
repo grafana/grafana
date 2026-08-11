@@ -177,6 +177,7 @@ export function TableFlat(props: TableNGProps) {
     getActions: getCellActions,
     sortColumns,
     tableRefreshEnabled,
+    filter,
   });
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
