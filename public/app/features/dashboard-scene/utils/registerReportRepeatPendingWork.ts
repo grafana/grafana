@@ -1,19 +1,9 @@
-import { sceneGraph, type SceneObject, type SceneQueryControllerLike } from '@grafana/scenes';
+import { sceneGraph, type SceneQueryControllerEntry, type SceneObject } from '@grafana/scenes';
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
 // Safety valve for clones that never activate (e.g. hidden by conditional rendering).
 // Kept below the image renderer's 30s readiness timeout so a stuck hold cannot fail a render.
 export const RELEASE_FALLBACK_MS = 20_000;
-
-interface PendingWorkController extends SceneQueryControllerLike {
-  registerPendingWork(type: string, origin: SceneObject): () => void;
-}
-
-// Duck-typed because the currently pinned @grafana/scenes version does not expose
-// registerPendingWork yet; this helper becomes active once the scenes upgrade lands.
-function supportsPendingWork(controller: SceneQueryControllerLike): controller is PendingWorkController {
-  return 'registerPendingWork' in controller && typeof controller.registerPendingWork === 'function';
-}
 
 // Latest hold per repeater. A re-repeat discards the previous clones, which will never
 // activate, so the superseded hold must be released eagerly instead of waiting for the
@@ -43,11 +33,11 @@ export function registerReportRepeatPendingWork(origin: SceneObject, clones: Sce
   }
 
   const controller = sceneGraph.getQueryController(origin);
-  if (!controller || !supportsPendingWork(controller)) {
+  if (!controller) {
     return;
   }
 
-  const release = controller.registerPendingWork('repeat', origin);
+  const release = registerPendingWork('repeat', origin);
   // Register-then-release keeps the running count above zero across the swap.
   releasePrevious?.();
 
@@ -78,4 +68,31 @@ export function registerReportRepeatPendingWork(origin: SceneObject, clones: Sce
 
   // Clones may already be active when repeats are re-performed with reused objects.
   releaseWhenAllActive();
+}
+
+export function registerPendingWork(type: SceneQueryControllerEntry['type'], origin: SceneObject): () => void {
+  const controller = sceneGraph.getQueryController(origin);
+  if (!controller) {
+    return () => {};
+  }
+
+  let released = false;
+
+  const release = () => {
+    if (released) {
+      return;
+    }
+    released = true;
+    controller.queryCompleted(entry);
+  };
+
+  const entry: SceneQueryControllerEntry = {
+    type,
+    origin,
+    cancel: release,
+  };
+
+  controller.queryStarted(entry);
+
+  return release;
 }
