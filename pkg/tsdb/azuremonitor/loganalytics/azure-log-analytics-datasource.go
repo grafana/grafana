@@ -549,7 +549,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 }
 
 func addDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl string, frame *data.Frame, dsInfo types.DatasourceInfo, queryUrl string) error {
-	if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
+	if query.QueryType == dataquery.AzureQueryTypeAzureTraces || query.QueryType == dataquery.AzureQueryTypeTraceExemplar {
 		err := addTraceDataLinksToFields(query, azurePortalBaseUrl, frame, dsInfo)
 		if err != nil {
 			return err
@@ -579,9 +579,19 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 		return err
 	}
 
-	if len(queryJSONModel.AzureTraces.Resources) == 0 {
+	if queryJSONModel.AzureTraces == nil {
+		queryJSONModel.AzureTraces = &dataquery.AzureTracesQuery{}
+	}
+
+	// Prefer resolved query resources (e.g. TraceExemplar correlation results) over the raw JSON payload.
+	resources := query.Resources
+	if len(resources) == 0 {
+		resources = queryJSONModel.AzureTraces.Resources
+	}
+	if len(resources) == 0 {
 		return fmt.Errorf("no resources specified for Azure traces data link")
 	}
+	queryJSONModel.AzureTraces.Resources = resources
 
 	traceIdVariable := "${__data.fields.traceID}"
 	resultFormat := dataquery.ResultFormatTrace
@@ -591,34 +601,45 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 		queryJSONModel.AzureTraces.OperationId = &traceIdVariable
 	}
 
+	// Explore links from TraceExemplar should open as Azure Traces queries.
+	azureTracesQueryType := string(dataquery.AzureQueryTypeAzureTraces)
+	queryJSONModel.QueryType = &azureTracesQueryType
+
 	logsQueryType := string(dataquery.AzureQueryTypeLogAnalytics)
 	logsJSONModel := dataquery.AzureMonitorQuery{
 		QueryType: &logsQueryType,
 		AzureLogAnalytics: &dataquery.AzureLogsQuery{
 			Query:     &query.TraceLogsExploreQuery,
-			Resources: []string{queryJSONModel.AzureTraces.Resources[0]},
+			Resources: []string{resources[0]},
 		},
 	}
 
 	if query.ResultFormat == dataquery.ResultFormatTable {
+		exploreTraceModel := queryJSONModel
+		exploreTrace := *queryJSONModel.AzureTraces
+		exploreTrace.Query = &query.TraceExploreQuery
+		exploreTraceModel.AzureTraces = &exploreTrace
 		AddCustomDataLink(*frame, data.DataLink{
 			Title: "Explore Trace: ${__data.fields.traceID}",
 			URL:   "",
 			Internal: &data.InternalDataLink{
 				DatasourceUID:  dsInfo.DatasourceUID,
 				DatasourceName: dsInfo.DatasourceName,
-				Query:          queryJSONModel,
+				Query:          exploreTraceModel,
 			},
 		}, MultiField)
 
-		queryJSONModel.AzureTraces.Query = &query.TraceParentExploreQuery
+		exploreParentModel := queryJSONModel
+		exploreParent := *queryJSONModel.AzureTraces
+		exploreParent.Query = &query.TraceParentExploreQuery
+		exploreParentModel.AzureTraces = &exploreParent
 		AddCustomDataLink(*frame, data.DataLink{
 			Title: "Explore Parent Span: ${__data.fields.parentSpanID}",
 			URL:   "",
 			Internal: &data.InternalDataLink{
 				DatasourceUID:  dsInfo.DatasourceUID,
 				DatasourceName: dsInfo.DatasourceName,
-				Query:          queryJSONModel,
+				Query:          exploreParentModel,
 			},
 		}, MultiField)
 

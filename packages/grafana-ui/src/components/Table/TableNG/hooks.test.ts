@@ -16,7 +16,6 @@ import {
   useNestedRows,
   useColWidths,
   useRowCompiler,
-  useDebouncedNumber,
 } from './hooks';
 import { type TableRow } from './types';
 import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
@@ -24,34 +23,6 @@ import { applyFilter, createTypographyContext, compileFrameToRecords } from './u
 const emptyFilterResult = applyFilter([], {}, []);
 
 describe('TableNG hooks', () => {
-  describe('useDebouncedNumber', () => {
-    beforeEach(() => jest.useFakeTimers());
-    afterEach(() => jest.useRealTimers());
-
-    it('returns the initial value immediately, without waiting for the debounce', () => {
-      const { result } = renderHook(() => useDebouncedNumber(100, 120));
-      expect(result.current).toBe(100);
-    });
-
-    it('holds the previous value until changes settle, then emits only the final value', () => {
-      const { result, rerender } = renderHook(({ v }) => useDebouncedNumber(v, 120), {
-        initialProps: { v: 100 },
-      });
-
-      // rapid changes (a drag) — none should be reflected until the window elapses
-      rerender({ v: 150 });
-      rerender({ v: 220 });
-      rerender({ v: 315 });
-      expect(result.current).toBe(100);
-
-      act(() => jest.advanceTimersByTime(119));
-      expect(result.current).toBe(100); // still within the debounce window
-
-      act(() => jest.advanceTimersByTime(1));
-      expect(result.current).toBe(315); // only the last value lands, not the intermediate ones
-    });
-  });
-
   function setupData() {
     // Mock data for testing
     const fields: Field[] = [
@@ -719,7 +690,8 @@ describe('TableNG hooks', () => {
         });
       });
 
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 26, modifiedFields[0], -1, 22);
+      // colWidth 100 - chrome 13 - 3 icons (filter + sort + type) * 22 = 21, floor - 1 = 20.
+      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 20, modifiedFields[0], -1, 22);
     });
 
     it('does not throw if a field has been deleted but the colWidth has not yet been updated', () => {
@@ -1436,6 +1408,43 @@ describe('TableNG hooks', () => {
       expect(result.current.nestedFieldWidths).toEqual([100, 100]);
       expect(result.current.nestedColWidths.get('a')).toEqual({ type: 'resized', width: 100 });
       expect(result.current.nestedColWidths.get('b')).toEqual({ type: 'resized', width: 100 });
+    });
+
+    it('re-flows auto (unconfigured) column widths when the panel width changes', () => {
+      const fields: Field[] = ['a', 'b'].map((name) => ({ name, type: FieldType.string, config: {}, values: [] }));
+      const { result, rerender } = renderHook(
+        ({ availableWidth }: { availableWidth: number }) =>
+          useNestedColWidths({ nestedVisibleFields: fields, availableWidth }),
+        { initialProps: { availableWidth: 300 } }
+      );
+
+      const before = [...result.current.nestedFieldWidths];
+      rerender({ availableWidth: 600 });
+      const after = result.current.nestedFieldWidths;
+
+      // widening the panel widens the auto-sized nested columns (previously they stayed put until a
+      // structure change, so they ignored panel resize).
+      expect(after[0]).toBeGreaterThan(before[0]);
+      expect(after[1]).toBeGreaterThan(before[1]);
+    });
+
+    it('preserves a manual nested resize across a panel resize before it persists to config', () => {
+      const fields = makeFields(['a', 'b']); // configured width 100 each
+      const { result, rerender } = renderHook(
+        ({ availableWidth }: { availableWidth: number }) =>
+          useNestedColWidths({ nestedVisibleFields: fields, availableWidth }),
+        { initialProps: { availableWidth: 300 } }
+      );
+
+      // user drags column 'a' — local widths update immediately; config persists later on pointer-up.
+      act(() => {
+        result.current.handleNestedColumnWidthsChange(new Map([['a', { type: 'resized', width: 250 }]]));
+      });
+      expect(result.current.nestedFieldWidths[0]).toBe(250);
+
+      // a panel resize lands before the drag persists — it must not overwrite the in-progress resize.
+      rerender({ availableWidth: 600 });
+      expect(result.current.nestedFieldWidths[0]).toBe(250);
     });
 
     it('handleNestedColumnWidthsChange updates nestedFieldWidths and nestedColWidths', () => {

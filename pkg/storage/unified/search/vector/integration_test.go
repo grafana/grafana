@@ -552,6 +552,130 @@ func TestIntegrationVectorExists(t *testing.T) {
 	assert.False(t, exists, "different model should be treated as not-exists")
 }
 
+func TestIntegrationVectorCountStoredEmbeddings(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	// Counts are global, and cleanIntegrationState only wipes the
+	// integration-test namespaces, so assert on the delta.
+	countFor := func(t *testing.T, model string) int64 {
+		t.Helper()
+		counts, err := backend.CountStoredEmbeddings(ctx)
+		require.NoError(t, err)
+		for _, c := range counts {
+			if c.Resource == testResource && c.Model == model {
+				return c.Count
+			}
+		}
+		return 0
+	}
+
+	before := countFor(t, testModel)
+	beforeOther := countFor(t, "other-model")
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		{Namespace: "integration-test", Resource: testResource, UID: "count-dash", Title: "T",
+			Subresource: "panel/1", ResourceVersion: 1, Content: "x",
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
+		{Namespace: "integration-test", Resource: testResource, UID: "count-dash", Title: "T",
+			Subresource: "panel/2", ResourceVersion: 1, Content: "y",
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
+		{Namespace: "integration-test", Resource: testResource, UID: "count-dash", Title: "T",
+			Subresource: "panel/1", ResourceVersion: 1, Content: "z",
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: "other-model"},
+	}))
+
+	assert.Equal(t, before+2, countFor(t, testModel))
+	assert.Equal(t, beforeOther+1, countFor(t, "other-model"), "rows must be grouped per model")
+
+	_, _, err := backend.DeleteRows(ctx, "integration-test", testModel, testResource,
+		DeleteSelector{UIDs: []string{"count-dash"}})
+	require.NoError(t, err)
+	assert.Equal(t, before, countFor(t, testModel))
+	assert.Equal(t, beforeOther+1, countFor(t, "other-model"))
+}
+
+// TestIntegrationVectorContentVersion pins the MIN-across-rows contract:
+// an absent uid reports exists=false, mixed content_version rows report the
+// oldest (MIN), and both Upsert and UpsertReplaceSubresources persist the
+// version so a later read reflects it.
+func TestIntegrationVectorContentVersion(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	version, exists, err := backend.ContentVersion(ctx, "integration-test", testModel, testResource, "cv-dash")
+	require.NoError(t, err)
+	assert.False(t, exists, "no rows yet")
+	assert.Equal(t, 0, version)
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		{Namespace: "integration-test", Resource: testResource, UID: "cv-dash", Title: "T",
+			Subresource: "panel/1", Content: "p1", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 2},
+		{Namespace: "integration-test", Resource: testResource, UID: "cv-dash", Title: "T",
+			Subresource: "panel/2", Content: "p2", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 5},
+	}))
+
+	version, exists, err = backend.ContentVersion(ctx, "integration-test", testModel, testResource, "cv-dash")
+	require.NoError(t, err)
+	assert.True(t, exists)
+	assert.Equal(t, 2, version, "MIN across the uid's mixed-version rows")
+
+	// UpsertReplaceSubresources round-trips content_version too: panel/1
+	// bumps to 9, panel/2 is left untouched (still 5, in desired but not
+	// changed) — the new MIN reflects the surviving older row.
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "cv-dash",
+		[]Vector{
+			{Namespace: "integration-test", Resource: testResource, UID: "cv-dash", Title: "T",
+				Subresource: "panel/1", Content: "p1 v2", Metadata: json.RawMessage(`{}`),
+				Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 9},
+		}, nil, []string{"panel/1", "panel/2"}))
+
+	version, exists, err = backend.ContentVersion(ctx, "integration-test", testModel, testResource, "cv-dash")
+	require.NoError(t, err)
+	assert.True(t, exists)
+	assert.Equal(t, 5, version, "panel/1 now 9, panel/2 unchanged at 5, so MIN is 5")
+
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"cv-dash"}})
+	require.NoError(t, err)
+}
+
+// TestIntegrationVectorUpdateContentVersion pins the round-trip contract:
+// UpdateContentVersion stamps every subresource row of a uid, regardless of
+// their prior (possibly mixed) content_version, and ContentVersion reflects
+// the new MIN afterward.
+func TestIntegrationVectorUpdateContentVersion(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		{Namespace: "integration-test", Resource: testResource, UID: "uv-dash", Title: "T",
+			Subresource: "panel/1", Content: "p1", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 1},
+		{Namespace: "integration-test", Resource: testResource, UID: "uv-dash", Title: "T",
+			Subresource: "panel/2", Content: "p2", Metadata: json.RawMessage(`{}`),
+			Embedding: makeEmbedding(0.5, 0.5), Model: testModel, ContentVersion: 2},
+	}))
+
+	version, exists, err := backend.ContentVersion(ctx, "integration-test", testModel, testResource, "uv-dash")
+	require.NoError(t, err)
+	require.True(t, exists)
+	assert.Equal(t, 1, version, "MIN across the mixed-version rows before the touch")
+
+	require.NoError(t, backend.UpdateContentVersion(ctx, "integration-test", testModel, testResource, "uv-dash", 5))
+
+	version, exists, err = backend.ContentVersion(ctx, "integration-test", testModel, testResource, "uv-dash")
+	require.NoError(t, err)
+	require.True(t, exists)
+	assert.Equal(t, 5, version, "every row (both panel/1 and panel/2) stamped to the new version")
+
+	// Content itself is untouched — this is a version-only stamp, not a re-embed.
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "uv-dash")
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"panel/1": "p1", "panel/2": "p2"}, stored)
+
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"uv-dash"}})
+	require.NoError(t, err)
+}
+
 func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
@@ -580,16 +704,72 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 func TestIntegrationVectorCreateBackfillJob(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
-	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 100))
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 100, 1))
 
 	// Second insert for the same (model, resource) is a no-op (ON CONFLICT
 	// DO NOTHING): the original row is preserved, not overwritten with 200.
-	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 200))
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 200, 1))
 
 	jobs, err := backend.ListIncompleteBackfillJobs(ctx, testModel)
 	require.NoError(t, err)
 	require.Len(t, jobs, 1, "exactly one job exists after the conflicting insert")
 	assert.Equal(t, int64(100), jobs[0].StoppingRV, "original stopping_rv preserved")
+}
+
+func TestIntegrationVectorReopenStaleBackfillJobs(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 100, 1))
+	jobs, err := backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Len(t, jobs, 1)
+	require.NoError(t, backend.CompleteBackfillJob(ctx, jobs[0].ID))
+
+	// Completed job is invisible to the lister until a version bump reopens it.
+	jobs, err = backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Empty(t, jobs)
+
+	// Same content_version: no-op, job stays completed.
+	reopened, err := backend.ReopenStaleBackfillJobs(ctx, testModel, testResource, 1, 999)
+	require.NoError(t, err)
+	assert.False(t, reopened, "same content_version must not reopen")
+	jobs, err = backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Empty(t, jobs)
+
+	// Version bump: reopens, resets the cursor/error, advances stopping_rv.
+	reopened, err = backend.ReopenStaleBackfillJobs(ctx, testModel, testResource, 2, 999)
+	require.NoError(t, err)
+	assert.True(t, reopened)
+	jobs, err = backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Len(t, jobs, 1)
+	assert.False(t, jobs[0].IsComplete)
+	assert.Equal(t, int64(999), jobs[0].StoppingRV)
+	assert.Empty(t, jobs[0].LastSeenKey)
+	assert.Empty(t, jobs[0].LastError)
+}
+
+func TestIntegrationVectorReopenStaleBackfillJobs_CoversCatchAllJob(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	// A ''-catch-all job must also be reopened by a builder-scoped call.
+	// Seeded with raw SQL: catch-all rows are operator-created by design —
+	// CreateBackfillJob validates resource as non-empty.
+	_, err := engine.Exec(
+		`INSERT INTO vector_backfill_jobs (model, resource, stopping_rv, is_complete, content_version)
+		 VALUES ($1, '', 100, TRUE, 1)`, testModel)
+	require.NoError(t, err)
+
+	reopened, err := backend.ReopenStaleBackfillJobs(ctx, testModel, testResource, 2, 999)
+	require.NoError(t, err)
+	assert.True(t, reopened, "the ''-catch-all job must be reopened by a resource-scoped call")
+
+	jobs, err := backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Len(t, jobs, 1)
+	assert.Equal(t, "", jobs[0].Resource)
 }
 
 func TestIntegrationVectorReconcilerLock(t *testing.T) {
