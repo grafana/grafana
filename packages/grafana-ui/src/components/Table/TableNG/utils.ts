@@ -1330,14 +1330,10 @@ function measureInlineRunWidth(
 /**
  * Width the header label needs, including its filter/sort/type-icon affordances.
  *
- * Unlike body content, the header is canvas-measured exactly rather than estimated from
- * `avgCharWidth`. It sets a hard lower bound the content is unioned with, so an under-estimate here
- * truncates the title outright. Exactness is affordable: it's one short string measured once per
- * column, not a value sampled across many rows.
- *
- * The sort arrow only appears once a column is sorted, so a tight column would otherwise ellipsize
- * its title the moment it's sorted; reserving its space when `isSorted` keeps the label readable
- * (the width recomputes on sort, so unsorted columns don't pay for it).
+ * Canvas-measured exactly rather than estimated from `avgCharWidth`: this is a hard lower bound on
+ * the column, so an under-estimate truncates the title outright — and it's one short string per
+ * column, not a sample across many rows. Sort-arrow space is only reserved when `isSorted` (widths
+ * recompute on sort), so a tight column doesn't ellipsize its title the moment it's sorted.
  */
 function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boolean, isSorted: boolean): number {
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
