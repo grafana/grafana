@@ -72,7 +72,6 @@ declare module "@openfeature/core" {
     | "dashboard.vectorSearch"
     | "grafana.vectorSearchCmdk"
     | "assistant.fullscreenWorkspace"
-    | "table.protoRowParser"
     | "grafana.queryVarEditorRedesign"
     | "table.refactorNested"
     | "table.paginationPageSize"
