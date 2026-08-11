@@ -16,6 +16,9 @@ import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { useSettingsPageNav } from '../navigation';
 
+import { StagedConfiguration } from './StagedConfiguration';
+import { isStagedExtraConfig } from './stagedConfig';
+
 const IMPORT_WIZARD_URL = '/alerting/import-to-gma';
 
 function ImportSettingsPage() {
@@ -64,8 +67,9 @@ function StagedConfigurationSection() {
     }
   }, [isError, error]);
 
-  // A user can have at most one staged configuration at a time.
-  const stagedConfig = data?.extra_config?.[0];
+  // A user can have at most one staged configuration at a time
+  const rawStagedConfig: unknown = data?.extra_config?.[0];
+  const stagedConfig = isStagedExtraConfig(rawStagedConfig) ? rawStagedConfig : undefined;
 
   return (
     <Stack direction="column" gap={1}>
@@ -119,8 +123,9 @@ function StagedConfigurationSection() {
         </EmptyState>
       )}
 
-      {/* Populated summary + accordion is added in a follow-up. */}
-      {!isLoading && !isError && stagedConfig && <Text variant="body">{stagedConfig.identifier}</Text>}
+      {!isLoading && !isError && stagedConfig && (
+        <StagedConfiguration stagedConfig={stagedConfig} liveConfig={data?.alertmanager_config} />
+      )}
     </Stack>
   );
 }

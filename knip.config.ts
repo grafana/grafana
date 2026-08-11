@@ -9,7 +9,7 @@ const packageIgnoreDeps = [
 
 const defaultEntries = ['i18next.config.ts'];
 
-const externalisedDatasources = ['azuremonitor', 'cloudwatch', 'grafana-testdata-datasource', 'graphite', 'influxdb'];
+const externalisedDatasources = ['azuremonitor', 'cloudwatch', 'grafana-testdata-datasource', 'graphite'];
 
 const config: KnipConfig = {
   compilers: {
@@ -29,6 +29,9 @@ const config: KnipConfig = {
     'public/app/features/alerting/unified/search/search.terms.js',
     'scripts/grafana-server/tmp/**',
     'devenv/**',
+
+    // vendored temporarily
+    'packages/grafana-data/src/datetime/easytz.js',
   ],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],

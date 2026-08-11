@@ -4,10 +4,10 @@ import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
-import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
 import { NotebookLayoutManager } from 'app/features/dashboard-scene/scene/layout-notebook/NotebookLayoutManager';
+import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from 'app/features/notebook/types';
 import { dispatch } from 'app/store/store';
 import { DashboardRoutes } from 'app/types/dashboard';
 

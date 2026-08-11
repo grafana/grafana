@@ -1,3 +1,5 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
+
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -9,7 +11,12 @@ import {
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { type DashboardMeta } from 'app/types/dashboard';
 
-import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../components/defaults';
+import {
+  getCanPushToConfiguredBranch,
+  getDefaultRef,
+  getDefaultWorkflow,
+  shouldEnforceBranchTemplate,
+} from '../components/defaults';
 import { generatePath } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
 import { type ProvisionedDashboardFormData } from '../types/form';
@@ -122,6 +129,7 @@ export function useProvisionedDashboardData(dashboard: DashboardScene, saveAsCop
   const { meta, title: defaultTitle, description: defaultDescription } = dashboard.useState();
   const [params] = useUrlParams();
   const loadedFromRef = params.get('ref') ?? undefined;
+  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   const defaultValuesResult = useDefaultValues({
     meta,
@@ -147,8 +155,17 @@ export function useProvisionedDashboardData(dashboard: DashboardScene, saveAsCop
   const { values, isNew, repository } = defaultValuesResult;
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 
+  // When the branch name template is enforced, dashboard pushes must go through the branch workflow
+  // so the templated branch is created and sent as `ref`, rather than a direct push that drops it.
+  // getDefaultWorkflow stays a pure default; the enforced case is decided here at the point of use.
+  // useBranchTemplate then fills the `ref`.
+  const defaultValues =
+    values && shouldEnforceBranchTemplate(repository, gitConventionsEnabled) && values.workflow !== 'branch'
+      ? { ...values, workflow: 'branch' as const }
+      : values;
+
   return {
-    defaultValues: values,
+    defaultValues,
     repository,
     loadedFromRef,
     canPushToConfiguredBranch,

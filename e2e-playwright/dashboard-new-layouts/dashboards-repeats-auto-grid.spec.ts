@@ -1,14 +1,12 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
-import { Canvas, Controls, Panels, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 import {
   checkRepeatedPanelTitles,
-  saveDashboard,
+  saveDashboardAndCloseToast,
   verifyChanges,
   movePanel,
-  getPanelPosition,
+  getPanelBox,
   importTestDashboard,
   goToEmbeddedPanel,
 } from './utils';
@@ -35,34 +33,26 @@ test.describe(
   },
   () => {
     test.describe('Enable and disable', () => {
-      test('can enable repeats', async ({ dashboardPage, selectors, page, components }) => {
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-
+      test('can enable repeats', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
         await importTestDashboard(page, selectors, 'Auto-grid repeats - add repeats');
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         await panels.selectByIndex(0);
         await sidebar.panelOptions.setTitle(`${REPEAT_TITLE_BASE}$c1`);
         await sidebar.panelOptions.repeatOptions.repeatByVariable('c1');
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
       });
 
-      test('can remove repeats', async ({ dashboardPage, selectors, page, components }) => {
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-
+      test('can remove repeats', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
         await importTestDashboard(
           page,
           selectors,
@@ -72,8 +62,8 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
-        await saveDashboard(dashboardPage, page, selectors);
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         // verify 6 panels are present (4 repeats and 2 normal)
@@ -89,7 +79,7 @@ test.describe(
         // verify only 3 panels are present
         await expect(panels.getHeaders()).toHaveCount(3);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
@@ -99,11 +89,14 @@ test.describe(
     });
 
     test.describe('Update', () => {
-      test('can update repeats with variable change', async ({ dashboardPage, selectors, page, components }) => {
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-
+      test('can update repeats with variable change', async ({
+        dashboardPage,
+        selectors,
+        page,
+        controls,
+        sidebar,
+        panels,
+      }) => {
         await importTestDashboard(
           page,
           selectors,
@@ -113,26 +106,22 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         await controls.variables.deselectOption('c1', `${REPEAT_OPTIONS.at(-1)}`);
         await page.locator('body').click({ position: { x: 0, y: 0 } }); // blur select
 
         // verify that repeats are present for first 3 values
-        await checkRepeatedPanelTitles(dashboardPage, selectors, REPEAT_TITLE_BASE, REPEAT_OPTIONS.slice(0, -1));
+        await checkRepeatedPanelTitles(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS.slice(0, -1));
 
         // verify there is no repeat with last value
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeHidden();
       });
 
-      test('can update repeats in sidebar', async ({ dashboardPage, selectors, page, components }) => {
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-
+      test('can update repeats in sidebar', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
         await importTestDashboard(
           page,
           selectors,
@@ -142,27 +131,31 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         // select first/original repeat panel to activate sidebar
         await panels.selectByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
 
         await sidebar.panelOptions.setTitle(`${NEW_TITLE_BASE}$c1`);
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
       });
 
-      test('can update repeats in panel editor', async ({ dashboardPage, selectors, page, components }) => {
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-
+      test('can update repeats in panel editor', async ({
+        dashboardPage,
+        selectors,
+        page,
+        components,
+        controls,
+        sidebar,
+        panels,
+        canvas,
+      }) => {
         await importTestDashboard(
           page,
           selectors,
@@ -172,8 +165,8 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
-        await saveDashboard(dashboardPage, page, selectors);
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         await controls.enterEditMode();
@@ -202,12 +195,12 @@ test.describe(
 
         await expect(canvas.getContainer()).toBeVisible(); // verifying that dashboard loaded
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
       });
 
       test('can update repeats in panel editor when loaded directly', async ({
@@ -215,12 +208,11 @@ test.describe(
         selectors,
         page,
         components,
+        controls,
+        sidebar,
+        panels,
+        canvas,
       }) => {
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-
         await importTestDashboard(
           page,
           selectors,
@@ -230,8 +222,8 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
-        await saveDashboard(dashboardPage, page, selectors);
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
+        await saveDashboardAndCloseToast(page, controls);
 
         // loading directly into panel editor
         await page.goto(`${page.url()}&editPanel=1`);
@@ -254,21 +246,17 @@ test.describe(
 
         await expect(canvas.getContainer()).toBeVisible(); // verifying that dashboard loaded
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
-        await checkRepeatedPanelTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+        await checkRepeatedPanelTitles(panels, NEW_TITLE_BASE, REPEAT_OPTIONS);
       });
     });
 
     test.describe('Move', () => {
-      test('can move repeated panels', async ({ dashboardPage, selectors, page, components }) => {
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-
+      test('can move repeated panels', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
         await importTestDashboard(
           page,
           selectors,
@@ -278,47 +266,34 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
 
         // this moving repeated panel between two normal panels
-        await movePanel(dashboardPage, selectors, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New panel');
+        await movePanel(panels, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New panel');
 
         //  verify move by panel title order
         await expect(panels.getHeaders().first()).toHaveText('New panel');
         await expect(panels.getHeaders().last()).toHaveText('New panel');
 
         // verify move by panel position
-        let repeatedPanel = await getPanelPosition(
-          dashboardPage,
-          selectors,
-          `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`
-        );
-        let normalPanel = await getPanelPosition(dashboardPage, selectors, 'New panel');
-        expect(normalPanel?.x).toBeLessThan(repeatedPanel?.x || 0);
+        let repeatedPanelBox = await getPanelBox(panels, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
+        let normalPanelBox = await getPanelBox(panels, 'New panel');
+        expect(normalPanelBox.x).toBeLessThan(repeatedPanelBox.x);
 
-        await saveDashboard(dashboardPage, page, selectors);
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
-        const repeatedPanel2 = await getPanelPosition(
-          dashboardPage,
-          selectors,
-          `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`
-        );
+        repeatedPanelBox = await getPanelBox(panels, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
+        normalPanelBox = await getPanelBox(panels, 'New panel');
+        expect(normalPanelBox.x).toBeLessThan(repeatedPanelBox.x);
 
-        const normalPanel2 = await getPanelPosition(dashboardPage, selectors, 'New panel');
-
-        expect(normalPanel2?.x).toBeLessThan(repeatedPanel2?.x || 0);
         await expect(panels.getHeaders().first()).toHaveText('New panel');
         await expect(panels.getHeaders().last()).toHaveText('New panel');
       });
     });
 
     test.describe('View', () => {
-      test('can view repeated panel', async ({ dashboardPage, selectors, page, components }) => {
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-
+      test('can view repeated panel', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
         await importTestDashboard(
           page,
           selectors,
@@ -328,8 +303,8 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
-        await saveDashboard(dashboardPage, page, selectors);
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         await panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`).hover();
@@ -354,11 +329,14 @@ test.describe(
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeVisible();
       });
 
-      test('can view embedded repeated panel', async ({ dashboardPage, selectors, page, components }) => {
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-
+      test('can view embedded repeated panel', async ({
+        dashboardPage,
+        selectors,
+        page,
+        controls,
+        sidebar,
+        panels,
+      }) => {
         await importTestDashboard(
           page,
           selectors,
@@ -368,8 +346,8 @@ test.describe(
 
         await controls.enterEditMode();
         await sidebar.toolbar.clickButton('Options');
-        await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
-        await saveDashboard(dashboardPage, page, selectors);
+        await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
+        await saveDashboardAndCloseToast(page, controls);
         await page.reload();
 
         await panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`).hover();

@@ -77,12 +77,12 @@
       "primary": "palette.ink150",
       "secondary": "palette.ink300",
       "disabled": "palette.ink400",
-      "link": "palette.orange500"
+      "link": "palette.blue400"
     },
     "border": {
       "weak": "palette.ink700",
-      "medium": "palette.ink600",
-      "strong": "palette.ink500"
+      "medium": "palette.ink650",
+      "strong": "palette.ink550"
     },
     "gradients": {
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
@@ -105,11 +105,29 @@
     "checkbox": {
       "activeBackgroundHover": "palette.orange400"
     },
+    "overlay": {
+      "background": "hsl(from palette.ink700 h s l / 0.6)"
+    },
     "switch": {
       "activeBackgroundHover": "palette.orange400"
     },
     "input": {
       "background": "palette.ink850"
+    },
+    "codeEditor": {
+      "keyword": "palette.blue300",
+      "controlKeyword": "palette.violet300",
+      "variable": "palette.sky300",
+      "type": "palette.teal300",
+      "function": "palette.amber300",
+      "number": "palette.peach300",
+      "string": "palette.sage300",
+      "operator": "palette.ink250",
+      "regexp": "palette.rose300",
+      "comment": "palette.ink350",
+      "heading": "palette.blue300",
+      "link": "palette.blue300",
+      "invalid": "palette.red300"
     },
     "tag": {
       "colors": [

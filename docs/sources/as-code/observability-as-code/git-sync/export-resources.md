@@ -19,7 +19,7 @@ aliases:
   - ../provision-resources/export-resources/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
 ---
 
-# Export non-provisioned resources from Grafana
+# Add non-provisioned resources from Grafana
 
 {{< admonition type="note" >}}
 
@@ -31,8 +31,8 @@ You can add dashboards to Git Sync using any of the following options:
 
 - [Add a dashboard using Import dashboards](#add-a-dashboard-using-import-dashboards)
 - [Export an existing dashboard from the Grafana UI as a copy](#copy-an-existing-dashboard-from-the-grafana-ui)
-- [Export a dashboard with Grafana CLI](#add-a-dashboard-with-the-grafana-cli)
-- [Copy a dashboard as JSON and commit to the repository](#add-a-dashboard-via-json-export)
+- [Add a dashboard with Grafana CLI](#add-a-dashboard-with-the-grafana-cli)
+- [Copy a dashboard as JSON and commit to the provisioned repository](#add-a-dashboard-via-json-export)
 
 ## Add a dashboard using Import dashboards
 
@@ -80,9 +80,15 @@ To do so, follow these steps:
 
 ## Add a dashboard with the Grafana CLI
 
-You can also export an existing dashboard with `gcx`, the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/). Use `gcx` to download the resources you want to sync from Grafana, and then commit and push those files to your provisioned Git repository. Git Sync will then detect the commit, and synchronize with Grafana.
+You can also export an existing dashboard from the terminal or from agentic coding tools using the CLI `gcx`. With `gcx` you can download the resources you want to sync from Grafana, and then commit and push those files to your provisioned Git repository. Git Sync will then detect the commit, and synchronize with Grafana.
 
-To do so, follow these steps:
+{{< admonition type="note" >}}
+
+For more information refer to the [`gcx` documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx/).
+
+{{< /admonition >}}
+
+To add a dashboard with `gcx`, follow these steps:
 
 1. Set up the `gcx` context to point to your instance as documented in [Defining contexts](https://github.com/grafana/gcx/#1-authenticate).
 1. Pull the resources you want to sync from the instance to your local repository:
