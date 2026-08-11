@@ -151,6 +151,7 @@
     "trend_example": (import '../dev-dashboards/panel-trend/trend_example.json'),
     "view-panel-tests": (import '../dev-dashboards/scenarios/view-panel-tests.json'),
     "vizlegend": (import '../dev-dashboards/vizlegend/vizlegend.json'),
+    "week-start": (import '../dev-dashboards/feature-time-ranges/week-start.json'),
     "xychart-demo": (import '../dev-dashboards/panel-xychart/xychart-demo.json'),
     "xychart-migrations": (import '../dev-dashboards/panel-xychart/xychart-migrations.json'),
     "xychart-tooltip-color-test": (import '../dev-dashboards/panel-xychart/xychart-tooltip-color-test.json'),
