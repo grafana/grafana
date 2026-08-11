@@ -515,7 +515,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	if err := service.validateRuleMutation(ctx, &rule, manager); err != nil {
+	if err := service.validateRuleMutations(ctx, []*models.AlertRule{&rule}, manager); err != nil {
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
@@ -857,17 +857,14 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 }
 
 func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *store.GroupDelta, manager utils.ManagerProperties, versionMessage string) error {
-	// Group replace is the path used by file and Terraform provisioning; it does not
-	// flow through CreateAlertRule/UpdateAlertRule, so validate here as well.
-	for _, r := range delta.New {
-		if err := service.validateRuleMutation(ctx, r, manager); err != nil {
-			return err
-		}
+	// Group replace does not flow through CreateAlertRule/UpdateAlertRule.
+	mutated := make([]*models.AlertRule, 0, len(delta.New)+len(delta.Update))
+	mutated = append(mutated, delta.New...)
+	for _, update := range delta.Update {
+		mutated = append(mutated, update.New)
 	}
-	for _, u := range delta.Update {
-		if err := service.validateRuleMutation(ctx, u.New, manager); err != nil {
-			return err
-		}
+	if err := service.validateRuleMutations(ctx, mutated, manager); err != nil {
+		return err
 	}
 
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -1035,7 +1032,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	if err := service.validateRuleMutation(ctx, &rule, manager); err != nil {
+	if err := service.validateRuleMutations(ctx, []*models.AlertRule{&rule}, manager); err != nil {
 		return models.AlertRule{}, err
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {

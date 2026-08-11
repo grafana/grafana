@@ -29,12 +29,14 @@ export const annotationEditActions = {
       return;
     }
 
-    annotationEditActions.addAnnotation({
+    const layersBefore = [...dataLayerSet.state.annotationLayers];
+
+    dashboardEditActions.duplicateElement({
+      duplicatedObject: layer,
       source: dataLayerSet,
-      addedObject: layer.clone({
-        key: undefined,
-        name: `${layer.state.name} - Copy`,
-      }),
+      cloneState: { name: `${layer.state.name} - Copy` },
+      perform: (copy) => dataLayerSet.setState({ annotationLayers: [...layersBefore, copy] }),
+      undo: () => dataLayerSet.setState({ annotationLayers: layersBefore }),
     });
   },
   removeAnnotation({ source, removedObject }: { removedObject: DataLayer; source: DashboardDataLayerSet }) {

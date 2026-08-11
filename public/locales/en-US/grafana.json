@@ -5658,6 +5658,7 @@
       "add-conditional-rule": "Add {{ruleDescription}} rule",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
+      "duplicate": "Duplicate {{typeName}}",
       "duplicate-panel": "Duplicate panel",
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",

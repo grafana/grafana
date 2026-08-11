@@ -87,7 +87,7 @@ function DuplicateActionButton({ onClick }: { onClick: () => void }) {
 
   return (
     <IconButton
-      name="file-copy-alt"
+      name="copy"
       variant="secondary"
       size="md"
       className={styles.action}
