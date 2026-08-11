@@ -903,9 +903,9 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	embeddedZanzanaService := authz.ProvideEmbeddedZanzanaService(cfg, zanzanaServer, tracingService)
 	alertRuleFolderConsumer := ngalert.ProvideAlertRuleFolderConsumer(dBstore)
-	folderConsumer := libraryelements.ProvideFolderConsumer(libraryElementService)
-	reconciler := folderreconcile.ProvideReconciler(cfg, folderimplService, orgService, alertRuleFolderConsumer, folderConsumer)
 	folderUIDHealService := libraryelements.ProvideFolderUIDHeal(sqlStore, folderimplService, orgService, serverLockService, kvStore)
+	folderConsumer := libraryelements.ProvideFolderConsumer(libraryElementService, folderUIDHealService)
+	reconciler := folderreconcile.ProvideReconciler(cfg, folderimplService, orgService, alertRuleFolderConsumer, folderConsumer)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {
@@ -1664,9 +1664,9 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	embeddedZanzanaService := authz.ProvideEmbeddedZanzanaService(cfg, zanzanaServer, tracingService)
 	alertRuleFolderConsumer := ngalert.ProvideAlertRuleFolderConsumer(dBstore)
-	folderConsumer := libraryelements.ProvideFolderConsumer(libraryElementService)
-	reconciler := folderreconcile.ProvideReconciler(cfg, folderimplService, orgService, alertRuleFolderConsumer, folderConsumer)
 	folderUIDHealService := libraryelements.ProvideFolderUIDHeal(sqlStore, folderimplService, orgService, serverLockService, kvStore)
+	folderConsumer := libraryelements.ProvideFolderConsumer(libraryElementService, folderUIDHealService)
+	reconciler := folderreconcile.ProvideReconciler(cfg, folderimplService, orgService, alertRuleFolderConsumer, folderConsumer)
 	healthService := grpcserver.ProvideHealthService(grpcserverProvider)
 	reflectionService, err := grpcserver.ProvideReflectionService(cfg, grpcserverProvider)
 	if err != nil {

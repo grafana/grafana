@@ -823,7 +823,7 @@ const (
 	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
 
 	// FlagDeletedFolderResourceCleanup
-	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server
+	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDHeal
 	FlagDeletedFolderResourceCleanup = "deletedFolderResourceCleanup"
 
 	// FlagLibraryElementFolderUIDHeal

@@ -2189,11 +2189,14 @@
     {
       "metadata": {
         "name": "deletedFolderResourceCleanup",
-        "resourceVersion": "1783997108632",
-        "creationTimestamp": "2026-07-14T02:45:08Z"
+        "resourceVersion": "1786468186693",
+        "creationTimestamp": "2026-07-14T02:45:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-11 17:09:46.693456265 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server",
+        "description": "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDHeal",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "hideFromDocs": true,
