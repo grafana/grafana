@@ -1,15 +1,14 @@
 import { useEffect } from 'react';
-import { Box } from '@grafana/ui';
 
 import type { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { Box } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getUserOrganizations, setUserOrganization } from 'app/features/org/state/actions';
 import { useDispatch, useSelector } from 'app/types/store';
 import { type UserOrg } from 'app/types/user';
 
 import { OrganizationSelect } from './OrganizationSelect';
-import { Trans } from '@grafana/i18n';
 
 export function OrganizationSwitcher({ children, undocked }: { children?: React.ReactNode; undocked?: boolean }) {
   const dispatch = useDispatch();
