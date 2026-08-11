@@ -77,7 +77,7 @@ function SettingsActionButton({ onClick }: { onClick: () => void }) {
       className={cx(styles.action, styles.editAction, styles.textAction)}
       onClick={onClick}
     >
-      {t('dashboard-scene.control-edit-actions.settings-tooltip', 'Settings')}
+      {t('dashboard-scene.control-edit-actions.settings', 'Settings')}
     </Button>
   );
 }

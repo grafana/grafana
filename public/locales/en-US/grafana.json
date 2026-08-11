@@ -5663,6 +5663,8 @@
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
       "edit-time-range-rule": "Change time range rule",
+      "group-into-row": "Group into row",
+      "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
@@ -6304,6 +6306,12 @@
         "title-hidden_other": "Hidden ({{count}})",
         "tooltip": "Filters overview"
       },
+      "group": {
+        "different-parents": "Select items within the same row, tab, or grid to group them",
+        "into-row": "Group into row",
+        "into-tab": "Group into tab",
+        "title": "Group"
+      },
       "links": {
         "add-link": "Add link",
         "new-link": "New link",
@@ -6934,7 +6942,7 @@
     "control-edit-actions": {
       "delete-tooltip": "Delete",
       "duplicate-tooltip": "Duplicate",
-      "settings-tooltip": "Settings"
+      "settings": "Settings"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -8070,7 +8078,8 @@
       "title-missing-rights": "Missing rights"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Select a data source"
+      "aria-label-select-a-data-source": "Select a data source",
+      "clear-button": "Clear data source"
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Page not found: {{page}}"
@@ -10976,6 +10985,12 @@
       "title": "Firing alerts",
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
+    },
+    "header-actions": {
+      "active-incidents": "Active incidents",
+      "firing-alerts": "Firing alerts",
+      "no-active-incidents": "All clear",
+      "no-firing-alerts": "All clear"
     },
     "home-page": {
       "edition": {

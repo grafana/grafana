@@ -1,7 +1,17 @@
 import { type SceneObject } from '@grafana/scenes';
 
 import { edit } from './edit';
-import { type EditActionProps, type MakeEditActionProps } from './types';
+
+interface MakeEditActionProps<Source extends SceneObject, T extends keyof Source['state']> {
+  description: string;
+  prop: T;
+}
+
+interface EditActionProps<Source extends SceneObject, T extends keyof Source['state']> {
+  source: Source;
+  oldValue: Source['state'][T];
+  newValue: Source['state'][T];
+}
 
 export function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
   description,

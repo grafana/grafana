@@ -1,7 +1,13 @@
+import { type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
+
 import { dropPredefinedVariableNamed } from '../../settings/variables/utils';
 import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 import { addElement } from '../element/addElement';
-import { type AddVariableActionHelperProps } from '../utils/types';
+
+interface AddVariableActionHelperProps {
+  addedObject: SceneVariable;
+  source: SceneVariableSet;
+}
 
 export function addVariable({ source, addedObject }: AddVariableActionHelperProps) {
   const varsBeforeAddition = [...(source.state.variables ?? [])];

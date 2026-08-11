@@ -3,7 +3,15 @@ import { type SceneObject } from '@grafana/scenes';
 
 import { edit } from '../utils/edit';
 import { getEditableElementFor } from '../utils/getEditableElementFor';
-import { type DuplicateElementActionHelperProps } from '../utils/types';
+
+interface DuplicateElementActionHelperProps<T extends SceneObject = SceneObject> {
+  duplicatedObject: T;
+  source: SceneObject;
+  /** Extra state applied to the clone, e.g. a renamed title. A fresh key is always generated. */
+  cloneState?: Partial<T['state']>;
+  perform: (duplicate: T) => void;
+  undo: (duplicate: T) => void;
+}
 
 /**
  * Helper for edit that duplicates elements.
