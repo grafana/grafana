@@ -639,6 +639,7 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 		ops,
 		cmp.Reporter(&reporter),
 		cmpopts.IgnoreFields(AlertQuery{}, "modelProps", "DatasourceType", "IsMTQuery"),
+		cmpopts.IgnoreFields(AlertRule{}, "K8sStatus"),
 		jsonCmp,
 		cmpopts.EquateEmpty(),
 	)
