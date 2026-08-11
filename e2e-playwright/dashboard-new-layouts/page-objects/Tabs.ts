@@ -22,10 +22,22 @@ export class Tabs extends PageObject {
     return this.getByGrafanaSelector(this.selectors.components.LayoutContainer(`tab ${tabTitle}`));
   }
 
-  /** Selects the tab by clicking its title */
-  async select(tabTitle: string) {
-    await test.step(`Select tab "${tabTitle}"`, async () => {
-      await this.getTitle(tabTitle).click();
-    });
+  /**
+   * Selects a tab by clicking its title; an array extends the selection via shift-clicks
+   * @param tabTitle a string to select one tab, an array of them to multi-select
+   */
+  async select(tabTitle: string | string[]) {
+    if (!Array.isArray(tabTitle)) {
+      await test.step(`Select tab "${tabTitle}"`, async () => {
+        await this.getTitle(tabTitle).click();
+      });
+    } else {
+      await test.step(`Select multiple tabs: ${tabTitle.join(', ')}`, async () => {
+        for (const [index, title] of tabTitle.entries()) {
+          // first click selects; subsequent shift-clicks extend the multi-selection
+          await this.getTitle(title).click(index === 0 ? undefined : { modifiers: ['Shift'] });
+        }
+      });
+    }
   }
 }
