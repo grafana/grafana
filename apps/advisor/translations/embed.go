@@ -12,10 +12,17 @@ package translations
 import (
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"sync"
 )
+
+// ErrInvalidLocale marks requests for a locale that is not a valid BCP 47
+// language tag. Callers can errors.Is against it to treat it as client error
+// (e.g. HTTP 400), as opposed to other errors which indicate a broken
+// embedded translation file (HTTP 500).
+var ErrInvalidLocale = errors.New("invalid locale")
 
 // fileName is the per-locale JSON file. Kept in sync with crowdin.yml's
 // "source" / "translation" entries for this package.
@@ -40,7 +47,7 @@ func IsValidLocale(s string) bool {
 // the frontend's t(key, fallback) handles the missing-key case.
 func Get(locale string) (map[string]string, error) {
 	if !IsValidLocale(locale) {
-		return map[string]string{}, fmt.Errorf("invalid locale: %q", locale)
+		return map[string]string{}, fmt.Errorf("%w: %q", ErrInvalidLocale, locale)
 	}
 	data, err := fs.ReadFile(locale + "/" + fileName)
 	if err != nil {

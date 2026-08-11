@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -193,8 +194,16 @@ func New(cfg app.Config) (app.App, error) {
 					trans, err := translations.Get(lang)
 					if err != nil {
 						logger.Error("Failed to load translations", "lang", lang, "error", err)
-						w.WriteHeader(http.StatusBadRequest)
-						return json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+						// A bad locale is the caller's fault; anything else (e.g. a
+						// malformed embedded translation file) is ours.
+						status := http.StatusInternalServerError
+						if errors.Is(err, translations.ErrInvalidLocale) {
+							status = http.StatusBadRequest
+						}
+						w.Header().Set("Content-Type", "application/json")
+						w.WriteHeader(status)
+						_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+						return err
 					}
 					w.Header().Set("Content-Type", "application/json")
 					return json.NewEncoder(w).Encode(advisorv0alpha1.GetTranslationsResponse{

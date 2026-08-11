@@ -1,6 +1,7 @@
 package translations
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -39,8 +40,11 @@ func TestGet_InvalidLocale(t *testing.T) {
 		"en-US-extra-extra-extra",
 	}
 	for _, c := range cases {
-		if _, err := Get(c); err == nil {
+		_, err := Get(c)
+		if err == nil {
 			t.Errorf("Get(%q) expected error, got nil", c)
+		} else if !errors.Is(err, ErrInvalidLocale) {
+			t.Errorf("Get(%q) error = %v, want ErrInvalidLocale", c, err)
 		}
 	}
 }
