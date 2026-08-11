@@ -15,6 +15,7 @@ import {
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
+import { createMutationClient } from 'app/features/dashboard-scene/mutation-api/clientBridge';
 import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
 
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -58,11 +59,29 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // renders the refresh picker, so activate it here or the spec's autoRefresh interval never
       // starts. Same workaround as DashboardControls.
       let refreshPickerDeactivation: CancelActivationHandler | undefined;
-      if (this.state.hideTimeControls) {
-        refreshPickerDeactivation = this.state.refreshPicker.activate();
-      }
+      const syncRefreshPickerActivation = (state: NotebookSceneState) => {
+        refreshPickerDeactivation?.();
+        refreshPickerDeactivation = state.hideTimeControls ? state.refreshPicker.activate() : undefined;
+      };
+      syncRefreshPickerActivation(this.state);
+
+      // Re-run it whenever the picker itself is replaced. A whole-state swap (APPLY_NOTEBOOK_SPEC
+      // rebuilds the scene from a spec) hands us a new SceneRefreshPicker that nothing has activated,
+      // so a one-shot activation above would leave auto-refresh silently stopped after an edit.
+      const stateSub = this.subscribeToState((newState, prevState) => {
+        if (
+          newState.refreshPicker !== prevState.refreshPicker ||
+          newState.hideTimeControls !== prevState.hideTimeControls
+        ) {
+          syncRefreshPickerActivation(newState);
+        }
+      });
+
+      const destroyMutationClient = createMutationClient(this, 'notebook');
 
       return () => {
+        destroyMutationClient();
+        stateSub.unsubscribe();
         refreshPickerDeactivation?.();
         window.__grafanaSceneContext = prevSceneContext;
       };

@@ -19,6 +19,20 @@ All responses share this shape:
 
 On failure, `success` is `false` and `error` contains a message. `changes` is always `[]` on failure.
 
+## Which commands exist depends on the open document
+
+The API is mounted on whichever document is rendering, and each document type registers its own
+commands. A dashboard exposes the dashboard commands; a notebook exposes the notebook commands. Asking
+for one that is not registered fails with `Unknown command type: X. Available commands: ...`, so
+`getAvailableCommands()` (or that error) is how a caller finds out where it is.
+
+This is why no command has to be described as "dashboards only": the dashboard commands are simply not
+reachable from a notebook, and a notebook spec is a different schema that would silently lose every
+narrative cell if a dashboard serializer answered for it.
+
+`CREATE_NOTEBOOK_SPEC` is the one exception, registered on both, because there is no blank notebook to
+open before creating one.
+
 ---
 
 ## Layout
@@ -1032,6 +1046,63 @@ Enter dashboard edit mode. Write commands call this automatically; this is rarel
 ```
 
 If already in edit mode, `wasAlreadyEditing` is `true` and `changes` is `[]`.
+
+---
+
+## Notebooks
+
+Available on a notebook page only (except `CREATE_NOTEBOOK_SPEC`), behind the `dashboard.notebooks`
+feature flag. A notebook is a flat, ordered list of cells — markdown, code, panel, library panel —
+described by a `NotebookSpec`. Its panel elements use the same shape as a dashboard v2 spec; what it
+adds is `Cell` (narrative content) and `NotebookLayout`.
+
+These are whole-spec commands: there are no granular notebook commands, so an edit is read, change the
+JSON, write back.
+
+### `GET_NOTEBOOK_SPEC`
+
+Return the whole notebook.
+
+```json
+{ "type": "GET_NOTEBOOK_SPEC", "payload": { "validate": false } }
+```
+
+`validate` checks the serialized spec against the notebook schema and fails the read if it is invalid.
+Worth requesting: a read that comes back with dangling cell references means the scene lost elements on
+the way out.
+
+**Response:** `{ "success": true, "data": { "spec": { ... } } }`
+
+### `APPLY_NOTEBOOK_SPEC`
+
+Replace the notebook from a whole spec. **In memory** — nothing is saved.
+
+```json
+{ "type": "APPLY_NOTEBOOK_SPEC", "payload": { "spec": { ... }, "validate": false } }
+```
+
+**Response:** `{ "success": true, "data": { "applied": true, "spec": { ... } }, "warnings": [...] }`
+
+`data.spec` is the notebook re-serialized after the write, so there is no need for a follow-up read.
+
+`warnings` names any cell that was requested and is not in the result. A layout entry pointing at an
+element that is not in `elements` is skipped rather than rejected, so without this a write could lose a
+cell and still report success. Pass `validate: true` to have that rejected up front instead.
+
+### `CREATE_NOTEBOOK_SPEC`
+
+Create a **new** notebook and open it. Registered on dashboards too, because there is no blank notebook
+to apply a spec into the way `/dashboard/new` is one for a dashboard.
+
+```json
+{ "type": "CREATE_NOTEBOOK_SPEC", "payload": { "spec": { ... }, "validate": true, "open": true } }
+```
+
+**Response:** `{ "success": true, "data": { "created": true, "uid": "n-abc123", "url": "/notebook/n-abc123" } }`
+
+Unlike every other command here this one **persists immediately**, and the server assigns the uid — so
+`validate` defaults to `true`. Set `open: false` to create without navigating. Use
+`APPLY_NOTEBOOK_SPEC` to change a notebook that already exists.
 
 ---
 

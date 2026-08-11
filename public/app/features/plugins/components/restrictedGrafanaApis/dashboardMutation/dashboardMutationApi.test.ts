@@ -1,6 +1,6 @@
-import { ALL_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
 import type { MutationClient, MutationRequest, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
 
+import { allMutationCommands } from './commandRegistry';
 import { dashboardMutationApi, setDashboardMutationClientForTests } from './dashboardMutationApi';
 
 function createMockClient(): MutationClient {
@@ -49,7 +49,7 @@ describe('dashboardMutationApi', () => {
 
   describe('getPayloadSchema', () => {
     it('returns schema for registered commands', () => {
-      for (const cmd of ALL_COMMANDS) {
+      for (const cmd of allMutationCommands()) {
         const schema = dashboardMutationApi.getPayloadSchema(cmd.name);
         expect(schema).toBeDefined();
         expect(typeof schema!.safeParse).toBe('function');
@@ -61,7 +61,7 @@ describe('dashboardMutationApi', () => {
     });
 
     it('is case-insensitive', () => {
-      for (const cmd of ALL_COMMANDS) {
+      for (const cmd of allMutationCommands()) {
         const lower = dashboardMutationApi.getPayloadSchema(cmd.name.toLowerCase());
         const upper = dashboardMutationApi.getPayloadSchema(cmd.name.toUpperCase());
         expect(lower).toBe(upper);
@@ -70,7 +70,7 @@ describe('dashboardMutationApi', () => {
     });
 
     it('returns the same schema as the command registry', () => {
-      for (const cmd of ALL_COMMANDS) {
+      for (const cmd of allMutationCommands()) {
         const schema = dashboardMutationApi.getPayloadSchema(cmd.name);
         expect(schema).toBe(cmd.payloadSchema);
       }

@@ -4,27 +4,35 @@
  * This module manages the single active MutationClient instance and provides
  * the API object that is exposed to plugins via RestrictedGrafanaApis.
  *
- * The mutation client is created/destroyed automatically when a DashboardScene
- * activates/deactivates, via the DashboardMutationClientSetter bridge.
+ * The mutation client is created/destroyed automatically when a document's scene
+ * activates/deactivates, via the clientBridge. Which client it is depends on what
+ * is mounted -- a dashboard and a notebook expose different commands -- and only
+ * one document is ever mounted at a time, so there is one slot.
  * Plugins access it through RestrictedGrafanaApis context -- they cannot
  * import this module directly because it lives inside the core bundle.
  */
 
 import type { DashboardMutationAPI } from '@grafana/data';
-import { ALL_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
+import { provideMutationClientFactory } from 'app/features/dashboard-scene/mutation-api/clientBridge';
 import type { MutationClient, MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
-import { provideMutationClientFactory } from 'app/features/dashboard-scene/scene/DashboardMutationClientSetter';
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { NotebookMutationClient } from 'app/features/notebook/mutation-api/NotebookMutationClient';
+import type { NotebookScene } from 'app/features/notebook/scene/NotebookScene';
+
+import { allMutationCommands } from './commandRegistry';
 
 let _client: MutationClient | null = null;
 
-provideMutationClientFactory((sceneObject) => {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const scene = sceneObject as unknown as DashboardScene;
-
+provideMutationClientFactory((sceneObject, resource) => {
   try {
-    _client = new DashboardMutationClient(scene);
+    if (resource === 'notebook') {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the bridge erases the scene type; `resource` is what says which it is
+      _client = new NotebookMutationClient(sceneObject as NotebookScene);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the bridge erases the scene type; `resource` is what says which it is
+      _client = new DashboardMutationClient(sceneObject as DashboardScene);
+    }
   } catch (error) {
     console.error('Failed to register Dashboard Mutation API:', error);
   }
@@ -48,7 +56,9 @@ export const dashboardMutationApi: DashboardMutationAPI = {
   },
   getPayloadSchema: (commandId: string) => {
     const normalized = commandId.toUpperCase();
-    const cmd = ALL_COMMANDS.find((c) => c.name === normalized);
+    // Every command, not just the ones the mounted document exposes: a caller may fetch a schema to
+    // decide whether to navigate somewhere it applies. `execute` is what enforces where it can run.
+    const cmd = allMutationCommands().find((c) => c.name === normalized);
     return cmd?.payloadSchema ?? null;
   },
   getAvailableCommands: () => {
