@@ -244,8 +244,6 @@ export const defaultDataTopic = (): DataTopic => ("series");
 
 export interface QueryOptionsSpec {
 	timeFrom?: string;
-	// Absolute end of a panel time range, intended to pair with timeFrom. Reserved in the schema;
-	// not yet honored by the panel renderer.
 	timeTo?: string;
 	maxDataPoints?: number;
 	timeShift?: string;

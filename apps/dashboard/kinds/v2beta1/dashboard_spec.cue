@@ -502,9 +502,7 @@ AnnotationQueryKind: {
 }
 
 QueryOptionsSpec: {
-	timeFrom?: string
-	// Absolute end of a panel time range, intended to pair with timeFrom. Reserved in the schema;
-	// not yet honored by the panel renderer.
+	timeFrom?:         string
 	timeTo?:           string
 	maxDataPoints?:    int
 	timeShift?:        string

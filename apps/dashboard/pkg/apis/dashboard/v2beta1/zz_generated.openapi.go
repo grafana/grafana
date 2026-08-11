@@ -3570,9 +3570,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryOptionsSpec(ref common.Refe
 					},
 					"timeTo": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Absolute end of a panel time range, intended to pair with timeFrom. Reserved in the schema; not yet honored by the panel renderer.",
-							Type:        []string{"string"},
-							Format:      "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"maxDataPoints": {
@@ -6850,9 +6849,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookQueryOptionsSpec(ref common.Refer
 					},
 					"timeTo": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Absolute end of a panel time range, intended to pair with timeFrom. Reserved in the schema; not yet honored by the panel renderer.",
-							Type:        []string{"string"},
-							Format:      "",
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"maxDataPoints": {
