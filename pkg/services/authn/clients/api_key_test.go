@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -177,6 +178,57 @@ func TestAPIKey_Test(t *testing.T) {
 			assert.Equal(t, tt.expected, c.Test(context.Background(), tt.req))
 		})
 	}
+}
+
+type capturingAPIKeyService struct {
+	apikeytest.Service
+	calls chan context.Context
+}
+
+func (s *capturingAPIKeyService) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
+	s.calls <- ctx
+	return nil
+}
+
+func TestAPIKey_Hook(t *testing.T) {
+	type ctxKey struct{}
+
+	t.Run("last used update should survive request cancellation but keep context values", func(t *testing.T) {
+		service := &capturingAPIKeyService{calls: make(chan context.Context, 1)}
+		c := ProvideAPIKey(service, tracing.InitializeTracerForTest())
+
+		ctx, cancel := context.WithCancel(context.WithValue(context.Background(), ctxKey{}, "tenant"))
+		req := &authn.Request{}
+		req.SetMeta(metaKeyID, "7")
+
+		assert.NoError(t, c.Hook(ctx, &authn.Identity{}, req))
+		cancel() // the request ends before the detached write runs
+
+		select {
+		case got := <-service.calls:
+			assert.Equal(t, "tenant", got.Value(ctxKey{}))
+			assert.NoError(t, got.Err())
+		case <-time.After(time.Second):
+			t.Fatal("expected UpdateAPIKeyLastUsedDate to be called")
+		}
+	})
+
+	t.Run("should skip last used update when the skip meta is set", func(t *testing.T) {
+		service := &capturingAPIKeyService{calls: make(chan context.Context, 1)}
+		c := ProvideAPIKey(service, tracing.InitializeTracerForTest())
+
+		req := &authn.Request{}
+		req.SetMeta(metaKeyID, "7")
+		req.SetMeta(metaKeySkipLastUsed, "true")
+
+		assert.NoError(t, c.Hook(context.Background(), &authn.Identity{}, req))
+
+		select {
+		case <-service.calls:
+			t.Fatal("expected UpdateAPIKeyLastUsedDate not to be called")
+		default:
+		}
+	})
 }
 
 func genApiKey() (string, string) {
