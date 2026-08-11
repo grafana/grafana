@@ -1,5 +1,6 @@
 import {
   createDataFrame,
+  type DataFrame,
   type Field,
   FieldType,
   getPanelDataSummary,
@@ -10,40 +11,66 @@ import { BarGaugeDisplayMode } from '@grafana/ui';
 import { type Options } from './panelcfg.gen';
 import { BARGAUGE_CARD_OPTIONS, barGaugeSugggestionsSupplier } from './suggestions';
 
+/** BAR_LIMIT in ./suggestions — more numeric fields than this and no bar gauge is suggested. */
+const BAR_LIMIT = 30;
+
+function numericFields(count: number): Field[] {
+  return Array.from({ length: count }, (_, i) => ({
+    name: `numeric-${i}`,
+    type: FieldType.number,
+    values: [0, 100, 200, 300, 400, 500],
+    config: {},
+  }));
+}
+
 describe('barGaugeSugggestionsSupplier', () => {
-  it('does not suggest bar gauge if no data is present', () => {
-    expect(barGaugeSugggestionsSupplier(getPanelDataSummary([]))).toBeFalsy();
-    expect(barGaugeSugggestionsSupplier(getPanelDataSummary(undefined))).toBeFalsy();
-    expect(
-      barGaugeSugggestionsSupplier(
-        getPanelDataSummary([
-          createDataFrame({
-            fields: [
-              { name: 'time', type: FieldType.time, values: [] },
-              { name: 'value', type: FieldType.number, values: [] },
-            ],
-          }),
-        ])
-      )
-    ).toBeFalsy();
-  });
-
-  it('does not suggest bar gauge if there are no numeric fields', () => {
-    const df = createDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time, values: [0, 100, 200] },
-        { name: 'status', type: FieldType.string, values: ['ok', 'warn', 'error'] },
+  it.each<{ description: string; frames?: DataFrame[] }>([
+    { description: 'an empty frame list', frames: [] },
+    { description: 'undefined panel data', frames: undefined },
+    {
+      description: 'a frame whose fields carry no rows',
+      frames: [
+        createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [] },
+            { name: 'value', type: FieldType.number, values: [] },
+          ],
+        }),
       ],
-    });
-    expect(barGaugeSugggestionsSupplier(getPanelDataSummary([df]))).toBeFalsy();
+    },
+  ])('returns undefined for $description', ({ frames }) => {
+    expect(barGaugeSugggestionsSupplier(getPanelDataSummary(frames))).toBeUndefined();
   });
 
-  it('does not suggest bar gauge if there are too many numeric fields', () => {
-    const fields: Field[] = [];
-    for (let i = 0; i < 31; i++) {
-      fields.push({ name: `numeric-${i}`, type: FieldType.number, values: [0, 100, 200, 300, 400, 500], config: {} });
-    }
-    expect(barGaugeSugggestionsSupplier(getPanelDataSummary([createDataFrame({ fields })]))).toBeFalsy();
+  it('returns undefined when rows exist but no field is numeric', () => {
+    const dataSummary = getPanelDataSummary([
+      createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [0, 100, 200] },
+          { name: 'status', type: FieldType.string, values: ['ok', 'warn', 'error'] },
+        ],
+      }),
+    ]);
+    // The fields must carry rows, otherwise the supplier returns on `!hasData` and this case
+    // would only repeat the no-data one above instead of reaching the numeric-field check.
+    expect(dataSummary.hasData).toBe(true);
+
+    expect(barGaugeSugggestionsSupplier(dataSummary)).toBeUndefined();
+  });
+
+  it('still suggests bar gauges at the limit of 30 numeric fields', () => {
+    const dataSummary = getPanelDataSummary([createDataFrame({ fields: numericFields(BAR_LIMIT) })]);
+
+    expect(barGaugeSugggestionsSupplier(dataSummary)).toEqual([
+      expect.objectContaining({ name: 'Bar gauge' }),
+      expect.objectContaining({ name: 'Bar gauge - LCD' }),
+    ]);
+  });
+
+  it('returns undefined one numeric field past the limit of 30', () => {
+    const dataSummary = getPanelDataSummary([createDataFrame({ fields: numericFields(BAR_LIMIT + 1) })]);
+
+    expect(barGaugeSugggestionsSupplier(dataSummary)).toBeUndefined();
   });
 
   it('suggests bar gauge and LCD variant for a single numeric field', () => {
@@ -76,10 +103,16 @@ describe('barGaugeSugggestionsSupplier', () => {
       ])
     );
 
-    const primary = (suggestions as Array<{ name: string; options?: Options; fieldConfig?: unknown }>)[0];
-    expect(primary.options?.displayMode).toBe(BarGaugeDisplayMode.Basic);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    expect((primary.fieldConfig as any)?.defaults?.color?.mode).toBe('continuous-GrYlRd');
+    expect(suggestions).toEqual([
+      expect.objectContaining({
+        name: 'Bar gauge',
+        options: expect.objectContaining({ displayMode: BarGaugeDisplayMode.Basic }),
+        fieldConfig: expect.objectContaining({
+          defaults: expect.objectContaining({ color: expect.objectContaining({ mode: 'continuous-GrYlRd' }) }),
+        }),
+      }),
+      expect.objectContaining({ name: 'Bar gauge - LCD' }),
+    ]);
   });
 
   describe('aggregation', () => {
@@ -124,15 +157,18 @@ describe('barGaugeSugggestionsSupplier', () => {
         ],
       },
     ])('$description suggests aggregated=$aggregated', ({ dataframes, aggregated }) => {
-      const suggestions = barGaugeSugggestionsSupplier(getPanelDataSummary(dataframes));
-      const expected = aggregated ? { values: false, calcs: ['lastNotNull'] } : { values: true, calcs: [] };
+      const reduceOptions = aggregated ? { values: false, calcs: ['lastNotNull'] } : { values: true, calcs: [] };
 
-      expect(Array.isArray(suggestions)).toBe(true);
-      if (Array.isArray(suggestions)) {
-        for (const suggestion of suggestions) {
-          expect(suggestion.options?.reduceOptions).toEqual(expect.objectContaining(expected));
-        }
-      }
+      expect(barGaugeSugggestionsSupplier(getPanelDataSummary(dataframes))).toEqual([
+        expect.objectContaining({
+          name: 'Bar gauge',
+          options: expect.objectContaining({ reduceOptions: expect.objectContaining(reduceOptions) }),
+        }),
+        expect.objectContaining({
+          name: 'Bar gauge - LCD',
+          options: expect.objectContaining({ reduceOptions: expect.objectContaining(reduceOptions) }),
+        }),
+      ]);
     });
   });
 });
@@ -162,9 +198,11 @@ describe('BARGAUGE_CARD_OPTIONS.previewModifier', () => {
     expect(suggestion.options?.reduceOptions?.limit).toBeUndefined();
   });
 
-  it('does not throw when options are missing', () => {
+  it('leaves a suggestion without options untouched', () => {
     const suggestion: VisualizationSuggestion<Options> = { name: 'preview' };
 
-    expect(() => previewModifier(suggestion)).not.toThrow();
+    previewModifier(suggestion);
+
+    expect(suggestion).toEqual({ name: 'preview' });
   });
 });
