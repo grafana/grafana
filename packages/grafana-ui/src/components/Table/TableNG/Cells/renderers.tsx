@@ -105,6 +105,7 @@ const CELL_REGISTRY: Record<TableCellOptions['type'], CellRegistryEntry> = {
         <SparklineCell
           value={props.value}
           field={props.field}
+          frame={props.frame}
           timeRange={props.timeRange}
           rowIdx={props.rowIdx}
           theme={props.theme}

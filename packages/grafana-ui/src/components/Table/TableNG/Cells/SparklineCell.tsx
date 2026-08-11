@@ -12,12 +12,14 @@ import {
   LineInterpolation,
   type TableSparklineCellOptions,
   TableCellDisplayMode,
+  TableSparklineColorMode,
   VisibilityMode,
 } from '@grafana/schema';
 
 import { measureText } from '../../../../utils/measureText';
 import { FormattedValueDisplay } from '../../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../../Sparkline/Sparkline';
+import { getSparklineColor } from '../../sparklineColor';
 import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { isTableCellStylesKeyEqual } from '../styles';
 import { type SparklineCellProps, type TableCellStyles } from '../types';
@@ -34,10 +36,11 @@ const defaultSparklineCellConfig: TableSparklineCellOptions = {
   barAlignment: BarAlignment.Center,
   showPoints: VisibilityMode.Never,
   hideValue: false,
+  sparklineColorMode: TableSparklineColorMode.Field,
 };
 
 export const SparklineCell = (props: SparklineCellProps) => {
-  const { field, value, theme, timeRange, rowIdx, width } = props;
+  const { field, frame, value, theme, timeRange, rowIdx, width } = props;
   const sparkline = prepareSparklineValue(value, field);
 
   if (!sparkline) {
@@ -71,7 +74,7 @@ export const SparklineCell = (props: SparklineCellProps) => {
   const cellOptions = getTableSparklineCellOptions(field);
 
   const config: FieldConfig<GraphFieldConfig> = {
-    color: field.config.color,
+    color: getSparklineColor(field, rowIdx, frame, cellOptions, theme),
     thresholds: field.config.thresholds,
     custom: {
       ...defaultSparklineCellConfig,

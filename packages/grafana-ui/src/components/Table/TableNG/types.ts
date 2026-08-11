@@ -199,6 +199,7 @@ export interface RowExpanderNGProps {
 
 export interface SparklineCellProps {
   field: Field;
+  frame?: DataFrame;
   rowIdx: number;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;

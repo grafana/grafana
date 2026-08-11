@@ -849,8 +849,15 @@ export interface TableBarGaugeCellOptions {
 /**
  * Sparkline cell options
  */
+export enum TableSparklineColorMode {
+  Field = 'field',
+  ByFieldValue = 'byFieldValue',
+}
+
 export interface TableSparklineCellOptions extends GraphFieldConfig {
   hideValue?: boolean;
+  sparklineColorField?: string;
+  sparklineColorMode?: TableSparklineColorMode;
   type: TableCellDisplayMode.Sparkline;
 }
 
