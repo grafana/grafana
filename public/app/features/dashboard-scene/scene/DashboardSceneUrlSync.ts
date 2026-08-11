@@ -143,6 +143,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
    * library panel, it waits once more, on the behavior the live tree holds.
    */
   private _openPanelEditById(panelId: string) {
+    // The pane is closed for the whole wait, so anything the user does meanwhile is the newer
+    // intent: leaving edit mode, or opening a different panel, would be silently undone by
+    // re-opening on the id this wait captured.
+    if (!this._scene.state.isEditing || this._scene.state.editPanel) {
+      return;
+    }
+
     const panel = findEditPanel(this._scene, panelId);
     if (!panel) {
       return;

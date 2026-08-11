@@ -182,6 +182,31 @@ describe('APPLY_SPEC with a panel open for editing', () => {
     expect(editorIsAttached(scene)).toBe(true);
   });
 
+  it('leaves a panel the user opened during the library-panel wait alone', async () => {
+    const scene = buildScene(makeSpec());
+    openPanelEdit(scene, 'panel-2');
+
+    await applySpec(scene, makeSpec());
+    expect(editedPanelKey(scene)).toBeUndefined();
+
+    // The pane is closed for the whole wait, so the user is free to open something else.
+    openPanelEdit(scene, 'panel-1');
+    getLibraryPanelBehavior(findVizPanelByKey(scene, 'panel-2')!)!.setState({ isLoaded: true });
+
+    expect(editedPanelKey(scene)).toBe('panel-1');
+  });
+
+  it('leaves the pane closed when the user exits edit mode during the library-panel wait', async () => {
+    const scene = buildScene(makeSpec());
+    openPanelEdit(scene, 'panel-2');
+
+    await applySpec(scene, makeSpec());
+    scene.exitEditMode({ skipConfirm: true });
+    getLibraryPanelBehavior(findVizPanelByKey(scene, 'panel-2')!)!.setState({ isLoaded: true });
+
+    expect(editedPanelKey(scene)).toBeUndefined();
+  });
+
   it('leaves the editor closed when none was open', async () => {
     const scene = buildScene(makeSpec());
 
