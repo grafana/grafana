@@ -243,4 +243,25 @@ func TestNewFSRequestConfig(t *testing.T) {
 		// The plugins CDN base URL is sourced from the plugins CDN service.
 		assert.Equal(t, "https://cdn.example.com", config.FullFrontendSettings.PluginsCDNBaseURL)
 	})
+
+	t.Run("takes the locale from the request", func(t *testing.T) {
+		cfg := newCfg()
+		license := &licensing.OSSLicensingService{Cfg: cfg}
+
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("Accept-Language", "de-DE,en;q=0.9")
+
+		reqCtx := &contextmodel.ReqContext{
+			Context:      &web.Context{Req: req},
+			SignedInUser: &user.SignedInUser{},
+			Logger:       log.NewNopLogger(),
+		}
+		ctx := ctxkey.Set(context.Background(), reqCtx)
+
+		config, err := NewFSRequestConfig(ctx, cfg, license, newPluginsCDN(), true)
+		require.NoError(t, err)
+
+		require.NotNil(t, config.FullFrontendSettings)
+		assert.Equal(t, "de-DE", config.FullFrontendSettings.Locale)
+	})
 }

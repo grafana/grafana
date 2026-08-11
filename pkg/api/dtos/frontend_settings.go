@@ -305,6 +305,9 @@ type FrontendSettingsDTO struct {
 	DateFormats setting.DateFormats  `json:"dateFormats,omitempty"`
 	QuickRanges []setting.QuickRange `json:"quickRanges,omitempty"`
 
+	// Regional formatting, from the request's Accept-Language. Not the UI language.
+	Locale string `json:"locale"`
+
 	LoginError string `json:"loginError,omitempty"`
 
 	// The K8s namespace to use for this user

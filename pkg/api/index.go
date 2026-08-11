@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -15,6 +14,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/frontendsettings"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -76,20 +76,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
-	// Locale is used for some number and date/time formatting, whereas language is used just for
-	// translating words in the interface
-	acceptLangHeader := c.Req.Header.Get("Accept-Language")
-	acceptLangHeaderFirstValue := ""
-
-	if len(acceptLangHeader) > 0 {
-		parts := strings.Split(acceptLangHeader, ",")
-		acceptLangHeaderFirstValue = parts[0]
-	}
-
-	locale := "en-US" // default to en formatting, but use the accept-lang header or user's preference
-	if acceptLangHeaderFirstValue != "" {
-		locale = acceptLangHeaderFirstValue
-	}
+	// Superseded by the locale in frontend settings; kept for anything still reading
+	// bootData.user.locale.
+	locale := frontendsettings.LocaleFromRequest(c.Req)
 
 	language := "" // frontend will set the default language
 	urlPrefs := getURLPrefs(c)

@@ -277,6 +277,10 @@ export interface GrafanaConfig {
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
+
+  // Regional formatting, from the request's Accept-Language. Not the UI language.
+  locale: string;
+
   grafanaJavascriptAgent: GrafanaJavascriptAgentConfig;
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer: boolean;

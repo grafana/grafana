@@ -1,6 +1,7 @@
 package frontendsettings
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func newTestReqContext() *contextmodel.ReqContext {
@@ -58,6 +60,21 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		assert.Equal(t, "https://grafana.example.com/", settings.AppUrl)
 		assert.Equal(t, "/grafana", settings.AppSubUrl)
 		assert.True(t, settings.AnonymousEnabled)
+	})
+
+	t.Run("takes the locale from the request", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		license := &licensing.OSSLicensingService{Cfg: cfg}
+
+		req := &http.Request{Header: http.Header{}}
+		req.Header.Set("Accept-Language", "en-GB,en;q=0.9")
+
+		reqCtx := newTestReqContext()
+		reqCtx.Context = &web.Context{Req: req}
+
+		settings, err := GetBaseFrontendSettings(reqCtx, cfg, license, nil)
+		require.NoError(t, err)
+		assert.Equal(t, "en-GB", settings.Locale)
 	})
 
 	t.Run("enables trusted types policy when CSP template requires it", func(t *testing.T) {

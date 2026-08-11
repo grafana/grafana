@@ -268,6 +268,9 @@ export class GrafanaBootConfig {
    */
   language: string | undefined;
 
+  // Regional formatting, from the request's Accept-Language. Not the UI language.
+  locale = 'en-US';
+
   listDashboardScopesEndpoint = '';
   listScopesEndpoint = '';
 
