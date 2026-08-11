@@ -159,4 +159,35 @@ describe('PromoteConfirmModal', () => {
     expect(ui.confirm.get()).toBeDisabled();
     expect(onDismiss).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['a sync gate', 409],
+    ['a stricter preview-only permission check', 403],
+  ])('allows promote when the dry-run preview is blocked by %s (%d)', async (_reason, status) => {
+    server.use(
+      http.post(CONVERT_URL, () => HttpResponse.json({ message: 'blocked' }, { status })),
+      http.post(PROMOTE_URL, () => HttpResponse.json({ status: 'success' }))
+    );
+
+    const onDismiss = jest.fn();
+    const { user } = render(<PromoteConfirmModal stagedConfig={stagedConfig} onDismiss={onDismiss} />);
+
+    expect(await screen.findByText(/couldn.t preview the promotion impact/i)).toBeInTheDocument();
+    expect(screen.queryByText(/couldn.t check the promotion impact/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(ui.confirm.get()).toBeEnabled());
+
+    await user.click(ui.confirm.get());
+    await waitFor(() => expect(onDismiss).toHaveBeenCalled());
+  });
+
+  it('keeps promote disabled and shows the error banner for a dry-run failure unrelated to the preview gates', async () => {
+    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ message: 'server error' }, { status: 500 })));
+
+    const onDismiss = jest.fn();
+    render(<PromoteConfirmModal stagedConfig={stagedConfig} onDismiss={onDismiss} />);
+
+    expect(await screen.findByText(/couldn.t check the promotion impact/i)).toBeInTheDocument();
+    expect(ui.confirm.get()).toBeDisabled();
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
 });

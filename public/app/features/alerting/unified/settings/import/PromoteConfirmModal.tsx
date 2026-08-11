@@ -28,14 +28,15 @@ interface Props {
 export function PromoteConfirmModal({ stagedConfig, isSyncManaged, onDismiss }: Props) {
   const notifyApp = useAppNotification();
   const dispatch = useDispatch();
-  const { result, isLoading, error } = useStagedConfigDryRun(stagedConfig);
+  const { result, isLoading, error, isPreviewUnavailable } = useStagedConfigDryRun(stagedConfig);
   const [promote, { isLoading: isPromoting }] = convertToGMAApi.usePromoteAlertmanagerConfigMutation();
   const [updateAlertingConfiguration, { isLoading: isClearingAutoSync }] =
     alertmanagerApi.endpoints.updateGrafanaAlertingConfiguration.useMutation();
 
   const isSubmitting = isPromoting || isClearingAutoSync;
-  // Only allow promoting once the dry-run confirms the merge is valid.
-  const canPromote = Boolean(result?.valid) && !isLoading && !error && !isSubmitting;
+  // Enabled once the dry-run confirms the merge is valid, or the preview itself couldn't run for a
+  // reason unrelated to whether the promote will succeed.
+  const canPromote = !isLoading && !isSubmitting && (Boolean(result?.valid) || isPreviewUnavailable);
 
   /**
    * The sync worker stops on its own once it sees the merge committed, but the configured datasource
@@ -136,7 +137,21 @@ export function PromoteConfirmModal({ stagedConfig, isSyncManaged, onDismiss }: 
             </Stack>
           )}
 
-          {!isLoading && error && (
+          {!isLoading && error && isPreviewUnavailable && (
+            <Alert
+              severity="info"
+              title={t(
+                'alerting.settings.import.promote.dry-run-unavailable-title',
+                "Couldn't preview the promotion impact"
+              )}
+            >
+              <Trans i18nKey="alerting.settings.import.promote.dry-run-unavailable-body">
+                You can still promote — the merge itself is validated when you confirm.
+              </Trans>
+            </Alert>
+          )}
+
+          {!isLoading && error && !isPreviewUnavailable && (
             <Alert
               severity="error"
               title={t('alerting.settings.import.promote.dry-run-error', "Couldn't check the promotion impact")}

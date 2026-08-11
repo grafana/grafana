@@ -3314,6 +3314,8 @@
           "checking": "Checking promotion impact…",
           "confirm": "Promote to live config",
           "dry-run-error": "Couldn't check the promotion impact",
+          "dry-run-unavailable-body": "You can still promote — the merge itself is validated when you confirm.",
+          "dry-run-unavailable-title": "Couldn't preview the promotion impact",
           "error-title": "Failed to promote configuration",
           "invalid-title": "This configuration can't be promoted",
           "merge-contact-points_one": "contact point added",

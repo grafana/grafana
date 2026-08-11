@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 
+import { getStatusFromError } from 'app/core/utils/errors';
+
 import { convertToGMAApi } from '../../api/convertToGMAApi';
 import { type DryRunValidationResult } from '../../components/import-to-gma/types';
 import { parseDryRunResponse } from '../../components/import-to-gma/useImport';
@@ -11,6 +13,8 @@ interface StagedConfigDryRun {
   result?: DryRunValidationResult;
   isLoading: boolean;
   error?: string;
+  /** Whether the preview failed for a reason that doesn't reflect promote eligibility. */
+  isPreviewUnavailable: boolean;
 }
 
 /**
@@ -37,5 +41,15 @@ export function useStagedConfigDryRun(stagedConfig: StagedExtraConfig): StagedCo
 
   const result = useMemo(() => (data ? parseDryRunResponse(data) : undefined), [data]);
 
-  return { result, isLoading, error: error ? stringifyErrorLike(error) : undefined };
+  // The preview enforces backend checks (a sync gate, a stricter permission check) that promote
+  // itself doesn't apply, so a 403/409 here doesn't mean promote will fail.
+  const status = getStatusFromError(error);
+  const isPreviewUnavailable = status === 403 || status === 409;
+
+  return {
+    result,
+    isLoading,
+    error: error ? stringifyErrorLike(error) : undefined,
+    isPreviewUnavailable,
+  };
 }
