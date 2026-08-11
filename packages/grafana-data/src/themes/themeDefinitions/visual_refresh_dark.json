@@ -38,8 +38,8 @@
     "accent": {
       "main": "palette.orange500",
       "mainEmphasis": "palette.orange400",
-      "text": "palette.orange300",
-      "textEmphasis": "palette.orange200",
+      "text": "palette.orange400",
+      "textEmphasis": "palette.orange300",
       "background": "palette.orange950",
       "backgroundEmphasis": "palette.orange900",
       "border": "palette.orange800",
