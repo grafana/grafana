@@ -34,9 +34,9 @@ function HomeRouteInner(props: DashboardPageProxyProps) {
   }
 
   // Probe failed: we cannot tell whether a home dashboard is configured.
-  // Fall back to the dashboard proxy so existing on-prem setups still work.
+  // Fall back to the unified homepage (bundled home.json is no longer the default).
   if (isError || !data) {
-    return <DashboardPageProxy {...props} />;
+    return <HomePage />;
   }
 
   if (homeDashboardUID) {

@@ -107,7 +107,7 @@ describe('HomeRoute', () => {
     expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
-  it('merged endpoint returns 500 → renders dashboard proxy', async () => {
+  it('merged endpoint returns 500 → renders HomePage', async () => {
     server.use(
       http.get(MERGED_PREFS_URL, () => {
         return HttpResponse.json({ message: 'boom' }, { status: 500 });
@@ -116,8 +116,8 @@ describe('HomeRoute', () => {
 
     render(<HomeRoute {...props} />);
 
-    expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
-    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
+    expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 
   it('homeURL present → calls locationService.replace', async () => {
