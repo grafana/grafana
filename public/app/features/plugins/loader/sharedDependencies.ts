@@ -126,10 +126,9 @@ export const sharedDependenciesMap = {
   //
   // (This means that we are exposing two versions of the same package).
   //
-  // The v5 exports that v6 removes are wrapped, so that a plugin which calls one
-  // is reported before the upgrade removes it. Calls to a hook carry the plugin
-  // id. Calls to a component do not, because React renders a component from its
-  // own work loop, after the frames of the plugin have returned.
+  // The v5 exports that v6 removes are wrapped, so that a plugin which calls one is reported before we attempt to upgrade
+  // this dependency. Calls to a hook will include the plugin id. Calls to a component do not, because React renders a component
+  // from its own work loop, after the frames of the plugin have returned.
   'react-router-dom': () => import('react-router-dom').then((module) => withV5UsageTelemetry(module)),
   'react-router': () => import('react-router-dom-v5-compat'),
   redux: () => import('redux'),
