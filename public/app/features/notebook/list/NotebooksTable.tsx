@@ -25,6 +25,8 @@ interface Props {
 }
 
 export function NotebooksTable({ notebooks }: Props) {
+  const styles = useStyles2(getStyles);
+
   const columns: Array<Column<NotebookRow>> = useMemo(
     () => [
       {
@@ -50,7 +52,7 @@ export function NotebooksTable({ notebooks }: Props) {
         id: 'tags',
         header: t('notebooks.list.table.tags', 'Tags'),
         minWidth: 160,
-        cell: ({ row: { original } }) => <TagList tags={original.tags} displayMax={3} />,
+        cell: ({ row: { original } }) => <TagList tags={original.tags} displayMax={3} className={styles.tagList} />,
       },
       {
         id: 'created',
@@ -75,7 +77,8 @@ export function NotebooksTable({ notebooks }: Props) {
         cell: ({ row: { original } }) => <NotebookRowActions notebook={original} />,
       },
     ],
-    []
+    // styles is memoized per theme, so this stays referentially stable and the table doesn't remount.
+    [styles]
   );
 
   return (
@@ -89,8 +92,7 @@ export function NotebooksTable({ notebooks }: Props) {
 }
 
 function RelativeTime({ timestamp }: { timestamp: string }) {
-  // Keeps "2 minutes ago" on one line instead of wrapping mid-phrase in a narrow column.
-  const nowrap = useStyles2(() => css({ whiteSpace: 'nowrap' }));
+  const styles = useStyles2(getStyles);
 
   if (!timestamp) {
     return null;
@@ -98,7 +100,7 @@ function RelativeTime({ timestamp }: { timestamp: string }) {
 
   return (
     <Tooltip content={dateTimeFormat(timestamp)}>
-      <span className={nowrap}>{dateTimeFormatTimeAgo(timestamp)}</span>
+      <span className={styles.nowrap}>{dateTimeFormatTimeAgo(timestamp)}</span>
     </Tooltip>
   );
 }
@@ -123,3 +125,11 @@ function NotebookRowActions({ notebook }: { notebook: NotebookRow }) {
     </Stack>
   );
 }
+
+// Module scope so useStyles2 can memoize — it keys its cache on the function's identity, so an
+// inline arrow would rebuild the styles on every render of every row.
+const getStyles = () => ({
+  // TagList centers its tags by default; in a table column they need to line up with the header.
+  tagList: css({ justifyContent: 'flex-start' }),
+  nowrap: css({ whiteSpace: 'nowrap' }),
+});

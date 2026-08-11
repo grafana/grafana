@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { Alert, Box, Button, Combobox, EmptyState, FilterInput, Stack, Text } from '@grafana/ui';
 import { useCreateNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
-import { handleError } from 'app/api/utils';
+import { extractErrorMessage, handleError } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -31,6 +31,7 @@ export function NotebooksListPage() {
   const {
     rows,
     totalCount,
+    isTruncated,
     authorOptions,
     searchQuery,
     setSearchQuery,
@@ -66,6 +67,10 @@ export function NotebooksListPage() {
 
       if (created.metadata.name) {
         navigate(notebookViewUrl(created.metadata.name));
+      } else {
+        // The notebook was persisted but we have nowhere to send the user, so say so rather than
+        // leaving the click looking like it did nothing.
+        handleError(created, dispatch, t('notebooks.list.create-error', 'Failed to create notebook'));
       }
     } catch (e) {
       handleError(e, dispatch, t('notebooks.list.create-error', 'Failed to create notebook'));
@@ -75,7 +80,7 @@ export function NotebooksListPage() {
   };
 
   const createButton = canCreate ? (
-    <Button icon="plus" onClick={onCreate} disabled={isCreating} data-testid="notebooks-create">
+    <Button icon="plus" onClick={onCreate} disabled={isCreating}>
       <Trans i18nKey="notebooks.list.new-notebook">New notebook</Trans>
     </Button>
   ) : undefined;
@@ -89,17 +94,28 @@ export function NotebooksListPage() {
         <Stack direction="column" gap={2}>
           {/* On a load failure the alert is the whole story — filters over nothing would just add noise. */}
           {error ? (
-            <Alert severity="error" title={t('notebooks.list.load-error', 'Failed to load notebooks')} />
+            // Carry the detail through, so a permissions problem reads differently from an outage.
+            <Alert severity="error" title={t('notebooks.list.load-error', 'Failed to load notebooks')}>
+              {extractErrorMessage(error)}
+            </Alert>
           ) : hasNoNotebooks ? (
             <EmptyState
               variant={canCreate ? 'call-to-action' : 'not-found'}
               button={createButton}
-              message={t('notebooks.list.empty-title', "You haven't created any notebooks yet")}
+              message={
+                canCreate
+                  ? t('notebooks.list.empty-title', "You haven't created any notebooks yet")
+                  : // Someone who cannot create one has nothing to act on, and may simply not have
+                    // been given access to any that exist.
+                    t('notebooks.list.empty-title-read-only', 'No notebooks available to you')
+              }
             >
-              <Trans i18nKey="notebooks.list.empty-body">
-                Notebooks capture an investigation as a document: narrative text and code alongside live visualizations
-                from your dashboards, alerts, and incidents.
-              </Trans>
+              {canCreate && (
+                <Trans i18nKey="notebooks.list.empty-body">
+                  Notebooks capture an investigation as a document: narrative text and code alongside live
+                  visualizations from your dashboards, alerts, and incidents.
+                </Trans>
+              )}
             </EmptyState>
           ) : (
             <>
@@ -128,11 +144,18 @@ export function NotebooksListPage() {
                   />
                 </Stack>
                 <Text variant="bodySmall" color="secondary">
-                  {t('notebooks.list.count', '', {
-                    count: rows.length,
-                    defaultValue_one: '{{count}} notebook',
-                    defaultValue_other: '{{count}} notebooks',
-                  })}
+                  {/* The server had more pages, so say the count is a page rather than a total. */}
+                  {isTruncated
+                    ? t('notebooks.list.count-truncated', '', {
+                        count: rows.length,
+                        defaultValue_one: 'Showing first {{count}} notebook',
+                        defaultValue_other: 'Showing first {{count}} notebooks',
+                      })
+                    : t('notebooks.list.count', '', {
+                        count: rows.length,
+                        defaultValue_one: '{{count}} notebook',
+                        defaultValue_other: '{{count}} notebooks',
+                      })}
                 </Text>
               </Stack>
 
