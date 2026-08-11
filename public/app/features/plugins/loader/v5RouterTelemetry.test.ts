@@ -1,7 +1,7 @@
 import { type MonitoringLogger } from '@grafana/runtime';
 import { mockLogger } from '@grafana/test-utils/unstable';
 
-import { getPluginIdFromStack, reportV5Usage } from './v5RouterTelemetry';
+import { getPluginIdFromStack, reportV5Usage, withV5UsageTelemetry } from './v5RouterTelemetry';
 
 // Chrome-shaped frames. The parser is deliberately format-agnostic, so one
 // browser's shape is enough to cover the common case.
@@ -119,5 +119,60 @@ describe('reportV5Usage', () => {
     const [, context] = jest.mocked(logger.logWarning).mock.calls[0];
     expect(context).toMatchObject({ exportName: 'withRouter', stack });
     expect(context).not.toHaveProperty('pluginId');
+  });
+});
+
+function fakeRouterModule() {
+  return {
+    useHistory: jest.fn((..._args: unknown[]) => 'history-value'),
+    useRouteMatch: jest.fn((..._args: unknown[]) => 'match-value'),
+    withRouter: jest.fn((..._args: unknown[]) => 'wrapped-component'),
+    // v6 keeps this one, so it must pass through untouched.
+    useLocation: jest.fn((..._args: unknown[]) => 'location-value'),
+  };
+}
+
+describe('withV5UsageTelemetry function exports', () => {
+  let logger: MonitoringLogger;
+
+  beforeEach(() => {
+    logger = mockLogger('features.plugins');
+  });
+
+  it.each(['useHistory', 'useRouteMatch', 'withRouter'] as const)('returns what %s returns', (exportName) => {
+    const module = fakeRouterModule();
+    const wrapped = withV5UsageTelemetry(module);
+
+    expect(wrapped[exportName]()).toBe(module[exportName]());
+  });
+
+  it.each(['useHistory', 'useRouteMatch', 'withRouter'] as const)('passes arguments to %s', (exportName) => {
+    const module = fakeRouterModule();
+    const wrapped = withV5UsageTelemetry(module);
+
+    wrapped[exportName]('first', 'second');
+
+    expect(module[exportName]).toHaveBeenCalledWith('first', 'second');
+  });
+
+  it('reports repeated calls from one place only once', () => {
+    const wrapped = withV5UsageTelemetry(fakeRouterModule());
+
+    for (let i = 0; i < 3; i++) {
+      wrapped.useHistory();
+    }
+
+    expect(logger.logWarning).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves exports that v6 keeps untouched', () => {
+    const module = fakeRouterModule();
+    const wrapped = withV5UsageTelemetry(module);
+
+    expect(wrapped.useLocation).toBe(module.useLocation);
+
+    wrapped.useLocation();
+
+    expect(logger.logWarning).not.toHaveBeenCalled();
   });
 });
