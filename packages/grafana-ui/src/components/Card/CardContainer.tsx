@@ -115,7 +115,7 @@ export const getCardContainerStyles = (
       gridAutoFlow: 'row',
       width: '100%',
       padding: theme.spacing(isCompact ? 1 : 2),
-      background: theme.colors.background.secondary,
+      background: theme.colors.background.primary,
       borderRadius: theme.shape.radius.lg,
       marginBottom: theme.spacing(noMargin ? 0 : 1),
       pointerEvents: disabled ? 'none' : 'auto',
@@ -127,7 +127,7 @@ export const getCardContainerStyles = (
 
       ...(!disableHover && {
         '&:hover': {
-          background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+          background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
           cursor: 'pointer',
           zIndex: 1,
         },
@@ -145,7 +145,7 @@ export const getCardContainerStyles = (
     oldContainer: css({
       display: 'flex',
       width: '100%',
-      background: theme.colors.background.secondary,
+      background: theme.colors.background.primary,
       borderRadius: theme.shape.radius.lg,
       position: 'relative',
       pointerEvents: disabled ? 'none' : 'auto',
@@ -158,7 +158,7 @@ export const getCardContainerStyles = (
 
       ...(!disableHover && {
         '&:hover': {
-          background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+          background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
           cursor: 'pointer',
           zIndex: 1,
         },

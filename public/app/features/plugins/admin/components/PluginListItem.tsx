@@ -108,7 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gridTemplateRows: 'auto',
       gap: theme.spacing(2),
       gridAutoFlow: 'row',
-      background: theme.colors.background.secondary,
+      background: theme.colors.background.primary,
       borderRadius: theme.shape.radius.lg,
       padding: theme.spacing(3),
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:hover': {
-        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+        background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
       },
     }),
     pluginType: css({
