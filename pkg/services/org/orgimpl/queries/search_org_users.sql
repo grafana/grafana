@@ -39,6 +39,6 @@ ORDER BY
 {{ else -}}
   u.login ASC, u.email ASC
 {{ end -}}
-{{ if .Limit -}}
+{{ if gt .Limit 0 -}}
 LIMIT {{ .Arg .Limit }} OFFSET {{ .Arg .Offset }}
 {{ end -}}

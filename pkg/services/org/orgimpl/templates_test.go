@@ -235,6 +235,18 @@ func TestTemplates(t *testing.T) {
 						IsServiceAccount: false,
 					},
 				},
+				{
+					Name: "negative_limit",
+					Data: searchOrgUsersQuery{
+						SQLTemplate:      queryTemplate(),
+						OrgUserTable:     dbHelper.Table("org_user"),
+						UserTable:        dbHelper.Table("user"),
+						OrgID:            7,
+						IsServiceAccount: false,
+						AccessAll:        true,
+						Limit:            -1,
+					},
+				},
 			},
 			countSearchOrgUsersTemplate: {
 				{
