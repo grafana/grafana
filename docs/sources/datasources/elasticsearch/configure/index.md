@@ -42,7 +42,7 @@ To configure the Elasticsearch data source, you need:
 
 When Elasticsearch security features are enabled, you must configure the following cluster privileges for the user or API key that Grafana uses to connect:
 
-- **monitor** - Necessary to retrieve the version information of the connected Elasticsearch instance.
+- **monitor** - Required for the connection health check. Grants access to the `_cluster/health` endpoint and retrieves the version information of the connected Elasticsearch instance.
 - **view_index_metadata** - Required for accessing mapping definitions of indices.
 - **read** - Grants the ability to perform search and retrieval operations on indices. This is essential for querying and extracting data from the cluster.
 
