@@ -68,7 +68,7 @@ import type {
  * validated, `satisfies z.ZodType<...>` holds, and `z.toJSONSchema` still emits
  * a proper `array` type (a trailing transform would collapse it to `any`).
  */
-function nullableArray<T extends z.ZodTypeAny>(element: T) {
+export function nullableArray<T extends z.ZodTypeAny>(element: T) {
   return z.preprocess((value) => (value == null ? [] : value), z.array(element));
 }
 
@@ -81,7 +81,7 @@ const controlSourceRefSchema = z.object({
   group: z.string(),
 }) satisfies z.ZodType<ControlSourceRef>;
 
-const elementReferenceSchema = z.object({
+export const elementReferenceSchema = z.object({
   kind: z.literal('ElementReference'),
   name: z.string(),
 }) satisfies z.ZodType<ElementReference>;
@@ -491,7 +491,7 @@ const vizConfigKindSchema = z.object({
   }),
 }) satisfies z.ZodType<VizConfigKind>;
 
-const panelKindSchema = z.object({
+export const panelKindSchema = z.object({
   kind: z.literal('Panel'),
   spec: z.object({
     id: z.number(),
@@ -505,7 +505,7 @@ const panelKindSchema = z.object({
   }),
 }) satisfies z.ZodType<PanelKind>;
 
-const libraryPanelKindSchema = z.object({
+export const libraryPanelKindSchema = z.object({
   kind: z.literal('LibraryPanel'),
   spec: z.object({
     id: z.number(),
@@ -642,7 +642,7 @@ const timeRangeOptionSchema = z.object({
   to: z.string().optional().default('now'),
 }) satisfies z.ZodType<TimeRangeOption>;
 
-const timeSettingsSpecSchema = z.object({
+export const timeSettingsSpecSchema = z.object({
   timezone: z.string().optional().default('browser'),
   from: z.string().optional().default('now-6h'),
   to: z.string().optional().default('now'),
