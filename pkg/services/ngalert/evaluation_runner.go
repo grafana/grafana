@@ -68,6 +68,7 @@ func (r *evaluationRunner) startEvaluation(ctx context.Context) {
 	// Start the state manager
 	g.Go(func() error { return r.ng.stateManager.Run(gCtx) })
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
 	if r.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingRuleStatusSync) {
 		syncer := alertstatus.NewSyncer(
 			r.ng.store,
