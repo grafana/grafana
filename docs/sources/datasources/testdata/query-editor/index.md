@@ -268,7 +268,7 @@ Generates simulated distributed trace data.
 
 Generates synthetic annotation data points. These annotations are created entirely in the browser and are useful for testing how panels display annotation markers and overlays. They don't query an external source or persist data.
 
-For more information about annotations in Grafana, refer to [Annotate visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/).
+For more information about using annotations with TestData, refer to [TestData annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/annotations/). For more information about annotations in Grafana, refer to [Annotate visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/).
 
 | Field     | Description                                       |
 | --------- | ------------------------------------------------- |

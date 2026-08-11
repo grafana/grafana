@@ -42,6 +42,7 @@ The following pages help you set up and use the TestData data source:
 - [TestData query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/query-editor/) for a reference of all 33 available scenarios and their options.
 - [TestData alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/alerting/) for prototyping and testing alert rules with simulated data.
 - [TestData template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/template-variables/) for using TestData with dashboard variables.
+- [TestData annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/annotations/) for generating simulated annotation events.
 - [Troubleshoot TestData](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/troubleshooting/) for solutions to common issues.
 
 ## Additional features
