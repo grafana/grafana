@@ -26,6 +26,11 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   const homeNav = useHomeNav();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
 
+  // When undocked we do not show a header, but just the org switcher (which only renders when there are multiple orgs)
+  if (!state.megaMenuDocked) {
+    return <OrganizationSwitcher undocked={true} />;
+  }
+
   return (
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={1}>

@@ -229,7 +229,7 @@ export const MegaMenu = memo(
 
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
-        {state.megaMenuDocked && <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />}
+        <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
         <nav className={cx(styles.content, state.megaMenuDocked && styles.contentDocked)} aria-label={navLabel}>
           <div className={styles.scrollArea}>
             <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>

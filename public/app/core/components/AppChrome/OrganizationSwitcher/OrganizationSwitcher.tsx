@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Box } from '@grafana/ui';
 
 import type { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -8,8 +9,9 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { type UserOrg } from 'app/types/user';
 
 import { OrganizationSelect } from './OrganizationSelect';
+import { Trans } from '@grafana/i18n';
 
-export function OrganizationSwitcher({ children }: { children?: React.ReactNode }) {
+export function OrganizationSwitcher({ children, undocked }: { children?: React.ReactNode; undocked?: boolean }) {
   const dispatch = useDispatch();
   const orgs = useSelector((state) => state.organization.userOrgs);
   const onSelectChange = async (option: SelectableValue<UserOrg>) => {
@@ -40,5 +42,15 @@ export function OrganizationSwitcher({ children }: { children?: React.ReactNode 
     return children;
   }
 
-  return <OrganizationSelect orgs={orgs} onSelectChange={onSelectChange} />;
+  const switcher = <OrganizationSelect orgs={orgs} onSelectChange={onSelectChange} />;
+
+  if (undocked) {
+    return (
+      <Box paddingX={1} paddingTop={0.5} paddingBottom={1} display="flex" alignItems="center" gap={1}>
+        {switcher}
+      </Box>
+    );
+  }
+
+  return switcher;
 }
