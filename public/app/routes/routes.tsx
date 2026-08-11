@@ -245,6 +245,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="cfg/access" />,
     },
     {
+      path: '/admin/databases',
+      component: () => <NavLandingPage navId="cfg/databases" />,
+    },
+    {
       path: '/org',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "OrgDetailsPage" */ '../features/org/OrgDetailsPage')

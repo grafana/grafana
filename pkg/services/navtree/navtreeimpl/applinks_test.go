@@ -204,6 +204,54 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "plugin-page-test-app3", appsNode.Children[1].Id)
 	})
 
+	t.Run("Should group apps configured for the databases nav id under Administration", func(t *testing.T) {
+		service.navigationAppConfig = map[string]NavigationAppConfig{
+			"test-app1": {SectionID: navtree.NavIDCfgDatabases, SortWeight: 1},
+			"test-app2": {SectionID: navtree.NavIDCfgDatabases, SortWeight: 2},
+		}
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(&navtree.NavLink{
+			Id: navtree.NavIDCfg,
+		})
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		databasesNode := treeRoot.FindById(navtree.NavIDCfgDatabases)
+		require.NotNil(t, databasesNode)
+		require.Equal(t, "Database configurations", databasesNode.Text)
+		require.Equal(t, "/admin/databases", databasesNode.Url)
+
+		// The section is created by the first app and reused by the second
+		require.Len(t, databasesNode.Children, 2)
+		require.Equal(t, "plugin-page-test-app1", databasesNode.Children[0].Id)
+		require.Equal(t, "plugin-page-test-app2", databasesNode.Children[1].Id)
+
+		adminNode := treeRoot.FindById(navtree.NavIDCfg)
+		require.Len(t, adminNode.Children, 1)
+		require.Equal(t, navtree.NavIDCfgDatabases, adminNode.Children[0].Id)
+
+		appsNode := treeRoot.FindById(navtree.NavIDApps)
+		require.NotNil(t, appsNode)
+		require.Len(t, appsNode.Children, 1)
+		require.Equal(t, "plugin-page-test-app3", appsNode.Children[0].Id)
+	})
+
+	t.Run("Should not add the databases section if no plugin wants to live there", func(t *testing.T) {
+		service.navigationAppConfig = map[string]NavigationAppConfig{}
+
+		treeRoot := navtree.NavTreeRoot{}
+		treeRoot.AddSection(&navtree.NavLink{
+			Id: navtree.NavIDCfg,
+		})
+
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDCfgDatabases))
+	})
+
 	t.Run("Should only add an 'Observability' section if a plugin exists that wants to live there", func(t *testing.T) {
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 

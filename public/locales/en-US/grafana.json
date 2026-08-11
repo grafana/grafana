@@ -11958,6 +11958,10 @@
       "subtitle": "Configure access for individual users, teams, and service accounts",
       "title": "Users and access"
     },
+    "config-databases": {
+      "subtitle": "Configure the databases that store your logs, metrics, and traces",
+      "title": "Database configurations"
+    },
     "config-general": {
       "subtitle": "Manage default preferences and settings across Grafana",
       "title": "General"
