@@ -1995,6 +1995,21 @@
     },
     {
       "metadata": {
+        "name": "datasourceQueryAuditLogging",
+        "resourceVersion": "1786451745808",
+        "creationTimestamp": "2026-08-11T12:35:45Z",
+        "deletionTimestamp": "2026-08-11T13:45:22Z"
+      },
+      "spec": {
+        "description": "Emit audit logs for datasource QueryData calls served by the multi-tenant datasource gateway. Enabled per-tenant via GOFF targeting.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.apiserver.useNewAPIsForDatasourceResources",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -2045,6 +2060,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.queryGateway",
+        "resourceVersion": "1786455922969",
+        "creationTimestamp": "2026-08-11T13:45:22Z"
+      },
+      "spec": {
+        "description": "Data source query gateway",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
