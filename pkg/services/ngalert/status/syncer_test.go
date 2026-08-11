@@ -179,3 +179,29 @@ func TestSyncer_sync_rewritesWhenStatusChanges(t *testing.T) {
 	require.NoError(t, s.sync(context.Background()))
 	require.Equal(t, 2, gen.alert.updates)
 }
+
+func TestSyncer_sync_preservesOtherOperatorStatus(t *testing.T) {
+	// A rule whose status already carries another operator's data.
+	alert := alertRuleObj("alert1")
+	alert.Status.OperatorStates = map[string]model.AlertRulestatusOperatorState{"other-op": {}}
+	alert.Status.AdditionalFields = map[string]any{"foo": "bar"}
+
+	gen := &fakeGenerator{
+		alert:     newFakeRuleClient(&model.AlertRuleList{Items: []model.AlertRule{alert}}),
+		recording: newFakeRuleClient(&model.RecordingRuleList{}),
+	}
+	states := &fakeStates{byUID: map[string][]*state.State{
+		"alert1": {{State: eval.Alerting, LastEvaluationTime: time.Now()}},
+	}}
+	s := newTestSyncer(t, gen, states, &fakeStatus{})
+
+	require.NoError(t, s.sync(context.Background()))
+	require.Equal(t, 1, gen.alert.updates)
+
+	written := gen.alert.updated["alert1"].(*model.AlertRule)
+	// The syncer's own field is updated...
+	require.Equal(t, model.AlertRuleAlertRuleStateFiring, *written.Status.State)
+	// ...without wiping status owned by other operators.
+	require.Contains(t, written.Status.OperatorStates, "other-op")
+	require.Equal(t, "bar", written.Status.AdditionalFields["foo"])
+}
