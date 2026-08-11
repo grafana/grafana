@@ -17,6 +17,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { type Resource } from 'app/features/apiserver/types';
+import { nextMetaAfterSaveAsFolderChange } from 'app/features/dashboard-scene/saving/SaveDashboardAsForm';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -276,15 +277,10 @@ export function SaveProvisionedDashboardForm({
       if (selectionId !== folderSelectionIdRef.current) {
         return;
       }
+      // Same merge Save As uses: swaps the folder's manager annotations without dropping the
+      // dashboard's k8s identity, so an open copy still resolves as an update
       dashboard.setState({
-        meta: {
-          // Keep the open dashboard's identity (uid, slug, permissions); only the folder and its
-          // manager annotations change while the drawer is open
-          ...dashboard.state.meta,
-          k8s: meta.k8s,
-          folderUid: uid,
-          folderTitle: title,
-        },
+        meta: { ...nextMetaAfterSaveAsFolderChange(dashboard.state.meta, uid, meta), folderTitle: title },
       });
     },
     [setValue, dashboard]

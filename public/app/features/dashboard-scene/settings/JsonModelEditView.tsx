@@ -203,7 +203,9 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
       : t('dashboard-settings.json-editor.save-button-disabled-tooltip', 'Fix validation errors before saving');
 
   const saveButton = (overwrite: boolean, disabled = false) => (
-    <Tooltip content={saveTooltip} placement="top" show={disabled && hasBlockingValidationErrors ? undefined : false}>
+    // Narrower than `disabled`: the tooltip talks about validation errors, so it must stay hidden
+    // while the button is only disabled by the pending repository lookup
+    <Tooltip content={saveTooltip} placement="top" show={hasBlockingValidationErrors ? undefined : false}>
       <Button
         type="submit"
         onClick={() => {

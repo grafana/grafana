@@ -5,7 +5,7 @@ import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { AnnoKeyFolder, AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyManagerIdentity, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -1345,6 +1345,14 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(await screen.findByRole('button', { name: /no folder/i })).toBeInTheDocument();
   });
 
+  it('keeps the No folder button when a branch workflow gates out New folder', async () => {
+    setupFolderless({ repository: { workflows: ['branch'] }, defaultValues: { workflow: 'branch' } });
+
+    // Picking the root only retargets the form, so it survives workflows that cannot create a folder
+    expect(await screen.findByRole('button', { name: /no folder/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /new folder/i })).not.toBeInTheDocument();
+  });
+
   it('passes no folder value to the picker for a new dashboard at root', async () => {
     setupFolderless();
 
@@ -1399,8 +1407,73 @@ describe('SaveProvisionedDashboardForm', () => {
     );
     // The folder is cleared, but the open dashboard keeps its identity while the drawer is open
     expect(props.dashboard.setState).toHaveBeenCalledWith({
-      meta: { folderUid: undefined, folderTitle: undefined, k8s: undefined, slug: 'test-dashboard' },
+      meta: { folderUid: undefined, folderTitle: undefined, k8s: { annotations: {} }, slug: 'test-dashboard' },
     });
+  });
+
+  it('keeps the k8s identity but drops the old folder annotations when a copy changes folder', async () => {
+    const dashboardState = {
+      meta: {
+        folderUid: 'my-team-uid',
+        slug: 'test-dashboard',
+        k8s: {
+          name: 'existing-uid',
+          resourceVersion: '42',
+          annotations: { [AnnoKeyManagerIdentity]: 'test-repo', [AnnoKeySourcePath]: 'My Team/test-dashboard.json' },
+        },
+      },
+      title: 'Test Dashboard',
+      description: '',
+      isDirty: true,
+    };
+    const dashboard = {
+      state: dashboardState,
+      useState: () => dashboardState,
+      setState: jest.fn(),
+      closeModal: jest.fn(),
+      getSaveModel: jest.fn().mockReturnValue({}),
+      saveCompleted: jest.fn(),
+      getSaveAsModel: jest.fn().mockReturnValue({}),
+      setManager: jest.fn(),
+      getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+    } as unknown as DashboardScene;
+
+    const { user } = setup({
+      dashboard,
+      // A copy of an existing dashboard is the one flow where the folder picker meets a saved k8s identity
+      isNew: true,
+      saveAsCopy: true,
+      repository: { type: 'github', name: 'test-repo', title: 'Test Repo', workflows: ['write'], target: 'folderless' },
+      defaultValues: {
+        ref: 'main',
+        path: 'My Team/test-dashboard.json',
+        repo: 'test-repo',
+        comment: '',
+        folder: { uid: 'my-team-uid', title: 'My Team' },
+        title: 'Test Dashboard',
+        description: '',
+        workflow: 'write',
+      },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /no folder/i }));
+
+    // The dashboard still resolves as an update; only the old folder's manager annotation goes,
+    // or the recomputed defaults would keep pointing at the old repository
+    await waitFor(() =>
+      expect(dashboard.setState).toHaveBeenCalledWith({
+        meta: {
+          folderUid: undefined,
+          folderTitle: undefined,
+          slug: 'test-dashboard',
+          k8s: {
+            name: 'existing-uid',
+            resourceVersion: '42',
+            annotations: { [AnnoKeySourcePath]: 'My Team/test-dashboard.json' },
+          },
+        },
+      })
+    );
   });
 
   it('ignores a slow folder pick that resolves after saving at root', async () => {

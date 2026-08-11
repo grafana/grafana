@@ -221,6 +221,28 @@ describe('useGetResourceRepositoryView', () => {
     });
   });
 
+  describe('repoType', () => {
+    it.each([
+      ['name-based lookup', { name: 'my-repo' }],
+      ['folder-based lookup', { folderName: 'my-repo' }],
+    ])('reports the repository type on a %s', (_, args) => {
+      setupMocks({ settingsItems: [repoView({ type: 'local' })] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView(args));
+
+      // Consumers pick the read-only tooltip copy from this, so undefined reads as a Git repo
+      expect(result.current.repoType).toBe('local');
+    });
+
+    it('is undefined when no repository resolves', () => {
+      setupMocks({ settingsItems: [] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'unmanaged-folder' }));
+
+      expect(result.current.repoType).toBeUndefined();
+    });
+  });
+
   describe('folder-based lookup', () => {
     it('returns Ready when folderName directly matches a repo name (root folder)', () => {
       const repo = repoView();

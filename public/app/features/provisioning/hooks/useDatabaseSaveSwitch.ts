@@ -2,10 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { appEvents } from 'app/core/app_events';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { DashboardSavedEvent } from 'app/types/events';
 
 import { RepoViewStatus } from './useGetResourceRepositoryView';
 
@@ -57,15 +55,6 @@ export function useDatabaseSaveSwitch({
     }
   }, [repository, isDeadEnd, isNewDashboard]);
 
-  // The database form replaces meta wholesale on a folder pick, so a completed save can't be
-  // inferred from meta itself.
-  useEffect(() => {
-    const sub = appEvents.subscribe(DashboardSavedEvent, () => {
-      drawer.setState({ databaseSwitchSnapshot: undefined });
-    });
-    return () => sub.unsubscribe();
-  }, [drawer]);
-
   // Consumes the snapshot, so the switch can only ever be undone once
   const takeSnapshot = useCallback(() => {
     const snapshot = drawer.state.databaseSwitchSnapshot;
@@ -86,6 +75,11 @@ export function useDatabaseSaveSwitch({
       if (!snapshot) {
         return;
       }
+      // saveCompleted mints the uid and clears the overlay in the same setState, so a changed uid
+      // means a save owns the current meta no matter which order the unmount and the save land in
+      if (dashboard.state.uid !== snapshot.uid) {
+        return;
+      }
       const initialMeta = dashboard.getInitialState()?.meta;
       dashboard.setState({ meta: snapshot.wasNew && initialMeta ? initialMeta : snapshot.gitMeta });
     };
@@ -101,7 +95,10 @@ export function useDatabaseSaveSwitch({
       repoDataStatus === RepoViewStatus.Ready
         ? { ...meta }
         : { ...meta, folderUid: entryFolderUid, folderTitle: undefined, k8s: undefined };
-    drawer.setState({ saveToDatabase: true, databaseSwitchSnapshot: { gitMeta, wasNew: isNewDashboard } });
+    drawer.setState({
+      saveToDatabase: true,
+      databaseSwitchSnapshot: { gitMeta, wasNew: isNewDashboard, uid: dashboard.state.uid },
+    });
 
     // Only an unmanaged folder is a valid database target; provisioned and orphaned ones are rejected.
     // Manager annotations go with it, or saveCompleted would carry them into the saved database dashboard.

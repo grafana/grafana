@@ -1,13 +1,11 @@
-import { act, render, screen } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
-import { appEvents } from 'app/core/app_events';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from 'app/features/dashboard-scene/saving/shared';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { type DashboardMeta } from 'app/types/dashboard';
-import { DashboardSavedEvent } from 'app/types/events';
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
@@ -118,13 +116,13 @@ describe('SaveProvisionedDashboard', () => {
   });
 
   it('does not show the switch link for an existing dashboard', () => {
-    setup({ isNew: false }, { changeInfo: { isNew: false } as unknown as DashboardChangeInfo });
+    setup({ isNew: false }, { dashboard: createDashboard({ k8s: { name: 'existing-uid' } }) });
 
     expect(screen.queryByRole('button', { name: /grafana database/i })).not.toBeInTheDocument();
   });
 
   it('shows the switch link when saving a copy of an existing folderless dashboard', () => {
-    setup({ isNew: false }, { saveAsCopy: true, changeInfo: { isNew: false } as unknown as DashboardChangeInfo });
+    setup({ isNew: false }, { dashboard: createDashboard({ k8s: { name: 'existing-uid' } }), saveAsCopy: true });
 
     expect(screen.getByRole('button', { name: /grafana database/i })).toBeInTheDocument();
   });
@@ -319,8 +317,8 @@ describe('SaveProvisionedDashboard', () => {
 
     await user.click(screen.getByRole('button', { name: /grafana database/i }));
 
-    // useSaveDashboard publishes this before the overlay closes
-    act(() => appEvents.publish(new DashboardSavedEvent()));
+    // saveCompleted mints the uid and clears the overlay in one setState
+    dashboard.state.uid = 'saved-uid';
     dashboard.state.meta.folderUid = 'db-folder-uid';
     unmount();
 
@@ -333,13 +331,18 @@ describe('SaveProvisionedDashboard', () => {
     const initialMeta = {
       folderUid: 'git-folder-uid',
       uid: 'existing-uid',
-      k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'test-repo' } },
+      k8s: {
+        name: 'existing-uid',
+        annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'test-repo' },
+      },
     } as DashboardMeta;
-    const dashboard = createDashboard({ folderUid: 'git-folder-uid', uid: 'existing-uid', initialMeta });
-    const { user, unmount } = setup(
-      { isNew: false },
-      { dashboard, saveAsCopy: true, changeInfo: { isNew: false } as unknown as DashboardChangeInfo }
-    );
+    const dashboard = createDashboard({
+      folderUid: 'git-folder-uid',
+      uid: 'existing-uid',
+      k8s: initialMeta.k8s,
+      initialMeta,
+    });
+    const { user, unmount } = setup({ isNew: false }, { dashboard, saveAsCopy: true });
 
     await user.click(screen.getByRole('button', { name: /grafana database/i }));
 

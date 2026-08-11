@@ -25,8 +25,9 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
   const { defaultValues, canPushToConfiguredBranch, readOnly, repository, repoDataStatus, error } =
     useProvisionedDashboardData(dashboard, saveAsCopy);
 
-  // changeInfo.isNew stays stable across repo resolution, unlike the data hook's isNew
-  const isNewDashboard = changeInfo.isNew || !!saveAsCopy;
+  // Same check the data hook does, read straight from meta: the hook reports isNew as false
+  // whenever the repository is not Ready, which is when the escape hatch is needed most
+  const isNewDashboard = !dashboard.state.meta.k8s?.name || !!saveAsCopy;
 
   const { saveToDatabase, canSwitch, switchToDatabase, switchToGit } = useDatabaseSaveSwitch({
     dashboard,

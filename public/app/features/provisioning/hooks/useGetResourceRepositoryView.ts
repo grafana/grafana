@@ -47,6 +47,9 @@ export const useGetResourceRepositoryView = (args: GetResourceRepositoryArgs): R
   const data = useResourceRepositoryViewData(args);
   return {
     ...data,
+    // Derived here so every resolution path reports it; the name and folderName branches used to
+    // return undefined, which read as a Git repo to consumers picking the read-only tooltip copy
+    repoType: data.repository?.type,
     isMissingRepo: !data.isLoading && !data.repository,
   };
 };
@@ -57,7 +60,7 @@ const useResourceRepositoryViewData = ({
   skipQuery,
   includeInstance,
   includeFolderless,
-}: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo'> => {
+}: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo' | 'repoType'> => {
   const provisioningEnabled = config.provisioningEnabled;
   // Skip when caller has no target. This query is shared across many
   // components, so a failing fetch would cycle all of them through retries.
@@ -208,7 +211,6 @@ const useResourceRepositoryViewData = ({
     folder,
     isInstanceManaged,
     isReadOnlyRepo: getIsReadOnlyRepo(repository),
-    repoType: repository?.type,
     status: RepoViewStatus.Ready,
   };
 };
