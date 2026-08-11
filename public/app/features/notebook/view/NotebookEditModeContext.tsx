@@ -24,15 +24,17 @@ const NotebookEditModeContext = createContext<NotebookEditMode | undefined>(unde
  */
 export function NotebookEditModeProvider({ children }: { children: ReactNode }) {
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Decided once and used everywhere below — seeding, entering edit mode, and offering the toggle
+  // all have to agree, and separate calls would let them drift apart. Checked here rather than only
+  // where the toggle renders, so a hand-typed ?edit=true does nothing for a user without permission.
+  const canEdit = canEditNotebooks();
+
   // Read once for the initial value: the URL seeds the state, it does not drive it. Deriving on
   // every render would fight setIsEditing, which is what actually owns the mode.
   const [isEditing, setEditing] = useState(
-    () => searchParams.get(NOTEBOOK_EDIT_PARAM) === NOTEBOOK_EDIT_PARAM_ON && canEditNotebooks()
+    () => searchParams.get(NOTEBOOK_EDIT_PARAM) === NOTEBOOK_EDIT_PARAM_ON && canEdit
   );
-
-  // Checked here rather than only where the toggle renders, so a hand-typed ?edit=true does nothing
-  // for a user without permission.
-  const canEdit = canEditNotebooks();
 
   const setIsEditing = useCallback(
     (editing: boolean) => {
