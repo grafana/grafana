@@ -40,7 +40,6 @@ function HomeRouteInner(props: DashboardPageProxyProps) {
   }
 
   // Empty/absent UID, or prefs probe failed with no UID available → unified homepage
-  // (bundled home.json is no longer the default).
   return <HomePage />;
 }
 
