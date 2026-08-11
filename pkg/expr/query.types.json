@@ -297,7 +297,7 @@
     {
       "metadata": {
         "name": "threshold",
-        "resourceVersion": "1786389239949",
+        "resourceVersion": "1786465221559",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -350,10 +350,7 @@
                     "type": "object"
                   },
                   "loadedDimensions": {
-                    "additionalProperties": true,
-                    "description": "Deprecated: use LoadedFingerprints. Read only when LoadedFingerprints is absent.",
-                    "type": "object",
-                    "x-grafana-type": "data.DataFrame"
+                    "description": "Deprecated: use LoadedFingerprints. Kept raw and decoded only when LoadedFingerprints is\nabsent, so an optional frame parsing error would not break everything"
                   },
                   "loadedFingerprints": {
                     "description": "Fingerprints of the series that are already firing. Supersedes LoadedDimensions",

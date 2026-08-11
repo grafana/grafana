@@ -105,9 +105,6 @@ func NewHysteresisCommand(refID string, referenceVar string, loadCondition Thres
 // fingerprintsFromFrame converts data.Frame to Fingerprints.
 // The input data frame must have a single field of uint64 type.
 // Returns error if the input data frame has invalid format
-//
-// Deprecated: only for reading the deprecated loadedDimensions field. Fingerprints now travel as a
-// plain array, which needs no conversion.
 func fingerprintsFromFrame(frame *data.Frame) (Fingerprints, error) {
 	frameType, frameVersion := frame.TypeInfo("")
 	if frameType != "fingerprints" {
@@ -140,9 +137,6 @@ func fingerprintsFromFrame(frame *data.Frame) (Fingerprints, error) {
 }
 
 // fingerprintsToFrame converts Fingerprints to data.Frame.
-//
-// Deprecated: only for writing the deprecated loadedDimensions field. See
-// SetLoadedFingerprintsToHysteresisCommand.
 func fingerprintsToFrame(fingerprints Fingerprints) *data.Frame {
 	fp := make([]uint64, 0, len(fingerprints))
 	for fingerprint := range fingerprints {

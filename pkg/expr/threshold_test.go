@@ -264,10 +264,11 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 			},
 		},
 		{
-			// The frame encoding cannot survive a caller that re-serialises the query through a map:
-			// sorting the keys puts "data" ahead of "schema", and the frame decoder needs the schema
-			// first. Documented rather than worked around — such callers should send the array below.
-			description: "frame loaded dimensions ordered data first are rejected",
+			// A caller that re-serialises the query through a map sorts the keys, which puts "data" ahead
+			// of "schema" — an order the frame decoder cannot read in its single pass. Decoding retries
+			// with the keys put back in order, so this still parses. Guards the error-string match in
+			// decodeLoadedDimensionsFrame: if the SDK rewords it, this case fails.
+			description: "frame loaded dimensions ordered data first are reordered and read",
 			query: `{
 				  "conditions": [
 				    {
@@ -288,8 +289,16 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				  ],
 				  "expression": "B"
 				}`,
-			shouldError:   true,
-			expectedError: "malformed key order or frame without schema",
+			assert: func(t *testing.T, c Command) {
+				require.IsType(t, &HysteresisCommand{}, c)
+				cmd := c.(*HysteresisCommand)
+				actual := make([]uint64, 0, len(cmd.LoadedDimensions))
+				for fingerprint := range cmd.LoadedDimensions {
+					actual = append(actual, uint64(fingerprint))
+				}
+				slices.Sort(actual)
+				require.EqualValues(t, []uint64{2, 3, 4, 5, 18446744073709551615}, actual)
+			},
 		},
 		{
 			description: "unmarshal as hysteresis command from loadedFingerprints",
@@ -568,17 +577,37 @@ func TestLoadedFingerprintsEncoding(t *testing.T) {
 		require.Equal(t, fingerprints, cmd.(*HysteresisCommand).LoadedDimensions)
 	})
 
-	t.Run("takes precedence over the deprecated frame", func(t *testing.T) {
+	t.Run("writes both encodings", func(t *testing.T) {
 		query := map[string]any{}
 		require.NoError(t, json.Unmarshal([]byte(model), &query))
-		require.NoError(t, setLoadedDimensionsToHysteresisCommandAsFrame(query, Fingerprints{2: {}, 3: {}}))
-		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, Fingerprints{7: {}}))
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, Fingerprints{2: {}, 3: {}}))
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommandAsFrame(query, Fingerprints{2: {}, 3: {}}))
+
+		condition := query["conditions"].([]any)[0].(map[string]any)
+		require.ElementsMatch(t, []uint64{2, 3}, condition["loadedFingerprints"])
+		require.NotNil(t, condition["loadedDimensions"], "the frame is still written for readers that predate loadedFingerprints")
+	})
+
+	// When both encodings are present the array wins, so a stale or mangled frame beside it cannot
+	// change the outcome. Distinct fingerprints in each, otherwise the assertion cannot tell them apart.
+	t.Run("array takes precedence over the frame beside it", func(t *testing.T) {
+		query := map[string]any{}
+		require.NoError(t, json.Unmarshal([]byte(model), &query))
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommandAsFrame(query, Fingerprints{7: {}}))
+		require.NoError(t, SetLoadedDimensionsToHysteresisCommand(query, Fingerprints{2: {}, 3: {}}))
 
 		raw, err := json.Marshal(query)
 		require.NoError(t, err)
+		// simplejson sorts object keys, which puts the frame's "data" ahead of its "schema".
+		sj, err := simplejson.NewJson(raw)
+		require.NoError(t, err)
+		raw, err = sj.MarshalJSON()
+		require.NoError(t, err)
+		require.Regexp(t, `"loadedDimensions":\{"data"`, string(raw), "frame must be reordered for this test to mean anything")
+
 		cmd, err := UnmarshalThresholdCommand(&rawNode{RefID: "B", QueryRaw: raw})
 		require.NoError(t, err)
-		require.Equal(t, Fingerprints{7: {}}, cmd.(*HysteresisCommand).LoadedDimensions)
+		require.Equal(t, Fingerprints{2: {}, 3: {}}, cmd.(*HysteresisCommand).LoadedDimensions)
 	})
 }
 

@@ -156,14 +156,18 @@ func UnmarshalThresholdCommand(rn *rawNode) (Command, error) {
 		}
 		unloading.Invert = true
 		var d Fingerprints
-		switch {
-		case firstCondition.LoadedFingerprints != nil:
+		if firstCondition.LoadedFingerprints != nil {
 			d = make(Fingerprints, len(firstCondition.LoadedFingerprints))
 			for _, fp := range firstCondition.LoadedFingerprints {
 				d[data.Fingerprint(fp)] = struct{}{}
 			}
-		case firstCondition.LoadedDimensions != nil:
-			d, err = fingerprintsFromFrame(firstCondition.LoadedDimensions)
+		} else if len(firstCondition.LoadedDimensions) > 0 && string(firstCondition.LoadedDimensions) != "null" {
+			// TODO yuri: This is a temporary workaround. Delete it once everything is switched to loadedFingerprints field
+			frame, err := decodeLoadedDimensionsFrame(firstCondition.LoadedDimensions)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse loaded dimensions: %w", err)
+			}
+			d, err = fingerprintsFromFrame(frame)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse loaded dimensions: %w", err)
 			}
@@ -248,8 +252,9 @@ type ThresholdConditionJSON struct {
 	// Fingerprints of the series that are already firing. Supersedes LoadedDimensions
 	LoadedFingerprints []uint64 `json:"loadedFingerprints,omitempty"`
 
-	// Deprecated: use LoadedFingerprints. Read only when LoadedFingerprints is absent.
-	LoadedDimensions *data.Frame `json:"loadedDimensions,omitempty"`
+	// Deprecated: use LoadedFingerprints. Kept raw and decoded only when LoadedFingerprints is
+	// absent, so an optional frame parsing error would not break everything
+	LoadedDimensions json.RawMessage `json:"loadedDimensions,omitempty"`
 }
 
 // IsHysteresisExpression returns true if the raw model describes a hysteresis command:
@@ -282,7 +287,53 @@ func SetLoadedDimensionsToHysteresisCommand(query map[string]any, fingerprints F
 	return nil
 }
 
-func setLoadedDimensionsToHysteresisCommandAsFrame(query map[string]any, fingerprints Fingerprints) error {
+func decodeLoadedDimensionsFrame(raw json.RawMessage) (*data.Frame, error) {
+	frame := &data.Frame{}
+	err := frame.UnmarshalJSON(raw)
+	if err == nil {
+		return frame, nil
+	}
+	// check if the error is due to malformed key order.
+	// See: https://github.com/grafana/grafana-plugin-sdk-go/blob/cc0b49b8370162cf7f321ed3b323a403c3308546/data/frame_json.go#L299-L301
+	if !strings.Contains(err.Error(), "malformed key order") {
+		return nil, err
+	}
+
+	reordered, ok := schemaBeforeData(raw)
+	if !ok {
+		return nil, err
+	}
+	retried := &data.Frame{}
+	if retryErr := retried.UnmarshalJSON(reordered); retryErr != nil {
+		return nil, retryErr
+	}
+	return retried, nil
+}
+
+func schemaBeforeData(frame json.RawMessage) (json.RawMessage, bool) {
+	// this is the last resort of fixing the frame. It's a temporary dirty hack to workaround shuffling of json keys
+	// by the querier pipeline until it's switched to loadedFingerprints array
+	var parts struct {
+		Schema json.RawMessage `json:"schema"`
+		Data   json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(frame, &parts); err != nil || parts.Schema == nil || parts.Data == nil {
+		return nil, false
+	}
+	out := make([]byte, 0, len(frame))
+	out = append(out, `{"schema":`...)
+	out = append(out, parts.Schema...)
+	out = append(out, `,"data":`...)
+	out = append(out, parts.Data...)
+	return append(out, '}'), true
+}
+
+// SetLoadedDimensionsToHysteresisCommandAsFrame mutates the input map and sets field
+// "conditions[0].loadedDimensions" with the data frame created from the provided fingerprints.
+//
+// Deprecated: use SetLoadedDimensionsToHysteresisCommand. Only for writing alongside it, so that a
+// reader that predates loadedFingerprints still finds something it understands.
+func SetLoadedDimensionsToHysteresisCommandAsFrame(query map[string]any, fingerprints Fingerprints) error {
 	condition, err := getConditionForHysteresisCommand(query)
 	if err != nil {
 		return err
@@ -290,8 +341,7 @@ func setLoadedDimensionsToHysteresisCommandAsFrame(query map[string]any, fingerp
 	if condition == nil {
 		return errors.New("not a hysteresis command")
 	}
-	fr := fingerprintsToFrame(fingerprints)
-	condition["loadedDimensions"] = fr
+	condition["loadedDimensions"] = fingerprintsToFrame(fingerprints)
 	return nil
 }
 
