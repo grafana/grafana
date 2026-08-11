@@ -28,6 +28,11 @@ const server = setupMswServer();
 const MIMIR_DS_UID = 'mimir-uid';
 const MIMIR_DS_NAME = 'Test Mimir Alertmanager';
 
+const SECOND_MIMIR_DS_UID = 'other-mimir-uid';
+const SECOND_MIMIR_DS_NAME = 'Other Mimir Alertmanager';
+// Configured UID with no matching datasource — puts the component in orphan-uid.
+const ORPHAN_DS_UID = 'missing-uid';
+
 const MIMIR_DS_PAYLOAD = {
   id: 1,
   uid: MIMIR_DS_UID,
@@ -36,6 +41,13 @@ const MIMIR_DS_PAYLOAD = {
   type: 'alertmanager',
   url: 'http://localhost:9009',
   jsonData: { implementation: 'mimir' },
+};
+
+const SECOND_MIMIR_DS_PAYLOAD = {
+  ...MIMIR_DS_PAYLOAD,
+  id: 2,
+  uid: SECOND_MIMIR_DS_UID,
+  name: SECOND_MIMIR_DS_NAME,
 };
 
 function registerMimirDataSources(datasources: Array<typeof MIMIR_DS_PAYLOAD> = [MIMIR_DS_PAYLOAD]) {
@@ -84,6 +96,7 @@ const edgeUi = {
   addMimirDatasourceLink: byRole('link', { name: /add mimir datasource/i }),
   stagedConflictWarning: byText(/currently occupies that slot/i),
   stagedConflictActiveTitle: byText(/auto-sync is not running/i),
+  stagedConflictSyncOwned: byText(/disable sync to make it revertable/i),
 };
 
 describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
@@ -207,7 +220,7 @@ describe('AutoSyncConfiguration — edge-case states (cases 5–8)', () => {
   it('case 8: orphan UID — warning callout + Disable sync action visible, Save remains available for recovery', async () => {
     setupAdminConfigGet(server, {
       alertmanagersChoice: AlertmanagerChoice.Internal,
-      external_alertmanager_uid: 'missing-uid',
+      external_alertmanager_uid: ORPHAN_DS_UID,
     });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
@@ -265,5 +278,47 @@ describe('AutoSyncConfiguration — staged configuration conflict', () => {
 
     await waitFor(() => expect(ui.saveButton.get()).toBeEnabled());
     expect(edgeUi.stagedConflictWarning.query()).not.toBeInTheDocument();
+  });
+
+  // Recovering from orphan-uid means repointing at a live datasource, but the syncer's own leftover still
+  // occupies the slot under the deleted UID, so every tick after the save would fail server-side.
+  it('blocks repointing an orphaned sync while its leftover staged config occupies the slot', async () => {
+    setupAdminConfigGet(server, {
+      alertmanagersChoice: AlertmanagerChoice.Internal,
+      external_alertmanager_uid: ORPHAN_DS_UID,
+    });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    const { user } = render(<AutoSyncConfiguration stagedConfigIdentifier={ORPHAN_DS_UID} stagedConfigIsSyncManaged />);
+
+    expect(await edgeUi.orphanWarning.find()).toBeInTheDocument();
+    expect(edgeUi.stagedConflictWarning.query()).not.toBeInTheDocument();
+
+    await user.click(ui.picker.get());
+    await user.click(await screen.findByText(MIMIR_DS_NAME));
+
+    await waitFor(() => expect(ui.saveButton.get()).toBeDisabled());
+    // Revert is hidden on the staged card while the config belongs to sync, so point at the way out.
+    expect(edgeUi.stagedConflictSyncOwned.get()).toBeInTheDocument();
+  });
+
+  // The alert describes what the syncer writes today, not what the picker happens to show.
+  it('keeps reporting a broken sync when the picker moves to the staged identifier', async () => {
+    setupAdminConfigGet(server, {
+      alertmanagersChoice: AlertmanagerChoice.Internal,
+      external_alertmanager_uid: MIMIR_DS_UID,
+    });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD, SECOND_MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources([MIMIR_DS_PAYLOAD, SECOND_MIMIR_DS_PAYLOAD]);
+
+    const { user } = render(<AutoSyncConfiguration stagedConfigIdentifier={SECOND_MIMIR_DS_UID} />);
+
+    expect(await edgeUi.stagedConflictActiveTitle.find()).toBeInTheDocument();
+
+    await user.click(ui.picker.get());
+    await user.click(await screen.findByText(SECOND_MIMIR_DS_NAME));
+
+    expect(edgeUi.stagedConflictActiveTitle.get()).toBeInTheDocument();
   });
 });

@@ -3283,10 +3283,12 @@
         "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
         "save-disabled-no-selection": "Select a Mimir or Cortex Alertmanager datasource to enable saving.",
         "save-disabled-staged-config": "Revert the staged configuration before enabling auto-sync.",
+        "save-disabled-staged-config-sync-managed": "Disable sync and revert the staged configuration before switching datasource.",
         "save-error": "Failed to save Mimir Alertmanager auto-sync",
         "save-success": "Mimir Alertmanager auto-sync enabled",
         "staged-conflict-active-title": "Auto-sync is not running",
         "staged-conflict-body": "Grafana holds one imported configuration at a time, and {{identifier}} currently occupies that slot. Revert it below to free auto-sync.",
+        "staged-conflict-body-sync-managed": "Grafana holds one imported configuration at a time, and {{identifier}} currently occupies that slot. Disable sync to make it revertable, then enable it for the new datasource.",
         "staged-conflict-title": "Auto-sync is unavailable while a configuration is staged",
         "title": "Auto-sync configuration"
       },

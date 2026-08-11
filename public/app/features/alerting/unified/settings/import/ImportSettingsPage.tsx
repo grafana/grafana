@@ -51,23 +51,34 @@ function ImportSettingsPage() {
 function ImportSettingsContent() {
   const isAutoSyncEnabled = config.featureToggles['alerting.syncExternalAlertmanager'];
   const { stagedConfig } = useStagedConfig();
+  const { datasourceUid: autoSyncUid, isLoading: isLoadingAutoSync } = useIsAutoSyncActive();
+
+  // The syncer addresses its own staged config by the datasource UID, so a matching identifier means this
+  // staged config is auto-sync's output rather than a manual import. Both cards below branch on it.
+  const isSyncManaged = Boolean(autoSyncUid) && stagedConfig?.identifier === autoSyncUid;
 
   return (
     <Stack direction="column" gap={2}>
-      {isAutoSyncEnabled && <AutoSyncConfiguration stagedConfigIdentifier={stagedConfig?.identifier} />}
-      <StagedConfigurationSection />
+      {isAutoSyncEnabled && (
+        <AutoSyncConfiguration
+          stagedConfigIdentifier={stagedConfig?.identifier}
+          stagedConfigIsSyncManaged={isSyncManaged}
+        />
+      )}
+      <StagedConfigurationSection isSyncManaged={isSyncManaged} isLoadingAutoSync={isLoadingAutoSync} />
     </Stack>
   );
 }
 
-function StagedConfigurationSection() {
+interface StagedConfigurationSectionProps {
+  isSyncManaged: boolean;
+  isLoadingAutoSync: boolean;
+}
+
+function StagedConfigurationSection({ isSyncManaged, isLoadingAutoSync }: StagedConfigurationSectionProps) {
   const { canRevert } = getStagedConfigPermissions();
   const { stagedConfig, liveConfig, isLoading, isError, error, refetch } = useStagedConfig();
-  const { datasourceUid: autoSyncUid, isLoading: isLoadingAutoSync } = useIsAutoSyncActive();
 
-  // The syncer addresses its own staged config by the datasource UID, so a matching identifier means this
-  // staged config is auto-sync's output rather than a manual import.
-  const isSyncManaged = Boolean(autoSyncUid) && stagedConfig?.identifier === autoSyncUid;
   const isLoadingCard = isLoading || isLoadingAutoSync;
 
   useEffect(() => {
