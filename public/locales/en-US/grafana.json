@@ -16052,7 +16052,7 @@
       "all-rows": "All rows",
       "all-rows-description": "The content renders once.",
       "every-row": "Every row",
-      "every-row-description": "The content renders once per row, and can reference that row with ${__data.fields.<name>}."
+      "every-row-description": "The content renders once per row."
     }
   },
   "theme-playground": {

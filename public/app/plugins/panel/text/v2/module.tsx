@@ -45,10 +45,7 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
           value: RenderMode.EveryRow,
           label: t('textng.render-mode.every-row', 'Every row'),
           icon: 'list-ul',
-          description: t(
-            'textng.render-mode.every-row-description',
-            'The content renders once per row, and can reference that row with ${__data.fields.<name>}.'
-          ),
+          description: t('textng.render-mode.every-row-description', 'The content renders once per row.'),
         },
       ],
     },
