@@ -11,14 +11,9 @@ import { hasConfiguredUid, isOperatorManaged, useAutoSyncConfiguration } from '.
 interface AutoSyncConfigurationProps {
   /** Identifier of the staged import occupying the shared `extra_config` slot, if there is one. */
   stagedConfigIdentifier?: string;
-  /** The staged config is auto-sync's own output, so the card below offers no Revert until sync is disabled. */
-  stagedConfigIsSyncManaged?: boolean;
 }
 
-export function AutoSyncConfiguration({
-  stagedConfigIdentifier,
-  stagedConfigIsSyncManaged,
-}: AutoSyncConfigurationProps) {
+export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfigurationProps) {
   const styles = useStyles2(getStyles);
   const { state, mimirCortexDatasources, selectedUid, setSelectedUid, save, disableSync, isPending, isLoading } =
     useAutoSyncConfiguration();
@@ -47,19 +42,12 @@ export function AutoSyncConfiguration({
   const savingWouldBreakSync = slotBlocksSyncFrom(selectedUid);
   const runningSyncIsBroken = Boolean(savedUid) && slotBlocksSyncFrom(savedUid);
 
-  const stagedConflictTooltip = stagedConfigIsSyncManaged
-    ? t(
-        'alerting.settings.auto-sync.save-disabled-staged-config-sync-managed',
-        'Disable sync and revert the staged configuration before switching datasource.'
-      )
-    : t(
-        'alerting.settings.auto-sync.save-disabled-staged-config',
-        'Revert the staged configuration before enabling auto-sync.'
-      );
-
   const saveDisabled = !selectedUid || selectedUid === savedUid || savingWouldBreakSync;
   const saveDisabledTooltip = savingWouldBreakSync
-    ? stagedConflictTooltip
+    ? t(
+        'alerting.settings.auto-sync.save-disabled-staged-config',
+        'Revert the staged configuration before enabling auto-sync.'
+      )
     : t(
         'alerting.settings.auto-sync.save-disabled-no-selection',
         'Select a Mimir or Cortex Alertmanager datasource to enable saving.'
@@ -114,11 +102,7 @@ export function AutoSyncConfiguration({
             </Alert>
           )}
           {(runningSyncIsBroken || (showSave && savingWouldBreakSync)) && (
-            <StagedConflictAlert
-              identifier={stagedConfigIdentifier}
-              isSyncManaged={stagedConfigIsSyncManaged}
-              isRunningSyncBroken={runningSyncIsBroken}
-            />
+            <StagedConflictAlert identifier={stagedConfigIdentifier} isRunningSyncBroken={runningSyncIsBroken} />
           )}
           <div className={styles.formRow}>
             <Field
@@ -217,12 +201,11 @@ export function AutoSyncConfiguration({
 
 interface StagedConflictAlertProps {
   identifier?: string;
-  isSyncManaged?: boolean;
   /** Sync is enabled and its ticks are already failing, rather than a save being blocked before the fact. */
   isRunningSyncBroken: boolean;
 }
 
-function StagedConflictAlert({ identifier, isSyncManaged, isRunningSyncBroken }: StagedConflictAlertProps) {
+function StagedConflictAlert({ identifier, isRunningSyncBroken }: StagedConflictAlertProps) {
   return (
     <Alert
       severity={isRunningSyncBroken ? 'error' : 'warning'}
@@ -235,17 +218,10 @@ function StagedConflictAlert({ identifier, isSyncManaged, isRunningSyncBroken }:
             )
       }
     >
-      {isSyncManaged ? (
-        <Trans i18nKey="alerting.settings.auto-sync.staged-conflict-body-sync-managed" values={{ identifier }}>
-          Grafana holds one imported configuration at a time, and {'{{identifier}}'} currently occupies that slot.
-          Disable sync to make it revertable, then enable it for the new datasource.
-        </Trans>
-      ) : (
-        <Trans i18nKey="alerting.settings.auto-sync.staged-conflict-body" values={{ identifier }}>
-          Grafana holds one imported configuration at a time, and {'{{identifier}}'} currently occupies that slot.
-          Revert it below to free auto-sync.
-        </Trans>
-      )}
+      <Trans i18nKey="alerting.settings.auto-sync.staged-conflict-body" values={{ identifier }}>
+        Grafana holds one imported configuration at a time, and {'{{identifier}}'} currently occupies that slot. Revert
+        it below to free auto-sync.
+      </Trans>
     </Alert>
   );
 }

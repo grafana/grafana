@@ -96,7 +96,6 @@ const edgeUi = {
   addMimirDatasourceLink: byRole('link', { name: /add mimir datasource/i }),
   stagedConflictWarning: byText(/currently occupies that slot/i),
   stagedConflictActiveTitle: byText(/auto-sync is not running/i),
-  stagedConflictSyncOwned: byText(/disable sync to make it revertable/i),
 };
 
 describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
@@ -290,7 +289,7 @@ describe('AutoSyncConfiguration — staged configuration conflict', () => {
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
-    const { user } = render(<AutoSyncConfiguration stagedConfigIdentifier={ORPHAN_DS_UID} stagedConfigIsSyncManaged />);
+    const { user } = render(<AutoSyncConfiguration stagedConfigIdentifier={ORPHAN_DS_UID} />);
 
     expect(await edgeUi.orphanWarning.find()).toBeInTheDocument();
     expect(edgeUi.stagedConflictWarning.query()).not.toBeInTheDocument();
@@ -299,8 +298,7 @@ describe('AutoSyncConfiguration — staged configuration conflict', () => {
     await user.click(await screen.findByText(MIMIR_DS_NAME));
 
     await waitFor(() => expect(ui.saveButton.get()).toBeDisabled());
-    // Revert is hidden on the staged card while the config belongs to sync, so point at the way out.
-    expect(edgeUi.stagedConflictSyncOwned.get()).toBeInTheDocument();
+    expect(edgeUi.stagedConflictWarning.get()).toBeInTheDocument();
   });
 
   // The alert describes what the syncer writes today, not what the picker happens to show.
