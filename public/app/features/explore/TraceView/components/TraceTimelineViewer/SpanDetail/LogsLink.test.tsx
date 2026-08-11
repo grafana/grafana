@@ -6,8 +6,6 @@ import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/r
 import { type DataQuery } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { SpanLinkType, type SpanLinkModel } from '../../types/links';
-
 import { getLogsButtonCTA, getLogsButtonTooltip, LogsLinkButton, LogsLinkMenuItem } from './LogsLink';
 
 jest.mock('@grafana/runtime/unstable', () => ({
@@ -23,18 +21,15 @@ const DYNAMIC_TRACE_TO_LOGS_FLAG = 'grafana.dynamicTraceToLogs';
 
 const CTA_RELATED_LOGS = 'Related logs';
 
-function createSpanLinkModel(overrides: Partial<LinkModel> = {}): SpanLinkModel {
+const TRACE_DATASOURCE_UID = 'trace-ds-uid';
+
+function createLinkModel(overrides: Partial<LinkModel> = {}): LinkModel {
   return {
-    type: SpanLinkType.Logs,
-    icon: 'gf-logs',
-    traceDatasourceUid: 'trace-ds-uid',
-    linkModel: {
-      href: '/logs',
-      title: CTA_RELATED_LOGS,
-      target: '_blank',
-      origin: {},
-      ...overrides,
-    },
+    href: '/logs',
+    title: CTA_RELATED_LOGS,
+    target: '_blank',
+    origin: {},
+    ...overrides,
   };
 }
 
@@ -76,14 +71,14 @@ describe('LogsLinkButton', () => {
   });
 
   it('renders the link button with its CTA copy', () => {
-    render(<LogsLinkButton spanLinkModel={createSpanLinkModel()} />);
+    render(<LogsLinkButton linkModel={createLinkModel()} traceDatasourceUid={TRACE_DATASOURCE_UID} />);
 
     expect(screen.getByRole('button')).toBeInTheDocument();
     expect(screen.getByText(CTA_RELATED_LOGS)).toBeInTheDocument();
   });
 
   it('does not query the datasource when the link has no query', () => {
-    render(<LogsLinkButton spanLinkModel={createSpanLinkModel()} />);
+    render(<LogsLinkButton linkModel={createLinkModel()} traceDatasourceUid={TRACE_DATASOURCE_UID} />);
 
     expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
   });
@@ -101,7 +96,10 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkButton spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     // The datasource is never queried, and the button stays enabled (present).
@@ -118,7 +116,10 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'elasticsearch' } };
 
     render(
-      <LogsLinkButton spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalledWith(interpolatedQuery.datasource));
@@ -130,7 +131,10 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkButton spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     await waitFor(() => expect(query).toHaveBeenCalled());
@@ -144,7 +148,10 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'elasticsearch' } };
 
     render(
-      <LogsLinkButton spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     await waitFor(() => expect(query).toHaveBeenCalled());
@@ -164,7 +171,10 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkButton spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     await userEvent.hover(await screen.findByRole('button'));
@@ -183,7 +193,10 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkButton spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalled());
@@ -203,7 +216,10 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkButton spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     await waitFor(() => expect(query).toHaveBeenCalled());
@@ -233,14 +249,14 @@ describe('LogsLinkMenuItem', () => {
   });
 
   it('renders the menu item with its CTA copy', () => {
-    render(<LogsLinkMenuItem spanLinkModel={createSpanLinkModel()} />);
+    render(<LogsLinkMenuItem linkModel={createLinkModel()} traceDatasourceUid={TRACE_DATASOURCE_UID} />);
 
     expect(screen.getByRole('menuitem')).toBeInTheDocument();
     expect(screen.getByText(CTA_RELATED_LOGS)).toBeInTheDocument();
   });
 
   it('does not query the datasource when the link has no query', () => {
-    render(<LogsLinkMenuItem spanLinkModel={createSpanLinkModel()} />);
+    render(<LogsLinkMenuItem linkModel={createLinkModel()} traceDatasourceUid={TRACE_DATASOURCE_UID} />);
 
     expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
   });
@@ -258,7 +274,10 @@ describe('LogsLinkMenuItem', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkMenuItem spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+      <LogsLinkMenuItem
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     // The datasource is never queried, and the item stays enabled (present).
@@ -271,7 +290,10 @@ describe('LogsLinkMenuItem', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'elasticsearch' } };
 
     render(
-      <LogsLinkMenuItem spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+      <LogsLinkMenuItem
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalledWith(interpolatedQuery.datasource));
@@ -288,7 +310,10 @@ describe('LogsLinkMenuItem', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkMenuItem spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+      <LogsLinkMenuItem
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     await waitFor(() => expect(screen.getByRole('menuitem')).toBeDisabled());
@@ -304,7 +329,10 @@ describe('LogsLinkMenuItem', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkMenuItem spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+      <LogsLinkMenuItem
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalled());
@@ -323,7 +351,10 @@ describe('LogsLinkMenuItem', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkMenuItem spanLinkModel={createSpanLinkModel({ interpolatedParams: { query: interpolatedQuery } })} />
+      <LogsLinkMenuItem
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
     );
 
     await waitFor(() => expect(query).toHaveBeenCalled());
@@ -332,7 +363,9 @@ describe('LogsLinkMenuItem', () => {
 
   it('invokes the link onClick handler when clicked', async () => {
     const onClick = jest.fn();
-    render(<LogsLinkMenuItem spanLinkModel={createSpanLinkModel({ onClick })} />);
+    render(
+      <LogsLinkMenuItem linkModel={createLinkModel({ onClick })} traceDatasourceUid={TRACE_DATASOURCE_UID} />
+    );
 
     await userEvent.click(screen.getByRole('menuitem'));
     expect(onClick).toHaveBeenCalled();

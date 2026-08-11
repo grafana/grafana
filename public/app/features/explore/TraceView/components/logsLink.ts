@@ -25,7 +25,7 @@ export function getTraceToLogsQuery(
   const tagsToUse =
     traceToLogsOptions.tags && traceToLogsOptions.tags.length > 0 ? traceToLogsOptions.tags : getDefaultLogsTags();
 
-  let query: DataQuery | undefined;
+  let query: DataQuery | DataQuery[] | undefined;
   let tags = '';
   switch (logsDataSourceSettings?.type) {
     case 'loki':
@@ -66,11 +66,11 @@ function getQueryForLoki(
   options: TraceToLogsOptionsV2,
   tags: string,
   customQuery?: string
-): LokiQuery | undefined {
+): LokiQuery[] | undefined {
   const { filterByTraceID, filterBySpanID } = options;
 
   if (customQuery) {
-    return { expr: customQuery, refId: '' };
+    return [{ expr: customQuery, refId: '' }];
   }
 
   if (!tags) {
@@ -95,10 +95,10 @@ function getQueryForLoki(
       '"';
   }
 
-  return {
+  return [{
     expr: expr,
     refId: '',
-  };
+  }];
 }
 
 // we do not have access to the dataquery type for opensearch,
