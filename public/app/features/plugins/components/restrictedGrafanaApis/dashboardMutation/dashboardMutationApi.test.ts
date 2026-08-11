@@ -1,4 +1,11 @@
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import type { MutationClient, MutationRequest, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
+import { NotebookMutationClient } from 'app/features/notebook/mutation-api/NotebookMutationClient';
+import type { NotebookScene } from 'app/features/notebook/scene/NotebookScene';
 
 import { allMutationCommands } from './commandRegistry';
 import { dashboardMutationApi, setDashboardMutationClientForTests } from './dashboardMutationApi';
@@ -18,6 +25,7 @@ function createMockClient(): MutationClient {
 describe('dashboardMutationApi', () => {
   afterEach(() => {
     setDashboardMutationClientForTests(null);
+    setTestFlags({});
   });
 
   describe('execute', () => {
@@ -73,6 +81,35 @@ describe('dashboardMutationApi', () => {
       for (const cmd of allMutationCommands()) {
         const schema = dashboardMutationApi.getPayloadSchema(cmd.name);
         expect(schema).toBe(cmd.payloadSchema);
+      }
+    });
+
+    it('answers for every command a real client exposes', () => {
+      // There are two notions of "all commands": this union, and what each client actually registers.
+      // They can drift, because a client may add a command at its own seam rather than through a
+      // resource registry — DashboardMutationClient does exactly that with CREATE_NOTEBOOK_SPEC. A name
+      // a caller can see on `getAvailableCommands()` but cannot get a schema for is the failure, so
+      // check against the clients rather than against the union that is being verified.
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+
+      const exposed = [
+        ...new DashboardMutationClient(
+          new DashboardScene({
+            title: 'Dash',
+            uid: 'dash-1',
+            meta: { canEdit: true },
+            body: DefaultGridLayoutManager.fromVizPanels([]),
+          })
+        ).getAvailableCommands(),
+        // getAvailableCommands reads nothing off the scene — the command list is fixed at construction
+        // — so a notebook does not have to be built to ask a notebook client what it offers.
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the client only stores the scene; nothing here touches it
+        ...new NotebookMutationClient({} as NotebookScene).getAvailableCommands(),
+      ];
+
+      expect(exposed).toContain('CREATE_NOTEBOOK_SPEC');
+      for (const name of exposed) {
+        expect(dashboardMutationApi.getPayloadSchema(name)).not.toBeNull();
       }
     });
   });
