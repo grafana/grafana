@@ -63,8 +63,9 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
 
   payloadSchema: createNotebookSpecPayloadSchema,
   permission: requiresNotebookCreate,
-  // Nothing on the open scene changes, so there is nothing to re-render. Not `readOnly: true` either:
-  // that would skip the payload clone, and this handler hands the spec to a request.
+  // Not `readOnly: true`: that would skip the payload clone, and this handler hands the spec to a
+  // request. It costs a forceRender on the open document, which nothing here changed — the two effects
+  // of the flag only come apart on this command. See `readOnly` in the dashboard command types.
   readOnly: false,
 
   handler: async (payload) => {
@@ -85,11 +86,17 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
 
       const created = await createNotebook(spec);
 
+      let opened = false;
       if (payload.open) {
         locationService.push(created.url);
+        // Report whether the navigation landed, not that it was asked for. A dirty dashboard's
+        // unsaved-changes prompt blocks the push, and the notebook the caller now holds a uid for is
+        // not the mounted document — so GET_NOTEBOOK_SPEC and APPLY_NOTEBOOK_SPEC are still out of
+        // reach. The create itself is saved either way, hence success.
+        opened = locationService.getLocation().pathname === created.url;
       }
 
-      return { success: true, data: { created: true, ...created }, changes: [] };
+      return { success: true, data: { created: true, opened, ...created }, changes: [] };
     } catch (error) {
       return {
         success: false,

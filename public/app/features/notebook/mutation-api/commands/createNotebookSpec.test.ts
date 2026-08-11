@@ -42,6 +42,9 @@ describe('CREATE_NOTEBOOK_SPEC', () => {
     testStore = createTestStore();
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    // locationService is shared across the file, so a test that navigated leaves the next one already
+    // standing where it expects to arrive — which is exactly what `opened` reads.
+    locationService.push('/d/where-the-user-was');
   });
 
   afterEach(() => {
@@ -59,7 +62,7 @@ describe('CREATE_NOTEBOOK_SPEC', () => {
 
     expect(result).toMatchObject({
       success: true,
-      data: { created: true, uid: 'n-abc123', url: '/notebook/n-abc123' },
+      data: { created: true, opened: true, uid: 'n-abc123', url: '/notebook/n-abc123' },
     });
     expect(push).toHaveBeenCalledWith('/notebook/n-abc123');
     // generateName, not a client-invented uid: the apiserver appends the random suffix.
@@ -80,8 +83,24 @@ describe('CREATE_NOTEBOOK_SPEC', () => {
       payload: { spec: notebookSpec(), open: false },
     });
 
-    expect(result.success).toBe(true);
+    expect(result).toMatchObject({ success: true, data: { created: true, opened: false } });
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it('reports opened: false when something blocked the navigation', async () => {
+    setBackendSrv({
+      fetch: jest.fn().mockReturnValue(of(createFetchResponse(createdNotebook()))),
+    } as unknown as BackendSrv);
+    // What a dirty dashboard's unsaved-changes prompt does: the push is issued and the location does
+    // not move.
+    jest.spyOn(locationService, 'push').mockImplementation(() => {});
+    const client = new NotebookMutationClient(notebookScene());
+
+    const result = await client.execute({ type: 'CREATE_NOTEBOOK_SPEC', payload: { spec: notebookSpec() } });
+
+    // The notebook is saved, so this is a success — but GET_NOTEBOOK_SPEC and APPLY_NOTEBOOK_SPEC only
+    // reach it once its page is mounted, and `opened` is how the caller knows they cannot yet.
+    expect(result).toMatchObject({ success: true, data: { created: true, opened: false, uid: 'n-abc123' } });
   });
 
   it('validates before writing, by default', async () => {
