@@ -1,6 +1,12 @@
+import { type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
+
 import { restoreUnshadowedPredefinedVariables } from '../../settings/variables/utils';
 import { removeElement } from '../element/removeElement';
-import { type RemoveVariableActionHelperProps } from '../utils/types';
+
+interface RemoveVariableActionHelperProps {
+  removedObject: SceneVariable;
+  source: SceneVariableSet;
+}
 
 export function removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
   const varsBeforeRemoval = [...source.state.variables];

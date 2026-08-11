@@ -10,7 +10,8 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { getDashboardSceneFor, getLayoutManagerFor, getQueryRunnerFor } from '../../utils/utils';
+import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
+import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { type DashboardScene } from '../DashboardScene';
 import { type BulkActionElement } from '../types/BulkActionElement';
 import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
