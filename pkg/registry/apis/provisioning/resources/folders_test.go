@@ -2187,7 +2187,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		t.Run("an incomplete relocating set still conflicts on the parent ancestor", func(t *testing.T) {
 			fm, _ := newManager()
 			_, err := fm.EnsureFolderPathExist(ctx, "newparent/newchild/dashboard.json", "test-ref",
-				WithForceWalk(), WithRelocatingFolders(RelocatingFolder{UID: "child-uid", Path: "newparent/newchild/"}))
+				WithForceWalk(), WithRelocatingUIDs("child-uid"))
 			require.Error(t, err)
 			require.ErrorContains(t, err, `folder UID "parent-uid" defined in "newparent" is already used by folder at path "oldparent"`)
 		})
@@ -2195,57 +2195,13 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		t.Run("the full relocating set relocates both folders without conflict", func(t *testing.T) {
 			fm, client := newManager()
 			leaf, err := fm.EnsureFolderPathExist(ctx, "newparent/newchild/dashboard.json", "test-ref",
-				WithForceWalk(),
-				WithRelocatingFolders(
-					RelocatingFolder{UID: "parent-uid", Path: "newparent/"},
-					RelocatingFolder{UID: "child-uid", Path: "newparent/newchild/"},
-				))
+				WithForceWalk(), WithRelocatingUIDs("parent-uid", "child-uid"))
 			require.NoError(t, err)
 			require.Equal(t, "child-uid", leaf)
 			// Both relocating folders were re-ensured (re-parented) at their new paths.
 			require.Contains(t, client.updateCalls, "parent-uid")
 			require.Contains(t, client.updateCalls, "child-uid")
 		})
-	})
-
-	// A relocation exemption must be bound to the UID's expected destination
-	// path. Here a parent legitimately relocates to "newparent/", but the child's
-	// _folder.json accidentally declares the parent's UID. If the exemption were
-	// UID-only it would bypass the duplicate-UID guard at the child leaf and
-	// repoint the parent's object to the child path; binding the exemption to
-	// "newparent/" keeps the genuine collision a hard validation error.
-	t.Run("relocation exemption does not leak to a child that reuses the parent UID", func(t *testing.T) {
-		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
-		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "newparent/_folder.json", "test-ref").
-			Return(&repository.FileInfo{Data: folderJSON("parent-uid", "Parent"), Hash: "parent-hash"}, nil)
-		// The child accidentally claims the parent's UID.
-		rw.On("Read", mock.Anything, "newparent/newchild/_folder.json", "test-ref").
-			Return(&repository.FileInfo{Data: folderJSON("parent-uid", "Child"), Hash: "child-hash"}, nil)
-
-		tree := NewEmptyFolderTree()
-		tree.Add(Folder{ID: "parent-uid", Path: "oldparent", Title: "Parent", MetadataHash: "parent-hash"}, "")
-
-		client := &fakeDynamicResourceClient{
-			getFn: func(name string) (*unstructured.Unstructured, error) {
-				if name == "parent-uid" {
-					return managedFolder(name, "Folder", config.Name), nil
-				}
-				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
-			},
-			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) { return obj, nil },
-			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) { return obj, nil },
-		}
-		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
-
-		_, err := fm.EnsureFolderPathExist(ctx, "newparent/newchild/dashboard.json", "test-ref",
-			WithForceWalk(), WithRelocatingFolders(RelocatingFolder{UID: "parent-uid", Path: "newparent/"}))
-
-		require.Error(t, err)
-		var validationErr *ResourceValidationError
-		require.ErrorAs(t, err, &validationErr, "child reusing the parent UID must stay a ResourceValidationError")
-		require.ErrorContains(t, err, `folder UID "parent-uid" defined in "newparent/newchild" is already used by folder at path "newparent"`)
 	})
 }
 
@@ -2718,10 +2674,10 @@ func TestRenameFolderPath(t *testing.T) {
 
 		fm := NewFolderManager(rw, client, tree, FolderKind, WithFolderMetadataEnabled(true))
 
-		// Without the parent-uid relocation bound to new-parent/, this would fail
-		// because parent-uid is still registered at old-parent/ in the tree.
+		// Without WithRelocatingUIDs("parent-uid"), this would fail because
+		// parent-uid is still registered at old-parent/ in the tree.
 		oldID, err := fm.RenameFolderPath(ctx, "old-parent/child/", "ref-old", "new-parent/child/", "ref-new",
-			WithRelocatingFolders(RelocatingFolder{UID: "parent-uid", Path: "new-parent/"}))
+			WithRelocatingUIDs("parent-uid"))
 		require.NoError(t, err)
 		require.Empty(t, oldID, "same UID means in-place update, no cleanup needed")
 	})

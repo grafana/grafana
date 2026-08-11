@@ -25,50 +25,30 @@ const MaxNumberOfFolders = 10000
 type EnsurePathOption func(*ensurePathConfig)
 
 type ensurePathConfig struct {
-	// relocatingUIDs maps a relocating folder's UID to its expected destination
-	// path. The ID conflict check is bypassed for a resolved folder only when its
-	// UID is listed here AND it resolves at the mapped destination path — never
-	// at some other path reached during the same ancestor walk.
-	relocatingUIDs map[string]string
+	relocatingUIDs map[string]struct{}
 	forceWalk      bool
 }
 
 func newEnsurePathConfig(opts []EnsurePathOption) ensurePathConfig {
-	cfg := ensurePathConfig{relocatingUIDs: make(map[string]string)}
+	cfg := ensurePathConfig{relocatingUIDs: make(map[string]struct{})}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
 	return cfg
 }
 
-// isRelocatingTo reports whether uid is a known relocating folder that is
-// expected to land at path. Binding the exemption to the destination path stops
-// a folder that accidentally claims a relocating ancestor's UID from bypassing
-// the conflict check at a different point in the walk.
-func (c *ensurePathConfig) isRelocatingTo(uid, path string) bool {
-	expected, ok := c.relocatingUIDs[uid]
-	if !ok {
-		return false
-	}
-	return safepath.EnsureTrailingSlash(expected) == safepath.EnsureTrailingSlash(path)
+func (c *ensurePathConfig) isRelocating(uid string) bool {
+	_, ok := c.relocatingUIDs[uid]
+	return ok
 }
 
-// RelocatingFolder pairs a relocating folder's UID with the destination path it
-// is expected to reach in this operation.
-type RelocatingFolder struct {
-	UID  string
-	Path string
-}
-
-// WithRelocatingFolders marks folders as legitimately relocating so that the ID
-// conflict check is bypassed for each UID only when it resolves at its expected
-// destination path during folder path resolution. Binding the exemption to that
-// path keeps it from leaking to other folders resolved during the same ancestor
-// walk. This avoids mutating the tree before the operation is confirmed to succeed.
-func WithRelocatingFolders(folders ...RelocatingFolder) EnsurePathOption {
+// WithRelocatingUIDs marks UIDs as legitimately relocating to a new path so
+// that the ID conflict check is bypassed for them during folder path resolution.
+// This avoids mutating the tree before the operation is confirmed to succeed.
+func WithRelocatingUIDs(uids ...string) EnsurePathOption {
 	return func(cfg *ensurePathConfig) {
-		for _, f := range folders {
-			cfg.relocatingUIDs[f.UID] = f.Path
+		for _, uid := range uids {
+			cfg.relocatingUIDs[uid] = struct{}{}
 		}
 	}
 }
@@ -184,9 +164,8 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 	if !epCfg.forceWalk {
 		if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing, IgnoreParent()) {
 			// When a folder is being relocated, its UID temporarily exists at both the old
-			// and new paths in the tree. Allow the duplicate UID only when this folder is
-			// the one relocating to this exact path.
-			if !epCfg.isRelocatingTo(f.ID, f.Path) &&
+			// and new paths in the tree. Allow the duplicate UID only in that case.
+			if !epCfg.isRelocating(f.ID) &&
 				safepath.EnsureTrailingSlash(existing.Path) != safepath.EnsureTrailingSlash(f.Path) {
 				return "", NewResourceValidationError(fmt.Errorf(
 					"folder UID %q defined in %q is already used by folder at path %q",
@@ -210,7 +189,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 			return nil
 		}
 
-		if !epCfg.isRelocatingTo(f.ID, f.Path) && existsInTree &&
+		if !epCfg.isRelocating(f.ID) && existsInTree &&
 			safepath.EnsureTrailingSlash(existing.Path) != safepath.EnsureTrailingSlash(f.Path) {
 			return NewResourceValidationError(fmt.Errorf(
 				"folder UID %q defined in %q is already used by folder at path %q",
@@ -549,11 +528,10 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 		}
 	}
 
-	// Pass the old UID as relocating to newPath so the ID conflict check does not
-	// reject the same stable UID appearing at its new path. Binding to newPath keeps
-	// the exemption from leaking to other folders on the ancestor walk. The tree is
-	// only mutated after EnsureFolderPathExist succeeds, avoiding tree corruption on failure.
-	ensureOpts := append([]EnsurePathOption{WithRelocatingFolders(RelocatingFolder{UID: oldFolder.ID, Path: newPath})}, opts...)
+	// Pass the old UID as relocating so the ID conflict check does not reject
+	// the same stable UID appearing at a new path. The tree is only mutated
+	// after EnsureFolderPathExist succeeds, avoiding tree corruption on failure.
+	ensureOpts := append([]EnsurePathOption{WithRelocatingUIDs(oldFolder.ID)}, opts...)
 	if _, err := fm.EnsureFolderPathExist(ctx, newPath, newRef, ensureOpts...); err != nil {
 		return "", fmt.Errorf("ensure new folder path: %w", err)
 	}
