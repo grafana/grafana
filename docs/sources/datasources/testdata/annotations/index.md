@@ -54,6 +54,29 @@ To use the Annotations scenario:
 
 For a reference of all TestData scenarios, refer to the [TestData query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/query-editor/).
 
+## Example: Overlay annotations on a time series panel
+
+This example creates a time series panel with simulated data, then adds a TestData annotation query so you can verify how the panel renders annotation markers.
+
+1. Navigate to the dashboard you want to update and click **Edit**.
+1. Click the **Add** icon and select **Visualization**.
+1. Select the **TestData** data source.
+1. Choose the **Random Walk** scenario from the **Scenario** drop-down.
+1. Click **Run queries** to render the time series.
+1. Click **Back to dashboard**, then click **Settings**.
+1. Select the **Annotations** tab.
+1. Click **Add annotation query**.
+1. Enter a name for the annotation, for example `Test events`.
+1. Select the **TestData** data source.
+1. Set the **Count** field to `5`.
+1. Click **Save dashboard**.
+
+Grafana draws five vertical annotation markers evenly across the time range on the time series panel. Hover over a marker to see the sample text and tags. Adjust the **Count** field to change how many markers appear.
+
+{{< admonition type="tip" >}}
+To test how a panel handles crowded overlays, increase the **Count** field to a high value, such as `100`. This produces many closely spaced markers, which is useful for checking marker rendering and tooltip behavior at high density.
+{{< /admonition >}}
+
 ## Limitations
 
 - **Events are synthetic.** TestData generates fixed sample text and tags. You can't customize the event content.
