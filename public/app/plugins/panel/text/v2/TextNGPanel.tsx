@@ -78,6 +78,7 @@ export function TextNGPanel(props: Props) {
       options.content,
       options.mode,
       options.renderMode,
+      options.handlebars,
       options.code?.language,
       data.series,
       replaceVariables,
@@ -98,6 +99,7 @@ export function TextNGPanel(props: Props) {
           showLineNumbers={options.code?.showLineNumbers ?? false}
           codeLanguage={options.code?.language}
           renderMode={options.renderMode}
+          handlebars={options.handlebars}
           series={data.series}
           replaceVariables={replaceVariables}
           suggestions={suggestions}
@@ -202,6 +204,7 @@ function renderPanelContent(options: Options, series: DataFrame[], replaceVariab
       mode: options.mode,
       series,
       renderMode: options.renderMode,
+      handlebars: options.handlebars,
       format: getInterpolateFormat(options.code?.language),
     },
     replaceVariables,

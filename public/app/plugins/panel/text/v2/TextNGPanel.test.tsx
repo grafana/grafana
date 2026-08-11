@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
-import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
+import { CodeLanguage, type Options, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { type Props, TextNGPanel } from './TextNGPanel';
 import { createData, createProps, renderPanel } from './test-utils';
@@ -348,6 +348,37 @@ describe('TextNGPanel', () => {
       ['an unset render mode', undefined],
     ])('renders once with no row context in %s', (_name, renderMode) => {
       expect(setupWithData(renderMode)).toContain('no row context');
+    });
+  });
+
+  describe('handlebars', () => {
+    const series = [
+      toDataFrame({
+        fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
+      }),
+    ];
+
+    const passThrough: InterpolateFunction = (target) => target;
+
+    function setupWithData(options: Partial<Options>) {
+      const props = createProps(passThrough, {
+        data: createData(series),
+        options: { content: '', mode: TextMode.Markdown, ...options },
+      });
+
+      setup(props, CoreApp.Dashboard);
+      return screen.getByTestId('TextNGPanel-converted-content').innerHTML;
+    }
+
+    it('evaluates expressions against the query data when enabled', () => {
+      const html = setupWithData({ content: '{{#each data}}- {{host}}\n{{/each}}', handlebars: true });
+
+      expect(html).toContain('web-1');
+      expect(html).toContain('web-2');
+    });
+
+    it('leaves expressions untouched when disabled', () => {
+      expect(setupWithData({ content: '{{#each data}}x{{/each}}' })).toContain('{{#each data}}x{{/each}}');
     });
   });
 });

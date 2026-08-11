@@ -3,6 +3,7 @@ import { t } from '@grafana/i18n';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
+import { buildAllRowsContext, buildRows, type CompiledTemplate, compileTemplate } from './handlebars';
 import { transformContent } from './utils';
 
 /** Every row re-interpolates the whole template, which the edit preview redoes on every keystroke. */
@@ -14,6 +15,7 @@ export interface TextTemplate {
   mode: TextMode;
   series?: DataFrame[];
   renderMode?: RenderMode;
+  handlebars?: boolean;
   format?: string;
 }
 
@@ -22,19 +24,25 @@ export function hasRenderableData(series?: DataFrame[]): series is DataFrame[] {
 }
 
 export function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction): string {
-  const { content, series, renderMode, format } = template;
+  const { content, mode, series, renderMode, handlebars, format } = template;
+
+  // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
+  const compiled = handlebars && mode !== TextMode.Code ? compileTemplate(content, replaceVariables) : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
-    return interpolateEveryRow(template, series, replaceVariables);
+    return interpolateEveryRow(template, series, replaceVariables, compiled);
   }
 
-  return replaceVariables(content, {}, format);
+  const templated = compiled ? compiled(buildAllRowsContext(series ?? [])) : content;
+
+  return replaceVariables(templated, {}, format);
 }
 
 function interpolateEveryRow(
   template: TextTemplate,
   series: DataFrame[],
-  replaceVariables: InterpolateFunction
+  replaceVariables: InterpolateFunction,
+  compiled?: CompiledTemplate
 ): string {
   const { content, mode, format } = template;
   const totalRows = series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
@@ -46,6 +54,8 @@ function interpolateEveryRow(
       continue;
     }
 
+    const rows = compiled ? buildRows(frame, series) : undefined;
+
     const rowCount = Math.min(frame.length, MAX_RENDERED_ROWS - blocks.length);
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
       // `field` is unused by the ${__data} macro but required by the type, and
@@ -54,7 +64,10 @@ function interpolateEveryRow(
         __dataContext: { value: { data: series, frame, field, rowIndex, frameIndex } },
       };
 
-      blocks.push(replaceVariables(content, scopedVars, format));
+      const row = rows?.[rowIndex];
+      const templated = compiled && row ? compiled(row) : content;
+
+      blocks.push(replaceVariables(templated, scopedVars, format));
     }
 
     if (blocks.length >= MAX_RENDERED_ROWS) {

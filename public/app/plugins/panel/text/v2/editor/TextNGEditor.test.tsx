@@ -580,3 +580,36 @@ describe('TextNGEditor render mode preview', () => {
     expect(previewHtml()).toContain('row-1');
   });
 });
+
+describe('TextNGEditor handlebars preview', () => {
+  const series = [
+    toDataFrame({
+      fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
+    }),
+  ];
+
+  const previewFor = (handlebars?: boolean) => (
+    <TextNGEditor
+      content="{{#each data}}- {{host}}\n{{/each}}"
+      mode={TextMode.Markdown}
+      showLineNumbers={false}
+      handlebars={handlebars}
+      series={series}
+      replaceVariables={(target) => target}
+      onChange={jest.fn()}
+    />
+  );
+
+  it('evaluates expressions in the preview when the pane enables them', () => {
+    render(previewFor(true));
+
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-1');
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-2');
+  });
+
+  it('previews the raw expressions when disabled', () => {
+    render(previewFor(false));
+
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('{{#each data}}');
+  });
+});

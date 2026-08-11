@@ -16123,9 +16123,11 @@
       "view-write": "Write"
     },
     "options": {
+      "handlebars": "Handlebars",
       "render-mode": "Render mode"
     },
     "render": {
+      "handlebars-error": "Handlebars error: {{message}}",
       "truncated": "Showing the first {{maxRows}} rows."
     },
     "render-mode": {

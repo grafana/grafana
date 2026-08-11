@@ -38,6 +38,8 @@ composableKinds: PanelCfg: {
 				Options: {
 					mode:        TextMode & (*"markdown" | _)
 					renderMode?: RenderMode & (*"once" | _)
+					// Evaluate Handlebars expressions in the content before variable interpolation.
+					handlebars?: bool | *false
 					code?:       CodeOptions
 					content: string | *"""
 						# Title

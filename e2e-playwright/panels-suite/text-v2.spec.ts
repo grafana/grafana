@@ -12,6 +12,7 @@ const CODE_PANEL = '5';
 // Render mode needs query data, which text-options.json has none of.
 const DATA_DASHBOARD_UID = 'adssfc8';
 const EVERY_ROW_PANEL = '6';
+const HANDLEBARS_PANEL = '5';
 
 test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
@@ -170,6 +171,51 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       // A single render cannot resolve per-row fields, so the macro stays literal.
       await expect(preview.locator('.user-card')).toHaveCount(1);
       await expect(preview).toContainText('${__data.fields.Id}');
+    });
+  });
+
+  test.describe('handlebars', () => {
+    test('evaluates expressions against the query data', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, {
+        root: dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Handlebars')),
+      });
+
+      // Below the fold, so the panel doesn't query until it scrolls into view.
+      await panel.scrollIntoViewIfNeeded();
+
+      // {{#each data}} over the panel's csv_content query.
+      await expect(panel.locator('li')).toHaveCount(3);
+      await expect(panel).toContainText('84.0%');
+      // The rows are 84, 12 and 37, so only the first takes the {{#if (gt cpu 50)}} branch.
+      await expect(panel.locator('li').filter({ hasText: '⚠️' })).toHaveCount(1);
+    });
+
+    test('leaves expressions literal when turned off in the options pane', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+    }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DATA_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: HANDLEBARS_PANEL }),
+      });
+
+      const preview = page.getByTestId('TextNGEditor-preview');
+      await expect(preview).toContainText('84.0%');
+
+      // Unlike Mode, Handlebars lives in the options pane, not the toolbar.
+      const handlebarsField = dashboardPage.getByGrafanaSelector(
+        selectors.components.PanelEditor.OptionsPane.fieldLabel('Data Handlebars')
+      );
+      const handlebarsInput = handlebarsField.locator('input[type="checkbox"]');
+      await expect(handlebarsInput).toBeChecked();
+
+      await handlebarsField.getByText('Handlebars', { exact: true }).click();
+
+      await expect(handlebarsInput).not.toBeChecked();
+      await expect(preview).toContainText('{{#each data}}');
     });
   });
 });
