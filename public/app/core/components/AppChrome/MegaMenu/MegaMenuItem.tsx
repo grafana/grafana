@@ -318,7 +318,7 @@ export function MegaMenuItem({
 const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   icon: css({
     width: theme.spacing(3),
-    color: visualRefreshEnabled ? theme.colors.accent.main : undefined,
+    color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
   }),
   img: css({
     height: theme.spacing(2),
