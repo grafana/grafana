@@ -242,7 +242,7 @@ func applyIncrementalChanges(
 				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.reparent_child_folder")
 				ensureOpts := []resources.EnsurePathOption{resources.WithForceWalk()}
 				if uids, ok := relocations[change.Path]; ok {
-					ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(uids...))
+					ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(change.Path, uids...))
 				}
 				folder, fErr := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path, change.Ref, ensureOpts...)
 				if fErr != nil {
@@ -328,7 +328,7 @@ func applyIncrementalChanges(
 				var folderRenameOpts []resources.EnsurePathOption
 				for dir := safepath.Dir(change.Path); dir != ""; dir = safepath.Dir(dir) {
 					if uids, ok := relocations[dir]; ok {
-						folderRenameOpts = append(folderRenameOpts, resources.WithRelocatingUIDs(uids...))
+						folderRenameOpts = append(folderRenameOpts, resources.WithRelocatingUIDs(dir, uids...))
 					}
 				}
 				oldFolderID, err := repositoryResources.RenameFolderPath(renameFolderCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, folderRenameOpts...)
@@ -345,7 +345,7 @@ func applyIncrementalChanges(
 				var renameOpts []resources.EnsurePathOption
 				for dir := safepath.EnsureTrailingSlash(safepath.Dir(change.Path)); dir != ""; dir = safepath.Dir(dir) {
 					if uids, ok := relocations[dir]; ok {
-						renameOpts = append(renameOpts, resources.WithRelocatingUIDs(uids...))
+						renameOpts = append(renameOpts, resources.WithRelocatingUIDs(dir, uids...))
 					}
 				}
 				name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)

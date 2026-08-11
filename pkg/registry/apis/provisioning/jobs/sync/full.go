@@ -187,7 +187,7 @@ func shouldSkipChange(ctx context.Context, change ResourceFileChange, progress j
 // folderMoves lists the stable-UID folder relocations in this batch so the
 // folder-path ensure can tolerate the same UID temporarily existing at both its
 // old and new path — but only for the current folder and its relocating ancestors
-// (see relocatingUIDsForPath). It is empty for non-folder changes.
+// (see relocatingFoldersForPath). It is empty for non-folder changes.
 func applyChange(
 	ctx context.Context,
 	change ResourceFileChange,
@@ -271,13 +271,15 @@ func applyChange(
 			ensureOpts = append(ensureOpts, resources.WithForceWalk())
 		}
 		// Exempt only the moving folders on this path's own ancestor chain from the
-		// duplicate-UID guard. A commit that renames a parent and a child at once
+		// duplicate-UID guard, and bind each exemption to that folder's own
+		// destination path. A commit that renames a parent and a child at once
 		// resolves the parent's still-old-path UID during the child's ancestor walk,
-		// so the child's ensure must tolerate the parent's UID. Exempting unrelated
-		// relocations elsewhere in the batch would instead let a folder that
-		// accidentally claims another folder's UID hijack that folder's object.
-		if relocatingUIDs := relocatingUIDsForPath(change.Path, folderMoves); len(relocatingUIDs) > 0 {
-			ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(relocatingUIDs...))
+		// so the child's ensure must tolerate the parent's UID at the parent's new
+		// path. Binding to the destination path stops a descendant that reuses a
+		// relocating ancestor's UID from hijacking that folder's object at the
+		// descendant's own (different) path.
+		for _, m := range relocatingFoldersForPath(change.Path, folderMoves) {
+			ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(m.Path, m.UID))
 		}
 
 		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path, currentRef, ensureOpts...)
@@ -495,24 +497,25 @@ func collectFolderMoves(folderChanges []ResourceFileChange) []folderMove {
 	return moves
 }
 
-// relocatingUIDsForPath returns the UIDs of the batch's folder moves whose
-// destination path is an ancestor of (or equal to) the given path. Ensuring a
-// folder walks its ancestors, so only the current folder and its relocating
-// ancestors legitimately need the duplicate-UID guard bypassed. Scoping the
-// exemption this way keeps an unrelated folder that accidentally claims another
-// folder's UID from hijacking that folder's object.
-func relocatingUIDsForPath(path string, moves []folderMove) []string {
+// relocatingFoldersForPath returns the batch's folder moves whose destination
+// path is an ancestor of (or equal to) the given path. Ensuring a folder walks
+// its ancestors, so only the current folder and its relocating ancestors
+// legitimately need the duplicate-UID guard bypassed. Each returned move keeps
+// its own destination path so the caller can bind the exemption to that exact
+// path, keeping a descendant that reuses a relocating ancestor's UID from
+// hijacking that folder's object.
+func relocatingFoldersForPath(path string, moves []folderMove) []folderMove {
 	path = safepath.EnsureTrailingSlash(path)
-	var uids []string
+	var matches []folderMove
 	for _, m := range moves {
 		// InDir is a prefix check; for directory paths (trailing slash) this
 		// matches movePath == path and any descendant of movePath.
 		movePath := safepath.EnsureTrailingSlash(m.Path)
 		if movePath != "" && safepath.InDir(path, movePath) {
-			uids = append(uids, m.UID)
+			matches = append(matches, m)
 		}
 	}
-	return uids
+	return matches
 }
 
 // changeBuckets groups resource changes by the phase in which they must be applied.
