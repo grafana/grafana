@@ -411,6 +411,39 @@ describe('provisioning data mapping', () => {
     });
   });
 
+  describe('commit author', () => {
+    it('writes authorName and authorEmail to spec when provided', () => {
+      const formData = makeFormData('github');
+      formData.commit = { authorName: '  Sync Bot  ', authorEmail: '  bot@example.com  ' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit?.authorName).toBe('Sync Bot');
+      expect(spec.commit?.authorEmail).toBe('bot@example.com');
+    });
+
+    it('omits the author fields when signing is configured', () => {
+      const formData = makeFormData('github');
+      formData.signingMethod = 'ssh';
+      formData.commit = { authorName: 'Sync Bot', authorEmail: 'bot@example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.commit).not.toHaveProperty('authorName');
+      expect(spec.commit).not.toHaveProperty('authorEmail');
+    });
+
+    it('reads the author fields from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        commit: { authorName: 'Sync Bot', authorEmail: 'bot@example.com' },
+      };
+      const data = specToData(spec);
+      expect(data.commit?.authorName).toBe('Sync Bot');
+      expect(data.commit?.authorEmail).toBe('bot@example.com');
+    });
+  });
+
   describe('commit signing', () => {
     it('writes signerName and signerEmail to spec when provided', () => {
       const formData = makeFormData('github');
@@ -421,7 +454,7 @@ describe('provisioning data mapping', () => {
       expect(spec.commit?.signerEmail).toBe('jane@example.com');
     });
 
-    it('trims author fields before writing to spec', () => {
+    it('trims signer fields before writing to spec', () => {
       const formData = makeFormData('github');
       formData.signingMethod = 'ssh';
       formData.commit = { signerName: '  Jane Doe  ', signerEmail: '  jane@example.com  ' };
@@ -430,14 +463,14 @@ describe('provisioning data mapping', () => {
       expect(spec.commit?.signerEmail).toBe('jane@example.com');
     });
 
-    it('omits author fields from spec when whitespace-only', () => {
+    it('omits signer fields from spec when whitespace-only', () => {
       const formData = makeFormData('github');
       formData.commit = { signerName: '   ', signerEmail: '   ' };
       const spec = dataToSpec(formData);
       expect(spec.commit).toBeUndefined();
     });
 
-    it('writes only the author fields that are set', () => {
+    it('writes only the signer fields that are set', () => {
       const formData = makeFormData('github');
       formData.signingMethod = 'ssh';
       formData.commit = { signerName: 'Jane Doe' };
@@ -447,7 +480,7 @@ describe('provisioning data mapping', () => {
       expect(spec.commit).not.toHaveProperty('singleResourceMessageTemplate');
     });
 
-    it('reads author fields from spec to form data', () => {
+    it('reads signer fields from spec to form data', () => {
       const spec: RepositorySpec = {
         type: 'github',
         title: 'repo',
