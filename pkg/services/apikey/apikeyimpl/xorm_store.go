@@ -9,19 +9,31 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type sqlStore struct {
-	db db.DB
+	sql legacysql.LegacyDatabaseProvider
+}
+
+// quoteTable resolves a table name and quotes it for use in raw SQL.
+func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
+	return dbHelper.DB.Quote(dbHelper.Table(name))
 }
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
 func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.APIKey, error) {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
 	result := make([]*apikey.APIKey, 0)
-	err := ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sess := dbSession.Where("service_account_id IS NULL").Asc("name")
+	err = dbHelper.DB.WithDbSession(ctx, func(dbSession *db.Session) error {
+		sess := dbSession.Table(dbHelper.Table("api_key")).
+			Where("service_account_id IS NULL").Asc("name")
 		if orgID != -1 {
 			sess = sess.Where("org_id=?", orgID)
 		}
@@ -31,9 +43,14 @@ func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.A
 }
 
 func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) (res *apikey.APIKey, err error) {
-	err = ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		key := apikey.APIKey{OrgID: cmd.OrgID, Name: cmd.Name}
-		exists, _ := sess.Get(&key)
+		exists, _ := sess.Table(dbHelper.Table("api_key")).Get(&key)
 		if exists {
 			return apikey.ErrDuplicate
 		}
@@ -60,7 +77,7 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) (res 
 			IsRevoked:        &isRevoked,
 		}
 
-		if _, err := sess.Insert(&t); err != nil {
+		if _, err := sess.Table(dbHelper.Table("api_key")).Insert(&t); err != nil {
 			return fmt.Errorf("%s: %w", "failed to insert token", err)
 		}
 		res = &t
@@ -70,9 +87,15 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) (res 
 }
 
 func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByNameQuery) (res *apikey.APIKey, err error) {
-	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		var key apikey.APIKey
-		has, err := sess.Where("org_id=? AND name=?", query.OrgID, query.KeyName).Get(&key)
+		has, err := sess.Table(dbHelper.Table("api_key")).
+			Where("org_id=? AND name=?", query.OrgID, query.KeyName).Get(&key)
 
 		if err != nil {
 			return err
@@ -87,9 +110,15 @@ func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByName
 }
 
 func (ss *sqlStore) GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.APIKey, error) {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
 	var key apikey.APIKey
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table("api_key").Where(fmt.Sprintf("%s = ?", ss.db.GetDialect().Quote("key")), hash).Get(&key)
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.Table(dbHelper.Table("api_key")).
+			Where(fmt.Sprintf("%s = ?", dbHelper.DB.GetDialect().Quote("key")), hash).Get(&key)
 		if err != nil {
 			return err
 		} else if !has {
@@ -101,9 +130,14 @@ func (ss *sqlStore) GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.A
 }
 
 func (ss *sqlStore) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
 	now := timeNow()
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if _, err := sess.Table("api_key").ID(tokenID).Cols("last_used_at").Update(&apikey.APIKey{LastUsedAt: &now}); err != nil {
+	return dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		if _, err := sess.Table(dbHelper.Table("api_key")).ID(tokenID).Cols("last_used_at").Update(&apikey.APIKey{LastUsedAt: &now}); err != nil {
 			return err
 		}
 
@@ -112,14 +146,19 @@ func (ss *sqlStore) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64)
 }
 
 func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
 	u := &quota.Map{}
 	type result struct {
 		Count int64
 	}
 
 	r := result{}
-	if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rawSQL := "SELECT COUNT(*) AS count FROM api_key"
+	if err := dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rawSQL := "SELECT COUNT(*) AS count FROM " + quoteTable(dbHelper, "api_key")
 		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
 			return err
 		}
@@ -135,8 +174,8 @@ func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 	}
 
 	if scopeParams != nil && scopeParams.OrgID != 0 {
-		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			rawSQL := "SELECT COUNT(*) AS count FROM api_key WHERE org_id = ?"
+		if err := dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			rawSQL := "SELECT COUNT(*) AS count FROM " + quoteTable(dbHelper, "api_key") + " WHERE org_id = ?"
 			if _, err := sess.SQL(rawSQL, scopeParams.OrgID).Get(&r); err != nil {
 				return err
 			}

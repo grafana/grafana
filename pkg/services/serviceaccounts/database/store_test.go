@@ -246,7 +246,7 @@ func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 	t.Helper()
 	db, cfg := db.InitTestDBWithCfg(t)
 	quotaService := quotatest.New(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(db, cfg, quotaService)
+	apiKeyService, err := apikeyimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(db)
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)

@@ -92,7 +92,7 @@ func SetupApiKey(t *testing.T, store db.DB, cfg *setting.Cfg, testKey TestApiKey
 	}
 
 	quotaService := quotatest.New(false, nil)
-	apiKeyService, err := apikeyimpl.ProvideService(store, cfg, quotaService)
+	apiKeyService, err := apikeyimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, quotaService)
 	require.NoError(t, err)
 	key, err := apiKeyService.AddAPIKey(context.Background(), addKeyCmd)
 	require.NoError(t, err)

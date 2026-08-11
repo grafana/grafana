@@ -499,7 +499,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	tracer := tracing.InitializeTracerForTest()
-	_, err = apikeyimpl.ProvideService(sqlStore, cfg, quotaService)
+	_, err = apikeyimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 	require.NoError(t, err)
 	_, err = authimpl.ProvideUserAuthTokenService(t.Context(), legacysql.NewDatabaseProvider(sqlStore), nil, quotaService, fakes.NewFakeSecretsService(), cfgProvider, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures())
 	require.NoError(t, err)
