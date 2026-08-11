@@ -46,6 +46,7 @@ require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-app-sdk v0.56.6
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
+	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.36.2
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a
 )
@@ -103,7 +104,6 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.44.0 // indirect

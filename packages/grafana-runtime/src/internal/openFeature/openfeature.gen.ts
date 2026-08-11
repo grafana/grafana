@@ -163,8 +163,6 @@ export const FlagKeys = {
   TableAutoColumnWidths: "table.autoColumnWidths",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
-  /** Enables the refactored TableNG nested-table implementation */
-  TableRefactorNested: "table.refactorNested",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -992,17 +990,6 @@ export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOption
  */
 export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.paginationPageSize", false, options).value;
-};
-
-/**
- * Enables the refactored TableNG nested-table implementation
- *
- * **Details:**
- * - flag key: `table.refactorNested`
- * - default value: `false`
- */
-export const useFlagTableRefactorNested = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("table.refactorNested", false, options).value;
 };
 
 /**

@@ -73,7 +73,6 @@ declare module "@openfeature/core" {
     | "grafana.vectorSearchCmdk"
     | "assistant.fullscreenWorkspace"
     | "grafana.queryVarEditorRedesign"
-    | "table.refactorNested"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
     | "dataviz.experimentalColorSchemes"
