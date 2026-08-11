@@ -1,7 +1,13 @@
 import { t } from '@grafana/i18n';
+import { type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
 
 import { edit } from '../utils/edit';
-import { type ChangeVariableTypeActionHelperProps } from '../utils/types';
+
+interface ChangeVariableTypeActionHelperProps {
+  oldVariable: SceneVariable;
+  newVariable: SceneVariable;
+  source: SceneVariableSet;
+}
 
 export function changeVariableType({ source, oldVariable, newVariable }: ChangeVariableTypeActionHelperProps) {
   const varsBeforeChange = [...source.state.variables];
