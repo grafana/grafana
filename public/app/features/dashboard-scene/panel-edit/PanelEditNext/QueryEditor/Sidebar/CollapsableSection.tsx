@@ -28,7 +28,7 @@ export const CollapsableSection = ({ label, isOpen, onToggle, headerAction, chil
           aria-controls={contentId}
         >
           <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
-          <Text color="primary" variant="bodySmall" weight="light">
+          <Text color="primary" variant="bodySmall" weight="light" truncate title={label}>
             {label}
           </Text>
         </button>
@@ -60,10 +60,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     cursor: 'pointer',
     borderRadius: theme.shape.radius.sm,
-    // Lets the label wrap (even mid-word for single-word labels like "Transformations") instead
-    // of overflowing the header row and pushing the add button out of view.
+    // Lets the label truncate instead of overflowing the header row and pushing the add button
+    // out of view.
     minWidth: 0,
-    overflowWrap: 'anywhere',
     '&:focus-visible': getFocusStyles(theme),
   }),
 });
