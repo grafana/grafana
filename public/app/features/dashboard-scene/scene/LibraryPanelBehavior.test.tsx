@@ -232,16 +232,75 @@ describe('LibraryPanelBehavior', () => {
     const queryRunner = dataProvider.state?.$data as SceneQueryRunner;
     expect(queryRunner?.state?.dataLayerFilter?.panelId).toBe(dashboardPanelId);
   });
+
+  // Repeat carried on the library panel definition is migrated onto the enclosing DashboardGridItem.
+  // Under dynamic dashboards repeat is owned by the panel instance instead, so the migration is
+  // skipped — except for public and scripted dashboards, whose migrations still run in the frontend.
+  describe('repeat migration', () => {
+    afterEach(() => {
+      config.featureToggles.dashboardNewLayouts = false;
+    });
+
+    it('migrates repeat onto the grid item for legacy dashboards', async () => {
+      config.featureToggles.dashboardNewLayouts = false;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.repeatDirection).toBe('h');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('skips the migration when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      expect(gridItem.state.variableName).toBeUndefined();
+    });
+
+    it('still migrates for a public dashboard when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { publicDashboardEnabled: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+    });
+
+    it('still migrates for a scripted dashboard when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { fromScript: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+    });
+
+    it('leaves the grid item alone when the library panel has no repeat', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+      expect(gridItem.state.variableName).toBeUndefined();
+    });
+  });
 });
 
 interface BuildTestSceneOptions {
   vizPanelTitle?: string;
   libPanelModelTitle?: string;
   timeFrom?: string;
+  /** Set on the library panel model, to exercise the repeat migration onto the grid item. */
+  repeat?: string;
+  /** Merged into the dashboard meta, for the public/scripted migration exceptions. */
+  meta?: { publicDashboardEnabled?: boolean; fromScript?: boolean };
 }
 
 async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {}) {
-  const { vizPanelTitle = 'Panel A', libPanelModelTitle = 'LibraryPanel A title', timeFrom } = options;
+  const { vizPanelTitle = 'Panel A', libPanelModelTitle = 'LibraryPanel A title', timeFrom, repeat, meta } = options;
 
   const behavior = new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' });
 
@@ -265,6 +324,7 @@ async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {
       datasource: { uid: 'abcdef' },
       targets: [{ refId: 'A' }],
       ...(timeFrom ? { timeFrom } : {}),
+      ...(repeat ? { repeat, repeatDirection: 'h', maxPerRow: 4 } : {}),
     },
     version: 1,
   };
@@ -285,6 +345,7 @@ async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {
     uid: 'dash-1',
     meta: {
       canEdit: true,
+      ...meta,
     },
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
