@@ -1222,11 +1222,11 @@ function sampleIndices(totalLen: number, sampleSize: number): number[] {
 export interface ContentAwareColWidthsOptions {
   typographyCtx: TypographyCtx;
   /**
-   * Header labels render at `fontWeightMedium`, which is wider than the body text this measures.
-   * When provided, header widths are measured with this (medium-weight) context so a column that
-   * hugs its header doesn't ellipsize the title; falls back to `typographyCtx` when absent.
+   * Header labels render at `fontWeightMedium`, which is wider than the body text `typographyCtx`
+   * measures, so headers get their own context and a column that hugs its header doesn't
+   * ellipsize the title.
    */
-  headerTypographyCtx?: TypographyCtx;
+  headerTypographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   /** Bound `(field, rowIdx) => actions`, so Actions columns can be sized to their button labels. */
   getActions?: GetActionsFunctionLocal;
@@ -1524,7 +1524,7 @@ export function computeContentAwareColWidths(
   availWidth: number,
   {
     typographyCtx,
-    headerTypographyCtx = typographyCtx,
+    headerTypographyCtx,
     showTypeIcons = false,
     getActions,
     sortColumns,

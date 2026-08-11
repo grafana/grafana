@@ -1725,7 +1725,11 @@ describe('TableNG utils', () => {
     };
 
     const compute = (fields: Field[], availWidth: number, showTypeIcons = false) =>
-      computeContentAwareColWidths(fields, availWidth, { typographyCtx: makeTypographyCtx(), showTypeIcons });
+      computeContentAwareColWidths(fields, availWidth, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+        showTypeIcons,
+      });
 
     afterEach(() => jest.restoreAllMocks());
 
@@ -1935,7 +1939,11 @@ describe('TableNG utils', () => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const getActions = (() => [{ title: 'Edit' }, { title: 'Delete' }]) as unknown as GetActionsFunctionLocal;
       // "Edit" (4*8+20=52) + gap 6 + "Delete" (6*8+20=68) => rowTotal 126; +CELL_CHROME 13 = 139.
-      const widths = computeContentAwareColWidths(fields, 139, { typographyCtx: makeTypographyCtx(), getActions });
+      const widths = computeContentAwareColWidths(fields, 139, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+        getActions,
+      });
       expect(widths).toEqual([139]);
     });
 
@@ -1949,7 +1957,12 @@ describe('TableNG utils', () => {
         },
       ];
       // No getActions => measurer returns 0, so the column floors to MIN_WIDTH (header "act" is smaller).
-      expect(computeContentAwareColWidths(fields, 50, { typographyCtx: makeTypographyCtx() })).toEqual([50]);
+      expect(
+        computeContentAwareColWidths(fields, 50, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+        })
+      ).toEqual([50]);
     });
 
     it('sizes a data links column to fit its links via getCellLinks (fuzzy width)', () => {
@@ -1966,7 +1979,12 @@ describe('TableNG utils', () => {
         },
       ];
       // "Open dashboard" (14*8+8=120); one link => rowTotal 120; +CELL_CHROME 13 = 133.
-      expect(computeContentAwareColWidths(fields, 133, { typographyCtx: makeTypographyCtx() })).toEqual([133]);
+      expect(
+        computeContentAwareColWidths(fields, 133, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+        })
+      ).toEqual([133]);
     });
 
     it('sizes a wrapped data links column to the widest single link, not the summed run', () => {
@@ -1985,8 +2003,14 @@ describe('TableNG utils', () => {
       });
       // Wrapped links stack vertically, so the column follows the widest link ("Open dashboard",
       // 14*8+8=120; +CELL_CHROME 13 = 133) rather than the summed inline run of both links.
-      const wrapped = computeContentAwareColWidths([field(true)], 50, { typographyCtx: makeTypographyCtx() });
-      const inline = computeContentAwareColWidths([field(false)], 50, { typographyCtx: makeTypographyCtx() });
+      const wrapped = computeContentAwareColWidths([field(true)], 50, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+      });
+      const inline = computeContentAwareColWidths([field(false)], 50, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+      });
       expect(wrapped).toEqual([133]);
       expect(inline[0]).toBeGreaterThan(wrapped[0]);
     });
@@ -2024,14 +2048,17 @@ describe('TableNG utils', () => {
           width: String(t).length * CHAR_W * 2,
         })) as typeof wideHeaderCtx.ctx.measureText);
 
-      const [body] = computeContentAwareColWidths([field], 40, { typographyCtx: makeTypographyCtx() });
-      const [medium] = computeContentAwareColWidths([field], 40, {
+      const [baseline] = computeContentAwareColWidths([field], 40, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+      });
+      const [wideHeader] = computeContentAwareColWidths([field], 40, {
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: wideHeaderCtx,
       });
 
       // the footer ("SUM" + "600000") drives the width, so the wider header context widens the column.
-      expect(medium).toBeGreaterThan(body);
+      expect(wideHeader).toBeGreaterThan(baseline);
     });
 
     it('does not mutate the shared field state.calcs while measuring a footer', () => {
@@ -2088,6 +2115,7 @@ describe('TableNG utils', () => {
       // header "Name" (4) => 4*8 = 32, + sort-arrow space 22 + chrome 13 = 67; content "a" is tiny.
       const widths = computeContentAwareColWidths(fields, 67, {
         typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
         sortColumns: [{ columnKey: 'Name', direction: 'ASC' }],
       });
       expect(widths).toEqual([67]);
@@ -2141,7 +2169,11 @@ describe('TableNG utils', () => {
       const fields: Field[] = [{ name: 'c', type: FieldType.string, values, config: {} }];
       // sampleSize 5 => indices [0, 13, 25, 38, 50]; index 50 (30 chars) drives width:
       // 30*8+13 + 6 text wiggle = 259.
-      const widths = computeContentAwareColWidths(fields, 259, { typographyCtx: makeTypographyCtx(), sampleSize: 5 });
+      const widths = computeContentAwareColWidths(fields, 259, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+        sampleSize: 5,
+      });
       expect(widths).toEqual([259]);
     });
 
@@ -2157,7 +2189,10 @@ describe('TableNG utils', () => {
       });
 
       const computeWithPills = (fields: Field[], availWidth: number) =>
-        computeContentAwareColWidths(fields, availWidth, { typographyCtx: makeTypographyCtx() });
+        computeContentAwareColWidths(fields, availWidth, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+        });
 
       it('sizes to fit an average row of pills across a couple of entries, not the longest value', () => {
         // one row: "AB" (2*8+12=28) + gap 4 + "CDE" (3*8+12=36) => rowTotal 68; +CELL_CHROME 13 = 81.

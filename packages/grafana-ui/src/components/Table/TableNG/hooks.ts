@@ -727,8 +727,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
  */
 export interface ContentAwareWidths {
   typographyCtx: TypographyCtx;
-  /** medium-weight context for measuring header labels; see {@link ContentAwareColWidthsOptions} */
-  headerTypographyCtx?: TypographyCtx;
+  headerTypographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   getActions?: GetActionsFunctionLocal;
   sortColumns?: SortColumn[];
@@ -774,24 +773,27 @@ export function useContentAwareWidths({
   sortColumns,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
-  return useMemo(
+  const headerTypographyCtx = useMemo(
     () =>
       enabled
-        ? {
-            typographyCtx,
-            headerTypographyCtx: createTypographyContext(
-              theme.typography.fontSize,
-              theme.typography.fontFamily,
-              extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
-              theme.typography.fontWeightMedium
-            ),
-            showTypeIcons,
-            getActions,
-            sortColumns,
-          }
+        ? createTypographyContext(
+            theme.typography.fontSize,
+            theme.typography.fontFamily,
+            extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
+            theme.typography.fontWeightMedium
+          )
         : undefined,
-    [enabled, theme, typographyCtx, showTypeIcons, getActions, sortColumns]
+    [enabled, theme]
   );
+  return enabled
+    ? {
+        typographyCtx,
+        headerTypographyCtx: headerTypographyCtx!,
+        showTypeIcons,
+        getActions,
+        sortColumns,
+      }
+    : undefined;
 }
 
 interface UseNestedColWidthsOptions {
