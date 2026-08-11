@@ -534,6 +534,8 @@ func TestReadingNavigationSettings(t *testing.T) {
 		service.readNavigationSettings()
 
 		require.Equal(t, "observability", service.navigationAppConfig["grafana-k8s-app"].SectionID)
+		require.Equal(t, navtree.NavIDCfgDatabases, service.navigationAppConfig["grafana-dbcfg-app"].SectionID)
+		require.Equal(t, navtree.NavIDCfgDatabases, service.navigationAppConfig["grafana-dbselfserve-app"].SectionID)
 	})
 
 	t.Run("Can add additional overrides via ini system", func(t *testing.T) {
