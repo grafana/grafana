@@ -506,7 +506,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/ssosettings"
 	_ "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	_ "github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
-	_ "github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	_ "github.com/grafana/grafana/pkg/services/star"
 	_ "github.com/grafana/grafana/pkg/services/star/api"
 	_ "github.com/grafana/grafana/pkg/services/star/starimpl"

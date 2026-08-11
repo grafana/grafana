@@ -181,12 +181,12 @@ func TestSocialService_GetConnectorUsesCurrentSettings(t *testing.T) {
 
 	initial, err := svc.GetConnector(context.Background(), social.GenericOAuthProviderName)
 	require.NoError(t, err)
-	require.Equal(t, "initial-secret", initial.(*connectors.SocialGenericOAuth).Config.ClientSecret)
+	require.Equal(t, "initial-secret", initial.(*connectors.SocialGenericOAuth).ClientSecret)
 
 	clientSecret = "rotated-secret"
 	rotated, err := svc.GetConnector(context.Background(), social.GenericOAuthProviderName)
 	require.NoError(t, err)
-	require.Equal(t, "rotated-secret", rotated.(*connectors.SocialGenericOAuth).Config.ClientSecret)
+	require.Equal(t, "rotated-secret", rotated.(*connectors.SocialGenericOAuth).ClientSecret)
 	require.NotSame(t, initial, rotated)
 }
 

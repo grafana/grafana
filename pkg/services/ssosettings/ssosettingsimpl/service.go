@@ -149,6 +149,8 @@ func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider,
 // management API, background reload loop, or MT-Settings client. It is used by
 // request-scoped consumers that need current OAuth settings from the tenant
 // database with the tenant configuration as fallback.
+//
+//nolint:staticcheck // SA1019: legacy tenant databases still use the deprecated secrets service
 func ProvideReadOnlyService(cfgProvider configprovider.ConfigProvider, sqlStore db.DB, secretsSvc secrets.Service) *Service {
 	configurableProviders := make(map[string]bool, len(ssosettings.AllOAuthProviders))
 	for _, provider := range ssosettings.AllOAuthProviders {
