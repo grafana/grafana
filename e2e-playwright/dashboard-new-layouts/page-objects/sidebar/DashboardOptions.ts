@@ -16,17 +16,15 @@ export class DashboardOptions extends PageObject {
 
   /** Returns the dashboard title input */
   getTitleInput() {
-    return this.dashboardPage
-      .getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('dashboard-options Title'))
-      .locator('input');
+    return this.getByGrafanaSelector(
+      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('dashboard-options Title')
+    ).locator('input');
   }
 
   /** Returns the dashboard description textarea */
   getDescriptionTextarea() {
-    return this.dashboardPage
-      .getByGrafanaSelector(
-        this.selectors.components.PanelEditor.OptionsPane.fieldLabel('dashboard-options Description')
-      )
-      .locator('textarea');
+    return this.getByGrafanaSelector(
+      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('dashboard-options Description')
+    ).locator('textarea');
   }
 }

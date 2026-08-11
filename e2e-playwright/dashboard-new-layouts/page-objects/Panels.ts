@@ -55,7 +55,7 @@ export class Panels extends PageObject {
 
   /** Returns all rendered panel bodies below the header */
   getBodies() {
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Panels.Panel.content);
+    return this.getByGrafanaSelector(this.selectors.components.Panels.Panel.content);
   }
 
   /**
@@ -90,17 +90,13 @@ export class Panels extends PageObject {
    */
   async selectMenuItem(panelTitle: string, menuPath: string[]) {
     await test.step(`Select menu item "${menuPath.join(' > ')}" on panel "${panelTitle}"`, async () => {
-      await this.dashboardPage
-        .getByGrafanaSelector(this.selectors.components.Panels.Panel.menu(panelTitle))
-        .click({ force: true });
+      await this.getByGrafanaSelector(this.selectors.components.Panels.Panel.menu(panelTitle)).click({ force: true });
 
       for (const item of menuPath.slice(0, -1)) {
-        await this.dashboardPage.getByGrafanaSelector(this.selectors.components.Panels.Panel.menuItems(item)).hover();
+        await this.getByGrafanaSelector(this.selectors.components.Panels.Panel.menuItems(item)).hover();
       }
 
-      await this.dashboardPage
-        .getByGrafanaSelector(this.selectors.components.Panels.Panel.menuItems(menuPath.at(-1)!))
-        .click();
+      await this.getByGrafanaSelector(this.selectors.components.Panels.Panel.menuItems(menuPath.at(-1)!)).click();
     });
   }
 }
