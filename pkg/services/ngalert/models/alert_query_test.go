@@ -258,9 +258,9 @@ func TestAlertQuery(t *testing.T) {
 				t.Run("can patch the command with loaded metrics", func(t *testing.T) {
 					require.NoError(t, tc.alertQuery.PatchHysteresisExpression(map[data.Fingerprint]struct{}{1: {}, 2: {}, 3: {}}))
 					condition := tc.alertQuery.modelProps["conditions"].([]any)[0].(map[string]any)
-					fingerprints, ok := condition["loadedFingerprints"].([]uint64)
+					fingerprints, ok := condition["loadedFingerprints"].([]string)
 					require.True(t, ok)
-					require.ElementsMatch(t, []uint64{1, 2, 3}, fingerprints)
+					require.ElementsMatch(t, []string{"1", "2", "3"}, fingerprints)
 
 					// The fingerprints have to reach the marshalled model, not just modelProps.
 					blob, err := tc.alertQuery.GetModel()

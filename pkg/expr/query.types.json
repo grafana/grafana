@@ -297,7 +297,7 @@
     {
       "metadata": {
         "name": "threshold",
-        "resourceVersion": "1786465221559",
+        "resourceVersion": "1786466011231",
         "creationTimestamp": "2024-02-21T22:09:26Z"
       },
       "spec": {
@@ -353,9 +353,9 @@
                     "description": "Deprecated: use LoadedFingerprints. Kept raw and decoded only when LoadedFingerprints is\nabsent, so an optional frame parsing error would not break everything"
                   },
                   "loadedFingerprints": {
-                    "description": "Fingerprints of the series that are already firing. Supersedes LoadedDimensions",
+                    "description": "Fingerprints of the series that are already firing, encoded as decimal strings to preserve their full uint64 precision through untyped JSON decoding. Supersedes LoadedDimensions",
                     "items": {
-                      "type": "integer"
+                      "type": "string"
                     },
                     "type": "array"
                   },

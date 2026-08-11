@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -158,7 +159,11 @@ func UnmarshalThresholdCommand(rn *rawNode) (Command, error) {
 		var d Fingerprints
 		if firstCondition.LoadedFingerprints != nil {
 			d = make(Fingerprints, len(firstCondition.LoadedFingerprints))
-			for _, fp := range firstCondition.LoadedFingerprints {
+			for _, value := range firstCondition.LoadedFingerprints {
+				fp, err := strconv.ParseUint(value, 10, 64)
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse loaded fingerprint %q: %w", value, err)
+				}
 				d[data.Fingerprint(fp)] = struct{}{}
 			}
 		} else if len(firstCondition.LoadedDimensions) > 0 && string(firstCondition.LoadedDimensions) != "null" {
@@ -249,8 +254,8 @@ type ThresholdConditionJSON struct {
 	Evaluator       ConditionEvalJSON  `json:"evaluator"`
 	UnloadEvaluator *ConditionEvalJSON `json:"unloadEvaluator,omitempty"`
 
-	// Fingerprints of the series that are already firing. Supersedes LoadedDimensions
-	LoadedFingerprints []uint64 `json:"loadedFingerprints,omitempty"`
+	// Fingerprints of the series that are already firing, encoded as decimal strings to preserve their full uint64 precision through untyped JSON decoding. Supersedes LoadedDimensions
+	LoadedFingerprints []string `json:"loadedFingerprints,omitempty"`
 
 	// Deprecated: use LoadedFingerprints. Kept raw and decoded only when LoadedFingerprints is
 	// absent, so an optional frame parsing error would not break everything
@@ -279,9 +284,9 @@ func SetLoadedDimensionsToHysteresisCommand(query map[string]any, fingerprints F
 	if condition == nil {
 		return errors.New("not a hysteresis command")
 	}
-	fp := make([]uint64, 0, len(fingerprints))
+	fp := make([]string, 0, len(fingerprints))
 	for fingerprint := range fingerprints {
-		fp = append(fp, uint64(fingerprint))
+		fp = append(fp, strconv.FormatUint(uint64(fingerprint), 10))
 	}
 	condition["loadedFingerprints"] = fp
 	return nil

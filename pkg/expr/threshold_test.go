@@ -318,7 +318,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				        ],
 				        "type": "lt"
 				      },
-				      "loadedFingerprints": [18446744073709551615,2,3,4,5]
+				      "loadedFingerprints": ["18446744073709551615","2","3","4","5"]
 				    }
 				  ]
 				}`,
@@ -554,12 +554,9 @@ func TestSetLoadedDimensionsToHysteresisCommand(t *testing.T) {
 func TestLoadedFingerprintsEncoding(t *testing.T) {
 	const model = `{ "type": "threshold", "conditions": [{ "evaluator": { "params": [5], "type": "gt" }, "unloadEvaluator" : {"params": [2], "type": "lt"}}], "expression": "A" }`
 
-	// The point of the array encoding. A query reaches the expression service through callers that
-	// re-serialise it via simplejson, which sorts object keys on the way out — the ordering the frame
-	// encoding cannot survive. Note this says nothing about integer precision: that holds because
-	// simplejson decodes with UseNumber, and a decoder that reads JSON numbers into float64 instead
-	// would mangle a fingerprint above 2^53 in either encoding, frame included.
-	t.Run("survives the simplejson round-trip that sorts keys", func(t *testing.T) {
+	// A query reaches the expression service through callers that re-serialise it via simplejson,
+	// which sorts object keys on the way out — the ordering the frame encoding cannot survive.
+	t.Run("survives JSON round-trips", func(t *testing.T) {
 		query := map[string]any{}
 		require.NoError(t, json.Unmarshal([]byte(model), &query))
 		fingerprints := Fingerprints{math.MaxUint64: {}, 2: {}, 3: {}}
@@ -570,6 +567,11 @@ func TestLoadedFingerprintsEncoding(t *testing.T) {
 		sj, err := simplejson.NewJson(raw)
 		require.NoError(t, err)
 		raw, err = sj.MarshalJSON()
+		require.NoError(t, err)
+
+		var generic map[string]any
+		require.NoError(t, json.Unmarshal(raw, &generic))
+		raw, err = json.Marshal(generic)
 		require.NoError(t, err)
 
 		cmd, err := UnmarshalThresholdCommand(&rawNode{RefID: "B", QueryRaw: raw})
@@ -584,7 +586,7 @@ func TestLoadedFingerprintsEncoding(t *testing.T) {
 		require.NoError(t, SetLoadedDimensionsToHysteresisCommandAsFrame(query, Fingerprints{2: {}, 3: {}}))
 
 		condition := query["conditions"].([]any)[0].(map[string]any)
-		require.ElementsMatch(t, []uint64{2, 3}, condition["loadedFingerprints"])
+		require.ElementsMatch(t, []string{"2", "3"}, condition["loadedFingerprints"])
 		require.NotNil(t, condition["loadedDimensions"], "the frame is still written for readers that predate loadedFingerprints")
 	})
 
