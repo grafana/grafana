@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panels, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 
 test.use({
   featureToggles: {
@@ -22,12 +20,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can remove a panel', async ({ gotoDashboardPage, selectors, page, components }) => {
+    test('can remove a panel', async ({ gotoDashboardPage, selectors, page, controls, sidebar, panels }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
       await controls.enterEditMode();
 
       const panelTitle = /^Panel #1$/;
@@ -41,12 +35,15 @@ test.describe(
       await expect(panels.getHeader(panelTitle)).toBeHidden();
     });
 
-    test('can remove several panels at once', async ({ gotoDashboardPage, selectors, page, components }) => {
+    test('can remove several panels at once', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      panels,
+    }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
       await controls.enterEditMode();
 
       const panelTitles = [/^Panel #1$/, /^Panel #2$/, /^Panel #3$/];

@@ -1,5 +1,5 @@
-import { type CellContentKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { CodeEditor } from '@grafana/ui';
+import { type CellContentKind } from 'app/features/notebook/types';
 
 const LINE_HEIGHT = 18;
 const MIN_LINES = 3;
