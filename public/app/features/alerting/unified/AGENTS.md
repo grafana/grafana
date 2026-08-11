@@ -29,13 +29,18 @@ This file provides context for AI agents when working on the Grafana Alerting co
 2. **Testing Guidelines**: [../../../../../contribute/style-guides/testing.md](../../../../../contribute/style-guides/testing.md)
    - React Testing Library, query priorities, user event setup
 
-3. **Styling Guide**: [../../../../../contribute/style-guides/styling.md](../../../../../contribute/style-guides/styling.md)
+3. **`frontend-testing-strategy` skill** — invoke with the Skill tool for this repo's testing
+   conventions: assert real behavior (not existence), avoiding AI-slop tests, and the anti-flake
+   rules. Read it before writing or reviewing tests here, alongside the Alerting Testing Guide
+   below.
+
+4. **Styling Guide**: [../../../../../contribute/style-guides/styling.md](../../../../../contribute/style-guides/styling.md)
    - Emotion usage, `useStyles2` hook patterns
 
-4. **Redux Framework**: [../../../../../contribute/style-guides/redux.md](../../../../../contribute/style-guides/redux.md)
+5. **Redux Framework**: [../../../../../contribute/style-guides/redux.md](../../../../../contribute/style-guides/redux.md)
    - Redux Toolkit patterns, reducer testing
 
-5. **Alerting Testing Guide**: [./TESTING.md](./TESTING.md)
+6. **Alerting Testing Guide**: [./TESTING.md](./TESTING.md)
    - MSW API mocking, permission mocking, data source setup
 
 ### Alerting-Specific Conventions

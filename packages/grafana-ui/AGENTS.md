@@ -5,8 +5,9 @@ VizTooltip, Sparkline, gauges, and more). When you are adding or changing visual
 code or its tests here, invoke these skills with the Skill tool — each skill's own
 description states exactly when it applies:
 
-- **`panel-testing-strategy`** — how visualization unit + E2E tests should be written:
-  assert real behavior (not existence), the canvas draw-call snapshot harness, and the
-  anti-flake rules.
+- **`frontend-testing-strategy`** — general frontend test conventions: assert real behavior
+  (not existence), avoiding AI-slop tests, and the anti-flake rules.
+- **`panel-testing-strategy`** — builds on the above with what's specific to visualization
+  code: the canvas draw-call snapshot harness and panel a11y/interaction-snapshot E2E.
 - **`add-e2e-selectors`** — add versioned `@grafana/e2e-selectors` and wire
   `data-testid` into JSX.
