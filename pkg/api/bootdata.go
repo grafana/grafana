@@ -187,7 +187,11 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		return info.SkipOrgRoleSync
 	}
 
-	oauthProviders := hs.SocialService.GetOAuthInfoProviders()
+	oauthProviders, err := hs.SocialService.GetOAuthInfoProviders(c.Req.Context())
+	if err != nil {
+		hs.log.Error("Failed to load OAuth providers", "error", err)
+		oauthProviders = map[string]*social.OAuthInfo{}
+	}
 	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
 		AuthProxyEnableLoginToken:     hs.Cfg.AuthProxy.EnableLoginToken,
 		SAMLSkipOrgRoleSync:           hs.Cfg.SAMLSkipOrgRoleSync,
@@ -632,7 +636,12 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 
 func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
 	providers := make(map[string]any)
-	for key, oauth := range hs.SocialService.GetOAuthInfoProviders() {
+	oauthProviders, err := hs.SocialService.GetOAuthInfoProviders(context.Background())
+	if err != nil {
+		hs.log.Error("Failed to load OAuth providers", "error", err)
+		return providers
+	}
+	for key, oauth := range oauthProviders {
 		providers[key] = map[string]string{
 			"name": oauth.Name,
 			"icon": oauth.Icon,

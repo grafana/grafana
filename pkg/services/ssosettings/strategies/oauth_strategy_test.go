@@ -7,9 +7,25 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func staticConfigProvider(t *testing.T, cfg *setting.Cfg) configprovider.ConfigProvider {
+	t.Helper()
+	provider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	return provider
+}
+
+type mutableConfigProvider struct {
+	cfg *setting.Cfg
+}
+
+func (p *mutableConfigProvider) Get(context.Context) (*setting.Cfg, error) {
+	return p.cfg, nil
+}
 
 var (
 	iniContent = `
@@ -120,12 +136,35 @@ func TestGetProviderConfig(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Raw = iniFile
 
-	strategy := NewOAuthStrategy(cfg)
+	strategy := NewOAuthStrategy(staticConfigProvider(t, cfg))
 
 	result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
 	require.NoError(t, err)
 
 	require.Equal(t, expectedOAuthInfo, result)
+}
+
+func TestOAuthStrategyUsesCurrentConfig(t *testing.T) {
+	provider := &mutableConfigProvider{cfg: oauthConfigWithClientSecret(t, "initial-secret")}
+	strategy := NewOAuthStrategy(provider)
+
+	initial, err := strategy.GetProviderConfig(context.Background(), social.GenericOAuthProviderName)
+	require.NoError(t, err)
+	require.Equal(t, "initial-secret", initial["client_secret"])
+
+	provider.cfg = oauthConfigWithClientSecret(t, "rotated-secret")
+	rotated, err := strategy.GetProviderConfig(context.Background(), social.GenericOAuthProviderName)
+	require.NoError(t, err)
+	require.Equal(t, "rotated-secret", rotated["client_secret"])
+}
+
+func oauthConfigWithClientSecret(t *testing.T, secret string) *setting.Cfg {
+	t.Helper()
+	raw, err := ini.Load([]byte("[auth.generic_oauth]\nclient_secret = " + secret))
+	require.NoError(t, err)
+	cfg := setting.NewCfg()
+	cfg.Raw = raw
+	return cfg
 }
 
 func TestGetProviderConfig_ExtraFields(t *testing.T) {
@@ -161,7 +200,7 @@ func TestGetProviderConfig_ExtraFields(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Raw = iniFile
 
-	strategy := NewOAuthStrategy(cfg)
+	strategy := NewOAuthStrategy(staticConfigProvider(t, cfg))
 
 	t.Run(social.AzureADProviderName, func(t *testing.T) {
 		result, err := strategy.GetProviderConfig(context.Background(), social.AzureADProviderName)
@@ -243,7 +282,7 @@ func TestGetProviderConfig_TokenExchangeTimeout(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.Raw = iniFile
 
-			strategy := NewOAuthStrategy(cfg)
+			strategy := NewOAuthStrategy(staticConfigProvider(t, cfg))
 
 			result, err := strategy.GetProviderConfig(context.Background(), "generic_oauth")
 			require.NoError(t, err)
@@ -332,7 +371,7 @@ func TestGetProviderConfig_GrafanaComGrafanaNet(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.Raw = iniFile
 
-			strategy := NewOAuthStrategy(cfg)
+			strategy := NewOAuthStrategy(staticConfigProvider(t, cfg))
 
 			actualConfig, err := strategy.GetProviderConfig(context.Background(), "grafana_com")
 			require.NoError(t, err)

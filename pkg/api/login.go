@@ -162,7 +162,11 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 
 func (hs *HTTPServer) getAutoLoginRedirectURL(c *contextmodel.ReqContext) string {
 	samlAutoLogin := hs.samlAutoLoginEnabled()
-	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
+	oauthInfos, err := hs.SocialService.GetOAuthInfoProviders(c.Req.Context())
+	if err != nil {
+		hs.log.Error("Failed to load OAuth providers", "error", err)
+		return ""
+	}
 
 	autoLoginProvidersLen := 0
 	for _, provider := range oauthInfos {

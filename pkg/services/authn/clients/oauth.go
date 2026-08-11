@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
@@ -72,14 +73,14 @@ var (
 )
 
 func ProvideOAuth(
-	name string, cfg *setting.Cfg, oauthService oauthtoken.OAuthTokenService,
-	socialService social.Service, settingsProviderService setting.Provider,
+	name string, cfgProvider configprovider.ConfigProvider, oauthService oauthtoken.OAuthTokenService,
+	socialService social.Service,
 	features featuremgmt.FeatureToggles, tracer trace.Tracer,
 ) *OAuth {
 	providerName := strings.TrimPrefix(name, "auth.client.")
 	return &OAuth{
 		name, fmt.Sprintf("oauth_%s", providerName), providerName,
-		log.New(name), cfg, tracer, settingsProviderService, oauthService,
+		log.New(name), cfgProvider, tracer, oauthService,
 		socialService, features,
 	}
 }
@@ -89,13 +90,12 @@ type OAuth struct {
 	moduleName   string
 	providerName string
 	log          log.Logger
-	cfg          *setting.Cfg
+	cfgProvider  configprovider.ConfigProvider
 	tracer       trace.Tracer
 
-	settingsProviderSvc setting.Provider
-	oauthService        oauthtoken.OAuthTokenService
-	socialService       social.Service
-	features            featuremgmt.FeatureToggles
+	oauthService  oauthtoken.OAuthTokenService
+	socialService social.Service
+	features      featuremgmt.FeatureToggles
 }
 
 func (c *OAuth) Name() string {
@@ -108,7 +108,15 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 	r.SetMeta(authn.MetaKeyAuthModule, c.moduleName)
 
-	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
+	cfg, err := c.cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, errOAuthInternal.Errorf("failed to get OAuth configuration: %w", err)
+	}
+
+	oauthCfg, err := c.socialService.GetOAuthInfoProvider(ctx, c.providerName)
+	if err != nil {
+		return nil, errOAuthInternal.Errorf("failed to get %s OAuth settings: %w", c.name, err)
+	}
 	if !oauthCfg.Enabled {
 		return nil, errOAuthClientDisabled.Errorf("oauth client is disabled: %s", c.providerName)
 	}
@@ -124,7 +132,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	// get state returned by the idp and hash it
-	stateQuery := hashOAuthState(r.HTTPRequest.URL.Query().Get(oauthStateQueryName), c.cfg.SecretKey, oauthCfg.ClientSecret)
+	stateQuery := hashOAuthState(r.HTTPRequest.URL.Query().Get(oauthStateQueryName), cfg.SecretKey, oauthCfg.ClientSecret)
 	// compare the state returned by idp against the one we stored in cookie
 	if stateQuery != stateCookie.Value {
 		return nil, errOAuthInvalidState.Errorf("provided state did not match stored state")
@@ -140,8 +148,8 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		opts = append(opts, oauth2.VerifierOption(pkceCookie.Value))
 	}
 
-	connector, errConnector := c.socialService.GetConnector(c.providerName)
-	httpClient, errHTTPClient := c.socialService.GetOAuthHttpClient(c.providerName)
+	connector, errConnector := c.socialService.GetConnector(ctx, c.providerName)
+	httpClient, errHTTPClient := c.socialService.GetOAuthHttpClient(ctx, c.providerName)
 	if errConnector != nil || errHTTPClient != nil {
 		return nil, errOAuthInternal.Errorf("failed to get %s oauth client: %w", c.name, errors.Join(errConnector, errHTTPClient))
 	}
@@ -204,7 +212,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	lookupParams := login.UserLookupParams{}
-	allowInsecureEmailLookup := c.settingsProviderSvc.KeyValue("auth", "oauth_allow_insecure_email_lookup").MustBool(false)
+	allowInsecureEmailLookup := cfg.Raw.Section("auth").Key("oauth_allow_insecure_email_lookup").MustBool(false)
 	if allowInsecureEmailLookup {
 		lookupParams.Email = &userInfo.Email
 	}
@@ -233,8 +241,8 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 }
 
 func (c *OAuth) IsEnabled() bool {
-	provider := c.socialService.GetOAuthInfoProvider(c.providerName)
-	if provider == nil {
+	provider, err := c.socialService.GetOAuthInfoProvider(context.Background(), c.providerName)
+	if err != nil || provider == nil {
 		return false
 	}
 
@@ -242,8 +250,8 @@ func (c *OAuth) IsEnabled() bool {
 }
 
 func (c *OAuth) GetConfig() authn.SSOClientConfig {
-	provider := c.socialService.GetOAuthInfoProvider(c.providerName)
-	if provider == nil {
+	provider, err := c.socialService.GetOAuthInfoProvider(context.Background(), c.providerName)
+	if err != nil || provider == nil {
 		return nil
 	}
 
@@ -256,7 +264,15 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 
 	var opts []oauth2.AuthCodeOption
 
-	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
+	cfg, err := c.cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, errOAuthInternal.Errorf("failed to get OAuth configuration: %w", err)
+	}
+
+	oauthCfg, err := c.socialService.GetOAuthInfoProvider(ctx, c.providerName)
+	if err != nil {
+		return nil, errOAuthInternal.Errorf("failed to get %s OAuth settings: %w", c.name, err)
+	}
 	if !oauthCfg.Enabled {
 		return nil, errOAuthClientDisabled.Errorf("oauth client is disabled: %s", c.providerName)
 	}
@@ -276,12 +292,12 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 		opts = append(opts, oauth2.S256ChallengeOption(plainPKCE))
 	}
 
-	state, hashedSate, err := genOAuthState(c.cfg.SecretKey, oauthCfg.ClientSecret)
+	state, hashedSate, err := genOAuthState(cfg.SecretKey, oauthCfg.ClientSecret)
 	if err != nil {
 		return nil, errOAuthGenState.Errorf("failed to generate state: %w", err)
 	}
 
-	connector, err := c.socialService.GetConnector(c.providerName)
+	connector, err := c.socialService.GetConnector(ctx, c.providerName)
 	if err != nil {
 		return nil, errOAuthInternal.Errorf("failed to get %s oauth connector: %w", c.name, err)
 	}
@@ -315,13 +331,23 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester, sessionToke
 		ctxLogger.Error("Failed to invalidate tokens", "error", err)
 	}
 
-	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
+	cfg, err := c.cfgProvider.Get(ctx)
+	if err != nil {
+		ctxLogger.Error("Failed to get OAuth configuration", "error", err)
+		return nil, false
+	}
+
+	oauthCfg, err := c.socialService.GetOAuthInfoProvider(ctx, c.providerName)
+	if err != nil {
+		ctxLogger.Error("Failed to get OAuth provider settings", "error", err)
+		return nil, false
+	}
 	if !oauthCfg.Enabled {
 		ctxLogger.Debug("OAuth client is disabled")
 		return nil, false
 	}
 
-	redirectURL := getOAuthSignoutRedirectURL(c.cfg, oauthCfg)
+	redirectURL := getOAuthSignoutRedirectURL(cfg, oauthCfg)
 	if redirectURL == "" {
 		ctxLogger.Debug("No signout redirect url configured")
 		return nil, false

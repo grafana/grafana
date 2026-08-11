@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const mapperMatchAllOrgID = -1
 
 // OrgRoleMapper maps external orgs/groups to Grafana orgs and basic roles.
 type OrgRoleMapper struct {
-	cfg        *setting.Cfg
-	logger     log.Logger
-	orgService org.Service
+	cfgProvider configprovider.ConfigProvider
+	logger      log.Logger
+	orgService  org.Service
 }
 
 // MappingConfiguration represents the mapping configuration from external orgs to Grafana orgs and roles.
@@ -34,11 +34,11 @@ func NewMappingConfiguration(orgMapping map[string]map[int64]org.RoleType, stric
 	}
 }
 
-func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapper {
+func ProvideOrgRoleMapper(cfgProvider configprovider.ConfigProvider, orgService org.Service) *OrgRoleMapper {
 	return &OrgRoleMapper{
-		cfg:        cfg,
-		logger:     log.New("orgrole.mapper"),
-		orgService: orgService,
+		cfgProvider: cfgProvider,
+		logger:      log.New("orgrole.mapper"),
+		orgService:  orgService,
 	}
 }
 
@@ -55,6 +55,22 @@ func (m *OrgRoleMapper) MapOrgRoles(
 	externalOrgs []string,
 	directlyMappedRole org.RoleType,
 ) map[int64]org.RoleType {
+	orgRoles, err := m.MapOrgRolesContext(ctx, mappingCfg, externalOrgs, directlyMappedRole)
+	if err != nil {
+		m.logger.FromContext(ctx).Warn("Failed to map organization roles", "error", err)
+		return nil
+	}
+	return orgRoles
+}
+
+// MapOrgRolesContext maps external orgs and roles using configuration resolved
+// for the request in ctx.
+func (m *OrgRoleMapper) MapOrgRolesContext(
+	ctx context.Context,
+	mappingCfg MappingConfiguration,
+	externalOrgs []string,
+	directlyMappedRole org.RoleType,
+) (map[int64]org.RoleType, error) {
 	logger := m.logger.FromContext(ctx)
 
 	if len(mappingCfg.orgMapping) == 0 {
@@ -66,7 +82,7 @@ func (m *OrgRoleMapper) MapOrgRoles(
 
 	if err := m.handleGlobalOrgMapping(ctx, userOrgRoles); err != nil {
 		// Cannot map global org roles, return nil (prevent resetting asignments)
-		return nil
+		return nil, nil
 	}
 
 	if len(userOrgRoles) == 0 {
@@ -75,7 +91,7 @@ func (m *OrgRoleMapper) MapOrgRoles(
 
 	if directlyMappedRole == "" {
 		logger.Debug("No direct role mapping found")
-		return userOrgRoles
+		return userOrgRoles, nil
 	}
 
 	logger.Debug("Direct role mapping found", "role", directlyMappedRole)
@@ -85,24 +101,30 @@ func (m *OrgRoleMapper) MapOrgRoles(
 		userOrgRoles[orgID] = getTopRole(directlyMappedRole, role)
 	}
 
-	return userOrgRoles
+	return userOrgRoles, nil
 }
 
-func (m *OrgRoleMapper) getDefaultOrgMapping(ctx context.Context, strictRoleMapping bool, directlyMappedRole org.RoleType) map[int64]org.RoleType {
+func (m *OrgRoleMapper) getDefaultOrgMapping(ctx context.Context, strictRoleMapping bool, directlyMappedRole org.RoleType) (map[int64]org.RoleType, error) {
 	if strictRoleMapping && !directlyMappedRole.IsValid() {
 		m.logger.FromContext(ctx).Debug("Prevent default org role mapping, role attribute strict requested")
-		return nil
+		return nil, nil
 	}
+
+	cfg, err := m.cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get configuration for default org mapping: %w", err)
+	}
+
 	orgRoles := make(map[int64]org.RoleType, 0)
 
-	orgID := m.cfg.DefaultOrgID()
+	orgID := cfg.DefaultOrgID()
 
 	orgRoles[orgID] = directlyMappedRole
 	if !directlyMappedRole.IsValid() {
-		orgRoles[orgID] = org.RoleType(m.cfg.AutoAssignOrgRole)
+		orgRoles[orgID] = org.RoleType(cfg.AutoAssignOrgRole)
 	}
 
-	return orgRoles
+	return orgRoles, nil
 }
 
 func (m *OrgRoleMapper) handleGlobalOrgMapping(ctx context.Context, orgRoles map[int64]org.RoleType) error {
@@ -112,7 +134,7 @@ func (m *OrgRoleMapper) handleGlobalOrgMapping(ctx context.Context, orgRoles map
 		return nil
 	}
 
-	allOrgIDs, err := m.getAllOrgs()
+	allOrgIDs, err := m.getAllOrgs(ctx)
 	if err != nil {
 		// Prevent resetting assignments
 		clear(orgRoles)
@@ -199,9 +221,9 @@ func (m *OrgRoleMapper) getOrgIDForInternalMapping(ctx context.Context, orgIdCfg
 	return orgID, nil
 }
 
-func (m *OrgRoleMapper) getAllOrgs() (map[int64]bool, error) {
+func (m *OrgRoleMapper) getAllOrgs(ctx context.Context) (map[int64]bool, error) {
 	allOrgIDs := map[int64]bool{}
-	allOrgs, err := m.orgService.Search(context.Background(), &org.SearchOrgsQuery{})
+	allOrgs, err := m.orgService.Search(ctx, &org.SearchOrgsQuery{})
 	if err != nil {
 		// In case of error, return no orgs
 		return nil, err

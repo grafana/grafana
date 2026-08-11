@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -133,7 +134,10 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 			return nil, err
 		}
 
-		id.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, externalOrgs, role)
+		id.OrgRoles, err = s.orgRoleMapper.MapOrgRolesContext(ctx, s.orgMappingCfg, externalOrgs, role)
+		if err != nil {
+			return nil, fmt.Errorf("map organization roles: %w", err)
+		}
 		if s.cfg.JWTAuth.RoleAttributeStrict && len(id.OrgRoles) == 0 {
 			return nil, errJWTInvalidRole.Errorf("could not evaluate any valid roles using IdP provided data")
 		}

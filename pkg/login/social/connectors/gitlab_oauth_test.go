@@ -224,8 +224,8 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AutoAssignOrgRole = string(tt.Cfg.AutoAssignOrgRole)
 
-			orgMapper := ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}})
-			provider := NewGitLabProvider(&social.OAuthInfo{
+			orgMapper := mustProvideOrgRoleMapper(t, cfg, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}})
+			provider := mustNewGitLabProvider(t, &social.OAuthInfo{
 				RoleAttributePath:       tt.RoleAttributePath,
 				RoleAttributeStrict:     tt.Cfg.RoleAttributeStrict,
 				AllowAssignGrafanaAdmin: tt.Cfg.AllowAssignGrafanaAdmin,
@@ -421,7 +421,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 			// Create a test client with a dummy token
 			client := oauth2.NewClient(context.Background(), &tokenSource{accessToken: "dummy_access_token"})
 
-			s := NewGitLabProvider(
+			s := mustNewGitLabProvider(t,
 				&social.OAuthInfo{
 					AllowedDomains:      []string{},
 					AllowSignup:         false,
@@ -525,7 +525,7 @@ func TestSocialGitlab_GetGroupsNextPage(t *testing.T) {
 	defer mockServer.Close()
 
 	// Create a SocialGitlab instance with the mock server URL
-	s := NewGitLabProvider(&social.OAuthInfo{ApiUrl: mockServer.URL}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+	s := mustNewGitLabProvider(t, &social.OAuthInfo{ApiUrl: mockServer.URL}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 	// Call getGroups and verify that it returns all groups
 	expectedGroups := []string{"admins", "editors", "viewers", "serveradmins"}
@@ -703,7 +703,7 @@ func TestSocialGitlab_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitLabProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewGitLabProvider(t, &social.OAuthInfo{}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
@@ -786,7 +786,7 @@ func TestSocialGitlab_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGitLabProvider(tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewGitLabProvider(t, tc.info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -869,7 +869,7 @@ func TestSocialGitlab_extractFromToken_WithIDTokenValidation(t *testing.T) {
 				info.JwkSetURL = tc.jwkSetURL
 			}
 
-			s := NewGitLabProvider(info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+			s := mustNewGitLabProvider(t, info, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
 
 			// Sign the token
 			idToken := signJWT(t, tc.tokenKey, tc.tokenKeyID, claims)

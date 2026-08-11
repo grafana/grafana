@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -61,7 +62,7 @@ type Service struct {
 	mtReadAuthoritative bool
 }
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
+func ProvideService(cfg *setting.Cfg, cfgProvider configprovider.ConfigProvider, sqlStore db.DB, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
 	secrets secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	usageStats usagestats.Service, registerer prometheus.Registerer,
@@ -98,7 +99,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	// it matches nothing and the legacy strategy behaves as before.
 	fbStrategies := []ssosettings.FallbackStrategy{
 		strategies.NewMTSettingsOAuthStrategy(mtSettingsClient, serveReads),
-		strategies.NewOAuthStrategy(cfg),
+		strategies.NewOAuthStrategy(cfgProvider),
 		strategies.NewMTSettingsLDAPStrategy(mtSettingsClient, serveReads),
 		strategies.NewLDAPStrategy(cfg),
 	}
@@ -142,6 +143,28 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	ssoSettingsApi.RegisterAPIEndpoints()
 
 	return svc
+}
+
+// ProvideReadOnlyService provides the SSO settings read path without the
+// management API, background reload loop, or MT-Settings client. It is used by
+// request-scoped consumers that need current OAuth settings from the tenant
+// database with the tenant configuration as fallback.
+func ProvideReadOnlyService(cfgProvider configprovider.ConfigProvider, sqlStore db.DB, secretsSvc secrets.Service) *Service {
+	configurableProviders := make(map[string]bool, len(ssosettings.AllOAuthProviders))
+	for _, provider := range ssosettings.AllOAuthProviders {
+		configurableProviders[provider] = true
+	}
+
+	return &Service{
+		logger:                log.New("ssosettings.service"),
+		store:                 database.ProvideStore(sqlStore),
+		secrets:               secretsSvc,
+		fbStrategies:          []ssosettings.FallbackStrategy{strategies.NewOAuthStrategy(cfgProvider)},
+		providersList:         slices.Clone(ssosettings.AllOAuthProviders),
+		configurableProviders: configurableProviders,
+		reloadables:           make(map[string]ssosettings.Reloadable),
+		cachedSSOSettings:     make([]*models.SSOSettings, 0),
+	}
 }
 
 var _ ssosettings.Service = (*Service)(nil)

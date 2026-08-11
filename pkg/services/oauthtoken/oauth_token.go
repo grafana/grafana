@@ -18,6 +18,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -40,7 +41,7 @@ var (
 )
 
 type Service struct {
-	Cfg             *setting.Cfg
+	cfgProvider     configprovider.ConfigProvider
 	SocialService   social.Service
 	AuthInfoService login.AuthInfoService
 	sessionService  auth.UserTokenService
@@ -66,13 +67,13 @@ type TokenRefreshMetadata struct {
 	AuthID            string
 }
 
-func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer,
+func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfgProvider configprovider.ConfigProvider, registerer prometheus.Registerer,
 	serverLockService *serverlock.ServerLockService, tracer tracing.Tracer, sessionService auth.UserTokenService, features featuremgmt.FeatureToggles,
 ) *Service {
 	return &Service{
 		AuthInfoService:      authInfoService,
 		sessionService:       sessionService,
-		Cfg:                  cfg,
+		cfgProvider:          cfgProvider,
 		SocialService:        socialService,
 		features:             features,
 		serverLock:           serverLockService,
@@ -268,7 +269,11 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 	}
 
 	provider := strings.TrimPrefix(tokenRefreshMetadata.AuthModule, "oauth_")
-	currentOAuthInfo := o.SocialService.GetOAuthInfoProvider(provider)
+	currentOAuthInfo, err := o.SocialService.GetOAuthInfoProvider(ctx, provider)
+	if err != nil {
+		ctxLogger.Warn("OAuth provider not found", "provider", provider, "error", err)
+		return nil, err
+	}
 	if currentOAuthInfo == nil {
 		ctxLogger.Warn("OAuth provider not found", "provider", provider)
 		return nil, nil
@@ -286,10 +291,15 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 		lockKey = fmt.Sprintf("oauth-refresh-token-%d-%d", userID, tokenRefreshMetadata.ExternalSessionID)
 	}
 
+	cfg, err := o.cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get configuration for OAuth token refresh: %w", err)
+	}
+
 	lockTimeConfig := serverlock.LockTimeConfig{
 		MaxInterval: 30 * time.Second,
-		MinWait:     time.Duration(o.Cfg.OAuthRefreshTokenServerLockMinWaitMs) * time.Millisecond,
-		MaxWait:     time.Duration(o.Cfg.OAuthRefreshTokenServerLockMinWaitMs+500) * time.Millisecond,
+		MinWait:     time.Duration(cfg.OAuthRefreshTokenServerLockMinWaitMs) * time.Millisecond,
+		MaxWait:     time.Duration(cfg.OAuthRefreshTokenServerLockMinWaitMs+500) * time.Millisecond,
 	}
 
 	retryOpt := func(attempts int) error {
@@ -419,14 +429,14 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 		return persistedToken, nil
 	}
 
-	connect, err := o.SocialService.GetConnector(tokenRefreshMetadata.AuthModule)
+	connect, err := o.SocialService.GetConnector(ctx, tokenRefreshMetadata.AuthModule)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth connector", "provider", tokenRefreshMetadata.AuthModule, "error", err)
 		span.SetStatus(codes.Error, "Failed to get oauth connector: "+err.Error())
 		return nil, err
 	}
 
-	client, err := o.SocialService.GetOAuthHttpClient(tokenRefreshMetadata.AuthModule)
+	client, err := o.SocialService.GetOAuthHttpClient(ctx, tokenRefreshMetadata.AuthModule)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth http client", "provider", tokenRefreshMetadata.AuthModule, "error", err)
 		span.SetStatus(codes.Error, "Failed to get oauth http client")
@@ -457,7 +467,8 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 
 	// If the tokens are not the same, update the entry in the DB
 	if !tokensEq(persistedToken, token) {
-		if o.Cfg.Env == setting.Dev {
+		cfg, cfgErr := o.cfgProvider.Get(ctx)
+		if cfgErr == nil && cfg.Env == setting.Dev {
 			ctxLogger.Debug("Oauth got token",
 				"auth_module", usr.GetAuthenticatedBy(),
 				"expiry", fmt.Sprintf("%v", token.Expiry),

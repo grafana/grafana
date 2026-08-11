@@ -8,10 +8,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -35,6 +37,13 @@ const UNEXPIRED_ID_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHR
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
+}
+
+func mustConfigProvider(t *testing.T, cfg *setting.Cfg) configprovider.ConfigProvider {
+	t.Helper()
+	provider, err := configprovider.ProvideService(cfg)
+	require.NoError(t, err)
+	return provider
 }
 
 var (
@@ -347,7 +356,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			env.service = ProvideService(
 				env.socialService,
 				env.authInfoService,
-				setting.NewCfg(),
+				mustConfigProvider(t, setting.NewCfg()),
 				prometheus.NewRegistry(),
 				env.serverLock,
 				tracing.InitializeTracerForTest(),
@@ -647,7 +656,7 @@ func TestIntegration_TryTokenRefresh_WithExternalSessions(t *testing.T) {
 			env.service = ProvideService(
 				env.socialService,
 				env.authInfoService,
-				setting.NewCfg(),
+				mustConfigProvider(t, setting.NewCfg()),
 				prometheus.NewRegistry(),
 				env.serverLock,
 				tracing.InitializeTracerForTest(),
@@ -1096,7 +1105,7 @@ func TestIntegration_GetCurrentOAuthToken(t *testing.T) {
 			env.service = ProvideService(
 				env.socialService,
 				env.authInfoService,
-				setting.NewCfg(),
+				mustConfigProvider(t, setting.NewCfg()),
 				prometheus.NewRegistry(),
 				env.serverLock,
 				tracing.InitializeTracerForTest(),
@@ -1396,7 +1405,7 @@ func TestIntegration_GetCurrentOAuthToken_WithExternalSessions(t *testing.T) {
 			env.service = ProvideService(
 				env.socialService,
 				env.authInfoService,
-				setting.NewCfg(),
+				mustConfigProvider(t, setting.NewCfg()),
 				prometheus.NewRegistry(),
 				env.serverLock,
 				tracing.InitializeTracerForTest(),

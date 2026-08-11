@@ -896,22 +896,22 @@ type mockSocialService struct {
 	err             error
 }
 
-func (m *mockSocialService) GetOAuthInfoProvider(name string) *social.OAuthInfo {
-	return m.oAuthInfo
+func (m *mockSocialService) GetOAuthInfoProvider(context.Context, string) (*social.OAuthInfo, error) {
+	return m.oAuthInfo, m.err
 }
 
-func (m *mockSocialService) GetOAuthInfoProviders() map[string]*social.OAuthInfo {
-	return m.oAuthInfos
+func (m *mockSocialService) GetOAuthInfoProviders(context.Context) (map[string]*social.OAuthInfo, error) {
+	return m.oAuthInfos, m.err
 }
 
-func (m *mockSocialService) GetOAuthProviders() map[string]bool {
-	return m.oAuthProviders
+func (m *mockSocialService) GetOAuthProviders(context.Context) (map[string]bool, error) {
+	return m.oAuthProviders, m.err
 }
 
-func (m *mockSocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
+func (m *mockSocialService) GetOAuthHttpClient(context.Context, string) (*http.Client, error) {
 	return m.httpClient, m.err
 }
 
-func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error) {
+func (m *mockSocialService) GetConnector(context.Context, string) (social.SocialConnector, error) {
 	return m.socialConnector, m.err
 }

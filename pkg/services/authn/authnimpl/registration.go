@@ -2,6 +2,7 @@ package authnimpl
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -28,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Registration struct{}
@@ -43,7 +43,7 @@ func ProvideRegistration(
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features featuremgmt.FeatureToggles, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
-	ldapService service.LDAP, settingsProviderService setting.Provider,
+	ldapService service.LDAP,
 	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
 ) (Registration, error) {
 	logger := log.New("authn.registration")
@@ -95,7 +95,7 @@ func ProvideRegistration(
 	}
 
 	if cfg.JWTAuth.Enabled {
-		orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
+		orgRoleMapper := connectors.ProvideOrgRoleMapper(cfgProvider, orgService)
 		authnSvc.RegisterClient(clients.ProvideJWT(jwtService, orgRoleMapper, cfg, tracer))
 	}
 
@@ -103,9 +103,13 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg, tracer))
 	}
 
-	for name := range socialService.GetOAuthProviders() {
+	oauthProviders, err := socialService.GetOAuthProviders(ctx)
+	if err != nil {
+		return Registration{}, fmt.Errorf("get OAuth providers: %w", err)
+	}
+	for name := range oauthProviders {
 		clientName := authn.ClientWithPrefix(name)
-		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features, tracer))
+		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfgProvider, oauthTokenService, socialService, features, tracer))
 	}
 
 	if cfg.ProvisioningEnabled {

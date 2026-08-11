@@ -12,13 +12,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -49,9 +49,14 @@ type googleUserData struct {
 	rawJSON       []byte `json:"-"`
 }
 
-func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialGoogle {
+func NewGoogleProvider(ctx context.Context, info *social.OAuthInfo, cfgProvider configprovider.ConfigProvider, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) (*SocialGoogle, error) {
+	base, err := newSocialBaseWithCache(social.GoogleProviderName, ctx, orgRoleMapper, info, features, cfgProvider, cache)
+	if err != nil {
+		return nil, err
+	}
+
 	provider := &SocialGoogle{
-		SocialBase: newSocialBaseWithCache(social.GoogleProviderName, orgRoleMapper, info, features, cfg, cache),
+		SocialBase: base,
 		validateHD: MustBool(info.Extra[validateHDKey], true),
 	}
 
@@ -59,9 +64,11 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *
 		provider.log.Warn("Using legacy Google API URL, please update your configuration")
 	}
 
-	ssoSettings.RegisterReloadable(social.GoogleProviderName, provider)
+	if ssoSettings != nil {
+		ssoSettings.RegisterReloadable(social.GoogleProviderName, provider)
+	}
 
-	return provider
+	return provider, nil
 }
 
 func (s *SocialGoogle) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
@@ -112,7 +119,9 @@ func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSetting
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(ctx, social.GoogleProviderName, newInfo)
+	if err := s.updateInfo(ctx, social.GoogleProviderName, newInfo); err != nil {
+		return err
+	}
 	s.validateHD = MustBool(newInfo.Extra[validateHDKey], true)
 
 	return nil
@@ -179,7 +188,10 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		userInfo.OrgRoles, err = s.orgRoleMapper.MapOrgRolesContext(ctx, s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		if err != nil {
+			return nil, fmt.Errorf("map organization roles: %w", err)
+		}
 		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
 			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
@@ -279,7 +291,7 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, _ *http.Client, tok
 		}
 	}
 
-	if s.cfg.Env == setting.Dev {
+	if s.isDev(ctx) {
 		logger.Debug("Received id_token", "raw_json", string(rawJSON))
 	}
 

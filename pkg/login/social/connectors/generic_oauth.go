@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -19,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -54,8 +54,11 @@ type SocialGenericOAuth struct {
 	teamIds              []string
 }
 
-func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) *SocialGenericOAuth {
-	s := newSocialBaseWithCache(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg, cache)
+func NewGenericOAuthProvider(ctx context.Context, info *social.OAuthInfo, cfgProvider configprovider.ConfigProvider, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles, cache remotecache.CacheStorage) (*SocialGenericOAuth, error) {
+	s, err := newSocialBaseWithCache(social.GenericOAuthProviderName, ctx, orgRoleMapper, info, features, cfgProvider, cache)
+	if err != nil {
+		return nil, err
+	}
 
 	teamIds, err := util.SplitStringWithError(info.Extra[teamIdsKey])
 	if err != nil {
@@ -68,7 +71,7 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 	}
 
 	provider := &SocialGenericOAuth{
-		SocialBase:           newSocialBaseWithCache(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg, cache),
+		SocialBase:           s,
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,
 		emailAttributePath:   info.EmailAttributePath,
@@ -81,9 +84,11 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMa
 		allowedOrganizations: allowedOrganizations,
 	}
 
-	ssoSettings.RegisterReloadable(social.GenericOAuthProviderName, provider)
+	if ssoSettings != nil {
+		ssoSettings.RegisterReloadable(social.GenericOAuthProviderName, provider)
+	}
 
-	return provider
+	return provider, nil
 }
 
 func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
@@ -140,7 +145,9 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(ctx, social.GenericOAuthProviderName, newInfo)
+	if err := s.updateInfo(ctx, social.GenericOAuthProviderName, newInfo); err != nil {
+		return err
+	}
 
 	teamIds, err := util.SplitStringWithError(newInfo.Extra[teamIdsKey])
 	if err != nil {
@@ -367,7 +374,11 @@ func (s *SocialGenericOAuth) extractUserGroups(logger log.Logger, userInfo *soci
 func (s *SocialGenericOAuth) postProcessUserInfo(ctx context.Context, client *http.Client, userInfo *social.BasicUserInfo, externalOrgs []string) error {
 	logger := s.log.FromContext(ctx)
 	if !s.info.SkipOrgRoleSync {
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, externalOrgs, userInfo.Role)
+		orgRoles, err := s.orgRoleMapper.MapOrgRolesContext(ctx, s.orgMappingCfg, externalOrgs, userInfo.Role)
+		if err != nil {
+			return fmt.Errorf("map organization roles: %w", err)
+		}
+		userInfo.OrgRoles = orgRoles
 		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
 			return errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}

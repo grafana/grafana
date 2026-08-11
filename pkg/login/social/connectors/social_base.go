@@ -24,6 +24,7 @@ import (
 	"golang.org/x/text/language"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -37,7 +38,7 @@ import (
 type SocialBase struct {
 	*oauth2.Config
 	info          *social.OAuthInfo
-	cfg           *setting.Cfg
+	cfgProvider   configprovider.ConfigProvider
 	reloadMutex   sync.RWMutex
 	log           log.Logger
 	features      featuremgmt.FeatureToggles
@@ -48,40 +49,52 @@ type SocialBase struct {
 }
 
 func newSocialBase(name string,
+	ctx context.Context,
 	orgRoleMapper *OrgRoleMapper,
 	info *social.OAuthInfo,
 	features featuremgmt.FeatureToggles,
-	cfg *setting.Cfg,
-) *SocialBase {
-	return newSocialBaseWithCache(name, orgRoleMapper, info, features, cfg, nil)
+	cfgProvider configprovider.ConfigProvider,
+) (*SocialBase, error) {
+	return newSocialBaseWithCache(name, ctx, orgRoleMapper, info, features, cfgProvider, nil)
 }
 
 func newSocialBaseWithCache(name string,
+	ctx context.Context,
 	orgRoleMapper *OrgRoleMapper,
 	info *social.OAuthInfo,
 	features featuremgmt.FeatureToggles,
-	cfg *setting.Cfg,
+	cfgProvider configprovider.ConfigProvider,
 	cache remotecache.CacheStorage,
-) *SocialBase {
+) (*SocialBase, error) {
 	logger := log.New("oauth." + name)
+	cfg, err := cfgProvider.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get configuration for OAuth provider %q: %w", name, err)
+	}
 
 	return &SocialBase{
 		Config:        createOAuthConfig(info, cfg, name),
 		info:          info,
 		log:           logger,
 		features:      features,
-		cfg:           cfg,
+		cfgProvider:   cfgProvider,
 		orgRoleMapper: orgRoleMapper,
-		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(context.Background(), info.OrgMapping, info.RoleAttributeStrict),
+		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(ctx, info.OrgMapping, info.RoleAttributeStrict),
 		providerName:  name,
 		cache:         cache,
-	}
+	}, nil
 }
 
-func (s *SocialBase) updateInfo(ctx context.Context, name string, info *social.OAuthInfo) {
-	s.Config = createOAuthConfig(info, s.cfg, name)
+func (s *SocialBase) updateInfo(ctx context.Context, name string, info *social.OAuthInfo) error {
+	cfg, err := s.cfgProvider.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("get configuration for OAuth provider %q: %w", name, err)
+	}
+
+	s.Config = createOAuthConfig(info, cfg, name)
 	s.info = info
 	s.orgMappingCfg = s.orgRoleMapper.ParseOrgMappingSettings(ctx, info.OrgMapping, info.RoleAttributeStrict)
+	return nil
 }
 
 type groupStruct struct {
@@ -144,12 +157,17 @@ func (s *SocialBase) TokenSource(ctx context.Context, t *oauth2.Token) oauth2.To
 }
 
 func (s *SocialBase) getBaseSupportBundleContent(bf *bytes.Buffer) error {
+	cfg, err := s.cfgProvider.Get(context.Background())
+	if err != nil {
+		return fmt.Errorf("get OAuth support bundle configuration: %w", err)
+	}
+
 	bf.WriteString("## Client configuration\n\n")
 	bf.WriteString("```ini\n")
 	fmt.Fprintf(bf, "allow_assign_grafana_admin = %v\n", s.info.AllowAssignGrafanaAdmin)
 	fmt.Fprintf(bf, "allow_sign_up = %v\n", s.info.AllowSignup)
 	fmt.Fprintf(bf, "allowed_domains = %v\n", s.info.AllowedDomains)
-	fmt.Fprintf(bf, "auto_assign_org_role = %v\n", s.cfg.AutoAssignOrgRole)
+	fmt.Fprintf(bf, "auto_assign_org_role = %v\n", cfg.AutoAssignOrgRole)
 	fmt.Fprintf(bf, "role_attribute_path = %v\n", s.info.RoleAttributePath)
 	fmt.Fprintf(bf, "role_attribute_strict = %v\n", s.info.RoleAttributeStrict)
 	fmt.Fprintf(bf, "skip_org_role_sync = %v\n", s.info.SkipOrgRoleSync)
@@ -167,6 +185,15 @@ func (s *SocialBase) getBaseSupportBundleContent(bf *bytes.Buffer) error {
 	bf.WriteString("```\n\n")
 
 	return nil
+}
+
+func (s *SocialBase) isDev(ctx context.Context) bool {
+	cfg, err := s.cfgProvider.Get(ctx)
+	if err != nil {
+		s.log.FromContext(ctx).Warn("Failed to get configuration while checking environment", "error", err)
+		return false
+	}
+	return cfg.Env == setting.Dev
 }
 
 func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
