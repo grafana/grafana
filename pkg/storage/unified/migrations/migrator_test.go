@@ -743,6 +743,72 @@ func TestUnifiedMigration_RebuildIndexes_RetrySuccess(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestUnifiedMigration_RebuildIndexes_ContextCanceledDuringBackoff(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	mockClient := resource.NewMockResourceClient(t)
+	mockClient.EXPECT().
+		RebuildIndexes(mock.Anything, mock.Anything).
+		RunAndReturn(func(context.Context, *resourcepb.RebuildIndexesRequest, ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+			cancel()
+			return nil, fmt.Errorf("temporary failure")
+		}).
+		Once()
+
+	registry := migrations.NewMigrationRegistry()
+	registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
+	migrator := migrations.NewUnifiedMigrator(
+		mockClient,
+		registry,
+		migrations.WithRebuildBackoff(backoff.Config{
+			MinBackoff: time.Minute,
+			MaxBackoff: time.Minute,
+			MaxRetries: 5,
+		}),
+	)
+
+	err := migrator.RebuildIndexes(ctx, migrations.RebuildIndexOptions{
+		NamespaceInfo:       authlib.NamespaceInfo{OrgID: 1, Value: "stack-123"},
+		Resources:           []schema.GroupResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}},
+		MigrationFinishedAt: time.Now(),
+	})
+
+	require.ErrorIs(t, err, context.Canceled)
+	require.NotContains(t, err.Error(), "temporary failure")
+}
+
+func TestUnifiedMigration_RebuildIndexes_ContextDeadlineExceeded(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	t.Cleanup(cancel)
+
+	mockClient := resource.NewMockResourceClient(t)
+	mockClient.EXPECT().
+		RebuildIndexes(mock.Anything, mock.Anything).
+		Return(nil, fmt.Errorf("temporary failure")).
+		Maybe()
+
+	registry := migrations.NewMigrationRegistry()
+	registry.Register(dashboard.FoldersDashboardsMigration(dashboardmigrator.ProvideFoldersDashboardsMigrator(nil)))
+	migrator := migrations.NewUnifiedMigrator(
+		mockClient,
+		registry,
+		migrations.WithRebuildBackoff(backoff.Config{
+			MinBackoff: 5 * time.Millisecond,
+			MaxBackoff: 10 * time.Millisecond,
+			MaxRetries: 0,
+		}),
+	)
+
+	err := migrator.RebuildIndexes(ctx, migrations.RebuildIndexOptions{
+		NamespaceInfo:       authlib.NamespaceInfo{OrgID: 1, Value: "stack-123"},
+		Resources:           []schema.GroupResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}},
+		MigrationFinishedAt: time.Now(),
+	})
+
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+}
+
 func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 	migrationFinishedAt := time.Now()
 

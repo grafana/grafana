@@ -247,15 +247,14 @@ func (m *unifiedMigration) RebuildIndexes(ctx context.Context, opts RebuildIndex
 		boff.Wait()
 	}
 
-	cause := boff.ErrCause()
-	if lastErr == nil {
-		lastErr = cause
-	}
-	if lastErr != nil {
-		logger.Error("failed to rebuild indexes after retries", "error", lastErr, "cause", cause, "attempts", boff.NumRetries())
+	err := boff.ErrCause()
+	if ctx.Err() != nil {
+		logger.Error("context ended while rebuilding indexes", "error", err, "lastError", lastErr, "attempts", boff.NumRetries())
+		return err
 	}
 
-	return lastErr
+	logger.Error("failed to rebuild indexes after retries", "error", err, "lastError", lastErr, "attempts", boff.NumRetries())
+	return err
 }
 
 func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
