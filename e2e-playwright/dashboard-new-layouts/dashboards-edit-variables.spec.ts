@@ -88,7 +88,9 @@ test.describe(
       await expect(markdownContent).toContainText('VariableUnderTest: 10m');
     });
 
-    test('can make a hidden variable visible', async ({ page, controls, sidebar }) => {
+    test('can make a hidden variable visible', async ({ gotoDashboardPage, page, controls, sidebar }) => {
+      await gotoDashboardPage({});
+
       await flows.dashboards.saveDashboardAndCloseToast(
         page,
         controls,
@@ -121,7 +123,9 @@ test.describe(
       await expect(variableLabel).toBeVisible();
     });
 
-    test('can hide variable under the controls menu', async ({ page, controls, sidebar }) => {
+    test('can hide variable under the controls menu', async ({ gotoDashboardPage, page, controls, sidebar }) => {
+      await gotoDashboardPage({});
+
       await flows.dashboards.saveDashboardAndCloseToast(
         page,
         controls,
