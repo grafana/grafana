@@ -69,5 +69,5 @@ After installing and configuring the Graphite data source you can:
 - Configure and use [templates and variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/)
 - Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
 - Add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/)
-- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/)
+- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/alerting/) on your Graphite data
 - [Troubleshoot](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/troubleshooting/) common issues with the Graphite data source
