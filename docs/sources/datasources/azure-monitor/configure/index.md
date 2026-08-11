@@ -20,7 +20,7 @@ labels:
 menuTitle: Configure
 title: Configure the Azure Monitor data source
 weight: 200
-review_date: 2026-05-12
+review_date: 2026-08-11
 ---
 
 # Configure the Azure Monitor data source
@@ -525,7 +525,7 @@ This setting is only available when the `azureMonitorBatchAPI` feature toggle is
 Because requests to the Batch API are sent to the `metrics.monitor.azure.com` data plane endpoint, you need the [Monitoring Reader](https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/rest-api-walkthrough#retrieve-metric-values-multi-dimensional-api) role at the subscription scope to use it.
 
 {{< admonition type="note" >}}
-The Metrics Batch API has a free monthly allowance, after which additional calls incur costs. See [Azure Monitor pricing](https://azure.microsoft.com/en-us/pricing/details/monitor/) for current rates.
+The Metrics Batch API has a free monthly allowance, after which additional calls incur costs. Refer to [Azure Monitor pricing](https://azure.microsoft.com/en-us/pricing/details/monitor/) for current rates.
 {{< /admonition >}}
 
 ### Private data source connect (Grafana Cloud only)
@@ -626,7 +626,7 @@ provider "grafana" {
   auth = "<YOUR_SERVICE_ACCOUNT_TOKEN>"
 }
 
-# For self-hosted Grafana
+# For self-managed Grafana
 # provider "grafana" {
 #   url  = "http://localhost:3000"
 #   auth = "<API_KEY_OR_SERVICE_ACCOUNT_TOKEN>"
