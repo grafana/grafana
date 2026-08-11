@@ -1,7 +1,8 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
 import { KeyValuesSummary } from './KeyValuesSummary';
@@ -74,19 +75,29 @@ export default function AccordionCategorizedKeyValues({
         };
 
   const showDataSummaryFields = data.length > 0 && !isOpen;
+  const emptyMessage = t('explore.span-detail.no-attributes', 'No attributes');
 
   return (
     <div className={styles.container}>
-      <div className={styles.header} {...headerProps} data-testid="AccordionCategorizedKeyValues--header">
+      <div
+        className={cx(styles.header, { [styles.headerEmpty]: isEmpty })}
+        {...headerProps}
+        data-testid="AccordionCategorizedKeyValues--header"
+      >
         {arrow}
         <strong className={styles.headerLabel}>{label}</strong>
-        {showDataSummaryFields && (
-          <span className={styles.summary}>
-            <KeyValuesSummary data={data} />
-          </span>
+        {isEmpty ? (
+          <span className={styles.emptyMessage}>{emptyMessage}</span>
+        ) : (
+          showDataSummaryFields && (
+            <span className={styles.summary}>
+              <KeyValuesSummary data={data} />
+            </span>
+          )
         )}
       </div>
       {isOpen &&
+        !isEmpty &&
         (showFlatAttributes ? (
           <KeyValuesTable data={data} linksGetter={linksGetter} promoGetter={promoGetter} />
         ) : (
@@ -153,12 +164,21 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
+    headerEmpty: css({
+      label: 'headerEmpty',
+      cursor: 'initial',
+    }),
     headerLabel: css({
       width: 'auto',
       display: 'inline-block',
     }),
     summary: css({
       marginLeft: '0.7em',
+    }),
+    emptyMessage: css({
+      marginLeft: '0.7em',
+      color: theme.colors.text.secondary,
+      fontWeight: theme.typography.fontWeightRegular,
     }),
     categories: css({
       padding: `0 ${categoryIndent}`,

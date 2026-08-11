@@ -485,30 +485,28 @@ export default function SpanDetail(props: SpanDetailProps) {
     />
   );
 
-  if (process.tags) {
-    listOfContentCards.push(
-      <AccordionCategorizedKeyValues
-        data={process.tags}
-        sectionType="resource"
-        label={
-          isSummarySpan ? (
-            <>
-              {t('explore.span-detail.label-resource-attributes', 'Resource attributes')}{' '}
-              <span className={styles.inheritedNote}>
-                {t('explore.span-detail.resource-attributes-inherited', '(inherited from slowest span)')}
-              </span>
-            </>
-          ) : (
-            t('explore.span-detail.label-resource-attributes', 'Resource attributes')
-          )
-        }
-        linksGetter={resourceLinksGetter}
-        isOpen={isProcessOpen}
-        onToggle={() => processToggle(spanID)}
-        promoGetter={promoGetter}
-      />
-    );
-  }
+  listOfContentCards.push(
+    <AccordionCategorizedKeyValues
+      data={process.tags ?? []}
+      sectionType="resource"
+      label={
+        isSummarySpan ? (
+          <>
+            {t('explore.span-detail.label-resource-attributes', 'Resource attributes')}{' '}
+            <span className={styles.inheritedNote}>
+              {t('explore.span-detail.resource-attributes-inherited', '(inherited from slowest span)')}
+            </span>
+          </>
+        ) : (
+          t('explore.span-detail.label-resource-attributes', 'Resource attributes')
+        )
+      }
+      linksGetter={resourceLinksGetter}
+      isOpen={isProcessOpen}
+      onToggle={() => processToggle(spanID)}
+      promoGetter={promoGetter}
+    />
+  );
 
   if (logs && logs.length > 0) {
     listOfContentCards.push(
