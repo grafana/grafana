@@ -9597,21 +9597,6 @@
     "requires-license": "Vyžaduje licenci Grafana Enterprise",
     "title": "Enterprise"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "dokončit",
-      "learn-how": "Zjistěte více v dokumentech"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "K pokročilým návodům",
-      "aria-label-to-basic-tutorials": "K základním návodům",
-      "checking-completed-setup-steps": "Kontrola dokončených kroků nastavení",
-      "remove-this-panel": "Odebrat tento panel"
-    },
-    "tutorial-card": {
-      "complete": "dokončit"
-    }
-  },
   "global-variables": {
     "details": {
       "create-error": "",
@@ -17671,12 +17656,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Odkaz"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Potřebujete pomoc?",
-      "welcome-to-grafana": "Vítejte v Grafaně"
     }
   },
   "xychart": {

@@ -9473,21 +9473,6 @@
     "requires-license": "É necessário ter uma licença da Grafana Enterprise",
     "title": "Enterprise"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "completo",
-      "learn-how": "Saiba como na documentação"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Acessar tutoriais avançados",
-      "aria-label-to-basic-tutorials": "Acessar tutoriais básicos",
-      "checking-completed-setup-steps": "Como verificar as etapas de configuração concluídas",
-      "remove-this-panel": "Remover este painel"
-    },
-    "tutorial-card": {
-      "complete": "completo"
-    }
-  },
   "global-variables": {
     "details": {
       "create-error": "",
@@ -17401,12 +17386,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Link"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Precisa de ajuda?",
-      "welcome-to-grafana": "Boas-vindas à Grafana"
     }
   },
   "xychart": {

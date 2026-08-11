@@ -9473,21 +9473,6 @@
     "requires-license": "Kräver en Grafana Enterprise-licens",
     "title": "Enterprise"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "klar",
-      "learn-how": "Läs mer i dokumenten"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Till avancerade handledningar",
-      "aria-label-to-basic-tutorials": "Till grundläggande handledningar",
-      "checking-completed-setup-steps": "Kontrollerar slutförda installationssteg",
-      "remove-this-panel": "Ta bort denna panel"
-    },
-    "tutorial-card": {
-      "complete": "klar"
-    }
-  },
   "global-variables": {
     "details": {
       "create-error": "",
@@ -17401,12 +17386,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Länk"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Behöver du hjälp?",
-      "welcome-to-grafana": "Välkommen till Grafana"
     }
   },
   "xychart": {

@@ -9411,21 +9411,6 @@
     "requires-license": "需要 Grafana 企业版许可证",
     "title": "企业"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "完成",
-      "learn-how": "在文档中了解如何操作"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "前往高级教程",
-      "aria-label-to-basic-tutorials": "前往基础教程",
-      "checking-completed-setup-steps": "检查已完成的设置步骤",
-      "remove-this-panel": "移除此面板"
-    },
-    "tutorial-card": {
-      "complete": "完成"
-    }
-  },
   "global-variables": {
     "details": {
       "create-error": "",
@@ -17266,12 +17251,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "链接"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "需要帮助吗？",
-      "welcome-to-grafana": "欢迎使用 Grafana"
     }
   },
   "xychart": {

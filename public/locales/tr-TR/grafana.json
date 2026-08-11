@@ -9473,21 +9473,6 @@
     "requires-license": "Grafana Enterprise lisansı gerektirir",
     "title": "Enterprise"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "tamamlandı",
-      "learn-how": "Belgelerden nasıl yapılacağını öğrenin"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Gelişmiş öğreticilere",
-      "aria-label-to-basic-tutorials": "Temel öğreticilere",
-      "checking-completed-setup-steps": "Tamamlanan kurulum adımları kontrol ediliyor",
-      "remove-this-panel": "Bu paneli kaldır"
-    },
-    "tutorial-card": {
-      "complete": "tamamlandı"
-    }
-  },
   "global-variables": {
     "details": {
       "create-error": "",
@@ -17401,12 +17386,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Bağlantı"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Yardıma mı ihtiyacınız var?",
-      "welcome-to-grafana": "Grafana'ya hoş geldiniz"
     }
   },
   "xychart": {

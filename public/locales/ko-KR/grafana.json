@@ -9411,21 +9411,6 @@
     "requires-license": "Grafana Enterprise 라이선스 필요",
     "title": "Enterprise"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "완료",
-      "learn-how": "문서에서 방법 알아보기"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "고급 튜토리얼로",
-      "aria-label-to-basic-tutorials": "기본 튜토리얼로",
-      "checking-completed-setup-steps": "완료된 설정 단계 확인 중",
-      "remove-this-panel": "이 패널 삭제"
-    },
-    "tutorial-card": {
-      "complete": "완료"
-    }
-  },
   "global-variables": {
     "details": {
       "create-error": "",
@@ -17266,12 +17251,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "링크"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "도움이 필요하세요?",
-      "welcome-to-grafana": "Grafana에 오신 것을 환영합니다."
     }
   },
   "xychart": {

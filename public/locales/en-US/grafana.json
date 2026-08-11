@@ -9483,21 +9483,6 @@
     "requires-license": "Requires a Grafana Enterprise license",
     "title": "Enterprise"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "complete",
-      "learn-how": "Learn how in the docs"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "To advanced tutorials",
-      "aria-label-to-basic-tutorials": "To basic tutorials",
-      "checking-completed-setup-steps": "Checking completed setup steps",
-      "remove-this-panel": "Remove this panel"
-    },
-    "tutorial-card": {
-      "complete": "complete"
-    }
-  },
   "global-variables": {
     "details": {
       "create-error": "Failed to create global variable",
@@ -17448,12 +17433,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Link"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Need help?",
-      "welcome-to-grafana": "Welcome to Grafana"
     }
   },
   "xychart": {

@@ -26,8 +26,6 @@ const debugPanel = async () => await import(/* webpackChunkName: "debugPanel" */
 const flamegraphPanel = async () =>
   await import(/* webpackChunkName: "flamegraphPanel" */ 'app/plugins/panel/flamegraph/module');
 const gaugePanel = async () => await import(/* webpackChunkName: "gaugePanel" */ 'app/plugins/panel/gauge/module');
-const gettingStartedPanel = async () =>
-  await import(/* webpackChunkName: "gettingStartedPanel" */ 'app/plugins/panel/gettingstarted/module');
 const histogramPanel = async () =>
   await import(/* webpackChunkName: "histogramPanel" */ 'app/plugins/panel/histogram/module');
 const livePanel = async () => await import(/* webpackChunkName: "livePanel" */ 'app/plugins/panel/live/module');
@@ -48,9 +46,6 @@ const timeseriesPanel = async () =>
   await import(/* webpackChunkName: "timeseriesPanel" */ 'app/plugins/panel/timeseries/module');
 const tracesPanel = async () => await import(/* webpackChunkName: "tracesPanel" */ 'app/plugins/panel/traces/module');
 const trendPanel = async () => await import(/* webpackChunkName: "trendPanel" */ 'app/plugins/panel/trend/module');
-const welcomeBanner = async () =>
-  await import(/* webpackChunkName: "welcomeBanner" */ 'app/plugins/panel/welcome/module');
-
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
 const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
 const xychartPanel = async () => await import(/* webpackChunkName: "xychart" */ 'app/plugins/panel/xychart/module');
@@ -87,7 +82,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/stat': statPanel,
   'core:plugin/debug': debugPanel,
   'core:plugin/flamegraph': flamegraphPanel,
-  'core:plugin/gettingstarted': gettingStartedPanel,
   'core:plugin/gauge': gaugePanel,
   'core:plugin/piechart': pieChartPanel,
   'core:plugin/bargauge': barGaugePanel,
@@ -95,7 +89,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/logs': logsPanel,
   'core:plugin/logstable': logsTablePanel,
   'core:plugin/traces': tracesPanel,
-  'core:plugin/welcome': welcomeBanner,
   'core:plugin/nodeGraph': nodeGraph,
   'core:plugin/histogram': histogramPanel,
 };

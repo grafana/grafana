@@ -9473,21 +9473,6 @@
     "requires-license": "Grafana Enterprise-licenc szükséges",
     "title": "Enterprise"
   },
-  "gettingstarted": {
-    "docs-card": {
-      "complete": "teljes",
-      "learn-how": "További információ a dokumentációban"
-    },
-    "getting-started": {
-      "aria-label-to-advanced-tutorials": "Haladó oktatóanyagokhoz",
-      "aria-label-to-basic-tutorials": "Alap oktatóanyagokhoz",
-      "checking-completed-setup-steps": "Befejezett beállítási lépések ellenőrzése",
-      "remove-this-panel": "Ezen panel eltávolítása"
-    },
-    "tutorial-card": {
-      "complete": "teljes"
-    }
-  },
   "global-variables": {
     "details": {
       "create-error": "",
@@ -17401,12 +17386,6 @@
   "visualization": {
     "data-hover-view": {
       "link": "Hivatkozás"
-    }
-  },
-  "welcome": {
-    "welcome-banner": {
-      "need-help": "Segítségre van szüksége?",
-      "welcome-to-grafana": "Üdvözli a Grafana"
     }
   },
   "xychart": {

@@ -1049,7 +1049,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/plugins/panel/dashlist/ @grafana/grafana-frontend-navigation
 /public/app/plugins/panel/debug/ @ryantxu
 /public/app/plugins/panel/gauge/ @grafana/dataviz-squad
-/public/app/plugins/panel/gettingstarted/ @grafana/grafana-frontend-navigation
 /public/app/plugins/panel/heatmap/ @grafana/dataviz-squad
 /public/app/plugins/panel/histogram/ @grafana/dataviz-squad
 /public/app/plugins/panel/logs/ @grafana/observability-logs
@@ -1071,7 +1070,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/plugins/panel/news/ @grafana/dataviz-squad
 /public/app/plugins/panel/stat/ @grafana/dataviz-squad
 /public/app/plugins/panel/text/ @grafana/dataviz-squad
-/public/app/plugins/panel/welcome/ @grafana/grafana-frontend-navigation
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
 /public/app/routes/ @grafana/grafana-frontend-navigation
 /public/app/store/ @grafana/grafana-frontend-platform
