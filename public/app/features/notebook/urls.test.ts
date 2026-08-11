@@ -1,51 +1,62 @@
-import { config } from '@grafana/runtime';
+import { createBrowserHistory, createMemoryHistory } from 'history';
+
+import { HistoryWrapper, config, locationService, setLocationService } from '@grafana/runtime';
 
 import { notebookShareUrl, notebookViewHref, notebookViewUrl } from './urls';
 
 describe('notebook urls', () => {
-  const originalAppSubUrl = config.appSubUrl;
+  const originalLocationService = locationService;
   const originalAppUrl = config.appUrl;
 
   afterEach(() => {
-    config.appSubUrl = originalAppSubUrl;
+    setLocationService(originalLocationService);
     config.appUrl = originalAppUrl;
   });
 
-  describe('without a sub-path', () => {
-    beforeEach(() => {
-      config.appSubUrl = '';
-      config.appUrl = 'https://host/';
-    });
+  /** Notebooks are org-scoped, so every browser-facing URL has to carry orgId. */
+  function setHistory(orgId: number, basename?: string) {
+    let base;
+    if (basename) {
+      // createBrowserHistory warns unless the document already sits under the basename.
+      window.history.replaceState({}, '', `${basename}/`);
+      base = createBrowserHistory({ basename });
+    } else {
+      base = createMemoryHistory({ initialEntries: ['/'] });
+    }
+    const wrapper = new HistoryWrapper(base);
+    wrapper.setOrgIdGetter(() => orgId);
+    setLocationService(wrapper);
+  }
 
-    it('builds the raw route', () => {
-      expect(notebookViewUrl('nb1')).toBe('/notebook/nb1');
-    });
+  it('keeps the raw route unprefixed, since the router applies the base itself', () => {
+    setHistory(1);
 
-    it('builds the same href for plain anchors', () => {
-      expect(notebookViewHref('nb1')).toBe('/notebook/nb1');
-    });
-
-    it('builds an absolute share url', () => {
-      expect(notebookShareUrl('nb1')).toBe('https://host/notebook/nb1');
-    });
+    expect(notebookViewUrl('nb1')).toBe('/notebook/nb1');
   });
 
-  describe('under a sub-path', () => {
-    beforeEach(() => {
-      config.appSubUrl = '/grafana';
-      config.appUrl = 'https://host/grafana/';
-    });
+  it('carries orgId on the href, so a link opens the org the notebook belongs to', () => {
+    setHistory(3);
 
-    it('leaves the raw route unprefixed, since the router applies the base itself', () => {
-      expect(notebookViewUrl('nb1')).toBe('/notebook/nb1');
-    });
+    expect(notebookViewHref('nb1')).toBe('/notebook/nb1?orgId=3');
+  });
 
-    it('prefixes the href for plain anchors, which never see the router base', () => {
-      expect(notebookViewHref('nb1')).toBe('/grafana/notebook/nb1');
-    });
+  it('applies the sub-path when Grafana is served under one', () => {
+    setHistory(1, '/grafana');
 
-    it('builds an absolute share url that keeps the sub-path exactly once', () => {
-      expect(notebookShareUrl('nb1')).toBe('https://host/grafana/notebook/nb1');
-    });
+    expect(notebookViewHref('nb1')).toBe('/grafana/notebook/nb1?orgId=1');
+  });
+
+  it('builds an absolute share url', () => {
+    setHistory(3);
+    config.appUrl = 'https://host/';
+
+    expect(notebookShareUrl('nb1')).toBe('https://host/notebook/nb1?orgId=3');
+  });
+
+  it('builds an absolute share url under a sub-path, keeping it exactly once', () => {
+    setHistory(3, '/grafana');
+    config.appUrl = 'https://host/grafana/';
+
+    expect(notebookShareUrl('nb1')).toBe('https://host/grafana/notebook/nb1?orgId=3');
   });
 });

@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box, useStyles2 } from '@grafana/ui';
@@ -49,7 +48,7 @@ export function NotebookScenePage() {
     return loadError ? (
       <DashboardPageError error={loadError} />
     ) : (
-      <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid="notebook-scene-page">
+      <Page navId="notebooks" layout={PageLayoutType.Canvas} data-testid="notebook-scene-page">
         <Box paddingY={4} display="flex" direction="column" alignItems="center">
           {isLoading && <PageLoader />}
         </Box>
@@ -79,13 +78,11 @@ function NotebookDocument({ scene }: { scene: DashboardScene }) {
 
   useEffect(() => scene.activate(), [scene]);
 
-  // Show a "Notebooks" breadcrumb parent rather than nesting under the raw title.
-  const pageNav = { text: title, parentItem: { text: t('notebook.breadcrumb-title', 'Notebooks') } };
+  // The Notebooks nav section supplies the parent breadcrumb, so pageNav only carries the title.
+  const pageNav = { text: title };
 
-  // Notebooks currently live under the Dashboards nav section, so the page highlights it. A
-  // dedicated top-level Notebooks nav section is deferred to its own follow-up.
   return (
-    <Page navId="dashboards/browse" pageNav={pageNav} layout={PageLayoutType.Custom}>
+    <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
       {/* ScopesVariable (and other UNSAFE_renderAsHidden vars) must mount so query runners aren't blocked forever on dependsOnScopes — same as SoloPanelPage. */}
       {renderHiddenVariables(scene)}
       {controls && <NotebookControls controls={controls} />}

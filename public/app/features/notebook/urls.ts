@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 export const NOTEBOOKS_BASE_URL = '/notebooks';
 
@@ -15,12 +15,12 @@ export function notebookViewUrl(uid: string): string {
 }
 
 /**
- * The same destination for consumers that render a plain `<a>` and so never see the router's
- * base — `LinkButton`, for one. Without this, Grafana served under a sub-path sends them to the
- * host root.
+ * The same destination for consumers that render a plain `<a>` and so never see the router —
+ * `LinkButton`, for one. `createHref` applies the sub-path and carries `orgId`; notebooks are
+ * org-scoped, so a link without it opens whichever org the reader happens to be in.
  */
 export function notebookViewHref(uid: string): string {
-  return `${config.appSubUrl}${notebookViewUrl(uid)}`;
+  return locationService.getHistory().createHref({ pathname: notebookViewUrl(uid) });
 }
 
 /** Absolute URL, for copying a link to share outside the current tab. */

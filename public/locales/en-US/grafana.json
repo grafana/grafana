@@ -12748,9 +12748,6 @@
       "title-zoom-out": "Zoom out"
     }
   },
-  "notebook": {
-    "breadcrumb-title": "Notebooks"
-  },
   "notebooks": {
     "list": {
       "all-authors": "All authors",

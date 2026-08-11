@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
@@ -101,22 +101,6 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/notebook/nb1');
-  });
-
-  it('keeps the Edit action inside the sub-path when Grafana is served under one', async () => {
-    // LinkButton renders a plain <a>, so unlike the title link it never sees the router base.
-    const originalAppSubUrl = config.appSubUrl;
-    config.appSubUrl = '/grafana';
-    setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setList([makeNotebook('nb1', 'Checkout error spike')]);
-
-    try {
-      render(<NotebooksListPage />);
-
-      expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/grafana/notebook/nb1');
-    } finally {
-      config.appSubUrl = originalAppSubUrl;
-    }
   });
 
   it('filters the list by title', async () => {
