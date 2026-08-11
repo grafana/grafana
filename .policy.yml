@@ -40,6 +40,7 @@ policy:
             - Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
             - Workflow .github/workflows/pr-unified-storage-compatibility.yml succeeded or skipped
+            - Workflow .github/workflows/proto-breaking-changes.yml succeeded or skipped
             - Workflow .github/workflows/reject-gh-secrets.yml succeeded or skipped
             - Workflow .github/workflows/run-schema-v2-e2e.yml succeeded or skipped
             - Workflow .github/workflows/shellcheck.yml succeeded or skipped
@@ -653,6 +654,23 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-unified-storage-compatibility.yml
+  - name: Workflow .github/workflows/proto-breaking-changes.yml succeeded or skipped
+    if:
+      changed_files:
+        paths:
+          - ^pkg\/registry\/apps\/annotation\/proto\/(?:(?:[^/]*(?:/|$))*)$
+          - ^\.github\/workflows\/proto-breaking-changes\.yml$
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/proto-breaking-changes\.yml$
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/proto-breaking-changes.yml
   - name: Workflow .github/workflows/reject-gh-secrets.yml succeeded or skipped
     if:
       file_not_deleted:
