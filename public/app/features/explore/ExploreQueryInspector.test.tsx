@@ -36,6 +36,11 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: () => null,
 }));
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagTableInspectDataTableNG: () => false,
+}));
+
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
