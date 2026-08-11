@@ -99,10 +99,6 @@ const (
 	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
 	FlagProvisioningPerformance = "provisioning.performance"
 
-	// FlagGrafanaAPIServerEnsureKubectlAccess
-	// Start an additional https handler and write kubectl options
-	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
-
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
@@ -993,4 +989,8 @@ const (
 	// FlagGrafanaRspackBuild
 	// Switches the backend to load frontend assets built with rspack instead of webpack
 	FlagGrafanaRspackBuild = "grafana.rspackBuild"
+
+	// FlagPluginsForceTls13
+	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client
+	FlagPluginsForceTls13 = "pluginsForceTls13"
 )

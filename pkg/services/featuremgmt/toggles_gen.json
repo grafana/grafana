@@ -3274,6 +3274,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.unifiedDataSourcePicker",
+        "resourceVersion": "1786018155159",
+        "creationTimestamp": "2026-08-06T12:09:15Z"
+      },
+      "spec": {
+        "description": "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.unifiedHomepage",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z",
@@ -3356,7 +3370,8 @@
       "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-12-06T20:21:21Z"
+        "creationTimestamp": "2023-12-06T20:21:21Z",
+        "deletionTimestamp": "2026-06-29T17:32:22Z"
       },
       "spec": {
         "description": "Start an additional https handler and write kubectl options",
@@ -4968,6 +4983,19 @@
     },
     {
       "metadata": {
+        "name": "pluginsForceTls13",
+        "resourceVersion": "1786362691770",
+        "creationTimestamp": "2026-08-10T11:51:31Z"
+      },
+      "spec": {
+        "description": "Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsSriChecks",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-10-04T12:55:09Z"
@@ -6296,6 +6324,34 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorage.vectorStore",
+        "resourceVersion": "1785880163909",
+        "creationTimestamp": "2026-08-04T21:49:23Z",
+        "deletionTimestamp": "2026-08-04T22:01:34Z"
+      },
+      "spec": {
+        "description": "Enables the VectorStore write RPCs on the unified storage server",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageVectorStore",
+        "resourceVersion": "1785880096317",
+        "creationTimestamp": "2026-08-04T21:48:16Z",
+        "deletionTimestamp": "2026-08-04T21:49:23Z"
+      },
+      "spec": {
+        "description": "Enables the VectorStore write RPCs on the unified storage server",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "expression": "false"
       }
     },

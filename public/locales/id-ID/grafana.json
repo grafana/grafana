@@ -6091,6 +6091,13 @@
       "save-json-to-file": "Simpan JSON ke file",
       "see-docs": "Lihat <2>dokumentasi</2> untuk informasi selengkapnya tentang penyediaan."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": "Tidak ada panel yang cocok"
     },
@@ -7200,6 +7207,7 @@
         "title-someone-else-has-updated-this-dashboard": "Orang lain telah memperbarui dasbor ini",
         "would-still-dashboard": "Ingin tetap menyimpan dasbor ini?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Simpan dan timpa"
     },
     "legacy": {

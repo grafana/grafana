@@ -10,8 +10,8 @@ import {
   type SceneObjectState,
   type VizPanel,
 } from '@grafana/scenes';
-import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { useStyles2 } from '@grafana/ui';
+import { type NotebookLayoutItemKind, type NotebookLayoutKind } from 'app/features/notebook/types';
 
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';

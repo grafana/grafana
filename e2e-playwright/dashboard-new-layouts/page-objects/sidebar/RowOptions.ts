@@ -19,7 +19,7 @@ export class RowOptions extends PageObject {
   /** Sets the row title */
   async setTitle(rowTitle: string) {
     await test.step(`Set row title to "${rowTitle}"`, async () => {
-      const input = this.dashboardPage.getByGrafanaSelector(
+      const input = this.getByGrafanaSelector(
         this.selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput
       );
       await input.fill(rowTitle);

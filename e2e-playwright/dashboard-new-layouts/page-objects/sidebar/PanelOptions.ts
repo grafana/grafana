@@ -21,9 +21,7 @@ export class PanelOptions extends PageObject {
 
   /** Returns the panel title input */
   getTitleInput() {
-    return this.dashboardPage.getByGrafanaSelector(
-      this.selectors.components.PanelEditor.OptionsPane.fieldInput('Title')
-    );
+    return this.getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
   }
 
   /** Sets the panel title */
@@ -37,16 +35,15 @@ export class PanelOptions extends PageObject {
 
   /** Returns the panel description textarea */
   getDescriptionTextarea() {
-    return this.dashboardPage
-      .getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description'))
-      .locator('textarea');
+    return this.getByGrafanaSelector(
+      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('panel-options Description')
+    ).locator('textarea');
   }
 
   /** Toggles the panel's transparent background switch */
   async toggleTransparentBackground() {
     await test.step('Toggle transparent background', async () => {
-      await this.dashboardPage
-        .getByGrafanaSelector(this.selectors.components.Sidebar.container)
+      await this.getByGrafanaSelector(this.selectors.components.Sidebar.container)
         .getByRole('switch', { name: 'Transparent background' })
         .click({ force: true });
     });

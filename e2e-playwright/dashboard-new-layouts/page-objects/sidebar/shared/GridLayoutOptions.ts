@@ -10,8 +10,7 @@ import { PageObject } from '../../PageObject';
 export class GridLayoutOptions extends PageObject {
   /** Returns the layout type option in the layout selection group */
   getLayoutType(layoutType: 'Auto' | 'Custom' | 'Rows' | 'Tabs'): Locator {
-    return this.dashboardPage
-      .getByGrafanaSelector(this.selectors.components.Sidebar.container)
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container)
       .getByTestId(this.selectors.components.OptionsGroup.group('layout'))
       .getByLabel(`layout-selection-option-${layoutType}`);
   }
@@ -30,14 +29,14 @@ export class GridLayoutOptions extends PageObject {
 
       if (confirm) {
         // despite its name, ConfirmModal.delete is the testid of every ConfirmModal confirm button (see ConfirmContent.tsx)
-        await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.ConfirmModal.delete).click();
+        await this.getByGrafanaSelector(this.selectors.pages.ConfirmModal.delete).click();
       }
     });
   }
 
   /** Returns the auto grid "Min column width" select */
   getMinColumnWidthSelect(): Locator {
-    return this.dashboardPage.getByGrafanaSelector(
+    return this.getByGrafanaSelector(
       this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth
     );
   }
@@ -67,7 +66,7 @@ export class GridLayoutOptions extends PageObject {
 
   /** Returns the custom min column width input, shown when the "Custom" option is selected */
   getCustomMinColumnWidthInput(): Locator {
-    return this.dashboardPage.getByGrafanaSelector(
+    return this.getByGrafanaSelector(
       this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customMinColumnWidth
     );
   }
@@ -75,19 +74,15 @@ export class GridLayoutOptions extends PageObject {
   /** Clears the custom min column width */
   async clickClearCustomMinColumnWidth() {
     await test.step('Clear custom min column width', async () => {
-      await this.dashboardPage
-        .getByGrafanaSelector(
-          this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomMinColumnWidth
-        )
-        .click();
+      await this.getByGrafanaSelector(
+        this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomMinColumnWidth
+      ).click();
     });
   }
 
   /** Returns the auto grid "Max columns" select */
   getMaxColumnsSelect(): Locator {
-    return this.dashboardPage.getByGrafanaSelector(
-      this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns
-    );
+    return this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.maxColumns);
   }
 
   /** Selects a max columns option */
@@ -99,9 +94,7 @@ export class GridLayoutOptions extends PageObject {
 
   /** Returns the auto grid "Row height" select */
   getRowHeightSelect(): Locator {
-    return this.dashboardPage.getByGrafanaSelector(
-      this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight
-    );
+    return this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.rowHeight);
   }
 
   /**
@@ -127,7 +120,7 @@ export class GridLayoutOptions extends PageObject {
 
   /** Returns the custom row height input, shown when the "Custom" option is selected */
   getCustomRowHeightInput(): Locator {
-    return this.dashboardPage.getByGrafanaSelector(
+    return this.getByGrafanaSelector(
       this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customRowHeight
     );
   }
@@ -135,17 +128,15 @@ export class GridLayoutOptions extends PageObject {
   /** Clears the custom row height */
   async clickClearCustomRowHeight() {
     await test.step('Clear custom row height', async () => {
-      await this.dashboardPage
-        .getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomRowHeight)
-        .click();
+      await this.getByGrafanaSelector(
+        this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomRowHeight
+      ).click();
     });
   }
 
   /** Returns the auto grid "Fill screen" switch */
   getFillScreenSwitch(): Locator {
-    return this.dashboardPage.getByGrafanaSelector(
-      this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen
-    );
+    return this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen);
   }
 
   /** Toggles the fill screen switch */

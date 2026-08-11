@@ -6091,6 +6091,13 @@
       "save-json-to-file": "JSON을 파일에 저장",
       "see-docs": "프로비저닝에 대한 자세한 내용은 <2>문서</2>를 참고하세요."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -7200,6 +7207,7 @@
         "title-someone-else-has-updated-this-dashboard": "다른 사람이 이 대시보드를 업데이트했습니다",
         "would-still-dashboard": "그래도 이 대시보드를 저장하시겠어요?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "저장 및 덮어쓰기"
     },
     "legacy": {
