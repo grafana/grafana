@@ -163,8 +163,6 @@ export const FlagKeys = {
   TableAutoColumnWidths: "table.autoColumnWidths",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
-  /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
-  TableProtoRowParser: "table.protoRowParser",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -992,17 +990,6 @@ export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOption
  */
 export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.paginationPageSize", false, options).value;
-};
-
-/**
- * Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.
- *
- * **Details:**
- * - flag key: `table.protoRowParser`
- * - default value: `false`
- */
-export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("table.protoRowParser", false, options).value;
 };
 
 /**

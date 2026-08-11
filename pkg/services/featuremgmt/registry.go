@@ -2949,15 +2949,6 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:         "table.protoRowParser",
-			Description:  "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{React: true},
-		},
-		{
 			Name:        "grafana.queryVarEditorRedesign",
 			Description: "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
 			Stage:       FeatureStageGeneralAvailability,
