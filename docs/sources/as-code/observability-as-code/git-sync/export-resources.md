@@ -110,8 +110,7 @@ To add a dashboard with `gcx`, follow these steps:
    - _<GIT_REPO>_: The path to the repository synced with Git Sync
    - _<DASHBOARDS_PATH>_: The path where the dashboards you want to export are located. The dashboards path must be under the repository
 
-1. Delete the original unmanaged resources you want to sync from Grafana.
-   - This step is required because Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
+1. Delete the original unmanaged resources you want to sync from Grafana. This step is required because Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
 1. Trigger a new pull to complete the sync. The resources are recreated as provisioned, with their original UIDs, so existing links keep working.
 
 {{< admonition type="note" >}}
@@ -127,8 +126,7 @@ To add an existing dashboard to Git Sync via JSON export, you need to:
 1. Export the dashboard as JSON.
 1. Convert it to the Custom Resource Definition (CRD) format required by the Grafana App Platform.
 1. Commit the converted file to your Git repository.
-1. Delete the original unmanaged resources you want to sync from Grafana.
-   - This step is required because Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
+1. Delete the original unmanaged resources you want to sync from Grafana. This step is required because Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
 1. Trigger a new pull to complete the sync. The resources are recreated as provisioned, with their original UIDs, so existing links keep working.
 
 {{< admonition type="note" >}}
@@ -153,7 +151,7 @@ To export a dashboard as a JSON file it must follow this CRD structure:
 The structure includes:
 
 - `apiVersion`: Specifies the API version. Both classic and `v2` JSON models are supported. For more information, refer to [Dashboard JSON model](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/).
-- `kind`: Identifies the resource type (Dashboard).
+- `kind`: Identifies the resource type. For example, dashboard.
 - `metadata`: Contains the dashboard identifier `uid`. You can find the identifier in the dashboard's URL or in the exported JSON.
 - `spec`: Wraps your original dashboard JSON.
 

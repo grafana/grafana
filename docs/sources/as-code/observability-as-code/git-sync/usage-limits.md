@@ -199,11 +199,11 @@ When migrating to resources to Git Sync, you can still create, edit or delete re
 
 ### Use existing resources
 
-If you want to manage existing resources with Git Sync, you can save them from the UI, save them as JSON files and commit them to the synced repository, or use `gcx`. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details. When migrating existing dashboards, the folder structure will be replicated in the provisioned repository.
+To add existing resources as provisioned Git Sync resources, you can use the Import dashboards tool, save them from the UI, save them as JSON files and commit them to the synced repository, or use `gcx`. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details. When migrating existing dashboards, the folder structure will be replicated in the provisioned repository.
 
 {{< admonition type="caution" >}}
 
-Since Git Sync cannot take ownership of a resource while an unmanaged resource with the same UID exists in Grafana, you may need to manually remove original resources to ensure the migration. Deleting resources implies certain operational caveats, refer to [How to delete existing resources in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources#how-to-delete-existing-resources-in-grafana) for more information.
+Git Sync cannot take ownership of a resource while an unmanaged resource with the same UID exists in Grafana, so you may need to manually remove the original resources to ensure the transition to provisioned resources. Since deleting resources implies certain operational caveats, refer to [How to delete existing resources in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources#how-to-delete-existing-resources-in-grafana) for more information.
 
 {{< /admonition >}}
 
