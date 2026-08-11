@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
-import { from, map, type Observable, of, switchMap } from 'rxjs';
+import { catchError, concatMap, defaultIfEmpty, filter, from, map, type Observable, of, switchMap, take, tap } from 'rxjs';
 
 import {
   CoreApp,
@@ -12,6 +12,7 @@ import {
   getDefaultTimeRange,
   type GrafanaTheme2,
   type LinkModel,
+  store,
   type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -21,6 +22,9 @@ import { useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { useStyles2, DataLinkButton, Menu } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
+
+/** Persists which Loki query variation found logs for a given logs datasource. */
+export const LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.lokiQueryMatch';
 
 interface Props {
   linkModel: LinkModel;
@@ -85,6 +89,9 @@ type LogsPresence = 'loading' | 'present' | 'absent';
 /**
  * Runs the link's query against its datasource to determine whether
  * any logs exist for the span, so the button can be disabled when there is nothing to link to.
+ *
+ * For Loki, the link may carry an array of query variations. We probe each until one
+ * returns logs and persist that match (by refId) so later spans can skip the full probe.
  */
 function useHasLogs(linkModel: LinkModel): LogsPresence {
   const dynamicTraceToLogsEnabled = useFlagGrafanaDynamicTraceToLogs();
@@ -97,15 +104,16 @@ function useHasLogs(linkModel: LinkModel): LogsPresence {
 
   useEffect(() => {
     // Without an interpolated query we can't check, so assume logs may exist and leave the link enabled.
-    if (!query || !dynamicTraceToLogsEnabled || Array.isArray(query)) {
+    if (!query || !dynamicTraceToLogsEnabled) {
       setPresence('present');
       return;
     }
 
     const effectiveTimeRange = timeRange ?? getDefaultTimeRange();
+    const queries = Array.isArray(query) ? query : [query];
 
     setPresence('loading');
-    const subscription = checkForLogs(query, effectiveTimeRange).subscribe({
+    const subscription = checkForLogsInQueries(queries, effectiveTimeRange).subscribe({
       next: (hasLogs) => setPresence(hasLogs ? 'present' : 'absent'),
       // If the check fails we don't want to hide a potentially valid link, so keep it enabled.
       error: () => setPresence('present'),
@@ -131,6 +139,57 @@ function useHasLogs(linkModel: LinkModel): LogsPresence {
   }, [dynamicTraceToLogsEnabled, presence]);
 
   return presence;
+}
+
+function getStoredLokiQueryMatch(datasourceUid: string): string | undefined {
+  return store.get(`${LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX}.${datasourceUid}`) ?? undefined;
+}
+
+function setStoredLokiQueryMatch(datasourceUid: string, refId: string): void {
+  store.set(`${LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX}.${datasourceUid}`, refId);
+}
+
+/**
+ * Checks whether logs exist for any of the given queries.
+ * When a prior successful Loki variation is stored for the datasource, that query is used immediately.
+ * Otherwise each variation is probed in order; the first match is stored for future checks.
+ */
+function checkForLogsInQueries(queries: DataQuery[], timeRange: TimeRange): Observable<boolean> {
+  if (queries.length === 0) {
+    return of(false);
+  }
+
+  if (queries.length === 1) {
+    return checkForLogs(queries[0], timeRange);
+  }
+
+  const datasourceUid = queries.find((q) => q.datasource?.uid)?.datasource?.uid;
+  const storedRefId = datasourceUid ? getStoredLokiQueryMatch(datasourceUid) : undefined;
+  const storedQuery = storedRefId ? queries.find((q) => q.refId === storedRefId) : undefined;
+
+  // A known-good naming convention for this datasource: skip probing the rest.
+  if (storedQuery) {
+    return checkForLogs(storedQuery, timeRange);
+  }
+
+  return from(queries).pipe(
+    concatMap((query) =>
+      checkForLogs(query, timeRange).pipe(
+        map((hasLogs) => (hasLogs ? query : undefined)),
+        // Skip variants that error so later naming conventions can still be tried.
+        catchError(() => of(undefined))
+      )
+    ),
+    filter((match): match is DataQuery => match != null),
+    take(1),
+    tap((match) => {
+      if (datasourceUid && match.refId) {
+        setStoredLokiQueryMatch(datasourceUid, match.refId);
+      }
+    }),
+    map(() => true),
+    defaultIfEmpty(false)
+  );
 }
 
 function checkForLogs(query: DataQuery, timeRange: TimeRange): Observable<boolean> {
