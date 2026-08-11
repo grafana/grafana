@@ -1,13 +1,11 @@
-import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
+import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues } from '@grafana/scenes';
 
-import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { openPanelEditFor } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
-import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
+import { findEditPanel } from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
-import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { type DashboardSceneState } from './types/dashboard';
 
@@ -85,13 +83,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         this._scene.onEnterEditMode();
       }
 
-      const libPanelBehavior = getLibraryPanelBehavior(panel);
-      if (libPanelBehavior && !libPanelBehavior?.state.isLoaded) {
-        this._waitForLibPanelToLoadBeforeEnteringPanelEdit(panel, libPanelBehavior);
+      const { editor } = openPanelEditFor(panel, (editPanel) => this._scene.setState({ editPanel }));
+      if (!editor) {
+        // Waiting on a library panel; the editor opens once it has loaded.
         return;
       }
 
-      update.editPanel = buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID);
+      update.editPanel = editor;
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
     }
@@ -118,19 +116,5 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     if (Object.keys(update).length > 0) {
       this._scene.setState(update);
     }
-  }
-
-  /**
-   * Temporary solution, with some refactoring of PanelEditor we can remove this
-   */
-  private _waitForLibPanelToLoadBeforeEnteringPanelEdit(panel: VizPanel, libPanel: LibraryPanelBehavior) {
-    const sub = libPanel.subscribeToState((state) => {
-      if (state.isLoaded) {
-        this._scene.setState({
-          editPanel: buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID),
-        });
-        sub.unsubscribe();
-      }
-    });
   }
 }

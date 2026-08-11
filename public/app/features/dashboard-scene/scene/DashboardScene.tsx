@@ -63,7 +63,7 @@ import {
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
-import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { openPanelEditFor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -115,7 +115,6 @@ import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
@@ -169,6 +168,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * Handles url sync
    */
   protected _urlSync = new DashboardSceneUrlSync(this);
+  /** Cancels a panel-edit re-attach still waiting on a library panel to load. */
+  private _pendingPanelEdit?: () => void;
   /**
    * Get notified when variables change
    */
@@ -614,39 +615,31 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this._initialState !== undefined;
   }
 
-  /**
-   * Re-bind an open panel editor onto the CURRENT layout tree.
-   *
-   * `PanelEditor` captures both the `VizPanel` it edits and that panel's layout
-   * item when it is constructed. Anything that replaces `state.body` wholesale
-   * — today that is APPLY_SPEC's rebuild-and-swap — therefore leaves the editor
-   * driving objects that are no longer reachable from the scene. The pane keeps
-   * rendering and accepting input, but nothing the user changes there reaches
-   * `transformSceneToSaveModel*`, so their edit is invisible to a save or a read
-   * and is silently reverted by the next wholesale write.
-   *
-   * Rebuilding the editor against the new panel is the smallest correct fix: it
-   * re-runs the same path the URL sync uses, so the pane resumes with a valid
-   * layout-item parent. A panel the new tree no longer contains has no editor to
-   * rebuild, so the pane is closed instead.
-   *
-   * `viewPanel` and `inspectPanelKey` need no equivalent — they hold panel KEYS
-   * and are resolved against the current scene on use.
-   */
+  // Re-bind an open panel editor onto the CURRENT layout tree.
   public reattachPanelEditor() {
+    // Always first: a wait left over from an earlier rebuild would reopen the
+    // editor on a panel that is no longer in the tree. It cannot be resumed here
+    // because the pane was closed while waiting, so a rebuild abandons it.
+    this._pendingPanelEdit?.();
+    this._pendingPanelEdit = undefined;
+
     const { editPanel } = this.state;
     if (!editPanel) {
       return;
     }
 
-    // Same find+open path as DashboardSceneUrlSync so cancel/discard semantics
-    // for unconfigured panels survive the rebuild.
+    // The outgoing editor's deactivate would stash an undo entry sourced from the
+    // discarded layout item, which never activates again and would be retried
+    // forever. The rebuild supersedes it anyway.
+    editPanel.skipPendingCommit();
+
     const panel = findEditPanel(this, editPanel.getUrlKey());
-    this.setState({
-      editPanel: panel
-        ? buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID)
-        : undefined,
-    });
+    const pending = panel ? openPanelEditFor(panel, (rebuilt) => this.setState({ editPanel: rebuilt })) : {};
+    this._pendingPanelEdit = pending.cancel;
+
+    // `undefined` while a library panel loads, so the pane closes rather than
+    // rendering over an empty shell.
+    this.setState({ editPanel: pending.editor });
   }
 
   /**

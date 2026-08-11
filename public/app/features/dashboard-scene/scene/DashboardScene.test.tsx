@@ -22,6 +22,7 @@ import {
   SceneDataTransformer,
   LocalValueVariable,
   MultiValueVariable,
+  type SceneObject,
 } from '@grafana/scenes';
 import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -46,6 +47,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -3496,47 +3498,86 @@ function createV2DashboardWithTransformations(transformationIds: string[]): Dash
 
 describe('reattachPanelEditor', () => {
   /** Replace `body` wholesale with an equivalent tree, as APPLY_SPEC's rebuild-and-swap does. */
-  function swapBody(scene: DashboardScene, panelKeys: string[]) {
+  function swapBody(scene: DashboardScene, key: string, behaviors: SceneObject[] = []) {
     scene.setState({
-      body: new DefaultGridLayoutManager({
-        grid: new SceneGridLayout({
-          children: panelKeys.map(
-            (key, index) =>
-              new DashboardGridItem({
-                key: `griditem-rebuilt-${index}`,
-                x: 0,
-                body: new VizPanel({ title: 'Panel A', key, pluginId: 'table' }),
-              })
-          ),
-        }),
-      }),
+      body: DefaultGridLayoutManager.fromVizPanels([
+        new VizPanel({ title: 'Panel A', key, pluginId: 'table', $behaviors: behaviors }),
+      ]),
     });
+  }
+
+  function openEditorOnPanel1(scene: DashboardScene) {
+    const editPanel = buildPanelEditScene(findVizPanelByKey(scene, 'panel-1')!);
+    scene.setState({ editPanel });
+    return editPanel;
   }
 
   it('re-binds the editor onto the panel in the replaced layout tree', () => {
     const scene = buildTestScene();
     scene.onEnterEditMode();
-    scene.setState({ editPanel: buildPanelEditScene(findVizPanelByKey(scene, 'panel-1')!) });
+    openEditorOnPanel1(scene);
 
-    swapBody(scene, ['panel-1']);
-    const rebuilt = findVizPanelByKey(scene, 'panel-1')!;
-    expect(scene.state.editPanel!.state.panelRef.resolve()).not.toBe(rebuilt);
-
+    swapBody(scene, 'panel-1');
     scene.reattachPanelEditor();
 
-    expect(scene.state.editPanel!.state.panelRef.resolve()).toBe(rebuilt);
+    // The bug was that edits made through the editor never reached serialization.
     scene.state.editPanel!.state.panelRef.resolve().setState({ title: 'Renamed by user' });
-    expect(rebuilt.state.title).toBe('Renamed by user');
+    expect(transformSceneToSaveModelSchemaV2(scene).elements['panel-1']).toMatchObject({
+      spec: { title: 'Renamed by user' },
+    });
   });
 
   it('closes the editor when the new tree no longer has its panel', () => {
     const scene = buildTestScene();
     scene.onEnterEditMode();
-    scene.setState({ editPanel: buildPanelEditScene(findVizPanelByKey(scene, 'panel-1')!) });
+    openEditorOnPanel1(scene);
 
-    swapBody(scene, ['panel-9']);
+    swapBody(scene, 'panel-9');
     scene.reattachPanelEditor();
 
+    expect(scene.state.editPanel).toBeUndefined();
+  });
+
+  it("drops the outgoing editor's pending undo entry, which is sourced from the discarded tree", () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    const skip = jest.spyOn(openEditorOnPanel1(scene), 'skipPendingCommit');
+
+    swapBody(scene, 'panel-1');
+    scene.reattachPanelEditor();
+
+    expect(skip).toHaveBeenCalled();
+  });
+
+  it('waits for a library panel to load before opening the editor on it', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    openEditorOnPanel1(scene);
+
+    // The rebuild resets library panels to unloaded.
+    const libPanel = new LibraryPanelBehavior({ isLoaded: false, uid: 'lib-uid', name: 'lib' });
+    swapBody(scene, 'panel-1', [libPanel]);
+    scene.reattachPanelEditor();
+    expect(scene.state.editPanel).toBeUndefined();
+
+    libPanel.setState({ isLoaded: true });
+    expect(scene.state.editPanel!.state.panelRef.resolve().state.key).toBe('panel-1');
+  });
+
+  it('abandons a pending library-panel wait when the scene is rebuilt again', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    openEditorOnPanel1(scene);
+
+    const stale = new LibraryPanelBehavior({ isLoaded: false, uid: 'lib-uid', name: 'lib' });
+    swapBody(scene, 'panel-1', [stale]);
+    scene.reattachPanelEditor();
+
+    swapBody(scene, 'panel-1');
+    scene.reattachPanelEditor();
+
+    // The superseded wait must not reopen the editor on the panel it captured.
+    stale.setState({ isLoaded: true });
     expect(scene.state.editPanel).toBeUndefined();
   });
 });

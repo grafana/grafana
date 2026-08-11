@@ -77,6 +77,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _originalSaveModel!: Panel;
   private _changesHaveBeenMade = false;
   private _tableViewPanelActivationAdded = false;
+  private _skipPendingCommit = false;
 
   public constructor(state: PanelEditorState) {
     super(state);
@@ -132,7 +133,22 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     };
   }
 
+  /**
+   * Drop the pending panel-edit undo entry instead of committing it on deactivate.
+   *
+   * Used when this editor is being replaced because the layout tree it captured
+   * has been discarded: the entry's source is that dead layout item, which never
+   * activates again, so the sidebar would retry it forever.
+   */
+  public skipPendingCommit() {
+    this._skipPendingCommit = true;
+  }
+
   private commitChanges() {
+    if (this._skipPendingCommit) {
+      return;
+    }
+
     if (!this.state.isDirty && !this._changesHaveBeenMade) {
       // Nothing to commit
       return;
@@ -427,6 +443,38 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // This is to notify UrlSyncManager that a new object has been added to scene that requires url sync
     this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);
   };
+}
+
+export interface PendingPanelEdit {
+  /** The editor, when it could be built right away. */
+  editor?: PanelEditor;
+  /** Abandons the wait. Only set when the editor was deferred. */
+  cancel?: () => void;
+}
+
+/**
+ * Open panel edit for `panel`, deferring while a library panel is still loading
+ * — it is an empty shell until then, so the editor must not open on it.
+ *
+ * Shared by the URL sync and by the re-attach after a scene rebuild, so both get
+ * the library-panel wait and the unconfigured-panel flag.
+ */
+export function openPanelEditFor(panel: VizPanel, onReady: (editor: PanelEditor) => void): PendingPanelEdit {
+  const build = () => buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID);
+  const libPanel = getLibraryPanelBehavior(panel);
+
+  if (!libPanel || libPanel.state.isLoaded) {
+    return { editor: build() };
+  }
+
+  const sub = libPanel.subscribeToState((state) => {
+    if (state.isLoaded) {
+      sub.unsubscribe();
+      onReady(build());
+    }
+  });
+
+  return { cancel: () => sub.unsubscribe() };
 }
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
