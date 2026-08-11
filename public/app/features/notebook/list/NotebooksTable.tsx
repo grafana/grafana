@@ -16,7 +16,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { notebookViewUrl } from '../urls';
+import { notebookShareUrl, notebookViewHref, notebookViewUrl } from '../urls';
 
 import { type NotebookRow } from './useNotebooksList';
 
@@ -104,20 +104,13 @@ function RelativeTime({ timestamp }: { timestamp: string }) {
 }
 
 function NotebookRowActions({ notebook }: { notebook: NotebookRow }) {
-  const href = notebookViewUrl(notebook.uid);
-
   return (
     <Stack alignItems="center" justifyContent="flex-end" gap={1}>
       {/* Editing is not built yet, so Edit goes where the title goes: the notebook itself. */}
-      <LinkButton variant="secondary" size="sm" icon="pen" href={href}>
+      <LinkButton variant="secondary" size="sm" icon="pen" href={notebookViewHref(notebook.uid)}>
         {t('notebooks.list.table.edit', 'Edit')}
       </LinkButton>
-      <ClipboardButton
-        variant="secondary"
-        size="sm"
-        icon="link"
-        getText={() => new URL(href, window.location.origin).toString()}
-      >
+      <ClipboardButton variant="secondary" size="sm" icon="link" getText={() => notebookShareUrl(notebook.uid)}>
         {t('notebooks.list.table.copy-link', 'Copy link')}
       </ClipboardButton>
       {/* Row-level actions land in a follow-up; the menu is a disabled placeholder for now. */}

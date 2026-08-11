@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
-import { defaultSpec as defaultNotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { Alert, Box, Button, Combobox, EmptyState, FilterInput, Stack, Text } from '@grafana/ui';
 import { useCreateNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
 import { handleError } from 'app/api/utils';
@@ -15,6 +14,9 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebooksTable } from '../list/NotebooksTable';
 import { useNotebooksList } from '../list/useNotebooksList';
+// Notebook schema types come from this module and nowhere else, so the eventual stable-v2
+// migration only has to change that one seam.
+import { defaultSpec as defaultNotebookSpec } from '../types';
 import { notebookViewUrl } from '../urls';
 
 const ALL_AUTHORS = '';
