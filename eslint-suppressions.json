@@ -1921,11 +1921,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/dashgrid/DashboardLibrary/CompatibilityBadge.tsx": {
-    "@grafana/no-plain-links": {
-      "count": 2
-    }
-  },
   "public/app/features/dashboard/dashgrid/DashboardLibrary/utils/communityDashboardHelpers.test.ts": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
