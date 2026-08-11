@@ -15,7 +15,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot OpenTSDB data source issues
 weight: 500
-last_reviewed: 2026-01-28
+review_date: 2026-08-11
 ---
 
 # Troubleshoot OpenTSDB data source issues

@@ -13,7 +13,7 @@ labels:
 menuTitle: Annotations
 title: OpenTSDB annotations
 weight: 450
-last_reviewed: 2026-01-28
+review_date: 2026-08-11
 ---
 
 # OpenTSDB annotations

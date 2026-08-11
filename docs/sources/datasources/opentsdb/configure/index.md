@@ -14,7 +14,7 @@ labels:
 menuTitle: Configure
 title: Configure the OpenTSDB data source
 weight: 100
-last_reviewed: 2026-01-28
+review_date: 2026-08-11
 ---
 
 # Configure the OpenTSDB data source
@@ -88,6 +88,10 @@ The version setting enables different query features in Grafana:
 | **==2.4** | Adds fill policy support for downsampling (none, null, zero, nan). Enables `arrays=true` for alerting compatibility. |
 
 Select the version that matches your OpenTSDB server. If you're unsure, check your OpenTSDB version with the `/api/version` endpoint.
+
+## Secure SOCKS proxy
+
+The OpenTSDB data source supports connecting through a secure SOCKS5 proxy. Use this to reach an OpenTSDB server hosted in a different network than Grafana without exposing it to the public internet. You configure the proxy at the Grafana instance level. For setup instructions, refer to [Configure a data source SOCKS5 connection proxy](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/proxy/).
 
 ## Verify the connection
 

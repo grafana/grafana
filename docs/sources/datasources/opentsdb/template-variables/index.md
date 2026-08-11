@@ -15,7 +15,7 @@ labels:
 menuTitle: Template variables
 title: OpenTSDB template variables
 weight: 300
-last_reviewed: 2026-01-28
+review_date: 2026-08-11
 ---
 
 # OpenTSDB template variables

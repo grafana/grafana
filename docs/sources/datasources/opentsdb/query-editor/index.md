@@ -17,7 +17,7 @@ labels:
 menuTitle: Query editor
 title: OpenTSDB query editor
 weight: 200
-last_reviewed: 2026-01-28
+review_date: 2026-08-11
 ---
 
 # OpenTSDB query editor
@@ -60,12 +60,12 @@ The alias field supports dynamic substitution using tag values. Use the pattern 
 
 Downsampling reduces the number of data points returned by aggregating values over time intervals. This improves query performance and reduces the amount of data transferred.
 
-| Field                    | Description                                                                                                              |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| **Interval**             | The time interval for downsampling. Leave blank to use the automatic interval based on the panel's time range and width. |
-| **Aggregator**           | The aggregation function for downsampling. Default: `avg`.                                                               |
-| **Fill**                 | (Version 2.2+) The fill policy for missing data points. Default: `none`.                                                 |
-| **Disable downsampling** | Toggle to disable downsampling entirely. Use this when you need raw data points.                                         |
+| Field                    | Description                                                                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Down sample**          | The time interval for downsampling. Enter a value in the input next to the **Down sample** label, or leave it blank to use the automatic interval based on the panel's time range and width. |
+| **Aggregator**           | The aggregation function for downsampling. Default: `avg`.                                                                                             |
+| **Fill**                 | (Version 2.2+) The fill policy for missing data points. Default: `none`.                                                                              |
+| **Disable downsampling** | Toggle to disable downsampling entirely. Use this when you need raw data points.                                                                      |
 
 ### Interval format
 
@@ -193,7 +193,7 @@ When **Explicit tags** is enabled (version 2.3+), OpenTSDB only returns time ser
 
 ## Aggregators
 
-The aggregator function combines multiple time series into one. Grafana fetches the list of available aggregators from your OpenTSDB server, so you may see additional aggregators beyond those listed here.
+The aggregator function combines multiple time series into one. The data source includes a built-in default list (`avg`, `sum`, `min`, `max`, `dev`, `zimsum`, `mimmin`, and `mimmax`), then replaces it with the list fetched from your OpenTSDB server. As a result, you may see additional aggregators, such as `count`, beyond the built-in defaults.
 
 ### Common aggregators
 
