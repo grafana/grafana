@@ -11,10 +11,6 @@ const COMPARISON_OUTPUT_PATH = './coverage-comparison.md';
 // without meaningfully reducing test coverage.
 const DROP_TOLERANCE_PCT = 0.02;
 
-// Guards against binary floating point error when comparing a rounded delta
-// against the tolerance (e.g. 79.96 - 79.94 === 0.020000000000010232).
-const EPSILON = 1e-9;
-
 const METRICS = ['lines', 'statements', 'functions', 'branches'];
 
 /**
@@ -33,12 +29,16 @@ function roundPct(value) {
  * @returns {'pass'|'tolerated'|'fail'}
  */
 function classifyChange(mainValue, prValue) {
-  const drop = roundPct(mainValue) - roundPct(prValue);
+  // Round each side first so the drop matches what's displayed (see formatDelta).
+  // Subtracting two already-rounded numbers can still leave binary floating point
+  // error right at the tolerance boundary (e.g. 79.96 - 79.94 === 0.020000000000010232),
+  // so round the difference once more instead of comparing against it directly.
+  const drop = roundPct(roundPct(mainValue) - roundPct(prValue));
 
   if (drop <= 0) {
     return 'pass';
   }
-  if (drop <= DROP_TOLERANCE_PCT + EPSILON) {
+  if (drop <= DROP_TOLERANCE_PCT) {
     return 'tolerated';
   }
   return 'fail';
