@@ -39,10 +39,6 @@ const config: KnipConfig = {
   workspaces: {
     '.': {
       ignoreDependencies: [
-        // TODO remove these ignores when react 19 is released
-        'react-19',
-        'react-dom-19',
-
         // used by yarn test:ci
         'jest-junit',
 

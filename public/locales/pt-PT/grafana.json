@@ -6132,6 +6132,13 @@
       "save-json-to-file": "Guardar JSON no ficheiro",
       "see-docs": "Consulte a <2>documentação</2> para obter mais informações sobre aprovisionamento."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -7254,6 +7261,7 @@
         "title-someone-else-has-updated-this-dashboard": "Outra pessoa atualizou este painel de controlo",
         "would-still-dashboard": "Ainda pretende guardar este painel de controlo?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Guardar e substituir"
     },
     "legacy": {

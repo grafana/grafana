@@ -12,6 +12,14 @@ export function getSessionExpiry() {
   return parseInt(expiresStr, 10);
 }
 
-export function hasSessionExpiry() {
+function hasSessionExpiry() {
   return document.cookie.split('; ').findIndex((row) => row.startsWith('grafana_session_expiry=')) > -1;
+}
+
+export function canRotateSessionToken(authenticatedBy?: string) {
+  return authenticatedBy !== 'jwt' && authenticatedBy !== 'extendedjwt';
+}
+
+export function hasRotatableSession(authenticatedBy?: string) {
+  return hasSessionExpiry() && canRotateSessionToken(authenticatedBy);
 }

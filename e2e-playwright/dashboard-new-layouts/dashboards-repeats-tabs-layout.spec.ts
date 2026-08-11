@@ -1,8 +1,8 @@
-import { test, expect, Components, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { Components, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import V2DashWithTabRepeats from '../dashboards/V2DashWithTabRepeats.json';
 
-import { Canvas, Controls, Panels, Rows, Sidebar, Tabs } from './page-objects';
+import { test, expect } from './fixtures';
 import {
   verifyChanges,
   saveDashboardAndCloseToast,
@@ -34,12 +34,7 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can enable tab repeats', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-      const canvas = new Canvas({ page, dashboardPage, selectors, components });
-
+    test('can enable tab repeats', async ({ dashboardPage, selectors, page, controls, sidebar, tabs, canvas }) => {
       await importTestDashboard(page, selectors, 'Tabs layout repeats - add repeats');
 
       await controls.enterEditMode();
@@ -60,10 +55,7 @@ test.describe(
       await checkRepeatedTabTitles(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
     });
 
-    test('can update tab repeats with variable change', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
+    test('can update tab repeats with variable change', async ({ dashboardPage, selectors, page, controls, tabs }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -82,11 +74,7 @@ test.describe(
       await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeHidden();
     });
 
-    test('can update repeats in sidebar', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
+    test('can update repeats in sidebar', async ({ dashboardPage, selectors, page, controls, sidebar, tabs }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -109,12 +97,15 @@ test.describe(
       await checkRepeatedTabTitles(tabs, NEW_TITLE_BASE, REPEAT_OPTIONS);
     });
 
-    test('can update repeats after panel change', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
+    test('can update repeats after panel change', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      panels,
+      tabs,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -142,13 +133,16 @@ test.describe(
       await expect(panels.getPanel('New edited panel')).toBeVisible();
     });
 
-    test('can update repeats after panel change in editor', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-      const canvas = new Canvas({ page, dashboardPage, selectors, components });
-
+    test('can update repeats after panel change in editor', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      panels,
+      tabs,
+      canvas,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -187,11 +181,14 @@ test.describe(
       await expect(panels.getPanel('New edited panel')).toBeVisible();
     });
 
-    test('can hide canvas grid add row action in repeats', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-      const canvas = new Canvas({ page, dashboardPage, selectors, components });
-
+    test('can hide canvas grid add row action in repeats', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      tabs,
+      canvas,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -208,10 +205,7 @@ test.describe(
       await expect(canvas.getAddRowButton()).toBeHidden();
     });
 
-    test('can move repeated tabs', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
+    test('can move repeated tabs', async ({ dashboardPage, selectors, page, controls, tabs }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -239,9 +233,7 @@ test.describe(
       expect(normalTab2.x).toBeLessThan(repeatedTab2.x);
     });
 
-    test('can load into repeated tab', async ({ dashboardPage, selectors, page, components }) => {
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
+    test('can load into repeated tab', async ({ dashboardPage, selectors, page, tabs }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -261,11 +253,7 @@ test.describe(
       );
     });
 
-    test('can view panels in repeated tab', async ({ dashboardPage, selectors, page, components }) => {
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
+    test('can view panels in repeated tab', async ({ dashboardPage, selectors, page, panels, rows, tabs }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -313,11 +301,7 @@ test.describe(
       await expect(panels.getPanel('Tab 3 - Row 2 - Panel repeat 2')).toBeVisible();
     });
 
-    test('can view embedded panels in repeated tab', async ({ dashboardPage, selectors, page, components }) => {
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const rows = new Rows({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
+    test('can view embedded panels in repeated tab', async ({ dashboardPage, selectors, page, panels, rows, tabs }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -353,11 +337,7 @@ test.describe(
       await expect(panels.getPanel('Tab 3 - Row 2 - Panel repeat 2')).toBeVisible();
     });
 
-    test('can remove repeats', async ({ dashboardPage, selectors, page, components }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
+    test('can remove repeats', async ({ dashboardPage, selectors, page, controls, sidebar, tabs }) => {
       await importTestDashboard(
         page,
         selectors,

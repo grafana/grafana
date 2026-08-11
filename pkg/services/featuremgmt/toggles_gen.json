@@ -3276,6 +3276,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.unifiedDataSourcePicker",
+        "resourceVersion": "1786018155159",
+        "creationTimestamp": "2026-08-06T12:09:15Z"
+      },
+      "spec": {
+        "description": "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.unifiedHomepage",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z",
@@ -3358,7 +3372,8 @@
       "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-12-06T20:21:21Z"
+        "creationTimestamp": "2023-12-06T20:21:21Z",
+        "deletionTimestamp": "2026-06-29T17:32:22Z"
       },
       "spec": {
         "description": "Start an additional https handler and write kubectl options",

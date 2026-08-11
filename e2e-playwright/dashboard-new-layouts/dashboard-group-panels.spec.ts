@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Canvas, Controls, Panels, Rows, Sidebar, Tabs } from './page-objects';
+import { test, expect } from './fixtures';
 import { expectVisibleRow, expectVisibleTab, importTestDashboard, saveDashboardAndCloseToast } from './utils';
 
 test.use({
@@ -23,14 +21,16 @@ test.describe(
   },
   () => {
     test.describe('Rows', () => {
-      test('can group and ungroup new panels into row', async ({ dashboardPage, selectors, page, components }) => {
+      test('can group and ungroup new panels into row', async ({
+        dashboardPage,
+        selectors,
+        page,
+        controls,
+        panels,
+        rows,
+        canvas,
+      }) => {
         await importTestDashboard(page, selectors, 'Group new panels into row');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const rows = new Rows({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         // Group into row
@@ -70,16 +70,13 @@ test.describe(
         dashboardPage,
         selectors,
         page,
-        components,
+        controls,
+        sidebar,
+        panels,
+        rows,
+        canvas,
       }) => {
         await importTestDashboard(page, selectors, 'Add and remove rows');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const rows = new Rows({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         await canvas.groupPanels('row'); // New row
@@ -161,15 +158,17 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(4);
       });
 
-      test('can paste a copied row', async ({ dashboardPage, selectors, page, components }) => {
+      test('can paste a copied row', async ({
+        dashboardPage,
+        selectors,
+        page,
+        controls,
+        sidebar,
+        panels,
+        rows,
+        canvas,
+      }) => {
         await importTestDashboard(page, selectors, 'Paste row');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const rows = new Rows({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         await canvas.groupPanels('row'); // New row
@@ -199,15 +198,17 @@ test.describe(
         await expect(panels.getPanels('New panel', secondRow)).toHaveCount(3);
       });
 
-      test('can duplicate a row', async ({ dashboardPage, selectors, page, components }) => {
+      test('can duplicate a row', async ({
+        dashboardPage,
+        selectors,
+        page,
+        controls,
+        sidebar,
+        panels,
+        rows,
+        canvas,
+      }) => {
         await importTestDashboard(page, selectors, 'Duplicate row');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const rows = new Rows({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         await canvas.groupPanels('row'); // New row
@@ -236,15 +237,8 @@ test.describe(
         await expect(panels.getPanels('New panel', secondRow)).toHaveCount(3);
       });
 
-      test('can collapse rows', async ({ dashboardPage, selectors, page, components }) => {
+      test('can collapse rows', async ({ dashboardPage, selectors, page, controls, sidebar, panels, rows, canvas }) => {
         await importTestDashboard(page, selectors, 'Collapse rows');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const rows = new Rows({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         await canvas.groupPanels('row'); // New row
@@ -290,17 +284,14 @@ test.describe(
         dashboardPage,
         selectors,
         page,
-        components,
+        controls,
+        sidebar,
+        panels,
+        rows,
+        tabs,
+        canvas,
       }) => {
         await importTestDashboard(page, selectors, 'Rows to tabs');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const rows = new Rows({ page, dashboardPage, selectors, components });
-        const tabs = new Tabs({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         await canvas.groupPanels('row'); // New row
@@ -342,16 +333,13 @@ test.describe(
         dashboardPage,
         selectors,
         page,
-        components,
+        controls,
+        panels,
+        rows,
+        tabs,
+        canvas,
       }) => {
         await importTestDashboard(page, selectors, 'Group new panels into tab with row');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const rows = new Rows({ page, dashboardPage, selectors, components });
-        const tabs = new Tabs({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         // Group into row with tab
@@ -393,14 +381,16 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
       });
 
-      test('cannot add a row without a title', async ({ dashboardPage, selectors, page, components }) => {
+      test('cannot add a row without a title', async ({
+        dashboardPage,
+        selectors,
+        page,
+        controls,
+        sidebar,
+        rows,
+        canvas,
+      }) => {
         await importTestDashboard(page, selectors, 'Cannot add row without title');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const rows = new Rows({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         await canvas.groupPanels('row'); // New row
@@ -431,14 +421,16 @@ test.describe(
     });
 
     test.describe('Tabs', () => {
-      test('can group and ungroup new panels into tab', async ({ dashboardPage, selectors, page, components }) => {
+      test('can group and ungroup new panels into tab', async ({
+        dashboardPage,
+        selectors,
+        page,
+        controls,
+        panels,
+        tabs,
+        canvas,
+      }) => {
         await importTestDashboard(page, selectors, 'Group new panels into tab');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const tabs = new Tabs({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         // Group into tab
@@ -474,15 +466,17 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
       });
 
-      test('can add and remove several tabs', async ({ dashboardPage, selectors, page, components }) => {
+      test('can add and remove several tabs', async ({
+        dashboardPage,
+        selectors,
+        page,
+        controls,
+        sidebar,
+        panels,
+        tabs,
+        canvas,
+      }) => {
         await importTestDashboard(page, selectors, 'Add and remove tabs');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const tabs = new Tabs({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         await canvas.groupPanels('tab'); // New tab
@@ -535,15 +529,17 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
       });
 
-      test('can paste a copied tab', async ({ dashboardPage, selectors, page, components }) => {
+      test('can paste a copied tab', async ({
+        dashboardPage,
+        selectors,
+        page,
+        controls,
+        sidebar,
+        panels,
+        tabs,
+        canvas,
+      }) => {
         await importTestDashboard(page, selectors, 'Paste tab');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const tabs = new Tabs({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         await canvas.groupPanels('tab');
@@ -565,15 +561,17 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
       });
 
-      test('can duplicate a tab', async ({ dashboardPage, selectors, page, components }) => {
+      test('can duplicate a tab', async ({
+        dashboardPage,
+        selectors,
+        page,
+        controls,
+        sidebar,
+        panels,
+        tabs,
+        canvas,
+      }) => {
         await importTestDashboard(page, selectors, 'Duplicate tab');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const tabs = new Tabs({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         await canvas.groupPanels('tab');
@@ -598,17 +596,14 @@ test.describe(
         dashboardPage,
         selectors,
         page,
-        components,
+        controls,
+        sidebar,
+        panels,
+        rows,
+        tabs,
+        canvas,
       }) => {
         await importTestDashboard(page, selectors, 'Tabs to rows');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const rows = new Rows({ page, dashboardPage, selectors, components });
-        const tabs = new Tabs({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         await canvas.groupPanels('tab');
@@ -661,16 +656,13 @@ test.describe(
         dashboardPage,
         selectors,
         page,
-        components,
+        controls,
+        panels,
+        rows,
+        tabs,
+        canvas,
       }) => {
         await importTestDashboard(page, selectors, 'Group new panels into tab with row');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const rows = new Rows({ page, dashboardPage, selectors, components });
-        const tabs = new Tabs({ page, dashboardPage, selectors, components });
-        const panels = new Panels({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         // Group into tab
@@ -714,14 +706,16 @@ test.describe(
         await expect(panels.getPanels('New panel')).toHaveCount(3);
       });
 
-      test('cannot add a tab without a title', async ({ dashboardPage, selectors, page, components }) => {
+      test('cannot add a tab without a title', async ({
+        dashboardPage,
+        selectors,
+        page,
+        controls,
+        sidebar,
+        tabs,
+        canvas,
+      }) => {
         await importTestDashboard(page, selectors, 'Cannot add tab without title');
-
-        const controls = new Controls({ page, dashboardPage, selectors, components });
-        const canvas = new Canvas({ page, dashboardPage, selectors, components });
-        const tabs = new Tabs({ page, dashboardPage, selectors, components });
-        const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
         await controls.enterEditMode();
 
         await canvas.groupPanels('tab');

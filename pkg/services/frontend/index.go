@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"context"
 	"embed"
 	"encoding/hex"
 	"errors"
@@ -10,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 	"syscall"
+
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -30,6 +33,7 @@ type IndexProvider struct {
 	config       *setting.Cfg
 	license      licensing.Licensing
 	bootScript   template.JS
+	previewCfg   fswebassets.PreviewAssetsConfig
 }
 
 type IndexViewData struct {
@@ -45,6 +49,9 @@ type IndexViewData struct {
 
 	Assets      dtos.EntryPointAssets // Includes CDN info
 	DefaultUser dtos.CurrentUser
+
+	// Set when Assets come from a preview build (see preview_assets.go).
+	PreviewAssetsFolder string
 
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
@@ -82,14 +89,14 @@ type IndexViewData struct {
 
 // Templates setup.
 var (
-	//go:embed *.html
+	//go:embed index.html
 	templatesFS embed.FS
 
 	// templates
-	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `*.html`))
+	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `index.html`))
 )
 
-func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService) (*IndexProvider, error) {
+func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService, previewCfg fswebassets.PreviewAssetsConfig) (*IndexProvider, error) {
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
@@ -111,6 +118,7 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		hooksService: hooksService,
 		config:       cfg,
 		license:      license,
+		previewCfg:   previewCfg,
 		//nolint:gosec
 		bootScript: template.JS(bootScriptRaw),
 	}, nil
@@ -132,7 +140,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	assetsManifest, err := fswebassets.GetWebAssets(ctx, p.config, p.license)
+	assetsManifest, previewFolder, err := p.resolveAssets(ctx, request)
 	if err != nil {
 		p.log.Error("unable to get web assets", "err", err)
 		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
@@ -161,6 +169,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		AppSubUrl:                             p.config.AppSubURL,
 		IsDevelopmentEnv:                      p.config.Env == setting.Dev,
 		Assets:                                assetsManifest,
+		PreviewAssetsFolder:                   previewFolder,
 		DefaultUser:                           dtos.CurrentUser{},
 		Nonce:                                 reqCtx.RequestNonce,
 		PublicDashboardAccessToken:            reqCtx.PublicDashboardAccessToken,
@@ -220,6 +229,25 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		}
 		panic(fmt.Sprintf("Error rendering index\n %s", err.Error()))
 	}
+}
+
+// resolveAssets returns the preview build's assets when a valid preview cookie is
+// present, falling back to the default assets so a stale cookie can't break the page.
+func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request) (dtos.EntryPointAssets, string, error) {
+	// The cookie only takes effect on stacks that have opted in.
+	if p.previewCfg.Active(k8srequest.NamespaceValue(ctx)) {
+		if cookie, err := req.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
+			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value)
+			if err == nil {
+				p.log.Info("resolved preview assets", "folder", cookie.Value)
+				return assets, cookie.Value, nil
+			}
+			p.log.Warn("unable to load preview assets, falling back to default assets", "folder", cookie.Value, "err", err)
+		}
+	}
+
+	assets, err := fswebassets.GetWebAssets(ctx, p.config, p.license)
+	return assets, "", err
 }
 
 func (p *IndexProvider) runIndexDataHooks(reqCtx *contextmodel.ReqContext, data *IndexViewData) {
