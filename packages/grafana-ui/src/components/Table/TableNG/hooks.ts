@@ -775,22 +775,20 @@ export function useContentAwareWidths({
   const theme = useTheme2();
   const headerTypographyCtx = useMemo(
     () =>
-      enabled
-        ? createTypographyContext(
-            theme.typography.fontSize,
-            theme.typography.fontFamily,
-            extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
-            theme.typography.fontWeightMedium
-          )
-        : undefined,
-    [enabled, theme]
+      createTypographyContext(
+        theme.typography.fontSize,
+        theme.typography.fontFamily,
+        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
+        theme.typography.fontWeightMedium
+      ),
+    [theme]
   );
   return useMemo(
     () =>
       enabled
         ? {
             typographyCtx,
-            headerTypographyCtx: headerTypographyCtx!,
+            headerTypographyCtx,
             showTypeIcons,
             getActions,
             sortColumns,
