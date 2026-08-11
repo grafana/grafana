@@ -87,6 +87,8 @@ func (client *GcomClient) GetInstanceByID(ctx context.Context, requestID string,
 	}()
 
 	if response.StatusCode == http.StatusNotFound {
+		// Drain the body so the keep-alive connection can be reused.
+		_, _ = io.Copy(io.Discard, response.Body)
 		return Instance{}, fmt.Errorf("instance id=%s: %w", instanceID, ErrInstanceNotFound)
 	}
 
