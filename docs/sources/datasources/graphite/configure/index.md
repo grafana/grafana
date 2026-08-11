@@ -16,6 +16,7 @@ labels:
 menuTitle: Configure
 title: Configure the Graphite data source
 weight: 100
+review_date: 2026-08-11
 ---
 
 # Configure the Graphite data source
@@ -100,7 +101,7 @@ Label mappings are the rules you define to tell Grafana how to pull pieces of th
 
 When you change your data source from Graphite to Loki, your queries are automatically mapped based on the rules you define. To create a mapping, specify the full path of the metric and replace the nodes you want to map with label names, using parentheses. The corresponding label values are extracted from your Graphite query during the data source switch.
 
-Grafana automatically maps all Graphite tags to labels, even if you haven’t defined explicit mappings. When using matching patterns with `{}`(e.g., `metric.{a,b}.value`), Grafana converts them to Loki’s regular expression matching syntax. If your queries include functions, Graphite extracts the relevant metrics and tags, then matches them against your mappings.
+Grafana automatically maps all Graphite tags to labels, even if you haven't defined explicit mappings. When using matching patterns with `{}` (for example, `metric.{a,b}.value`), Grafana converts them to the Loki regular expression matching syntax. If your queries include functions, Graphite extracts the relevant metrics and tags, then matches them against your mappings.
 
 | **Graphite Query**                                       | **Mapped to Loki Query**         |
 | -------------------------------------------------------- | -------------------------------- |
@@ -111,8 +112,6 @@ Grafana automatically maps all Graphite tags to labels, even if you haven’t de
 | **Setting**                     | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Private data source connect** | _Only for Grafana Cloud users._ Establishes a private, secured connection between a Grafana Cloud stack and data sources within a private network. Use the drop-down to locate the PDC URL. For setup instructions, refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc). Click **Manage private data source connect** to open your PDC connection page and view your configuration details. |
-
-|
 
 After configuring your Graphite data source options, click **Save & test** at the bottom to test the connection. You should see a confirmation dialog box that says:
 

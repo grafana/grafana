@@ -4,7 +4,6 @@ aliases:
 description: Guide for using the Graphite data source query editor.
 keywords:
   - grafana
-  - microsoft
   - graphite
   - monitor
   - metrics
@@ -19,6 +18,7 @@ labels:
 menuTitle: Query editor
 title: Graphite query editor
 weight: 300
+review_date: 2026-08-11
 ---
 
 # Graphite query editor
@@ -27,7 +27,7 @@ Grafana includes a Graphite-specific query editor to help you build queries.
 The query editor helps you quickly navigate the metric space, add functions, and change function parameters.
 It supports a variety of Graphite queries, including complex nested queries, through the use of query references.
 
-For general documentation on querying data sources in Grafana, see [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 ## Query editor elements
 
@@ -61,11 +61,11 @@ Some functions like `aliasByNode` support an optional second argument. To add th
 
 Refer to [Functions](https://graphite.readthedocs.io/en/latest/functions.html) in the Graphite documentation for more information.
 
-{{% admonition type="warning" %}}
+{{< admonition type="warning" >}}
 Some functions accept a second argument, which can itself be another function that returns a series. If you need to add a second argument that is a function, Grafana recommends using a series reference from a second query instead of embedding the function directly.
 
 Currently, the query editor does not support parsing a second function argument when switching between the query builder and the code editor.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Sort labels
 
@@ -83,10 +83,10 @@ Grafana consolidates all Graphite metrics so that Graphite doesn't return more d
 By default, Grafana consolidates data points using the `avg` function.
 To control how Graphite consolidates metrics, use the Graphite `consolidateBy()` function.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Grafana calculates legend summary values like `max`, `min`, and `total` on the client side, after data has been calculated.
 Depending on the consolidation function used, only one or two of these values may be accurate at the same time.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Combine time series
 
@@ -101,9 +101,9 @@ To select data, use the `seriesByTag` function, which takes tag expressions (`=`
 
 The Grafana query builder does this for you automatically when you select a tag.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Regular expression searches can be slow on high-cardinality tags, so try to use other tags to reduce the scope first. To help reduce the results, start by filtering on a particular name or namespace.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ## Nested queries
 

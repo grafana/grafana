@@ -16,6 +16,7 @@ labels:
 menuTitle: Template variables
 title: Graphite template variables
 weight: 300
+review_date: 2026-08-11
 ---
 
 # Graphite template variables
@@ -51,7 +52,7 @@ Grafana allows two ways to reference variables in a query:
 | `$varname`   | `apps.frontend.$server.requests.count`   |
 | `${varname}` | `apps.frontend.${server}.requests.count` |
 
-- **Shorthand syntax (`$varname`)** is convenient for simple paths but doesn't work when the variable is adjacent to characters (e.g., `cpu$coreLoad`).
+- **Shorthand syntax (`$varname`)** is convenient for simple paths but doesn't work when the variable is adjacent to characters (for example, `cpu$coreLoad`).
 - **Full syntax (`${varname}`)** is more flexible and works in any part of the string, including embedded within words.
 
 Choose the format that best fits the structure of your Graphite metric path.
@@ -83,7 +84,7 @@ For details, refer to the [Graphite docs on the autocomplete API for tags](http:
 server=~${servers:regex}
 ```
 
-This query tells Grafana to format the selected values in the `servers` variable as a regular expression (e.g., (`server1`|`server2`) if two servers are selected).
+This query tells Grafana to format the selected values in the `servers` variable as a regular expression (for example, `(server1|server2)` if two servers are selected).
 
 For more information, refer to [Advanced variable format options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options).
 
@@ -95,7 +96,7 @@ When using multi-value variables in tag queries, append `${var:regex}` to the va
 tag_values(server, app=~${apps:regex})
 ```
 
-This query returns only series where the app tag matches the selected values in $`{apps}`, formatted as a regular expression. `=~` is the regular expression operator
+This query returns only series where the app tag matches the selected values in `${apps}`, formatted as a regular expression. `=~` is the regular expression operator.
 
 Non-tag queries use the default `glob` formatting for multi-value variables.
 
@@ -139,9 +140,9 @@ The following table illustrates the difference between expanded and non-expanded
 | `test.servers.*`       | `001`          | `expand(test.servers.*)`  | `test.servers.001`                                                     |
 | `*.servers.*.cpu`      | `cpu`          | `expand(*.servers.*.cpu)` | `prod.servers.001.cpu`, `prod.servers.002.cpu`, `test.servers.001.cpu` |
 
-{{% admonition type="note" %}}
-A non-expanded query query works like an expanded query but returns only the final segment of each matched metric.
-{{% /admonition %}}
+{{< admonition type="note" >}}
+A non-expanded query works like an expanded query but returns only the final segment of each matched metric.
+{{< /admonition >}}
 
 Grafana also supports **nested variables**, which allow you to reference other variables in a query.
 

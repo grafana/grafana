@@ -13,6 +13,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Graphite data source issues
 weight: 400
+review_date: 2026-08-11
 ---
 
 # Troubleshoot Graphite data source issues
@@ -143,6 +144,21 @@ If you see unexpected aggregation in your data:
 - Check the rollup configuration in your MetricTank instance.
 - Adjust the time range or use `consolidateBy()` to control aggregation behavior.
 - Review the query processing metadata in the panel inspector for details on how data was processed.
+
+## Enable debug logging
+
+To capture detailed request and response information when troubleshooting Graphite issues:
+
+1. Set the Grafana log level to `debug` in the configuration file:
+
+   ```ini
+   [log]
+   level = debug
+   ```
+
+1. Restart Grafana to apply the change.
+1. Reproduce the issue, then review the logs in `/var/log/grafana/grafana.log` (or your configured log location) for Graphite-related entries that include the request URL and response details.
+1. Reset the log level to `info` after troubleshooting to avoid excessive log volume.
 
 ## Get additional help
 
