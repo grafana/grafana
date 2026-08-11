@@ -1,30 +1,55 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
-import { catchError, concatMap, defaultIfEmpty, filter, from, map, type Observable, of, switchMap, take, tap } from 'rxjs';
+import {
+  catchError,
+  concatMap,
+  defaultIfEmpty,
+  filter,
+  from,
+  map,
+  type Observable,
+  of,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 
 import {
   CoreApp,
   type DataFrame,
   type DataQuery,
   type DataSourceApi,
+  type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
   type DataSourceJsonData,
   getDefaultTimeRange,
   type GrafanaTheme2,
   type LinkModel,
+  locationUtil,
+  serializeStateToUrlParam,
   store,
   type TimeRange,
+  toURLRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
-import { reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
-import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  getDataSourceInstance,
+  useDataSourceInstanceList,
+  useDataSourceInstanceSettings,
+} from '@grafana/runtime/unstable';
 import { useStyles2, DataLinkButton, Menu } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 
 /** Persists which Loki query variation found logs for a given logs datasource. */
 export const LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.lokiQueryMatch';
+
+/** Persists which Loki datasource last returned related logs. */
+export const LOKI_DATASOURCE_MATCH_STORAGE_KEY = 'grafana.explore.traceToLogs.lokiDatasourceMatch';
+
+const MAX_FALLBACK_LOKI_DATASOURCES = 2;
 
 interface Props {
   linkModel: LinkModel;
@@ -35,7 +60,7 @@ interface Props {
 
 export const LogsLinkButton = ({ linkModel, traceDatasourceUid, forTrace }: Props) => {
   const styles = useStyles2(getStyles);
-  const presence = useHasLogs(linkModel);
+  const { presence, resolvedLinkModel } = useHasLogs(linkModel);
 
   const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
 
@@ -49,10 +74,11 @@ export const LogsLinkButton = ({ linkModel, traceDatasourceUid, forTrace }: Prop
   return (
     <span className={styles}>
       <DataLinkButton
-        link={linkModel}
+        link={resolvedLinkModel}
         buttonProps={{
           icon: isLoading ? 'spinner' : 'gf-logs',
-          disabled: presence === 'absent',
+          // Only enable once a probe has resolved a working query (or when checks are skipped).
+          disabled: presence !== 'present',
           variant: presence === 'absent' ? 'secondary' : 'primary',
           fill: forTrace ? 'outline' : undefined,
           tooltip,
@@ -71,7 +97,7 @@ function getStyles(theme: GrafanaTheme2) {
 }
 
 export const LogsLinkMenuItem = ({ linkModel, traceDatasourceUid }: Props) => {
-  const presence = useHasLogs(linkModel);
+  const { presence, resolvedLinkModel } = useHasLogs(linkModel);
 
   const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
 
@@ -81,16 +107,26 @@ export const LogsLinkMenuItem = ({ linkModel, traceDatasourceUid }: Props) => {
 
   return (
     <Menu.Item
-      label={linkModel.title}
+      label={resolvedLinkModel.title}
       icon={isLoading ? 'spinner' : 'gf-logs'}
       ariaLabel={tooltip}
-      disabled={presence === 'absent'}
-      onClick={(event: React.MouseEvent) => linkModel.onClick?.(event)}
+      disabled={presence !== 'present'}
+      onClick={(event: React.MouseEvent) => resolvedLinkModel.onClick?.(event)}
     />
   );
 };
 
 type LogsPresence = 'loading' | 'present' | 'absent';
+
+type LogsCheckMatch = {
+  datasourceUid: string;
+  query: DataQuery;
+};
+
+type LogsCheckResult = {
+  hasLogs: boolean;
+  match?: LogsCheckMatch;
+};
 
 /**
  * Runs the link's query against its datasource to determine whether
@@ -98,20 +134,34 @@ type LogsPresence = 'loading' | 'present' | 'absent';
  *
  * For Loki, the link may carry an array of query variations. We probe each until one
  * returns logs and persist that match (by refId) so later spans can skip the full probe.
+ * If the configured datasource has no logs, we try other Loki datasources.
+ * The Explore link is only enabled after a probe resolves a working query.
  */
-function useHasLogs(linkModel: LinkModel): LogsPresence {
+function useHasLogs(linkModel: LinkModel): { presence: LogsPresence; resolvedLinkModel: LinkModel } {
   const dynamicTraceToLogsEnabled = useFlagGrafanaDynamicTraceToLogs();
   const [presence, setPresence] = useState<LogsPresence>('loading');
+  const [resolvedLinkModel, setResolvedLinkModel] = useState(linkModel);
 
   const { query, timeRange } = linkModel.interpolatedParams ?? {};
 
   const queryKey = query ? JSON.stringify(query) : undefined;
   const timeRangeKey = timeRange ? `${timeRange.from.valueOf()}-${timeRange.to.valueOf()}` : undefined;
+  const { isLoading: isLoadingDsList, items: dsList } = useDataSourceInstanceList({ type: 'loki' });
+
+  useEffect(() => {
+    setResolvedLinkModel(linkModel);
+  }, [linkModel, queryKey, timeRangeKey]);
 
   useEffect(() => {
     // Without an interpolated query we can't check, so assume logs may exist and leave the link enabled.
+    // Same when the feature flag is off — skip probing and keep the configured link.
     if (!query || !dynamicTraceToLogsEnabled) {
       setPresence('present');
+      return;
+    }
+
+    // Wait for the Loki datasource list before probing fallbacks.
+    if (isLoadingDsList) {
       return;
     }
 
@@ -119,10 +169,18 @@ function useHasLogs(linkModel: LinkModel): LogsPresence {
     const queries = Array.isArray(query) ? query : [query];
 
     setPresence('loading');
-    const subscription = checkForLogsInQueries(queries, effectiveTimeRange).subscribe({
-      next: (hasLogs) => setPresence(hasLogs ? 'present' : 'absent'),
-      // If the check fails we don't want to hide a potentially valid link, so keep it enabled.
-      error: () => setPresence('present'),
+    const subscription = checkForLogsInQueries(queries, effectiveTimeRange, dsList).subscribe({
+      next: (result) => {
+        // Only enable navigation once we know which query (and datasource) works.
+        if (result.hasLogs && result.match) {
+          setResolvedLinkModel(rewriteLinkForMatch(linkModel, result.match));
+          setPresence('present');
+          return;
+        }
+        setPresence('absent');
+      },
+      // No resolved match — keep the link disabled rather than opening an unverified query.
+      error: () => setPresence('absent'),
     });
 
     // Unsubscribing cancels the in-flight datasource request when the component
@@ -133,7 +191,7 @@ function useHasLogs(linkModel: LinkModel): LogsPresence {
     // The trace view re-renders a lot on every event, including mouse over.
     // `query`/`timeRange` are intentionally omitted; their content is captured by the serialized keys.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryKey, timeRangeKey]);
+  }, [queryKey, timeRangeKey, isLoadingDsList, dsList]);
 
   useEffect(() => {
     if (presence === 'loading' || !dynamicTraceToLogsEnabled) {
@@ -144,7 +202,7 @@ function useHasLogs(linkModel: LinkModel): LogsPresence {
     });
   }, [dynamicTraceToLogsEnabled, presence]);
 
-  return presence;
+  return { presence, resolvedLinkModel };
 }
 
 function getStoredLokiQueryMatch(datasourceUid: string): string | undefined {
@@ -155,30 +213,124 @@ function setStoredLokiQueryMatch(datasourceUid: string, refId: string): void {
   store.set(`${LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX}.${datasourceUid}`, refId);
 }
 
+function getStoredLokiDatasourceMatch(): string | undefined {
+  return store.get(LOKI_DATASOURCE_MATCH_STORAGE_KEY) ?? undefined;
+}
+
+function setStoredLokiDatasourceMatch(datasourceUid: string): void {
+  store.set(LOKI_DATASOURCE_MATCH_STORAGE_KEY, datasourceUid);
+}
+
+function remapQueriesToDatasource(queries: DataQuery[], datasourceUid: string): DataQuery[] {
+  return queries.map((q) => ({
+    ...q,
+    datasource: {
+      ...(typeof q.datasource === 'object' ? q.datasource : {}),
+      uid: datasourceUid,
+      type: 'loki',
+    },
+  }));
+}
+
+/**
+ * Datasources to probe for Loki multi-query links:
+ * 1. previously successful Loki datasource (if still available)
+ * 2. the link's configured datasource
+ * 3. up to MAX_FALLBACK_LOKI_DATASOURCES other Loki datasources
+ */
+function getLokiDatasourcesToTry(primaryUid: string | undefined, dsList: DataSourceInstanceListItem[]): string[] {
+  const otherUids = dsList
+    .map((ds) => ds.uid)
+    .filter((uid) => uid !== primaryUid)
+    .slice(0, MAX_FALLBACK_LOKI_DATASOURCES);
+
+  const storedUid = getStoredLokiDatasourceMatch();
+  const uids: string[] = [];
+
+  if (storedUid && (storedUid === primaryUid || otherUids.includes(storedUid))) {
+    uids.push(storedUid);
+  }
+  if (primaryUid && !uids.includes(primaryUid)) {
+    uids.push(primaryUid);
+  }
+  for (const uid of otherUids) {
+    if (!uids.includes(uid)) {
+      uids.push(uid);
+    }
+  }
+
+  return uids;
+}
+
 /**
  * Checks whether logs exist for any of the given queries.
  * When a prior successful Loki variation is stored for the datasource, that query is used immediately.
  * Otherwise each variation is probed in order; the first match is stored for future checks.
+ * If the configured Loki datasource has no logs, other Loki datasources are tried.
  */
-function checkForLogsInQueries(queries: DataQuery[], timeRange: TimeRange): Observable<boolean> {
+function checkForLogsInQueries(
+  queries: DataQuery[],
+  timeRange: TimeRange,
+  dsList: DataSourceInstanceListItem[]
+): Observable<LogsCheckResult> {
   if (queries.length === 0) {
-    return of(false);
+    return of({ hasLogs: false });
   }
 
+  // Single-query links (non-Loki variants / custom) keep the original single-datasource check.
   if (queries.length === 1) {
-    return checkForLogs(queries[0], timeRange);
+    const query = queries[0];
+    return checkForLogs(query, timeRange).pipe(
+      map((hasLogs) => {
+        if (!hasLogs || !query.datasource?.uid) {
+          return { hasLogs: false };
+        }
+        return {
+          hasLogs: true,
+          match: { datasourceUid: query.datasource.uid, query },
+        };
+      })
+    );
   }
 
-  const datasourceUid = queries.find((q) => q.datasource?.uid)?.datasource?.uid;
-  const storedRefId = datasourceUid ? getStoredLokiQueryMatch(datasourceUid) : undefined;
+  const primaryUid = queries.find((q) => q.datasource?.uid)?.datasource?.uid;
+  const datasourcesToTry = getLokiDatasourcesToTry(primaryUid, dsList);
+
+  return from(datasourcesToTry).pipe(
+    concatMap((datasourceUid) => {
+      const dsQueries = remapQueriesToDatasource(queries, datasourceUid);
+      return probeForMatchingQuery(dsQueries, timeRange, datasourceUid).pipe(
+        map((match) => (match ? { datasourceUid, query: match } : undefined)),
+        catchError(() => of(undefined))
+      );
+    }),
+    filter((match): match is LogsCheckMatch => match != null),
+    take(1),
+    tap((match) => {
+      if (match.query.refId) {
+        setStoredLokiQueryMatch(match.datasourceUid, match.query.refId);
+      }
+      setStoredLokiDatasourceMatch(match.datasourceUid);
+    }),
+    map((match) => ({ hasLogs: true, match })),
+    defaultIfEmpty({ hasLogs: false })
+  );
+}
+
+/**
+ * Probes query variations against a single datasource.
+ * Uses a stored refId for that datasource immediately when available.
+ */
+function probeForMatchingQuery(
+  queries: DataQuery[],
+  timeRange: TimeRange,
+  datasourceUid: string
+): Observable<DataQuery | undefined> {
+  const storedRefId = getStoredLokiQueryMatch(datasourceUid);
   const storedQuery = storedRefId ? queries.find((q) => q.refId === storedRefId) : undefined;
+  const orderedQueries = storedQuery ? [storedQuery, ...queries.filter((q) => q.refId !== storedQuery.refId)] : queries;
 
-  // A known-good naming convention for this datasource: skip probing the rest.
-  if (storedQuery) {
-    return checkForLogs(storedQuery, timeRange);
-  }
-
-  return from(queries).pipe(
+  return from(orderedQueries).pipe(
     concatMap((query) =>
       checkForLogs(query, timeRange).pipe(
         map((hasLogs) => (hasLogs ? query : undefined)),
@@ -188,14 +340,50 @@ function checkForLogsInQueries(queries: DataQuery[], timeRange: TimeRange): Obse
     ),
     filter((match): match is DataQuery => match != null),
     take(1),
-    tap((match) => {
-      if (datasourceUid && match.refId) {
-        setStoredLokiQueryMatch(datasourceUid, match.refId);
-      }
-    }),
-    map(() => true),
-    defaultIfEmpty(false)
+    defaultIfEmpty(undefined)
   );
+}
+
+function rewriteLinkForMatch(linkModel: LinkModel, match: LogsCheckMatch): LinkModel {
+  // Narrow Explore to the successful query variation (and datasource, when it differs from config).
+  const matchedQueries = remapQueriesToDatasource([match.query], match.datasourceUid);
+  const href = rebuildExploreHref(linkModel, matchedQueries, match.datasourceUid);
+
+  return {
+    ...linkModel,
+    href,
+    interpolatedParams: {
+      ...linkModel.interpolatedParams,
+      query: matchedQueries[0],
+    },
+    // Original onClick closes over the configured datasource/queries; replace it so navigation
+    // uses the matched datasource and successful query variation.
+    onClick: linkModel.onClick
+      ? (event) => {
+          if (event?.preventDefault) {
+            event.preventDefault();
+          }
+          locationService.push(href);
+        }
+      : undefined,
+  };
+}
+
+function rebuildExploreHref(linkModel: LinkModel, queries: DataQuery[], datasourceUid: string): string {
+  const timeRange = linkModel.interpolatedParams?.timeRange;
+  try {
+    return locationUtil.assureBaseUrl(
+      `/explore?left=${encodeURIComponent(
+        serializeStateToUrlParam({
+          ...(timeRange?.raw ? { range: toURLRange(timeRange.raw) } : {}),
+          datasource: datasourceUid,
+          queries,
+        })
+      )}`
+    );
+  } catch {
+    return linkModel.href;
+  }
 }
 
 function checkForLogs(query: DataQuery, timeRange: TimeRange): Observable<boolean> {

@@ -89,33 +89,21 @@ describe('createSpanLinkFactory', () => {
       { trace: 'otel_trace_id', span: 'otel_span_id' },
     ] as const;
 
+    // Explore opens with the first/default query only; the full variation list lives on interpolatedParams.
     const lokiExploreHref = (
       tagSelector: string,
-      serviceNames: string[],
+      _serviceNames: string[],
       range: { from: string; to: string } = defaultRange
     ) => {
-      const queries: Array<{ expr: string; refId: string; datasource: { uid: string } }> = [];
-      for (const { trace, span } of fieldVariants) {
-        const pipeline = `| logfmt | json | drop __error__ | ${trace}="${traceId}" | ${span}="${spanId}"`;
-        const fieldRef = `${trace}:${span}`;
-        queries.push({
+      const { trace, span } = fieldVariants[0];
+      const pipeline = `| logfmt | json | drop __error__ | ${trace}="${traceId}" | ${span}="${spanId}"`;
+      const queries = [
+        {
           expr: `{${tagSelector}} ${pipeline}`,
-          refId: `t2l:default:${fieldRef}`,
+          refId: `t2l:default:${trace}:${span}`,
           datasource: { uid: 'loki1_uid' },
-        });
-        if (serviceNames.length > 0) {
-          queries.push({
-            expr: `{job=~"(.*/)?(${serviceNames.join('|')})"} ${pipeline}`,
-            refId: `t2l:job:${fieldRef}`,
-            datasource: { uid: 'loki1_uid' },
-          });
-        }
-      }
-      queries.push({
-        expr: `{${tagSelector}} |= "${traceId}" |= "${spanId}"`,
-        refId: 'line-contains',
-        datasource: { uid: 'loki1_uid' },
-      });
+        },
+      ];
 
       return `/explore?left=${encodeURIComponent(
         JSON.stringify({

@@ -3,18 +3,24 @@ import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import {
   type DataSourceApi,
+  type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
   type LinkModel,
   store,
   toDataFrame,
 } from '@grafana/data';
-import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  getDataSourceInstance,
+  useDataSourceInstanceList,
+  useDataSourceInstanceSettings,
+} from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
   getLogsButtonCTA,
   getLogsButtonTooltip,
+  LOKI_DATASOURCE_MATCH_STORAGE_KEY,
   LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX,
   LogsLinkButton,
   LogsLinkMenuItem,
@@ -24,10 +30,12 @@ jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+  useDataSourceInstanceList: jest.fn().mockReturnValue({ isLoading: false, items: [] }),
 }));
 
 const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
 const useDataSourceInstanceSettingsMock = jest.mocked(useDataSourceInstanceSettings);
+const useDataSourceInstanceListMock = jest.mocked(useDataSourceInstanceList);
 
 const DYNAMIC_TRACE_TO_LOGS_FLAG = 'grafana.dynamicTraceToLogs';
 
@@ -69,10 +77,20 @@ function lokiQueryMatchStorageKey(datasourceUid: string) {
   return `${LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX}.${datasourceUid}`;
 }
 
+function mockLokiDatasourceList(uids: string[], isLoading = false) {
+  useDataSourceInstanceListMock.mockReturnValue({
+    isLoading,
+    items: uids.map((uid) => ({ uid, type: 'loki', name: uid }) as DataSourceInstanceListItem),
+  });
+}
+
 describe('LogsLinkButton', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     store.delete(lokiQueryMatchStorageKey('logs-ds-uid'));
+    store.delete(lokiQueryMatchStorageKey('loki-fallback-uid'));
+    store.delete(LOKI_DATASOURCE_MATCH_STORAGE_KEY);
+    mockLokiDatasourceList(['logs-ds-uid']);
     useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
     // The presence check is gated behind this flag; enable it so most tests exercise the check.
     // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
@@ -83,6 +101,8 @@ describe('LogsLinkButton', () => {
 
   afterEach(async () => {
     store.delete(lokiQueryMatchStorageKey('logs-ds-uid'));
+    store.delete(lokiQueryMatchStorageKey('loki-fallback-uid'));
+    store.delete(LOKI_DATASOURCE_MATCH_STORAGE_KEY);
     await act(async () => {
       setTestFlags({});
     });
@@ -222,7 +242,7 @@ describe('LogsLinkButton', () => {
     expect(await screen.findByText('View related logs using the trace data source configuration.')).toBeInTheDocument();
   });
 
-  it('fails open (keeps the link enabled) when the presence check errors', async () => {
+  it('keeps the link disabled when the presence check errors', async () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -241,11 +261,43 @@ describe('LogsLinkButton', () => {
     );
 
     await waitFor(() => expect(query).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'true'));
     await userEvent.hover(screen.getByRole('button'));
-    expect(await screen.findByText('View related logs using the trace data source configuration.')).toBeInTheDocument();
     expect(
-      screen.queryByText('No related logs found using the trace data source configuration.')
-    ).not.toBeInTheDocument();
+      await screen.findByText('No related logs found using the trace data source configuration.')
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the link disabled until a query variation resolves', async () => {
+    useDataSourceInstanceSettingsMock.mockReturnValue({
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      settings: { jsonData: {} } as any,
+    });
+    let resolveQuery: ((value: { data: (typeof logsFrame)[] }) => void) | undefined;
+    const query = jest.fn().mockReturnValue(
+      new Promise((resolve) => {
+        resolveQuery = resolve;
+      })
+    );
+    getDataSourceInstanceMock.mockResolvedValue({ query, type: 'loki' } as unknown as DataSourceApi);
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
+    );
+
+    await waitFor(() => expect(query).toHaveBeenCalled());
+    expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'true');
+
+    await act(async () => {
+      resolveQuery?.({ data: [logsFrame] });
+    });
+
+    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
   });
 
   it('probes loki query variations until one returns logs and stores the match', async () => {
@@ -337,12 +389,97 @@ describe('LogsLinkButton', () => {
       await screen.findByText('No related logs found using the trace data source configuration.')
     ).toBeInTheDocument();
   });
+
+  it('falls back to other loki datasources when the configured one has no logs and stores the match', async () => {
+    mockLokiDatasourceList(['logs-ds-uid', 'loki-fallback-uid', 'loki-other-uid']);
+    useDataSourceInstanceSettingsMock.mockReturnValue({
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      settings: { jsonData: {} } as any,
+    });
+
+    const primaryQuery = jest.fn().mockReturnValue(of({ data: [emptyFrame] }));
+    const fallbackQuery = jest.fn().mockReturnValue(of({ data: [logsFrame] }));
+    getDataSourceInstanceMock.mockImplementation(async (ref) => {
+      const uid = typeof ref === 'object' && ref && 'uid' in ref ? ref.uid : undefined;
+      if (uid === 'loki-fallback-uid') {
+        return { query: fallbackQuery, type: 'loki' } as unknown as DataSourceApi;
+      }
+      return { query: primaryQuery, type: 'loki' } as unknown as DataSourceApi;
+    });
+
+    const queries: DataQuery[] = [
+      { refId: 't2l:default:trace_id:span_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 'line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+    ];
+
+    render(
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: queries } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
+    );
+
+    await waitFor(() => expect(fallbackQuery).toHaveBeenCalled());
+    expect(store.get(LOKI_DATASOURCE_MATCH_STORAGE_KEY)).toBe('loki-fallback-uid');
+    expect(store.get(lokiQueryMatchStorageKey('loki-fallback-uid'))).toBe('t2l:default:trace_id:span_id');
+    await userEvent.hover(screen.getByRole('button'));
+    expect(await screen.findByText('View related logs using the trace data source configuration.')).toBeInTheDocument();
+  });
+
+  it('uses a stored loki datasource match immediately before probing the configured datasource', async () => {
+    store.set(LOKI_DATASOURCE_MATCH_STORAGE_KEY, 'loki-fallback-uid');
+    store.set(lokiQueryMatchStorageKey('loki-fallback-uid'), 'line-contains');
+    mockLokiDatasourceList(['logs-ds-uid', 'loki-fallback-uid']);
+    useDataSourceInstanceSettingsMock.mockReturnValue({
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      settings: { jsonData: {} } as any,
+    });
+
+    const primaryQuery = jest.fn().mockReturnValue(of({ data: [emptyFrame] }));
+    const fallbackQuery = jest.fn().mockReturnValue(of({ data: [logsFrame] }));
+    getDataSourceInstanceMock.mockImplementation(async (ref) => {
+      const uid = typeof ref === 'object' && ref && 'uid' in ref ? ref.uid : undefined;
+      if (uid === 'loki-fallback-uid') {
+        return { query: fallbackQuery, type: 'loki' } as unknown as DataSourceApi;
+      }
+      return { query: primaryQuery, type: 'loki' } as unknown as DataSourceApi;
+    });
+
+    const queries: DataQuery[] = [
+      { refId: 't2l:default:trace_id:span_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 'line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+    ];
+
+    render(
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: queries } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
+    );
+
+    await waitFor(() => expect(fallbackQuery).toHaveBeenCalledTimes(1));
+    expect(primaryQuery).not.toHaveBeenCalled();
+    expect(fallbackQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targets: [
+          expect.objectContaining({
+            refId: 'line-contains',
+            datasource: expect.objectContaining({ uid: 'loki-fallback-uid' }),
+          }),
+        ],
+      })
+    );
+  });
 });
 
 describe('LogsLinkMenuItem', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     store.delete(lokiQueryMatchStorageKey('logs-ds-uid'));
+    store.delete(LOKI_DATASOURCE_MATCH_STORAGE_KEY);
+    mockLokiDatasourceList(['logs-ds-uid']);
     useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
     // The presence check is gated behind this flag; enable it so most tests exercise the check.
     // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
@@ -353,6 +490,7 @@ describe('LogsLinkMenuItem', () => {
 
   afterEach(async () => {
     store.delete(lokiQueryMatchStorageKey('logs-ds-uid'));
+    store.delete(LOKI_DATASOURCE_MATCH_STORAGE_KEY);
     await act(async () => {
       setTestFlags({});
     });
@@ -449,7 +587,7 @@ describe('LogsLinkMenuItem', () => {
     expect(screen.getByRole('menuitem')).toBeEnabled();
   });
 
-  it('fails open (keeps the item enabled) when the presence check errors', async () => {
+  it('keeps the item disabled when the presence check errors', async () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -468,14 +606,12 @@ describe('LogsLinkMenuItem', () => {
     );
 
     await waitFor(() => expect(query).toHaveBeenCalled());
-    expect(screen.getByRole('menuitem')).toBeEnabled();
+    await waitFor(() => expect(screen.getByRole('menuitem')).toBeDisabled());
   });
 
   it('invokes the link onClick handler when clicked', async () => {
     const onClick = jest.fn();
-    render(
-      <LogsLinkMenuItem linkModel={createLinkModel({ onClick })} traceDatasourceUid={TRACE_DATASOURCE_UID} />
-    );
+    render(<LogsLinkMenuItem linkModel={createLinkModel({ onClick })} traceDatasourceUid={TRACE_DATASOURCE_UID} />);
 
     await userEvent.click(screen.getByRole('menuitem'));
     expect(onClick).toHaveBeenCalled();
