@@ -1209,13 +1209,6 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "base",
-                "fade",
-                "highlight",
-                "right",
-                "left"
-              ],
               "additionalProperties": false
             }
           },

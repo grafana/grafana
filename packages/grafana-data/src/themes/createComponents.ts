@@ -124,11 +124,11 @@ export const ThemeComponentsInputSchema = z
     home: z.object({
       background: z
         .object({
-          base: z.string(),
-          fade: z.string(),
-          highlight: z.string(),
-          right: z.string(),
-          left: z.string(),
+          base: z.string().optional(),
+          fade: z.string().optional(),
+          highlight: z.string().optional(),
+          right: z.string().optional(),
+          left: z.string().optional(),
         })
         .optional(),
     }),
