@@ -58,7 +58,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/notebook/:uid/:slug?',
+      path: `${NOTEBOOKS_BASE_URL}/:uid/:slug?`,
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
       component: SafeDynamicImport(
