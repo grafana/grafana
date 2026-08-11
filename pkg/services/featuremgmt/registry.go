@@ -287,16 +287,6 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
-			Name:            "grafanaAPIServerEnsureKubectlAccess",
-			Description:     "Start an additional https handler and write kubectl options",
-			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,
@@ -3018,7 +3008,7 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{React: true},
+			Generate:     Generate{Go: true},
 		},
 		{
 			Name:        "grafana.customizableMegaMenu",
@@ -3092,6 +3082,15 @@ var (
 			Description:  "Controls whether the frontend blocks calls to legacy /api/ endpoints",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "grafana.ofrepRootUrl",
+			Description:  "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
@@ -3172,6 +3171,30 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:        "grafana.rspackBuild",
+			Description: "Switches the backend to load frontend assets built with rspack instead of webpack",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+			Generate:    Generate{Go: true},
+			Expression:  "false",
+		},
+		{
+			Name:        "pluginsForceTls13",
+			Description: "Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataSourcesPlugins,
+			Generate:    Generate{LegacyGo: true},
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.unifiedDataSourcePicker",
+			Description: "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "true", // enabled by default
+			Generate:    Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

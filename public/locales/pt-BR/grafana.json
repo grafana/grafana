@@ -5914,8 +5914,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Essa ação desagrupará todos os grupos inseridos.",
-      "ungroup-nested-title": "Desagrupar grupos inseridos?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} de {{numberOfPages}}",
@@ -6127,6 +6131,13 @@
       "file-path": "<strong>Caminho do arquivo:</strong> {{filePath}}",
       "save-json-to-file": "Salvar JSON no arquivo",
       "see-docs": "Consulte a <2>documentação</2> para obter mais informações sobre provisionamento."
+    },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
     },
     "search-panel": {
       "no-match": "Nenhum painel correspondente"
@@ -7250,6 +7261,7 @@
         "title-someone-else-has-updated-this-dashboard": "Outra pessoa atualizou este painel",
         "would-still-dashboard": "Deseja salvar este painel mesmo assim?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Salvar e substituir"
     },
     "legacy": {
@@ -14757,7 +14769,6 @@
     },
     "header": {
       "alert": "Alerta",
-      "expression": "Expressão",
       "pending-expression": "",
       "pending-expression-cancel": "Cancelar",
       "pending-transformation": "",
@@ -14771,6 +14782,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

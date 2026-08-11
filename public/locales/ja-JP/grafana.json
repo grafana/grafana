@@ -5874,8 +5874,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "これにより、ネストされたすべてのグループのグループ化が解除されます。",
-      "ungroup-nested-title": "ネストされたグループのグループ化を解除しますか？"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{numberOfPages}}ページ中の{{currentPage}}ページ目",
@@ -6086,6 +6090,13 @@
       "file-path": "<strong>ファイルパス：</strong>{{filePath}}",
       "save-json-to-file": "JSONをファイルに保存",
       "see-docs": "プロビジョニングについての詳細は<2>ドキュメント</2>をご覧ください。"
+    },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
     },
     "search-panel": {
       "no-match": ""
@@ -7196,6 +7207,7 @@
         "title-someone-else-has-updated-this-dashboard": "他のユーザーがこのダッシュボードを更新しました",
         "would-still-dashboard": "このダッシュボードの保存を続行しますか？"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "保存して上書き"
     },
     "legacy": {
@@ -14638,7 +14650,6 @@
     },
     "header": {
       "alert": "アラート",
-      "expression": "式",
       "pending-expression": "",
       "pending-expression-cancel": "キャンセル",
       "pending-transformation": "",
@@ -14652,6 +14663,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

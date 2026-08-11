@@ -54,6 +54,9 @@ type IndexViewData struct {
 	// Feature flag for image-renderer to check support for binding calls
 	RenderBindingSupported bool
 
+	// Feature flag for selecting the Luxon-backed date-time implementation
+	UseLuxon bool
+
 	// Options for controlling the inclusion and behavior of the Meticulous AI session recorder script.
 	MeticulousAIEnabled                   bool
 	MeticulousAIRecordingToken            string
@@ -72,6 +75,9 @@ type IndexViewData struct {
 
 	// Feature flag for controlling behaviour of blocking or alerting legacy api usage from the frontend
 	LegacyAPIMode string
+
+	// Feature flag for gradually rolling out the root /ofrep/v1 OFREP route instead of the namespaced route
+	OFREPRootUrlEnabled bool
 }
 
 // Templates setup.
@@ -140,6 +146,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
+	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
 	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
 	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
 	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
@@ -147,6 +154,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
 	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
 	legacyAPIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyAPIHandling, "off", openfeature.TransactionContext(ctx))
+	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                              "Grafana",
@@ -159,6 +167,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		Settings:                              fsSettings,
 		FullSettings:                          requestConfig.FullFrontendSettings, // only populated when FlagFrontendServiceReducedBootDataAPI enabled
 		RenderBindingSupported:                renderBindingSupported,
+		UseLuxon:                              useLuxon,
 		AssetSriChecksEnabled:                 grafanaAssetSriChecks,
 		MeticulousAIEnabled:                   meticulousAIEnabled,
 		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
@@ -167,6 +176,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		NewPreferencesPage:                    newPreferencesPage,
 		BootScript:                            p.bootScript,
 		LegacyAPIMode:                         legacyAPIMode,
+		OFREPRootUrlEnabled:                   ofrepRootUrlEnabled,
 	}
 
 	// Check for login_error cookie. Two writers exist:

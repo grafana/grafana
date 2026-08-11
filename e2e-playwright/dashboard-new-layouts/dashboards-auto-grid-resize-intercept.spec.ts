@@ -1,8 +1,9 @@
 import { type Page } from '@playwright/test';
 
-import { test, expect, type Components, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { Controls, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
+import { type Controls, type Sidebar } from './page-objects';
 import { importTestDashboard } from './utils';
 
 test.use({
@@ -28,15 +29,10 @@ test.describe(
       dashboardPage,
       selectors,
       page,
-      components,
+      controls,
+      sidebar,
     }) => {
-      const { sidebar } = await setupAutoGridInEditMode(
-        page,
-        dashboardPage,
-        selectors,
-        components,
-        'Auto grid resize intercept - switch'
-      );
+      await setupAutoGridInEditMode(page, selectors, controls, sidebar, 'Auto grid resize intercept - switch');
 
       const resizeZones = page.getByTestId(RESIZE_ZONE_TESTID);
       await expect(resizeZones.first()).toBeVisible();
@@ -58,18 +54,12 @@ test.describe(
     });
 
     test('intercepts a resize gesture and can open the auto grid layout settings', async ({
-      dashboardPage,
       selectors,
       page,
-      components,
+      controls,
+      sidebar,
     }) => {
-      const { sidebar } = await setupAutoGridInEditMode(
-        page,
-        dashboardPage,
-        selectors,
-        components,
-        'Auto grid resize intercept - edit'
-      );
+      await setupAutoGridInEditMode(page, selectors, controls, sidebar, 'Auto grid resize intercept - edit');
 
       await sidebar.clickCloseButton();
 
@@ -87,22 +77,16 @@ test.describe(
 
 async function setupAutoGridInEditMode(
   page: Page,
-  dashboardPage: DashboardPage,
   selectors: E2ESelectorGroups,
-  components: Components,
+  controls: Controls,
+  sidebar: Sidebar,
   title: string
-): Promise<{ sidebar: Sidebar }> {
+) {
   await importTestDashboard(page, selectors, title, undefined);
-
-  const controls = new Controls({ page, dashboardPage, selectors, components });
-  const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
   await controls.enterEditMode();
 
   await sidebar.toolbar.clickButton('Options');
   await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-
-  return { sidebar };
 }
 
 // Drags the panel's bottom-right resize corner. Uses the raw mouse API (not locator.hover) because

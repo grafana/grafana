@@ -147,6 +147,10 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
       },
     }),
     gridNested: css({
+      // react-data-grid's root sets `content-visibility: auto`. The nested grid's wrapper has no
+      // definite height, so its skipped-contents size is 0, and in Firefox a zero-size element never
+      // intersects the viewport, never becomes relevant, and stays collapsed forever.
+      contentVisibility: 'visible',
       height: '100%',
       width: `calc(100% - ${COLUMN.EXPANDER_WIDTH - TABLE.CELL_PADDING * 2 - 1}px)`,
       overflowX: 'scroll',

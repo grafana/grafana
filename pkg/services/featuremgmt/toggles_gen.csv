@@ -31,7 +31,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-09,provisioning.gitConventions,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-07-08,provisioning.userAttribution,preview,@grafana/grafana-app-platform-squad,false,false,false
 2026-07-16,provisioning.performance,experimental,@grafana/grafana-app-platform-squad,false,false,false
-2023-12-06,grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2023-07-21,awsAsyncQueryCaching,GA,@grafana/data-sources-plugins,false,false,false
 2023-07-26,configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
 2026-05-22,reportingHeaderSettings,experimental,@grafana/grafana-operator-experience-squad,false,false,true
@@ -349,7 +348,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-29,table.paginationPageSize,experimental,@grafana/dataviz-squad,false,false,true
 2026-07-24,table.autoColumnWidths,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-23,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
-2026-08-05,datetime.useLuxon,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-08-05,datetime.useLuxon,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-06-25,grafana.customizableMegaMenu,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-04-20,cujTracking,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-26,auth.tokenRotationGracePeriod,experimental,@grafana/identity-access-team,false,false,false
@@ -359,6 +358,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-28,reporting.redirectReportsToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-06-26,grafana.onDemandDiagnostics,experimental,@grafana/data-sources,false,false,false
 2026-07-08,grafana.frontendLegacyAPIHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-08-06,grafana.ofrepRootUrl,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-08-05,assistant.dashboardPlanning,experimental,@grafana/dashboards-squad,false,false,true
 2026-07-17,features.bulkFlagEvalFiltering,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-07-14,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,false
@@ -368,3 +368,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-24,authz.listFoldersViaSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-06-24,libraryElements.folderTreeViaSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-08-03,alerting.stateManagerRequireWarm,experimental,@grafana/alerting-squad,false,false,false
+2026-08-06,grafana.rspackBuild,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-08-10,pluginsForceTls13,experimental,@grafana/data-sources-plugins,false,false,false
+2026-08-06,grafana.unifiedDataSourcePicker,GA,@grafana/grafana-datasources-core-services,false,false,true

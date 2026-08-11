@@ -5662,6 +5662,8 @@
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
       "edit-time-range-rule": "Change time range rule",
+      "group-into-row": "Group into row",
+      "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
@@ -6132,6 +6134,13 @@
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "Unable to change identifier from JSON editor",
+      "invalid-api-version": "Invalid apiVersion: {{apiVersion}}. Expected '{{expectedAPIVersion}}'.",
+      "invalid-kind": "Invalid kind: {{kind}}. Expected 'Dashboard'.",
+      "metadata-edit-unsupported": "Editing dashboard metadata is not yet supported ({{keys}})",
+      "missing-spec": "Missing spec. Expected a valid dashboard spec."
+    },
     "search-panel": {
       "no-match": "No panels matching"
     },
@@ -6296,6 +6305,12 @@
         "title-hidden_other": "Hidden ({{count}})",
         "tooltip": "Filters overview"
       },
+      "group": {
+        "different-parents": "Select items within the same row, tab, or grid to group them",
+        "into-row": "Group into row",
+        "into-tab": "Group into tab",
+        "title": "Group"
+      },
       "links": {
         "add-link": "Add link",
         "new-link": "New link",
@@ -6320,7 +6335,7 @@
       },
       "predefined-variables": {
         "all": "All",
-        "description": "This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.",
+        "description": "This dashboard does not receive global or folder-scoped variables by default. Choose which ones to include.",
         "folder": "Folder",
         "global": "Global",
         "label": "Predefined variables",
@@ -7254,6 +7269,7 @@
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"
       },
+      "resource-validation-error-title": "Unable to save changes",
       "save-and-overwrite": "Save and overwrite"
     },
     "legacy": {
@@ -8060,7 +8076,8 @@
       "title-missing-rights": "Missing rights"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Select a data source"
+      "aria-label-select-a-data-source": "Select a data source",
+      "clear-button": "Clear data source"
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Page not found: {{page}}"
@@ -10966,6 +10983,12 @@
       "title": "Firing alerts",
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
+    },
+    "header-actions": {
+      "active-incidents": "Active incidents",
+      "firing-alerts": "Firing alerts",
+      "no-active-incidents": "All clear",
+      "no-firing-alerts": "All clear"
     },
     "home-page": {
       "edition": {
