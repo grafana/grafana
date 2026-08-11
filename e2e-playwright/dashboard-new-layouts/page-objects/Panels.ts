@@ -77,11 +77,25 @@ export class Panels extends PageObject {
     }
   }
 
-  /** Selects the panel at the given index by clicking its header */
-  async selectByIndex(panelIndex: number) {
-    await test.step(`Select panel at index ${panelIndex}`, async () => {
-      await this.getHeaders().nth(panelIndex).click();
-    });
+  /**
+   * Selects panels by index by clicking their headers; an array extends the selection via shift-clicks
+   * @param panelIndex a number to select one panel, an array of them to multi-select
+   */
+  async selectByIndex(panelIndex: number | number[]) {
+    if (!Array.isArray(panelIndex)) {
+      await test.step(`Select panel at index ${panelIndex}`, async () => {
+        await this.getHeaders().nth(panelIndex).click();
+      });
+    } else {
+      await test.step(`Select multiple panels at indexes: ${panelIndex.join(', ')}`, async () => {
+        for (const [index, i] of panelIndex.entries()) {
+          // first click selects; subsequent shift-clicks extend the multi-selection
+          await this.getHeaders()
+            .nth(i)
+            .click(index === 0 ? undefined : { modifiers: ['Shift'] });
+        }
+      });
+    }
   }
 
   /**
