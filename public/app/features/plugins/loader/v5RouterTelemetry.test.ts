@@ -1,4 +1,7 @@
-import { getPluginIdFromStack } from './v5RouterTelemetry';
+import { type MonitoringLogger } from '@grafana/runtime';
+import { mockLogger } from '@grafana/test-utils/unstable';
+
+import { getPluginIdFromStack, reportV5Usage } from './v5RouterTelemetry';
 
 // Chrome-shaped frames. The parser is deliberately format-agnostic, so one
 // browser's shape is enough to cover the common case.
@@ -61,5 +64,60 @@ describe('getPluginIdFromStack', () => {
 
   it('returns undefined when there is no stack', () => {
     expect(getPluginIdFromStack(undefined)).toBeUndefined();
+  });
+});
+
+function pluginStack(pluginId: string) {
+  return chromeStack(`MyPage (http://localhost:3000/public/plugins/${pluginId}/module.js:2:3)`);
+}
+
+// The dedupe set lives at module scope and has no reset hook, because production
+// code should not carry one. Each test therefore uses its own plugin id.
+describe('reportV5Usage', () => {
+  let logger: MonitoringLogger;
+
+  beforeEach(() => {
+    logger = mockLogger('features.plugins');
+  });
+
+  it('reports the plugin id and the export name', () => {
+    reportV5Usage('useHistory', pluginStack('reports-once-app'));
+
+    expect(logger.logWarning).toHaveBeenCalledTimes(1);
+    const [, context] = jest.mocked(logger.logWarning).mock.calls[0];
+    expect(context).toMatchObject({ pluginId: 'reports-once-app', exportName: 'useHistory' });
+  });
+
+  it('reports the same plugin and export only once', () => {
+    reportV5Usage('useHistory', pluginStack('deduped-app'));
+    reportV5Usage('useHistory', pluginStack('deduped-app'));
+    reportV5Usage('useHistory', pluginStack('deduped-app'));
+
+    expect(logger.logWarning).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports the same export again for a different plugin', () => {
+    reportV5Usage('useHistory', pluginStack('first-app'));
+    reportV5Usage('useHistory', pluginStack('second-app'));
+
+    expect(logger.logWarning).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports a different export again for the same plugin', () => {
+    reportV5Usage('useHistory', pluginStack('two-exports-app'));
+    reportV5Usage('Redirect', pluginStack('two-exports-app'));
+
+    expect(logger.logWarning).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports the stack when it cannot find a plugin', () => {
+    const stack = chromeStack('RoutesWrapper (http://localhost:3000/public/build/app.js:1:1)');
+
+    reportV5Usage('withRouter', stack);
+
+    expect(logger.logWarning).toHaveBeenCalledTimes(1);
+    const [, context] = jest.mocked(logger.logWarning).mock.calls[0];
+    expect(context).toMatchObject({ exportName: 'withRouter', stack });
+    expect(context).not.toHaveProperty('pluginId');
   });
 });
