@@ -53,3 +53,33 @@ describe('admin route guards', () => {
     expect(getRouteRolesGuard('/admin/users')()).toEqual([]);
   });
 });
+
+// Notebooks reuse dashboard RBAC actions rather than defining their own, so the list page is
+// gated on dashboards:read — the same action the notebooks apiserver resource resolves to.
+describe('notebooks route guard', () => {
+  const previousPermissions = contextSrv.user.permissions;
+
+  afterEach(() => {
+    contextSrv.user.permissions = previousPermissions;
+  });
+
+  function getNotebooksRolesGuard() {
+    const route = getAppRoutes().find((r) => r.path === '/notebooks');
+    if (!route?.roles) {
+      throw new Error('Route not found or has no roles guard: /notebooks');
+    }
+    return route.roles;
+  }
+
+  it('rejects /notebooks without dashboards:read', () => {
+    contextSrv.user.permissions = {};
+
+    expect(getNotebooksRolesGuard()()).toEqual(['Reject']);
+  });
+
+  it('allows /notebooks with dashboards:read', () => {
+    contextSrv.user.permissions = { [AccessControlAction.DashboardsRead]: true };
+
+    expect(getNotebooksRolesGuard()()).toEqual([]);
+  });
+});
