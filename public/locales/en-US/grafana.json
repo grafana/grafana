@@ -12792,6 +12792,10 @@
         "updated": "Updated"
       },
       "unknown-author": "Anonymous"
+    },
+    "view": {
+      "edit-mode": "Edit",
+      "editing": "Editing"
     }
   },
   "notifications": {

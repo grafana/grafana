@@ -1,18 +1,19 @@
-import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { PageLayoutType } from '@grafana/data';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Box, useStyles2 } from '@grafana/ui';
+import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
-import { type DashboardControls } from 'app/features/dashboard-scene/scene/DashboardControls';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardRoutes } from 'app/types/dashboard';
+
+import { NotebookControls } from '../view/NotebookControls';
+import { NotebookEditModeProvider } from '../view/NotebookEditModeContext';
 
 import { getNotebookScenePageStateManager } from './NotebookScenePageStateManager';
 
@@ -83,10 +84,14 @@ function NotebookDocument({ scene }: { scene: DashboardScene }) {
 
   return (
     <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
-      {/* ScopesVariable (and other UNSAFE_renderAsHidden vars) must mount so query runners aren't blocked forever on dependsOnScopes — same as SoloPanelPage. */}
-      {renderHiddenVariables(scene)}
-      {controls && <NotebookControls controls={controls} />}
-      {body && <body.Component model={body} />}
+      <NotebookEditModeProvider>
+        {/* ScopesVariable (and other UNSAFE_renderAsHidden vars) must mount so query runners aren't blocked forever on dependsOnScopes — same as SoloPanelPage. */}
+        {renderHiddenVariables(scene)}
+        {/* Rendered unconditionally: the row carries the view/edit toggle, which a notebook
+            without time controls still needs. */}
+        <NotebookControls controls={controls} />
+        {body && <body.Component model={body} />}
+      </NotebookEditModeProvider>
     </Page>
   );
 }
@@ -106,32 +111,5 @@ function renderHiddenVariables(scene: DashboardScene) {
     </>
   );
 }
-
-// Read-only notebooks still get the shared time range + refresh — but only those two
-// pickers, not the full dashboard controls bar (which carries edit/variable actions).
-function NotebookControls({ controls }: { controls: DashboardControls }) {
-  const styles = useStyles2(getControlsStyles);
-  const { timePicker, refreshPicker, hideTimeControls } = controls.useState();
-
-  if (hideTimeControls) {
-    return null;
-  }
-
-  return (
-    <div className={styles.controls}>
-      <timePicker.Component model={timePicker} />
-      <refreshPicker.Component model={refreshPicker} />
-    </div>
-  );
-}
-
-const getControlsStyles = (theme: GrafanaTheme2) => ({
-  controls: css({
-    display: 'flex',
-    justifyContent: 'flex-end',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1, 2),
-  }),
-});
 
 export default NotebookScenePage;

@@ -2,7 +2,7 @@ import { createBrowserHistory, createMemoryHistory } from 'history';
 
 import { HistoryWrapper, config, locationService, setLocationService } from '@grafana/runtime';
 
-import { notebookShareUrl, notebookViewHref, notebookViewUrl } from './urls';
+import { notebookEditHref, notebookShareUrl, notebookViewHref, notebookViewUrl } from './urls';
 
 describe('notebook urls', () => {
   const originalLocationService = locationService;
@@ -44,6 +44,12 @@ describe('notebook urls', () => {
     setHistory(1, '/grafana');
 
     expect(notebookViewHref('nb1')).toBe('/grafana/notebooks/nb1?orgId=1');
+  });
+
+  it('carries both the edit param and orgId, so the list Edit action lands in edit mode', () => {
+    setHistory(3);
+
+    expect(notebookEditHref('nb1')).toBe('/notebooks/nb1?edit=true&orgId=3');
   });
 
   it('builds an absolute share url', () => {
