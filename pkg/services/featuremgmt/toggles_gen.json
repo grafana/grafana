@@ -2172,14 +2172,16 @@
     {
       "metadata": {
         "name": "datetime.useLuxon",
-        "resourceVersion": "1785947524842",
-        "creationTimestamp": "2026-08-05T16:32:04Z"
+        "resourceVersion": "1786019066815",
+        "creationTimestamp": "2026-08-05T16:32:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-06 12:24:26.815649031 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
