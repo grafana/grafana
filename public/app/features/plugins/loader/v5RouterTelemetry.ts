@@ -1,3 +1,5 @@
+import { createElement, type ComponentType } from 'react';
+
 import { getLogger } from '@grafana/runtime/unstable';
 
 // Plugin bundles are served from `public/plugins/<id>/`, both locally and from the
@@ -12,6 +14,7 @@ const reported = new Set<string>();
 // Exports that react-router v6 removes. Plugins that call these break at the
 // upgrade, so these are the ones worth counting.
 const V5_ONLY_FUNCTIONS = ['useHistory', 'useRouteMatch', 'withRouter'] as const;
+const V5_ONLY_COMPONENTS = ['Switch', 'Redirect', 'Prompt'] as const;
 
 /**
  * Reads the plugin id out of a captured stack.
@@ -44,7 +47,10 @@ export function getPluginIdFromStack(stack: string | undefined): string | undefi
  */
 export function reportV5Usage(exportName: string, stack: string | undefined = new Error().stack): void {
   const pluginId = getPluginIdFromStack(stack);
-  const key = `${pluginId ?? stack}:${exportName}`;
+  // Without a plugin the key holds the export name alone. Keying on the stack
+  // would let one export report many times, because React builds a different
+  // stack on each render.
+  const key = pluginId ? `${pluginId}:${exportName}` : `unattributed:${exportName}`;
 
   if (reported.has(key)) {
     return;
@@ -71,6 +77,22 @@ function reportingFunction(exportName: string, original: UnknownFunction): Unkno
   };
 }
 
+type UnknownProps = Record<string, unknown>;
+
+function isComponent(value: unknown): value is ComponentType<UnknownProps> {
+  return typeof value === 'function';
+}
+
+// The report happens during render rather than in an effect, so that a component
+// which throws still reports. The dedupe keeps repeat renders quiet.
+function reportingComponent(exportName: string, Original: ComponentType<UnknownProps>): UnknownFunction {
+  return function ReportingWrapper(props: UnknownProps) {
+    reportV5Usage(exportName);
+
+    return createElement(Original, props);
+  };
+}
+
 /**
  * Returns the react-router-dom module with its v5-only exports wrapped, so that
  * a plugin calling one of them is reported.
@@ -88,6 +110,14 @@ export function withV5UsageTelemetry<T extends Record<string, unknown>>(module: 
 
     if (isFunction(original)) {
       wrappers[exportName] = reportingFunction(exportName, original);
+    }
+  }
+
+  for (const exportName of V5_ONLY_COMPONENTS) {
+    const original = module[exportName];
+
+    if (isComponent(original)) {
+      wrappers[exportName] = reportingComponent(exportName, original);
     }
   }
 

@@ -1,7 +1,15 @@
+import { render, screen } from '@testing-library/react';
+import * as reactRouterDom from 'react-router-dom';
+import { MemoryRouter, Route, Switch as RealSwitch } from 'react-router-dom';
+
 import { type MonitoringLogger } from '@grafana/runtime';
 import { mockLogger } from '@grafana/test-utils/unstable';
 
 import { getPluginIdFromStack, reportV5Usage, withV5UsageTelemetry } from './v5RouterTelemetry';
+
+// The component tests wrap the real module, because the point of them is the
+// interaction between a wrapped component and react-router's own matching.
+const routerModule = { ...reactRouterDom };
 
 // Chrome-shaped frames. The parser is deliberately format-agnostic, so one
 // browser's shape is enough to cover the common case.
@@ -139,6 +147,19 @@ describe('withV5UsageTelemetry function exports', () => {
     logger = mockLogger('features.plugins');
   });
 
+  // Must come first in this block. An unattributed report is keyed on the export
+  // name alone, so once another test in this file has called `useHistory` through
+  // a wrapper, later calls are correctly suppressed for the rest of the run.
+  it('reports the call, and repeats from one place only once', () => {
+    const wrapped = withV5UsageTelemetry(fakeRouterModule());
+
+    for (let i = 0; i < 3; i++) {
+      wrapped.useHistory();
+    }
+
+    expect(logger.logWarning).toHaveBeenCalledTimes(1);
+  });
+
   it.each(['useHistory', 'useRouteMatch', 'withRouter'] as const)('returns what %s returns', (exportName) => {
     const module = fakeRouterModule();
     const wrapped = withV5UsageTelemetry(module);
@@ -155,16 +176,6 @@ describe('withV5UsageTelemetry function exports', () => {
     expect(module[exportName]).toHaveBeenCalledWith('first', 'second');
   });
 
-  it('reports repeated calls from one place only once', () => {
-    const wrapped = withV5UsageTelemetry(fakeRouterModule());
-
-    for (let i = 0; i < 3; i++) {
-      wrapped.useHistory();
-    }
-
-    expect(logger.logWarning).toHaveBeenCalledTimes(1);
-  });
-
   it('leaves exports that v6 keeps untouched', () => {
     const module = fakeRouterModule();
     const wrapped = withV5UsageTelemetry(module);
@@ -174,5 +185,67 @@ describe('withV5UsageTelemetry function exports', () => {
     wrapped.useLocation();
 
     expect(logger.logWarning).not.toHaveBeenCalled();
+  });
+});
+
+describe('withV5UsageTelemetry component exports', () => {
+  let logger: MonitoringLogger;
+
+  beforeEach(() => {
+    logger = mockLogger('features.plugins');
+  });
+
+  it('renders the real Switch and reports it', () => {
+    const { Switch, Route } = withV5UsageTelemetry({ ...routerModule });
+
+    render(
+      <MemoryRouter initialEntries={['/second']}>
+        <Switch>
+          <Route path="/first">first page</Route>
+          <Route path="/second">second page</Route>
+        </Switch>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('second page')).toBeInTheDocument();
+    expect(logger.logWarning).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the real Prompt and reports it', () => {
+    const { Prompt } = withV5UsageTelemetry({ ...routerModule });
+
+    render(
+      <MemoryRouter>
+        <Prompt when={false} message="unsaved" />
+      </MemoryRouter>
+    );
+
+    expect(logger.logWarning).toHaveBeenCalledTimes(1);
+  });
+
+  // The wrapper changes the element type that `Switch` sees. v5 `Switch` matches
+  // on `child.props.path || child.props.from` rather than on the child type, so a
+  // forwarding wrapper stays transparent to it. This test is what proves that.
+  it('keeps a wrapped Redirect matchable by a real Switch', () => {
+    const { Redirect } = withV5UsageTelemetry({ ...routerModule });
+
+    render(
+      <MemoryRouter initialEntries={['/old']}>
+        <RealSwitch>
+          <Redirect from="/old" to="/new" />
+          <Route path="/new">new page</Route>
+        </RealSwitch>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('new page')).toBeInTheDocument();
+    expect(logger.logWarning).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves components that v6 keeps untouched', () => {
+    const wrapped = withV5UsageTelemetry({ ...routerModule });
+
+    expect(wrapped.Route).toBe(routerModule.Route);
+    expect(wrapped.Link).toBe(routerModule.Link);
   });
 });
