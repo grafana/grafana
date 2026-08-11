@@ -124,7 +124,7 @@ func recordingRuleObj(uid string) model.RecordingRule {
 
 func newTestSyncer(t *testing.T, gen *fakeGenerator, states *fakeStates, status *fakeStatus) *Syncer {
 	t.Helper()
-	s, err := NewSyncer(
+	return NewSyncer(
 		&fakeOrgs{orgs: []int64{1}},
 		states,
 		status,
@@ -134,8 +134,6 @@ func newTestSyncer(t *testing.T, gen *fakeGenerator, states *fakeStates, status 
 		ngmetrics.NewStatusSyncerMetrics(nil),
 		gen,
 	)
-	require.NoError(t, err)
-	return s
 }
 
 func TestSyncer_sync_writesBothKindsAndDedupes(t *testing.T) {
