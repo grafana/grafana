@@ -122,12 +122,9 @@ This approach is more efficient than writing separate queries for each series, s
 
 ## Apply annotations
 
-[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs. You can add annotation queries by clicking the **Add new element** icon (blue plus sign) in the dashboard toolbar and selecting **Annotation query**.
+[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs. Graphite supports two ways to query annotations: a regular metric query and a Graphite events query.
 
-Graphite supports two ways to query annotations:
-
-- A regular metric query, using the `Graphite query` textbox.
-- A Graphite events query, using the `Graphite event tags` textbox with a tag, wildcard, or empty value
+For details on both modes, example queries, and how to create events in Graphite, refer to [Graphite annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/annotations/).
 
 ## Integration with Loki
 
