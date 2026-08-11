@@ -74,7 +74,6 @@ declare module "@openfeature/core" {
     | "assistant.fullscreenWorkspace"
     | "table.protoRowParser"
     | "grafana.queryVarEditorRedesign"
-    | "table.refactorNested"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
     | "dataviz.experimentalColorSchemes"
