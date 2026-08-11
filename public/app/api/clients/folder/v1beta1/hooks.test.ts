@@ -134,9 +134,12 @@ const setupCreateFolderHandler = (onCreate?: jest.Mock) => {
 };
 
 const originalToggles = { ...config.featureToggles };
+const originalProvisioningEnabled = config.provisioningEnabled;
+config.provisioningEnabled = false;
 afterAll(() => {
   // Restore the original feature toggle value changed during tests
   config.featureToggles = originalToggles;
+  config.provisioningEnabled = originalProvisioningEnabled;
 });
 
 describe('useGetFolderQueryFacade', () => {

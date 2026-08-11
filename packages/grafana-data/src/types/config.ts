@@ -310,6 +310,7 @@ export interface GrafanaConfig {
   sharedWithMeFolderUID: string;
   rootFolderUID: string;
   localFileSystemAvailable: boolean;
+  provisioningEnabled: boolean;
   cloudMigrationEnabled: boolean;
   cloudMigrationIsTarget: boolean;
   cloudMigrationPollIntervalMs: number;

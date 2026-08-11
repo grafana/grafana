@@ -234,6 +234,34 @@ When a violation is detected, the rule reports:
 Import '../status-history/utils' reaches outside the 'histogram' plugin directory. Plugins should only import from external dependencies or relative paths within their own directory.
 ```
 
+### `zod-import-namespace`
+
+Require all zod imports to use a namespace named `z` from the root `zod` package.
+
+This rule allows only:
+
+```ts
+import * as z from 'zod';
+import type * as z from 'zod';
+```
+
+It disallows any other zod import style, including named/default imports and all zod subpath imports such as `zod/mini`. This ensures that all zod imports are consistent, allowing for a smaller bundle size.
+
+#### Examples
+
+```ts
+// Bad ❌
+import { z } from 'zod';
+import z from 'zod';
+import * as zod from 'zod';
+import type { ZodType } from 'zod';
+import * as z from 'zod/mini';
+
+// Good ✅
+import * as z from 'zod';
+import type * as z from 'zod';
+```
+
 ### `define-feature-events`
 
 Enforces best practices when using `defineFeatureEvents` from `@grafana/runtime/internal`.

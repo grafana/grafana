@@ -28,6 +28,9 @@ jest.mock('@grafana/runtime', () => {
           state: 'alpha',
         },
       },
+      // getProvisionedMeta's k8s folder lookup isn't mocked in this suite; keep it disabled
+      // so folder selection doesn't attempt a real getFolder query.
+      provisioningEnabled: false,
     },
   };
 });
@@ -1071,6 +1074,68 @@ describe('SaveProvisionedDashboardForm', () => {
 
     await waitFor(() => {
       expect(saveButton).toBeEnabled();
+    });
+  });
+
+  describe('enforced branch name template', () => {
+    beforeEach(() => {
+      setTestFlags({ 'provisioning.gitConventions': true });
+    });
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    const enforcedRepo: NonNullable<Props['repository']> = {
+      type: 'github',
+      name: 'test-repo',
+      title: 'Test Repo',
+      workflows: ['branch', 'write'],
+      target: 'folder',
+      branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/{{action}}-{{title}}' },
+    };
+
+    const branchDefaults: Props['defaultValues'] = {
+      ref: 'dashboard/2023-01-01-abcde',
+      path: 'test-dashboard.json',
+      repo: 'test-repo',
+      comment: '',
+      folder: { uid: 'folder-uid', title: '' },
+      title: 'Test Dashboard',
+      description: 'Test Description',
+      workflow: 'branch',
+    };
+
+    it('sends the enforced template branch as ref to the /files endpoint on save', async () => {
+      // The whole point of the fix: the enforced branch must be sent as `ref` so the change lands
+      // on the template branch instead of being dropped (forbidden / direct push to configured branch).
+      server.use(
+        http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+          capturedRequest = { url: new URL(request.url), body: await request.json() };
+          return saveSuccessResponse('new-dashboard', 'Test Dashboard');
+        })
+      );
+
+      const { user, props } = setup({
+        repository: { ...enforcedRepo, branch: 'main' },
+        defaultValues: branchDefaults,
+      });
+      props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+        apiVersion: 'dashboard.grafana.app/v1alpha1',
+        kind: 'Dashboard',
+        metadata: { generateName: 'p' },
+        spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+      });
+
+      const branch = await screen.findByRole('textbox', { name: /branch/i });
+      await waitFor(() => expect(branch).toHaveValue('grafana/create-test-dashboard'));
+
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      await waitFor(() => expect(capturedRequest).not.toBeNull());
+      const request = requireCapturedRequest(capturedRequest);
+      expect(request.url.searchParams.get('ref')).toBe('grafana/create-test-dashboard');
     });
   });
 

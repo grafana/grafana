@@ -10,9 +10,8 @@ import {
   type SceneObjectState,
   type VizPanel,
 } from '@grafana/scenes';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { useStyles2 } from '@grafana/ui';
+import { type NotebookLayoutItemKind, type NotebookLayoutKind } from 'app/features/notebook/types';
 
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -34,7 +33,7 @@ interface NotebookLayoutManagerState extends SceneObjectState {
 
 export class NotebookLayoutManager
   extends SceneObjectBase<NotebookLayoutManagerState>
-  implements DashboardLayoutManager
+  implements DashboardLayoutManager<{}, NotebookLayoutKind>
 {
   public static Component = NotebookLayoutManagerRenderer;
   public readonly isDashboardLayoutManager = true;
@@ -57,7 +56,7 @@ export class NotebookLayoutManager
   // Serialization lives here (not in a standalone helper) so the manager doesn't import the
   // serializer module — that mutual import is what forms a dependency cycle. The serializer
   // still imports this manager to construct it in deserialize, which stays one-directional.
-  public serialize(): DashboardV2Spec['layout'] {
+  public serialize(): NotebookLayoutKind {
     const cells: NotebookLayoutItemKind[] = this.state.cells.map((cell) => ({
       kind: 'NotebookLayoutItem',
       spec: {
@@ -68,13 +67,7 @@ export class NotebookLayoutManager
       },
     }));
 
-    const layout: NotebookLayoutKind = { kind: 'NotebookLayout', spec: { cells } };
-    // TODO: if the layout-manager-generic RFC lands (DashboardLayoutManager made generic over its
-    // serialize() return type), drop this cast and return NotebookLayoutKind directly; otherwise
-    // keep it as is. The shared interface only knows the dashboard layout union, so a sibling kind
-    // must be laundered through unknown here.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- notebook layout is a sibling kind not in DashboardV2Spec['layout']
-    return layout as unknown as DashboardV2Spec['layout'];
+    return { kind: 'NotebookLayout', spec: { cells } };
   }
 
   // Only panel cells are viz panels; markdown/code cells are narrative content and are
@@ -87,11 +80,11 @@ export class NotebookLayoutManager
   // DashboardLayoutManager contract minimally.
   public addPanel(): void {}
 
-  public cloneLayout(): DashboardLayoutManager {
+  public cloneLayout(): NotebookLayoutManager {
     return this.clone({});
   }
 
-  public duplicate(_panelIdGenerator?: PanelIdGenerator): DashboardLayoutManager {
+  public duplicate(_panelIdGenerator?: PanelIdGenerator): NotebookLayoutManager {
     return this.clone({ key: undefined });
   }
 

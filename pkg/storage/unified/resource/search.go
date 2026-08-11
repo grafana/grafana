@@ -668,6 +668,16 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 		}, nil
 	}
 
+	// Trash authorizes each hit against one index's group and resource, so hits
+	// federated in from another index would be checked against the wrong one.
+	// Refused here rather than further in because resolving a federated index below
+	// can build one.
+	if req.IsDeleted && len(req.Federated) > 0 {
+		return &resourcepb.ResourceSearchResponse{
+			Error: NewBadRequestError("searching deleted resources does not support federated queries"),
+		}, nil
+	}
+
 	stats := NewSearchStats("Search")
 	defer s.logStats(ctx, stats, span, "namespace", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "query", req.Query)
 
@@ -1923,7 +1933,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
 
 		listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
-			Limit: listEverything,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     nsr.Group,

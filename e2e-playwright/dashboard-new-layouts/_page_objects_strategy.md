@@ -43,6 +43,7 @@ Design principles:
 - **Locator getters return Playwright `Locator`** — the test owns the assertion, never the page object
 - **Action methods wrap multi-step interactions** — and use `test.step()` so the Playwright HTML report shows named steps, not cryptic stack traces
 - **Page objects minimize cross-references** - when composition is needed, the spec orchestrates the sequence
+- **Lookups are scoped to their owning container** — page objects chain from their region's container selector; page-wide `getByRole` is reserved for portalled UI (dropdown option lists, dialogs, tooltips, toasts) and must anchor to the portal root (`listbox`, `dialog`, ...)
 - **Timing and layout-sensitive mechanics stay in specs or `utils`** — e.g.
   - `toPass()` retries,
   - `mouse` drag-and-drop,
@@ -76,9 +77,9 @@ await page.getByRole('option', { name: 'c1' }).click();
 await controls.enterEditMode();
 await toolbar.openDashboardOptions();
 await sidebar.dashboardOptions.switchToAutoGrid();
-await panel.selectByTitle('New panel');
+await panels.selectByTitle('New panel');
 await sidebar.panelOptions.setTitle(`${repeatTitleBase}$c1`);
-await sidebar.panelOptions.enableRepeat('c1');
+await sidebar.panelOptions.repeatOptions.repeatByVariable('c1');
 ```
 
 ## Expected Gains
@@ -97,14 +98,14 @@ await sidebar.panelOptions.enableRepeat('c1');
 
 ### Projected after migration
 
-| Metric                                                        | Target                                                                           |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Raw selector calls in specs                                   | Near 0 — only one-off assertions may remain inline                               |
-| Files to update when changing a selector                      | 1 (the page object)                                                              |
-| Total spec lines                                              | ~4,500 (~20% reduction, projected)                                               |
-| Duplicated helper functions                                   | 0                                                                                |
-| Parameter pass-throughs (`dashboardPage, selectors`) in specs | Constructors only (further reduction once fixtures land — see Future Follow-Ups) |
-| Test readability                                              | Verb-based methods (20-40 chars)                                                 |
+| Metric                                                        | Target                                                               |
+| ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Raw selector calls in specs                                   | Near 0 — only one-off assertions may remain inline                   |
+| Files to update when changing a selector                      | 1 (the page object)                                                  |
+| Total spec lines                                              | ~4,500 (~20% reduction, projected)                                   |
+| Duplicated helper functions                                   | 0                                                                    |
+| Parameter pass-throughs (`dashboardPage, selectors`) in specs | None — page objects are injected as fixtures (see Future Follow-Ups) |
+| Test readability                                              | Verb-based methods (20-40 chars)                                     |
 
 **Hypothesis (to validate post-migration)**: authoring a new test drops from ~45 minutes (copy-paste-adapt a similar spec, look up selector chains) to ~15 minutes (compose existing page objects). This is an informal prediction, not a measured outcome — we'll check it against real authoring times once the first few tests are written end-to-end against page objects.
 
@@ -241,14 +242,14 @@ Without these, an agent asked to "write an E2E test for feature X" will copy raw
 
 ## Future Follow-Ups
 
-### Playwright Fixtures
+### Playwright Fixtures (done)
 
-Once all page objects are proven, a `fixtures.ts` file could expose them as Playwright fixtures via `test.extend()`, eliminating the constructor boilerplate from specs entirely. Playwright fixtures compose freely — `gotoDashboardPage` from `@grafana/plugin-e2e` is itself a fixture. The friction is subtler: 16 of 26 specs call `gotoDashboardPage({ uid: '…' })` with per-test arguments inside the test body, so a page-object fixture cannot be pre-bound to the `DashboardPage` those calls return. Two workable shapes, to decide once page objects stabilize:
+Implemented in `fixtures.ts`: one lazy, test-scoped fixture per top-level page object, via `test.extend()` on the plugin-e2e `test`. Specs import `test`/`expect` from `./fixtures` and destructure page objects from the test arguments; no spec calls `new` anymore.
 
-- **Factory fixtures** — expose `makeControls`, `makeToolbar`, etc. as fixtures the spec calls after `gotoDashboardPage(...)`. Removes `new` but keeps one line of wiring per spec.
-- **Shadow `gotoDashboardPage`** — a local fixture that returns `{ dashboardPage, controls, toolbar, sidebar, panel }` in one call. Removes wiring entirely, at the cost of coupling page-object construction to navigation.
+The "pre-binding to the `DashboardPage` returned by `gotoDashboardPage({ uid })`" friction anticipated above turned out not to exist: `getByGrafanaSelector` resolves locators from `page` alone and never depends on navigation state, so neither of the two shapes considered (factory fixtures, shadow `gotoDashboardPage`) was needed. Instead:
 
-The 10 specs that use the empty `dashboardPage` fixture (not `gotoDashboardPage`) could adopt page-object fixtures immediately; the remaining 16 need the decision above. Deferring until the page objects are behaviorally proven keeps the follow-up low-risk.
+- `PageObjectArgs` was narrowed: page objects receive a `getByGrafanaSelector` function instead of a whole `DashboardPage`, so they cannot navigate, mock, or wait by construction (Remove Middle Man).
+- `fixtures.ts` builds the function once per test from a non-navigated `DashboardPage` (`buildGetByGrafanaSelector`, a plain helper, deliberately not a fixture so it never leaks into test closures).
 
 ### Codegen-to-Page-Object Transform
 
@@ -268,13 +269,13 @@ Playwright's [test generator](https://playwright.dev/docs/codegen) lets engineer
 
 This means **`data-testid` always wins over `getByRole`** when both are present — the opposite of what the docs suggest. The output is fully deterministic for a given DOM state.
 
-**The opportunity**: Grafana's `@grafana/e2e-selectors` system assigns `data-testid` attributes to UI elements, and `data-testid` is one of codegen's top-priority selectors. When codegen produces a `getByTestId('header-container')`, that value maps directly to a page object method like `panel.headerContainer()` — the mapping is deterministic. A mapping table (testid value to page object method) in the `AGENTS.md` would make this transform mechanical for both humans and AI agents.
+**The opportunity**: Grafana's `@grafana/e2e-selectors` system assigns `data-testid` attributes to UI elements, and `data-testid` is one of codegen's top-priority selectors. When codegen produces a `getByTestId('header-container')`, that value maps directly to a page object method like `panels.getHeaders()` — the mapping is deterministic. A mapping table (testid value to page object method) in the `AGENTS.md` would make this transform mechanical for both humans and AI agents.
 
 **Possible approaches**:
 
 1. **Agent-first authoring** — Describe the test scenario in natural language ("test that enabling repeats on a variable shows repeated panels, and that they persist after save+reload"). The agent reads `AGENTS.md`, discovers the page objects, and writes the test directly using the `add-e2e-tests` skill. No recording step — the agent composes page objects from the available API. This works best when the UI workflow maps cleanly to existing page objects. Lowest friction, highest leverage from the page object investment.
 
-2. **Record then transform** — Run `npx playwright codegen -o /tmp/recorded.spec.ts`, manually walk through the flow in the browser, then run the raw output through an AST transform. Because codegen deterministically emits `getByTestId(...)` for elements with `data-testid` (score 1, highest priority), and Grafana's `@grafana/e2e-selectors` assigns `data-testid` to all interactive elements, the raw output maps mechanically to page object methods. A Babel or ts-morph visitor can rewrite `getByTestId('header-container')` → `panel.headerContainer()` using a static mapping table — no LLM needed at runtime. The transform is a build-once tool (an agent could help scaffold it), then it runs instantly and deterministically on every codegen output. Best for complex flows where the engineer wants to validate the exact click sequence visually before transforming it.
+2. **Record then transform** — Run `npx playwright codegen -o /tmp/recorded.spec.ts`, manually walk through the flow in the browser, then run the raw output through an AST transform. Because codegen deterministically emits `getByTestId(...)` for elements with `data-testid` (score 1, highest priority), and Grafana's `@grafana/e2e-selectors` assigns `data-testid` to all interactive elements, the raw output maps mechanically to page object methods. A Babel or ts-morph visitor can rewrite `getByTestId('header-container')` → `panels.getHeaders()` using a static mapping table — no LLM needed at runtime. The transform is a build-once tool (an agent could help scaffold it), then it runs instantly and deterministically on every codegen output. Best for complex flows where the engineer wants to validate the exact click sequence visually before transforming it.
 
 Both approaches benefit from the same foundation: page objects provide the vocabulary, `AGENTS.md` provides the mapping, and the `add-e2e-tests` skill provides the conventions.
 

@@ -1,15 +1,6 @@
-import type OpenLayersMap from 'ol/Map';
+import { type MapLayerRegistryItem, type RegistryItem, Registry } from '@grafana/data';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type GrafanaTheme2,
-  type RegistryItem,
-  Registry,
-  type EventBus,
-} from '@grafana/data';
-
-import { xyzTiles, defaultXYZConfig, type XYZConfig } from './generic';
+import { xyzTiles, defaultXYZConfig, resolveXYZConfig, type XYZConfig, type UnresolvedXYZConfig } from './generic';
 
 interface PublicServiceItem extends RegistryItem {
   slug: string;
@@ -57,32 +48,32 @@ const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
   },
 ]);
 
-interface ESRIXYZConfig extends XYZConfig {
-  server: string;
+export interface ESRIXYZConfig extends XYZConfig {
+  server?: string;
 }
 
-const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
+const esriXYZTiles: MapLayerRegistryItem<UnresolvedXYZConfig<ESRIXYZConfig>> = {
   id: 'esri-xyz',
   name: 'ArcGIS MapServer',
   description: 'Add layer from an ESRI ArcGIS MapServer',
   isBaseMap: true,
+  // The public services are attributed to ArcGIS, a custom server is attributed by the user
+  requiresAttribution: (options) => (options.config?.server ?? DEFAULT_SERVICE) !== CUSTOM_SERVICE,
 
-  create: async (
-    map: OpenLayersMap,
-    options: MapLayerOptions<ESRIXYZConfig>,
-    eventBus: EventBus,
-    theme: GrafanaTheme2
-  ) => {
-    const cfg = { ...options.config };
+  create: async (map, options, eventBus, theme) => {
+    const cfg = resolveXYZConfig<ESRIXYZConfig>(options.config ?? {});
     const svc = publicServiceRegistry.getIfExists(cfg.server ?? DEFAULT_SERVICE)!;
     if (svc.id !== CUSTOM_SERVICE) {
       const base = 'https://services.arcgisonline.com/ArcGIS/rest/services/';
       cfg.url = `${base}${svc.slug}/MapServer/tile/{z}/{y}/{x}`;
       cfg.attribution = `Tiles © <a href="${base}${svc.slug}/MapServer">ArcGIS</a>`;
     }
-    const opts = { ...options, config: cfg as XYZConfig };
-    return xyzTiles.create(map, opts, eventBus, theme).then((xyz) => {
-      xyz.registerOptionsUI = (builder) => {
+    const opts = { ...options, config: cfg };
+    const xyz = await xyzTiles.create(map, opts, eventBus, theme);
+
+    return {
+      ...xyz,
+      registerOptionsUI: (builder) => {
         builder
           .addSelect({
             path: 'config.server',
@@ -108,9 +99,8 @@ const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
             },
             showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
           });
-      };
-      return xyz;
-    });
+      },
+    };
   },
 
   defaultOptions: {

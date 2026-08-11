@@ -128,6 +128,9 @@ const LogLineComponent = memo(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
     const logLineRef = useRef<HTMLDivElement | null>(null);
+    // TODO remove when react-use is fixed
+    // see https://github.com/streamich/react-use/issues/2612
+    // @ts-expect-error
     const intersection = useIntersection(logLineRef, {});
     const pinned = useLogIsPinned(log);
     const permalinked = useLogIsPermalinked(log);
@@ -535,12 +538,13 @@ export const getStyles = (
   }
 
   const colors = {
-    critical: '#B877D9',
+    critical: theme.visualization.getColorByName('purple'),
     error: theme.colors.error.text,
-    warning: '#FBAD37',
-    debug: '#6E9FFF',
+    warning: theme.colors.warning.text,
+    // dimgray fails WCAG AA contrast on dark backgrounds, so use a lighter gray in dark theme
+    debug: theme.isDark ? '#9e9e9e' : theme.visualization.getColorByName('dimgray'),
     trace: '#6ed0e0',
-    info: '#6E9FFF',
+    info: theme.visualization.getColorByName('blue'),
     metadata: theme.colors.text.secondary,
     default: colorDefault,
     parsedField: theme.colors.text.secondary,

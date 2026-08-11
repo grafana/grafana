@@ -82,7 +82,6 @@ function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
                           }}
                           aria-label={t('dashboard.sidebar.add.new-panel.title', 'Panel')}
                         >
-                          {/* @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react. */}
                           <SVG
                             title={t('dashboard.sidebar.add.new-panel.button', 'Add new panel button')}
                             src={addPanelSvg}

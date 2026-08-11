@@ -4,7 +4,6 @@ import { delay } from 'rxjs/operators';
 
 import { AppEvents, DataQueryErrorType, type EventBusExtended, PathValidationError } from '@grafana/data';
 import { type BackendSrvRequest, type FetchError, type FetchResponse } from '@grafana/runtime';
-import { hasSessionExpiry } from 'app/core/utils/auth';
 
 import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
 import { ShowModalReactEvent } from '../../types/events';
@@ -19,6 +18,7 @@ const getTestContext = (overides?: object, mockFromFetch = true) => {
     statusText: 'Ok',
     isSignedIn: true,
     orgId: 1337,
+    authenticatedBy: undefined as string | undefined,
     redirected: false,
     type: 'basic',
     url: 'http://localhost:3000/api/some-mock',
@@ -48,6 +48,7 @@ const getTestContext = (overides?: object, mockFromFetch = true) => {
   const user: User = {
     isSignedIn: props.isSignedIn,
     orgId: props.orgId,
+    authenticatedBy: props.authenticatedBy,
   } as jest.MockedObject<User>;
   const contextSrvMock: ContextSrv = {
     user,
@@ -99,8 +100,11 @@ const createUnauthorizedResponse = () =>
   }) as unknown as Response;
 
 jest.mock('app/core/utils/auth', () => ({
-  getSessionExpiry: jest.fn(() => 1),
-  hasSessionExpiry: jest.fn(() => true),
+  ...jest.requireActual('app/core/utils/auth'),
+  getSessionExpiry: () => 1,
+  // pretend the session expiry cookie is always present so only the auth method decides
+  hasRotatableSession: (authenticatedBy?: string) =>
+    jest.requireActual('app/core/utils/auth').canRotateSessionToken(authenticatedBy),
 }));
 
 describe('backendSrv', () => {
@@ -219,15 +223,36 @@ describe('backendSrv', () => {
           false
         );
 
-        backendSrv.loginPing = jest.fn();
         backendSrv.rotateToken = jest.fn().mockResolvedValue(okResponse);
 
         await backendSrv.request({ url, method: 'GET', retry: 0 }).finally(() => {
           expect(appEventsMock.emit).not.toHaveBeenCalled();
           expect(logoutMock).not.toHaveBeenCalled();
-          expect(backendSrv.loginPing).not.toHaveBeenCalled();
           expect(backendSrv.rotateToken).toHaveBeenCalledTimes(1);
           expect(fetchMock).toHaveBeenCalledTimes(2); // expecting 2 calls because of retry and because the tokenRotation is mocked
+        });
+      });
+    });
+
+    describe('when making an unsuccessful call and the request was authenticated without a session', () => {
+      it('then it should not rotate the token', async () => {
+        const url = '/api/dashboard/';
+        const { backendSrv, logoutMock } = getTestContext({
+          ok: false,
+          status: 401,
+          statusText: errorMessage,
+          data: { message: errorMessage },
+          url,
+          authenticatedBy: 'jwt',
+        });
+
+        backendSrv.rotateToken = jest.fn();
+        backendSrv.loginPing = jest.fn().mockResolvedValue({ ok: true } as FetchResponse);
+
+        await backendSrv.request({ url, method: 'GET', retry: 0 }).catch(() => {
+          expect(backendSrv.rotateToken).not.toHaveBeenCalled();
+          expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
+          expect(logoutMock).not.toHaveBeenCalled();
         });
       });
     });
@@ -298,14 +323,8 @@ describe('backendSrv', () => {
     });
 
     describe('when concurrent requests require a login check', () => {
-      afterEach(() => {
-        jest.mocked(hasSessionExpiry).mockReturnValue(true);
-      });
-
       it('performs a single login ping', async () => {
-        jest.mocked(hasSessionExpiry).mockReturnValue(false);
-
-        const { backendSrv, fromFetchMock } = getTestContext();
+        const { backendSrv, fromFetchMock } = getTestContext({ authenticatedBy: 'jwt' });
         const loginPingResponse = new Subject<Response>();
         const unauthorizedError = {
           status: 401,
@@ -334,9 +353,7 @@ describe('backendSrv', () => {
       });
 
       it('does not check the session for a request that fails after logout', async () => {
-        jest.mocked(hasSessionExpiry).mockReturnValue(false);
-
-        const { backendSrv, contextSrvMock, fromFetchMock, logoutMock } = getTestContext();
+        const { backendSrv, contextSrvMock, fromFetchMock, logoutMock } = getTestContext({ authenticatedBy: 'jwt' });
         const firstResponse = new Subject<Response>();
         const secondResponse = new Subject<Response>();
         const unauthorizedResponse = createUnauthorizedResponse();

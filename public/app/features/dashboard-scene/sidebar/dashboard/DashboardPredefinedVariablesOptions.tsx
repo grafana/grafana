@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useFlagGlobalDashboardVariables } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 import {
   AnnoKeyIgnorePredefinedVariables,
@@ -31,8 +31,11 @@ export type PredefinedVariablesDashboard = DashboardSceneLike & {
 };
 
 function modeFromDenyList(denyList: string[] | undefined): PredefinedVariablesMode | undefined {
-  // Missing / empty deny list → All (inject everything).
-  if (denyList === undefined || denyList.length === 0) {
+  // Absent / invalid → None (opt-out by default). Explicit `[]` → All.
+  if (denyList === undefined) {
+    return 'none';
+  }
+  if (denyList.length === 0) {
     return 'all';
   }
   if (denyList.includes(DENY_ALL_PREDEFINED)) {
@@ -49,10 +52,11 @@ function modeFromDenyList(denyList: string[] | undefined): PredefinedVariablesMo
   return undefined;
 }
 
-function denyListFromMode(mode: PredefinedVariablesMode): string[] | undefined {
+function denyListFromMode(mode: PredefinedVariablesMode): string[] {
   switch (mode) {
     case 'all':
-      return undefined;
+      // Explicit opt-in — always write `[]` so as-code/saved JSON shows the choice.
+      return [];
     case 'none':
       return [DENY_ALL_PREDEFINED];
     // Mode names the bucket to KEEP, so we deny the *other* bucket.
@@ -80,11 +84,7 @@ function updateDashboardDenyList(dashboard: PredefinedVariablesDashboard, mode: 
   const meta = dashboard.state.meta;
   const annotations = readAnnotationMap(dashboard);
 
-  if (nextDenyList === undefined) {
-    delete annotations[AnnoKeyIgnorePredefinedVariables];
-  } else {
-    annotations[AnnoKeyIgnorePredefinedVariables] = serializeIgnorePredefinedVariables(nextDenyList);
-  }
+  annotations[AnnoKeyIgnorePredefinedVariables] = serializeIgnorePredefinedVariables(nextDenyList);
 
   const nextMetaK8s: Partial<ObjectMeta> = {
     ...(meta.k8s ?? {}),
@@ -115,7 +115,7 @@ interface Props {
 export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
   const { meta } = dashboard.useState();
   const canEditDenyList = Boolean(meta.canSave) && !dashboard.managedResourceCannotBeEdited();
-  const globalDashboardVariablesEnabled = useFlagGlobalDashboardVariables();
+  const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
 
   const annotationValue = meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
   const mode = useMemo(() => {
@@ -156,7 +156,7 @@ export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
       label={t('dashboard.sidebar.predefined-variables.label', 'Predefined variables')}
       description={t(
         'dashboard.sidebar.predefined-variables.description',
-        'This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.'
+        'This dashboard does not receive global or folder-scoped variables by default. Choose which ones to include.'
       )}
       noMargin
       disabled={!canEditDenyList}

@@ -1366,6 +1366,54 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 	})
 }
 
+// Trash authorizes each hit against one index's group and resource, so a federated
+// trash search has no correct answer and is refused. The refusal has to come
+// before the federated indexes are resolved, because resolving one can build an
+// index -- hence the assertion on BuildIndex.
+func TestSearchRejectsFederatedTrashQueries(t *testing.T) {
+	backend := &mockSearchBackend{}
+	opts := SearchOptions{
+		Backend: backend,
+		Resources: &TestDocumentBuilderSupplier{
+			GroupsResources: map[string]string{
+				"group": "resource",
+			},
+		},
+		InitMinCount: 1,
+	}
+
+	support, err := newSearchServer(opts, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	req := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "ns",
+				Group:     "group",
+				Resource:  "resource",
+			},
+		},
+		Federated: []*resourcepb.ResourceKey{{
+			Namespace: "ns",
+			Group:     "group",
+			Resource:  "resource",
+		}},
+		Limit:     10,
+		IsDeleted: true,
+	}
+
+	rsp, err := support.Search(context.Background(), req)
+	require.NoError(t, err)
+	require.NotNil(t, rsp.Error)
+	require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
+	require.Equal(t, "searching deleted resources does not support federated queries", rsp.Error.Message)
+
+	backend.mu.Lock()
+	defer backend.mu.Unlock()
+	require.Empty(t, backend.buildIndexCalls, "the request must be refused before any index is resolved")
+}
+
 func TestJitterForKey(t *testing.T) {
 	maxAge := 24 * time.Hour
 
