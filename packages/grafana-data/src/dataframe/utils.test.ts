@@ -182,18 +182,22 @@ describe('alignTimeRangeCompareData', () => {
 
     expect(second.fields[0].values).toEqual(first.fields[0].values);
     expect(second.fields[0].config).toEqual(first.fields[0].config);
-    expect(second.fields).toHaveLength(2);
+    // time field + shadow backing + dashed foreground for the single value field
+    expect(second.fields).toHaveLength(3);
   });
 
   // #126189 acceptance criteria — "compare is dashed, current is solid".
   // The compare frame is the only one passed through alignTimeRangeCompareData; the current-period frame
   // never gets a lineStyle, so leaving the current frame's config untouched is what keeps it solid.
   // Assert on the returned frame — alignTimeRangeCompareData is non-mutating (#128796).
-  describe('dashed styling for comparison series (#126189)', () => {
+  //
+  // Each graphable value field is expanded into two series: a solid "shadow" backing (index N) drawn
+  // behind, and the dash-dot-dash foreground (index N+1) in the series color drawn on top.
+  describe('shadow + dashed styling for comparison series (#126189)', () => {
     const DASH_LINE_STYLE = { fill: 'dash', dash: [1, 5, 4, 5] };
 
     it.each([FieldType.number, FieldType.boolean, FieldType.enum])(
-      'applies the dashed lineStyle to %s value fields',
+      'expands %s value fields into a solid shadow backing followed by a dashed foreground',
       (fieldType) => {
         const frame = toDataFrame({
           fields: [
@@ -204,7 +208,23 @@ describe('alignTimeRangeCompareData', () => {
 
         const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
 
-        expect(result.fields[1].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+        // time + shadow + dashed
+        expect(result.fields).toHaveLength(3);
+
+        // shadow glow: solid, wide, faded, its own line color, hidden from legend/tooltip
+        const shadow = result.fields[1];
+        expect(shadow.config.custom?.lineStyle).toEqual({ fill: 'solid' });
+        expect(shadow.config.custom?.lineWidth).toBe(2); // default 1 + 1
+        expect(typeof shadow.config.custom?.lineColor).toBe('string');
+        expect(shadow.config.custom?.fillOpacity).toBe(0);
+        expect(shadow.config.custom?.showPoints).toBe('never');
+        expect(shadow.config.custom?.hideFrom).toEqual({ legend: true, tooltip: true, viz: false });
+
+        // dashed foreground keeps the series color (no explicit lineColor override)
+        const foreground = result.fields[2];
+        expect(foreground.config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+        expect(foreground.config.custom?.lineColor).toBeUndefined();
+        expect(foreground.config.custom?.hideFrom).toBeUndefined();
       }
     );
 
@@ -221,7 +241,7 @@ describe('alignTimeRangeCompareData', () => {
       expect(result.fields[0].config.custom?.lineStyle).toBeUndefined();
     });
 
-    it('does not add a lineStyle to string fields', () => {
+    it('does not expand or style string fields', () => {
       const frame = toDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [1000, 2000] },
@@ -232,11 +252,50 @@ describe('alignTimeRangeCompareData', () => {
 
       const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
 
+      // time + string (untouched) + shadow + dashed
+      expect(result.fields).toHaveLength(4);
       expect(result.fields[1].config.custom?.lineStyle).toBeUndefined();
-      expect(result.fields[2].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+      expect(result.fields[2].config.custom?.lineStyle).toEqual({ fill: 'solid' });
+      expect(result.fields[3].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
     });
 
-    it('preserves an existing lineStyle-adjacent custom config while adding the dash', () => {
+    it('groups every shadow ahead of every foreground for multi-series frames', () => {
+      // Shadows must all render before foregrounds so a later series' wider shadow never paints over
+      // an earlier series' dashed line.
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'a', type: FieldType.number, values: [10, 20] },
+          { name: 'b', type: FieldType.number, values: [30, 40] },
+        ],
+      });
+
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+      // time + (shadow a, shadow b) + (dashed a, dashed b)
+      expect(result.fields).toHaveLength(5);
+      expect(result.fields[0].type).toBe(FieldType.time);
+      expect(result.fields[1].config.custom?.lineStyle).toEqual({ fill: 'solid' });
+      expect(result.fields[2].config.custom?.lineStyle).toEqual({ fill: 'solid' });
+      expect(result.fields[3].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+      expect(result.fields[4].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+    });
+
+    it('gives each expanded field its own state so the join can assign independent origins', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'value', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+      // Shared state would let the join's in-place `state.origin` write bleed between the two series.
+      expect(result.fields[1].state).not.toBe(result.fields[2].state);
+    });
+
+    it('derives the shadow line width from an existing lineWidth and preserves it on the foreground', () => {
       const frame = toDataFrame({
         fields: [
           { name: 'time', type: FieldType.time, values: [1000, 2000] },
@@ -251,8 +310,13 @@ describe('alignTimeRangeCompareData', () => {
 
       const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
 
-      expect(result.fields[1].config.custom?.lineWidth).toBe(2);
-      expect(result.fields[1].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+      // shadow glow is wider than the configured line width
+      expect(result.fields[1].config.custom?.lineWidth).toBe(3); // configured 2 + 1
+      expect(result.fields[1].config.custom?.lineStyle).toEqual({ fill: 'solid' });
+
+      // dashed foreground keeps the configured line width
+      expect(result.fields[2].config.custom?.lineWidth).toBe(2);
+      expect(result.fields[2].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
     });
   });
 });

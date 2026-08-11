@@ -70,19 +70,12 @@ export const TimeSeriesPanel = ({
   const { frames, compareDiffMs } = useMemo(() => {
     let frames = prepareGraphableFields(data.series, theme, timeRange);
     if (frames != null) {
-      let compareDiffMs: number[] = [0];
       // Held separately from `frames` below: TS won't retain the null-check narrowing of `frames`
       // inside the .map callback once `frames` itself gets reassigned in this scope.
       const originalFrames = frames;
 
       frames = originalFrames.map((frame: DataFrame) => {
         const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
-
-        frame.fields.forEach((field) => {
-          if (field.type !== FieldType.time) {
-            compareDiffMs.push(diffMs);
-          }
-        });
 
         if (diffMs !== 0) {
           // Check if the compared frame needs time alignment
@@ -95,6 +88,18 @@ export const TimeSeriesPanel = ({
         }
 
         return frame;
+      });
+
+      // Built after alignment: alignTimeRangeCompareData expands each compare field into a shadow +
+      // dashed series, so the per-series diff must be indexed against the final field layout.
+      const compareDiffMs: number[] = [0];
+      frames.forEach((frame) => {
+        const diffMs = frame.meta?.timeCompare?.diffMs ?? 0;
+        frame.fields.forEach((field) => {
+          if (field.type !== FieldType.time) {
+            compareDiffMs.push(diffMs);
+          }
+        });
       });
 
       return { frames, compareDiffMs };

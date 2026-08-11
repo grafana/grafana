@@ -1,3 +1,5 @@
+import { getFieldSeriesColor } from '../field/scale';
+import { alpha, darken, lighten } from '../themes/colorManipulator';
 import { type GrafanaTheme2 } from '../themes/types';
 import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
 import { type TimeRange } from '../types/time';
@@ -126,8 +128,27 @@ export function addRow(dataFrame: DataFrame, row: Record<string, unknown> | unkn
   }
 }
 
+// Dash-dot-dash pattern for the foreground compare line.
+const COMPARE_DASH = [1, 5, 4, 5];
+
+// How much to lighten (light theme) / darken (dark theme) the series color to produce the
+// "shadow" backing line, so the compare series reads as a shadow of its current-period counterpart.
+const SHADOW_COLOR_AMOUNT = 0.3;
+
+// The shadow is drawn as a faded, translucent line just one step wider than the dashed foreground so
+// it reads as a subtle glow/halo hugging the pattern, while still preserving the peaks and valleys
+// that the dash pattern would otherwise leave in the gaps.
+const SHADOW_LINE_WIDTH_INCREASE = 1;
+const SHADOW_OPACITY = 0.35;
+
 /**
  * Aligns time range comparison data by adjusting timestamps and applying compare-specific styling.
+ *
+ * Each graphable field is expanded into two rendered series: a wide, faded, translucent "shadow"
+ * glow (a lightened/darkened shade of the series color) drawn behind, plus a dash-dot-dash line in
+ * the series color drawn on top. The glow keeps the shape continuous so peaks/valleys aren't lost in
+ * the dash gaps, while the shared color makes the relationship to the current-period series clear.
+ *
  * Returns a new DataFrame with new field objects rather than mutating the input - callers (e.g.
  * streaming/split-chunk query paths) may not own the frame or its fields, so mutating them in place
  * can corrupt state shared elsewhere (e.g. a datasource's response accumulator).
@@ -136,37 +157,80 @@ export function addRow(dataFrame: DataFrame, row: Record<string, unknown> | unkn
  * @param theme - The Grafana theme for color calculations
  */
 export function alignTimeRangeCompareData(series: DataFrame, diff: number, theme: GrafanaTheme2): DataFrame {
-  const fields = series.fields.map((field: Field): Field => {
+  const timeCompare = { diffMs: diff, isTimeShiftQuery: true };
+
+  // Non-graphable fields (time/string) keep their position; graphable fields are expanded into a
+  // shadow + dashed pair. All shadows are grouped ahead of all foregrounds so that, in multi-series
+  // frames, a later series' shadow can't paint over an earlier series' dashed line.
+  const passthrough: Field[] = [];
+  const shadows: Field[] = [];
+  const foregrounds: Field[] = [];
+
+  for (const field of series.fields) {
     // Align compare series time stamps with reference series
     const values =
       field.type === FieldType.time ? field.values.map((v: number) => (diff < 0 ? v - diff : v + diff)) : field.values;
 
-    const config = {
-      ...(field.config ?? {}),
-      custom: {
-        ...(field.config?.custom ?? {}),
-        timeCompare: {
-          diffMs: diff,
-          isTimeShiftQuery: true,
-        },
-      },
-    };
+    const isGraphable =
+      field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum;
 
-    // Apply visual styling for comparison series
-    if (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum) {
-      config.custom = {
-        ...config.custom,
-        lineStyle: {
-          fill: 'dash',
-          dash: [1, 5, 4, 5],
+    if (!isGraphable) {
+      passthrough.push({
+        ...field,
+        values,
+        config: {
+          ...(field.config ?? {}),
+          custom: { ...(field.config?.custom ?? {}), timeCompare },
         },
-      };
+      });
+      continue;
     }
 
-    return { ...field, values, config };
-  });
+    const baseColor = getFieldSeriesColor(field, theme).color;
+    const shadowTint = theme.isDark ? darken(baseColor, SHADOW_COLOR_AMOUNT) : lighten(baseColor, SHADOW_COLOR_AMOUNT);
+    const shadowColor = alpha(shadowTint, SHADOW_OPACITY);
+    const baseLineWidth = field.config?.custom?.lineWidth ?? 1;
 
-  return { ...series, fields };
+    // Shadow glow: wide, faded, translucent line drawn behind the dashed line so peaks/valleys survive
+    // the dash gaps. Hidden from the legend and tooltip so it doesn't duplicate the compare entry.
+    // Each expanded field needs its own `state`: the join step mutates `state.origin` in place, so a
+    // shared reference would make the shadow and dashed series resolve to the same origin field.
+    shadows.push({
+      ...field,
+      values,
+      state: { ...field.state },
+      config: {
+        ...(field.config ?? {}),
+        custom: {
+          ...(field.config?.custom ?? {}),
+          timeCompare,
+          lineColor: shadowColor,
+          lineWidth: baseLineWidth + SHADOW_LINE_WIDTH_INCREASE,
+          lineStyle: { fill: 'solid' },
+          fillOpacity: 0,
+          showPoints: 'never',
+          hideFrom: { legend: true, tooltip: true, viz: false },
+        },
+      },
+    });
+
+    // Dash-dot-dash foreground in the series color, drawn on top of the shadow.
+    foregrounds.push({
+      ...field,
+      values,
+      state: { ...field.state },
+      config: {
+        ...(field.config ?? {}),
+        custom: {
+          ...(field.config?.custom ?? {}),
+          timeCompare,
+          lineStyle: { fill: 'dash', dash: [...COMPARE_DASH] },
+        },
+      },
+    });
+  }
+
+  return { ...series, fields: [...passthrough, ...shadows, ...foregrounds] };
 }
 
 /**
