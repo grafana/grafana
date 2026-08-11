@@ -128,7 +128,7 @@ You can align all data points received in a fixed length of time by applying an 
 #### Select an alignment function
 
 During alignment, all data points are received in a fixed interval.
-Within each interval, as defined by the [alignment period](#alignment-period)), and for each time series, the data is aggregated into a single point.
+Within each interval, as defined by the [alignment period](#define-the-alignment-period), and for each time series, the data is aggregated into a single point.
 The value of that point is determined by the type of alignment function you use.
 
 For more information on alignment functions, refer to [alignment metric selector](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).

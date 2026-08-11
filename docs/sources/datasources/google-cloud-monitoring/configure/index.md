@@ -43,15 +43,15 @@ For authentication options and configuration details, refer to [Google authentic
 
 When you configure Google authentication, note the following requirements specific to Google Cloud Monitoring.
 
-### Configure a GCP Service Account
+### Configure a GCP service account
 
-When you [create a Google Cloud Platform (GCP) Service Account and key file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#create-a-gcp-service-account-and-key-file), the Service Account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
+When you [create a Google Cloud Platform (GCP) service account and key file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#create-a-gcp-service-account-and-key-file), the service account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
 
 {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
 ### Grant the GCE Default Service Account scope
 
-If Grafana is running on a Google Compute Engine (GCE) virtual machine, when you [configure a GCE Default Service Account](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#use-gce-default-service-account), you must also grant that Service Account access to the "Cloud Monitoring API" scope.
+If Grafana is running on a Google Compute Engine (GCE) virtual machine, when you [configure a GCE Default Service Account](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#use-gce-default-service-account), you must also grant that service account access to the "Cloud Monitoring API" scope.
 
 ## Enable Google Cloud Platform APIs
 
@@ -175,7 +175,7 @@ For more information about provisioning, and for available configuration options
 
 ### Provisioning examples
 
-**Using the JWT (Service Account key file) authentication type:**
+**Using the JWT (service account key file) authentication type:**
 
 ```yaml
 apiVersion: 1
@@ -199,7 +199,7 @@ datasources:
         -----END PRIVATE KEY-----
 ```
 
-**Using the JWT (Service Account private key path) authentication type:**
+**Using the JWT (service account private key path) authentication type:**
 
 ```yaml
 apiVersion: 1
@@ -276,7 +276,7 @@ provider "grafana" {
 
 The following examples show how to configure the Google Cloud Monitoring data source for each authentication method.
 
-**Using the JWT (Service Account key file) authentication type:**
+**Using the JWT (service account key file) authentication type:**
 
 ```hcl
 resource "grafana_data_source" "google_cloud_monitoring" {
@@ -297,7 +297,7 @@ resource "grafana_data_source" "google_cloud_monitoring" {
 }
 ```
 
-**Using the JWT (Service Account private key path) authentication type:**
+**Using the JWT (service account private key path) authentication type:**
 
 ```hcl
 resource "grafana_data_source" "google_cloud_monitoring" {

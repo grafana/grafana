@@ -36,7 +36,7 @@ Grafana ships with the Google Cloud Monitoring data source preinstalled in both 
 The following documents help you get started with the Google Cloud Monitoring data source:
 
 - [Configure the data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/configure/) - Set up authentication and connect to Google Cloud
-- [Query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/) - Create and edit Metric and SLO queries
+- [Query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/query-editor/) - Create and edit Metrics, SLO, and PromQL queries
 - [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/template-variables/) - Create dynamic dashboards with Google Cloud Monitoring variables
 - [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/annotations/) - Overlay Google Cloud Monitoring events on graphs
 - [Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/alerting/) - Create alert rules based on GCP metrics and SLOs
