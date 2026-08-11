@@ -88,6 +88,8 @@ export const SpanDetailLinkButtons = ({
 
   const { settings, isLoading } = useDataSourceInstanceSettings(datasourceUid);
 
+  console.log(createSpanLink?.(span));
+
   const links = useMemo(() => {
     let linkToProfiles: SpanLinkDef | undefined;
 
