@@ -775,7 +775,7 @@ func TestUnifiedMigration_RebuildIndexes_ContextCanceledDuringBackoff(t *testing
 	})
 
 	require.ErrorIs(t, err, context.Canceled)
-	require.NotContains(t, err.Error(), "temporary failure")
+	require.ErrorContains(t, err, "temporary failure")
 }
 
 func TestUnifiedMigration_RebuildIndexes_ContextDeadlineExceeded(t *testing.T) {
