@@ -114,6 +114,12 @@ To add a dashboard with `gcx`, follow these steps:
    - This step is required because Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
 1. Trigger a new pull to complete the sync. The resources are recreated as provisioned, with their original UIDs, so existing links keep working.
 
+{{< admonition type="note" >}}
+
+Deleting resources implies certain operational caveats. Refer to [How to delete existing resources in Grafana](#how-to-delete-existing-resources-in-grafana) for more information.
+
+{{< /admonition >}}
+
 ## Add a dashboard via JSON export
 
 To add an existing dashboard to Git Sync via JSON export, you need to:
@@ -124,6 +130,12 @@ To add an existing dashboard to Git Sync via JSON export, you need to:
 1. Delete the original unmanaged resources you want to sync from Grafana.
    - This step is required because Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
 1. Trigger a new pull to complete the sync. The resources are recreated as provisioned, with their original UIDs, so existing links keep working.
+
+{{< admonition type="note" >}}
+
+Deleting resources implies certain operational caveats. Refer to [How to delete existing resources in Grafana](#how-to-delete-existing-resources-in-grafana) for more information.
+
+{{< /admonition >}}
 
 ### Required JSON format
 
@@ -144,6 +156,18 @@ The structure includes:
 - `kind`: Identifies the resource type (Dashboard).
 - `metadata`: Contains the dashboard identifier `uid`. You can find the identifier in the dashboard's URL or in the exported JSON.
 - `spec`: Wraps your original dashboard JSON.
+
+## How to delete existing resources in Grafana
+
+If you add existing resources using `gcx` or via JSON import, the resource UID is kept, so you need to manually delete the original resource in Grafana to provision it with Git Sync.
+
+When you delete a resource, keep in mind the following:
+
+- You cannot restore deleted resources from the UI.
+- Dashboard version history does not carry over.
+- You need to reapply custom folder permissions. Refer to [Git Sync permissions and access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana) for more details.
+- Git Sync does not support alerts for the moment.
+- Deleting a folder deletes its alert rules. Move them out before deleting the folder.
 
 ## Work with Git-managed dashboards
 
