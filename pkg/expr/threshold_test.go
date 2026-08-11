@@ -265,9 +265,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 		},
 		{
 			// A caller that re-serialises the query through a map sorts the keys, which puts "data" ahead
-			// of "schema" — an order the frame decoder cannot read in its single pass. Decoding retries
-			// with the keys put back in order, so this still parses. Guards the error-string match in
-			// decodeLoadedDimensionsFrame: if the SDK rewords it, this case fails.
+			// of "schema" — an order the frame decoder cannot read in its single pass.
 			description: "frame loaded dimensions ordered data first are reordered and read",
 			query: `{
 				  "conditions": [

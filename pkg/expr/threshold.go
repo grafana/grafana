@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -293,31 +294,24 @@ func SetLoadedDimensionsToHysteresisCommand(query map[string]any, fingerprints F
 }
 
 func decodeLoadedDimensionsFrame(raw json.RawMessage) (*data.Frame, error) {
+	schemaIndex := bytes.Index(raw, []byte(`"schema"`))
+	dataIndex := bytes.Index(raw, []byte(`"data"`))
+	if schemaIndex >= 0 && dataIndex >= 0 && dataIndex < schemaIndex {
+		// this is the last resort of fixing the frame. It's a temporary dirty hack to workaround shuffling of json keys
+		// by the querier pipeline until it's switched to loadedFingerprints array
+		reordered, ok := schemaBeforeData(raw)
+		if ok {
+			raw = reordered
+		}
+	}
 	frame := &data.Frame{}
-	err := frame.UnmarshalJSON(raw)
-	if err == nil {
-		return frame, nil
-	}
-	// check if the error is due to malformed key order.
-	// See: https://github.com/grafana/grafana-plugin-sdk-go/blob/cc0b49b8370162cf7f321ed3b323a403c3308546/data/frame_json.go#L299-L301
-	if !strings.Contains(err.Error(), "malformed key order") {
+	if err := frame.UnmarshalJSON(raw); err != nil {
 		return nil, err
 	}
-
-	reordered, ok := schemaBeforeData(raw)
-	if !ok {
-		return nil, err
-	}
-	retried := &data.Frame{}
-	if retryErr := retried.UnmarshalJSON(reordered); retryErr != nil {
-		return nil, retryErr
-	}
-	return retried, nil
+	return frame, nil
 }
 
 func schemaBeforeData(frame json.RawMessage) (json.RawMessage, bool) {
-	// this is the last resort of fixing the frame. It's a temporary dirty hack to workaround shuffling of json keys
-	// by the querier pipeline until it's switched to loadedFingerprints array
 	var parts struct {
 		Schema json.RawMessage `json:"schema"`
 		Data   json.RawMessage `json:"data"`
