@@ -2505,6 +2505,15 @@ var (
 			Generate:     Generate{LegacyGo: true},
 		},
 		{
+			Name:         "libraryElementFolderUIDHeal",
+			Description:  "Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:        "react19",
 			Description: "Whether to use the new React 19 runtime",
 			Stage:       FeatureStageGeneralAvailability,

@@ -4193,6 +4193,20 @@
     },
     {
       "metadata": {
+        "name": "libraryElementFolderUIDHeal",
+        "resourceVersion": "1786410680079",
+        "creationTimestamp": "2026-08-11T01:11:20Z"
+      },
+      "spec": {
+        "description": "Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "libraryElements.folderTreeViaSearch",
         "resourceVersion": "1782273749340",
         "creationTimestamp": "2026-06-24T04:02:29Z"

@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folderreconcile"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
@@ -87,6 +88,7 @@ func ProvideBackgroundServiceRegistry(
 	natsSubscriber *infranats.SubscriberService,
 	sqlStore *sqlstore.SQLStore,
 	folderReconciler *folderreconcile.Reconciler,
+	folderUIDHeal *libraryelements.FolderUIDHealService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service,
 	_ serviceaccounts.Service,
@@ -142,6 +144,7 @@ func ProvideBackgroundServiceRegistry(
 		zanzanaService,
 		sqlStore,
 		folderReconciler,
+		folderUIDHeal,
 	)
 }
 
