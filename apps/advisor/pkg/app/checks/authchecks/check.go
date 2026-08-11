@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/apps/advisor/translations"
+	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 )
 

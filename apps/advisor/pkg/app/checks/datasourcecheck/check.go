@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/apps/advisor/translations"
+	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"

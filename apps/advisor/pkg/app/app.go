@@ -29,7 +29,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
-	"github.com/grafana/grafana/apps/advisor/translations"
+	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"

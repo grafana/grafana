@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-github/v82/github"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/apps/advisor/translations"
+	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
