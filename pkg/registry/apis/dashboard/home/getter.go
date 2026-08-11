@@ -7,10 +7,12 @@ import (
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/setting"
@@ -118,10 +120,11 @@ func (h *homeDashboard) Get(version string) (runtime.Object, error) {
 
 // load reads the configured file, refreshes the cached source, and invalidates
 // any previously cached version conversions. Must be called with versionsMu held.
-// Returns an error when no custom home path is configured or the file cannot be read.
+// Returns a Kubernetes NotFound status when no custom home path is configured
+// (matching legacy /api/dashboards/home), or an error when the file cannot be read.
 func (h *homeDashboard) load() error {
 	if h.fpath == "" {
-		return fmt.Errorf("no custom home dashboard configured")
+		return apierrors.NewNotFound(dashv0.DashboardResourceInfo.GroupResource(), DASHBOARD_NAME)
 	}
 
 	obj, err := readDashboard(h.fpath)
@@ -129,7 +132,7 @@ func (h *homeDashboard) load() error {
 		return err
 	}
 	if obj == nil {
-		return fmt.Errorf("no custom home dashboard configured")
+		return apierrors.NewNotFound(dashv0.DashboardResourceInfo.GroupResource(), DASHBOARD_NAME)
 	}
 
 	now := metav1.Now()

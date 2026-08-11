@@ -11,6 +11,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -134,7 +135,8 @@ func TestHomeDashboardGet_ErrorsWhenNoPathConfigured(t *testing.T) {
 
 	_, err := home.Get(dashv0.VERSION)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "no custom home dashboard configured")
+	require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
+	require.Contains(t, err.Error(), DASHBOARD_NAME)
 }
 
 func TestHomeDashboardGet_LoadsConfiguredFile(t *testing.T) {
