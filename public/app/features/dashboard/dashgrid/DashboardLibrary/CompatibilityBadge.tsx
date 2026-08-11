@@ -195,11 +195,12 @@ function getErrorTooltip(errorCode: string | undefined) {
   return (
     <Trans i18nKey="dashboard-library.compatibility-badge.error-tooltip">
       Compatibility check failed. First, verify the{' '}
-      <TextLink href="https://grafana.com/docs/grafana/latest/datasources/" external>
+      <TextLink variant="bodySmall" href="https://grafana.com/docs/grafana/latest/datasources/" external>
         data source
       </TextLink>{' '}
       is working. Then open the dashboard and review the{' '}
       <TextLink
+        variant="bodySmall"
         href="https://grafana.com/docs/grafana/latest/visualizations/dashboards/build-dashboards/modify-dashboard-settings/"
         external
       >
