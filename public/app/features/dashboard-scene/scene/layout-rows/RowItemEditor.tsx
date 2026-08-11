@@ -10,10 +10,10 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../sidebar/SectionFiltersList';
 import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../sidebar/SectionVariablesList';
-import { dashboardEditActions } from '../../sidebar/shared';
 import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
@@ -239,7 +239,7 @@ function editRowTitleAction(row: RowItem, title: string, prevTitle: string) {
     title = generateUniqueTitle('New row', existingNames);
   }
 
-  dashboardEditActions.edit({
+  edit({
     description: t('dashboard.edit-actions.row-title', 'Change row title'),
     source: row,
     perform: () => row.onChangeTitle(title),

@@ -3,8 +3,8 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
+import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
-import { dashboardEditActions } from '../../sidebar/shared';
 
 import { type AutoGridItem } from './AutoGridItem';
 
@@ -39,7 +39,7 @@ function RepeatByOption({ item, id }: { item: AutoGridItem; id?: string }) {
       sceneContext={item}
       repeat={variableName}
       onChange={(value?: string) => {
-        dashboardEditActions.edit({
+        edit({
           description: t('dashboard.edit-actions.panel-repeat-variable', 'Panel repeat by'),
           source: item,
           perform: () => item.setRepeatByVariable(value),

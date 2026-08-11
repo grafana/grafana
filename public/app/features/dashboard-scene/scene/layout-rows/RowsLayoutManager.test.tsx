@@ -3,7 +3,7 @@ import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
-import { dashboardEditActions } from '../../sidebar/shared';
+import { removeElement } from '../../actions/element/removeElement';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -20,22 +20,26 @@ let lastEditPerform: (() => void) | undefined;
 let lastEditUndo: (() => void) | undefined;
 let ungroupLayoutCalled = false;
 
-jest.mock('../../sidebar/shared', () => ({
-  dashboardEditActions: {
-    addElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    removeElement: jest.fn(({ perform, undo }) => {
-      perform();
-      lastUndo = undo;
-    }),
-    edit: jest.fn(({ perform, undo }) => {
-      perform();
-      lastEditPerform = perform;
-      lastEditUndo = undo;
-    }),
-  },
+jest.mock('../../actions/element/addElement', () => ({
+  addElement: jest.fn(({ perform, undo }) => {
+    perform();
+    lastUndo = undo;
+  }),
+}));
+
+jest.mock('../../actions/element/removeElement', () => ({
+  removeElement: jest.fn(({ perform, undo }) => {
+    perform();
+    lastUndo = undo;
+  }),
+}));
+
+jest.mock('../../actions/utils/edit', () => ({
+  edit: jest.fn(({ perform, undo }) => {
+    perform();
+    lastEditPerform = perform;
+    lastEditUndo = undo;
+  }),
 }));
 
 jest.mock('../layouts-shared/utils', () => ({
@@ -207,7 +211,7 @@ describe('RowsLayoutManager', () => {
 
       expect(rowsLayoutManager.state.rows).toHaveLength(1);
       expect(rowsLayoutManager.state.rows[0]).toBe(row2);
-      expect(dashboardEditActions.removeElement).toHaveBeenCalled();
+      expect(removeElement).toHaveBeenCalled();
     });
 
     it('should handle undo action correctly', () => {

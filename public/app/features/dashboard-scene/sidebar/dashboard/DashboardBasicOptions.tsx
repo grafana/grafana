@@ -2,8 +2,9 @@ import { useRef } from 'react';
 
 import { Input, TextArea } from '@grafana/ui';
 
+import { changeDescription } from '../../actions/dashboard/changeDescription';
+import { changeTitle } from '../../actions/dashboard/changeTitle';
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { dashboardEditActions } from '../shared';
 
 export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardScene; id?: string }) {
   const { title } = dashboard.useState();
@@ -28,7 +29,7 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
           return;
         }
 
-        dashboardEditActions.changeTitle({
+        changeTitle({
           source: dashboard,
           oldValue: valueBeforeEdit.current,
           newValue: e.currentTarget.value,
@@ -59,7 +60,7 @@ export function DashboardDescriptionInput({ dashboard, id }: { dashboard: Dashbo
           return;
         }
 
-        dashboardEditActions.changeDescription({
+        changeDescription({
           source: dashboard,
           oldValue: valueBeforeEdit.current,
           newValue: e.currentTarget.value,

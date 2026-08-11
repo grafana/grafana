@@ -11,7 +11,7 @@ import { updateAnnotationFromSavedQuery } from 'app/features/annotations/utils/s
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
-import { dashboardEditActions } from '../../sidebar/shared';
+import { edit } from '../../actions/utils/edit';
 
 import { type AnnotationLayer } from './AnnotationEditableElement';
 
@@ -127,7 +127,7 @@ function AnnotationDataSourcePicker({ layer }: { layer: AnnotationLayer }) {
             }
           : { ...query, datasource: dsRef };
 
-      dashboardEditActions.edit({
+      edit({
         description: t('dashboard.sidebar.annotation.change-data-source', 'Change annotation data source'),
         source: layer,
         perform: () => {

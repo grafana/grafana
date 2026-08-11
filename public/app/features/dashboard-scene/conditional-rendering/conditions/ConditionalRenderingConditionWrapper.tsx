@@ -3,7 +3,7 @@ import { type ReactNode } from 'react';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../sidebar/shared';
+import { edit } from '../../actions/utils/edit';
 import { DashboardInteractions } from '../../utils/interactions';
 import { type GroupConditionConditionType } from '../group/types';
 
@@ -30,7 +30,7 @@ export function ConditionalRenderingConditionWrapper({
   const onDeleteconditionalRenderingRule = () => {
     const index = getConditionIndex(model);
     DashboardInteractions.clickRemoveConditionalRuleButton({ ruleId });
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.conditional-rendering.conditions.wrapper.delete-condition', 'Delete Condition'),
       source: model,
       perform: () => removeCondition(model),
