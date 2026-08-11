@@ -10,18 +10,20 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
 
-jest.mock('../../actions/dashboardEditActions', () => ({
-  dashboardEditActions: {
-    addElement: jest.fn(({ perform }) => {
-      perform();
-    }),
-    removeElement: jest.fn(({ perform }) => {
-      perform();
-    }),
-    edit: jest.fn(({ perform }) => {
-      perform();
-    }),
-  },
+jest.mock('../../actions/element/addElement', () => ({
+  addElement: jest.fn(({ perform }) => {
+    perform();
+  }),
+}));
+jest.mock('../../actions/element/removeElement', () => ({
+  removeElement: jest.fn(({ perform }) => {
+    perform();
+  }),
+}));
+jest.mock('../../actions/utils/edit', () => ({
+  edit: jest.fn(({ perform }) => {
+    perform();
+  }),
 }));
 
 function buildScene(body: DashboardScene['state']['body']) {

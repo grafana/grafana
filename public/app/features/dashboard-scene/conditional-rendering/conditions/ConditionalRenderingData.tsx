@@ -14,7 +14,7 @@ import {
 import { type ConditionalRenderingDataKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
+import { edit } from '../../actions/utils/edit';
 import { getLowerTranslatedObjectType } from '../object';
 
 import { ConditionalRenderingConditionWrapper } from './ConditionalRenderingConditionWrapper';
@@ -195,7 +195,7 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
         options={enableConditionOptions}
         value={enableConditionOption}
         onChange={({ value: newValue }) => {
-          dashboardEditActions.edit({
+          edit({
             description: t('dashboard.edit-actions.edit-query-result-rule', 'Change query result rule'),
             source: model,
             perform: () => model.changeValue(Boolean(newValue)),

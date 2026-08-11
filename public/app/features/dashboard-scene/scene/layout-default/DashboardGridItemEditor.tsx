@@ -9,7 +9,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
+import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 
 import { type DashboardGridItem } from './DashboardGridItem';
@@ -99,7 +99,7 @@ function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
       options={directionOptions}
       value={repeatDirection ?? 'h'}
       onChange={(value) => {
-        dashboardEditActions.edit({
+        edit({
           description: t('dashboard.edit-actions.panel-repeat-direction', 'Repeat direction'),
           source: gridItem,
           perform: () => gridItem.setRepeatDirection(value),
@@ -123,7 +123,7 @@ function MaxPerRowOption({ gridItem, id }: OptionComponentProps & { id?: string 
       options={maxPerRowOptions}
       value={maxPerRow ?? 4}
       onChange={(value) => {
-        dashboardEditActions.edit({
+        edit({
           description: t('dashboard.edit-actions.panel-max-repeats-per-row', 'Max repeats per row'),
           source: gridItem,
           perform: () => gridItem.setMaxPerRow(value.value),
@@ -153,7 +153,7 @@ function RepeatByOption({ gridItem, id }: OptionComponentProps & { id?: string }
   const handleChange = useCallback(
     (value?: string) => {
       if (value !== variableName) {
-        dashboardEditActions.edit({
+        edit({
           description: t('dashboard.edit-actions.panel-repeat-variable', 'Panel repeat by'),
           source: gridItem,
           perform: () => handleStateChange(value),

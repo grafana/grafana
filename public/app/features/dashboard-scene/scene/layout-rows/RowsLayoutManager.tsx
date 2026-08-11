@@ -14,7 +14,9 @@ import {
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
+import { addElement } from '../../actions/element/addElement';
+import { removeElement } from '../../actions/element/removeElement';
+import { edit } from '../../actions/utils/edit';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
@@ -165,7 +167,7 @@ export class RowsLayoutManager
       newRow.setState({ title: newTitle });
     }
 
-    dashboardEditActions.addElement({
+    addElement({
       addedObject: newRow,
       source: this,
       perform: () => {
@@ -322,7 +324,7 @@ export class RowsLayoutManager
     let nextVariableSet: SceneVariables | undefined;
     let nextVariables: SceneVariable[] | undefined;
 
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.rows-layout.edit.ungroup-rows', 'Ungroup rows'),
       source: scene,
       perform: () => {
@@ -493,7 +495,7 @@ export class RowsLayoutManager
     if (skipUndo) {
       perform();
     } else {
-      dashboardEditActions.removeElement({
+      removeElement({
         removedObject: row,
         source: this,
         perform,

@@ -17,7 +17,7 @@ import {
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { dashboardEditActions } from '../actions/dashboardEditActions';
+import { removeVariable } from '../actions/variable/removeVariable';
 import { SourceIcon } from '../settings/ProvisionedControlsSection';
 import { isVariableEditable } from '../settings/variables/utils';
 import { getPredefinedOrigin } from '../utils/predefinedVariables';
@@ -85,7 +85,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const onClickDeleteVariable = useCallback(() => {
     const set = variable.parent;
     if (set instanceof SceneVariableSet) {
-      dashboardEditActions.removeVariable({ source: set, removedObject: variable });
+      removeVariable({ source: set, removedObject: variable });
     }
   }, [variable]);
 

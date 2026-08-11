@@ -3,7 +3,7 @@ import { type DropResult } from '@hello-pangea/dnd';
 import { VariableHide } from '@grafana/data';
 import { type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
 
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
+import { edit } from '../../actions/utils/edit';
 
 export interface ListIds {
   visible: string;
@@ -64,7 +64,7 @@ export function createDragEndHandler(
     const reordered = [...lists[listIds.visible], ...lists[listIds.controlsMenu], ...lists[listIds.hidden]];
     const draggableSet = new Set(reordered);
 
-    dashboardEditActions.edit({
+    edit({
       source: variableSet,
       description,
       perform: () => {

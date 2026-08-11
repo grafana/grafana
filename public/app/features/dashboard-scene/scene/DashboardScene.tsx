@@ -63,7 +63,7 @@ import {
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
-import { dashboardEditActions } from '../actions/dashboardEditActions';
+import { edit } from '../actions/utils/edit';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -1175,7 +1175,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (skipUndo) {
       perform();
     } else {
-      dashboardEditActions.edit({
+      edit({
         description: t('dashboard.edit-actions.switch-layout', 'Switch layout'),
         source: this,
         perform,

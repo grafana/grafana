@@ -16,7 +16,7 @@ import {
 import { useStyles2 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
-import { dashboardEditActions } from '../actions/dashboardEditActions';
+import { moveElement } from '../actions/element/moveElement';
 import { ObjectsReorderedOnCanvasEvent, DashboardStateChangedEvent } from '../sidebar/events';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
@@ -414,7 +414,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const prevDestinationTabs = [...destination.state.tabs];
     const prevDestinationSlug = destination.state.currentTabSlug;
 
-    dashboardEditActions.moveElement({
+    moveElement({
       source,
       movedObject: tab,
       perform: () => {

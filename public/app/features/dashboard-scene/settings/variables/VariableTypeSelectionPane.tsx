@@ -15,7 +15,8 @@ import {
 } from '@grafana/scenes';
 import { Box, Card, Sidebar, Stack, useStyles2 } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
+import { addVariable } from '../../actions/variable/addVariable';
+import { changeVariableType } from '../../actions/variable/changeVariableType';
 import { isRowItem, isTabItem } from '../../scene/types/LayoutItemTypeGuards';
 import { getDashboardSceneLike, type DashboardSceneLike } from '../../scene/types/dashboard';
 import { type DashboardSidebarPane } from '../../sidebar/types';
@@ -65,7 +66,7 @@ function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>
       const sectionVars = variablesSet.state.variables ?? [];
       const newVar = getVariableScene(type, { name: getNextAvailableId(getVariableNamePrefix(type), sectionVars) });
 
-      dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
+      addVariable({ source: variablesSet, addedObject: newVar });
 
       if (sectionOwner === dashboard) {
         DashboardInteractions.variableTypeSelected({ type });
@@ -131,7 +132,7 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
         key: variable.state.key,
       });
 
-      dashboardEditActions.changeVariableType({
+      changeVariableType({
         source: variableSet,
         oldVariable: variable,
         newVariable,

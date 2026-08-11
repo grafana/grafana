@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { CustomVariable } from '@grafana/scenes';
 import { Button, FieldValidationMessage, Modal, Stack, TextArea } from '@grafana/ui';
-import { dashboardEditActions } from 'app/features/dashboard-scene/actions/dashboardEditActions';
+import { edit } from 'app/features/dashboard-scene/actions/utils/edit';
 
 import { ValuesFormatSelector } from '../../components/CustomVariableForm';
 import { VariableValuesPreview } from '../../components/VariableValuesPreview';
@@ -126,7 +126,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
       await updateDraftState({ query: event.currentTarget.value });
     },
     onSaveOptions() {
-      dashboardEditActions.edit({
+      edit({
         source: variable,
         description: t('dashboard-scene.use-modal-editor.description.change-variable-query', 'Change variable query'),
         perform: async () => {

@@ -1,6 +1,6 @@
 import { AdHocFiltersVariable, SceneVariableSet } from '@grafana/scenes';
 
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
+import { addVariable } from '../../actions/variable/addVariable';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
@@ -8,13 +8,9 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 
 import { openAddFilterForm } from './AddFilters';
 
-jest.mock('../../actions/dashboardEditActions', () => ({
-  dashboardEditActions: {
-    addVariable: jest.fn(),
-  },
-}));
+jest.mock('../../actions/variable/addVariable', () => ({ addVariable: jest.fn() }));
 
-const addVariableMock = jest.mocked(dashboardEditActions.addVariable);
+const addVariableMock = jest.mocked(addVariable);
 
 describe('openAddFilterForm', () => {
   beforeEach(() => {

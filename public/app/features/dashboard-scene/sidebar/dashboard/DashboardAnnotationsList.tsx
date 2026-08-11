@@ -8,7 +8,7 @@ import { t, Trans } from '@grafana/i18n';
 import { type SceneDataLayerProvider } from '@grafana/scenes';
 import { Box, Button, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
+import { edit } from '../../actions/utils/edit';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -77,7 +77,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
         query: { ...moved.state.query, hide: isHidden, placement },
       };
 
-      dashboardEditActions.edit({
+      edit({
         source: dataLayerSet,
         description: t('dashboard.sidebar.annotations.reorder-description', 'Reorder annotations list'),
         perform: () => {

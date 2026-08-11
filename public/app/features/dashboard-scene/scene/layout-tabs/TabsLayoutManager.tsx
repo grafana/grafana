@@ -13,7 +13,10 @@ import {
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
+import { addElement } from '../../actions/element/addElement';
+import { moveElement } from '../../actions/element/moveElement';
+import { removeElement } from '../../actions/element/removeElement';
+import { edit } from '../../actions/utils/edit';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
@@ -234,7 +237,7 @@ export class TabsLayoutManager
       newTab.setState({ title: newTitle });
     }
 
-    dashboardEditActions.addElement({
+    addElement({
       addedObject: newTab,
       source: this,
       perform: () => {
@@ -386,7 +389,7 @@ export class TabsLayoutManager
     let nextVariableSet: SceneVariables | undefined;
     let nextVariables: SceneVariable[] | undefined;
 
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.tabs-layout.edit.ungroup-tabs', 'Ungroup tabs'),
       source: scene,
       perform: () => {
@@ -570,7 +573,7 @@ export class TabsLayoutManager
     if (skipUndo) {
       perform();
     } else {
-      dashboardEditActions.removeElement({
+      removeElement({
         removedObject: tab,
         source: this,
         perform,
@@ -605,7 +608,7 @@ export class TabsLayoutManager
     const originalFromIndex = this.state.tabs.findIndex((tab) => tab === objectToMove);
     const originalToIndex = this.state.tabs.findIndex((tab) => tab === destinationTab);
 
-    dashboardEditActions.moveElement({
+    moveElement({
       source: this,
       movedObject: objectToMove,
       perform: () => {

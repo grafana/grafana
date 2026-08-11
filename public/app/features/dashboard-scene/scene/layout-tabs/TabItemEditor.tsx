@@ -10,7 +10,7 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
+import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
 import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../sidebar/SectionFiltersList';
 import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../sidebar/SectionVariablesList';
@@ -208,7 +208,7 @@ function editTabTitleAction(tab: TabItem, title: string, prevTitle: string) {
     title = generateUniqueTitle('New tab', existingNames);
   }
 
-  dashboardEditActions.edit({
+  edit({
     description: t('dashboard.edit-actions.tab-title', 'Change tab title'),
     source: tab,
     perform: () => tab.onChangeTitle(title),

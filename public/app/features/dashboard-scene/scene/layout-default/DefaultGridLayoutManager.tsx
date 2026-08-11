@@ -23,7 +23,9 @@ import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
-import { dashboardEditActions } from '../../actions/dashboardEditActions';
+import { addElement } from '../../actions/element/addElement';
+import { removeElement } from '../../actions/element/removeElement';
+import { edit } from '../../actions/utils/edit';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import {
   ObjectsReorderedOnCanvasEvent,
@@ -163,7 +165,7 @@ export class DefaultGridLayoutManager
         key: getGridItemKeyForPanelId(panelId),
       });
 
-      dashboardEditActions.addElement({
+      addElement({
         addedObject: vizPanel,
         source: this,
         perform: () => {
@@ -204,7 +206,7 @@ export class DefaultGridLayoutManager
     }
 
     if (config.featureToggles.dashboardNewLayouts) {
-      dashboardEditActions.edit({
+      edit({
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: newGridItem.state.body,
         source: this,
@@ -253,7 +255,7 @@ export class DefaultGridLayoutManager
       return;
     }
 
-    dashboardEditActions.removeElement({
+    removeElement({
       removedObject: gridItem.state.body,
       source: this,
       perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
@@ -321,7 +323,7 @@ export class DefaultGridLayoutManager
     }
 
     const parent = gridItem.parent instanceof SceneGridRow ? gridItem.parent : grid;
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.edit-actions.duplicate-panel', 'Duplicate panel'),
       addedObject: newGridItem.state.body,
       source: this,

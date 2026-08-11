@@ -11,7 +11,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { dashboardEditActions } from '../actions/dashboardEditActions';
+import { edit } from '../actions/utils/edit';
 import { type VizPanelLinks } from '../scene/PanelLinks';
 import { useSidebarInputAutoFocus } from '../scene/layouts-shared/utils';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
@@ -24,7 +24,7 @@ import { PanelStylesSection } from './PanelStylesSection';
 export function createPresetApplyHandler(panel: VizPanel) {
   return function onApplyPreset(preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) {
     const prevOptions = panel.state.options;
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
       source: panel,
       perform: () => {
@@ -208,7 +208,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
       onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
       onFocus={() => setPrevDescription(panel.state.description)}
       onBlur={() => {
-        dashboardEditActions.edit({
+        edit({
           description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
           source: panel,
           perform: () => panel.setState({ description: description }),
@@ -225,7 +225,7 @@ export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: str
   const onChange = () => {
     const newDisplayMode = displayMode === 'default' ? 'transparent' : 'default';
 
-    dashboardEditActions.edit({
+    edit({
       description: t('dashboard.edit-actions.panel-background', 'Change panel background'),
       source: panel,
       perform: () => panel.setState({ displayMode: newDisplayMode }),
@@ -245,7 +245,7 @@ export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: 
     return;
   }
 
-  dashboardEditActions.edit({
+  edit({
     description: t('dashboard.edit-actions.panel-title', 'Change panel title'),
     source: panel,
     perform: () => updatePanelTitleState(panel, title),
