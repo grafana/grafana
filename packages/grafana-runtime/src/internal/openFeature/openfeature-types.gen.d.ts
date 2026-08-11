@@ -77,6 +77,7 @@ declare module "@openfeature/core" {
     | "table.refactorNested"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
+    | "table.inspectDataTableNG"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
