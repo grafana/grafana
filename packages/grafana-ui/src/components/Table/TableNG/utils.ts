@@ -189,6 +189,19 @@ export function shouldTextWrap(field: Field): boolean {
 }
 
 /**
+ * @internal
+ * Returns true if the field's cells pretty-print their value as JSON. An `other` field only does so
+ * when no explicit cell type was chosen — one set to Pill or Markdown should render as that instead.
+ */
+export function rendersAsJson(field: Field, cellType = getCellOptions(field).type): boolean {
+  return (
+    cellType === TableCellDisplayMode.JSONView ||
+    ((cellType == null || cellType === TableCellDisplayMode.Auto) &&
+      getAutoRendererDisplayMode(field) === TableCellDisplayMode.JSONView)
+  );
+}
+
+/**
  * @internal wrap a cell height measurer to clamp its output to the maxHeight defined in the field, if any.
  */
 function clampByMaxHeight(measurer: MeasureCellHeight, maxHeight = Infinity): MeasureCellHeight {
@@ -502,10 +515,12 @@ export function getRowHeight(
       const cellValueRaw = row.__index === -1 ? displayName : row[displayName];
       if (cellValueRaw != null) {
         // For non-string fields (e.g. Time, Number), the raw value is a number/epoch that
-        // AutoCell formats via field.display() before rendering. Measure the rendered string
+        // AutoCell formats via field.display() before rendering. A JSON cell reformats strings too,
+        // expanding compact source into an indented block. Measure the rendered string either way
         // so the height matches what is actually displayed in the cell.
+        const needsFormatting = field.type !== FieldType.string || rendersAsJson(field);
         const cellValueForMeasuring =
-          field.type !== FieldType.string && row.__index !== -1 && field.display != null
+          needsFormatting && row.__index !== -1 && field.display != null
             ? formattedValueToString(field.display(cellValueRaw))
             : cellValueRaw;
         const colWidth = columnWidths[fieldIdx];
@@ -552,7 +567,10 @@ export function shouldTextOverflow(field: Field): boolean {
     // so we need to ensurefield.type === FieldType.string we don't apply overflow hover states for type image
     (field.type === FieldType.string && cellOptions.type !== TableCellDisplayMode.Image) ||
     // regardless of the underlying cell type, data links cells have text overflow.
-    cellOptions.type === TableCellDisplayMode.DataLinks;
+    cellOptions.type === TableCellDisplayMode.DataLinks ||
+    // an unwrapped JSON cell collapses its pretty-printed block to a single truncated line, so
+    // expanding on hover is the only way to read the value short of opening the inspector.
+    rendersAsJson(field, cellOptions.type);
 
   return eligibleCellType && !shouldTextWrap(field) && !isCellInspectEnabled(field);
 }
@@ -1470,8 +1488,9 @@ const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx
 const measureMarkdownColWidth: MeasureColWidth = () => 0;
 
 // JSON cells pretty-print their value to a multi-line block, but how that block lays out depends on
-// wrapping. With wrapText on it renders as `pre`/`pre-line` — newlines preserved, one visible line
-// per JSON line — so the width is the widest line. Without wrapping the newlines collapse and it
+// wrapping. With wrapText on it renders as `pre-wrap`, so newlines are preserved and the width the
+// column wants is its widest line — anything longer soft-wraps to extra height, which is fine.
+// Without wrapping the newlines collapse and it
 // renders on a single line, so the width is the whole value (bounded by MAX_AUTO_WIDTH). Sizing an
 // unwrapped column to its widest line would under-measure the collapsed text and clip it, so pick
 // the measurement to match the layout. Counting the pretty text (indentation included) slightly
@@ -1496,6 +1515,7 @@ const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>
   [TableCellDisplayMode.Actions]: measureActionsColWidth,
   [TableCellDisplayMode.DataLinks]: measureDataLinksColWidth,
   [TableCellDisplayMode.Markdown]: measureMarkdownColWidth,
+  [TableCellDisplayMode.JSONView]: measureJsonColWidth,
 };
 
 const DEFAULT_GROWTH_WEIGHT = 1;
@@ -1581,14 +1601,9 @@ export function computeContentAwareColWidths(
     // stays wider than a sparse one — the cap keeps it bounded and it wraps to extra height within.
     // The cell type's registered measurer handles pills/links/actions/graphical; text is default.
     const cellType = getCellOptions(field).type;
-    const resolvedType = cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType;
-    // A cell renders as JSON when it's an explicit JSONView cell or the field is untyped (`other`),
-    // mirroring the displayJsonValue attachment in render-hooks. JSON pretty-prints to a multi-line
-    // block, so it needs measureJsonColWidth (widest line) rather than plain-text total-length
-    // sizing. A registered measurer still wins — pills/actions/etc. set an explicit cell type whose
-    // renderer ignores the JSON display — so JSON is only the fallback for otherwise-unmeasured cells.
-    const rendersAsJson = cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other;
-    const measure = COL_WIDTH_MEASURERS[resolvedType] ?? (rendersAsJson ? measureJsonColWidth : measureTextColWidth);
+    const resolvedType =
+      cellType == null || cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType;
+    const measure = COL_WIDTH_MEASURERS[resolvedType] ?? measureTextColWidth;
     const cellWidth = measure(field, effectiveSampleSize, measureCtx);
     const footerWidth = measureFooterWidth(field, typographyCtx.avgCharWidth);
 

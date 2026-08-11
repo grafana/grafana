@@ -78,6 +78,7 @@ import {
   isCellInspectEnabled,
   parseStyleJson,
   predicateByName,
+  rendersAsJson,
   shouldTextOverflow,
   shouldTextWrap,
 } from './utils';
@@ -174,12 +175,6 @@ export type FromFieldsFn = (
 ) => FromFieldsResult;
 
 /**
- * Builds column definitions and cell root renderers from a set of fields.
- * Internal: callers should use `useColumnBuilderFromFields`, which memoizes the
- * per-call closure and resolves `resolvedFilterResult` (flat → top-level filterResult,
- * nested → per-parent via `parentIndex`).
- */
-/**
  * Returns a copy of `fields` with the table's cell-type-specific display processors attached — the
  * Pill mappings override and the JSON pretty-printer. These are derived on fresh field objects
  * rather than mutated onto the caller's fields: the column builder used to attach them by mutating
@@ -209,9 +204,10 @@ export function prepareFieldsForDisplay(fields: Field[], theme: GrafanaTheme2): 
       prepared.display = getDisplayProcessor({ field: prepared, theme });
     }
 
-    // JSONView cells, and untyped `other` fields, render their value as pretty-printed JSON. Copy
-    // first (if the Pill branch above didn't already) so the original field object is never mutated.
-    if (cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other) {
+    // JSONView cells, and `other` fields left on the default cell type, render their value as
+    // pretty-printed JSON. Copy first (if the Pill branch above didn't already) so the original
+    // field object is never mutated.
+    if (rendersAsJson(field, cellType)) {
       prepared = prepared === field ? { ...field } : prepared;
       prepared.display = displayJsonValue(prepared);
     }
@@ -220,6 +216,12 @@ export function prepareFieldsForDisplay(fields: Field[], theme: GrafanaTheme2): 
   });
 }
 
+/**
+ * Builds column definitions and cell root renderers from a set of fields.
+ * Internal: callers should use `useColumnBuilderFromFields`, which memoizes the
+ * per-call closure and resolves `resolvedFilterResult` (flat → top-level filterResult,
+ * nested → per-parent via `parentIndex`).
+ */
 function buildColumnsFromFields(
   fields: Field[],
   widths: number[],

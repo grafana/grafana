@@ -549,6 +549,27 @@ describe('prepareFieldsForDisplay', () => {
     expect(prepared.display!('{"a":1}').text).toBe('{\n "a": 1\n}');
   });
 
+  it.each([TableCellDisplayMode.Pill, TableCellDisplayMode.Markdown])(
+    'leaves an `other` field alone when it is explicitly a %s column',
+    (type) => {
+      // These renderers ignore the JSON display processor, so attaching it only clobbers the field's
+      // own formatting — an array of pill values would become a multi-line JSON blob.
+      const value = ['a', 'b'];
+      const field: Field = {
+        name: 'j',
+        type: FieldType.other,
+        values: [value],
+        config: { custom: { cellOptions: { type } } },
+        display: baseDisplay,
+      };
+
+      const [prepared] = prepareFieldsForDisplay([field], createTheme());
+
+      expect(prepared).toBe(field);
+      expect(prepared.display!(value).text).toBe('a,b');
+    }
+  );
+
   it('returns fields that need no display processor by reference, unchanged', () => {
     const field: Field = {
       name: 's',
