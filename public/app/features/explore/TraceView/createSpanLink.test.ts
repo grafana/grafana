@@ -311,7 +311,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
-        lokiExploreHref('service.name="serviceName", pod="podName"', ['serviceName', 'service'])
+        lokiExploreHref('service_name="serviceName", pod="podName"', ['serviceName', 'service'])
       );
     });
 

@@ -2,10 +2,15 @@ import { type TraceToLogsTag } from '@grafana/o11y-ds-frontend';
 
 import { type TraceSpan } from './components/types/trace';
 
+/** Loki/Prometheus label names cannot contain dots; OTel attributes commonly use them. */
+export function toLokiLabelName(name: string): string {
+  return name.replace(/\./g, '_');
+}
+
 const normalize = (tag: string) => {
   return {
     key: tag,
-    value: tag.includes('.') ? tag.replace('.', '_') : undefined,
+    value: tag.includes('.') ? toLokiLabelName(tag) : undefined,
   };
 };
 
@@ -41,6 +46,13 @@ export function getSpanTags(span: TraceSpan) {
   ];
 }
 
+type TagFormatOptions = {
+  labelValueSign?: string;
+  joinBy?: string;
+  /** Transform the label name written into the query (e.g. dots → underscores for Loki). */
+  normalizeLabelName?: (name: string) => string;
+};
+
 /**
  * Creates a string representing all the tags already formatted for use in the query. The tags are filtered so that
  * only intersection of tags that exist in a span and tags that you want are serialized into the string.
@@ -48,19 +60,27 @@ export function getSpanTags(span: TraceSpan) {
 export function getFormattedTags(
   allTags: TraceToLogsTag[],
   tagsToUse: TraceToLogsTag[],
-  { labelValueSign = '=', joinBy = ', ' }: { labelValueSign?: string; joinBy?: string } = {}
+  { joinBy = ', ', ...filterOptions }: TagFormatOptions = {}
 ) {
   // In order, try to use mapped tags -> tags -> default tags
   // Build tag portion of query
-  return getFilteredTags(allTags, tagsToUse, labelValueSign).join(joinBy);
+  return getFilteredTags(allTags, tagsToUse, filterOptions).join(joinBy);
 }
 
-export function getFilteredTags(allTags: TraceToLogsTag[], tagsToUse: TraceToLogsTag[], labelValueSign = '=') {
+export function getFilteredTags(
+  allTags: TraceToLogsTag[],
+  tagsToUse: TraceToLogsTag[],
+  { labelValueSign = '=', normalizeLabelName }: Omit<TagFormatOptions, 'joinBy'> = {}
+) {
   return allTags
     .map((tag) => {
       const keyValue = tagsToUse.find((keyValue) => keyValue.key === tag.key);
       if (keyValue) {
-        return `${keyValue.value ? keyValue.value : keyValue.key}${labelValueSign}"${tag.value}"`;
+        let labelName = keyValue.value ? keyValue.value : keyValue.key;
+        if (normalizeLabelName) {
+          labelName = normalizeLabelName(labelName);
+        }
+        return `${labelName}${labelValueSign}"${tag.value}"`;
       }
       return undefined;
     })

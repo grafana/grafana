@@ -2,9 +2,15 @@ import { type DataQuery, type DataSourceInstanceSettings, type DataSourceJsonDat
 import { type TraceToLogsTag, type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
 import { type LokiQuery } from 'app/features/loki-helpers/types';
 
-import { getDefaultLogsTags, getFilteredTags, getFormattedTags, getSpanTags } from '../crossSignalConfig';
+import {
+  getDefaultLogsTags,
+  getFilteredTags,
+  getFormattedTags,
+  getSpanTags,
+  toLokiLabelName,
+} from '../crossSignalConfig';
 
-import { type TraceSpan } from './types/trace';
+import { type Trace, type TraceSpan } from './types/trace';
 
 export function getTraceToLogsSpanQuery(
   span: TraceSpan,
@@ -23,6 +29,70 @@ export function getTraceToLogsSpanQuery(
   );
 }
 
+/**
+ * Builds a trace-to-logs query for the whole trace (no span id filter).
+ * Uses the root span for tag mapping and collects service names across the trace for Loki job variants.
+ */
+export function getTraceToLogsTraceQuery(
+  trace: Trace,
+  logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData>,
+  traceToLogsOptions: TraceToLogsOptionsV2
+) {
+  const rootSpan = getRootSpan(trace.spans) ?? trace.spans[0];
+  if (!rootSpan) {
+    return { query: undefined, tags: '' };
+  }
+
+  const allTags = getSpanTags(rootSpan);
+  const serviceNames = getTraceServiceNames(trace);
+  return getTraceToLogsQuery(
+    allTags,
+    logsDataSourceSettings,
+    traceToLogsOptions,
+    trace.traceID,
+    undefined,
+    serviceNames
+  );
+}
+
+function getRootSpan(spans: TraceSpan[]): TraceSpan | undefined {
+  const allIDs = new Set(spans.map(({ spanID }) => spanID));
+  let candidateSpan: TraceSpan | undefined;
+
+  for (const span of spans) {
+    const hasInternalRef = span.references?.some(
+      ({ traceID, spanID }) => traceID === span.traceID && allIDs.has(spanID)
+    );
+    if (hasInternalRef) {
+      continue;
+    }
+
+    if (!candidateSpan) {
+      candidateSpan = span;
+      continue;
+    }
+
+    const thisRefLength = span.references?.length || 0;
+    const candidateRefLength = candidateSpan.references?.length || 0;
+    if (
+      thisRefLength < candidateRefLength ||
+      (thisRefLength === candidateRefLength && span.startTime < candidateSpan.startTime)
+    ) {
+      candidateSpan = span;
+    }
+  }
+
+  return candidateSpan;
+}
+
+function getTraceServiceNames(trace: Trace): string[] {
+  const names: string[] = [];
+  for (const span of trace.spans) {
+    names.push(...getServiceNames(getSpanTags(span), span.process.serviceName));
+  }
+  return [...new Set(names)];
+}
+
 export function getTraceToLogsQuery(
   allTags: TraceToLogsTag[],
   logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData>,
@@ -39,8 +109,9 @@ export function getTraceToLogsQuery(
   let tags = '';
   switch (logsDataSourceSettings?.type) {
     case 'loki':
-      tags = getFormattedTags(allTags, tagsToUse);
-      const tagMatchers = getFilteredTags(allTags, tagsToUse);
+      // Trace/OTel attributes use dots; Loki label names require underscores.
+      tags = getFormattedTags(allTags, tagsToUse, { normalizeLabelName: toLokiLabelName });
+      const tagMatchers = getFilteredTags(allTags, tagsToUse, { normalizeLabelName: toLokiLabelName });
       query = getQueryForLoki(
         traceID,
         spanID,

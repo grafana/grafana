@@ -29,15 +29,20 @@ export const LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.
 interface Props {
   linkModel: LinkModel;
   traceDatasourceUid?: string;
+  /** When true, tooltip copy refers to the whole trace rather than a span. */
+  forTrace?: boolean;
 }
 
-export const LogsLinkButton = ({ linkModel, traceDatasourceUid }: Props) => {
+export const LogsLinkButton = ({ linkModel, traceDatasourceUid, forTrace }: Props) => {
   const styles = useStyles2(getStyles);
   const presence = useHasLogs(linkModel);
 
   const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
 
-  const tooltip = useMemo(() => getLogsButtonTooltip(settings, presence), [presence, settings]);
+  const tooltip = useMemo(
+    () => getLogsButtonTooltip(settings, presence, forTrace ? 'trace' : 'span'),
+    [forTrace, presence, settings]
+  );
 
   const isLoading = presence === 'loading';
 
@@ -49,6 +54,7 @@ export const LogsLinkButton = ({ linkModel, traceDatasourceUid }: Props) => {
           icon: isLoading ? 'spinner' : 'gf-logs',
           disabled: presence === 'absent',
           variant: presence === 'absent' ? 'secondary' : 'primary',
+          fill: forTrace ? 'outline' : undefined,
           tooltip,
         }}
       ></DataLinkButton>
@@ -230,7 +236,8 @@ export function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSource
 
 export function getLogsButtonTooltip(
   settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined,
-  presence: LogsPresence
+  presence: LogsPresence,
+  level: 'span' | 'trace' = 'span'
 ) {
   const defaultCTA = t(
     'explore.span-detail-link-buttons.related-logs-tooltip',
@@ -242,6 +249,12 @@ export function getLogsButtonTooltip(
   const options = getTraceToLogsOptions(settings.jsonData);
 
   if (presence === 'absent') {
+    if (level === 'trace') {
+      return t(
+        'explore.span-detail-link-buttons.logs-for-this-trace.no-logs-tooltip',
+        'No logs found for this trace using the trace data source configuration.'
+      );
+    }
     if (options?.filterBySpanID) {
       return t(
         'explore.span-detail-link-buttons.logs-for-this-span.no-logs-tooltip',
@@ -260,6 +273,12 @@ export function getLogsButtonTooltip(
     );
   }
 
+  if (level === 'trace') {
+    return t(
+      'explore.span-detail-link-buttons.logs-for-this-trace.tooltip',
+      'See logs related to this trace using the trace data source configuration.'
+    );
+  }
   if (options?.filterBySpanID) {
     return t(
       'explore.span-detail-link-buttons.logs-for-this-span.tooltip',

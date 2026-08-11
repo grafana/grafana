@@ -2,8 +2,8 @@ import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafa
 import { type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
 import { type LokiQuery } from 'app/features/loki-helpers/types';
 
-import { getTraceToLogsQuery, getTraceToLogsSpanQuery } from './logsLink';
-import { type TraceSpan } from './types/trace';
+import { getTraceToLogsQuery, getTraceToLogsSpanQuery, getTraceToLogsTraceQuery } from './logsLink';
+import { type Trace, type TraceSpan } from './types/trace';
 
 const lokiSettings = {
   uid: 'loki1_uid',
@@ -116,6 +116,32 @@ describe('getTraceToLogsQuery loki alternatives', () => {
     });
   });
 
+  it('normalizes dotted trace label names to underscores for Loki', () => {
+    const { query, tags } = getTraceToLogsQuery(
+      [
+        { key: 'service.name', value: 'api' },
+        { key: 'k8s.pod.name', value: 'pod-1' },
+        { key: 'http.request.method', value: 'GET' },
+      ],
+      lokiSettings,
+      {
+        ...defaultOptions,
+        tags: [
+          { key: 'service.name', value: '' },
+          { key: 'k8s.pod.name' },
+          { key: 'http.request.method' },
+        ],
+      },
+      '7946b05c2e2e4e5a'
+    );
+    const queries = query as LokiQuery[];
+
+    expect(tags).toBe('service_name="api", k8s_pod_name="pod-1", http_request_method="GET"');
+    expect(queries[0].expr.startsWith('{service_name="api", k8s_pod_name="pod-1", http_request_method="GET"}')).toBe(
+      true
+    );
+  });
+
   it('skips job variants when there are no service names', () => {
     const { query } = getTraceToLogsQuery(
       [{ key: 'cluster', value: 'cluster1' }],
@@ -169,5 +195,37 @@ describe('getTraceToLogsQuery loki alternatives', () => {
     );
 
     expect(query).toBeUndefined();
+  });
+
+  it('builds a trace-level query without span id filters and with services from the whole trace', () => {
+    const childSpan = createSpan({
+      spanID: 'childspan0000001',
+      process: {
+        serviceName: 'payments',
+        tags: [{ key: 'cluster', value: 'cluster1' }],
+      },
+      references: [{ refType: 'CHILD_OF', traceID: '7946b05c2e2e4e5a', spanID: '6605c7b08e715d6c' }],
+    });
+    const rootSpan = createSpan();
+    const trace = {
+      traceID: '7946b05c2e2e4e5a',
+      spans: [rootSpan, childSpan],
+      processes: {
+        p1: rootSpan.process,
+        p2: childSpan.process,
+      },
+    } as Trace;
+
+    const { query } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
+    const queries = query as LokiQuery[];
+
+    expect(queries[0].expr).toContain('traceID="7946b05c2e2e4e5a"');
+    expect(queries[0].expr).not.toContain('spanID=');
+    expect(queries[0].refId).toBe('t2l:default:traceID');
+    expect(queries.find((q) => q.refId === 't2l:job:traceID')?.expr).toContain('(checkout|payments)');
+    expect(queries.at(-1)).toEqual({
+      expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} |= "7946b05c2e2e4e5a"',
+      refId: 'line-contains',
+    });
   });
 });
