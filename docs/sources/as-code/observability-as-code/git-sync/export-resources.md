@@ -93,22 +93,26 @@ To add a dashboard with `gcx`, follow these steps:
 1. Set up the `gcx` context to point to your instance as documented in [Defining contexts](https://github.com/grafana/gcx/#1-authenticate).
 1. Pull the resources you want to sync from the instance to your local repository:
 
-```
-gcx resources pull dashboards --path <REPO_PATH>
-```
+   ```
+   gcx resources pull dashboards --path <REPO_PATH>
+   ```
 
-Next, commit and push the resources to your Git repository:
+1. Commit and push the resources to your Git repository:
 
-```
-git add <DASHBOARDS_PATH>
-git commit -m "Add dashboards from Grafana"
-git push
-```
+   ```
+   git add <DASHBOARDS_PATH>
+   git commit -m "Add dashboards from Grafana"
+   git push
+   ```
 
-Where:
+   Where:
 
-- _<GIT_REPO>_: The path to the repository synced with Git Sync
-- _<DASHBOARDS_PATH>_: The path where the dashboards you want to export are located. The dashboards path must be under the repository
+   - _<GIT_REPO>_: The path to the repository synced with Git Sync
+   - _<DASHBOARDS_PATH>_: The path where the dashboards you want to export are located. The dashboards path must be under the repository
+
+1. Delete the original unmanaged resources you want to sync from Grafana.
+   - This step is required because Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
+1. Trigger a new pull to complete the sync. The resources are recreated as provisioned, with their original UIDs, so existing links keep working.
 
 ## Add a dashboard via JSON export
 
@@ -117,6 +121,9 @@ To add an existing dashboard to Git Sync via JSON export, you need to:
 1. Export the dashboard as JSON.
 1. Convert it to the Custom Resource Definition (CRD) format required by the Grafana App Platform.
 1. Commit the converted file to your Git repository.
+1. Delete the original unmanaged resources you want to sync from Grafana.
+   - This step is required because Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
+1. Trigger a new pull to complete the sync. The resources are recreated as provisioned, with their original UIDs, so existing links keep working.
 
 ### Required JSON format
 
