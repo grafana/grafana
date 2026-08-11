@@ -414,6 +414,7 @@ describe('provisioning data mapping', () => {
   describe('commit signing', () => {
     it('writes signerName and signerEmail to spec when provided', () => {
       const formData = makeFormData('github');
+      formData.signingMethod = 'ssh';
       formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
       const spec = dataToSpec(formData);
       expect(spec.commit?.signerName).toBe('Jane Doe');
@@ -422,6 +423,7 @@ describe('provisioning data mapping', () => {
 
     it('trims author fields before writing to spec', () => {
       const formData = makeFormData('github');
+      formData.signingMethod = 'ssh';
       formData.commit = { signerName: '  Jane Doe  ', signerEmail: '  jane@example.com  ' };
       const spec = dataToSpec(formData);
       expect(spec.commit?.signerName).toBe('Jane Doe');
@@ -437,6 +439,7 @@ describe('provisioning data mapping', () => {
 
     it('writes only the author fields that are set', () => {
       const formData = makeFormData('github');
+      formData.signingMethod = 'ssh';
       formData.commit = { signerName: 'Jane Doe' };
       const spec = dataToSpec(formData);
       expect(spec.commit?.signerName).toBe('Jane Doe');
@@ -466,11 +469,11 @@ describe('provisioning data mapping', () => {
       expect(spec.commit?.signingMethod).toBe('ssh');
     });
 
-    it('omits signingMethod when not set', () => {
+    it('omits the signer fields when no signing method is set', () => {
       const formData = makeFormData('github');
       formData.commit = { signerName: 'Jane Doe', signerEmail: 'jane@example.com' };
       const spec = dataToSpec(formData);
-      expect(spec.commit).not.toHaveProperty('signingMethod');
+      expect(spec.commit).toBeUndefined();
     });
 
     it('writes smimeCertificate to spec when set', () => {

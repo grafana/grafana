@@ -433,6 +433,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
               signingMethodName="signingMethod"
               signingKeyName="commitSigningKey"
               smimeCertificateName="smimeCertificate"
+              authorNameName="commit.authorName"
+              authorEmailName="commit.authorEmail"
               signerNameName="commit.signerName"
               signerEmailName="commit.signerEmail"
               signerIsAuthorName="commit.signerIsAuthor"

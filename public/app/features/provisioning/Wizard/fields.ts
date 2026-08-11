@@ -24,8 +24,21 @@ export interface FieldConfig {
 // Provider-specific field configurations for all providers
 // This needs to be a function for translations to work
 const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => {
-  // Commit signing fields are identical across all git-based providers.
-  const signingFields = {
+  // Commit identity and signing fields are identical across all git-based providers.
+  const commitFields = {
+    commitAuthorName: {
+      label: t('provisioning.shared.commit-author-name-label', 'Author name'),
+      description: t(
+        'provisioning.shared.commit-author-name-description',
+        'Author all commits as this name instead of the user who made the change.'
+      ),
+      placeholder: t('provisioning.shared.commit-author-name-placeholder', 'Grafana'),
+    },
+    commitAuthorEmail: {
+      label: t('provisioning.shared.commit-author-email-label', 'Author email'),
+      description: t('provisioning.shared.commit-author-email-description', 'Email used for the commit author.'),
+      placeholder: t('provisioning.shared.commit-author-email-placeholder', 'noreply@grafana.com'),
+    },
     signingMethod: {
       label: t('provisioning.shared.signing-method-label', 'Commit signing'),
       description: t(
@@ -144,7 +157,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
       ),
     },
-    ...signingFields,
+    ...commitFields,
   });
 
   return {
@@ -200,7 +213,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a merge request when saving changes. If the repository does not allow direct changes to the main branch, a merge request may still be required.'
         ),
       },
-      ...signingFields,
+      ...commitFields,
     },
     bitbucket: {
       token: {
@@ -276,7 +289,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
-      ...signingFields,
+      ...commitFields,
     },
     git: {
       token: {
@@ -333,7 +346,7 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
           'Allows users to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.'
         ),
       },
-      ...signingFields,
+      ...commitFields,
     },
     local: {
       path: {
@@ -361,6 +374,8 @@ export const getGitProviderFields = (
       tokenConfig: FieldConfig;
       tokenUserConfig?: FieldConfig;
       emailConfig?: FieldConfig;
+      commitAuthorNameConfig?: FieldConfig;
+      commitAuthorEmailConfig?: FieldConfig;
       signingMethodConfig?: FieldConfig;
       signingKeyConfig?: FieldConfig;
       smimeCertificateConfig?: FieldConfig;
@@ -382,6 +397,8 @@ export const getGitProviderFields = (
   const tokenConfig = configs.token;
   const tokenUserConfig = configs.tokenUser; // Optional field, only for some providers
   const emailConfig = configs.email; // Optional field, only for Bitbucket
+  const commitAuthorNameConfig = configs.commitAuthorName; // Optional, only for git-based providers
+  const commitAuthorEmailConfig = configs.commitAuthorEmail; // Optional, only for git-based providers
   const signingMethodConfig = configs.signingMethod; // Optional, only for git-based providers
   const signingKeyConfig = configs.commitSigningKey; // Optional, only for git-based providers
   const smimeCertificateConfig = configs.smimeCertificate; // Paired with commitSigningKey when format is smime
@@ -401,6 +418,8 @@ export const getGitProviderFields = (
     tokenConfig,
     tokenUserConfig,
     emailConfig,
+    commitAuthorNameConfig,
+    commitAuthorEmailConfig,
     signingMethodConfig,
     signingKeyConfig,
     smimeCertificateConfig,

@@ -24,6 +24,8 @@ function Wrapper({ defaultSigningKeyConfigured, defaultValues, onSubmit = () => 
         messageTemplateName="commit.singleResourceMessageTemplate"
         enforceTemplateName="commit.enforceTemplate"
         type="github"
+        authorNameName="commit.authorName"
+        authorEmailName="commit.authorEmail"
         signingMethodName="signingMethod"
         signingKeyName="commitSigningKey"
         smimeCertificateName="smimeCertificate"
