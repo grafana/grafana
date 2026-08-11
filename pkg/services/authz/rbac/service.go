@@ -800,7 +800,7 @@ func (s *Service) getRendererPermissions(ctx context.Context, action string) (ma
 	_, span := s.tracer.Start(ctx, "authz_direct_db.service.getRendererPermissions")
 	defer span.End()
 
-	if action == "dashboards:read" || action == "folders:read" || action == "datasources:read" || action == "datasources:query" {
+	if action == "dashboards:read" || action == "folders:read" || action == "datasources:read" || action == "datasources:query" || action == "plugins.metas:read" {
 		return map[string]bool{"*": true}, nil
 	}
 	return map[string]bool{}, nil
@@ -1034,8 +1034,15 @@ func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap m
 		return true, nil
 	}
 
+	// Named object with no parent folder. Storage enforces that folder-scoped
+	// kinds always carry a non-root folder (apistore RequireFolder), and that
+	// non-folder-scoped kinds can never carry one (EnableFolderSupport=false).
+	// An empty parent folder on a named check therefore means the kind does not
+	// live in folders, and the stack role alone decides.
+	// Source: pkg/storage/unified/apistore/prepare.go (fn verifyFolder)
 	if req.ParentFolder == "" {
-		return false, fmt.Errorf("k8s authorizer supports folder level not resource level authorization")
+		ctxLogger.Debug("folderAuthz: named object without parent folder, stack role decides")
+		return true, nil
 	}
 
 	// The stack-role grant lives under the resource-type action

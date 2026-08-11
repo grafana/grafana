@@ -1,6 +1,8 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { addNewPanelFromSidebar } from './utils';
+import { test, expect } from './fixtures';
+import { type Sidebar } from './page-objects';
+import { expectVisibleRow, expectVisibleTab } from './utils';
 
 test.use({
   featureToggles: {
@@ -10,8 +12,23 @@ test.use({
   },
 });
 
-const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
-const DASHBOARD_NAME = 'Test variable output';
+async function undockMegaMenu(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
+  await test.step('Undock the mega menu', async () => {
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.NavMenu.Menu)
+      .getByRole('button', { name: 'Undock menu' })
+      .click();
+  });
+}
+
+async function addPanelFromSidebar(sidebar: Sidebar, clickAddButton = true) {
+  await test.step('Add panel from sidebar', async () => {
+    if (clickAddButton) {
+      await sidebar.toolbar.clickButton('Add');
+    }
+    await sidebar.addOptions.clickNewPanelButton();
+  });
+}
 
 test.describe(
   'Dashboard panels',
@@ -19,116 +36,87 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new panel', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
+    test('adds new panels from the sidebar and from the canvas', async ({
+      gotoDashboardPage,
+      selectors,
+      components,
+      sidebar,
+      panels,
+      canvas,
+    }) => {
+      const dashboardPage = await gotoDashboardPage({});
+      // undock the mega menu so that the "Configure visualization" button on the panel does not shrink
+      await undockMegaMenu(dashboardPage, selectors);
 
-      const undockButton = page.getByRole('button', { name: 'Undock menu' });
-      await undockButton.click();
+      // by default on a new dashboard, the "Add options" are already opened in the sidebar, so no need to click on the "Add" toolbar button
+      await addPanelFromSidebar(sidebar, false);
+      await expect(panels.getPanels('New panel')).toHaveCount(1);
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await addPanelFromSidebar(sidebar);
+      await expect(panels.getPanels('New panel')).toHaveCount(2);
 
-      await page.evaluate(() => {
-        window.scrollTo(0, document.body.scrollHeight);
-      });
-      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addPanel).last().click();
+      // use the canvas
+      await canvas.addPanel();
+      await expect(panels.getPanels('New panel')).toHaveCount(3);
 
-      // Check that new panel has been added
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toBeVisible();
-
-      // Check that pressing the configure button shows the panel editor
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.content)
-        .getByRole('button', { name: /configure/i })
-        .click();
+      // check that pressing the configure button shows the panel editor
+      const panelContainer = panels.getPanel('New panel');
+      await panelContainer.hover();
+      await panelContainer.getByRole('button', { name: /configure/i }).click();
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content)).toBeVisible();
     });
 
-    test('can add a panel from the sidebar on a new dashboard', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({});
-      // check that the sidebar is open on Add section
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton)).toBeVisible();
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
-      // check that new panel has been added
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toBeVisible();
-      addNewPanelFromSidebar(dashboardPage, selectors);
-      // check that another has been added
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('New panel'))
-      ).toHaveCount(2);
-    });
-
-    test('adds a new panel from the sidebar into the layout that was selected last', async ({
+    test('adds new panels from the sidebar and from the canvas into the last selected layout (tab or row)', async ({
       gotoDashboardPage,
       selectors,
-      page,
+      sidebar,
+      panels,
+      rows,
+      tabs,
+      canvas,
     }) => {
       const dashboardPage = await gotoDashboardPage({});
-      await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
+      await undockMegaMenu(dashboardPage, selectors);
 
-      // group into tab
-      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
-      await page.getByText('Group into tab').click();
+      // by default on a new dashboard, the "Add options" are already opened in the sidebar, so no need to click on the "Add" toolbar button
+      await addPanelFromSidebar(sidebar, false);
 
-      // add new panel from the sidebar
-      addNewPanelFromSidebar(dashboardPage, selectors);
+      // group the new panel into a tab
+      await canvas.groupPanels('tab');
+      const tab1 = await expectVisibleTab('New tab', tabs);
 
-      // check that another panel has been added inside the tab
-      const tab = dashboardPage.getByGrafanaSelector(selectors.components.LayoutContainer('tab New tab'));
-      await expect(tab.getByTestId(selectors.components.Panels.Panel.title('New panel'))).toHaveCount(2);
+      // add a new panel to this tab
+      await addPanelFromSidebar(sidebar);
+      await expect(panels.getPanels('New panel', tab1)).toHaveCount(2);
 
-      // add new tab
-      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addTab).click();
+      // add another tab and a new panel inside
+      await canvas.addTab();
+      const tab2 = await expectVisibleTab('New tab 1', tabs);
 
-      // add new panel from the sidebar
-      addNewPanelFromSidebar(dashboardPage, selectors);
-      //check that new panel has been added there
-      const tab2 = dashboardPage.getByGrafanaSelector(selectors.components.LayoutContainer('tab New tab 1'));
-      await expect(tab2.getByTestId(selectors.components.Panels.Panel.title('New panel'))).toHaveCount(1);
+      await addPanelFromSidebar(sidebar);
+      await expect(panels.getPanels('New panel', tab2)).toHaveCount(1);
 
-      // panel is selected
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
-      ).toBeVisible();
-      addNewPanelFromSidebar(dashboardPage, selectors);
-      await expect(tab2.getByTestId(selectors.components.Panels.Panel.title('New panel'))).toHaveCount(2);
+      await addPanelFromSidebar(sidebar);
+      await expect(panels.getPanels('New panel', tab2)).toHaveCount(2);
 
       // group into row
-      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
-      await page.getByText('Group into row').click();
-      // add into the row
-      addNewPanelFromSidebar(dashboardPage, selectors);
-      const row = dashboardPage.getByGrafanaSelector(selectors.components.LayoutContainer('row New row'));
+      await canvas.groupPanels('row', tab2);
+      const row1 = await expectVisibleRow('New row', rows);
 
-      // scroll to the bottom of the row to load all panels
-      const scrollContainer = page
-        .getByTestId(selectors.components.DashboardEditPaneSplitter.primaryBody)
-        .locator('> div')
-        .first();
-      await scrollContainer.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+      // add a panel to the row
+      await addPanelFromSidebar(sidebar);
+      await expect(panels.getPanels('New panel', row1)).toHaveCount(3);
 
-      await expect(row.getByTestId(selectors.components.Panels.Panel.title('New panel'))).toHaveCount(3);
-      // add new row and add into it
-      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow).click();
-      addNewPanelFromSidebar(dashboardPage, selectors);
+      // add another row and a couple of panels to it
+      await canvas.addRow();
+      const row2 = await expectVisibleRow('New row 1', rows);
 
-      const row1 = dashboardPage.getByGrafanaSelector(selectors.components.LayoutContainer('row New row 1'));
-      await expect(row1.getByTestId(selectors.components.Panels.Panel.title('New panel'))).toHaveCount(1);
+      await addPanelFromSidebar(sidebar);
+      await expect(panels.getPanels('New panel', row2)).toHaveCount(1);
 
-      // panel is selected
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'))
-      ).toBeVisible();
-      addNewPanelFromSidebar(dashboardPage, selectors);
-
-      await scrollContainer.evaluate((el) => el.scrollTo(0, el.scrollHeight));
-
-      // check that the new panel is added next to the last panel selected
-      await expect(row1.getByTestId(selectors.components.Panels.Panel.title('New panel'))).toHaveCount(2);
+      // use the canvas
+      await canvas.addPanel(row2);
+      await expect(panels.getPanels('New panel', row2)).toHaveCount(2);
     });
   }
 );

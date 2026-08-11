@@ -270,6 +270,7 @@
       "placeholder-search-devices-by-ip-address": "IP adresine göre cihaz arayın."
     },
     "user-list-page": {
+      "label-active-users": "",
       "label-all-users": "Tüm kullanıcılar",
       "label-anonymous-devices": "Anonim cihazlar",
       "label-organization-users": "Kuruluş kullanıcıları",
@@ -612,12 +613,6 @@
       "title-restore-version": "Sürümü geri yükle",
       "title-restoring-alertmanager-configuration": "Alertmanager yapılandırması geri yükleniyor"
     },
-    "alerts-activity-banner": {
-      "description": "Grafana tarafından yönetilen uyarı kurallarınızı tek yerden takip etmek için yeni bir sayfa kullanıma açıldı. Hangi uyarıların tetiklendiğini görün, geçmişe dönük verileri inceleyin; önceliklendirme ve kök neden analizinizi güçlendirmek için filtreleyin ve gruplandırın.",
-      "open-button": "Uyarı Etkinliğini Göster",
-      "open-button-aria": "Uyarı Etkinliğini Aç",
-      "title": "Uyarı Etkinliği artık kullanılabilir!"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "Sırala",
       "label-filter-placeholder-search-alerts-by-labels": "Etiketlere göre uyarı ara",
@@ -792,7 +787,9 @@
         "value-in-transition": "Geçişteki değer"
       },
       "error": {
-        "server-error": "Uyarı durumu geçmişi sorgusu başarısız oldu: Sunucu bir hata döndürdü"
+        "server-error": "Uyarı durumu geçmişi sorgusu başarısız oldu: Sunucu bir hata döndürdü",
+        "server-error-description": "",
+        "title": ""
       },
       "filter": {
         "clear": "Filtreleri temizle",
@@ -1164,7 +1161,8 @@
       "api-machinery": {
         "with-causes": ""
       },
-      "failedWith": "{{-config}}, {{status}} durumu ile başarısız oldu: {{-message}}"
+      "failedWith": "{{-config}}, {{status}} durumu ile başarısız oldu: {{-message}}",
+      "time-interval-in-use": ""
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -1612,6 +1610,24 @@
       "action-button": "İçe aktar",
       "additional-settings": "Ek ayarlar",
       "alert-rules": "Uyarı kuralları",
+      "autosync-active-block": {
+        "description": "",
+        "disable-sync": "",
+        "go-to-settings": "",
+        "import-rules": "",
+        "title": ""
+      },
+      "autosync-review": {
+        "back": "",
+        "badge": "",
+        "card-title": "",
+        "enable": "",
+        "heading": "",
+        "scope": "",
+        "scope-value": "",
+        "source": "",
+        "subtitle": ""
+      },
       "confirm": {
         "body": "İçe aktarma işlemini başlatmak istediğinizden emin misiniz? Bu eylem, Grafana Alerting'de yeni kaynaklar oluşturacaktır.",
         "confirm": "İçe aktarmayı başlat",
@@ -1658,6 +1674,27 @@
       "import-source": "İçe aktarma kaynağı",
       "info-description": "Bu sihirbaz, uyarı kurallarını ve bildirim kaynaklarını haricî kaynaklardan Grafana Alerting'e aktarmanıza yardımcı olur. Daha fazla bilgi için <2>belgelere</2> bakın.",
       "info-title": "İçe aktarma sihirbazı",
+      "loading": "",
+      "method": {
+        "autosync": "",
+        "autosync-datasource-label": "",
+        "autosync-datasource-placeholder": "",
+        "autosync-desc": "",
+        "autosync-no-datasources-desc": "",
+        "autosync-no-datasources-title": "",
+        "autosync-title": "",
+        "heading": "",
+        "next-steps": "",
+        "promote": "",
+        "promote-desc": "",
+        "promote-title": "",
+        "promote-warning-desc": "",
+        "promote-warning-title": "",
+        "stage": "",
+        "stage-desc": "",
+        "stage-title": "",
+        "subtitle": ""
+      },
       "namespace": {
         "description": "Mevcut bir ad alanı aramak için yazın",
         "label": "Ad alanı"
@@ -1681,6 +1718,10 @@
         "filter": "Filtre",
         "folder": "Hedef klasör",
         "heading": "İçe aktarmayı incele",
+        "merge-route": "",
+        "merge-summary": "",
+        "method": "",
+        "method-promote": "",
         "namespace": "Ad alanı",
         "nothing": "İçe aktarılacak hiçbir şey yok",
         "nothing-desc": "Her iki adım da atlandı. Geri dönün ve en az bir içe aktarma kaynağı yapılandırın.",
@@ -1701,11 +1742,20 @@
         "source": "Kaynak",
         "start": "İçe aktarmayı başlat",
         "subtitle": "Her bölümü gözden geçirin ve emin olduktan sonra içe aktarma işlemini başlatın.",
+        "templates": "",
         "validation-error": "Doğrulanamadı.",
         "validation-ok": "Çakışma bulunamadı. İçe aktarmaya hazır.",
         "validation-warning": "Çakışmaları önlemek için bazı kaynakların adı değiştirilecektir.",
         "will-import-config": "Bu yapılandırma içe aktarılacak",
         "will-import-rules": "Kurallar içe aktarılacak",
+        "merge-inhibition-rules_one": "",
+        "merge-inhibition-rules_other": "",
+        "merge-receivers_one": "",
+        "merge-receivers_other": "",
+        "merge-templates_one": "",
+        "merge-templates_other": "",
+        "merge-time-intervals_one": "",
+        "merge-time-intervals_other": "",
         "will-import-rules-count_one": "{{count}} kural içe aktarılacak",
         "will-import-rules-count_other": "{{count}} kural içe aktarılacak"
       },
@@ -1721,6 +1771,7 @@
       "step1": {
         "datasource": "Alertmanager veri kaynağı",
         "heading": "Bildirim Kaynaklarını İçe Aktar",
+        "next-disabled-tooltip": "",
         "no-datasources": "Alertmanager veri kaynağı bulunamadı",
         "no-permission-desc": "Bildirim kaynaklarını içe aktarma izniniz yok. <strong>alerting.notifications:write</strong> iznine ihtiyacınız var. Bu adımı atlayabilirsiniz.",
         "no-permission-title": "İzinler yetersiz",
@@ -1741,6 +1792,11 @@
         },
         "source-title": "İçe aktarma kaynağı",
         "subtitle": "İletişim noktalarını, bildirim politikalarını, şablonları ve sessize alma zamanlamalarını haricî bir Alertmanager'dan içe aktarın.",
+        "templates-desc": "",
+        "templates-dropzone": "",
+        "templates-duplicate": "",
+        "templates-label": "",
+        "templates-remove": "",
         "upload": "YAML dosyasını yükle",
         "validating": "Yapılandırma doğrulanıyor...",
         "validation-error": "Doğrulanamadı",
@@ -1800,6 +1856,10 @@
         "description": "Kuralların içe aktarılacağı klasör",
         "label": "Hedef klasör"
       },
+      "templates": {
+        "conflicts-with-config": "",
+        "duplicate-file-name": ""
+      },
       "wizard": {
         "cancel": "İptal et",
         "cancel-confirm-body": "İptal etmek istediğinizden emin misiniz? Tüm ilerlemeniz kaybolacak.",
@@ -1807,10 +1867,14 @@
         "cancel-confirm-title": "İçe aktarma iptal edilsin mi?",
         "cancel-confirm-yes": "Değişiklikleri sil",
         "skip": "Atla",
+        "step-method": "",
+        "step-method-desc": "",
         "step-notifications": "Bildirim kaynakları",
         "step-notifications-desc": "İletişim noktaları, politikalar, şablonlar",
         "step-review": "İncele ve içe aktar",
         "step-review-desc": "Ön izle ve içe aktarmayı onayla",
+        "step-review-enable": "",
+        "step-review-enable-desc": "",
         "step-rules": "Uyarı kuralları",
         "step-rules-desc": "Uyarı ve kayıt kuralları"
       },
@@ -1827,6 +1891,11 @@
       "renamed-intervals_other": "{{count}} zaman aralığı yeniden adlandırılacak",
       "renamed-receivers_one": "{{count}} iletişim noktasının adı değiştirilecek",
       "renamed-receivers_other": "{{count}} iletişim noktasının adı değiştirilecek"
+    },
+    "import-to-gma-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
     },
     "import-to-gma-tool": {
       "pageTitle": "Grafana Alerting'e aktar"
@@ -2457,10 +2526,6 @@
         "permanently-remove": "Bu işlem <1>{{routeName}}</1> bildirim politikasını kalıcı olarak kaldıracaktır.",
         "title-delete-notification-policy": "Bildirim politikasını sil"
       },
-      "error-modal": {
-        "failed-to-update-your-configuration": "Yapılandırmanız güncellenemedi:",
-        "title-something-went-wrong": "Bir hata oluştu"
-      },
       "filter-description": "Yönlendirmeleri virgülle ayrılmış bir eşleştirici listesi kullanarak filtreleyin, ör.<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Otomatik olarak oluşturulan politikalar",
       "matchers": "Eşleşenler",
@@ -2632,6 +2697,10 @@
       "max-data-points": "MD (Maks. Veri Noktası) = {{maxDataPoints}}",
       "min-interval": "Min. Aralık = {{minInterval}}"
     },
+    "query-viewer": {
+      "no-eval-data": "",
+      "no-query": ""
+    },
     "queryAndExpressionsStep": {
       "custom": "Özel",
       "disableAdvancedOptions": {
@@ -2765,7 +2834,8 @@
       "label-data-source": "Veri kaynağı"
     },
     "rule-details-drawer": {
-      "go-to-detail-view": "Uyarı kuralını göster"
+      "go-to-detail-view": "Uyarı kuralını göster",
+      "silence-button": ""
     },
     "rule-details-expression": {
       "label-expression": "İfade"
@@ -2872,7 +2942,6 @@
           "stop-alerting-inside-range": "Aralık içinde olduğunda uyarıyı durdur (veya bekleme durumuna geç)",
           "stop-alerting-less": "Daha az olduğunda uyarıyı durdur (veya bekleme durumuna geç)",
           "stop-alerting-more": "Daha fazla olduğunda uyarıyı durdur (veya bekleme durumuna geç)",
-          "stop-alerting-not-equal": "Eşit değilse uyarıyı durdur (veya bekleme durumuna geç)",
           "stop-alerting-outside-range": "Aralık dışında olduğunda uyarıyı durdur (veya bekleme durumuna geç)",
           "title": "Özel kurtarma eşiği"
         }
@@ -3083,7 +3152,8 @@
         "show": "Göster"
       },
       "manage-alerts": "Bu veri kaynaklarında hem Grafana arayüzünde hem de yapılandırıldıkları veri kaynağında bu uyarı kurallarını yönetebilmek için \"Uyarı Yönetimi\" arayüzü üzerinden yönetimi seçebilirsiniz.",
-      "namespace-autocomplete-unavailable": "Çok sayıda klasör olduğundan otomatik tamamlama kullanılamıyor",
+      "namespace-multiple-datasources": "",
+      "namespace-search-incomplete": "",
       "placeholder-all-data-sources": "Tüm veri kaynakları",
       "placeholder-contact-point": "İletişim noktası seçin",
       "placeholder-data-sources": "Veri kaynaklarını seçin",
@@ -3114,6 +3184,17 @@
       "text-federated": "Şirket dışı",
       "text-provisioned": "Sağlanan",
       "ungrouped": "Gruplandırılmamış"
+    },
+    "rules-view-mode-selector": {
+      "legacy-view-options": {
+        "grouped": "",
+        "list": "",
+        "state": ""
+      },
+      "view-options": {
+        "grouped": "",
+        "list": ""
+      }
     },
     "saved-searches": {
       "actions-aria-label": "İşlemler",
@@ -3205,8 +3286,40 @@
         "save-success": "",
         "title": ""
       },
+      "import": {
+        "any": "",
+        "collapse-all": "",
+        "empty-body": "",
+        "empty-cta": "",
+        "empty-learn-more": "",
+        "empty-title": "",
+        "error-body": "",
+        "error-retry": "",
+        "error-title": "",
+        "expand-all": "",
+        "inhibition-equal": "",
+        "loading": "",
+        "no-matchers": "",
+        "parse-error-body": "",
+        "parse-error-title": "",
+        "resources": "",
+        "section": {
+          "contact-points": "",
+          "inhibition-rules": "",
+          "notification-policy": "",
+          "templates": "",
+          "time-intervals": ""
+        },
+        "staged-badge": "",
+        "staged-description": "",
+        "staged-title": "",
+        "view": "",
+        "policy-tree-routes_one": "",
+        "policy-tree-routes_other": ""
+      },
       "tabs": {
-        "alert-managers": "Uyarı yöneticileri"
+        "alert-managers": "Uyarı yöneticileri",
+        "import": ""
       }
     },
     "settings-content": {
@@ -3306,9 +3419,6 @@
       },
       "continue-in-alerting": "Alerting'de devam et",
       "create": "Oluştur",
-      "evaluation": {
-        "immediate-warning": "Anında tetikleme, geçici sorunlar için gereksiz uyarıların gönderilmesine yol açabilir"
-      },
       "notification": {
         "contact-point-selected": "Tetiklenen uyarıların bildirimleri seçilen bir iletişim noktasına yönlendirilir.",
         "description": {
@@ -3559,9 +3669,24 @@
         "declare-incident": "Olay bildir",
         "declare-incident-no-permission": "Olaya erişim izniniz yok",
         "instance-details": "Örnek ayrıntıları",
+        "investigation-checking": "",
+        "investigation-lookup-failed": "",
+        "investigation-lookup-retry": "",
+        "investigation-poll-failed": "",
+        "investigation-poll-retry": "",
+        "investigation-report-failed": "",
+        "investigation-running": "",
+        "investigation-start-failed": "",
+        "investigation-starting": "",
+        "investigation-waiting-identity": "",
+        "investigation-watch-live": "",
+        "open-failed-investigation": "",
+        "open-investigation": "",
         "section-silence": "",
         "silence-button": "Sessize alma",
-        "silence-no-permission": "Sessize alma oluşturma izniniz yok"
+        "silence-no-permission": "Sessize alma oluşturma izniniz yok",
+        "start-investigation": "",
+        "start-investigation-tooltip": ""
       },
       "labels-column-title": "Etiketler",
       "no-firing-or-pending-instances": "Seçilen zaman aralığında tetiklenen veya beklemede olan hiçbir uyarı örneğiniz yok.",
@@ -3887,6 +4012,9 @@
       "trace-id": "İzleme Kimliği: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Kimlik doğrulaması ayarları"
@@ -4021,6 +4149,8 @@
       "tls-client-key-label": "TLS istemci anahtarı",
       "tls-skip-verify-description": "Etkinleştirilirse istemci, sunucu tarafından sunulan herhangi bir sertifikayı ve \nbu sertifikadaki herhangi bir ana bilgisayar adını kabul eder. Bu modu yalnızca test için kullanmalısınız çünkü bu mod\nSSL/TLS'yi aradaki adam saldırılarına karşı savunmasız bırakır.",
       "tls-skip-verify-label": "TLS doğrulamasını atla",
+      "token-exchange-timeout-description": "",
+      "token-exchange-timeout-label": "",
       "token-url-description": "OAuth2 sağlayıcınızın belirteç uç noktası.",
       "token-url-required": "Bu alan gereklidir ve geçerli bir URL olmalıdır.",
       "use-pkce-description": "Etkinleştirilirse Grafana OAuth2 Yetkilendirme Kodu Verilmesi ile birlikte <2>Proof Key for Code Exchange (PKCE)</2> kullanacaktır.",
@@ -4216,9 +4346,6 @@
       "tip": "Gezinme menüsündeki herhangi bir ögenin üzerine gelin ve yer imi simgesine tıklayarak buraya ekleyin."
     }
   },
-  "bouncing-loader": {
-    "label": "Yükleniyor"
-  },
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Sağlanan Kaynakları Toplu Sil",
@@ -4261,11 +4388,16 @@
       "title-folder-not-found": "Klasör bulunamadı",
       "title-ruler-namespace-error": "Kurallar yüklenemiyor"
     },
+    "browse-folder-variables-page": {
+      "title-folder-not-found": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "Klasör boş"
     },
     "bulk-actions": {
-      "error-generic": "İş oluşturulurken beklenmedik bir hata oluştu"
+      "error-generic": "İş oluşturulurken beklenmedik bir hata oluştu",
+      "commit-title-resource-count_one": "",
+      "commit-title-resource-count_other": ""
     },
     "bulk-delete-resources-form": {
       "button-cancel": "İptal et",
@@ -4304,6 +4436,9 @@
     },
     "create-new": {
       "dashboard-group": ""
+    },
+    "create-new-button": {
+      "generate-dashboard": ""
     },
     "dashboards-tree": {
       "checkbox": {
@@ -4372,14 +4507,21 @@
       "root-title": "Panolar",
       "search-placeholder": "Klasör ara",
       "shared-with-me": "Benimle paylaşılan",
+      "starred-folders": "",
       "team-folders": "Ekip klasörleri",
       "team-folders-error-title": "",
       "unknown-error": "Bilinmeyen hata"
     },
+    "folder-variables": {
+      "empty": "",
+      "list-heading": "",
+      "new": ""
+    },
     "manage-folder-nav": {
       "alert-rules": "Uyarı kuralları",
       "dashboards": "Panolar",
-      "panels": "Paneller"
+      "panels": "Paneller",
+      "variables": ""
     },
     "my-team-folders": "Ekip klasörlerim",
     "name-cell": {
@@ -4448,6 +4590,8 @@
       "title-required": "Klasör adı gereklidir"
     },
     "restore": {
+      "failed-create-permission": "",
+      "failed-fetch": "",
       "success-multiple": "Panolar geri yüklendi",
       "success-single": "Pano geri yüklendi",
       "view-dashboard": "Panoyu görüntüle",
@@ -4460,6 +4604,7 @@
       "success-count_other": "{{count}} pano başarıyla geri yüklendi"
     },
     "shared-with-me": "Benimle paylaşılan",
+    "starred-folders": "",
     "text-this-repository-is-read-only": "Hedefe doğrudan erişiminiz varsa JSON'u kopyalayıp oraya yapıştırın.",
     "trash-state-manager": {
       "label": {
@@ -4705,6 +4850,7 @@
       "not-found": "<0>Bulunamadı: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + sağ fare",
       "middle-mouse": "Orta fare",
       "pan-title": "Kaydır:",
@@ -4903,7 +5049,13 @@
       "dark-theme": "Koyu",
       "dashboard-from-template": "Şablondan pano",
       "light-theme": "Açık",
+      "open-saved-queries": "",
       "scopes": "Kapsamlar"
+    },
+    "deep-search": {
+      "no-matches": "",
+      "more-panels_one": "",
+      "more-panels_other": ""
     },
     "empty-state": {
       "button-title": "Grafana Asistanı ile arayın",
@@ -4914,11 +5066,13 @@
       "selected-scopes-label": "Kapsamlar: "
     },
     "search-box": {
+      "ask-assistant": "",
       "placeholder": "Ara veya şuraya git:"
     },
     "section": {
       "actions": "İşlemler",
       "dashboard-search-results": "Panolar",
+      "deep-search": "",
       "folder-search-results": "Klasörler",
       "pages": "Sayfalar",
       "preferences": "Tercihler",
@@ -4950,11 +5104,25 @@
   },
   "connections": {
     "add-new-connection": {
+      "category": "",
+      "clear": "",
+      "filter-by-category": "",
       "filter-by-options": {
         "label": {
           "all": "Tümü",
           "installed": "Yüklü",
           "new-updates": "Yeni Güncellemeler"
+        }
+      },
+      "filter-by-state-disabled": "",
+      "filter-by-type": "",
+      "filters": "",
+      "give-feedback": "",
+      "group-by": "",
+      "group-by-options": {
+        "label": {
+          "category": "",
+          "type": ""
         }
       },
       "label": {
@@ -4963,7 +5131,12 @@
         "by-name-za": "Ada göre (Z-A)",
         "by-published-date": "Yayımlanma tarihine göre",
         "by-updated-date": "Güncelleme tarihine göre"
-      }
+      },
+      "reset-filters": "",
+      "sort": "",
+      "sort-list": "",
+      "state": "",
+      "type": ""
     },
     "advisor-redirect-notice": {
       "aria-label-link-to-advisor": "Advisor bağlantısı",
@@ -5009,9 +5182,7 @@
     "connect-data": {
       "apps-header": "Uygulamalar",
       "datasources-header": "Veri Kaynakları",
-      "empty-message": "Sorgunuzla eşleşen sonuç bulunamadı",
-      "request-data-source": "Yeni veri kaynağı talep et",
-      "roadmap": "Yol haritasını görüntüle"
+      "empty-message": "Sorgunuzla eşleşen sonuç bulunamadı"
     },
     "connections-home-page": {
       "welcome-to-connections": "Bağlantılara hoş geldiniz"
@@ -5227,17 +5398,6 @@
     }
   },
   "dashboard": {
-    "actions": {
-      "open-settings": ""
-    },
-    "add": {
-      "new-panel": {
-        "button": "Yeni panel düğmesi ekle",
-        "description": "Panel eklemek için sürükleyin veya tıklayın",
-        "title": "Panel"
-      },
-      "pane-header": "Ekle"
-    },
     "add-menu": {
       "import": "Kütüphaneden içe aktar",
       "paste-panel": "Paneli yapıştır",
@@ -5247,34 +5407,6 @@
     "alert-rules-drawer": {
       "redirect-link": "Grafana Alerting'de listele",
       "subtitle": "Bu panoyla ilgili uyarı kuralları"
-    },
-    "annotation-settings-edit": {
-      "apply": "Uygula",
-      "delete": "Sil",
-      "description-color-annotation-event-markers": "Ek açıklama olay işaretçileri için kullanılacak renk",
-      "description-enabled-annotation-query-issued-every-dashboard": "Etkinleştirildiğinde her pano yenilemesinde açıklama sorgusu çalıştırılır",
-      "description-hidden": "Ek açıklama sorguları, panonun üst kısmından açılabilir veya kapatılabilir. Bu seçenek işaretlendiğinde bu açma/kapama gizlenecektir.",
-      "error-loading-panels": "Panel eklentileri yüklenemedi",
-      "label-color": "Renk",
-      "label-data-source": "Veri kaynağı",
-      "label-enabled": "Etkin",
-      "label-hidden": "Gizli",
-      "label-name": "Ad",
-      "label-show-in": "Şurada göster:",
-      "placeholder-choose-panels": "Panel seçin",
-      "preview-in-dashboard": "Panoda ön izle",
-      "query": "Sorgu",
-      "title-annotation-support-source": "Bu veri kaynağı için ek açıklama desteği yok"
-    },
-    "annotation-settings-list": {
-      "aria-label-delete": "\"{{title}}\" başlıklı sorguyu sil",
-      "built-in": "{{name}} (Yerleşik)",
-      "data-source": "Veri kaynağı",
-      "disabled": "(Devre Dışı) {{name}}",
-      "new-query": "Yeni sorgu",
-      "query-name": "Sorgu adı",
-      "tooltip-move-down": "Aşağı taşı",
-      "tooltip-move-up": "Yukarı taşı"
     },
     "auto-grid": {
       "description": "Paneller, sığacak şekilde yeniden boyutlandırılır ve düzgün ızgaralar oluşturur.",
@@ -5287,6 +5419,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Otomatik",
       "options": {
         "custom-min-height": {
@@ -5304,18 +5437,17 @@
         "min-width-custom": "Özel min. genişlik",
         "min-width-custom-clear": "Standart minimum sütun genişliğine dön",
         "min-width-error": "50 ile 2000 arasında bir sayı gereklidir"
+      },
+      "resize-intercept": {
+        "edit": "",
+        "header": "",
+        "switch": ""
       }
     },
     "canvas-actions": {
-      "add": {
-        "paste": {
-          "description": "Paneli yapıştırmak için tıklayın veya sürükleyin",
-          "title": "Paneli yapıştır"
-        }
-      },
       "add-panel": "Panel ekle",
       "disabled-child-contains-tabs": "Bir satır zaten sekme içerdiği için sekme olarak değiştirilemiyor",
-      "disabled-nested-grouping": "Gruplandırma 3 düzey ile sınırlıdır",
+      "disabled-nested-grouping": "",
       "disabled-nested-tabs": "Sekmeler diğer sekmelerin içine yerleştirilemez",
       "group-into-row": "Satır olarak grupla",
       "group-into-tab": "Sekme olarak grupla",
@@ -5327,14 +5459,6 @@
       "paste-tab": "Sekmeyi yapıştır",
       "ungroup-rows": "Satırların gruplandırmasını kaldır",
       "ungroup-tabs": "Sekmelerin gruplandırmasını kaldır"
-    },
-    "code-pane": {
-      "collapse": "Düzenleyiciyi daralt",
-      "copy-as-resource": "",
-      "copy-as-resource-tooltip": "",
-      "expand": "Düzenleyiciyi genişlet",
-      "header": "Kod olarak düzenle",
-      "modal-title": "Paneli kod olarak düzenle"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5443,16 +5567,6 @@
         "not-found": "Bulunamadı"
       }
     },
-    "dashboard-settings": {
-      "actions": {
-        "close": "Kapat"
-      }
-    },
-    "dashboard-slice": {
-      "title": {
-        "dashboard-init-failed": "Pano başlatılamadı"
-      }
-    },
     "dashboard-srv": {
       "message": {
         "edit-dashboard-json": "Pano JSON'unu Düzenle"
@@ -5475,6 +5589,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Özel",
       "row-actions": {
         "delete": "Satırı sil",
@@ -5512,8 +5627,26 @@
         "title": "Satır seçenekleri"
       }
     },
-    "description": {
-      "action": "Pano açıklamasını değiştir"
+    "diagnostics": {
+      "actions": "",
+      "cancel-button": "",
+      "download-button": "",
+      "error-title": "",
+      "generating-button": "",
+      "generation-failed": "",
+      "info-text-dashboard": "",
+      "info-text-panel": "",
+      "job-not-created": "",
+      "no-panels": "",
+      "no-queries": "",
+      "progress": "",
+      "request-failed": "",
+      "sensitive-warning-body": "",
+      "sensitive-warning-title": "",
+      "subtitle-dashboard": "",
+      "subtitle-panel": "",
+      "timed-out": "",
+      "title": ""
     },
     "dynamic-config-value-editor": {
       "render-label": {
@@ -5523,6 +5656,8 @@
     "edit-actions": {
       "add": "{{typeName}} ekle",
       "add-conditional-rule": "{{ruleDescription}} kuralı ekle",
+      "dashboard-description": "",
+      "dashboard-title": "",
       "duplicate-panel": "Paneli çoğalt",
       "edit-query-result-rule": "Sorgu sonucu kuralını değiştir",
       "edit-template-variable-rule": "Şablon değişkeni kuralını değiştir",
@@ -5542,136 +5677,12 @@
       "switch-layout": "Düzeni değiştir",
       "switch-layout-row": "Düzeni değiştir",
       "switch-layout-tab": "Düzeni değiştir",
-      "tab-title": "Sekme başlığını değiştir"
-    },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Ek açıklama veri kaynağını değiştir",
-        "choose-panels": "Panel seçin",
-        "color": "Renk",
-        "color-description": "Ek açıklama olay işaretçileri için kullanılacak renk",
-        "data-source": "Veri kaynağı",
-        "display": "Ek açıklama denetimlerini şurada göster:",
-        "display-options": {
-          "above-dashboard": "Panonun üstünde",
-          "controls-menu": "Denetim menüsü",
-          "controls-menu-description": "Denetim menüsü açıkken erişilebilir",
-          "hidden": "Gizli",
-          "hidden-description": "Bu ek açıklamayı açma/kapatma düğmesini gizler"
-        },
-        "enabled": "Etkin",
-        "enabled-description": "Etkinleştirildiğinde her pano yenilemesinde açıklama sorgusu çalıştırılır",
-        "name": "Ad",
-        "open-query-editor": "Sorgu düzenleyicisini aç",
-        "open-query-editor-tooltip": "Ek açıklama sorgusunu yapılandırmak için sorgu düzenleyiciyi açın",
-        "panel-filter": {
-          "all-panels": "Tüm paneller",
-          "all-panels-description": "Ek açıklama verilerini, ek açıklamaları destekleyen tüm panellere gönder",
-          "all-panels-except": "Şunlar hariç tüm paneller",
-          "all-panels-except-description": "Ek açıklama verilerini aşağıdaki panellere gönderme",
-          "selected-panels": "Seçili paneller",
-          "selected-panels-description": "Ek açıklamaları açıkça listelenen panellere gönder"
-        },
-        "query": "Sorgu",
-        "query-editor-close": "Kapat",
-        "query-editor-modal-title": "Ek Açıklama Sorgusu",
-        "show-in": "Şurada göster:"
-      },
-      "annotations": {
-        "add-annotation": "Ek açıklama ekle",
-        "reorder": "Yeniden sıralamak için sürükleyin",
-        "select-annotation": "Seçin"
-      },
-      "elements": {
-        "annotation": "Ek açıklama",
-        "annotation-set": "Ek açıklamalar ve uyarılar",
-        "dashboard": "Pano",
-        "element": "Bileşen",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Bağlantılar",
-        "local-variable": "Yerel değişken",
-        "multiple-elements": "Birden çok öge",
-        "multiple-elements-delete-text": "Bu ögeleri silmek istediğinize emin misiniz?",
-        "multiple-panels": "Birden çok panel",
-        "multiple-panels-delete-text": "Bu panelleri silmek istediğinizden emin misiniz? Tüm sorgular kaldırılacak.",
-        "objects": "Nesneler",
-        "panel": "Panel",
-        "panels": "Paneller",
-        "row": "Satır",
-        "rows": "Satırlar",
-        "section-filters-set": "",
-        "tab": "Sekme",
-        "tabs": "Sekmeler",
-        "variable": "{{type}} değişkeni",
-        "variable-set": "Değişkenler"
-      },
-      "links": {
-        "add-link": "Bağlantı ekle",
-        "reorder": "Yeniden sıralamak için sürükleyin",
-        "select-link": "Seçin",
-        "untitled": "Başlıksız bağlantı"
-      },
-      "row": {
-        "header": {
-          "hide": "Gizle",
-          "title": "Satır başlığı"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Değişkenler"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Değişken türünü değiştir",
-        "custom-options": {
-          "apply": "Uygula",
-          "change-value": "Değişken değerini değiştir",
-          "discard": "Vazgeç",
-          "modal-title": "Özel seçenekler"
-        },
-        "datasource-options": {
-          "name-filter": "Ad filtresi",
-          "name-filter-description": "Hangi veri kaynağı örneklerinin dâhil edileceğini belirlemek için düzenli ifade filtresi. Tümü için boş bırakın.",
-          "name-filter-placeholder": "Örnek: /^prod/",
-          "type": "Tür",
-          "type-placeholder": "Veri kaynağı türü seçin"
-        },
-        "description": "Açıklama",
-        "description-placeholder": "Açıklayıcı metin",
-        "label": "Etiket",
-        "label-description": "İsteğe bağlı görünen ad",
-        "name": "Ad",
-        "open-editor": "Değişken düzenleyicisini aç",
-        "open-editor-tooltip": "Daha fazla değişken seçeneği için değişken düzenleyicisini açın",
-        "query-options": {
-          "close": "Kapat",
-          "modal-title": "Sorgu Değişkeni",
-          "preview": "Ön izleme"
-        },
-        "selection-options": {
-          "allow-custom-values": "Özel değer girişine izin ver",
-          "allow-custom-values-description": "Kullanıcıların değer girmesine izin verir",
-          "category": "Seçim ayarları",
-          "custom-all-value": "Özel tüm değer",
-          "custom-all-value-description": "Tümünü temsil etmek için bir joker karakterli regex (düzenli ifade) veya başka bir değer",
-          "include-all": "Tümünü Dâhil Et değeri",
-          "include-all-description": "Tüm değerleri temsil eden tek bir seçeneği etkinleştirir",
-          "multi-value": "Çoklu değer"
-        },
-        "type-category": "{{type}} seçenekleri"
-      },
-      "variables": {
-        "add-variable": "Değişken ekle",
-        "change-type": "",
-        "reorder": "Yeniden sıralamak için sürükleyin",
-        "select-type": "Değişken türünü seçin",
-        "select-type-card-tooltip": "Türü seçmek için tıklayın",
-        "select-variable": "Seçin"
-      }
+      "tab-title": "Sekme başlığını değiştir",
+      "variable-description": "",
+      "variable-hide": "",
+      "variable-label": "",
+      "variable-name": "",
+      "variable-type": ""
     },
     "empty": {
       "add-library-panel-body": "Diğer panolarla paylaşılan görselleştirmeleri ekleyin.",
@@ -5736,33 +5747,22 @@
       "footer-text": "Bu içerik <2>Grafana LLM eklentisi</2> kullanılarak yapay zekâ ile oluşturulmuştur",
       "placeholder-tell-ai-what-to-do-next": "Yapay zekaya bir sonraki adımı söyleyin..."
     },
-    "general-settings-unconnected": {
-      "editable-options": {
-        "label": {
-          "editable": "Düzenlenebilir",
-          "readonly": "Salt okunur"
-        }
-      },
-      "graph_tooltip_options": {
-        "label": {
-          "default": "Varsayılan",
-          "shared-crosshair": "Paylaşılan artı işareti",
-          "shared-tooltip": "Paylaşılan araç ipucu"
-        }
-      }
-    },
     "get-debug-dashboard": {
       "title": {
         "annotations": "Ek açıklamalar"
       }
     },
     "get-field-override-categories": {
+      "body-matcher-no-editor": "",
+      "body-unknown-matcher": "",
       "label-add-field-override": "Alan geçersiz kılma ekle",
       "label-add-override-property": "Geçersiz kılma özelliği ekle",
       "override-name": "{{overrideNum}} ögesini geçersiz kıl",
       "title": {
         "add-button": "ekle düğmesi"
-      }
+      },
+      "title-matcher-no-editor": "",
+      "title-unknown-matcher": ""
     },
     "get-library-panel-options-category": {
       "descriptor": {
@@ -5793,18 +5793,6 @@
         "transform-data": "Verileri dönüştür"
       }
     },
-    "get-panel-filters": {
-      "description": {
-        "annotation-following-panels": "Ek açıklama verilerini aşağıdaki panellere gönderme",
-        "annotation-panels-support-annotations": "Ek açıklama verilerini, ek açıklamaları destekleyen tüm panellere gönder",
-        "annotations-explicitly-listed-panels": "Ek açıklamaları açıkça listelenen panellere gönder"
-      },
-      "label": {
-        "all-panels": "Tüm paneller",
-        "all-panels-except": "Şunlar hariç tüm paneller",
-        "selected-panels": "Seçili paneller"
-      }
-    },
     "get-panel-frame-category": {
       "descriptor": {
         "title": {
@@ -5826,11 +5814,6 @@
         "repeat-options": "Tekrarlama seçenekleri",
         "title": "Başlık",
         "transparent-background": "Şeffaf arka plan"
-      }
-    },
-    "get-panel-menu": {
-      "text": {
-        "extensions": "Uzantılar"
       }
     },
     "help-wizard": {
@@ -5856,6 +5839,7 @@
     },
     "inspect": {
       "data-tab": "Veri",
+      "errors-and-notices-tab": "",
       "json-tab": "JSON",
       "meta-tab": "Meta veriler",
       "query-tab": "Sorgu",
@@ -5918,12 +5902,7 @@
     "layout": {
       "cancel": "İptal et",
       "common": {
-        "copy": "Kopyala",
-        "copy-tooltip": "",
-        "delete": "Sil",
-        "duplicate": "Çoğalt",
-        "layout": "Düzen",
-        "paste": "Yapıştır"
+        "layout": "Düzen"
       },
       "continue": "Devam et",
       "panel": {
@@ -5934,12 +5913,13 @@
           "title": "Düzeni değiştir"
         }
       },
-      "ungroup-nested-text": "Bu işlem, iç içe geçmiş tüm grupların gruplandırmasını kaldıracaktır.",
-      "ungroup-nested-title": "İç içe geçmiş grupların gruplandırması kaldırılsın mı?"
-    },
-    "make-editable": {
-      "dashboard-not-editable": "Pano düzenlenemiyor",
-      "make-editable": "Düzenlenebilir hâle getir"
+      "scroll-content": "",
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}}/{{numberOfPages}}",
@@ -5951,14 +5931,10 @@
     },
     "new-panel": {
       "aria-label": "Yapılandırılmamış panel. Yapılandırma seçeneklerini görmek için sekmeye gidin.",
-      "configure-button": "",
-      "configure-button-menu": "Menüyü aç/kapat",
       "configure-visualization": "Görselleştirmeyi yapılandır",
       "empty-state-message": "Burada görselleştirmek için bir sorgu çalıştırın ya da diğer panel türlerini eklemek için tüm görselleştirmelere gidin.",
-      "menu-open-panel-editor": "Yapılandır",
       "menu-use-library-panel": "Kütüphane panelini kullan",
       "menu-use-saved-query": "Kaydedilen sorguyu kullan",
-      "missing-config": "Eksik panel yapılandırması",
       "no-visualization": "Yapılandırılmış görselleştirme yok",
       "saved-query-apply-error": "Kayıtlı sorgu uygulanamadı",
       "saved-query-apply-error-detail": "Kayıtlı sorgu uygulanırken bir hata oluştu. Lütfen tekrar deneyin.",
@@ -5966,16 +5942,18 @@
       "saved-query-no-suggestion-detail": "Sorgu, bir görselleştirme türü önermek için yeterli veri döndürmedi."
     },
     "new-panel-title": "Yeni panel",
+    "notebook-layout": {
+      "description": "",
+      "name": "",
+      "pill": "",
+      "time": ""
+    },
     "on-create-new-row": {
       "new-row": {
         "title": {
           "row-title": "Satır başlığı"
         }
       }
-    },
-    "options": {
-      "description": "Açıklama",
-      "title-option": "Başlık"
     },
     "options-pane-category": {
       "aria-label-collapse": "{{title}} kategorisini daralt",
@@ -5987,20 +5965,16 @@
       "title-matched_one": "{{totalCount}} seçenekten {{count}} tanesi eşleşti",
       "title-matched_other": "{{totalCount}} seçenekten {{count}} tanesi eşleşti"
     },
-    "outline": {
-      "pane-header": "İçerik taslağı",
-      "repeated-item": "Tekrar et",
-      "tree-item": {
-        "empty": "(boş)",
-        "no-title": "<başlık yok>"
-      }
-    },
     "override-category-title": {
       "aria-label-remove-override": "Geçersiz kılmayı kaldır",
       "tooltip-remove-override": "Geçersiz kılmayı kaldır"
     },
     "panel": {
       "time-range-settings": {
+        "compare-day-before": "",
+        "compare-month-before": "",
+        "compare-week-before": "",
+        "compared-to": "",
         "hide-time-info": "Panel zaman aralığını gizle",
         "hide-time-info-description": "Panel zaman aralığını panel başlığında gösterme",
         "time-from": "Panel zaman aralığı",
@@ -6010,15 +5984,6 @@
         "time-window-compare": "Zaman karşılaştırması",
         "time-window-compare-description": "İki zaman aralığı arasındaki verileri karşılaştırın",
         "title": "Panel zaman ayarları"
-      }
-    },
-    "panel-assistant": {
-      "hint": {
-        "aria-label": "Bu panel için asistanı aç"
-      },
-      "prompt-card": {
-        "placeholder": "Asistana bu panel hakkında soru sorun...",
-        "placeholder-multi": "Asistana bu paneller hakkında soru sorun..."
       }
     },
     "panel-edit": {
@@ -6062,11 +6027,6 @@
           "no-template-variables-found": "Şablon değişkeni bulunamadı"
         }
       }
-    },
-    "revert-dashboard-modal": {
-      "body-restore-version": "Panoyu {{version}} sürümüne geri yüklemek istediğinize emin misiniz? Kaydedilmemiş tüm değişiklikler kaybolacaktır.",
-      "confirmText-restore-version": "Evet, {{version}} sürümüne geri yükle",
-      "title-restore-version": "Sürümü geri yükle"
     },
     "rows-layout": {
       "cancel": "İptal et",
@@ -6136,14 +6096,12 @@
       "saving": "Kaydediliyor…",
       "title": "Başlık"
     },
-    "save-dashboard-button": {
-      "save-dashboard": "Panoyu kaydet"
-    },
     "save-dashboard-diff": {
       "full-json-diff": "Tam JSON karşılaştırması",
       "no-changes-in-the-dashboard-json": "Pano JSON'unda değişiklik yok",
       "title-because-dashboard-migrated-grafana-format": "Pano yeni Grafana pano biçimine geçirildiği için farkın okunması zor",
-      "title-folder": "klasör"
+      "title-folder": "klasör",
+      "title-predefined-variables": ""
     },
     "save-dashboard-drawer": {
       "label-changes": "Değişiklikler",
@@ -6175,11 +6133,11 @@
       "see-docs": "Sağlama hakkında daha fazla bilgi için <2>belgelere</2> bakın. "
     },
     "schema-editor": {
-      "apply-button": "Değişiklikleri uygula",
-      "apply-button-disabled-tooltip": "Değişiklikleri uygulamadan önce doğrulama hatalarını düzeltin",
-      "apply-button-disabled-tooltip-yaml": "Belgede doğrulama hataları var. Satır içi hata ayrıntılarını görmek için JSON'a geçin.",
-      "apply-error-title": "Değişiklikler uygulanamadı",
-      "undo-title": "Şema düzenleme"
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
     },
     "search-panel": {
       "no-match": "Eşleşen panel yok"
@@ -6189,31 +6147,276 @@
     },
     "sidebar": {
       "add": {
+        "annotation-query": {
+          "description": "",
+          "label": ""
+        },
+        "dashboard-controls": "",
+        "filters": {
+          "label": ""
+        },
+        "group-layouts": "",
+        "link": {
+          "label": "",
+          "tooltip": ""
+        },
+        "new-panel": {
+          "button": "",
+          "description": "",
+          "title": ""
+        },
+        "pane-header": "",
+        "paste-panel": {
+          "description": "",
+          "title": ""
+        },
+        "row": {
+          "add-label": "",
+          "group-label": ""
+        },
+        "tab": {
+          "add-label": "",
+          "group-label": ""
+        },
         "title": "Ekle",
-        "tooltip": "Yeni öge ekle"
+        "tooltip": "Yeni öge ekle",
+        "variable": {
+          "label": ""
+        }
+      },
+      "annotation": {
+        "change-data-source": "",
+        "choose-panels": "",
+        "color": "",
+        "color-description": "",
+        "data-source": "",
+        "display": "",
+        "display-options": {
+          "above-dashboard": "",
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": ""
+        },
+        "enabled": "",
+        "enabled-description": "",
+        "name": "",
+        "open-query-editor": "",
+        "open-query-editor-tooltip": "",
+        "panel-filter": {
+          "all-panels": "",
+          "all-panels-description": "",
+          "all-panels-except": "",
+          "all-panels-except-description": "",
+          "selected-panels": "",
+          "selected-panels-description": ""
+        },
+        "query": "",
+        "query-editor-close": "",
+        "query-editor-modal-title": "",
+        "show-in": ""
+      },
+      "annotations": {
+        "add-annotation-query": "",
+        "name-builtin": "",
+        "name-disabled": "",
+        "reorder-description": "",
+        "title-above-dashboard-count_one": "",
+        "title-above-dashboard-count_other": "",
+        "title-controls-menu-count_one": "",
+        "title-controls-menu-count_other": "",
+        "title-hidden-count_one": "",
+        "title-hidden-count_other": ""
       },
       "dashboard-options": {
+        "annotations": "",
+        "description": "",
+        "filters": "",
+        "links": "",
+        "open-settings": "",
         "title": "Seçenekler",
-        "tooltip": "Pano seçenekleri"
+        "title-option": "",
+        "tooltip": "Pano seçenekleri",
+        "variables": ""
       },
+      "drag-to-reorder": "",
       "edit-schema": {
+        "apply-button": "",
+        "apply-button-disabled-tooltip": "",
+        "apply-button-disabled-tooltip-yaml": "",
+        "apply-error-title": "",
+        "collapse": "",
+        "copy-as-resource": "",
+        "copy-as-resource-tooltip": "",
+        "expand": "",
+        "modal-title": "",
+        "pane-header": "",
         "title": "Kod",
-        "tooltip": "Kod olarak düzenle"
+        "tooltip": "Kod olarak düzenle",
+        "undo-title": ""
+      },
+      "element-actions": {
+        "copy": "",
+        "copy-tooltip": "",
+        "delete": "",
+        "duplicate": "",
+        "paste": ""
+      },
+      "elements": {
+        "annotation": "",
+        "annotation-set": "",
+        "dashboard": "",
+        "element": "",
+        "filter": "",
+        "filters-set": "",
+        "link": "",
+        "link-set": "",
+        "local-variable": "",
+        "multiple-elements": "",
+        "multiple-elements-delete-text": "",
+        "multiple-panels": "",
+        "multiple-panels-delete-text": "",
+        "objects": "",
+        "panel": "",
+        "panels": "",
+        "row": "",
+        "rows": "",
+        "section-filters-set": "",
+        "tab": "",
+        "tabs": "",
+        "variable": "",
+        "variable-set": ""
       },
       "export": {
         "title": "Dışa aktar"
       },
-      "filters": "",
-      "open": "",
+      "feedback-title": "",
+      "filters": {
+        "add-filter": "",
+        "reorder-description": "",
+        "title": "",
+        "tooltip": "",
+        "title-above-dashboard_one": "",
+        "title-above-dashboard_other": "",
+        "title-controls-menu_one": "",
+        "title-controls-menu_other": "",
+        "title-hidden_one": "",
+        "title-hidden_other": ""
+      },
+      "links": {
+        "add-link": "",
+        "new-link": "",
+        "reorder-description": "",
+        "title-above-dashboard_one": "",
+        "title-above-dashboard_other": "",
+        "title-controls-menu_one": "",
+        "title-controls-menu_other": ""
+      },
       "outline": {
+        "pane-header": "",
+        "repeated-item": "",
+        "search": {
+          "no-results": ""
+        },
         "title": "Ana hat",
-        "tooltip": "İçerik taslağı"
+        "tooltip": "İçerik taslağı",
+        "tree-item": {
+          "empty": "",
+          "no-title": ""
+        }
+      },
+      "predefined-variables": {
+        "all": "",
+        "description": "",
+        "folder": "",
+        "global": "",
+        "label": "",
+        "none": "",
+        "pane-header": "",
+        "title": "",
+        "tooltip": ""
       },
       "redo": "Yinele",
+      "row": {
+        "header": {
+          "hide": "",
+          "title": ""
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": ""
+      },
+      "select": "",
       "snapshot": {
+        "title": "",
         "tooltip": "Orijinal panoyu aç"
       },
       "undo": "Geri al",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "",
+        "custom-options": {
+          "apply": "",
+          "discard": "",
+          "modal-title": ""
+        },
+        "datasource-options": {
+          "name-filter": "",
+          "name-filter-description": "",
+          "name-filter-placeholder": "",
+          "type": "",
+          "type-placeholder": ""
+        },
+        "description": "",
+        "description-placeholder": "",
+        "display": "",
+        "display-options": {
+          "controls-menu": "",
+          "controls-menu-description": "",
+          "hidden": "",
+          "hidden-description": "",
+          "label-hidden": "",
+          "label-hidden-description": ""
+        },
+        "label": "",
+        "label-description": "",
+        "name": "",
+        "open-editor": "",
+        "open-editor-tooltip": "",
+        "query-options": {
+          "close": "",
+          "old-modal-title": "",
+          "preview": ""
+        },
+        "selection-options": {
+          "allow-custom-values": "",
+          "allow-custom-values-description": "",
+          "category": "",
+          "custom-all-value": "",
+          "custom-all-value-description": "",
+          "include-all": "",
+          "include-all-description": "",
+          "multi-value": ""
+        },
+        "type-category": ""
+      },
+      "variables": {
+        "add-variable": "",
+        "change-type": "",
+        "reorder-description": "",
+        "select-type": "",
+        "select-type-card-tooltip": "",
+        "top-placement-default": "",
+        "title-controls-menu_one": "",
+        "title-controls-menu_other": "",
+        "title-hidden_one": "",
+        "title-hidden_other": "",
+        "title-top-placement_one": "",
+        "title-top-placement_other": ""
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6223,10 +6426,21 @@
         "pane-header": "",
         "quick-toggles": "",
         "title": ""
+      },
+      "viz-panel": {
+        "configure-button": "",
+        "delete-panel-text": "",
+        "delete-panel-title": "",
+        "delete-panel-yes": "",
+        "options": {
+          "configure-button-tooltip": "",
+          "description": "",
+          "title-option": "",
+          "transparent-background": ""
+        }
       }
     },
     "source-link": {
-      "title": "Kaynak ({{provider}})",
       "tooltip": "Kaynak dosyayı depoda göster"
     },
     "support-snapshot-service": {
@@ -6281,9 +6495,6 @@
         "title-not-unique": "Bu başlık benzersiz değil"
       }
     },
-    "title": {
-      "action": "Pano başlığını değiştir"
-    },
     "toolbar": {
       "add": "Ekle",
       "alert-rules": "Uyarı kuralları",
@@ -6293,8 +6504,7 @@
         "tooltip": "Pano ayarları"
       },
       "discard-library-panel-changes": "Kütüphane paneli değişikliklerini at",
-      "discard-panel": "Panel değişikliklerini at",
-      "discard-panel-new": "Paneli at",
+      "discard-library-panel-changes-short": "",
       "edit": {
         "label": "Düzenle",
         "tooltip": "Düzenleme kipine gir"
@@ -6316,14 +6526,12 @@
       "more-save-options": "Diğer kaydetme seçenekleri",
       "new": {
         "back-to-dashboard": "Panoya geri dön",
-        "discard-library-panel-changes": "Kütüphane paneli değişikliklerini at",
-        "discard-panel": "Panel değişikliklerini at",
-        "discard-panel-new": "Paneli at",
         "enter-edit-mode": {
           "label": "Düzenlenebilir yap",
           "tooltip": "Bu pano salt okunur olarak işaretlendi"
         },
         "export": {
+          "download-diagnostics": "",
           "tooltip": {
             "as-code": "Kod olarak dışa aktar"
           }
@@ -6342,7 +6550,6 @@
           "tooltip": "Kopya olarak kaydet"
         },
         "save-dashboard-short": "Kaydet",
-        "save-library-panel": "Kütüphane panelini kaydet",
         "save-template": {
           "label": "",
           "tooltip": ""
@@ -6350,10 +6557,13 @@
         "share": {
           "arrow": "Paylaş",
           "tooltip": "Bağlantıyı kopyala"
-        },
-        "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır"
+        }
       },
       "open-original": "Orijinal panoyu aç",
+      "panel-edit-back": "",
+      "panel-edit-back-tooltip": "",
+      "panel-edit-discard": "",
+      "panel-edit-discard-tooltip": "",
       "playlist-next": "Sonraki panoya git",
       "playlist-previous": "Önceki panoya git",
       "playlist-stop": "Oynatma listesini durdur",
@@ -6372,16 +6582,15 @@
       },
       "save-dashboard-short": "Kaydet",
       "save-library-panel": "Kütüphane panelini kaydet",
+      "save-library-panel-short": "",
       "settings": "Pano ayarları",
       "share-button": "Paylaş",
-      "snapshot": {
-        "title": "Kaynak"
-      },
       "star-add-error": "Favorilere eklenemedi",
       "star-added": "Favorilere eklendi",
       "star-remove-error": "Favorilerden kaldırılamadı",
       "star-removed": "Favorilerden kaldırıldı",
-      "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır"
+      "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
+      "unlink-library-panel-short": ""
     },
     "transformation-editor": {
       "input-data": "Girdi verisi",
@@ -6413,7 +6622,13 @@
       "sql-expressions-message-link": "Daha fazla bilgi edinin",
       "sql-expressions-title": "SQL İfadeleri",
       "title-add-another-transformation": "Başka bir dönüşüm ekle",
+      "transformations-list": "",
       "view-all": "Tümünü görüntüle"
+    },
+    "transformation-search-status": {
+      "no-results": "",
+      "results-found_one": "",
+      "results-found_other": ""
     },
     "transformation-type-picker": {
       "sql-cta-button": "",
@@ -6432,12 +6647,6 @@
       "tooltip-clear-search": "Aramayı temizle",
       "tooltip-close-picker": "Seçiciyi kapat"
     },
-    "unsaved-changes-modal": {
-      "cancel": "İptal",
-      "changes": "Değişikliklerinizi kaydetmek istiyor musunuz?",
-      "discard": "Temizle",
-      "title-unsaved-changes": "Kaydedilmemiş değişiklikler"
-    },
     "validation": {
       "invalid-dashboard-id": "Geçerli bir Grafana.com kimliği bulunamadı",
       "invalid-json": "Geçerli JSON değil",
@@ -6446,37 +6655,7 @@
       "tags-expected-strings": "etiklet dizi hâlinde metinlerden oluşmalı"
     },
     "variable": {
-      "description": {
-        "action": "Değişken açıklamasını değiştir"
-      },
-      "description-tooltip": "Değişken açıklaması",
-      "hide": {
-        "action": "Değişken gizleme seçeneğini değiştir"
-      },
-      "label": {
-        "action": "Değişken etiketini değiştir"
-      },
-      "name": {
-        "action": "Değişken adını değiştir"
-      },
-      "type": {
-        "action": "Değişken türünü değiştir"
-      }
-    },
-    "version-history-comparison": {
-      "button-restore": "{{version}} sürümüne geri yükle",
-      "label-view-json-diff": "JSON farkını görüntüle",
-      "new-updated-by": "",
-      "old-updated-by": ""
-    },
-    "version-history-table": {
-      "aria-label-toggle-selection": "{{version}} sürümünün seçimini değiştir",
-      "date": "Tarih",
-      "name-latest": "En son",
-      "notes": "Notlar",
-      "restore": "Geri yükle",
-      "updated-by": "Güncelleyen",
-      "version": "Sürüm"
+      "description-tooltip": "Değişken açıklaması"
     },
     "view-json-modal": {
       "title-json": "JSON"
@@ -6484,17 +6663,6 @@
     "view-panel": {
       "back-to-dashboard": "",
       "not-found": "Panel bulunamadı"
-    },
-    "viz-panel": {
-      "delete-panel-text": "Bu panel silindiğinde tüm sorgular da kaldırılacak. Devam etmek istediğinizden emin misiniz?",
-      "delete-panel-title": "Panel silinsin mi?",
-      "delete-panel-yes": "Sil",
-      "options": {
-        "configure-button-tooltip": "Sorguları ve görselleştirme seçeneklerini düzenle",
-        "description": "Açıklama",
-        "title-option": "Başlık",
-        "transparent-background": "Şeffaf arka plan"
-      }
     }
   },
   "dashboard-import": {
@@ -6523,8 +6691,20 @@
       "customize-with-assistant-button": "Asistan ile özelleştir",
       "customize-with-assistant-button-label": "Asistan ile özelleştirin: {{title}}",
       "datasource-provided-badge": "Veri kaynağı sağlandı",
+      "delete-confirm-body": "",
+      "delete-confirm-cancel": "",
+      "delete-confirm-confirm": "",
+      "delete-confirm-prompt": "",
+      "delete-confirm-title": "",
+      "delete-template-button-label": "",
+      "delete-template-menu-item": "",
       "details-tooltip": "Ayrıntılar",
+      "edit-template-button-label": "",
+      "edit-template-menu-item": "",
+      "more-actions-label": "",
       "no-preview": "Ön izleme yok ",
+      "use-template-button": "",
+      "use-template-button-label": "",
       "view-dashboard-button": "Panoyu görüntüle",
       "view-dashboard-button-label": "Panoyu görüntüle: {{title}}",
       "view-template-button": "Şablonu görüntüle",
@@ -6555,7 +6735,13 @@
       "tooltip-red": "Metriklerin %{{score}} ({{found}}/{{total}}) kadarı eşleşiyor. Bu pano, kapsamlı sorgu özelleştirmesi gerektirecektir."
     },
     "create-from-scratch": "Bunun yerine sıfırdan bir pano oluşturun",
+    "custom-dashboard-template-filters": {
+      "creator-placeholder": "",
+      "search-placeholder": "",
+      "sort-placeholder": ""
+    },
     "dashboard-card": {
+      "created-by-label": "",
       "details": {
         "datasource": "Veri kaynağı",
         "dependencies": "Bağımlılıklar",
@@ -6563,8 +6749,10 @@
         "last-update": "Son Güncelleme",
         "published-by": "Yayımlayan",
         "view-on-grafana-com": "Grafana.com'da göster"
-      },
-      "no-description": "Açıklama yok"
+      }
+    },
+    "grafana-dashboard-template-modal": {
+      "no-results-found": ""
     },
     "merged-description": "Veri kaynağı tarafından sağlanan panolara veya topluluk panolarına göz atın ve seçim yapın",
     "merged-empty-no-dashboards": "Bu veri kaynağı için hiçbir pano mevcut değil.",
@@ -6581,7 +6769,10 @@
     "suggested-error-description": "Önerilen pano yüklenemedi.",
     "suggested-error-title": "Önerilen pano yüklenirken hata oluştu",
     "template-dashboard-modal": {
-      "description": "Grafana şablonlarını örnek verilerle kullanmaya başlayın. Gerçek metriklerle çalıştırmak için verilerinizi bağlayın.",
+      "description": "",
+      "description-custom": "",
+      "tab-custom": "",
+      "tab-grafana": "",
       "title": "Bir şablondan pano oluşturun"
     }
   },
@@ -6590,6 +6781,21 @@
       "button-title": "Pano bağlantısı ekle",
       "info-box-content": "Pano bağlantıları, diğer panolara ve web sitelerine bağlantılar eklemenize olanak tanır ve bunları pano başlığının hemen altına yerleştirir. <2>Daha fazla bilgi edinin</2>",
       "title": "Henüz eklenmiş pano bağlantısı yok"
+    }
+  },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": ""
+    },
+    "modal": {
+      "title": ""
+    },
+    "prompt": {
+      "cancel": "",
+      "description": "",
+      "input-label": "",
+      "placeholder": "",
+      "submit": ""
     }
   },
   "dashboard-scene": {
@@ -6601,31 +6807,10 @@
       "adhoc-options": "Filtre seçenekleri",
       "alert-not-supported": "Bu veri kaynağı filtreleri desteklemiyor",
       "description-enable-group-by": "Filtre açılır kutusunda \"gruplandırma ölçütü\" işlecini etkinleştirir",
-      "description-enables-users-custom-values": "Kullanıcıların listeye özel değerler eklemesine olanak tanır",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Boyutları CSV biçiminde girin: {{name}}, {{value}}",
       "label-data-source": "Veri kaynağı",
       "label-use-static-key-dimensions": "Statik anahtar boyutları kullan",
-      "name-allow-custom-values": "Özel değerlere izin ver",
       "name-enable-group-by": "Gruplandırmayı etkinleştir"
-    },
-    "add-filters": {
-      "label": "Filtreleme ve gruplandırma ölçütü"
-    },
-    "add-link": {
-      "inline-instance-name": "Yeni bağlantı",
-      "label-link": "Bağlantı",
-      "tooltip": "Başka bir panoya veya haricî bir siteye bağlantı ekle"
-    },
-    "add-new-edit-pane": {
-      "group-layouts": "Grup düzenleri"
-    },
-    "add-row": {
-      "add-label": "Satır ekle",
-      "group-label": "Satırlar hâlinde grupla"
-    },
-    "add-tab": {
-      "add-label": "Sekme ekle",
-      "group-label": "Sekmeler hâlinde grupla"
     },
     "add-to-dashboard": {
       "message": {
@@ -6655,19 +6840,12 @@
         "new-panel": "Yeni panel"
       }
     },
-    "add-variable": {
-      "label-variable": "Değişken"
-    },
     "adhoc-origin-filters-controller": {
       "input-placeholder": "Varsayılan filtre ekle..."
     },
     "adhoc-origin-filters-editor": {
       "description": "Varsayılan olarak önceden seçilmiş filtreler.",
       "label": "Varsayılan filtreler"
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "Olay verilerini grafiklere ekleyin",
-      "label-annotation-query": "Ek açıklama sorgusu"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6682,16 +6860,6 @@
       "delete-confirm": "Ek açıklama sorgusunu sil",
       "delete-text": "{{name}} ögesini silmek istediğinizden emin misiniz?",
       "delete-title": "Ek açıklama sorgusunu sil"
-    },
-    "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": "Ek açıklama listesini yeniden sırala"
-        }
-      },
-      "render-list": {
-        "aria-label-annotation": "Ek açıklama"
-      }
     },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Kaydedilen sorguyu kullan"
@@ -6734,15 +6902,6 @@
       "query-name": "Sorgu adı",
       "tooltip-move-down": "Aşağı taşı",
       "tooltip-move-up": "Yukarı taşı"
-    },
-    "annotations-list": {
-      "drag-end": {
-        "description": "Ek açıklama listesini yeniden sırala"
-      }
-    },
-    "annotations-section": {
-      "name-builtin": "{{annoName}} (Yerleşik)",
-      "name-disabled": "(Devre Dışı) {{annoName}}"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Şu geçersiz karakterleri içeremez: \"~\", \"^\", \":\", \"?\", \"*\", \"[\", \"\\\" veya \"]\".",
@@ -6795,20 +6954,7 @@
       "json-values-tooltip": "Her bir nesnenin herhangi bir sayıda özelliğe sahip olabileceği bir nesneler dizisini temsil eden bir JSON sağlayın.<br/>Daha fazla bilgi için <4>belgelerimize</4> göz atın.",
       "name-csv-values": "CSV",
       "name-json-values": "JSON",
-      "name-values-separated-comma": "Virgülle ayrılmış değerler",
       "selection-options": "Seçim ayarları"
-    },
-    "dashboard-annotations-list": {
-      "add-annotation-query": "Ek açıklama sorgusu ekle",
-      "title-above-dashboard-count_one": "Panonun üstünde ({{count}})",
-      "title-above-dashboard-count_other": "Panonun üstünde ({{count}})",
-      "title-controls-menu-count_one": "Denetim menüsü ({{count}})",
-      "title-controls-menu-count_other": "Denetim menüsü ({{count}})",
-      "title-hidden-count_one": "Gizli ({{count}})",
-      "title-hidden-count_other": "Gizli ({{count}})"
-    },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Yeni pano düzenleme deneyimi hakkında geri bildirimde bulunun"
     },
     "dashboard-link-form": {
       "back-to-list": "Listeye geri dön",
@@ -6840,9 +6986,6 @@
       "tooltip-move-link-down": "Bağlantıyı aşağı taşı",
       "tooltip-move-link-up": "Bağlantıyı yukarı taşı",
       "type": "Tür"
-    },
-    "dashboard-links-list": {
-      "add-link": "Bağlantı ekle"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Pano yüklenirken hata oluştu"
@@ -6879,8 +7022,34 @@
         "dashboard-not-found": "Pano bulunamadı"
       }
     },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Pano kontrolleri"
+    "dashboard-settings": {
+      "annotations": {
+        "button-moved": "",
+        "description-moved": "",
+        "title-moved": ""
+      },
+      "json": {
+        "button-moved": "",
+        "description-moved": "",
+        "title-moved": ""
+      },
+      "variables": {
+        "button-moved": "",
+        "description-moved": "",
+        "title-moved": ""
+      }
+    },
+    "dashboard-template-edit-banner": {
+      "body": "",
+      "title": ""
+    },
+    "dashboard-template-saved-banner": {
+      "body": "",
+      "title": ""
+    },
+    "dashboard-template-use-banner": {
+      "body": "",
+      "title": ""
     },
     "data-source-variable-form": {
       "data-source-options": "Veri kaynağı seçenekleri",
@@ -6915,12 +7084,6 @@
     "description-label": {
       "description": "Açıklama"
     },
-    "draggable-item": {
-      "drag-to-reorder": "Yeniden sıralamak için sürükleyin"
-    },
-    "draggable-items-list": {
-      "select": "Seçin"
-    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -6944,15 +7107,13 @@
       "sql-name": "SQL ile dönüştür",
       "sql-transformation-description": "Verilerinizi MySQL benzeri söz dizimiyle işleyin"
     },
-    "filters-list": {
-      "add-filter": "",
-      "reorder-description": "",
-      "title-above-dashboard_one": "",
-      "title-above-dashboard_other": "",
-      "title-controls-menu_one": "",
-      "title-controls-menu_other": "",
-      "title-hidden_one": "",
-      "title-hidden_other": ""
+    "errors-and-notices-inspector": {
+      "copy": "",
+      "learn-more": "",
+      "no-issues": "",
+      "severity-error": "",
+      "severity-info": "",
+      "severity-warning": ""
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -6983,6 +7144,7 @@
     },
     "get-editable-variables": {
       "description": {
+        "add-filters-and-group-by-keys-on-the-fly": "",
         "add-keyvalue-filters-on-the-fly": "Anında anahtar/değer filtreleri ekleyin",
         "dynamically-switch-source-multiple-panels": "Birden fazla panel için veri kaynağını dinamik olarak değiştirin",
         "group": "Anında gruplandırma için anahtarlar ekleyin",
@@ -7033,12 +7195,10 @@
     },
     "group-by-variable-form": {
       "alert-not-supported": "Bu veri kaynağı değişkenlere göre gruplamayı desteklemiyor",
-      "description-enables-users-custom-values": "Kullanıcıların listeye özel değerler eklemesine olanak tanır",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Boyutları CSV biçiminde girin: {{name}}, {{value}}",
       "group-by-options": "Seçeneklere göre grupla",
       "label-data-source": "Veri kaynağı",
-      "label-use-static-group-by-dimensions": "Statik grup boyutlarını kullan",
-      "name-allow-custom-values": "Özel değerlere izin ver"
+      "label-use-static-group-by-dimensions": "Statik grup boyutlarını kullan"
     },
     "help-wizard": {
       "copy-to-clipboard": "Panoya kopyala",
@@ -7101,6 +7261,7 @@
         "title-someone-else-has-updated-this-dashboard": "Başka biri bu panoyu güncelledi",
         "would-still-dashboard": "Yine de bu panoyu kaydetmek istiyor musunuz?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Kaydet ve üzerine yaz"
     },
     "legacy": {
@@ -7124,16 +7285,6 @@
       "delete-title": "Bağlantıyı sil",
       "unnamed": "Adsız bağlantı"
     },
-    "link-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-links-list": "Bağlantılar listesini yeniden sırala"
-        }
-      },
-      "render-list": {
-        "aria-label-link": "Bağlantı"
-      }
-    },
     "link-options": {
       "icon": "Simge",
       "include-time-range": "Geçerli zaman aralığını dâhil et",
@@ -7146,13 +7297,6 @@
       "type-dashboards": "Panolar",
       "type-link": "Bağlantı",
       "with-tags": "Etiketlerle birlikte"
-    },
-    "links-list": {
-      "drag-end-description": "Bağlantılar listesini yeniden sırala",
-      "title-above-dashboard_one": "Panonun üstünde ({{count}})",
-      "title-above-dashboard_other": "Panonun üstünde ({{count}})",
-      "title-controls-menu_one": "Denetim menüsü ({{count}})",
-      "title-controls-menu_other": "Denetim menüsü ({{count}})"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "",
@@ -7263,9 +7407,18 @@
       },
       "title-close": "Kapat"
     },
+    "predefined-variables": {
+      "label-all": "",
+      "label-custom": "",
+      "label-folder": "",
+      "label-global": "",
+      "label-none": ""
+    },
     "provisioned-controls-section": {
       "label": "Veri kaynağı tarafından sağlanır",
       "tooltip": "{{pluginName}} eklentisi tarafından eklendi",
+      "tooltip-folder": "",
+      "tooltip-global": "",
       "tooltip-unknown": "Bir veri kaynağı eklentisi tarafından eklendi"
     },
     "provisioned-delete-modal": {
@@ -7288,6 +7441,33 @@
       "try-it": "Deneyin",
       "upgrade-title": "Yeni düzenleyici mevcut"
     },
+    "query-variable-editor": {
+      "modal": {
+        "apply": "",
+        "apply-description": "",
+        "discard": "",
+        "drag-to-resize": "",
+        "no-values-found": "",
+        "preview-of-values": "",
+        "run-query": "",
+        "static-options-require-query": "",
+        "tabs": {
+          "query": "",
+          "static-options": ""
+        },
+        "title": ""
+      },
+      "spreadsheet": {
+        "add-option": "",
+        "clipboard-access-blocked": "",
+        "drag-to-reorder": "",
+        "enable-copy-paste-tooltip": "",
+        "paste-from-clipboard": "",
+        "paste-from-clipboard-with-format": "",
+        "paste-parse-error": "",
+        "remove-option": ""
+      }
+    },
     "query-variable-editor-form": {
       "description-examples": "Görüntü metnini ve değeri ayırmak için adlandırılmış yakalama grupları kullanılabilir (<1>örnekleri görün</1>).",
       "description-optional": "İsteğe bağlıdır, bir seri adının veya metrik düğüm parçasının bir kısmını çıkarmak istiyorsanız kullanılır.",
@@ -7307,6 +7487,14 @@
       },
       "selection-options": "Seçim ayarları",
       "static-options-legend": "Statik seçenekler"
+    },
+    "refresh-select": {
+      "options": {
+        "label": {
+          "on-dashboard-load": "",
+          "on-time-range-change": ""
+        }
+      }
     },
     "resource-export": {
       "classic-v2-warning": "Bu pano sürüm 2 şemasını kullanıyor. Sekmeler ve koşullu oluşturma gibi özellikler klasik biçimdeyken gösterilemez ve kaybolabilir.",
@@ -7397,10 +7585,13 @@
     "save-provisioned-dashboard-form": {
       "advanced-options": "",
       "cancel": "İptal",
+      "cancel-folder": "",
       "cannot-be-saved": "Bu pano başka bir kaynaktan sağlandığı için Grafana kullanıcı arayüzünden kaydedilemez. JSON'u kopyalayın veya aşağıdan bir dosyaya kaydedin, ardından sağlama kaynağındaki panonuzu güncelleyebilirsiniz.",
       "copy-json-to-clipboard": "JSON'u panoya kopyala",
+      "create-folder": "",
       "error-saving": "Kaydedilirken bir hata oluştu.",
       "file-path": "<strong>Dosya yolu:</strong> {{filePath}}",
+      "folder-create-error": "",
       "form-loading-error": "Form yüklenirken hata oluştu",
       "form-loading-error-unknown": "Form yüklenirken beklenmedik bir hata oluştu.",
       "format": {
@@ -7409,8 +7600,10 @@
         "v2-resource": ""
       },
       "label-description": "Açıklama",
+      "label-folder-name": "",
       "label-target-folder": "Hedef klasör",
       "label-title": "Başlık",
+      "new-folder": "",
       "repo-path-required": "Kaydetmek için gereken zorunlu alanlar eksik",
       "save": "Kaydet",
       "save-json-to-file": "JSON'u dosyaya kaydet",
@@ -7426,8 +7619,13 @@
       "new-alert-rule": "Yeni uyarı kuralı",
       "title-no-alerting-capable-query-found": "Uyarı oluşturabilecek sorgu bulunamadı"
     },
-    "section-filters-list": {
-      "add-filter": ""
+    "scripted-dashboard-deprecation-banner": {
+      "body": "",
+      "title": ""
+    },
+    "scripted-dashboards-disabled": {
+      "body": "",
+      "title": ""
     },
     "section-placement": {
       "top-row": "",
@@ -7435,11 +7633,6 @@
     },
     "selection-options-form": {
       "description-enables-multiple-values-selected": "Aynı anda birden fazla değerin seçilmesini sağlar",
-      "description-enables-option-include-variables": "Tüm değerleri dahil etme seçeneğini etkinleştirir",
-      "description-enables-users-custom-values": "Kullanıcıların listeye özel değerler eklemesine olanak tanır",
-      "name-allow-custom-values": "Özel değerlere izin ver",
-      "name-custom-all-value": "Özel tüm değer",
-      "name-include-all-option": "Tümünü Dâhil Et seçeneği",
       "name-multi-value": "Çoklu değer"
     },
     "share-button": {
@@ -7517,31 +7710,10 @@
       "save-dashboard": "Panoyu kaydet",
       "title-unsaved-changes": "Kaydedilmemiş değişiklikler"
     },
-    "use-annotations-category": {
-      "category": {
-        "title": {
-          "annotations": "Ek açıklamalar"
-        }
-      }
-    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Ayarlar"
-        }
-      }
-    },
-    "use-filters-category": {
-      "category": {
-        "title": {
-          "filters": ""
-        }
-      }
-    },
-    "use-links-category": {
-      "category": {
-        "title": {
-          "links": "Bağlantılar"
         }
       }
     },
@@ -7553,12 +7725,8 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Pano kaydedildi"
     },
-    "use-variables-category": {
-      "category": {
-        "title": {
-          "variables": "Değişkenler"
-        }
-      }
+    "validate-variable-name": {
+      "warning-predefined-shadow": ""
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Bu değişken başka bir değişken veya pano tarafından referans alınmıyor.",
@@ -7568,23 +7736,6 @@
     },
     "variable-controls": {
       "add-variable": "Değişken ekle"
-    },
-    "variable-display-select": {
-      "label": "Ekran",
-      "options": {
-        "controls-menu": {
-          "description": "Denetim menüsü açıkken görünür",
-          "label": "Denetim menüsü"
-        },
-        "hidden": {
-          "description": "Yalnızca düzenleme modunda görünür",
-          "label": "Gizli"
-        },
-        "top-placement-hidden-label": {
-          "description": "",
-          "label": ""
-        }
-      }
     },
     "variable-editable-element": {
       "delete-confirm": "Değişkeni sil",
@@ -7607,7 +7758,6 @@
       "placeholder-descriptive-text": "Açıklayıcı metin",
       "placeholder-label-name": "Etiket adı",
       "placeholder-variable-name": "Değişken adı",
-      "run-query": "",
       "text-running-query": "Sorgu çalıştırılıyor...",
       "title": {
         "delete-variable": "Değişkeni sil"
@@ -7626,23 +7776,6 @@
       "tooltip-duplicate-variable": "Değişkeni çoğalt",
       "tooltip-remove-variable": "Değişkeni kaldır"
     },
-    "variable-hide-select": {
-      "hide_options": {
-        "label": {
-          "label": "Etiket",
-          "nothing": "Hiçbir şey",
-          "variable": "Değişken"
-        }
-      },
-      "label": "Gizle"
-    },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Değişkenler listesini yeniden sırala"
-        }
-      }
-    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Statik seçenekler"
     },
@@ -7657,23 +7790,6 @@
       "show-more": "Daha fazla göster",
       "preview-of-values_one": "Değerlerin ön izlemesi ({{count}})",
       "preview-of-values_other": "Değerlerin ön izlemesi ({{count}})"
-    },
-    "variables-list": {
-      "add-variable": "Değişken ekle",
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Değişkenler listesini yeniden sırala"
-        }
-      },
-      "top-placement": {
-        "default": ""
-      },
-      "title-controls-menu_one": "Denetim menüsü ({{count}})",
-      "title-controls-menu_other": "Denetim menüsü ({{count}})",
-      "title-hidden_one": "Gizli ({{count}})",
-      "title-hidden_other": "Gizli ({{count}})",
-      "title-top-placement_one": "",
-      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
@@ -7767,16 +7883,12 @@
     "permissions": {
       "title": "İzinler"
     },
-    "provisioned-delete-modal": {
-      "confirm-button": "Tamam",
-      "text-1": "Bu pano, Grafana sağlama sistemi tarafından yönetilmektedir ve silinemez. Panoyu silmek için yapılandırma dosyasından kaldırın.",
-      "text-2": "Sağlama sistemi hakkında daha fazla bilgi için Grafana belgelerine bakın. ",
-      "text-3": "Dosya yolu: {{provisionedId}}",
-      "text-link": "Belgeler sayfasına git",
-      "title": "Sağlanan pano silinemiyor"
-    },
-    "settings": {
-      "title": "Ayarlar"
+    "template": {
+      "title": "",
+      "unavailable-body": "",
+      "unavailable-oss-body": "",
+      "unavailable-oss-title": "",
+      "unavailable-title": ""
     },
     "time-picker": {
       "hide-time-picker": "Zaman seçiciyi gizle",
@@ -7842,7 +7954,9 @@
       "description-mixed": "Birden fazla veri kaynağı kullanın"
     },
     "list": {
-      "no-data-source-message": "Veri kaynağı bulunamadı"
+      "no-data-source-message": "Veri kaynağı bulunamadı",
+      "results-found_one": "",
+      "results-found_other": ""
     },
     "modal": {
       "configure-new-data-source": "Yeni sekme açın ve bir veri kaynağı yapılandırın",
@@ -8434,6 +8548,10 @@
     "get-matches-metadata": {
       "matches": "0 eşleşme"
     },
+    "key-values-table": {
+      "link-fallback-label": "",
+      "open-value-in": ""
+    },
     "legacy-create-span-link-factory": {
       "text": {
         "tags": "Etiketler"
@@ -8538,6 +8656,26 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "Mevcut sorgular ve zaman aralığı için birim bilgisi mevcut değil."
     },
+    "metrics-list": {
+      "collapse-metric": "",
+      "error": "",
+      "expand-metric": "",
+      "filter-values": "",
+      "hide-values": "",
+      "labels-error": "",
+      "loading": "",
+      "loading-labels": "",
+      "loading-values": "",
+      "no-metrics": "",
+      "search-placeholder": "",
+      "show-more": "",
+      "show-more-metrics": "",
+      "show-more-values": "",
+      "show-values": "",
+      "sort-ascending": "",
+      "sort-descending": "",
+      "values-error": ""
+    },
     "next-prev-result": {
       "aria-label-next": "Sonraki sonuç düğmesi",
       "aria-label-prev": "Önceki sonuç düğmesi",
@@ -8614,10 +8752,12 @@
       "query-deleted": "Sorgu silindi"
     },
     "rich-history-queries-tab": {
+      "datasource-list-error": "",
       "filter-aria-label": "Veri kaynakları için sorguları filtreleyin",
       "filter-history": "Geçmişi filtrele",
       "filter-placeholder": "Veri kaynakları için sorguları filtreleyin",
       "history-local": "Geçmiş tarayıcınızda yerel olarak barındırılır ve başkalarıyla paylaşılmaz.",
+      "load-error": "",
       "loading": "Yükleniyor...",
       "loading-results": "Sonuçlar yükleniyor...",
       "search-placeholder": "Arama sorguları",
@@ -8650,8 +8790,10 @@
       }
     },
     "rich-history-starred-tab": {
+      "datasource-list-error": "",
       "filter-queries-aria-label": "Veri kaynakları için sorguları filtreleyin",
       "filter-queries-placeholder": "Veri kaynakları için sorguları filtreleyin",
+      "load-error": "",
       "loading": "Yükleniyor...",
       "loading-results": "Sonuçlar yükleniyor...",
       "local-history-message": "Geçmiş tarayıcınızda yerel olarak barındırılır ve başkalarıyla paylaşılmaz.",
@@ -8710,13 +8852,29 @@
       "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Tüm aralıkları göster",
+    "signal-card": {
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
+      "jump-to-query-label": ""
+    },
+    "signal-explorer": {
+      "empty-text": "",
+      "section-label-queries": "",
+      "title-datasource-explorer": "",
+      "unknown-datasource": ""
+    },
     "span-bar": {
       "tooltip-critical-path": "Genel izleme/istek/iş akışındaki <1>kritik yol</1> üzerinde bir segment."
     },
     "span-bar-row": {
-      "tooltip-adaptive-traces-restored": ""
+      "tooltip-adaptive-traces-restored": "",
+      "summary-count-aria_one": "",
+      "summary-count-aria_other": ""
     },
     "span-detail": {
+      "attribute-category": {
+        "other": ""
+      },
       "label": {
         "kind": "Tür:",
         "library-name": "Kütüphane Adı:",
@@ -8728,19 +8886,51 @@
       "label-resource-attributes": "Kaynak öznitelikleri",
       "label-span-attributes": "Zaman aralığı öznitelikleri",
       "label-stack-trace": "Yığın izleme",
+      "label-summary-attributes": "",
       "label-warnings": "Uyarılar",
       "overview-items": {
         "label": {
           "child-count": "Alt Öge Sayısı:",
           "duration": "Süre:",
+          "end-time": "",
           "service": "Hizmet:",
           "start-time": "Başlangıç Tarihi:"
         }
       },
-      "share-span": "Paylaş"
+      "resource-attributes-inherited": "",
+      "share-span": "Paylaş",
+      "summary-label": "",
+      "summary-count-aria_one": "",
+      "summary-count-aria_other": ""
+    },
+    "span-detail-link-buttons": {
+      "logs-for-this-span": {
+        "button": "",
+        "no-logs-tooltip": "",
+        "tooltip": ""
+      },
+      "logs-for-this-trace": {
+        "button": "",
+        "no-logs-tooltip": "",
+        "tooltip": ""
+      },
+      "open-in-profiles-drilldown": "",
+      "profiles-for-this-span": "",
+      "related-logs": "",
+      "related-logs-no-logs-tooltip": "",
+      "related-logs-tooltip": "",
+      "session-for-this-span": ""
     },
     "span-flame-graph": {
       "flame-graph": "Alev grafiği"
+    },
+    "summary-span": {
+      "stat-max": "",
+      "stat-max-lower": "",
+      "stat-median": "",
+      "stat-median-lower": "",
+      "stat-min": "",
+      "stat-min-lower": ""
     },
     "supplementary-result-error": {
       "show-details": "Ayrıntıları göster"
@@ -8813,7 +9003,18 @@
       "url": "URL"
     },
     "trace-view": {
+      "adaptive-traces-restored": {
+        "body": "",
+        "title": ""
+      },
       "aria-label-copy": "Panoya kopyala",
+      "attribute-plugin-promo": {
+        "learn-more": ""
+      },
+      "database-observability-promo": {
+        "body": "",
+        "title": ""
+      },
       "no-data": "Veri yok",
       "tooltip-copy-icon": "Kopyalandı"
     },
@@ -8945,6 +9146,27 @@
     "threshold": {
       "label-input": "Girdi"
     }
+  },
+  "feature-control": {
+    "button": {
+      "aria-label": "",
+      "close-tooltip": "",
+      "open-tooltip": ""
+    },
+    "delete-flag": "",
+    "description": "",
+    "dismiss": {
+      "label": "",
+      "tooltip": ""
+    },
+    "flag-key": "",
+    "flag-key-placeholder": "",
+    "flag-type": "",
+    "flag-value": "",
+    "menu": "",
+    "new-flag": "",
+    "save-flag": "",
+    "title": ""
   },
   "folder-filter": {
     "select-aria-label": "Klasör filtresi",
@@ -9089,6 +9311,7 @@
       "name-lookup-field": "Arama alanı"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Varsayılan alan adlarına göre konum verilerini otomatik olarak tanımlayın",
         "description-coords": "Enlem ve boylam alanlarını belirtin",
@@ -9118,9 +9341,9 @@
     "description-mouse-wheel-zoom": "Fare tekerleği ile yakınlaştırma kontrolünü etkinleştir",
     "description-no-repeat": "Haritanın yatay olarak tekrar etmesini önleyin",
     "description-share-view": "Birden fazla panelde aynı görünümü kullanın.  Not: Bunun için panonun yeniden yüklenmesi gerekebilir.",
-    "description-show-attribution": "Harita kaynağı atıf bilgilerini sağ altta göster",
     "description-show-debug": "Harita bilgilerini göster",
     "description-show-measure": "Harita üzerinde ölçüm yapmak için araçları göster",
+    "description-show-optional-attribution": "",
     "description-show-scale": "Harita ölçeğini belirtin",
     "description-show-zoom": "Sol üst köşedeki yakınlaştırma kontrol düğmelerini göster",
     "description-sync-view-variable": "Görünüm sınırlarını sorgularda kullanmak üzere bir pano değişkeninde sakla",
@@ -9181,9 +9404,9 @@
     "name-mouse-wheel-zoom": "Fare tekerleği yakınlaştırma",
     "name-no-repeat": "Harita tekrarı yok",
     "name-share-view": "Görünümü paylaş",
-    "name-show-attribution": "Özniteliği göster",
     "name-show-debug": "Hata ayıklamayı göster",
     "name-show-measure": "Ölçüm araçlarını göster",
+    "name-show-optional-attribution": "",
     "name-show-scale": "Ölçeği göster",
     "name-show-zoom": "Yakınlaştırma kontrolünü göster",
     "name-sync-view-variable": "Görünümü pano değişkeniyle senkronize et",
@@ -9263,6 +9486,16 @@
     },
     "tutorial-card": {
       "complete": "tamamlandı"
+    }
+  },
+  "global-variables": {
+    "details": {
+      "create-error": "",
+      "create-success": "",
+      "delete-error": "",
+      "delete-success": "",
+      "update-error": "",
+      "update-success": ""
     }
   },
   "gops": {
@@ -9401,6 +9634,7 @@
     "field": {
       "fieldColor": {
         "accessibleGroup": "Erişilebilir",
+        "experimentalGroup": "",
         "otherGroup": "Diğerleri"
       }
     },
@@ -9854,6 +10088,14 @@
       "log-base": "Günlük tabanı"
     },
     "builder": {
+      "annotation-options": {
+        "canvas-controls-desc": "",
+        "canvas-controls-name": "",
+        "clustering-desc": "",
+        "clustering-name": "",
+        "multi-lane-name": "",
+        "multi-row-desc": ""
+      },
       "annotations": "Ek açıklamalar",
       "axis": {
         "category-axis": "Eksen",
@@ -10189,9 +10431,13 @@
     "matchers": {
       "groups": {
         "annotation": "Ek açıklamalar",
+        "annotation-description": "",
         "exemplar": "Örnekler",
+        "exemplar-description": "",
         "nested": "İç içe geçmiş",
-        "series": "Dataframe"
+        "nested-description": "",
+        "series": "Dataframe",
+        "series-description": ""
       },
       "labels": {
         "base-field-name": "{{name}} (temel alan adı)",
@@ -10241,6 +10487,9 @@
       "text-color-swatch": "Metin rengi",
       "transparent-swatch": "Şeffaf"
     },
+    "page-loader": {
+      "label": ""
+    },
     "page-toolbar": {
       "go-back": "Geri dön (Esc)",
       "search-dashboard-name": "Pano adına göre ara",
@@ -10255,6 +10504,8 @@
       "aria-label-toggle-collapse": "paneli daralt/genişlet",
       "ariaLabel-panel-loading": "Panel yükleme çubuğu",
       "ariaLabel-panel-status": "Panel durumu",
+      "errors-and-notices": "",
+      "inspect-errors-notices": "",
       "tooltip-cancel": "Sorguyu iptal et",
       "tooltip-cancel-loading": "Sorguyu iptal et",
       "tooltip-stop-streaming": "Akışı durdur",
@@ -10281,6 +10532,10 @@
     },
     "secret-form-field": {
       "reset": "Sıfırla"
+    },
+    "secret-input": {
+      "hide": "",
+      "show": ""
     },
     "secret-text-area": {
       "hide-content": "Gizli içeriği gizle",
@@ -10390,8 +10645,7 @@
     "tags-input": {
       "add": "Ekle",
       "placeholder-new-tag": "Yeni etiket (eklemek için anahtarı girin)",
-      "remove": "Etiketi kaldır: {{name}}",
-      "tag-too-long": "Etiket çok uzun, en fazla 50 karakter olabilir"
+      "remove": "Etiketi kaldır: {{name}}"
     },
     "time-sync-button": {
       "aria-label-sync": "Zamanları senkronize et",
@@ -10552,7 +10806,6 @@
     "name-reverse": "Geri döndür",
     "name-scale": "Ölçek",
     "name-scheme": "Düzen",
-    "name-show-color-scale": "Renk ölçeğini göster",
     "name-show-histogram": "Histogramı göster (Y ekseni)",
     "name-show-legend": "Açıklamayı göster",
     "name-start-color-from-value": "Renk ölçeğini bu değerden başlat",
@@ -10574,6 +10827,7 @@
     "placeholder-start-color-from-value": "Otomatik (min.)",
     "placeholder-value-name": "Değer",
     "placement-options": {
+      "label-bottom": "",
       "label-hidden": "Gizli",
       "label-left": "Sol",
       "label-right": "Sağ"
@@ -10621,6 +10875,8 @@
     "shortcuts-description": {
       "change-theme": "Temayı değiştir",
       "collapse-all-rows": "Tüm satırları daralt",
+      "copy-panel": "",
+      "copy-share-link": "",
       "copy-time-range": "Zaman aralığını kopyala",
       "dashboard-settings": "Pano ayarları",
       "duplicate-panel": "Paneli çoğalt",
@@ -10639,8 +10895,8 @@
       "open-assistant": "Asistanı aç",
       "open-search": "Aramayı aç",
       "open-share-embed-drawer": "Eklenen paneli paylaş",
-      "open-share-link-drawer": "Panel bağlantısını paylaş",
       "open-shared-modal": "Panel anlık görüntüsünü paylaş",
+      "paste-panel": "",
       "paste-time-range": "Zaman aralığını yapıştır",
       "refresh-all-panels": "Tüm panelleri yenile",
       "remove-panel": "Paneli kaldır",
@@ -10677,6 +10933,16 @@
     "name-stacking": "İstifleme"
   },
   "home": {
+    "alerts-incidents": {
+      "alert-tab-label": "",
+      "incident-tab-label": "",
+      "team-filter-all": "",
+      "team-filter-label": "",
+      "team-filter-your-teams": "",
+      "title": "",
+      "title-alerts": "",
+      "title-incidents": ""
+    },
     "dashboard-tabs": {
       "most-used": "",
       "most-used-active": "",
@@ -10686,11 +10952,16 @@
       "starred": "",
       "starred-active": ""
     },
+    "dashboards": {
+      "title": "",
+      "view-all": ""
+    },
     "firing-alerts-card": {
+      "create": "",
       "empty": "",
+      "empty-selected-team": "",
       "empty-teams": "",
       "error-title": "",
-      "retry": "",
       "severity-critical": "",
       "severity-high": "",
       "severity-low": "",
@@ -10698,6 +10969,7 @@
       "severity-unknown": "",
       "title": "",
       "view-all": "",
+      "view-rules": "",
       "critical-count_one": "",
       "critical-count_other": "",
       "high-count_one": "",
@@ -10716,10 +10988,101 @@
       },
       "placeholder": ""
     },
-    "most-used-dashboards-tab": {
+    "incidents-card": {
+      "declare": "",
       "empty": "",
       "error-title": "",
+      "title": "",
+      "view-all": ""
+    },
+    "most-used-dashboards-tab": {
+      "empty": "",
+      "empty-description": "",
+      "error-title": "",
       "loading": ""
+    },
+    "news-card": {
+      "empty": "",
+      "error-title": "",
+      "read-more": "",
+      "title": ""
+    },
+    "overview": {
+      "get-started": {
+        "cards": {
+          "app-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "cloud-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "database-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "demo-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "hosted-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "infra-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "kubernetes": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "logs": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "opentelemetry": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "prometheus": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "visualize-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "website-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          }
+        },
+        "show-less": "",
+        "show-more": "",
+        "title": ""
+      },
+      "options": {
+        "all": "",
+        "attention": "",
+        "available": "",
+        "enabled": "",
+        "get-started": ""
+      },
+      "title": ""
     },
     "recent-dashboards-tab": {
       "browse": "",
@@ -10728,13 +11091,149 @@
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": ""
+      "loading": "",
+      "reset": ""
+    },
+    "recommendations": {
+      "application-observability": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
+      "carousel-label": "",
+      "carousel-roledescription": "",
+      "connect-metrics": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "enable-logs": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "enable-logs-k8s": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "existing": "",
+      "go-to": "",
+      "health": {
+        "nodes_one": "",
+        "nodes_other": "",
+        "pods_one": "",
+        "pods_other": "",
+        "restarts_one": "",
+        "restarts_other": ""
+      },
+      "hide": "",
+      "hosted-traces": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
+      "kubernetes": {
+        "action": "",
+        "cluster-cpu": "",
+        "datasource": "",
+        "title": "",
+        "view": "",
+        "alerts-firing_one": "",
+        "alerts-firing_other": "",
+        "clusters_one": "",
+        "clusters_other": "",
+        "pods_one": "",
+        "pods_other": ""
+      },
+      "kubernetes-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
+      "logs": {
+        "action": "",
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "title": "",
+        "volume": "",
+        "stats-sources_one": "",
+        "stats-sources_other": ""
+      },
+      "metrics": {
+        "action": "",
+        "action-explore": "",
+        "data-points-per-minute": "",
+        "datasource": "",
+        "disk-worst": "",
+        "series-trend": "",
+        "stats": "",
+        "title": "",
+        "view": "",
+        "disk-eta_one": "",
+        "disk-eta_other": "",
+        "disk-hosts_one": "",
+        "disk-hosts_other": "",
+        "names_one": "",
+        "names_other": "",
+        "series_one": "",
+        "series_other": "",
+        "stats-hosts_one": "",
+        "stats-hosts_other": ""
+      },
+      "next": "",
+      "no-data": {
+        "badge": "",
+        "connect": "",
+        "description": "",
+        "description-partial": "",
+        "description-unknown": "",
+        "popular-solutions": "",
+        "solution-k6": "",
+        "solution-kubernetes": "",
+        "solution-synthetics": "",
+        "title": "",
+        "title-partial": ""
+      },
+      "pause": "",
+      "previous": "",
+      "recommended": "",
+      "resume": "",
+      "show": "",
+      "switch": "",
+      "switchSolution": "",
+      "title": "",
+      "traces": {
+        "action": "",
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "throughput": "",
+        "title": "",
+        "spans_one": "",
+        "spans_other": "",
+        "stats-services_one": "",
+        "stats-services_other": ""
+      }
     },
     "starred-dashboards-tab": {
       "empty": "",
       "empty-description": "",
       "error-title": "",
       "loading": ""
+    },
+    "summary-card": {
+      "retry": ""
     }
   },
   "import-overview": {
@@ -10969,9 +11468,6 @@
     }
   },
   "library-panels": {
-    "add-library-panel-modal": {
-      "title-create-library-panel": "Kütüphane paneli oluştur"
-    },
     "confirm": {
       "delete-panel": "Bu paneli kaldırmak istiyor musunuz?"
     },
@@ -11015,17 +11511,6 @@
     "save": {
       "error": "Kütüphane paneli kaydedilirken hata oluştu: \"{{errorMsg}}\"",
       "success": "Kütüphane paneli kaydedildi"
-    },
-    "save-library-panel-modal": {
-      "affected-dashboards": "Paneli kullanan aşağıdaki panolar etkilenecek:",
-      "cancel": "İptal et",
-      "dashboard-name": "Pano adı",
-      "discard": "Vazgeç",
-      "loading-connected-dashboards": "Bağlı panolar yükleniyor...",
-      "placeholder-search-affected-dashboards": "Etkilenen panoları ara",
-      "update-all": "Tümünü güncelle",
-      "num-affected_one": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1>",
-      "num-affected_other": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1>"
     },
     "search-controls": {
       "label": {
@@ -11169,24 +11654,7 @@
       "end-of-range": "Seçilen zaman aralığının sonu.",
       "load-more": "Daha fazla yüklemek için kaydırın",
       "load-newer": "Yeni günlükler yükleniyor...",
-      "load-older": "Eski günlükler yükleniyor...",
-      "older-logs": "Eski günlükler"
-    },
-    "log-context-buttons": {
-      "center-matched-line": "Eşleşen satırı ortala",
-      "label-wrap-lines": "Satırları kaydır"
-    },
-    "log-details": {
-      "fields": "Alanlar",
-      "links": "Bağlantılar",
-      "log-line": "Günlük satırı",
-      "no-details": "Ayrıntı yok"
-    },
-    "log-details-body": {
-      "toggle-field-button": {
-        "tooltip-hide-log-line": "Günlük kaydı satırını gizle",
-        "tooltip-show-log-line": "Günlük kaydı satırını göster"
-      }
+      "load-older": "Eski günlükler yükleniyor..."
     },
     "log-labels": {
       "collapse": "Etiketleri daralt",
@@ -11288,28 +11756,6 @@
       "next": "Sonraki sonuç",
       "prev": "Önceki sonuç"
     },
-    "log-row-context-modal": {
-      "error-loading-log-more-logs": "Daha fazla günlük kaydı yüklenirken hata oluştu.",
-      "no-more-logs-available": "Başka günlük kaydı yok.",
-      "open-in-split-view": "Bölünmüş görünümde aç",
-      "title-log-context": "Günlük kaydı içeriği"
-    },
-    "log-row-menu-cell": {
-      "aria-label-copy-shortlink": "Kısa bağlantıyı kopyala",
-      "aria-label-pin-line": "Satırı sabitle",
-      "aria-label-show-context": "İçeriği göster",
-      "aria-label-unpin-line": "Satırın sabitlemesini kaldır",
-      "tooltip-copy-shortlink": "Kısa bağlantıyı kopyala",
-      "tooltip-copy-to-clipboard": "Panoya kopyala",
-      "tooltip-show-context": "İçeriği göster",
-      "tooltip-unpin-line": "Satırın sabitlemesini kaldır"
-    },
-    "log-row-message": {
-      "ellipsis": "… ",
-      "more": "daha fazla",
-      "see-details": "Günlük ayrıntılarını göster",
-      "tooltip-error": "Hata: {{errorMessage}}"
-    },
     "log-rows": {
       "disable-popover": {
         "confirm": "Onayla",
@@ -11334,7 +11780,6 @@
     "logs-controls": {
       "collapse": "Daralt",
       "deduplication": "Yinelenenleri kaldırma",
-      "disable-prettify-json": "JSON günlük kayıtlarını daralt",
       "display-level-all": "Tüm seviyeler",
       "download": "Günlükleri indir",
       "download-logs": {
@@ -11348,7 +11793,6 @@
       "font-large": "Büyük yazı tipi ayarla",
       "font-small": "Küçük yazı tipi ayarla",
       "hide-search": "Aramayı kapat",
-      "hide-timestamps": "Zaman damgalarını gizle",
       "hide-unique-labels": "Benzersiz etiketleri gizle",
       "label": {
         "collapse": "Genişletilmiş",
@@ -11381,14 +11825,12 @@
       },
       "newest-first": "Günlükler yeniden eskiye sıralandı: En eskileri göstermek için tıklayın",
       "oldest-first": "Günlükler eskiden yeniye sıralandı: En yenileri göstermek için tıklayın",
-      "prettify-json": "JSON günlük kayıtlarını genişlet",
       "remove-escaping": "Kaçış karakterini kaldır",
       "resolution-ms": "msn",
       "resolution-ns": "nsn",
       "scroll-bottom": "En alta kaydır",
       "scroll-top": "En üste kaydır",
       "show-search": "Günlük sonuçlarında ara",
-      "show-timestamps": "Zaman damgalarını göster",
       "show-unique-labels": "Benzersiz etiketleri göster",
       "table-wrap-text": {
         "disable": "",
@@ -11412,7 +11854,6 @@
         "enable-highlighting": "Vurgulamayı etkinleştir",
         "filter-level": "Günlük kaydı sonuçlarını seviyeye göre filtrele"
       },
-      "unwrap-lines": "Satırları çöz",
       "unwrapped-columns": {
         "disable": "Sütunları devre dışı bırak",
         "disabled-label": "Sütunlar desteklenmiyor",
@@ -11420,16 +11861,9 @@
         "enable": "Sütunları etkinleştir",
         "enabled-text": "Sütunlar devre dışı",
         "not-supported": "Satır sonu kaydırması etkinleştirildiğinde sütunlar desteklenmez"
-      },
-      "wrap-lines": "Satırları kaydır"
-    },
-    "logs-panel": {
-      "render-common-labels": {
-        "common-labels": "Ortak etiketler:"
       }
     },
     "name-allow-download": "",
-    "name-common-labels": "Ortak etiketler",
     "name-deduplication": "Yinelenenleri kaldırma",
     "name-details-mode": "Günlük kaydı ayrıntı paneli modu",
     "name-details-options": {
@@ -11453,9 +11887,6 @@
       "label-newest-first": "Yeniden eskiye",
       "label-oldest-first": "Eskiden yeniye"
     },
-    "out-of-range-message": {
-      "end-of-the-selected-time-range": "Seçilen zaman aralığının sonu."
-    },
     "popover-menu": {
       "copy": "Seçimi kopyala",
       "disable-menu": "Menüyü devre dışı bırak",
@@ -11465,24 +11896,6 @@
     },
     "show-log-attributes": "",
     "timestamp-format": "Zaman damgası çözünürlüğü",
-    "un-themed-log-details": {
-      "aria-label-data-links": "Veri bağlantıları",
-      "aria-label-fields": "Alanlar",
-      "aria-label-line": "Günlük satırı",
-      "aria-label-log-level": "Günlük kaydı seviyesi",
-      "aria-label-no-details": "Ayrıntı yok"
-    },
-    "un-themed-log-details-row": {
-      "filter-out": "Değeri filtre dışı bırak",
-      "filter-out-query": "{{query}} sorgusu içinde değeri filtrele",
-      "title-copy-value-to-clipboard": "Değeri panoya kopyala",
-      "toggle-field-button": {
-        "tooltip-field-instead-message": "Mesaj yerine bu alanı göster",
-        "tooltip-hide-this-field": "Bu alanı gizle"
-      },
-      "tooltip-adhoc-statistics": "Geçici istatistikler",
-      "tooltip-hide-adhoc-statistics": "Geçici istatistikleri gizle"
-    },
     "un-themed-log-label-stats": {
       "field-log-stats": "{{label}}: {{total}} satırın {{rowCount}} tanesinde bu alan mevcut",
       "label-log-stats": "{{label}}: {{total}} satırın {{rowCount}} tanesinde bu etiket mevcut"
@@ -11977,6 +12390,10 @@
       "subtitle": "Grafana'daki kullanıcıları yönetin",
       "title": "Kullanıcılar"
     },
+    "global-variables": {
+      "subtitle": "",
+      "title": ""
+    },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
@@ -12075,6 +12492,10 @@
     "reporting": {
       "title": "Raporlama"
     },
+    "saved-queries": {
+      "subtitle": "",
+      "title": ""
+    },
     "scenes": {
       "title": "Pano Sahneleri"
     },
@@ -12150,11 +12571,24 @@
       "aria-label": "İçerik Haritaları"
     },
     "extension-sidebar": {
+      "assistant-close": "",
+      "assistant-close-tooltip": "",
+      "assistant-label": "",
+      "assistant-open": "",
+      "assistant-open-tooltip": "",
       "button-tooltip": {
         "close": "{{title}} bölümünü kapat",
         "open": "{{title}} bölümünü aç",
         "open-all": "Yapay Zeka asistanlarını ve yan menü uygulamalarını aç"
       }
+    },
+    "fullscreen-workspace": {
+      "enter": "",
+      "error-exit": "",
+      "error-message": "",
+      "error-reload": "",
+      "error-title": "",
+      "workspace": ""
     },
     "help": {
       "aria-label": "Yardım",
@@ -12174,6 +12608,18 @@
     "item": {
       "bookmark": {
         "tooltip": "{{itemName}} yer imi"
+      },
+      "hide": {
+        "tooltip": ""
+      },
+      "pin": {
+        "tooltip": ""
+      },
+      "show": {
+        "tooltip": ""
+      },
+      "unpin": {
+        "tooltip": ""
       }
     },
     "kiosk": {
@@ -12181,17 +12627,27 @@
     },
     "megamenu": {
       "close": "Menüyü kapat",
+      "customise": "",
+      "customise-cancel": "",
+      "customise-done": "",
+      "customise-reset": "",
+      "customise-saving": "",
       "dialog-label": "Gezinme",
       "dock": "Menüyü sabitle",
       "list-label": "Gezinme",
       "open": "Ana menü",
+      "pin-error": "",
+      "pinned-list-label": "",
       "undock": "Menünün sabitlemesini kaldır"
     },
     "megamenu-item": {
       "children-error": "",
       "collapse-aria-label": "Bölümü daralt: {{sectionName}}",
       "expand-aria-label": "Bölümü genişlet: {{sectionName}}",
-      "loading-aria-label": ""
+      "loading-aria-label": "",
+      "reorder-aria-label": "",
+      "starred-dashboard-icon": "",
+      "starred-folder-icon": ""
     },
     "org-switcher": {
       "aria-label": "Organizasyonu değiştir"
@@ -12201,6 +12657,7 @@
     },
     "quick-add": {
       "aria-label": "Yeni",
+      "generate-dashboard-button": "",
       "new-template-dashboard-button": ""
     },
     "rss-button": "Blog'tan son gönderiler"
@@ -12286,6 +12743,9 @@
       "title-zoom-in": "Yakınlaştır",
       "title-zoom-out": "Uzaklaştır"
     }
+  },
+  "notebook": {
+    "breadcrumb-title": ""
   },
   "notifications": {
     "empty-state": {
@@ -12452,7 +12912,7 @@
     "header-menu": {
       "copy": "Kopyala",
       "copy-styles": "Stilleri kopyala",
-      "create-library-panel": "Kütüphane paneli oluştur",
+      "download-diagnostics": "",
       "duplicate": "Çoğalt",
       "edit": "Düzenle",
       "explore": "Keşfet",
@@ -12463,6 +12923,7 @@
       "inspect-json": "Panel JSON",
       "more": "Daha fazla...",
       "new-alert-rule": "Yeni uyarı kuralı",
+      "panel-copy-success": "",
       "paste-styles": "Stilleri yapıştır",
       "query": "Sorgu",
       "remove": "Kaldır",
@@ -12982,6 +13443,7 @@
       "comment-placeholder-describe-changes-optional": "Değişikliklerinizi açıklayan bir not ekleyin (isteğe bağlı)",
       "custom-value-description": "Yeni dal oluşturmak için Enter tuşuna basın",
       "description-branch": "Mevcut bir dalı seçin veya dal oluşturmak için yeni bir dal adı girin",
+      "description-branch-enforced": "",
       "description-branch-restricted": "Bu depo yalnızca yapılandırılan dal ile sınırlandırılmıştır",
       "description-file-path": "Depo içindeki dosya yolu (.json veya .yaml)",
       "description-filename": "Pano için dosya adı (.json veya .yaml)",
@@ -13024,13 +13486,16 @@
   "provisioning": {
     "bitbucket": {
       "branch-required": "Dal gereklidir",
+      "email-description": "",
+      "email-invalid": "",
+      "email-label": "",
       "permissions": {
         "pull-requests-label": "Çekme istekleri",
         "pull-requests-read-write": "Okuma ve yazma",
         "repository-label": "Depolar",
         "repository-read-write-admin": "Okuma ve yazma",
         "webhooks-label": "Web kancaları",
-        "webhooks-read-write": "Okuma ve yazma"
+        "webhooks-read-write-delete": ""
       },
       "pr-workflow-description": "Kullanıcıların değişiklikleri kaydederken bir çekme isteği açıp açmayacağını seçmesine izin verir. Depo ana dala doğrudan değişikliklere izin vermiyorsa bir çekme isteği gerekebilir.",
       "pr-workflow-label": "Kaydederken çekme isteği seçeneğini etkinleştir",
@@ -13060,12 +13525,10 @@
       "warning-quota-may-exceed-message": "",
       "warning-quota-may-exceed-message-onprem": "",
       "warning-quota-may-exceed-title": "",
-      "dashboards-count_one": "{{count}} pano",
-      "dashboards-count_other": "{{count}} pano",
-      "files-count_one": "{{count}} dosya",
-      "files-count_other": "{{count}} dosya",
-      "folders-count_one": "{{count}} klasör",
-      "folders-count_other": "{{count}} klasör"
+      "files-count_one": "",
+      "files-count_other": "",
+      "resources-count_one": "",
+      "resources-count_other": ""
     },
     "branch-options": {
       "description-enforce-template": "",
@@ -13086,16 +13549,12 @@
       "aria-label-copy": "Kodu panoya kopyala"
     },
     "commit-message": {
-      "dashboard-create-default": "",
-      "dashboard-delete-default": "",
-      "dashboard-move-default": "",
-      "dashboard-rename-default": "",
-      "dashboard-update-default": "",
-      "folder-create-default": "",
-      "folder-delete-default": "",
-      "folder-move-default": "",
-      "folder-rename-default": "",
-      "folder-update-default": ""
+      "bulk-resource-kind": "",
+      "create-default": "",
+      "delete-default": "",
+      "move-default": "",
+      "rename-default": "",
+      "update-default": ""
     },
     "commit-options": {
       "description-enforce-template": "",
@@ -13116,7 +13575,7 @@
       "button-saving": "Kaydediliyor…",
       "description-commit-message-template": "",
       "description-connection": "Kullanılacak GitHub Uygulaması bağlantısını seçin",
-      "description-enabled": "Otomatik çekme etkinleştirildikten sonra hedef değiştirilemez.",
+      "description-enabled": "",
       "description-read-only": "Kaynaklar Grafana aracılığıyla değiştirilemez.",
       "description-title": "Yapılandırma için okunabilir ad",
       "error-connection-required": "Bağlantı gerekli",
@@ -13175,6 +13634,7 @@
       "description-private-key": "GitHub Uygulamanız için PEM formatında özel anahtar",
       "description-provider": "Sağlayıcı türünü seçin",
       "description-title": "Bu bağlantı için anlaşılır bir ad",
+      "description-webhook-disabled": "",
       "error-delete-connection": "Bağlantı silinemedi",
       "error-required": "Bu alan zorunludur",
       "error-save-connection": "Bağlantı kaydedilemedi",
@@ -13186,6 +13646,7 @@
       "label-private-key": "Özel Anahtar (PEM)",
       "label-provider": "Sağlayıcı",
       "label-title": "Başlık",
+      "label-webhook-disabled": "",
       "not-found": "Bağlantı bulunamadı",
       "not-found-description": "Aradığınız bağlantı mevcut değil.",
       "page-subtitle": "Haricî sağlayıcılarla kimlik doğrulamak için bir bağlantı yapılandırın",
@@ -13257,8 +13718,7 @@
       "title-visual-previews-in-pull-requests": "Çekme isteklerinde resimlerin işlenmesiyle birlikte görsel ön izleme"
     },
     "error": {
-      "branch-not-found-dashboard": "Bu panoyu içermeyen bir dal seçtiniz. Başka bir dal seçin.",
-      "branch-not-found-folder": "Bu klasörü içermeyen bir dal seçtiniz. Başka bir dal seçin."
+      "branch-not-found": ""
     },
     "error-title-default": "Hata",
     "expanded-row": {
@@ -13365,6 +13825,10 @@
       "url-description": "GitHub depo URL'si",
       "url-required": "Depo URL'si gereklidir"
     },
+    "github-enterprise": {
+      "server-url-description": "",
+      "server-url-label": ""
+    },
     "gitlab": {
       "branch-required": "Dal gereklidir",
       "permissions": {
@@ -13445,6 +13909,17 @@
         "error-fetching-active-job": "Etkin iş alınırken hata oluştu"
       }
     },
+    "job-summary": {
+      "column-created": "",
+      "column-deleted": "",
+      "column-errors": "",
+      "column-resource": "",
+      "column-total": "",
+      "column-unchanged": "",
+      "column-updated": "",
+      "column-warnings": "",
+      "unknown-kind": ""
+    },
     "local": {
       "path-description": "Depoya giden yerel dosya sistemi yolu",
       "path-label": "Depo Yolu",
@@ -13453,9 +13928,11 @@
     "managed-badge": {
       "classic-file-provisioning": "",
       "kubectl": "",
+      "manage-repository": "",
       "plugin": "",
       "provisioned": "",
-      "terraform": ""
+      "terraform": "",
+      "view-source-file": ""
     },
     "managed-by-repository-tooltip": "Yöneten: Depo",
     "managed-by-repository-tooltip-with-title": "Yöneten: {{title}} deposu",
@@ -13465,26 +13942,77 @@
       "truncated": "İleti kısaltıldı"
     },
     "migrate": {
-      "all-managed": "",
       "all-resources": "",
-      "dashboards": "",
+      "branch-description-generated": "",
+      "branch-label": "",
+      "branch-must-differ": "",
       "drawer-cancel": "",
       "drawer-description": "",
       "drawer-title": "",
       "empty": "",
       "error-title": "",
-      "folders": "",
+      "folders-error-body": "",
+      "folders-error-title": "",
+      "general-folder-title": "",
+      "generate-folder-ids-confirm-body": "",
+      "generate-folder-ids-confirm-button": "",
+      "generate-folder-ids-confirm-title": "",
+      "generate-folder-ids-description": "",
+      "generate-folder-ids-label": "",
+      "generate-folder-ids-warning-body": "",
+      "generate-folder-ids-warning-title": "",
       "header-subtitle": "",
       "header-title": "",
       "loading": "",
+      "loading-resources": "",
       "migrate-button": "",
+      "migrate-button-configured-branch-tooltip": "",
       "migrate-button-disabled-tooltip": "",
+      "migrate-button-empty-tooltip": "",
+      "migrate-button-invalid-branch-tooltip": "",
+      "migrate-button-selected": "",
+      "migrate-everything": "",
       "n-of-m-managed": "",
+      "partial-error-body": "",
+      "partial-error-title": "",
       "repo-description": "",
       "repo-label": "",
+      "repo-no-push-body": "",
+      "repo-no-push-title": "",
       "repo-placeholder": "",
-      "selective-coming-soon": "",
-      "start-button": ""
+      "resources-collapse": "",
+      "resources-expand": "",
+      "resources-select-all": "",
+      "resources-select-folder": "",
+      "resources-sort-aria": "",
+      "resources-sort-count-asc": "",
+      "resources-sort-count-desc": "",
+      "resources-sort-title-asc": "",
+      "resources-sort-title-desc": "",
+      "resources-to-migrate-all-managed": "",
+      "resources-to-migrate-empty": "",
+      "resources-to-migrate-heading": "",
+      "resources-to-migrate-search": "",
+      "resources-to-migrate-subtitle": "",
+      "retain-resources-description": "",
+      "retain-resources-label": "",
+      "retain-resources-warning-body": "",
+      "retain-resources-warning-title": "",
+      "workflow-branch-description": "",
+      "workflow-branch-title": "",
+      "workflow-label": "",
+      "workflow-write-description": "",
+      "workflow-write-title": "",
+      "drawer-description-selective_one": "",
+      "drawer-description-selective_other": "",
+      "resources-folder-summary_one": "",
+      "resources-folder-summary_other": "",
+      "resources-to-migrate-footer_one": "",
+      "resources-to-migrate-footer_other": "",
+      "resources-to-migrate-migrate-all_one": "",
+      "resources-to-migrate-migrate-all_other": "",
+      "resources-to-migrate-migrate-selected_one": "",
+      "resources-to-migrate-migrate-selected_other": ""
     },
     "missing-folder-metadata-banner": {
       "error-message": "Bu klasörün bir meta veri dosyasına sahip olup olmadığı doğrulanamadı. Lütfen daha sonra tekrar deneyin.",
@@ -13587,19 +14115,23 @@
     "read-only-remote-tooltip": "Bu kaynak salt okunurdur ve Git aracılığıyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
     "recent-jobs": {
       "column-action": "Eylem",
+      "column-author": "",
       "column-duration": "Süre",
       "column-job-id": "İş Kimliği",
       "column-message": "Mesaj",
+      "column-origin": "",
       "column-started": "Başlatıldı",
       "column-status": "Durum",
       "error-loading-active-jobs": "Etkin işler yüklenirken hata oluştu",
       "error-loading-historic-jobs": "Geçmiş işler yüklenirken hata oluştu",
-      "jobs": "İşler"
+      "jobs": "İşler",
+      "origin-unknown": ""
     },
     "repository-actions": {
       "connection": "Bağlantı",
       "settings": "Ayarlar",
-      "source-code": "Kaynak kodu"
+      "source-code": "Kaynak kodu",
+      "view-folder": ""
     },
     "repository-card": {
       "last-sync": "Son eşitleme: {{date}}",
@@ -13638,12 +14170,17 @@
       "resources": "Kaynaklar",
       "status": "Durum:",
       "unhealthy": "İyi durumda değil",
-      "view-folder": "Klasörü Görüntüle",
+      "view-resource": "",
       "webhook": "Web kancası",
       "webhook-events": "Etkinlikler:",
       "webhook-id": "Kimlik:",
       "webhook-last-event": "Son Olay:",
       "webhook-url": "Web Kancasını Görüntüle"
+    },
+    "repository-select": {
+      "description": "",
+      "label": "",
+      "placeholder": ""
     },
     "repository-status": {
       "error": "Depo yüklenemedi"
@@ -13673,6 +14210,9 @@
       "bitbucket-tooltip": "Kaynak dosyalara doğrudan bağlantılar içeren geliştirilmiş Bitbucket entegrasyonu. Web kancası tabanlı senkronizasyon, PR yorumları ve depo ayarları doğrulamaları gibi özellikler yakında eklenecektir.",
       "github": "GitHub",
       "github-description": "GitHub depolarına bağlanın",
+      "github-enterprise": "",
+      "github-enterprise-description": "",
+      "github-enterprise-tooltip": "",
       "github-tooltip": "Web kancası tabanlı senkronizasyon, PR yorumları, kaynak dosyalara derin bağlantılar ve depo ayarları doğrulamaları içeren geliştirilmiş GitHub entegrasyonu.",
       "gitlab": "GitLab",
       "gitlab-description": "GitLab depolarına bağlanın",
@@ -13684,6 +14224,16 @@
       "pure-git-description": "Herhangi bir Git deposuna bağlanın",
       "pure-git-tooltip": "Smart HTTP protokolü sürüm 2 kullanarak herhangi bir Git deposuna bağlanır. Sağlayıcıya özel özellikler olmadan temel senkronizasyon iş akışı (web kancaları, PR yorumları, doğrudan bağlantılar)."
     },
+    "resource-kind": {
+      "dashboard": "",
+      "dashboards": "",
+      "folder": "",
+      "folders": "",
+      "library-panel": "",
+      "library-panels": "",
+      "playlist": "",
+      "playlists": ""
+    },
     "resource-tree": {
       "header-hash": "Hash (Karma)",
       "header-status": "Durum",
@@ -13692,6 +14242,11 @@
       "missing-folder-metadata": "Klasör meta veri dosyası eksik",
       "search-placeholder": "Yola veya başlığa göre ara",
       "source": "Kaynak",
+      "status-filter-aria-label": "",
+      "status-filter-pending": "",
+      "status-filter-placeholder": "",
+      "status-filter-synced": "",
+      "status-filter-warning": "",
       "status-pending": "Bekliyor",
       "status-synced": "Senkronize edildi",
       "view": "Göster"
@@ -13716,6 +14271,18 @@
       },
       "title-error-saving-file": "Dosya kaydedilirken hata oluştu"
     },
+    "save-resource": {
+      "button-cancel": "",
+      "button-delete": "",
+      "button-deleting": "",
+      "button-save": "",
+      "button-saving": "",
+      "drawer-title-delete": "",
+      "drawer-title-save": "",
+      "error-saving": "",
+      "missing-info": "",
+      "read-only-message": ""
+    },
     "setup-modal": {
       "done": "Tamamlandı",
       "next": "İleri",
@@ -13735,6 +14302,8 @@
       "progress-bar": {
         "aria-label": "İlerleme Çubuğu"
       },
+      "signer-is-author-description": "",
+      "signer-is-author-label": "",
       "signing-key-description": "",
       "signing-key-label": "",
       "signing-method-description": "",
@@ -13771,9 +14340,15 @@
       "migrate-default-message": ""
     },
     "sync-repository": {
+      "button-cancel": "",
+      "button-force-full-pull": "",
+      "confirm-force-full-pull": "",
       "error-pulling-resources": "Kaynaklar çekilirken hata oluştu",
       "pull": "Çek",
+      "pull-diff": "",
+      "pull-full": "",
       "success-pull-started": "Çekme işlemi başlatıldı",
+      "title-force-full-pull": "",
       "tooltip-unhealthy-repository": "İyi durumda olmayan bir depo çekilemedi"
     },
     "synchronize-step": {
@@ -13811,9 +14386,14 @@
       "error-title": "Canlı güncellemeler kullanılamıyor"
     },
     "webhook-section": {
+      "description-webhook-disabled": "",
+      "description-webhook-disabled-email": "",
+      "description-webhook-disabled-email-step": "",
+      "description-webhook-disabled-forced": "",
       "description-webhook-url": "",
       "description-webhook-url-learn-more": "",
       "label-webhook": "",
+      "label-webhook-disabled": "",
       "label-webhook-url": "",
       "placeholder-webhook-url": ""
     },
@@ -13862,8 +14442,6 @@
       "github-app-no-connections": "GitHub bağlantısı bulunamadı",
       "github-app-no-connections-message": "Mevcut herhangi bir GitHub uygulaması bağlantınız yok. Oluşturmak için lütfen \"Yeni bir uygulamaya bağlan\"ı seçin.",
       "github-app-select-connection": "Bir GitHub Uygulaması bağlantısı seçin",
-      "github-enterprise-alert-body": "GitHub Enterprise Server şu anda yalnızca Pure Git depo türü üzerinden desteklenmektedir. Yerel GitHub Enterprise entegrasyonu planlanmaktadır ve önümüzdeki aylarda kullanıma sunulacaktır.",
-      "github-enterprise-alert-title": "GitHub Enterprise Server",
       "give-feedback-link": "Geri bildirim gönder",
       "step-bootstrap": "Nelerin senkronize edileceğini seçin",
       "step-configure-repo": "Depoyu yapılandır",
@@ -14191,7 +14769,6 @@
     },
     "header": {
       "alert": "Uyarı",
-      "expression": "İfade",
       "pending-expression": "",
       "pending-expression-cancel": "İptal et",
       "pending-transformation": "",
@@ -14205,6 +14782,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },
@@ -14213,6 +14791,7 @@
       "message": ""
     },
     "sidebar": {
+      "add": "",
       "add-below": "{{id}} ögesini aşağıya ekleyin",
       "add-expression": "İfade ekle",
       "add-expression-disabled": "İfadeler, Pano veri kaynağı ile desteklenmez",
@@ -14232,6 +14811,7 @@
       "new-type": "Yeni {{type}}",
       "queries-empty": "",
       "queries-expressions": "Sorgular ve İfadeler",
+      "stacked": "",
       "toggle-size": "Kenar çubuğu boyutunu değiştir",
       "transformations": "Dönüşümler",
       "transformations-empty": "",
@@ -14504,6 +15084,9 @@
       "new-dashboard": "Yeni pano",
       "new-folder": "Yeni klasör",
       "new-template-dashboard": ""
+    },
+    "description-tooltip": {
+      "label": ""
     },
     "generate-columns": {
       "score": "Puan"
@@ -14926,6 +15509,14 @@
       "more-info": "Herhangi bir panonun anlık görüntüsünü <1>Paylaş</1> modülü aracılığıyla oluşturabilirsiniz. <4>Daha fazla bilgi edinin</4>"
     },
     "external-badge": "Harici",
+    "load-error": {
+      "retry": "",
+      "title": ""
+    },
+    "load-more": {
+      "label": "",
+      "loading": ""
+    },
     "name-column-header": "Ad",
     "share": {
       "cancel-button": "İptal",
@@ -15225,8 +15816,12 @@
     "description-column-filter": "Tablo içindeki alan filtrelerini etkinleştir/devre dışı bırak",
     "description-frozen-columns": "Sütunlar tablonun sol tarafından sabitlenir",
     "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
+    "description-page-size": "",
     "description-styling-from-field": "CSS özellikleri içeren JSON nesnelerinden oluşan bir alan",
     "description-tooltip-from-field": "Araç ipucunda (gizli veya görünür) bir alandaki hücreyi göster",
+    "frame-picker": {
+      "label": ""
+    },
     "image-cell-options-editor": {
       "description-alt-text": "Görsel görüntülenemediğinde veya ekran okuyucu kullanan kullanıcılar için gösterilecek alternatif metin",
       "description-title-text": "İmleç görselin üzerine getirildiğinde görüntülenecek metin",
@@ -15255,6 +15850,7 @@
     "name-hide-in-table": "Tabloda gizle",
     "name-max-height": "Maks. satır yüksekliği",
     "name-min-column-width": "Minimum sütun genişliği",
+    "name-page-size": "",
     "name-show-table-header": "Tablo başlığını göster",
     "name-styling-from-field": "Alan üzerinden stil uygulama",
     "name-tooltip-from-field": "Alandan araç ipucu",
@@ -15265,6 +15861,7 @@
     "placeholder-column-width": "otomatik",
     "placeholder-frozen-columns": "yok",
     "placeholder-max-height": "yok",
+    "placeholder-page-size": "",
     "tooltip-placement-options": {
       "label-auto": "Otomatik",
       "label-bottom": "Alt",
@@ -15361,6 +15958,8 @@
           "confirm-button": "Sil",
           "title": "Sil"
         },
+        "delete-modal-error-text": "",
+        "delete-modal-error-title": "",
         "delete-modal-invalid-text": "Bu ekip, bir veya daha fazla klasörün sahibidir. Devam etmek için önce sahipliği kaldırın.",
         "delete-modal-invalid-title": "Ekip silinemiyor",
         "delete-modal-text": "Bu işlem, \"<1>{{ teamName }}</1 >\" ekibini silecektir.",
@@ -15370,7 +15969,7 @@
       },
       "failed-to-check-folders": "Ekibin klasörlere sahip olup olmadığı kontrol edilemedi. Lütfen tekrar deneyin.",
       "loading-teams": "Ekipler yükleniyor...",
-      "new-team": "Yeni ekip",
+      "new-team": "",
       "placeholder-search-teams": "Ekip ara"
     },
     "team-pages": {
@@ -15411,6 +16010,37 @@
     "name-mode": "Mod",
     "name-show-line-numbers": "Satır numaralarını göster",
     "name-show-mini-map": "Mini haritayı göster"
+  },
+  "textng": {
+    "category-text": "",
+    "code-view": {
+      "aria-label-code-content": ""
+    },
+    "editor": {
+      "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
+      "view-preview": "",
+      "view-split": "",
+      "view-write": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "Temel tema",
@@ -15473,7 +16103,6 @@
       "from-input": "Başlangıç",
       "open-input-calendar": "Takvimi aç",
       "range-error": "",
-      "required-error": "",
       "to-input": "Bitiş"
     },
     "range-picker": {
@@ -15497,7 +16126,7 @@
     },
     "zone": {
       "select-aria-label": "Zaman dilimi seçici",
-      "select-search-input": "Aramak için yazmaya başlayın (ülke, şehir, kısaltma)"
+      "select-search-input": ""
     }
   },
   "timeline": {
@@ -15745,10 +16374,6 @@
       "convert-field-type": "Alan türünü dönüştür",
       "description": {
         "convert-to-specified-field-type": "Bir alanı belirtilen alan türüne dönüştürün."
-      },
-      "label": {
-        "browser": "Tarayıcı",
-        "utc": "UTC"
       },
       "label-as": "olarak",
       "label-date-format": "Tarih biçimi",
@@ -16577,11 +17202,6 @@
       "shared-dashboard-users-tab-title": "Paylaşılan pano kullanıcıları"
     }
   },
-  "variabels": {
-    "variable-usages-button": {
-      "usage-title": "{{variableId}} için kullanım yerleri gösteriliyor"
-    }
-  },
   "variable": {
     "adhoc": {
       "placeholder": "Değer seçin"
@@ -16607,11 +17227,6 @@
       "plus-segment": {
         "aria-label-add-filter": "Filtre Ekle"
       }
-    },
-    "confirm-delete-modal": {
-      "body-delete-variable": "\"{{variableToDelete}}\" değişkenini silmek istediğinizden emin misiniz?",
-      "confirmText-delete": "Sil",
-      "title-delete-variable": "Değişkeni sil"
     },
     "create-ad-hoc-variable-adapter": {
       "description": {
@@ -16682,18 +17297,7 @@
       "description-values-variable": "Statik seçenekleri sorgu sonuçlarıyla sıralama"
     },
     "static-options": {
-      "add-option-button-label": "Yeni seçenek ekle",
-      "drag-and-drop": "Yeniden düzenlemek için sürükleyip bırakın",
-      "label-header": "Görüntülenen metin",
-      "label-placeholder": "Varsayılan olarak değeri kullanır",
-      "remove-option-button-label": "Seçeneği kaldır",
-      "value-header": "Değer",
-      "value-placeholder": "Değer"
-    },
-    "text-box-variable-editor": {
-      "name-default-value": "Varsayılan değer",
-      "placeholder-default-value-if-any": "Varsayılan değer (varsa)",
-      "text-options": "Metin seçenekleri"
+      "add-option-button-label": "Yeni seçenek ekle"
     },
     "transform-usages-to-network": {
       "result": {
@@ -16709,49 +17313,11 @@
       "tooltip-renamed-or-missing-variables": "Panoda yeniden adlandırılmış veya eksik olan tüm değişken referanslarını gösteren listeyi genişletmek için tıklayın.",
       "variable": "Değişken"
     },
-    "variable-check-indicator": {
-      "title-variable-referenced-dashboard": "Bu değişken başka bir değişken veya pano tarafından referans alınmıyor.",
-      "title-variable-referenced-other-variables-dashboard": "Bu değişkene diğer değişkenler veya panolar tarafından başvuruluyor."
-    },
-    "variable-editor-editor-un-connected": {
-      "apply": "Uygula",
-      "aria-label-variable-editor-form": "Değişken düzenleyici formu",
-      "delete": "Sil",
-      "description-optional-display-name": "İsteğe bağlı görünen ad",
-      "description-template-variable-characters": "Şablon değişkeninin adı. (Maks. 50 karakter)",
-      "general": "Genel",
-      "name-label": "Etiket",
-      "name-name": "Ad",
-      "placeholder-descriptive-text": "Açıklayıcı metin",
-      "placeholder-label-name": "Etiket adı",
-      "placeholder-variable-name": "Değişken adı",
-      "run-query": "Sorgu çalıştır"
-    },
-    "variable-editor-list": {
-      "definition": "Tanım",
-      "new-variable": "Yeni değişken",
-      "variable": "Değişken"
-    },
-    "variable-editor-list-row": {
-      "drag-handle-label": "{{variableName}} değişkenini yeniden sırala",
-      "tooltip-duplicate-variable": "Değişkeni çoğalt",
-      "tooltip-remove-variable": "Değişkeni kaldır"
-    },
-    "variable-editor-un-connected": {
-      "name-description": "Açıklama"
-    },
     "variable-options": {
       "aria-label-toggle-all-values": "Tüm değerleri aç/kapat"
     },
-    "variable-type-select": {
-      "name-select-variable-type": "Değişken tipi seçin"
-    },
-    "variable-usages-button": {
-      "tooltip-show-usages": "Kullanımları göster"
-    },
     "variables-dependencies-button": {
-      "show-dependencies": "Bağımlılıkları göster",
-      "title-dependencies": "Bağımlılıklar"
+      "show-dependencies": ""
     },
     "variables-unknown-button": {
       "usage-title": "{{variableId}} için kullanım yerleri gösteriliyor",
@@ -16761,6 +17327,75 @@
       "collapse-label": "Yeniden adlandırılmış veya eksik değişkenler",
       "collapse-tooltip": "Panoda yeniden adlandırılmış veya eksik olan tüm değişken referanslarını gösteren listeyi genişletmek için tıklayın.",
       "loading": "Yükleniyor..."
+    }
+  },
+  "variables-management": {
+    "bulk": {
+      "failed": "",
+      "deleted_one": "",
+      "deleted_other": "",
+      "move-skipped_one": "",
+      "move-skipped_other": "",
+      "moved_one": "",
+      "moved_other": ""
+    },
+    "delete-modal": {
+      "confirm": "",
+      "title": "",
+      "body_one": "",
+      "body_other": ""
+    },
+    "editor": {
+      "cancel": "",
+      "delete": "",
+      "delete-modal-body": "",
+      "delete-modal-confirm": "",
+      "delete-modal-title": "",
+      "folder-description": "",
+      "folder-description-folder-only": "",
+      "folder-label": "",
+      "moved": "",
+      "name-exists": "",
+      "save": "",
+      "saving": "",
+      "updated": ""
+    },
+    "editor-nav": {
+      "back-to-list": "",
+      "new": "",
+      "not-found": ""
+    },
+    "move-modal": {
+      "cancel": "",
+      "folder-label": "",
+      "move": "",
+      "moving": "",
+      "title": "",
+      "body_one": "",
+      "body_other": "",
+      "body-folder-only_one": "",
+      "body-folder-only_other": ""
+    },
+    "page": {
+      "delete": "",
+      "empty-body": "",
+      "empty-cta": "",
+      "empty-title": "",
+      "load-error": "",
+      "move": "",
+      "new-variable": "",
+      "selected-count_one": "",
+      "selected-count_other": ""
+    },
+    "recreate": {
+      "delete-failed": ""
+    },
+    "table": {
+      "header-name": "",
+      "header-type": "",
+      "select-all": "",
+      "select-folder": "",
+      "select-variable": ""
     }
   },
   "visualization": {

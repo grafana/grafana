@@ -5,10 +5,14 @@ aliases:
   - ../../../dashboards/build-dashboards/create-dynamic-dashboard/ # /docs/grafana/latest/dashboards/build-dashboards/create-dynamic-dashboard/
   - ./create-dynamic-dashboard/ # /docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dynamic-dashboard/
 keywords:
-  - panel
   - dashboard
-  - create
-  - dynamic dashboard
+  - panel
+  - edit mode
+  - sidebar
+  - content outline
+  - layout
+  - repeat
+  - show/hide rules
 labels:
   products:
     - cloud
@@ -101,7 +105,7 @@ To create a dashboard, follow these steps:
      Then, go to step 12.
 
    {{< admonition type="note" >}}
-   [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
+   [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is only available on Grafana Enterprise and Grafana Cloud.
    {{< /admonition >}}
 
 1. If you want to change the panel data source, in the **Queries** tab, click the **Data source** drop-down list and do one of the following:
@@ -232,7 +236,7 @@ To edit a dashboard, follow these steps:
    | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
    | Edit existing elements | <p>Click the element to open the sidebar showing the relevant options. Click the **Dashboard options** icon to access dashboard settings.</p><p>If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.</p>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
    | Add more panels        | <p>Click the **Add new element** icon and select **Panel**.</p><p>You can also hover your cursor on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.</p>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-   | Group panels           | <p>Click **Add new element** and select **Group into row** or **Group into tab**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** and select a grouping option.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>                                                                                                                                                                                                                                                                                                                                                                              |
+   | Group panels           | <p>Click **Add new element** and select **Group into row** or **Group into tab**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** and select a grouping option or select a specific set of panels and group them into rows or tabs.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>                                                                                                                                                                                                                                                                                                          |
    | Add dashboard controls | Click **Add new element** and select one of the following: <ul><li>[Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls)</li><li>[Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables)</li><li>[Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries)</li><li>[Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-links)</li></ul> |
    | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
@@ -496,3 +500,23 @@ To make a copy of a dashboard, follow these steps:
 1. Click **Save**.
 
 You're now in the copied dashboard.
+
+## Frequently asked questions
+
+{{< qa-list >}}
+{{< qa question="How do I create a dashboard in Grafana?" >}}
+To create a dashboard, select New → New dashboard, then Add visualization.
+Choose the data source you want to query, build your query, and pick a visualization type (time series, table, stat, and so on) to display the results.
+Add as many panels as you need, then click Save dashboard to keep it.
+{{< /qa >}}
+{{< qa question="How do I add a panel to a dashboard?" >}}
+Open the dashboard in edit mode and click Add → Visualization.
+Select a data source, write or build your query, choose how to visualize the results, and adjust the panel options on the right.
+Click Apply to add the panel to the dashboard, then Save to persist your changes.
+{{< /qa >}}
+{{< qa question="Do I need to know my data source's query language?" >}}
+In most cases, yes.
+Building effective dashboards requires understanding how to query your data source so you can retrieve the information you want to visualize.
+Grafana provides visualization and editing tools, but the query syntax depends on the data source you're using.
+{{< /qa >}}
+{{< /qa-list >}}

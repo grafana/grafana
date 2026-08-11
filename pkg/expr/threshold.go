@@ -294,8 +294,10 @@ func getConditionForHysteresisCommand(query map[string]any) (map[string]any, err
 	default:
 		return nil, errors.New("invalid threshold command: field \"condition\" expected to be an array of objects")
 	}
-	_, ok = condition["unloadEvaluator"]
-	if !ok {
+	// A null unloadEvaluator must be treated as absent: UnmarshalThresholdCommand decodes it to a nil
+	// pointer and builds a plain threshold, so detection here has to agree or we patch a command that
+	// never reads the loaded dimensions.
+	if u, ok := condition["unloadEvaluator"]; !ok || u == nil {
 		return nil, nil
 	}
 	return condition, nil

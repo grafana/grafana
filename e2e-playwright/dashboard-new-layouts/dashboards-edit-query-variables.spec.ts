@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 import { flows, type Variable } from './utils';
 
 test.use({
@@ -25,32 +23,36 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new query variable', async ({ gotoDashboardPage, selectors, page, components }) => {
+    test('can add a new query variable', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+      components,
+      controls,
+      sidebar,
+      panels,
+    }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
-      const variable: Variable = {
+      const variable: Variable & { label: string } = {
         type: 'query',
         name: 'VariableUnderTest',
-        value: 'default',
         label: 'VariableUnderTest',
+        value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.query.openEditor();
 
       // Select the 'gdev-testdata' data source, type a query, and run it
-      await sidebar.variableOptions.query.selectDatasource('gdev-testdata');
-      await sidebar.variableOptions.query.setQuery('*');
+      await sidebar.variableOptions.query.selectTargetDatasource('gdev-testdata');
+      await sidebar.variableOptions.query.setTestDataQuery('*');
       await sidebar.variableOptions.query.runQuery();
 
-      // Assert that at least 1 option is visible
-      const previewOptions = sidebar.variableOptions.getPreviewOptions();
-      await expect(previewOptions.first()).toBeVisible({ timeout: 15_000 });
+      // Assert that at least 1 value is visible in the preview
+      const previewValues = sidebar.variableOptions.query.getPreviewOfValues();
+      await expect(previewValues.first()).toBeVisible({ timeout: 15_000 });
 
       // Go to the "Static options" tab
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Static options (0)')).click();
@@ -74,14 +76,14 @@ test.describe(
       await sidebar.variableOptions.query.runQuery();
 
       // Assert that both options have been added
-      await expect(previewOptions.first()).toHaveText('Custom value one');
-      await expect(previewOptions.nth(1)).toHaveText('Custom value two');
+      await expect(previewValues.first()).toHaveText('Custom value one');
+      await expect(previewValues.nth(1)).toHaveText('Custom value two');
 
       // Click the "Apply" button
       await sidebar.variableOptions.query.clickApplyButton();
 
       // Verify that the variable has the static options
-      await controls.variables.openDropdown(variable.label!);
+      await controls.variables.openDropdown(variable.label);
       await expect(controls.variables.getOption('Custom value one')).toBeVisible();
       await expect(controls.variables.getOption('Custom value two')).toBeVisible();
 
@@ -89,10 +91,85 @@ test.describe(
       await page.keyboard.press('Escape');
 
       // Assert that the markdown panels contain the correct variable values
-      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-      await expect(panelContent).toBeVisible();
-      const markdownContent = panelContent.locator('.markdown-html');
+      const panelBody = panels.getBodies().first();
+      await expect(panelBody).toBeVisible();
+      const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText('VariableUnderTest: custom-value-1');
+    });
+
+    test('can add a new query variable that references other variables', async ({
+      gotoDashboardPage,
+      page,
+      controls,
+      sidebar,
+      panels,
+    }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
+      // create a data source and a constant variables
+
+      await flows.addNewGenericVariable(page, sidebar, controls, {
+        type: 'datasource',
+        name: 'ds',
+        label: '',
+        value: '',
+      });
+      await sidebar.variableOptions.datasource.selectType('TestData');
+
+      await flows.addNewGenericVariable(
+        page,
+        sidebar,
+        controls,
+        {
+          type: 'constant',
+          name: 'query',
+          label: '',
+          value: '',
+        },
+        true
+      );
+      await sidebar.variableOptions.constant.setValue('*');
+
+      // create the query variable
+
+      const variable: Variable & { label: string } = {
+        type: 'query',
+        name: 'VariableUnderTest',
+        label: 'VariableUnderTest',
+        value: '',
+      };
+
+      await flows.addNewGenericVariable(page, sidebar, controls, variable, true);
+
+      await sidebar.variableOptions.query.openEditor();
+
+      // Select the data source and query type
+      await sidebar.variableOptions.query.selectTargetDatasource('${ds}');
+      await sidebar.variableOptions.query.setTestDataQuery('$query');
+
+      await sidebar.variableOptions.query.runQuery();
+
+      // Assert the preview of values
+      const previewValues = sidebar.variableOptions.query.getPreviewOfValues();
+      await expect(previewValues.nth(0)).toBeVisible({ timeout: 15_000 });
+      await expect(previewValues.nth(0)).toHaveText('A');
+      await expect(previewValues.nth(1)).toHaveText('B');
+
+      await sidebar.variableOptions.query.clickApplyButton();
+
+      // Verify that the variable has the static options
+      await controls.variables.openDropdown(variable.label);
+      await expect(controls.variables.getOption('A')).toBeVisible();
+      await expect(controls.variables.getOption('B')).toBeVisible();
+
+      // Close the variable dropdown
+      await page.keyboard.press('Escape');
+
+      // Assert that the markdown panels contain the correct variable values
+      const panelBody = panels.getBodies().first();
+      await expect(panelBody).toBeVisible();
+      const markdownContent = panelBody.locator('.markdown-html');
+      await expect(markdownContent).toContainText('VariableUnderTest: A');
     });
   }
 );

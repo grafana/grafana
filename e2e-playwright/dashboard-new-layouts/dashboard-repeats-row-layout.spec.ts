@@ -1,25 +1,20 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
 import V2DashWithRowRepeats from '../dashboards/V2DashWithRowRepeats.json';
 
+import { test, expect } from './fixtures';
 import {
   verifyChanges,
-  saveDashboard,
+  saveDashboardAndCloseToast,
   importTestDashboard,
   goToEmbeddedPanel,
-  groupIntoRow,
+  checkRepeatedTabTitles,
   checkRepeatedRowTitles,
   moveRow,
   getRowBox,
-  toggleRow,
-  getRowByTitle,
-  getPanelByTitle,
-  selectRow,
-  getRowWrapper,
 } from './utils';
 
-const repeatTitleBase = 'Row - ';
-const repeatOptions = [1, 2, 3, 4];
+const REPEAT_TITLE_BASE = 'Row - ';
+const REPEAT_OPTIONS = [1, 2, 3, 4];
+
 const getEditedName = (base: string) => `edited ${base}`;
 const getRepeatedPanelTitle = (row: number, panel: number) => `repeated-row-${row}-repeated-panel-${panel}`;
 
@@ -40,96 +35,86 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('enables row repeats', async ({ dashboardPage, selectors, page }) => {
+    test('enables row repeats', async ({ dashboardPage, selectors, page, controls, sidebar, rows, canvas }) => {
       await importTestDashboard(page, selectors, 'Row layout repeats - add repeats');
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await controls.enterEditMode();
 
-      await groupIntoRow(page, dashboardPage, selectors);
+      await canvas.groupPanels('row');
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput)
-        .fill(`${repeatTitleBase}$c1`);
+      await sidebar.rowOptions.setTitle(`${REPEAT_TITLE_BASE}$c1`);
 
-      await expect(
-        getRowByTitle(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.join(' + ')}`)
-      ).toBeVisible();
+      await expect(rows.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
 
-      const repeatOptionsGroup = dashboardPage.getByGrafanaSelector(
-        selectors.components.OptionsGroup.group('dash-row-repeat')
-      );
+      await sidebar.rowOptions.repeatOptions.repeatByVariable('c1');
 
-      // expand repeat options dropdown
-      await repeatOptionsGroup.click();
-      // find repeat variable dropdown
-      await repeatOptionsGroup.getByRole('combobox').click();
-      await page.getByRole('option', { name: 'c1' }).click();
+      await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
-      await checkRepeatedRowTitles(dashboardPage, selectors, repeatTitleBase, repeatOptions);
-
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
-      await checkRepeatedRowTitles(dashboardPage, selectors, repeatTitleBase, repeatOptions);
+      await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
     });
 
-    test('updates row repeats with variable change', async ({ dashboardPage, selectors, page }) => {
+    test('updates row repeats with variable change', async ({ dashboardPage, selectors, page, controls, rows }) => {
       await importTestDashboard(
         page,
         selectors,
         'Rows layout repeats - update on variable change',
         JSON.stringify(V2DashWithRowRepeats)
       );
-      // open variable dropdown
-      const c4Var = dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('c4'));
-      await c4Var
-        .locator('..')
-        .getByTestId(selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(repeatOptions.join(',')))
-        .click();
-      // deselect first variable option
-      await dashboardPage
-        .getByGrafanaSelector(
-          selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${repeatOptions.at(0)}`)
-        )
-        .click();
 
+      // deselect first variable option
+      await controls.variables.deselectOption('c4', `${REPEAT_OPTIONS.at(0)}`);
       // blur to close dropdown
       await page.locator('body').click();
 
       // verify that repeats are present for last 3 values
-      await checkRepeatedRowTitles(dashboardPage, selectors, repeatTitleBase, repeatOptions.slice(1));
+      await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS.slice(1));
+
       // verify there is no repeat with first value
-      await expect(getRowByTitle(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`)).toBeHidden();
+      await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS.slice(0, 1), 'hidden');
     });
 
-    test('updates title for repeat rows in edit pane', async ({ dashboardPage, selectors, page }) => {
+    test('updates title for repeat rows in sidebar', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      rows,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
-        'Rows layout repeats - update through edit pane',
+        'Rows layout repeats - update through sidebar',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await controls.enterEditMode();
 
-      // select first/original repeat row to activate edit pane
-      await selectRow(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`);
+      // select first/original repeat row to activate sidebar
+      await rows.select(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
 
-      const titleInput = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.ElementEditPane.RowsLayout.titleInput
-      );
-      await titleInput.fill(`${getEditedName(repeatTitleBase)}$c4`);
-      await titleInput.blur();
+      await sidebar.rowOptions.setTitle(`${getEditedName(REPEAT_TITLE_BASE)}$c4`);
 
-      await checkRepeatedRowTitles(dashboardPage, selectors, getEditedName(repeatTitleBase), repeatOptions);
+      await checkRepeatedRowTitles(rows, getEditedName(REPEAT_TITLE_BASE), REPEAT_OPTIONS);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
-      await checkRepeatedRowTitles(dashboardPage, selectors, getEditedName(repeatTitleBase), repeatOptions);
+      await checkRepeatedRowTitles(rows, getEditedName(REPEAT_TITLE_BASE), REPEAT_OPTIONS);
     });
 
-    test('updates repeats after panel change', async ({ dashboardPage, selectors, page }) => {
+    test('updates repeats after panel change', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      panels,
+      rows,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -137,34 +122,37 @@ test.describe(
         JSON.stringify(V2DashWithRowRepeats)
       );
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await controls.enterEditMode();
 
-      await getPanelByTitle(dashboardPage, selectors, 'single panel row 1').click();
-
-      const panelTitleInput = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.OptionsPane.fieldInput('Title')
-      );
-
-      await panelTitleInput.fill(`${getEditedName('single panel row $c4')}`);
-      await panelTitleInput.blur();
+      await panels.selectByTitle('single panel row 1');
+      await sidebar.panelOptions.setTitle(getEditedName('single panel row $c4'));
 
       // close first row to load the second row
-      await toggleRow(dashboardPage, selectors, `${repeatTitleBase}1`);
+      await rows.toggle(`${REPEAT_TITLE_BASE}1`);
 
       // verify edited panel title updated in repeated row
-      await expect(getPanelByTitle(dashboardPage, selectors, getEditedName('single panel row 2'))).toBeVisible();
+      await expect(panels.getHeader(getEditedName('single panel row 2'))).toBeVisible();
       // reopen first row so collapse is not saved
-      await toggleRow(dashboardPage, selectors, `${repeatTitleBase}1`);
+      await rows.toggle(`${REPEAT_TITLE_BASE}1`);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       // close first row to load the second row
-      await toggleRow(dashboardPage, selectors, `${repeatTitleBase}1`);
-      await expect(getPanelByTitle(dashboardPage, selectors, getEditedName('single panel row 2'))).toBeVisible();
+      await rows.toggle(`${REPEAT_TITLE_BASE}1`);
+      await expect(panels.getHeader(getEditedName('single panel row 2'))).toBeVisible();
     });
 
-    test('updates repeats after panel change in editor', async ({ dashboardPage, selectors, page }) => {
+    test('updates repeats after panel change in editor', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      panels,
+      rows,
+      canvas,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -174,51 +162,47 @@ test.describe(
 
       const editedSinglePanelName = (rowNumber: string) => getEditedName(`single panel row ${rowNumber}`);
 
-      const panel = getPanelByTitle(dashboardPage, selectors, 'single panel row 1').first();
-      await panel.hover();
+      await panels.getHeader('single panel row 1').hover();
       await page.keyboard.press('e');
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
-      ).toBeHidden(); // verifying that panel editor loaded
+      await expect(canvas.getContainer()).toBeHidden(); // verifying that panel editor loaded
 
-      const panelTitleInput = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.OptionsPane.fieldInput('Title')
-      );
-      await panelTitleInput.fill(editedSinglePanelName('$c4'));
-      await panelTitleInput.blur();
+      await sidebar.panelOptions.setTitle(editedSinglePanelName('$c4'));
 
       // playwright too fast, verifying JSON diff that changes landed
       await verifyChanges(dashboardPage, page, selectors, editedSinglePanelName('$c4'));
       // verify panel title change in panel editor UI
-      await expect(getPanelByTitle(dashboardPage, selectors, editedSinglePanelName('1'))).toBeVisible();
+      await expect(panels.getHeader(editedSinglePanelName('1'))).toBeVisible();
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
-      ).toBeVisible(); // verifying that dashboard loaded
+      await controls.clickBackToDashboard();
+      await expect(canvas.getContainer()).toBeVisible(); // verifying that dashboard loaded
 
       // close first row to make sure we are viewing second row
-      await toggleRow(dashboardPage, selectors, `${repeatTitleBase}1`);
+      await rows.toggle(`${REPEAT_TITLE_BASE}1`);
 
       // verify edited panel title updated in repeated row
-      await expect(getPanelByTitle(dashboardPage, selectors, editedSinglePanelName('2'))).toBeVisible();
+      await expect(panels.getHeader(editedSinglePanelName('2'))).toBeVisible();
       // open first row again so collapse is not saved
-      await toggleRow(dashboardPage, selectors, `${repeatTitleBase}1`);
+      await rows.toggle(`${REPEAT_TITLE_BASE}1`);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       // collapse row again so lazy loading loads 2nd row
-      await toggleRow(dashboardPage, selectors, `${repeatTitleBase}1`);
+      await rows.toggle(`${REPEAT_TITLE_BASE}1`);
 
-      // verify edited panel title updated in repeated tab
-      await expect(getPanelByTitle(dashboardPage, selectors, editedSinglePanelName('2'))).toBeVisible();
+      // verify edited panel title updated in repeated row
+      await expect(panels.getHeader(editedSinglePanelName('2'))).toBeVisible();
     });
 
-    test('hides add panel action in repeated rows', async ({ dashboardPage, selectors, page }) => {
+    test('hides add panel action in repeated rows', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      rows,
+      canvas,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -226,25 +210,19 @@ test.describe(
         JSON.stringify(V2DashWithRowRepeats)
       );
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await controls.enterEditMode();
       // check that add action is visible in the first repeated row
-      await expect(
-        getRowWrapper(dashboardPage, selectors, `${repeatTitleBase}1`).getByTestId(
-          selectors.components.CanvasGridAddActions.addPanel
-        )
-      ).toBeVisible();
+      await expect(canvas.getAddPanelButton(rows.getContent(`${REPEAT_TITLE_BASE}1`))).toBeVisible();
 
       // close first row to make sure second row is in viewport
-      await toggleRow(dashboardPage, selectors, `${repeatTitleBase}1`);
+      await rows.toggle(`${REPEAT_TITLE_BASE}1`);
 
-      const secondRow = dashboardPage.getByGrafanaSelector(
-        selectors.components.DashboardRow.wrapper(`${repeatTitleBase}2`)
-      );
-      await expect(secondRow).toBeVisible();
-      await expect(secondRow.getByTestId(selectors.components.CanvasGridAddActions.addPanel)).toBeHidden();
+      const secondRowContent = rows.getContent(`${REPEAT_TITLE_BASE}2`);
+      await expect(secondRowContent).toBeVisible();
+      await expect(canvas.getAddPanelButton(secondRowContent)).toBeHidden();
     });
 
-    test('views panels in repeated row', async ({ dashboardPage, selectors, page }) => {
+    test('views panels in repeated row', async ({ dashboardPage, selectors, page, panels }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -253,67 +231,42 @@ test.describe(
       );
 
       // non repeated panel in repeated row
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.title('single panel row 1'))
-        .first()
-        .hover();
+      await panels.getPanel('single panel row 1').hover();
       await page.keyboard.press('v');
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(1, 1)))
-      ).toBeHidden();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('single panel row 1'))
-      ).toBeVisible();
+      await expect(panels.getPanel(getRepeatedPanelTitle(1, 1))).toBeHidden();
+      await expect(panels.getPanel('single panel row 1')).toBeVisible();
 
       await page.reload();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('single panel row 1'))
-      ).toBeVisible();
+      await expect(panels.getPanel('single panel row 1')).toBeVisible();
 
       await page.keyboard.press('Escape');
 
       // repeated panel in original row repeat
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(1, 2)))
-        .hover();
+      await panels.getPanel(getRepeatedPanelTitle(1, 2)).hover();
       await page.keyboard.press('v');
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(1, 1)))
-      ).toBeHidden();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(1, 2)))
-      ).toBeVisible();
+      await expect(panels.getPanel(getRepeatedPanelTitle(1, 1))).toBeHidden();
+      await expect(panels.getPanel(getRepeatedPanelTitle(1, 2))).toBeVisible();
 
       await page.reload();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(1, 2)))
-      ).toBeVisible();
+      await expect(panels.getPanel(getRepeatedPanelTitle(1, 2))).toBeVisible();
 
       await page.keyboard.press('Escape');
 
       // repeated panel in repeated row
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(2, 2)))
-        .hover();
+      await panels.getPanel(getRepeatedPanelTitle(2, 2)).hover();
       await page.keyboard.press('v');
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(1, 2)))
-      ).toBeHidden();
+      await expect(panels.getPanel(getRepeatedPanelTitle(1, 2))).toBeHidden();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(2, 2)))
-      ).toBeVisible();
+      await expect(panels.getPanel(getRepeatedPanelTitle(2, 2))).toBeVisible();
 
       await page.reload();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(2, 2)))
-      ).toBeVisible();
+      await expect(panels.getPanel(getRepeatedPanelTitle(2, 2))).toBeVisible();
     });
 
-    test('views embedded panels in repeated rows', async ({ dashboardPage, selectors, page }) => {
+    test('views embedded panels in repeated rows', async ({ dashboardPage, selectors, page, panels, rows }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -325,41 +278,28 @@ test.describe(
 
       // non repeated panel in repeated row
       // collapse row to make sure row 2 is in viewport
-      await toggleRow(dashboardPage, selectors, `${repeatTitleBase}1`);
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.title('single panel row 2'))
-        .first()
-        .hover();
+      await rows.toggle(`${REPEAT_TITLE_BASE}1`);
+      await panels.getPanel('single panel row 2').hover();
       await page.keyboard.press('p+e');
       await goToEmbeddedPanel(page);
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('single panel row 2'))
-      ).toBeVisible();
+      await expect(panels.getPanel('single panel row 2')).toBeVisible();
       await page.goto(dashUrl);
 
       // repeated panel in original row
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(1, 2)))
-        .hover();
+      await panels.getPanel(getRepeatedPanelTitle(1, 2)).hover();
       await page.keyboard.press('p+e');
       await goToEmbeddedPanel(page);
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(1, 2)))
-      ).toBeVisible();
+      await expect(panels.getPanel(getRepeatedPanelTitle(1, 2))).toBeVisible();
       await page.goto(dashUrl);
 
       // repeated panel in repeated row
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(2, 2)))
-        .hover();
+      await panels.getPanel(getRepeatedPanelTitle(2, 2)).hover();
       await page.keyboard.press('p+e');
       await goToEmbeddedPanel(page);
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title(getRepeatedPanelTitle(2, 2)))
-      ).toBeVisible();
+      await expect(panels.getPanel(getRepeatedPanelTitle(2, 2))).toBeVisible();
     });
 
-    test('removes repeats', async ({ dashboardPage, selectors, page }) => {
+    test('removes repeats', async ({ dashboardPage, selectors, page, controls, sidebar, panels, rows }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -368,54 +308,39 @@ test.describe(
       );
 
       // verify both repeated and single rows are present
-      await checkRepeatedRowTitles(dashboardPage, selectors, repeatTitleBase, repeatOptions);
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title('single row'))
-      ).toBeVisible();
+      await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+      await expect(rows.getTitle('single row')).toBeVisible();
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await controls.enterEditMode();
 
-      await selectRow(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`);
+      await rows.select(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
 
-      const repeatOptionsGroup = dashboardPage.getByGrafanaSelector(
-        selectors.components.OptionsGroup.group('dash-row-repeat')
-      );
-      // expand repeat options dropdown
-      await repeatOptionsGroup.click();
-      // find repeat variable dropdown
-      await repeatOptionsGroup.getByRole('combobox').click();
-      await page.getByRole('option', { name: 'Disable repeating' }).click();
+      await sidebar.rowOptions.repeatOptions.disableRepeatByVariable();
 
-      const nonRepeatedTitle = `${repeatTitleBase}${repeatOptions.join(' + ')}`;
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(nonRepeatedTitle))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(
-          selectors.components.Panels.Panel.title(`single panel row ${repeatOptions.join(' + ')}`)
-        )
-      ).toBeVisible();
-      for (const option of repeatOptions) {
-        await expect(getRowByTitle(dashboardPage, selectors, `${repeatTitleBase}${option}`)).toBeHidden();
-      }
+      const nonRepeatedTitle = `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`;
+      await expect(rows.getTitle(nonRepeatedTitle)).toBeVisible();
+      await expect(panels.getPanel(`single panel row ${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
+      await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS, 'hidden');
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.title(nonRepeatedTitle))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(
-          selectors.components.Panels.Panel.title(`single panel row ${repeatOptions.join(' + ')}`)
-        )
-      ).toBeVisible();
+      await expect(rows.getTitle(nonRepeatedTitle)).toBeVisible();
+      await expect(panels.getPanel(`single panel row ${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
       // check rows are not repeated anymore
-      for (const option of repeatOptions) {
-        await expect(getRowByTitle(dashboardPage, selectors, `${repeatTitleBase}${option}`)).toBeHidden();
-      }
+      await checkRepeatedRowTitles(rows, REPEAT_TITLE_BASE, REPEAT_OPTIONS, 'hidden');
     });
-    test('adds tabs in repeated rows', async ({ dashboardPage, selectors, page }) => {
+
+    test('adds tabs in repeated rows', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      rows,
+      tabs,
+      canvas,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -423,26 +348,31 @@ test.describe(
         JSON.stringify(V2DashWithRowRepeats)
       );
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await controls.enterEditMode();
 
       // add a tab in first row
-      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).first().click();
-      await page.getByText('Group into tab').click();
+      await canvas.groupPanels('tab', rows.getContent(`${REPEAT_TITLE_BASE}1`));
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput)
-        .fill(`tab-row-$c4`);
+      await sidebar.tabOptions.setTitle('tab-row-$c4');
 
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(`tab-row-1`))).toBeVisible();
+      await expect(tabs.getTitle('tab-row-1')).toBeVisible();
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(`tab-row-1`))).toBeVisible();
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(`tab-row-2`))).toBeVisible();
+      await checkRepeatedTabTitles(tabs, 'tab-row-', [1, 2]);
     });
-    test('adds repeat tabs in repeated rows', async ({ dashboardPage, selectors, page }) => {
-      const tabRepeatTitle = (tabNo: number, rowNo: number) => `tab-${tabNo}-row-${rowNo}`;
+
+    test('adds repeat tabs in repeated rows', async ({
+      dashboardPage,
+      selectors,
+      page,
+      controls,
+      sidebar,
+      rows,
+      tabs,
+      canvas,
+    }) => {
       await importTestDashboard(
         page,
         selectors,
@@ -450,46 +380,24 @@ test.describe(
         JSON.stringify(V2DashWithRowRepeats)
       );
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await controls.enterEditMode();
 
       // add a tab in first row
-      await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).first().click();
-      await page.getByText('Group into tab').click();
+      await canvas.groupPanels('tab', rows.getContent(`${REPEAT_TITLE_BASE}1`));
 
-      await dashboardPage
-        .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput)
-        .fill(`tab-$c1-row-$c4`);
+      await sidebar.tabOptions.setTitle('tab-$c1-row-$c4');
 
-      const repeatOptionsGroup = dashboardPage.getByGrafanaSelector(
-        selectors.components.OptionsGroup.group('repeat-options')
-      );
-      // expand repeat options dropdown
-      await repeatOptionsGroup.getByRole('button').first().click();
-      // find repeat variable dropdown
-      await repeatOptionsGroup.getByRole('combobox').click();
-      await page.getByRole('option', { name: 'c1' }).click();
+      await sidebar.tabOptions.repeatOptions.repeatByVariable('c1');
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabRepeatTitle(1, 1)))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabRepeatTitle(2, 1)))
-      ).toBeVisible();
-      await saveDashboard(dashboardPage, page, selectors);
+      // tabs repeated by c1 are present in the first row
+      await checkRepeatedTabTitles(tabs, 'tab-', ['1-row-1', '2-row-1']);
+
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabRepeatTitle(1, 1)))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabRepeatTitle(2, 1)))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabRepeatTitle(1, 2)))
-      ).toBeVisible();
-      await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(tabRepeatTitle(2, 2)))
-      ).toBeVisible();
+      // each repeated tab is present in both repeated rows
+      await checkRepeatedTabTitles(tabs, 'tab-1-row-', [1, 2]);
+      await checkRepeatedTabTitles(tabs, 'tab-2-row-', [1, 2]);
     });
   }
 );
@@ -503,7 +411,7 @@ test.describe(
     // bypassing CSP to ensure the Save button is correctly updated
     test.use({ contextOptions: { bypassCSP: true } });
 
-    test('moves repeated rows', async ({ dashboardPage, selectors, page }) => {
+    test('moves repeated rows', async ({ dashboardPage, selectors, page, components, controls, rows }) => {
       // collapse rows so it's easier to move them without simulating scrolling
       // clone to avoid mutating V2DashWithRowRepeats, which is shared with the other tests in this file
       const dashboardWithCollapsedRows = structuredClone(V2DashWithRowRepeats);
@@ -519,12 +427,16 @@ test.describe(
       );
       const singleRowTitle = 'single row';
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await moveRow(dashboardPage, page, selectors, `${repeatTitleBase}1`, singleRowTitle);
+      await controls.enterEditMode();
+      await moveRow(page, dashboardPage, rows, selectors, `${REPEAT_TITLE_BASE}1`, singleRowTitle);
 
-      let singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
-      const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}1`);
-      expect(singleRowBox.y).toBeLessThan(repeatedRowBox.y || 0);
+      // The row order is only updated after the drop animation finishes (onDragEnd),
+      // so retry the position check until the reorder has been applied
+      await expect(async () => {
+        const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
+        const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${REPEAT_TITLE_BASE}4`); // note: 4 (the last repeated row) because we wait for the whole repeated group to move ;)
+        expect(singleRowBox.y).toBeLessThan(repeatedRowBox.y);
+      }).toPass();
 
       // Wait for save button to be active (indicates changes have been applied)
       // since we cannot verify that changes have been applied by checking the JSON diff we have to check the Save button state
@@ -532,14 +444,14 @@ test.describe(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton)
       ).toHaveAttribute('data-testactive');
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
 
       await page.reload();
 
-      singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
-      for (let i = 1; i <= repeatOptions.length; i++) {
+      const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
+      for (let i = 1; i <= REPEAT_OPTIONS.length; i++) {
         // verify move by row position
-        const repeatedRow = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}${i}`);
+        const repeatedRow = await getRowBox(dashboardPage, selectors, `${REPEAT_TITLE_BASE}${i}`);
         expect(singleRowBox?.y).toBeLessThan(repeatedRow?.y || 0);
       }
     });

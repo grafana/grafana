@@ -1,7 +1,9 @@
 package permreg
 
 import (
+	"maps"
 	"strings"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -65,7 +67,8 @@ type PrefixSet map[string]bool
 var _ PermissionRegistry = &permissionRegistry{}
 
 type permissionRegistry struct {
-	actionScopePrefixes map[string]PrefixSet // TODO use thread safe map
+	mu                  sync.RWMutex
+	actionScopePrefixes map[string]PrefixSet
 	kindScopePrefix     map[string]string
 	logger              log.Logger
 }
@@ -121,27 +124,31 @@ func (pr *permissionRegistry) RegisterPluginScope(scope string) {
 
 	scopeParts := strings.Split(scope, ":")
 	kind := scopeParts[0]
-
-	// If the scope is already registered, return
-	if _, found := pr.kindScopePrefix[kind]; found {
-		return
-	}
-
-	// If the scope contains an attribute part, register the kind and attribute
+	scopePrefix := kind + ":"
 	if len(scopeParts) > 2 {
 		attr := scopeParts[1]
-		pr.kindScopePrefix[kind] = kind + ":" + attr + ":"
-		pr.logger.Debug("registered scope prefix", "kind", kind, "scope_prefix", kind+":"+attr+":")
-		return
+		scopePrefix = kind + ":" + attr + ":"
 	}
 
-	pr.logger.Debug("registered scope prefix", "kind", kind, "scope_prefix", kind+":")
-	pr.kindScopePrefix[kind] = kind + ":"
+	pr.mu.Lock()
+	if _, found := pr.kindScopePrefix[kind]; found {
+		pr.mu.Unlock()
+		return
+	}
+	pr.kindScopePrefix[kind] = scopePrefix
+	pr.mu.Unlock()
+
+	pr.logger.Debug("registered scope prefix", "kind", kind, "scope_prefix", scopePrefix)
 }
 
 func (pr *permissionRegistry) RegisterPermission(action, scope string) error {
-	if _, ok := pr.actionScopePrefixes[action]; !ok {
-		pr.actionScopePrefixes[action] = PrefixSet{}
+	pr.mu.Lock()
+	defer pr.mu.Unlock()
+
+	validScopePrefixes, ok := pr.actionScopePrefixes[action]
+	if !ok {
+		validScopePrefixes = PrefixSet{}
+		pr.actionScopePrefixes[action] = validScopePrefixes
 	}
 
 	if scope == "" {
@@ -157,11 +164,14 @@ func (pr *permissionRegistry) RegisterPermission(action, scope string) error {
 	}
 
 	// Add a new entry in case the scope is not empty
-	pr.actionScopePrefixes[action][scopePrefix] = true
+	validScopePrefixes[scopePrefix] = true
 	return nil
 }
 
 func (pr *permissionRegistry) IsPermissionValid(action, scope string) error {
+	pr.mu.RLock()
+	defer pr.mu.RUnlock()
+
 	validScopePrefixes, ok := pr.actionScopePrefixes[action]
 	if !ok {
 		return ErrUnknownAction(action)
@@ -200,6 +210,9 @@ func isScopeValid(scope string, validScopePrefixes PrefixSet) bool {
 }
 
 func (pr *permissionRegistry) GetScopePrefixes(action string) (PrefixSet, bool) {
+	pr.mu.RLock()
+	defer pr.mu.RUnlock()
+
 	set, ok := pr.actionScopePrefixes[action]
-	return set, ok
+	return maps.Clone(set), ok
 }

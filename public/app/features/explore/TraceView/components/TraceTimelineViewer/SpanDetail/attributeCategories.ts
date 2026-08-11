@@ -93,7 +93,7 @@ const ATTRIBUTE_CATEGORY_CONFIG: AttributeCategoryConfig[] = [
     labelKey: 'explore.span-detail.attribute-category.frontend',
     defaultLabel: 'Frontend',
     icon: 'frontend-observability',
-    prefixes: ['browser', 'device', 'session'],
+    prefixes: ['browser', 'device', 'session', 'gf.feo11y'],
   },
   {
     id: 'telemetry-sdk',
@@ -160,8 +160,21 @@ const ATTRIBUTE_CATEGORY_CONFIG: AttributeCategoryConfig[] = [
   },
 ];
 
+/** Resource categories ordered by "gravity" (user-facing → infrastructure → telemetry). */
 const SECTION_CATEGORY_PRIORITY: Record<AttributeSectionType, string[]> = {
-  resource: [SERVICE_CATEGORY_ID],
+  resource: [
+    'frontend',
+    SERVICE_CATEGORY_ID,
+    'deployment',
+    'database',
+    'process',
+    'runtime',
+    'container',
+    'kubernetes',
+    'host-os',
+    'cloud',
+    'telemetry-sdk',
+  ],
   span: ['http', 'url'],
 };
 
@@ -210,9 +223,11 @@ function orderAttributeCategories(
   return [...priorityCategories, ...remainingCategories];
 }
 
+export const OTHER_CATEGORY_ID = 'other' as const;
+
 function getOtherCategory(): AttributeCategoryDefinition {
   return {
-    id: 'other',
+    id: OTHER_CATEGORY_ID,
     label: t('explore.span-detail.attribute-category.other', 'Other'),
     icon: 'tag-alt',
     match: () => true,
@@ -221,6 +236,11 @@ function getOtherCategory(): AttributeCategoryDefinition {
 
 function getAttributeCategories(sectionType: AttributeSectionType): AttributeCategoryDefinition[] {
   return orderAttributeCategories(buildAttributeCategories(), SECTION_CATEGORY_PRIORITY[sectionType]);
+}
+
+/** Returns true when an attribute key matches the OpenTelemetry `db.*` / `db_*` namespace. */
+export function isDatabaseAttribute(key: string): boolean {
+  return matchesPrefixes(key, ['db']);
 }
 
 export function groupAttributesByCategory(

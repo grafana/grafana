@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { AppEvents, CoreApp, type GrafanaTheme2, PanelPlugin, type PanelProps } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { sceneGraph, sceneUtils } from '@grafana/scenes';
 import {
   Button,
@@ -17,9 +18,8 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
-import { AccessControlAction } from 'app/types/accessControl';
+import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
 
 import { applyQueryToPanel, getVizSuggestionForQuery } from '../utils/getVizSuggestionForQuery';
@@ -42,12 +42,6 @@ import { DashboardScene } from './DashboardScene';
 
 export const UNCONFIGURED_PANEL_PLUGIN_ID = '__unconfigured-panel';
 const UnconfiguredPanel = new PanelPlugin(UnconfiguredPanelComp);
-
-function hasSavedQueryReadPermissions(): boolean {
-  return config.featureToggles.savedQueriesRBAC
-    ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
-    : contextSrv.isSignedIn;
-}
 
 // PanelPlugin components receive PanelProps and have no SceneObject parent reference,
 // so window.__grafanaSceneContext is the only available mechanism to reach the DashboardScene.
@@ -239,7 +233,7 @@ export function UnconfiguredPanelComp(props: PanelProps) {
           <div
             className={cx(styles.buttonList, isCompact && styles.buttonListCompact, !isButtonsVisible && styles.hidden)}
             aria-hidden={!isButtonsVisible}
-            {...(!isButtonsVisible ? { inert: '' } : {})}
+            inert={!isButtonsVisible}
           >
             {buttons.map((button, i) => (
               <div
@@ -256,9 +250,21 @@ export function UnconfiguredPanelComp(props: PanelProps) {
                 }
               >
                 {isCompact ? (
-                  <Button icon={button.icon} variant={button.variant} onClick={button.onClick} tooltip={button.label} />
+                  <Button
+                    icon={button.icon}
+                    variant={button.variant}
+                    onClick={button.onClick}
+                    tooltip={button.label}
+                    data-testid={selectors.components.UnconfiguredPanel.actionButton(button.key)}
+                  />
                 ) : (
-                  <Button icon={button.icon} variant={button.variant} onClick={button.onClick} fullWidth>
+                  <Button
+                    icon={button.icon}
+                    variant={button.variant}
+                    onClick={button.onClick}
+                    fullWidth
+                    data-testid={selectors.components.UnconfiguredPanel.actionButton(button.key)}
+                  >
                     {button.label}
                   </Button>
                 )}

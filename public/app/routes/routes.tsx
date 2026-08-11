@@ -163,7 +163,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/browse-dashboards/BrowseDashboardsPage')
       ),
     },
-    config.featureToggles.globalDashboardVariables && {
+    {
       path: '/dashboards/variables',
       roles: () =>
         contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
@@ -174,7 +174,7 @@ export function getAppRoutes(): RouteDescriptor[] {
           )
       ),
     },
-    config.featureToggles.globalDashboardVariables && {
+    {
       path: '/dashboards/variables/new',
       roles: () =>
         contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
@@ -185,7 +185,7 @@ export function getAppRoutes(): RouteDescriptor[] {
           )
       ),
     },
-    config.featureToggles.globalDashboardVariables && {
+    {
       // Nested under a static /edit segment so a variable whose derived
       // metadata.name is literally "new" can never collide with the create route.
       path: '/dashboards/variables/edit/:name',
@@ -368,6 +368,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/authentication/ldap',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.LDAPStatusRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
       ),
@@ -381,6 +382,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/settings',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminSettings" */ 'app/features/admin/AdminSettings')
       ),
@@ -391,36 +393,42 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgUsersRead, AccessControlAction.UsersRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserListPage" */ 'app/features/admin/UserListPage')
       ),
     },
     {
       path: '/admin/users/create',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.UsersCreate]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserCreatePage" */ 'app/features/admin/UserCreatePage')
       ),
     },
     {
       path: '/admin/users/edit/:id',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.UsersRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
       ),
     },
     {
       path: '/admin/orgs',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminListOrgsPage" */ 'app/features/admin/AdminListOrgsPage')
       ),
     },
     {
       path: '/admin/orgs/edit/:id',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminEditOrgPage" */ 'app/features/admin/AdminEditOrgPage')
       ),
     },
     {
       path: '/admin/stats',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionServerStatsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
       ),
@@ -551,6 +559,24 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () => contextSrv.evaluatePermission([AccessControlAction.AlertingRuleRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/browse-dashboards/BrowseFolderAlertingPage')
+      ),
+    },
+    {
+      path: '/dashboards/f/:uid/:slug/variables',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "FolderVariablesPage"*/ 'app/features/browse-dashboards/BrowseFolderVariablesPage'
+          )
+      ),
+    },
+    {
+      path: '/dashboards/f/:uid/variables',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "FolderVariablesPage"*/ 'app/features/browse-dashboards/BrowseFolderVariablesPage'
+          )
       ),
     },
     {

@@ -1100,6 +1100,8 @@ export type DashboardThreshold = {
   color: string;
   /** Value null means -Infinity */
   value: number;
+  /** Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. */
+  valueExpr?: string;
 };
 export type DashboardThresholdsConfig = {
   mode: string;
@@ -1180,9 +1182,12 @@ export type DashboardVizConfigKind = {
 };
 export type DashboardPanelSpec = {
   data: DashboardQueryGroupKind;
-  description: string;
+  /** Shown in a info icon tooltip next to panel title */
+  description?: string;
   id: number;
   links: DashboardDataLink[];
+  /** Shown in a sub header below the title. */
+  subtitle?: string;
   title: string;
   transparent?: boolean;
   vizConfig: DashboardVizConfigKind;
@@ -1871,31 +1876,30 @@ export type NotebookMatcherConfig = {
   /** If set, limits this matcher to fields of that type. If not set, "series" mode is used. */
   scope?: string;
 };
-export type NotebookDataTransformerConfig = {
+export type NotebookV2TransformationSpec = {
   /** Disabled transformations are skipped */
   disabled?: boolean;
   /** Optional frame matcher. When missing it will be applied to all results */
   filter?: NotebookMatcherConfig;
-  /** Unique identifier of transformer */
-  id: string;
   /** Options to be passed to the transformer Valid options depend on the transformer id */
   options: object;
   /** Where to pull DataFrames from as input to transformation */
   topic?: string;
 };
-export type NotebookTransformationKind = {
-  /** The kind of a TransformationKind is the transformation ID */
+export type NotebookV2TransformationKind = {
+  /** The group is the transformation ID */
+  group: string;
   kind: string;
-  spec: NotebookDataTransformerConfig;
+  spec: NotebookV2TransformationSpec;
 };
-export type NotebookQueryGroupSpec = {
+export type NotebookV2QueryGroupSpec = {
   queries: NotebookPanelQueryKind[];
   queryOptions: NotebookQueryOptionsSpec;
-  transformations: NotebookTransformationKind[];
+  transformations: NotebookV2TransformationKind[];
 };
-export type NotebookQueryGroupKind = {
+export type NotebookV2QueryGroupKind = {
   kind: string;
-  spec: NotebookQueryGroupSpec;
+  spec: NotebookV2QueryGroupSpec;
 };
 export type NotebookDataLink = {
   targetBlank?: boolean;
@@ -2008,6 +2012,8 @@ export type NotebookThreshold = {
   color: string;
   /** Value null means -Infinity */
   value: number;
+  /** Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. */
+  valueExpr?: string;
 };
 export type NotebookThresholdsConfig = {
   mode: string;
@@ -2086,23 +2092,26 @@ export type NotebookVizConfigKind = {
   spec: NotebookVizConfigSpec;
   version: string;
 };
-export type NotebookPanelSpec = {
-  data: NotebookQueryGroupKind;
-  description: string;
+export type NotebookV2PanelSpec = {
+  data: NotebookV2QueryGroupKind;
+  /** Shown in a info icon tooltip next to panel title */
+  description?: string;
   id: number;
   links: NotebookDataLink[];
+  /** Shown in a sub header below the title. */
+  subtitle?: string;
   title: string;
   transparent?: boolean;
   vizConfig: NotebookVizConfigKind;
 };
-export type NotebookPanelKind = {
+export type NotebookV2PanelKind = {
   kind: string;
-  spec: NotebookPanelSpec;
+  spec: NotebookV2PanelSpec;
 };
-export type NotebookCellKindOrPanelKindOrLibraryPanelKind = {
+export type NotebookCellKindOrV2PanelKindOrLibraryPanelKind = {
   CellKind?: NotebookCellKind;
   LibraryPanelKind?: NotebookLibraryPanelKind;
-  PanelKind?: NotebookPanelKind;
+  V2PanelKind?: NotebookV2PanelKind;
 };
 export type NotebookElementReference = {
   kind: string;
@@ -2154,7 +2163,7 @@ export type NotebookTimeSettingsSpec = {
 export type NotebookSpec = {
   description?: string;
   elements: {
-    [key: string]: NotebookCellKindOrPanelKindOrLibraryPanelKind;
+    [key: string]: NotebookCellKindOrV2PanelKindOrLibraryPanelKind;
   };
   layout: NotebookNotebookLayoutKind;
   tags: string[];

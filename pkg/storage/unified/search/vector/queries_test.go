@@ -37,20 +37,69 @@ func TestVectorQueries(t *testing.T) {
 							Metadata:        json.RawMessage(`{"datasource_uids":["ds1"]}`),
 							Embedding:       []float32{0.1, 0.2, 0.3},
 							Model:           "text-embedding-005",
+							ContentVersion:  3,
 						},
 						Embedding: pgvector.NewHalfVector([]float32{0.1, 0.2, 0.3}),
 					},
 				},
 			},
-			sqlVectorCollectionDelete: {
+			sqlVectorCollectionRefreshMeta: {
 				{
 					Name: "simple",
-					Data: &sqlVectorCollectionDeleteRequest{
+					Data: &sqlVectorCollectionRefreshMetaRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "things_external",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						UID:         "abc-uid",
+						Rows: []VectorMeta{
+							{Subresource: "chunk/1", Title: "Thing One", Metadata: json.RawMessage(`{"embeddedAt":1750000000}`)},
+							{Subresource: "chunk/2", Title: "Thing Two", Metadata: json.RawMessage(`{"embeddedAt":1750000000}`)},
+						},
+					},
+				},
+			},
+			sqlVectorCollectionDeleteUIDs: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionDeleteUIDsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Resource:    "dashboards",
 						Namespace:   "stacks-123",
 						Model:       "text-embedding-005",
-						UID:         "abc-uid",
+						UIDs:        []string{"u1", "u2"},
+					},
+				},
+				{
+					Name: "all_models",
+					Data: &sqlVectorCollectionDeleteUIDsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "dashboards",
+						Namespace:   "stacks-123",
+						AllModels:   true,
+						UIDs:        []string{"u1", "u2"},
+					},
+				},
+			},
+			sqlVectorCollectionDeleteAll: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionDeleteAllRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "dashboards",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						Limit:       10000,
+					},
+				},
+				{
+					Name: "all_models",
+					Data: &sqlVectorCollectionDeleteAllRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "dashboards",
+						Namespace:   "stacks-123",
+						AllModels:   true,
+						Limit:       10000,
 					},
 				},
 			},
@@ -64,6 +113,42 @@ func TestVectorQueries(t *testing.T) {
 						Model:        "text-embedding-005",
 						UID:          "abc-uid",
 						Subresources: []string{"panel/1", "panel/2"},
+					},
+				},
+			},
+			sqlVectorNamespaceDeleteEmbeddings: {
+				{
+					Name: "simple",
+					Data: &sqlVectorNamespaceDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+					},
+				},
+			},
+			sqlVectorNamespaceDeleteQueryCache: {
+				{
+					Name: "simple",
+					Data: &sqlVectorNamespaceDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+					},
+				},
+			},
+			sqlVectorNamespaceDeleteRateBuckets: {
+				{
+					Name: "simple",
+					Data: &sqlVectorNamespaceDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
+					},
+				},
+			},
+			sqlVectorNamespaceDeletePromoted: {
+				{
+					Name: "simple",
+					Data: &sqlVectorNamespaceDeleteRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "stacks-123",
 					},
 				},
 			},
@@ -93,6 +178,32 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlVectorCollectionContentVersion: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionContentVersionRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "dashboards",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						UID:         "abc-uid",
+						Response:    &sqlVectorCollectionContentVersionResponse{},
+					},
+				},
+			},
+			sqlVectorCollectionUpdateVersion: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionUpdateVersionRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "dashboards",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						UID:         "abc-uid",
+						Version:     2,
+					},
+				},
+			},
 			sqlVectorBackfillJobsList: {
 				{
 					Name: "simple",
@@ -107,9 +218,22 @@ func TestVectorQueries(t *testing.T) {
 				{
 					Name: "simple",
 					Data: &sqlVectorBackfillJobsCreateRequest{
+						SQLTemplate:    mocks.NewTestingSQLTemplate(),
+						Model:          "text-embedding-005",
+						Resource:       "dashboards",
+						StoppingRV:     12345,
+						ContentVersion: 1,
+					},
+				},
+			},
+			sqlVectorBackfillJobsReopen: {
+				{
+					Name: "simple",
+					Data: &sqlVectorBackfillJobsReopenRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Model:       "text-embedding-005",
 						Resource:    "dashboards",
+						Version:     2,
 						StoppingRV:  12345,
 					},
 				},
@@ -208,6 +332,27 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlVectorCatalogList: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCatalogListRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Response:    &sqlVectorCatalogListResponse{},
+					},
+				},
+			},
+			sqlVectorCatalogInsert: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCatalogInsertRequest{
+						SQLTemplate:  mocks.NewTestingSQLTemplate(),
+						GroupName:    "ext.example.com",
+						Resource:     "my-things",
+						PartitionKey: "my_things_external",
+						IsExternal:   true,
+					},
+				},
+			},
 			sqlVectorCollectionSearch: {
 				{
 					Name: "no filters",
@@ -245,9 +390,11 @@ func TestVectorQueries(t *testing.T) {
 						Limit:          5,
 						UIDValues:      []string{"dash-1"},
 						FolderValues:   []string{"folder-a", "folder-b"},
-						MetadataFilters: []MetadataFilterEntry{
-							{JSON: `{"datasource_uids":["ds-uid-1"]}`},
-							{JSON: `{"query_languages":["promql"]}`},
+						// Two groups: OR within a group, AND across groups. JSON
+						// pairs mirror pgvector.Search's scalar+array shapes.
+						MetadataFilterGroups: []MetadataFilterGroup{
+							{JSONs: []string{`{"datasourceUid":"ds1"}`, `{"datasourceUid":["ds1"]}`, `{"datasourceUid":"ds2"}`, `{"datasourceUid":["ds2"]}`}},
+							{JSONs: []string{`{"language":"promql"}`, `{"language":["promql"]}`}},
 						},
 						Response: &sqlVectorCollectionSearchResponse{},
 					},

@@ -6,7 +6,7 @@ import { Sidebar } from '../dashboard-new-layouts/page-objects';
 
 import { makeNewDashboardRequestBody } from './utils/makeDashboard';
 
-// New-layouts has no settings toolbar button; settings open from the dashboard edit-pane
+// New-layouts has no settings toolbar button; settings open from the dashboard sidebar
 // "Dashboard options" sidebar button, then the "View all settings" button it reveals.
 async function openDashboardSettings(
   page: Page,
@@ -14,7 +14,12 @@ async function openDashboardSettings(
   selectors: E2ESelectorGroups,
   components: Components
 ) {
-  const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+  const sidebar = new Sidebar({
+    page,
+    getByGrafanaSelector: dashboardPage.getByGrafanaSelector.bind(dashboardPage),
+    selectors,
+    components,
+  });
   const editButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton);
   const optionsButton = sidebar.toolbar.getButton('Options');
   // The first edit-button click can be swallowed before the scene is interactive; re-click only
@@ -163,8 +168,8 @@ test.describe(
         await page.getByTestId(selectors.pages.ConfirmModal.input).fill('Delete');
         await page.getByTestId(selectors.pages.ConfirmModal.delete).click();
 
-        // Wait for redirect to home after deletion
-        await page.waitForURL('**/');
+        // Wait for redirect to home after deletion (?orgId=N may be appended by locationService)
+        await page.waitForURL((url) => url.pathname === '/');
 
         // Navigate to recently deleted
         await page.goto('/dashboard/recently-deleted');

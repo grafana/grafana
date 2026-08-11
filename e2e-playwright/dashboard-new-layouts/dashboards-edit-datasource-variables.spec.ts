@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 import { flows, type Variable } from './utils';
 
 test.use({
@@ -20,13 +18,9 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new datasource variable', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can add a new datasource variable', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
       const variable: Variable = {
         type: 'datasource',
         name: 'VariableUnderTest',
@@ -34,7 +28,7 @@ test.describe(
         value: 'gdev-cloudwatch',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.datasource.selectType('CloudWatch');
       await sidebar.variableOptions.datasource.setNameFilter('cloud');
@@ -45,9 +39,9 @@ test.describe(
       await expect(variableLabel).toContainText(variable.label!);
 
       // Assert the variable values are correctly displayed in the panel
-      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-      await expect(panelContent).toBeVisible();
-      const markdownContent = panelContent.locator('.markdown-html');
+      const panelBody = panels.getBodies().first();
+      await expect(panelBody).toBeVisible();
+      const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText(`${variable.name}: ${variable.value}`);
     });
   }

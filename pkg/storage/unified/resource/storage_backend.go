@@ -94,8 +94,7 @@ type kvStorageBackend struct {
 	gcGate                  *GCGate
 	lastImportStore         *lastImportStore
 	lastImportTimeMaxAge    time.Duration
-	//reg     prometheus.Registerer
-	metrics *kvBackendMetrics
+	metrics                 *kvBackendMetrics
 
 	watchOpts WatchOptions
 
@@ -130,9 +129,11 @@ type kvStorageBackend struct {
 }
 
 type kvBackendMetrics struct {
-	ConflictErrors      *prometheus.CounterVec
-	EventEmitFailures   *prometheus.CounterVec
-	NatsNotifierDropped *prometheus.CounterVec
+	ConflictErrors                   *prometheus.CounterVec
+	EventEmitFailures                *prometheus.CounterVec
+	NatsNotifierDropped              *prometheus.CounterVec
+	WatchNotificationsPublished      *prometheus.CounterVec
+	WatchNotificationPublishFailures *prometheus.CounterVec
 }
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
@@ -151,6 +152,14 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name: "storage_server_nats_notifier_dropped_events_total",
 			Help: "Notifications dropped by the NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
 		}, []string{"reason"}),
+		WatchNotificationsPublished: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_watch_notifications_published_total",
+			Help: "Watch notifications successfully published to NATS, by group, resource, and action. The denominator for consumer delivery completeness: compare against the consumers' live-received totals to measure events missed in flight.",
+		}, []string{"group", "resource", "action"}),
+		WatchNotificationPublishFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_watch_notifications_publish_failures_total",
+			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
+		}, []string{"group", "resource", "action"}),
 	}
 }
 
@@ -166,6 +175,20 @@ func (m *kvBackendMetrics) recordEventEmitFailure(event WriteEvent) {
 		return
 	}
 	m.EventEmitFailures.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
+}
+
+func (m *kvBackendMetrics) recordWatchNotificationPublished(event Event) {
+	if m == nil {
+		return
+	}
+	m.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
+}
+
+func (m *kvBackendMetrics) recordWatchNotificationPublishFailure(event Event) {
+	if m == nil {
+		return
+	}
+	m.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
 
 var _ KVBackend = &kvStorageBackend{}
@@ -201,9 +224,9 @@ type KVBackendOptions struct {
 	// Nil preserves existing behavior.
 	ExperimentalKV       *ExperimentalKVOptions
 	DisablePruner        bool
-	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
-	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
-	Reg                  prometheus.Registerer // TODO add metrics
+	EventRetentionPeriod time.Duration // How long to keep events (default: 1 hour)
+	EventPruningInterval time.Duration // How often to run the event pruning (default: 5 minutes)
+	Reg                  prometheus.Registerer
 	Log                  log.Logger
 	GarbageCollection    GarbageCollectionConfig
 
@@ -243,6 +266,9 @@ type KVBackendOptions struct {
 
 	// TenantDeleterConfig, if set, enables periodic deletion of expired pending-delete tenant data.
 	TenantDeleterConfig *TenantDeleterConfig
+
+	// EmbeddingDeleter, if set, deletes vector embeddings on tenant deletion.
+	EmbeddingDeleter EmbeddingDeleter
 
 	// SearchLookback is the duration subtracted from sinceRv in calls to ListModifiedSince.
 	// This guards against concurrent writes that commit slightly out-of-order. 0 means no lookback.
@@ -365,7 +391,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		cancel:                  cancel,
 		metrics:                 metrics,
 	}
-	err = backend.initPruner(ctx)
+	err = backend.initPruner(ctx, opts.Reg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
@@ -388,7 +414,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the tenant deleter.
 	if opts.TenantDeleterConfig != nil {
-		td := NewTenantDeleter(backend.dataStore, pds, *opts.TenantDeleterConfig)
+		td := NewTenantDeleter(backend.dataStore, pds, *opts.TenantDeleterConfig, opts.EmbeddingDeleter)
 		td.Start(ctx)
 		backend.tenantDeleter = td
 	}
@@ -538,7 +564,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 	return nil
 }
 
-func (k *kvStorageBackend) initPruner(ctx context.Context) error {
+func (k *kvStorageBackend) initPruner(ctx context.Context, reg prometheus.Registerer) error {
 	if k.disablePruner {
 		k.log.Debug("Pruner disabled, using noop pruner")
 		k.historyPruner = &NoopPruner{}
@@ -560,6 +586,7 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 				"name", key.Name,
 				"error", err)
 		},
+		Reg: reg,
 	})
 	if err != nil {
 		return err
@@ -1480,24 +1507,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		listRV = listOptions.ResourceVersion
 	}
 
-	// Fetch the latest objects.
-	// TODO: stream keys into BatchGet instead of materializing the whole list.
-	// For unbounded list calls (e.g. index build with req.Limit == 0) at 1M
-	// rows this allocates ~250 MB of DataKey before any reads start. Pipe
-	// ListResourceKeysAtRevision through a bounded channel into BatchGet so
-	// memory is O(chunk), not O(N).
-	keys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
-	for dataKey, err := range k.dataStore.ListResourceKeysAtRevision(ctx, listOptions) {
-		if err != nil {
-			return 0, err
-		}
-
-		keys = append(keys, dataKey)
-		// Only fetch the first limit items + 1 to get the next token.
-		if req.Limit > 0 && len(keys) >= int(req.Limit+1) {
-			break
-		}
-	}
+	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
 	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "")
 	defer iter.stop()
 
@@ -1508,14 +1518,46 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return listRV, nil
 }
 
-// newKvListIterator builds a kvListIterator over dataStore.BatchGet(keys).
-func newKvListIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, isCrossNamespace bool) *kvListIterator {
-	next, stopFn := iter.Pull2(ds.BatchGet(ctx, keys))
+// newKvListIterator builds a kvListIterator that reads keys in bounded batches.
+func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace bool) *kvListIterator {
+	next, stopFn := iter.Pull2(batchGetResourceKeys(ctx, ds, keys))
 	return &kvListIterator{
 		listRV:           listRV,
 		isCrossNamespace: isCrossNamespace,
 		next:             next,
 		stopFn:           stopFn,
+	}
+}
+
+func batchGetResourceKeys(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error]) iter.Seq2[DataObj, error] {
+	return func(yield func(DataObj, error) bool) {
+		batch := make([]DataKey, 0, dataBatchSize)
+
+		flush := func() bool {
+			for obj, err := range ds.BatchGet(ctx, batch) {
+				if !yield(obj, err) || err != nil {
+					return false
+				}
+			}
+			batch = batch[:0]
+			return true
+		}
+
+		for key, err := range keys {
+			if err != nil {
+				yield(DataObj{}, err)
+				return
+			}
+
+			batch = append(batch, key)
+			if len(batch) == dataBatchSize && !flush() {
+				return
+			}
+		}
+
+		if len(batch) > 0 {
+			flush()
+		}
 	}
 }
 
@@ -2246,60 +2288,142 @@ func (i *kvHistoryIterator) Value() []byte {
 }
 
 // WatchWriteEvents returns a channel that receives write events.
+//
+// Notifications carry metadata only, so values are read back — everything that
+// has already arrived in one batched read, since a read per event is slow enough
+// under load to overflow the notifier's buffer and drop notifications.
 func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
-	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
 	notifierEvents := k.notifier.Watch(ctx, k.watchOpts)
-	go func() {
-		for event := range notifierEvents {
-			// fetch the data
-			dataReader, err := k.dataStore.Get(ctx, DataKey{
-				Group:           event.Group,
-				Resource:        event.Resource,
-				Namespace:       event.Namespace,
-				Name:            event.Name,
-				ResourceVersion: event.ResourceVersion,
-				Action:          event.Action,
-				Folder:          event.Folder,
-			})
-			if err != nil || dataReader == nil {
-				k.log.Error("failed to get data for event", "error", err)
-				continue
-			}
-			data, err := readAndClose(dataReader)
-			if err != nil {
-				k.log.Error("failed to read and close data for event", "error", err)
-				continue
-			}
-			var t resourcepb.WatchEvent_Type
-			switch event.Action {
-			case DataActionCreated:
-				t = resourcepb.WatchEvent_ADDED
-			case DataActionUpdated:
-				t = resourcepb.WatchEvent_MODIFIED
-			case DataActionDeleted:
-				t = resourcepb.WatchEvent_DELETED
-			}
 
-			events <- &WrittenEvent{
-				Key: &resourcepb.ResourceKey{
-					Namespace: event.Namespace,
-					Group:     event.Group,
-					Resource:  event.Resource,
-					Name:      event.Name,
-				},
-				Type:            t,
-				Folder:          event.Folder,
-				Value:           data,
-				ResourceVersion: event.ResourceVersion,
-				PreviousRV:      event.PreviousRV,
-				Timestamp:       resourceVersionTime(event.ResourceVersion).Unix(),
+	go func() {
+		defer close(events)
+
+		buf := make([]Event, 0, dataBatchSize)
+		for {
+			batch, ok := nextEventBatch(notifierEvents, buf[:0])
+			if !ok {
+				return
+			}
+			if !k.emitWriteEvents(ctx, batch, events) {
+				return
 			}
 		}
-		close(events)
 	}()
 	return events, nil
+}
+
+func nextEventBatch(notifications <-chan Event, buf []Event) ([]Event, bool) {
+	event, ok := <-notifications
+	if !ok {
+		return nil, false
+	}
+	batch := append(buf, event)
+
+	for len(batch) < cap(batch) {
+		select {
+		case event, ok := <-notifications:
+			if !ok {
+				// Emit what we have; the next call sees the closed channel and stops.
+				return batch, true
+			}
+			batch = append(batch, event)
+		default:
+			return batch, true
+		}
+	}
+	return batch, true
+}
+
+// emitWriteEvents resolves the values a batch of notifications refers to and
+// forwards them, preserving resource version order. It reports false when ctx is
+// done and the stream should stop.
+func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, out chan<- *WrittenEvent) bool {
+	keys := make([]DataKey, len(batch))
+	for i, event := range batch {
+		keys[i] = DataKey{
+			Group:           event.Group,
+			Resource:        event.Resource,
+			Namespace:       event.Namespace,
+			Name:            event.Name,
+			ResourceVersion: event.ResourceVersion,
+			Action:          event.Action,
+			Folder:          event.Folder,
+		}
+	}
+
+	// Read the whole batch before emitting any of it: the iterator holds a
+	// storage cursor open, and a slow watcher must not pin it.
+	values := make(map[DataKey][]byte, len(batch))
+	readFailed := false
+	// Keys present in storage but unreadable — not the same as missing data.
+	var unreadable map[DataKey]bool
+	for obj, err := range k.dataStore.BatchGet(ctx, keys) {
+		if err != nil {
+			// A cancelled context surfaces here with no results: shutdown, not a storage
+			// problem, and grinding the backlog would log an error per buffered batch.
+			if ctx.Err() != nil {
+				return false
+			}
+			k.log.Error("failed to get data for events", "error", err)
+			readFailed = true
+			break
+		}
+		data, err := readAndClose(obj.Value)
+		if err != nil {
+			k.log.Error("failed to read data for event", "key", obj.Key.String(), "error", err)
+			if unreadable == nil {
+				unreadable = make(map[DataKey]bool)
+			}
+			unreadable[obj.Key] = true
+			continue
+		}
+		values[obj.Key] = data
+	}
+
+	// Emit in notification order rather than in the order the read returned.
+	for i, event := range batch {
+		data, ok := values[keys[i]]
+		if !ok {
+			// BatchGet omits keys it has no value for rather than erroring — but a failed
+			// batch read reported on none of them, and an unreadable value already did.
+			if !readFailed && !unreadable[keys[i]] {
+				k.log.Error("no data for event", "key", keys[i].String())
+			}
+			continue
+		}
+
+		var t resourcepb.WatchEvent_Type
+		switch event.Action {
+		case DataActionCreated:
+			t = resourcepb.WatchEvent_ADDED
+		case DataActionUpdated:
+			t = resourcepb.WatchEvent_MODIFIED
+		case DataActionDeleted:
+			t = resourcepb.WatchEvent_DELETED
+		}
+
+		select {
+		case out <- &WrittenEvent{
+			Key: &resourcepb.ResourceKey{
+				Namespace: event.Namespace,
+				Group:     event.Group,
+				Resource:  event.Resource,
+				Name:      event.Name,
+			},
+			Type:            t,
+			Folder:          event.Folder,
+			Value:           data,
+			ResourceVersion: event.ResourceVersion,
+			PreviousRV:      event.PreviousRV,
+			Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
+		}:
+		case <-ctx.Done():
+			return false
+		}
+	}
+	return true
 }
 
 // GetResourceStats returns resource stats within the storage backend.
@@ -2312,6 +2436,20 @@ func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedR
 	defer span.End()
 
 	return k.dataStore.GetResourceStats(ctx, nsr, minCount)
+}
+
+// GetResourceStatsWithLimit is like GetResourceStats but stops counting each
+// namespace at countLimit. See dataStore.GetResourceStatsWithLimit.
+func (k *kvStorageBackend) GetResourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceStatsWithLimit", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+		attribute.Int("countLimit", countLimit),
+	))
+	defer span.End()
+
+	return k.dataStore.GetResourceStatsWithLimit(ctx, nsr, minCount, countLimit)
 }
 
 // ListStoredResources discovers resource identities in the storage backend.

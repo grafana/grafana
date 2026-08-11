@@ -55,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -85,7 +86,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-		authInfoStore, err := authinfoimpl.ProvideStore(sqlStore, secretsService)
+		authInfoStore, err := authinfoimpl.ProvideStore(context.Background(), legacysql.NewDatabaseProvider(sqlStore), secretsService)
 		require.NoError(t, err)
 		srv := authinfoimpl.ProvideService(
 			authInfoStore, remotecache.NewFakeCacheStorage(), secretsService)
@@ -648,6 +649,21 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 
 			sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
 			assert.Equal(t, 403, sc.resp.Code)
+		},
+	}, hs)
+
+	hs.userService = &usertest.FakeUserService{ExpectedError: user.ErrUserAlreadyExists}
+
+	updateUserScenario(t, updateUserContext{
+		desc:         "Should return 409 when the login or email is taken by another user",
+		url:          "/api/users/1",
+		routePattern: "/api/users/:id",
+		cmd:          updateUserCommand,
+		fn: func(sc *scenarioContext) {
+			sc.authInfoService.ExpectedError = user.ErrUserNotFound
+
+			sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
+			assert.Equal(t, http.StatusConflict, sc.resp.Code)
 		},
 	}, hs)
 }

@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/usagestats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -182,6 +183,15 @@ type StorageBackend interface {
 	// Get resource stats within the storage backend.  When namespace is empty, it will apply to all
 	GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error)
 
+	// GetResourceStatsWithLimit is like GetResourceStats but may stop counting a
+	// namespace once it reaches countLimit, letting callers that only compare
+	// counts against thresholds avoid scanning full history. countLimit <= 0 means
+	// no limit; a backend may also ignore it and return exact counts. In limited
+	// mode (countLimit > 0) ResourceVersion is not populated, and countLimit must
+	// be greater than minCount so a namespace is not dropped by the minCount filter
+	// before it is counted.
+	GetResourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error)
+
 	// ListStoredResources discovers which resource identities exist in storage,
 	// without returning counts. It is a cheaper alternative to GetResourceStats
 	// for callers that only need to know what is stored. The filter's Namespace
@@ -280,8 +290,17 @@ type SearchOptions struct {
 	// TTL for the dedup cache used in ListModifiedSince updates. 0 disables the cache.
 	IndexModificationCacheTTL time.Duration
 
+	// Keep deleted objects in the index so trash searches can find them. Off means
+	// a delete removes the document, as it did before trash search existed.
+	IndexDeletedDocuments bool
+
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
+
+	// PostRankAuthzEnabled mirrors the index backend's post-rank authorization
+	// setting. It selects the index features this server requires, so an index
+	// that predates them is rebuilt before that path serves a query.
+	PostRankAuthzEnabled bool
 
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
@@ -320,6 +339,10 @@ type SearchOptions struct {
 	RateLimiter        vector.RateLimiter
 	RateLimitPerTenant int
 	RateLimitWindow    time.Duration
+
+	// Vector API collection allowlists: "group/resource" entries; empty allows nothing.
+	AllowedInternalCollections []string
+	AllowedExternalCollections []string
 }
 
 type ResourceServerOptions struct {
@@ -394,6 +417,11 @@ type ResourceServerOptions struct {
 	// the RPC then returns Unimplemented.
 	Embedder *embedder.Embedder
 
+	// Reranker is the optional cross-encoder used by the HybridSearch RPC's
+	// rerank stage. nil when no [vector_reranker] provider is configured;
+	// HybridSearch then returns RRF ordering and min_relevance is a no-op.
+	Reranker *rerank.Reranker
+
 	// VectorReconciler, when non-nil, is launched after Init; the server
 	// attaches its own broadcaster to it before starting Run so the
 	// reconciler's watch path lights up. The reconciler owns the
@@ -448,7 +476,7 @@ func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, err
 	}
 
 	// Create the search server using the search.go factory
-	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.AccessClient, blobstore, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
+	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.AccessClient, blobstore, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
 	if err != nil || searchServer == nil {
 		return nil, fmt.Errorf("search server could not be created: %w", err)
 	}
@@ -558,7 +586,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, s.access, s.blob, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, opts.Reranker, s.access, s.blob, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
@@ -1665,7 +1693,7 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 				Group:              key.Group,
 				Resource:           key.Resource,
 				Namespace:          key.Namespace,
-				FreshnessTimestamp: resourceVersionTime(c.resourceVersion),
+				FreshnessTimestamp: ResourceVersionTime(c.resourceVersion),
 			}
 		}
 
@@ -2094,8 +2122,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
 					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
-					// or a snowflake ID (KV backend), so we use resourceVersionTime to handle both formats.
-					latencySeconds := time.Since(resourceVersionTime(event.ResourceVersion)).Seconds()
+					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
+					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
 					if latencySeconds > 0 {
 						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
 					}
@@ -2121,6 +2149,17 @@ func (s *server) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchR
 		return nil, fmt.Errorf("vector search is not configured")
 	}
 	return s.search.VectorSearch(ctx, req)
+}
+
+// HybridSearch delegates to the embedded searchServer, where both the
+// search backend and the vector backend live.
+func (s *server) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
+	// Unimplemented (not a bare error) so API-layer callers can map a
+	// search-disabled server to 501, same as an unconfigured vector store.
+	if s.search == nil {
+		return nil, status.Error(codes.Unimplemented, "hybrid search is not configured")
+	}
+	return s.search.HybridSearch(ctx, req)
 }
 
 // StatsGetter provides resource statistics (via search index or backend).
@@ -2543,10 +2582,10 @@ func classifyAuthError(err error) string {
 	}
 }
 
-// resourceVersionTime extracts the timestamp embedded in a resource version.
+// ResourceVersionTime extracts the timestamp embedded in a resource version.
 // Resource versions can be either snowflake IDs (KV backend) or microsecond
 // Unix timestamps (SQL backend).
-func resourceVersionTime(rv int64) time.Time {
+func ResourceVersionTime(rv int64) time.Time {
 	if IsSnowflake(rv) {
 		msec := (rv >> (snowflake.NodeBits + snowflake.StepBits)) + snowflake.Epoch
 		return time.UnixMilli(msec)

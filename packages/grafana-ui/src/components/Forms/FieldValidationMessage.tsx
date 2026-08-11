@@ -84,7 +84,7 @@ const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
         width: 0,
         height: 0,
         borderWidth: '4px 5px 4px 0',
-        borderColor: 'transparent #e02f44 transparent transparent',
+        borderColor: `transparent ${theme.colors.error.main} transparent transparent`,
         borderStyle: 'solid',
       },
     }),
