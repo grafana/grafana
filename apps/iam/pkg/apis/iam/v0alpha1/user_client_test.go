@@ -85,6 +85,17 @@ func TestUserClientGetUserTeamsAllCombinesMultiplePages(t *testing.T) {
 	require.Equal(t, "continue=next%2B%2F%3D&limit=1", transport.requests[1].Query.Encode())
 }
 
+func TestUserClientGetUserTeamsAllStartsFromFirstPage(t *testing.T) {
+	transport := &recordingResourceClient{responses: [][]byte{[]byte(`{"items":[]}`)}}
+	client := NewUserClient(transport)
+
+	_, err := client.GetUserTeamsAll(context.Background(), resource.Identifier{Namespace: "org-1", Name: "user-1"}, GetUserTeamsRequest{
+		Params: GetUserTeamsRequestParams{Limit: 25, Continue: "caller-token"},
+	})
+	require.NoError(t, err)
+	require.Equal(t, "continue=&limit=25", transport.requests[0].Query.Encode())
+}
+
 func TestUserClientGetUserTeamsAllReturnsEmptyResult(t *testing.T) {
 	transport := &recordingResourceClient{responses: [][]byte{[]byte(`{"items":[]}`)}}
 	client := NewUserClient(transport)

@@ -7,6 +7,7 @@ import (
 )
 
 func (c *UserClient) GetUserTeamsAll(ctx context.Context, identifier resource.Identifier, request GetUserTeamsRequest) (*GetUserTeamsResponse, error) {
+	request.Params.Continue = ""
 	response, err := c.GetUserTeams(ctx, identifier, request)
 	if err != nil {
 		return nil, err
