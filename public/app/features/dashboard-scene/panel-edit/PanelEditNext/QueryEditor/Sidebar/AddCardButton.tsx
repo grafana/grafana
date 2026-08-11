@@ -205,8 +205,8 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       height: theme.spacing(2.5),
       borderRadius: theme.shape.radius.sm,
       border: 'none',
-      background: theme.colors.primary.main,
-      color: theme.colors.primary.contrastText,
+      background: theme.colors.secondary.main,
+      color: theme.colors.secondary.contrastText,
       cursor: 'pointer',
       padding: 0,
       // Never let the row's flex layout shrink this below its own content — the section title
@@ -235,7 +235,7 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       }),
 
       '&:hover': {
-        background: theme.colors.primary.shade,
+        background: theme.colors.secondary.shade,
       },
 
       '&:active': {
@@ -243,7 +243,7 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       },
 
       '&:focus-visible': {
-        outline: `2px solid ${theme.colors.primary.border}`,
+        outline: `2px solid ${theme.colors.secondary.border}`,
         outlineOffset: '2px',
         ...(!alwaysVisible && {
           opacity: 1,
