@@ -57,8 +57,7 @@ func resolveWAL(setting walSetting, fsName string, fsSupportsWAL bool) bool {
 		return true
 	default:
 		if !fsSupportsWAL {
-			walLogger.Warn("Not enabling SQLite WAL mode because the filesystem holding the database may not support it. "+
-				"Set [database] wal = true to enable it anyway",
+			walLogger.Warn("Not enabling SQLite WAL mode because the filesystem holding the database may not support it",
 				"filesystem", fsName)
 			return false
 		}

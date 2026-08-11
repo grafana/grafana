@@ -220,7 +220,6 @@ func TestReadConfigWAL(t *testing.T) {
 	testCases := []struct {
 		value    string
 		expected walSetting
-		expErr   bool
 	}{
 		{value: "auto", expected: walAuto},
 		{value: "AUTO", expected: walAuto},
@@ -233,7 +232,7 @@ func TestReadConfigWAL(t *testing.T) {
 		{value: "0", expected: walOff},
 		{value: "off", expected: walOff},
 		{value: "no", expected: walOff},
-		{value: "sometimes", expErr: true},
+		{value: "sometimes", expected: walAuto},
 	}
 
 	for _, tc := range testCases {
@@ -248,13 +247,8 @@ func TestReadConfigWAL(t *testing.T) {
 			require.NoError(t, err)
 
 			dbCfg := &DatabaseConfig{}
-			err = dbCfg.readConfig(cfg)
-			if tc.expErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, tc.expected, dbCfg.wal)
+			require.NoError(t, dbCfg.readConfig(cfg))
+			assert.Equal(t, tc.expected, dbCfg.wal, "an unusable value falls back to auto rather than failing startup")
 		})
 	}
 }

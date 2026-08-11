@@ -1,9 +1,9 @@
-//go:build !linux && !windows
+//go:build !linux && !windows && !darwin && !freebsd
 
 package sqlstore
 
-// Assume local storage: the remaining platforms are almost always developer machines
-// with the database on a local disk.
+// Without a way to tell local storage from a network mount, leave WAL off unless the
+// operator asks for it.
 func filesystemSupportsWAL(_ string) (string, bool) {
-	return "unknown", true
+	return "unknown", false
 }

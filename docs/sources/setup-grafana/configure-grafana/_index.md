@@ -483,7 +483,7 @@ Supported values:
 - **`true`**: Grafana always enables WAL. Use this when you know the database file is on storage that only one Grafana instance uses, even if Grafana doesn't recognize the filesystem.
 - **`false`**: Grafana disables WAL. This also reverts a database that already uses WAL, because SQLite stores the journal mode in the database file.
 
-Grafana detects the storage on Linux and Windows. On other operating systems, `auto` assumes local storage and enables WAL.
+Grafana detects the storage on Linux, macOS and Windows. On other operating systems, `auto` leaves WAL off, so set `wal` to `true` if you know the database is on local storage.
 
 #### `query_retries`
 

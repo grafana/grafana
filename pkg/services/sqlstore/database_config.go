@@ -119,18 +119,16 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 
 	dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	// auto needs the resolved database path, so it is decided in buildConnectionString.
-	walRaw := strings.TrimSpace(sec.Key("wal").String())
-	switch {
-	case walRaw == "" || strings.EqualFold(walRaw, walAutoValue):
-		dbCfg.wal = walAuto
-	default:
+	dbCfg.wal = walAuto
+	if walRaw := strings.TrimSpace(sec.Key("wal").String()); walRaw != "" && !strings.EqualFold(walRaw, walAutoValue) {
 		enabled, err := sec.Key("wal").Bool()
-		if err != nil {
-			return fmt.Errorf("invalid value %q for [database] wal, expected auto, true or false", walRaw)
-		}
-		dbCfg.wal = walOff
-		if enabled {
+		switch {
+		case err != nil:
+			walLogger.Warn("Ignoring invalid value for [database] wal, expected auto, true or false", "value", walRaw)
+		case enabled:
 			dbCfg.wal = walOn
+		default:
+			dbCfg.wal = walOff
 		}
 	}
 
