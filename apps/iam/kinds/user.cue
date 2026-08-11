@@ -78,6 +78,12 @@ userv0alpha1: userKind & {
 		"/teams": {
 			"GET": {
 				name: "getUserTeams"
+				request: {
+					query: {
+						limit:    int64 | *0
+						continue: string | *""
+					}
+				}
 				response: {
 					#UserTeam: {
 						user:       string
