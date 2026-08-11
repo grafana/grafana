@@ -36,23 +36,19 @@ export function withV5UsageTelemetry<T extends Record<string, unknown>>(module: 
 
   const wrapped = { ...module, ...wrappers };
 
-  // A spread copies enumerable properties only, and webpack marks `__esModule`
-  // as non-enumerable. SystemJS reads it when it registers a shared dependency
-  // and puts it on the namespace it hands to plugins, so carry it over by hand.
-  copyHiddenProperty(module, wrapped, '__esModule');
+  // Webpack defines `__esModule` as non-enumerable, causing the spread to drop it.
+  // SystemJS relies on it to determine whether to use the default export, so we need to preserve it.
+  const esModule = Object.getOwnPropertyDescriptor(module, '__esModule');
+
+  if (esModule) {
+    Object.defineProperty(wrapped, '__esModule', esModule);
+  }
 
   return wrapped;
 }
 
 /**
- * Reads the plugin id out of a captured stack.
- *
- * The shared dependency is a singleton, so a caller cannot be identified from
- * anything the loader holds. The wrapper captures its own stack instead, which
- * runs in the frame of the plugin that called it.
- *
- * Frame formats differ between browsers, so this matches on the bundle path
- * rather than on frame syntax. The first match is the nearest caller.
+ * Reads the plugin id from a captured stack.
  */
 export function getPluginIdFromStack(stack: string | undefined): string | undefined {
   if (!stack) {
@@ -65,9 +61,9 @@ export function getPluginIdFromStack(stack: string | undefined): string | undefi
 /**
  * Reports that a plugin used an export that react-router v6 removes.
  *
- * Faro does not collect a stack for a warning, so the caller cannot be
- * identified after the fact. The stack is captured here instead, in the frame
- * of the plugin that made the call.
+ * Faro does not collect a stack trace for a warning, so the caller cannot be
+ * identified after the fact. This captures one here instead, while the plugin
+ * that made the call is still on the stack.
  *
  * Reports once per plugin and export. When the plugin cannot be identified the
  * event still goes out, with the stack attached, because an unattributed signal
@@ -113,18 +109,13 @@ function isComponent(value: unknown): value is ComponentType<UnknownProps> {
 
 // The report happens during render rather than in an effect, so that a component
 // which throws still reports. The dedupe keeps repeat renders quiet.
+//
+// React calls this from its own work loop, after the plugin's call has returned,
+// so the captured stack holds no plugin id. Hooks keep theirs. See reportV5Usage.
 function reportingComponent(exportName: string, Original: ComponentType<UnknownProps>): UnknownFunction {
   return function ReportingWrapper(props: UnknownProps) {
     reportV5Usage(exportName);
 
     return createElement(Original, props);
   };
-}
-
-function copyHiddenProperty(source: object, target: object, key: string | symbol): void {
-  const descriptor = Object.getOwnPropertyDescriptor(source, key);
-
-  if (descriptor) {
-    Object.defineProperty(target, key, descriptor);
-  }
 }
