@@ -143,8 +143,8 @@
       "panel-4": {
         "kind": "Panel",
         "spec": {
-          "id": 4,
-          "title": "Every row",
+          "id": 6,
+          "title": "Render mode: Every row",
           "description": "",
           "links": [],
           "data": {
@@ -156,14 +156,14 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "grafana-testdata-datasource",
                       "version": "v0",
+                      "group": "grafana-testdata-datasource",
                       "datasource": {
-                        "name": "gdev-testdata"
+                        "name": "PD8C576611E62080A"
                       },
                       "spec": {
-                        "csvContent": "host,cpu\nweb-1,84\nweb-2,12\ndb-1,37",
-                        "scenarioId": "csv_content"
+                        "scenarioId": "csv_content",
+                        "csvContent": "Id,first_name,last_name,login,last_login_date,status,role,email,photo\n1,John,Smith,j.smith,2022-11-02,active,admin,j.smith@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n2,Jessica,Johnson,j.johnson,2022-10-31,not active,analyst,j.johnson@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n3,Wei,Zhang,w.zhang,2026-08-10,Active,editor,w.zhang@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n4,Priya,Raman,p.raman,2026-08-09,pending,viewer,p.raman@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n5,\"Anne-Marie \"\"Annie\"\"\",\"van der Berg, Johannes\",a.vdberg,2026-07-04,active,admin,a.vdberg+test@example.co.uk,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg"
                       }
                     },
                     "refId": "A",
@@ -181,13 +181,12 @@
             "version": "13.2.0-local",
             "spec": {
               "options": {
+                "mode": "html",
+                "content": "<style>\n  .user-card {\n    display: grid;\n    grid-template-columns: minmax(0, 1fr) 96px;\n    gap: 20px;\n    align-items: center;\n    margin-bottom: 12px;\n    padding: 20px;\n    overflow: hidden;\n    color: var(--theme-colors-text-primary, #d8d9da);\n    background: var(--theme-colors-background-primary, #181b1f);\n    border: 1px solid var(--theme-colors-border-weak, #2c3235);\n    border-radius: 8px;\n    box-shadow: 0 1px 2px rgb(0 0 0 / 18%);\n\n    font-family: inherit;\n  }\n\n  .user-card__header {\n    display: flex;\n    gap: 12px;\n    align-items: flex-start;\n    justify-content: space-between;\n    margin-bottom: 18px;\n  }\n\n  .user-card__name {\n    margin: 0;\n    color: var(--theme-colors-text-primary, #d8d9da);\n    font-size: 18px;\n    font-weight: 500;\n    line-height: 1.3;\n  }\n\n  .user-card__email {\n    margin-top: 4px;\n    overflow: hidden;\n    color: var(--theme-colors-text-secondary, #9fa7af);\n    font-size: 13px;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n  }\n\n  .user-card__status {\n    display: inline-flex;\n    flex: 0 0 auto;\n    gap: 6px;\n    align-items: center;\n    min-height: 24px;\n    padding: 2px 9px;\n    border-radius: 999px;\n    font-size: 12px;\n    font-weight: 500;\n  }\n\n  .user-card__status::before {\n    width: 7px;\n    height: 7px;\n    border-radius: 50%;\n    content: \"\";\n  }\n\n  .user-card__status--active {\n    color: var(--theme-colors-success-text, #73bf69);\n    background: rgb(115 191 105 / 12%);\n    border: 1px solid rgb(115 191 105 / 28%);\n  }\n\n  .user-card__status--active::before {\n    background: var(--theme-colors-success-text, #73bf69);\n  }\n\n  .user-card__status--inactive {\n    color: var(--theme-colors-error-text, #f2495c);\n    background: rgb(242 73 92 / 12%);\n    border: 1px solid rgb(242 73 92 / 28%);\n  }\n\n  .user-card__status--inactive::before {\n    background: var(--theme-colors-error-text, #f2495c);\n  }\n\n  .user-card__metadata {\n    display: grid;\n    grid-template-columns: repeat(3, minmax(90px, 1fr));\n    gap: 16px;\n  }\n\n  .user-card__label {\n    margin-bottom: 4px;\n    color: var(--theme-colors-text-secondary, #9fa7af);\n    font-size: 11px;\n    font-weight: 500;\n    letter-spacing: 0.03em;\n    line-height: 1.2;\n    text-transform: uppercase;\n  }\n\n  .user-card__value {\n    overflow: hidden;\n    color: var(--theme-colors-text-primary, #d8d9da);\n    font-size: 14px;\n    font-weight: 500;\n    line-height: 1.4;\n    text-overflow: ellipsis;\n    white-space: nowrap;\n  }\n\n  .user-card__avatar {\n    width: 80px;\n    height: 80px;\n    object-fit: cover;\n    border: 1px solid var(--theme-colors-border-medium, #3d4449);\n    border-radius: 50%;\n    background: var(--theme-colors-background-secondary, #111217);\n  }\n\n  @media (max-width: 600px) {\n    .user-card {\n      grid-template-columns: minmax(0, 1fr) 64px;\n      gap: 12px;\n      padding: 16px;\n    }\n\n    .user-card__avatar {\n      width: 56px;\n      height: 56px;\n    }\n\n    .user-card__metadata {\n      grid-template-columns: 1fr;\n      gap: 12px;\n    }\n\n    .user-card__header {\n      flex-direction: column;\n    }\n  }\n</style>\n\n<article class=\"user-card\">\n  <div>\n    <header class=\"user-card__header\">\n      <div style=\"min-width: 0;\">\n        <h3 class=\"user-card__name\">\n          ${__data.fields.Id}\n          ${__data.fields.first_name} ${__data.fields.last_name}\n        </h3>\n\n        <div class=\"user-card__email\">\n          ${__data.fields.email}\n        </div>\n      </div>\n    </header>\n\n    <div class=\"user-card__metadata\">\n      <div>\n        <div class=\"user-card__label\">Username</div>\n        <div class=\"user-card__value\">${__data.fields.login}</div>\n      </div>\n\n      <div>\n        <div class=\"user-card__label\">Role</div>\n        <div class=\"user-card__value\">${__data.fields.role}</div>\n      </div>\n\n      <div>\n        <div class=\"user-card__label\">Last login</div>\n        <div class=\"user-card__value\">\n          ${__data.fields.last_login_date}\n        </div>\n      </div>\n    </div>\n  </div>\n\n  <img\n    class=\"user-card__avatar\"\n    src=\"${__data.fields.photo}\" \n    alt=\"placeholder\"\n  />\n</article>",
                 "code": {
                   "language": "plaintext",
-                  "showLineNumbers": false,
-                  "showMiniMap": false
+                  "showLineNumbers": false
                 },
-                "content": "- **${__data.fields.host}** \u2014 ${__data.fields.cpu}%",
-                "mode": "markdown",
                 "renderMode": "everyRow"
               },
               "fieldConfig": {
