@@ -24,8 +24,7 @@ review_date: 2026-04-10
 # Parca data source
 
 {{< admonition type="caution" >}}
-Starting January 2, 2027, the Parca data source plugin is deprecated.
-It will no longer receive updates after that date.
+This plugin is deprecated and will only receive critical security updates. Support will end on January 2, 2027.
 {{< /admonition >}}
 
 Parca is a continuous profiling database for analysis of CPU and memory usage, down to the line number and throughout time. Grafana ships with built-in support for Parca, so you can add it as a data source and start querying your profiles in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
