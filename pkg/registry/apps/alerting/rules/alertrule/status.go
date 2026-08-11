@@ -107,7 +107,14 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 
 	s.mirrorToUnified(ctx, name, newRule.Status, createValidation, updateValidation, options)
 
-	return newRule, false, nil
+	// Re-read so the response reflects the stored rule (full spec/metadata + the
+	// persisted status), not the request object — a partial status update (e.g. the
+	// generated UpdateStatus) carries an empty/stale spec.
+	updated, err := s.legacy.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+	return updated, false, nil
 }
 
 // mirrorToUnified copies the persisted status onto the unified object, best-effort.
