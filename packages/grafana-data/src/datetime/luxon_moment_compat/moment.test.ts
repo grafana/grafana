@@ -1,3 +1,4 @@
+import { convertMomentToLuxonWithOrdinal } from './format';
 import moment from './moment';
 
 // used by enterprise code (public/app/extensions), which in-repo usage scans don't cover, so this
@@ -52,6 +53,11 @@ describe('diff', () => {
 });
 
 describe('format', () => {
+  it('matches the longest moment token first', () => {
+    expect(convertMomentToLuxonWithOrdinal('zz')).toBe('ZZZZZ');
+    expect(convertMomentToLuxonWithOrdinal('z')).toBe('ZZZZ');
+  });
+
   it('renders ZZ as a colon-less offset (like moment)', () => {
     expect(moment.utc('2024-05-08T10:30:45Z').format('ddd MMM DD YYYY HH:mm [GMT]ZZ')).toBe(
       'Wed May 08 2024 10:30 GMT+0000'
@@ -68,6 +74,15 @@ describe('format', () => {
 
   it('matches moment formatting for invalid inputs', () => {
     expect(moment('not a date').format('YYYY-MM-DD')).toBe('Invalid date');
+  });
+});
+
+describe('formatted string parsing', () => {
+  it('parses lowercase meridiem tokens without falling back to the local timezone', () => {
+    const parsed = moment.utc('Aug 20, 2020 10:30:20 am', 'MMM D, YYYY h:mm:ss a');
+
+    expect(parsed.isValid()).toBe(true);
+    expect(parsed.toISOString()).toBe('2020-08-20T10:30:20.000Z');
   });
 });
 
@@ -121,6 +136,15 @@ describe('year/month/date accessors', () => {
     d.month(0);
     d.date(15);
     expect(d.toISOString()).toBe('2025-01-15T00:00:00.000Z');
+  });
+
+  it('sets week units without passing unsupported fields to luxon', () => {
+    const input = '2024-05-06 10:30:45';
+
+    expect(moment.utc(input).set('week', 20).week()).toBe(20);
+    expect(moment.utc(input).set('weeks', 20).week()).toBe(20);
+    expect(moment.utc(input).set('w', 20).week()).toBe(20);
+    expect(moment.utc(input).set('isoWeek', 20).week()).toBe(20);
   });
 
   it('exposes plural aliases for every unit (used by decoupled plugin repos)', () => {

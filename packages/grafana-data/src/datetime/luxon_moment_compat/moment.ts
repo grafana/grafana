@@ -1,6 +1,6 @@
 import { canonicalZoneName, findTimeZoneAt } from '../easytz_lookup';
 
-import { convertMomentToLuxonWithOrdinal, formatWithOrdinal } from './format';
+import { convertMomentToLuxonForParsing, formatWithOrdinal } from './format';
 import {
   type DateTimeUnit,
   type DurationUnit,
@@ -402,7 +402,7 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
 
   // ISO_8601 is the only non-string MomentFormat member and it is handled above, so this
   // fallback never changes behavior; it only narrows the type for the format conversions below.
-  const fmt = convertMomentToLuxonWithOrdinal(typeof format === 'string' ? format : 'ISO_8601');
+  const fmt = convertMomentToLuxonForParsing(typeof format === 'string' ? format : 'ISO_8601');
 
   const parsed = parseFromCachedFormat(value, fmt, options);
   if (parsed.isValid) {
@@ -756,6 +756,9 @@ class MomentCompat implements MomentLike {
       return this;
     }
 
+    if (unit === 'week' || unit === 'weeks' || unit === 'w' || unit === 'isoWeek') {
+      return this.week(value);
+    }
     if (unit === 'month' || unit === 'months' || unit === 'M') {
       return this._setDt(this._dt.set({ month: value + 1 }));
     }

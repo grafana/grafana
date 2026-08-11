@@ -1,5 +1,7 @@
 import type { DateTime } from './luxon';
 
+const LOWER_MERIDIEM_FORMAT = "'__mls__'a'__mle__'";
+
 const TOKEN_MAP: Record<string, string> = {
   // moment's L* tokens are locale-aware (word order changes per locale), so map them to luxon's
   // localized macro tokens rather than fixed patterns. `L` and `llll` have no exact luxon macro
@@ -28,7 +30,7 @@ const TOKEN_MAP: Record<string, string> = {
   ddd: 'ccc',
   // HH/H, hh/h, mm/m, ss/s are identical in moment and luxon and pass through unmapped
   A: 'a',
-  a: "'__mls__'a'__mle__'",
+  a: LOWER_MERIDIEM_FORMAT,
 
   ZZ: 'ZZZ',
   Z: 'ZZ',
@@ -38,7 +40,12 @@ const TOKEN_MAP: Record<string, string> = {
   T: "'T'",
 };
 
-const TOKEN_PATTERN = new RegExp(`\\[([^\\]]+)\\]|Do|${Object.keys(TOKEN_MAP).join('|')}`, 'g');
+const TOKEN_PATTERN = new RegExp(
+  `\\[([^\\]]+)\\]|Do|${Object.keys(TOKEN_MAP)
+    .sort((a, b) => b.length - a.length)
+    .join('|')}`,
+  'g'
+);
 const ORDINAL_MARKER = '__ord__';
 const ORDINAL_MARKER_PATTERN = new RegExp(`(\\d+)${ORDINAL_MARKER}`, 'g');
 const MERIDIEM_START_MARKER = '__mls__';
@@ -90,6 +97,10 @@ function replaceMomentToken(match: string, escapedText?: string): string {
 
 export function convertMomentToLuxonWithOrdinal(format: string): string {
   return convertFormat(format).luxonFormat;
+}
+
+export function convertMomentToLuxonForParsing(format: string): string {
+  return convertFormat(format).luxonFormat.split(LOWER_MERIDIEM_FORMAT).join('a');
 }
 
 function getOrdinal(day: number): string {
