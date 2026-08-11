@@ -1083,11 +1083,16 @@ Replace the notebook from a whole spec. **In memory** — nothing is saved.
 
 **Response:** `{ "success": true, "data": { "applied": true, "spec": { ... } }, "warnings": [...] }`
 
-`data.spec` is the notebook re-serialized after the write, so there is no need for a follow-up read.
+`data.spec` is the notebook re-serialized after the write, so there is no need for a follow-up read. It
+is absent if that re-serialization failed — the write still landed, and `warnings` says the surviving
+cells could not be checked.
 
 `warnings` names any cell that was requested and is not in the result. A layout entry pointing at an
 element that is not in `elements` is skipped rather than rejected, so without this a write could lose a
 cell and still report success. Pass `validate: true` to have that rejected up front instead.
+
+The payload is strict: an unknown key is rejected rather than ignored, so a mistyped `validate` cannot
+silently apply the spec unchecked.
 
 ### `CREATE_NOTEBOOK_SPEC`
 
@@ -1098,11 +1103,19 @@ to apply a spec into the way `/dashboard/new` is one for a dashboard.
 { "type": "CREATE_NOTEBOOK_SPEC", "payload": { "spec": { ... }, "validate": true, "open": true } }
 ```
 
-**Response:** `{ "success": true, "data": { "created": true, "uid": "n-abc123", "url": "/notebook/n-abc123" } }`
+**Response:**
+`{ "success": true, "data": { "created": true, "opened": true, "uid": "n-abc123", "url": "/notebook/n-abc123" } }`
 
 Unlike every other command here this one **persists immediately**, and the server assigns the uid — so
 `validate` defaults to `true`. Set `open: false` to create without navigating. Use
 `APPLY_NOTEBOOK_SPEC` to change a notebook that already exists.
+
+`opened` is whether the navigation actually landed, which is not the same as `open`: a dirty dashboard's
+unsaved-changes prompt blocks it. The notebook exists either way, but `GET_NOTEBOOK_SPEC` and
+`APPLY_NOTEBOOK_SPEC` only reach it once its page is mounted.
+
+The command is registered on a dashboard only when the `dashboard.notebooks` flag is on, so
+`getAvailableCommands()` names it exactly where it can run.
 
 ---
 
