@@ -230,7 +230,7 @@ export function MaxDataPointsOption({
 }) {
   const value = options.maxDataPoints ?? '';
 
-  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
+  const commitMaxDataPoints = (event: ChangeEvent<HTMLInputElement>) => {
     const maxDataPointsNumber = parseInt(event.target.value, 10);
 
     const maxDataPoints = isNaN(maxDataPointsNumber) || maxDataPointsNumber === 0 ? undefined : maxDataPointsNumber;
@@ -257,7 +257,8 @@ export function MaxDataPointsOption({
         width={10}
         placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
-        onBlur={onMaxDataPointsBlur}
+        onChange={commitMaxDataPoints}
+        onBlur={commitMaxDataPoints}
         defaultValue={value}
       />
     </InlineField>
@@ -273,7 +274,7 @@ export function MinIntervalOption({
 }) {
   const value = options.minInterval ?? '';
 
-  const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
+  const commitMinInterval = (event: ChangeEvent<HTMLInputElement>) => {
     const minInterval = event.target.value;
     if (minInterval !== value) {
       onChange({
@@ -299,7 +300,8 @@ export function MinIntervalOption({
         width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
-        onBlur={onMinIntervalBlur}
+        onChange={commitMinInterval}
+        onBlur={commitMinInterval}
         defaultValue={value}
       />
     </InlineField>
