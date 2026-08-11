@@ -5914,8 +5914,12 @@
         }
       },
       "scroll-content": "Dashboard content",
-      "ungroup-nested-text": "This will ungroup all nested groups.",
-      "ungroup-nested-title": "Ungroup nested groups?"
+      "ungroup-convert-to-rows": "Convert to rows",
+      "ungroup-convert-to-tabs": "Convert to tabs",
+      "ungroup-groups-text": "Nested groups will be moved up a level and converted to rows or tabs.",
+      "ungroup-groups-title": "Ungroup nested groups?",
+      "ungroup-repeat-loss": "Repeat options configured on the ungrouped groups will be lost.",
+      "ungroup-repeat-loss-title": "Ungroup?"
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
@@ -6128,6 +6132,13 @@
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "Unable to change identifier from JSON editor",
+      "invalid-api-version": "Invalid apiVersion: {{apiVersion}}. Expected '{{expectedAPIVersion}}'.",
+      "invalid-kind": "Invalid kind: {{kind}}. Expected 'Dashboard'.",
+      "metadata-edit-unsupported": "Editing dashboard metadata is not yet supported ({{keys}})",
+      "missing-spec": "Missing spec. Expected a valid dashboard spec."
+    },
     "search-panel": {
       "no-match": "No panels matching"
     },
@@ -6316,7 +6327,7 @@
       },
       "predefined-variables": {
         "all": "All",
-        "description": "This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.",
+        "description": "This dashboard does not receive global or folder-scoped variables by default. Choose which ones to include.",
         "folder": "Folder",
         "global": "Global",
         "label": "Predefined variables",
@@ -7247,6 +7258,7 @@
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"
       },
+      "resource-validation-error-title": "Unable to save changes",
       "save-and-overwrite": "Save and overwrite"
     },
     "legacy": {
@@ -14758,7 +14770,6 @@
     },
     "header": {
       "alert": "Alert",
-      "expression": "Expression",
       "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
       "pending-transformation": "Select a transformation",
@@ -14772,6 +14783,7 @@
     "labels": {
       "alert": "alert",
       "expression": "expression",
+      "expression-title": "{{type}} Expression",
       "query": "query",
       "transformation": "transformation"
     },

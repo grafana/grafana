@@ -2,8 +2,10 @@ import { test } from '@playwright/test';
 
 import { PageObject, type PageObjectArgs } from '../../PageObject';
 
-// The collapsible "Repeat options" group in the sidebar options pane —
-// shared by panels, rows, and tabs to repeat the element by a template variable
+/**
+ * The collapsible "Repeat options" group in the sidebar options pane —
+ * shared by panels, rows, and tabs to repeat the element by a template variable
+ */
 export class RepeatOptions extends PageObject {
   constructor(
     args: PageObjectArgs,
@@ -17,25 +19,25 @@ export class RepeatOptions extends PageObject {
     super(args);
   }
 
+  /** Repeats the element by the given template variable */
   async repeatByVariable(variableName: string) {
     await test.step(`Repeat by variable "${variableName}"`, async () => {
       await this.selectOption(variableName);
     });
   }
 
+  /** Disables the element's repetition */
   async disableRepeatByVariable() {
     await test.step('Disable repeat by variable', async () => {
       await this.selectOption('Disable repeating');
     });
   }
 
+  /** Selects an option in the "Repeat by variable" dropdown, expanding the options group first if collapsed */
   private async selectOption(optionLabel: string) {
-    const toggle = this.dashboardPage.getByGrafanaSelector(
-      this.selectors.components.OptionsGroup.toggle(this.groupId),
-      {
-        root: this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.container),
-      }
-    );
+    const toggle = this.getByGrafanaSelector(this.selectors.components.OptionsGroup.toggle(this.groupId), {
+      root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container),
+    });
 
     // the toggle collapses an already-open group (expanded state persists in local storage), so only click when collapsed
     if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
@@ -44,10 +46,9 @@ export class RepeatOptions extends PageObject {
       });
     }
 
-    await this.dashboardPage
-      .getByGrafanaSelector(
-        this.selectors.components.PanelEditor.OptionsPane.fieldLabel(`${this.groupId} Repeat by variable`)
-      )
+    await this.getByGrafanaSelector(
+      this.selectors.components.PanelEditor.OptionsPane.fieldLabel(`${this.groupId} Repeat by variable`)
+    )
       .getByRole('combobox')
       .click();
 

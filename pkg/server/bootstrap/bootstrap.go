@@ -12,22 +12,25 @@
 // orchestrates the process around whichever initializer it is handed.
 package bootstrap
 
-// defaultEnterpriseCommit is the placeholder value used for the enterprise
-// commit when Grafana was not built from the enterprise repo. A commit equal to
-// this (or empty) marks a non-enterprise build, so printVersion omits the
-// enterprise commit from the version string. The value matches grafana-cli's DefaultCommitValue;
-// we redeclare it here so bootstrap doesn't have to import the CLI package. We will cut over in a later step
-const defaultEnterpriseCommit = "NA"
+// DefaultCommitValue is the placeholder stamped in for a build commit when
+// Grafana was not built from a repo carrying that information (a local/dev
+// build). Binaries assign it as the default for their commit build vars, and
+// printVersion treats an enterprise commit equal to this (or empty) as "not an
+// enterprise build" and omits it from the version string.
+const DefaultCommitValue = "NA"
 
 // Config holds the startup inputs shared by every bootstrap entrypoint. CLI
 // flag definitions stay in the CLI layer; their resolved values are passed here
 // as plain data. Each entrypoint embeds this and adds its own initializer.
 type Config struct {
-	BuildInfo       BuildInfo
-	Packaging       string
-	PidFile         string
-	ConfigFile      string
-	HomePath        string
+	BuildInfo    BuildInfo
+	Packaging    string
+	IsEnterprise bool
+	PidFile      string
+	ConfigFile   string
+	HomePath     string
+	// ConfigOverrides is a space-separated string of config options that
+	// override defaults, e.g. "cfg:default.paths.log=/dev/null".
 	ConfigOverrides string
 	// ExtraArgs are trailing CLI arguments; they take precedence over
 	// ConfigOverrides when merged into the config command-line args.

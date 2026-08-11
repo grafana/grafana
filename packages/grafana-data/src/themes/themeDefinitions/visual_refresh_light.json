@@ -107,6 +107,21 @@
     "switch": {
       "activeBackgroundHover": "palette.orange700"
     },
+    "codeEditor": {
+      "keyword": "palette.blue700",
+      "controlKeyword": "palette.violet700",
+      "variable": "palette.sky700",
+      "type": "palette.teal700",
+      "function": "palette.amber700",
+      "number": "palette.peach700",
+      "string": "palette.sage700",
+      "operator": "palette.neutral650",
+      "regexp": "palette.rose700",
+      "comment": "palette.neutral600",
+      "heading": "palette.blue700",
+      "link": "palette.blue700",
+      "invalid": "palette.red700"
+    },
     "tag": {
       "colors": [
         { "background": "palette.coral300", "text": "palette.coral900" },

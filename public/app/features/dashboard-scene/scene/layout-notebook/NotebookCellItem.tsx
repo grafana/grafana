@@ -1,5 +1,5 @@
 import { SceneObjectBase, type SceneObjectState, type VizPanel } from '@grafana/scenes';
-import { type CellContentKind } from '@grafana/schema/apis/notebook/v2beta1';
+import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
