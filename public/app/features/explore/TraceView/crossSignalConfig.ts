@@ -52,6 +52,10 @@ export function getFormattedTags(
 ) {
   // In order, try to use mapped tags -> tags -> default tags
   // Build tag portion of query
+  return getFilteredTags(allTags, tagsToUse, labelValueSign).join(joinBy);
+}
+
+export function getFilteredTags(allTags: TraceToLogsTag[], tagsToUse: TraceToLogsTag[], labelValueSign = '=') {
   return allTags
     .map((tag) => {
       const keyValue = tagsToUse.find((keyValue) => keyValue.key === tag.key);
@@ -60,6 +64,5 @@ export function getFormattedTags(
       }
       return undefined;
     })
-    .filter((v) => Boolean(v))
-    .join(joinBy);
+    .filter((v): v is string => Boolean(v));
 }

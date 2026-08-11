@@ -2,7 +2,7 @@ import { type DataQuery, type DataSourceInstanceSettings, type DataSourceJsonDat
 import { type TraceToLogsTag, type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
 import { type LokiQuery } from 'app/features/loki-helpers/types';
 
-import { getDefaultLogsTags, getFormattedTags, getSpanTags } from '../crossSignalConfig';
+import { getDefaultLogsTags, getFilteredTags, getFormattedTags, getSpanTags } from '../crossSignalConfig';
 
 import { type TraceSpan } from './types/trace';
 
@@ -11,7 +11,16 @@ export function getTraceToLogsSpanQuery(
   logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData>,
   traceToLogsOptions: TraceToLogsOptionsV2
 ) {
-  return getTraceToLogsQuery(getSpanTags(span), logsDataSourceSettings, traceToLogsOptions, span.traceID, span.spanID);
+  const allTags = getSpanTags(span);
+  const serviceNames = getServiceNames(allTags, span.process.serviceName);
+  return getTraceToLogsQuery(
+    allTags,
+    logsDataSourceSettings,
+    traceToLogsOptions,
+    span.traceID,
+    span.spanID,
+    serviceNames
+  );
 }
 
 export function getTraceToLogsQuery(
@@ -19,7 +28,8 @@ export function getTraceToLogsQuery(
   logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData>,
   traceToLogsOptions: TraceToLogsOptionsV2,
   traceID: string,
-  spanID?: string
+  spanID?: string,
+  serviceNames: string[] = []
 ) {
   const customQuery = traceToLogsOptions.customQuery ? traceToLogsOptions.query : undefined;
   const tagsToUse =
@@ -30,7 +40,14 @@ export function getTraceToLogsQuery(
   switch (logsDataSourceSettings?.type) {
     case 'loki':
       tags = getFormattedTags(allTags, tagsToUse);
-      query = getQueryForLoki(traceID, spanID, traceToLogsOptions, tags, customQuery);
+      const tagMatchers = getFilteredTags(allTags, tagsToUse);
+      query = getQueryForLoki(
+        traceID,
+        spanID,
+        tagMatchers,
+        customQuery,
+        serviceNames.length > 0 ? serviceNames : getServiceNames(allTags)
+      );
       break;
     case 'grafana-splunk-datasource':
       tags = getFormattedTags(allTags, tagsToUse, { joinBy: ' ' });
@@ -60,45 +77,96 @@ export function getTraceToLogsQuery(
   return { query, tags };
 }
 
+function getServiceNames(allTags: TraceToLogsTag[], processServiceName?: string): string[] {
+  const names = allTags
+    .filter((tag) => tag.key === 'service.name')
+    .map((tag) => String(tag.value))
+    .filter((name) => name.length > 0);
+
+  if (processServiceName) {
+    names.push(processServiceName);
+  }
+
+  return [...new Set(names)];
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Field-name pairs used when probing which structured id labels exist in logs. */
+const TRACE_SPAN_ID_FIELD_VARIANTS = [
+  { trace: 'traceID', span: 'spanID' },
+  { trace: 'trace_id', span: 'span_id' },
+  { trace: 'traceId', span: 'spanId' },
+  { trace: 'TraceID', span: 'SpanID' },
+  { trace: 'TraceId', span: 'SpanId' },
+  { trace: 'otel_trace_id', span: 'otel_span_id' },
+] as const;
+
+/**
+ * Builds alternative Loki queries for trace-to-logs when no custom query is configured:
+ * - default / job: structured id filters, one query per trace/span field-name variant
+ * - line-contains: tag selector + line filter for the trace/span id values
+ *
+ * Each query gets a stable refId encoding the strategy and field names so a successful
+ * probe can persist which naming convention worked.
+ */
 function getQueryForLoki(
   traceID: string,
   spanID: string | undefined,
-  options: TraceToLogsOptionsV2,
-  tags: string,
-  customQuery?: string
+  tags: string[],
+  customQuery?: string,
+  serviceNames: string[] = []
 ): LokiQuery[] | undefined {
-  const { filterByTraceID, filterBySpanID } = options;
-
+  // If the user configured a custom query, respect it
   if (customQuery) {
-    return [{ expr: customQuery, refId: '' }];
+    return [{ expr: customQuery, refId: 'custom' }];
   }
 
-  if (!tags) {
+  if (!tags.length) {
     return undefined;
   }
 
-  let expr = '{${__tags}}';
-  if (filterByTraceID) {
-    expr +=
-      ' | label_format log_line_contains_trace_id=`{{ contains "' +
-      traceID +
-      '" __line__  }}` | log_line_contains_trace_id="true" or trace_id="' +
-      traceID +
-      '"';
-  }
-  if (filterBySpanID && spanID) {
-    expr +=
-      ' | label_format log_line_contains_span_id=`{{ contains "' +
-      spanID +
-      '" __line__  }}` | log_line_contains_span_id="true" or span_id="' +
-      spanID +
-      '"';
+  const tagSelector = `{${tags.join(', ')}}`;
+  const jobSelector =
+    serviceNames.length > 0
+      ? `{job=~"(.*/)?(${serviceNames.map(escapeRegExp).join('|')})"}`
+      : undefined;
+
+  const queries: LokiQuery[] = [];
+
+  for (const { trace: traceField, span: spanField } of TRACE_SPAN_ID_FIELD_VARIANTS) {
+    const structuredIdFilters = [`${traceField}="${traceID}"`];
+    if (spanID) {
+      structuredIdFilters.push(`${spanField}="${spanID}"`);
+    }
+    const structuredPipeline = `| logfmt | json | drop __error__ | ${structuredIdFilters.join(' | ')}`;
+    const fieldRef = spanID ? `${traceField}:${spanField}` : traceField;
+
+    queries.push({
+      expr: `${tagSelector} ${structuredPipeline}`,
+      refId: `t2l:default:${fieldRef}`,
+    });
+
+    if (jobSelector) {
+      queries.push({
+        expr: `${jobSelector} ${structuredPipeline}`,
+        refId: `t2l:job:${fieldRef}`,
+      });
+    }
   }
 
-  return [{
-    expr: expr,
-    refId: '',
-  }];
+  const lineContainsFilters = [`|= "${traceID}"`];
+  if (spanID) {
+    lineContainsFilters.push(`|= "${spanID}"`);
+  }
+  queries.push({
+    expr: `${tagSelector} ${lineContainsFilters.join(' ')}`,
+    refId: 'line-contains',
+  });
+
+  return queries;
 }
 
 // we do not have access to the dataquery type for opensearch,

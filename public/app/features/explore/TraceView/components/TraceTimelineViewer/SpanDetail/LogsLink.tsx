@@ -97,7 +97,7 @@ function useHasLogs(linkModel: LinkModel): LogsPresence {
 
   useEffect(() => {
     // Without an interpolated query we can't check, so assume logs may exist and leave the link enabled.
-    if (!query || !dynamicTraceToLogsEnabled) {
+    if (!query || !dynamicTraceToLogsEnabled || Array.isArray(query)) {
       setPresence('present');
       return;
     }

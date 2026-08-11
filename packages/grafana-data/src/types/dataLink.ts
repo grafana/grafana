@@ -106,7 +106,7 @@ export interface LinkModel<T = any> {
    * @alpha
    */
   interpolatedParams?: {
-    query?: DataQuery;
+    query?: DataQuery | DataQuery[];
     timeRange?: TimeRange;
   };
 }
