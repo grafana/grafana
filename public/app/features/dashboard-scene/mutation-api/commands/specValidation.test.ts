@@ -63,6 +63,7 @@ function makeSceneContext(): MutationContext {
       getK8SMetadata: () => ({ name: 'dash-uid', generation: 1, creationTimestamp: '2026-01-01T00:00:00Z' }),
     },
     setState: jest.fn(),
+    reattachPanelEditor: jest.fn(),
   };
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structural stub of the DashboardScene surface this command reads
   return { scene: scene as unknown as DashboardScene } satisfies MutationContext;
@@ -74,6 +75,7 @@ describe('APPLY_SPEC validate flag', () => {
   afterEach(() => {
     mockTransformSaveModelSchemaV2ToScene.mockReset();
     mockTransformSceneToSaveModelSchemaV2.mockReset();
+    jest.mocked(sceneContext.scene.reattachPanelEditor).mockClear();
   });
 
   it('defaults `validate` to false in the payload schema (non-breaking)', () => {
@@ -108,6 +110,7 @@ describe('APPLY_SPEC validate flag', () => {
     const result = await applySpecCommand.handler({ spec: specWithNulls, validate: true }, sceneContext);
 
     expect(result.success).toBe(true);
+    expect(sceneContext.scene.reattachPanelEditor).toHaveBeenCalled();
     const dto = mockTransformSaveModelSchemaV2ToScene.mock.calls[0][0];
     expect(dto.spec.tags).toEqual([]);
     expect(dto.spec.annotations).toEqual([]);
@@ -119,6 +122,7 @@ describe('APPLY_SPEC validate flag', () => {
     mockTransformSaveModelSchemaV2ToScene.mockReturnValue({ state: {} });
     const result = await applySpecCommand.handler({ spec: validSpec, validate: false }, sceneContext);
     expect(result.success).toBe(true);
+    expect(sceneContext.scene.reattachPanelEditor).toHaveBeenCalled();
     const dto = mockTransformSaveModelSchemaV2ToScene.mock.calls[0][0];
     expect(dto.spec).toBe(validSpec);
   });

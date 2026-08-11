@@ -157,6 +157,9 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
       const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key });
       scene.setState(newState);
 
+      // setState merges, so an open editor would keep pointing at the discarded tree.
+      scene.reattachPanelEditor();
+
       // Return the re-serialized spec so the caller gets the rekeyed element
       // names (rebuild rekeys to `panel-<id>`) without a follow-up GET_SPEC.
       // Best effort: a serialization failure still reports success.

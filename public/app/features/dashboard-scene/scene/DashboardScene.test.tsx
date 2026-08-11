@@ -3494,6 +3494,53 @@ function createV2DashboardWithTransformations(transformationIds: string[]): Dash
   };
 }
 
+describe('reattachPanelEditor', () => {
+  /** Replace `body` wholesale with an equivalent tree, as APPLY_SPEC's rebuild-and-swap does. */
+  function swapBody(scene: DashboardScene, panelKeys: string[]) {
+    scene.setState({
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: panelKeys.map(
+            (key, index) =>
+              new DashboardGridItem({
+                key: `griditem-rebuilt-${index}`,
+                x: 0,
+                body: new VizPanel({ title: 'Panel A', key, pluginId: 'table' }),
+              })
+          ),
+        }),
+      }),
+    });
+  }
+
+  it('re-binds the editor onto the panel in the replaced layout tree', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ editPanel: buildPanelEditScene(findVizPanelByKey(scene, 'panel-1')!) });
+
+    swapBody(scene, ['panel-1']);
+    const rebuilt = findVizPanelByKey(scene, 'panel-1')!;
+    expect(scene.state.editPanel!.state.panelRef.resolve()).not.toBe(rebuilt);
+
+    scene.reattachPanelEditor();
+
+    expect(scene.state.editPanel!.state.panelRef.resolve()).toBe(rebuilt);
+    scene.state.editPanel!.state.panelRef.resolve().setState({ title: 'Renamed by user' });
+    expect(rebuilt.state.title).toBe('Renamed by user');
+  });
+
+  it('closes the editor when the new tree no longer has its panel', () => {
+    const scene = buildTestScene();
+    scene.onEnterEditMode();
+    scene.setState({ editPanel: buildPanelEditScene(findVizPanelByKey(scene, 'panel-1')!) });
+
+    swapBody(scene, ['panel-9']);
+    scene.reattachPanelEditor();
+
+    expect(scene.state.editPanel).toBeUndefined();
+  });
+});
+
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   const scene = new DashboardScene({
     title: 'hello',
