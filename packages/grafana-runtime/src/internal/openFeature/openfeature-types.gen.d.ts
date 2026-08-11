@@ -78,7 +78,6 @@ declare module "@openfeature/core" {
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
     | "dataviz.experimentalColorSchemes"
-    | "datetime.useLuxon"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
     | "grafana.growthHomepage"
@@ -88,6 +87,7 @@ declare module "@openfeature/core" {
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
     | "grafana.thresholdsInterpolation"
+    | "grafana.unifiedDataSourcePicker"
     | "datasources.queryGateway";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;

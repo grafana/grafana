@@ -163,6 +163,7 @@ export function useFiringAlerts(selectedTeam?: string) {
     hasTeams,
     // Echoed back so the card can scope its empty message to the filtered team.
     selectedTeam,
+    enabled,
     loading,
     error,
     refetch,

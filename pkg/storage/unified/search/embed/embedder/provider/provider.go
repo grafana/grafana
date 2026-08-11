@@ -26,8 +26,7 @@ import (
 // when no provider is configured. Callers (the search server) treat nil as
 // "vector search is disabled" and surface Unimplemented to clients.
 //
-// vectorMetrics is optional; when non-nil its EmbedDuration histogram is
-// wired into the constructed Embedder so each provider call is timed.
+// vectorMetrics is optional; when non-nil, provider calls are timed and their input tokens tallied.
 //
 // The configured provider's connection fields (project ID for Vertex, region
 // + credentials for Bedrock, endpoint + AZURE_OPENAI_API_KEY for Azure) must
@@ -35,24 +34,26 @@ import (
 // so misconfiguration fails at startup, not at first request.
 func ProvideEmbedder(cfg *setting.Cfg, vectorMetrics *resource.VectorMetrics) (*embedder.Embedder, error) {
 	var hist *prometheus.HistogramVec
+	var tokensTotal *prometheus.CounterVec
 	if vectorMetrics != nil {
 		hist = vectorMetrics.EmbedDuration
+		tokensTotal = vectorMetrics.EmbedTokensTotal
 	}
 	switch cfg.EmbeddingProvider {
 	case "":
 		return nil, nil
 	case "vertex":
-		return newVertexEmbedder(cfg, hist)
+		return newVertexEmbedder(cfg, hist, tokensTotal)
 	case "bedrock":
-		return newBedrockEmbedder(cfg, hist)
+		return newBedrockEmbedder(cfg, hist, tokensTotal)
 	case "azure":
-		return newAzureEmbedder(cfg, hist)
+		return newAzureEmbedder(cfg, hist, tokensTotal)
 	default:
 		return nil, fmt.Errorf("unknown embedding provider %q (expected vertex, bedrock, azure, or empty)", cfg.EmbeddingProvider)
 	}
 }
 
-func newVertexEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*embedder.Embedder, error) {
+func newVertexEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec, tokensTotal *prometheus.CounterVec) (*embedder.Embedder, error) {
 	if cfg.VertexProjectID == "" {
 		return nil, fmt.Errorf("vector_embedder.provider=vertex requires vertex_project_id")
 	}
@@ -63,7 +64,7 @@ func newVertexEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*em
 	model := "vertex/" + cfg.VertexModel
 	dense := vertex.NewDenseEmbedder(client, cfg.VertexModel, cfg.VertexDimensions, cfg.VertexBatchSize)
 	return &embedder.Embedder{
-		TextEmbedder: embedder.Instrument(dense, model, duration),
+		TextEmbedder: embedder.Instrument(dense, model, duration, tokensTotal),
 		Model:        model,
 		VectorType:   embedder.VectorTypeDense,
 		Metric:       embedder.CosineDistance,
@@ -72,7 +73,7 @@ func newVertexEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*em
 	}, nil
 }
 
-func newBedrockEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*embedder.Embedder, error) {
+func newBedrockEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec, tokensTotal *prometheus.CounterVec) (*embedder.Embedder, error) {
 	// Adaptive retry adds a client-side rate limiter that backs off request
 	// issuance when Bedrock returns ThrottlingException (429), which the
 	// default standard retryer does not; combined with a higher attempt
@@ -91,7 +92,7 @@ func newBedrockEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*e
 	model := "bedrock/" + cfg.BedrockModel
 	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions, cfg.BedrockBatchSize)
 	return &embedder.Embedder{
-		TextEmbedder: embedder.Instrument(dense, model, duration),
+		TextEmbedder: embedder.Instrument(dense, model, duration, tokensTotal),
 		Model:        model,
 		VectorType:   embedder.VectorTypeDense,
 		Metric:       embedder.CosineDistance,
@@ -100,7 +101,7 @@ func newBedrockEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*e
 	}, nil
 }
 
-func newAzureEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*embedder.Embedder, error) {
+func newAzureEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec, tokensTotal *prometheus.CounterVec) (*embedder.Embedder, error) {
 	if cfg.AzureEndpoint == "" {
 		return nil, fmt.Errorf("vector_embedder.provider=azure requires azure_endpoint")
 	}
@@ -115,7 +116,7 @@ func newAzureEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*emb
 	model := "azure/" + cfg.AzureDeployment
 	dense := azure.NewDenseEmbedder(client, cfg.AzureDimensions, cfg.AzureBatchSize)
 	return &embedder.Embedder{
-		TextEmbedder: embedder.Instrument(dense, model, duration),
+		TextEmbedder: embedder.Instrument(dense, model, duration, tokensTotal),
 		Model:        model,
 		VectorType:   embedder.VectorTypeDense,
 		Metric:       embedder.CosineDistance,

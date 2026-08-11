@@ -1,8 +1,6 @@
 import { type Locator } from '@playwright/test';
 
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panels, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 import { flows, type Variable } from './utils';
 
 test.use({
@@ -34,14 +32,9 @@ test.describe(
       });
     };
 
-    test('can add a new custom variable', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can add a new custom variable', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
       const variable: Variable & { label: string } = {
         type: 'custom',
         name: 'VariableUnderTest',
@@ -77,14 +70,9 @@ test.describe(
       await expect(variableLabel).toBeHidden();
     });
 
-    test('can edit a custom variable', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can edit a custom variable', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
       const variable: Variable & { label: string } = {
         type: 'custom',
         name: 'VariableUnderTest',
@@ -133,17 +121,13 @@ test.describe(
 
     test('can create a custom variable with multiple properties', async ({
       gotoDashboardPage,
-      selectors,
       page,
-      components,
+      controls,
+      sidebar,
+      panels,
     }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
       const variable: Variable & { label: string } = {
         type: 'custom',
         name: 'VariableUnderTest',

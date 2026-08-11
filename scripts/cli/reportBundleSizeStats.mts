@@ -8,9 +8,7 @@ const BUILD_DIR = path.join(REPO_ROOT, 'public', 'build');
 /**
  * The production builds we emit. The names are used as the metric prefix.
  */
-const MANIFESTS = [
-  { name: 'default', fileName: 'assets-manifest.json' },
-];
+const MANIFESTS = [{ name: 'default', fileName: 'assets-manifest.json' }];
 
 interface Entrypoint {
   assets: Record<string, string[]>;

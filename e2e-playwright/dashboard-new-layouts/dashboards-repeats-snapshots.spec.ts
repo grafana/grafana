@@ -1,11 +1,12 @@
 import { type Page } from '@playwright/test';
 
-import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { type SnapshotCreateResponse } from '../../public/app/features/dashboard/services/SnapshotSrv';
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
-import { Controls, Panels, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
+import { type Panels } from './page-objects';
 import { importTestDashboard, saveDashboardAndCloseToast } from './utils';
 
 const repeatTitleBase = 'repeat - ';
@@ -59,11 +60,9 @@ test.describe(
       dashboardPage,
       selectors,
       page,
-      components,
+      controls,
+      panels,
     }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
       await importTestDashboard(
         page,
         selectors,
@@ -88,12 +87,10 @@ test.describe(
       dashboardPage,
       selectors,
       page,
-      components,
+      controls,
+      sidebar,
+      panels,
     }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
       await importTestDashboard(
         page,
         selectors,
