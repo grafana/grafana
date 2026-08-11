@@ -8,6 +8,8 @@ keywords:
   - grafana
   - graphite
   - guide
+  - provisioning
+  - terraform
 labels:
   products:
     - cloud
@@ -42,24 +44,24 @@ To configure basic settings for the data source, complete the following steps:
 1. Select the **Graphite data source**.
 1. Click **Add new data source** in the upper right.
 
-Grafana takes you to the **Settings** tab, where you will set up your Graphite configuration.
+Grafana takes you to the **Settings** tab, where you set up your Graphite configuration.
 
 ## Configuration options in the UI
 
 Following is a list of configuration options for Graphite.
 
-| Setting     | Description                                                                                                                                  |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**    | The display name for the data source. This is how you'll reference it in panels and queries. <br>Examples: `graphite-1`, `graphite-metrics`. |
-| **Default** | When enabled, sets this data source as the default for dashboard panels. It will be automatically selected when creating new panels.         |
+| Setting     | Description                                                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Name**    | The display name for the data source. This is how you reference it in panels and queries. For example, `graphite-1` or `graphite-metrics`. |
+| **Default** | When enabled, sets this data source as the default for dashboard panels. Grafana automatically selects it when you create new panels.      |
 
 **HTTP:**
 
-| Setting             | Description                                                                                                                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **URL**             | Sets the HTTP protocol, IP, and port of your `graphite-web` or `graphite-api` installation. <br>Since the access method is set to _Server_, the URL must be accessible from the Grafana backend. |
-| **Allowed cookies** | By default, Grafana removes forwarded cookies. Specify cookie names here to allow them to be forwarded to the data source.                                                                       |
-| **Timeout**         | Sets the HTTP request timeout in seconds.                                                                                                                                                        |
+| Setting             | Description                                                                                                                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **URL**             | Sets the HTTP protocol, IP, and port of your `graphite-web` or `graphite-api` installation. Because the access method is set to _Server_, the URL must be accessible from the Grafana backend. |
+| **Allowed cookies** | By default, Grafana removes forwarded cookies. Specify cookie names here to allow them to be forwarded to the data source.                                                                     |
+| **Timeout**         | Sets the HTTP request timeout in seconds.                                                                                                                                                      |
 
 **Auth:**
 
@@ -93,7 +95,7 @@ Pass along additional information and metadata about the request or response.
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Version**               | Select your Graphite version from the drop-down. This controls which functions are available in the Graphite query editor. Use `1.1.x` for Grafana Cloud Graphite.                                                                          |
 | **Graphite backend type** | Select the Graphite backend type. Choosing `Metrictank` enables additional features like query processing metadata. (`Metrictank` is a multi-tenant time series engine compatible with Graphite.) Use `Default` for Grafana Cloud Graphite. |
-| **Rollup indicator**      | Toggle on to display an info icon in panel headers when data aggregation (rollup) occurs. Only available when `Metrictank` is selected.                                                                                                     |
+| **Rollup indicator**      | Toggle on to display an info icon in panel headers when data aggregation occurs. Only available when `Metrictank` is selected.                                                                                                              |
 
 **Label mappings:**
 
@@ -103,10 +105,12 @@ When you change your data source from Graphite to Loki, your queries are automat
 
 Grafana automatically maps all Graphite tags to labels, even if you haven't defined explicit mappings. When using matching patterns with `{}` (for example, `metric.{a,b}.value`), Grafana converts them to the Loki regular expression matching syntax. If your queries include functions, Graphite extracts the relevant metrics and tags, then matches them against your mappings.
 
+For example, given the mapping `servers.(cluster).(server).*`:
+
 | **Graphite Query**                                       | **Mapped to Loki Query**         |
-| -------------------------------------------------------- | -------------------------------- |
+| -------------------------------------------------------- | -------------------------------- | ------- |
 | `alias(servers.west.001.cpu,1,2)`                        | `{cluster="west", server="001"}` |
-| `alias(servers.*.{001,002}.*,1,2)`                       | `{server=~"(001,002)"}`          |
+| `alias(servers.*.{001,002}.*,1,2)`                       | `{server=~"(001                  | 002)"}` |
 | `interpolate(seriesByTag('foo=bar', 'server=002'), inf)` | `{foo="bar", server="002"}`      |
 
 | **Setting**                     | **Description**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
@@ -134,4 +138,82 @@ datasources:
     url: http://localhost:8080
     jsonData:
       graphiteVersion: '1.1'
+      graphiteType: default
 ```
+
+The following `jsonData` options are supported:
+
+| Option                   | Type    | Description                                                                                   |
+| ------------------------ | ------- | --------------------------------------------------------------------------------------------- |
+| `graphiteVersion`        | string  | The Graphite version. Supported values are `0.9`, `1.0`, and `1.1`. Defaults to `1.1`.        |
+| `graphiteType`           | string  | The Graphite backend type. Supported values are `default` and `metrictank`.                   |
+| `rollupIndicatorEnabled` | boolean | Displays an info icon in panel headers when data is aggregated. Applies only to `metrictank`. |
+
+## Provision with Terraform
+
+You can provision the Graphite data source using [Terraform](https://www.terraform.io/) with the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+
+For more information about provisioning resources with Terraform, refer to the [Grafana as code using Terraform](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/) documentation.
+
+### Terraform example
+
+The following example provisions a Graphite data source:
+
+```hcl
+terraform {
+  required_providers {
+    grafana = {
+      source  = "grafana/grafana"
+      version = ">= 2.0.0"
+    }
+  }
+}
+
+provider "grafana" {
+  url  = "<YOUR_GRAFANA_URL>"
+  auth = "<YOUR_SERVICE_ACCOUNT_TOKEN>"
+}
+
+resource "grafana_data_source" "graphite" {
+  type = "graphite"
+  name = "Graphite"
+  url  = "http://localhost:8080"
+
+  json_data_encoded = jsonencode({
+    # Graphite version: 0.9, 1.0, or 1.1
+    graphiteVersion = "1.1"
+    # Backend type: default or metrictank
+    graphiteType = "default"
+  })
+}
+```
+
+### Terraform example with basic authentication
+
+The following example provisions a Graphite data source with basic authentication:
+
+```hcl
+resource "grafana_data_source" "graphite_auth" {
+  type                = "graphite"
+  name                = "Graphite"
+  url                 = "http://localhost:8080"
+  basic_auth_enabled  = true
+  basic_auth_username = "<USERNAME>"
+
+  json_data_encoded = jsonencode({
+    graphiteVersion = "1.1"
+    graphiteType    = "default"
+  })
+
+  secure_json_data_encoded = jsonencode({
+    basicAuthPassword = "<PASSWORD>"
+  })
+}
+```
+
+Replace the following placeholders:
+
+- _`<YOUR_GRAFANA_URL>`_: Your Grafana instance URL (for example, `https://your-org.grafana.net` for Grafana Cloud)
+- _`<YOUR_SERVICE_ACCOUNT_TOKEN>`_: A service account token with data source permissions
+- _`<USERNAME>`_: The username for basic authentication
+- _`<PASSWORD>`_: The password for basic authentication
