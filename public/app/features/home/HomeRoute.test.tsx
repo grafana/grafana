@@ -141,7 +141,8 @@ describe('HomeRoute', () => {
       data: { metadata: {}, spec: { homeDashboardUID: 'abc' } },
       isLoading: false,
       isError: true,
-    } as ReturnType<typeof useMergedPreferencesQuery>);
+      refetch: jest.fn(),
+    } as unknown as ReturnType<typeof useMergedPreferencesQuery>);
 
     render(<HomeRoute {...props} />);
 
