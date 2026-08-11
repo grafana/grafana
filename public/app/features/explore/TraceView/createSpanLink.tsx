@@ -26,10 +26,10 @@ import { Icon } from '@grafana/ui';
 
 import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
-import { getFormattedTags, getSpanTags, getTraceToLogsQuery } from './components/logsLink';
+import { getTraceToLogsSpanQuery } from './components/logsLink';
 import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from './components/types/links';
 import { type Trace, type TraceSpan, type TraceSpanReference } from './components/types/trace';
-import { getDefaultMetricTags, getDefaultProfilingTags } from './crossSignalConfig';
+import { getDefaultMetricTags, getDefaultProfilingTags, getFormattedTags, getSpanTags } from './crossSignalConfig';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -168,7 +168,7 @@ function legacyCreateSpanLinkFactory(
     // TODO: This should eventually move into specific data sources and added to the data frame as we no longer use the
     //  deprecated blob format and we can map the link easily in data frame.
     if (logsDataSourceSettings && traceToLogsOptions) {
-      const { query, tags } = getTraceToLogsQuery(logsDataSourceSettings, traceToLogsOptions);
+      const { query, tags } = getTraceToLogsSpanQuery(span, logsDataSourceSettings, traceToLogsOptions);
 
       // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
       // For custom query, this is always defined and we check if the interpolation matched all variables later on.

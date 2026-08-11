@@ -27,7 +27,7 @@ import {
   scopedVarsFromTags,
   scopedVarsFromTrace,
 } from '../../../createSpanLink';
-import { getFormattedTags, getSpanTags } from '../../logsLink';
+import { getFormattedTags, getSpanTags } from '../../../crossSignalConfig';
 import { type TraceSpan } from '../../types/trace';
 
 import { type TraceFlameGraphs } from '.';

@@ -2,13 +2,24 @@ import { type DataQuery, type DataSourceInstanceSettings, type DataSourceJsonDat
 import { type TraceToLogsTag, type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
 import { type LokiQuery } from 'app/features/loki-helpers/types';
 
-import { getDefaultLogsTags } from '../crossSignalConfig';
+import { getDefaultLogsTags, getFormattedTags, getSpanTags } from '../crossSignalConfig';
 
 import { type TraceSpan } from './types/trace';
 
-export function getTraceToLogsQuery(
+export function getTraceToLogsSpanQuery(
+  span: TraceSpan,
   logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData>,
   traceToLogsOptions: TraceToLogsOptionsV2
+) {
+  return getTraceToLogsQuery(getSpanTags(span), logsDataSourceSettings, traceToLogsOptions, span.traceID, span.spanID);
+}
+
+export function getTraceToLogsQuery(
+  allTags: TraceToLogsTag[],
+  logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData>,
+  traceToLogsOptions: TraceToLogsOptionsV2,
+  traceID: string,
+  spanID?: string
 ) {
   const customQuery = traceToLogsOptions.customQuery ? traceToLogsOptions.query : undefined;
   const tagsToUse =
@@ -18,73 +29,40 @@ export function getTraceToLogsQuery(
   let tags = '';
   switch (logsDataSourceSettings?.type) {
     case 'loki':
-      tags = getFormattedTags(span, tagsToUse);
-      query = getQueryForLoki(span, traceToLogsOptions, tags, customQuery);
+      tags = getFormattedTags(allTags, tagsToUse);
+      query = getQueryForLoki(traceID, spanID, traceToLogsOptions, tags, customQuery);
       break;
     case 'grafana-splunk-datasource':
-      tags = getFormattedTags(span, tagsToUse, { joinBy: ' ' });
-      query = getQueryForSplunk(span, traceToLogsOptions, tags, customQuery);
+      tags = getFormattedTags(allTags, tagsToUse, { joinBy: ' ' });
+      query = getQueryForSplunk(traceID, spanID, traceToLogsOptions, tags, customQuery);
       break;
     case 'elasticsearch':
     case 'grafana-opensearch-datasource':
-      tags = getFormattedTags(span, tagsToUse, { labelValueSign: ':', joinBy: ' AND ' });
-      query = getQueryForElasticsearchOrOpensearch(span, traceToLogsOptions, tags, customQuery);
+      tags = getFormattedTags(allTags, tagsToUse, { labelValueSign: ':', joinBy: ' AND ' });
+      query = getQueryForElasticsearchOrOpensearch(traceID, spanID, traceToLogsOptions, tags, customQuery);
       break;
     case 'grafana-falconlogscale-datasource':
-      tags = getFormattedTags(span, tagsToUse, { joinBy: ' OR ' });
-      query = getQueryForFalconLogScale(span, traceToLogsOptions, tags, customQuery);
+      tags = getFormattedTags(allTags, tagsToUse, { joinBy: ' OR ' });
+      query = getQueryForFalconLogScale(traceID, spanID, traceToLogsOptions, tags, customQuery);
       break;
     case 'googlecloud-logging-datasource':
-      tags = getFormattedTags(span, tagsToUse, { joinBy: ' AND ' });
-      query = getQueryForGoogleCloudLogging(span, traceToLogsOptions, tags, customQuery);
+      tags = getFormattedTags(allTags, tagsToUse, { joinBy: ' AND ' });
+      query = getQueryForGoogleCloudLogging(traceID, spanID, traceToLogsOptions, tags, customQuery);
       break;
     case 'victoriametrics-logs-datasource':
       // Build tag selector using strict equality (":=") required by LogsQL
       // See https://docs.victoriametrics.com/victorialogs/logsql/#exact-filter
-      tags = getFormattedTags(span, tagsToUse, { labelValueSign: ':=', joinBy: ' AND ' });
-      query = getQueryForVictoriaLogs(span, traceToLogsOptions, tags, customQuery);
+      tags = getFormattedTags(allTags, tagsToUse, { labelValueSign: ':=', joinBy: ' AND ' });
+      query = getQueryForVictoriaLogs(traceID, spanID, traceToLogsOptions, tags, customQuery);
       break;
   }
 
   return { query, tags };
 }
 
-export function getSpanTags(span: TraceSpan) {
-  return [
-    ...span.process.tags,
-    ...span.tags,
-    { key: 'spanId', value: span.spanID },
-    { key: 'traceId', value: span.traceID },
-    { key: 'name', value: span.operationName },
-    { key: 'duration', value: span.duration },
-  ];
-}
-
-/**
- * Creates a string representing all the tags already formatted for use in the query. The tags are filtered so that
- * only intersection of tags that exist in a span and tags that you want are serialized into the string.
- */
-export function getFormattedTags(
-  allTags: TraceToLogsTag[],
-  tagsToUse: TraceToLogsTag[],
-  { labelValueSign = '=', joinBy = ', ' }: { labelValueSign?: string; joinBy?: string } = {}
-) {
-  // In order, try to use mapped tags -> tags -> default tags
-  // Build tag portion of query
-  return allTags
-    .map((tag) => {
-      const keyValue = tagsToUse.find((keyValue) => keyValue.key === tag.key);
-      if (keyValue) {
-        return `${keyValue.value ? keyValue.value : keyValue.key}${labelValueSign}"${tag.value}"`;
-      }
-      return undefined;
-    })
-    .filter((v) => Boolean(v))
-    .join(joinBy);
-}
-
 function getQueryForLoki(
-  span: TraceSpan,
+  traceID: string,
+  spanID: string | undefined,
   options: TraceToLogsOptionsV2,
   tags: string,
   customQuery?: string
@@ -100,13 +78,21 @@ function getQueryForLoki(
   }
 
   let expr = '{${__tags}}';
-  if (filterByTraceID && span.traceID) {
+  if (filterByTraceID) {
     expr +=
-      ' | label_format log_line_contains_trace_id=`{{ contains "${__span.traceId}" __line__  }}` | log_line_contains_trace_id="true" or trace_id="${__span.traceId}"';
+      ' | label_format log_line_contains_trace_id=`{{ contains "' +
+      traceID +
+      '" __line__  }}` | log_line_contains_trace_id="true" or trace_id="' +
+      traceID +
+      '';
   }
-  if (filterBySpanID && span.spanID) {
+  if (filterBySpanID && spanID) {
     expr +=
-      ' | label_format log_line_contains_span_id=`{{ contains "${__span.spanId}" __line__  }}` | log_line_contains_span_id="true" or span_id="${__span.spanId}"';
+      ' | label_format log_line_contains_span_id=`{{ contains "' +
+      spanID +
+      '" __line__  }}` | log_line_contains_span_id="true" or span_id="' +
+      spanID +
+      '"';
   }
 
   return {
@@ -126,7 +112,8 @@ interface ElasticsearchOrOpensearchQuery extends DataQuery {
 }
 
 function getQueryForElasticsearchOrOpensearch(
-  span: TraceSpan,
+  traceID: string,
+  spanID: string | undefined,
   options: TraceToLogsOptionsV2,
   tags: string,
   customQuery?: string
@@ -141,12 +128,12 @@ function getQueryForElasticsearchOrOpensearch(
   }
 
   let queryArr = [];
-  if (filterBySpanID && span.spanID) {
-    queryArr.push('"${__span.spanId}"');
+  if (filterBySpanID && spanID) {
+    queryArr.push(`"${spanID}"`);
   }
 
-  if (filterByTraceID && span.traceID) {
-    queryArr.push('"${__span.traceId}"');
+  if (filterByTraceID) {
+    queryArr.push(`"${traceID}"`);
   }
 
   if (tags) {
@@ -160,7 +147,13 @@ function getQueryForElasticsearchOrOpensearch(
   };
 }
 
-function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags: string, customQuery?: string) {
+function getQueryForSplunk(
+  traceID: string,
+  spanID: string | undefined,
+  options: TraceToLogsOptionsV2,
+  tags: string,
+  customQuery?: string
+) {
   const { filterByTraceID, filterBySpanID } = options;
 
   if (customQuery) {
@@ -171,11 +164,12 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags:
   if (tags) {
     query += '${__tags}';
   }
-  if (filterByTraceID && span.traceID) {
+  if (filterByTraceID) {
     query += ' "${__span.traceId}"';
+    query += ` "${traceID}"`;
   }
-  if (filterBySpanID && span.spanID) {
-    query += ' "${__span.spanId}"';
+  if (filterBySpanID && spanID) {
+    query += ` "${spanID}"`;
   }
 
   return {
@@ -185,7 +179,8 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags:
 }
 
 function getQueryForGoogleCloudLogging(
-  span: TraceSpan,
+  traceID: string,
+  spanID: string | undefined,
   options: TraceToLogsOptionsV2,
   tags: string,
   customQuery?: string
@@ -197,12 +192,12 @@ function getQueryForGoogleCloudLogging(
   }
 
   let queryArr = [];
-  if (filterBySpanID && span.spanID) {
-    queryArr.push('"${__span.spanId}"');
+  if (filterBySpanID && spanID) {
+    queryArr.push(`"${spanID}"`);
   }
 
-  if (filterByTraceID && span.traceID) {
-    queryArr.push('"${__span.traceId}"');
+  if (filterByTraceID) {
+    queryArr.push(`"${traceID}"`);
   }
 
   if (tags) {
@@ -215,7 +210,13 @@ function getQueryForGoogleCloudLogging(
   };
 }
 
-function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV2, tags: string, customQuery?: string) {
+function getQueryForFalconLogScale(
+  traceID: string,
+  spanID: string | undefined,
+  options: TraceToLogsOptionsV2,
+  tags: string,
+  customQuery?: string
+) {
   const { filterByTraceID, filterBySpanID } = options;
 
   if (customQuery) {
@@ -230,12 +231,14 @@ function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV
   }
 
   let lsql = '${__tags}';
-  if (filterByTraceID && span.traceID) {
+  if (filterByTraceID) {
     lsql += ' or "${__span.traceId}"';
+    lsql += ` or "${traceID}"`;
   }
 
-  if (filterBySpanID && span.spanID) {
+  if (filterBySpanID && spanID) {
     lsql += ' or "${__span.spanId}"';
+    lsql += ` or "${spanID}"`;
   }
 
   return {
@@ -249,7 +252,13 @@ function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV
  * Uses := for exact‑match filters and joins parts with AND.
  * See https://docs.victoriametrics.com/victorialogs/logsql/#exact-filter
  */
-function getQueryForVictoriaLogs(span: TraceSpan, options: TraceToLogsOptionsV2, tags: string, customQuery?: string) {
+function getQueryForVictoriaLogs(
+  traceID: string,
+  spanID: string | undefined,
+  options: TraceToLogsOptionsV2,
+  tags: string,
+  customQuery?: string
+) {
   const { filterByTraceID, filterBySpanID } = options;
 
   // Custom user query has priority
@@ -262,11 +271,12 @@ function getQueryForVictoriaLogs(span: TraceSpan, options: TraceToLogsOptionsV2,
 
   const parts: string[] = [];
 
-  if (filterBySpanID && span.spanID) {
+  if (filterBySpanID && spanID) {
     parts.push('span_id:="${__span.spanId}"');
+    parts.push(`span_id:="${spanID}"`);
   }
-  if (filterByTraceID && span.traceID) {
-    parts.push('trace_id:="${__span.traceId}"');
+  if (filterByTraceID) {
+    parts.push(`trace_id:="${traceID}"`);
   }
   if (tags) {
     parts.push('${__tags}');
