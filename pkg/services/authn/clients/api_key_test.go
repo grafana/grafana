@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/components/satokengen"
@@ -191,13 +192,11 @@ func (s *capturingAPIKeyService) UpdateAPIKeyLastUsedDate(ctx context.Context, t
 }
 
 func TestAPIKey_Hook(t *testing.T) {
-	type ctxKey struct{}
-
 	t.Run("last used update should survive request cancellation but keep context values", func(t *testing.T) {
 		service := &capturingAPIKeyService{calls: make(chan context.Context, 1)}
 		c := ProvideAPIKey(service, tracing.InitializeTracerForTest())
 
-		ctx, cancel := context.WithCancel(context.WithValue(context.Background(), ctxKey{}, "tenant"))
+		ctx, cancel := context.WithCancel(request.WithNamespace(context.Background(), "stacks-11"))
 		req := &authn.Request{}
 		req.SetMeta(metaKeyID, "7")
 
@@ -206,7 +205,9 @@ func TestAPIKey_Hook(t *testing.T) {
 
 		select {
 		case got := <-service.calls:
-			assert.Equal(t, "tenant", got.Value(ctxKey{}))
+			ns, ok := request.NamespaceFrom(got)
+			assert.True(t, ok)
+			assert.Equal(t, "stacks-11", ns)
 			assert.NoError(t, got.Err())
 		case <-time.After(time.Second):
 			t.Fatal("expected UpdateAPIKeyLastUsedDate to be called")
