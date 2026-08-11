@@ -120,6 +120,24 @@ var appManifestData = app.ManifestData{
 
 								OperationId: "getTranslations",
 
+								Parameters: []*spec3.Parameter{
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "lang",
+											In:          "query",
+											Description: "BCP 47 locale (e.g. \"es-ES\"). Defaults to \"en-US\" server-side if empty.",
+											Required:    true,
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"string"},
+													Description: "BCP 47 locale (e.g. \"es-ES\"). Defaults to \"en-US\" server-side if empty.",
+												},
+											},
+										},
+									},
+								},
+
 								Responses: &spec3.Responses{
 									ResponsesProps: spec3.ResponsesProps{
 										Default: &spec3.Response{

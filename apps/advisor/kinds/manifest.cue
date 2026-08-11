@@ -26,6 +26,12 @@ manifest: {
 					"/translations": {
 						"GET": {
 							name: "getTranslations"
+							request: {
+								query: {
+									// BCP 47 locale (e.g. "es-ES"). Defaults to "en-US" server-side if empty.
+									lang: string
+								}
+							}
 							response: {
 								// Flat map of i18n key -> translated string for the requested locale.
 								translations: [string]: string
