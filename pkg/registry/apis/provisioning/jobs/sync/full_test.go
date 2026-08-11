@@ -1854,7 +1854,7 @@ func TestCollectFolderMoves(t *testing.T) {
 	}, moves)
 }
 
-func TestRelocatingUIDsForPath(t *testing.T) {
+func TestRelocatingFoldersForPath(t *testing.T) {
 	moves := []folderMove{
 		{Path: "parent/", UID: "parent-uid"},
 		{Path: "parent/child/", UID: "child-uid"},
@@ -1862,16 +1862,20 @@ func TestRelocatingUIDsForPath(t *testing.T) {
 	}
 
 	// Ensuring the child exempts the child and its relocating ancestor, but never
-	// an unrelated sibling relocation.
-	require.ElementsMatch(t, []string{"parent-uid", "child-uid"},
-		relocatingUIDsForPath("parent/child/", moves))
+	// an unrelated sibling relocation. Each match keeps its own destination path so
+	// the caller can bind the exemption to that exact path.
+	require.ElementsMatch(t, []folderMove{
+		{Path: "parent/", UID: "parent-uid"},
+		{Path: "parent/child/", UID: "child-uid"},
+	}, relocatingFoldersForPath("parent/child/", moves))
 
 	// Ensuring the parent exempts only the parent — its descendant is not an ancestor.
-	require.ElementsMatch(t, []string{"parent-uid"},
-		relocatingUIDsForPath("parent/", moves))
+	require.ElementsMatch(t, []folderMove{
+		{Path: "parent/", UID: "parent-uid"},
+	}, relocatingFoldersForPath("parent/", moves))
 
 	// A path with no relocating ancestors gets nothing.
-	require.Empty(t, relocatingUIDsForPath("unrelated/", moves))
+	require.Empty(t, relocatingFoldersForPath("unrelated/", moves))
 }
 
 func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {

@@ -29,6 +29,17 @@ func newPermissiveMockQuotaTracker(t *testing.T) quotas.QuotaTracker {
 	return qt
 }
 
+func TestRelocatingFolders(t *testing.T) {
+	// Every UID relocating to a target path is bound to that exact path so the
+	// duplicate-UID guard is only bypassed when the UID resolves there.
+	require.ElementsMatch(t, []resources.RelocatingFolder{
+		{UID: "a", Path: "dst/"},
+		{UID: "b", Path: "dst/"},
+	}, relocatingFolders("dst/", []string{"a", "b"}))
+
+	require.Empty(t, relocatingFolders("dst/", nil))
+}
+
 func TestIncrementalSync_ContextCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()

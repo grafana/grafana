@@ -59,8 +59,8 @@ func (result *rebuiltIncrementalDiffTracker) IsActiveUID(uid string) bool {
 }
 
 // Relocations returns a mapping from target folder path to the UIDs that are
-// relocating there. Callers thread these per-path allowlists into
-// EnsureFolderPathExist via WithRelocatingUIDs.
+// relocating there. Callers bind each UID to that target path and thread them
+// into EnsureFolderPathExist via WithRelocatingFolders.
 func (result *rebuiltIncrementalDiffTracker) Relocations() map[string][]string {
 	return result.relocations
 }

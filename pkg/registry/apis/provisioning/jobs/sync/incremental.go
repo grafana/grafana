@@ -20,6 +20,17 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
+// relocatingFolders binds each relocating UID to targetPath, its expected
+// destination, so the duplicate-UID guard is bypassed only when the UID resolves
+// at that exact path during folder path resolution.
+func relocatingFolders(targetPath string, uids []string) []resources.RelocatingFolder {
+	folders := make([]resources.RelocatingFolder, 0, len(uids))
+	for _, uid := range uids {
+		folders = append(folders, resources.RelocatingFolder{UID: uid, Path: targetPath})
+	}
+	return folders
+}
+
 // Convert git changes into resource file changes
 func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error {
 	syncStart := time.Now()
@@ -242,7 +253,7 @@ func applyIncrementalChanges(
 				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.reparent_child_folder")
 				ensureOpts := []resources.EnsurePathOption{resources.WithForceWalk()}
 				if uids, ok := relocations[change.Path]; ok {
-					ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(uids...))
+					ensureOpts = append(ensureOpts, resources.WithRelocatingFolders(relocatingFolders(change.Path, uids)...))
 				}
 				folder, fErr := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path, change.Ref, ensureOpts...)
 				if fErr != nil {
@@ -328,7 +339,7 @@ func applyIncrementalChanges(
 				var folderRenameOpts []resources.EnsurePathOption
 				for dir := safepath.Dir(change.Path); dir != ""; dir = safepath.Dir(dir) {
 					if uids, ok := relocations[dir]; ok {
-						folderRenameOpts = append(folderRenameOpts, resources.WithRelocatingUIDs(uids...))
+						folderRenameOpts = append(folderRenameOpts, resources.WithRelocatingFolders(relocatingFolders(dir, uids)...))
 					}
 				}
 				oldFolderID, err := repositoryResources.RenameFolderPath(renameFolderCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, folderRenameOpts...)
@@ -345,7 +356,7 @@ func applyIncrementalChanges(
 				var renameOpts []resources.EnsurePathOption
 				for dir := safepath.EnsureTrailingSlash(safepath.Dir(change.Path)); dir != ""; dir = safepath.Dir(dir) {
 					if uids, ok := relocations[dir]; ok {
-						renameOpts = append(renameOpts, resources.WithRelocatingUIDs(uids...))
+						renameOpts = append(renameOpts, resources.WithRelocatingFolders(relocatingFolders(dir, uids)...))
 					}
 				}
 				name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)
