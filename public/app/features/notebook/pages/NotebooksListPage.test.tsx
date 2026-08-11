@@ -88,7 +88,7 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     const link = await screen.findByRole('link', { name: 'Checkout error spike' });
-    expect(link).toHaveAttribute('href', '/notebook/nb1');
+    expect(link).toHaveAttribute('href', '/notebooks/nb1');
     expect(screen.getByText('Marcus Chen')).toBeInTheDocument();
     expect(screen.getByText('errors')).toBeInTheDocument();
     expect(screen.getByText('1 notebook')).toBeInTheDocument();
@@ -100,7 +100,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
-    expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/notebook/nb1');
+    expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/notebooks/nb1');
   });
 
   it('filters the list by title', async () => {
@@ -171,7 +171,7 @@ describe('NotebooksListPage', () => {
     await userEvent.click(await screen.findByTestId('notebooks-create'));
 
     await waitFor(() => {
-      expect(locationService.getLocation().pathname).toBe('/notebook/nb-new');
+      expect(locationService.getLocation().pathname).toBe('/notebooks/nb-new');
     });
   });
 });

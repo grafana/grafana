@@ -3,15 +3,16 @@ import { config, locationService } from '@grafana/runtime';
 export const NOTEBOOKS_BASE_URL = '/notebooks';
 
 /**
- * The single-notebook destination. Until a notebook editor exists this is the read-only scene
- * page, and both the list's title link and its Edit action point here — routing everything
- * through this helper keeps that one place to change once the editor lands.
+ * The single-notebook destination, nested under the list so the two stay consistent. Until a
+ * notebook editor exists this is the read-only scene page, and both the list's title link and
+ * its Edit action point here — routing everything through this helper keeps that one place to
+ * change once the editor lands.
  *
  * Raw, with no sub-path applied: react-router (`useNavigate`) and `Link`/`TextLink` apply the
  * base themselves, so prefixing here would double it.
  */
 export function notebookViewUrl(uid: string): string {
-  return `/notebook/${uid}`;
+  return `${NOTEBOOKS_BASE_URL}/${uid}`;
 }
 
 /**
