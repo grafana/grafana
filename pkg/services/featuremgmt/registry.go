@@ -3018,7 +3018,7 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{React: true},
+			Generate:     Generate{Go: true},
 		},
 		{
 			Name:        "grafana.customizableMegaMenu",
