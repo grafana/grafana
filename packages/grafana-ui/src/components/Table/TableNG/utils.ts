@@ -1343,18 +1343,12 @@ function measureInlineRunWidth(
  * (the width recomputes on sort, so unsorted columns don't pay for it).
  */
 function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boolean, isSorted: boolean): number {
-  const textWidth = ctx.ctx.measureText(getDisplayName(field)).width;
-  let iconSpace = 0;
-  if (field.config?.custom?.filterable) {
-    iconSpace += HEADER_ICON_SPACE;
-  }
-  if (showTypeIcons) {
-    iconSpace += HEADER_ICON_SPACE;
-  }
-  if (isSorted) {
-    iconSpace += HEADER_ICON_SPACE;
-  }
-  return textWidth + iconSpace + CELL_HORIZONTAL_CHROME;
+  let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
+  headerWidth += CELL_HORIZONTAL_CHROME;
+  headerWidth += field.config?.custom?.filterable ? HEADER_ICON_SPACE : 0;
+  headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
+  headerWidth += isSorted ? HEADER_ICON_SPACE : 0;
+  return headerWidth;
 }
 
 // gap between a footer reducer's label and its value (theme.spacing(0.5), matches SummaryCell).
@@ -1367,14 +1361,23 @@ const FOOTER_UNFORMATTED_REDUCERS = new Set<string>([ReducerID.count, ReducerID.
 /**
  * Width a column's footer/summary cell needs. Each configured reducer renders its label (e.g. "Sum")
  * inline with its reduced value, so a column that hugs its body content can truncate a wider footer.
- * Size to the widest reducer row (label + value, estimated from `avgCharWidth`); returns 0 when the
- * column has no footer. The reduced values are computed the same way the footer renders them.
+ * Size to the widest reducer row (label + value); returns 0 when the column has no footer. The
+ * reduced values are computed and formatted the same way the footer renders them.
+ *
+ * Both label and value are canvas-measured exactly (like the header) with the medium-weight (header)
+ * context rather than estimated from `avgCharWidth`. SummaryCell renders the value at
+ * `fontWeightMedium` and the label uppercase, and footer values are digit/symbol/unit-heavy — all of
+ * which the prose-derived `avgCharWidth` under-estimates. Since the label is `flex-shrink: 0`, that
+ * under-measure truncates the value, so exactness matters here just as it does for the title. (The
+ * label actually renders a touch smaller than the header font, so measuring it here slightly
+ * over-reserves — the safe direction.)
  */
-function measureFooterWidth(field: Field, avgCharWidth: number): number {
+function measureFooterWidth(field: Field, headerCtx: TypographyCtx): number {
   const reducers = field.config.custom?.footer?.reducers;
   if (reducers == null || reducers.length === 0) {
     return 0;
   }
+
   // Reduce over a copy with its own `state` so we never touch the shared `field.state.calcs`:
   // reduceField reads and writes that cache, and the footer (useReducerEntries) relies on it —
   // reducing the full, unfiltered values here would otherwise leave the footer showing whole-dataset
@@ -1382,13 +1385,17 @@ function measureFooterWidth(field: Field, avgCharWidth: number): number {
   const results = reduceField({ field: { ...field, state: undefined }, reducers });
   let widest = 0;
   for (const id of reducers) {
-    const label = fieldReducers.get(id)?.name ?? id;
+    // SummaryCell uppercases the label; the value goes through the display processor (except the raw
+    // count reducers, which render unformatted).
+    const label = (fieldReducers.get(id)?.name ?? id).toUpperCase();
     const value = results[id];
-    // count/countAll render raw (String), like the footer; everything else goes through display.
     const valueText =
       value == null ? '' : FOOTER_UNFORMATTED_REDUCERS.has(id) ? String(value) : formatCellValue(field, value);
-    widest = Math.max(widest, (label.length + valueText.length) * avgCharWidth + FOOTER_LABEL_GAP);
+    const rowWidth =
+      headerCtx.ctx.measureText(label).width + FOOTER_LABEL_GAP + headerCtx.ctx.measureText(valueText).width;
+    widest = Math.max(widest, rowWidth);
   }
+
   return widest + CELL_HORIZONTAL_CHROME;
 }
 
@@ -1590,7 +1597,7 @@ export function computeContentAwareColWidths(
     const rendersAsJson = cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other;
     const measure = COL_WIDTH_MEASURERS[resolvedType] ?? (rendersAsJson ? measureJsonColWidth : measureTextColWidth);
     const cellWidth = measure(field, effectiveSampleSize, measureCtx);
-    const footerWidth = measureFooterWidth(field, typographyCtx.avgCharWidth);
+    const footerWidth = measureFooterWidth(field, headerTypographyCtx);
 
     const floor = Math.max(COLUMN.MIN_WIDTH, field.config.custom?.minWidth ?? 0);
     const cap = Math.max(COLUMN.MAX_AUTO_WIDTH, floor);

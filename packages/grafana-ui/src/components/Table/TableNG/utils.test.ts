@@ -2006,6 +2006,34 @@ describe('TableNG utils', () => {
       expect(withW).toBeGreaterThan(withoutW);
     });
 
+    it('canvas-measures the footer with the medium-weight (header) context, matching how it renders', () => {
+      // SummaryCell renders the footer value at fontWeightMedium, so it's measured exactly with the
+      // header (medium-weight) context, not estimated from the body avgCharWidth — otherwise the
+      // value ellipsizes. A header context that measures wider must therefore widen a footer column.
+      const field: Field = {
+        name: 'N',
+        type: FieldType.number,
+        values: [100000, 200000, 300000],
+        config: { custom: { footer: { reducers: ['sum'] } } },
+      };
+      const wideHeaderCtx = makeTypographyCtx();
+      jest
+        .spyOn(wideHeaderCtx.ctx, 'measureText')
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        .mockImplementation(((t: string) => ({
+          width: String(t).length * CHAR_W * 2,
+        })) as typeof wideHeaderCtx.ctx.measureText);
+
+      const [body] = computeContentAwareColWidths([field], 40, { typographyCtx: makeTypographyCtx() });
+      const [medium] = computeContentAwareColWidths([field], 40, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: wideHeaderCtx,
+      });
+
+      // the footer ("SUM" + "600000") drives the width, so the wider header context widens the column.
+      expect(medium).toBeGreaterThan(body);
+    });
+
     it('does not mutate the shared field state.calcs while measuring a footer', () => {
       const field: Field = {
         name: 'N',
