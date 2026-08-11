@@ -75,9 +75,9 @@ export const palette = {
   orange500: '#da6900',
   orange600: '#c05c00',
   orange700: '#a74f00',
-  orange800: '#7c3900',
-  orange900: '#532300',
-  orange950: '#2d1000',
+  orange800: '#7b3b0a',
+  orange900: '#51270b',
+  orange950: '#2b1508',
 
   // Yellow-orange. Status: warning, pending
   amber50: '#fce5c0',
