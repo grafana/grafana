@@ -106,9 +106,8 @@ export function useSplitter(options: UseSplitterOptions) {
 
   const onUpdateSize = useCallback(
     (diff: number) => {
-      // primarySizeRef is a measured size, so 0 is valid — a consumer that unsets the pane's min
-      // size can drag it all the way closed. Testing it for truthiness stranded the splitter there,
-      // because every later drag bailed out here.
+      // A fully collapsed primary pane measures 0, which is a valid size to resize from, so only
+      // an absent measurement may bail out here — otherwise the pane could never be dragged open again.
       if (!containerSize.current || primarySizeRef.current === null || !secondPaneRef.current) {
         return;
       }

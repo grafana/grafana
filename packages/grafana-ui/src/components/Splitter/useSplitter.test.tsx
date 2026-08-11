@@ -78,8 +78,6 @@ describe('useSplitter', () => {
 
     await dragSplitterBy(200);
 
-    // A zero-width pane is a legal measured state, not a missing measurement — the drag must still
-    // be processed, otherwise the pane can never be reopened.
     expect(onResizing).toHaveBeenCalled();
   });
 
