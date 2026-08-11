@@ -121,5 +121,22 @@ export function withV5UsageTelemetry<T extends Record<string, unknown>>(module: 
     }
   }
 
-  return { ...module, ...wrappers };
+  const wrapped = { ...module, ...wrappers };
+
+  // A spread copies enumerable properties only, and webpack marks the interop
+  // flags of a module namespace as non-enumerable. Carry them over by hand.
+  // SystemJS reads `__esModule` when it registers a shared dependency, and it
+  // keeps an object whose tag is 'Module' instead of copying it.
+  copyHiddenProperty(module, wrapped, '__esModule');
+  copyHiddenProperty(module, wrapped, Symbol.toStringTag);
+
+  return wrapped;
+}
+
+function copyHiddenProperty(source: object, target: object, key: string | symbol): void {
+  const descriptor = Object.getOwnPropertyDescriptor(source, key);
+
+  if (descriptor) {
+    Object.defineProperty(target, key, descriptor);
+  }
 }

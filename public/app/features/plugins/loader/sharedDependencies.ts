@@ -25,6 +25,8 @@ import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
 import * as ticks from 'app/core/utils/ticks';
 
+import { withV5UsageTelemetry } from './v5RouterTelemetry';
+
 // Help the 6.4 to 6.5 migration
 // The base classes were moved from @grafana/ui to @grafana/data
 // This exposes the same classes on both import paths
@@ -123,7 +125,12 @@ export const sharedDependenciesMap = {
   // just exposing "react-router-dom-v5-compat".
   //
   // (This means that we are exposing two versions of the same package).
-  'react-router-dom': () => import('react-router-dom'),
+  //
+  // The v5 exports that v6 removes are wrapped, so that a plugin which calls one
+  // is reported before the upgrade removes it. Calls to a hook carry the plugin
+  // id. Calls to a component do not, because React renders a component from its
+  // own work loop, after the frames of the plugin have returned.
+  'react-router-dom': () => import('react-router-dom').then(withV5UsageTelemetry),
   'react-router': () => import('react-router-dom-v5-compat'),
   redux: () => import('redux'),
   rxjs: () => import('rxjs'),

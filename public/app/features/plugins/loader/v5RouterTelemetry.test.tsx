@@ -249,3 +249,23 @@ describe('withV5UsageTelemetry component exports', () => {
     expect(wrapped.Link).toBe(routerModule.Link);
   });
 });
+
+describe('withV5UsageTelemetry module shape', () => {
+  it('carries over the interop flags that a spread would drop', () => {
+    const module = { useLocation: () => 'location' };
+    Object.defineProperty(module, '__esModule', { value: true, enumerable: false });
+    Object.defineProperty(module, Symbol.toStringTag, { value: 'Module', enumerable: false });
+
+    const wrapped = withV5UsageTelemetry(module);
+
+    expect(Object.getOwnPropertyDescriptor(wrapped, '__esModule')).toMatchObject({ value: true });
+    expect(Object.getOwnPropertyDescriptor(wrapped, Symbol.toStringTag)).toMatchObject({ value: 'Module' });
+  });
+
+  it('leaves the flags off when the module has none', () => {
+    const wrapped = withV5UsageTelemetry({ useLocation: () => 'location' });
+
+    expect('__esModule' in wrapped).toBe(false);
+    expect(Symbol.toStringTag in wrapped).toBe(false);
+  });
+});
