@@ -80,7 +80,15 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 
     const handleRef = useCallback(
       (ref: HTMLElement | null) => {
-        refs.setReference(ref);
+        // Guard against re-setting the same DOM reference, which
+        // floating-ui treats as a state update triggering a new render.
+        // When the ref churns (detach → re-attach) within a single commit
+        // (e.g. a sibling Combobox/Select selection re-renders the tooltip
+        // trigger's parent tree), the unguarded setDomReference call puts
+        // React into an unbounded update loop that crashes with error #185.
+        if (ref !== refs.domReference.current) {
+          refs.setReference(ref);
+        }
 
         if (typeof forwardedRef === 'function') {
           forwardedRef(ref);
