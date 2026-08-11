@@ -90,6 +90,7 @@ import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
+import { getLayoutManagerFor } from '../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import {
@@ -102,7 +103,6 @@ import {
   getDashboardSceneFor,
   getDefaultVizPanel,
   getLayoutForObject,
-  getLayoutManagerFor,
   getPanelIdForVizPanel,
   hasActualSaveChanges,
 } from '../utils/utils';
@@ -1453,7 +1453,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   getRawJsonFromEditor(): Dashboard | DashboardV2Spec | undefined {
     if (this.state.editview instanceof JsonModelEditView) {
       try {
-        return JSON.parse(this.state.editview.state.jsonText);
+        // The v2 editor holds a full resource envelope; getEditedSaveModel unwraps it back to the bare spec.
+        return this.state.editview.getEditedSaveModel();
       } catch {
         return undefined;
       }

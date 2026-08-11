@@ -1,5 +1,7 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Point } from 'ol/geom';
+import { fromLonLat } from 'ol/proj';
 
 import {
   applyFieldOverrides,
@@ -18,7 +20,6 @@ import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
-import { RESIZE_WIDTH_DEBOUNCE_MS } from './hooks';
 
 // Shared helpers for test data frame construction
 const withFieldOverrides = (frame: ReturnType<typeof toDataFrame>): DataFrame =>
@@ -247,6 +248,23 @@ const createTimeDataFrame = (): DataFrame =>
           config: { custom: {} },
         },
         { name: 'Value', type: FieldType.number, values: [1, 2, 3], config: { custom: {} } },
+      ],
+    })
+  );
+
+const createGeoDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'GeoData',
+      length: 1,
+      fields: [
+        { name: 'Label', type: FieldType.string, values: ['NYC'], config: { custom: {} } },
+        {
+          name: 'Location',
+          type: FieldType.geo,
+          values: [new Point(fromLonLat([-74.0445, 40.6892]))],
+          config: { custom: {} },
+        },
       ],
     })
   );
@@ -1015,6 +1033,19 @@ describe('TableNG', () => {
       );
 
       expect(container.querySelector('.table-ng-pagination')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Geo cells', () => {
+    it('renders the geo cell as WKT once the lazy OpenLayers provider loads', async () => {
+      render(<TableNG enableVirtualization={false} data={createGeoDataFrame()} width={800} height={600} />);
+
+      // A geo field sends TableNG down the Suspense/LazyOpenLayersProvider branch. Until the
+      // provider resolves, GeoCell has no formatGeometry and stringifies the raw geometry (a plain
+      // object); once it loads, the cell renders the geometry as WKT. Matching the WKT *shape*
+      // (rather than exact coordinates, which drift through the projection round-trip) proves the
+      // geo cell rendered through the lazily-loaded provider rather than the Suspense fallback.
+      expect(await screen.findByText(/^POINT\([^)]+\)$/)).toBeInTheDocument();
     });
   });
 
@@ -2361,11 +2392,10 @@ describe('TableNG', () => {
     });
   });
 
-  describe('width debouncing', () => {
+  describe('column width on resize', () => {
     let origResizeObserver = global.ResizeObserver;
 
     beforeEach(() => {
-      jest.useFakeTimers();
       origResizeObserver = global.ResizeObserver;
       global.ResizeObserver = class ResizeObserver {
         observe() {}
@@ -2375,7 +2405,6 @@ describe('TableNG', () => {
     });
 
     afterEach(() => {
-      jest.useRealTimers();
       global.ResizeObserver = origResizeObserver;
     });
 
@@ -2410,19 +2439,16 @@ describe('TableNG', () => {
       expect(columnTemplate(container)).toBe('450px 450px');
     });
 
-    it('defers width changes until the resize settles when an auto-sized pill column is present', () => {
+    it('applies width changes immediately for an auto-sized pill column', () => {
       const data = frameWithFields([pillField(), valueField]);
       const { container, rerender } = renderAtWidth(data, 400);
       expect(columnTemplate(container)).toBe('200px 200px');
 
       rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('200px 200px');
-
-      act(() => jest.advanceTimersByTime(RESIZE_WIDTH_DEBOUNCE_MS));
       expect(columnTemplate(container)).toBe('450px 450px');
     });
 
-    it('defers width changes until the resize settles when an auto-sized column wraps its text', () => {
+    it('applies width changes immediately when an auto-sized column wraps its text', () => {
       const data = frameWithFields([
         {
           name: 'Name',
@@ -2436,16 +2462,13 @@ describe('TableNG', () => {
       expect(columnTemplate(container)).toBe('200px 200px');
 
       rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe('200px 200px');
-
-      act(() => jest.advanceTimersByTime(RESIZE_WIDTH_DEBOUNCE_MS));
       expect(columnTemplate(container)).toBe('450px 450px');
     });
 
-    // Toggling width-sensitivity (here by turning on text wrapping) flips whether the debounce is active.
-    // The debounce wrapper stays mounted regardless, so the table must not remount — a remount would
-    // recreate the grid DOM node and wipe local state like filters, pagination, and column resize.
-    it('does not remount the table when width-sensitivity toggles', () => {
+    // Toggling text wrapping changes the field config but the same table component renders throughout,
+    // so it must not remount — a remount would recreate the grid DOM node and wipe local state like
+    // filters, pagination, and column resize.
+    it('does not remount the table when a width-sensitive config toggles', () => {
       const gridNode = (container: HTMLElement) => container.querySelector('[role="grid"], [role="treegrid"]');
 
       const insensitive = frameWithFields([
@@ -2473,7 +2496,7 @@ describe('TableNG', () => {
       expect(columnTemplate(container)).toBe('100px 800px');
     });
 
-    it('defers width changes when only a nested table has a width-sensitive column', () => {
+    it('applies width changes immediately when only a nested table has a width-sensitive column', () => {
       const nestedFrame = toDataFrame({
         name: 'Nested',
         fields: [pillField(), valueField],
@@ -2492,9 +2515,6 @@ describe('TableNG', () => {
       const initialTemplate = columnTemplate(container);
 
       rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
-      expect(columnTemplate(container)).toBe(initialTemplate);
-
-      act(() => jest.advanceTimersByTime(RESIZE_WIDTH_DEBOUNCE_MS));
       expect(columnTemplate(container)).not.toBe(initialTemplate);
     });
   });

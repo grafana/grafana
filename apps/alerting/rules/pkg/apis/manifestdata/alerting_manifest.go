@@ -267,7 +267,7 @@ var appManifestData = app.ManifestData{
 			},
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
-					"/search": {
+					"/searchRules": {
 						Post: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
@@ -354,7 +354,7 @@ var appManifestData = app.ManifestData{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
 																	Type:        []string{"object"},
-																	Description: "listMeta is intentionally omitted: #SearchResults carries its\nown metadata (continue, totalHits) mirroring the generic\nsearch.grafana.app SearchResults envelope.",
+																	Description: "listMeta is intentionally omitted: #SearchResults carries its\nown metadata (continue, totalHits).",
 																	Properties: map[string]spec.Schema{
 																		"apiVersion": {
 																			SchemaProps: spec.SchemaProps{
@@ -677,6 +677,13 @@ var appManifestData = app.ManifestData{
 										Type: []string{"integer"},
 									},
 								},
+								"totalHitsRelation": {
+									SchemaProps: spec.SchemaProps{
+
+										Description: "Always read totalHits together with totalHitsRelation.",
+										Ref:         spec.MustCreateRef("#/components/schemas/createSearchRulesTotalHitsRelation"),
+									},
+								},
 							},
 						},
 					},
@@ -689,7 +696,7 @@ var appManifestData = app.ManifestData{
 					"createSearchRulesSearchTextLeaf": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
-							Description: "#SearchTextLeaf is a free-text search across one or more text-capable\nfields. When fields is omitted, the kind's default text field set is used.",
+							Description: "#SearchTextLeaf is a free-text search across one or more text-capable\nfields. When fields is omitted, the kind's default text field set is used.\nA match requires every whitespace-separated term of value to appear in the\nfield, in any order. How very short terms, punctuation, and common words are\nmatched is backend-defined and may change.",
 							Properties: map[string]spec.Schema{
 								"fields": {
 									SchemaProps: spec.SchemaProps{
@@ -745,6 +752,16 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
+					"createSearchRulesTotalHitsRelation": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"string"},
+							Description: "#TotalHitsRelation says how totalHits relates to the real number of matching\nrules the caller may see: \"eq\" when it is exact, \"lte\" when it is an upper\nbound because authorisation was applied after the search ranked its results.",
+							Enum: []interface{}{
+								"eq",
+								"lte",
+							},
+						},
+					},
 				},
 			},
 		},
@@ -773,7 +790,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/search|POST": v0alpha1.CreateSearchRulesResponse{},
+	"v0alpha1||<namespace>/searchRules|POST": v0alpha1.CreateSearchRulesResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -799,7 +816,7 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 }
 
 var customRouteToGoRequestBodyType = map[string]any{
-	"v0alpha1||<namespace>/search|POST": v0alpha1.CreateSearchRulesRequestBody{},
+	"v0alpha1||<namespace>/searchRules|POST": v0alpha1.CreateSearchRulesRequestBody{},
 }
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {

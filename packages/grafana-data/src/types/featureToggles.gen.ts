@@ -129,11 +129,6 @@ export interface FeatureToggles {
   */
   provisioningExport?: boolean;
   /**
-  * Start an additional https handler and write kubectl options
-  * @default false
-  */
-  grafanaAPIServerEnsureKubectlAccess?: boolean;
-  /**
   * Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
   * @default true
   */
@@ -298,6 +293,12 @@ export interface FeatureToggles {
   * @default true
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.
+  * @deprecated
+  * @default true
+  */
+  disableScriptedDashboards?: boolean;
   /**
   * Enables undo/redo in dynamic dashboards
   * @default false

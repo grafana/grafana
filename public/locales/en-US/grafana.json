@@ -3287,6 +3287,8 @@
         "title": "Auto-sync configuration"
       },
       "import": {
+        "any": "any",
+        "collapse-all": "Collapse all",
         "empty-body": "Import an Alertmanager configuration to stage it here as a safe, reversible copy. Review what it contains, then promote it into your live Grafana Alertmanager when you're ready.",
         "empty-cta": "Import Alertmanager configuration",
         "empty-learn-more": "Learn more about importing configurations",
@@ -3294,9 +3296,26 @@
         "error-body": "The request to the Alerting API failed. Check your connection and try again.",
         "error-retry": "Retry",
         "error-title": "Couldn't load imported configurations",
+        "expand-all": "Expand all",
+        "inhibition-equal": "equal: {{labels}}",
         "loading": "Loading imported configurations…",
+        "no-matchers": "(no matchers)",
+        "parse-error-body": "The imported Alertmanager configuration could not be parsed.",
+        "parse-error-title": "Couldn't read the staged configuration",
+        "policy-tree-routes_one": "{{count}} route",
+        "policy-tree-routes_other": "{{count}} routes",
+        "resources": "Resources",
+        "section": {
+          "contact-points": "Contact points",
+          "inhibition-rules": "Inhibition rules",
+          "notification-policy": "Notification policy",
+          "templates": "Templates",
+          "time-intervals": "Time intervals"
+        },
+        "staged-badge": "Staged · read-only",
         "staged-description": "A read-only, reversible copy of an imported Alertmanager config. Promote it to merge into your live config, or revert to remove it.",
-        "staged-title": "Staged configuration"
+        "staged-title": "Staged configuration",
+        "view": "View"
       },
       "tabs": {
         "alert-managers": "Alert managers",
@@ -3600,6 +3619,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Time intervals",
+      "imported-not-usable": "Imported from an external Alertmanager — promote it to use it here",
       "placeholder-select-time-intervals": "Select time intervals..."
     },
     "time-intervals-table": {
@@ -5643,6 +5663,8 @@
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
       "edit-time-range-rule": "Change time range rule",
+      "group-into-row": "Group into row",
+      "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
@@ -5895,8 +5917,12 @@
         }
       },
       "scroll-content": "Dashboard content",
-      "ungroup-nested-text": "This will ungroup all nested groups.",
-      "ungroup-nested-title": "Ungroup nested groups?"
+      "ungroup-convert-to-rows": "Convert to rows",
+      "ungroup-convert-to-tabs": "Convert to tabs",
+      "ungroup-groups-text": "Nested groups will be moved up a level and converted to rows or tabs.",
+      "ungroup-groups-title": "Ungroup nested groups?",
+      "ungroup-repeat-loss": "Repeat options configured on the ungrouped groups will be lost.",
+      "ungroup-repeat-loss-title": "Ungroup?"
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
@@ -6109,6 +6135,13 @@
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "Unable to change identifier from JSON editor",
+      "invalid-api-version": "Invalid apiVersion: {{apiVersion}}. Expected '{{expectedAPIVersion}}'.",
+      "invalid-kind": "Invalid kind: {{kind}}. Expected 'Dashboard'.",
+      "metadata-edit-unsupported": "Editing dashboard metadata is not yet supported ({{keys}})",
+      "missing-spec": "Missing spec. Expected a valid dashboard spec."
+    },
     "search-panel": {
       "no-match": "No panels matching"
     },
@@ -6273,6 +6306,12 @@
         "title-hidden_other": "Hidden ({{count}})",
         "tooltip": "Filters overview"
       },
+      "group": {
+        "different-parents": "Select items within the same row, tab, or grid to group them",
+        "into-row": "Group into row",
+        "into-tab": "Group into tab",
+        "title": "Group"
+      },
       "links": {
         "add-link": "Add link",
         "new-link": "New link",
@@ -6297,7 +6336,7 @@
       },
       "predefined-variables": {
         "all": "All",
-        "description": "This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.",
+        "description": "This dashboard does not receive global or folder-scoped variables by default. Choose which ones to include.",
         "folder": "Folder",
         "global": "Global",
         "label": "Predefined variables",
@@ -7231,6 +7270,7 @@
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"
       },
+      "resource-validation-error-title": "Unable to save changes",
       "save-and-overwrite": "Save and overwrite"
     },
     "legacy": {
@@ -7587,6 +7627,14 @@
       "disabled-tooltip": "Save the dashboard before creating alert rules",
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
+    },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "This feature will be removed in Grafana 14. <2>Read the deprecation notice</2>.",
+      "title": "Scripted dashboards are deprecated"
+    },
+    "scripted-dashboards-disabled": {
+      "body": "Scripted dashboards are deprecated and will be removed in Grafana 14. <2>Read the deprecation notice</2>. To temporarily restore them, set the <4>disableScriptedDashboards</4> feature toggle to <7>false</7>.",
+      "title": "Scripted dashboards are disabled"
     },
     "section-placement": {
       "top-row": "Top of row",
@@ -8029,7 +8077,8 @@
       "title-missing-rights": "Missing rights"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Select a data source"
+      "aria-label-select-a-data-source": "Select a data source",
+      "clear-button": "Clear data source"
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Page not found: {{page}}"
@@ -10936,6 +10985,12 @@
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
     },
+    "header-actions": {
+      "active-incidents": "Active incidents",
+      "firing-alerts": "Firing alerts",
+      "no-active-incidents": "All clear",
+      "no-firing-alerts": "All clear"
+    },
     "home-page": {
       "edition": {
         "cloud": "Grafana Cloud",
@@ -12412,6 +12467,10 @@
     "new-folder": {
       "title": "New folder"
     },
+    "notebooks": {
+      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+      "title": "Notebooks"
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12705,8 +12764,35 @@
       "title-zoom-out": "Zoom out"
     }
   },
-  "notebook": {
-    "breadcrumb-title": "Notebooks"
+  "notebooks": {
+    "list": {
+      "all-authors": "All authors",
+      "author-filter": "Filter by author",
+      "count_one": "{{count}} notebook",
+      "count_other": "{{count}} notebooks",
+      "count-truncated_one": "First {{count}} notebook loaded",
+      "count-truncated_other": "First {{count}} notebooks loaded",
+      "create-error": "Failed to create notebook",
+      "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
+      "empty-title": "You haven't created any notebooks yet",
+      "empty-title-read-only": "No notebooks available to you",
+      "load-error": "Failed to load notebooks",
+      "new-notebook": "New notebook",
+      "new-notebook-title": "New notebook",
+      "no-results": "No notebooks found",
+      "search-placeholder": "Search notebooks by title...",
+      "table": {
+        "author": "Author",
+        "copy-link": "Copy link",
+        "created": "Created",
+        "edit": "Edit",
+        "more-actions": "More actions",
+        "tags": "Tags",
+        "title": "Title",
+        "updated": "Updated"
+      },
+      "unknown-author": "Anonymous"
+    }
   },
   "notifications": {
     "empty-state": {
@@ -14730,7 +14816,6 @@
     },
     "header": {
       "alert": "Alert",
-      "expression": "Expression",
       "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
       "pending-transformation": "Select a transformation",
@@ -14744,6 +14829,7 @@
     "labels": {
       "alert": "alert",
       "expression": "expression",
+      "expression-title": "{{type}} Expression",
       "query": "query",
       "transformation": "transformation"
     },
@@ -15777,6 +15863,7 @@
     "description-column-filter": "Enables/disables field filters in table",
     "description-frozen-columns": "Columns are frozen from the left side of the table",
     "description-min-column-width": "The minimum width for column auto resizing",
+    "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "frame-picker": {
@@ -15810,6 +15897,7 @@
     "name-hide-in-table": "Hide in table",
     "name-max-height": "Max row height",
     "name-min-column-width": "Minimum column width",
+    "name-page-size": "Page size",
     "name-show-table-header": "Show table header",
     "name-styling-from-field": "Styling from field",
     "name-tooltip-from-field": "Tooltip from field",
@@ -15820,6 +15908,7 @@
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "none",
     "placeholder-max-height": "none",
+    "placeholder-page-size": "auto",
     "tooltip-placement-options": {
       "label-auto": "Auto",
       "label-bottom": "Bottom",

@@ -619,7 +619,7 @@ func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesBody(ref common.Referenc
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "listMeta is intentionally omitted: #SearchResults carries its own metadata (continue, totalHits) mirroring the generic search.grafana.app SearchResults envelope.",
+				Description: "listMeta is intentionally omitted: #SearchResults carries its own metadata (continue, totalHits).",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"metadata": {
@@ -1004,6 +1004,13 @@ func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesSearchResultsMetadata(re
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
 							Format: "int64",
+						},
+					},
+					"totalHitsRelation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Always read totalHits together with totalHitsRelation.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},

@@ -60,20 +60,20 @@
 # END Technical documentation
 
 # Policy bot
-/.policy.yml @grafana/grafana-backend-group
-/.policy.yml.tmpl @grafana/grafana-backend-group
-/.github/workflows/policybot.yml @grafana/grafana-backend-group
+/.policy.yml @grafana/grafana-operator-experience-squad
+/.policy.yml.tmpl @grafana/grafana-operator-experience-squad
+/.github/workflows/policybot.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/sbom-on-release.yml @grafana/security
 
 # Backend code
-/go.mod @grafana/grafana-backend-group
-/go.sum @grafana/grafana-backend-group
+/go.mod @grafana/grafana-backend-services-squad
+/go.sum @grafana/grafana-backend-services-squad
 /go.work @grafana/grafana-app-platform-squad
 /go.work.sum @grafana/grafana-app-platform-squad
 /.citools @grafana/grafana-backend-services-squad
-/pkg/README.md @grafana/grafana-backend-group
-/pkg/ruleguard.rules.go @grafana/grafana-backend-group
-/.golangci.yml @grafana/grafana-backend-group
+/pkg/README.md @grafana/grafana-backend-services-squad
+/pkg/ruleguard.rules.go @grafana/grafana-backend-services-squad
+/.golangci.yml @grafana/grafana-backend-services-squad
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
@@ -111,14 +111,14 @@
 /apps/logsdrilldown/ @grafana/observability-logs
 /apps/annotation/ @grafana/grafana-backend-services-squad
 /apps/dashvalidator/ @grafana/sharing-squad
-/pkg/api/ @grafana/grafana-backend-group
+/pkg/api/ @grafana/grafana-backend-services-squad
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/appplugin @grafana/grafana-catalog
 /pkg/apis/datasource @grafana/grafana-datasources-core-services
 /pkg/apis/userstorage @grafana/grafana-app-platform-squad @grafana/grafana-catalog
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/clientauth/ @grafana/grafana-app-platform-squad
-/pkg/cmd/ @grafana/grafana-backend-group
+/pkg/cmd/ @grafana/grafana-backend-services-squad
 /pkg/cmd/grafana-cli/commands/install_command.go @grafana/grafana-catalog
 /pkg/cmd/grafana-cli/commands/install_command_test.go @grafana/grafana-catalog
 /pkg/cmd/grafana-cli/commands/listremote_command.go @grafana/grafana-catalog
@@ -133,64 +133,64 @@
 /pkg/components/satokengen/ @grafana/identity-squad
 /pkg/components/dashdiffs/ @grafana/grafana-app-platform-squad
 /pkg/components/imguploader/ @grafana/alerting-squad
-/pkg/components/loki/ @grafana/grafana-backend-group
-/pkg/components/simplejson/ @grafana/grafana-backend-group
+/pkg/components/loki/ @grafana/alerting-squad
+/pkg/components/simplejson/ @grafana/grafana-backend-services-squad
 /pkg/configprovider/ @grafana/grafana-backend-services-squad
-/pkg/events/ @grafana/grafana-backend-group
-/pkg/extensions/ @grafana/grafana-backend-group
-/pkg/ifaces/ @grafana/grafana-backend-group
-/pkg/infra/db/ @grafana/grafana-backend-group
+/pkg/events/ @grafana/grafana-backend-services-squad
+/pkg/extensions/ @grafana/grafana-operator-experience-squad
+/pkg/ifaces/ @grafana/grafana-backend-services-squad
+/pkg/infra/db/ @grafana/grafana-search-and-storage
 /pkg/infra/features/ @grafana/grafana-backend-services-squad
 /pkg/infra/leaderelection/ @grafana/access-squad
-/pkg/infra/localcache/ @grafana/grafana-backend-group
-/pkg/infra/log/ @grafana/grafana-backend-group
-/pkg/infra/metrics/ @grafana/grafana-backend-group
+/pkg/infra/localcache/ @grafana/grafana-backend-services-squad
+/pkg/infra/log/ @grafana/grafana-backend-services-squad
+/pkg/infra/metrics/ @grafana/grafana-backend-services-squad
 /pkg/infra/nats/ @grafana/grafana-search-and-storage
-/pkg/infra/network/ @grafana/grafana-backend-group
-/pkg/infra/process/ @grafana/grafana-backend-group
-/pkg/infra/remotecache/ @grafana/grafana-backend-group
-/pkg/infra/serverlock/ @grafana/grafana-backend-group
-/pkg/infra/slugify/ @grafana/grafana-backend-group
-/pkg/infra/tracing/ @grafana/grafana-backend-group
-/pkg/infra/usagestats/ @grafana/grafana-backend-group
-/pkg/middleware/ @grafana/grafana-backend-group
-/pkg/mocks/ @grafana/grafana-backend-group
-/pkg/models/ @grafana/grafana-backend-group
-/pkg/server/ @grafana/grafana-backend-group
+/pkg/infra/network/ @grafana/identity-squad
+/pkg/infra/process/ @grafana/grafana-backend-services-squad
+/pkg/infra/remotecache/ @grafana/grafana-operator-experience-squad
+/pkg/infra/serverlock/ @grafana/grafana-backend-services-squad
+/pkg/infra/slugify/ @grafana/grafana-app-platform-squad
+/pkg/infra/tracing/ @grafana/grafana-backend-services-squad
+/pkg/infra/usagestats/ @grafana/grafana-backend-services-squad
+/pkg/middleware/ @grafana/grafana-backend-services-squad
+/pkg/mocks/ @grafanabot
+/pkg/models/ @grafana/identity-squad
+/pkg/server/ @grafana/grafana-backend-services-squad
 /pkg/apiserver @grafana/grafana-app-platform-squad
 /pkg/apimachinery @grafana/grafana-app-platform-squad
 /pkg/apimachinery/identity/ @grafana/identity-squad
-/pkg/apimachinery/errutil/ @grafana/grafana-backend-group
+/pkg/apimachinery/errutil/ @grafana/grafana-app-platform-squad
 /pkg/storage/ @grafana/grafana-search-and-storage
 /pkg/storage/secret/ @grafana/grafana-operator-experience-squad
 /pkg/services/annotations/ @grafana/grafana-backend-services-squad
 /pkg/services/apikey/ @grafana/identity-squad
-/pkg/services/cleanup/ @grafana/grafana-backend-group
-/pkg/services/contexthandler/ @grafana/grafana-backend-group @grafana/grafana-app-platform-squad
+/pkg/services/cleanup/ @grafana/grafana-backend-services-squad
+/pkg/services/contexthandler/ @grafana/grafana-app-platform-squad
 /pkg/services/correlations/ @grafana/datapro
-/pkg/services/dashboardimport/ @grafana/grafana-backend-group
+/pkg/services/dashboardimport/ @grafana/grafana-app-platform-squad
 /pkg/services/dashboards/ @grafana/grafana-app-platform-squad
-/pkg/services/dashboardversion/ @grafana/grafana-backend-group
+/pkg/services/dashboardversion/ @grafana/grafana-app-platform-squad
 /pkg/services/encryption/ @grafana/grafana-operator-experience-squad
 /pkg/services/folder/ @grafana/grafana-search-and-storage
 /pkg/services/folderreconcile/ @grafana/grafana-search-and-storage
 /pkg/services/frontend/ @grafana/grafana-frontend-platform
 /pkg/services/apiserver @grafana/grafana-app-platform-squad
 /pkg/services/apiserver/auth/authorizer/storewrapper @grafana/access-squad
-/pkg/services/hooks/ @grafana/grafana-backend-group
+/pkg/services/hooks/ @grafana/grafana-operator-experience-squad
 /pkg/services/kmsproviders/ @grafana/grafana-operator-experience-squad
 /pkg/services/licensing/ @grafana/grafana-operator-experience-squad
 /pkg/services/dsquerierclient/ @grafana/grafana-datasources-core-services
-/pkg/services/navtree/ @grafana/grafana-backend-group @grafana/grafana-frontend-navigation
-/pkg/services/notifications/ @grafana/grafana-backend-group
-/pkg/services/org/ @grafana/grafana-backend-group
-/pkg/services/preference/ @grafana/grafana-backend-group
+/pkg/services/navtree/ @grafana/grafana-frontend-navigation
+/pkg/services/notifications/ @grafana/grafana-backend-services-squad
+/pkg/services/org/ @grafana/identity-squad
+/pkg/services/preference/ @grafana/grafana-backend-services-squad
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
 /pkg/services/provisioning/alerting/ @grafana/alerting-squad
 /pkg/services/query/ @grafana/grafana-datasources-core-services
 /pkg/services/queryhistory/ @grafana/datapro
 /pkg/services/quota/ @grafana/grafana-search-and-storage
-/pkg/services/screenshot/ @grafana/grafana-backend-group
+/pkg/services/screenshot/ @grafana/alerting-squad
 /pkg/services/search/ @grafana/grafana-search-and-storage
 /pkg/services/searchusers/ @grafana/grafana-search-and-storage
 /pkg/services/secrets/ @grafana/grafana-operator-experience-squad
@@ -199,13 +199,13 @@
 /pkg/services/sqlstore/ @grafana/grafana-search-and-storage
 /pkg/services/ssosettings/ @grafana/identity-squad
 /pkg/services/star/ @grafana/grafana-search-and-storage
-/pkg/services/stats/ @grafana/grafana-backend-group
+/pkg/services/stats/ @grafana/grafana-backend-services-squad
 /pkg/services/tag/ @grafana/grafana-search-and-storage
 /pkg/services/team/ @grafana/identity-squad
-/pkg/services/temp_user/ @grafana/grafana-backend-group
-/pkg/services/updatemanager/ @grafana/grafana-backend-group
+/pkg/services/temp_user/ @grafana/identity-squad
+/pkg/services/updatemanager/ @grafana/grafana-catalog
 /pkg/services/user/ @grafana/access-squad
-/pkg/services/validations/ @grafana/grafana-backend-group
+/pkg/services/validations/ @grafana/grafana-backend-services-squad
 /pkg/setting/ @grafana/grafana-backend-services-squad
 /pkg/tests/ @grafana/grafana-backend-services-squad
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
@@ -216,12 +216,12 @@
 /pkg/tests/apis/shorturl @grafana/sharing-squad
 /pkg/tests/api/correlations/ @grafana/datapro
 /pkg/tests/api/admin/encryption/ @grafana/grafana-operator-experience-squad
-/pkg/tsdb/grafanads/ @grafana/grafana-backend-group
-/pkg/util/ @grafana/grafana-backend-group
-/pkg/web/ @grafana/grafana-backend-group
+/pkg/tsdb/grafanads/ @grafana/grafana-backend-services-squad
+/pkg/util/ @grafana/grafana-backend-services-squad
+/pkg/web/ @grafana/grafana-backend-services-squad
 
-/pkg/infra/kvstore/ @grafana/grafana-backend-group
-/pkg/infra/fs/ @grafana/grafana-backend-group
+/pkg/infra/kvstore/ @grafana/grafana-search-and-storage
+/pkg/infra/fs/ @grafana/grafana-backend-services-squad
 
 # devenv
 # Backend code, developers environment
@@ -306,7 +306,7 @@
 /devenv/docker/blocks/jaegeronly/ @grafana/grafana-operator-experience-squad
 /devenv/docker/blocks/maildev/ @grafana/alerting-squad
 /devenv/docker/blocks/mariadb/ @grafana/data-sources-plugins
-/devenv/docker/blocks/memcached/ @grafana/grafana-backend-group
+/devenv/docker/blocks/memcached/ @grafana/grafana-operator-experience-squad
 /devenv/docker/blocks/mimir_backend/ @grafana/alerting-squad
 /devenv/docker/blocks/mqtt/ @grafana/alerting-squad
 /devenv/docker/blocks/mysql/ @grafana/data-sources-plugins
@@ -330,7 +330,7 @@
 /devenv/docker/blocks/tempo/ @grafana/data-sources-plugins
 /devenv/docker/blocks/zipkin/ @grafana/data-sources-plugins
 /devenv/docker/blocks/redis/ @bergquist
-/devenv/docker/blocks/sensugo/ @grafana/grafana-backend-group
+/devenv/docker/blocks/sensugo/ @grafana/alerting-squad
 /devenv/docker/blocks/slow_proxy/ @bergquist
 /devenv/docker/blocks/smtp/ @bergquist
 /devenv/docker/blocks/traefik/ @mckn
@@ -342,7 +342,7 @@
 /devenv/docker/ha-test-unified-alerting/ @grafana/alerting-squad
 /devenv/docker/ha_test/ @grafana/grafana-backend-services-squad
 /devenv/docker/loadtest/ @grafana/grafana-backend-services-squad
-/devenv/docker/rpmtest/ @grafana/grafana-backend-services-squad
+/devenv/docker/rpmtest/ @grafana/grafana-operator-experience-squad
 /devenv/jsonnet/ @grafana/dataviz-squad
 /devenv/local_cdn/ @grafana/grafana-frontend-platform
 /devenv/local-npm/ @grafana/grafana-frontend-platform
@@ -358,12 +358,12 @@
 
 
 # Continuous Integration
-/pkg/build/ @grafana/grafana-backend-services-squad
+/pkg/build/ @grafana/grafana-operator-experience-squad
 /.dockerignore @grafana/grafana-backend-services-squad
 /Dockerfile @grafana/grafana-backend-services-squad
 /Makefile @grafana/grafana-backend-services-squad
-/scripts/build/ @grafana/grafana-backend-services-squad
-/scripts/list-release-artifacts.sh @grafana/grafana-backend-services-squad
+/scripts/build/ @grafana/grafana-operator-experience-squad
+/scripts/list-release-artifacts.sh @grafana/grafana-operator-experience-squad
 /scripts/releasefinder.sh @baldm0mma
 
 # OSS Plugin Partnerships backend code
@@ -413,7 +413,7 @@
 /pkg/services/plugindashboards/ @grafana/grafana-catalog
 
 # Backend code docs
-/contribute/backend/ @grafana/grafana-backend-group
+/contribute/backend/ @grafana/grafana-backend-services-squad
 
 
 /crowdin.yml @grafana/grafana-frontend-platform
@@ -947,7 +947,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/applyStateChanges.ts @grafana/dashboards-squad
 /public/app/core/utils/arrayMove.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/isFrontendService.ts @grafana/grafana-frontend-platform
-/public/app/core/utils/auth.ts @grafana/identity-access-team
+/public/app/core/utils/auth* @grafana/identity-access-team
 /public/app/core/utils/browser* @grafana/grafana-frontend-platform
 /public/app/core/utils/colors.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/debugLog.ts @grafana/dashboards-squad
@@ -1102,9 +1102,9 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/explore/FlameGraph/ @grafana/observability-traces-and-profiling
 /public/app/features/explore/TraceView/ @grafana/observability-traces-and-profiling
 
-/public/api-merged.json @grafana/grafana-backend-group
-/public/api-enterprise-spec.json @grafana/grafana-backend-group
-/public/openapi3.json @grafana/grafana-backend-group
+/public/api-merged.json @grafanabot
+/public/api-enterprise-spec.json @grafanabot
+/public/openapi3.json @grafanabot
 /public/app/app.ts @grafana/grafana-frontend-platform
 /public/app/dev.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/metrics.ts @grafana/grafana-catalog
@@ -1115,10 +1115,10 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/AppWrapper.tsx @grafana/grafana-frontend-platform
 
 /scripts/benchmark-access-control.sh @grafana/access-squad
-/scripts/build-deb.sh @grafana/grafana-backend-services-squad
-/scripts/build-rpm.sh @grafana/grafana-backend-services-squad
-/scripts/build-targz.sh @grafana/grafana-backend-services-squad
-scripts/build-msi.sh @grafana/grafana-backend-services-squad
+/scripts/build-deb.sh @grafana/grafana-operator-experience-squad
+/scripts/build-rpm.sh @grafana/grafana-operator-experience-squad
+/scripts/build-targz.sh @grafana/grafana-operator-experience-squad
+scripts/build-msi.sh @grafana/grafana-operator-experience-squad
 scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/ci-* @grafana/grafana-backend-services-squad
 /scripts/publish-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
@@ -1131,6 +1131,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/check-enterprise-linked.sh @grafana/grafana-frontend-platform
 /scripts/check-codeowner-affected.js @grafana/dataviz-squad
 /scripts/compare-coverage-by-codeowner.js @grafana/dataviz-squad
+/scripts/tests/compare-coverage-by-codeowner.test.ts @grafana/dataviz-squad
 /scripts/helpers/ @grafana/grafana-backend-services-squad
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
@@ -1138,10 +1139,10 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/prepare-npm-package.js @grafana/grafana-frontend-platform
 /scripts/protobuf-check.sh @grafana/grafana-catalog
 /scripts/stripnulls.sh @grafana/grafana-as-code
-/scripts/tag_release.sh @grafana/grafana-backend-services-squad
-/scripts/trigger_docker_build.sh @grafana/grafana-backend-services-squad
+/scripts/tag_release.sh @grafana/grafana-operator-experience-squad
+/scripts/trigger_docker_build.sh @grafana/grafana-operator-experience-squad
 /scripts/trigger_grafana_packer.sh @grafana/grafana-backend-services-squad
-/scripts/trigger_windows_build.sh @grafana/grafana-backend-services-squad
+/scripts/trigger_windows_build.sh @grafana/grafana-operator-experience-squad
 /scripts/verify-repo-update/ @grafana/grafana-backend-services-squad
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-squad
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/grafana-frontend-platform
@@ -1279,11 +1280,11 @@ embed.go @grafana/grafana-as-code
 /.github/pr-commands.json @tolzhabayev
 /.github/renovate.json5 @grafana/grafana-frontend-platform
 /.github/actions/check-jobs/action.yml @grafana/grafana-frontend-platform
-/.github/actions/setup-enterprise/action.yml @grafana/grafana-backend-group
-/.github/actions/setup-go/action.yml @grafana/grafana-backend-group
-/.github/actions/report-go-cache-sizes/ @grafana/grafana-backend-group
-/.github/actions/build-go @grafana/grafana-backend-services-squad
-/.github/actions/build-targz @grafana/grafana-backend-services-squad
+/.github/actions/setup-enterprise/action.yml @grafana/grafana-operator-experience-squad
+/.github/actions/setup-go/action.yml @grafana/grafana-backend-services-squad
+/.github/actions/report-go-cache-sizes/ @grafana/grafana-operator-experience-squad
+/.github/actions/build-go @grafana/grafana-operator-experience-squad
+/.github/actions/build-targz @grafana/grafana-operator-experience-squad
 /.github/actions/bundle-schema-types @grafana/grafana-frontend-platform
 /.github/actions/change-detection @grafana/grafana-backend-services-squad
 /.github/actions/setup-fpm @grafana/grafana-backend-services-squad
@@ -1296,27 +1297,27 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/alerting-swagger-gen.yml @grafana/alerting-squad
 /.github/workflows/alerting-update-module.yml @grafana/alerting-squad
 /.github/workflows/auto-milestone.yml @grafana/grafana-backend-services-squad
-/.github/workflows/backend-code-checks.yml @grafana/grafana-backend-group
-/.github/workflows/backend-unit-tests.yml @grafana/grafana-backend-group
+/.github/workflows/backend-code-checks.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/backend-unit-tests.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/backport-trigger.yml @grafana/grafana-backend-services-squad
-/.github/workflows/build-go-matrix.yml @grafana/grafana-backend-services-squad
+/.github/workflows/build-go-matrix.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/backport-workflow.yml @grafana/grafana-backend-services-squad
 /.github/workflows/bump-version.yml @grafana/grafana-backend-services-squad
-/.github/workflows/release-pr.yml @grafana/grafana-backend-services-squad
-/.github/workflows/release-comms.yml @grafana/grafana-backend-services-squad
+/.github/workflows/release-pr.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/release-comms.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/migrate-prs.yml @grafana/grafana-backend-services-squad
-/.github/workflows/create-next-release-branch.yml @grafana/grafana-backend-services-squad
-/.github/workflows/create-release-branch.yml @grafana/grafana-backend-services-squad
+/.github/workflows/create-next-release-branch.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/create-release-branch.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-security-branch.yml @grafana/grafana-backend-services-squad
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/commands.yml @torkelo
-/.github/workflows/community-release.yml @grafana/grafana-backend-services-squad
+/.github/workflows/community-release.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/detect-breaking-changes-* @grafana/grafana-frontend-platform
 /.github/workflows/documentation-ci.yml @grafana/docs-tooling
 /.github/workflows/deploy-pr-preview.yml @grafana/docs-tooling
 /.github/workflows/externalized-datasources-reminder.yml @grafana/data-sources-plugins
 /.github/workflows/feature-toggles-ci.yml @grafana/docs-tooling
-/.github/workflows/github-release.yml @grafana/grafana-backend-services-squad
+/.github/workflows/github-release.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/external-fr-notify.yml @grafana/grafana-community-support
 /.github/workflows/external-fr-type-labeler.yml @grafana/grafana-community-support
 /.github/workflows/external-fr-weekly-digest.yml @grafana/grafana-community-support
@@ -1336,7 +1337,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check.yml @grafana/grafana-backend-services-squad
 /.github/workflows/pr-test-integration-pgvector.yml @grafana/grafana-search-and-storage
-/.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
+/.github/workflows/pr-test-integration.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/reject-gh-secrets.yml @grafana/grafana-backend-services-squad
 /.github/workflows/sync-mirror-event.yml @grafana/grafana-backend-services-squad
 /.github/workflows/scripts/levitate/ @grafana/grafana-frontend-platform
@@ -1362,15 +1363,15 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/trufflehog.yml @Proximyst
 /.github/workflows/changelog.yml @zserge
 /.github/workflows/shellcheck.yml @grafana/grafana-backend-services-squad
-/.github/workflows/release-build.yml @grafana/grafana-backend-services-squad
-/.github/workflows/release-verify.yml @grafana/grafana-backend-services-squad
-/.github/workflows/release-verify-packages.yml @grafana/grafana-backend-services-squad
+/.github/workflows/release-build.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/release-verify.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/release-verify-packages.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/cleanup-branches.yml @grafana/grafana-backend-services-squad
 /.github/workflows/publish-artifact.yml @grafana/grafana-backend-services-squad
 /.github/actions/changelog @zserge
 /.github/workflows/check-frontend-test-coverage.yml @grafana/dataviz-squad
 /.github/workflows/report-frontend-coverage-to-bench.yaml @grafana/dataviz-squad
-/.github/workflows/swagger-gen.yml @grafana/grafana-backend-group
+/.github/workflows/swagger-gen.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
 /.github/workflows/analytics-events-report.yml @grafana/grafana-frontend-platform
@@ -1387,9 +1388,9 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-test-docker.yml @grafana/grafana-backend-services-squad
 /.github/workflows/update-schema-types.yml @grafana/grafana-frontend-platform
 /.github/workflows/defaults-ini-docs-reminder.yml @grafana/docs-tooling @jtvdez
-/.github/workflows/pr-build-grafana.yml @grafana/grafana-backend-services-squad
-/.github/workflows/build-docker-variants.yml @grafana/grafana-backend-services-squad
-/.github/workflows/create-release-tag.yml @grafana/grafana-backend-services-squad
+/.github/workflows/pr-build-grafana.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/build-docker-variants.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/create-release-tag.yml @grafana/grafana-operator-experience-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

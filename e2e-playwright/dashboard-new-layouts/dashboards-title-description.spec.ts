@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 
 test.use({
   featureToggles: {
@@ -16,12 +14,14 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can change dashboard description and title', async ({ gotoDashboardPage, selectors, page, components }) => {
+    test('can change dashboard description and title', async ({
+      gotoDashboardPage,
+      selectors,
+      components,
+      controls,
+      sidebar,
+    }) => {
       const dashboardPage = await gotoDashboardPage({ uid: 'ed155665/annotation-filtering' });
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Options');
 
