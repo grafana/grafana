@@ -520,10 +520,10 @@ export class BackendSrv implements BackendService {
                 return from(authChecker).pipe(
                   catchError((err) => {
                     if (err.status === 401) {
-                      this.dependencies.logout();
-                      return throwError(err);
+                      // Rethrow the original per-request error instead so each caller gets its own config/traceId
+                      return throwError(() => error);
                     }
-                    return throwError(err);
+                    return throwError(() => err);
                   })
                 );
               }
@@ -614,6 +614,14 @@ export class BackendSrv implements BackendService {
     }
 
     this._tokenRotationInProgress = this.fetch({ url: '/api/user/auth-tokens/rotate', method: 'POST', retry: 1 }).pipe(
+      // Runs once against the shared source, upstream of share(), so a failure logs out exactly once
+      // no matter how many requests are waiting on this same rotation.
+      catchError((err) => {
+        if (err.status === 401) {
+          this.dependencies.logout();
+        }
+        return throwError(() => err);
+      }),
       finalize(() => {
         this._tokenRotationInProgress = null;
       }),
@@ -629,6 +637,14 @@ export class BackendSrv implements BackendService {
     }
 
     this._loginPingInProgress = this.fetch({ url: '/api/login/ping', method: 'GET', retry: 1 }).pipe(
+      // Runs once against the shared source, upstream of share(), so a failure logs out exactly once
+      // no matter how many requests are waiting on this same ping.
+      catchError((err) => {
+        if (err.status === 401) {
+          this.dependencies.logout();
+        }
+        return throwError(() => err);
+      }),
       finalize(() => {
         this._loginPingInProgress = null;
       }),
