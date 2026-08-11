@@ -27,11 +27,7 @@ type HomeDashboardGetter interface {
 }
 
 func NewHomeDashboardSupport(cfg *setting.Cfg) *homeDashboard {
-	filePath := cfg.DefaultHomeDashboardPath
-	if filePath == "" {
-		filePath = filepath.Join(cfg.StaticRootPath, "dashboards/home.json")
-	}
-	return newHomeDashboardSupportForFile(filePath)
+	return newHomeDashboardSupportForFile(cfg.DefaultHomeDashboardPath)
 }
 
 func newHomeDashboardSupportForFile(defaultDashboardFile string) *homeDashboard {
@@ -39,7 +35,7 @@ func newHomeDashboardSupportForFile(defaultDashboardFile string) *homeDashboard 
 		log: logging.DefaultLogger.With("logger", "dashboards-apiserver-home"),
 	}
 
-	// With no file configured we always serve the built-in fallback, so there is nothing to watch.
+	// With no file configured there is no dashboard to serve or watch.
 	if defaultDashboardFile == "" {
 		return home
 	}
@@ -120,19 +116,20 @@ func (h *homeDashboard) Get(version string) (runtime.Object, error) {
 	return obj, err
 }
 
-// load reads the configured file (falling back to a built-in dashboard if the
-// file is missing or invalid), refreshes the cached source, and invalidates any
-// previously cached version conversions. Must be called with versionsMu held.
+// load reads the configured file, refreshes the cached source, and invalidates
+// any previously cached version conversions. Must be called with versionsMu held.
+// Returns an error when no custom home path is configured or the file cannot be read.
 func (h *homeDashboard) load() error {
+	if h.fpath == "" {
+		return fmt.Errorf("no custom home dashboard configured")
+	}
+
 	obj, err := readDashboard(h.fpath)
 	if err != nil {
-		h.log.Error("failed to read home dashboard, using default", "path", h.fpath, "err", err)
+		return err
 	}
 	if obj == nil {
-		obj, err = defaultHomeDashboard()
-		if err != nil {
-			return err
-		}
+		return fmt.Errorf("no custom home dashboard configured")
 	}
 
 	now := metav1.Now()

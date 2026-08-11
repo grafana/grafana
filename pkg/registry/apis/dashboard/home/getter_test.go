@@ -66,15 +66,12 @@ func TestNewHomeDashboardSupport_UsesConfiguredPath(t *testing.T) {
 	require.NoError(t, home.Close())
 }
 
-func TestNewHomeDashboardSupport_FallsBackToStaticRootPath(t *testing.T) {
-	// StaticRootPath is used only to build the default path; the file does not
-	// need to exist for the constructor to return.
+func TestNewHomeDashboardSupport_EmptyPathWhenUnset(t *testing.T) {
 	cfg := &setting.Cfg{StaticRootPath: t.TempDir()}
 
 	home := NewHomeDashboardSupport(cfg)
 	require.NotNil(t, home)
-	require.Equal(t, filepath.Join(cfg.StaticRootPath, "dashboards/home.json"), home.fpath)
-	// File does not exist → watcher.Add fails and the watcher is left nil.
+	require.Empty(t, home.fpath)
 	require.Nil(t, home.watcher)
 }
 
@@ -120,20 +117,24 @@ func TestHomeDashboardGet_ErrorsWithoutScheme(t *testing.T) {
 	require.Contains(t, err.Error(), "scheme was not registered")
 }
 
-func TestHomeDashboardGet_FallsBackToDefaultWhenFileMissing(t *testing.T) {
+func TestHomeDashboardGet_ErrorsWhenFileMissing(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "missing.json")
 	home := newHomeDashboardSupportForFile(missing)
 	t.Cleanup(func() { _ = home.Close() })
 	home.RegisterSchema(newTestScheme(t))
 
-	obj, err := home.Get(dashv0.VERSION)
-	require.NoError(t, err)
-	dash, ok := obj.(*dashv0.Dashboard)
-	require.True(t, ok)
-	require.Equal(t, DASHBOARD_NAME, dash.Name)
-	require.NotEmpty(t, dash.ResourceVersion)
-	require.False(t, dash.CreationTimestamp.IsZero())
-	require.Equal(t, "Home", dash.Spec.Object["title"])
+	_, err := home.Get(dashv0.VERSION)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "read home dashboard")
+}
+
+func TestHomeDashboardGet_ErrorsWhenNoPathConfigured(t *testing.T) {
+	home := newHomeDashboardSupportForFile("")
+	home.RegisterSchema(newTestScheme(t))
+
+	_, err := home.Get(dashv0.VERSION)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "no custom home dashboard configured")
 }
 
 func TestHomeDashboardGet_LoadsConfiguredFile(t *testing.T) {
@@ -157,7 +158,9 @@ func TestHomeDashboardGet_LoadsConfiguredFile(t *testing.T) {
 }
 
 func TestHomeDashboardGet_CachesConvertedVersions(t *testing.T) {
-	home := newHomeDashboardSupportForFile("")
+	path := writeDashboardFile(t, `{"title":"cached"}`)
+	home := newHomeDashboardSupportForFile(path)
+	t.Cleanup(func() { _ = home.Close() })
 	home.scheme = newTestScheme(t)
 
 	first, err := home.Get(dashv0.VERSION)
@@ -221,7 +224,9 @@ func TestHomeDashboardGet_ConvertsToAllRegisteredVersions(t *testing.T) {
 }
 
 func TestHomeDashboardGet_UnsupportedVersionIsCachedAsError(t *testing.T) {
-	home := newHomeDashboardSupportForFile("")
+	path := writeDashboardFile(t, `{"title":"unsupported-version"}`)
+	home := newHomeDashboardSupportForFile(path)
+	t.Cleanup(func() { _ = home.Close() })
 	home.scheme = newTestScheme(t)
 
 	_, err := home.Get("v9unknown")
@@ -233,27 +238,16 @@ func TestHomeDashboardGet_UnsupportedVersionIsCachedAsError(t *testing.T) {
 	require.Equal(t, err.Error(), err2.Error())
 }
 
-func TestHomeDashboardLoad_PreservesPriorBehaviorOnMissingFile(t *testing.T) {
-	// load() should not error when the underlying file is missing; it logs and
-	// falls back to defaultHomeDashboard.
+func TestHomeDashboardLoad_ErrorsOnMissingFile(t *testing.T) {
 	home := newHomeDashboardSupportForFile(filepath.Join(t.TempDir(), "missing.json"))
 	home.scheme = newTestScheme(t)
 
 	home.versionsMu.Lock()
 	err := home.load()
 	home.versionsMu.Unlock()
-	require.NoError(t, err)
-	require.NotNil(t, home.source)
-
-	meta, err := utils.MetaAccessor(home.source)
-	require.NoError(t, err)
-	require.Equal(t, DASHBOARD_NAME, meta.GetName())
-	require.NotEmpty(t, meta.GetResourceVersion())
-	ts := meta.GetCreationTimestamp()
-	require.False(t, ts.IsZero())
-	// load() must invalidate any cached version conversions.
-	require.NotNil(t, home.versions)
-	require.Empty(t, home.versions)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "read home dashboard")
+	require.Nil(t, home.source)
 }
 
 func TestHomeDashboardLoad_RereadsSourceWhenInvalidated(t *testing.T) {

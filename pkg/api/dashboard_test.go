@@ -149,28 +149,21 @@ func TestGetHomeDashboard(t *testing.T) {
 		"canAdmin":  false,
 	}
 
+	t.Run("empty default_home_dashboard_path returns not found", func(t *testing.T) {
+		hs.Cfg.DefaultHomeDashboardPath = ""
+		prefService.ExpectedPreference = &pref.Preference{}
+
+		res := hs.GetHomeDashboard(req)
+		nr, ok := res.(*response.NormalResponse)
+		require.True(t, ok, "should return *NormalResponse")
+		require.Equal(t, http.StatusNotFound, nr.Status())
+	})
+
 	tests := []struct {
 		name             string
 		defaultSetting   string
 		expectedResponse func(t *testing.T) []byte
 	}{
-		{
-			name:           "using default config",
-			defaultSetting: "",
-			expectedResponse: func(t *testing.T) []byte {
-				t.Helper()
-				b, err := os.ReadFile("../../public/dashboards/home.json")
-				require.NoError(t, err)
-				j, err := simplejson.NewJson(b)
-				require.NoError(t, err)
-				wrapper := dtos.DashboardFullWithMeta{}
-				wrapper.Meta.FolderTitle = "General"
-				wrapper.Dashboard = j
-				out, err := json.Marshal(wrapper)
-				require.NoError(t, err)
-				return out
-			},
-		},
 		{
 			name:           "custom path with classic dashboard",
 			defaultSetting: "../../public/dashboards/default.json",
