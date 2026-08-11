@@ -112,14 +112,18 @@ const defineFeatureEventsRule = createRule({
           }
 
           for (const prop of init.properties) {
+            const numberOfComments = context.sourceCode.getCommentsBefore(prop).length;
             if (prop.type !== AST_NODE_TYPES.Property) {
               continue;
             }
             if (!propertyValueCallsFactory(prop.value)) {
               continue;
             }
-            if (context.sourceCode.getCommentsBefore(prop).length === 0) {
+            if (numberOfComments === 0) {
               context.report({ node: prop, messageId: 'missingEventComment' });
+            }
+            if (numberOfComments >= 2) {
+              context.report({ node: prop, messageId: 'stackedJSDocComment' });
             }
           }
           return;
@@ -144,14 +148,19 @@ const defineFeatureEventsRule = createRule({
             (e) => e.expression.type === AST_NODE_TYPES.Identifier && e.expression.name === 'EventProperty'
           ) ?? false;
 
+        const numberOfComments = context.sourceCode.getCommentsBefore(node).length;
+
         if (!extendsEventProperty) {
           context.report({ node, messageId: 'interfaceMustExtend' });
           return;
         }
 
         for (const member of node.body.body) {
-          if (context.sourceCode.getCommentsBefore(member).length === 0) {
+          if (numberOfComments === 0) {
             context.report({ node: member, messageId: 'missingPropertyComment' });
+          }
+          if (numberOfComments >= 2) {
+            context.report({ node: member, messageId: 'stackedJSDocComment' });
           }
         }
       },
@@ -170,6 +179,7 @@ const defineFeatureEventsRule = createRule({
       missingEventComment: 'Each event must have a JSDoc comment describing when it fires or its purpose.',
       interfaceMustExtend: 'Event property interfaces must extend `EventProperty` from `@grafana/runtime/internal`.',
       missingPropertyComment: 'Each interface property must have a JSDoc comment describing what it captures.',
+      stackedJSDocComment: 'Each interface property or event must just have one JSDoc comment describing it',
     },
     schema: [],
   },
