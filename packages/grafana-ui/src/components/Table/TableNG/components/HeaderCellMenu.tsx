@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import { useCallback, useRef } from 'react';
 
-import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -10,54 +10,25 @@ import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Dropdown } from '../../../Dropdown/Dropdown';
 import { IconButton } from '../../../IconButton/IconButton';
 import { Menu } from '../../../Menu/Menu';
-import { Popover } from '../../../Tooltip/Popover';
-import { FilterPopup } from '../Filter/FilterPopup';
-import { useFilterPopupState } from '../Filter/useFilterPopupState';
-import { type FilterType, type TableRow } from '../types';
 
 interface HeaderCellMenuProps {
-  name: string;
   displayName: string;
-  field: Field;
   filterable: boolean;
-  filter: FilterType;
-  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
-  parentIndex?: number;
-  crossFilterRows: Record<string, TableRow[]>;
-  crossFilterTailRows: TableRow[];
+  /** Opens the column's filter popup, anchored to the passed element. */
+  onOpenFilter: (anchor: HTMLButtonElement | null) => void;
 }
 
 /**
  * The `table.refresh` per-column "..." menu. Hidden until the header cell is hovered or something
- * inside it takes focus, and pinned visible while the column is filtered so a filtered column stays
- * distinguishable from an unfiltered one.
+ * inside it takes focus.
  *
- * Built on Dropdown + Menu so it matches the dashboard panel menu.
+ * Built on Dropdown + Menu so it matches the dashboard panel menu. The filter popup itself is owned
+ * by `HeaderCell`, which also opens it from the persistent filter icon.
  */
-export function HeaderCellMenu({
-  name,
-  displayName,
-  field,
-  filterable,
-  filter,
-  setFilter,
-  parentIndex,
-  crossFilterRows,
-  crossFilterTailRows,
-}: HeaderCellMenuProps) {
+export function HeaderCellMenu({ displayName, filterable, onOpenFilter }: HeaderCellMenuProps) {
   // `Dropdown` overwrites its child's ref with its own floating-ui reference, so we can't hold a ref
-  // on the button directly. We anchor off the wrapper instead, and reach the button through it for
-  // the focus restore `FilterPopup` does on close.
+  // on the button directly. We reach it through the wrapper instead, so the popup can anchor to it.
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const { isPopoverVisible, setPopoverVisible, popupProps } = useFilterPopupState({
-    name,
-    filter,
-    setFilter,
-    field,
-    parentIndex,
-    crossFilterRows,
-    crossFilterTailRows,
-  });
   const styles = useStyles2(getStyles);
 
   const menuLabel = t('grafana-ui.table.column-menu-label', 'Column options for {{name}}', { name: displayName });
@@ -70,12 +41,12 @@ export function HeaderCellMenu({
             label={t('grafana-ui.table.column-menu-filter', 'Filter values')}
             icon="filter"
             testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem}
-            onClick={() => setPopoverVisible(true)}
+            onClick={() => onOpenFilter(wrapperRef.current?.querySelector('button') ?? null)}
           />
         )}
       </Menu>
     ),
-    [filterable, menuLabel, setPopoverVisible]
+    [filterable, menuLabel, onOpenFilter]
   );
 
   return (
@@ -97,17 +68,6 @@ export function HeaderCellMenu({
           data-testid={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button}
         />
       </Dropdown>
-
-      {isPopoverVisible && wrapperRef.current && (
-        <Popover
-          content={<FilterPopup {...popupProps} buttonElement={wrapperRef.current.querySelector('button')} />}
-          // matches the inline filter button's placement: the popup opens rightward from the control
-          // rather than back across the column it belongs to
-          placement="bottom-start"
-          referenceElement={wrapperRef.current}
-          show
-        />
-      )}
     </div>
   );
 }
