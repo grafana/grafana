@@ -175,10 +175,10 @@ Configuring Workload Identity Federation involves three systems: Google Cloud, y
 
 ### Configure Google Cloud
 
-1. Create a [Workload Identity Pool and Provider](https://cloud.google.com/iam/docs/workload-identity-federation-with-other-providers) that trusts your OIDC identity provider. When configuring the provider, set up attribute mappings so that `google.subject` maps to the relevant claim from your identity provider (for example, `assertion.sub` — the exact mapping depends on your provider's claim format).
+1. Create a [Workload Identity Pool and Provider](https://cloud.google.com/iam/docs/workload-identity-federation-with-other-providers) that trusts your OIDC identity provider. When configuring the provider, set up attribute mappings so that `google.subject` maps to the relevant claim from your identity provider, such as `assertion.sub`. The exact mapping depends on your provider's claim format.
 1. Grant the Cloud Monitoring permissions needed to run queries. How you grant them depends on whether you use service account impersonation:
-   - **Without impersonation** — grant the WIF pool principal the **Monitoring Viewer** role (`roles/monitoring.viewer`) directly.
-   - **With impersonation** — create a service account, grant it the **Monitoring Viewer** role, then grant the WIF pool principal the **Service Account Token Creator** role (`roles/iam.serviceAccountTokenCreator`) on that service account.
+   - **Without impersonation:** Grant the WIF pool principal the **Monitoring Viewer** role (`roles/monitoring.viewer`) directly.
+   - **With impersonation:** Create a service account, grant it the **Monitoring Viewer** role, then grant the WIF pool principal the **Service Account Token Creator** role (`roles/iam.serviceAccountTokenCreator`) on that service account.
 
 ### Configure Grafana Cloud
 
@@ -201,7 +201,7 @@ Configuring Workload Identity Federation involves three systems: Google Cloud, y
 1. Click **Save & test** to verify the connection.
 
 {{< admonition type="note" >}}
-Credentials from Workload Identity Federation are tied to the signed-in user's active session — there is no long-lived credential available to the Grafana backend. This means any feature that runs without a user present won't work, including alerting, scheduled reports, and public dashboards. If you rely on these features, use a service account key (JWT) instead.
+Credentials from Workload Identity Federation are tied to the signed-in user's active session, so no long-lived credential is available to the Grafana backend. Any feature that runs without a user present won't work, including alerting, scheduled reports, and public dashboards. If you rely on these features, use a service account key (Google JWT File) instead.
 {{< /admonition >}}
 
 ## Configure service account impersonation

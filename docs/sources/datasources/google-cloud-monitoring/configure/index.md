@@ -93,9 +93,9 @@ Configure how Grafana authenticates with Google Cloud.
 
 | Setting                 | Description                                                                                                                                                                                                                                                         |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Authentication type** | Select the authentication method. Choose **Google JWT File** to use a service account key file, **GCE Default Service Account** if Grafana is running on a GCE virtual machine, or **Forward OAuth Identity** to authenticate as the Google-signed-in Grafana user. |
+| **Authentication type** | Select the authentication method: **Google JWT File** to use a service account key file, **GCE Default Service Account** if Grafana runs on a GCE virtual machine, **Forward OAuth Identity** to authenticate as the Google-signed-in Grafana user, or **Workload Identity Federation** (Grafana Cloud only) to authenticate through an external OIDC identity provider. For a comparison of the methods, refer to [Supported authentication methods](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#supported-authentication-methods). |
 
-### JWT Key Details
+### Configure Google JWT File authentication
 
 These settings appear when you select **Google JWT File** as the authentication type.
 
@@ -103,7 +103,7 @@ These settings appear when you select **Google JWT File** as the authentication 
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **JWT token** | Upload or paste your Google JWT token. You can drag and drop a `.json` key file, click **Click to browse files** to upload, or use **Paste JWT Token** or **Fill In JWT Token manually**. |
 
-### Forward OAuth Identity
+### Configure Forward OAuth Identity
 
 These settings appear when you select **Forward OAuth Identity** as the authentication type.
 
@@ -123,7 +123,27 @@ scopes = openid email profile https://www.googleapis.com/auth/monitoring.read
 
 After you change the scopes, each user must sign out, revoke the existing grant at [https://myaccount.google.com/permissions](https://myaccount.google.com/permissions), and sign in again. Google reuses the previous consent until the grant is revoked, so existing sessions continue to hold tokens issued under the old scope set.
 
-### Service account impersonation
+<!-- vale Grafana.Headings = NO -->
+
+### Configure Workload Identity Federation
+
+<!-- vale Grafana.Headings = YES -->
+
+_Only available for Grafana Cloud._
+
+These settings appear when you select **Workload Identity Federation** as the authentication type. This method lets each query run as the signed-in user by authenticating through an external OIDC identity provider, such as Okta, instead of a service account key. Setting it up spans Google Cloud, your Grafana Cloud stack, and the data source. For the complete procedure, refer to [Use Workload Identity Federation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/google-authentication/#use-workload-identity-federation).
+
+| Setting                             | Description                                                                                                                                                                                                  |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Workload Identity Pool Provider** | Enter the full resource path of your provider, in the form `projects/<project-number>/locations/global/workloadIdentityPools/<pool-id>/providers/<provider-id>`. Use the project number, not the project ID. |
+| **Service account email**           | _(Optional)_ Enter the service account to impersonate. Leave this blank if you granted the **Monitoring Viewer** role directly to the Workload Identity pool principal.                                       |
+| **Default project**                 | Enter the GCP project ID where your Cloud Monitoring queries run.                                                                                                                                            |
+
+{{< admonition type="note" >}}
+Credentials from Workload Identity Federation are tied to the signed-in user's session, so features that run without a user present don't work. This includes alerting, scheduled reports, and public dashboards. If you rely on these features, use a service account key (Google JWT File) instead.
+{{< /admonition >}}
+
+### Configure service account impersonation
 
 Use service account impersonation to have Grafana authenticate as a different service account than the one provided in the JWT token.
 
