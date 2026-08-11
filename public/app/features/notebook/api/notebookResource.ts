@@ -75,7 +75,10 @@ export async function createNotebook(spec: NotebookSpec): Promise<CreatedNoteboo
     spec: spec as unknown as Notebook['spec'],
   };
 
-  const result = await dispatch(dashboardAPIv2beta1.endpoints.createNotebook.initiate({ notebook }));
+  // `track: false` because nothing renders this mutation's state — the caller awaits the result here.
+  // Tracked, every create would leave a cache entry in the store that no component subscribes to and
+  // nothing resets.
+  const result = await dispatch(dashboardAPIv2beta1.endpoints.createNotebook.initiate({ notebook }, { track: false }));
 
   if ('error' in result && result.error) {
     throw new Error(notebookWriteError(result.error));
