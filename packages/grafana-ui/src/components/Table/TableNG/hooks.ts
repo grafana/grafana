@@ -785,15 +785,19 @@ export function useContentAwareWidths({
         : undefined,
     [enabled, theme]
   );
-  return enabled
-    ? {
-        typographyCtx,
-        headerTypographyCtx: headerTypographyCtx!,
-        showTypeIcons,
-        getActions,
-        sortColumns,
-      }
-    : undefined;
+  return useMemo(
+    () =>
+      enabled
+        ? {
+            typographyCtx,
+            headerTypographyCtx: headerTypographyCtx!,
+            showTypeIcons,
+            getActions,
+            sortColumns,
+          }
+        : undefined,
+    [enabled, typographyCtx, headerTypographyCtx, showTypeIcons, getActions, sortColumns]
+  );
 }
 
 interface UseNestedColWidthsOptions {
