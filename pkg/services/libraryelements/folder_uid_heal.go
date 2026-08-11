@@ -120,7 +120,10 @@ func (s *FolderUIDHealService) healOrg(ctx context.Context, orgID int64) error {
 	ctx, user := identity.WithServiceIdentity(ctx, orgID,
 		identity.WithServiceIdentityName("library-element-folder-uid-heal"))
 
-	// Rows at the root (folder_id 0) are left alone: there is no folder to resolve a UID from.
+	if err := s.healRoot(ctx, orgID); err != nil {
+		return err
+	}
+
 	var folderIDs []int64
 	if err := s.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL("SELECT DISTINCT folder_id FROM library_element WHERE org_id=? AND folder_id<>0",
@@ -149,6 +152,22 @@ func (s *FolderUIDHealService) healOrg(ctx context.Context, orgID int64) error {
 		}
 	}
 	return nil
+}
+
+// healRoot normalizes the markers that mean "no folder" (NULL and 'general') to the empty
+// string every write path converges on. A root row holding a real UID is left alone: the k8s
+// create path wrote those before it aligned folder_id, so the panel does live in that folder.
+func (s *FolderUIDHealService) healRoot(ctx context.Context, orgID int64) error {
+	return s.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		res, err := sess.Exec(`UPDATE library_element SET folder_uid='' `+
+			`WHERE org_id=? AND folder_id=0 AND (folder_uid IS NULL OR folder_uid=?)`,
+			orgID, folder.GeneralFolderUID)
+		if err != nil {
+			return err
+		}
+		s.logHealed(res, orgID, 0, "")
+		return nil
+	})
 }
 
 func (s *FolderUIDHealService) healFolder(ctx context.Context, orgID, folderID int64, folderUID string) error {

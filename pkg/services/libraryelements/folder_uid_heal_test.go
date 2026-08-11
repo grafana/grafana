@@ -101,20 +101,38 @@ func TestIntegration_HealOrg(t *testing.T) {
 		require.Equal(t, "f2", healStoredUID(t, store, "consistent"))
 	})
 
-	t.Run("leaves a stale folder_uid at the root untouched", func(t *testing.T) {
-		s, store := healSetup(t, map[int64]string{2: "f2"})
-		healInsert(t, store, "moved-to-root", 0, "f1")
-
-		require.NoError(t, s.healOrg(context.Background(), healOrgID))
-		require.Equal(t, "f1", healStoredUID(t, store, "moved-to-root"))
-	})
-
-	t.Run("leaves a NULL folder_uid at the root untouched", func(t *testing.T) {
+	t.Run("normalizes a NULL folder_uid at the root to empty", func(t *testing.T) {
 		s, store := healSetup(t, map[int64]string{2: "f2"})
 		healInsert(t, store, "null-root", 0, nil)
 
 		require.NoError(t, s.healOrg(context.Background(), healOrgID))
-		require.Nil(t, healStoredUID(t, store, "null-root"))
+		require.Equal(t, "", healStoredUID(t, store, "null-root"))
+	})
+
+	t.Run("normalizes a general folder_uid at the root to empty", func(t *testing.T) {
+		s, store := healSetup(t, map[int64]string{2: "f2"})
+		healInsert(t, store, "general-root", 0, folder.GeneralFolderUID)
+
+		require.NoError(t, s.healOrg(context.Background(), healOrgID))
+		require.Equal(t, "", healStoredUID(t, store, "general-root"))
+	})
+
+	t.Run("leaves an already empty folder_uid at the root untouched", func(t *testing.T) {
+		s, store := healSetup(t, map[int64]string{2: "f2"})
+		healInsert(t, store, "empty-root", 0, "")
+
+		require.NoError(t, s.healOrg(context.Background(), healOrgID))
+		require.Equal(t, "", healStoredUID(t, store, "empty-root"))
+	})
+
+	// The k8s create path wrote folder_id=0 with a real UID before it aligned folder_id,
+	// so the panel lives in that folder and must not be moved to the root.
+	t.Run("leaves a real folder_uid at the root untouched", func(t *testing.T) {
+		s, store := healSetup(t, map[int64]string{2: "f2"})
+		healInsert(t, store, "k8s-created", 0, "f2")
+
+		require.NoError(t, s.healOrg(context.Background(), healOrgID))
+		require.Equal(t, "f2", healStoredUID(t, store, "k8s-created"))
 	})
 
 	t.Run("leaves the row alone when the folder no longer exists", func(t *testing.T) {
