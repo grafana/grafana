@@ -243,7 +243,9 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       },
 
       '&:focus-visible': {
-        outline: `2px solid ${theme.colors.secondary.border}`,
+        // Intentionally not theme.colors.secondary.border — that token is a faint decorative
+        // border for the solid fill and is nearly invisible as a focus ring against it.
+        outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '2px',
         ...(!alwaysVisible && {
           opacity: 1,
