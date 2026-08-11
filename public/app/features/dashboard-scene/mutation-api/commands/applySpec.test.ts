@@ -207,6 +207,31 @@ describe('APPLY_SPEC with a panel open for editing', () => {
     expect(editedPanelKey(scene)).toBeUndefined();
   });
 
+  it('keeps `?editPanel=` in the URL while the library panel loads', async () => {
+    const scene = buildScene(makeSpec());
+    openPanelEdit(scene, 'panel-2');
+
+    await applySpec(scene, makeSpec());
+
+    // The pane is closed, but the dashboard is still editing that panel: a reload here has to come
+    // back to it, and a load that never completes must not lose it either.
+    expect(editedPanelKey(scene)).toBeUndefined();
+    expect(scene.urlSync!.getUrlState().editPanel).toBe('2');
+
+    getLibraryPanelBehavior(findVizPanelByKey(scene, 'panel-2')!)!.setState({ isLoaded: true });
+    expect(scene.urlSync!.getUrlState().editPanel).toBe('2');
+  });
+
+  it('drops `?editPanel=` when the applied spec no longer has the panel', async () => {
+    const scene = buildScene(makeSpec());
+    openPanelEdit(scene, 'panel-1');
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    await applySpec(scene, makeSpec(withoutPanel1));
+
+    expect(scene.urlSync!.getUrlState().editPanel).toBeUndefined();
+  });
+
   it('leaves the editor closed when none was open', async () => {
     const scene = buildScene(makeSpec());
 

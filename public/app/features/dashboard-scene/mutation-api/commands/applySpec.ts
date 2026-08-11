@@ -13,7 +13,7 @@
 
 import * as z from 'zod';
 
-import { sceneUtils } from '@grafana/scenes';
+import { sceneUtils, type SceneObjectUrlValues } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
@@ -110,6 +110,12 @@ type MutationContextScene = {
   setState: (state: unknown) => void;
 };
 
+// Same reason: the bits of DashboardSceneUrlSync the rebuild drives, without importing it.
+type DashboardUrlSync = {
+  retainEditPanelAcrossRebuild: (panelId: string) => void;
+  updateFromUrl: (values: SceneObjectUrlValues) => void;
+};
+
 export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   name: 'APPLY_SPEC',
   description:
@@ -162,10 +168,20 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
       // waits for a library panel to load, and leaves the pane closed when the applied spec no
       // longer has the panel.
       const editPanelKey = scene.state.editPanel?.getUrlKey();
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow the base handler to the dashboard's own, which owns the hold below
+      const urlSync = scene.urlSync as DashboardUrlSync | undefined;
+
+      if (editPanelKey) {
+        // Dropping the pane below writes `?editPanel=` out of the URL, and the re-open cannot
+        // always put it back in the same tick: a library panel has to load first. Hold the param
+        // so a reload during that window, or a load that never completes, still names the panel.
+        urlSync?.retainEditPanelAcrossRebuild(editPanelKey);
+      }
+
       scene.setState({ ...newState, editPanel: undefined });
 
       if (editPanelKey) {
-        scene.urlSync?.updateFromUrl({ editPanel: editPanelKey });
+        urlSync?.updateFromUrl({ editPanel: editPanelKey });
       }
 
       // Return the re-serialized spec so the caller gets the rekeyed element
