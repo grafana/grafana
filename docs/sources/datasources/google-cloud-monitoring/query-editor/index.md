@@ -16,12 +16,13 @@ labels:
 menuTitle: Query editor
 title: Google Cloud Monitoring query editor
 weight: 300
+review_date: 2026-08-11
 ---
 
 # Google Cloud Monitoring query editor
 
 This topic explains querying specific to the Google Cloud Monitoring data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 ## Query types
 
@@ -42,10 +43,10 @@ The metrics query editor helps you select metrics, group and aggregate by labels
 
 ### Create a metrics query
 
-1. Select **Builder** in the **Query type** dropdown.
-1. Select a project from the **Project** dropdown.
-1. Select a Google Cloud Platform service from the **Service** dropdown.
-1. Select a metric from the **Metric** dropdown.
+1. Select **Builder** in the **Query type** drop-down.
+1. Select a project from the **Project** drop-down.
+1. Select a Google Cloud Platform service from the **Service** drop-down.
+1. Select a metric from the **Metric** drop-down.
 1. _(Optional)_ Use the plus and minus icons in the filter and group-by sections to add and remove filters or group-by clauses.
 
 Google Cloud Monitoring supports several metrics types, such as `GAUGE`, `DELTA,` and `CUMULATIVE`.
@@ -55,7 +56,7 @@ The metrics query editor lists available aggregation methods for a selected metr
 
 In the case that the metric value type is a distribution, the aggregation will be set by default to the mean. For scalar value types, there is no aggregation by default.
 
-The various metrics are documented [here](https://cloud.google.com/monitoring/api/metrics_gcp) and further details on the kinds and types of metrics can be found [here](https://cloud.google.com/monitoring/api/v3/kinds-and-types).
+For a full list of metrics, refer to the [Google Cloud metrics list](https://cloud.google.com/monitoring/api/metrics_gcp). For more details on metric kinds and value types, refer to [Metric kinds and value types](https://cloud.google.com/monitoring/api/v3/kinds-and-types).
 
 {{< admonition type="note" >}}
 Distribution metrics are typically best visualized as either a heatmap or histogram. When visualizing in this way, aggregation is not necessary. However, for other visualization types, performance degradation may be observed when attempting to query distribution metrics that are not aggregated due to the number of potential buckets that can be returned. For more information on how to visualize distribution metrics refer to [this page](https://cloud.google.com/monitoring/charts/charting-distribution-metrics).
@@ -173,7 +174,7 @@ You can use patterns in the alias field to customize the legend key's format:
 
 **Using metric labels:**
 
-You can select from a list of metric and resource labels for a metric in the Group By dropdown.
+You can select from a list of metric and resource labels for a metric in the Group By drop-down.
 You can then include them in the legend key using alias patterns.
 
 For example, given this value of Alias By: `{{metric.type}} - {{metric.label.instance_name}}`
@@ -217,8 +218,8 @@ To understand basic MQL concepts, refer to [Introduction to Monitoring Query Lan
 
 **To create an MQL query:**
 
-1. Select **MQL** in the **Query type** dropdown.
-1. Select a project from the **Project** dropdown.
+1. Select **MQL** in the **Query type** drop-down.
+1. Select a project from the **Project** drop-down.
 1. Enter your MQL query in the text area.
 1. _(Optional)_ Configure the **Graph period** setting.
 
@@ -231,7 +232,7 @@ The following options are available for MQL queries:
 | Setting          | Description                                                                                                                                           |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Alias by**     | Control the format of legend keys. Refer to [Set alias patterns for MQL queries](#set-alias-patterns-for-mql-queries) for available patterns.         |
-| **Graph period** | Enable the toggle to override the default time period. Select a period from the dropdown to control the granularity of the returned time series data. |
+| **Graph period** | Enable the toggle to override the default time period. Select a period from the drop-down to control the granularity of the returned time series data. |
 
 ### Set alias patterns for MQL queries
 
@@ -250,15 +251,15 @@ To understand basic concepts in service monitoring, refer to the [Google Cloud M
 
 **To create an SLO query:**
 
-1. Select **Service Level Objectives (SLO)** in the **Query type** dropdown.
-1. Select a project from the **Project** dropdown.
-1. Select an [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** dropdown.
-1. Select an [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** dropdown.
-1. Select a [time series selector](https://cloud.google.com/stackdriver/docs/solutions/slo-monitoring/api/timeseries-selectors#ts-selector-list) from the **Selector** dropdown.
+1. Select **Service Level Objectives (SLO)** in the **Query type** drop-down.
+1. Select a project from the **Project** drop-down.
+1. Select an [SLO service](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services) from the **Service** drop-down.
+1. Select an [SLO](https://cloud.google.com/monitoring/api/ref_v3/rest/v3/services.serviceLevelObjectives) from the **SLO** drop-down.
+1. Select a [time series selector](https://cloud.google.com/stackdriver/docs/solutions/slo-monitoring/api/timeseries-selectors#ts-selector-list) from the **Selector** drop-down.
 
 Grafana's time series selectors use descriptive names that map to system names that Google uses in the Service Monitoring documentation:
 
-| Selector dropdown value        | Corresponding time series selector |
+| Selector drop-down value        | Corresponding time series selector |
 | ------------------------------ | ---------------------------------- |
 | **SLI Value**                  | `select_slo_health`                |
 | **SLO Compliance**             | `select_slo_compliance`            |
@@ -290,8 +291,8 @@ For more information about PromQL support in Google Cloud Monitoring, refer to t
 
 To create a PromQL query:
 
-1. Select **PromQL** in the **Query type** dropdown.
-1. Select a project from the **Project** dropdown.
+1. Select **PromQL** in the **Query type** drop-down.
+1. Select a project from the **Project** drop-down.
 1. Enter your PromQL query in the text area.
 
 ### Configure PromQL options

@@ -17,6 +17,7 @@ labels:
 menuTitle: Configure
 title: Configure the Google Cloud Monitoring data source
 weight: 100
+review_date: 2026-08-11
 ---
 
 # Configure the Google Cloud Monitoring data source
@@ -31,7 +32,7 @@ Before you begin, ensure you have the following:
 - **GCP project:** A Google Cloud Platform project.
 - **GCP permissions:** Permissions to create a service account or configure GCE default service account settings in your GCP project.
 
-Grafana includes built-in support for Google Cloud Monitoring, so you don't need to install a plugin.
+Grafana ships with the Google Cloud Monitoring data source preinstalled in both Grafana OSS and Grafana Enterprise, so there's nothing for you to install. For details on how the standalone plugin updates, refer to [Plugin updates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/#plugin-updates).
 
 ## Set up GCP authentication
 
@@ -244,7 +245,7 @@ provider "grafana" {
   auth = "<YOUR_SERVICE_ACCOUNT_TOKEN>"
 }
 
-# For self-hosted Grafana
+# For self-managed Grafana
 # provider "grafana" {
 #   url  = "http://localhost:3000"
 #   auth = "<API_KEY_OR_SERVICE_ACCOUNT_TOKEN>"
@@ -319,4 +320,4 @@ After you configure the Google Cloud Monitoring data source, you can:
 - [Add annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/annotations/) to overlay GCP events on your graphs.
 - [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/alerting/) to receive notifications based on GCP metrics and SLOs.
 - [Explore your data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to investigate metrics without building a dashboard.
-- [Import pre-configured dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/) for popular GCP services.
+- [Build dashboards for GCP services](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/google-cloud-monitoring/#import-dashboards-for-gcp-services) using community and Grafana-authored dashboards.

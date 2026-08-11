@@ -22,6 +22,7 @@ labels:
 menuTitle: Google authentication
 title: Google authentication
 weight: 200
+review_date: 2026-08-11
 ---
 
 # Google authentication
