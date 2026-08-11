@@ -35,7 +35,7 @@ var MigratedUnifiedResources = map[string]bool{
 	PlaylistResource:         true,  // Only Mode5!
 	FolderResource:           true,  // Only Mode5!
 	DashboardResource:        true,  // Only Mode5!
-	ShortURLResource:         false, // Requires kubernetesShortURLs to be enabled by default
+	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
 	StarsResource:            false,
 	PreferencesResource:      false,
@@ -173,6 +173,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MigrationChunkMaxBytes = section.Key("migration_chunk_max_bytes").MustInt64(256 * 1024 * 1024)
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
+	cfg.UnifiedStorageAuthzExemptionEnabled = section.Key("authz_exemption_enabled").MustBool(false)
+	cfg.UnifiedStorageAuthzExemptResources = parseCommaSeparatedList(section.Key("authz_exempt_resources").String())
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
 	if cfg.SearchInjectFailuresPercent < 0 {
 		cfg.SearchInjectFailuresPercent = 0
@@ -187,13 +189,17 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SearchPostRankAuthzMaxCandidates = section.Key("search_post_rank_authz_max_candidates").MustInt(0)
 	cfg.SearchPostRankAuthzFacetSampleSize = section.Key("search_post_rank_authz_facet_sample_size").MustInt(0)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
+	cfg.EnableVectorStore = section.Key("vector_store_enabled").MustBool(false)
 	cfg.VectorAllowedInternalCollections = section.Key("vector_allowed_internal_collections").Strings(",")
 	if len(cfg.VectorAllowedInternalCollections) == 0 {
 		cfg.VectorAllowedInternalCollections = []string{"dashboard.grafana.app/dashboards"}
 	}
 	cfg.VectorAllowedExternalCollections = section.Key("vector_allowed_external_collections").Strings(",")
+	cfg.VectorAllowedWriteServices = section.Key("vector_allowed_write_services").Strings(",")
 	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
 	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)
+	// Full aggregate scan of the embeddings table; hourly by default, zero disables.
+	cfg.VectorEmbeddingCountInterval = section.Key("vector_embedding_count_interval").MustDuration(time.Hour)
 	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)

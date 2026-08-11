@@ -169,7 +169,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 
 		// Check for specific error types
 		switch {
-		case errors.Is(err, ErrAuthentication):
+		case errors.Is(err, connection.ErrAuthentication):
 			// ErrAuthentication is returned when the underlying JWT is invalid.
 			// This means that appID and/or privateKey are not correct.
 			return connection.FailedTestResults(
@@ -252,14 +252,14 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		logger.Info("error getting app installation", "installationID", c.cfg.InstallationID(), "error", err)
 		// Check for specific error types
 		switch {
-		case errors.Is(err, ErrAuthentication):
+		case errors.Is(err, connection.ErrAuthentication):
 			return connection.FailedTestResults(
 				http.StatusUnauthorized,
 				[]provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String(),
-						Detail:   ErrAuthentication.Error(),
+						Detail:   connection.ErrAuthentication.Error(),
 						BadValue: c.cfg.InstallationID(),
 					},
 				},
@@ -344,7 +344,7 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 			return nil, fmt.Errorf("%s: %w", err.Error(), connection.ErrRepositoryAccess)
 		case errors.Is(err, ErrNotFound):
 			return nil, fmt.Errorf("%s: %w", err.Error(), connection.ErrNotFound)
-		case errors.Is(err, ErrAuthentication):
+		case errors.Is(err, connection.ErrAuthentication):
 			return nil, connection.ErrAuthentication
 		}
 
@@ -403,39 +403,28 @@ func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecur
 		return "", errors.New("connection is not a GitHub connection")
 	}
 
-	return GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
-}
-
-// TokenCreationTime returns when the underlying token has been created.
-func (c *Connection) TokenCreationTime(_ context.Context) (time.Time, error) {
-	issuingTime, _, err := getIssuingAndExpirationTimeFromToken(c.secrets.Token, c.secrets.PrivateKey)
+	token, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 	if err != nil {
-		return time.Time{}, err
+		return "", err
 	}
 
-	return issuingTime, nil
+	return token, nil
 }
 
-// TokenExpiration returns the underlying token expiration.
-func (c *Connection) TokenExpiration(_ context.Context) (time.Time, error) {
-	_, expiration, err := getIssuingAndExpirationTimeFromToken(c.secrets.Token, c.secrets.PrivateKey)
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	return expiration, nil
-}
-
-// TokenValid returns whether the underlying token is valid.
-func (c *Connection) TokenValid(_ context.Context) bool {
+// ValidateToken checks the stored JWT. A token that does not parse with the
+// private key or was issued for another appID is invalid.
+func (c *Connection) ValidateToken() (expiresAt time.Time, err error) {
 	claims, err := parseJWTToken(c.secrets.Token, c.secrets.PrivateKey)
 	if err != nil {
-		// Error here means the token has not been built with the object privateKey
-		return false
+		return time.Time{}, err
 	}
-
-	// For the token to be valid, the issuer must be equal to the object appID
-	return claims.Issuer == c.cfg.AppID()
+	if claims.Issuer != c.cfg.AppID() {
+		return time.Time{}, errors.New("token was issued for another appID")
+	}
+	if claims.ExpiresAt != nil {
+		return claims.ExpiresAt.Time, nil
+	}
+	return time.Time{}, nil
 }
 
 type permissionTarget int

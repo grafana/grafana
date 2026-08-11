@@ -14,6 +14,7 @@ import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks
 import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../sidebar/SectionFiltersList';
 import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../sidebar/SectionVariablesList';
 import { dashboardEditActions } from '../../sidebar/shared';
+import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
@@ -61,7 +62,7 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
   const sectionVariablesCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.tabs-layout.tab-options.section-variables.title', 'Variables'),
-      id: 'tab-section-variables',
+      id: SidebarCategoryType.TabSectionVariables,
       isOpenDefault: true,
       renderTitle: (isExpanded: boolean) => (
         <SectionVariablesCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
@@ -71,7 +72,7 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
-        id: 'tab-section-variables-list',
+        id: SidebarCategoryType.TabSectionVariablesList,
         skipField: true,
         render: () => <SectionVariablesList sectionOwner={model} />,
       })
@@ -83,7 +84,7 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
   const sectionFiltersCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.tabs-layout.tab-options.section-filters.title', 'Filters'),
-      id: 'tab-section-filters',
+      id: SidebarCategoryType.TabSectionFilters,
       isOpenDefault: true,
       renderTitle: () => <SectionFiltersCategoryTitle />,
     });
@@ -91,7 +92,7 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
-        id: 'tab-section-filters-list',
+        id: SidebarCategoryType.TabSectionFiltersList,
         skipField: true,
         render: () => <SectionFiltersList sectionOwner={model} />,
       })

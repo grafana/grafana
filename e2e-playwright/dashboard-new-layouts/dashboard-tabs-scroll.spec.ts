@@ -1,6 +1,8 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { type Page } from '@playwright/test';
 
-import { groupIntoTab, saveDashboard } from './utils';
+import { expect, test } from './fixtures';
+import { type Canvas, type Sidebar, type Tabs } from './page-objects';
+import { saveDashboardAndCloseToast } from './utils';
 
 test.use({
   featureToggles: {
@@ -15,63 +17,29 @@ test.use({
 // 11 tabs comfortably overflow at 1280px while keeping setup quick.
 const EXTRA_TABS_TO_APPEND = 10;
 
-async function buildOverflowTabs(
-  page: Parameters<Parameters<typeof test>[1]>[0]['page'],
-  dashboardPage: Parameters<Parameters<typeof test>[1]>[0]['dashboardPage'],
-  selectors: Parameters<Parameters<typeof test>[1]>[0]['selectors']
-) {
-  const editButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton);
-  if (await editButton.isVisible()) {
-    await editButton.click();
-  }
+async function buildOverflowTabs(sidebar: Sidebar, canvas: Canvas, tabs: Tabs) {
+  await sidebar.addOptions.clickAddTabButton();
 
-  await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
-  await groupIntoTab(page, dashboardPage, selectors);
-
-  const addTabButton = dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addTab);
   for (let i = 0; i < EXTRA_TABS_TO_APPEND; i++) {
-    await addTabButton.click();
+    await canvas.addTab();
   }
 
   const lastTabTitle = `New tab ${EXTRA_TABS_TO_APPEND}`;
-  await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(lastTabTitle))).toBeVisible();
+  const lastTab = tabs.getTitle(lastTabTitle);
+  await expect(lastTab).toBeVisible();
 
   return {
-    addTabButton,
-    firstTab: dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab')),
+    firstTab: tabs.getTitle('New tab'),
     lastTabTitle,
-    lastTab: dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(lastTabTitle)),
+    lastTab,
   };
 }
 
-async function openOutline(
-  page: Parameters<Parameters<typeof test>[1]>[0]['page'],
-  dashboardPage: Parameters<Parameters<typeof test>[1]>[0]['dashboardPage'],
-  selectors: Parameters<Parameters<typeof test>[1]>[0]['selectors']
-) {
-  const outlineButton = dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton);
-  if (!(await outlineButton.isVisible())) {
-    const sidebarToggle = page.getByTestId(selectors.components.Sidebar.showHideToggle);
-    if (await sidebarToggle.isVisible()) {
-      await sidebarToggle.click();
-    }
-  }
-
-  await expect(outlineButton).toBeVisible();
-  await expect(async () => {
-    const expanded = await outlineButton.getAttribute('aria-expanded');
-    if (expanded !== 'true') {
-      await outlineButton.click();
-    }
-    await expect(outlineButton).toHaveAttribute('aria-expanded', 'true');
-  }).toPass();
-
-  // Clicking the toggle leaves the pointer parked on it, so its "Content
-  // outline" tooltip stays open and overlaps the top of the outline pane,
-  // intercepting clicks on outline items. Move the pointer away and wait for
-  // the tooltip to leave the document before callers interact with the pane.
-  await page.mouse.move(0, 0);
-  await expect(page.getByTestId(selectors.components.Tooltip.container)).not.toBeAttached();
+async function openContentOutline(page: Page, sidebar: Sidebar) {
+  await test.step('Open content outline', async () => {
+    await sidebar.toolbar.clickButton('Outline');
+    await page.keyboard.press('Escape'); // dismiss the "Content ooutline" tooltip so it does not block outline node clicks
+  });
 }
 
 test.describe(
@@ -80,9 +48,15 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('shows scroll buttons and supports paged scrolling', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({});
-      const { firstTab, lastTab } = await buildOverflowTabs(page, dashboardPage, selectors);
+    test('shows scroll buttons and supports paged scrolling', async ({
+      gotoDashboardPage,
+      page,
+      sidebar,
+      tabs,
+      canvas,
+    }) => {
+      await gotoDashboardPage({});
+      const { firstTab, lastTab } = await buildOverflowTabs(sidebar, canvas, tabs);
 
       const scrollLeftButton = page.getByRole('button', { name: 'Scroll tabs left' });
       const scrollRightButton = page.getByRole('button', { name: 'Scroll tabs right' });
@@ -114,42 +88,51 @@ test.describe(
       await expect(firstTab).not.toBeInViewport();
     });
 
-    test('auto-scrolls selected tabs into view from outline', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({});
-      const { firstTab, lastTab, lastTabTitle } = await buildOverflowTabs(page, dashboardPage, selectors);
+    test('auto-scrolls selected tabs into view from outline', async ({
+      gotoDashboardPage,
+      page,
+      sidebar,
+      tabs,
+      canvas,
+    }) => {
+      await gotoDashboardPage({});
+      const { firstTab, lastTab, lastTabTitle } = await buildOverflowTabs(sidebar, canvas, tabs);
 
-      await openOutline(page, dashboardPage, selectors);
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('New tab')).click();
+      await openContentOutline(page, sidebar);
+      await sidebar.contentOutline.clickItem('New tab');
       await expect(firstTab).toBeInViewport();
 
-      // Selecting an outline item can move focus to another sidebar pane; reopen
-      // outline defensively before selecting the second tab.
-      await openOutline(page, dashboardPage, selectors);
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item(lastTabTitle)).click();
+      await openContentOutline(page, sidebar);
+      await sidebar.contentOutline.clickItem(lastTabTitle);
       await expect(lastTab).toBeInViewport();
     });
 
-    test('auto-scrolls newly appended tab into view', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({});
-      const { addTabButton, firstTab } = await buildOverflowTabs(page, dashboardPage, selectors);
+    test('auto-scrolls newly appended tab into view', async ({ gotoDashboardPage, page, sidebar, tabs, canvas }) => {
+      await gotoDashboardPage({});
+      const { firstTab } = await buildOverflowTabs(sidebar, canvas, tabs);
 
-      await openOutline(page, dashboardPage, selectors);
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('New tab')).click();
+      await openContentOutline(page, sidebar);
+      await sidebar.contentOutline.clickItem('New tab');
       await expect(firstTab).toBeInViewport();
 
-      await addTabButton.click();
-      const newestTab = dashboardPage.getByGrafanaSelector(
-        selectors.components.Tab.title(`New tab ${EXTRA_TABS_TO_APPEND + 1}`)
-      );
+      await canvas.addTab();
+      const newestTab = tabs.getTitle(`New tab ${EXTRA_TABS_TO_APPEND + 1}`);
       await expect(newestTab).toBeInViewport();
       await expect(firstTab).not.toBeInViewport();
     });
 
-    test('keeps overflow controls after save and reload', async ({ gotoDashboardPage, selectors, page }) => {
-      const dashboardPage = await gotoDashboardPage({});
-      await buildOverflowTabs(page, dashboardPage, selectors);
+    test('keeps overflow controls after save and reload', async ({
+      gotoDashboardPage,
+      page,
+      controls,
+      sidebar,
+      tabs,
+      canvas,
+    }) => {
+      await gotoDashboardPage({});
+      await buildOverflowTabs(sidebar, canvas, tabs);
 
-      await saveDashboard(dashboardPage, page, selectors, 'test dashboard scroll');
+      await saveDashboardAndCloseToast(page, controls, `test dashboard scroll ${Date.now()}`);
       await page.reload();
       await expect(page.getByRole('button', { name: 'Scroll tabs left' })).toBeVisible();
     });

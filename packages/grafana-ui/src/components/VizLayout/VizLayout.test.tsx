@@ -234,6 +234,27 @@ describe('VizLayout', () => {
       expect(children).toHaveBeenCalledWith(600, 600);
     });
 
+    it('prefers the measured legend width over the width prop once measured', () => {
+      // maxWidth can clamp the legend below the requested width. Sizing the chart from the
+      // raw prop would then leave a dead gap between the chart and the legend.
+      mockUseMeasure.mockReturnValue([jest.fn(), { ...noMeasure, width: 480 }]);
+      const children = jest.fn().mockReturnValue(null);
+      render(
+        <VizLayout
+          width={800}
+          height={600}
+          legend={
+            <VizLayout.Legend placement="right" width={600} maxWidth="60%">
+              <div />
+            </VizLayout.Legend>
+          }
+        >
+          {children}
+        </VizLayout>
+      );
+      expect(children).toHaveBeenCalledWith(320, 600);
+    });
+
     it('sets the legend width style when an explicit width prop is provided', () => {
       render(
         <VizLayout

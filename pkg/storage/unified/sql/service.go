@@ -573,7 +573,12 @@ func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts Ser
 	}
 	s.serverStopper = server
 	s.uninitializedSearchServer = server
-	s.registerUnifiedResourceServer(provider, server)
+
+	var vs *resource.VectorStoreServer
+	if opts.Cfg.EnableVectorStore && opts.VectorBackend != nil && opts.Embedder != nil {
+		vs = resource.NewVectorStoreServer(opts.VectorBackend, opts.Embedder, opts.Cfg.VectorAllowedExternalCollections, opts.Cfg.VectorAllowedWriteServices, opts.VectorMetrics)
+	}
+	s.registerUnifiedResourceServer(provider, server, vs)
 	return nil
 }
 
@@ -606,7 +611,16 @@ type resourceServerWithAuth struct {
 
 var _ grpcauth.ServiceAuthFuncOverride = (*resourceServerWithAuth)(nil)
 
-func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, server resource.ResourceServer) {
+// vectorStoreWithAuth wraps the VectorStore write service with per-service
+// authentication.
+type vectorStoreWithAuth struct {
+	*resource.VectorStoreServer
+	*interceptors.ServiceWithAuth
+}
+
+var _ grpcauth.ServiceAuthFuncOverride = (*vectorStoreWithAuth)(nil)
+
+func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, server resource.ResourceServer, vs *resource.VectorStoreServer) {
 	var handler = server
 	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
 		handler = &resourceServerWithAuth{ResourceServer: server, ServiceWithAuth: sa}
@@ -625,6 +639,16 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
+
+	// VectorStore write service: storage-server surface only (standalone
+	// search servers don't register it — writes go to storage-api).
+	if vs != nil {
+		var vsHandler resourcepb.VectorStoreServer = vs
+		if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
+			vsHandler = &vectorStoreWithAuth{VectorStoreServer: vs, ServiceWithAuth: sa}
+		}
+		resourcepb.RegisterVectorStoreServer(srv, vsHandler)
+	}
 }
 
 // BuildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV

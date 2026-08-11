@@ -1,8 +1,7 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
 import v2DashboardWithTabs from '../dashboards/V2DashRowsWithTabs.json';
 
-import { Controls, Tabs } from './page-objects';
+import { test, expect } from './fixtures';
+import { type Tabs } from './page-objects';
 import { dragTo, importTestDashboard } from './utils';
 
 test.use({
@@ -13,7 +12,7 @@ test.use({
 });
 
 async function getTabWithBoundingBox(tabs: Tabs, tabTitle: string) {
-  const tab = tabs.getTab(tabTitle);
+  const tab = tabs.getTitle(tabTitle);
   const box = await tab.boundingBox();
   if (!box) {
     throw new Error(`Tab bounding box not found for title: ${tabTitle}`);
@@ -30,16 +29,13 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
     dashboardPage,
     selectors,
     page,
-    components,
+    controls,
+    tabs,
   }) => {
     await importTestDashboard(page, selectors, 'Drag tab within manager', JSON.stringify(v2DashboardWithTabs), {
       checkPanelsVisible: false,
       requiresDataSourceSelection: false,
     });
-
-    const controls = new Controls({ page, dashboardPage, selectors, components });
-    const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
     await controls.enterEditMode();
 
     // drag a tab within the same tabs manager ---

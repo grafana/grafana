@@ -126,7 +126,8 @@ func NewRepositoryController(
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "provisioningRepositoryController",
+				Name:            "provisioningRepositoryController",
+				MetricsProvider: newWorkerQueueWaitProvider(registry, "repository"),
 			},
 		),
 		repoFactory:       repoFactory,
@@ -157,6 +158,18 @@ func NewRepositoryController(
 	rc.processFn = rc.process
 	rc.enqueueRepository = rc.enqueue
 	rc.keyFunc = repoKeyFunc
+
+	// Expose the local work-queue depth as a scrape-time gauge. The queue is
+	// per-replica, so Prometheus target labels (pod/instance) distinguish replicas;
+	// no metric label is needed. A GaugeFunc reads the authoritative Len() at scrape
+	// time, so it cannot drift the way manual inc/dec would.
+	registry.MustRegister(prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "grafana_provisioning_repository_worker_queue_size",
+			Help: "Number of repository keys waiting in this replica's local work queue",
+		},
+		func() float64 { return float64(rc.queue.Len()) },
+	))
 
 	return rc
 }
@@ -1027,6 +1040,17 @@ func (rc *RepositoryController) shouldGenerateTokenFromConnection(
 		return true
 	}
 
+	// The token was stored without expiration tracking; regenerate to backfill it.
+	if obj.Status.Token.LastUpdated == 0 {
+		rc.tokenMetrics.recordRefreshReason(refreshReasonMissing)
+		return true
+	}
+
+	// A zero expiration means the token does not expire.
+	if obj.Status.Token.Expiration == 0 {
+		return false
+	}
+
 	expiration := time.UnixMilli(obj.Status.Token.Expiration)
 	rc.tokenMetrics.recordTimeToExpiry(time.Until(expiration).Seconds())
 
@@ -1064,14 +1088,16 @@ func (rc *RepositoryController) generateRepositoryToken(
 		return "", nil, fmt.Errorf("unable to create token for repository: %w", err)
 	}
 
+	tokenStatus := provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}
+	if !token.ExpiresAt.IsZero() {
+		tokenStatus.Expiration = token.ExpiresAt.UnixMilli()
+	}
+
 	patchOperations := []map[string]any{
 		{
-			"op":   "replace",
-			"path": "/status/token",
-			"value": provisioning.TokenStatus{
-				LastUpdated: time.Now().UnixMilli(),
-				Expiration:  token.ExpiresAt.UnixMilli(),
-			},
+			"op":    "add",
+			"path":  "/status/token",
+			"value": tokenStatus,
 		},
 	}
 

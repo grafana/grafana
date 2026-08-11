@@ -1,20 +1,21 @@
 import { type Page } from '@playwright/test';
 
-import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { type SnapshotCreateResponse } from '../../public/app/features/dashboard/services/SnapshotSrv';
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
-import { Controls, Panel, Sidebar } from './page-objects';
-import { importTestDashboard, saveDashboard } from './utils';
+import { test, expect } from './fixtures';
+import { type Panels } from './page-objects';
+import { importTestDashboard, saveDashboardAndCloseToast } from './utils';
 
 const repeatTitleBase = 'repeat - ';
 const repeatOptions = [1, 2, 3, 4];
 
-async function expectRepeatPanelsRendered(panel: Panel, expectedCount: number) {
+async function expectRepeatPanelsRendered(panels: Panels, expectedCount: number) {
   // Snapshot rendering can interpolate the repeat variable differently (for example, as a single multi-value string),
   // so assert on the number of repeated panels rather than exact per-clone titles.
-  const repeatedPanels = panel.getHeadersByTitle(new RegExp(`^${repeatTitleBase}`));
+  const repeatedPanels = panels.getHeaders(new RegExp(`^${repeatTitleBase}`));
   await expect(repeatedPanels).toHaveCount(expectedCount);
   await expect(repeatedPanels.first()).toBeVisible();
 }
@@ -59,11 +60,9 @@ test.describe(
       dashboardPage,
       selectors,
       page,
-      components,
+      controls,
+      panels,
     }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panel = new Panel({ page, dashboardPage, selectors, components });
-
       await importTestDashboard(
         page,
         selectors,
@@ -72,7 +71,7 @@ test.describe(
       );
 
       // Sanity check: repeats exist before snapshot.
-      await expectRepeatPanelsRendered(panel, repeatOptions.length);
+      await expectRepeatPanelsRendered(panels, repeatOptions.length);
 
       await controls.openShareSnapshotDrawer();
 
@@ -81,19 +80,17 @@ test.describe(
       await expect(controls.getContainer()).toBeVisible();
 
       // Regression: snapshot must include repeat clones; otherwise panels are missing / fail to render.
-      await expectRepeatPanelsRendered(panel, repeatOptions.length);
+      await expectRepeatPanelsRendered(panels, repeatOptions.length);
     });
 
     test('dashboard snapshot renders repeated panels (auto grid)', async ({
       dashboardPage,
       selectors,
       page,
-      components,
+      controls,
+      sidebar,
+      panels,
     }) => {
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panel = new Panel({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
       await importTestDashboard(
         page,
         selectors,
@@ -104,11 +101,11 @@ test.describe(
       // Convert layout to auto grid and persist it, then snapshot.
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Options');
-      await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
-      await saveDashboard(dashboardPage, page, selectors);
+      await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
-      await expectRepeatPanelsRendered(panel, repeatOptions.length);
+      await expectRepeatPanelsRendered(panels, repeatOptions.length);
 
       await controls.openShareSnapshotDrawer();
 
@@ -116,7 +113,7 @@ test.describe(
       await page.goto(snapshotUrl);
       await expect(controls.getContainer()).toBeVisible();
 
-      await expectRepeatPanelsRendered(panel, repeatOptions.length);
+      await expectRepeatPanelsRendered(panels, repeatOptions.length);
     });
   }
 );

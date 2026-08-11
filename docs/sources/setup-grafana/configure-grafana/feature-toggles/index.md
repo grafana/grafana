@@ -29,7 +29,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `lokiQuerySplitting`                         | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
 | `renderAuthJWT`                              | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                          | Yes                |
 | `awsDatasourcesTempCredentials`              | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                             | Yes                |
-| `provisioning`                               | Enables Git Sync and as-code provisioning for Grafana resources                                                                                               | Yes                |
 | `provisioningFolderMetadata`                 | Allow setting folder metadata for provisioned folders                                                                                                         | Yes                |
 | `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled                           | Yes                |
 | `useKubernetesShortURLsAPI`                  | Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs                                                     | Yes                |
@@ -72,6 +71,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `preferences.rerouteLegacyAPIs`              | Use K8s client implementation for legacy preferences API                                                                                                      | Yes                |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                                              | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                                                    | Yes                |
+| `grafana.unifiedDataSourcePicker`            | Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins                                               | Yes                |
 
 ## Public preview feature toggles
 
@@ -89,7 +89,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                             |
 | `timeComparison`                  | Enables time comparison option in supported panels                                             |
 | `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                  |
-| `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                 |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                             |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                         |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                |
@@ -110,4 +109,3 @@ The following toggles require explicitly setting Grafana's [app mode](../#app_mo
 | Feature toggle name                    | Description                                                                   |
 | -------------------------------------- | ----------------------------------------------------------------------------- |
 | `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server, including all datasources |
-| `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options                   |

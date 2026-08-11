@@ -21,6 +21,7 @@ var provisioningExtras = wire.NewSet(
 	extras.ProvideProvisioningOSSRepositoryExtras,
 	extras.ProvideProvisioningOSSConnectionExtras,
 	extras.ProvideFactoryFromConfig,
+	extras.ProvideConnectionFactoryFromConfig,
 )
 
 var configProviderExtras = wire.NewSet(

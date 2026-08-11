@@ -8,7 +8,7 @@ import {
   useGetUserPreferencesQuery,
   usePatchUserPreferencesMutation,
 } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
-import { useListPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { useListPreferencesQuery, useUpdatePreferencesMutation } from '@grafana/api-clients/rtkq/preferences/v1';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';

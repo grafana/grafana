@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 import { flows, type Variable } from './utils';
 
 test.use({
@@ -25,13 +23,17 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new query variable', async ({ gotoDashboardPage, selectors, page, components }) => {
+    test('can add a new query variable', async ({
+      gotoDashboardPage,
+      selectors,
+      page,
+      components,
+      controls,
+      sidebar,
+      panels,
+    }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
       const variable: Variable & { label: string } = {
         type: 'query',
         name: 'VariableUnderTest',
@@ -39,7 +41,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.query.openEditor();
 
@@ -89,27 +91,24 @@ test.describe(
       await page.keyboard.press('Escape');
 
       // Assert that the markdown panels contain the correct variable values
-      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-      await expect(panelContent).toBeVisible();
-      const markdownContent = panelContent.locator('.markdown-html');
+      const panelBody = panels.getBodies().first();
+      await expect(panelBody).toBeVisible();
+      const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText('VariableUnderTest: custom-value-1');
     });
 
     test('can add a new query variable that references other variables', async ({
       gotoDashboardPage,
-      selectors,
       page,
-      components,
+      controls,
+      sidebar,
+      panels,
     }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
       // create a data source and a constant variables
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, {
+      await flows.addNewGenericVariable(page, sidebar, controls, {
         type: 'datasource',
         name: 'ds',
         label: '',
@@ -119,8 +118,8 @@ test.describe(
 
       await flows.addNewGenericVariable(
         page,
-        dashboardPage,
-        selectors,
+        sidebar,
+        controls,
         {
           type: 'constant',
           name: 'query',
@@ -140,7 +139,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable, true);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable, true);
 
       await sidebar.variableOptions.query.openEditor();
 
@@ -167,9 +166,9 @@ test.describe(
       await page.keyboard.press('Escape');
 
       // Assert that the markdown panels contain the correct variable values
-      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-      await expect(panelContent).toBeVisible();
-      const markdownContent = panelContent.locator('.markdown-html');
+      const panelBody = panels.getBodies().first();
+      await expect(panelBody).toBeVisible();
+      const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText('VariableUnderTest: A');
     });
   }

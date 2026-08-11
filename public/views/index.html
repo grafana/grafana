@@ -265,6 +265,34 @@
       </script>
     </div>
 
+    <noscript>
+      <style>
+        .preloader {
+          display: none;
+        }
+
+        .js-required-message {
+          margin: 48px auto;
+          max-width: 720px;
+          padding: 0 16px;
+          font-family: Sans-serif;
+          line-height: 1.5;
+        }
+
+        .theme-light .js-required-message {
+          color: #52545c;
+        }
+
+        .theme-dark .js-required-message {
+          color: #d8d9da;
+        }
+      </style>
+      <main class="js-required-message">
+        <h1>JavaScript is required to run Grafana</h1>
+        <p>Please enable JavaScript in your browser and reload the page.</p>
+      </main>
+    </noscript>
+
     <div id="reactRoot"></div>
 
     <script nonce="[[.Nonce]]">
@@ -287,6 +315,10 @@
 
       [[if .NewPreferencesPage]]
         window.__grafanaNewPreferencesPage = true;
+      [[end]]
+
+      [[if .OFREPRootUrlEnabled]]
+        window.__grafanaOFREPRootUrlEnabled = true;
       [[end]]
 
       // FEMT index.html uses this, and we want to keep the index.ts the same for both

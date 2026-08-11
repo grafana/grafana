@@ -9,6 +9,7 @@ import {
   createTheme,
   type DataSourceApi,
   EventBusSrv,
+  getDefaultTimeRange,
   LoadingState,
   PluginExtensionTypes,
   store,
@@ -117,6 +118,7 @@ const dummyProps: Props = {
   editSavedQueryRef: undefined,
   addingSavedQuery: undefined,
   queriesChangedIndexAtRun: 0,
+  range: getDefaultTimeRange(),
 };
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -258,6 +260,9 @@ describe('Explore', () => {
     it('should retrieve the last visible state from local storage', async () => {
       const getBoolMock = jest.spyOn(store, 'getBool').mockReturnValue(false);
       setup();
+      // Wait for the Explore component to render
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
       const showContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
       expect(showContentOutlineButton).not.toBeInTheDocument();
       getBoolMock.mockRestore();

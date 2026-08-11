@@ -1,7 +1,7 @@
 import { type ComponentType } from 'react';
 
 import { Registry, type RegistryItem } from '@grafana/data';
-import { type CellContentKind } from '@grafana/schema/apis/notebook/v2beta1';
+import { type CellContentKind } from 'app/features/notebook/types';
 
 import { CodeCell } from './CodeCell';
 import { MarkdownCell } from './MarkdownCell';
