@@ -3619,6 +3619,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Time intervals",
+      "imported-not-usable": "Imported from an external Alertmanager — promote it to use it here",
       "placeholder-select-time-intervals": "Select time intervals..."
     },
     "time-intervals-table": {
