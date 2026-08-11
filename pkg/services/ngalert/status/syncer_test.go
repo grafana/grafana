@@ -205,3 +205,18 @@ func TestSyncer_sync_preservesOtherOperatorStatus(t *testing.T) {
 	require.Contains(t, written.Status.OperatorStates, "other-op")
 	require.Equal(t, "bar", written.Status.AdditionalFields["foo"])
 }
+
+func TestSyncer_sync_prunesDeletedRules(t *testing.T) {
+	alertClient := newFakeRuleClient(&model.AlertRuleList{Items: []model.AlertRule{alertRuleObj("alert1")}})
+	gen := &fakeGenerator{alert: alertClient, recording: newFakeRuleClient(&model.RecordingRuleList{})}
+	s := newTestSyncer(t, gen, &fakeStates{}, &fakeStatus{})
+
+	key := ngmodels.AlertRuleKey{OrgID: 1, UID: "alert1"}
+	require.NoError(t, s.sync(context.Background()))
+	require.Contains(t, s.lastHash, key, "rule should be tracked after it is synced")
+
+	// The rule is deleted: it's no longer listed.
+	alertClient.list = &model.AlertRuleList{}
+	require.NoError(t, s.sync(context.Background()))
+	require.NotContains(t, s.lastHash, key, "deleted rule's change-detection entry should be pruned")
+}

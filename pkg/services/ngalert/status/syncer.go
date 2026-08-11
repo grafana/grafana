@@ -153,12 +153,17 @@ func (s *Syncer) syncOrg(ctx context.Context, orgID int64) {
 	namespace := s.namespacer(orgID)
 	ctx = identity.WithServiceIdentityContext(ctx, orgID, identity.WithServiceIdentityName(serviceIdentityName))
 
+	seen := make(map[string]struct{})
+	listedAll := true
+
 	alertRules, err := s.alertRuleClient.ListAll(ctx, namespace, resource.ListOptions{})
 	if err != nil {
 		s.log.Error("Failed to list alert rules for status sync", "org_id", orgID, "error", err)
+		listedAll = false
 	} else {
 		alertRuleCount = len(alertRules.Items)
 		for i := range alertRules.Items {
+			seen[alertRules.Items[i].Name] = struct{}{}
 			s.syncAlertRule(ctx, orgID, &alertRules.Items[i])
 		}
 	}
@@ -166,11 +171,33 @@ func (s *Syncer) syncOrg(ctx context.Context, orgID int64) {
 	recordingRules, err := s.recordingRuleClient.ListAll(ctx, namespace, resource.ListOptions{})
 	if err != nil {
 		s.log.Error("Failed to list recording rules for status sync", "org_id", orgID, "error", err)
-		return
+		listedAll = false
+	} else {
+		recordingRuleCount = len(recordingRules.Items)
+		for i := range recordingRules.Items {
+			seen[recordingRules.Items[i].Name] = struct{}{}
+			s.syncRecordingRule(ctx, orgID, &recordingRules.Items[i])
+		}
 	}
-	recordingRuleCount = len(recordingRules.Items)
-	for i := range recordingRules.Items {
-		s.syncRecordingRule(ctx, orgID, &recordingRules.Items[i])
+
+	// Drop change-detection entries for rules this org no longer has: a stale hash
+	// would otherwise suppress the write for a later rule reusing the UID, and the
+	// map would grow unbounded. Only prune when both kinds listed successfully, so a
+	// transient list error doesn't evict live rules' entries.
+	if listedAll {
+		s.pruneOrg(orgID, seen)
+	}
+}
+
+// pruneOrg removes lastHash entries for the org whose UIDs were not present in
+// the latest successful listing.
+func (s *Syncer) pruneOrg(orgID int64, seen map[string]struct{}) {
+	for key := range s.lastHash {
+		if key.OrgID == orgID {
+			if _, ok := seen[key.UID]; !ok {
+				delete(s.lastHash, key)
+			}
+		}
 	}
 }
 
