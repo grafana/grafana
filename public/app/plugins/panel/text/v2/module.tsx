@@ -30,11 +30,7 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
 
   builder.addSelect({
     path: 'renderMode',
-    name: t('textng.options.render-mode', 'Render template'),
-    description: t(
-      'textng.options.render-mode-description',
-      'Render the content once, or once for every row of query data.'
-    ),
+    name: t('textng.options.render-mode', 'Render mode'),
     category: [t('textng.category-data', 'Data')],
     defaultValue: defaultOptions.renderMode,
     settings: {

@@ -16043,8 +16043,7 @@
       "view-write": "Write"
     },
     "options": {
-      "render-mode": "Render template",
-      "render-mode-description": "Render the content once, or once for every row of query data."
+      "render-mode": "Render mode"
     },
     "render": {
       "truncated": "Showing the first {{maxRows}} rows."

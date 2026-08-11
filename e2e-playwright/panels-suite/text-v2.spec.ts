@@ -9,7 +9,7 @@ const MARKDOWN_PANEL = '4';
 const HTML_PANEL = '6';
 const CODE_PANEL = '5';
 
-// Render template needs query data, which text-options.json has none of.
+// Render mode needs query data, which text-options.json has none of.
 const DATA_DASHBOARD_UID = 'adssfc8';
 const EVERY_ROW_PANEL = '4';
 
@@ -161,11 +161,11 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       const preview = page.getByTestId('TextNGEditor-preview');
       await expect(preview.locator('li')).toHaveCount(3);
 
-      // Unlike Mode, Render template lives in the options pane, not the toolbar.
-      const renderTemplate = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.OptionsPane.fieldLabel('Data Render template')
+      // Unlike Mode, Render mode lives in the options pane, not the toolbar.
+      const renderMode = dashboardPage.getByGrafanaSelector(
+        selectors.components.PanelEditor.OptionsPane.fieldLabel('Data Render mode')
       );
-      await renderTemplate.getByRole('combobox').click();
+      await renderMode.getByRole('combobox').click();
       await page.getByRole('option').filter({ hasText: 'All rows' }).click();
 
       // A single render cannot resolve per-row fields, so the macro stays literal.
