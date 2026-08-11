@@ -71,6 +71,32 @@ const createBasicDataFrame = (): DataFrame =>
     })
   );
 
+// A `FieldType.other` column, which the Auto cell pretty-prints as JSON.
+const createJsonDataFrame = (wrapText: boolean): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'JsonData',
+      length: 1,
+      fields: [
+        {
+          name: 'service',
+          type: FieldType.string,
+          values: ['gateway'],
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: 'metadata',
+          type: FieldType.other,
+          values: [{ region: 'us-east-1', replicas: 3 }],
+          config: { custom: { ...stdCellConfig.custom, wrapText } },
+          ...stdField,
+        },
+      ],
+    })
+  );
+
 const createEmptyDataFrame = (): DataFrame =>
   withFieldOverrides(
     toDataFrame({
@@ -1853,6 +1879,35 @@ describe('TableNG', () => {
 
       // In the getStyles function, when textWrap is true, whiteSpace is set to 'pre-line'
       expect(cellStyles.getPropertyValue('white-space')).toBe('pre-line');
+    });
+
+    it('wraps a JSON cell as pre-wrap so the pretty-printed indentation survives', () => {
+      // `pre-line` collapses runs of whitespace, which flattens the indentation displayJsonValue
+      // produces. The JSON and auto style classes both declare white-space at the same specificity,
+      // so this also guards against the winner coming down to emotion's insertion order.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(true)} width={800} height={600} />
+      );
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      const jsonCellStyles = window.getComputedStyle(cells[1]);
+
+      expect(jsonCellStyles.getPropertyValue('white-space')).toBe('pre-wrap');
+      expect(jsonCellStyles.getPropertyValue('font-family')).toBe('monospace');
+    });
+
+    it('renders an unwrapped JSON cell with the indentation intact in the DOM', () => {
+      // the collapsing happens in CSS, so the text node itself must still carry the newlines and
+      // indentation for the hover expansion to have anything to reveal.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
+      );
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      // read the raw node rather than using toHaveTextContent, which normalizes away the very
+      // newlines and indentation under test
+      const jsonText = cells[1].textContent;
+      expect(jsonText).toBe(JSON.stringify({ region: 'us-east-1', replicas: 3 }, null, ' '));
     });
   });
 
