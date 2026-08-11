@@ -23,7 +23,7 @@ review_date: 2026-04-10
 
 # Parca data source
 
-{{< admonition type="caution" >}}
+{{< admonition type="warning" >}}
 This plugin is deprecated and will only receive critical security updates. Support will end on January 2, 2027.
 {{< /admonition >}}
 
