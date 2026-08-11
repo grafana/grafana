@@ -148,14 +148,13 @@ const defineFeatureEventsRule = createRule({
             (e) => e.expression.type === AST_NODE_TYPES.Identifier && e.expression.name === 'EventProperty'
           ) ?? false;
 
-        const numberOfComments = context.sourceCode.getCommentsBefore(node).length;
-
         if (!extendsEventProperty) {
           context.report({ node, messageId: 'interfaceMustExtend' });
           return;
         }
 
         for (const member of node.body.body) {
+          const numberOfComments = context.sourceCode.getCommentsBefore(member).length;
           if (numberOfComments === 0) {
             context.report({ node: member, messageId: 'missingPropertyComment' });
           }
