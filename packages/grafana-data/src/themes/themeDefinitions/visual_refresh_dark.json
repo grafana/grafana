@@ -139,6 +139,14 @@
         { "background": "palette.lavender800", "text": "palette.lavender200" },
         { "background": "palette.rose800", "text": "palette.rose200" }
       ]
+    },
+    "home": {
+      "background": {
+        "fade": "palette.violet900",
+        "highlight": "palette.violet800",
+        "right": "palette.orange800",
+        "left": "palette.blue800"
+      }
     }
   }
 }

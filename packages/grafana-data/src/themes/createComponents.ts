@@ -4,7 +4,7 @@ import * as z from 'zod';
 import { type ThemeColors } from './createColors';
 import type { Radii } from './createShape';
 import type { ThemeSpacingTokens } from './createSpacing';
-import { palette, resolvePaletteRefs } from './palette_new';
+import { resolvePaletteRefs } from './palette_new';
 import { type DeepRequired } from './types';
 
 interface MenuComponentTokens {
@@ -124,7 +124,6 @@ export const ThemeComponentsInputSchema = z
     home: z.object({
       background: z
         .object({
-          base: z.string().optional(),
           fade: z.string().optional(),
           highlight: z.string().optional(),
           right: z.string().optional(),
@@ -221,11 +220,19 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     },
     home: {
       background: {
-        base: colors.background.page,
-        fade: colors.mode === 'dark' ? palette.violet900 : palette.violet100,
-        highlight: colors.mode === 'dark' ? palette.violet800 : palette.violet200,
-        right: colors.mode === 'dark' ? palette.orange800 : palette.orange200,
-        left: colors.mode === 'dark' ? palette.blue800 : palette.blue200,
+        fade:
+          colors.mode === 'dark'
+            ? 'hsl(from #3a364c h calc(s * 1.5) calc(l * 1.1))'
+            : 'hsl(from #dedfee h calc(s * 1.05) calc(l * 0.9))',
+        highlight: 'transparent',
+        right:
+          colors.mode === 'dark'
+            ? 'hsl(from #722323 h calc(s * 1.1) calc(l * 0.9) / 80%)'
+            : 'hsl(from #ff9a9a h s l / 80%)',
+        left:
+          colors.mode === 'dark'
+            ? 'hsl(from #1b416d h calc(s * 0.9) calc(l * 0.9) / 60%)'
+            : 'hsl(from #a6e3df h s l / 60%)',
       },
     },
   };
