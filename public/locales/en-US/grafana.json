@@ -11959,7 +11959,8 @@
       "title": "Users and access"
     },
     "config-databases": {
-      "subtitle": "Configure the databases that store your logs, metrics, and traces",
+    "config-databases": {
+      "subtitle": "Manage settings for your observability databases",
       "title": "Database configurations"
     },
     "config-general": {

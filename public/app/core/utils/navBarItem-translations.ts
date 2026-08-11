@@ -301,7 +301,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'cfg/access':
       return t('nav.config-access.subtitle', 'Configure access for individual users, teams, and service accounts');
     case 'cfg/databases':
-      return t('nav.config-databases.subtitle', 'Configure the databases that store your logs, metrics, and traces');
+      return t('nav.config-databases.subtitle', 'Manage settings for your observability databases');
     case 'apps':
       return t('nav.apps.subtitle', 'App plugins that extend the Grafana experience');
     case 'monitoring':

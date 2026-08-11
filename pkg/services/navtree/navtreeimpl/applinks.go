@@ -358,7 +358,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 			cfgNode.Children = append(cfgNode.Children, &navtree.NavLink{
 				Text:     "Database configurations",
 				Id:       navtree.NavIDCfgDatabases,
-				SubTitle: "Configure the databases that store your logs, metrics, and traces",
+				SubTitle: "Manage settings for your observability databases",
 				Icon:     "shield",
 				Children: sectionChildren,
 				Url:      s.cfg.AppSubURL + "/admin/databases",
