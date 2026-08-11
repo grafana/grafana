@@ -10,7 +10,7 @@ import { PageObject } from './PageObject';
 export class Canvas extends PageObject {
   /** Returns the edit canvas body (the area left of the sidebar) */
   getContainer() {
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardSidebarSplitter.primaryBody);
+    return this.getByGrafanaSelector(this.selectors.components.DashboardSidebarSplitter.primaryBody);
   }
 
   /**

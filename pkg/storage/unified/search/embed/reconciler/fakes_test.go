@@ -216,6 +216,9 @@ type fakeVector struct {
 
 	backfillJobs      []backfillJobCall
 	createBackfillErr error
+
+	counts    []vector.EmbeddingCount
+	countsErr error
 }
 
 type backfillJobCall struct {
@@ -356,6 +359,11 @@ func (f *fakeVector) ContentVersion(context.Context, string, string, string, str
 }
 func (f *fakeVector) UpdateContentVersion(context.Context, string, string, string, string, int) error {
 	return nil
+}
+func (f *fakeVector) CountStoredEmbeddings(context.Context) ([]vector.EmbeddingCount, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.counts, f.countsErr
 }
 func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	f.mu.Lock()

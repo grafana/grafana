@@ -98,14 +98,14 @@ await sidebar.panelOptions.repeatOptions.repeatByVariable('c1');
 
 ### Projected after migration
 
-| Metric                                                        | Target                                                                           |
-| ------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Raw selector calls in specs                                   | Near 0 — only one-off assertions may remain inline                               |
-| Files to update when changing a selector                      | 1 (the page object)                                                              |
-| Total spec lines                                              | ~4,500 (~20% reduction, projected)                                               |
-| Duplicated helper functions                                   | 0                                                                                |
-| Parameter pass-throughs (`dashboardPage, selectors`) in specs | Constructors only (further reduction once fixtures land — see Future Follow-Ups) |
-| Test readability                                              | Verb-based methods (20-40 chars)                                                 |
+| Metric                                                        | Target                                                               |
+| ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Raw selector calls in specs                                   | Near 0 — only one-off assertions may remain inline                   |
+| Files to update when changing a selector                      | 1 (the page object)                                                  |
+| Total spec lines                                              | ~4,500 (~20% reduction, projected)                                   |
+| Duplicated helper functions                                   | 0                                                                    |
+| Parameter pass-throughs (`dashboardPage, selectors`) in specs | None — page objects are injected as fixtures (see Future Follow-Ups) |
+| Test readability                                              | Verb-based methods (20-40 chars)                                     |
 
 **Hypothesis (to validate post-migration)**: authoring a new test drops from ~45 minutes (copy-paste-adapt a similar spec, look up selector chains) to ~15 minutes (compose existing page objects). This is an informal prediction, not a measured outcome — we'll check it against real authoring times once the first few tests are written end-to-end against page objects.
 
@@ -242,14 +242,14 @@ Without these, an agent asked to "write an E2E test for feature X" will copy raw
 
 ## Future Follow-Ups
 
-### Playwright Fixtures
+### Playwright Fixtures (done)
 
-Once all page objects are proven, a `fixtures.ts` file could expose them as Playwright fixtures via `test.extend()`, eliminating the constructor boilerplate from specs entirely. Playwright fixtures compose freely — `gotoDashboardPage` from `@grafana/plugin-e2e` is itself a fixture. The friction is subtler: 16 of 26 specs call `gotoDashboardPage({ uid: '…' })` with per-test arguments inside the test body, so a page-object fixture cannot be pre-bound to the `DashboardPage` those calls return. Two workable shapes, to decide once page objects stabilize:
+Implemented in `fixtures.ts`: one lazy, test-scoped fixture per top-level page object, via `test.extend()` on the plugin-e2e `test`. Specs import `test`/`expect` from `./fixtures` and destructure page objects from the test arguments; no spec calls `new` anymore.
 
-- **Factory fixtures** — expose `makeControls`, `makeToolbar`, etc. as fixtures the spec calls after `gotoDashboardPage(...)`. Removes `new` but keeps one line of wiring per spec.
-- **Shadow `gotoDashboardPage`** — a local fixture that returns `{ dashboardPage, controls, toolbar, sidebar, panel }` in one call. Removes wiring entirely, at the cost of coupling page-object construction to navigation.
+The "pre-binding to the `DashboardPage` returned by `gotoDashboardPage({ uid })`" friction anticipated above turned out not to exist: `getByGrafanaSelector` resolves locators from `page` alone and never depends on navigation state, so neither of the two shapes considered (factory fixtures, shadow `gotoDashboardPage`) was needed. Instead:
 
-The 10 specs that use the empty `dashboardPage` fixture (not `gotoDashboardPage`) could adopt page-object fixtures immediately; the remaining 16 need the decision above. Deferring until the page objects are behaviorally proven keeps the follow-up low-risk.
+- `PageObjectArgs` was narrowed: page objects receive a `getByGrafanaSelector` function instead of a whole `DashboardPage`, so they cannot navigate, mock, or wait by construction (Remove Middle Man).
+- `fixtures.ts` builds the function once per test from a non-navigated `DashboardPage` (`buildGetByGrafanaSelector`, a plain helper, deliberately not a fixture so it never leaks into test closures).
 
 ### Codegen-to-Page-Object Transform
 

@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panels, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 import { importTestDashboard, saveDashboardAndCloseToast } from './utils';
 
 test.use({
@@ -17,13 +15,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can duplicate a panel', async ({ dashboardPage, selectors, page, components }) => {
+    test('can duplicate a panel', async ({ dashboardPage, selectors, page, controls, sidebar, panels }) => {
       await importTestDashboard(page, selectors, 'Paste tab');
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
       await controls.enterEditMode();
 
       const oldPanelTitle = 'New panel';
