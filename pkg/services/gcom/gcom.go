@@ -16,6 +16,8 @@ const LogPrefix = "gcom.service"
 
 var ErrTokenNotFound = errors.New("gcom: token not found")
 
+var ErrInstanceNotFound = errors.New("gcom: instance not found")
+
 type Service interface {
 	GetInstanceByID(ctx context.Context, requestID string, instanceID string) (Instance, error)
 	GetPlugins(ctx context.Context, requestID string) (map[string]Plugin, error)
@@ -83,6 +85,10 @@ func (client *GcomClient) GetInstanceByID(ctx context.Context, requestID string,
 			client.log.Error("closing http response body", "err", err.Error())
 		}
 	}()
+
+	if response.StatusCode == http.StatusNotFound {
+		return Instance{}, fmt.Errorf("instance id=%s: %w", instanceID, ErrInstanceNotFound)
+	}
 
 	if response.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(response.Body)
