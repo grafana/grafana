@@ -1280,17 +1280,14 @@ function measureLongestLineWidth(field: Field, sampleSize: number, avgCharWidth:
 }
 
 /**
- * Width a column of inline "runs" wants — cells that render several chips/links/buttons flowing
- * horizontally and wrapping (pills, data links, actions). Measuring the single longest value like a
- * text cell is wrong: it ignores that a cell holds several items. Instead we size to fit an
- * *average row's* combined item width (per-item `chrome` + inter-item `gap`) on roughly one line,
- * which the global cap then bounds so long runs wrap to a few lines rather than one-item-per-line.
- * The floor is the widest single item so none is ever clipped. Mirrors PillCell geometry.
+ * Width for cells holding several chips/links/buttons that flow horizontally and wrap (pills, data
+ * links, actions). Since a cell holds multiple items, we size to an *average row's* combined item
+ * width (per-item `chrome` + inter-item `gap`) rather than the single longest value, so long runs
+ * wrap to a few lines rather than one item per line once the global cap applies. The floor is the
+ * widest single item so none is ever clipped.
  *
- * Item text is estimated from character count (`avgCharWidth`) rather than canvas-measured — the
- * fuzzy sizing used elsewhere. It slightly over-estimates, which errs toward roomier columns: the
- * safe direction for avoiding clipped items. `itemsForRow` returns the display text of each item in
- * a sampled row (empty when the row has none); `indices` are the sampled rows (see sampleIndices).
+ * `itemsForRow` returns the display text of each item in a sampled row; `indices` are the sampled
+ * rows (see sampleIndices).
  */
 function measureInlineRunWidth(
   indices: number[],
@@ -1359,18 +1356,14 @@ const FOOTER_LABEL_GAP = 4;
 const FOOTER_UNFORMATTED_REDUCERS = new Set<string>([ReducerID.count, ReducerID.countAll]);
 
 /**
- * Width a column's footer/summary cell needs. Each configured reducer renders its label (e.g. "Sum")
- * inline with its reduced value, so a column that hugs its body content can truncate a wider footer.
- * Size to the widest reducer row (label + value); returns 0 when the column has no footer. The
- * reduced values are computed and formatted the same way the footer renders them.
+ * Width a column's footer/summary cell needs. Each reducer renders label + value inline, so
+ * size to the widest reducer row; returns 0 if no footer. Values computed/formatted as the
+ * footer renders them.
  *
- * Both label and value are canvas-measured exactly (like the header) with the medium-weight (header)
- * context rather than estimated from `avgCharWidth`. SummaryCell renders the value at
- * `fontWeightMedium` and the label uppercase, and footer values are digit/symbol/unit-heavy — all of
- * which the prose-derived `avgCharWidth` under-estimates. Since the label is `flex-shrink: 0`, that
- * under-measure truncates the value, so exactness matters here just as it does for the title. (The
- * label actually renders a touch smaller than the header font, so measuring it here slightly
- * over-reserves — the safe direction.)
+ * Label and value are canvas-measured exactly (medium-weight header context), not estimated via
+ * `avgCharWidth` — footer values are digit/symbol/unit-heavy and the label is `flex-shrink: 0`,
+ * so an under-measure would truncate the value. (Label renders slightly smaller than header font
+ * in practice, so this slightly over-reserves — safe direction.)
  */
 function measureFooterWidth(field: Field, headerCtx: TypographyCtx): number {
   const reducers = field.config.custom?.footer?.reducers;
@@ -1460,10 +1453,9 @@ const measureActionsColWidth: MeasureColWidth = (field, sampleSize, { typography
   );
 };
 
-// `avgCharWidth` is derived from a prose sample, so it under-estimates digit/symbol-heavy strings
-// like dates and timestamps, leaving those columns cramped. Give string/time columns a cell-padding's
-// worth of slack so they get a little breathing room rather than hugging the content exactly.
-// Numeric/boolean columns are left tight on purpose — hugging their short values is the whole point.
+// `avgCharWidth` comes from a prose sample, so it under-estimates digit/symbol-heavy strings like
+// timestamps. String/time columns get a padding's worth of slack to compensate; numeric/boolean
+// columns stay tight on purpose.
 const TEXT_WIDTH_WIGGLE = TABLE.CELL_PADDING;
 
 const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) => {
@@ -1472,27 +1464,22 @@ const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx
   return isText ? width + TEXT_WIDTH_WIGGLE : width;
 };
 
-// Markdown always wraps (its cell style forces whiteSpace: normal) and renders formatted, so its
-// raw source string is a poor proxy for rendered width — markup syntax and long link URLs would
-// stretch the column to the cap. Contribute no content width so it sizes to its header and wraps to
-// extra height instead, the same as a wrapped free-text column.
+// Markdown always wraps and renders formatted, so its raw source is a poor proxy for rendered width
+// — markup syntax and long link URLs would stretch the column to the cap. Contribute no content
+// width so it sizes to its header and wraps to extra height instead.
 const measureMarkdownColWidth: MeasureColWidth = () => 0;
 
-// JSON cells pretty-print their value to a multi-line block, but how that block lays out depends on
-// wrapping. With wrapText on it renders as `pre`/`pre-line` — newlines preserved, one visible line
-// per JSON line — so the width is the widest line. Without wrapping the newlines collapse and it
-// renders on a single line, so the width is the whole value (bounded by MAX_AUTO_WIDTH). Sizing an
-// unwrapped column to its widest line would under-measure the collapsed text and clip it, so pick
-// the measurement to match the layout. Counting the pretty text (indentation included) slightly
-// over-estimates the collapsed width, which errs roomier — the safe direction against clipping.
+// JSON pretty-prints to a multi-line block, but its layout depends on wrapping: wrapped renders as
+// `pre`/`pre-line` (newlines preserved), so width is the widest line; unwrapped collapses to a
+// single line, so width is the whole value. Measuring an unwrapped column by its widest line would
+// under-measure and clip it.
 const measureJsonColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) => {
   const measure = shouldTextWrap(field) ? measureLongestLineWidth : measureLongestContentWidth;
   return measure(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
 };
 
-// Singleton registry mirroring the buildCellHeightMeasurers factory map: cell types that size
-// differently from the default text measurement register here; anything absent falls back to
-// measureTextColWidth.
+// Cell types that size differently from plain text register here; anything absent falls back to
+// measureTextColWidth. Mirrors the buildCellHeightMeasurers factory map.
 const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>> = {
   [TableCellDisplayMode.Sparkline]: measureGraphicalColWidth,
   [TableCellDisplayMode.Gauge]: measureGraphicalColWidth,
@@ -1510,10 +1497,9 @@ const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>
 const DEFAULT_GROWTH_WEIGHT = 1;
 
 // Per-field-type multiplier on a column's share of the panel's leftover space (see the grow step
-// below). Types absent from this map fall back to DEFAULT_GROWTH_WEIGHT. Numeric and boolean
-// columns hold short, fixed-width values, so a smaller weight keeps them comparatively tight while
-// strings/dates/pills take most of the slack (a shared weight cancels out, so an all-numeric table
-// still fills the panel). Broken out per type so each can be tuned individually later.
+// below); types absent here fall back to DEFAULT_GROWTH_WEIGHT. Numeric and boolean values are short
+// and fixed-width, so a smaller weight keeps them tight while strings/dates/pills take most of the
+// slack. A shared weight cancels out, so an all-numeric table still fills the panel.
 const GROWTH_WEIGHTS: Partial<Record<FieldType, number>> = {
   [FieldType.number]: 0.35,
   [FieldType.boolean]: 0.35,
@@ -1585,17 +1571,13 @@ export function computeContentAwareColWidths(
       sortedKeys.has(getDisplayName(field))
     );
 
-    // Every column is sized to its content (unioned with the header below), including wrapped ones:
-    // a wrapped column still gets a content-based width so a content-heavy column (e.g. long text)
-    // stays wider than a sparse one — the cap keeps it bounded and it wraps to extra height within.
-    // The cell type's registered measurer handles pills/links/actions/graphical; text is default.
+    // Wrapped columns are measured like any other: a content-based width keeps a content-heavy
+    // column wider than a sparse one, and the cap bounds it so it wraps to extra height within.
     const cellType = getCellOptions(field).type;
     const resolvedType = cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType;
-    // A cell renders as JSON when it's an explicit JSONView cell or the field is untyped (`other`),
-    // mirroring the displayJsonValue attachment in render-hooks. JSON pretty-prints to a multi-line
-    // block, so it needs measureJsonColWidth (widest line) rather than plain-text total-length
-    // sizing. A registered measurer still wins — pills/actions/etc. set an explicit cell type whose
-    // renderer ignores the JSON display — so JSON is only the fallback for otherwise-unmeasured cells.
+    // Untyped (`other`) fields render as JSON too, mirroring the displayJsonValue attachment in
+    // render-hooks. Only a fallback: an explicit cell type's renderer ignores the JSON display, so a
+    // registered measurer wins.
     const rendersAsJson = cellType === TableCellDisplayMode.JSONView || field.type === FieldType.other;
     const measure = COL_WIDTH_MEASURERS[resolvedType] ?? (rendersAsJson ? measureJsonColWidth : measureTextColWidth);
     const cellWidth = measure(field, effectiveSampleSize, measureCtx);
@@ -1609,17 +1591,15 @@ export function computeContentAwareColWidths(
     contentTotal += clamped;
   }
 
-  // Distribute leftover space by a growth share of growthWeight × √(content width): a column with
-  // more content grows more (a busy pill column beats a sparse one), but the √ damps the spread so
-  // the widest column doesn't run away from its neighbours, and the per-type weight keeps
-  // numeric/boolean columns comparatively tight. On overflow content widths are kept (grid scrolls).
+  // Distribute leftover space by growthWeight × √(content width): a column with more content grows
+  // more, but the √ damps the spread so the widest column doesn't run away from its neighbours. On
+  // overflow content widths are kept (grid scrolls).
   const growShare = (i: number) => growthWeight(fields[i].type) * Math.sqrt(contentWidths.get(i)!);
   const growTotal = autoIdxs.reduce((sum, i) => sum + growShare(i), 0);
 
   const leftover = availWidth - definedWidth - contentTotal;
-  // Round cumulatively so the auto columns' rounded widths sum to the same total as their exact
-  // widths. Rounding each share independently can push the total a pixel or two past availWidth and
-  // trigger a spurious horizontal scrollbar on a table that should exactly fill the panel.
+  // Round cumulatively so the rounded widths sum to the same total as the exact ones. Rounding each
+  // independently can push the total past availWidth and trigger a spurious horizontal scrollbar.
   let exactSoFar = 0;
   let roundedSoFar = 0;
   for (const i of autoIdxs) {
