@@ -32,7 +32,7 @@ test.describe(
       await canvas.addRow();
 
       await rows.select(['New row', 'New row 2']);
-      await sidebar.groupOptions.clickGroupIntoButton('tab');
+      await sidebar.groupOptions.groupElementsInto('tab');
 
       // Two tabs: the selected rows in the first, the leftover row in the second.
       await expect(tabs.getTitle('New tab')).toBeVisible();
@@ -62,7 +62,7 @@ test.describe(
       // The fixture has three "New panel"s in a grid. Select the first and last by position
       // (they share the same title).
       await panels.selectByIndex([0, 2]);
-      await sidebar.groupOptions.clickGroupIntoButton('row');
+      await sidebar.groupOptions.groupElementsInto('row');
 
       const firstRowContent = await expectVisibleRow('New row', rows);
       const secondRowContent = await expectVisibleRow('New row 1', rows);

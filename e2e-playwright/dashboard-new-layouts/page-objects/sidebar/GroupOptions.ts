@@ -16,7 +16,7 @@ export class GroupOptions extends PageObject {
   }
 
   /** Groups the selected elements into a row or tab */
-  async clickGroupIntoButton(target: 'row' | 'tab') {
+  async groupElementsInto(target: 'row' | 'tab') {
     await test.step(`Click "Group into ${target}" in sidebar`, async () => {
       await this.getGroupIntoButton(target).click();
     });
