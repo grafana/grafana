@@ -44,40 +44,20 @@ These errors occur when running TestData scenarios.
 | Empty String Input for CSV scenarios | CSV Metric Values and CSV Content require input data. Add comma-separated values or CSV content.                               |
 | Time range doesn't contain data      | Some scenarios generate data relative to the query time range. Expand the dashboard time range.                                |
 
-### Unexpected error from Conditional Error
+### Exemplars don't appear
 
 **Symptoms:**
 
-- Query returns a server error or panic message.
-- Error appears immediately when running the query.
+- The Exemplars scenario runs without error but no diamond markers appear on the panel.
+- Markers disappear when you interact with the legend.
 
-**Solutions:**
+**Possible causes and solutions:**
 
-1. The Conditional Error scenario triggers a server panic when the **String Input** field is empty. This is the intended behavior for error testing.
-1. To return data instead of an error, populate the **String Input** field with comma-separated values (for example, `1,20,90,30,5,0`).
-1. To change the error type, use the **Error type** drop-down to select between Server panic, Frontend exception, and Frontend observable.
-
-### Error with source returns an error
-
-The Error with source scenario intentionally returns errors for testing how Grafana handles different error sources. This isn't a misconfiguration.
-
-- **Plugin** error source simulates an error originating from the plugin itself.
-- **Downstream** error source simulates an error from a downstream service.
-
-Use this scenario to test alerting rules, error displays, and error handling in custom panels.
-
-### Slow Query appears stuck
-
-**Symptoms:**
-
-- Query runs for an extended period.
-- Panel shows a loading spinner indefinitely.
-
-**Solutions:**
-
-1. Check the **String Input** field, which controls the delay duration. The default is `5s`.
-1. Reduce the value to a shorter duration (for example, `1s` or `500ms`).
-1. The field accepts Go duration syntax: `5s` (seconds), `1m` (minutes), `500ms` (milliseconds).
+| Cause                                       | Solution                                                                                                                                             |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No series query in the panel                | Exemplars returns only markers and no series of its own. Add a second query, such as Random Walk, for the exemplars to annotate.                     |
+| Series hidden in the legend                 | The legend filter matches on exemplar labels, so hiding a series in the legend also hides its markers. Show the series to restore the markers.       |
+| Markers fall outside the panel value range  | With **Min** and **Max** empty, the value range is derived from a reference random walk and markers can land off-panel. Set **Min** and **Max** explicitly, or align them with the sibling series. |
 
 ### Wrong data type for the visualization
 
@@ -104,6 +84,51 @@ Use this scenario to test alerting rules, error displays, and error handling in 
 1. Predictable Pulse aligns timestamps to the step interval based on absolute time from the epoch, not from the start of the time range. This means the pattern starts at the same point regardless of when you load the dashboard.
 1. Verify the cycle duration matches your intent: the full cycle is `Step * (On Count + Off Count)` seconds.
 1. Check that **On Value** and **Off Value** are set correctly. The defaults are `2` and `1`, not `1` and `0`.
+
+### Slow Query appears stuck
+
+**Symptoms:**
+
+- Query runs for an extended period.
+- Panel shows a loading spinner indefinitely.
+
+**Solutions:**
+
+1. Check the **String Input** field, which controls the delay duration. The default is `5s`.
+1. Reduce the value to a shorter duration (for example, `1s` or `500ms`).
+1. The field accepts Go duration syntax: `5s` (seconds), `1m` (minutes), `500ms` (milliseconds).
+
+### Unexpected error from Conditional Error
+
+**Symptoms:**
+
+- Query returns a server error or panic message.
+- Error appears immediately when running the query.
+
+**Solutions:**
+
+1. The Conditional Error scenario triggers a server panic when the **String Input** field is empty. This is the intended behavior for error testing.
+1. To return data instead of an error, populate the **String Input** field with comma-separated values (for example, `1,20,90,30,5,0`).
+1. To change the error type, use the **Error type** drop-down to select between Server panic, Frontend exception, and Frontend observable.
+
+### Error with source returns an error
+
+The Error with source scenario intentionally returns errors for testing how Grafana handles different error sources. This isn't a misconfiguration.
+
+- **Plugin** error source simulates an error originating from the plugin itself.
+- **Downstream** error source simulates an error from a downstream service.
+
+Use this scenario to test alerting rules, error displays, and error handling in custom panels.
+
+### Flaky Query returns errors intermittently
+
+The Flaky Query scenario returns errors for a configurable percentage of requests. Intermittent errors are the intended behavior, not a misconfiguration.
+
+**Solutions:**
+
+1. Adjust the **Error rate** field to control how often requests fail. Set it to `0` for no errors or `100` to fail every request.
+1. Use the **Status code** and **Error source** fields to shape the returned error.
+1. If you're using Flaky Query with an alert rule, be aware that intermittent failures can flip the rule between states across evaluations. For alerting behavior, refer to [TestData alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/alerting/).
 
 ## CSV and data input errors
 

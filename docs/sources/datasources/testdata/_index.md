@@ -23,7 +23,7 @@ review_date: '2026-08-11'
 
 # TestData data source
 
-Grafana ships with a built-in TestData data source that generates simulated time-series, log, trace, and other data for any [panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/). You can use it to verify dashboard functionality, test visualizations, prototype alerting rules, and reproduce issues without connecting to an external data source.
+Every dashboard starts with data, and the TestData data source gives you data instantly. TestData is bundled with Grafana, so it's ready to use out of the box with no installation required. It generates simulated time series, logs, traces, and more for any [panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/), with no external connection required. Use it to prototype dashboards, put visualizations through their paces with tricky edge cases, experiment with alert rules, and reproduce issues in a way that others can replicate.
 
 ## Supported features
 
