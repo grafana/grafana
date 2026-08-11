@@ -45,7 +45,7 @@ func TestTwinmakerSceneViewerStep_Run(t *testing.T) {
 			input:              &pluginItem{Plugin: twinmakerPlugin},
 			wantErr:            false,
 			wantFailures:       true,
-			wantFailureMessage: "SceneViewer panel",
+			wantFailureMessage: twinmakerAppPluginID,
 		},
 		{
 			name:         "nil plugin item returns no failure",

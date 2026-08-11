@@ -11,9 +11,8 @@ import (
 )
 
 const (
-	twinmakerSceneViewerStepID  = "twinmaker_sceneviewer"
-	twinmakerAppPluginID        = "grafana-iot-twinmaker-app"
-	twinmakerSceneViewerMessage = "The SceneViewer panel in the TwinMaker App will stop working in Grafana 13.1. Ignore or silence this warning if you are not using the SceneViewer panel."
+	twinmakerSceneViewerStepID = "twinmaker_sceneviewer"
+	twinmakerAppPluginID       = "grafana-iot-twinmaker-app"
 )
 
 var _ checks.Step = &twinmakerSceneViewerStep{}
@@ -49,7 +48,7 @@ func (s *twinmakerSceneViewerStep) Run(_ context.Context, log logging.Logger, _ 
 	return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 		advisor.CheckReportFailureSeverityLow,
 		s.ID(),
-		twinmakerSceneViewerMessage,
+		twinmakerAppPluginID,
 		twinmakerSceneViewerStepID,
 		[]advisor.CheckErrorLink{
 			{
