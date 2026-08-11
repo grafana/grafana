@@ -452,6 +452,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			"OrgID":           {},
 			"GUID":            {},
 			"FolderFullpath":  {}, // Populated lazily from DB, not part of rule fingerprint
+			"K8sStatus":       {},
 		}
 
 		tp := reflect.TypeOf(rule).Elem()

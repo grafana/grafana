@@ -1082,6 +1082,7 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		"IsPaused":       {},
 		"Record":         {},
 		"FolderFullpath": {},
+		"K8sStatus":      {},
 	}
 
 	tpe := reflect.TypeFor[AlertRule]()
@@ -1125,6 +1126,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		"For":                         {},
 		"NotificationSettings":        {},
 		"FolderFullpath":              {},
+		"K8sStatus":                   {},
 	}
 
 	tpe := reflect.TypeFor[AlertRule]()
