@@ -204,6 +204,7 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "plugin-page-test-app3", appsNode.Children[1].Id)
 	})
 
+	// This can be done by using `[navigation.app_sections]` in the INI config
 	t.Run("Should group apps configured for the databases nav id under Administration", func(t *testing.T) {
 		service.navigationAppConfig = map[string]NavigationAppConfig{
 			"test-app1": {SectionID: navtree.NavIDCfgDatabases, SortWeight: 1},

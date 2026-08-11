@@ -410,8 +410,6 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "Assistant", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
-		"grafana-dbcfg-app":                {SectionID: navtree.NavIDCfgDatabases, SortWeight: 1},
-		"grafana-dbselfserve-app":          {SectionID: navtree.NavIDCfgDatabases, SortWeight: 2},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},
 		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 2},
 		"grafana-adaptivetraces-app":       {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 3},
