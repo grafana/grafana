@@ -77,6 +77,55 @@ describe('createSpanLinkFactory', () => {
   });
 
   describe('should return loki link', () => {
+    const traceId = '7946b05c2e2e4e5a';
+    const spanId = '6605c7b08e715d6c';
+    const defaultRange = { from: '1602637200000', to: '1602637201000' };
+    const fieldVariants = [
+      { trace: 'traceID', span: 'spanID' },
+      { trace: 'trace_id', span: 'span_id' },
+      { trace: 'traceId', span: 'spanId' },
+      { trace: 'TraceID', span: 'SpanID' },
+      { trace: 'TraceId', span: 'SpanId' },
+      { trace: 'otel_trace_id', span: 'otel_span_id' },
+    ] as const;
+
+    const lokiExploreHref = (
+      tagSelector: string,
+      serviceNames: string[],
+      range: { from: string; to: string } = defaultRange
+    ) => {
+      const queries: Array<{ expr: string; refId: string; datasource: { uid: string } }> = [];
+      for (const { trace, span } of fieldVariants) {
+        const pipeline = `| logfmt | json | drop __error__ | ${trace}="${traceId}" | ${span}="${spanId}"`;
+        const fieldRef = `${trace}:${span}`;
+        queries.push({
+          expr: `{${tagSelector}} ${pipeline}`,
+          refId: `t2l:default:${fieldRef}`,
+          datasource: { uid: 'loki1_uid' },
+        });
+        if (serviceNames.length > 0) {
+          queries.push({
+            expr: `{job=~"(.*/)?(${serviceNames.join('|')})"} ${pipeline}`,
+            refId: `t2l:job:${fieldRef}`,
+            datasource: { uid: 'loki1_uid' },
+          });
+        }
+      }
+      queries.push({
+        expr: `{${tagSelector}} |= "${traceId}" |= "${spanId}"`,
+        refId: 'line-contains',
+        datasource: { uid: 'loki1_uid' },
+      });
+
+      return `/explore?left=${encodeURIComponent(
+        JSON.stringify({
+          range,
+          datasource: 'loki1_uid',
+          queries,
+        })
+      )}`;
+    };
+
     beforeAll(() => {
       setDataSourceSrv({
         getInstanceSettings() {
@@ -96,9 +145,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
-        `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"loki1_uid","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\", service_namespace=\\"namespace1\\"}","refId":"","datasource":{"uid":"loki1_uid"}}]}'
-        )}`
+        lokiExploreHref('cluster="cluster1", hostname="hostname1", service_namespace="namespace1"', ['test service'])
       );
     });
 
@@ -121,11 +168,7 @@ describe('createSpanLinkFactory', () => {
       const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
-      expect(linkDef!.href).toBe(
-        `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"loki1_uid","queries":[{"expr":"{ip=\\"192.168.0.1\\"}","refId":"","datasource":{"uid":"loki1_uid"}}]}'
-        )}`
-      );
+      expect(linkDef!.href).toBe(lokiExploreHref('ip="192.168.0.1"', ['service']));
     });
 
     it('from tags and process tags as well', () => {
@@ -147,11 +190,7 @@ describe('createSpanLinkFactory', () => {
       const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
-      expect(linkDef!.href).toBe(
-        `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"loki1_uid","queries":[{"expr":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","refId":"","datasource":{"uid":"loki1_uid"}}]}'
-        )}`
-      );
+      expect(linkDef!.href).toBe(lokiExploreHref('ip="192.168.0.1", host="host"', ['service']));
     });
 
     it('with adjusted start and end time', () => {
@@ -174,11 +213,10 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
-        `/explore?left=${encodeURIComponent(
-          `{"range":{"from":"${span.startTime / 1000 - 60000}","to":"${
-            span.startTime / 1000 + span.duration / 1000 + 60000
-          }"},"datasource":"loki1_uid","queries":[{"expr":"{hostname=\\"hostname1\\"}","refId":"","datasource":{"uid":"loki1_uid"}}]}`
-        )}`
+        lokiExploreHref('hostname="hostname1"', ['service'], {
+          from: String(span.startTime / 1000 - 60000),
+          to: String(span.startTime / 1000 + span.duration / 1000 + 60000),
+        })
       );
     });
 
@@ -193,19 +231,8 @@ describe('createSpanLinkFactory', () => {
       const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
-      expect(decodeURIComponent(linkDef!.href)).toBe(
-        '/explore?left=' +
-          JSON.stringify({
-            range: { from: '1602637200000', to: '1602637201000' },
-            datasource: 'loki1_uid',
-            queries: [
-              {
-                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | label_format log_line_contains_trace_id=`{{ contains "7946b05c2e2e4e5a" __line__  }}` | log_line_contains_trace_id="true" or trace_id="7946b05c2e2e4e5a" | label_format log_line_contains_span_id=`{{ contains "6605c7b08e715d6c" __line__  }}` | log_line_contains_span_id="true" or span_id="6605c7b08e715d6c"',
-                refId: '',
-                datasource: { uid: 'loki1_uid' },
-              },
-            ],
-          })
+      expect(linkDef!.href).toBe(
+        lokiExploreHref('cluster="cluster1", hostname="hostname1", service_namespace="namespace1"', ['test service'])
       );
     });
 
@@ -257,11 +284,7 @@ describe('createSpanLinkFactory', () => {
       const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
-      expect(linkDef!.href).toBe(
-        `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"loki1_uid","queries":[{"expr":"{service=\\"serviceName\\", pod=\\"podName\\"}","refId":"","datasource":{"uid":"loki1_uid"}}]}'
-        )}`
-      );
+      expect(linkDef!.href).toBe(lokiExploreHref('service="serviceName", pod="podName"', ['serviceName', 'service']));
     });
 
     it('handles incomplete renamed tags', () => {
@@ -288,9 +311,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
-        `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"loki1_uid","queries":[{"expr":"{service.name=\\"serviceName\\", pod=\\"podName\\"}","refId":"","datasource":{"uid":"loki1_uid"}}]}'
-        )}`
+        lokiExploreHref('service.name="serviceName", pod="podName"', ['serviceName', 'service'])
       );
     });
 
@@ -1126,7 +1147,7 @@ describe('createSpanLinkFactory', () => {
           JSON.stringify([
             {
               expr: '{service="serviceName", pod="podName"} |="serviceName" |="trace1"',
-              refId: '',
+              refId: 'custom',
               datasource: { uid: 'loki1_uid' },
             },
           ])

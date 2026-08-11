@@ -47,12 +47,16 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   // datasource ref is optional in a query object, but Explore relies on it being defined for some
   // functionalities, e.g., changing query filters directly from visualizations, so we need to put
   // it here if it's missing. See also #112945
-  if (query && typeof query === 'object' && !query.datasource?.uid && internalLink.datasourceUid) {
-    query.datasource = query.datasource || {};
-    query.datasource.uid = internalLink.datasourceUid;
+  const queries = (Array.isArray(query) ? query : query ? [query] : []) as DataQuery[];
+  for (const q of queries) {
+    if (!q.datasource?.uid && internalLink.datasourceUid) {
+      q.datasource = q.datasource || {};
+      q.datasource.uid = internalLink.datasourceUid;
+    }
   }
 
-  const interpolatedQuery = interpolateObject(query, scopedVars, replaceVariables);
+  const interpolatedQueries = interpolateObject(queries, scopedVars, replaceVariables) ?? [];
+  const interpolatedQuery = Array.isArray(query) ? interpolatedQueries : interpolatedQueries[0];
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
@@ -68,7 +72,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     title: replaceVariables(title, scopedVars),
     // In this case this is meant to be internal link (opens split view by default) the href will also points
     // to explore but this way you can open it in new tab.
-    href: generateInternalHref(internalLink.datasourceUid, interpolatedQuery, range, interpolatedPanelsState),
+    href: generateInternalHref(internalLink.datasourceUid, interpolatedQueries, range, interpolatedPanelsState),
     onClick: onClickFn
       ? (event) => {
           // Explore data links can be displayed not only in DataLinkButton but it can be used by the consumer in
@@ -80,7 +84,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
 
           onClickFn({
             datasourceUid: internalLink.datasourceUid,
-            queries: [interpolatedQuery],
+            queries: interpolatedQueries,
             panelsState: interpolatedPanelsState,
             correlationHelperData: interpolatedCorrelationData,
             range,
@@ -98,7 +102,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
  */
 function generateInternalHref<T extends DataQuery>(
   datasourceUid: string,
-  query: T,
+  queries: T[],
   range?: TimeRange,
   panelsState?: ExplorePanelsState
 ): string {
@@ -110,7 +114,7 @@ function generateInternalHref<T extends DataQuery>(
         // `range ? ...` here. This behavior will be marked as deprecated in #72498
         ...(range?.raw ? { range: toURLRange(range.raw) } : {}),
         datasource: datasourceUid,
-        queries: [query],
+        queries,
         panelsState: panelsState,
       })
     )}`
