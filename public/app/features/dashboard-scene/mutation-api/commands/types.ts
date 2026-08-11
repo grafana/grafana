@@ -44,7 +44,16 @@ export interface MutationCommand<T = unknown, TScene = DashboardScene> {
   payloadSchema: z.ZodType<T>;
   /** Permission check run before execution. Must be a pure predicate (no side effects). */
   permission: PermissionCheck<TScene>;
-  /** When true, the command only reads state and will not trigger a forceRender. */
+  /**
+   * When true, the command only reads state: the payload is passed through as-is and no forceRender
+   * follows.
+   *
+   * Two effects, deliberately on one flag. A write payload is deep-cloned because Zod hands back frozen
+   * or shared default objects that downstream code mutates in place, and a write is followed by a
+   * re-render. They coincide for every command that changes the open scene. CREATE_NOTEBOOK_SPEC is the
+   * one that does not — it needs the clone but changes nothing here — and pays a spare forceRender for
+   * it. Split the flag if a second such command appears.
+   */
   readOnly?: boolean;
   /** The handler function. */
   handler: (payload: T, context: MutationContext<TScene>) => Promise<MutationResult>;

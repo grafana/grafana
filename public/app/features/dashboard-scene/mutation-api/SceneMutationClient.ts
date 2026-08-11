@@ -84,8 +84,9 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
       return { success: false, error: validationResult.error, changes: [] };
     }
 
-    // Zod may return frozen or shared default objects. Deep-clone write payloads
-    // so downstream code (e.g. getPanelOptionsWithDefaults) can mutate in-place.
+    // Deep-clone write payloads so downstream code (e.g. getPanelOptionsWithDefaults) can mutate
+    // in-place. A schema does not copy what it passes through — `z.unknown()` hands back the caller's
+    // own object — so without this a handler's in-place edit reaches into the plugin's argument.
     const payload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
 
     const context: MutationContext<TScene> = { scene: this.scene };
