@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -54,36 +55,52 @@ type Syncer struct {
 	log        log.Logger
 	metrics    *ngmetrics.StatusSyncer
 
+	// Clients are built lazily on first sync: the ClientGenerator blocks until the
+	// apiserver is ready, so building them in NewSyncer would stall the evaluation
+	// goroutine until then.
+	clientGenerator     resource.ClientGenerator
+	mu                  sync.Mutex
+	alertRuleClient     *v0alpha1.AlertRuleClient
+	recordingRuleClient *v0alpha1.RecordingRuleClient
+
 	// lastHash bounds write churn: a rule's status is only written when it changed
 	// since the last sync, so a steady state does not re-issue loopback writes.
 	lastHash map[ngmodels.AlertRuleKey]uint64
-
-	alertRuleClient     *v0alpha1.AlertRuleClient
-	recordingRuleClient *v0alpha1.RecordingRuleClient
 }
 
-func NewSyncer(orgs OrgStore, states StateReader, status StatusReader, namespacer request.NamespaceMapper, interval time.Duration, logger log.Logger, metrics *ngmetrics.StatusSyncer, clientGenerator resource.ClientGenerator) (*Syncer, error) {
-	alertRuleClient, err := v0alpha1.NewAlertRuleClientFromGenerator(clientGenerator)
-	if err != nil {
-		return nil, fmt.Errorf("alert rule client: %w", err)
-	}
-	recordingRuleClient, err := v0alpha1.NewRecordingRuleClientFromGenerator(clientGenerator)
-	if err != nil {
-		return nil, fmt.Errorf("recording rule client: %w", err)
-	}
-
+func NewSyncer(orgs OrgStore, states StateReader, status StatusReader, namespacer request.NamespaceMapper, interval time.Duration, logger log.Logger, metrics *ngmetrics.StatusSyncer, clientGenerator resource.ClientGenerator) *Syncer {
 	return &Syncer{
-		orgs:                orgs,
-		states:              states,
-		status:              status,
-		namespacer:          namespacer,
-		interval:            interval,
-		log:                 logger,
-		metrics:             metrics,
-		lastHash:            make(map[ngmodels.AlertRuleKey]uint64),
-		alertRuleClient:     alertRuleClient,
-		recordingRuleClient: recordingRuleClient,
-	}, nil
+		orgs:            orgs,
+		states:          states,
+		status:          status,
+		namespacer:      namespacer,
+		interval:        interval,
+		log:             logger,
+		metrics:         metrics,
+		clientGenerator: clientGenerator,
+		lastHash:        make(map[ngmodels.AlertRuleKey]uint64),
+	}
+}
+
+// clients builds the rule clients on first use and caches them. The
+// ClientGenerator blocks until the apiserver is ready, so this runs from the sync
+// goroutine rather than NewSyncer.
+func (s *Syncer) clients() (*v0alpha1.AlertRuleClient, *v0alpha1.RecordingRuleClient, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.alertRuleClient != nil && s.recordingRuleClient != nil {
+		return s.alertRuleClient, s.recordingRuleClient, nil
+	}
+	ar, err := v0alpha1.NewAlertRuleClientFromGenerator(s.clientGenerator)
+	if err != nil {
+		return nil, nil, fmt.Errorf("alert rule client: %w", err)
+	}
+	rr, err := v0alpha1.NewRecordingRuleClientFromGenerator(s.clientGenerator)
+	if err != nil {
+		return nil, nil, fmt.Errorf("recording rule client: %w", err)
+	}
+	s.alertRuleClient, s.recordingRuleClient = ar, rr
+	return ar, rr, nil
 }
 
 // Run drives the periodic sync until ctx is cancelled.
@@ -107,6 +124,11 @@ func (s *Syncer) Run(ctx context.Context) error {
 }
 
 func (s *Syncer) sync(ctx context.Context) error {
+	// Build the k8s clients on first sync; this blocks until the apiserver is ready.
+	if _, _, err := s.clients(); err != nil {
+		return fmt.Errorf("init rule clients: %w", err)
+	}
+
 	orgIDs, err := s.orgs.FetchOrgIds(ctx)
 	if err != nil {
 		return fmt.Errorf("fetch org ids: %w", err)

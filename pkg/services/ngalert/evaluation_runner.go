@@ -69,7 +69,7 @@ func (r *evaluationRunner) startEvaluation(ctx context.Context) {
 	g.Go(func() error { return r.ng.stateManager.Run(gCtx) })
 
 	if r.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingRuleStatusSync) {
-		if syncer, err := alertstatus.NewSyncer(
+		syncer := alertstatus.NewSyncer(
 			r.ng.store,
 			r.ng.stateManager,
 			r.ng.schedule,
@@ -78,16 +78,13 @@ func (r *evaluationRunner) startEvaluation(ctx context.Context) {
 			r.ng.Log.New("ngalert.status.syncer"),
 			r.ng.Metrics.GetStatusSyncerMetrics(),
 			r.ng.clientGenerator,
-		); err != nil {
-			r.ng.Log.Error("Failed to initialize status syncer", "error", err)
-		} else {
-			// Best-effort: swallow the syncer's return so it can never cancel the evaluation
-			// errgroup (and thereby stop the scheduler). It still stops with gCtx on demotion.
-			g.Go(func() error {
-				_ = syncer.Run(gCtx)
-				return nil
-			})
-		}
+		)
+		// Best-effort: swallow the syncer's return so it can never cancel the evaluation
+		// errgroup (and thereby stop the scheduler). It still stops with gCtx on demotion.
+		g.Go(func() error {
+			_ = syncer.Run(gCtx)
+			return nil
+		})
 	}
 
 	// Wait for scheduler and state manager to finish in background.
