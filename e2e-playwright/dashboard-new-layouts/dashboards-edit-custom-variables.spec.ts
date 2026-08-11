@@ -1,7 +1,7 @@
 import { type Locator } from '@playwright/test';
 
 import { test, expect } from './fixtures';
-import { flows, type Variable } from './utils';
+import { flows, type Variable } from './helpers';
 
 test.use({
   featureToggles: {
@@ -42,7 +42,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.custom.openEditor();
       await sidebar.variableOptions.custom.selectFormat('CSV');
@@ -80,7 +80,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.custom.openEditor();
       await sidebar.variableOptions.custom.selectFormat('CSV');
@@ -135,7 +135,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
 
       const options = [
         { value: 'dev', text: 'Development', aws: 'us-east-1' },

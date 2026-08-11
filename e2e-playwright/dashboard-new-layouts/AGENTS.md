@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This suite contains Playwright E2E tests for the V2 dashboard layout system. Tests use **page objects** to wrap raw selector chains behind user-intent methods. The full rationale is in [`_page_objects_strategy.md`](./_page_objects_strategy.md).
+This suite contains Playwright E2E tests for the V2 dashboard layout system. Tests use **page objects** to wrap raw selector chains behind user-intent methods, so specs read like user stories (`controls.enterEditMode()`) instead of selector chains, each interaction has exactly one implementation, and selector changes touch one file instead of every spec.
 
 ## Page Objects Reference
 
@@ -32,8 +32,6 @@ All page objects live in `page-objects/`. Specs never construct them: the top-le
 
 > The show/hide visibility toggle is a **Toolbar** control (`sidebar.toolbar.getVisibilityToggle()`), even though its selector lives under `components.Sidebar.*`. `Toolbar.getButton(name)` resolves buttons by accessible name, scoped to the sidebar container.
 
-> This table grows as specs are migrated — only methods needed by migrated specs exist.
-
 ### Fixtures
 
 `fixtures.ts` extends the plugin-e2e `test` with one lazy, test-scoped fixture per top-level page object. Specs import `test`/`expect` from it and never wire anything:
@@ -48,7 +46,7 @@ test('example', async ({ gotoDashboardPage, controls, sidebar }) => {
 });
 ```
 
-Page objects work identically whether the spec navigates with `gotoDashboardPage({ uid })`, the `dashboardPage` fixture, or `importTestDashboard()`: locator resolution depends only on `page`, never on how navigation happened.
+Page objects work identically whether the spec navigates with `gotoDashboardPage({ uid })`, the `dashboardPage` fixture, or `flows.dashboards.importTestDashboard()`: locator resolution depends only on `page`, never on how navigation happened.
 
 ### Base class & constructor
 
@@ -70,11 +68,21 @@ export abstract class PageObject {
 }
 ```
 
-Page objects deliberately receive only the selector-resolving function, not a whole `DashboardPage`: they cannot navigate, mock, or wait — those responsibilities stay in specs and `utils.ts`. Simple page objects (e.g. `Controls`, `Toolbar`) inherit the constructor directly — no override needed. Page objects that compose sub-objects (e.g. `Sidebar`) declare `constructor(args: PageObjectArgs)`, call `super(args)`, and pass the same `args` to their children. Construction is wired once in `fixtures.ts` (`buildGetByGrafanaSelector`) — specs never call `new`.
+Page objects deliberately receive only the selector-resolving function, not a whole `DashboardPage`: they cannot navigate, mock, or wait — those responsibilities stay in specs and `helpers/`. Simple page objects (e.g. `Controls`, `Toolbar`) inherit the constructor directly — no override needed. Page objects that compose sub-objects (e.g. `Sidebar`) declare `constructor(args: PageObjectArgs)`, call `super(args)`, and pass the same `args` to their children. Construction is wired once in `fixtures.ts` (`buildGetByGrafanaSelector`) — specs never call `new`.
+
+## Helpers Reference
+
+Shared spec helpers live in `helpers/` and are imported from its barrel (`import { flows, movePanel, expectRowToBeVisible } from './helpers'`). Each file has one responsibility — put new helpers in the right one:
+
+| File            | Responsibility                                                                                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flows.ts`      | Multi-step user flows (setup, navigation) composed from page objects, exposed as the namespaced `flows` object (`flows.dashboards.*`, `flows.variables.*`, `flows.navigation.*`) |
+| `utils.ts`      | Pixel/timing-sensitive mechanics: drag-and-drop and `boundingBox()` geometry                                                                                                     |
+| `assertions.ts` | Reusable assertion bundles (`expect` calls over page-object locators)                                                                                                            |
 
 ## How to Write a New Test
 
-1. **Identify which page objects you need.** Check the table above. If the interaction you need isn't covered, add the method to the appropriate page object — only what the new test requires.
+1. **Identify which page objects and helpers you need.** Check the two reference tables above. If the interaction you need isn't covered, add the method to the appropriate page object or helper file — only what the new test requires.
 
 2. **Scaffold the spec** following this structure:
 
@@ -113,7 +121,8 @@ yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 - **No speculative methods.** Only add methods needed by the spec being migrated.
 - **Plural vs singular getters** (e.g. `getPanels()` / `getPanel()`): plural getters return every match — assert counts or narrow (`.first()`, `.nth()`) in the spec; singular getters return the first match.
 - **Scoped lookups**: getters with a `scope?: Locator` parameter search inside that container — pass `rows.getContent(...)` or `tabs.getContent(...)` to look up elements in a specific row or tab.
-- **No waits or retries inside page objects** unless the pre-refactor code had them. Keep `toPass()` retries, drag-and-drop, scroll logic, and `boundingBox()` in the spec or in `utils.ts`.
+- **No waits or retries inside page objects** unless the pre-refactor code had them. Keep `toPass()` retries, drag-and-drop, scroll logic, and `boundingBox()` in the spec or in `helpers/utils.ts`.
+- **Locators re-resolve on every action.** Playwright re-resolves a `Locator` when each action runs. Two methods that each embed the same positional filter (e.g. `hoverLastRow()` and `clickLastRowButton()` both using `.last()`) can hit two different nodes if the DOM shifts between calls. Prefer one getter that returns the locator (`getLastRow()`) and reuse that value for every related step. Never return pre-resolved snapshots from page objects; `boundingBox()` is point-in-time and stays inline.
 
 ### Selector scoping
 
@@ -124,7 +133,7 @@ yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 
 - **One raw `getByGrafanaSelector` is allowed** for one-off assertions that aren't reusable interactions (e.g. a breadcrumb check).
 - **Timing-sensitive mechanics stay inline** — `toPass()`, `mouse` sequences, `page.evaluate()`.
-- **Test setup stays in the spec** — API calls, dashboard provisioning, navigation via `gotoDashboardPage()`.
+- **Test setup stays in the spec or in `helpers/flows.ts`** — API calls, dashboard provisioning (`flows.dashboards.importTestDashboard()`), navigation via `gotoDashboardPage()`. Never in page objects.
 - **Each spec is fully migrated or untouched.** No file should mix page-object calls and raw selectors for the same UI region.
 
 ### Adding a method to a page object
@@ -150,44 +159,3 @@ const newTitle = 'New dashboard title';
 await titleInput.fill(newTitle);
 await expect(titleInput).toHaveValue(newTitle);
 ```
-
-## Migration Status
-
-**32 of 32 specs migrated — the migration is complete.** No spec accesses the `selectors` object directly anymore, beyond the one-off assertions allowed by the conventions above.
-
-| Spec                                                  | Status   | Lines of code | Selectors usage count |
-| ----------------------------------------------------- | -------- | ------------- | --------------------- |
-| `dashboard-group-panels.spec.ts`                      | Migrated | —             | —                     |
-| `dashboard-group-selected.spec.ts`                    | Migrated | —             | —                     |
-| `dashboards-auto-grid-resize-intercept.spec.ts`       | Migrated | —             | —                     |
-| `dashboards-panel-layouts.spec.ts`                    | Migrated | —             | —                     |
-| `dashboard-repeats-row-layout.spec.ts`                | Migrated | —             | —                     |
-| `dashboards-repeats-tabs-layout.spec.ts`              | Migrated | —             | —                     |
-| `dashboards-repeats-custom-grid.spec.ts`              | Migrated | —             | —                     |
-| `dashboards-repeats-auto-grid.spec.ts`                | Migrated | —             | —                     |
-| `dashboards-title-description.spec.ts`                | Migrated | —             | —                     |
-| `dashboards-edit-panel-title-description.spec.ts`     | Migrated | —             | —                     |
-| `dashboards-edit-panel-transparent-bg.spec.ts`        | Migrated | —             | —                     |
-| `dashboard-mobile-sidebar.spec.ts`                    | Migrated | —             | —                     |
-| `dashboard-hide-sidebar.spec.ts`                      | Migrated | —             | —                     |
-| `dashboards-remove-panel.spec.ts`                     | Migrated | —             | —                     |
-| `dashboard-duplicate-panel.spec.ts`                   | Migrated | —             | —                     |
-| `dashboard-sidepane.spec.ts`                          | Migrated | —             | —                     |
-| `dashboard-outline.spec.ts`                           | Migrated | —             | —                     |
-| `dashboards-conditional-rendering.spec.ts`            | Migrated | —             | —                     |
-| `dashboards-add-panel.spec.ts`                        | Migrated | —             | —                     |
-| `dashboards-edit-variables.spec.ts`                   | Migrated | —             | —                     |
-| `dashboard-tabs-scroll.spec.ts`                       | Migrated | —             | —                     |
-| `dashboards-repeats-snapshots.spec.ts`                | Migrated | —             | —                     |
-| `dashboards-move-panel.spec.ts`                       | Migrated | —             | —                     |
-| `dashboard-conditional-rendering-load-change.spec.ts` | Migrated | —             | —                     |
-| `dashboards-edit-custom-variables.spec.ts`            | Migrated | —             | —                     |
-| `dashboards-edit-query-variables.spec.ts`             | Migrated | —             | —                     |
-| `dashboard-keybindings.spec.ts`                       | Migrated | —             | —                     |
-| `dashboards-edit-adhoc-variables.spec.ts`             | Migrated | —             | —                     |
-| `dashboards-edit-group-by-variables.spec.ts`          | Migrated | —             | —                     |
-| `dashboards-edit-datasource-variables.spec.ts`        | Migrated | —             | —                     |
-| `dashboard-url-syncing.spec.ts`                       | Migrated | —             | —                     |
-| `dashboard-tabs-drag-drop.spec.ts`                    | Migrated | —             | —                     |
-
-See [`_page_objects_strategy.md`](./_page_objects_strategy.md) for the full migration plan.

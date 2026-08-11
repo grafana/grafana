@@ -3,15 +3,7 @@ import { Components, type DashboardPage, type E2ESelectorGroups } from '@grafana
 import V2DashWithTabRepeats from '../dashboards/V2DashWithTabRepeats.json';
 
 import { test, expect } from './fixtures';
-import {
-  verifyChanges,
-  saveDashboardAndCloseToast,
-  importTestDashboard,
-  goToEmbeddedPanel,
-  moveTab,
-  getTabBox,
-  checkRepeatedTabTitles,
-} from './utils';
+import { expectRepeatedTabTitlesToBe, expectDashboardChangesToContain, flows, moveTab, getTabBox } from './helpers';
 
 const REPEAT_TITLE_BASE = 'Tab - ';
 const NEW_TITLE_BASE = 'edited tab rep - ';
@@ -34,8 +26,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can enable tab repeats', async ({ dashboardPage, selectors, page, controls, sidebar, tabs, canvas }) => {
-      await importTestDashboard(page, selectors, 'Tabs layout repeats - add repeats');
+    test('can enable tab repeats', async ({ selectors, page, controls, sidebar, tabs, canvas }) => {
+      await flows.dashboards.importTestDashboard(page, selectors, 'Tabs layout repeats - add repeats');
 
       await controls.enterEditMode();
 
@@ -47,16 +39,16 @@ test.describe(
 
       await sidebar.tabOptions.repeatOptions.repeatByVariable('c1');
 
-      await checkRepeatedTabTitles(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+      await expectRepeatedTabTitlesToBe(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
-      await saveDashboardAndCloseToast(page, controls);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
-      await checkRepeatedTabTitles(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+      await expectRepeatedTabTitlesToBe(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
     });
 
-    test('can update tab repeats with variable change', async ({ dashboardPage, selectors, page, controls, tabs }) => {
-      await importTestDashboard(
+    test('can update tab repeats with variable change', async ({ selectors, page, controls, tabs }) => {
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Tabs layout repeats - update on variable change',
@@ -68,14 +60,14 @@ test.describe(
       await page.locator('body').click({ position: { x: 0, y: 0 } }); // blur select
 
       // verify that repeats are present for first 3 values
-      await checkRepeatedTabTitles(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS.slice(0, -1));
+      await expectRepeatedTabTitlesToBe(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS.slice(0, -1));
 
       // verify there is no repeat with last value
       await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeHidden();
     });
 
-    test('can update repeats in sidebar', async ({ dashboardPage, selectors, page, controls, sidebar, tabs }) => {
-      await importTestDashboard(
+    test('can update repeats in sidebar', async ({ selectors, page, controls, sidebar, tabs }) => {
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Tabs layout repeats - update through sidebar',
@@ -89,24 +81,16 @@ test.describe(
 
       await sidebar.tabOptions.setTitle(`${NEW_TITLE_BASE}$c1`);
 
-      await checkRepeatedTabTitles(tabs, NEW_TITLE_BASE, REPEAT_OPTIONS);
+      await expectRepeatedTabTitlesToBe(tabs, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
-      await saveDashboardAndCloseToast(page, controls);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
-      await checkRepeatedTabTitles(tabs, NEW_TITLE_BASE, REPEAT_OPTIONS);
+      await expectRepeatedTabTitlesToBe(tabs, NEW_TITLE_BASE, REPEAT_OPTIONS);
     });
 
-    test('can update repeats after panel change', async ({
-      dashboardPage,
-      selectors,
-      page,
-      controls,
-      sidebar,
-      panels,
-      tabs,
-    }) => {
-      await importTestDashboard(
+    test('can update repeats after panel change', async ({ selectors, page, controls, sidebar, panels, tabs }) => {
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Tabs layout repeats - update repeats after panel change',
@@ -127,7 +111,7 @@ test.describe(
       // verify edited panel title updated in repeated tab
       await expect(panels.getPanel('New edited panel')).toBeVisible();
 
-      await saveDashboardAndCloseToast(page, controls);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await expect(panels.getPanel('New edited panel')).toBeVisible();
@@ -143,7 +127,7 @@ test.describe(
       tabs,
       canvas,
     }) => {
-      await importTestDashboard(
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Tabs layout repeats - update repeats after panel change in editor',
@@ -158,7 +142,7 @@ test.describe(
       await sidebar.panelOptions.setTitle('New edited panel');
 
       // playwright too fast, verifying JSON diff that changes landed
-      await verifyChanges(dashboardPage, page, selectors, 'New edited panel');
+      await expectDashboardChangesToContain(dashboardPage, page, selectors, 'New edited panel');
 
       // verify panel title change in panel editor UI
       await expect(panels.getPanel('New edited panel')).toBeVisible();
@@ -174,7 +158,7 @@ test.describe(
       // verify edited panel title updated in repeated tab
       await expect(panels.getPanel('New edited panel')).toBeVisible();
 
-      await saveDashboardAndCloseToast(page, controls);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       // verify edited panel title updated in repeated tab
@@ -189,7 +173,7 @@ test.describe(
       tabs,
       canvas,
     }) => {
-      await importTestDashboard(
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Tabs layout repeats - hide canvas add action in repeats',
@@ -205,8 +189,8 @@ test.describe(
       await expect(canvas.getAddRowButton()).toBeHidden();
     });
 
-    test('can move repeated tabs', async ({ dashboardPage, selectors, page, controls, tabs }) => {
-      await importTestDashboard(
+    test('can move repeated tabs', async ({ selectors, page, controls, tabs }) => {
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Tabs layout repeats - move repeated tabs',
@@ -225,7 +209,7 @@ test.describe(
         expect(normalTab.x).toBeLessThan(repeatedTab.x);
       }).toPass();
 
-      await saveDashboardAndCloseToast(page, controls);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       const repeatedTab2 = await getTabBox(tabs, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
@@ -233,8 +217,8 @@ test.describe(
       expect(normalTab2.x).toBeLessThan(repeatedTab2.x);
     });
 
-    test('can load into repeated tab', async ({ dashboardPage, selectors, page, tabs }) => {
-      await importTestDashboard(
+    test('can load into repeated tab', async ({ selectors, page, tabs }) => {
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Tabs layout repeats - can load into repeated tab',
@@ -253,8 +237,8 @@ test.describe(
       );
     });
 
-    test('can view panels in repeated tab', async ({ dashboardPage, selectors, page, panels, rows, tabs }) => {
-      await importTestDashboard(
+    test('can view panels in repeated tab', async ({ selectors, page, panels, rows, tabs }) => {
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Tabs layout repeats - view panels in repeated tabs',
@@ -301,8 +285,8 @@ test.describe(
       await expect(panels.getPanel('Tab 3 - Row 2 - Panel repeat 2')).toBeVisible();
     });
 
-    test('can view embedded panels in repeated tab', async ({ dashboardPage, selectors, page, panels, rows, tabs }) => {
-      await importTestDashboard(
+    test('can view embedded panels in repeated tab', async ({ selectors, page, panels, rows, tabs }) => {
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Tabs layout repeats - view embedded panels in repeated tabs',
@@ -314,7 +298,7 @@ test.describe(
       // non repeated panel in repeated tab
       await panels.getPanel('New panel').hover();
       await page.keyboard.press('p+e');
-      await goToEmbeddedPanel(page);
+      await flows.navigation.goToEmbeddedPanel(page);
       await expect(panels.getPanel('New panel')).toBeVisible();
       await page.goto(dashUrl);
 
@@ -323,7 +307,7 @@ test.describe(
       await panels.getPanel('Tab 1 - Row 2 - Panel repeat 2').hover();
       await page.keyboard.press('p+e');
 
-      await goToEmbeddedPanel(page);
+      await flows.navigation.goToEmbeddedPanel(page);
       await expect(panels.getPanel('Tab 1 - Row 2 - Panel repeat 2')).toBeVisible();
       await page.goto(dashUrl);
 
@@ -333,12 +317,12 @@ test.describe(
       await panels.getPanel('Tab 3 - Row 2 - Panel repeat 2').hover();
       await page.keyboard.press('p+e');
 
-      await goToEmbeddedPanel(page);
+      await flows.navigation.goToEmbeddedPanel(page);
       await expect(panels.getPanel('Tab 3 - Row 2 - Panel repeat 2')).toBeVisible();
     });
 
-    test('can remove repeats', async ({ dashboardPage, selectors, page, controls, sidebar, tabs }) => {
-      await importTestDashboard(
+    test('can remove repeats', async ({ selectors, page, controls, sidebar, tabs }) => {
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Tabs layout repeats - remove repeats',
@@ -346,7 +330,7 @@ test.describe(
       );
 
       // verify 5 tabs are present (4 repeats and 1 normal)
-      await checkRepeatedTabTitles(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+      await expectRepeatedTabTitlesToBe(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
       await expect(tabs.getTitle('New tab')).toBeVisible();
 
       await controls.enterEditMode();
@@ -361,7 +345,7 @@ test.describe(
       await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(2)}`)).toBeHidden();
       await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(3)}`)).toBeHidden();
 
-      await saveDashboardAndCloseToast(page, controls);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
