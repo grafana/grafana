@@ -17,7 +17,7 @@ labels:
     - oss
 menuTitle: Query editor
 title: Graphite query editor
-weight: 300
+weight: 200
 review_date: 2026-08-11
 ---
 
