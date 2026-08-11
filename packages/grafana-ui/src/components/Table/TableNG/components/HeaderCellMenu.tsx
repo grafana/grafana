@@ -49,7 +49,7 @@ export function HeaderCellMenu({
   // on the button directly. We anchor off the wrapper instead, and reach the button through it for
   // the focus restore `FilterPopup` does on close.
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const { isPopoverVisible, setPopoverVisible, filterEnabled, popupProps } = useFilterPopupState({
+  const { isPopoverVisible, setPopoverVisible, popupProps } = useFilterPopupState({
     name,
     filter,
     setFilter,
@@ -90,7 +90,7 @@ export function HeaderCellMenu({
     >
       <Dropdown overlay={overlay} placement="bottom-end">
         <IconButton
-          className={filterEnabled ? styles.buttonFilterEnabled : styles.button}
+          className={styles.button}
           name="ellipsis-v"
           size="sm"
           aria-label={menuLabel}
@@ -112,11 +112,18 @@ export function HeaderCellMenu({
   );
 }
 
-const getStyles = memoize((theme: GrafanaTheme2) => {
+const getStyles = memoize((theme: GrafanaTheme2) => ({
+  wrapper: css({
+    label: 'headerColumnMenuWrapper',
+    display: 'flex',
+    alignItems: 'center',
+    flexShrink: 0,
+  }),
   // Revealed on hover, but only faded rather than removed from the layout: the button must stay
   // tabbable while transparent so keyboard users can reach it, and auto column widths reserve its
-  // space unconditionally (see HEADER_MENU_SPACE) because it never leaves the flow.
-  const button = css({
+  // space unconditionally (see HEADER_MENU_SPACE) because it never leaves the flow. An active filter
+  // is reported by a persistent icon in HeaderCell rather than by pinning this button visible.
+  button: css({
     label: 'headerColumnMenuButton',
     color: theme.colors.text.secondary,
     opacity: 0,
@@ -126,22 +133,5 @@ const getStyles = memoize((theme: GrafanaTheme2) => {
     '.rdg-cell:hover &, .rdg-cell:focus-within &, &:focus-visible': {
       opacity: 1,
     },
-  });
-
-  return {
-    wrapper: css({
-      label: 'headerColumnMenuWrapper',
-      display: 'flex',
-      alignItems: 'center',
-      flexShrink: 0,
-    }),
-    button,
-    // An active filter pins the button visible and colors it, so the column reads as filtered even
-    // when the pointer is elsewhere.
-    buttonFilterEnabled: css(button, {
-      label: 'headerColumnMenuButtonFilterEnabled',
-      opacity: 1,
-      color: theme.colors.primary.text,
-    }),
-  };
-});
+  }),
+}));

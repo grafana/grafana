@@ -230,6 +230,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     getActions: getCellActions,
     sortColumns,
     tableRefreshEnabled,
+    filter,
   });
 
   const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);

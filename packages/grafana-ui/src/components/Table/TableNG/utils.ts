@@ -1234,6 +1234,11 @@ export interface ContentAwareColWidthsOptions {
   sortColumns?: SortColumn[];
   /** `table.refresh`: a filterable column reserves the column menu button instead of a filter icon. */
   tableRefreshEnabled?: boolean;
+  /**
+   * Active filters. Under `table.refresh` a filtered column also reserves space for the persistent
+   * filter icon that marks it, the same way a sorted column reserves space for its arrow.
+   */
+  filter?: FilterType;
   /** overridable for testing; otherwise derived from the auto-column count */
   sampleSize?: number;
 }
@@ -1337,16 +1342,22 @@ function measureInlineRunWidth(
  * column, not a sample across many rows. Sort-arrow space is only reserved when `isSorted` (widths
  * recompute on sort), so a tight column doesn't ellipsize its title the moment it's sorted.
  */
-function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boolean, isSorted: boolean, tableRefreshEnabled?: boolean): number {
+function measureHeaderWidth(
+  field: Field,
+  ctx: TypographyCtx,
+  showTypeIcons: boolean,
+  isSorted: boolean,
+  tableRefreshEnabled: boolean,
+  isFiltered: boolean
+): number {
   let headerWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   headerWidth += CELL_HORIZONTAL_CHROME;
-  if (field.config?.custom?.filterable) {
-    // the refreshed header replaces the inline filter icon with the (wider) column menu button
-    headerWidth += tableRefreshEnabled ? HEADER_MENU_SPACE : HEADER_ICON_SPACE;
-  }
-  headerWidth += field.config?.custom?.filterable ? HEADER_ICON_SPACE : 0;
   headerWidth += showTypeIcons ? HEADER_ICON_SPACE : 0;
   headerWidth += isSorted ? HEADER_ICON_SPACE : 0;
+  // the refreshed header marks an active filter with a persistent icon next to the sort arrow. Like
+  // the arrow, it only exists while that state holds, so its space is reserved only then (the widths
+  // recompute when the filter changes).
+  headerWidth += tableRefreshEnabled && isFiltered ? HEADER_ICON_SPACE : 0;
   return headerWidth;
 }
 
@@ -1535,6 +1546,7 @@ export function computeContentAwareColWidths(
     getActions,
     sortColumns,
     tableRefreshEnabled = false,
+    filter,
     sampleSize,
   }: ContentAwareColWidthsOptions
 ): number[] {
@@ -1564,6 +1576,13 @@ export function computeContentAwareColWidths(
 
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
   const sortedKeys = new Set(sortColumns?.map((c) => c.columnKey));
+  // Filter entries are keyed per parent on nested tables, so match on the display name they carry
+  // rather than the key: nested columns share one width, so any active filter widens the column.
+  const filteredKeys = new Set(
+    Object.values(filter ?? {})
+      .filter((entry) => entry.filtered != null)
+      .map((entry) => entry.displayName)
+  );
 
   for (const i of autoIdxs) {
     const field = fields[i];
@@ -1572,7 +1591,8 @@ export function computeContentAwareColWidths(
       headerTypographyCtx,
       showTypeIcons,
       sortedKeys.has(getDisplayName(field)),
-      tableRefreshEnabled
+      tableRefreshEnabled,
+      filteredKeys.has(getDisplayName(field))
     );
 
     // Wrapped columns are measured like any other: a content-based width keeps a content-heavy
