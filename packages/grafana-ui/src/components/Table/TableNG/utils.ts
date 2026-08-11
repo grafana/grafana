@@ -1389,8 +1389,10 @@ function measureFooterWidth(field: Field, headerCtx: TypographyCtx): number {
     // count reducers, which render unformatted).
     const label = (fieldReducers.get(id)?.name ?? id).toUpperCase();
     const value = results[id];
-    const valueText =
-      value == null ? '' : FOOTER_UNFORMATTED_REDUCERS.has(id) ? String(value) : formatCellValue(field, value);
+    let valueText = '';
+    if (value != null) {
+      valueText = FOOTER_UNFORMATTED_REDUCERS.has(id) ? String(value) : formatCellValue(field, value);
+    }
     const rowWidth =
       headerCtx.ctx.measureText(label).width + FOOTER_LABEL_GAP + headerCtx.ctx.measureText(valueText).width;
     widest = Math.max(widest, rowWidth);
