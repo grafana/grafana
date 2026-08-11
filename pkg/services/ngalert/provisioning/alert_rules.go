@@ -260,6 +260,9 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 		fq := folder.GetFoldersQuery{
 			OrgID:        user.GetOrgID(),
 			SignedInUser: user,
+			// Only folder UID and per-folder access are used below; serve
+			// from the search index rather than a full-object folder list.
+			MetadataOnly: true,
 		}
 		folders, err := service.folderService.GetFolders(ctx, fq)
 		if err != nil {
@@ -1211,6 +1214,9 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderFullpath(ctx context.Co
 		UIDs:         nil,
 		WithFullpath: true,
 		SignedInUser: user,
+		// Only Fullpath is read below; serve from the search index rather than a
+		// full-object folder list.
+		MetadataOnly: true,
 	}
 	for uid := range namespaces {
 		fq.UIDs = append(fq.UIDs, uid)
