@@ -830,6 +830,7 @@ knip.config.ts @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/grafana-catalog
 
 # Claude Code skills — owned by the squad that maintains each skill
+/.claude/skills/frontend-testing-strategy/ @grafana/dataviz-squad
 /.claude/skills/panel-testing-strategy/ @grafana/dataviz-squad
 /.claude/skills/add-e2e-selectors/ @grafana/grafana-frontend-platform
 playwright.storybook.config.ts @grafana/grafana-frontend-platform
