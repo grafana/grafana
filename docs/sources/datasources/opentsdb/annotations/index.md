@@ -87,7 +87,7 @@ This query retrieves annotations attached to the `deploy.myapp` metric, showing 
 
 ### Monitor infrastructure-wide events
 
-Capture system-wide events such as network changes or datacenter maintenance:
+Capture system-wide events such as network changes or data center maintenance:
 
 | Field                   | Value                   |
 | ----------------------- | ----------------------- |
@@ -113,7 +113,7 @@ Track when configuration changes are applied:
 
 | Field                   | Value           |
 | ----------------------- | --------------- |
-| Name                    | Config Changes  |
+| Name                    | Configuration changes |
 | OpenTSDB metrics query  | `events.config` |
 | Show Global Annotations | disabled        |
 

@@ -149,7 +149,11 @@ These issues relate to slow queries or high resource usage.
 1. Check OpenTSDB and HBase performance metrics.
 1. Consider increasing OpenTSDB heap size if memory is constrained.
 
+<!-- vale Grafana.Headings = NO -->
+
 ### HBase performance issues
+
+<!-- vale Grafana.Headings = YES -->
 
 OpenTSDB relies on HBase for data storage. Performance problems in HBase directly affect OpenTSDB query performance.
 
@@ -157,7 +161,7 @@ OpenTSDB relies on HBase for data storage. Performance problems in HBase directl
 
 1. Monitor HBase region server health and compaction status.
 1. Ensure sufficient heap memory is allocated to HBase region servers.
-1. Check for region hotspots and rebalance if necessary.
+1. Check for region hot spots and redistribute regions if necessary.
 1. Refer to the [OpenTSDB troubleshooting guide](http://opentsdb.net/docs/build/html/user_guide/troubleshooting.html) for HBase-specific issues.
 
 ## Enable debug logging

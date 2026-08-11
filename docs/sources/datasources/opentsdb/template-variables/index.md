@@ -20,7 +20,7 @@ review_date: 2026-08-11
 
 # OpenTSDB template variables
 
-Instead of hard-coding server, application, and sensor names in your metric queries, you can use template variables. Variables appear as drop-down menus at the top of the dashboard, making it easy to change the data being displayed without editing queries.
+Instead of hard-coding server, application, and sensor names in your metric queries, you can use template variables. Variables appear as drop-down menus at the top of the dashboard, so you can change the data being displayed without editing queries.
 
 For an introduction to template variables, refer to the [Variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) documentation.
 
@@ -186,7 +186,7 @@ Variables can be used in these query editor fields:
 
 ## Multi-value variables
 
-When you enable **Multi-value** for a variable, users can select multiple values simultaneously. The OpenTSDB data source handles multi-value variables using pipe (`|`) separation, which is compatible with OpenTSDB's literal_or filter type.
+When you enable **Multi-value** for a variable, users can select multiple values simultaneously. The OpenTSDB data source handles multi-value variables using pipe (`|`) separation, which is compatible with OpenTSDB's `literal_or` filter type.
 
 ### Configure multi-value variables
 

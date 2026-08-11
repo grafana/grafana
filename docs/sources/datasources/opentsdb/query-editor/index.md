@@ -312,7 +312,7 @@ This query sums HTTP request counts across all hosts matching `web-*` and groups
 
 This query calculates the rate of bytes received per second. The counter max is set to the 64-bit unsigned integer maximum to handle counter wraps correctly.
 
-### Using alias patterns
+### Use alias patterns
 
 | Field      | Value                       |
 | ---------- | --------------------------- |
@@ -323,7 +323,7 @@ This query calculates the rate of bytes received per second. The counter max is 
 
 This query uses the alias pattern to create readable legend labels like `webserver01 - Response Time`.
 
-### Downsampling with custom interval
+### Downsample with a custom interval
 
 | Field                 | Value               |
 | --------------------- | ------------------- |
@@ -333,7 +333,7 @@ This query uses the alias pattern to create readable legend labels like `webserv
 | Downsample Aggregator | `avg`               |
 | Fill                  | `zero`              |
 
-This query downsamples disk I/O data to 5-minute averages, filling gaps with zero values.
+This query reduces disk I/O data to 5-minute averages, filling gaps with zero values.
 
 ### Compare environments with filters
 
