@@ -16,7 +16,7 @@ labels:
 menuTitle: Configure
 title: Configure the TestData data source
 weight: 100
-review_date: '2026-04-08'
+review_date: '2026-08-11'
 ---
 
 # Configure the TestData data source
@@ -92,7 +92,7 @@ For all available configuration options, refer to the [Grafana provider data sou
 
 After configuring your TestData data source, you can:
 
-- [Write queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/query-editor/) using the 30 available scenarios to generate simulated data.
+- [Write queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/query-editor/) using the 33 available scenarios to generate simulated data.
 - [Use template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/template-variables/) to create dynamic, reusable dashboards.
 - [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/alerting/) to prototype and test alert rules with simulated data.
 - [Troubleshoot issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/troubleshooting/) if you encounter problems with your data source.

@@ -18,7 +18,7 @@ labels:
 menuTitle: TestData
 title: TestData data source
 weight: 1500
-review_date: '2026-04-08'
+review_date: '2026-08-11'
 ---
 
 # TestData data source
@@ -39,7 +39,7 @@ Grafana ships with a built-in TestData data source that generates simulated time
 The following pages help you set up and use the TestData data source:
 
 - [Configure the TestData data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/configure/) for setup and provisioning instructions.
-- [TestData query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/query-editor/) for a reference of all 30 available scenarios and their options.
+- [TestData query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/query-editor/) for a reference of all 33 available scenarios and their options.
 - [TestData alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/alerting/) for prototyping and testing alert rules with simulated data.
 - [TestData template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/template-variables/) for using TestData with dashboard variables.
 - [Troubleshoot TestData](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/troubleshooting/) for solutions to common issues.

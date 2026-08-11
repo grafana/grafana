@@ -17,7 +17,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot TestData data source issues
 weight: 500
-review_date: '2026-04-08'
+review_date: '2026-08-11'
 ---
 
 # Troubleshoot TestData data source issues
@@ -222,7 +222,7 @@ These errors occur when using TestData with [Grafana Alerting](https://grafana.c
 
 **Solutions:**
 
-1. Verify you're using a backend-evaluated scenario. Browser-only scenarios (Streaming Client, Grafana Live, Grafana API, Steps, No Data Points) return empty results when evaluated by the alerting engine. Use a backend scenario like Random Walk or Predictable Pulse instead.
+1. Verify you're using a backend-evaluated scenario. Browser-only scenarios (Streaming Client, Grafana Live, Grafana API, Steps, Annotations, Node Graph, Flame Graph, Trace, and Raw Frames) return empty results when evaluated by the alerting engine. Use a backend scenario like Random Walk or Predictable Pulse instead.
 1. Confirm the scenario is returning time-series data. Scenarios that produce logs (Logs), traces (Trace), graphs (Node Graph, Flame Graph), or tables (Table Static) can't be used as alert conditions.
 1. Check that the **String Input** field isn't empty for scenarios that require it (for example, CSV Metric Values).
 

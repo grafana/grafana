@@ -15,12 +15,12 @@ labels:
 menuTitle: Query editor
 title: TestData query editor
 weight: 200
-review_date: '2026-04-08'
+review_date: '2026-08-11'
 ---
 
 # TestData query editor
 
-Instead of a traditional query language, the TestData data source uses **scenarios** to generate simulated data. Each scenario produces a different type of data suited for testing specific visualizations, behaviors, or edge cases. TestData includes 30 scenarios covering time series, logs, traces, graphs, streaming, and error simulation.
+Instead of a traditional query language, the TestData data source uses **scenarios** to generate simulated data. Each scenario produces a different type of data suited for testing specific visualizations, behaviors, or edge cases. TestData includes 33 scenarios covering time series, logs, traces, graphs, streaming, and error simulation.
 
 Use scenarios to:
 
@@ -33,7 +33,7 @@ Use scenarios to:
 To build a query, select a scenario from the **Scenario** drop-down. The query editor updates to show fields specific to that scenario. Click **Run queries** or use the keyboard shortcut to execute.
 
 {{< admonition type="note" >}}
-Some scenarios run entirely in the browser (Streaming Client, Grafana Live, Grafana API, Steps, No Data Points). These scenarios don't send queries to the backend, which means they can't be used with [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/alerting/) or in any context that requires server-side evaluation.
+Some scenarios run entirely in the browser: Streaming Client, Grafana Live, Grafana API, Steps, Annotations, Node Graph, Flame Graph, Trace, and Raw Frames. These scenarios don't send queries to the backend, which means they can't be used with [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/alerting/) or in any context that requires server-side evaluation.
 {{< /admonition >}}
 
 ## Scenario reference
@@ -63,11 +63,14 @@ The scenarios are organized into the following categories. Use the table below t
 | [Annotations](#annotations)                                         | Visualization testing | Annotation data points.                            |
 | [Exponential heatmap bucket data](#exponential-heatmap-bucket-data) | Visualization testing | Heatmap data with exponential buckets.             |
 | [Linear heatmap bucket data](#linear-heatmap-bucket-data)           | Visualization testing | Heatmap data with linear buckets.                  |
+| [Exemplars](#exemplars)                                             | Visualization testing | Exemplar markers to overlay on a sibling series.   |
 | [Streaming Client](#streaming-client)                               | Streaming             | Browser-side streaming (signal, logs, traces).     |
 | [Grafana Live](#grafana-live)                                       | Streaming             | Server-side streaming via live channels.           |
 | [Grafana API](#grafana-api)                                         | Data retrieval        | Fetch data from internal Grafana endpoints.        |
 | [Conditional Error](#conditional-error)                             | Error testing         | Configurable error or CSV data.                    |
 | [Error with source](#error-with-source)                             | Error testing         | Error with plugin or downstream classification.    |
+| [Flaky Query](#flaky-query)                                         | Error testing         | Intermittent errors with configurable rate.        |
+| [Errors and notices](#errors-and-notices)                           | Error testing         | Series with info, warning, and error notices.      |
 | [No Data Points](#no-data-points)                                   | Error testing         | Empty result with no data.                         |
 | [Data Points Outside Range](#datapoints-outside-range)              | Error testing         | Data point outside the visible time range.         |
 | [Slow Query](#slow-query)                                           | Error testing         | Configurable delay before returning data.          |
@@ -279,6 +282,19 @@ Generates heatmap data with exponentially distributed bucket boundaries (1, 2, 4
 
 Generates heatmap data with linearly distributed bucket boundaries (0, 10, 20, 30, ...). Use this to test heatmap panels with linear distributions.
 
+### Exemplars
+
+Generates only exemplars, the diamond markers a panel draws on top of a series, and no series of its own. Add a second query in the same panel, such as Random Walk, to give the exemplars a series to annotate. Values and timestamps are seeded from the dashboard time range, so the same range always returns the same exemplars.
+
+| Field           | Description                                                                                                       |
+| --------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Count**       | Number of exemplars to generate.                                                                                  |
+| **Min**         | Minimum value for the exemplars. When empty, the range is derived from a reference random walk over the same time range, padded by 10%. |
+| **Max**         | Maximum value for the exemplars. When empty, the range is derived as described for **Min**.                       |
+| **Labels**      | Exemplar labels shown in the tooltip. Each label defines a **Name**, a **Length**, and an optional **Link**.      |
+
+To keep the exemplars aligned with a sibling series, pin **Min** and **Max**, or give the sibling query an explicit start value and spread. The legend filter matches on exemplar labels, so hiding a series in the legend also hides its markers.
+
 ## Streaming scenarios
 
 These scenarios produce real-time streaming data. Data updates continuously in the browser without requiring manual query execution.
@@ -353,6 +369,23 @@ Returns an error with a configurable source classification.
 | **Error source** | Source of the error: `Plugin` (plugin error) or `Downstream` (downstream service error). |
 
 Use this to test how Grafana differentiates between plugin errors and downstream errors in alerting and error handling.
+
+### Flaky Query
+
+Returns errors intermittently based on a configurable error rate, with optional delays. Use this to test how panels, alert rules, and error handling behave when a data source fails part of the time.
+
+| Field                | Description                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Error rate**       | Percentage of requests that return an error. Default: `50`.                                                   |
+| **Status code**      | HTTP status code returned with the error. Default: `400`.                                                     |
+| **Error source**     | Source of the error: `Plugin` (plugin error) or `Downstream` (downstream service error).                      |
+| **Query delay**      | Base delay applied to each request in Go duration syntax, for example `1s` or `500ms`. Default: `5s`.         |
+| **Delay variability**| Randomizes the query delay by plus or minus this percentage. For example, `100` on a `1s` delay sleeps between 0 and 2 seconds. |
+| **Error message**    | Message returned with the error. Default: `Flaky query error`.                                                |
+
+### Errors and notices
+
+Returns a random walk series with one query-result notice of each severity (info, warning, and error) attached to the frame metadata. Use this to preview how a panel displays query errors and notices.
 
 ### No Data Points
 
