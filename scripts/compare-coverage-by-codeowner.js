@@ -23,7 +23,7 @@ const METRICS = ['lines', 'statements', 'functions', 'branches'];
  * @returns {number} Rounded percentage
  */
 function roundPct(value) {
-  return Math.round(value * 100) / 100;
+  return Number(value.toFixed(2));
 }
 
 /**
@@ -112,7 +112,9 @@ function hasToleratedDrop(mainSummary, prSummary) {
  * @returns {string} Formatted delta (e.g., "+1.2%" or "-0.5%")
  */
 function formatDelta(prValue, mainValue) {
-  const delta = prValue - mainValue;
+  // Round each side first, same as classifyChange, so the displayed delta never
+  // disagrees with the status/tolerance columns near the rounding boundary.
+  const delta = roundPct(prValue) - roundPct(mainValue);
   if (delta > 0) {
     return `+${delta.toFixed(2)}%`;
   } else if (delta < 0) {
@@ -324,6 +326,7 @@ if (require.main === module) {
 module.exports = {
   DROP_TOLERANCE_PCT,
   compareCoverageByCodeowner,
+  formatDelta,
   generateMarkdown,
   getStatusIcon,
   getOverallStatus,

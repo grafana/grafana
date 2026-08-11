@@ -1,5 +1,6 @@
 const {
   DROP_TOLERANCE_PCT,
+  formatDelta,
   generateMarkdown,
   getOverallStatus,
   getStatusIcon,
@@ -41,6 +42,15 @@ describe('compare-coverage-by-codeowner', () => {
     it('fails drops larger than the tolerance', () => {
       expect(getStatusIcon(64.58, 64.55)).toBe('❌ Fail');
       expect(getStatusIcon(80, 79)).toBe('❌ Fail');
+    });
+  });
+
+  describe('formatDelta', () => {
+    it('rounds each side before diffing so it agrees with classifyChange at the boundary', () => {
+      // Raw delta here is -0.014, which would round to -0.01 and look like a
+      // regression past tolerance if not rounded first — but each side rounds
+      // to a 0.02 drop, i.e. tolerated.
+      expect(formatDelta(79.951, 79.965)).toBe('-0.02%');
     });
   });
 
