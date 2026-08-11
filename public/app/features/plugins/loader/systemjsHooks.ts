@@ -4,7 +4,7 @@ import { config } from '@grafana/runtime';
 import { transformPluginSourceForCDN } from '../cdn/utils';
 
 import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, SHARED_DEPENDENCY_PREFIX } from './constants';
-import { getPluginInfoFromCache, resolvePluginUrlWithCache } from './pluginInfoCache';
+import { getPluginInfoFromCache, resolvePluginUrlWithBuildHash } from './pluginInfoCache';
 // SystemJS has to be imported before the sharedDependenciesMap
 import { SystemJS } from './systemjs';
 // eslint-disable-next-line import/order
@@ -92,15 +92,16 @@ export function decorateSystemJSResolve(
     const cleanedUrl = getBackWardsCompatibleUrl(url);
     const isFileSystemModule =
       (cleanedUrl.endsWith('.js') || cleanedUrl.endsWith('.css')) && !isHostedOnCDN(cleanedUrl);
-    // Add a cache query param for filesystem module.js requests
-    // CDN hosted plugins contain the version in the path so skip
-    return isFileSystemModule ? resolvePluginUrlWithCache(cleanedUrl) : cleanedUrl;
+    // Pin filesystem module/chunk requests to the plugin's buildHash (build-addressed route)
+    // so a session loads one coherent build (FR-001, FR-002). Falls back to a cache param when
+    // no buildHash is known. CDN hosted plugins contain the version in the path so skip.
+    return isFileSystemModule ? resolvePluginUrlWithBuildHash(cleanedUrl) : cleanedUrl;
   } catch (err) {
     // Provide fallback for plugins that use `loadPluginCss` to load theme styles.
     if (LOAD_PLUGIN_CSS_REGEX.test(id)) {
       const resolvedUrl = getLoadPluginCssUrl(id);
       const url = originalResolve.apply(this, [resolvedUrl, parentUrl]);
-      return resolvePluginUrlWithCache(url);
+      return resolvePluginUrlWithBuildHash(url);
     }
     console.warn(`SystemJS: failed to resolve '${id}'`);
     return id;

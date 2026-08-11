@@ -2,6 +2,9 @@ import { config } from '@grafana/runtime';
 
 jest.mock('./pluginInfoCache', () => ({
   resolvePluginUrlWithCache: (url: string) => `${url}?_cache=1234`,
+  // build-hash pinning: rewrites FS urls onto the build-addressed route
+  // /public/plugins/:id/:buildHash/* instead of appending a timestamp cache param
+  resolvePluginUrlWithBuildHash: (url: string) => url.replace('/public/plugins/', '/public/plugins/BUILDHASH/'),
 }));
 
 import { server } from './pluginLoader.mock';
@@ -46,24 +49,24 @@ describe('SystemJS Loader Hooks', () => {
   });
 
   describe('decorateSystemJSResolve', () => {
-    it('removes legacy wildcard from resolved url', () => {
+    it('removes legacy wildcard from resolved url and pins it to the build-addressed route', () => {
       const id = '/public/plugins/my-datasource/styles.css!';
       const result = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id);
 
-      expect(result).toBe('http://localhost/public/plugins/my-datasource/styles.css?_cache=1234');
+      expect(result).toBe('http://localhost/public/plugins/BUILDHASH/my-datasource/styles.css');
     });
-    it('adds default js extension to resolved url', () => {
+    it('adds default js extension to resolved url and pins filesystem modules to the build-addressed route', () => {
       // test against missing extension
       const id = '/public/plugins/my-plugin/traffic_light';
       const result = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id);
 
-      expect(result).toBe('http://localhost/public/plugins/my-plugin/traffic_light.js?_cache=1234');
+      expect(result).toBe('http://localhost/public/plugins/BUILDHASH/my-plugin/traffic_light.js');
 
       // test against missing extension with periods in filename
       const id2 = '/public/plugins/my-plugin/lib/flot/jquery.flot.gauge';
       const result2 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id2);
 
-      expect(result2).toBe('http://localhost/public/plugins/my-plugin/lib/flot/jquery.flot.gauge.js?_cache=1234');
+      expect(result2).toBe('http://localhost/public/plugins/BUILDHASH/my-plugin/lib/flot/jquery.flot.gauge.js');
 
       // test against bare specifiers
       const id3 = 'package:lodash';
@@ -75,12 +78,12 @@ describe('SystemJS Loader Hooks', () => {
       const id4 = '/public/plugins/my-plugin/traffic_light.js';
       const result4 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id4);
 
-      expect(result4).toBe('http://localhost/public/plugins/my-plugin/traffic_light.js?_cache=1234');
+      expect(result4).toBe('http://localhost/public/plugins/BUILDHASH/my-plugin/traffic_light.js');
 
       const id5 = '/public/plugins/my-plugin/traffic_light.css';
       const result5 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id5);
 
-      expect(result5).toBe('http://localhost/public/plugins/my-plugin/traffic_light.css?_cache=1234');
+      expect(result5).toBe('http://localhost/public/plugins/BUILDHASH/my-plugin/traffic_light.css');
 
       const id6 = '/public/plugins/my-plugin/traffic_light.json';
       const result6 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id6);
@@ -92,17 +95,27 @@ describe('SystemJS Loader Hooks', () => {
 
       expect(result7).toBe('http://localhost/public/plugins/my-plugin/traffic_light.wasm');
     });
-    it('resolves loadPluginCSS urls correctly', () => {
+    it('resolves loadPluginCSS urls correctly and pins them to the build-addressed route', () => {
       const id = 'plugins/my-plugin/dark.css';
       const result = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id);
 
-      expect(result).toBe('http://localhost/public/plugins/my-plugin/dark.css?_cache=1234');
+      expect(result).toBe('http://localhost/public/plugins/BUILDHASH/my-plugin/dark.css');
     });
-    it('adds cache query param to resolved module.js url', () => {
+    it('pins the resolved module.js url to the build-addressed route instead of a timestamp cache param', () => {
       const id = '/public/plugins/my-plugin/module.js';
       const result = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id);
 
-      expect(result).toBe('http://localhost/public/plugins/my-plugin/module.js?_cache=1234');
+      expect(result).toBe('http://localhost/public/plugins/BUILDHASH/my-plugin/module.js');
+      expect(result).not.toContain('_cache=');
+    });
+    it('leaves CDN-hosted plugin urls unchanged (already versioned in path)', () => {
+      config.pluginsCDNBaseURL = 'http://my-cdn.com/plugins';
+      const id = 'http://my-cdn.com/plugins/my-plugin/v1.0.0/public/plugins/my-plugin/module.js';
+      const result = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id);
+
+      expect(result).toBe(id);
+      expect(result).not.toContain('BUILDHASH');
+      expect(result).not.toContain('_cache=');
     });
   });
 });

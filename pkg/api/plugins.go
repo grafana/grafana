@@ -7,8 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -210,6 +212,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		BaseUrl:          plugin.BaseURL,
 		Module:           plugin.Module,
 		ModuleHash:       hs.pluginAssets.ModuleHash(c.Req.Context(), plugin),
+		BuildHash:        hs.pluginAssets.BuildHash(c.Req.Context(), plugin),
 		DefaultNavUrl:    path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
 		State:            plugin.State,
 		Signature:        plugin.Signature,
@@ -255,6 +258,41 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 	}
 
 	return response.JSON(http.StatusOK, dto)
+}
+
+// GetPluginBuildInfo returns the build the serving replica currently has
+// registered for a plugin, so build drift across an HA replica set is directly
+// queryable (which buildHash a replica serves) without external hash-diffing.
+//
+// GET /api/plugins/:pluginId/build
+func (hs *HTTPServer) GetPluginBuildInfo(c *contextmodel.ReqContext) response.Response {
+	pluginID := web.Params(c.Req)[":pluginId"]
+
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
+	if !exists {
+		return response.Error(http.StatusNotFound, "Plugin not found, no installed plugin with that id", nil)
+	}
+
+	return response.JSON(http.StatusOK, &dtos.PluginBuildInfo{
+		PluginID:        plugin.ID,
+		Version:         plugin.Info.Version,
+		BuildHash:       hs.pluginAssets.BuildHash(c.Req.Context(), plugin),
+		ServedByReplica: hs.replicaID(),
+	})
+}
+
+// replicaID identifies this replica for the build-info endpoint. In real HA the
+// InstanceID/hostname is distinct per pod; co-located test replicas share a hostname,
+// so we disambiguate by HTTP port.
+func (hs *HTTPServer) replicaID() string {
+	if hs.Cfg.InstanceID != "" {
+		return hs.Cfg.InstanceID
+	}
+	hn, _ := os.Hostname()
+	if hs.Cfg.HTTPPort != "" {
+		return hn + ":" + hs.Cfg.HTTPPort
+	}
+	return hn
 }
 
 func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.Response {
@@ -355,6 +393,13 @@ func (hs *HTTPServer) CollectPluginMetrics(c *contextmodel.ReqContext) response.
 // /public/plugins/:pluginId/*
 func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 	pluginID := web.Params(c.Req)[":pluginId"]
+	hs.servePluginAssetPath(c, pluginID, web.Params(c.Req)["*"])
+}
+
+// servePluginAssetPath serves a plugin asset (from the active build) at rawAssetPath,
+// either from the local filesystem or via a CDN redirect. It is shared by the legacy
+// asset route and the build-addressed route's fall-through for non-build nested paths.
+func (hs *HTTPServer) servePluginAssetPath(c *contextmodel.ReqContext, pluginID, rawAssetPath string) {
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
 		c.JsonApiErr(404, "Plugin not found", nil)
@@ -362,7 +407,7 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 	}
 
 	// prepend slash for cleaning relative paths
-	requestedFile, err := plugins.CleanRelativePath(web.Params(c.Req)["*"])
+	requestedFile, err := plugins.CleanRelativePath(rawAssetPath)
 	if err != nil {
 		// slash is prepended above therefore this is not expected to fail
 		c.JsonApiErr(500, "Failed to clean relative file path", err)
@@ -379,9 +424,121 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 	hs.serveLocalPluginAsset(c, plugin, requestedFile)
 }
 
+// buildAssetImmutableCacheControl is the cache directive for build-addressed
+// assets. Because the URL embeds the immutable content buildHash, the bytes at a
+// given URL never change, so they are safe to cache for a year and marked immutable.
+const buildAssetImmutableCacheControl = "public, max-age=31536000, immutable"
+
+// buildHashPattern matches a content buildHash — a hex-encoded SHA-256 (64 hex chars),
+// the shape produced by modulehash.BuildHash. It lets the shared route tell a
+// build-addressed request from a legacy nested asset path (img, css, …).
+var buildHashPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
+
+// looksLikeBuildHash reports whether a path segment is a content buildHash rather than a
+// legacy nested-asset directory. The decision is by shape, not by what this replica
+// currently retains: under HA a client may pin a build this replica never installed, and
+// that request must still be treated as build-addressed (answered 410 → client reloads),
+// not misrouted to the active build as a nested asset.
+func looksLikeBuildHash(segment string) bool {
+	return buildHashPattern.MatchString(segment)
+}
+
+// getBuildAddressedPluginAsset serves a plugin asset addressed by an immutable
+// (pluginID, buildHash) pair from the retained build registry (F1-T2), so a
+// no-affinity client can resolve chunks of its build from any replica (FR-001).
+//
+//   - retained build   -> 200 with immutable caching
+//   - known but evicted -> 410 Gone (a deterministic recovery trigger, not 404)
+//   - never existed     -> 404 Not Found
+//
+// /public/plugins/:pluginId/:buildHash/*
+func (hs *HTTPServer) getBuildAddressedPluginAsset(c *contextmodel.ReqContext) {
+	pluginID := web.Params(c.Req)[":pluginId"]
+	buildHash := web.Params(c.Req)[":buildHash"]
+
+	requestedFile, err := plugins.CleanRelativePath(web.Params(c.Req)["*"])
+	if err != nil {
+		// slash is prepended by CleanRelativePath therefore this is not expected to fail
+		c.JsonApiErr(500, "Failed to clean relative file path", err)
+		return
+	}
+
+	// This route shares its shape with the legacy nested-asset route
+	// (/public/plugins/:pluginId/*), so a request like /public/plugins/:id/img/logo.svg
+	// also lands here with buildHash="img". Treat the request as build-addressed only when
+	// :buildHash looks like a content hash; anything else is a legacy nested asset path
+	// (plugin logos, screenshots, nested CSS, …) and is served from the active build.
+	// The test is by shape, not by what this replica retains, so a pinned build this
+	// replica never had (the typical HA/rollout skew) is still handled here and answered
+	// 410 → the client reloads, rather than 404 → a hard ChunkLoadError.
+	if !looksLikeBuildHash(buildHash) {
+		hs.servePluginAssetPath(c, pluginID, buildHash+"/"+web.Params(c.Req)["*"])
+		return
+	}
+
+	// Resolve strictly against the retained-build registry via BuildFile (not File, whose
+	// version argument means the active build): a build this replica does not have must
+	// miss here so we answer 410 rather than serve the active build's bytes.
+	resolver, ok := hs.pluginFileStore.(buildFileResolver)
+	if !ok {
+		// The filestore cannot resolve a specific build, so we cannot serve this pinned
+		// build. Signal the client to reload rather than misroute the hash as a nested
+		// asset path (which would 404 and skip recovery).
+		c.Resp.Header().Set("Cache-Control", "no-store")
+		c.JsonApiErr(http.StatusGone, "Plugin build not available on this replica", nil)
+		return
+	}
+	f, err := resolver.BuildFile(c.Req.Context(), pluginID, buildHash, requestedFile)
+	if err != nil {
+		// A negative result on an immutable build-addressed URL must not be cached: HTTP
+		// treats 410 Gone (and error responses generally) as cacheable by default, so a
+		// miss from one replica could be stored by the browser or an intervening cache and
+		// keep failing even against a replica that still has the build.
+		c.Resp.Header().Set("Cache-Control", "no-store")
+		switch {
+		case errors.Is(err, plugins.ErrFileNotExist):
+			// The build IS present here but does not contain this file: a plain 404. It must
+			// NOT be 410, or the client would treat a current build as superseded and reload.
+			c.JsonApiErr(http.StatusNotFound, "Plugin build asset not found", nil)
+		case errors.Is(err, plugins.ErrPluginNotInstalled):
+			// This replica does not have the pinned build — evicted, or never installed here
+			// during a rollout. Answer 410 Gone so the client treats its pinned build as
+			// superseded and reloads to the build this replica can serve.
+			c.JsonApiErr(http.StatusGone, "Plugin build not available on this replica", nil)
+		default:
+			c.JsonApiErr(500, "Could not open plugin file", err)
+		}
+		return
+	}
+
+	// The URL embeds the immutable content buildHash, so in production the bytes never
+	// change and can be cached for a year. In dev, plugin files change in place while the
+	// buildHash may still be cached, so mirror the legacy path and disable caching to
+	// avoid pinning a stale asset.
+	if hs.Cfg.Env == setting.Dev {
+		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+	} else {
+		c.Resp.Header().Set("Cache-Control", buildAssetImmutableCacheControl)
+	}
+	http.ServeContent(c.Resp, c.Req, requestedFile, f.ModTime, bytes.NewReader(f.Content))
+}
+
+// buildFileResolver is the optional capability a filestore exposes to serve an asset
+// from a specific retained build addressed by its content buildHash, without the
+// active-build fallback of File. Kept as an optional interface (consumed via type
+// assertion) so plugins.FileStore is not widened for its many fake implementers.
+type buildFileResolver interface {
+	BuildFile(ctx context.Context, pluginID, buildHash, filename string) (*plugins.File, error)
+}
+
 // serveLocalPluginAsset returns the content of a plugin asset file from the local filesystem to the http client.
 func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin pluginstore.Plugin, assetPath string) {
-	f, err := hs.pluginFileStore.File(c.Req.Context(), plugin.ID, plugin.Info.Version, assetPath)
+	// Legacy asset path serves the ACTIVE build (empty build key). Content-addressed
+	// requests go through getBuildAddressedPluginAsset (/public/plugins/:id/:buildHash/*),
+	// which the frontend uses to pin its build's chunks. NOTE: plugin.Info.Version (a
+	// version string, not a content buildHash) must NOT be passed here — it never matched
+	// a retained build and returned 500.
+	f, err := hs.pluginFileStore.File(c.Req.Context(), plugin.ID, "", assetPath)
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
 			c.JsonApiErr(404, "Plugin file not found", nil)
