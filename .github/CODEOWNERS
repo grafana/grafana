@@ -1023,6 +1023,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/plugins/ @grafana/grafana-frontend-platform
 /public/app/features/plugins/admin/ @grafana/grafana-catalog
 /public/app/features/plugins/datasource_srv* @grafana/grafana-catalog
+/public/app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/ @grafana/dashboards-squad
 /public/app/features/profile/ @grafana/grafana-frontend-platform
 /public/app/features/runtime/ @ryantxu
 /public/app/features/query/ @grafana/dashboards-squad
