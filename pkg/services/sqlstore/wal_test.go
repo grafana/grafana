@@ -66,7 +66,6 @@ func TestWALFilesystemPath(t *testing.T) {
 
 		assert.Equal(t, filepath.Join(dir, "elsewhere"), walFilesystemPath(link))
 	})
-
 }
 
 func TestFilesystemSupportsWAL(t *testing.T) {
