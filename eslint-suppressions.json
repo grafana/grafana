@@ -2946,9 +2946,6 @@
     }
   },
   "public/app/plugins/datasource/grafana/components/QueryEditor.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
