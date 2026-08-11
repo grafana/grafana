@@ -209,6 +209,9 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       color: theme.colors.primary.contrastText,
       cursor: 'pointer',
       padding: 0,
+      // Never let the row's flex layout shrink this below its own content — the section title
+      // wraps to make room instead.
+      flexShrink: 0,
       willChange: 'transform',
       transform: alwaysVisible ? 'translateZ(0)' : 'translateY(-50%) translateZ(0)',
 

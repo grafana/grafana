@@ -60,6 +60,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
     cursor: 'pointer',
     borderRadius: theme.shape.radius.sm,
+    // Lets the label wrap (even mid-word for single-word labels like "Transformations") instead
+    // of overflowing the header row and pushing the add button out of view.
+    minWidth: 0,
+    overflowWrap: 'anywhere',
     '&:focus-visible': getFocusStyles(theme),
   }),
 });
