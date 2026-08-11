@@ -688,6 +688,9 @@ export const versionedComponents = {
           filterItem: {
             '13.2.0': 'data-testid tableng header column-menu-filter-item',
           },
+          activeFilterButton: {
+            '13.2.0': 'data-testid tableng header active-filter-button',
+          },
         },
         Filters: {
           HeaderButton: {

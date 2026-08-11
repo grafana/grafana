@@ -10633,12 +10633,12 @@
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
       "cell-inspect-tooltip": "Inspect value",
-      "column-filtered": "Filtered",
       "column-menu-filter": "Filter values",
       "column-menu-label": "Column options for {{name}}",
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}",
       "csv-placeholder": "Enter CSV here...",
+      "edit-column-filter": "Edit filter on {{name}}",
       "filter": {
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",

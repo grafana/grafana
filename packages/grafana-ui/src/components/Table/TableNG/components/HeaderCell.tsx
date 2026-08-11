@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type Column, type SortDirection } from '@grafana/react-data-grid';
 
@@ -10,7 +11,10 @@ import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
 import { Stack } from '../../../Layout/Stack/Stack';
+import { Popover } from '../../../Tooltip/Popover';
 import { Filter } from '../Filter/Filter';
+import { FilterPopup } from '../Filter/FilterPopup';
+import { useFilterPopupState } from '../Filter/useFilterPopupState';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 import { getDisplayName } from '../utils';
 
@@ -57,6 +61,30 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
   const hasActiveFilter = tableRefreshEnabled && filterable && filter[filterKey]?.filtered != null;
+
+  // The filter popup is shared by the two controls that open it — the column menu's "Filter values"
+  // item and the filter icon that marks an already-filtered column — so it lives here rather than in
+  // either one. `filterAnchor` is whichever control opened it, so the popup lands under that control
+  // and returns focus to it on close.
+  const filterIconRef = useRef<HTMLButtonElement>(null);
+  const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(null);
+  const { isPopoverVisible, setPopoverVisible, popupProps } = useFilterPopupState({
+    name: column.key,
+    filter,
+    setFilter,
+    field,
+    parentIndex,
+    crossFilterRows,
+    crossFilterTailRows,
+  });
+
+  const openFilter = useCallback(
+    (anchor: HTMLButtonElement | null) => {
+      setFilterAnchor(anchor);
+      setPopoverVisible(true);
+    },
+    [setPopoverVisible]
+  );
 
   // we have to remove/reset the filter if the column is not filterable
   useEffect(() => {
@@ -112,17 +140,27 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
         )}
       </button>
-      {/* the column menu is only revealed on hover, so an active filter needs a persistent marker of
-          its own; it sits with the sort arrow because both report state rather than offering an action.
-          Sized "sm" like the type icon rather than "lg" like the arrow: the funnel fills its box where
-          the arrow is a thin glyph, so matching the arrow's nominal size reads far bigger than it. */}
+      {/* The column menu is only revealed on hover, so an active filter needs a persistent marker of
+          its own; it sits with the sort arrow because both report the column's state. It doubles as a
+          shortcut back into the filter popup, so the filter can be adjusted or cleared without going
+          through the menu. Sized "sm" like the type icon rather than "lg" like the arrow: the funnel
+          fills its box where the arrow is a thin glyph, so the arrow's nominal size reads far bigger. */}
       {hasActiveFilter && (
-        <Icon
-          className={styles.headerCellIcon}
-          size="sm"
-          name="filter"
-          title={t('grafana-ui.table.column-filtered', 'Filtered')}
-        />
+        <button
+          ref={filterIconRef}
+          type="button"
+          className={styles.headerCellFilterButton}
+          aria-label={t('grafana-ui.table.edit-column-filter', 'Edit filter on {{name}}', { name: displayName })}
+          data-testid={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.activeFilterButton}
+          onClick={(ev) => {
+            // the header cell itself sorts on click, so this must not bubble
+            ev.stopPropagation();
+            openFilter(filterIconRef.current);
+          }}
+          onMouseDown={(ev) => ev.stopPropagation()}
+        >
+          <Icon className={styles.headerCellIcon} size="sm" name="filter" />
+        </button>
       )}
     </>
   );
@@ -137,16 +175,22 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 
         {filterable && (
           <div className={styles.headerCellActions}>
-            <HeaderCellMenu
-              name={column.key}
-              displayName={displayName}
-              field={field}
-              filterable={filterable}
-              filter={filter}
-              setFilter={setFilter}
-              parentIndex={parentIndex}
-              crossFilterRows={crossFilterRows}
-              crossFilterTailRows={crossFilterTailRows}
+            <HeaderCellMenu displayName={displayName} filterable={filterable} onOpenFilter={openFilter} />
+          </div>
+        )}
+
+        {isPopoverVisible && filterAnchor && (
+          // `Popover` portals out of the header cell, but React events still bubble along the React
+          // tree, so a click inside the popup would otherwise reach react-data-grid's sort handler
+          // and re-sort the column while the user is picking values.
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+          <div onClick={(ev) => ev.stopPropagation()} onMouseDown={(ev) => ev.stopPropagation()}>
+            <Popover
+              content={<FilterPopup {...popupProps} buttonElement={filterAnchor} />}
+              // opens rightward from whichever control was used, rather than back across the column
+              placement="bottom-start"
+              referenceElement={filterAnchor}
+              show
             />
           </div>
         )}
@@ -220,5 +264,17 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean, sorta
   }),
   headerCellIcon: css({
     color: theme.colors.text.secondary,
+  }),
+  // Wraps the filter icon without changing how it reads: no padding, border or background, so the
+  // button box is exactly the icon and the header's spacing and reserved width are unaffected.
+  headerCellFilterButton: css({
+    label: 'headerCellFilterButton',
+    display: 'flex',
+    alignItems: 'center',
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    cursor: 'pointer',
+    borderRadius: theme.spacing(0.25),
   }),
 }));
