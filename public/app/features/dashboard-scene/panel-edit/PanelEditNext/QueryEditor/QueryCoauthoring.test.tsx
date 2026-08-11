@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -139,6 +139,7 @@ async function setup(
   }
 
   return {
+    anchorElement,
     capability,
     clearPreview,
     dismissInvocation,
@@ -254,6 +255,9 @@ describe('QueryCoauthoring', () => {
     expect(request.systemPrompt).toContain('counter');
     expect(request.systemPrompt).toContain('Make only the requested change.');
     expect(request.systemPrompt).toContain('slash-separated label names');
+    expect(request.systemPrompt).toContain(
+      'Keep clarifications to one plain-text question, at most two sentences and 240 characters.'
+    );
     expect(request.systemPrompt).not.toContain('dashboardTitle');
   });
 
@@ -330,6 +334,41 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toHaveStyle({
       maxHeight: `${window.innerHeight - 500 - VIEWPORT_TEST_MARGIN}px`,
     });
+  });
+
+  it('recalculates the viewport constraint when the editor anchor moves after its content changes', async () => {
+    let notifyResize: VoidFunction | undefined;
+    const resizeObserver: ResizeObserver = {
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+    };
+    const resizeObserverSpy = jest
+      .spyOn(globalThis, 'ResizeObserver')
+      .mockImplementation((callback: ResizeObserverCallback) => {
+        notifyResize = () => callback([], resizeObserver);
+        return resizeObserver;
+      });
+    const { anchorElement } = await setup(500);
+
+    jest.mocked(anchorElement.getBoundingClientRect).mockReturnValue({
+      top: 600,
+      bottom: 600,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 600,
+      toJSON: () => undefined,
+    });
+    act(() => notifyResize?.());
+
+    expect(resizeObserver.observe).toHaveBeenCalledWith(anchorElement);
+    expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toHaveStyle({
+      maxHeight: `${window.innerHeight - 600 - VIEWPORT_TEST_MARGIN}px`,
+    });
+    resizeObserverSpy.mockRestore();
   });
 
   it('closes and resumes a typed draft without discarding it', async () => {
@@ -572,6 +611,38 @@ describe('QueryCoauthoring', () => {
 
     expect(mockGenerate).toHaveBeenCalledTimes(2);
     expect(mockGenerate.mock.calls[1][0].prompt).toBe('Use handler');
+  });
+
+  it('normalizes Markdown clarification output to compact plain text', async () => {
+    const { user } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Make this less noisy');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() =>
+      mockGenerate.mock.calls[0][0].onComplete('Choose one:\n1. **Aggregate by `method`**\n2. **Filter traffic**')
+    );
+
+    expect(screen.getByText('Choose one: 1. Aggregate by method 2. Filter traffic')).toBeInTheDocument();
+    expect(screen.queryByText(/\*\*|`/)).not.toBeInTheDocument();
+  });
+
+  it('keeps clarification response controls outside the scrollable message region', async () => {
+    const { user } = await setup();
+
+    await user.type(screen.getByRole('textbox'), 'Make this less noisy');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() =>
+      mockGenerate.mock.calls[0][0].onComplete(
+        'Would you like to aggregate by method, filter specific traffic, or smooth the resulting series?'
+      )
+    );
+
+    const message = screen.getByRole('region', { name: 'Clarification message' });
+    expect(message).toHaveTextContent(/aggregate by method/);
+    expect(within(message).queryByRole('textbox')).not.toBeInTheDocument();
+    expect(within(message).queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add a detail' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
   });
 
   it('offers a bounded handoff when the request is too broad for one query', async () => {

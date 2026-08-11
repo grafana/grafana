@@ -526,11 +526,13 @@ export interface LegacyMetricFindQueryOptions {
   variable?: { name: string };
 }
 
+/** @internal */
 export interface QueryEditorCoauthoringRange {
   from: number;
   to: number;
 }
 
+/** @internal */
 export interface QueryEditorCoauthoringMetricMetadata {
   name: string;
   type?: string;
@@ -539,29 +541,40 @@ export interface QueryEditorCoauthoringMetricMetadata {
   labels?: string[];
 }
 
+/** @internal */
 export interface QueryEditorCoauthoringContext {
   query: string;
   focusRanges: QueryEditorCoauthoringRange[];
   metricMetadata: QueryEditorCoauthoringMetricMetadata[];
 }
 
+/** @internal */
 export interface QueryEditorCoauthoringPreviewChange {
   id: string;
-  focus: 'inside' | 'outside' | 'mixed';
   original: string;
   proposed: string;
-  kind?: 'aggregation' | 'binary-expression' | 'function' | 'label-matcher' | 'range' | 'selector';
+  kind?: string;
 }
 
+/** @internal */
 export interface QueryEditorCoauthoringPreview {
   changes: QueryEditorCoauthoringPreviewChange[];
 }
 
+/** @internal */
 export interface QueryEditorCoauthoringInvocation {
   anchorElement: HTMLElement;
   dismiss: () => void;
 }
 
+/**
+ * Experimental contract between Grafana and a data source query editor that supports query coauthoring.
+ *
+ * @remarks
+ * This interface is internal to Grafana and can change without notice. It is not a plugin API.
+ *
+ * @internal
+ */
 export interface QueryEditorCoauthoringCapability<TQuery extends DataQuery = DataQuery> {
   getValue: () => string;
   getContext: () => Promise<QueryEditorCoauthoringContext>;
@@ -573,6 +586,7 @@ export interface QueryEditorCoauthoringCapability<TQuery extends DataQuery = Dat
   focus: () => void;
 }
 
+/** @internal */
 export type QueryEditorCoauthoringRegistrar<TQuery extends DataQuery = DataQuery> = (
   capability: QueryEditorCoauthoringCapability<TQuery> | undefined
 ) => void;
@@ -597,6 +611,11 @@ export interface QueryEditorProps<
   history?: Array<HistoryItem<TQuery>>;
   queries?: DataQuery[];
   app?: CoreApp;
+  /**
+   * Registers the experimental query coauthoring capability when the editor supports it.
+   *
+   * @internal
+   */
   onRegisterQueryEditorCoauthoring?: QueryEditorCoauthoringRegistrar<TVQuery>;
 }
 

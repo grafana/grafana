@@ -253,10 +253,24 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
       setAvailableHeight(Math.max(window.innerHeight - anchorTop - VIEWPORT_MARGIN, 0));
     };
 
+    let animationFrame: number | undefined;
+    const resizeObserver = new ResizeObserver(() => {
+      updateAvailableHeight();
+      if (animationFrame !== undefined) {
+        cancelAnimationFrame(animationFrame);
+      }
+      animationFrame = requestAnimationFrame(updateAvailableHeight);
+    });
+
     updateAvailableHeight();
+    resizeObserver.observe(invocation.anchorElement);
     window.addEventListener('resize', updateAvailableHeight);
     window.addEventListener('scroll', updateAvailableHeight, true);
     return () => {
+      resizeObserver.disconnect();
+      if (animationFrame !== undefined) {
+        cancelAnimationFrame(animationFrame);
+      }
       window.removeEventListener('resize', updateAvailableHeight);
       window.removeEventListener('scroll', updateAvailableHeight, true);
     };
@@ -394,7 +408,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
           return;
         }
         if (acceptedTerminalToolCallCount === 0) {
-          const message = completionText.trim();
+          const message = normalizeClarificationMessage(completionText);
           if (message) {
             setIntent('');
             setClarification({ message });
@@ -696,11 +710,17 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
         </div>
       )}
       {isAssistantAvailable && clarification && (
-        <Stack direction="column" gap={1}>
+        <div className={styles.clarification}>
           <Text variant="bodySmall" weight="medium">
             <Trans i18nKey="query-editor-coauthoring.clarification-title">Assistant needs one detail</Trans>
           </Text>
-          <Text variant="bodySmall">{clarification.message}</Text>
+          <div
+            className={styles.clarificationMessage}
+            role="region"
+            aria-label={t('query-editor-coauthoring.clarification-message', 'Clarification message')}
+          >
+            <Text variant="bodySmall">{clarification.message}</Text>
+          </div>
           <div className={styles.promptRow}>
             <TextArea
               value={intent}
@@ -730,7 +750,7 @@ export function QueryCoauthoring({ capability, onAccept }: Props) {
               <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
             </Button>
           </Stack>
-        </Stack>
+        </div>
       )}
       {isAssistantAvailable && contextError && (
         <Stack direction="column" gap={1}>
@@ -994,6 +1014,7 @@ function buildSystemPrompt(context: QueryEditorCoauthoringContext): string {
     'Make only the requested change. Do not add grouping labels, filters, functions, or other transformations the user did not ask for.',
     'Treat slash-separated label names in the user request as alternatives or synonyms, not a request to use every listed label. Choose the single exact available label that best matches, or ask one concise clarification question if none does.',
     'Use only metric labels provided in relevant metric metadata. If the requested grouping is ambiguous or unavailable, ask one concise clarification question in plain text and do not call a tool.',
+    'Keep clarifications to one plain-text question, at most two sentences and 240 characters. Do not use Markdown, lists, headings, or examples.',
     'For a counter breakdown, place the rate expression inside an aggregation, for example: sum by (label) (rate(metric[range])). A by/without modifier cannot follow a function call.',
     'When there is enough information, call exactly one terminal tool: submit_query_proposal for a focused query edit, or request_assistant_handoff if the request requires other queries, data sources, or panel changes.',
     'Do not execute the query and do not claim that it is semantically correct.',
@@ -1056,6 +1077,14 @@ function normalizeSelectionExplanation(completionText: string, fallback: string)
     .replace(/\s+/g, ' ')
     .trim();
   return explanation ? explanation.slice(0, 500) : fallback;
+}
+
+function normalizeClarificationMessage(completionText: string): string {
+  return completionText
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function workingFocusSummary(context: QueryEditorCoauthoringContext): string {
@@ -1156,6 +1185,20 @@ function getStyles(theme: GrafanaTheme2) {
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
       },
+    }),
+    clarification: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+      minHeight: 0,
+      overflow: 'hidden',
+    }),
+    clarificationMessage: css({
+      flex: '1 1 auto',
+      minHeight: 0,
+      paddingRight: theme.spacing(0.5),
+      overflowY: 'auto',
+      scrollbarGutter: 'stable',
     }),
     proposal: css({
       display: 'flex',
