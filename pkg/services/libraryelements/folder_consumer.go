@@ -10,8 +10,8 @@ type FolderConsumer struct {
 	svc  *LibraryElementService
 	heal *FolderUIDHealService
 
-	// warnedOrgs keeps the gate from logging on every reconcile tick.
-	warnedOrgs sync.Map
+	// warnOnce keeps the gate from logging on every reconcile tick.
+	warnOnce sync.Once
 }
 
 func ProvideFolderConsumer(svc *LibraryElementService, heal *FolderUIDHealService) *FolderConsumer {
@@ -22,17 +22,17 @@ func (c *FolderConsumer) Name() string { return "library-elements" }
 
 func (c *FolderConsumer) FoldersInUse(ctx context.Context, orgID int64) ([]string, error) {
 	// Deleting by a folder_uid the heal has not yet repaired can remove a panel that lives in
-	// a different, existing folder, so report nothing until this org is marked. The marker is
+	// a different, existing folder, so report nothing until the heal has run. Completion is
 	// the gate, not the feature toggle: with the heal never run, nothing here is trustworthy.
-	healed, err := c.heal.isHealed(ctx, orgID)
+	allowed, err := c.heal.cleanupAllowed(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if !healed {
-		if _, warned := c.warnedOrgs.LoadOrStore(orgID, struct{}{}); !warned {
-			c.svc.log.Warn("Skipping library element folder cleanup until the folder UID heal has run; "+
-				"enable the libraryElementFolderUIDHeal feature toggle", "org_id", orgID)
-		}
+	if !allowed {
+		c.warnOnce.Do(func() {
+			c.svc.log.Warn("Skipping library element folder cleanup until the folder UID heal has run; " +
+				"enable the libraryElementFolderUIDHeal feature toggle")
+		})
 		return nil, nil
 	}
 	return c.svc.folderUIDsInUse(ctx, orgID)

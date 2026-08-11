@@ -24,8 +24,11 @@ const (
 	healLockMaxWait = 10 * time.Minute
 
 	healKVNamespace = "libraryelements"
-	healKVKey       = "folder_uid_healed"
-	healKVDone      = "true"
+	// healKVKey records per-org progress so restarts skip completed orgs.
+	healKVKey = "folder_uid_healed"
+	// healKVKeyAllOrgs records that a full pass finished, which is what releases cleanup.
+	healKVKeyAllOrgs = "folder_uid_healed_all_orgs"
+	healKVDone       = "true"
 )
 
 type healOrgLister interface {
@@ -88,8 +91,9 @@ func (s *FolderUIDHealService) heal(ctx context.Context) error {
 		return err
 	}
 
+	complete := true
 	for _, o := range orgs {
-		done, err := s.isHealed(ctx, o.ID)
+		done, err := s.isOrgHealed(ctx, o.ID)
 		if err != nil {
 			return err
 		}
@@ -99,17 +103,35 @@ func (s *FolderUIDHealService) heal(ctx context.Context) error {
 		if err := s.healOrg(ctx, o.ID); err != nil {
 			// Mark nothing, so the next start retries this org.
 			s.log.Error("Failed to heal org", "org_id", o.ID, "error", err)
+			complete = false
 			continue
 		}
 		if err := s.kv.Set(ctx, o.ID, healKVNamespace, healKVKey, healKVDone); err != nil {
 			return err
 		}
 	}
-	return nil
+	if !complete {
+		return nil
+	}
+
+	// One marker for every org, present and future: orgs created after a full pass run on
+	// code that keeps folder_uid in sync, so they cannot carry the legacy drift.
+	return s.kv.Set(ctx, kvstore.AllOrganizations, healKVNamespace, healKVKeyAllOrgs, healKVDone)
 }
 
-func (s *FolderUIDHealService) isHealed(ctx context.Context, orgID int64) (bool, error) {
+func (s *FolderUIDHealService) isOrgHealed(ctx context.Context, orgID int64) (bool, error) {
 	v, ok, err := s.kv.Get(ctx, orgID, healKVNamespace, healKVKey)
+	if err != nil {
+		return false, err
+	}
+	return ok && v == healKVDone, nil
+}
+
+// cleanupAllowed reports whether a full heal pass has finished. It is deliberately not
+// per-org: gating on a per-org marker would leave orgs created after the pass disabled
+// forever, most obviously once the one-shot toggle is turned off again.
+func (s *FolderUIDHealService) cleanupAllowed(ctx context.Context) (bool, error) {
+	v, ok, err := s.kv.Get(ctx, kvstore.AllOrganizations, healKVNamespace, healKVKeyAllOrgs)
 	if err != nil {
 		return false, err
 	}

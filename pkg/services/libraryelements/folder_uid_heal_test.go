@@ -2,6 +2,7 @@ package libraryelements
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -32,6 +33,16 @@ func (f *healFoldersByID) Get(_ context.Context, q *folder.GetFolderQuery) (*fol
 	return &folder.Folder{ID: *q.ID, OrgID: q.OrgID, UID: uid}, nil // nolint:staticcheck
 }
 
+// healFailingFolders fails resolution with something other than "not found", which must
+// leave the org unmarked rather than be treated as a missing folder.
+type healFailingFolders struct {
+	*foldertest.FakeService
+}
+
+func (f *healFailingFolders) Get(_ context.Context, _ *folder.GetFolderQuery) (*folder.Folder, error) {
+	return nil, errors.New("folder lookup failed")
+}
+
 type healFakeOrgs struct{}
 
 func (healFakeOrgs) Search(_ context.Context, _ *org.SearchOrgsQuery) ([]*org.OrgDTO, error) {
@@ -53,11 +64,16 @@ func healSetup(t *testing.T, byID map[int64]string) (*FolderUIDHealService, db.D
 
 func healInsert(t *testing.T, store db.DB, uid string, folderID int64, folderUID any) {
 	t.Helper()
+	healInsertOrg(t, store, healOrgID, uid, folderID, folderUID)
+}
+
+func healInsertOrg(t *testing.T, store db.DB, orgID int64, uid string, folderID int64, folderUID any) {
+	t.Helper()
 	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err := sess.Exec(`INSERT INTO library_element
 			(org_id, folder_id, folder_uid, uid, name, kind, type, description, model, version, created, created_by, updated, updated_by)
 			VALUES (?, ?, ?, ?, ?, 1, 'timeseries', '', '{}', 1, '2024-01-01', 1, '2024-01-01', 1)`,
-			healOrgID, folderID, folderUID, uid, uid)
+			orgID, folderID, folderUID, uid, uid)
 		return err
 	})
 	require.NoError(t, err)
@@ -153,12 +169,32 @@ func TestIntegration_Heal_MarksOrgOnce(t *testing.T) {
 	require.NoError(t, s.heal(context.Background()))
 	require.Equal(t, "f2", healStoredUID(t, store, "drifted"))
 
-	healed, err := s.isHealed(context.Background(), healOrgID)
+	healed, err := s.isOrgHealed(context.Background(), healOrgID)
 	require.NoError(t, err)
 	require.True(t, healed)
+
+	// A completed pass releases cleanup for every org, including ones created later.
+	allowed, err := s.cleanupAllowed(context.Background())
+	require.NoError(t, err)
+	require.True(t, allowed)
 
 	// A second pass must skip the org rather than repeat the work.
 	healInsert(t, store, "later-drift", 2, "f1")
 	require.NoError(t, s.heal(context.Background()))
 	require.Equal(t, "f1", healStoredUID(t, store, "later-drift"))
+}
+
+func TestIntegration_Heal_LeavesCleanupGatedWhenAnOrgFails(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	// No mapping for folder 2, and the fake returns a non-NotFound error, so healOrg fails.
+	s, store := healSetup(t, nil)
+	s.folders = &healFailingFolders{}
+	healInsert(t, store, "drifted", 2, "f1")
+
+	require.NoError(t, s.heal(context.Background()))
+
+	allowed, err := s.cleanupAllowed(context.Background())
+	require.NoError(t, err)
+	require.False(t, allowed, "a partial pass must not release cleanup")
 }
