@@ -15,31 +15,25 @@ import {
   type CellContentKind as GeneratedCellContentKind,
   type CellKind as GeneratedCellKind,
   type CodeCellContentKind as GeneratedCodeCellContentKind,
-  type LibraryPanelKind as GeneratedLibraryPanelKind,
   type MarkdownCellContentKind as GeneratedMarkdownCellContentKind,
   type NotebookElement as GeneratedNotebookElement,
   type NotebookLayoutItemKind as GeneratedNotebookLayoutItemKind,
   type NotebookLayoutKind as GeneratedNotebookLayoutKind,
   type Spec as GeneratedSpec,
-  type TimeSettingsSpec as GeneratedTimeSettingsSpec,
-  type V2PanelKind as GeneratedV2PanelKind,
 } from '@grafana/schema/apis/notebook/v2beta1';
 
 // Forked by the notebook spec so it can carry the dashboard v2 shape.
 export const defaultPanelKind = defaultV2PanelKind;
-export type PanelKind = GeneratedV2PanelKind;
 
 // Shared with the dashboard spec, or notebook-only. Either way the generated name is already right.
 export type CellContentKind = GeneratedCellContentKind;
 export type CellKind = GeneratedCellKind;
 export type CodeCellContentKind = GeneratedCodeCellContentKind;
-export type LibraryPanelKind = GeneratedLibraryPanelKind;
 export type MarkdownCellContentKind = GeneratedMarkdownCellContentKind;
 export type NotebookElement = GeneratedNotebookElement;
 export type NotebookLayoutItemKind = GeneratedNotebookLayoutItemKind;
 export type NotebookLayoutKind = GeneratedNotebookLayoutKind;
 export type Spec = GeneratedSpec;
-export type TimeSettingsSpec = GeneratedTimeSettingsSpec;
 
 export const defaultLibraryPanelKind = generatedDefaultLibraryPanelKind;
 export const defaultSpec = generatedDefaultSpec;

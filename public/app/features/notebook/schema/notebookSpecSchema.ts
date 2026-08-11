@@ -107,7 +107,9 @@ const notebookLayoutKindSchema = z.object({
 // Top-level NotebookSpec
 // ---------------------------------------------------------------------------
 
-export const notebookSpecSchema = z.object({
+// Not exported: `validateNotebookSpec` is the entry point, because a bare shape parse would miss the
+// referential check below, which is the malformation that actually costs a cell.
+const notebookSpecSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
   tags: nullableArray(z.string()),
