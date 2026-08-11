@@ -8,7 +8,7 @@ keywords:
   - '13.2'
 title: Upgrade to Grafana v13.2
 menuTitle: Upgrade to v13.2
-weight: 494
+weight: 493
 ---
 
 # Upgrade to Grafana v13.2
