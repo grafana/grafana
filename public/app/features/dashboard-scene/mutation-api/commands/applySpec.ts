@@ -155,7 +155,18 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
       // Reuse the live key so existing references (incl. the mutation client's
       // `scene`) survive the swap.
       const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key });
-      scene.setState(newState);
+      // `setState` merges, so an open panel editor would survive the swap still driving the
+      // VizPanel and layout item of the tree we just discarded: edits made through it never reach
+      // the new tree, and so are absent from a save or a read. Drop it and re-open through url
+      // sync, the same path `?editPanel=` takes, which resolves the id against the current tree,
+      // waits for a library panel to load, and leaves the pane closed when the applied spec no
+      // longer has the panel.
+      const editPanelKey = scene.state.editPanel?.getUrlKey();
+      scene.setState({ ...newState, editPanel: undefined });
+
+      if (editPanelKey) {
+        scene.urlSync?.updateFromUrl({ editPanel: editPanelKey });
+      }
 
       // Return the re-serialized spec so the caller gets the rekeyed element
       // names (rebuild rekeys to `panel-<id>`) without a follow-up GET_SPEC.

@@ -1,4 +1,4 @@
-import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
+import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues } from '@grafana/scenes';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
@@ -87,7 +87,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       const libPanelBehavior = getLibraryPanelBehavior(panel);
       if (libPanelBehavior && !libPanelBehavior?.state.isLoaded) {
-        this._waitForLibPanelToLoadBeforeEnteringPanelEdit(panel, libPanelBehavior);
+        this._waitForLibPanelToLoadBeforeEnteringPanelEdit(values.editPanel, libPanelBehavior);
         return;
       }
 
@@ -123,14 +123,39 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   /**
    * Temporary solution, with some refactoring of PanelEditor we can remove this
    */
-  private _waitForLibPanelToLoadBeforeEnteringPanelEdit(panel: VizPanel, libPanel: LibraryPanelBehavior) {
+  private _waitForLibPanelToLoadBeforeEnteringPanelEdit(panelId: string, libPanel: LibraryPanelBehavior) {
     const sub = libPanel.subscribeToState((state) => {
       if (state.isLoaded) {
-        this._scene.setState({
-          editPanel: buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID),
-        });
         sub.unsubscribe();
+        this._openPanelEditById(panelId);
       }
+    });
+  }
+
+  /**
+   * Open panel edit for an id resolved against the CURRENT tree.
+   *
+   * The wait above outlives the panel it was started for. A scene rebuild (APPLY_SPEC, the json and
+   * code editors) replaces the whole layout tree, and `state.editPanel` is unset for the duration of
+   * the wait, so nothing else can re-open the pane afterwards. Resolving the id again is what lets
+   * the wait survive that: opening the editor on the panel it captured would instead leave the pane
+   * driving a panel the dashboard no longer contains. If the panel it lands on is itself an unloaded
+   * library panel, it waits once more, on the behavior the live tree holds.
+   */
+  private _openPanelEditById(panelId: string) {
+    const panel = findEditPanel(this._scene, panelId);
+    if (!panel) {
+      return;
+    }
+
+    const libPanelBehavior = getLibraryPanelBehavior(panel);
+    if (libPanelBehavior && !libPanelBehavior.state.isLoaded) {
+      this._waitForLibPanelToLoadBeforeEnteringPanelEdit(panelId, libPanelBehavior);
+      return;
+    }
+
+    this._scene.setState({
+      editPanel: buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID),
     });
   }
 }
