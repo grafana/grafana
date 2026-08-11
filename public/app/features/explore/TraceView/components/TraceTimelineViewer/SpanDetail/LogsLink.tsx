@@ -11,6 +11,7 @@ import {
   type DataSourceJsonData,
   getDefaultTimeRange,
   type GrafanaTheme2,
+  type LinkModel,
   type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -21,16 +22,14 @@ import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/r
 import { useStyles2, DataLinkButton, Menu } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 
-import { type SpanLinkModel } from '../../types/links';
-
 interface Props {
-  spanLinkModel: SpanLinkModel;
+  linkModel: LinkModel;
+  traceDatasourceUid?: string;
 }
 
-export const LogsLinkButton = ({ spanLinkModel }: Props) => {
+export const LogsLinkButton = ({ linkModel, traceDatasourceUid }: Props) => {
   const styles = useStyles2(getStyles);
-  const presence = useHasLogs(spanLinkModel);
-  const { linkModel, icon, className, traceDatasourceUid } = spanLinkModel;
+  const presence = useHasLogs(linkModel);
 
   const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
 
@@ -43,8 +42,7 @@ export const LogsLinkButton = ({ spanLinkModel }: Props) => {
       <DataLinkButton
         link={linkModel}
         buttonProps={{
-          icon: isLoading ? 'spinner' : icon,
-          className,
+          icon: isLoading ? 'spinner' : 'gf-logs',
           disabled: presence === 'absent',
           variant: presence === 'absent' ? 'secondary' : 'primary',
           tooltip,
@@ -62,9 +60,8 @@ function getStyles(theme: GrafanaTheme2) {
   });
 }
 
-export const LogsLinkMenuItem = ({ spanLinkModel }: Props) => {
-  const presence = useHasLogs(spanLinkModel);
-  const { linkModel, icon, traceDatasourceUid } = spanLinkModel;
+export const LogsLinkMenuItem = ({ linkModel, traceDatasourceUid }: Props) => {
+  const presence = useHasLogs(linkModel);
 
   const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
 
@@ -75,7 +72,7 @@ export const LogsLinkMenuItem = ({ spanLinkModel }: Props) => {
   return (
     <Menu.Item
       label={linkModel.title}
-      icon={isLoading ? 'spinner' : icon}
+      icon={isLoading ? 'spinner' : 'gf-logs'}
       ariaLabel={tooltip}
       disabled={presence === 'absent'}
       onClick={(event: React.MouseEvent) => linkModel.onClick?.(event)}
@@ -89,11 +86,11 @@ type LogsPresence = 'loading' | 'present' | 'absent';
  * Runs the link's query against its datasource to determine whether
  * any logs exist for the span, so the button can be disabled when there is nothing to link to.
  */
-function useHasLogs(spanLinkModel: SpanLinkModel): LogsPresence {
+function useHasLogs(linkModel: LinkModel): LogsPresence {
   const dynamicTraceToLogsEnabled = useFlagGrafanaDynamicTraceToLogs();
   const [presence, setPresence] = useState<LogsPresence>('loading');
 
-  const { query, timeRange } = spanLinkModel.linkModel.interpolatedParams ?? {};
+  const { query, timeRange } = linkModel.interpolatedParams ?? {};
 
   const queryKey = query ? JSON.stringify(query) : undefined;
   const timeRangeKey = timeRange ? `${timeRange.from.valueOf()}-${timeRange.to.valueOf()}` : undefined;
