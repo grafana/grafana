@@ -16050,9 +16050,7 @@
     },
     "render-mode": {
       "all-rows": "All rows",
-      "all-rows-description": "The content renders once.",
-      "every-row": "Every row",
-      "every-row-description": "The content renders once per row."
+      "every-row": "Every row"
     }
   },
   "theme-playground": {

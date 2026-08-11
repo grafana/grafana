@@ -28,7 +28,7 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
   addHiddenOption('code.language', defaultCodeOptions.language);
   addHiddenOption('code.showLineNumbers', defaultCodeOptions.showLineNumbers);
 
-  builder.addSelect({
+  builder.addRadio({
     path: 'renderMode',
     name: t('textng.options.render-mode', 'Render mode'),
     category: [t('textng.category-data', 'Data')],
@@ -38,14 +38,10 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
         {
           value: RenderMode.AllRows,
           label: t('textng.render-mode.all-rows', 'All rows'),
-          icon: 'book',
-          description: t('textng.render-mode.all-rows-description', 'The content renders once.'),
         },
         {
           value: RenderMode.EveryRow,
           label: t('textng.render-mode.every-row', 'Every row'),
-          icon: 'list-ul',
-          description: t('textng.render-mode.every-row-description', 'The content renders once per row.'),
         },
       ],
     },
