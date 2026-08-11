@@ -12467,6 +12467,10 @@
     "new-folder": {
       "title": "New folder"
     },
+    "notebooks": {
+      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+      "title": "Notebooks"
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12760,8 +12764,35 @@
       "title-zoom-out": "Zoom out"
     }
   },
-  "notebook": {
-    "breadcrumb-title": "Notebooks"
+  "notebooks": {
+    "list": {
+      "all-authors": "All authors",
+      "author-filter": "Filter by author",
+      "count_one": "{{count}} notebook",
+      "count_other": "{{count}} notebooks",
+      "count-truncated_one": "First {{count}} notebook loaded",
+      "count-truncated_other": "First {{count}} notebooks loaded",
+      "create-error": "Failed to create notebook",
+      "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
+      "empty-title": "You haven't created any notebooks yet",
+      "empty-title-read-only": "No notebooks available to you",
+      "load-error": "Failed to load notebooks",
+      "new-notebook": "New notebook",
+      "new-notebook-title": "New notebook",
+      "no-results": "No notebooks found",
+      "search-placeholder": "Search notebooks by title...",
+      "table": {
+        "author": "Author",
+        "copy-link": "Copy link",
+        "created": "Created",
+        "edit": "Edit",
+        "more-actions": "More actions",
+        "tags": "Tags",
+        "title": "Title",
+        "updated": "Updated"
+      },
+      "unknown-author": "Anonymous"
+    }
   },
   "notifications": {
     "empty-state": {

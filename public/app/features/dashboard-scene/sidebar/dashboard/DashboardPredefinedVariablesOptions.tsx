@@ -4,21 +4,17 @@ import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { Field, RadioButtonGroup } from '@grafana/ui';
-import {
-  AnnoKeyIgnorePredefinedVariables,
-  DENY_ALL_FOLDER_PREDEFINED,
-  DENY_ALL_GLOBAL_PREDEFINED,
-  DENY_ALL_PREDEFINED,
-  type ObjectMeta,
-} from 'app/features/apiserver/types';
+import { AnnoKeyIgnorePredefinedVariables, type ObjectMeta } from 'app/features/apiserver/types';
 
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
+import { DashboardInteractions } from '../../utils/interactions';
 import {
+  denyListFromGlobalVariablesMode,
+  getGlobalVariablesMode,
   parseIgnorePredefinedVariables,
   serializeIgnorePredefinedVariables,
+  type GlobalVariablesMode,
 } from '../../utils/predefinedVariableDenyList';
-
-type PredefinedVariablesMode = 'none' | 'all' | 'global' | 'folder';
 
 /** Narrow host surface so this pane does not import DashboardScene (circular dep). */
 export type PredefinedVariablesDashboard = DashboardSceneLike & {
@@ -29,43 +25,6 @@ export type PredefinedVariablesDashboard = DashboardSceneLike & {
   refreshPredefinedVariables: () => Promise<void>;
   managedResourceCannotBeEdited: () => boolean;
 };
-
-function modeFromDenyList(denyList: string[] | undefined): PredefinedVariablesMode | undefined {
-  // Absent / invalid → None (opt-out by default). Explicit `[]` → All.
-  if (denyList === undefined) {
-    return 'none';
-  }
-  if (denyList.length === 0) {
-    return 'all';
-  }
-  if (denyList.includes(DENY_ALL_PREDEFINED)) {
-    return 'none';
-  }
-  // Mode names the bucket to KEEP, so folder:* deny → Global and global:* deny → Folder.
-  if (denyList.length === 1 && denyList[0] === DENY_ALL_FOLDER_PREDEFINED) {
-    return 'global';
-  }
-  if (denyList.length === 1 && denyList[0] === DENY_ALL_GLOBAL_PREDEFINED) {
-    return 'folder';
-  }
-  // Mixed / custom name lists: no radio selected until the user picks a coarse mode.
-  return undefined;
-}
-
-function denyListFromMode(mode: PredefinedVariablesMode): string[] {
-  switch (mode) {
-    case 'all':
-      // Explicit opt-in — always write `[]` so as-code/saved JSON shows the choice.
-      return [];
-    case 'none':
-      return [DENY_ALL_PREDEFINED];
-    // Mode names the bucket to KEEP, so we deny the *other* bucket.
-    case 'global':
-      return [DENY_ALL_FOLDER_PREDEFINED];
-    case 'folder':
-      return [DENY_ALL_GLOBAL_PREDEFINED];
-  }
-}
 
 function readAnnotationMap(dashboard: PredefinedVariablesDashboard): Record<string, string> {
   const fromMeta = dashboard.state.meta.k8s?.annotations ?? {};
@@ -79,12 +38,14 @@ function readAnnotationMap(dashboard: PredefinedVariablesDashboard): Record<stri
   return merged;
 }
 
-function updateDashboardDenyList(dashboard: PredefinedVariablesDashboard, mode: PredefinedVariablesMode) {
-  const nextDenyList = denyListFromMode(mode);
+export function updateDashboardDenyList(dashboard: PredefinedVariablesDashboard, mode: GlobalVariablesMode) {
+  const fromMode = getGlobalVariablesMode(parseIgnorePredefinedVariables(readAnnotationMap(dashboard)));
+  const nextDenyList = denyListFromGlobalVariablesMode(mode);
   const meta = dashboard.state.meta;
   const annotations = readAnnotationMap(dashboard);
 
-  annotations[AnnoKeyIgnorePredefinedVariables] = serializeIgnorePredefinedVariables(nextDenyList);
+  // Mode 'all' maps to [] (explicit opt-in). Persist the list (including empty) as JSON.
+  annotations[AnnoKeyIgnorePredefinedVariables] = serializeIgnorePredefinedVariables(nextDenyList ?? []);
 
   const nextMetaK8s: Partial<ObjectMeta> = {
     ...(meta.k8s ?? {}),
@@ -103,6 +64,11 @@ function updateDashboardDenyList(dashboard: PredefinedVariablesDashboard, mode: 
     },
   });
 
+  DashboardInteractions.globalVariablesModeChanged({
+    from_mode: fromMode,
+    to_mode: mode,
+  });
+
   // Update the live variable set immediately so controls match the denylist without a reload.
   // Discard restores the edit-session baseline (including prior predefined variables).
   void dashboard.refreshPredefinedVariables();
@@ -119,7 +85,7 @@ export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
 
   const annotationValue = meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
   const mode = useMemo(() => {
-    return modeFromDenyList(
+    return getGlobalVariablesMode(
       parseIgnorePredefinedVariables(
         annotationValue !== undefined
           ? { [AnnoKeyIgnorePredefinedVariables]: annotationValue }
@@ -132,7 +98,7 @@ export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
     return null;
   }
 
-  const options: Array<SelectableValue<PredefinedVariablesMode>> = [
+  const options: Array<SelectableValue<GlobalVariablesMode>> = [
     {
       label: t('dashboard.sidebar.predefined-variables.none', 'None'),
       value: 'none',
