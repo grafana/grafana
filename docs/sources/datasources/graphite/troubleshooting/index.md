@@ -51,6 +51,14 @@ If you receive 401 or 403 errors:
 
 For detailed authentication configuration, refer to [Configure the Graphite data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/configure/).
 
+**Deprecation notice about browser access mode:**
+
+If the data source configuration page shows a deprecation notice about browser access mode:
+
+- The data source is configured to use browser (direct) access, which is deprecated and slated for removal.
+- Edit the data source so it uses _Server_ (proxy) access instead. Server access routes requests through the Grafana backend, which avoids browser cross-origin restrictions.
+- Click **Save & test** to re-test the connection after switching.
+
 ## Query issues
 
 Use the following troubleshooting steps to resolve problems with Graphite queries.
@@ -81,6 +89,16 @@ If the query editor displays parser errors:
 - Verify that function arguments are in the correct format.
 - Ensure metric paths don't contain unsupported characters.
 
+**Queries don't map correctly when switching from Graphite to Loki:**
+
+Label mappings apply only when you switch between Graphite and Loki queries. If mapped queries produce unexpected labels or no results:
+
+- Verify your label mappings are defined in the Graphite data source configuration.
+- Remember that Grafana automatically maps all Graphite tags to labels, so you only need explicit mappings for non-tag metric nodes.
+- Check that multi-value patterns such as `{001,002}` map to the expected regular expression, for example `{server=~"(001|002)"}`.
+
+For details, refer to the label mappings section in [Configure the Graphite data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/configure/).
+
 For query syntax help, refer to [Graphite query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/query-editor/).
 
 ## Version and feature issues
@@ -102,6 +120,27 @@ If `seriesByTag()` or other tag functions fail:
 - Confirm your Graphite server is version 1.1 or later.
 - Verify the Graphite version setting in your data source configuration matches your actual server version.
 - Check that tags are properly configured in your Graphite server.
+
+## Template variable issues
+
+Use the following troubleshooting steps when dashboard variables don't behave as expected.
+
+**Variable not interpolated in a query:**
+
+- When a variable is adjacent to other characters, use the full syntax `${varname}` instead of `$varname`. For example, use `cpu.${core}.load` rather than `cpu.$coreLoad`.
+- Confirm the variable name matches exactly, including case.
+
+**Multi-value variable returns no data in tag queries:**
+
+- Tag queries expect regular expression formatting for multi-value variables. Append `:regex` to the variable, for example `tag_values(server, app=~${apps:regex})`.
+- Non-tag queries use the default glob formatting and don't require `:regex`.
+
+**Dependent variable is empty:**
+
+- Define the parent variable above the child variable in the dashboard variable list so it resolves first.
+- Verify the parent variable has a selected value. An empty parent produces an empty child query.
+
+For details, refer to [Graphite template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/template-variables/).
 
 ## Performance issues
 
@@ -125,13 +164,13 @@ If metric path autocomplete is slow:
 - Use more specific path prefixes to narrow the search scope.
 - Check your Graphite server's index performance.
 
-## MetricTank-specific issues
+## MetricTank backend issues
 
 If you're using MetricTank as your Graphite backend, use the following troubleshooting steps.
 
 **Rollup indicator not appearing:**
 
-If the rollup indicator doesn't display when expected:
+If the **Rollup indicator** doesn't display when expected:
 
 - Verify **Metrictank** is selected as the Graphite backend type in the data source configuration.
 - Ensure the **Rollup indicator** toggle is enabled.
@@ -141,7 +180,7 @@ If the rollup indicator doesn't display when expected:
 
 If you see unexpected aggregation in your data:
 
-- Check the rollup configuration in your MetricTank instance.
+- Check the data aggregation (`rollup`) configuration in your MetricTank instance.
 - Adjust the time range or use `consolidateBy()` to control aggregation behavior.
 - Review the query processing metadata in the panel inspector for details on how data was processed.
 
