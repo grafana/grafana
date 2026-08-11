@@ -12754,9 +12754,12 @@
       "author-filter": "Filter by author",
       "count_one": "{{count}} notebook",
       "count_other": "{{count}} notebooks",
+      "count-truncated_one": "First {{count}} notebook loaded",
+      "count-truncated_other": "First {{count}} notebooks loaded",
       "create-error": "Failed to create notebook",
       "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
       "empty-title": "You haven't created any notebooks yet",
+      "empty-title-read-only": "No notebooks available to you",
       "load-error": "Failed to load notebooks",
       "new-notebook": "New notebook",
       "new-notebook-title": "New notebook",
@@ -12771,7 +12774,8 @@
         "tags": "Tags",
         "title": "Title",
         "updated": "Updated"
-      }
+      },
+      "unknown-author": "Anonymous"
     }
   },
   "notifications": {

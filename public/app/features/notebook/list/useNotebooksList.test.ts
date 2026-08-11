@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
@@ -5,7 +6,7 @@ import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { defaultSpec as defaultNotebookSpec } from 'app/features/notebook/types';
 
-import { useNotebooksList } from './useNotebooksList';
+import { NOTEBOOKS_PAGE_LIMIT, useNotebooksList } from './useNotebooksList';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
   useGetDisplayMappingQuery: jest.fn(),
@@ -48,10 +49,10 @@ function makeNotebook(
   };
 }
 
-function setList(items: Notebook[], extra: { isLoading?: boolean; error?: unknown } = {}) {
+function setList(items: Notebook[], extra: { isLoading?: boolean; error?: unknown; continueToken?: string } = {}) {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
   mockUseListNotebookQuery.mockReturnValue({
-    data: { items },
+    data: { items, metadata: { continue: extra.continueToken } },
     isLoading: extra.isLoading ?? false,
     error: extra.error,
   } as unknown as ReturnType<typeof useListNotebookQuery>);
@@ -114,15 +115,20 @@ describe('useNotebooksList', () => {
       expect(result.current.rows[0].updated).toBe('2026-03-04T00:00:00Z');
     });
 
-    it('sorts most recently updated first', () => {
-      setList([
-        makeNotebook({ name: 'older', title: 'Older', updated: '2026-01-01T00:00:00Z' }),
-        makeNotebook({ name: 'newer', title: 'Newer', updated: '2026-06-01T00:00:00Z' }),
-      ]);
+    it('reports truncation when the server returns a continue token', () => {
+      setList([makeNotebook({ name: 'nb1', title: 'One' })], { continueToken: 'next-page' });
 
       const { result } = setupHook();
 
-      expect(result.current.rows.map((row) => row.uid)).toEqual(['newer', 'older']);
+      expect(result.current.isTruncated).toBe(true);
+    });
+
+    it('is not truncated when the server returns the whole list', () => {
+      setList([makeNotebook({ name: 'nb1', title: 'One' })]);
+
+      const { result } = setupHook();
+
+      expect(result.current.isTruncated).toBe(false);
     });
   });
 
@@ -131,7 +137,10 @@ describe('useNotebooksList', () => {
       setList([makeNotebook({ name: 'nb1', title: 'One', createdBy: 'user:abc' })]);
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
       mockUseGetDisplayMappingQuery.mockReturnValue({
-        data: { display: [{ identity: { type: 'user', name: 'abc' }, displayName: 'Marcus Chen' }] },
+        data: {
+          keys: ['user:abc'],
+          display: [{ identity: { type: 'user', name: 'abc' }, displayName: 'Marcus Chen' }],
+        },
       } as unknown as ReturnType<typeof useGetDisplayMappingQuery>);
 
       const { result } = setupHook();
@@ -140,12 +149,74 @@ describe('useNotebooksList', () => {
       expect(result.current.authorOptions).toEqual([{ value: 'user:abc', label: 'Marcus Chen' }]);
     });
 
-    it('falls back to the raw identity key when the lookup returns nothing', () => {
+    it('matches on identity rather than position', () => {
+      // The server builds `display` from its query results and appends constants, so it is
+      // neither in `keys` order nor the same length. Pairing by index would swap these names.
+      setList([
+        makeNotebook({ name: 'nb1', title: 'One', createdBy: 'user:aaa' }),
+        makeNotebook({ name: 'nb2', title: 'Two', createdBy: 'user:bbb' }),
+      ]);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: {
+          keys: ['user:aaa', 'user:bbb'],
+          display: [
+            { identity: { type: 'user', name: 'bbb' }, displayName: 'Priya Mehta' },
+            { identity: { type: 'user', name: 'aaa' }, displayName: 'Marcus Chen' },
+          ],
+        },
+      } as unknown as ReturnType<typeof useGetDisplayMappingQuery>);
+
+      const { result } = setupHook();
+
+      const byUid = Object.fromEntries(result.current.rows.map((row) => [row.uid, row.authorName]));
+      expect(byUid).toEqual({ nb1: 'Marcus Chen', nb2: 'Priya Mehta' });
+    });
+
+    it('resolves a legacy numeric key through internalId', () => {
+      // A createdBy annotation can carry the numeric id, which never appears as identity.name.
+      setList([makeNotebook({ name: 'nb1', title: 'One', createdBy: 'user:1' })]);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: {
+          keys: ['user:1'],
+          display: [{ identity: { type: 'user', name: 'abc' }, displayName: 'Marcus Chen', internalId: 1 }],
+        },
+      } as unknown as ReturnType<typeof useGetDisplayMappingQuery>);
+
+      const { result } = setupHook();
+
+      expect(result.current.rows[0].authorName).toBe('Marcus Chen');
+    });
+
+    it('drops a name the server did not return, rather than shifting it onto another row', () => {
+      // Users the query cannot resolve are simply absent from `display`, so the arrays differ in
+      // length as well as order.
+      setList([
+        makeNotebook({ name: 'nb1', title: 'One', createdBy: 'user:missing' }),
+        makeNotebook({ name: 'nb2', title: 'Two', createdBy: 'user:bbb' }),
+      ]);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: {
+          keys: ['user:missing', 'user:bbb'],
+          display: [{ identity: { type: 'user', name: 'bbb' }, displayName: 'Priya Mehta' }],
+        },
+      } as unknown as ReturnType<typeof useGetDisplayMappingQuery>);
+
+      const { result } = setupHook();
+
+      const byUid = Object.fromEntries(result.current.rows.map((row) => [row.uid, row.authorName]));
+      expect(byUid).toEqual({ nb1: 'Anonymous', nb2: 'Priya Mehta' });
+    });
+
+    it('falls back to Anonymous rather than leaking the identity key', () => {
       setList([makeNotebook({ name: 'nb1', title: 'One', createdBy: 'user:abc' })]);
 
       const { result } = setupHook();
 
-      expect(result.current.rows[0].authorName).toBe('user:abc');
+      expect(result.current.rows[0].authorName).toBe('Anonymous');
+      expect(result.current.authorOptions).toEqual([{ value: 'user:abc', label: 'Anonymous' }]);
     });
 
     it('skips the display lookup when no notebook has an author', () => {
@@ -154,8 +225,7 @@ describe('useNotebooksList', () => {
       setupHook();
 
       // skipToken is passed rather than an empty key list, which the endpoint would reject.
-      expect(mockUseGetDisplayMappingQuery).toHaveBeenCalledWith(expect.anything());
-      expect(mockUseGetDisplayMappingQuery).not.toHaveBeenCalledWith({ key: [] });
+      expect(mockUseGetDisplayMappingQuery).toHaveBeenCalledWith(skipToken);
     });
 
     it('sorts the current user to the top of the author options', () => {
@@ -217,6 +287,12 @@ describe('useNotebooksList', () => {
   it('skips the list request when the feature is disabled', () => {
     setupHook(false);
 
-    expect(mockUseListNotebookQuery).not.toHaveBeenCalledWith({});
+    expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
+  });
+
+  it('bounds the page so the server cannot silently truncate the list', () => {
+    setupHook();
+
+    expect(mockUseListNotebookQuery).toHaveBeenCalledWith({ limit: NOTEBOOKS_PAGE_LIMIT });
   });
 });

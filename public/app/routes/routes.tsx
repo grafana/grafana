@@ -59,6 +59,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: `${NOTEBOOKS_BASE_URL}/:uid/:slug?`,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
       component: SafeDynamicImport(
@@ -66,8 +67,9 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      // Notebooks reuse dashboard RBAC actions, so dashboards:read is what gates the list page.
-      // The feature flag is enforced inside the page instead, since getAppRoutes cannot use hooks.
+      // Notebooks reuse dashboard RBAC actions, so dashboards:read is what gates both notebook
+      // routes. The feature flag is enforced inside the pages instead, since getAppRoutes cannot
+      // use hooks.
       path: NOTEBOOKS_BASE_URL,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
       component: SafeDynamicImport(

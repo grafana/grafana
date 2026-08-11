@@ -54,32 +54,34 @@ describe('admin route guards', () => {
   });
 });
 
-// Notebooks reuse dashboard RBAC actions rather than defining their own, so the list page is
-// gated on dashboards:read — the same action the notebooks apiserver resource resolves to.
-describe('notebooks route guard', () => {
+// Notebooks reuse dashboard RBAC actions rather than defining their own, so both notebook routes
+// are gated on dashboards:read — the same action the notebooks apiserver resource resolves to.
+describe('notebooks route guards', () => {
   const previousPermissions = contextSrv.user.permissions;
 
   afterEach(() => {
     contextSrv.user.permissions = previousPermissions;
   });
 
-  function getNotebooksRolesGuard() {
-    const route = getAppRoutes().find((r) => r.path === '/notebooks');
+  function getRouteRolesGuard(path: string) {
+    const route = getAppRoutes().find((r) => r.path === path);
     if (!route?.roles) {
-      throw new Error('Route not found or has no roles guard: /notebooks');
+      throw new Error(`Route not found or has no roles guard: ${path}`);
     }
     return route.roles;
   }
 
-  it('rejects /notebooks without dashboards:read', () => {
+  const notebookRoutes = ['/notebooks', '/notebooks/:uid/:slug?'];
+
+  it.each(notebookRoutes)('rejects %s without dashboards:read', (path) => {
     contextSrv.user.permissions = {};
 
-    expect(getNotebooksRolesGuard()()).toEqual(['Reject']);
+    expect(getRouteRolesGuard(path)()).toEqual(['Reject']);
   });
 
-  it('allows /notebooks with dashboards:read', () => {
+  it.each(notebookRoutes)('allows %s with dashboards:read', (path) => {
     contextSrv.user.permissions = { [AccessControlAction.DashboardsRead]: true };
 
-    expect(getNotebooksRolesGuard()()).toEqual([]);
+    expect(getRouteRolesGuard(path)()).toEqual([]);
   });
 });

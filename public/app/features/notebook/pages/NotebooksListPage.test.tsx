@@ -45,10 +45,10 @@ function makeNotebook(name: string, title: string, tags: string[] = []): Noteboo
   };
 }
 
-function setList(items: Notebook[], extra: { isLoading?: boolean; error?: unknown } = {}) {
+function setList(items: Notebook[], extra: { isLoading?: boolean; error?: unknown; continueToken?: string } = {}) {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
   mockUseListNotebookQuery.mockReturnValue({
-    data: { items },
+    data: { items, metadata: { continue: extra.continueToken } },
     isLoading: extra.isLoading ?? false,
     error: extra.error,
   } as unknown as ReturnType<typeof useListNotebookQuery>);
@@ -60,7 +60,10 @@ describe('NotebooksListPage', () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
     mockUseGetDisplayMappingQuery.mockReturnValue({
-      data: { display: [{ identity: { type: 'user', name: 'abc' }, displayName: 'Marcus Chen' }] },
+      data: {
+        keys: ['user:abc'],
+        display: [{ identity: { type: 'user', name: 'abc' }, displayName: 'Marcus Chen' }],
+      },
     } as unknown as ReturnType<typeof useGetDisplayMappingQuery>);
     setList([]);
   });
@@ -134,7 +137,7 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     expect(await screen.findByText("You haven't created any notebooks yet")).toBeInTheDocument();
-    expect(screen.getByTestId('notebooks-create')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New notebook' })).toBeInTheDocument();
   });
 
   it('shows only the error alert when the list fails to load', async () => {
@@ -148,6 +151,52 @@ describe('NotebooksListPage', () => {
     expect(screen.queryByText('No notebooks found')).not.toBeInTheDocument();
   });
 
+  it('surfaces the error detail, so a permissions problem reads differently from an outage', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setList([], { error: { status: 403, data: { message: 'notebooks feature is not enabled' } } });
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText('notebooks feature is not enabled')).toBeInTheDocument();
+  });
+
+  it('tells a viewer none are available rather than that they created none', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText('No notebooks available to you')).toBeInTheDocument();
+    expect(screen.queryByText("You haven't created any notebooks yet")).not.toBeInTheDocument();
+  });
+
+  it('reports how many were loaded when the server had more to give', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setList([makeNotebook('nb1', 'Checkout error spike')], { continueToken: 'next-page' });
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText('First 1 notebook loaded')).toBeInTheDocument();
+    expect(screen.getByText('1 notebook')).toBeInTheDocument();
+  });
+
+  it('keeps the loaded count and the match count separate while filtering a truncated list', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setList([makeNotebook('nb1', 'Checkout error spike'), makeNotebook('nb2', 'Q2 latency regression')], {
+      continueToken: 'next-page',
+    });
+
+    render(<NotebooksListPage />);
+
+    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+    // The match count moves with the filter; the loaded count keeps describing the page we hold.
+    await waitFor(() => {
+      expect(screen.getByText('1 notebook')).toBeInTheDocument();
+    });
+    expect(screen.getByText('First 2 notebooks loaded')).toBeInTheDocument();
+  });
+
   it('hides the create button without dashboards:create', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
@@ -156,7 +205,7 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
-    expect(screen.queryByTestId('notebooks-create')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'New notebook' })).not.toBeInTheDocument();
   });
 
   it('creates a notebook and navigates to it', async () => {
@@ -168,7 +217,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
-    await userEvent.click(await screen.findByTestId('notebooks-create'));
+    await userEvent.click(await screen.findByRole('button', { name: 'New notebook' }));
 
     await waitFor(() => {
       expect(locationService.getLocation().pathname).toBe('/notebooks/nb-new');
