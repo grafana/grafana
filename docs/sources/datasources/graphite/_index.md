@@ -20,11 +20,13 @@ review_date: 2026-08-11
 
 # Graphite data source
 
-Graphite is an open source time series database built for storing and retrieving numeric metrics at scale. Grafana ships with built-in support for Graphite, so you can query your metrics, build dashboards, and drive alerts without installing a plugin.
+Graphite is an open source time series database that stores numeric metrics. Grafana includes built-in support for Graphite, so you can query your metrics, build dashboards, and set up alerts without installing a plugin.
 
-The Graphite data source pairs a feature-rich query editor with template variables, annotations, and tag-based queries, taking you from a raw metric path to a polished visualization in just a few steps. This page covers the configuration options, variables, and querying features specific to Graphite.
+The Graphite data source includes a query editor for building metric queries and supports template variables, annotations, tag-based queries, and Grafana Alerting.
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/).
+
+{{< docs/play title="Graphite: Sample Website Dashboard" url="https://play.grafana.org/d/000000003/" >}}
 
 ## Supported features
 
@@ -38,14 +40,29 @@ The Graphite data source supports the following features:
 | Alerting    | Yes       |
 | Annotations | Yes       |
 
-After you add the Graphite data source, you can [configure it](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/configure/) so that your Grafana instance's users can create queries in its [query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/query-editor/) when they [build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) and use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
+## Get started
 
-{{< docs/play title="Graphite: Sample Website Dashboard" url="https://play.grafana.org/d/000000003/" >}}
+The following documents help you set up and use the Graphite data source:
 
-## Get Grafana metrics into Graphite
+- [Configure the Graphite data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/configure/)
+- [Graphite query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/query-editor/)
+- [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/template-variables/)
+- [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/annotations/)
+- [Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/alerting/)
+- [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/troubleshooting/)
 
-Grafana exposes metrics for Graphite on the `/metrics` endpoint.
-Refer to [Internal Grafana metrics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/) for more information.
+## Additional features
+
+After you configure the Graphite data source, you can:
+
+- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to query data without building a dashboard
+- Build a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
+- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results
+- Configure [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) for dynamic, reusable dashboards
+
+## Send Grafana metrics to Graphite
+
+Grafana can report its own internal metrics to a Graphite backend. In the `[metrics.graphite]` section of the Grafana configuration file, set `address` to your Carbon host and port, for example `localhost:2003`. For the full list of internal metrics settings, refer to [Set up Grafana monitoring](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/).
 
 ## Graphite and Loki integration
 
@@ -61,13 +78,8 @@ The Graphite data source ships with pre-built dashboards to help you monitor you
 
 To import a pre-built dashboard, navigate to the Graphite data source's **Dashboards** tab and click **Import** next to the dashboard you want.
 
-## Get the most out of the data source
+## Related resources
 
-After installing and configuring the Graphite data source you can:
-
-- Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
-- Configure and use [templates and variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/)
-- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
-- Add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/)
-- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/alerting/) on your Graphite data
-- [Troubleshoot](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/graphite/troubleshooting/) common issues with the Graphite data source
+- [Learn more about Graphite](https://graphiteapp.org/)
+- [Graphite documentation](https://graphite.readthedocs.io/)
+- [Grafana community forum](https://community.grafana.com/)
