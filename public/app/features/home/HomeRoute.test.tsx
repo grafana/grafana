@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { type ComponentProps } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { useMergedPreferencesQuery } from '@grafana/api-clients/rtkq/preferences/v1';
 import { locationService, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { MERGED_PREFS_URL } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -28,10 +29,23 @@ jest.mock('./analytics/main', () => ({
 
 jest.mock('app/plugins/panel/news/useNewsFeed');
 
+// Call through by default so MSW-backed tests keep working; override only for the
+// cached-data-after-error case that is hard to reproduce via the network layer.
+jest.mock('@grafana/api-clients/rtkq/preferences/v1', () => {
+  const actual = jest.requireActual('@grafana/api-clients/rtkq/preferences/v1');
+  return {
+    ...actual,
+    useMergedPreferencesQuery: jest.fn(actual.useMergedPreferencesQuery),
+  };
+});
+
 setBackendSrv(backendSrv);
 setupMockServer();
 
 const useNewsFeedMock = jest.mocked(useNewsFeed);
+const useMergedPreferencesQueryMock = jest.mocked(useMergedPreferencesQuery);
+const actualUseMergedPreferencesQuery = jest.requireActual('@grafana/api-clients/rtkq/preferences/v1')
+  .useMergedPreferencesQuery as typeof useMergedPreferencesQuery;
 
 describe('HomeRoute', () => {
   let probeCallCount = 0;
@@ -47,6 +61,7 @@ describe('HomeRoute', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    useMergedPreferencesQueryMock.mockImplementation(actualUseMergedPreferencesQuery);
     probeCallCount = 0;
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
     useNewsFeedMock.mockReturnValue({
@@ -118,6 +133,20 @@ describe('HomeRoute', () => {
 
     expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
     expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
+  });
+
+  it('prefs error with cached homeDashboardUID → still renders dashboard proxy', async () => {
+    // Simulate RTK Query keeping previous data after a failed refetch.
+    useMergedPreferencesQueryMock.mockReturnValue({
+      data: { metadata: {}, spec: { homeDashboardUID: 'abc' } },
+      isLoading: false,
+      isError: true,
+    } as ReturnType<typeof useMergedPreferencesQuery>);
+
+    render(<HomeRoute {...props} />);
+
+    expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
   it('homeURL present → calls locationService.replace', async () => {

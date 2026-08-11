@@ -14,7 +14,7 @@ const DashboardPageProxy = lazy(
 const HomePage = lazy(() => import(/* webpackChunkName: "HomePage" */ './HomePage'));
 
 function HomeRouteInner(props: DashboardPageProxyProps) {
-  const { data, isLoading, isError } = useMergedPreferencesQuery();
+  const { data, isLoading } = useMergedPreferencesQuery();
   const redirectUri = data?.spec?.homeURL;
   const homeDashboardUID = data?.spec?.homeDashboardUID;
   // homeDashboardUID takes precedence over homeURL
@@ -33,16 +33,14 @@ function HomeRouteInner(props: DashboardPageProxyProps) {
     return <PageLoader />;
   }
 
-  // Probe failed: we cannot tell whether a home dashboard is configured.
-  // Fall back to the unified homepage (bundled home.json is no longer the default).
-  if (isError || !data) {
-    return <HomePage />;
-  }
-
+  // Prefer a known home dashboard UID (including cached data after a failed refetch)
+  // over the error fallback so a transient prefs failure does not replace a configured home.
   if (homeDashboardUID) {
     return <DashboardPageProxy {...props} />;
   }
 
+  // Empty/absent UID, or prefs probe failed with no UID available → unified homepage
+  // (bundled home.json is no longer the default).
   return <HomePage />;
 }
 
