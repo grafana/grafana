@@ -106,7 +106,6 @@ To add a dashboard with `gcx`, follow these steps:
    ```
 
    Where:
-
    - _<GIT_REPO>_: The path to the repository synced with Git Sync
    - _<DASHBOARDS_PATH>_: The path where the dashboards you want to export are located. The dashboards path must be under the repository
 
