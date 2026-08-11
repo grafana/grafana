@@ -84,7 +84,7 @@ function getQueryForLoki(
       traceID +
       '" __line__  }}` | log_line_contains_trace_id="true" or trace_id="' +
       traceID +
-      '';
+      '"';
   }
   if (filterBySpanID && spanID) {
     expr +=
@@ -165,7 +165,6 @@ function getQueryForSplunk(
     query += '${__tags}';
   }
   if (filterByTraceID) {
-    query += ' "${__span.traceId}"';
     query += ` "${traceID}"`;
   }
   if (filterBySpanID && spanID) {
@@ -232,12 +231,10 @@ function getQueryForFalconLogScale(
 
   let lsql = '${__tags}';
   if (filterByTraceID) {
-    lsql += ' or "${__span.traceId}"';
     lsql += ` or "${traceID}"`;
   }
 
   if (filterBySpanID && spanID) {
-    lsql += ' or "${__span.spanId}"';
     lsql += ` or "${spanID}"`;
   }
 
@@ -272,7 +269,6 @@ function getQueryForVictoriaLogs(
   const parts: string[] = [];
 
   if (filterBySpanID && spanID) {
-    parts.push('span_id:="${__span.spanId}"');
     parts.push(`span_id:="${spanID}"`);
   }
   if (filterByTraceID) {
