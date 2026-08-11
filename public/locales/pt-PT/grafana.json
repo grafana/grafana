@@ -5914,8 +5914,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Isto desagrupará todos os grupos aninhados.",
-      "ungroup-nested-title": "Desagrupar grupos aninhados?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} de {{numberOfPages}}",
@@ -6127,6 +6131,13 @@
       "file-path": "<strong>Caminho do ficheiro:</strong> {{filePath}}",
       "save-json-to-file": "Guardar JSON no ficheiro",
       "see-docs": "Consulte a <2>documentação</2> para obter mais informações sobre aprovisionamento."
+    },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
     },
     "search-panel": {
       "no-match": ""
@@ -7250,6 +7261,7 @@
         "title-someone-else-has-updated-this-dashboard": "Outra pessoa atualizou este painel de controlo",
         "would-still-dashboard": "Ainda pretende guardar este painel de controlo?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Guardar e substituir"
     },
     "legacy": {
@@ -14757,7 +14769,6 @@
     },
     "header": {
       "alert": "Alertar",
-      "expression": "Expressão",
       "pending-expression": "",
       "pending-expression-cancel": "Cancelar",
       "pending-transformation": "",
@@ -14771,6 +14782,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

@@ -5994,8 +5994,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Spowoduje to rozgrupowanie wszystkich zagnieżdżonych grup.",
-      "ungroup-nested-title": "Rozgrupować zagnieżdżone grupy?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} z {{numberOfPages}}",
@@ -6209,6 +6213,13 @@
       "file-path": "<strong>Ścieżka do pliku:</strong> {{filePath}}",
       "save-json-to-file": "Zapisz JSON w pliku",
       "see-docs": "Więcej informacji na temat konfiguracji można znaleźć w <2>dokumentacji</2>."
+    },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
     },
     "search-panel": {
       "no-match": ""
@@ -7358,6 +7369,7 @@
         "title-someone-else-has-updated-this-dashboard": "Ktoś inny zaktualizował ten pulpit",
         "would-still-dashboard": "Czy nadal chcesz zapisać ten pulpit?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Zapisz i zastąp"
     },
     "legacy": {
@@ -14995,7 +15007,6 @@
     },
     "header": {
       "alert": "Alert",
-      "expression": "Wyrażenie",
       "pending-expression": "",
       "pending-expression-cancel": "Anuluj",
       "pending-transformation": "",
@@ -15009,6 +15020,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

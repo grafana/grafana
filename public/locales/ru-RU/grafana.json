@@ -5994,8 +5994,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Все вложенные группы будут разгруппированы.",
-      "ungroup-nested-title": "Разгруппировать вложенные группы?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} из {{numberOfPages}}",
@@ -6209,6 +6213,13 @@
       "file-path": "<strong>Путь к файлу:</strong> {{filePath}}",
       "save-json-to-file": "Сохранить модель JSON в файл",
       "see-docs": "Подробнее о подготовке см. в <2>документации</2>."
+    },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
     },
     "search-panel": {
       "no-match": "Нет совпадающих панелей"
@@ -7358,6 +7369,7 @@
         "title-someone-else-has-updated-this-dashboard": "Дашборд обновлен другим пользователем",
         "would-still-dashboard": "Все равно сохранить дашборд?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Сохранить и перезаписать"
     },
     "legacy": {
@@ -14995,7 +15007,6 @@
     },
     "header": {
       "alert": "Оповещение",
-      "expression": "Выражение",
       "pending-expression": "",
       "pending-expression-cancel": "Отмена",
       "pending-transformation": "",
@@ -15009,6 +15020,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

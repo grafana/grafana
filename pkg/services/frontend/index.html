@@ -214,6 +214,10 @@
         window.__grafanaNewPreferencesPage = true;
       [[end]]
 
+      [[if .OFREPRootUrlEnabled]]
+        window.__grafanaOFREPRootUrlEnabled = true;
+      [[end]]
+
       window.__grafanaLegacyAPIMode = [[.LegacyAPIMode]];
       window.__grafanaPublicDashboardAccessToken = [[.PublicDashboardAccessToken]];
 

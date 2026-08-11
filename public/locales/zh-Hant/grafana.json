@@ -5874,8 +5874,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "這將取消所有巢狀群組的分組。",
-      "ungroup-nested-title": "要取消巢狀群組的分組嗎？"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "第 {{currentPage}} 頁，共 {{numberOfPages}} 頁",
@@ -6086,6 +6090,13 @@
       "file-path": "<strong>檔案路徑：</strong>{{filePath}}",
       "save-json-to-file": "將 JSON 儲存至檔案",
       "see-docs": "有關佈建的更多資訊，請參閱<2>文件</2>。"
+    },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
     },
     "search-panel": {
       "no-match": ""
@@ -7196,6 +7207,7 @@
         "title-someone-else-has-updated-this-dashboard": "其他人已更新此儀表板",
         "would-still-dashboard": "仍要儲存此儀表板嗎？"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "儲存並覆寫"
     },
     "legacy": {
@@ -14638,7 +14650,6 @@
     },
     "header": {
       "alert": "警示",
-      "expression": "運算式",
       "pending-expression": "",
       "pending-expression-cancel": "取消",
       "pending-transformation": "",
@@ -14652,6 +14663,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

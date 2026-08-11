@@ -5874,8 +5874,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "중첩된 모든 그룹이 해제됩니다.",
-      "ungroup-nested-title": "중첩된 그룹을 해제하시겠습니까?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{numberOfPages}} 중 {{currentPage}}",
@@ -6086,6 +6090,13 @@
       "file-path": "<strong>파일 경로:</strong> {{filePath}}",
       "save-json-to-file": "JSON을 파일에 저장",
       "see-docs": "프로비저닝에 대한 자세한 내용은 <2>문서</2>를 참고하세요."
+    },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
     },
     "search-panel": {
       "no-match": ""
@@ -7196,6 +7207,7 @@
         "title-someone-else-has-updated-this-dashboard": "다른 사람이 이 대시보드를 업데이트했습니다",
         "would-still-dashboard": "그래도 이 대시보드를 저장하시겠어요?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "저장 및 덮어쓰기"
     },
     "legacy": {
@@ -14638,7 +14650,6 @@
     },
     "header": {
       "alert": "경고",
-      "expression": "표현식",
       "pending-expression": "",
       "pending-expression-cancel": "취소",
       "pending-transformation": "",
@@ -14652,6 +14663,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },
