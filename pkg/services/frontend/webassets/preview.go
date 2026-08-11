@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -24,6 +24,7 @@ var validPreviewAssetsFolder = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 const (
 	maxPreviewAssetsFolderLength = 128
 	previewCacheTTL              = 30 * time.Second
+	previewCacheSize             = 64
 	previewFetchTimeout          = 10 * time.Second
 )
 
@@ -85,14 +86,14 @@ func ResolvePreviewAssetsURL(baseURL string, folder string) (string, error) {
 }
 
 type cachedPreviewAssets struct {
-	assets    dtos.EntryPointAssets
-	err       error
-	fetchedAt time.Time
+	assets dtos.EntryPointAssets
+	err    error
 }
 
 var (
-	previewCacheMu sync.Mutex
-	previewCache   = map[string]cachedPreviewAssets{}
+	// Bounded so unauthenticated requests carrying arbitrary cookie values can't
+	// grow the cache without limit.
+	previewCache = expirable.NewLRU[string, cachedPreviewAssets](previewCacheSize, nil, previewCacheTTL)
 
 	// Collapses concurrent fetches of the same assets URL into one remote request.
 	previewFlights singleflight.Group
@@ -100,9 +101,7 @@ var (
 
 // Clears the cache, exported just for tests.
 func ResetPreviewAssetsCache() {
-	previewCacheMu.Lock()
-	previewCache = map[string]cachedPreviewAssets{}
-	previewCacheMu.Unlock()
+	previewCache.Purge()
 }
 
 // GetPreviewWebAssets fetches the assets manifest for a preview folder, with all
@@ -117,13 +116,13 @@ func GetPreviewWebAssets(ctx context.Context, preview PreviewAssetsConfig, folde
 		return dtos.EntryPointAssets{}, err
 	}
 
-	if cached, ok := getCachedPreviewAssets(assetsURL); ok {
+	if cached, ok := previewCache.Get(assetsURL); ok {
 		return cached.assets, cached.err
 	}
 
 	ch := previewFlights.DoChan(assetsURL, func() (any, error) {
 		// A previous flight may have filled the cache while we waited for the slot.
-		if cached, ok := getCachedPreviewAssets(assetsURL); ok {
+		if cached, ok := previewCache.Get(assetsURL); ok {
 			return cached, nil
 		}
 
@@ -135,14 +134,12 @@ func GetPreviewWebAssets(ctx context.Context, preview PreviewAssetsConfig, folde
 
 		result, err := webassets.ReadWebAssetsFromCDN(fetchCtx, "build", assetsURL)
 
-		entry := cachedPreviewAssets{err: err, fetchedAt: time.Now()}
+		entry := cachedPreviewAssets{err: err}
 		if err == nil {
 			entry.assets = *result
 		}
 
-		previewCacheMu.Lock()
-		previewCache[assetsURL] = entry
-		previewCacheMu.Unlock()
+		previewCache.Add(assetsURL, entry)
 
 		return entry, nil
 	})
@@ -158,19 +155,4 @@ func GetPreviewWebAssets(ctx context.Context, preview PreviewAssetsConfig, folde
 		entry := flight.Val.(cachedPreviewAssets)
 		return entry.assets, entry.err
 	}
-}
-
-// getCachedPreviewAssets returns the live entry, evicting expired entries first.
-func getCachedPreviewAssets(assetsURL string) (cachedPreviewAssets, bool) {
-	previewCacheMu.Lock()
-	defer previewCacheMu.Unlock()
-
-	for key, cached := range previewCache {
-		if time.Since(cached.fetchedAt) >= previewCacheTTL {
-			delete(previewCache, key)
-		}
-	}
-
-	cached, ok := previewCache[assetsURL]
-	return cached, ok
 }
