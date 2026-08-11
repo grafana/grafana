@@ -37,11 +37,11 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
       options: [
         {
           value: RenderMode.AllRows,
-          label: t('textng.render-mode.all-rows', 'All rows'),
+          label: t('textng.render-mode.once', 'Once'),
         },
         {
           value: RenderMode.EveryRow,
-          label: t('textng.render-mode.every-row', 'Every row'),
+          label: t('textng.render-mode.per-row', 'Per row'),
         },
       ],
     },

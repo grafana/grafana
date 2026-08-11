@@ -16049,8 +16049,8 @@
       "truncated": "Showing the first {{maxRows}} rows."
     },
     "render-mode": {
-      "all-rows": "All rows",
-      "every-row": "Every row"
+      "once": "Once",
+      "per-row": "Per row"
     }
   },
   "theme-playground": {
