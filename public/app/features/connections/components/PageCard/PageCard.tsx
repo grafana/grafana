@@ -13,11 +13,11 @@ type PageCardProps = {
 
 export default function PageCard({ title, description, icon, url, index }: PageCardProps) {
   const styles = useStyles2(getStyles);
-  
+
   return (
-    <Card  href={url} className={styles.card}>
+    <Card href={url} className={styles.card} noMargin>
       <Card.Figure className={`${styles.figure} ${index % 2 === 0 ? styles.evenLogo : styles.oddLogo}`}>
-          <Icon name={icon} size="xl"  />
+        <Icon name={icon} size="xl" />
       </Card.Figure>
       <Card.Heading className={styles.heading}>{title}</Card.Heading>
       <Card.Description>{description}</Card.Description>
