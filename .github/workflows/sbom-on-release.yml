@@ -3,8 +3,8 @@ name: "SBOM on Release"
 # Not triggered by `on: release: published`: the release is created by github-release.yml
 # using secrets.GITHUB_TOKEN, and GitHub does not fire new workflow runs for events produced
 # by the default GITHUB_TOKEN. That native trigger silently never fired for releases created
-# by the automated pipeline, so this is called explicitly right after the release is created
-# instead (mirrors how deploy-storybook.yml is chained from github-release.yml).
+# by the automated pipeline, so release-comms.yml calls this explicitly once its
+# create_github_release job has completed.
 on:
   workflow_call:
     inputs:
@@ -66,13 +66,9 @@ jobs:
           common_secrets: |
             SOCKET_API_TOKEN=socket:SOCKET_API_KEY
 
-      # Pinned to a commit rather than a version tag: shared-workflows hasn't cut a release past
-      # v0.1.2 yet, but 801dc0b (branch-scoped scans via the Socket CLI, requiring the caller to
-      # check out `branch` first) is already the behavior this workflow depends on. Re-pin to the
-      # next tagged socket-export-sbom release once one exists.
       - name: "Export SPDX SBOM from Socket"
         id: export-sbom
-        uses: grafana/shared-workflows/actions/socket-export-sbom@801dc0b75637c2fb0d0d4de0c85890991d973f68 # commit, pending next socket-export-sbom tag
+        uses: grafana/shared-workflows/actions/socket-export-sbom@73f73d35ceadf46221741d45faefec0c5a990e6b # socket-export-sbom/v1.0.0
         with:
           socket_api_token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).SOCKET_API_TOKEN }}
           socket_org: grafana
