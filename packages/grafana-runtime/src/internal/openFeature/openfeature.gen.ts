@@ -145,6 +145,8 @@ export const FlagKeys = {
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
+  /** Renders the raw Prometheus query results table using TableNG instead of the legacy Table */
+  RawPrometheusTableNg: "rawPrometheus.tableNg",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
@@ -897,6 +899,17 @@ export const useFlagQueryHistoryLocalOnly = (options?: ReactFlagEvaluationOption
  */
 export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryHistory.recentQueriesUI", false, options).value;
+};
+
+/**
+ * Renders the raw Prometheus query results table using TableNG instead of the legacy Table
+ *
+ * **Details:**
+ * - flag key: `rawPrometheus.tableNg`
+ * - default value: `false`
+ */
+export const useFlagRawPrometheusTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("rawPrometheus.tableNg", false, options).value;
 };
 
 /**
