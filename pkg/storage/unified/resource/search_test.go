@@ -1763,6 +1763,30 @@ func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
 	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "vector_storage_search_duration_seconds"))
 }
 
+// TestSearchServer_HybridSearch_ObservesDuration mirrors the VectorSearch
+// test above: the Unimplemented path confirms the histogram wiring.
+func TestSearchServer_HybridSearch_ObservesDuration(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := ProvideVectorMetrics(reg)
+	s := &searchServer{
+		log:           log.New("test-hybrid-search"),
+		vectorMetrics: m,
+	}
+
+	_, err := s.HybridSearch(context.Background(), &resourcepb.HybridSearchRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: "stack-1",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+		},
+		Query: "test",
+	})
+	require.Error(t, err)
+	require.Equal(t, codes.Unimplemented, status.Code(err))
+
+	require.Equal(t, 1, testutil.CollectAndCount(m.HybridSearchDuration, "vector_storage_hybrid_search_duration_seconds"))
+}
+
 func TestFolderFilterSet(t *testing.T) {
 	cases := []struct {
 		name     string

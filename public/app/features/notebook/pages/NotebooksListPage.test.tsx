@@ -7,6 +7,7 @@ import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { defaultSpec as defaultNotebookSpec } from 'app/features/notebook/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { NotebooksListPage } from './NotebooksListPage';
 
@@ -97,13 +98,27 @@ describe('NotebooksListPage', () => {
     expect(screen.getByText('1 notebook')).toBeInTheDocument();
   });
 
-  it('points the Edit action at the same place as the title', async () => {
+  it('points the Edit action at the notebook in edit mode', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     setList([makeNotebook('nb1', 'Checkout error spike')]);
 
     render(<NotebooksListPage />);
 
-    expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/notebooks/nb1');
+    expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/notebooks/nb1?edit=true');
+  });
+
+  it('hides the Edit action from a user who cannot edit dashboards', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action !== AccessControlAction.DashboardsWrite);
+    setList([makeNotebook('nb1', 'Checkout error spike')]);
+
+    render(<NotebooksListPage />);
+
+    // The row still renders, just without a way into edit mode.
+    expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
   });
 
   it('filters the list by title', async () => {

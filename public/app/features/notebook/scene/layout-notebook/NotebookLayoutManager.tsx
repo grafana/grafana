@@ -33,9 +33,11 @@ interface NotebookLayoutManagerState extends SceneObjectState {
   // or the two copies drift.
   title?: string;
   tags?: string[];
-  // Mirrored down from NotebookScene via editModeChanged, not read off the parent: reaching up to
-  // the notebook scene pulls the dashboard-scene module graph into the layout and reintroduces the
-  // dependency cycle.
+  /**
+   * Mirrors the scene's edit mode, pushed down by editModeChanged rather than read off the parent:
+   * reaching up to the notebook scene pulls the dashboard-scene module graph into the layout and
+   * reintroduces the dependency cycle.
+   */
   isEditing?: boolean;
 }
 
@@ -84,8 +86,10 @@ export class NotebookLayoutManager
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
   }
 
-  // The DashboardLayoutManager hook the root scene calls to mirror edit mode down; the renderer
-  // shows the add-block insertion points off it.
+  /**
+   * The scene calls this when the mode flips. Recording it here rather than reaching up to the
+   * NotebookScene keeps the import one-directional — the scene only type-imports this manager.
+   */
   public editModeChanged(isEditing: boolean): void {
     this.setState({ isEditing });
   }

@@ -83,7 +83,7 @@ export function NotebookCellFrame({ cell, index, isEditing, isDragActive, dropIn
             </div>
           )}
 
-          <NotebookCellRenderer cell={cell} />
+          <NotebookCellRenderer cell={cell} isEditing={Boolean(isEditing)} />
 
           {/* index + 1: this divider inserts *after* the cell it belongs to. */}
           {isEditing && (

@@ -12656,6 +12656,7 @@
       "customise-saving": "Saving…",
       "dialog-label": "Navigation",
       "dock": "Dock menu",
+      "header-title": "Navigation",
       "list-label": "Navigation",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
@@ -12772,6 +12773,7 @@
       "heading": "Heading",
       "label": "Add block",
       "paragraph": "Paragraph",
+      "prompt": "Type to start writing — press / for blocks",
       "visualization": "Visualization",
       "visualization-placeholder": "Coming soon"
     },
@@ -12814,7 +12816,9 @@
       "unknown-author": "Anonymous"
     },
     "view": {
-      "copy-link": "Copy link"
+      "copy-link": "Copy link",
+      "edit-mode": "Edit",
+      "editing": "Editing"
     }
   },
   "notifications": {

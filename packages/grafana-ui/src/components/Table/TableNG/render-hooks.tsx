@@ -509,6 +509,8 @@ function buildColumnsFromFields(
       width,
       headerCellClass,
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
+      // every column is sortable unless explicitly disabled
+      sortable: field.config.custom?.sortable !== false,
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell

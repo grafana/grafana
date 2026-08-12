@@ -1216,19 +1216,6 @@
     },
     {
       "metadata": {
-        "name": "azureMonitorBatchAPI",
-        "resourceVersion": "1782267315125",
-        "creationTimestamp": "2026-06-24T02:15:15Z"
-      },
-      "spec": {
-        "description": "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
-        "stage": "experimental",
-        "codeowner": "@grafana/data-sources-plugins",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "azureMonitorDisableLogLimit",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-10-24T13:32:09Z"
@@ -2004,6 +1991,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.azureMonitorBatchAPI",
+        "resourceVersion": "1786542896418",
+        "creationTimestamp": "2026-08-12T13:54:56Z"
+      },
+      "spec": {
+        "description": "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
         "expression": "false"
       }
     },
@@ -6129,6 +6129,21 @@
       },
       "spec": {
         "description": "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.inspectDataTableNG",
+        "resourceVersion": "1786484899208",
+        "creationTimestamp": "2026-08-11T21:48:19Z"
+      },
+      "spec": {
+        "description": "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,

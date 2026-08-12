@@ -373,6 +373,19 @@ describe('useColumnBuilderFromFields', () => {
     expect(result.columns[1].frozen).toBe(false);
   });
 
+  it('is sortable by default, and only opts out when custom.sortable is explicitly false', () => {
+    const unsortableFrame = createDataFrame({
+      fields: [
+        { name: 'A', type: FieldType.string, values: ['x', 'y'] },
+        { name: 'B', type: FieldType.number, values: [1, 2], config: { custom: { sortable: false } } },
+        { name: 'C', type: FieldType.number, values: [1, 2], config: { custom: { sortable: true } } },
+      ],
+    });
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+    const result = callFromFields(hook, unsortableFrame.fields, [100, 100, 100], unsortableFrame, rows, rows);
+    expect(result.columns.map((c) => c.sortable)).toEqual([true, false, true]);
+  });
+
   it('sets column widths from the widths array', () => {
     const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
     const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);

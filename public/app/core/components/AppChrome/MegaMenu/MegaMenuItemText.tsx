@@ -184,9 +184,12 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], visualRefr
 
   const wrapperActiveVisualRefresh = css({
     color: theme.colors.accent.text,
-    backgroundColor: theme.colors.accent.transparent,
+    backgroundColor: theme.colors.accent.background,
     position: 'relative',
     borderRadius: theme.shape.radius.default,
+    '&:hover': {
+      color: theme.colors.accent.textEmphasis,
+    },
   });
 
   return {

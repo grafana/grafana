@@ -1,9 +1,18 @@
 import { act, render } from '@testing-library/react';
+import { createMemoryHistory } from 'history';
 import { BehaviorSubject } from 'rxjs';
 
 import { CoreApp, type Scope } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, ScopesContext, type ScopesContextValue, setPluginImportUtils } from '@grafana/runtime';
+import {
+  config,
+  HistoryWrapper,
+  locationService,
+  ScopesContext,
+  type ScopesContextValue,
+  setLocationService,
+  setPluginImportUtils,
+} from '@grafana/runtime';
 import {
   sceneGraph,
   SceneRefreshPicker,
@@ -12,6 +21,7 @@ import {
   ScopesVariable,
   VizPanel,
 } from '@grafana/scenes';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { NotebookScene } from './NotebookScene';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
@@ -23,7 +33,7 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-function buildScene(hideTimeControls: boolean, isEditing?: boolean) {
+function buildScene(hideTimeControls: boolean) {
   return new NotebookScene({
     title: 'My notebook',
     body: new NotebookLayoutManager({
@@ -39,7 +49,6 @@ function buildScene(hideTimeControls: boolean, isEditing?: boolean) {
     timePicker: new SceneTimePicker({}),
     refreshPicker: new SceneRefreshPicker({ refresh: '10s', intervals: ['10s', '1m'] }),
     hideTimeControls,
-    isEditing,
   });
 }
 
@@ -93,26 +102,56 @@ describe('NotebookScene', () => {
     expect(scene.state.refreshPicker.isActive).toBe(false);
   });
 
-  // The layout renders the editing affordances but must not read edit mode off its parent — that
-  // import direction is what reintroduces the dashboard-scene dependency cycle — so the scene pushes
-  // it down instead.
-  it('pushes edit mode down to the layout on activation', () => {
-    const scene = buildScene(false);
+  describe('edit mode', () => {
+    const originalLocationService = locationService;
 
-    expect(scene.state.body.state.isEditing).toBeUndefined();
+    beforeEach(() => {
+      // A memory history keeps the url assertions independent of whatever jsdom's location is.
+      setLocationService(new HistoryWrapper(createMemoryHistory({ initialEntries: ['/notebooks/nb1'] })));
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    });
 
-    scene.activate();
+    afterEach(() => {
+      setLocationService(originalLocationService);
+      jest.restoreAllMocks();
+    });
 
-    expect(scene.state.body.state.isEditing).toBe(true);
-  });
+    it('starts in view mode', () => {
+      expect(buildScene(false).state.isEditing).toBeUndefined();
+    });
 
-  // Without this the hardcoded `isEditing ?? true` default would mask a mirror that never propagates.
-  it('leaves the layout out of edit mode when the notebook is not editing', () => {
-    const scene = buildScene(false, false);
+    it('enters edit mode and tells the layout', () => {
+      const scene = buildScene(false);
 
-    scene.activate();
+      scene.onEnterEditMode();
 
-    expect(scene.state.body.state.isEditing).toBe(false);
+      expect(scene.state.isEditing).toBe(true);
+      // Asserted through the layout's own state rather than a spy, so the propagation is real.
+      expect(scene.state.body.state.isEditing).toBe(true);
+    });
+
+    // Reflecting the mode in the url is NotebookSceneUrlSync's job, not these methods' — covered by
+    // its own tests and by the page test that mounts the sync provider.
+    it('refuses a user without edit permission, whatever the caller', () => {
+      // NotebookSceneUrlSync calls this directly, so the guard cannot live only in the toggle.
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      const scene = buildScene(false);
+
+      scene.onEnterEditMode();
+
+      expect(scene.state.isEditing).toBeUndefined();
+      expect(scene.state.body.state.isEditing).toBeUndefined();
+    });
+
+    it('leaves edit mode again, clearing the layout too', () => {
+      const scene = buildScene(false);
+      scene.onEnterEditMode();
+
+      scene.onExitEditMode();
+
+      expect(scene.state.isEditing).toBe(false);
+      expect(scene.state.body.state.isEditing).toBe(false);
+    });
   });
 
   describe('enrichDataRequest', () => {
