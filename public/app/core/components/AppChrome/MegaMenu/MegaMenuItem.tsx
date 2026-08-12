@@ -91,6 +91,7 @@ export function MegaMenuItem({
   const location = useLocation();
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
+  const useActiveIconColor = level === 0 || isActive;
   // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
   // render alongside the label so the two kinds are distinguishable. Nav items at every depth can
   // also provide an icon through plugin metadata.
@@ -156,7 +157,12 @@ export function MegaMenuItem({
 
   if (link.icon) {
     iconElement = (
-      <Icon className={styles.icon} name={toIconName(link.icon) ?? 'link'} size="lg" title={starredLeafIconTitle} />
+      <Icon
+        className={cx(styles.icon, useActiveIconColor && styles.activeColor)}
+        name={toIconName(link.icon) ?? 'link'}
+        size="lg"
+        title={starredLeafIconTitle}
+      />
     );
   } else if (link.img) {
     iconElement = (
@@ -321,6 +327,9 @@ export function MegaMenuItem({
 const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   icon: css({
     width: theme.spacing(3),
+    color: visualRefreshEnabled ? theme.colors.text.secondary : undefined,
+  }),
+  activeColor: css({
     color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
   }),
   img: css({
