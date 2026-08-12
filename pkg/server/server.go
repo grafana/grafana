@@ -223,3 +223,5 @@ func (s *Server) notifySystemd(state string) {
 		s.log.Warn("Failed to write notification to systemd", "err", err)
 	}
 }
+
+// CI trigger placeholder, remove before merge.

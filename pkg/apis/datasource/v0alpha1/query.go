@@ -78,3 +78,5 @@ type QueryTypeDefinitionList struct {
 func (QueryTypeDefinitionList) OpenAPIModelName() string {
 	return OpenAPIPrefix + "QueryTypeDefinitionList"
 }
+
+// CI trigger placeholder, remove before merge.
