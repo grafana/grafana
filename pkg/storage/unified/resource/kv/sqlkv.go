@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"slices"
 	"strings"
 	"time"
 
@@ -558,6 +559,13 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 	return nil
 }
 
+// deleteChunkSize caps the IN-list size per DELETE. A large key_path IN list makes
+// the MySQL optimizer abandon the key_path index (index dives stop past
+// eq_range_index_dive_limit, and the range optimizer exceeds range_optimizer_max_mem_size),
+// degrading the delete to a full table scan of resource_history. Chunking keeps each
+// statement in the index-friendly range.
+const deleteChunkSize = 200
+
 func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) error {
 	if len(keys) == 0 {
 		return nil
@@ -568,10 +576,11 @@ func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 		return err
 	}
 
-	keyPaths := getKeyPaths(section, keys)
-	query, args := qb.buildBatchDeleteQuery(keyPaths)
-	if _, err := k.conn(ctx).ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("failed to batch delete keys: %w", err)
+	for chunk := range slices.Chunk(getKeyPaths(section, keys), deleteChunkSize) {
+		query, args := qb.buildBatchDeleteQuery(chunk)
+		if _, err := k.conn(ctx).ExecContext(ctx, query, args...); err != nil {
+			return fmt.Errorf("failed to batch delete keys: %w", err)
+		}
 	}
 
 	return nil

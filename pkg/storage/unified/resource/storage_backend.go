@@ -810,7 +810,11 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 					continue
 				}
 
-				// if not in dry run mode, batch delete the keys
+				// if not in dry run mode, batch delete the keys.
+				// keysToDelete is ordered oldest-first (SortOrderAsc above), so the deletion
+				// marker (highest RV) is deleted last. BatchDelete may delete in chunks and
+				// stop on the first failure, so a partial delete always leaves the marker
+				// behind; the next GC pass re-finds it and finishes. Do not reorder.
 				err = b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
 				if err != nil {
 					return fmt.Errorf("failed to batch delete keys: %s", err)

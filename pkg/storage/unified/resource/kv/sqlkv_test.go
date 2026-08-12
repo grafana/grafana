@@ -251,6 +251,24 @@ func TestSQLKVInsertDataImportBatchUsesLegacyFields(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestSQLKV_BatchDelete_ChunksLargeKeyList(t *testing.T) {
+	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
+
+	// A large key_path IN list makes MySQL abandon the index and full-scan, so BatchDelete
+	// chunks into <= deleteChunkSize keys per DELETE. 450 keys -> 3 DELETEs (200,200,50).
+	keys := make([]string, 2*deleteChunkSize+50)
+	for i := range keys {
+		keys[i] = fmt.Sprintf("k-%04d", i)
+	}
+	for range 3 {
+		mock.ExpectExec(`(?i)delete from .*resource_history.* where .*key_path.* in \(`).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+	}
+
+	require.NoError(t, sqlKV.BatchDelete(context.Background(), DataSection, keys))
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestSQLKV_Batch_RejectsDataSection(t *testing.T) {
 	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
 
