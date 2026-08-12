@@ -637,6 +637,32 @@ func TestIntegrationCreateUser(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "callview", usr.Login)
 	})
+
+	t.Run("GetByLogin and LoginConflict handle legacy login with trailing whitespace", func(t *testing.T) {
+		// Simulate a pre-fix row that still has trailing whitespace in the DB.
+		_, err := userStore.Insert(context.Background(), &user.User{
+			Email:   "legacy-spaced@example.com",
+			Login:   "legacyuser ",
+			Name:    "legacyuser",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		usr, err := userStore.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: "legacyuser"})
+		require.NoError(t, err)
+		require.Equal(t, "legacyuser ", usr.Login)
+
+		usr, err = userStore.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: "  legacyuser  "})
+		require.NoError(t, err)
+		require.Equal(t, "legacyuser ", usr.Login)
+
+		err = userStore.LoginConflict(context.Background(), "legacyuser", "other@example.com")
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+
+		err = userStore.LoginConflict(context.Background(), "  legacyuser  ", "another@example.com")
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+	})
 }
 
 type FakeUserStore struct {

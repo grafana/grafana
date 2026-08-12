@@ -436,7 +436,7 @@ func (s *UserK8sService) GetByEmail(ctx context.Context, cmd *user.GetUserByEmai
 		return nil, err
 	}
 
-	u, err := s.getByFieldSelector(ctx, ctxLogger, client, "spec.email", strings.ToLower(cmd.Email), namespace, orgID)
+	u, err := s.getByFieldSelector(ctx, ctxLogger, client, "spec.email", strings.ToLower(strings.TrimSpace(cmd.Email)), namespace, orgID)
 	if err != nil {
 		span.RecordError(err)
 		return nil, err

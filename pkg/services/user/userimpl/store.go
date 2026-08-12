@@ -152,15 +152,13 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 			return user.ErrUserNotFound
 		}
 
-		var where string
 		var has bool
 		var err error
 
 		// Since username can be an email address, attempt login with email address
 		// first if the login field has the "@" symbol.
 		if strings.Contains(query.LoginOrEmail, "@") {
-			where = "email=?"
-			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
+			has, err = ss.getByExactOrTrimmed(sess, usr, "email", query.LoginOrEmail)
 			if err != nil {
 				return err
 			}
@@ -168,8 +166,7 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 
 		// Look for the login field instead of email
 		if !has {
-			where = "login=?"
-			has, err = sess.Where(ss.notServiceAccountFilter()).Where(where, query.LoginOrEmail).Get(usr)
+			has, err = ss.getByExactOrTrimmed(sess, usr, "login", query.LoginOrEmail)
 		}
 
 		if err != nil {
@@ -188,8 +185,8 @@ func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQu
 }
 
 func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
-	// enforcement of lowercase due to forcement of caseinsensitive login
-	query.Email = strings.ToLower(query.Email)
+	// Trim then lowercase so accidental whitespace around typed credentials does not fail lookup.
+	query.Email = strings.ToLower(strings.TrimSpace(query.Email))
 
 	usr := &user.User{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
@@ -197,9 +194,7 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 			return user.ErrUserNotFound
 		}
 
-		where := "email=?"
-		has, err := sess.Where(ss.notServiceAccountFilter()).Where(where, query.Email).Get(usr)
-
+		has, err := ss.getByExactOrTrimmed(sess, usr, "email", query.Email)
 		if err != nil {
 			return err
 		} else if !has {
@@ -213,17 +208,30 @@ func (ss *sqlStore) GetByEmail(ctx context.Context, query *user.GetUserByEmailQu
 	return usr, nil
 }
 
+// getByExactOrTrimmed finds a non-service-account user by exact column match, then by TRIM(column)
+// so legacy rows that still contain leading/trailing whitespace remain reachable after lookup keys are trimmed.
+func (ss *sqlStore) getByExactOrTrimmed(sess *db.Session, usr *user.User, column, value string) (bool, error) {
+	has, err := sess.Where(ss.notServiceAccountFilter()).Where(column+"=?", value).Get(usr)
+	if err != nil || has {
+		return has, err
+	}
+
+	*usr = user.User{}
+	return sess.Where(ss.notServiceAccountFilter()).Where("TRIM("+column+")=?", value).Get(usr)
+}
+
 // LoginConflict returns an error if the provided email or login are already
 // associated with a user.
 func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) error {
-	// enforcement of lowercase due to forcement of caseinsensitive login
-	login = strings.ToLower(login)
-	email = strings.ToLower(email)
+	// Trim then lowercase so create/update cannot collide with legacy spaced rows, and so
+	// whitespace-only differences are treated as the same identity.
+	login = strings.ToLower(strings.TrimSpace(login))
+	email = strings.ToLower(strings.TrimSpace(email))
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		where := "email=? OR login=?"
+		where := "email=? OR login=? OR TRIM(email)=? OR TRIM(login)=?"
 
-		exists, err := sess.Where(where, email, login).Get(&user.User{})
+		exists, err := sess.Where(where, email, login, email, login).Get(&user.User{})
 		if err != nil {
 			return err
 		}
