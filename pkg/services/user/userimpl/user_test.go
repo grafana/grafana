@@ -52,6 +52,18 @@ func TestUserService(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("create user trims leading and trailing whitespace from login and email", func(t *testing.T) {
+		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
+			Email: "  spaced@example.com  ",
+			Login: "  callview  ",
+			Name:  "name",
+		})
+		require.NoError(t, err)
+		require.NotNil(t, userStore.LastInsertedUser)
+		require.Equal(t, "callview", userStore.LastInsertedUser.Login)
+		require.Equal(t, "spaced@example.com", userStore.LastInsertedUser.Email)
+	})
+
 	t.Run("create user should fail when username and email are empty", func(t *testing.T) {
 		_, err := userService.Create(context.Background(), &user.CreateUserCommand{
 			Email: "",
@@ -597,6 +609,34 @@ func TestIntegrationCreateUser(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, user.ErrUserNotFound)
 	})
+
+	t.Run("create user trims login whitespace so GetByLogin works without spaces", func(t *testing.T) {
+		userService := LegacyService{
+			store:        userStore,
+			orgService:   &orgtest.FakeOrgService{},
+			cacheService: localcache.ProvideService(),
+			teamService:  &teamtest.FakeService{},
+			tracer:       tracing.InitializeTracerForTest(),
+			cfg:          setting.NewCfg(),
+			db:           ss,
+		}
+		created, err := userService.Create(context.Background(), &user.CreateUserCommand{
+			Email:        "trimspace@example.com",
+			Login:        "  callview  ",
+			Name:         "callview",
+			SkipOrgSetup: true,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "callview", created.Login)
+
+		usr, err := userService.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: "callview"})
+		require.NoError(t, err)
+		require.Equal(t, "callview", usr.Login)
+
+		usr, err = userService.GetByLogin(context.Background(), &user.GetUserByLoginQuery{LoginOrEmail: "  callview  "})
+		require.NoError(t, err)
+		require.Equal(t, "callview", usr.Login)
+	})
 }
 
 type FakeUserStore struct {
@@ -608,6 +648,7 @@ type FakeUserStore struct {
 	ExpectedDeleteUserError                 error
 	ExpectedCountUserAccountsWithEmptyRoles int64
 	ExpectedListUsersByIdOrUid              []*user.User
+	LastInsertedUser                        *user.User
 }
 
 func newUserStoreFake() *FakeUserStore {
@@ -615,7 +656,9 @@ func newUserStoreFake() *FakeUserStore {
 }
 
 func (f *FakeUserStore) Insert(ctx context.Context, query *user.User) (int64, error) {
-	return 0, f.ExpectedError
+	copied := *query
+	f.LastInsertedUser = &copied
+	return 1, f.ExpectedError
 }
 
 func (f *FakeUserStore) Delete(ctx context.Context, userID int64) error {

@@ -143,8 +143,8 @@ func (ss *sqlStore) notServiceAccountFilter() string {
 }
 
 func (ss *sqlStore) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
-	// enforcement of lowercase due to forcement of caseinsensitive login
-	query.LoginOrEmail = strings.ToLower(query.LoginOrEmail)
+	// Trim then lowercase so accidental whitespace around typed credentials does not fail login.
+	query.LoginOrEmail = strings.ToLower(strings.TrimSpace(query.LoginOrEmail))
 
 	usr := &user.User{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
@@ -237,9 +237,9 @@ func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) erro
 }
 
 func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
-	// enforcement of lowercase due to forcement of caseinsensitive login
-	cmd.Login = strings.ToLower(cmd.Login)
-	cmd.Email = strings.ToLower(cmd.Email)
+	// Trim then lowercase so leading/trailing whitespace cannot leave logins that the UI hides.
+	cmd.Login = strings.ToLower(strings.TrimSpace(cmd.Login))
+	cmd.Email = strings.ToLower(strings.TrimSpace(cmd.Email))
 
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		usr := user.User{

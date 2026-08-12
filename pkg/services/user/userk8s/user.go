@@ -94,6 +94,10 @@ func (s *UserK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, e
 }
 
 func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	// Trim before empty checks so stored login matches what the UI displays.
+	cmd.Login = strings.TrimSpace(cmd.Login)
+	cmd.Email = strings.TrimSpace(cmd.Email)
+
 	ctx, span := s.tracer.Start(ctx, "user.create", trace.WithAttributes(
 		attribute.String("login", cmd.Login),
 	))
@@ -372,7 +376,7 @@ func (s *UserK8sService) GetByLogin(ctx context.Context, cmd *user.GetUserByLogi
 
 	ctxLogger := s.logger.FromContext(ctx)
 
-	loginOrEmail := strings.ToLower(cmd.LoginOrEmail)
+	loginOrEmail := strings.ToLower(strings.TrimSpace(cmd.LoginOrEmail))
 
 	orgID, err := s.getOrgID(ctx, ctxLogger)
 	if err != nil {
@@ -479,10 +483,10 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 		existing.Spec.Title = cmd.Name
 	}
 	if cmd.Email != "" {
-		existing.Spec.Email = strings.ToLower(cmd.Email)
+		existing.Spec.Email = strings.ToLower(strings.TrimSpace(cmd.Email))
 	}
 	if cmd.Login != "" {
-		existing.Spec.Login = strings.ToLower(cmd.Login)
+		existing.Spec.Login = strings.ToLower(strings.TrimSpace(cmd.Login))
 	}
 	if cmd.IsDisabled != nil {
 		existing.Spec.Disabled = *cmd.IsDisabled
