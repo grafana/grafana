@@ -130,6 +130,16 @@ func TestItemAnnotationConversion(t *testing.T) {
 		require.LessOrEqual(t, anno.Spec.Time, after)
 	})
 
+	t.Run("negative epoch defaults to now instead of being rejected by the new API", func(t *testing.T) {
+		before := time.Now().UnixMilli()
+		anno, err := itemToAnnotation(&annotations.Item{Text: "hello", Epoch: -1})
+		require.NoError(t, err)
+		after := time.Now().UnixMilli()
+
+		require.GreaterOrEqual(t, anno.Spec.Time, before)
+		require.LessOrEqual(t, anno.Spec.Time, after)
+	})
+
 	t.Run("point annotation reads back TimeEnd == Time", func(t *testing.T) {
 		anno, err := itemToAnnotation(&annotations.Item{Text: "hello", Epoch: 1234})
 		require.NoError(t, err)

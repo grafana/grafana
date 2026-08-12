@@ -393,10 +393,10 @@ func annoToItemDTO(anno *annotationV0.Annotation) (*annotations.ItemDTO, error) 
 }
 
 func itemToAnnotation(item *annotations.Item) (*annotationV0.Annotation, error) {
-	// Legacy API defaults an unset time to now;
-	// the new API requires it, so the proxy must fill it in to keep legacy behavior unchanged
+	// Legacy API defaults an unset time to now and silently accepts negative values;
+	// the new API rejects both, so the proxy normalizes them here to keep legacy behavior unchanged
 	epoch := item.Epoch
-	if epoch == 0 {
+	if epoch <= 0 {
 		epoch = time.Now().UnixMilli()
 	}
 

@@ -694,6 +694,7 @@ func TestK8sAdapter_ValidateAnnotation(t *testing.T) {
 	}{
 		{name: "time is current", time: now, retentionTTL: defaultTTL},
 		{name: "time not present", time: 0, retentionTTL: defaultTTL, expectErr: true, errContains: "time is required"},
+		{name: "time negative", time: -1, retentionTTL: defaultTTL, expectErr: true, errContains: "time is required"},
 		{name: "recent past within retention", time: now - retentionMs/2, retentionTTL: defaultTTL},
 		{name: "inside future bound", time: now + futureWindowMs - second, retentionTTL: defaultTTL},
 		{name: "too far in the future", time: now + futureWindowMs + second, retentionTTL: defaultTTL, expectErr: true, errContains: "time cannot be more than 1 week in the future"},
