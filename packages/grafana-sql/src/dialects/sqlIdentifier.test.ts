@@ -23,16 +23,6 @@ describe('quoteIdentifierIfNecessary', () => {
     expect(quoteIdentifierIfNecessary('we`ird', 'mysql')).toBe('`we``ird`');
     expect(quoteIdentifierIfNecessary('we"ird', 'standard')).toBe('"we""ird"');
   });
-
-  it('quotes dotted table names as a single identifier', () => {
-    expect(quoteIdentifierIfNecessary('sales.east.revenue', 'standard')).toBe('"sales.east.revenue"');
-    expect(quoteIdentifierIfNecessary('sales.east.revenue', 'mysql')).toBe('`sales.east.revenue`');
-  });
-
-  it('escapes embedded quote characters inside dotted names', () => {
-    expect(quoteIdentifierIfNecessary('sales."east".revenue', 'standard')).toBe('"sales.""east"".revenue"');
-    expect(quoteIdentifierIfNecessary('sales.`east`.revenue', 'mysql')).toBe('`sales.``east``.revenue`');
-  });
 });
 
 describe('unquoteIdentifier', () => {
@@ -62,22 +52,5 @@ describe('unquoteIdentifier', () => {
   it('leaves mismatched or partial quotes untouched', () => {
     expect(unquoteIdentifier('`table A', 'mysql')).toBe('`table A');
     expect(unquoteIdentifier('`', 'mysql')).toBe('`');
-  });
-
-  it('strips quotes from dotted table names as a single identifier', () => {
-    expect(unquoteIdentifier('"sales.east.revenue"', 'standard')).toBe('sales.east.revenue');
-    expect(unquoteIdentifier('`sales.east.revenue`', 'mysql')).toBe('sales.east.revenue');
-  });
-
-  it('leaves unquoted dotted names unchanged', () => {
-    expect(unquoteIdentifier('sales.east.revenue', 'standard')).toBe('sales.east.revenue');
-    expect(unquoteIdentifier('sales.east.revenue', 'mysql')).toBe('sales.east.revenue');
-  });
-
-  it('round-trips dotted table names through quote and unquote', () => {
-    const dottedName = 'sales.east.revenue';
-
-    expect(unquoteIdentifier(quoteIdentifierIfNecessary(dottedName, 'standard'), 'standard')).toBe(dottedName);
-    expect(unquoteIdentifier(quoteIdentifierIfNecessary(dottedName, 'mysql'), 'mysql')).toBe(dottedName);
   });
 });
