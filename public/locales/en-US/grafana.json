@@ -1162,7 +1162,8 @@
         "with-causes": "{{-baseMessage}}: {{-causes}}"
       },
       "failedWith": "{{-config}} failed with {{status}}: {{-message}}",
-      "time-interval-in-use": "This time interval cannot be deleted because it is still used by one or more notification policies or alert rules."
+      "time-interval-in-use": "This time interval cannot be deleted because it is still used by one or more notification policies or alert rules.",
+      "time-interval-name-exists": "Time interval with this name already exists. Use a different name or update existing one."
     },
     "evaluate-every-validation-options": {
       "message": {
@@ -3606,6 +3607,7 @@
     },
     "time-interval-form": {
       "description-unique-time-interval": "A unique name for the time interval",
+      "error-save-time-interval": "Failed to save time interval",
       "text-loading-time-interval": "Loading time interval",
       "title-no-matching-time-interval-found": "No matching time interval found"
     },
