@@ -1,0 +1,80 @@
+name: Frontend preview check
+description: >-
+  Determines whether a pull request is eligible for a frontend preview deploy:
+  not from a fork, and only changing frontend code. Used by the
+  deploy-frontend-preview workflow.
+
+inputs:
+  pr-number:
+    description: Pull request number to inspect
+    required: true
+  token:
+    description: GitHub token used to read the pull request
+    required: true
+
+outputs:
+  should-deploy:
+    description: >-
+      'true' when the PR is eligible for a frontend preview deploy: not from a
+      fork, and every changed file is frontend code
+    value: ${{ steps.check.outputs.should-deploy }}
+  head-sha:
+    description: Head commit SHA of the pull request
+    value: ${{ steps.check.outputs.head-sha }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check pull request files
+      id: check
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        REPO: ${{ github.repository }}
+      run: |
+        set -euo pipefail
+
+        pr=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}")
+
+        head_sha=$(jq -r '.head.sha' <<< "$pr")
+        head_repo=$(jq -r '.head.repo.full_name // ""' <<< "$pr")
+
+        is_fork=true
+        if [ "$head_repo" = "$REPO" ]; then
+          is_fork=false
+        fi
+
+        files=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/files" --paginate --jq '.[].filename')
+
+        # A PR is frontend-only when every changed file matches this allowlist.
+        # Keep it conservative: anything not listed (backend code, config,
+        # schemas, CI, docs tooling, ...) makes the PR ineligible.
+        frontend_only=true
+        if [ -z "$files" ]; then
+          frontend_only=false
+        fi
+
+        while IFS= read -r file; do
+          case "$file" in
+            public/* | packages/* | e2e-playwright/* | scripts/webpack/*) ;;
+            package.json | yarn.lock | .yarnrc.yml | nx.json | tsconfig.json) ;;
+            *)
+              echo "Not frontend-only, found: ${file}"
+              frontend_only=false
+              break
+              ;;
+          esac
+        done <<< "$files"
+
+        should_deploy=false
+        if [ "$frontend_only" = "true" ] && [ "$is_fork" = "false" ]; then
+          should_deploy=true
+        fi
+
+        {
+          echo "should-deploy=${should_deploy}"
+          echo "head-sha=${head_sha}"
+        } >> "$GITHUB_OUTPUT"
+
+        echo "PR #${PR_NUMBER}: should-deploy=${should_deploy} (frontend-only=${frontend_only}, is-fork=${is_fork}), head-sha=${head_sha}"
