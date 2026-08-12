@@ -80,11 +80,11 @@ Configure these settings based on your OpenTSDB server version and configuration
 
 The version setting enables different query features in Grafana:
 
-| Version   | Available features                                                                                                   |
-| --------- | -------------------------------------------------------------------------------------------------------------------- |
-| **<=2.1** | Basic queries with tags. Uses legacy tag-based filtering.                                                            |
-| **==2.2** | Adds filter support (`literal_or`, `wildcard`, `regexp`, and more). Filters replace tags for more flexible queries.  |
-| **==2.3** | Adds explicit tags support for rate calculations and additional filter types.                                        |
+| Version   | Available features                                                                                                           |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **<=2.1** | Basic queries with tags. Uses legacy tag-based filtering.                                                                    |
+| **==2.2** | Adds filter support (`literal_or`, `wildcard`, `regexp`, and more). Filters replace tags for more flexible queries.          |
+| **==2.3** | Adds explicit tags support for rate calculations and additional filter types.                                                |
 | **==2.4** | Adds fill policy support for downsampling (`none`, `null`, `zero`, `nan`). Enables `arrays=true` for alerting compatibility. |
 
 Select the version that matches your OpenTSDB server. If you're unsure, check your OpenTSDB version with the `/api/version` endpoint.

@@ -60,12 +60,12 @@ The alias field supports dynamic substitution using tag values. Use the pattern 
 
 Downsampling reduces the number of data points returned by aggregating values over time intervals. This improves query performance and reduces the amount of data transferred.
 
-| Field                    | Description                                                                                                                                            |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Field                    | Description                                                                                                                                                                                  |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Down sample**          | The time interval for downsampling. Enter a value in the input next to the **Down sample** label, or leave it blank to use the automatic interval based on the panel's time range and width. |
-| **Aggregator**           | The aggregation function for downsampling. Default: `avg`.                                                                                             |
-| **Fill**                 | (Version 2.2+) The fill policy for missing data points. Default: `none`.                                                                              |
-| **Disable downsampling** | Toggle to disable downsampling entirely. Use this when you need raw data points.                                                                      |
+| **Aggregator**           | The aggregation function for downsampling. Default: `avg`.                                                                                                                                   |
+| **Fill**                 | (Version 2.2+) The fill policy for missing data points. Default: `none`.                                                                                                                     |
+| **Disable downsampling** | Toggle to disable downsampling entirely. Use this when you need raw data points.                                                                                                             |
 
 ### Interval format
 

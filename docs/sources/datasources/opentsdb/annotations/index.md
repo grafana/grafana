@@ -111,11 +111,11 @@ Mark incident start and resolution times:
 
 Track when configuration changes are applied:
 
-| Field                   | Value           |
-| ----------------------- | --------------- |
+| Field                   | Value                 |
+| ----------------------- | --------------------- |
 | Name                    | Configuration changes |
-| OpenTSDB metrics query  | `events.config` |
-| Show Global Annotations | disabled        |
+| OpenTSDB metrics query  | `events.config`       |
+| Show Global Annotations | disabled              |
 
 ### Correlate multiple event types
 
