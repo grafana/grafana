@@ -43,11 +43,19 @@ import {
 import { useStyles2, DataLinkButton, Menu } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 
-/** Persists which Loki query variation found logs for a given logs datasource. */
+/** Persists which Loki query variation found logs for a given trace + logs datasource pair. */
 export const LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.lokiQueryMatch';
 
-/** Persists which Loki datasource last returned related logs. */
-export const LOKI_DATASOURCE_MATCH_STORAGE_KEY = 'grafana.explore.traceToLogs.lokiDatasourceMatch';
+/** Persists which Loki datasource last returned related logs for a given trace datasource. */
+export const LOKI_DATASOURCE_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.lokiDatasourceMatch';
+
+export function lokiQueryMatchStorageKey(traceDatasourceUid: string, logsDatasourceUid: string): string {
+  return `${LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX}.${traceDatasourceUid}.${logsDatasourceUid}`;
+}
+
+export function lokiDatasourceMatchStorageKey(traceDatasourceUid: string): string {
+  return `${LOKI_DATASOURCE_MATCH_STORAGE_KEY_PREFIX}.${traceDatasourceUid}`;
+}
 
 const MAX_FALLBACK_LOKI_DATASOURCES = 2;
 
@@ -60,7 +68,7 @@ interface Props {
 
 export const LogsLinkButton = ({ linkModel, traceDatasourceUid, forTrace }: Props) => {
   const styles = useStyles2(getStyles);
-  const { presence, resolvedLinkModel } = useHasLogs(linkModel);
+  const { presence, resolvedLinkModel } = useHasLogs(linkModel, traceDatasourceUid);
 
   const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
 
@@ -97,7 +105,7 @@ function getStyles(theme: GrafanaTheme2) {
 }
 
 export const LogsLinkMenuItem = ({ linkModel, traceDatasourceUid }: Props) => {
-  const { presence, resolvedLinkModel } = useHasLogs(linkModel);
+  const { presence, resolvedLinkModel } = useHasLogs(linkModel, traceDatasourceUid);
 
   const { settings } = useDataSourceInstanceSettings(traceDatasourceUid);
 
@@ -137,7 +145,10 @@ type LogsCheckResult = {
  * If the configured datasource has no logs, we try other Loki datasources.
  * The Explore link is only enabled after a probe resolves a working query.
  */
-function useHasLogs(linkModel: LinkModel): { presence: LogsPresence; resolvedLinkModel: LinkModel } {
+function useHasLogs(
+  linkModel: LinkModel,
+  traceDatasourceUid?: string
+): { presence: LogsPresence; resolvedLinkModel: LinkModel } {
   const dynamicTraceToLogsEnabled = useFlagGrafanaDynamicTraceToLogs();
   const [presence, setPresence] = useState<LogsPresence>('loading');
   const [resolvedLinkModel, setResolvedLinkModel] = useState(linkModel);
@@ -169,7 +180,7 @@ function useHasLogs(linkModel: LinkModel): { presence: LogsPresence; resolvedLin
     const queries = Array.isArray(query) ? query : [query];
 
     setPresence('loading');
-    const subscription = checkForLogsInQueries(queries, effectiveTimeRange, dsList).subscribe({
+    const subscription = checkForLogsInQueries(queries, effectiveTimeRange, dsList, traceDatasourceUid).subscribe({
       next: (result) => {
         // Only enable navigation once we know which query (and datasource) works.
         if (result.hasLogs && result.match) {
@@ -191,7 +202,7 @@ function useHasLogs(linkModel: LinkModel): { presence: LogsPresence; resolvedLin
     // The trace view re-renders a lot on every event, including mouse over.
     // `query`/`timeRange` are intentionally omitted; their content is captured by the serialized keys.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryKey, timeRangeKey, isLoadingDsList, dsList]);
+  }, [queryKey, timeRangeKey, isLoadingDsList, dsList, traceDatasourceUid]);
 
   useEffect(() => {
     if (presence === 'loading' || !dynamicTraceToLogsEnabled) {
@@ -205,20 +216,39 @@ function useHasLogs(linkModel: LinkModel): { presence: LogsPresence; resolvedLin
   return { presence, resolvedLinkModel };
 }
 
-function getStoredLokiQueryMatch(datasourceUid: string): string | undefined {
-  return store.get(`${LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX}.${datasourceUid}`) ?? undefined;
+function getStoredLokiQueryMatch(
+  traceDatasourceUid: string | undefined,
+  logsDatasourceUid: string
+): string | undefined {
+  if (!traceDatasourceUid) {
+    return undefined;
+  }
+  return store.get(lokiQueryMatchStorageKey(traceDatasourceUid, logsDatasourceUid)) ?? undefined;
 }
 
-function setStoredLokiQueryMatch(datasourceUid: string, refId: string): void {
-  store.set(`${LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX}.${datasourceUid}`, refId);
+function setStoredLokiQueryMatch(
+  traceDatasourceUid: string | undefined,
+  logsDatasourceUid: string,
+  refId: string
+): void {
+  if (!traceDatasourceUid) {
+    return;
+  }
+  store.set(lokiQueryMatchStorageKey(traceDatasourceUid, logsDatasourceUid), refId);
 }
 
-function getStoredLokiDatasourceMatch(): string | undefined {
-  return store.get(LOKI_DATASOURCE_MATCH_STORAGE_KEY) ?? undefined;
+function getStoredLokiDatasourceMatch(traceDatasourceUid: string | undefined): string | undefined {
+  if (!traceDatasourceUid) {
+    return undefined;
+  }
+  return store.get(lokiDatasourceMatchStorageKey(traceDatasourceUid)) ?? undefined;
 }
 
-function setStoredLokiDatasourceMatch(datasourceUid: string): void {
-  store.set(LOKI_DATASOURCE_MATCH_STORAGE_KEY, datasourceUid);
+function setStoredLokiDatasourceMatch(traceDatasourceUid: string | undefined, logsDatasourceUid: string): void {
+  if (!traceDatasourceUid) {
+    return;
+  }
+  store.set(lokiDatasourceMatchStorageKey(traceDatasourceUid), logsDatasourceUid);
 }
 
 function remapQueriesToDatasource(queries: DataQuery[], datasourceUid: string): DataQuery[] {
@@ -238,13 +268,17 @@ function remapQueriesToDatasource(queries: DataQuery[], datasourceUid: string): 
  * 2. the link's configured datasource
  * 3. up to MAX_FALLBACK_LOKI_DATASOURCES other Loki datasources
  */
-function getLokiDatasourcesToTry(primaryUid: string | undefined, dsList: DataSourceInstanceListItem[]): string[] {
+function getLokiDatasourcesToTry(
+  primaryUid: string | undefined,
+  dsList: DataSourceInstanceListItem[],
+  traceDatasourceUid?: string
+): string[] {
   const otherUids = dsList
     .map((ds) => ds.uid)
     .filter((uid) => uid !== primaryUid)
     .slice(0, MAX_FALLBACK_LOKI_DATASOURCES);
 
-  const storedUid = getStoredLokiDatasourceMatch();
+  const storedUid = getStoredLokiDatasourceMatch(traceDatasourceUid);
   const uids: string[] = [];
 
   if (storedUid && (storedUid === primaryUid || otherUids.includes(storedUid))) {
@@ -271,7 +305,8 @@ function getLokiDatasourcesToTry(primaryUid: string | undefined, dsList: DataSou
 function checkForLogsInQueries(
   queries: DataQuery[],
   timeRange: TimeRange,
-  dsList: DataSourceInstanceListItem[]
+  dsList: DataSourceInstanceListItem[],
+  traceDatasourceUid?: string
 ): Observable<LogsCheckResult> {
   if (queries.length === 0) {
     return of({ hasLogs: false });
@@ -294,12 +329,12 @@ function checkForLogsInQueries(
   }
 
   const primaryUid = queries.find((q) => q.datasource?.uid)?.datasource?.uid;
-  const datasourcesToTry = getLokiDatasourcesToTry(primaryUid, dsList);
+  const datasourcesToTry = getLokiDatasourcesToTry(primaryUid, dsList, traceDatasourceUid);
 
   return from(datasourcesToTry).pipe(
     concatMap((datasourceUid) => {
       const dsQueries = remapQueriesToDatasource(queries, datasourceUid);
-      return probeForMatchingQuery(dsQueries, timeRange, datasourceUid).pipe(
+      return probeForMatchingQuery(dsQueries, timeRange, datasourceUid, traceDatasourceUid).pipe(
         map((match) => (match ? { datasourceUid, query: match } : undefined)),
         catchError(() => of(undefined))
       );
@@ -308,9 +343,9 @@ function checkForLogsInQueries(
     take(1),
     tap((match) => {
       if (match.query.refId) {
-        setStoredLokiQueryMatch(match.datasourceUid, match.query.refId);
+        setStoredLokiQueryMatch(traceDatasourceUid, match.datasourceUid, match.query.refId);
       }
-      setStoredLokiDatasourceMatch(match.datasourceUid);
+      setStoredLokiDatasourceMatch(traceDatasourceUid, match.datasourceUid);
     }),
     map((match) => ({ hasLogs: true, match })),
     defaultIfEmpty({ hasLogs: false })
@@ -324,9 +359,10 @@ function checkForLogsInQueries(
 function probeForMatchingQuery(
   queries: DataQuery[],
   timeRange: TimeRange,
-  datasourceUid: string
+  logsDatasourceUid: string,
+  traceDatasourceUid?: string
 ): Observable<DataQuery | undefined> {
-  const storedRefId = getStoredLokiQueryMatch(datasourceUid);
+  const storedRefId = getStoredLokiQueryMatch(traceDatasourceUid, logsDatasourceUid);
   const storedQuery = storedRefId ? queries.find((q) => q.refId === storedRefId) : undefined;
   const orderedQueries = storedQuery ? [storedQuery, ...queries.filter((q) => q.refId !== storedQuery.refId)] : queries;
 

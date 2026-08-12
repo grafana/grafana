@@ -20,8 +20,8 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   getLogsButtonCTA,
   getLogsButtonTooltip,
-  LOKI_DATASOURCE_MATCH_STORAGE_KEY,
-  LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX,
+  lokiDatasourceMatchStorageKey,
+  lokiQueryMatchStorageKey,
   LogsLinkButton,
   LogsLinkMenuItem,
 } from './LogsLink';
@@ -73,8 +73,12 @@ const logsFrame = toDataFrame({
 
 const emptyFrame = toDataFrame({ fields: [{ name: 'time', values: [] }] });
 
-function lokiQueryMatchStorageKey(datasourceUid: string) {
-  return `${LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX}.${datasourceUid}`;
+function queryMatchKey(logsDatasourceUid: string) {
+  return lokiQueryMatchStorageKey(TRACE_DATASOURCE_UID, logsDatasourceUid);
+}
+
+function datasourceMatchKey() {
+  return lokiDatasourceMatchStorageKey(TRACE_DATASOURCE_UID);
 }
 
 function mockLokiDatasourceList(uids: string[], isLoading = false) {
@@ -87,9 +91,9 @@ function mockLokiDatasourceList(uids: string[], isLoading = false) {
 describe('LogsLinkButton', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
-    store.delete(lokiQueryMatchStorageKey('logs-ds-uid'));
-    store.delete(lokiQueryMatchStorageKey('loki-fallback-uid'));
-    store.delete(LOKI_DATASOURCE_MATCH_STORAGE_KEY);
+    store.delete(queryMatchKey('logs-ds-uid'));
+    store.delete(queryMatchKey('loki-fallback-uid'));
+    store.delete(datasourceMatchKey());
     mockLokiDatasourceList(['logs-ds-uid']);
     useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
     // The presence check is gated behind this flag; enable it so most tests exercise the check.
@@ -100,9 +104,9 @@ describe('LogsLinkButton', () => {
   });
 
   afterEach(async () => {
-    store.delete(lokiQueryMatchStorageKey('logs-ds-uid'));
-    store.delete(lokiQueryMatchStorageKey('loki-fallback-uid'));
-    store.delete(LOKI_DATASOURCE_MATCH_STORAGE_KEY);
+    store.delete(queryMatchKey('logs-ds-uid'));
+    store.delete(queryMatchKey('loki-fallback-uid'));
+    store.delete(datasourceMatchKey());
     await act(async () => {
       setTestFlags({});
     });
@@ -328,13 +332,13 @@ describe('LogsLinkButton', () => {
     );
 
     await waitFor(() => expect(query).toHaveBeenCalledTimes(3));
-    expect(store.get(lokiQueryMatchStorageKey('logs-ds-uid'))).toBe('t2l:job:trace_id:span_id');
+    expect(store.get(queryMatchKey('logs-ds-uid'))).toBe('t2l:job:trace_id:span_id');
     await userEvent.hover(screen.getByRole('button'));
     expect(await screen.findByText('View related logs using the trace data source configuration.')).toBeInTheDocument();
   });
 
   it('uses a stored loki query match immediately without probing other variations', async () => {
-    store.set(lokiQueryMatchStorageKey('logs-ds-uid'), 't2l:job:trace_id:span_id');
+    store.set(queryMatchKey('logs-ds-uid'), 't2l:job:trace_id:span_id');
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -383,7 +387,7 @@ describe('LogsLinkButton', () => {
     );
 
     await waitFor(() => expect(query).toHaveBeenCalledTimes(2));
-    expect(store.get(lokiQueryMatchStorageKey('logs-ds-uid'))).toBeUndefined();
+    expect(store.get(queryMatchKey('logs-ds-uid'))).toBeUndefined();
     await userEvent.hover(await screen.findByRole('button'));
     expect(
       await screen.findByText('No related logs found using the trace data source configuration.')
@@ -421,15 +425,15 @@ describe('LogsLinkButton', () => {
     );
 
     await waitFor(() => expect(fallbackQuery).toHaveBeenCalled());
-    expect(store.get(LOKI_DATASOURCE_MATCH_STORAGE_KEY)).toBe('loki-fallback-uid');
-    expect(store.get(lokiQueryMatchStorageKey('loki-fallback-uid'))).toBe('t2l:default:trace_id:span_id');
+    expect(store.get(datasourceMatchKey())).toBe('loki-fallback-uid');
+    expect(store.get(queryMatchKey('loki-fallback-uid'))).toBe('t2l:default:trace_id:span_id');
     await userEvent.hover(screen.getByRole('button'));
     expect(await screen.findByText('View related logs using the trace data source configuration.')).toBeInTheDocument();
   });
 
   it('uses a stored loki datasource match immediately before probing the configured datasource', async () => {
-    store.set(LOKI_DATASOURCE_MATCH_STORAGE_KEY, 'loki-fallback-uid');
-    store.set(lokiQueryMatchStorageKey('loki-fallback-uid'), 'line-contains');
+    store.set(datasourceMatchKey(), 'loki-fallback-uid');
+    store.set(queryMatchKey('loki-fallback-uid'), 'line-contains');
     mockLokiDatasourceList(['logs-ds-uid', 'loki-fallback-uid']);
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
@@ -477,8 +481,8 @@ describe('LogsLinkButton', () => {
 describe('LogsLinkMenuItem', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
-    store.delete(lokiQueryMatchStorageKey('logs-ds-uid'));
-    store.delete(LOKI_DATASOURCE_MATCH_STORAGE_KEY);
+    store.delete(queryMatchKey('logs-ds-uid'));
+    store.delete(datasourceMatchKey());
     mockLokiDatasourceList(['logs-ds-uid']);
     useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
     // The presence check is gated behind this flag; enable it so most tests exercise the check.
@@ -489,8 +493,8 @@ describe('LogsLinkMenuItem', () => {
   });
 
   afterEach(async () => {
-    store.delete(lokiQueryMatchStorageKey('logs-ds-uid'));
-    store.delete(LOKI_DATASOURCE_MATCH_STORAGE_KEY);
+    store.delete(queryMatchKey('logs-ds-uid'));
+    store.delete(datasourceMatchKey());
     await act(async () => {
       setTestFlags({});
     });
