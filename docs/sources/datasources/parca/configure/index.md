@@ -22,9 +22,8 @@ review_date: 2026-04-10
 
 # Configure the Parca data source
 
-{{< admonition type="caution" >}}
-Starting January 2, 2027, the Parca data source plugin is deprecated.
-It will no longer receive updates after that date.
+{{< admonition type="warning" >}}
+This plugin is deprecated and will only receive critical security updates. Support will end on January 2, 2027.
 {{< /admonition >}}
 
 This document explains how to configure the Parca data source in Grafana.

@@ -353,15 +353,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "kubernetesSnapshots",
-			Description:     "Routes snapshot requests from /api to the /apis endpoint",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "externalSnapshotsK8SAPIPush",
 			Description:     "When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.",
 			Stage:           FeatureStageExperimental,
@@ -2034,6 +2025,15 @@ var (
 			Owner:       grafanaDatavizSquad,
 			Generate:    Generate{React: true},
 			Expression:  "false",
+		},
+		{
+			Name:         "text.newFeatures",
+			Description:  "Enables the new features in text panel",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Generate:     Generate{React: true},
+			Expression:   "false",
 		},
 		{
 			Name:        "interactiveLearning",
