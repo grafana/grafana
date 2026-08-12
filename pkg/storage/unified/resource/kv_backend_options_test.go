@@ -27,6 +27,7 @@ var callerSuppliedFields = map[string]string{
 	"EnableNatsNotifier":       "set together with EventSubscriber by the caller",
 	"EnableNatsNotifierShadow": "set together with EventSubscriber by the caller",
 	"EmbeddingDeleter":         "vector backend injected by the caller",
+	"DisableStorageServices":   "derived from which modules the process runs, not from a setting",
 
 	// The lease options are set together, and the holder comes from
 	// sql.ResolveLeaseHolder, which this package cannot import.
