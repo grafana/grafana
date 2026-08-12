@@ -230,7 +230,7 @@ func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) erro
 
 // loginConflict returns ErrUserAlreadyExists if login/email collide with another user,
 // including legacy rows that still have leading/trailing whitespace. excludeUserID, when
-// non-zero, is ignored so a user can normalize their own spaced login/email on update.
+// non-zero, is excluded so a user can normalize their own spaced login/email on update.
 func (ss *sqlStore) loginConflict(sess *db.Session, login, email string, excludeUserID int64) error {
 	login = strings.ToLower(strings.TrimSpace(login))
 	email = strings.ToLower(strings.TrimSpace(email))
@@ -271,10 +271,30 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 	cmd.Email = strings.ToLower(strings.TrimSpace(cmd.Email))
 
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		// Block updates that would take the trimmed identity of a different legacy spaced row.
-		// Excludes the user being updated so they can still normalize their own login/email.
-		if err := ss.loginConflict(sess, cmd.Login, cmd.Email, cmd.UserID); err != nil {
-			return err
+		// Only conflict-check login/email when they are actually changing. Otherwise a clean
+		// user who already shares a trimmed identity with a legacy spaced peer would be
+		// unable to save an ordinary profile update (name/theme/etc.).
+		if cmd.Login != "" || cmd.Email != "" {
+			var existing user.User
+			has, err := sess.ID(cmd.UserID).Where(ss.notServiceAccountFilter()).Get(&existing)
+			if err != nil {
+				return err
+			}
+			if !has {
+				return user.ErrUserNotFound
+			}
+
+			loginToCheck := ""
+			emailToCheck := ""
+			if cmd.Login != "" && cmd.Login != strings.ToLower(strings.TrimSpace(existing.Login)) {
+				loginToCheck = cmd.Login
+			}
+			if cmd.Email != "" && cmd.Email != strings.ToLower(strings.TrimSpace(existing.Email)) {
+				emailToCheck = cmd.Email
+			}
+			if err := ss.loginConflict(sess, loginToCheck, emailToCheck, cmd.UserID); err != nil {
+				return err
+			}
 		}
 
 		usr := user.User{

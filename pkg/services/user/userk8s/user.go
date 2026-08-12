@@ -608,9 +608,9 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 	case cmd.UserID > 0:
 		found, lookupErr = s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
 	case cmd.Login != "":
-		found, lookupErr = s.getByFieldSelectorRaw(ctx, ctxLogger, client, "spec.login", strings.ToLower(cmd.Login), namespace)
+		found, lookupErr = s.getByFieldSelectorRaw(ctx, ctxLogger, client, "spec.login", strings.ToLower(strings.TrimSpace(cmd.Login)), namespace)
 	case cmd.Email != "":
-		found, lookupErr = s.getByFieldSelectorRaw(ctx, ctxLogger, client, "spec.email", strings.ToLower(cmd.Email), namespace)
+		found, lookupErr = s.getByFieldSelectorRaw(ctx, ctxLogger, client, "spec.email", strings.ToLower(strings.TrimSpace(cmd.Email)), namespace)
 	default:
 		span.RecordError(user.ErrNoUniqueID)
 		span.SetStatus(codes.Error, user.ErrNoUniqueID.Error())

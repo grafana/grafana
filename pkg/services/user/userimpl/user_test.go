@@ -704,6 +704,58 @@ func TestIntegrationCreateUser(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "spacedlogin", usr.Login)
 	})
+
+	t.Run("Update with unchanged login succeeds when a legacy spaced duplicate exists", func(t *testing.T) {
+		cleanID, err := userStore.Insert(context.Background(), &user.User{
+			Email:   "clean-dup@example.com",
+			Login:   "duplogin",
+			Name:    "clean-dup",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		_, err = userStore.Insert(context.Background(), &user.User{
+			Email:   "spaced-dup@example.com",
+			Login:   "duplogin ",
+			Name:    "spaced-dup",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		// Ordinary profile save must not fail just because a legacy spaced peer exists.
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID: cleanID,
+			Login:  "duplogin",
+			Email:  "clean-dup@example.com",
+			Name:   "clean-dup-renamed",
+		})
+		require.NoError(t, err)
+
+		usr, err := userStore.GetByID(context.Background(), cleanID)
+		require.NoError(t, err)
+		require.Equal(t, "clean-dup-renamed", usr.Name)
+		require.Equal(t, "duplogin", usr.Login)
+
+		// Changing onto that trimmed identity from a third user must still be blocked.
+		thirdID, err := userStore.Insert(context.Background(), &user.User{
+			Email:   "third-dup@example.com",
+			Login:   "thirdlogin",
+			Name:    "third-dup",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID: thirdID,
+			Login:  "duplogin",
+			Email:  "third-dup@example.com",
+			Name:   "third-dup",
+		})
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+	})
 }
 
 type FakeUserStore struct {
