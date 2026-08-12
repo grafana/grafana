@@ -2,7 +2,7 @@ import { type Meta, type StoryObj } from '@storybook/react';
 
 import { createDataFrame } from '@grafana/data';
 
-import { ColorScheme } from '../types';
+import { ColorScheme, PaneView, ViewMode } from '../types';
 
 import FlameGraph from './FlameGraph';
 import { CollapsedMap, FlameGraphDataContainer } from './dataTransform';
@@ -18,6 +18,9 @@ const meta: Meta<typeof FlameGraph> = {
     colorScheme: ColorScheme.PackageBased,
     onColorSchemeChange: () => {},
     onTextAlignChange: () => {},
+    isDiffMode: false,
+    viewMode: ViewMode.Single,
+    paneView: PaneView.FlameGraph,
     search: '',
   },
 };

@@ -56,8 +56,8 @@ const FlameGraphHeader = (props: Props) => {
   const effectiveViewMode = props.canShowSplitView ? props.viewMode : ViewMode.Single;
 
   return (
-    <div className={cx(styles.header, styles.headerNew, { [styles.stickyHeader]: props.stickyHeader })}>
-      <div className={styles.inputContainerNew}>
+    <div className={cx(styles.header, { [styles.stickyHeader]: props.stickyHeader })}>
+      <div className={styles.inputContainer}>
         <Input
           value={localSearch || ''}
           onChange={(v) => {
@@ -233,9 +233,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     top: 0,
     gap: theme.spacing(1),
     marginTop: theme.spacing(1),
-  }),
-  headerNew: css({
-    label: 'headerNew',
     alignItems: 'flex-start',
     position: 'relative',
   }),
@@ -244,8 +241,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'sticky',
     background: theme.colors.background.primary,
   }),
-  inputContainerNew: css({
-    label: 'inputContainerNew',
+  inputContainer: css({
+    label: 'inputContainer',
     flexGrow: 0,
     minWidth: '150px',
     maxWidth: '350px',

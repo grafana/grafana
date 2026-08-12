@@ -47,8 +47,8 @@ type Props = {
   collapsing?: boolean;
   getExtraContextMenuButtons?: GetExtraContextMenuButtonsFunction;
 
-  viewMode?: ViewMode;
-  paneView?: PaneView;
+  viewMode: ViewMode;
+  paneView: PaneView;
   search: string;
 };
 
