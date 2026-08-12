@@ -1,10 +1,16 @@
 import { render, screen } from '@testing-library/react';
 
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type ScopedVars } from '@grafana/data';
+import {
+  createTheme,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  type ScopedVars,
+} from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
 import { renderWithQueryEditorProvider } from '../testUtils';
+import { type Transformation } from '../types';
 
 import { ContentHeader, ContentHeaderSceneWrapper } from './ContentHeader';
 
@@ -93,5 +99,31 @@ describe('ContentHeader query name', () => {
     });
 
     expect(screen.getByRole('button', { name: 'Edit query name' })).toBeInTheDocument();
+  });
+});
+
+describe('ContentHeader transformation name', () => {
+  it('uses the proportional body font', () => {
+    const transformation: Transformation = {
+      transformId: 'transform-1',
+      transformConfig: { id: 'reduce', options: {} },
+      registryItem: { name: 'Reduce' } as Transformation['registryItem'],
+    };
+
+    render(
+      <ContentHeader
+        selectedAlert={null}
+        selectedQuery={null}
+        selectedTransformation={transformation}
+        queries={[]}
+        cardType={QueryEditorType.Transformation}
+        onChangeDataSource={jest.fn()}
+        onUpdateQuery={jest.fn()}
+      />
+    );
+
+    expect(getComputedStyle(screen.getByText('Reduce')).fontFamily.replaceAll(' ', '')).toBe(
+      createTheme().typography.fontFamily.replaceAll(' ', '')
+    );
   });
 });

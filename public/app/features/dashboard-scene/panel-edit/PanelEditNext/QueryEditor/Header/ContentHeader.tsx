@@ -228,7 +228,7 @@ export function ContentHeader({
               <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
             </Text>
             <NavToolbarSeparator />
-            <Text weight="light" variant="code" color="primary">
+            <Text weight="light" variant="body" color="primary">
               {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
             </Text>
           </>
