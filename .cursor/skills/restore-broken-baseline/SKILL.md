@@ -1,6 +1,6 @@
 ---
 name: restore-broken-baseline
-description: Restore this workspace to the known broken baseline for the dotted-identifier bug on fix/influx-dotted-identifiers, move every Task Tracking Jira issue back to To Do, and remove the jira-ticket-e2e skill so it can be built live next time. Use after an investigation or fix cycle. Restore only — never implement or re-apply product changes.
+description: Restore this workspace to the known broken baseline for the dotted-identifier bug on fix/influx-dotted-identifiers, move every Task Tracking Jira issue back to To Do, remove the jira-ticket-e2e skill so it can be built live next time, and start the local Grafana server. Use after an investigation or fix cycle. Restore only — never implement or re-apply product changes.
 ---
 
 # Restore workspace to the known broken baseline
@@ -8,7 +8,8 @@ description: Restore this workspace to the known broken baseline for the dotted-
 This workspace tracks a known-broken state of SQL/Influx dotted-identifier
 handling on the branch `fix/influx-dotted-identifiers`. After a fix cycle,
 run this skill to put the working tree back to that baseline, return every
-issue on the Task Tracking board to To Do, and tidy leftover agent work.
+issue on the Task Tracking board to To Do, tidy leftover agent work, and
+start the local Grafana server.
 
 This skill is restore-only. Do not fix the identifier bug, do not cherry-pick
 the fix commit, and do not make any other product change while running it.
@@ -119,12 +120,32 @@ back to To Do is enough for the next In Progress transition to fire again.
    - The Cursor Automation and the Jira "Send web request" rule stay in place;
      do not delete them.
 
-8. Print a short summary:
+8. Start the local Grafana server (do this; do not only remind the user).
+   Do **not** stop it as part of this skill — the user will kill it later.
+
+   1. Health-check: `curl -fsS http://127.0.0.1:3000/api/health`
+   2. If that succeeds, Grafana is already up. Report the URL and credentials;
+      do not restart.
+   3. Otherwise start it with the existing script (idempotent; reuses tmux
+      sessions):
+
+      ```bash
+      bash .claude/skills/run-grafana/scripts/start-local.sh
+      ```
+
+   4. First backend compile can take several minutes. If the script's health
+      wait times out, leave the tmux sessions running and say so. Do not
+      run `stop-local.sh`.
+
+9. Print a short summary:
    - current SHA (`git rev-parse --short HEAD`) and branch
    - working tree state (`git status --short` should be empty except an
      expected deletion of `jira-ticket-e2e` if that skill was in HEAD)
    - confirm `.cursor/skills/jira-ticket-e2e` is absent
    - every Jira key on the board and its status after the reset
+   - Grafana URL `http://localhost:3000/` and login `admin` / `admin`
+   - how to attach: `tmux attach -t grafana-backend` /
+     `tmux attach -t grafana-frontend`
    - next suggested step: start a fresh chat and pick up a To Do ticket
      from the board (moving it to In Progress starts the Cloud Agent).
      Construct `jira-ticket-e2e` live if that workflow is needed.
