@@ -1812,6 +1812,12 @@ func TestWatchReplaysMissedEvents(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, createTestPlaylist(ctx, writer))
 
+	// Replay only returns settled events (older than the 1ms settle window), so
+	// let the writes above settle before resuming. A fresh reader server cannot
+	// fall back to its broadcaster here: its poller starts from the current max
+	// RV and skips these pre-existing events, so replay is the only catch-up path.
+	time.Sleep(20 * time.Millisecond)
+
 	// A second server on the same store never saw the writes above, so the only
 	// way it can catch up is by replaying them from the event store.
 	reader := newWatchTestServer(t, watchTestServerOpts{KV: kvStore})

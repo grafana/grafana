@@ -4005,10 +4005,51 @@ func TestKvStorageBackend_ListEventsSince(t *testing.T) {
 		return rvs
 	}
 
+	// Only settled events are replayable, so wait for the writes above to fall
+	// outside the (1ms) settle window before asserting on them.
+	require.Eventually(t, func() bool {
+		return len(collect(0)) == 3
+	}, time.Second, 5*time.Millisecond)
+
 	// Events are returned in ascending order, and sinceRV is exclusive.
 	assert.Equal(t, []int64{rv1, rv2, rv3}, collect(0))
 	assert.Equal(t, []int64{rv2, rv3}, collect(rv1))
 	assert.Empty(t, collect(rv3))
+}
+
+// TestKvStorageBackend_ListEventsSince_SkipsUnsettled makes sure events still
+// inside the settle window are not replayed: they may have concurrent, lower-RV
+// writes in flight, so replaying them could advance a watch past an event that
+// has not landed yet. The settled broadcaster stream delivers them instead.
+func TestKvStorageBackend_ListEventsSince_SkipsUnsettled(t *testing.T) {
+	backend := setupTestStorageBackend(t, withSettleDelay(time.Hour))
+	ctx := context.Background()
+
+	testObj, err := createTestObject()
+	require.NoError(t, err)
+	metaAccessor, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+
+	_, err = backend.WriteEvent(ctx, WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "apps",
+			Resource:  "resources",
+			Name:      "recent-resource",
+		},
+		Value:     objectToJSONBytes(t, testObj),
+		Object:    metaAccessor,
+		ObjectOld: metaAccessor,
+	})
+	require.NoError(t, err)
+
+	var rvs []int64
+	for event, err := range backend.ListEventsSince(ctx, 0) {
+		require.NoError(t, err)
+		rvs = append(rvs, event.ResourceVersion)
+	}
+	assert.Empty(t, rvs, "events inside the settle window must not be replayed")
 }
 
 func TestKvStorageBackend_CanReplayFrom(t *testing.T) {
@@ -4112,15 +4153,25 @@ func TestKvStorageBackend_ListEventsSince_PrunedDataExpires(t *testing.T) {
 		Action:          DataActionCreated,
 	}))
 
-	var rvs []int64
-	var sawErr error
-	for event, err := range backend.ListEventsSince(ctx, 0) {
-		if err != nil {
-			sawErr = err
-			break
+	collect := func() ([]int64, error) {
+		var rvs []int64
+		for event, err := range backend.ListEventsSince(ctx, 0) {
+			if err != nil {
+				return rvs, err
+			}
+			rvs = append(rvs, event.ResourceVersion)
 		}
-		rvs = append(rvs, event.ResourceVersion)
+		return rvs, nil
 	}
+
+	// Only settled events are replayable, so wait for the writes above to fall
+	// outside the (1ms) settle window before asserting on them.
+	require.Eventually(t, func() bool {
+		rvs, err := collect()
+		return err != nil || len(rvs) > 0
+	}, time.Second, 5*time.Millisecond)
+
+	rvs, sawErr := collect()
 	// The intact event is still delivered; the pruned one surfaces as expired.
 	assert.Equal(t, []int64{rv}, rvs)
 	require.Error(t, sawErr)

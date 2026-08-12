@@ -2558,12 +2558,22 @@ func (k *kvStorageBackend) CanReplayFrom(ctx context.Context, sinceRV int64) err
 // sinceRV, in ascending resource version order. It reads straight from the
 // event store, so it is only complete for resource versions that are still
 // within the event retention period (see EventRetentionPeriod).
+//
+// Only events older than the settle window (now - SettleDelay) are returned.
+// Writes are not globally ordered without a hard lock, so a recent event may
+// still have a concurrent, lower-RV write that has not landed in the store yet.
+// To get the writes past (now - SettleDelay) the caller must subscribe to the watch stream
+// BEFORE calling ListEventsSince
 func (k *kvStorageBackend) ListEventsSince(ctx context.Context, sinceRV int64) iter.Seq2[*WrittenEvent, error] {
 	return func(yield func(*WrittenEvent, error) bool) {
 		ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListEventsSince", trace.WithAttributes(
 			attribute.Int64("sinceRV", sinceRV),
 		))
 		defer span.End()
+
+		// Snapshot the settle frontier once so a slow replay keeps a stable upper
+		// bound; events past it are the broadcaster's responsibility.
+		settledRV := snowflakeFromTime(time.Now().Add(-k.watchOpts.SettleDelay))
 
 		for event, err := range k.eventStore.ListSince(ctx, sinceRV, SortOrderAsc) {
 			if err != nil {
@@ -2572,6 +2582,11 @@ func (k *kvStorageBackend) ListEventsSince(ctx context.Context, sinceRV int64) i
 			}
 			if event.ResourceVersion <= sinceRV {
 				continue
+			}
+			// Ascending order: once we reach the unsettled window everything left
+			// is also unsettled, so stop and let the broadcaster deliver the rest.
+			if event.ResourceVersion > settledRV {
+				return
 			}
 			// Events written as part of a bulk update are not streamed to watchers.
 			if event.PreviousRV < 0 {
