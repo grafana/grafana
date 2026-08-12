@@ -8,7 +8,6 @@ import FlameGraph from './FlameGraph/FlameGraph';
 import { type GetExtraContextMenuButtonsFunction } from './FlameGraph/FlameGraphContextMenu';
 import { type FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
 import { useColorScheme } from './hooks';
 import { type ClickedItemData, PaneView, type ViewMode, type TextAlign } from './types';
 
@@ -325,9 +324,13 @@ function getStyles() {
       width: '100%',
       height: '100%',
     }),
+    // The table manages its own internal scrolling (react-data-grid / react-window), so this just needs to
+    // give it its real allotted height to measure against, rather than a fixed constant taller than the
+    // pane's actual available space - which let the table's bottom run past the panel's bottom.
     tableContainer: css({
-      height: FLAMEGRAPH_CONTAINER_HEIGHT,
+      height: '100%',
       minWidth: 0,
+      minHeight: 0,
       overflow: 'hidden',
     }),
   };
