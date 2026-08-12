@@ -55,11 +55,20 @@ runs:
       run: |
         set -xeuo pipefail
         BIN="$HOME/.cache/go-cache-plugin/go-cache-plugin"
-        if [ ! -f "$BIN" ]; then
-          mkdir -p "$(dirname "$BIN")"
-          curl --fail --retry 5 --retry-delay 2 --retry-all-errors -Lo "$BIN" https://github.com/grafana/go-cache-plugin/releases/download/"$GOCP_VERSION"/go-cache-plugin-"$GOCP_OS"
+        if [ -f "$BIN" ]; then
+          echo -e "$GOCP_HASH\t$BIN" | sha256sum --check
+          exit 0
         fi
-        echo -e "$GOCP_HASH\t$BIN" | sha256sum --check
+        mkdir -p "$(dirname "$BIN")"
+        # Download to a temporary path and only publish into the cached
+        # directory once the checksum passes: actions/cache saves on a key miss
+        # even when the job fails, so a truncated download would otherwise be
+        # restored by every later job until the version changes.
+        TMP="$(mktemp)"
+        curl --fail --retry 5 --retry-delay 2 --retry-all-errors -Lo "$TMP" \
+          https://github.com/grafana/go-cache-plugin/releases/download/"$GOCP_VERSION"/go-cache-plugin-"$GOCP_OS"
+        echo -e "$GOCP_HASH\t$TMP" | sha256sum --check
+        mv "$TMP" "$BIN"
 
     - name: Auth to AWS
       if: inputs.download-only != 'true'
