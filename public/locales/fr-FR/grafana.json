@@ -3619,6 +3619,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Intervalles de temps",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Sélectionnez les intervalles de temps..."
     },
     "time-intervals-table": {
@@ -5662,6 +5663,8 @@
       "edit-query-result-rule": "Modifier la règle de résultat de requête",
       "edit-template-variable-rule": "Modifier la règle de variable de modèle",
       "edit-time-range-rule": "Modifier la règle d’intervalle de temps",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Déplacer {{typeName}}",
       "panel-background": "Modifier l’arrière-plan du panneau",
       "panel-description": "Modifier la description du panneau",
@@ -6302,6 +6305,12 @@
         "title-controls-menu_other": "",
         "title-hidden_one": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -8068,7 +8077,8 @@
       "title-missing-rights": "Droits manquants"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Sélectionner une source de données"
+      "aria-label-select-a-data-source": "Sélectionner une source de données",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Page introuvable : {{page}}"
@@ -10975,6 +10985,12 @@
       "high-count_one": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12451,6 +12467,10 @@
     "new-folder": {
       "title": "Nouveau dossier"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12744,8 +12764,35 @@
       "title-zoom-out": "Zoom arrière"
     }
   },
-  "notebook": {
-    "breadcrumb-title": ""
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_other": ""
+    }
   },
   "notifications": {
     "empty-state": {
