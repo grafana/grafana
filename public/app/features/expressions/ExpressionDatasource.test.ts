@@ -208,7 +208,36 @@ describe('ExpressionDatasourceApi', () => {
       expect(frame.fields[0].config.displayNameFromDS).toBeUndefined();
     });
 
-    it('does not restore an ambiguous SQL expression display name', async () => {
+    it('restores the reserved value field when other numeric fields are present', async () => {
+      const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+      const query: ExpressionQuery = {
+        type: ExpressionQueryType.sql,
+        refId: 'B',
+        expression: 'SELECT * FROM A',
+        datasource: { uid: '__expr__', type: '__expr__' },
+      };
+      const frame = toDataFrame({
+        refId: 'B',
+        fields: [
+          { name: '__value__', type: FieldType.number, values: [1] },
+          { name: 'other', type: FieldType.number, values: [2] },
+          { name: '__display_name__', type: FieldType.string, values: ['A'] },
+        ],
+      });
+
+      mockGetDatasource.mockResolvedValue({});
+      jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [frame] }));
+
+      const response = await lastValueFrom(ds.query(buildRequest(query, {})));
+
+      const resultFrame = response.data[0] as DataFrame;
+      expect(resultFrame).not.toBe(frame);
+      expect(resultFrame.fields[0].config.displayNameFromDS).toBe('A');
+      expect(resultFrame.fields[1].config.displayNameFromDS).toBeUndefined();
+      expect(frame.fields[0].config.displayNameFromDS).toBeUndefined();
+    });
+
+    it('does not restore an ambiguous SQL expression display name or a frame without a value field', async () => {
       const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
       const query: ExpressionQuery = {
         type: ExpressionQueryType.sql,
@@ -223,11 +252,10 @@ describe('ExpressionDatasourceApi', () => {
           { name: '__display_name__', type: FieldType.string, values: ['A', 'B'] },
         ],
       });
-      const multipleValues = toDataFrame({
+      const missingValue = toDataFrame({
         refId: 'B',
         fields: [
-          { name: '__value__', type: FieldType.number, values: [1] },
-          { name: 'other', type: FieldType.number, values: [2] },
+          { name: 'n', type: FieldType.number, values: [1] },
           { name: '__display_name__', type: FieldType.string, values: ['A'] },
         ],
       });
@@ -235,14 +263,14 @@ describe('ExpressionDatasourceApi', () => {
       mockGetDatasource.mockResolvedValue({});
       jest
         .spyOn(DataSourceWithBackend.prototype, 'query')
-        .mockReturnValue(of({ data: [differentNames, multipleValues] }));
+        .mockReturnValue(of({ data: [differentNames, missingValue] }));
 
       const response = await lastValueFrom(ds.query(buildRequest(query, {})));
 
       expect(response.data[0]).toBe(differentNames);
-      expect(response.data[1]).toBe(multipleValues);
+      expect(response.data[1]).toBe(missingValue);
       expect(differentNames.fields[0].config.displayNameFromDS).toBeUndefined();
-      expect(multipleValues.fields[0].config.displayNameFromDS).toBeUndefined();
+      expect(missingValue.fields[0].config.displayNameFromDS).toBeUndefined();
     });
   });
 });

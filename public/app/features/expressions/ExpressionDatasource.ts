@@ -31,16 +31,19 @@ import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from './types';
 
 const SQL_DISPLAY_NAME_FIELD = '__display_name__';
+const SQL_VALUE_FIELD = '__value__';
 // Source frames consumed by SQL expressions are returned with these internal full-long conversion types.
 const SQL_FULL_LONG_FRAME_TYPES = new Set(['numeric-full-long', 'timeseries-full-long']);
 
 function restoreSQLDisplayName(frame: DataFrame): DataFrame {
   const displayFields = frame.fields.filter((field) => field.name === SQL_DISPLAY_NAME_FIELD);
-  const valueFields = frame.fields.filter((field) => field.type === FieldType.number);
+  const valueFields = frame.fields.filter((field) => field.name === SQL_VALUE_FIELD && field.type === FieldType.number);
   if (displayFields.length !== 1 || valueFields.length !== 1) {
     return frame;
   }
 
+  // A field-level display name can only describe one series. Multi-series full-long frames interleave
+  // names per row and need to be partitioned into separate series before their aliases can be restored.
   const displayName = displayFields[0].values[0];
   if (
     typeof displayName !== 'string' ||
