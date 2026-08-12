@@ -68,6 +68,11 @@ describe('format', () => {
     );
   });
 
+  it('omits z for the local system zone like moment', () => {
+    expect(moment(1587126975779).format('z')).toBe('');
+    expect(moment(1587126975779).format('[z] z')).toBe('z ');
+  });
+
   it('renders L* tokens with locale-aware word order', () => {
     const d = () => moment.utc('1986-09-04T20:30:00Z');
     expect(d().format('LL')).toBe('September 4, 1986');

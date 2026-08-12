@@ -63,29 +63,36 @@ interface ConvertedFormat {
 // format strings, so the cache stays small for the lifetime of the page.
 const convertedFormatCache = new Map<string, ConvertedFormat>();
 
-function convertFormat(format: string): ConvertedFormat {
-  let converted = convertedFormatCache.get(format);
+function convertFormat(format: string, omitZoneName = false): ConvertedFormat {
+  const cacheKey = `${omitZoneName ? 'local' : 'zoned'}|${format}`;
+  let converted = convertedFormatCache.get(cacheKey);
 
   if (!converted) {
     // Moment escapes literals using backslashes while Luxon expects quoted literals.
     // Normalize `\x` to `[x]` first so we can reuse the existing escaped-text handling.
     const withEscapedLiterals = format.replace(/\\(.)/g, '[$1]');
-    const luxonFormat = withEscapedLiterals.replace(TOKEN_PATTERN, replaceMomentToken);
+    const luxonFormat = withEscapedLiterals.replace(TOKEN_PATTERN, (match, escapedText?: string) =>
+      replaceMomentToken(match, escapedText, omitZoneName)
+    );
 
     converted = {
       luxonFormat,
       hasOrdinal: luxonFormat.includes(ORDINAL_MARKER),
       hasMeridiem: luxonFormat.includes(MERIDIEM_START_MARKER),
     };
-    convertedFormatCache.set(format, converted);
+    convertedFormatCache.set(cacheKey, converted);
   }
 
   return converted;
 }
 
-function replaceMomentToken(match: string, escapedText?: string): string {
+function replaceMomentToken(match: string, escapedText?: string, omitZoneName = false): string {
   if (escapedText != null) {
     return `'${escapedText}'`;
+  }
+
+  if (omitZoneName && (match === 'z' || match === 'zz')) {
+    return '';
   }
 
   if (match === 'Do') {
@@ -109,7 +116,10 @@ function getOrdinal(day: number): string {
 }
 
 export function formatWithOrdinal(luxonDateTime: DateTime, momentFormat: string): string {
-  const { luxonFormat, hasOrdinal, hasMeridiem } = convertFormat(momentFormat);
+  const { luxonFormat, hasOrdinal, hasMeridiem } = convertFormat(
+    momentFormat,
+    luxonDateTime.zone.type === 'system'
+  );
   // ZZZZ doesnt work
   // https://github.com/moment/luxon/discussions/1041
   // https://github.com/moment/luxon/issues/499#issuecomment-865017957
