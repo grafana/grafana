@@ -105,7 +105,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     icon: css({
       marginRight: theme.spacing(1.5),
       color: theme.colors.accent.text,
-      backgroundColor: theme.colors.accent.transparent,
+      backgroundColor: theme.colors.accent.background,
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(1),
       width: theme.spacing(4.5),
