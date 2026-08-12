@@ -9,8 +9,8 @@ export type GetExtraContextMenuButtonsFunction = (
   clickedItemData: ClickedItemData,
   data: DataFrame,
   state: {
-    viewMode?: ViewMode;
-    paneView?: PaneView;
+    viewMode: ViewMode;
+    paneView: PaneView;
     isDiff: boolean;
     search: string;
     collapseConfig?: CollapseConfig;
@@ -38,8 +38,8 @@ type Props = {
   collapsing?: boolean;
   allGroupsCollapsed?: boolean;
   allGroupsExpanded?: boolean;
-  viewMode?: ViewMode;
-  paneView?: PaneView;
+  viewMode: ViewMode;
+  paneView: PaneView;
   search: string;
 };
 

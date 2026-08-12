@@ -61,11 +61,11 @@ type Props = {
   collapsedMap: CollapsedMap;
   setCollapsedMap: (collapsedMap: CollapsedMap) => void;
 
-  viewMode?: ViewMode;
-  paneView?: PaneView;
-  onTextAlignChange?: (align: TextAlign) => void;
-  onColorSchemeChange?: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
-  isDiffMode?: boolean;
+  viewMode: ViewMode;
+  paneView: PaneView;
+  onTextAlignChange: (align: TextAlign) => void;
+  onColorSchemeChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
+  isDiffMode: boolean;
 };
 
 const FlameGraph = ({
@@ -207,9 +207,7 @@ const FlameGraph = ({
           onSandwichPillClick={onSandwichPillClick}
         />
         <div className={styles.controls}>
-          {onColorSchemeChange && (
-            <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode ?? false} />
-          )}
+          <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
           <ButtonGroup className={styles.buttonSpacing}>
             <Button
               variant={'secondary'}
@@ -234,14 +232,12 @@ const FlameGraph = ({
               icon={'angle-double-up'}
             />
           </ButtonGroup>
-          {onTextAlignChange && (
-            <RadioButtonGroup<TextAlign>
-              size="sm"
-              options={alignOptions}
-              value={textAlign}
-              onChange={onTextAlignChange}
-            />
-          )}
+          <RadioButtonGroup<TextAlign>
+            size="sm"
+            options={alignOptions}
+            value={textAlign}
+            onChange={onTextAlignChange}
+          />
         </div>
       </div>
       {canvas}
