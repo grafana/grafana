@@ -8217,6 +8217,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rspack/lite-tapable@npm:^1.0.1":
+  version: 1.1.5
+  resolution: "@rspack/lite-tapable@npm:1.1.5"
+  checksum: 10/e74775fd2d9355175168cde752467bb9906bb5deb850f11e65535effa7d775230fa2f9583587a36b360ba0bea45e841d785858f61ea31d2c2bf36fe9ab6c27b1
+  languageName: node
+  linkType: hard
+
 "@rspack/resolver-binding-darwin-arm64@npm:0.2.8":
   version: 0.2.8
   resolution: "@rspack/resolver-binding-darwin-arm64@npm:0.2.8"
@@ -19820,6 +19827,7 @@ __metadata:
     regenerator-runtime: "npm:0.14.1"
     reselect: "npm:5.1.1"
     rimraf: "npm:6.0.1"
+    rspack-manifest-plugin: "npm:5.2.2"
     rxjs: "npm:7.8.2"
     sass: "npm:1.89.2"
     sass-loader: "npm:16.0.5"
@@ -30412,6 +30420,20 @@ __metadata:
   version: 1.3.2
   resolution: "rslog@npm:1.3.2"
   checksum: 10/69f575564ac93be5e3a7f3b7dd086e93fcca96e25dbb2fbd19ff0db9d0f2ace50b782b06b03c6b3f351252e45a80df85caf0e1ecdcca694c41f937efd67ac6bd
+  languageName: node
+  linkType: hard
+
+"rspack-manifest-plugin@npm:5.2.2":
+  version: 5.2.2
+  resolution: "rspack-manifest-plugin@npm:5.2.2"
+  dependencies:
+    "@rspack/lite-tapable": "npm:^1.0.1"
+  peerDependencies:
+    "@rspack/core": ^1.0.0 || ^2.0.0
+  peerDependenciesMeta:
+    "@rspack/core":
+      optional: true
+  checksum: 10/1acae737b83bcb16d4d9fa07a2b8542c97844bc7328ebdca4db76d3d010f507eeb9ba05f639dc01961234fedbe99dc49d7c128533b415be13a75b91e21101410
   languageName: node
   linkType: hard
 
