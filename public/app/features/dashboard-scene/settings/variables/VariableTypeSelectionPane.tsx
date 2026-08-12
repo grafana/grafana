@@ -162,6 +162,7 @@ function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: Editab
         {options.map((option) => (
           <Card
             noMargin
+            variant="secondary"
             isCompact
             onClick={() => onSelectType(option.value!)}
             key={option.value}

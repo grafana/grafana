@@ -38,6 +38,7 @@ export function ExpressionTypePicker() {
               finalizePendingExpression(item.value);
             }}
             noMargin
+            variant="secondary"
           >
             <Card.Heading>{label}</Card.Heading>
             <Card.Description>

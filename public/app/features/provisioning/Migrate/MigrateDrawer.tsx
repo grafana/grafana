@@ -315,7 +315,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
           <Field noMargin label={t('provisioning.migrate.workflow-label', 'How should changes be applied?')}>
             <Stack direction="column" gap={1}>
               {supportsWrite && (
-                <Card noMargin isSelected={workflow === 'write'} onClick={selectWriteWorkflow}>
+                <Card noMargin variant="secondary" isSelected={workflow === 'write'} onClick={selectWriteWorkflow}>
                   <Card.Heading>
                     <Trans i18nKey="provisioning.migrate.workflow-write-title">Commit to the configured branch</Trans>
                   </Card.Heading>
@@ -327,7 +327,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
                 </Card>
               )}
               {supportsBranch && (
-                <Card noMargin isSelected={workflow === 'branch'} onClick={selectBranchWorkflow}>
+                <Card noMargin variant="secondary" isSelected={workflow === 'branch'} onClick={selectBranchWorkflow}>
                   <Card.Heading>
                     <Trans i18nKey="provisioning.migrate.workflow-branch-title">Open a pull request</Trans>
                   </Card.Heading>

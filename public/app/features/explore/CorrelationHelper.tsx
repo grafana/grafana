@@ -243,7 +243,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
               ) : undefined,
             ].filter((val) => val);
             return (
-              <Card noMargin key={`trans-${i}`}>
+              <Card noMargin variant="secondary" key={`trans-${i}`}>
                 <Card.Heading>
                   {field}: {type}
                 </Card.Heading>

@@ -15,7 +15,7 @@ export function SqlExpressionCard({ name, description, imageUrl, onClick, testId
   const styles = useStyles2(getCardStyles, fullWidth);
 
   return (
-    <Card className={styles.baseCard} data-testid={testId} onClick={onClick} noMargin>
+    <Card className={styles.baseCard} data-testid={testId} onClick={onClick} noMargin variant="secondary">
       <Card.Heading>{name}</Card.Heading>
       <Card.Description>
         <Text variant="bodySmall">{description}</Text>

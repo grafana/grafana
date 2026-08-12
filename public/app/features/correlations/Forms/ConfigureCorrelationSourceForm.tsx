@@ -148,7 +148,7 @@ export const ConfigureCorrelationSourceForm = () => {
             />
           </Field>
           {variables.length > 0 && (
-            <Card noMargin>
+            <Card noMargin variant="secondary">
               <Card.Heading>{formText.heading}</Card.Heading>
               <Card.Description>
                 {formText.descriptionPre}

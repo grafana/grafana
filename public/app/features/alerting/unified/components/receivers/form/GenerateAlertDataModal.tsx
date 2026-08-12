@@ -103,7 +103,7 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
             setStatus('firing');
           }}
         >
-          <Card noMargin>
+          <Card noMargin variant="secondary">
             <Stack direction="column" gap={1}>
               <div className={styles.section}>
                 <AnnotationsStep />
