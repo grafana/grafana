@@ -185,6 +185,19 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/create-security-patch-from-security-mirror.yml
+  - name: Workflow .github/workflows/deploy-frontend-preview.yml succeeded or skipped
+    if:
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/deploy-frontend-preview\.yml$
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/deploy-frontend-preview.yml
   - name: Workflow .github/workflows/deploy-pr-preview.yml succeeded or skipped
     if:
       changed_files:
