@@ -258,7 +258,7 @@ func (s *kvPeerStore) listActive(ctx context.Context, ttl time.Duration) ([]peer
 		}
 		peers = append(peers, peer{ServerName: rec.ServerName, RouteURL: rec.RouteURL})
 	}
-	// Best-effort prune in one round-trip; the active set above already excludes
+	// Best-effort prune; the active set above already excludes
 	// these, so a failed delete just leaves them for the next tick.
 	for chunk := range slices.Chunk(stale, maxPeerDeleteBatch) {
 		if err := s.kv.BatchDelete(ctx, kv.NATSPeersSection, chunk); err != nil {
