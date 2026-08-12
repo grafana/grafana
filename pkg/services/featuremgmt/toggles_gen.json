@@ -4079,6 +4079,7 @@
         "name": "kubernetesSnapshots",
         "resourceVersion": "1785415648917",
         "creationTimestamp": "2023-12-05T22:31:49Z",
+        "deletionTimestamp": "2026-08-12T12:19:48Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-07-30 12:47:28.917575 +0000 UTC"
         }
