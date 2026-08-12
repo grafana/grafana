@@ -2,6 +2,7 @@ package nats
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -10,6 +11,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
+
+type batchDeleteSpyKV struct {
+	kv.KV
+	sizes []int
+}
+
+func (s *batchDeleteSpyKV) BatchDelete(ctx context.Context, section string, keys []string) error {
+	s.sizes = append(s.sizes, len(keys))
+	return s.KV.BatchDelete(ctx, section, keys)
+}
 
 // newTestKVStore builds a kvPeerStore over an in-memory KV with a settable clock
 // so TTL behaviour is deterministic.
@@ -85,6 +96,35 @@ func TestKVPeerStore(t *testing.T) {
 		r, err := s.kv.Get(ctx, kv.NATSPeersSection, s.peerKey("fresh"))
 		require.NoError(t, err)
 		require.NoError(t, r.Close())
+	})
+
+	t.Run("prunes stale peers in chunks under the batch limit", func(t *testing.T) {
+		now := time.Unix(1_000, 0)
+		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, db.Close()) })
+
+		spy := &batchDeleteSpyKV{KV: kv.NewBadgerKV(db)}
+		s := newKVPeerStore(spy, "grafana")
+		s.now = func() time.Time { return now }
+
+		const staleCount = 2*maxPeerDeleteBatch + 1
+		for i := 0; i < staleCount; i++ {
+			require.NoError(t, s.upsert(ctx, peer{ServerName: fmt.Sprintf("stale-%d", i), RouteURL: "nats://10.0.0.1:6222"}))
+		}
+		now = now.Add(ttl + time.Second)
+
+		peers, err := s.listActive(ctx, ttl)
+		require.NoError(t, err)
+		require.Empty(t, peers)
+
+		total := 0
+		for _, n := range spy.sizes {
+			require.LessOrEqual(t, n, maxPeerDeleteBatch)
+			total += n
+		}
+		require.Equal(t, staleCount, total)
+		require.Greater(t, len(spy.sizes), 1)
 	})
 
 	t.Run("remove deletes a single peer", func(t *testing.T) {
