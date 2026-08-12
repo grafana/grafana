@@ -48,6 +48,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const styles = useStyles2(getStyles, headerCellWrap, sortable);
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;
+  const hideHeader = field.config.custom?.hideHeader ?? false;
 
   // we have to remove/reset the filter if the column is not filterable
   useEffect(() => {
@@ -101,8 +102,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       {showTypeIcons && (
         <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
       )}
-      <button tabIndex={0} className={styles.headerCellLabel} title={displayName}>
-        {displayName}
+      <button tabIndex={0} className={styles.headerCellLabel} title={hideHeader ? undefined : displayName}>
+        {!hideHeader && displayName}
         {direction && (
           <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
         )}
