@@ -63,6 +63,18 @@ describe('HeaderCell', () => {
     expect(container.querySelector('svg')).toBeInTheDocument();
   });
 
+  it('shows a pointer cursor and underlines the label on hover by default', () => {
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    const label = screen.getByRole('button', { name: 'Field1' });
+    expect(window.getComputedStyle(label).cursor).toBe('pointer');
+  });
+
+  it('uses a default cursor and drops the hover underline when the field is not sortable', () => {
+    render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { sortable: false } } })} />);
+    const label = screen.getByRole('button', { name: 'Field1' });
+    expect(window.getComputedStyle(label).cursor).toBe('default');
+  });
+
   it('renders with wrapped header text when wrapHeaderText is enabled', () => {
     render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { wrapHeaderText: true } } })} />);
     expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
