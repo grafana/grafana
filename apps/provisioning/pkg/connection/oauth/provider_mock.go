@@ -68,9 +68,9 @@ func (_c *MockProvider_Endpoint_Call) RunAndReturn(run func() oauth2.Endpoint) *
 	return _c
 }
 
-// ListRepositories provides a mock function with given fields: ctx, accessToken
-func (_m *MockProvider) ListRepositories(ctx context.Context, accessToken string) ([]v0alpha1.ExternalRepository, error) {
-	ret := _m.Called(ctx, accessToken)
+// ListRepositories provides a mock function with given fields: ctx
+func (_m *MockProvider) ListRepositories(ctx context.Context) ([]v0alpha1.ExternalRepository, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListRepositories")
@@ -78,19 +78,19 @@ func (_m *MockProvider) ListRepositories(ctx context.Context, accessToken string
 
 	var r0 []v0alpha1.ExternalRepository
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]v0alpha1.ExternalRepository, error)); ok {
-		return rf(ctx, accessToken)
+	if rf, ok := ret.Get(0).(func(context.Context) ([]v0alpha1.ExternalRepository, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []v0alpha1.ExternalRepository); ok {
-		r0 = rf(ctx, accessToken)
+	if rf, ok := ret.Get(0).(func(context.Context) []v0alpha1.ExternalRepository); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]v0alpha1.ExternalRepository)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, accessToken)
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -105,14 +105,13 @@ type MockProvider_ListRepositories_Call struct {
 
 // ListRepositories is a helper method to define mock.On call
 //   - ctx context.Context
-//   - accessToken string
-func (_e *MockProvider_Expecter) ListRepositories(ctx interface{}, accessToken interface{}) *MockProvider_ListRepositories_Call {
-	return &MockProvider_ListRepositories_Call{Call: _e.mock.On("ListRepositories", ctx, accessToken)}
+func (_e *MockProvider_Expecter) ListRepositories(ctx interface{}) *MockProvider_ListRepositories_Call {
+	return &MockProvider_ListRepositories_Call{Call: _e.mock.On("ListRepositories", ctx)}
 }
 
-func (_c *MockProvider_ListRepositories_Call) Run(run func(ctx context.Context, accessToken string)) *MockProvider_ListRepositories_Call {
+func (_c *MockProvider_ListRepositories_Call) Run(run func(ctx context.Context)) *MockProvider_ListRepositories_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context))
 	})
 	return _c
 }
@@ -122,7 +121,7 @@ func (_c *MockProvider_ListRepositories_Call) Return(_a0 []v0alpha1.ExternalRepo
 	return _c
 }
 
-func (_c *MockProvider_ListRepositories_Call) RunAndReturn(run func(context.Context, string) ([]v0alpha1.ExternalRepository, error)) *MockProvider_ListRepositories_Call {
+func (_c *MockProvider_ListRepositories_Call) RunAndReturn(run func(context.Context) ([]v0alpha1.ExternalRepository, error)) *MockProvider_ListRepositories_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -30,6 +30,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -86,6 +87,7 @@ type kvStorageBackend struct {
 	natsShadow              *natsShadow
 	log                     log.Logger
 	disablePruner           bool
+	disableStorageServices  bool
 	dashboardVersionsToKeep int
 	eventRetentionPeriod    time.Duration
 	eventPruningInterval    time.Duration
@@ -134,6 +136,7 @@ type kvBackendMetrics struct {
 	NatsNotifierDropped              *prometheus.CounterVec
 	WatchNotificationsPublished      *prometheus.CounterVec
 	WatchNotificationPublishFailures *prometheus.CounterVec
+	GCGroupResourceDuration          *prometheus.HistogramVec
 }
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
@@ -160,7 +163,22 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name: "storage_server_watch_notifications_publish_failures_total",
 			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
 		}, []string{"group", "resource", "action"}),
+		GCGroupResourceDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "storage_server",
+			Name:      "gc_group_resource_duration_seconds",
+			Help:      "Duration of a garbage-collection pass over one group/resource.",
+			Buckets:   []float64{0.01, 0.05, 0.1, 0.5, 1, 5, 30, 60, 300, 1800, 7200},
+		}, []string{"group", "resource"}),
 	}
+}
+
+// observeGCGroupResource records how long a GC pass over one group/resource took.
+// Nil-safe for test backends.
+func (m *kvBackendMetrics) observeGCGroupResource(group, resource string, d time.Duration) {
+	if m == nil {
+		return
+	}
+	m.GCGroupResourceDuration.WithLabelValues(group, resource).Observe(d.Seconds())
 }
 
 func (m *kvBackendMetrics) recordConflict(event WriteEvent) {
@@ -230,6 +248,10 @@ type KVBackendOptions struct {
 	Log                  log.Logger
 	GarbageCollection    GarbageCollectionConfig
 
+	// DisableStorageServices stops the background jobs that write, for a process
+	// that reads through this backend without running the storage server.
+	DisableStorageServices bool
+
 	// GCGate defers the start of the GC until released (optional).
 	GCGate *GCGate
 
@@ -291,6 +313,34 @@ type KVBackendOptions struct {
 	// is not lost while a slow write is still in flight. Only effective when
 	// EnableKVLeases is true.
 	LeaseAutoRenew bool
+}
+
+// NewKVBackendOptions returns the options that come from Grafana's config. The
+// caller adds the rest: the KV store, the logger, the metrics registry.
+//
+// Config is read here and nowhere else, so a new setting reaches every wiring
+// rather than only the one it was added to.
+func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
+	return KVBackendOptions{
+		DisablePruner:           cfg.DisablePruner,
+		LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
+		EventRetentionPeriod:    cfg.EventRetentionPeriod,
+		EventPruningInterval:    cfg.EventPruningInterval,
+		SearchLookback:          cfg.SearchLookback,
+		WatchOptions:            WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
+		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+		TenantWatcherConfig:     NewTenantWatcherConfig(cfg),
+		TenantDeleterConfig:     NewTenantDeleterConfig(cfg),
+		GarbageCollection: GarbageCollectionConfig{
+			Enabled:          cfg.EnableGarbageCollection,
+			DryRun:           cfg.GarbageCollectionDryRun,
+			Interval:         cfg.GarbageCollectionInterval,
+			BatchSize:        cfg.GarbageCollectionBatchSize,
+			BatchWait:        cfg.GarbageCollectionBatchWait,
+			MaxAge:           cfg.GarbageCollectionMaxAge,
+			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
+		},
+	}
 }
 
 var (
@@ -387,6 +437,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		gcGate:                  opts.GCGate,
 		searchLookback:          opts.SearchLookback,
 		disablePruner:           opts.DisablePruner,
+		disableStorageServices:  opts.DisableStorageServices,
 		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
 		cancel:                  cancel,
 		metrics:                 metrics,
@@ -396,7 +447,11 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
 	if backend.garbageCollection.Enabled {
-		if err := backend.initGarbageCollection(ctx); err != nil {
+		if opts.DisableStorageServices {
+			// Otherwise every replica of a process that only reads would run its
+			// own garbage collector.
+			logger.Warn("garbage collection is enabled but storage services are disabled, not starting it")
+		} else if err := backend.initGarbageCollection(ctx); err != nil {
 			return nil, fmt.Errorf("failed to initialize garbage collection: %w", err)
 		}
 	}
@@ -565,7 +620,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 }
 
 func (k *kvStorageBackend) initPruner(ctx context.Context, reg prometheus.Registerer) error {
-	if k.disablePruner {
+	if k.disablePruner || k.disableStorageServices {
 		k.log.Debug("Pruner disabled, using noop pruner")
 		k.historyPruner = &NoopPruner{}
 		return nil
@@ -691,6 +746,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 	//nolint:staticcheck
 	start := time.Now()
+	defer func() { b.metrics.observeGCGroupResource(group, resourceName, time.Since(start)) }()
 
 	totalDeleted := int64(0)
 	totalDryRun := int64(0)
@@ -772,16 +828,9 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 				// mark the key as seen
 				seenKeys[k] = struct{}{}
 
-				startKeyToDelete := k.Prefix()
-				// end key is exclusive, so we need to add a suffix to make sure we include all the versions we want to delete
-				endKeyToDelete := PrefixRangeEnd(dk.String())
-
-				keysToDelete := []string{}
-				for deleteKey, err := range b.kv.Keys(ctx, kv.DataSection, ListOptions{
-					StartKey: startKeyToDelete,
-					EndKey:   endKeyToDelete,
-					Sort:     kv.SortOrderAsc,
-				}) {
+				// Collect all revisions of this resource, oldest-first, via the datastore.
+				keysToDelete := []DataKey{}
+				for deleteKey, err := range b.dataStore.Keys(ctx, k, SortOrderAsc) {
 					if err != nil {
 						return fmt.Errorf("failed to get keys for resource '%s': %s", dk, err)
 					}
@@ -810,8 +859,9 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 					continue
 				}
 
-				// if not in dry run mode, batch delete the keys
-				err = b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
+				// Oldest-first (SortOrderAsc), so a partial delete leaves the deletion marker
+				// behind and the next GC pass finishes.
+				err = b.dataStore.batchDelete(ctx, keysToDelete)
 				if err != nil {
 					return fmt.Errorf("failed to batch delete keys: %s", err)
 				}
@@ -1507,24 +1557,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		listRV = listOptions.ResourceVersion
 	}
 
-	// Fetch the latest objects.
-	// TODO: stream keys into BatchGet instead of materializing the whole list.
-	// For unbounded list calls (e.g. index build with req.Limit == 0) at 1M
-	// rows this allocates ~250 MB of DataKey before any reads start. Pipe
-	// ListResourceKeysAtRevision through a bounded channel into BatchGet so
-	// memory is O(chunk), not O(N).
-	keys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
-	for dataKey, err := range k.dataStore.ListResourceKeysAtRevision(ctx, listOptions) {
-		if err != nil {
-			return 0, err
-		}
-
-		keys = append(keys, dataKey)
-		// Only fetch the first limit items + 1 to get the next token.
-		if req.Limit > 0 && len(keys) >= int(req.Limit+1) {
-			break
-		}
-	}
+	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
 	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "")
 	defer iter.stop()
 
@@ -1535,14 +1568,46 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return listRV, nil
 }
 
-// newKvListIterator builds a kvListIterator over dataStore.BatchGet(keys).
-func newKvListIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, isCrossNamespace bool) *kvListIterator {
-	next, stopFn := iter.Pull2(ds.BatchGet(ctx, keys))
+// newKvListIterator builds a kvListIterator that reads keys in bounded batches.
+func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace bool) *kvListIterator {
+	next, stopFn := iter.Pull2(batchGetResourceKeys(ctx, ds, keys))
 	return &kvListIterator{
 		listRV:           listRV,
 		isCrossNamespace: isCrossNamespace,
 		next:             next,
 		stopFn:           stopFn,
+	}
+}
+
+func batchGetResourceKeys(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error]) iter.Seq2[DataObj, error] {
+	return func(yield func(DataObj, error) bool) {
+		batch := make([]DataKey, 0, dataBatchSize)
+
+		flush := func() bool {
+			for obj, err := range ds.BatchGet(ctx, batch) {
+				if !yield(obj, err) || err != nil {
+					return false
+				}
+			}
+			batch = batch[:0]
+			return true
+		}
+
+		for key, err := range keys {
+			if err != nil {
+				yield(DataObj{}, err)
+				return
+			}
+
+			batch = append(batch, key)
+			if len(batch) == dataBatchSize && !flush() {
+				return
+			}
+		}
+
+		if len(batch) > 0 {
+			flush()
+		}
 	}
 }
 

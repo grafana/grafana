@@ -4084,6 +4084,14 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.CommitOptions": {
         "type": "object",
         "properties": {
+          "authorEmail": {
+            "description": "Email used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset.",
+            "type": "string"
+          },
+          "authorName": {
+            "description": "Name used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset.",
+            "type": "string"
+          },
           "enforceTemplate": {
             "description": "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only.",
             "type": "boolean"

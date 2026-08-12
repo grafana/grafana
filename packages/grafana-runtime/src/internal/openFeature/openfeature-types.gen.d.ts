@@ -19,6 +19,7 @@ declare module "@openfeature/core" {
     | "provisioning.readmes"
     | "provisioning.gitConventions"
     | "provisioning.userAttribution"
+    | "snapshots.kubernetesSnapshots"
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
@@ -36,12 +37,13 @@ declare module "@openfeature/core" {
     | "suggestedDashboardsAssistantButton"
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleQuality"
-    | "azureMonitorBatchAPI"
+    | "datasources.azureMonitorBatchAPI"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
     | "grafana.newTextPanel"
+    | "text.newFeatures"
     | "plugins.useMTPlugins"
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
@@ -72,13 +74,10 @@ declare module "@openfeature/core" {
     | "dashboard.vectorSearch"
     | "grafana.vectorSearchCmdk"
     | "assistant.fullscreenWorkspace"
-    | "table.protoRowParser"
     | "grafana.queryVarEditorRedesign"
-    | "table.refactorNested"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
     | "dataviz.experimentalColorSchemes"
-    | "datetime.useLuxon"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
     | "grafana.growthHomepage"
@@ -87,7 +86,8 @@ declare module "@openfeature/core" {
     | "grafana.multiTenantNavTree"
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
-    | "grafana.thresholdsInterpolation";
+    | "grafana.thresholdsInterpolation"
+    | "grafana.unifiedDataSourcePicker";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

@@ -144,6 +144,10 @@ export const dateTimeForTimeZone = (
   return dateTime(input, formatInput);
 };
 
+export const guessBrowserTimeZone = (ignoreCache = false): string => {
+  return tz.guess(ignoreCache);
+};
+
 export const getWeekdayIndex = (day: string) => {
   return moment.weekdays().findIndex((wd) => wd.toLowerCase() === day.toLowerCase());
 };

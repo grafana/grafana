@@ -91,7 +91,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		srv := authinfoimpl.ProvideService(
 			authInfoStore, remotecache.NewFakeCacheStorage(), secretsService)
 		hs.authInfoService = srv
-		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), settings, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -166,7 +166,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "admin",
 			IsAdmin: true,
 		}
-		orgSvc, err := orgimpl.ProvideService(sqlStore, sc.cfg, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), sc.cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -198,7 +198,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "multi",
 			IsAdmin: true,
 		}
-		orgSvc, err := orgimpl.ProvideService(sqlStore, sc.cfg, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), sc.cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -651,6 +651,21 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 			assert.Equal(t, 403, sc.resp.Code)
 		},
 	}, hs)
+
+	hs.userService = &usertest.FakeUserService{ExpectedError: user.ErrUserAlreadyExists}
+
+	updateUserScenario(t, updateUserContext{
+		desc:         "Should return 409 when the login or email is taken by another user",
+		url:          "/api/users/1",
+		routePattern: "/api/users/:id",
+		cmd:          updateUserCommand,
+		fn: func(sc *scenarioContext) {
+			sc.authInfoService.ExpectedError = user.ErrUserNotFound
+
+			sc.fakeReqWithParams("PUT", sc.url, map[string]string{"id": "1"}).exec()
+			assert.Equal(t, http.StatusConflict, sc.resp.Code)
+		},
+	}, hs)
 }
 
 func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPServer, *notifications.NotificationServiceMock) {
@@ -659,7 +674,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	tempUserService := tempuserimpl.ProvideService(sqlStore, cfg)
-	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotatest.New(false, nil))
+	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
 		sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -890,7 +905,7 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 		tempUserSvc := tempuserimpl.ProvideService(sqlStore, settings)
-		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), settings, quotatest.New(false, nil))
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),

@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import { omit } from 'lodash';
-import moment from 'moment';
 import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeAsMoment } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -298,7 +297,7 @@ function CompareVersions({ left, right, disabled = false, onCancel, onConfirm }:
 }
 
 const LastAppliedCell = ({ value }: CellProps<VersionData>) => {
-  const date = moment(value);
+  const date = dateTimeAsMoment(value);
 
   return (
     <Stack direction="row" alignItems="center">

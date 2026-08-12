@@ -628,7 +628,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 	permissionStore := rs.NewStore(cfg, sql, featuremgmt.WithFeatures())
 	teamService, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
-	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	orgID, err := orgService.GetOrCreate(context.Background(), "test")

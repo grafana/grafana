@@ -3619,6 +3619,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Tijdsintervallen",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Selecteer tijdsintervallen..."
     },
     "time-intervals-table": {
@@ -5662,6 +5663,8 @@
       "edit-query-result-rule": "Regel voor queryresultaat wijzigen",
       "edit-template-variable-rule": "Regel voor sjabloonvariabele wijzigen",
       "edit-time-range-rule": "Regel voor tijdsbereik wijzigen",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "{{typeName}} verplaatsen ",
       "panel-background": "Paneelachtergrond wijzigen",
       "panel-description": "Paneelbeschrijving wijzigen",
@@ -5914,8 +5917,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Hiermee worden alle geneste groepen gedegroepeerd.",
-      "ungroup-nested-title": "Geneste groepen degroeperen?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} van {{numberOfPages}}",
@@ -6128,6 +6135,13 @@
       "save-json-to-file": "JSON opslaan naar bestand",
       "see-docs": "Bekijk de <2>documentatie</2> voor meer informatie over provisioning."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6291,6 +6305,12 @@
         "title-controls-menu_other": "",
         "title-hidden_one": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -7250,6 +7270,7 @@
         "title-someone-else-has-updated-this-dashboard": "Iemand anders heeft dit dashboard bijgewerkt",
         "would-still-dashboard": "Wil je dit dashboard nog steeds opslaan?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Opslaan en overschrijven"
     },
     "legacy": {
@@ -8056,7 +8077,8 @@
       "title-missing-rights": "Ontbrekende rechten"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Selecteer een gegevensbron"
+      "aria-label-select-a-data-source": "Selecteer een gegevensbron",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Pagina niet gevonden: {{page}}"
@@ -10963,6 +10985,12 @@
       "high-count_one": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12439,6 +12467,10 @@
     "new-folder": {
       "title": "Nieuwe map"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "Oproepbaar"
     },
@@ -12732,8 +12764,35 @@
       "title-zoom-out": "Uitzoomen"
     }
   },
-  "notebook": {
-    "breadcrumb-title": ""
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_other": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -14757,7 +14816,6 @@
     },
     "header": {
       "alert": "Waarschuwing",
-      "expression": "Expressie",
       "pending-expression": "",
       "pending-expression-cancel": "Annuleren",
       "pending-transformation": "",
@@ -14771,6 +14829,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

@@ -1,4 +1,3 @@
-import type OpenLayersMap from 'ol/Map';
 import { type Point } from 'ol/geom';
 import { VectorImage } from 'ol/layer';
 import LayerGroup from 'ol/layer/Group';
@@ -11,10 +10,7 @@ import {
   type MapLayerRegistryItem,
   type MapLayerOptions,
   type PanelData,
-  type GrafanaTheme2,
   FrameGeometrySourceMode,
-  type EventBus,
-  type PanelOptionsEditorBuilder,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
@@ -69,12 +65,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * @param options
    * @param theme
    */
-  create: async (
-    map: OpenLayersMap,
-    options: MapLayerOptions<MarkersConfig>,
-    eventBus: EventBus,
-    theme: GrafanaTheme2
-  ) => {
+  create: async (_map, options, _eventBus, theme) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -225,7 +216,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
       },
 
       // Marker overlay options
-      registerOptionsUI: (builder: PanelOptionsEditorBuilder<MapLayerOptions<MarkersConfig>>) => {
+      registerOptionsUI: (builder) => {
         builder
           .addCustomEditor({
             id: 'config.style',

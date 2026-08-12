@@ -1,7 +1,5 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panels, Sidebar } from './page-objects';
-import { importTestDashboard, saveDashboard } from './utils';
+import { test, expect } from './fixtures';
+import { flows } from './helpers';
 
 test.use({
   featureToggles: {
@@ -17,13 +15,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can duplicate a panel', async ({ dashboardPage, selectors, page, components }) => {
-      await importTestDashboard(page, selectors, 'Paste tab');
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+    test('can duplicate a panel', async ({ selectors, page, controls, sidebar, panels }) => {
+      await flows.dashboards.importTestDashboard(page, selectors, 'Paste tab');
       await controls.enterEditMode();
 
       const oldPanelTitle = 'New panel';
@@ -38,7 +31,7 @@ test.describe(
 
       await expect(panels.getPanels(panelTitle)).toHaveCount(2);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await expect(panels.getPanels(panelTitle)).toHaveCount(2);
