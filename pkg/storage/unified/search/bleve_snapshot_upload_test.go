@@ -89,6 +89,10 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	assert.Equal(t, int64(42), uploadedMeta.LatestResourceVersion)
 	assert.Equal(t, be.opts.BuildVersion, uploadedMeta.BuildVersion)
 	assert.NotZero(t, uploadedMeta.IndexFormat)
+	// Recorded so selection can skip a snapshot missing a feature this instance
+	// requires, without downloading it first.
+	assert.True(t, uploadedMeta.FeaturesRecorded)
+	assert.Equal(t, resource.CurrentIndexFeatures(), uploadedMeta.Features)
 	// The test index holds a single document; DocCount is recorded for
 	// debugging only, but verify it reflects the index contents.
 	assert.Equal(t, uint64(1), uploadedMeta.DocCount)

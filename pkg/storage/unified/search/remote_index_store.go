@@ -90,6 +90,14 @@ type IndexMeta struct {
 	// IndexFormat identifies the Bleve segment format that wrote this snapshot
 	// (for example, "zap/16"). Empty on legacy snapshots means "unknown, assume compatible".
 	IndexFormat string `json:"index_format,omitempty"`
+	// Features are the index features the snapshot was built with, letting selection
+	// skip a snapshot missing a feature this instance requires instead of finding out
+	// after downloading it. Only meaningful when FeaturesRecorded is set.
+	Features []resource.IndexFeature `json:"features,omitempty"`
+	// FeaturesRecorded distinguishes "no features" from "not recorded", which the
+	// Features field alone cannot. False for a snapshot uploaded before this field
+	// existed, and for one whose index predates index features.
+	FeaturesRecorded bool `json:"features_recorded,omitempty"`
 	// ReaderRequirements are the features an instance must understand before using
 	// this snapshot. Selection skips a snapshot declaring one it does not recognise.
 	// Empty on snapshots uploaded before this field existed.
