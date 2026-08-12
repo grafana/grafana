@@ -7,6 +7,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,7 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 // newDashboardUnstructured builds a minimal unstructured dashboard with optional annotations.
@@ -362,6 +365,50 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinat
 
 type recordingAccessClient struct {
 	check func(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error)
+}
+
+func TestValidateLibraryPanelDeleteChecksUnifiedReferences(t *testing.T) {
+	tests := []struct {
+		name      string
+		totalHits int64
+		forbidden bool
+	}{
+		{name: "unreferenced panel", totalHits: 0},
+		{name: "connected panel", totalHits: 1, forbidden: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var captured *resourcepb.ResourceSearchRequest
+			client := &recordingResourceClient{search: func(_ context.Context, request *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+				captured = request
+				return &resourcepb.ResourceSearchResponse{TotalHits: tt.totalHits}, nil
+			}}
+			builder := &DashboardsAPIBuilder{unified: client}
+
+			err := builder.validateLibraryPanelDelete(context.Background(), "panel-a", "stacks-1")
+			if tt.forbidden {
+				require.True(t, apierrors.IsForbidden(err))
+			} else {
+				require.NoError(t, err)
+			}
+			require.NotNil(t, captured)
+			require.Equal(t, int64(1), captured.Limit)
+			require.Equal(t, "stacks-1", captured.Options.Key.Namespace)
+			require.Equal(t, dashv0.DASHBOARD_RESOURCE, captured.Options.Key.Resource)
+			require.Equal(t, builders.DASHBOARD_LIBRARY_PANEL_REFERENCE, captured.Options.Fields[0].Key)
+			require.Equal(t, []string{"panel-a"}, captured.Options.Fields[0].Values)
+		})
+	}
+}
+
+type recordingResourceClient struct {
+	resource.ResourceClient
+	search func(context.Context, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
+}
+
+func (c *recordingResourceClient) Search(ctx context.Context, request *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	return c.search(ctx, request)
 }
 
 func (c *recordingAccessClient) Check(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {

@@ -11,9 +11,13 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientrest "k8s.io/client-go/rest"
 
+	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -41,6 +45,44 @@ func (testDirectRestConfigProvider) DirectlyServeHTTP(http.ResponseWriter, *http
 func (testDirectRestConfigProvider) IsReady() bool                                        { return true }
 
 var _ grafanaapiserver.DirectRestConfigProvider = testDirectRestConfigProvider{}
+
+func TestWriteErrorPreservesLegacyFolderNotFoundMessage(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	reqContext := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req:  httptest.NewRequest(http.MethodPost, "/api/library-elements", nil),
+			Resp: web.NewResponseWriter("", recorder),
+		},
+		Logger: log.NewNopLogger(),
+	}
+	err := k8serrors.NewNotFound(schema.GroupResource{Group: folderV1.GROUP, Resource: folderV1.RESOURCE}, "does-not-exist")
+
+	(&libraryElementsK8sHandler{}).writeError(reqContext, err)
+
+	require.Equal(t, http.StatusNotFound, recorder.Code)
+	require.JSONEq(t, `{"message":"folder not found","traceID":""}`, recorder.Body.String())
+}
+
+func TestWriteErrorMapsCreateNotFoundToMissingFolderWhenAggregationStripsDetails(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	reqContext := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req:  httptest.NewRequest(http.MethodPost, "/api/library-elements", nil),
+			Resp: web.NewResponseWriter("", recorder),
+		},
+		Logger: log.NewNopLogger(),
+	}
+	err := &k8serrors.StatusError{ErrStatus: metav1.Status{
+		Code:    http.StatusNotFound,
+		Reason:  metav1.StatusReasonNotFound,
+		Message: "the server could not find the requested resource",
+	}}
+
+	(&libraryElementsK8sHandler{}).writeError(reqContext, err)
+
+	require.Equal(t, http.StatusNotFound, recorder.Code)
+	require.JSONEq(t, `{"message":"folder not found","traceID":""}`, recorder.Body.String())
+}
 
 type panelFolderCaptureAccessControl struct {
 	actest.FakeAccessControl
@@ -134,6 +176,16 @@ func TestSortK8sLibraryPanelsByTitleCaseInsensitive(t *testing.T) {
 	descending := makeItems()
 	sortK8sLibraryPanelsByTitle(descending, false)
 	require.Equal(t, []string{"charlie", "Bravo", "alpha"}, titles(descending))
+}
+
+func TestPaginateK8sLibraryPanelsHandlesExtremePage(t *testing.T) {
+	items := []unstructured.Unstructured{
+		{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": "first"}}},
+		{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": "second"}}},
+	}
+
+	require.Equal(t, items, paginateK8sLibraryPanels(items, 2, 1))
+	require.Empty(t, paginateK8sLibraryPanels(items, 2, int(^uint(0)>>1)))
 }
 
 func TestValidateK8sLibraryPanelUID(t *testing.T) {

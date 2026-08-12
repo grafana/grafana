@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -61,6 +62,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	libraryelementsmodel "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -71,6 +73,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 var (
@@ -502,6 +505,58 @@ func libraryPanelAuthorizationTarget(obj runtime.Object) (string, string, error)
 		folderUID = accesscontrol.GeneralFolderUID
 	}
 	return accessor.GetName(), folderUID, nil
+}
+
+// validateLibraryPanelDelete keeps the direct App Platform API consistent with
+// the legacy API: dashboards must not be left with a dangling library-panel
+// reference. The standalone service has no legacy DashboardService, so query the
+// unified search index at the storage boundary before deleting.
+func (b *DashboardsAPIBuilder) validateLibraryPanelDelete(ctx context.Context, name, namespace string) error {
+	if b.unified == nil {
+		return fmt.Errorf("unified resource client is required for library panel delete validation")
+	}
+	key, err := resource.AsResourceKey(namespace, dashv0.DASHBOARD_RESOURCE)
+	if err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+	result, err := b.unified.Search(ctx, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: key,
+			Fields: []*resourcepb.Requirement{{
+				Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+				Operator: string(selection.Equals),
+				Values:   []string{name},
+			}},
+		},
+		Limit: 1,
+	})
+	if err != nil {
+		return fmt.Errorf("check library panel connections: %w", err)
+	}
+	if result.GetTotalHits() > 0 {
+		return apierrors.NewForbidden(
+			dashv0.LibraryPanelResourceInfo.GroupVersionResource().GroupResource(),
+			name,
+			libraryelementsmodel.ErrLibraryElementHasConnections,
+		)
+	}
+	return nil
+}
+
+func (b *DashboardsAPIBuilder) validateLibraryPanelFolder(ctx context.Context, obj runtime.Object) error {
+	_, folderUID, err := libraryPanelAuthorizationTarget(obj)
+	if err != nil {
+		return err
+	}
+	if folderUID == accesscontrol.GeneralFolderUID {
+		return nil
+	}
+	ns, err := request.NamespaceInfoFrom(ctx, false)
+	if err != nil {
+		return err
+	}
+	_, err = b.validateFolderExists(ctx, folderUID, ns.OrgID)
+	return err
 }
 
 // validateDelete checks if a dashboard can be deleted
@@ -1152,6 +1207,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 				unifiedLibraryStore,
 				b.authorizeLibraryPanel,
 				b.authorizeLibraryPanelUpdate,
+				b.validateLibraryPanelDelete,
+				b.validateLibraryPanelFolder,
 			)
 		}
 

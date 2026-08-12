@@ -13,10 +13,13 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 type libraryPanelAuthorizer func(ctx context.Context, obj runtime.Object, verb, namespace string) error
 type libraryPanelUpdateAuthorizer func(ctx context.Context, oldObj, newObj runtime.Object, namespace string) error
+type libraryPanelDeleteValidator func(ctx context.Context, name, namespace string) error
+type libraryPanelFolderValidator func(ctx context.Context, obj runtime.Object) error
 
 // libraryPanelAccessStorage enforces writes at the standalone storage boundary.
 // Standalone app-platform API servers do not reliably populate old objects for
@@ -29,6 +32,8 @@ type libraryPanelAccessStorage struct {
 	resource        schema.GroupResource
 	authorize       libraryPanelAuthorizer
 	authorizeUpdate libraryPanelUpdateAuthorizer
+	validateDelete  libraryPanelDeleteValidator
+	validateFolder  libraryPanelFolderValidator
 }
 
 var (
@@ -40,6 +45,8 @@ func newLibraryPanelAccessStorage(
 	store rest.StandardStorage,
 	authorize libraryPanelAuthorizer,
 	authorizeUpdate libraryPanelUpdateAuthorizer,
+	validateDelete libraryPanelDeleteValidator,
+	validateFolder libraryPanelFolderValidator,
 ) *libraryPanelAccessStorage {
 	table, _ := store.(rest.TableConvertor)
 	return &libraryPanelAccessStorage{
@@ -48,6 +55,8 @@ func newLibraryPanelAccessStorage(
 		resource:        schema.GroupResource{Group: "dashboard.grafana.app", Resource: "librarypanels"},
 		authorize:       authorize,
 		authorizeUpdate: authorizeUpdate,
+		validateDelete:  validateDelete,
+		validateFolder:  validateFolder,
 	}
 }
 
@@ -82,6 +91,9 @@ func (s *libraryPanelAccessStorage) Create(ctx context.Context, obj runtime.Obje
 	if err := s.authorize(ctx, obj, utils.VerbCreate, requestcontext.NamespaceValue(ctx)); err != nil {
 		return nil, err
 	}
+	if err := s.validateFolder(ctx, obj); err != nil {
+		return nil, err
+	}
 	return s.store.Create(ctx, obj, createValidation, options)
 }
 
@@ -98,6 +110,19 @@ func (s *libraryPanelAccessStorage) Update(ctx context.Context, name string, obj
 	}
 	if err := s.authorizeUpdate(ctx, oldObj, newObj, requestcontext.NamespaceValue(ctx)); err != nil {
 		return nil, false, err
+	}
+	oldName, oldFolder, err := libraryPanelAuthorizationTarget(oldObj)
+	if err != nil {
+		return nil, false, err
+	}
+	newName, newFolder, err := libraryPanelAuthorizationTarget(newObj)
+	if err != nil {
+		return nil, false, err
+	}
+	if (oldName != newName || oldFolder != newFolder) && newFolder != accesscontrol.GeneralFolderUID {
+		if err := s.validateFolder(ctx, newObj); err != nil {
+			return nil, false, err
+		}
 	}
 
 	return s.store.Update(
@@ -117,6 +142,9 @@ func (s *libraryPanelAccessStorage) Delete(ctx context.Context, name string, del
 		return nil, false, err
 	}
 	if err := s.authorize(ctx, obj, utils.VerbDelete, requestcontext.NamespaceValue(ctx)); err != nil {
+		return nil, false, err
+	}
+	if err := s.validateDelete(ctx, name, requestcontext.NamespaceValue(ctx)); err != nil {
 		return nil, false, err
 	}
 	return s.store.Delete(ctx, name, deleteValidation, options)
