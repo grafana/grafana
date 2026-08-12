@@ -34,7 +34,7 @@ weight: -56
 
 Welcome to Grafana 13.2!
 
-This release helps you share and reuse trusted queries to get answers faster and more easily onboard team members, dig into a crowded panels without leaving the dashboard, and securely connect to your data with fewer long-lived secrets to manage.
+This release helps you share and reuse trusted queries to get answers faster and more easily onboard team members, dig into crowded panels without leaving the dashboard, and securely connect to your data with fewer long-lived secrets to manage.
 
 Saved queries are now generally available in Grafana Enterprise and Grafana Cloud, helping individual's knowledge become a library everyone can draw on: find them from anywhere using the command palette (cmd/ctrl+K) then quickly jump into Explore, and reliably manage them as code with Terraform.
 
