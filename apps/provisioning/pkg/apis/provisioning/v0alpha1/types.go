@@ -376,6 +376,15 @@ type CommitOptions struct {
 	// When true, the Comment field in Save drawers is pre-filled from
 	// SingleResourceMessageTemplate and rendered read-only.
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+
+	// Name used as the commit author instead of the user who triggered the
+	// commit. Only valid when signingMethod is unset.
+	AuthorName string `json:"authorName,omitempty"`
+
+	// Email used as the commit author instead of the user who triggered the
+	// commit. Only valid when signingMethod is unset.
+	AuthorEmail string `json:"authorEmail,omitempty"`
+
 	// Name used as the commit signer. Required for the signing key's identity
 	// to match the commit, which providers need to mark commits as Verified. When
 	// empty, defaults to "Grafana".
