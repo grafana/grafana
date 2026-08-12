@@ -84,7 +84,6 @@ describe('table module', () => {
     );
   });
 
-
   describe('"Tooltip placement" visibility', () => {
     const showIf = (field?: string) =>
       customConfigItem('tooltip.placement').showIf!(
