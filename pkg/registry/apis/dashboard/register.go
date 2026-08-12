@@ -443,9 +443,9 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelAccess(ctx context.Context, a
 }
 
 // authorizeLibraryPanelUpdate requires write access to the existing panel and,
-// when an update changes its name or folder, to the destination as well. Keeping
-// this in one helper lets admission and the standalone storage boundary enforce
-// identical move semantics.
+// when an update changes its name or folder, create access to the destination.
+// Keeping this in one helper lets admission and the standalone storage boundary
+// enforce identical move semantics.
 func (b *DashboardsAPIBuilder) authorizeLibraryPanelUpdate(ctx context.Context, oldObj, newObj runtime.Object, namespace string) error {
 	if oldObj == nil || newObj == nil {
 		return fmt.Errorf("both existing and updated library panel objects are required for %s authorization", utils.VerbUpdate)
@@ -465,7 +465,7 @@ func (b *DashboardsAPIBuilder) authorizeLibraryPanelUpdate(ctx context.Context, 
 	if oldName == newName && oldFolder == newFolder {
 		return nil
 	}
-	return b.authorizeLibraryPanel(ctx, newObj, utils.VerbUpdate, namespace)
+	return b.authorizeLibraryPanel(ctx, newObj, utils.VerbCreate, namespace)
 }
 
 func (b *DashboardsAPIBuilder) authorizeLibraryPanel(ctx context.Context, obj runtime.Object, verb, namespace string) error {

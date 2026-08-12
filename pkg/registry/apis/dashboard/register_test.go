@@ -317,12 +317,18 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinat
 		OrgID:     1,
 		Namespace: "stacks-1",
 	}
-	checkedFolders := make([]string, 0, 2)
+	type authorizationCheck struct {
+		verb   string
+		folder string
+	}
+	checks := make([]authorizationCheck, 0, 2)
 	accessClient := &recordingAccessClient{
 		check: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-			require.Equal(t, utils.VerbUpdate, req.Verb)
-			checkedFolders = append(checkedFolders, folder)
-			return authlib.CheckResponse{Allowed: folder == "source-folder", Zookie: authlib.NoopZookie{}}, nil
+			checks = append(checks, authorizationCheck{verb: req.Verb, folder: folder})
+			return authlib.CheckResponse{
+				Allowed: req.Verb == utils.VerbUpdate && folder == "source-folder",
+				Zookie:  authlib.NoopZookie{},
+			}, nil
 		},
 	}
 	dashboardBuilder := NewAPIService(
@@ -360,7 +366,10 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinat
 	), nil)
 
 	require.True(t, apierrors.IsForbidden(err), "moving a panel must require destination-folder access")
-	require.Equal(t, []string{"source-folder", "destination-folder"}, checkedFolders)
+	require.Equal(t, []authorizationCheck{
+		{verb: utils.VerbUpdate, folder: "source-folder"},
+		{verb: utils.VerbCreate, folder: "destination-folder"},
+	}, checks)
 }
 
 type recordingAccessClient struct {
