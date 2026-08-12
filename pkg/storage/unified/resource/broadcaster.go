@@ -166,6 +166,7 @@ func (b *broadcaster[T]) Subscribe(ctx context.Context, name, resource string) (
 		return sub.ch, nil
 	case <-ctx.Done(): // client canceled before registration
 		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultCtxCanceled).Inc()
+		b.Unsubscribe(sub.ch)
 		return nil, ctx.Err()
 	case <-b.terminated: // broadcaster stopped before registration
 		b.metrics.SubscriptionsTotal.WithLabelValues(resource, subscriptionResultTerminated).Inc()

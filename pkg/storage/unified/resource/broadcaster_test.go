@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"sync"
 	"testing"
 	"time"
 
@@ -326,4 +327,45 @@ func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 		}, time.Second, 10*time.Millisecond)
 		requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultTerminated), 1)
 	})
+}
+
+// TestBroadcasterUnsubscribesOnCancelDuringSubscribe guards against a leak where
+// a subscription is submitted, the caller's context is canceled before the
+// subscription is registered, and stream() then registers it with nobody left
+// to call Unsubscribe. Such an orphan would retain events until the overflow cap
+// or shutdown. After the fix the cancel path tears the subscription down, so no
+// subscribers remain regardless of how the cancel races registration.
+func TestBroadcasterUnsubscribesOnCancelDuringSubscribe(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan int)
+	t.Cleanup(func() { close(ch) })
+
+	reg := prometheus.NewPedanticRegistry()
+	metrics := newBroadcasterMetrics(reg)
+	b := NewBroadcaster(ctx, ch, metrics, nil)
+
+	const n = 200
+	var wg sync.WaitGroup
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			cctx, ccancel := context.WithCancel(ctx)
+			// Cancel concurrently to race the two-phase Subscribe so that some
+			// callers take the ctx.Done() path after the subscription is queued.
+			go ccancel()
+			sub, err := b.Subscribe(cctx, "leak", "leak")
+			if err == nil {
+				// Registered before the cancel landed; a real caller would clean up.
+				b.Unsubscribe(sub)
+			}
+		}()
+	}
+	wg.Wait()
+
+	// Every subscription — including those whose caller took the ctx.Done() path
+	// but that stream() still registered — must be torn down.
+	requireMetricEventually(t, metrics.Subscribers.WithLabelValues("leak"), 0)
 }

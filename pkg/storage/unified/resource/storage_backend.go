@@ -2581,10 +2581,11 @@ func (k *kvStorageBackend) ListEventsSince(ctx context.Context, sinceRV int64) i
 			switch {
 			case errors.Is(err, ErrNotFound):
 				// The version this event refers to was pruned from the data
-				// store. A newer version exists and its own event follows, so
-				// the watcher still converges.
-				k.log.Debug("skipping event with pruned data", "resource_version", event.ResourceVersion)
-				continue
+				// store, so the range after sinceRV can no longer be replayed in
+				// full. Refuse the resume with an expired error so client re-lists.
+				k.log.Info("cannot replay: event data pruned", "resource_version", event.ResourceVersion, "since", sinceRV)
+				yield(nil, NewResourceVersionExpiredError(sinceRV))
+				return
 			case err != nil:
 				yield(nil, err)
 				return

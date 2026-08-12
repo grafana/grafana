@@ -4077,7 +4077,7 @@ func TestKvStorageBackend_EventRetentionPeriodMinimum(t *testing.T) {
 	assert.Equal(t, 20*time.Minute, honoured.eventRetentionPeriod)
 }
 
-func TestKvStorageBackend_ListEventsSince_SkipsPrunedData(t *testing.T) {
+func TestKvStorageBackend_ListEventsSince_PrunedDataExpires(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
 
@@ -4100,8 +4100,9 @@ func TestKvStorageBackend_ListEventsSince_SkipsPrunedData(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// An event whose data version has been pruned is skipped instead of failing
-	// the whole replay.
+	// An event whose data version has been pruned means the history can no longer
+	// be replayed in full, so the replay fails with an expired error rather than
+	// silently skipping the event.
 	require.NoError(t, backend.eventStore.Save(ctx, Event{
 		Namespace:       "default",
 		Group:           "apps",
@@ -4112,9 +4113,16 @@ func TestKvStorageBackend_ListEventsSince_SkipsPrunedData(t *testing.T) {
 	}))
 
 	var rvs []int64
+	var sawErr error
 	for event, err := range backend.ListEventsSince(ctx, 0) {
-		require.NoError(t, err)
+		if err != nil {
+			sawErr = err
+			break
+		}
 		rvs = append(rvs, event.ResourceVersion)
 	}
+	// The intact event is still delivered; the pruned one surfaces as expired.
 	assert.Equal(t, []int64{rv}, rvs)
+	require.Error(t, sawErr)
+	require.True(t, IsResourceVersionExpired(sawErr), "expected an expired resource version error, got %v", sawErr)
 }
