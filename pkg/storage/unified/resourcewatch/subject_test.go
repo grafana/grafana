@@ -87,6 +87,15 @@ func TestGrantSubjects(t *testing.T) {
 		misses  []schema.GroupVersionResource
 	}{
 		{
+			grant: "*/*",
+			want:  SubjectAllResources,
+			matches: []schema.GroupVersionResource{
+				{Group: "provisioning.grafana.app", Resource: "jobs"},
+				{Group: "notifications.alerting.grafana.app", Resource: "receivers"},
+				{Resource: "configmaps"},
+			},
+		},
+		{
 			grant: "provisioning.grafana.app/jobs",
 			want:  "us.watch.v1.provisioning.grafana.app.*.jobs",
 			matches: []schema.GroupVersionResource{
@@ -147,7 +156,7 @@ func TestGrantSubjects(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.grant, func(t *testing.T) {
-			pattern := grantSubject(tt.grant)
+			pattern := grantSubject(t, tt.grant)
 			require.Equal(t, tt.want, pattern)
 
 			for _, gvr := range tt.matches {
@@ -165,10 +174,22 @@ func TestGrantSubjects(t *testing.T) {
 // grantSubject mirrors the us-nats auth callout: a <group>/<resource> grant
 // becomes a subject with the group's tokens copied verbatim and the namespace
 // wildcarded between group and resource.
-func grantSubject(grant string) string {
+//
+// A group of exactly "*" is the exception: it stands for every group, whatever
+// its token count, which no fixed-width pattern can cover. Only a ">" tail can,
+// and ">" is legal only as the final token, so it swallows the resource
+// position too — hence the callout expands it to the firehose and a whole-group
+// wildcard is only ever granted as "*/*".
+func grantSubject(t *testing.T, grant string) string {
+	t.Helper()
+
 	group, resource, _ := strings.Cut(grant, "/")
-	if group == "" {
+	switch group {
+	case "":
 		group = coreGroup
+	case anyToken:
+		require.Equal(t, anyToken, resource, "a %q group can only be granted with a %q resource", anyToken, anyToken)
+		return SubjectAllResources
 	}
 	return strings.Join([]string{subjectRoot, group, anyToken, resource}, ".")
 }
