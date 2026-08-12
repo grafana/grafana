@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { act, render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { type ComponentProps } from 'react';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
@@ -83,16 +83,12 @@ const setup = (propOverrides = {}) => {
 };
 
 describe('ExploreQueryInspector', () => {
-  beforeEach(async () => {
-    await act(async () => {
-      setTestFlags({ [FlagKeys.TableInspectDataTableNG]: false });
-    });
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.TableInspectDataTableNG]: false });
   });
 
-  afterEach(async () => {
-    await act(async () => {
-      setTestFlags({});
-    });
+  afterEach(() => {
+    setTestFlags({});
   });
 
   it('should render closable drawer component', () => {
