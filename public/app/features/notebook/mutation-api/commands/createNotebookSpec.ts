@@ -27,24 +27,29 @@ import { type Spec as NotebookSpec } from '../../types';
 
 import { requiresNotebookCreate } from './permissions';
 
-const createNotebookSpecPayloadSchema = z.object({
-  spec: z
-    .record(z.string(), z.unknown())
-    .describe('A complete notebook spec to create (the same shape GET_NOTEBOOK_SPEC returns).'),
-  validate: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe(
-      'Validate the spec against the notebook schema and reject before writing. On by default here, ' +
-        'unlike the other commands, because a create is persisted.'
-    ),
-  open: z
-    .boolean()
-    .optional()
-    .default(true)
-    .describe('Navigate to the new notebook. Turn off to create one without leaving the current page.'),
-});
+// Strict, like GET and APPLY. The argument for it is strongest here: this is the only command on the
+// surface that persists, so an ignored key is a saved notebook. A mistyped `open` navigates anyway and
+// a mistyped `validate` is harmless only because it defaults to on.
+const createNotebookSpecPayloadSchema = z
+  .object({
+    spec: z
+      .record(z.string(), z.unknown())
+      .describe('A complete notebook spec to create (the same shape GET_NOTEBOOK_SPEC returns).'),
+    validate: z
+      .boolean()
+      .optional()
+      .default(true)
+      .describe(
+        'Validate the spec against the notebook schema and reject before writing. On by default here, ' +
+          'unlike the other commands, because a create is persisted.'
+      ),
+    open: z
+      .boolean()
+      .optional()
+      .default(true)
+      .describe('Navigate to the new notebook. Turn off to create one without leaving the current page.'),
+  })
+  .strict();
 
 export type CreateNotebookSpecPayload = z.infer<typeof createNotebookSpecPayloadSchema>;
 

@@ -123,6 +123,25 @@ describe('CREATE_NOTEBOOK_SPEC', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('rejects an unknown payload key rather than ignoring it', async () => {
+    const fetch = jest.fn();
+    setBackendSrv({ fetch } as unknown as BackendSrv);
+    const push = jest.spyOn(locationService, 'push');
+    const client = new NotebookMutationClient(notebookScene());
+
+    // A mistyped `open` would otherwise be ignored and the create would navigate anyway. This is the
+    // one command here that persists, so an ignored key is a saved notebook.
+    const result = await client.execute({
+      type: 'CREATE_NOTEBOOK_SPEC',
+      payload: { spec: notebookSpec(), opne: false },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('opne');
+    expect(fetch).not.toHaveBeenCalled();
+    expect(push).not.toHaveBeenCalled();
+  });
+
   it("surfaces the apiserver's own rejection message", async () => {
     setBackendSrv({
       fetch: jest
