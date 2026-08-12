@@ -290,7 +290,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,alertingNotificationHistoryTriage,experimental,@grafana/alerting-squad,false,false,false
 2026-05-22,alertingNotificationHistoryDetail,experimental,@grafana/alerting-squad,false,false,false
 2026-07-14,deletedFolderResourceCleanup,experimental,@grafana/search-and-storage,false,true,false
-2026-08-11,libraryElementFolderUIDHeal,experimental,@grafana/search-and-storage,false,true,false
+2026-08-12,libraryElementFolderUIDRepair,experimental,@grafana/search-and-storage,false,true,false
 2026-05-22,react19,GA,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,managedPluginsV2,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-22,rememberUserOrgForSso,GA,@grafana/identity-access-team,false,false,false

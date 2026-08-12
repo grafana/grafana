@@ -282,7 +282,7 @@ var Basic = wire.NewSet(
 	libraryelements.ProvideFolderConsumer,
 	ngalert.ProvideAlertRuleFolderConsumer,
 	folderreconcile.ProvideReconciler,
-	libraryelements.ProvideFolderUIDHeal,
+	libraryelements.ProvideFolderUIDRepair,
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	github.ProvideFactory,

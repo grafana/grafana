@@ -823,12 +823,12 @@ const (
 	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
 
 	// FlagDeletedFolderResourceCleanup
-	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDHeal
+	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair
 	FlagDeletedFolderResourceCleanup = "deletedFolderResourceCleanup"
 
-	// FlagLibraryElementFolderUIDHeal
+	// FlagLibraryElementFolderUIDRepair
 	// Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup
-	FlagLibraryElementFolderUIDHeal = "libraryElementFolderUIDHeal"
+	FlagLibraryElementFolderUIDRepair = "libraryElementFolderUIDRepair"
 
 	// FlagReact19
 	// Whether to use the new React 19 runtime

@@ -2497,7 +2497,7 @@ var (
 		},
 		{
 			Name:            "deletedFolderResourceCleanup",
-			Description:     "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDHeal",
+			Description:     "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaSearchAndStorageSquad,
 			HideFromDocs:    true,
@@ -2506,7 +2506,7 @@ var (
 			Generate:        Generate{LegacyGo: true},
 		},
 		{
-			Name:            "libraryElementFolderUIDHeal",
+			Name:            "libraryElementFolderUIDRepair",
 			Description:     "Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaSearchAndStorageSquad,
