@@ -48,7 +48,7 @@ jobs:
       with:
         persist-credentials: false
     - name: Cache golden files
-      uses: actions/cache@v5  # zizmor: ignore[cache-poisoning] cache scope is per branch and the repo takes no fork PRs
+      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # zizmor: ignore[cache-poisoning] v5.0.4 — cache scope is per branch and the repo takes no fork PRs
       id: cache
       with:
         key: "golden-files-${{ runner.os }}-${{ hashFiles('apps/dashboard/**', 'pkg/apimachinery/**', 'pkg/infra/tracing/**', 'go.work', 'go.work.sum') }}"
