@@ -2189,16 +2189,17 @@
     {
       "metadata": {
         "name": "deletedFolderResourceCleanup",
-        "resourceVersion": "1786468186693",
+        "resourceVersion": "1786545663415",
         "creationTimestamp": "2026-07-14T02:45:08Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-08-11 17:09:46.693456265 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-08-12 14:41:03.415109912 +0000 UTC"
         }
       },
       "spec": {
         "description": "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDHeal",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -4197,13 +4198,17 @@
     {
       "metadata": {
         "name": "libraryElementFolderUIDHeal",
-        "resourceVersion": "1786410680079",
-        "creationTimestamp": "2026-08-11T01:11:20Z"
+        "resourceVersion": "1786544808568",
+        "creationTimestamp": "2026-08-11T01:11:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-12 14:26:48.568641559 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
       }
