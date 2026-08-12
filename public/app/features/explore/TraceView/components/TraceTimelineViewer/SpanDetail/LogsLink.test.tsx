@@ -9,13 +9,13 @@ import {
   store,
   toDataFrame,
 } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   getDataSourceInstance,
   useDataSourceInstanceList,
   useDataSourceInstanceSettings,
 } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
-import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type LokiQuery } from 'app/features/loki-helpers/types';
 
@@ -280,7 +280,7 @@ describe('LogsLinkButton', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       settings: { jsonData: {} } as any,
     });
-    let resolveQuery: ((value: { data: (typeof logsFrame)[] }) => void) | undefined;
+    let resolveQuery: ((value: { data: Array<typeof logsFrame> }) => void) | undefined;
     const query = jest.fn().mockReturnValue(
       new Promise((resolve) => {
         resolveQuery = resolve;
