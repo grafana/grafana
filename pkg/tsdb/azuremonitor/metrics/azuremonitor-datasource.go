@@ -96,7 +96,7 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 
 // Registered in pkg/services/featuremgmt; referenced by name because the
 // coreplugins depguard rule forbids importing Grafana core packages.
-const batchAPIFlag = "azureMonitorBatchAPI"
+const batchAPIFlag = "datasources.azureMonitorBatchAPI"
 
 // Defaults to off when the flag cannot be evaluated (e.g. the standalone
 // plugin binary has no provider).
@@ -126,7 +126,7 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 		return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client, svc.HTTPClient, svc.URL)
 	}
 	if dsInfo.Settings.BatchAPIEnabled {
-		e.Logger.Warn("Azure Monitor datasource has batchAPIEnabled=true but the azureMonitorBatchAPI feature flag is off; falling back to the legacy ARM metrics endpoint")
+		e.Logger.Warn("Azure Monitor datasource has batchAPIEnabled=true but the datasources.azureMonitorBatchAPI feature flag is off; falling back to the legacy ARM metrics endpoint")
 	}
 
 	result := backend.NewQueryDataResponse()

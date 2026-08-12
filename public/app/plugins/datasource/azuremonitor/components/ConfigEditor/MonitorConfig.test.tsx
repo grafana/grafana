@@ -103,7 +103,7 @@ describe('MonitorConfig', () => {
     });
   });
 
-  it('should show the Batch API toggle when the azureMonitorBatchAPI feature flag is enabled', () => {
+  it('should show the Batch API toggle when the datasources.azureMonitorBatchAPI feature flag is enabled', () => {
     jest.mocked(useBatchAPIFlag).mockReturnValue(true);
 
     render(<MonitorConfig {...defaultProps} />);
@@ -111,7 +111,7 @@ describe('MonitorConfig', () => {
     expect(screen.getByText('Enable Batch API')).toBeInTheDocument();
   });
 
-  it('should hide the Batch API toggle when the azureMonitorBatchAPI feature flag is disabled', () => {
+  it('should hide the Batch API toggle when the datasources.azureMonitorBatchAPI feature flag is disabled', () => {
     jest.mocked(useBatchAPIFlag).mockReturnValue(false);
 
     render(<MonitorConfig {...defaultProps} />);

@@ -10,7 +10,7 @@ import pluginJson from './plugin.json';
 export const OPEN_FEATURE_DOMAIN = pluginJson.id;
 
 // Registered in pkg/services/featuremgmt/registry.go.
-export const BATCH_API_FLAG = 'azureMonitorBatchAPI';
+export const BATCH_API_FLAG = 'datasources.azureMonitorBatchAPI';
 
 /**
  * Registers a read-only proxy of Grafana's OFREP provider under the plugin's
@@ -40,7 +40,7 @@ export function initFeatureFlags(): void {
 export function isBatchAPIFlagEnabled(): boolean {
   const details = OpenFeature.getClient(OPEN_FEATURE_DOMAIN).getBooleanDetails(BATCH_API_FLAG, false);
   if (details.errorCode) {
-    return Boolean(config.featureToggles.azureMonitorBatchAPI);
+    return Boolean(config.featureToggles[BATCH_API_FLAG]);
   }
   return details.value;
 }

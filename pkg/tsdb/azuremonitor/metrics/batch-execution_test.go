@@ -60,7 +60,7 @@ func (t *hostRecordingTransport) RoundTrip(req *http.Request) (*http.Response, e
 var openfeatureTestMutex sync.Mutex
 
 // stubBatchFlag registers an in-memory OpenFeature provider with the
-// azureMonitorBatchAPI flag set for the duration of the test and returns the
+// datasources.azureMonitorBatchAPI flag set for the duration of the test and returns the
 // context to query with.
 func stubBatchFlag(t *testing.T, enabled bool) context.Context {
 	t.Helper()
