@@ -149,6 +149,8 @@ export const FlagKeys = {
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
+  /** Routes snapshot requests from /api to the /apis endpoint */
+  SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
   /** Enables CodeMirror editor for SQL Expressions */
@@ -163,10 +165,8 @@ export const FlagKeys = {
   TableAutoColumnWidths: "table.autoColumnWidths",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
-  /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
-  TableProtoRowParser: "table.protoRowParser",
-  /** Enables the refactored TableNG nested-table implementation */
-  TableRefactorNested: "table.refactorNested",
+  /** Enables the new features in text panel */
+  TextNewFeatures: "text.newFeatures",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -920,6 +920,17 @@ export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Routes snapshot requests from /api to the /apis endpoint
+ *
+ * **Details:**
+ * - flag key: `snapshots.kubernetesSnapshots`
+ * - default value: `false`
+ */
+export const useFlagSnapshotsKubernetesSnapshots = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("snapshots.kubernetesSnapshots", false, options).value;
+};
+
+/**
  * Enables the splash screen modal for introducing new Grafana features on first session
  *
  * **Details:**
@@ -997,25 +1008,14 @@ export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOpti
 };
 
 /**
- * Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.
+ * Enables the new features in text panel
  *
  * **Details:**
- * - flag key: `table.protoRowParser`
+ * - flag key: `text.newFeatures`
  * - default value: `false`
  */
-export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("table.protoRowParser", false, options).value;
-};
-
-/**
- * Enables the refactored TableNG nested-table implementation
- *
- * **Details:**
- * - flag key: `table.refactorNested`
- * - default value: `false`
- */
-export const useFlagTableRefactorNested = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("table.refactorNested", false, options).value;
+export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("text.newFeatures", false, options).value;
 };
 
 /**

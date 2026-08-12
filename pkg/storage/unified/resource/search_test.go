@@ -674,6 +674,32 @@ func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
 	}
 }
 
+// Anything this binary builds with, it must also know how to read, or it would
+// refuse its own indexes.
+func TestKnownIndexFeaturesCoverCurrent(t *testing.T) {
+	for _, current := range CurrentIndexFeatures() {
+		require.Contains(t, knownIndexFeatures, current)
+	}
+}
+
+// Declaring a requirement this binary cannot read would reject every index it
+// builds.
+func TestReaderRequiredFeaturesAreKnown(t *testing.T) {
+	for _, required := range readerRequiredFeatures {
+		require.Contains(t, knownIndexFeatures, required)
+	}
+	require.Empty(t, UnknownIndexRequirements(IndexReaderRequirements()))
+}
+
+func TestUnknownIndexRequirements(t *testing.T) {
+	// An index built before requirements were recorded.
+	require.Empty(t, UnknownIndexRequirements(nil))
+
+	// Refused by name, so an older instance needs no knowledge of the feature.
+	require.Equal(t, []IndexFeature{"feature-from-the-future"},
+		UnknownIndexRequirements([]IndexFeature{IndexFeatureDeletedMarker, "feature-from-the-future"}))
+}
+
 // TestRequiredIndexFeaturesStoredFacets covers the gating that keeps the stored
 // facet mapping from rebuilding indexes where post-rank authorization is off.
 func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {

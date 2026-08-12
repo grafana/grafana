@@ -3161,6 +3161,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.pluginPathNesting",
+        "resourceVersion": "1785918906185",
+        "creationTimestamp": "2026-08-05T08:35:06Z"
+      },
+      "spec": {
+        "description": "Nest app plugin navigation items in the mega menu based on their URL path hierarchy",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1781718345897",
         "creationTimestamp": "2026-06-17T17:45:45Z"
@@ -4064,13 +4077,18 @@
     {
       "metadata": {
         "name": "kubernetesSnapshots",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-12-05T22:31:49Z"
+        "resourceVersion": "1785415648917",
+        "creationTimestamp": "2023-12-05T22:31:49Z",
+        "deletionTimestamp": "2026-08-12T12:19:48Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-30 12:47:28.917575 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Routes snapshot requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true,
         "requiresRestart": true,
         "expression": "false"
       }
@@ -5896,6 +5914,19 @@
     },
     {
       "metadata": {
+        "name": "snapshots.kubernetesSnapshots",
+        "resourceVersion": "1785421660642",
+        "creationTimestamp": "2026-07-30T14:27:40Z"
+      },
+      "spec": {
+        "description": "Routes snapshot requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "splashScreen",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -6124,7 +6155,8 @@
       "metadata": {
         "name": "table.protoRowParser",
         "resourceVersion": "1782139478281",
-        "creationTimestamp": "2026-06-22T14:44:38Z"
+        "creationTimestamp": "2026-06-22T14:44:38Z",
+        "deletionTimestamp": "2026-08-11T20:21:15Z"
       },
       "spec": {
         "description": "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
@@ -6139,7 +6171,8 @@
       "metadata": {
         "name": "table.refactorNested",
         "resourceVersion": "1782413661913",
-        "creationTimestamp": "2026-06-25T18:54:21Z"
+        "creationTimestamp": "2026-06-25T18:54:21Z",
+        "deletionTimestamp": "2026-08-11T20:20:39Z"
       },
       "spec": {
         "description": "Enables the refactored TableNG nested-table implementation",
@@ -6243,6 +6276,21 @@
         "description": "Enables creating alerts from Tempo data source",
         "stage": "experimental",
         "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "text.newFeatures",
+        "resourceVersion": "1786536451233",
+        "creationTimestamp": "2026-08-12T12:07:31Z"
+      },
+      "spec": {
+        "description": "Enables the new features in text panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

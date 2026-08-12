@@ -11,11 +11,12 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
-import { type NotebookLayoutItemKind, type NotebookLayoutKind } from 'app/features/notebook/types';
+import { type DashboardLayoutManager } from 'app/features/dashboard-scene/scene/types/DashboardLayoutManager';
+import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/types/LayoutRegistryItem';
+import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 
-import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
-import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
+import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { NotebookCellRenderer } from './NotebookCellRenderer';
@@ -23,10 +24,9 @@ import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 
 interface NotebookLayoutManagerState extends SceneObjectState {
   cells: NotebookCellItem[];
-  // The notebook's title and tags, shown in the document header. Held on the manager's own
-  // state (set by the notebook loader) instead of read from the parent DashboardScene —
-  // reaching up to the scene would import the dashboard-scene module graph and reintroduce a
-  // dependency cycle.
+  // Seeded by the notebook loader from the same spec fields as NotebookScene, so the document
+  // header renders without reaching up to the parent. Read them off the scene once editing lands,
+  // or the two copies drift.
   title?: string;
   tags?: string[];
 }
@@ -84,8 +84,19 @@ export class NotebookLayoutManager
     return this.clone({});
   }
 
-  public duplicate(_panelIdGenerator?: PanelIdGenerator): NotebookLayoutManager {
-    return this.clone({ key: undefined });
+  // Same as the dashboard layout managers: a plain clone would reuse the originals' panel-<id> keys,
+  // which collide in findVizPanelByKey and in the panelId enrichDataRequest feeds to query caching.
+  public duplicate(panelIdGenerator?: PanelIdGenerator): NotebookLayoutManager {
+    const nextId = panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(this);
+
+    const cells = this.state.cells.map((cell) =>
+      cell.clone({
+        key: undefined,
+        body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
+      })
+    );
+
+    return this.clone({ key: undefined, cells });
   }
 
   public getOutlineChildren(): SceneObject[] {

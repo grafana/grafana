@@ -5659,6 +5659,7 @@
       "add-conditional-rule": "Add {{ruleDescription}} rule",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
+      "duplicate": "Duplicate {{typeName}}",
       "duplicate-panel": "Duplicate panel",
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
@@ -6370,7 +6371,7 @@
         "custom-options": {
           "apply": "Apply",
           "discard": "Discard",
-          "modal-title": "Custom options"
+          "modal-title": "Custom variable: {{name}}"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -6863,7 +6864,8 @@
         "change-annotation-enabled-state": "Change annotation enabled state",
         "change-annotation-name": "Change annotation name",
         "change-annotation-panel-filter": "Change annotation panel filter"
-      }
+      },
+      "edit-query": "Edit query"
     },
     "annotation-editable-element": {
       "delete-confirm": "Delete annotation query",
@@ -6939,13 +6941,9 @@
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Delete",
-      "aria-label-edit": "Edit",
-      "delete": {
-        "confirm": "Are you sure you want to delete: {{name}}?",
-        "text": "Delete {{type}}",
-        "title": "Delete {{type}}"
-      }
+      "delete-tooltip": "Delete",
+      "duplicate-tooltip": "Duplicate",
+      "settings": "Settings"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -7745,6 +7743,10 @@
     },
     "variable-controls": {
       "add-variable": "Add variable"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "Edit values",
+      "edit-query": "Edit query"
     },
     "variable-editable-element": {
       "delete-confirm": "Delete variable",
@@ -12764,6 +12766,13 @@
       "title-zoom-out": "Zoom out"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "Notebook",
+      "failed-to-load": "Failed to load notebook",
+      "not-found-title": "Not found"
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "All authors",
@@ -12794,8 +12803,7 @@
       "unknown-author": "Anonymous"
     },
     "view": {
-      "edit-mode": "Edit",
-      "editing": "Editing"
+      "copy-link": "Copy link"
     }
   },
   "notifications": {

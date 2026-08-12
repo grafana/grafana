@@ -6,8 +6,8 @@ import { type SnapshotCreateResponse } from '../../public/app/features/dashboard
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
 import { test, expect } from './fixtures';
+import { flows } from './helpers';
 import { type Panels } from './page-objects';
-import { importTestDashboard, saveDashboardAndCloseToast } from './utils';
 
 const repeatTitleBase = 'repeat - ';
 const repeatOptions = [1, 2, 3, 4];
@@ -63,7 +63,7 @@ test.describe(
       controls,
       panels,
     }) => {
-      await importTestDashboard(
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Snapshots repeats - custom grid',
@@ -91,7 +91,7 @@ test.describe(
       sidebar,
       panels,
     }) => {
-      await importTestDashboard(
+      await flows.dashboards.importTestDashboard(
         page,
         selectors,
         'Snapshots repeats - auto grid',
@@ -102,7 +102,7 @@ test.describe(
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Options');
       await sidebar.dashboardOptions.gridLayoutOptions.switchLayout('Auto', { confirm: true });
-      await saveDashboardAndCloseToast(page, controls);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await expectRepeatPanelsRendered(panels, repeatOptions.length);

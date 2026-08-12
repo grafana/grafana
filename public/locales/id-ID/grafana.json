@@ -3593,6 +3593,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Interval waktu",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Pilih interval waktu..."
     },
     "time-intervals-table": {
@@ -5622,6 +5623,8 @@
       "edit-query-result-rule": "Ubah aturan hasil kueri",
       "edit-template-variable-rule": "Ubah aturan variabel templat",
       "edit-time-range-rule": "Ubah aturan rentang waktu",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Pindahkan {{typeName}}",
       "panel-background": "Ubah latar belakang panel",
       "panel-description": "Ubah deskripsi panel",
@@ -6255,6 +6258,12 @@
         "title-above-dashboard_other": "",
         "title-controls-menu_other": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -8010,7 +8019,8 @@
       "title-missing-rights": "Hak tidak ada"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Pilih sumber data"
+      "aria-label-select-a-data-source": "Pilih sumber data",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Halaman tidak ditemukan: {{page}}"
@@ -10901,6 +10911,12 @@
       "critical-count_other": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12356,6 +12372,10 @@
     "new-folder": {
       "title": "Folder baru"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12646,8 +12666,33 @@
       "title-zoom-out": "Perkecil"
     }
   },
-  "notebook": {
-    "breadcrumb-title": ""
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_other": "",
+      "count-truncated_other": ""
+    }
   },
   "notifications": {
     "empty-state": {

@@ -656,11 +656,12 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 	}
 
 	bi := buildInfo{
-		BuildTime:        buildTime.Unix(),
-		BuildVersion:     buildVersion,
-		SelectableFields: selectableFields,
-		SearchFieldsHash: searchFieldsHash,
-		Features:         resource.CurrentIndexFeatures(),
+		BuildTime:          buildTime.Unix(),
+		BuildVersion:       buildVersion,
+		SelectableFields:   selectableFields,
+		SearchFieldsHash:   searchFieldsHash,
+		Features:           resource.CurrentIndexFeatures(),
+		ReaderRequirements: resource.IndexReaderRequirements(),
 	}
 
 	biBytes, err := json.Marshal(bi)
@@ -694,6 +695,10 @@ type buildInfo struct {
 	// Index features the index was built with. Absent on indexes built before
 	// index features existed.
 	Features []resource.IndexFeature `json:"features,omitempty"`
+
+	// Features a reader must understand before using this index. One this binary
+	// does not recognise means the index may hold documents it would misread.
+	ReaderRequirements []resource.IndexFeature `json:"reader_requirements,omitempty"`
 }
 
 type buildIndexSource int
@@ -1079,7 +1084,6 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 	bi, err := getBuildInfo(idx)
 	if err != nil {
 		logger.Warn("failed to get build info from existing index", "error", err)
-		return idx, name, rv, nil
 	}
 
 	indexBuildTime := time.Time{}
@@ -1091,7 +1095,13 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 	// scan replaces it shortly after. Only an index that would answer incorrectly
 	// is rejected. An index with no build time counts as older than any import.
 	reason := ""
-	if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
+	if err != nil {
+		// Without build info there is no way to tell whether this index declares a
+		// requirement this binary cannot meet, so it is not safe to serve.
+		reason = fmt.Sprintf("build info could not be read: %v", err)
+	} else if unknown := resource.UnknownIndexRequirements(bi.ReaderRequirements); len(unknown) > 0 {
+		reason = fmt.Sprintf("index requires features this instance does not understand %v", unknown)
+	} else if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
 		reason = fmt.Sprintf("index is missing required features %v", missing)
 	} else if !lastImportTime.IsZero() && indexBuildTime.Before(lastImportTime) {
 		reason = "index was built before the last import"
@@ -1960,11 +1970,12 @@ func (bi buildInfo) resourceBuildInfo() resource.IndexBuildInfo {
 	}
 
 	return resource.IndexBuildInfo{
-		BuildTime:        bt,
-		BuildVersion:     bv,
-		SelectableFields: bi.SelectableFields,
-		SearchFieldsHash: bi.SearchFieldsHash,
-		Features:         bi.Features,
+		BuildTime:          bt,
+		BuildVersion:       bv,
+		SelectableFields:   bi.SelectableFields,
+		SearchFieldsHash:   bi.SearchFieldsHash,
+		Features:           bi.Features,
+		ReaderRequirements: bi.ReaderRequirements,
 	}
 }
 
