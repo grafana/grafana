@@ -31,8 +31,7 @@ test.describe(
 
       await expect(panels.getPanels(panelTitle)).toHaveCount(2);
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls);
 
       await expect(panels.getPanels(panelTitle)).toHaveCount(2);
     });

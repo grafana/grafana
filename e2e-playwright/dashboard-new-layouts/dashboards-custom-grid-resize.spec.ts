@@ -45,7 +45,7 @@ test.describe(
         );
       }).toPass();
 
-      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
+      await flows.dashboards.saveDashboard(page, controls, { reloadPageAfterSave: false, title: test.info().title });
 
       const panelBoxAfterResize = await getPanelBox(panels, 'New panel');
 

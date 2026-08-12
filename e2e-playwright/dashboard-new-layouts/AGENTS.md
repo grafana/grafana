@@ -74,11 +74,11 @@ Page objects deliberately receive only the selector-resolving function, not a wh
 
 Shared spec helpers live in `helpers/` and are imported from its barrel (`import { flows, movePanel, expectRowToBeVisible } from './helpers'`). Each file has one responsibility — put new helpers in the right one:
 
-| File            | Responsibility                                                                                                                                                                   |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `flows.ts`      | Multi-step user flows (setup, navigation) composed from page objects, exposed as the namespaced `flows` object (`flows.dashboards.*`, `flows.variables.*`, `flows.navigation.*`) |
-| `utils.ts`      | Pixel/timing-sensitive mechanics: drag-and-drop and `boundingBox()` geometry                                                                                                     |
-| `assertions.ts` | Reusable assertion bundles (`expect` calls over page-object locators)                                                                                                            |
+| File            | Responsibility                                                                                                                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `flows.ts`      | Multi-step user flows (setup, navigation) composed from page objects, exposed as the namespaced `flows` object (`flows.dashboards.importTestDashboard`, `flows.dashboards.saveDashboard`, `flows.variables.*`, `flows.navigation.*`) |
+| `utils.ts`      | Pixel/timing-sensitive mechanics: drag-and-drop and `boundingBox()` geometry                                                                                                                                                         |
+| `assertions.ts` | Reusable assertion bundles (`expect` calls over page-object locators)                                                                                                                                                                |
 
 ## How to Write a New Test
 
