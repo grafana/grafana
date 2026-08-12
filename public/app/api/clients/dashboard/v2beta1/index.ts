@@ -102,6 +102,10 @@ export const {
   useUpdateVariableMutation,
   useDeleteVariableMutation,
   useReplaceVariableMutation,
+  // The generated notebook endpoints already provide/invalidate the coarse 'Notebook' tag, so
+  // creating a notebook refetches the list without any extra enhancement here.
+  useListNotebookQuery,
+  useCreateNotebookMutation,
 } = dashboardAPIv2beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
@@ -112,4 +116,7 @@ export type {
   ListVariableApiResponse,
   CreateVariableApiArg,
   UpdateVariableApiArg,
+  Notebook,
+  NotebookList,
+  NotebookSpec,
 } from '@grafana/api-clients/rtkq/dashboard/v2beta1';

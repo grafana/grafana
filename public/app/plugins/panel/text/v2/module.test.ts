@@ -5,6 +5,13 @@ import { type Options, RenderMode } from '../panelcfg.gen';
 
 import { textNGPanelOptions } from './module';
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: () => ({ getBooleanValue: () => mockNewFeatures }),
+}));
+
+let mockNewFeatures = true;
+
 // addSelect resolves its editor from the registry, which app.ts normally seeds.
 standardEditorsRegistry.setInit(getAllOptionEditors);
 
@@ -23,6 +30,10 @@ function getRenderModeItem() {
 }
 
 describe('textNGPanelOptions', () => {
+  beforeEach(() => {
+    mockNewFeatures = true;
+  });
+
   it('registers renderMode with a default that preserves a single render', () => {
     expect(getRenderModeItem().defaultValue).toBe(RenderMode.Once);
   });
@@ -47,5 +58,12 @@ describe('textNGPanelOptions', () => {
     const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
 
     expect(getRenderModeItem().showIf?.({} as Options, data)).toBe(true);
+  });
+
+  it('hides renderMode when the text.newFeatures flag is off, even with rows', () => {
+    mockNewFeatures = false;
+    const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
+
+    expect(getRenderModeItem().showIf?.({} as Options, data)).toBe(false);
   });
 });

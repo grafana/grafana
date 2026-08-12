@@ -1,5 +1,6 @@
 import { PanelPlugin, type PanelOptionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { defaultCodeOptions, defaultOptions, type Options, RenderMode } from '../panelcfg.gen';
 
@@ -46,7 +47,8 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
         },
       ],
     },
-    showIf: (_options, data) => hasRenderableData(data),
+    showIf: (_options, data) =>
+      getFeatureFlagClient().getBooleanValue('text.newFeatures', false) && hasRenderableData(data),
   });
 };
 

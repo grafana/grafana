@@ -6,6 +6,44 @@ const COVERAGE_MAIN_PATH = './coverage-main/coverage-summary.json';
 const COVERAGE_PR_PATH = './coverage-pr/coverage-summary.json';
 const COMPARISON_OUTPUT_PATH = './coverage-comparison.md';
 
+// Drops of this many percentage points or less do not fail the check. A single
+// added branch or line in a large codebase can move the percentage by 0.01-0.02
+// without meaningfully reducing test coverage.
+const DROP_TOLERANCE_PCT = 0.02;
+
+const METRICS = ['lines', 'statements', 'functions', 'branches'];
+
+/**
+ * Rounds a percentage to 2 decimal places to match display precision
+ * @param {number} value - Percentage value
+ * @returns {number} Rounded percentage
+ */
+function roundPct(value) {
+  return Number(value.toFixed(2));
+}
+
+/**
+ * Classifies a coverage change as improved/unchanged, a tolerated drop, or a regression
+ * @param {number} mainValue - Main branch coverage percentage
+ * @param {number} prValue - PR branch coverage percentage
+ * @returns {'pass'|'tolerated'|'fail'}
+ */
+function classifyChange(mainValue, prValue) {
+  // Round each side first so the drop matches what's displayed (see formatDelta).
+  // Subtracting two already-rounded numbers can still leave binary floating point
+  // error right at the tolerance boundary (e.g. 79.96 - 79.94 === 0.020000000000010232),
+  // so round the difference once more instead of comparing against it directly.
+  const drop = roundPct(roundPct(mainValue) - roundPct(prValue));
+
+  if (drop <= 0) {
+    return 'pass';
+  }
+  if (drop <= DROP_TOLERANCE_PCT) {
+    return 'tolerated';
+  }
+  return 'fail';
+}
+
 /**
  * Reads and parses a coverage summary JSON file
  * @param {string} filePath - Path to coverage summary file
@@ -37,31 +75,34 @@ function formatPercentage(value) {
  * @returns {string} Status icon and text
  */
 function getStatusIcon(mainValue, prValue) {
-  // Round to 2 decimal places for comparison to match display precision
-  const prPct = Math.round(prValue * 100) / 100;
-  const mainPct = Math.round(mainValue * 100) / 100;
-
-  if (prPct >= mainPct) {
-    return '✅ Pass';
+  switch (classifyChange(mainValue, prValue)) {
+    case 'pass':
+      return '✅ Pass';
+    case 'tolerated':
+      return '🟡 Within tolerance';
+    default:
+      return '❌ Fail';
   }
-  return '❌ Fail';
 }
 
 /**
  * Determines overall pass/fail status for all coverage metrics
  * @param {Object} mainSummary - Main branch coverage summary
  * @param {Object} prSummary - PR branch coverage summary
- * @returns {boolean} True if all metrics maintained or improved
+ * @returns {boolean} True if no metric dropped by more than the tolerance
  */
 function getOverallStatus(mainSummary, prSummary) {
-  const metrics = ['lines', 'statements', 'functions', 'branches'];
-  const allPass = metrics.every((metric) => {
-    // Round to 2 decimal places for comparison to match display precision
-    const prPct = Math.round(prSummary[metric].pct * 100) / 100;
-    const mainPct = Math.round(mainSummary[metric].pct * 100) / 100;
-    return prPct >= mainPct;
-  });
-  return allPass;
+  return METRICS.every((metric) => classifyChange(mainSummary[metric].pct, prSummary[metric].pct) !== 'fail');
+}
+
+/**
+ * Reports whether any metric dropped within the tolerated range
+ * @param {Object} mainSummary - Main branch coverage summary
+ * @param {Object} prSummary - PR branch coverage summary
+ * @returns {boolean} True if at least one metric had a tolerated drop
+ */
+function hasToleratedDrop(mainSummary, prSummary) {
+  return METRICS.some((metric) => classifyChange(mainSummary[metric].pct, prSummary[metric].pct) === 'tolerated');
 }
 
 /**
@@ -71,7 +112,9 @@ function getOverallStatus(mainSummary, prSummary) {
  * @returns {string} Formatted delta (e.g., "+1.2%" or "-0.5%")
  */
 function formatDelta(prValue, mainValue) {
-  const delta = prValue - mainValue;
+  // Round each side first, same as classifyChange, so the displayed delta never
+  // disagrees with the status/tolerance columns near the rounding boundary.
+  const delta = roundPct(prValue) - roundPct(mainValue);
   if (delta > 0) {
     return `+${delta.toFixed(2)}%`;
   } else if (delta < 0) {
@@ -89,7 +132,6 @@ function formatDelta(prValue, mainValue) {
 function getFilesWithDecreasedCoverage(mainCoverage, prCoverage) {
   const mainFiles = mainCoverage.files || {};
   const prFiles = prCoverage.files || {};
-  const metrics = ['lines', 'statements', 'functions', 'branches'];
   const decreased = [];
 
   for (const [filePath, prFile] of Object.entries(prFiles)) {
@@ -98,11 +140,7 @@ function getFilesWithDecreasedCoverage(mainCoverage, prCoverage) {
       continue; // new file — not a regression
     }
 
-    const anyDecreased = metrics.some((metric) => {
-      const prPct = Math.round(prFile[metric].pct * 100) / 100;
-      const mainPct = Math.round(mainFile[metric].pct * 100) / 100;
-      return prPct < mainPct;
-    });
+    const anyDecreased = METRICS.some((metric) => roundPct(prFile[metric].pct) < roundPct(mainFile[metric].pct));
 
     if (anyDecreased) {
       decreased.push({ path: filePath, main: mainFile, pr: prFile });
@@ -134,7 +172,6 @@ function generateFailureDetailsSection(decreasedFiles, artifactUrl, prSha, repo)
   }
 
   const MAX_FILES = 20;
-  const metrics = ['lines', 'statements', 'functions', 'branches'];
   const headers = ['File', 'Lines', 'Statements', 'Functions', 'Branches'];
 
   lines.push(`| ${headers.join(' | ')} |`);
@@ -142,9 +179,9 @@ function generateFailureDetailsSection(decreasedFiles, artifactUrl, prSha, repo)
 
   const shown = decreasedFiles.slice(0, MAX_FILES);
   for (const { path, main, pr } of shown) {
-    const metricCells = metrics.map((metric) => {
-      const prPct = Math.round(pr[metric].pct * 100) / 100;
-      const mainPct = Math.round(main[metric].pct * 100) / 100;
+    const metricCells = METRICS.map((metric) => {
+      const prPct = roundPct(pr[metric].pct);
+      const mainPct = roundPct(main[metric].pct);
       return prPct < mainPct ? `${formatPercentage(mainPct)} → ${formatPercentage(prPct)}` : '—';
     });
 
@@ -202,10 +239,17 @@ function generateMarkdown(mainCoverage, prCoverage) {
     })
     .join('\n');
 
-  const overallStatus = overallPass ? '✅ Passed' : '❌ Failed';
+  const tolerated = hasToleratedDrop(mainSummary, prSummary);
+
+  let overallStatus = '✅ Passed';
+  if (!overallPass) {
+    overallStatus = '❌ Failed';
+  } else if (tolerated) {
+    overallStatus = '🟡 Passed within tolerance';
+  }
 
   let failureDetails = '';
-  if (!overallPass) {
+  if (!overallPass || tolerated) {
     const artifactUrl = process.env.COVERAGE_ARTIFACT_URL || '';
     const prSha = process.env.PR_SHA || '';
     const repo = process.env.GITHUB_REPOSITORY || '';
@@ -213,12 +257,19 @@ function generateMarkdown(mainCoverage, prCoverage) {
     failureDetails = generateFailureDetailsSection(decreasedFiles, artifactUrl, prSha, repo);
   }
 
+  // Only explain the tolerance when it is what let the check pass. On a failure the
+  // note would contradict the result and draw attention away from the real regression.
+  const toleranceNote =
+    overallPass && tolerated
+      ? `\n_Drops of ${formatPercentage(DROP_TOLERANCE_PCT)} or less are tolerated and do not fail the check._\n`
+      : '';
+
   return `## Test Coverage Checks ${overallStatus} for \`${teamName}\`
 
 | Metric | Main | PR | Change | Status |
 |--------|------|----|----|--------|
 ${tableRows}
-
+${toleranceNote}
 ${failureDetails}
 
 **Run locally:** 💻 \`yarn test:coverage:by-codeowner ${teamName}\`
@@ -264,16 +315,22 @@ function compareCoverageByCodeowner(
 if (require.main === module) {
   const passed = compareCoverageByCodeowner();
   if (!passed) {
-    console.error('❌ Coverage check failed: One or more metrics decreased');
+    console.error(
+      `❌ Coverage check failed: One or more metrics dropped by more than ${formatPercentage(DROP_TOLERANCE_PCT)}`
+    );
     process.exit(1);
   }
-  console.log('✅ Coverage check passed: All metrics maintained or improved');
+  console.log('✅ Coverage check passed: All metrics maintained, improved, or within tolerance');
 }
 
 module.exports = {
+  DROP_TOLERANCE_PCT,
   compareCoverageByCodeowner,
+  formatDelta,
   generateMarkdown,
+  getStatusIcon,
   getOverallStatus,
+  hasToleratedDrop,
   getFilesWithDecreasedCoverage,
   generateFailureDetailsSection,
 };

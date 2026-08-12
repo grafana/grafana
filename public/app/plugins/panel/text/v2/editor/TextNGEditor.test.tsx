@@ -15,6 +15,9 @@ import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 // stub it with a plain textarea so these tests stay fast and deterministic.
 jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
+  // The stubbed editor never runs completions; the source itself is covered by
+  // variableCompletion.test.ts.
+  createVariableCompletionSource: () => () => null,
   CodeMirrorEditor: ({
     value,
     onChange,
