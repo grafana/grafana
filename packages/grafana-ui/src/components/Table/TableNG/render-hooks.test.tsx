@@ -380,6 +380,42 @@ describe('useColumnBuilderFromFields', () => {
     expect(result.columns[1].width).toBe(200);
   });
 
+  it('marks columns sortable by default', () => {
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+    const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+    expect(result.columns[0].sortable).toBe(true);
+    expect(result.columns[1].sortable).toBe(true);
+  });
+
+  it('disables header sorting when field.config.custom.sortable is false', () => {
+    const nonSortableFrame = createDataFrame({
+      fields: [
+        {
+          name: 'timestamp',
+          type: FieldType.time,
+          values: [1, 2],
+          config: { custom: { sortable: false } },
+        },
+        { name: 'body', type: FieldType.string, values: ['a', 'b'] },
+      ],
+    });
+    const nonSortableRows: TableRow[] = [
+      { __depth: 0, __index: 0, timestamp: 1, body: 'a' },
+      { __depth: 0, __index: 1, timestamp: 2, body: 'b' },
+    ];
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+    const result = callFromFields(
+      hook,
+      nonSortableFrame.fields,
+      [100, 100],
+      nonSortableFrame,
+      nonSortableRows,
+      nonSortableRows
+    );
+    expect(result.columns[0].sortable).toBe(false);
+    expect(result.columns[1].sortable).toBe(true);
+  });
+
   function makePillFrame({ withMappings }: { withMappings: boolean }): DataFrame {
     return createDataFrame({
       fields: [

@@ -507,6 +507,9 @@ function buildColumnsFromFields(
       key: displayName,
       name: displayName,
       width,
+      // Default true; set field.config.custom.sortable === false to disable header-click sorting.
+      // Programmatic sortColumns (e.g. managed sortBy) still apply when sortable is false.
+      sortable: field.config.custom?.sortable !== false,
       headerCellClass,
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       renderCell: renderCellContent,

@@ -78,6 +78,42 @@ describe('HeaderCell', () => {
     expect(screen.queryByLabelText('Filter Field1')).not.toBeInTheDocument();
   });
 
+  it('uses the display name as the native title when there is no description', () => {
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    expect(screen.getByRole('button', { name: 'Field1' })).toHaveAttribute('title', 'Field1');
+  });
+
+  it('shows a tooltip from the field description instead of a native title', async () => {
+    render(
+      <HeaderCell
+        {...baseProps}
+        field={makeField({
+          config: {
+            description: 'Time sorting is controlled by the table controls on the right side',
+            custom: { sortable: false },
+          },
+        })}
+      />
+    );
+    const label = screen.getByRole('button', { name: 'Field1' });
+    expect(label).not.toHaveAttribute('title');
+    await userEvent.hover(label);
+    expect(
+      await screen.findByText('Time sorting is controlled by the table controls on the right side')
+    ).toBeInTheDocument();
+  });
+
+  it('still renders the sort direction indicator when the column is not header-sortable', () => {
+    const { container } = render(
+      <HeaderCell
+        {...baseProps}
+        direction="DESC"
+        field={makeField({ config: { custom: { sortable: false } } })}
+      />
+    );
+    expect(container.querySelector('svg')).toBeInTheDocument();
+  });
+
   it('exposes the filter popover state via aria-expanded on the filter button', async () => {
     render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { filterable: true } } })} />);
     const filterButton = screen.getByLabelText('Filter Field1');

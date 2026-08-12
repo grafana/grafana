@@ -4,6 +4,7 @@ import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
 
 import { type DataFrame, type FieldConfigSource, transformDataFrame } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { type CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
 import { type LogsFrame } from 'app/features/logs/logsFrame';
 
@@ -149,15 +150,26 @@ const organizeFields = async (
         configAfterLevel.custom.cellOptions = undefined;
       }
 
+      const isTimeField = field.name === timeFieldName;
+
       field.config = {
         ...configAfterLevel,
+        // Time sort is driven by LogTableControls; keep managed sortBy working but disable header-click sorting.
+        ...(isTimeField
+          ? {
+              description: t(
+                'logs.logs-table.timestamp-sort-tooltip',
+                'Use the table controls on the right to manage time sorting.'
+              ),
+            }
+          : {}),
         filterable: field.config?.filterable ?? doesFieldSupportAdHocFiltering(field, timeFieldName, bodyFieldName),
         custom: {
           ...configAfterLevel.custom,
-          width:
-            field.name === timeFieldName
-              ? getTimeFieldWidth(configAfterLevel.custom?.width, fieldIndex, options)
-              : configAfterLevel.custom?.width,
+          width: isTimeField
+            ? getTimeFieldWidth(configAfterLevel.custom?.width, fieldIndex, options)
+            : configAfterLevel.custom?.width,
+          ...(isTimeField ? { sortable: false } : {}),
           inspect: configAfterLevel.custom?.inspect ?? doesFieldSupportInspector(field),
           cellOptions:
             isFirstField && bodyFieldName && (supportsPermalink || options.enableLogDetails)

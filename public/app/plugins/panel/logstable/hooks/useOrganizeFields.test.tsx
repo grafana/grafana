@@ -267,6 +267,37 @@ describe('useOrganizeFields', () => {
         expect(organizedFields.current.organizedFrame?.fields[0].config.custom.filterable).toBe(true);
       });
     });
+
+    test('disables timestamp header sorting and sets a controls tooltip', async () => {
+      const { result: organizedFields } = renderHook(() =>
+        useOrganizeFields({
+          extractedFrame,
+          bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
+          logsFrame: testLogsFrame,
+          onPermalinkClick: () => null,
+          options: {},
+          supportsPermalink: false,
+          timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
+        })
+      );
+
+      await waitFor(() => {
+        const timeField = organizedFields.current.organizedFrame?.fields.find(
+          (f) => f.name === LOGS_DATAPLANE_TIMESTAMP_NAME
+        );
+        const bodyField = organizedFields.current.organizedFrame?.fields.find(
+          (f) => f.name === LOGS_DATAPLANE_BODY_NAME
+        );
+        expect(timeField?.config.custom?.sortable).toBe(false);
+        expect(timeField?.config.description).toBe(
+          'Time sorting is controlled by the table controls on the right side'
+        );
+        expect(bodyField?.config.custom?.sortable).not.toBe(false);
+        expect(bodyField?.config.description).toBeUndefined();
+      });
+    });
   });
 
   describe('log level column enhancements', () => {
