@@ -395,16 +395,16 @@ func (s *Service) RegisterClient(c authn.Client) {
 	}
 }
 
-func (s *Service) IsClientEnabled(name string) bool {
+func (s *Service) IsClientEnabled(ctx context.Context, name string) bool {
 	client, ok := s.clients[name]
 	if !ok {
 		return false
 	}
 
-	return client.IsEnabled()
+	return client.IsEnabled(ctx)
 }
 
-func (s *Service) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
+func (s *Service) GetClientConfig(ctx context.Context, name string) (authn.SSOClientConfig, bool) {
 	client, ok := s.clients[name]
 	if !ok {
 		return nil, false
@@ -415,7 +415,7 @@ func (s *Service) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
 		return nil, false
 	}
 
-	return ssoSettingsAwareClient.GetConfig(), true
+	return ssoSettingsAwareClient.GetConfig(ctx), true
 }
 
 func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) error {

@@ -707,7 +707,7 @@ func TestLogoutSaml(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, true, hs.samlSingleLogoutEnabled())
+	assert.Equal(t, true, hs.samlSingleLogoutEnabled(t.Context()))
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.SignedInUser = &user.SignedInUser{
 			UserID:          1,
@@ -836,7 +836,7 @@ func TestIsExternallySynced(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, hs.isExternallySynced(tc.cfg, tc.provider))
+			assert.Equal(t, tc.expected, hs.isExternallySynced(t.Context(), tc.cfg, tc.provider))
 		})
 	}
 }
@@ -882,7 +882,7 @@ func TestIsProviderEnabled(t *testing.T) {
 					EnabledClients: tc.enabledAuthnClients,
 				},
 			}
-			assert.Equal(t, tc.expected, hs.isProviderEnabled(setting.NewCfg(), tc.provider))
+			assert.Equal(t, tc.expected, hs.isProviderEnabled(t.Context(), setting.NewCfg(), tc.provider))
 		})
 	}
 }

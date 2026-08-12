@@ -23,11 +23,11 @@ func (m *MockService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	panic("unimplemented")
 }
 
-func (m *MockService) IsClientEnabled(name string) bool {
+func (m *MockService) IsClientEnabled(context.Context, string) bool {
 	panic("unimplemented")
 }
 
-func (m *MockService) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
+func (m *MockService) GetClientConfig(context.Context, string) (authn.SSOClientConfig, bool) {
 	panic("unimplemented")
 }
 
@@ -104,11 +104,11 @@ func (m MockClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 	return nil, nil
 }
 
-func (m MockClient) IsEnabled() bool {
+func (m MockClient) IsEnabled(context.Context) bool {
 	return true
 }
 
-func (m MockClient) GetConfig() authn.SSOClientConfig {
+func (m MockClient) GetConfig(context.Context) authn.SSOClientConfig {
 	return nil
 }
 

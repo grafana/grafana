@@ -271,8 +271,11 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 	provider := strings.TrimPrefix(tokenRefreshMetadata.AuthModule, "oauth_")
 	currentOAuthInfo, err := o.SocialService.GetOAuthInfoProvider(ctx, provider)
 	if err != nil {
-		ctxLogger.Warn("OAuth provider not found", "provider", provider, "error", err)
-		return nil, err
+		// Provider configuration is resolved dynamically and can fail independently
+		// of the OAuth refresh credentials. Skip this refresh attempt so a transient
+		// configuration lookup failure does not revoke an otherwise valid session.
+		ctxLogger.Warn("Unable to resolve OAuth provider configuration; skipping token refresh", "provider", provider, "error", err)
+		return nil, nil
 	}
 	if currentOAuthInfo == nil {
 		ctxLogger.Warn("OAuth provider not found", "provider", provider)
@@ -293,7 +296,10 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 
 	cfg, err := o.cfgProvider.Get(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("get configuration for OAuth token refresh: %w", err)
+		// As with provider resolution above, configuration lookup failure is not
+		// evidence that the refresh token is invalid and must not revoke the session.
+		ctxLogger.Warn("Unable to resolve OAuth token refresh configuration; skipping token refresh", "provider", provider, "error", err)
+		return nil, nil
 	}
 
 	lockTimeConfig := serverlock.LockTimeConfig{

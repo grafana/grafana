@@ -388,7 +388,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		if module, ok := modules[filteredUsers[i].UserID]; ok {
 			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
-			filteredUsers[i].IsExternallySynced = hs.isExternallySynced(hs.Cfg, module)
+			filteredUsers[i].IsExternallySynced = hs.isExternallySynced(c.Req.Context(), hs.Cfg, module)
 		}
 	}
 
@@ -449,7 +449,7 @@ func (hs *HTTPServer) searchOrgUsersPageUsingK8s(c *contextmodel.ReqContext, que
 		isExternallySynced := false
 		for _, module := range u.AuthModule {
 			authLabels = append(authLabels, login.GetAuthProviderLabel(module))
-			if hs.isExternallySynced(hs.Cfg, module) {
+			if hs.isExternallySynced(c.Req.Context(), hs.Cfg, module) {
 				isExternallySynced = true
 			}
 		}
@@ -564,7 +564,7 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 		}
 	}
 	if authInfo != nil && authInfo.AuthModule != "" {
-		if hs.isExternallySynced(hs.Cfg, authInfo.AuthModule) {
+		if hs.isExternallySynced(c.Req.Context(), hs.Cfg, authInfo.AuthModule) {
 			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
 		}
 	}

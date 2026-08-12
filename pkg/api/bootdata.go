@@ -175,9 +175,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings.RendererAvailable = hs.RenderService.IsAvailable(c.Req.Context())
 	frontendSettings.RendererVersion = hs.RenderService.Version()
 
-	frontendSettings.Oauth = hs.getEnabledOAuthProviders()
-	frontendSettings.SamlEnabled = hs.samlEnabled()
-	frontendSettings.SamlName = hs.samlName()
+	frontendSettings.Oauth = hs.getEnabledOAuthProviders(c.Req.Context())
+	frontendSettings.SamlEnabled = hs.samlEnabled(c.Req.Context())
+	frontendSettings.SamlName = hs.samlName(c.Req.Context())
 
 	// It returns false if the provider is not enabled or the skip org role sync is false.
 	parseSkipOrgRoleSyncEnabled := func(info *social.OAuthInfo) bool {
@@ -634,9 +634,9 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 	return pluginSettings, nil
 }
 
-func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
+func (hs *HTTPServer) getEnabledOAuthProviders(ctx context.Context) map[string]any {
 	providers := make(map[string]any)
-	oauthProviders, err := hs.SocialService.GetOAuthInfoProviders(context.Background())
+	oauthProviders, err := hs.SocialService.GetOAuthInfoProviders(ctx)
 	if err != nil {
 		hs.log.Error("Failed to load OAuth providers", "error", err)
 		return providers

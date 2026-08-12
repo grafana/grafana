@@ -2,7 +2,6 @@ package authnimpl
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -103,14 +102,7 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideExtendedJWT(cfg, tracer))
 	}
 
-	oauthProviders, err := socialService.GetOAuthProviders(ctx)
-	if err != nil {
-		return Registration{}, fmt.Errorf("get OAuth providers: %w", err)
-	}
-	for name := range oauthProviders {
-		clientName := authn.ClientWithPrefix(name)
-		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfgProvider, oauthTokenService, socialService, features, tracer))
-	}
+	registerOAuthClients(ctx, logger, authnSvc, cfgProvider, oauthTokenService, socialService, features, tracer)
 
 	if cfg.ProvisioningEnabled {
 		authnSvc.RegisterClient(clients.ProvideProvisioning())
@@ -153,4 +145,24 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(sync.AccessClaimsHook, 160)
 
 	return Registration{}, nil
+}
+
+func registerOAuthClients(
+	ctx context.Context, logger log.Logger, authnSvc authn.Service,
+	cfgProvider configprovider.ConfigProvider, oauthTokenService oauthtoken.OAuthTokenService,
+	socialService social.Service, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
+) {
+	oauthProviders, err := socialService.GetOAuthProviders(ctx)
+	if err != nil {
+		// OAuth provider settings can be loaded dynamically. Preserve startup
+		// availability if that lookup is temporarily unavailable; no OAuth clients
+		// are registered, and later process restarts can retry the lookup.
+		logger.Error("Failed to get OAuth providers; OAuth clients will not be registered", "err", err)
+		return
+	}
+
+	for name := range oauthProviders {
+		clientName := authn.ClientWithPrefix(name)
+		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfgProvider, oauthTokenService, socialService, features, tracer))
+	}
 }

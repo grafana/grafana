@@ -46,6 +46,14 @@ func mustConfigProvider(t *testing.T, cfg *setting.Cfg) configprovider.ConfigPro
 	return provider
 }
 
+type errorConfigProvider struct {
+	err error
+}
+
+func (p errorConfigProvider) Get(context.Context) (*setting.Cfg, error) {
+	return nil, p.err
+}
+
 var (
 	unexpiredTokenWithoutRefresh = &oauth2.Token{
 		AccessToken: "testaccess",
@@ -82,6 +90,7 @@ type environment struct {
 	serverLock      *serverlock.ServerLockService
 	socialConnector *socialtest.MockSocialConnector
 	socialService   *socialtest.FakeSocialService
+	cfgProvider     configprovider.ConfigProvider
 
 	store   db.DB
 	service *Service
@@ -97,6 +106,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 		setup           func(env *environment)
 		expectedToken   *oauth2.Token
 		expectedErr     error
+		expectNoError   bool
 	}
 
 	userIdentity := &authn.Identity{
@@ -121,6 +131,25 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			desc:            "should skip token refresh when no oauth provider was found",
 			identity:        userIdentity,
 			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.SAMLAuthModule},
+		},
+		{
+			desc:            "should skip token refresh when provider configuration lookup fails",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
+			setup: func(env *environment) {
+				env.socialService.ExpectedAuthInfoProviderError = assert.AnError
+			},
+			expectNoError: true,
+		},
+		{
+			desc:            "should skip token refresh when refresh configuration lookup fails",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
+			setup: func(env *environment) {
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{UseRefreshToken: true}
+				env.cfgProvider = errorConfigProvider{err: assert.AnError}
+			},
+			expectNoError: true,
 		},
 		{
 			desc:            "should skip token refresh when oauth provider token handling is disabled (UseRefreshToken is false)",
@@ -346,7 +375,8 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 				socialService: &socialtest.FakeSocialService{
 					ExpectedConnector: socialConnector,
 				},
-				store: store,
+				cfgProvider: mustConfigProvider(t, setting.NewCfg()),
+				store:       store,
 			}
 
 			if tt.setup != nil {
@@ -356,7 +386,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			env.service = ProvideService(
 				env.socialService,
 				env.authInfoService,
-				mustConfigProvider(t, setting.NewCfg()),
+				env.cfgProvider,
 				prometheus.NewRegistry(),
 				env.serverLock,
 				tracing.InitializeTracerForTest(),
@@ -370,6 +400,9 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			if tt.expectedErr != nil {
 				assert.ErrorIs(t, err, tt.expectedErr)
 				return
+			}
+			if tt.expectNoError {
+				require.NoError(t, err)
 			}
 
 			if tt.expectedToken == nil {

@@ -609,9 +609,36 @@ func TestIsEnabled(t *testing.T) {
 				fakeSocialSvc,
 				featuremgmt.WithFeatures(),
 				tracing.InitializeTracerForTest())
-			assert.Equal(t, tt.expected, c.IsEnabled())
+			assert.Equal(t, tt.expected, c.IsEnabled(t.Context()))
 		})
 	}
+}
+
+func TestOAuthProviderLookupUsesCallerContext(t *testing.T) {
+	type contextKey struct{}
+
+	ctx := context.WithValue(t.Context(), contextKey{}, "request-tenant")
+	lookupCount := 0
+	fakeSocialSvc := &socialtest.FakeSocialService{
+		GetOAuthInfoProviderFunc: func(gotCtx context.Context, provider string) (*social.OAuthInfo, error) {
+			assert.Equal(t, "request-tenant", gotCtx.Value(contextKey{}))
+			assert.Equal(t, social.GitHubProviderName, provider)
+			lookupCount++
+			return &social.OAuthInfo{Enabled: true}, nil
+		},
+	}
+	c := ProvideOAuth(
+		social.GitHubProviderName,
+		testConfigProvider(t, setting.NewCfg()),
+		nil,
+		fakeSocialSvc,
+		featuremgmt.WithFeatures(),
+		tracing.InitializeTracerForTest(),
+	)
+
+	assert.True(t, c.IsEnabled(ctx))
+	assert.NotNil(t, c.GetConfig(ctx))
+	assert.Equal(t, 2, lookupCount)
 }
 
 type mockConnector struct {

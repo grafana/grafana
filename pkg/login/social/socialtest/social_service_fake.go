@@ -8,14 +8,18 @@ import (
 )
 
 type FakeSocialService struct {
-	ExpectedAuthInfoProvider *social.OAuthInfo
-	ExpectedOAuthProviders   map[string]bool
-	ExpectedConnector        social.SocialConnector
-	ExpectedHttpClient       *http.Client
+	ExpectedAuthInfoProvider      *social.OAuthInfo
+	ExpectedAuthInfoProviderError error
+	ExpectedOAuthProviders        map[string]bool
+	ExpectedOAuthProvidersError   error
+	ExpectedConnector             social.SocialConnector
+	ExpectedHttpClient            *http.Client
+	GetOAuthInfoProviderFunc      func(context.Context, string) (*social.OAuthInfo, error)
+	GetOAuthInfoProvidersFunc     func(context.Context) (map[string]*social.OAuthInfo, error)
 }
 
 func (fss *FakeSocialService) GetOAuthProviders(context.Context) (map[string]bool, error) {
-	return fss.ExpectedOAuthProviders, nil
+	return fss.ExpectedOAuthProviders, fss.ExpectedOAuthProvidersError
 }
 
 func (fss *FakeSocialService) GetOAuthHttpClient(context.Context, string) (*http.Client, error) {
@@ -26,10 +30,16 @@ func (fss *FakeSocialService) GetConnector(context.Context, string) (social.Soci
 	return fss.ExpectedConnector, nil
 }
 
-func (fss *FakeSocialService) GetOAuthInfoProvider(context.Context, string) (*social.OAuthInfo, error) {
-	return fss.ExpectedAuthInfoProvider, nil
+func (fss *FakeSocialService) GetOAuthInfoProvider(ctx context.Context, provider string) (*social.OAuthInfo, error) {
+	if fss.GetOAuthInfoProviderFunc != nil {
+		return fss.GetOAuthInfoProviderFunc(ctx, provider)
+	}
+	return fss.ExpectedAuthInfoProvider, fss.ExpectedAuthInfoProviderError
 }
 
-func (fss *FakeSocialService) GetOAuthInfoProviders(context.Context) (map[string]*social.OAuthInfo, error) {
+func (fss *FakeSocialService) GetOAuthInfoProviders(ctx context.Context) (map[string]*social.OAuthInfo, error) {
+	if fss.GetOAuthInfoProvidersFunc != nil {
+		return fss.GetOAuthInfoProvidersFunc(ctx)
+	}
 	panic("not implemented")
 }

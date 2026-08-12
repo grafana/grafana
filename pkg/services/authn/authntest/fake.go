@@ -52,6 +52,7 @@ type FakeService struct {
 	ExpectedIdentities   []*authn.Identity
 	CurrentIndex         int
 	EnabledClients       []string
+	RegisteredClients    []authn.Client
 }
 
 func (f *FakeService) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -74,7 +75,7 @@ func (f *FakeService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	return f.ExpectedIdentity, f.ExpectedErr
 }
 
-func (f *FakeService) IsClientEnabled(name string) bool {
+func (f *FakeService) IsClientEnabled(_ context.Context, name string) bool {
 	// Consider all clients as enabled if EnabledClients is not explicitly set
 	if f.EnabledClients == nil {
 		return true
@@ -88,7 +89,7 @@ func (f *FakeService) IsClientEnabled(name string) bool {
 	return false
 }
 
-func (f *FakeService) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
+func (f *FakeService) GetClientConfig(_ context.Context, name string) (authn.SSOClientConfig, bool) {
 	if f.ExpectedClientConfig == nil {
 		return nil, false
 	}
@@ -151,7 +152,9 @@ func (f *FakeService) ResolveIdentity(ctx context.Context, orgID int64, typedID 
 	return identity, f.ExpectedErr
 }
 
-func (f *FakeService) RegisterClient(c authn.Client) {}
+func (f *FakeService) RegisterClient(c authn.Client) {
+	f.RegisteredClients = append(f.RegisteredClients, c)
+}
 
 func (f *FakeService) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
 	return f.ExpectedErr
@@ -166,6 +169,8 @@ type FakeClient struct {
 	ExpectedPriority uint
 	ExpectedIdentity *authn.Identity
 	ExpectedStats    map[string]any
+	IsEnabledFunc    func(context.Context) bool
+	GetConfigFunc    func(context.Context) authn.SSOClientConfig
 }
 
 func (f *FakeClient) Name() string {
@@ -176,9 +181,17 @@ func (f *FakeClient) Authenticate(ctx context.Context, r *authn.Request) (*authn
 	return f.ExpectedIdentity, f.ExpectedErr
 }
 
-func (f FakeClient) IsEnabled() bool { return true }
+func (f FakeClient) IsEnabled(ctx context.Context) bool {
+	if f.IsEnabledFunc != nil {
+		return f.IsEnabledFunc(ctx)
+	}
+	return true
+}
 
-func (f *FakeClient) GetConfig() authn.SSOClientConfig {
+func (f *FakeClient) GetConfig(ctx context.Context) authn.SSOClientConfig {
+	if f.GetConfigFunc != nil {
+		return f.GetConfigFunc(ctx)
+	}
 	return nil
 }
 
@@ -224,7 +237,7 @@ func (f FakeRedirectClient) Authenticate(ctx context.Context, r *authn.Request) 
 	return f.ExpectedIdentity, f.ExpectedErr
 }
 
-func (f FakeRedirectClient) IsEnabled() bool { return true }
+func (f FakeRedirectClient) IsEnabled(context.Context) bool { return true }
 
 func (f FakeRedirectClient) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redirect, error) {
 	return f.ExpectedRedirect, f.ExpectedErr

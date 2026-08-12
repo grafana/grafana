@@ -36,7 +36,7 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	return c.client.AuthenticatePassword(ctx, r, username, password)
 }
 
-func (c *Basic) IsEnabled() bool {
+func (c *Basic) IsEnabled(context.Context) bool {
 	return true
 }
 

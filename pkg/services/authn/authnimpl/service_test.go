@@ -261,6 +261,30 @@ func TestService_Authenticate(t *testing.T) {
 	}
 }
 
+func TestServiceClientLookupsUseCallerContext(t *testing.T) {
+	type contextKey struct{}
+
+	ctx := context.WithValue(t.Context(), contextKey{}, "request-tenant")
+	expectedConfig := &authntest.FakeSSOClientConfig{ExpectedName: "OAuth"}
+	client := &authntest.FakeClient{
+		ExpectedName: "auth.client.test",
+		IsEnabledFunc: func(gotCtx context.Context) bool {
+			assert.Equal(t, "request-tenant", gotCtx.Value(contextKey{}))
+			return true
+		},
+		GetConfigFunc: func(gotCtx context.Context) authn.SSOClientConfig {
+			assert.Equal(t, "request-tenant", gotCtx.Value(contextKey{}))
+			return expectedConfig
+		},
+	}
+	service := &Service{clients: map[string]authn.Client{client.Name(): client}}
+
+	assert.True(t, service.IsClientEnabled(ctx, client.Name()))
+	config, ok := service.GetClientConfig(ctx, client.Name())
+	assert.True(t, ok)
+	assert.Same(t, expectedConfig, config)
+}
+
 func TestService_OrgID(t *testing.T) {
 	type TestCase struct {
 		desc          string

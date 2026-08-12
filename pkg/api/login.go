@@ -161,7 +161,7 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 }
 
 func (hs *HTTPServer) getAutoLoginRedirectURL(c *contextmodel.ReqContext) string {
-	samlAutoLogin := hs.samlAutoLoginEnabled()
+	samlAutoLogin := hs.samlAutoLoginEnabled(c.Req.Context())
 	oauthInfos, err := hs.SocialService.GetOAuthInfoProviders(c.Req.Context())
 	if err != nil {
 		hs.log.Error("Failed to load OAuth providers", "error", err)
@@ -293,7 +293,7 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 
 func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 	// FIXME: restructure saml client to implement authn.LogoutClient
-	if hs.samlSingleLogoutEnabled() {
+	if hs.samlSingleLogoutEnabled(c.Req.Context()) {
 		if c.GetAuthenticatedBy() == loginservice.SAMLAuthModule {
 			c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
 			return
@@ -358,48 +358,48 @@ func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err
 	return hs.Cfg.AppSubURL + "/login"
 }
 
-func (hs *HTTPServer) samlEnabled() bool {
-	return hs.authnService.IsClientEnabled(authn.ClientSAML)
+func (hs *HTTPServer) samlEnabled(ctx context.Context) bool {
+	return hs.authnService.IsClientEnabled(ctx, authn.ClientSAML)
 }
 
-func (hs *HTTPServer) samlName() string {
-	config, ok := hs.authnService.GetClientConfig(authn.ClientSAML)
+func (hs *HTTPServer) samlName(ctx context.Context) string {
+	config, ok := hs.authnService.GetClientConfig(ctx, authn.ClientSAML)
 	if !ok {
 		return ""
 	}
 	return config.GetDisplayName()
 }
 
-func (hs *HTTPServer) samlSingleLogoutEnabled() bool {
-	config, ok := hs.authnService.GetClientConfig(authn.ClientSAML)
+func (hs *HTTPServer) samlSingleLogoutEnabled(ctx context.Context) bool {
+	config, ok := hs.authnService.GetClientConfig(ctx, authn.ClientSAML)
 	if !ok {
 		return false
 	}
-	return hs.samlEnabled() && config.IsSingleLogoutEnabled()
+	return hs.samlEnabled(ctx) && config.IsSingleLogoutEnabled()
 }
 
-func (hs *HTTPServer) samlAutoLoginEnabled() bool {
-	config, ok := hs.authnService.GetClientConfig(authn.ClientSAML)
+func (hs *HTTPServer) samlAutoLoginEnabled(ctx context.Context) bool {
+	config, ok := hs.authnService.GetClientConfig(ctx, authn.ClientSAML)
 	if !ok {
 		return false
 	}
-	return hs.samlEnabled() && config.IsAutoLoginEnabled()
+	return hs.samlEnabled(ctx) && config.IsAutoLoginEnabled()
 }
 
-func (hs *HTTPServer) samlSkipOrgRoleSyncEnabled() bool {
-	config, ok := hs.authnService.GetClientConfig(authn.ClientSAML)
+func (hs *HTTPServer) samlSkipOrgRoleSyncEnabled(ctx context.Context) bool {
+	config, ok := hs.authnService.GetClientConfig(ctx, authn.ClientSAML)
 	if !ok {
 		return false
 	}
-	return hs.samlEnabled() && config.IsSkipOrgRoleSyncEnabled()
+	return hs.samlEnabled(ctx) && config.IsSkipOrgRoleSyncEnabled()
 }
 
-func (hs *HTTPServer) samlAllowAssignGrafanaAdminEnabled() bool {
-	config, ok := hs.authnService.GetClientConfig(authn.ClientSAML)
+func (hs *HTTPServer) samlAllowAssignGrafanaAdminEnabled(ctx context.Context) bool {
+	config, ok := hs.authnService.GetClientConfig(ctx, authn.ClientSAML)
 	if !ok {
 		return false
 	}
-	return hs.samlEnabled() && config.IsAllowAssignGrafanaAdminEnabled()
+	return hs.samlEnabled(ctx) && config.IsAllowAssignGrafanaAdminEnabled()
 }
 
 func getLoginExternalError(err error) string {
@@ -438,15 +438,15 @@ func getFirstPublicErrorMessage(err *errutil.Error) string {
 // https://github.com/grafana/grafana/blob/4181acec72f76df7ad02badce13769bae4a1f840/pkg/services/login/authinfoservice/database/database.go#L61
 // this means that if the user has multiple auth providers and one of them is set to sync org roles
 // then isExternallySynced will be true for this one provider and false for the others
-func (hs *HTTPServer) isExternallySynced(cfg *setting.Cfg, authModule string) bool {
+func (hs *HTTPServer) isExternallySynced(ctx context.Context, cfg *setting.Cfg, authModule string) bool {
 	// provider enabled in config
-	if !hs.isProviderEnabled(cfg, authModule) {
+	if !hs.isProviderEnabled(ctx, cfg, authModule) {
 		return false
 	}
 	// first check SAML, LDAP and JWT
 	switch authModule {
 	case loginservice.SAMLAuthModule:
-		return !hs.samlSkipOrgRoleSyncEnabled()
+		return !hs.samlSkipOrgRoleSyncEnabled(ctx)
 	case loginservice.LDAPAuthModule:
 		return !cfg.LDAPSkipOrgRoleSync
 	case loginservice.JWTModule:
@@ -454,7 +454,7 @@ func (hs *HTTPServer) isExternallySynced(cfg *setting.Cfg, authModule string) bo
 	}
 	switch authModule {
 	case loginservice.GoogleAuthModule, loginservice.OktaAuthModule, loginservice.AzureADAuthModule, loginservice.GitLabAuthModule, loginservice.GithubAuthModule, loginservice.GrafanaComAuthModule, loginservice.GenericOAuthModule:
-		config, ok := hs.authnService.GetClientConfig(oauthModuleToAuthnClient(authModule))
+		config, ok := hs.authnService.GetClientConfig(ctx, oauthModuleToAuthnClient(authModule))
 		if !ok {
 			return false
 		}
@@ -466,8 +466,8 @@ func (hs *HTTPServer) isExternallySynced(cfg *setting.Cfg, authModule string) bo
 // isGrafanaAdminExternallySynced returns true if Grafana server admin role is being managed by an external auth provider, and false otherwise.
 // Grafana admin role sync is available for JWT, OAuth providers and LDAP.
 // For JWT and OAuth providers there is an additional config option `allow_assign_grafana_admin` that has to be enabled for Grafana Admin role to be synced.
-func (hs *HTTPServer) isGrafanaAdminExternallySynced(cfg *setting.Cfg, authModule string) bool {
-	if !hs.isExternallySynced(cfg, authModule) {
+func (hs *HTTPServer) isGrafanaAdminExternallySynced(ctx context.Context, cfg *setting.Cfg, authModule string) bool {
+	if !hs.isExternallySynced(ctx, cfg, authModule) {
 		return false
 	}
 
@@ -475,11 +475,11 @@ func (hs *HTTPServer) isGrafanaAdminExternallySynced(cfg *setting.Cfg, authModul
 	case loginservice.JWTModule:
 		return cfg.JWTAuth.AllowAssignGrafanaAdmin
 	case loginservice.SAMLAuthModule:
-		return hs.samlAllowAssignGrafanaAdminEnabled()
+		return hs.samlAllowAssignGrafanaAdminEnabled(ctx)
 	case loginservice.LDAPAuthModule:
 		return true
 	default:
-		config, ok := hs.authnService.GetClientConfig(oauthModuleToAuthnClient(authModule))
+		config, ok := hs.authnService.GetClientConfig(ctx, oauthModuleToAuthnClient(authModule))
 		if !ok {
 			return false
 		}
@@ -487,16 +487,16 @@ func (hs *HTTPServer) isGrafanaAdminExternallySynced(cfg *setting.Cfg, authModul
 	}
 }
 
-func (hs *HTTPServer) isProviderEnabled(cfg *setting.Cfg, authModule string) bool {
+func (hs *HTTPServer) isProviderEnabled(ctx context.Context, cfg *setting.Cfg, authModule string) bool {
 	switch authModule {
 	case loginservice.SAMLAuthModule:
-		return hs.authnService.IsClientEnabled(authn.ClientSAML)
+		return hs.authnService.IsClientEnabled(ctx, authn.ClientSAML)
 	case loginservice.LDAPAuthModule:
 		return cfg.LDAPAuthEnabled
 	case loginservice.JWTModule:
 		return cfg.JWTAuth.Enabled
 	case loginservice.GoogleAuthModule, loginservice.OktaAuthModule, loginservice.AzureADAuthModule, loginservice.GitLabAuthModule, loginservice.GithubAuthModule, loginservice.GrafanaComAuthModule, loginservice.GenericOAuthModule:
-		return hs.authnService.IsClientEnabled(oauthModuleToAuthnClient(authModule))
+		return hs.authnService.IsClientEnabled(ctx, oauthModuleToAuthnClient(authModule))
 	}
 	return false
 }

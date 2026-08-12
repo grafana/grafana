@@ -152,7 +152,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	return id, nil
 }
 
-func (s *JWT) IsEnabled() bool {
+func (s *JWT) IsEnabled(context.Context) bool {
 	return s.cfg.JWTAuth.Enabled
 }
 

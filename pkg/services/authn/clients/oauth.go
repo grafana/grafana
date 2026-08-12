@@ -240,8 +240,8 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}, nil
 }
 
-func (c *OAuth) IsEnabled() bool {
-	provider, err := c.socialService.GetOAuthInfoProvider(context.Background(), c.providerName)
+func (c *OAuth) IsEnabled(ctx context.Context) bool {
+	provider, err := c.socialService.GetOAuthInfoProvider(ctx, c.providerName)
 	if err != nil || provider == nil {
 		return false
 	}
@@ -249,8 +249,8 @@ func (c *OAuth) IsEnabled() bool {
 	return provider.Enabled
 }
 
-func (c *OAuth) GetConfig() authn.SSOClientConfig {
-	provider, err := c.socialService.GetOAuthInfoProvider(context.Background(), c.providerName)
+func (c *OAuth) GetConfig(ctx context.Context) authn.SSOClientConfig {
+	provider, err := c.socialService.GetOAuthInfoProvider(ctx, c.providerName)
 	if err != nil || provider == nil {
 		return nil
 	}

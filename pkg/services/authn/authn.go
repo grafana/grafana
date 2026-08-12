@@ -139,10 +139,10 @@ type Service interface {
 	// Example:
 	// - "saml" = "auth.client.saml"
 	// - "github" = "auth.client.github"
-	IsClientEnabled(client string) bool
+	IsClientEnabled(ctx context.Context, client string) bool
 
 	// GetClientConfig returns the client configuration for the given client and a boolean indicating if the config was present.
-	GetClientConfig(client string) (SSOClientConfig, bool)
+	GetClientConfig(ctx context.Context, client string) (SSOClientConfig, bool)
 }
 
 type IdentitySynchronizer interface {
@@ -154,7 +154,7 @@ type Client interface {
 	// Name returns the name of a client
 	Name() string
 	// IsEnabled returns the enabled status of the client
-	IsEnabled() bool
+	IsEnabled(ctx context.Context) bool
 }
 
 // ContextAwareClient is an optional interface that auth client can implement.
@@ -193,7 +193,7 @@ type LogoutClient interface {
 
 type SSOSettingsAwareClient interface {
 	Client
-	GetConfig() SSOClientConfig
+	GetConfig(ctx context.Context) SSOClientConfig
 }
 
 type PasswordClient interface {
