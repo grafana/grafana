@@ -18,12 +18,12 @@ import (
 )
 
 func TestManagedRoute_GeneratedSubRoute_DefaultsAndMatcher(t *testing.T) {
-	mr := &ManagedRoute{
+	mr := &v1.ManagedRoute{
 		Name:     "managed",
 		Receiver: "receiver",
 	}
 
-	route := mr.GeneratedSubRoute()
+	route := GeneratedSubRoute(mr)
 
 	assert.Equal(t, model.Duration(dispatch.DefaultRouteOpts.GroupWait), *route.GroupWait)
 	assert.Equal(t, model.Duration(dispatch.DefaultRouteOpts.GroupInterval), *route.GroupInterval)
@@ -35,12 +35,12 @@ func TestManagedRoute_GeneratedSubRoute_DefaultsAndMatcher(t *testing.T) {
 }
 
 func TestManagedRoute_GeneratedSubRoute_UserDefinedHasNoMatcher(t *testing.T) {
-	mr := &ManagedRoute{
+	mr := &v1.ManagedRoute{
 		Name:     models.DefaultRoutingTreeName,
 		Receiver: "receiver",
 	}
 
-	route := mr.GeneratedSubRoute()
+	route := GeneratedSubRoute(mr)
 	require.Empty(t, route.ObjectMatchers)
 }
 
@@ -53,7 +53,7 @@ func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
 		Receiver: "child",
 	}
 
-	mr := &ManagedRoute{
+	mr := &v1.ManagedRoute{
 		Name:           "managed",
 		Receiver:       "receiver",
 		GroupBy:        []string{"alertname", "cluster"},
@@ -64,7 +64,7 @@ func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
 		Provenance:     models.Provenance("test"),
 	}
 
-	route := mr.GeneratedSubRoute()
+	route := GeneratedSubRoute(mr)
 
 	// Basic fields preserved
 	assert.Equal(t, "receiver", route.Receiver)
@@ -84,32 +84,6 @@ func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
 
 	// Provenance propagated
 	assert.EqualValues(t, v1.Provenance("test"), route.Provenance)
-}
-
-func TestManagedRoutes_Sort(t *testing.T) {
-	routes := ManagedRoutes{
-		{Name: "x"},
-		{Name: models.DefaultRoutingTreeName},
-		{Name: "z"},
-	}
-
-	routes.Sort()
-
-	require.Equal(t, "x", routes[0].Name)
-	require.Equal(t, "z", routes[1].Name)
-	require.Equal(t, models.DefaultRoutingTreeName, routes[2].Name)
-}
-
-func TestManagedRoutes_Contains(t *testing.T) {
-	routes := ManagedRoutes{
-		{Name: "x"},
-		{Name: models.DefaultRoutingTreeName},
-		{Name: "z"},
-	}
-	assert.True(t, routes.Contains("x"))
-	assert.True(t, routes.Contains("z"))
-	assert.True(t, routes.Contains(models.DefaultRoutingTreeName))
-	assert.False(t, routes.Contains("missing"))
 }
 
 func TestWithManagedRoutes(t *testing.T) {
@@ -143,8 +117,8 @@ func TestWithManagedRoutes(t *testing.T) {
 			expectedRoute: &v1.Route{
 				Receiver: policy_exports.Empty().Receiver,
 				Routes: []*v1.Route{
-					NewManagedRoute("matcher-variety", policy_exports.MatcherVariety()).GeneratedSubRoute(),
-					NewManagedRoute("override-inherit", policy_exports.OverrideInherit()).GeneratedSubRoute(),
+					GeneratedSubRoute(v1.NewManagedRoute("matcher-variety", policy_exports.MatcherVariety())),
+					GeneratedSubRoute(v1.NewManagedRoute("override-inherit", policy_exports.OverrideInherit())),
 				},
 			},
 		},
@@ -205,7 +179,7 @@ func TestConfigRevision_GetManagedRoute(t *testing.T) {
 		t.Run(fmt.Sprintf("returns managed route %s", name), func(t *testing.T) {
 			got := rev.GetManagedRoute(name)
 			require.NotNil(t, got)
-			assert.Equal(t, NewManagedRoute(name, expected), got)
+			assert.Equal(t, v1.NewManagedRoute(name, expected), got)
 		})
 	}
 
@@ -213,7 +187,7 @@ func TestConfigRevision_GetManagedRoute(t *testing.T) {
 		got := rev.GetManagedRoute(models.DefaultRoutingTreeName)
 		require.NotNil(t, got)
 		assert.Equal(t, models.DefaultRoutingTreeName, got.Name)
-		assert.Equal(t, NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route), got)
+		assert.Equal(t, v1.NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route), got)
 	})
 
 	t.Run("returns nil if not found", func(t *testing.T) {
@@ -233,7 +207,7 @@ func TestConfigRevision_DefaultRoutingTreeAliases(t *testing.T) {
 				// Name echoes the requested alias so the API response preserves the client's name.
 				assert.Equal(t, name, got.Name)
 				// The underlying route is the root route regardless of which alias was used.
-				assert.Equal(t, NewManagedRoute(name, rev.Config.AlertmanagerConfig.Route), got)
+				assert.Equal(t, v1.NewManagedRoute(name, rev.Config.AlertmanagerConfig.Route), got)
 				// Identity is canonical so RBAC scopes and provenance keys are stable across aliases.
 				assert.Equal(t, models.DefaultRoutingTreeName, got.GetUID())
 				assert.Equal(t, "", got.ResourceID())
@@ -259,11 +233,11 @@ func TestConfigRevision_GetManagedRoutes(t *testing.T) {
 	t.Run("returns all managed routes", func(t *testing.T) {
 		routes := rev.GetManagedRoutes()
 
-		expected := make([]*ManagedRoute, 0, len(rev.Config.ManagedRoutes)+1)
+		expected := make([]*v1.ManagedRoute, 0, len(rev.Config.ManagedRoutes)+1)
 		for name, mr := range rev.Config.ManagedRoutes {
-			expected = append(expected, NewManagedRoute(name, mr))
+			expected = append(expected, v1.NewManagedRoute(name, mr))
 		}
-		expected = append(expected, NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
+		expected = append(expected, v1.NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
 
 		assert.Len(t, routes, len(expected))
 		assert.ElementsMatch(t, routes, expected)
