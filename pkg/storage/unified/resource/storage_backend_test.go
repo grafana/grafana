@@ -3999,7 +3999,8 @@ func TestKvStorageBackend_ListEventsSince(t *testing.T) {
 		var rvs []int64
 		for event, err := range backend.ListEventsSince(ctx, sinceRV) {
 			require.NoError(t, err)
-			require.NotEmpty(t, event.Value)
+			// Replay events are metadata-only; the server reads the value lazily.
+			require.Nil(t, event.Value)
 			rvs = append(rvs, event.ResourceVersion)
 		}
 		return rvs
@@ -4118,62 +4119,28 @@ func TestKvStorageBackend_EventRetentionPeriodMinimum(t *testing.T) {
 	assert.Equal(t, 20*time.Minute, honoured.eventRetentionPeriod)
 }
 
-func TestKvStorageBackend_ListEventsSince_PrunedDataExpires(t *testing.T) {
+func TestKvStorageBackend_ListEventsSince_DoesNotReadValues(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
 
-	testObj, err := createTestObject()
-	require.NoError(t, err)
-	metaAccessor, err := utils.MetaAccessor(testObj)
-	require.NoError(t, err)
-
-	rv, err := backend.WriteEvent(ctx, WriteEvent{
-		Type: resourcepb.WatchEvent_ADDED,
-		Key: &resourcepb.ResourceKey{
-			Namespace: "default",
-			Group:     "apps",
-			Resource:  "resources",
-			Name:      "test-resource",
-		},
-		Value:     objectToJSONBytes(t, testObj),
-		Object:    metaAccessor,
-		ObjectOld: metaAccessor,
-	})
-	require.NoError(t, err)
-
-	// An event whose data version has been pruned means the history can no longer
-	// be replayed in full, so the replay fails with an expired error rather than
-	// silently skipping the event.
+	// An event whose object value was never written to the data store.
+	rv := snowflakeFromTime(time.Now().Add(-time.Hour))
 	require.NoError(t, backend.eventStore.Save(ctx, Event{
 		Namespace:       "default",
 		Group:           "apps",
 		Resource:        "resources",
-		Name:            "pruned-resource",
-		ResourceVersion: rv + 1,
+		Name:            "valueless-resource",
+		ResourceVersion: rv,
 		Action:          DataActionCreated,
 	}))
 
-	collect := func() ([]int64, error) {
-		var rvs []int64
-		for event, err := range backend.ListEventsSince(ctx, 0) {
-			if err != nil {
-				return rvs, err
-			}
-			rvs = append(rvs, event.ResourceVersion)
-		}
-		return rvs, nil
+	var events []*WrittenEvent
+	for event, err := range backend.ListEventsSince(ctx, 0) {
+		require.NoError(t, err)
+		events = append(events, event)
 	}
 
-	// Only settled events are replayable, so wait for the writes above to fall
-	// outside the (1ms) settle window before asserting on them.
-	require.Eventually(t, func() bool {
-		rvs, err := collect()
-		return err != nil || len(rvs) > 0
-	}, time.Second, 5*time.Millisecond)
-
-	rvs, sawErr := collect()
-	// The intact event is still delivered; the pruned one surfaces as expired.
-	assert.Equal(t, []int64{rv}, rvs)
-	require.Error(t, sawErr)
-	require.True(t, IsResourceVersionExpired(sawErr), "expected an expired resource version error, got %v", sawErr)
+	require.Len(t, events, 1)
+	assert.Equal(t, rv, events[0].ResourceVersion)
+	assert.Nil(t, events[0].Value, "replay must not read object values")
 }

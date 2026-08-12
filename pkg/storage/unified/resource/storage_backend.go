@@ -2481,28 +2481,11 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 	return true
 }
 
-// toWrittenEvent loads the value stored for an event and turns it into a WrittenEvent.
-func (k *kvStorageBackend) toWrittenEvent(ctx context.Context, event Event) (*WrittenEvent, error) {
-	dataReader, err := k.dataStore.Get(ctx, DataKey{
-		Group:           event.Group,
-		Resource:        event.Resource,
-		Namespace:       event.Namespace,
-		Name:            event.Name,
-		ResourceVersion: event.ResourceVersion,
-		Action:          event.Action,
-		Folder:          event.Folder,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get data for event: %w", err)
-	}
-	if dataReader == nil {
-		return nil, fmt.Errorf("no data for event with resource version %d: %w", event.ResourceVersion, ErrNotFound)
-	}
-	data, err := readAndClose(dataReader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read data for event: %w", err)
-	}
-
+// eventToWrittenEvent maps an event-store entry to a metadata-only WrittenEvent.
+// The object value is intentionally left nil: the resource server materialises
+// it lazily (via ReadResource) before sending to the client, so we don't read
+// from the database objects that would otherwise be discarded.
+func eventToWrittenEvent(event Event) *WrittenEvent {
 	var t resourcepb.WatchEvent_Type
 	switch event.Action {
 	case DataActionCreated:
@@ -2522,11 +2505,10 @@ func (k *kvStorageBackend) toWrittenEvent(ctx context.Context, event Event) (*Wr
 		},
 		Type:            t,
 		Folder:          event.Folder,
-		Value:           data,
 		ResourceVersion: event.ResourceVersion,
 		PreviousRV:      event.PreviousRV,
 		Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
-	}, nil
+	}
 }
 
 // maxEventReplayAge is how far back a watch may be resumed from: half the event
@@ -2554,9 +2536,9 @@ func (k *kvStorageBackend) CanReplayFrom(ctx context.Context, sinceRV int64) err
 	return nil
 }
 
-// ListEventsSince returns all write events with a resource version greater than
-// sinceRV, in ascending resource version order. It reads straight from the
-// event store, so it is only complete for resource versions that are still
+// ListEventsSince returns metadata-only write events with a resource version
+// greater than sinceRV, in ascending resource version order. It reads straight
+// from the event store, so it is only complete for resource versions that are still
 // within the event retention period (see EventRetentionPeriod).
 //
 // Only events older than the settle window (now - SettleDelay) are returned.
@@ -2592,20 +2574,7 @@ func (k *kvStorageBackend) ListEventsSince(ctx context.Context, sinceRV int64) i
 			if event.PreviousRV < 0 {
 				continue
 			}
-			written, err := k.toWrittenEvent(ctx, event)
-			switch {
-			case errors.Is(err, ErrNotFound):
-				// The version this event refers to was pruned from the data
-				// store, so the range after sinceRV can no longer be replayed in
-				// full. Refuse the resume with an expired error so client re-lists.
-				k.log.Info("cannot replay: event data pruned", "resource_version", event.ResourceVersion, "since", sinceRV)
-				yield(nil, NewResourceVersionExpiredError(sinceRV))
-				return
-			case err != nil:
-				yield(nil, err)
-				return
-			}
-			if !yield(written, nil) {
+			if !yield(eventToWrittenEvent(event), nil) {
 				return
 			}
 		}

@@ -2047,9 +2047,30 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		}
 
 		value := event.Value
-		// remove the delete marker stored in the value for deleted objects
-		if event.Type == resourcepb.WatchEvent_DELETED {
+		switch {
+		case event.Type == resourcepb.WatchEvent_DELETED:
+			// remove the delete marker stored in the value for deleted objects
 			value = []byte{}
+		case value == nil:
+			// Replay events arrive without their object value so a broad watch
+			// does not read objects it would filters out above.
+			// Live events already carry it, so this only reads on replayed events.
+			rsp := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.ResourceVersion})
+			if rsp.Error != nil {
+				if rsp.Error.Code == http.StatusNotFound {
+					// The object version was pruned from the data store, so the
+					// watch can no longer be replayed faithfully; tell the client
+					// to list again from scratch.
+					s.log.Info("cannot replay: event data pruned", "key", event.Key, "resource_version", event.ResourceVersion, "since", since)
+					return NewResourceVersionExpiredError(since)
+				}
+				return fmt.Errorf("reading object for watch event: %s", rsp.Error.Message)
+			}
+			if rsp.ResourceVersion != event.ResourceVersion {
+				s.log.Error("resource version mismatch reading watch event value", "key", event.Key, "expected", event.ResourceVersion, "actual", rsp.ResourceVersion)
+				return fmt.Errorf("resource version mismatch")
+			}
+			value = rsp.Value
 		}
 		resp := &resourcepb.WatchEvent{
 			Timestamp: event.Timestamp,

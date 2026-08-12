@@ -1837,12 +1837,57 @@ func TestWatchReplaysMissedEvents(t *testing.T) {
 	case evt := <-mock.events:
 		require.Equal(t, resourcepb.WatchEvent_ADDED, evt.Type)
 		require.Greater(t, evt.Resource.Version, sinceRV)
+		// Replay events carry no value from the backend; the server must have
+		// materialised it lazily before sending.
+		require.NotEmpty(t, evt.Resource.Value, "replayed event value should be materialised by the server")
 	case <-time.After(10 * time.Second):
 		t.Fatal("timed out waiting for the replayed event")
 	}
 
 	cancel()
 	require.NoError(t, eg.Wait())
+}
+
+// TestWatchReplayExpiresWhenDataPruned makes sure that if an event survives the
+// watch's filters during replay but its object value has been pruned from the
+// data store, the server refuses the resume with an expired error so the client
+// lists again from scratch instead of silently missing the write.
+func TestWatchReplayExpiresWhenDataPruned(t *testing.T) {
+	testUser := newWatchTestUser()
+	srv := newWatchTestServer(t, watchTestServerOpts{})
+
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+	defer cancel()
+
+	// A real, settled write to resume from.
+	sinceRV, err := createTestPlaylistRV(ctx, srv)
+	require.NoError(t, err)
+
+	// Inject an event whose object value is not in the data store, as if it had
+	// been pruned. It matches the watch scope so it passes the filters and forces
+	// the server's lazy value read, which then finds nothing.
+	backend := srv.backend.(*kvStorageBackend)
+	require.NoError(t, backend.eventStore.Save(ctx, Event{
+		Namespace:       watchTestNamespace,
+		Group:           watchTestGroup,
+		Resource:        watchTestResource,
+		Name:            "pruned-resource",
+		ResourceVersion: sinceRV + 1,
+		Action:          DataActionCreated,
+	}))
+
+	// Let the writes settle so replay covers them.
+	time.Sleep(20 * time.Millisecond)
+
+	err = srv.Watch(&resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+		},
+		Since: sinceRV,
+	}, newMockWatchServer(ctx))
+
+	require.Error(t, err)
+	require.True(t, IsResourceVersionExpired(err), "expected an expired resource version error, got %v", err)
 }
 
 // TestWatchRejectsExpiredResourceVersion makes sure that a watch starting from a
