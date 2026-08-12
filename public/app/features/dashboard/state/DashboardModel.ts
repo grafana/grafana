@@ -5,7 +5,6 @@ import {
   type AnnotationQuery,
   type AppEvent,
   type DashboardCursorSync,
-  dateTime,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   type DateTimeInput,
