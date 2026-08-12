@@ -31,17 +31,17 @@ The TestData data source supports [Grafana Alerting](https://grafana.com/docs/gr
 
 TestData scenarios that return time-series data work with alert rule conditions. Choose a scenario based on the behavior you want to test.
 
-| Scenario                     | Alerting use case                                                                              |
-| ---------------------------- | ---------------------------------------------------------------------------------------------- |
-| **Predictable Pulse**        | Deterministic on/off pattern. Produces repeatable alert firing and resolving on a fixed cycle. |
-| **Random Walk**              | Non-deterministic time series. Useful for quick prototyping and load testing alert evaluation. |
-| **CSV Metric Values**        | Controlled, fixed values. Test exact threshold boundaries.                                     |
-| **Predictable CSV Wave**     | Custom repeating waveforms. Test complex threshold patterns with precise control.              |
-| **Random Walk (with error)** | Returns both data and an error. Test how alerts handle partial failures.                       |
-| **Error with source**        | Returns a plugin or downstream error. Test alert evaluation error handling.                    |
+| Scenario                     | Alerting use case                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Predictable Pulse**        | Deterministic on/off pattern. Produces repeatable alert firing and resolving on a fixed cycle.   |
+| **Random Walk**              | Non-deterministic time series. Useful for quick prototyping and load testing alert evaluation.   |
+| **CSV Metric Values**        | Controlled, fixed values. Test exact threshold boundaries.                                       |
+| **Predictable CSV Wave**     | Custom repeating waveforms. Test complex threshold patterns with precise control.                |
+| **Random Walk (with error)** | Returns both data and an error. Test how alerts handle partial failures.                         |
+| **Error with source**        | Returns a plugin or downstream error. Test alert evaluation error handling.                      |
 | **Flaky Query**              | Returns errors intermittently. Test how alerts handle a data source that fails part of the time. |
-| **No Data Points**           | Returns empty results. Test no-data alert conditions.                                          |
-| **Slow Query**               | Introduces a configurable delay. Test alert evaluation timeouts.                               |
+| **No Data Points**           | Returns empty results. Test no-data alert conditions.                                            |
+| **Slow Query**               | Introduces a configurable delay. Test alert evaluation timeouts.                                 |
 
 Scenarios that produce logs, traces, or streaming data aren't suitable for threshold-based alert conditions.
 

@@ -53,11 +53,11 @@ These errors occur when running TestData scenarios.
 
 **Possible causes and solutions:**
 
-| Cause                                       | Solution                                                                                                                                             |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| No series query in the panel                | Exemplars returns only markers and no series of its own. Add a second query, such as Random Walk, for the exemplars to annotate.                     |
-| Series hidden in the legend                 | The legend filter matches on exemplar labels, so hiding a series in the legend also hides its markers. Show the series to restore the markers.       |
-| Markers fall outside the panel value range  | With **Min** and **Max** empty, the value range is derived from a reference random walk and markers can land off-panel. Set **Min** and **Max** explicitly, or align them with the sibling series. |
+| Cause                                      | Solution                                                                                                                                                                                           |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No series query in the panel               | Exemplars returns only markers and no series of its own. Add a second query, such as Random Walk, for the exemplars to annotate.                                                                   |
+| Series hidden in the legend                | The legend filter matches on exemplar labels, so hiding a series in the legend also hides its markers. Show the series to restore the markers.                                                     |
+| Markers fall outside the panel value range | With **Min** and **Max** empty, the value range is derived from a reference random walk and markers can land off-panel. Set **Min** and **Max** explicitly, or align them with the sibling series. |
 
 ### Wrong data type for the visualization
 

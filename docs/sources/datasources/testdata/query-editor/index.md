@@ -286,12 +286,12 @@ Generates heatmap data with linearly distributed bucket boundaries (0, 10, 20, 3
 
 Generates only exemplars, the diamond markers a panel draws on top of a series, and no series of its own. Add a second query in the same panel, such as Random Walk, to give the exemplars a series to annotate. Values and timestamps are seeded from the dashboard time range, so the same range always returns the same exemplars.
 
-| Field           | Description                                                                                                       |
-| --------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Count**       | Number of exemplars to generate.                                                                                  |
-| **Min**         | Minimum value for the exemplars. When empty, the range is derived from a reference random walk over the same time range, padded by 10%. |
-| **Max**         | Maximum value for the exemplars. When empty, the range is derived as described for **Min**.                       |
-| **Labels**      | Exemplar labels shown in the tooltip. Each label defines a **Name**, a **Length**, and an optional **Link**.      |
+| Field      | Description                                                                                                                             |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Count**  | Number of exemplars to generate.                                                                                                        |
+| **Min**    | Minimum value for the exemplars. When empty, the range is derived from a reference random walk over the same time range, padded by 10%. |
+| **Max**    | Maximum value for the exemplars. When empty, the range is derived as described for **Min**.                                             |
+| **Labels** | Exemplar labels shown in the tooltip. Each label defines a **Name**, a **Length**, and an optional **Link**.                            |
 
 To keep the exemplars aligned with a sibling series, pin **Min** and **Max**, or give the sibling query an explicit start value and spread. The legend filter matches on exemplar labels, so hiding a series in the legend also hides its markers.
 
@@ -374,14 +374,14 @@ Use this to test how Grafana differentiates between plugin errors and downstream
 
 Returns errors intermittently based on a configurable error rate, with optional delays. Use this to test how panels, alert rules, and error handling behave when a data source fails part of the time.
 
-| Field                | Description                                                                                                   |
-| -------------------- | ------------------------------------------------------------------------------------------------------------- |
-| **Error rate**       | Percentage of requests that return an error. Default: `50`.                                                   |
-| **Status code**      | HTTP status code returned with the error. Default: `400`.                                                     |
-| **Error source**     | Source of the error: `Plugin` (plugin error) or `Downstream` (downstream service error).                      |
-| **Query delay**      | Base delay applied to each request in Go duration syntax, for example `1s` or `500ms`. Default: `5s`.         |
-| **Delay variability**| Randomizes the query delay by plus or minus this percentage. For example, `100` on a `1s` delay sleeps between 0 and 2 seconds. |
-| **Error message**    | Message returned with the error. Default: `Flaky query error`.                                                |
+| Field                 | Description                                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Error rate**        | Percentage of requests that return an error. Default: `50`.                                                                     |
+| **Status code**       | HTTP status code returned with the error. Default: `400`.                                                                       |
+| **Error source**      | Source of the error: `Plugin` (plugin error) or `Downstream` (downstream service error).                                        |
+| **Query delay**       | Base delay applied to each request in Go duration syntax, for example `1s` or `500ms`. Default: `5s`.                           |
+| **Delay variability** | Randomizes the query delay by plus or minus this percentage. For example, `100` on a `1s` delay sleeps between 0 and 2 seconds. |
+| **Error message**     | Message returned with the error. Default: `Flaky query error`.                                                                  |
 
 ### Errors and notices
 
