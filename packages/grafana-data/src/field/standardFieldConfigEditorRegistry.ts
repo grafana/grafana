@@ -21,6 +21,16 @@ export interface StandardEditorContext<TOptions, TState = any> {
 
 export interface StandardEditorProps<TValue = any, TSettings = any, TOptions = any, TState = any> {
   value: TValue;
+  /**
+   * Commits a new value for the option this editor is registered against.
+   *
+   * How an object value is applied depends on where the editor is registered:
+   *
+   * - **Panel options** are merged into the current value, so leaving a key out does not remove it.
+   *   Set the key to `undefined` to clear it — `onChange({ ...value, age: undefined })` clears `age`,
+   *   whereas passing an object that simply omits `age` leaves the old value in place.
+   * - **Field config** values are replaced, so leaving a key out does remove it.
+   */
   onChange: (value?: TValue) => void;
   context: StandardEditorContext<TOptions, TState>;
   id?: string;

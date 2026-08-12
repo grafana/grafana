@@ -135,14 +135,13 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		NotebookAction{}.OpenAPIModelName():                                                      schema_pkg_apis_dashboard_v2beta1_NotebookAction(ref),
 		NotebookActionVariable{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_NotebookActionVariable(ref),
 		NotebookCellKind{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookCellKind(ref),
-		NotebookCellKindOrPanelKindOrLibraryPanelKind{}.OpenAPIModelName():                       schema_pkg_apis_dashboard_v2beta1_NotebookCellKindOrPanelKindOrLibraryPanelKind(ref),
+		NotebookCellKindOrV2PanelKindOrLibraryPanelKind{}.OpenAPIModelName():                     schema_pkg_apis_dashboard_v2beta1_NotebookCellKindOrV2PanelKindOrLibraryPanelKind(ref),
 		NotebookCellSpec{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookCellSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.NotebookClient":    schema_pkg_apis_dashboard_v2beta1_NotebookClient(ref),
 		NotebookCodeCellContentKind{}.OpenAPIModelName():                                         schema_pkg_apis_dashboard_v2beta1_NotebookCodeCellContentKind(ref),
 		NotebookCodeCellContentSpec{}.OpenAPIModelName():                                         schema_pkg_apis_dashboard_v2beta1_NotebookCodeCellContentSpec(ref),
 		NotebookDataLink{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookDataLink(ref),
 		NotebookDataQueryKind{}.OpenAPIModelName():                                               schema_pkg_apis_dashboard_v2beta1_NotebookDataQueryKind(ref),
-		NotebookDataTransformerConfig{}.OpenAPIModelName():                                       schema_pkg_apis_dashboard_v2beta1_NotebookDataTransformerConfig(ref),
 		NotebookDynamicConfigValue{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookDynamicConfigValue(ref),
 		NotebookElementReference{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_NotebookElementReference(ref),
 		NotebookFetchOptions{}.OpenAPIModelName():                                                schema_pkg_apis_dashboard_v2beta1_NotebookFetchOptions(ref),
@@ -163,12 +162,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		NotebookNotebookLayoutItemSpec{}.OpenAPIModelName():                                      schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutItemSpec(ref),
 		NotebookNotebookLayoutKind{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutKind(ref),
 		NotebookNotebookLayoutSpec{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutSpec(ref),
-		NotebookPanelKind{}.OpenAPIModelName():                                                   schema_pkg_apis_dashboard_v2beta1_NotebookPanelKind(ref),
 		NotebookPanelQueryKind{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_NotebookPanelQueryKind(ref),
 		NotebookPanelQuerySpec{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_NotebookPanelQuerySpec(ref),
-		NotebookPanelSpec{}.OpenAPIModelName():                                                   schema_pkg_apis_dashboard_v2beta1_NotebookPanelSpec(ref),
-		NotebookQueryGroupKind{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_NotebookQueryGroupKind(ref),
-		NotebookQueryGroupSpec{}.OpenAPIModelName():                                              schema_pkg_apis_dashboard_v2beta1_NotebookQueryGroupSpec(ref),
 		NotebookQueryOptionsSpec{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_NotebookQueryOptionsSpec(ref),
 		NotebookRangeMap{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookRangeMap(ref),
 		NotebookRegexMap{}.OpenAPIModelName():                                                    schema_pkg_apis_dashboard_v2beta1_NotebookRegexMap(ref),
@@ -178,7 +173,12 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		NotebookThresholdsConfig{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_NotebookThresholdsConfig(ref),
 		NotebookTimeRangeOption{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2beta1_NotebookTimeRangeOption(ref),
 		NotebookTimeSettingsSpec{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_NotebookTimeSettingsSpec(ref),
-		NotebookTransformationKind{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookTransformationKind(ref),
+		NotebookV2PanelKind{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2beta1_NotebookV2PanelKind(ref),
+		NotebookV2PanelSpec{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2beta1_NotebookV2PanelSpec(ref),
+		NotebookV2QueryGroupKind{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_NotebookV2QueryGroupKind(ref),
+		NotebookV2QueryGroupSpec{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_NotebookV2QueryGroupSpec(ref),
+		NotebookV2TransformationKind{}.OpenAPIModelName():                                        schema_pkg_apis_dashboard_v2beta1_NotebookV2TransformationKind(ref),
+		NotebookV2TransformationSpec{}.OpenAPIModelName():                                        schema_pkg_apis_dashboard_v2beta1_NotebookV2TransformationSpec(ref),
 		NotebookV2beta1ActionStyle{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1ActionStyle(ref),
 		NotebookV2beta1DataQueryKindDatasource{}.OpenAPIModelName():                              schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1DataQueryKindDatasource(ref),
 		NotebookV2beta1FieldConfigSourceOverrides{}.OpenAPIModelName():                           schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1FieldConfigSourceOverrides(ref),
@@ -3568,6 +3568,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryOptionsSpec(ref common.Refe
 							Format: "",
 						},
 					},
+					"timeTo": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"maxDataPoints": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
@@ -5646,7 +5652,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookCellKind(ref common.ReferenceCall
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "A cell holds non-panel narrative content (markdown text, code) in a notebook layout. Panel cells are not represented here — they reuse PanelKind.",
+				Description: "A cell holds non-panel narrative content (markdown text, code) in a notebook layout. Panel cells are not represented here — they reuse V2PanelKind.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -5671,7 +5677,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookCellKind(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_dashboard_v2beta1_NotebookCellKindOrPanelKindOrLibraryPanelKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v2beta1_NotebookCellKindOrV2PanelKindOrLibraryPanelKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -5682,9 +5688,9 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookCellKindOrPanelKindOrLibraryPanel
 							Ref: ref(NotebookCellKind{}.OpenAPIModelName()),
 						},
 					},
-					"PanelKind": {
+					"V2PanelKind": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(NotebookPanelKind{}.OpenAPIModelName()),
+							Ref: ref(NotebookV2PanelKind{}.OpenAPIModelName()),
 						},
 					},
 					"LibraryPanelKind": {
@@ -5696,7 +5702,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookCellKindOrPanelKindOrLibraryPanel
 			},
 		},
 		Dependencies: []string{
-			NotebookCellKind{}.OpenAPIModelName(), NotebookLibraryPanelKind{}.OpenAPIModelName(), NotebookPanelKind{}.OpenAPIModelName()},
+			NotebookCellKind{}.OpenAPIModelName(), NotebookLibraryPanelKind{}.OpenAPIModelName(), NotebookV2PanelKind{}.OpenAPIModelName()},
 	}
 }
 
@@ -5916,57 +5922,6 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookDataQueryKind(ref common.Referenc
 		},
 		Dependencies: []string{
 			NotebookV2beta1DataQueryKindDatasource{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_NotebookDataTransformerConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Transformations allow to manipulate data returned by a query before the system applies a visualization. Using transformations you can: rename fields, join time series data, perform mathematical operations across queries, use the output of one transformation as the input to another transformation, etc.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"id": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Unique identifier of transformer",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"disabled": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Disabled transformations are skipped",
-							Type:        []string{"boolean"},
-							Format:      "",
-						},
-					},
-					"filter": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Optional frame matcher. When missing it will be applied to all results",
-							Ref:         ref(NotebookMatcherConfig{}.OpenAPIModelName()),
-						},
-					},
-					"topic": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Where to pull DataFrames from as input to transformation",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"options": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Options to be passed to the transformer Valid options depend on the transformer id",
-							Type:        []string{"object"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"id", "options"},
-			},
-		},
-		Dependencies: []string{
-			NotebookMatcherConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -6730,7 +6685,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutItemSpec(ref common
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
+				Description: "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"element": {
@@ -6817,34 +6772,6 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutSpec(ref common.Ref
 	}
 }
 
-func schema_pkg_apis_dashboard_v2beta1_NotebookPanelKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(NotebookPanelSpec{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"kind", "spec"},
-			},
-		},
-		Dependencies: []string{
-			NotebookPanelSpec{}.OpenAPIModelName()},
-	}
-}
-
 func schema_pkg_apis_dashboard_v2beta1_NotebookPanelQueryKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -6908,155 +6835,6 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookPanelQuerySpec(ref common.Referen
 	}
 }
 
-func schema_pkg_apis_dashboard_v2beta1_NotebookPanelSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"id": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"number"},
-							Format:  "double",
-						},
-					},
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"description": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Shown in a info icon tooltip next to panel title",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"subtitle": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Shown in a sub header below the title.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"links": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookDataLink{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"data": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(NotebookQueryGroupKind{}.OpenAPIModelName()),
-						},
-					},
-					"vizConfig": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(NotebookVizConfigKind{}.OpenAPIModelName()),
-						},
-					},
-					"transparent": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-				},
-				Required: []string{"id", "title", "links", "data", "vizConfig"},
-			},
-		},
-		Dependencies: []string{
-			NotebookDataLink{}.OpenAPIModelName(), NotebookQueryGroupKind{}.OpenAPIModelName(), NotebookVizConfigKind{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_NotebookQueryGroupKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(NotebookQueryGroupSpec{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"kind", "spec"},
-			},
-		},
-		Dependencies: []string{
-			NotebookQueryGroupSpec{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_dashboard_v2beta1_NotebookQueryGroupSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"queries": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookPanelQueryKind{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"transformations": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookTransformationKind{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"queryOptions": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(NotebookQueryOptionsSpec{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"queries", "transformations", "queryOptions"},
-			},
-		},
-		Dependencies: []string{
-			NotebookPanelQueryKind{}.OpenAPIModelName(), NotebookQueryOptionsSpec{}.OpenAPIModelName(), NotebookTransformationKind{}.OpenAPIModelName()},
-	}
-}
-
 func schema_pkg_apis_dashboard_v2beta1_NotebookQueryOptionsSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -7064,6 +6842,12 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookQueryOptionsSpec(ref common.Refer
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"timeFrom": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"timeTo": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -7223,7 +7007,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookSpec(ref common.ReferenceCallback
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref(NotebookCellKindOrPanelKindOrLibraryPanelKind{}.OpenAPIModelName()),
+										Ref: ref(NotebookCellKindOrV2PanelKindOrLibraryPanelKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -7240,7 +7024,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookSpec(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			NotebookCellKindOrPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), NotebookNotebookLayoutKind{}.OpenAPIModelName(), NotebookTimeSettingsSpec{}.OpenAPIModelName()},
+			NotebookCellKindOrV2PanelKindOrLibraryPanelKind{}.OpenAPIModelName(), NotebookNotebookLayoutKind{}.OpenAPIModelName(), NotebookTimeSettingsSpec{}.OpenAPIModelName()},
 	}
 }
 
@@ -7482,7 +7266,110 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookTimeSettingsSpec(ref common.Refer
 	}
 }
 
-func schema_pkg_apis_dashboard_v2beta1_NotebookTransformationKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v2beta1_NotebookV2PanelKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "The notebook's own panel chain. It is a copy of the dashboard one down to the transformation, which follows the dashboard v2 shape rather than the v2beta1 shape in this package. The chain has to be forked rather than shared because PanelKind reaches TransformationKind through QueryGroupKind, and those three are what Dashboard v2beta1 serves. Everything the chain does not change (DataLink, VizConfigKind, PanelQueryKind, QueryOptionsSpec) stays shared.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookV2PanelSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookV2PanelSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookV2PanelSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"id": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"number"},
+							Format:  "double",
+						},
+					},
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Shown in a info icon tooltip next to panel title",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"subtitle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Shown in a sub header below the title.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"links": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookDataLink{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"data": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookV2QueryGroupKind{}.OpenAPIModelName()),
+						},
+					},
+					"vizConfig": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookVizConfigKind{}.OpenAPIModelName()),
+						},
+					},
+					"transparent": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"id", "title", "links", "data", "vizConfig"},
+			},
+		},
+		Dependencies: []string{
+			NotebookDataLink{}.OpenAPIModelName(), NotebookV2QueryGroupKind{}.OpenAPIModelName(), NotebookVizConfigKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookV2QueryGroupKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -7490,7 +7377,90 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookTransformationKind(ref common.Ref
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The kind of a TransformationKind is the transformation ID",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookV2QueryGroupSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			NotebookV2QueryGroupSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookV2QueryGroupSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"queries": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookPanelQueryKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"transformations": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(NotebookV2TransformationKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"queryOptions": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(NotebookQueryOptionsSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"queries", "transformations", "queryOptions"},
+			},
+		},
+		Dependencies: []string{
+			NotebookPanelQueryKind{}.OpenAPIModelName(), NotebookQueryOptionsSpec{}.OpenAPIModelName(), NotebookV2TransformationKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookV2TransformationKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Dashboard v2 shape: the transformation ID moved from `kind` to `group`.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The group is the transformation ID",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -7499,15 +7469,58 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookTransformationKind(ref common.Ref
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(NotebookDataTransformerConfig{}.OpenAPIModelName()),
+							Ref:     ref(NotebookV2TransformationSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
-				Required: []string{"kind", "spec"},
+				Required: []string{"kind", "group", "spec"},
 			},
 		},
 		Dependencies: []string{
-			NotebookDataTransformerConfig{}.OpenAPIModelName()},
+			NotebookV2TransformationSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookV2TransformationSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Dashboard v2 shape: no `id`, it is carried by the parent's `group`.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Disabled transformations are skipped",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"filter": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional frame matcher. When missing it will be applied to all results",
+							Ref:         ref(NotebookMatcherConfig{}.OpenAPIModelName()),
+						},
+					},
+					"topic": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Where to pull DataFrames from as input to transformation",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"options": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Options to be passed to the transformer Valid options depend on the transformer id",
+							Type:        []string{"object"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"options"},
+			},
+		},
+		Dependencies: []string{
+			NotebookMatcherConfig{}.OpenAPIModelName()},
 	}
 }
 

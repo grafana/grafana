@@ -120,4 +120,10 @@ export type CtaClicked = Satisfies<
           solution: string;
         }
     ))
+  | ({
+      surface: 'header';
+    } & {
+      action: 'view_alerts' | 'view_incidents';
+      placement: 'pill';
+    })
 >;

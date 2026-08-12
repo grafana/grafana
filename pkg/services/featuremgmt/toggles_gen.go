@@ -99,10 +99,6 @@ const (
 	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
 	FlagProvisioningPerformance = "provisioning.performance"
 
-	// FlagGrafanaAPIServerEnsureKubectlAccess
-	// Start an additional https handler and write kubectl options
-	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
-
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
@@ -127,10 +123,6 @@ const (
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
 
-	// FlagKubernetesSnapshots
-	// Routes snapshot requests from /api to the /apis endpoint
-	FlagKubernetesSnapshots = "kubernetesSnapshots"
-
 	// FlagExternalSnapshotsK8SAPIPush
 	// When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
 	FlagExternalSnapshotsK8SAPIPush = "externalSnapshotsK8SAPIPush"
@@ -138,6 +130,10 @@ const (
 	// FlagExternalSnapshotsSupportLegacyAPI
 	// On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.
 	FlagExternalSnapshotsSupportLegacyAPI = "externalSnapshotsSupportLegacyAPI"
+
+	// FlagSnapshotsKubernetesSnapshots
+	// Routes snapshot requests from /api to the /apis endpoint
+	FlagSnapshotsKubernetesSnapshots = "snapshots.kubernetesSnapshots"
 
 	// FlagLibraryelementsKubernetesLibraryPanels
 	// Routes library panel requests from /api to the /apis endpoint
@@ -946,6 +942,10 @@ const (
 	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
 	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
 
+	// FlagDatetimeUseLuxon
+	// Uses the Luxon-backed compatibility implementation for Grafana date and time APIs
+	FlagDatetimeUseLuxon = "datetime.useLuxon"
+
 	// FlagAuthTokenRotationGracePeriod
 	// Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts
 	FlagAuthTokenRotationGracePeriod = "auth.tokenRotationGracePeriod"
@@ -989,6 +989,10 @@ const (
 	// FlagAlertingStateManagerRequireWarm
 	// Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.
 	FlagAlertingStateManagerRequireWarm = "alerting.stateManagerRequireWarm"
+
+	// FlagGrafanaPluginPathNesting
+	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
+	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
 
 	// FlagGrafanaRspackBuild
 	// Switches the backend to load frontend assets built with rspack instead of webpack
