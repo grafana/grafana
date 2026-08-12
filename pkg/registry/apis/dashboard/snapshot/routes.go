@@ -159,7 +159,7 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 	// /api routes. Returns true (and writes a 403) when the feature is disabled.
 	featureDisabled := func(w http.ResponseWriter, r *http.Request) bool {
 		ctx := r.Context()
-		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesSnapshots, false, openfeature.TransactionContext(ctx)) {
+		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagSnapshotsKubernetesSnapshots, false, openfeature.TransactionContext(ctx)) {
 			return false
 		}
 		w.WriteHeader(http.StatusForbidden)

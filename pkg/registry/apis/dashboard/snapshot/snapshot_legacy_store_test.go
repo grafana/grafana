@@ -47,8 +47,8 @@ func setExternalSnapshotsK8SAPIPushToggle(t *testing.T, enabled bool) {
 		},
 		// The k8s snapshot routes require kubernetesSnapshots; enable it so the
 		// external-push behavior under test is actually reached.
-		featuremgmt.FlagKubernetesSnapshots: {
-			Key:            featuremgmt.FlagKubernetesSnapshots,
+		featuremgmt.FlagSnapshotsKubernetesSnapshots: {
+			Key:            featuremgmt.FlagSnapshotsKubernetesSnapshots,
 			DefaultVariant: "enabled",
 			Variants: map[string]any{
 				"enabled":  true,

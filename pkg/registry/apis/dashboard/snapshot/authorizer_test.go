@@ -20,8 +20,8 @@ func setKubernetesSnapshotsToggle(t *testing.T, enabled bool) {
 		variant = "enabled"
 	}
 	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagKubernetesSnapshots: {
-			Key:            featuremgmt.FlagKubernetesSnapshots,
+		featuremgmt.FlagSnapshotsKubernetesSnapshots: {
+			Key:            featuremgmt.FlagSnapshotsKubernetesSnapshots,
 			DefaultVariant: variant,
 			Variants: map[string]any{
 				"enabled":  true,

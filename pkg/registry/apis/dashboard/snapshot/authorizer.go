@@ -25,7 +25,7 @@ func NewSnapshotAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer
 				return authorizer.DecisionNoOpinion, "", nil
 			}
 
-			if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesSnapshots, false, openfeature.TransactionContext(ctx)) {
+			if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagSnapshotsKubernetesSnapshots, false, openfeature.TransactionContext(ctx)) {
 				return authorizer.DecisionDeny, "kubernetes snapshots feature is not enabled", nil
 			}
 
