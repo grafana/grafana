@@ -15,7 +15,19 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { reportInteraction } from '@grafana/runtime';
+
 import KeyValuesTable, { LinkValue, type KeyValuesTableProps } from './KeyValuesTable';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+  config: {
+    buildInfo: {
+      version: '11.0.0',
+    },
+  },
+}));
 
 const data = [
   { key: 'span.kind', value: 'client' },
@@ -33,6 +45,10 @@ const setup = (propOverrides?: Partial<KeyValuesTableProps>) => {
 };
 
 describe('LinkValue', () => {
+  beforeEach(() => {
+    (reportInteraction as jest.Mock).mockClear();
+  });
+
   it('renders as expected', () => {
     const link = {
       title: 'titleValue',
@@ -57,9 +73,46 @@ describe('LinkValue', () => {
     const linkEl = screen.getByRole('link', { name: 'titleValue' });
     expect(linkEl.firstChild).toBe(linkEl.querySelector('svg'));
   });
+
+  it('reports an interaction when clicked', async () => {
+    const user = userEvent.setup();
+    const onClick = jest.fn();
+    const link = {
+      id: 'grafana-asserts-app/view-service/v1',
+      title: 'View in Asserts',
+      path: 'http://example.com/asserts',
+      pluginId: 'grafana-asserts-app',
+      group: { name: 'service.name' },
+      category: 'service.name',
+      onClick,
+    };
+    render(
+      <LinkValue link={link} datasourceType="tempo">
+        value
+      </LinkValue>
+    );
+
+    await user.click(screen.getByRole('link', { name: 'View in Asserts' }));
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_resource_link_clicked', {
+      grafana_version: '11.0.0',
+      datasourceType: 'tempo',
+      pluginId: 'grafana-asserts-app',
+      linkId: 'grafana-asserts-app/view-service/v1',
+      group: 'service.name',
+      category: 'service.name',
+      title: 'View in Asserts',
+      location: 'value',
+    });
+    expect(onClick).toHaveBeenCalled();
+  });
 });
 
 describe('KeyValuesTable tests', () => {
+  beforeEach(() => {
+    (reportInteraction as jest.Mock).mockClear();
+  });
+
   it('renders without exploding', () => {
     expect(() => setup()).not.toThrow();
   });
@@ -92,12 +145,47 @@ describe('KeyValuesTable tests', () => {
               },
             ]
           : [],
-    } as KeyValuesTableProps);
+    });
 
     const link = screen.getByRole('link', { name: 'More info about client' });
     expect(link).toBeInTheDocument();
     expect(link.firstChild).toBe(link.querySelector('svg'));
     expect(screen.getByRole('row', { name: 'span.kind More info about client' })).toBeInTheDocument();
+  });
+
+  it('reports an interaction when a single resource link is clicked', async () => {
+    const user = userEvent.setup();
+    const onClick = jest.fn();
+    setup({
+      datasourceType: 'tempo',
+      linksGetter: (array, i) =>
+        array[i].key === 'span.kind'
+          ? [
+              {
+                id: 'grafana-asserts-app/span-kind/v1',
+                path: 'http://example.com/docs',
+                title: 'More info about client',
+                pluginId: 'grafana-asserts-app',
+                group: { name: 'span.kind' },
+                onClick,
+              },
+            ]
+          : [],
+    });
+
+    await user.click(screen.getByRole('link', { name: 'More info about client' }));
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_resource_link_clicked', {
+      grafana_version: '11.0.0',
+      datasourceType: 'tempo',
+      pluginId: 'grafana-asserts-app',
+      linkId: 'grafana-asserts-app/span-kind/v1',
+      group: 'span.kind',
+      category: undefined,
+      title: 'More info about client',
+      location: 'value',
+    });
+    expect(onClick).toHaveBeenCalled();
   });
 
   it('renders a dropdown menu when multiple links are available', async () => {
@@ -120,7 +208,7 @@ describe('KeyValuesTable tests', () => {
               },
             ]
           : [],
-    } as KeyValuesTableProps);
+    });
 
     expect(screen.queryByRole('link', { name: 'Documentation' })).not.toBeInTheDocument();
     expect(screen.getByRole('row', { name: /span\.kind.*"client"/ })).toBeInTheDocument();
@@ -133,6 +221,51 @@ describe('KeyValuesTable tests', () => {
     expect(screen.getByRole('menuitem', { name: 'Service dashboard' })).toBeInTheDocument();
     expect(screen.getByTitle('Docs')).toBeInTheDocument();
     expect(screen.getByTitle('Dashboard')).toBeInTheDocument();
+  });
+
+  it('reports an interaction when a menu resource link is clicked', async () => {
+    const user = userEvent.setup();
+    const onClick = jest.fn();
+    setup({
+      datasourceType: 'tempo',
+      linksGetter: (array, i) =>
+        array[i].key === 'span.kind'
+          ? [
+              {
+                id: 'grafana-asserts-app/docs/v1',
+                path: 'http://example.com/docs',
+                title: 'Docs',
+                description: 'Documentation',
+                pluginId: 'grafana-asserts-app',
+                group: { name: 'span.kind' },
+                onClick,
+              },
+              {
+                id: 'grafana-other-app/dashboard/v1',
+                path: 'http://example.com/dashboard',
+                title: 'Dashboard',
+                description: 'Service dashboard',
+                pluginId: 'grafana-other-app',
+                group: { name: 'span.kind' },
+              },
+            ]
+          : [],
+    });
+
+    await user.click(screen.getByRole('button', { name: /"client"/ }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Documentation' }));
+
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_resource_link_clicked', {
+      grafana_version: '11.0.0',
+      datasourceType: 'tempo',
+      pluginId: 'grafana-asserts-app',
+      linkId: 'grafana-asserts-app/docs/v1',
+      group: 'span.kind',
+      category: undefined,
+      title: 'Docs',
+      location: 'menu',
+    });
+    expect(onClick).toHaveBeenCalled();
   });
 
   it('opens the dropdown when clicking the attribute value text', async () => {
@@ -153,7 +286,7 @@ describe('KeyValuesTable tests', () => {
               },
             ]
           : [],
-    } as KeyValuesTableProps);
+    });
 
     await user.click(screen.getByText(/"client"/));
 

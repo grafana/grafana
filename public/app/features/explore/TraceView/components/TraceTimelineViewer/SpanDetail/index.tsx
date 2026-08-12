@@ -117,7 +117,7 @@ const useResourceAttributesExtensionLinks = ({
   const resourceLinksGetter = useCallback(
     (pairs: TraceKeyValuePair[], index: number) => {
       const { key } = pairs[index] ?? {};
-      return links.filter((link) => link.category === key);
+      return links.filter((link) => link.group?.name === key || link.category === key);
     },
     [links]
   );
@@ -469,6 +469,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         linksGetter={resourceLinksGetter}
         onToggle={() => summaryAttributesToggle(spanID)}
         promoGetter={promoGetter}
+        datasourceType={datasourceType}
       />
     );
   }
@@ -482,6 +483,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       linksGetter={resourceLinksGetter}
       onToggle={() => tagsToggle(spanID)}
       promoGetter={promoGetter}
+      datasourceType={datasourceType}
     />
   );
 
@@ -506,6 +508,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         isOpen={isProcessOpen}
         onToggle={() => processToggle(spanID)}
         promoGetter={promoGetter}
+        datasourceType={datasourceType}
       />
     );
   }
