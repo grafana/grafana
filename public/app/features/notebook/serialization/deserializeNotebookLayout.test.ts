@@ -57,6 +57,21 @@ describe('deserializeNotebookLayout', () => {
     expect(manager.getVizPanels()).toHaveLength(2);
   });
 
+  it('skips a cell named after an inherited member instead of throwing', () => {
+    const { layout, elements } = fixture();
+    // `elements` is caller-supplied JSON, so a cell can name anything. A bare bracket lookup resolves
+    // `constructor` to Object's own, which is truthy and has no `kind`, so it would reach the
+    // unknown-kind throw rather than the skip every other unresolvable reference takes.
+    layout.spec.cells.push({
+      kind: 'NotebookLayoutItem',
+      spec: { element: { kind: 'ElementReference', name: 'constructor' }, source: 'user' },
+    });
+
+    const manager = deserializeNotebookLayout(layout, elements);
+
+    expect(manager.state.cells).toHaveLength(4);
+  });
+
   it('round-trips cell order, source and collapsed', () => {
     const { layout, elements } = fixture();
 
