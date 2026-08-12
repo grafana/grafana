@@ -6,17 +6,22 @@ import { t } from '@grafana/i18n';
 import {
   ClipboardButton,
   type Column,
+  Dropdown,
   IconButton,
   InteractiveTable,
   LinkButton,
+  Menu,
   Stack,
   TagList,
   TextLink,
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+import { useLazyGetNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 
+import { NotebookExportMenu } from '../export/NotebookExportMenu';
 import { canEditNotebooks } from '../permissions';
+import { type Spec as NotebookSpec } from '../types';
 import { notebookEditHref, notebookShareUrl, notebookViewUrl } from '../urls';
 
 import { type NotebookRow } from './useNotebooksList';
@@ -121,14 +126,45 @@ function NotebookRowActions({ notebook }: { notebook: NotebookRow }) {
       <ClipboardButton variant="secondary" size="sm" icon="link" getText={() => notebookShareUrl(notebook.uid)}>
         {t('notebooks.list.table.copy-link', 'Copy link')}
       </ClipboardButton>
-      {/* Row-level actions land in a follow-up; the menu is a disabled placeholder for now. */}
-      <IconButton
-        name="ellipsis-v"
-        disabled
-        aria-label={t('notebooks.list.table.more-actions', 'More actions')}
-        tooltip={t('notebooks.list.table.more-actions', 'More actions')}
-      />
+      <Dropdown overlay={<NotebookRowMenu uid={notebook.uid} />} placement="bottom-end">
+        <IconButton
+          name="ellipsis-v"
+          variant="secondary"
+          aria-label={t('notebooks.list.table.more-actions', 'More actions')}
+          tooltip={t('notebooks.list.table.more-actions', 'More actions')}
+        />
+      </Dropdown>
     </Stack>
+  );
+}
+
+function NotebookRowMenu({ uid }: { uid: string }) {
+  const [fetchNotebook] = useLazyGetNotebookQuery();
+
+  return (
+    <Menu>
+      {/* A submenu for one top-level item reads a little oddly today, but it is the shape Duplicate
+          and Delete slot into, and it matches the design. */}
+      <Menu.Item
+        label={t('notebooks.export.label', 'Export')}
+        icon="download-alt"
+        childItems={[
+          <NotebookExportMenu
+            key="export"
+            uid={uid}
+            // The table's rows are flattened and carry no spec, so it is fetched when an action runs
+            // rather than for every row on screen.
+            getSpec={async () => {
+              const notebook = await fetchNotebook({ name: uid }).unwrap();
+              // The generated client type mirrors the schema spec at runtime (same OpenAPI source);
+              // bridge at the fetch seam, as the notebook page state manager does.
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema spec at the fetch seam
+              return notebook.spec as unknown as NotebookSpec;
+            }}
+          />,
+        ]}
+      />
+    </Menu>
   );
 }
 

@@ -12813,6 +12813,14 @@
     }
   },
   "notebooks": {
+    "export": {
+      "copied": "Notebook copied as Markdown",
+      "copy-markdown": "Copy as Markdown",
+      "download-markdown": "Download as .md",
+      "error": "Failed to export notebook",
+      "label": "Export",
+      "open-in-cursor": "Open in Cursor"
+    },
     "list": {
       "all-authors": "All authors",
       "author-filter": "Filter by author",

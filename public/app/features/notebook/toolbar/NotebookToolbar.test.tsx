@@ -2,8 +2,23 @@ import { createMemoryHistory } from 'history';
 import { render, screen } from 'test/test-utils';
 
 import { HistoryWrapper, config, locationService, setLocationService } from '@grafana/runtime';
+import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
+
+import { NotebookScene } from '../scene/NotebookScene';
+import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutManager';
 
 import { NotebookToolbar } from './NotebookToolbar';
+
+function buildScene() {
+  return new NotebookScene({
+    title: 'Q2 latency regression',
+    uid: 'nb1',
+    body: new NotebookLayoutManager({ cells: [] }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({}),
+  });
+}
 
 describe('NotebookToolbar', () => {
   const originalLocationService = locationService;
@@ -32,7 +47,7 @@ describe('NotebookToolbar', () => {
    * service when the button is clicked, not at render, so setting it afterwards is enough.
    */
   function setup() {
-    const rendered = render(<NotebookToolbar uid="nb1" />);
+    const rendered = render(<NotebookToolbar uid="nb1" scene={buildScene()} />);
 
     const history = new HistoryWrapper(createMemoryHistory({ initialEntries: ['/'] }));
     history.setOrgIdGetter(() => 3);
@@ -57,5 +72,15 @@ describe('NotebookToolbar', () => {
     await user.click(screen.getByRole('button', { name: 'Copy link' }));
 
     expect(await screen.findByText('Copied')).toBeInTheDocument();
+  });
+
+  it('offers the export actions from a dropdown', async () => {
+    const { user } = setup();
+
+    await user.click(screen.getByRole('button', { name: /Export/ }));
+
+    expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Download as .md' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Open in Cursor' })).toBeInTheDocument();
   });
 });
