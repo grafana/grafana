@@ -43,6 +43,38 @@ describe('StateTimelinePanel hooks', () => {
       expect(result.current.paginatedFrames?.length).toBe(2);
     });
 
+    describe('single page', () => {
+      const buildFrame = (numberOfSeries: number) =>
+        createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+            ...Array.from({ length: numberOfSeries }, (_, index) => ({
+              name: `value-${index}`,
+              type: FieldType.number,
+              values: [4, 5, 6],
+            })),
+          ],
+        });
+
+      it('renders nothing while every series fits on one page', () => {
+        const { result } = renderHook(() => usePagination([buildFrame(3)], 3));
+
+        render(result.current.paginationElement);
+
+        expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('next page')).not.toBeInTheDocument();
+      });
+
+      it('renders as soon as one series does not fit', () => {
+        const { result } = renderHook(() => usePagination([buildFrame(4)], 3));
+
+        render(result.current.paginationElement);
+
+        expect(screen.getByRole('navigation')).toBeInTheDocument();
+        expect(screen.getByLabelText('next page')).not.toBeDisabled();
+      });
+    });
+
     const frame = createDataFrame({
       fields: [
         { name: 'time', type: FieldType.time, values: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] },
