@@ -519,7 +519,11 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelDelete(ctx context.Context, n
 	if err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
-	result, err := b.unified.Search(ctx, &resourcepb.ResourceSearchRequest{
+	// This referential-integrity check must include dashboards the requester
+	// cannot list; otherwise deleting a panel could leave hidden dashboards with
+	// dangling references.
+	searchCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+	result, err := b.unified.Search(searchCtx, &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Key: key,
 			Fields: []*resourcepb.Requirement{{
