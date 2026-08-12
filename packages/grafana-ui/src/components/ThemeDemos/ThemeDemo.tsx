@@ -12,7 +12,8 @@ import {
   type ThemeVizHue,
 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { type IconName } from '../../types/icon';
 import { Badge, type BadgeColor } from '../Badge/Badge';
 import { allButtonVariants, Button } from '../Button/Button';
 import { Card } from '../Card/Card';
@@ -22,7 +23,9 @@ import { Field } from '../Forms/Field';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
+import { FilterPill } from '../FilterPill/FilterPill';
 import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
 import { type BackgroundColor, type BorderColor, Box, type BoxShadow } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
@@ -34,6 +37,13 @@ import { Text, type TextProps } from '../Text/Text';
 
 const badgeColors: BadgeColor[] = ['blue', 'red', 'green', 'orange', 'purple', 'darkgrey', 'brand'];
 const exampleTagNames = ['frontend', 'backend', 'alerting', 'dashboard', 'prometheus', 'loki', 'tempo', 'mimir'];
+const exampleTagIcons: IconName[] = ['tag-alt', 'heart', 'rocket', 'bell', 'cloud', 'database', 'apps', 'bolt'];
+const exampleFilterPills = [
+  'job = prometheus',
+  'namespace = monitoring',
+  'cluster =~ prod-.*',
+  'service != gateway',
+];
 
 interface DemoBoxProps {
   bg?: BackgroundColor;
@@ -332,8 +342,8 @@ export const ThemeDemo = () => {
                 ))}
               </Stack>
               <Stack wrap="wrap" gap={1} alignItems="center">
-                {exampleTagNames.map((name) => (
-                  <Tag key={name} name={name} icon="tag-alt" />
+                {exampleTagNames.map((name, index) => (
+                  <Tag key={name} name={name} icon={exampleTagIcons[index % exampleTagIcons.length]} />
                 ))}
               </Stack>
               <ul
@@ -350,6 +360,27 @@ export const ThemeDemo = () => {
                   <TagItem key={`removable-${name}`} name={name} onRemove={() => {}} />
                 ))}
               </ul>
+            </Stack>
+          </DemoBox>
+        </CollapsableSection>
+        <CollapsableSection label="Filter pills" isOpen={true}>
+          <DemoBox bg="primary">
+            <Stack direction="column" gap={2}>
+              <DemoText>Dashboard filters (AdHocFilterPill / BasePill)</DemoText>
+              <Stack wrap="wrap" gap={1} alignItems="center">
+                {exampleFilterPills.map((label) => (
+                  <DashboardFilterPillDemo key={label} label={label} removable />
+                ))}
+                <DashboardFilterPillDemo label="region = us-east-1" readOnly />
+                <DashboardFilterPillDemo label="env = staging" disabled />
+              </Stack>
+              <DemoText>FilterPill</DemoText>
+              <Stack wrap="wrap" gap={1} alignItems="center">
+                <FilterPill label="Logs" selected={false} onClick={() => {}} />
+                <FilterPill label="Metrics" selected onClick={() => {}} />
+                <FilterPill label="Traces" selected onClick={() => {}} />
+                <FilterPill label="Profiles" selected={false} onClick={() => {}} />
+              </Stack>
             </Stack>
           </DemoBox>
         </CollapsableSection>
@@ -542,3 +573,82 @@ function ActionsDemo() {
     </Stack>
   );
 }
+
+/** Visual stand-in for scenes AdHocFilterPill / BasePill (not exported from @grafana/ui). */
+function DashboardFilterPillDemo({
+  label,
+  removable,
+  readOnly,
+  disabled,
+}: {
+  label: string;
+  removable?: boolean;
+  readOnly?: boolean;
+  disabled?: boolean;
+}) {
+  const styles = useStyles2(getDashboardFilterPillStyles);
+
+  return (
+    <div
+      className={cx(
+        styles.pill,
+        readOnly && styles.readOnly,
+        disabled && styles.disabled
+      )}
+      role="button"
+      tabIndex={0}
+    >
+      <span className={styles.text}>{label}</span>
+      {removable && !readOnly && (
+        <IconButton name="times" size="md" className={styles.remove} tooltip={`Remove ${label}`} onClick={() => {}} />
+      )}
+    </div>
+  );
+}
+
+const getDashboardFilterPillStyles = (theme: GrafanaTheme2) => ({
+  pill: css({
+    display: 'flex',
+    alignItems: 'center',
+    background: theme.colors.action.selected,
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.border.weak}`,
+    padding: theme.spacing(0.125, 0, 0.125, 1),
+    color: theme.colors.text.primary,
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    minHeight: theme.spacing(2.75),
+    ...theme.typography.bodySmall,
+    fontWeight: theme.typography.fontWeightBold,
+    cursor: 'pointer',
+
+    '&:hover': {
+      background: theme.colors.action.hover,
+    },
+  }),
+  readOnly: css({
+    paddingRight: theme.spacing(1),
+    cursor: 'text',
+
+    '&:hover': {
+      background: theme.colors.action.selected,
+    },
+  }),
+  disabled: css({
+    color: theme.colors.text.disabled,
+    cursor: 'default',
+
+    '&:hover': {
+      background: theme.colors.action.selected,
+    },
+  }),
+  text: css({
+    maxWidth: 200,
+    width: '100%',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+  }),
+  remove: css({
+    marginInline: theme.spacing(0.5),
+  }),
+});

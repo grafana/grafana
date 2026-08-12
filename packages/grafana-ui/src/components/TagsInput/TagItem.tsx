@@ -74,11 +74,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderWidth: visualRefreshEnabled ? 0 : '1px',
       borderStyle: 'solid',
       borderRadius: theme.shape.radius.pill,
-      padding: `0 ${theme.spacing(0.5)}`,
+      padding: '0 8px',
       whiteSpace: 'nowrap',
       textShadow: 'none',
       fontWeight: 500,
-      fontSize: theme.typography.size.sm,
+      fontSize: 10,
+      fontFamily: theme.typography.fontFamilyMonospace,
       color: '#fff',
     }),
     defaultTagColor: css({
@@ -93,6 +94,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     buttonStyles: css({
       margin: 0,
+      color: 'inherit',
       '&:hover::before': {
         display: 'none',
       },
