@@ -150,7 +150,7 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
 	qs := quotatest.New(false, nil)
-	orgSvc, err := orgimpl.ProvideService(store, cfg, qs)
+	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, qs)
 	require.NoError(b, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),

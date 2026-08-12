@@ -12,7 +12,10 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -328,7 +331,9 @@ func (rt *bearerTokenExchangeRT) RoundTrip(req *http.Request) (*http.Response, e
 }
 
 func newBearerTokenExchangeWrapper(exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper) func(http.RoundTripper) http.RoundTripper {
+	tracingMiddleware := httpclientprovider.TracingMiddleware(log.New("annotations.apiclient"), tracer)
 	return func(rt http.RoundTripper) http.RoundTripper {
-		return &bearerTokenExchangeRT{exchanger: exchanger, nsMapper: nsMapper, next: rt}
+		tracingRT := tracingMiddleware.CreateMiddleware(httpclient.Options{}, rt)
+		return &bearerTokenExchangeRT{exchanger: exchanger, nsMapper: nsMapper, next: tracingRT}
 	}
 }

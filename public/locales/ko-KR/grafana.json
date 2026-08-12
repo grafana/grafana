@@ -3593,6 +3593,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "시간 간격",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "시간 간격 선택..."
     },
     "time-intervals-table": {
@@ -5622,6 +5623,8 @@
       "edit-query-result-rule": "쿼리 결과 규칙 변경",
       "edit-template-variable-rule": "템플릿 변수 규칙 변경",
       "edit-time-range-rule": "시간 범위 규칙 변경",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "{{typeName}} 이동",
       "panel-background": "패널 배경 변경",
       "panel-description": "패널 설명 변경",
@@ -6255,6 +6258,12 @@
         "title-above-dashboard_other": "",
         "title-controls-menu_other": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -8010,7 +8019,8 @@
       "title-missing-rights": "권한 없음"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "데이터 소스 선택"
+      "aria-label-select-a-data-source": "데이터 소스 선택",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "페이지를 찾을 수 없음: {{page}}"
@@ -10901,6 +10911,12 @@
       "critical-count_other": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12356,6 +12372,10 @@
     "new-folder": {
       "title": "새 폴더"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "온콜"
     },
@@ -12646,8 +12666,33 @@
       "title-zoom-out": "줌 아웃"
     }
   },
-  "notebook": {
-    "breadcrumb-title": ""
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_other": "",
+      "count-truncated_other": ""
+    }
   },
   "notifications": {
     "empty-state": {

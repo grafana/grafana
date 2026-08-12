@@ -304,6 +304,7 @@ func (s *SocialGithub) fetchOrganizations(ctx context.Context, client *http.Clie
 }
 
 func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+	logger := s.log.FromContext(ctx)
 	s.reloadMutex.RLock()
 	defer s.reloadMutex.RUnlock()
 
@@ -337,7 +338,7 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 	}
 
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
-		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+		logger.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	var directlyMappedRole org.RoleType
@@ -346,14 +347,14 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 		var grafanaAdmin bool
 		directlyMappedRole, grafanaAdmin, err = s.extractRoleAndAdminOptional(response.Body, userInfo.Groups)
 		if err != nil {
-			s.log.Warn("Failed to extract role", "err", err)
+			logger.Warn("Failed to extract role", "err", err)
 		}
 
 		if s.info.AllowAssignGrafanaAdmin {
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
 		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
 			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}

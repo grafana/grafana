@@ -3671,6 +3671,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Odstępy czasu",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Wybierz odstępy czasu…"
     },
     "time-intervals-table": {
@@ -5742,6 +5743,8 @@
       "edit-query-result-rule": "Zmień regułę wyniku zapytania",
       "edit-template-variable-rule": "Zmień regułę zmiennej szablonu",
       "edit-time-range-rule": "Zmień regułę zakresu czasu",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Przenieś {{typeName}}",
       "panel-background": "Zmień tło panelu",
       "panel-description": "Zmień opis panelu",
@@ -6396,6 +6399,12 @@
         "title-hidden_few": "",
         "title-hidden_many": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -8184,7 +8193,8 @@
       "title-missing-rights": "Brak uprawnień"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Wybierz źródło danych"
+      "aria-label-select-a-data-source": "Wybierz źródło danych",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Nie znaleziono strony: {{page}}"
@@ -11123,6 +11133,12 @@
       "high-count_many": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12641,6 +12657,10 @@
     "new-folder": {
       "title": "Nowy folder"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12940,8 +12960,39 @@
       "title-zoom-out": "Zmniejszenie"
     }
   },
-  "notebook": {
-    "breadcrumb-title": ""
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_few": "",
+      "count_many": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_few": "",
+      "count-truncated_many": "",
+      "count-truncated_other": ""
+    }
   },
   "notifications": {
     "empty-state": {

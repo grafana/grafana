@@ -118,6 +118,7 @@ func NewAzureADProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper 
 }
 
 func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+	logger := s.log.FromContext(ctx)
 	s.reloadMutex.RLock()
 	defer s.reloadMutex.RUnlock()
 
@@ -146,7 +147,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
 
-	s.log.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
+	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
 
 	userInfo := &social.BasicUserInfo{
 		Id:     claims.ID,
@@ -159,22 +160,22 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	if !s.info.SkipOrgRoleSync {
 		directlyMappedRole, grafanaAdmin := s.extractRoleAndAdminOptional(claims)
 
-		s.log.Debug("AzureAD OAuth: extracted role", "email", email, "role", directlyMappedRole)
+		logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", directlyMappedRole)
 
 		if s.info.AllowAssignGrafanaAdmin {
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
 		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
 			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
 
-		s.log.Debug("AzureAD OAuth: mapped org roles", "email", email, "roles", fmt.Sprintf("%v", userInfo.OrgRoles))
+		logger.Debug("AzureAD OAuth: mapped org roles", "email", email, "roles", fmt.Sprintf("%v", userInfo.OrgRoles))
 	}
 
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
-		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+		logger.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	if !s.isGroupMember(groups) {
@@ -210,7 +211,7 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 	case social.ClientSecretPost:
 		// Default behavior for ClientSecretPost, no additional setup needed
 	default:
-		s.log.Debug("ClientAuthentication is not set. Using default client authentication method: none")
+		s.log.FromContext(ctx).Debug("ClientAuthentication is not set. Using default client authentication method: none")
 	}
 
 	// Default token exchange
@@ -266,13 +267,14 @@ type azureADManagedIdentityTokenSource struct {
 }
 
 func (s *azureADTokenSource) Token() (*oauth2.Token, error) {
-	s.log.Debug("Fetching Token with AzureAD Token Source and Workload Identity")
+	logger := s.log.FromContext(s.ctx)
+	logger.Debug("Fetching Token with AzureAD Token Source and Workload Identity")
 	if s.token.Valid() {
 		return s.token, nil
 	}
 
 	if s.token.RefreshToken == "" {
-		s.log.Warn("AzureADToken fetchToken failed: no refresh token available")
+		logger.Warn("AzureADToken fetchToken failed: no refresh token available")
 		return nil, fmt.Errorf("no refresh token available to refresh the access token")
 	}
 
@@ -293,18 +295,19 @@ func (s *azureADTokenSource) Token() (*oauth2.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.log.Debug("AzureADToken fetchToken completed", "expiry", token.Expiry)
+	logger.Debug("AzureADToken fetchToken completed", "expiry", token.Expiry)
 	return token, nil
 }
 
 func (s *azureADManagedIdentityTokenSource) Token() (*oauth2.Token, error) {
-	s.log.Debug("Fetching Token with AzureAD Token Source and Managed Identity")
+	logger := s.log.FromContext(s.ctx)
+	logger.Debug("Fetching Token with AzureAD Token Source and Managed Identity")
 	if s.token.Valid() {
 		return s.token, nil
 	}
 
 	if s.token.RefreshToken == "" {
-		s.log.Warn("AzureADManagedIdentityToken fetchToken failed: no refresh token available")
+		logger.Warn("AzureADManagedIdentityToken fetchToken failed: no refresh token available")
 		return nil, fmt.Errorf("no refresh token available to refresh the access token")
 	}
 
@@ -334,7 +337,7 @@ func (s *azureADManagedIdentityTokenSource) Token() (*oauth2.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.log.Debug("AzureADManagedIdentityToken fetchToken completed", "expiry", token.Expiry)
+	logger.Debug("AzureADManagedIdentityToken fetchToken completed", "expiry", token.Expiry)
 	return token, nil
 }
 
@@ -356,7 +359,7 @@ func fetchAzureADToken(ctx context.Context, log log.Logger, tokenURL string, par
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Error("Failed to close response body", "error", err)
+			log.FromContext(ctx).Error("Failed to close response body", "error", err)
 		}
 	}()
 
@@ -366,7 +369,7 @@ func fetchAzureADToken(ctx context.Context, log log.Logger, tokenURL string, par
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		log.Error("oauth2: cannot fetch token", "status", resp.Status, "body", body)
+		log.FromContext(ctx).Error("oauth2: cannot fetch token", "status", resp.Status, "body", body)
 		return nil, fmt.Errorf("oauth2: cannot fetch token: %v", resp.Status)
 	}
 
@@ -479,6 +482,7 @@ func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester)
 }
 
 func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, idTokenString string) (*azureClaims, error) {
+	logger := s.log.FromContext(ctx)
 	rawJSON, err := s.validateIDTokenSignatureWithURLs(ctx, client, idTokenString, s.getAzureJWKSURLs())
 	if err != nil {
 		return nil, fmt.Errorf("error validating id token signature: %w", err)
@@ -493,13 +497,13 @@ func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client,
 		return nil, &SocialError{"AzureAD OAuth: version 1.0 is not supported. Please ensure the auth_url and token_url are set to the v2.0 endpoints."}
 	}
 
-	s.log.Debug("Validating audience", "audience", claims.Audience, "client_id", s.ClientID)
+	logger.Debug("Validating audience", "audience", claims.Audience, "client_id", s.ClientID)
 	if claims.Audience != s.ClientID {
 		return nil, &SocialError{"AzureAD OAuth: audience mismatch"}
 	}
 
-	s.log.Debug("Validating tenant", "tenant", claims.TenantID, "allowed_tenants", s.allowedOrganizations)
-	if !s.isAllowedTenant(claims.TenantID) {
+	logger.Debug("Validating tenant", "tenant", claims.TenantID, "allowed_tenants", s.allowedOrganizations)
+	if !s.isAllowedTenant(logger, claims.TenantID) {
 		return nil, &SocialError{"AzureAD OAuth: tenant mismatch"}
 	}
 	return &claims, nil
@@ -623,8 +627,9 @@ type getAzureGroupResponse struct {
 //
 // See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
 func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, claims *azureClaims, token *oauth2.Token) ([]string, error) {
+	logger := s.log.FromContext(ctx)
 	if !s.forceUseGraphAPI {
-		s.log.Debug("Checking the claim for groups")
+		logger.Debug("Checking the claim for groups")
 		if len(claims.Groups) > 0 {
 			return claims.Groups, nil
 		}
@@ -635,7 +640,7 @@ func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, 
 	}
 
 	// Fallback to the Graph API
-	endpoint, errBuildGraphURI := s.groupsGraphAPIURL(claims, token)
+	endpoint, errBuildGraphURI := s.groupsGraphAPIURL(logger, claims, token)
 	if errBuildGraphURI != nil {
 		return nil, errBuildGraphURI
 	}
@@ -658,16 +663,16 @@ func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, 
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			s.log.Warn("AzureAD OAuth: failed to close response body", "err", err)
+			logger.Warn("AzureAD OAuth: failed to close response body", "err", err)
 		}
 	}()
 
 	if res.StatusCode != http.StatusOK {
 		if res.StatusCode == http.StatusForbidden {
-			s.log.Warn("AzureAD OAuth: Token need GroupMember.Read.All permission to fetch all groups")
+			logger.Warn("AzureAD OAuth: Token need GroupMember.Read.All permission to fetch all groups")
 		} else {
 			body, _ := io.ReadAll(res.Body)
-			s.log.Warn("AzureAD OAuth: could not fetch user groups", "code", res.StatusCode, "body", string(body))
+			logger.Warn("AzureAD OAuth: could not fetch user groups", "code", res.StatusCode, "body", string(body))
 		}
 		return []string{}, nil
 	}
@@ -682,12 +687,12 @@ func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, 
 
 // groupsGraphAPIURL retrieves the Microsoft Graph API URL to fetch user groups from the _claim_sources if present
 // otherwise it generates an handcrafted URL.
-func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Token) (string, error) {
+func (s *SocialAzureAD) groupsGraphAPIURL(logger log.Logger, claims *azureClaims, token *oauth2.Token) (string, error) {
 	var endpoint string
 	// First check if an endpoint was specified in the claims
 	if claims.ClaimNames.Groups != "" {
 		endpoint = claims.ClaimSources[claims.ClaimNames.Groups].Endpoint
-		s.log.Debug(fmt.Sprintf("endpoint to fetch groups specified in the claims: %s", endpoint))
+		logger.Debug(fmt.Sprintf("endpoint to fetch groups specified in the claims: %s", endpoint))
 	}
 
 	// If no endpoint was specified or if the endpoints provided in _claim_source is pointing to the deprecated
@@ -710,7 +715,7 @@ func (s *SocialAzureAD) groupsGraphAPIURL(claims *azureClaims, token *oauth2.Tok
 		}
 
 		endpoint = fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", tenantID, claims.ID)
-		s.log.Debug(fmt.Sprintf("handcrafted endpoint to fetch groups: %s", endpoint))
+		logger.Debug(fmt.Sprintf("handcrafted endpoint to fetch groups: %s", endpoint))
 	}
 	return endpoint, nil
 }
@@ -728,9 +733,9 @@ func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
 	return s.getBaseSupportBundleContent(bf)
 }
 
-func (s *SocialAzureAD) isAllowedTenant(tenantID string) bool {
+func (s *SocialAzureAD) isAllowedTenant(logger log.Logger, tenantID string) bool {
 	if len(s.allowedOrganizations) == 0 {
-		s.log.Warn("No allowed organizations specified, all tenants are allowed. Configure allowed_organizations to restrict access")
+		logger.Warn("No allowed organizations specified, all tenants are allowed. Configure allowed_organizations to restrict access")
 		return true
 	}
 
