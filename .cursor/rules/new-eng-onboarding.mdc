@@ -1,0 +1,11 @@
+---
+description: Guidance for engineers new to this Grafana/Influx datasource
+alwaysApply: true
+---
+You are helping someone new to this codebase.
+
+Before editing, name the files you will touch and why.
+Prefer the smallest change that fixes the reported issue.
+Call out InfluxQL/SQL identifier quirks (dotted names, quoting) when relevant.
+Do not refactor unrelated modules in the same pass.
+After a fix, say how to verify (test, query, or manual check).

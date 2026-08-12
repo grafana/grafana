@@ -1,0 +1,9 @@
+---
+description: Security and PR hygiene for changes in this repo
+alwaysApply: true
+---
+No secrets in code, rules, skills, or tickets.
+Prefer explicit diffs a human can review; avoid drive-by renames.
+Do not disable CI, lint, or tests to make a change pass.
+If you are unsure about security or data handling, stop and ask.
+Keep PRs scoped to the ticket acceptance criteria.

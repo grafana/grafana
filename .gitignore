@@ -84,6 +84,11 @@ public/css/*.min.css
 !.cursor/commands/
 .cursor/commands/*
 !.cursor/commands/*.md
+!.cursor/rules/
+.cursor/rules/*
+!.cursor/rules/*.mdc
+!.cursor/skills/
+!.cursor/skills/**
 !.cursor/README.md
 # Agent edit audit log written by .cursor/hooks/audit-edit.sh
 .cursor/hooks-audit.log
