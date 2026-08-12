@@ -301,6 +301,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,datasourcesApiServerEnableHealthEndpointFrontend,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-05-22,datasourcesApiServerEnableHealthEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,flameGraphWithCallTree,preview,@grafana/observability-traces-and-profiling,false,false,true
+2026-08-12,flameGraph.tableNg,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-05-22,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,true
 2026-05-22,logsTablePanelNG,experimental,@grafana/observability-logs,false,false,true
 2026-05-22,plugins.useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true

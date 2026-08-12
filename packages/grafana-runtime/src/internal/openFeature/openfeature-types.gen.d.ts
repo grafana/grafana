@@ -54,6 +54,7 @@ declare module "@openfeature/core" {
     | "grafana.viewPanelPane"
     | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraphWithCallTree"
+    | "flameGraph.tableNg"
     | "inlineLogDetailsNoScrolls"
     | "logsTablePanelNG"
     | "plugins.useMTPluginSettings"
