@@ -3,8 +3,16 @@ import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { CoreApp, type DataFrame, type GrafanaTheme2, type PanelProps, type InterpolateFunction } from '@grafana/data';
-import { ScrollContainer, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
+import {
+  CoreApp,
+  getFrameDisplayName,
+  type DataFrame,
+  type GrafanaTheme2,
+  type PanelProps,
+  type InterpolateFunction,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Combobox, Field, ScrollContainer, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -21,7 +29,7 @@ import { TextNGCodeView } from './TextNGCodeView';
 import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { renderContent } from './renderContent';
-import { EMPTY_CONTENT, getInterpolateFormat } from './utils';
+import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
@@ -33,15 +41,16 @@ export function TextNGPanel(props: Props) {
   const isEditing = app === CoreApp.PanelEditor;
   const content = options.content ?? defaultOptions.content ?? '';
 
-  const suggestions = useMemo(
-    () => (isEditing ? getDataLinksVariableSuggestions(data.series) : []),
-    [isEditing, data.series]
-  );
+  const frames = data.series;
+  const currentFrameIndex = getCurrentFrameIndex(frames, options);
+  const series = useMemo(() => (frames.length > 1 ? [frames[currentFrameIndex]] : frames), [frames, currentFrameIndex]);
+
+  const suggestions = useMemo(() => (isEditing ? getDataLinksVariableSuggestions(series) : []), [isEditing, series]);
 
   const [processed, setProcessed] = useState<Options>(() => ({
     mode: options.mode,
     // The editor renders its own preview, so skip the render pass on entry.
-    content: isEditing ? EMPTY_CONTENT : renderPanelContent(options, data.series, replaceVariables),
+    content: isEditing ? EMPTY_CONTENT : renderPanelContent(options, series, replaceVariables),
   }));
 
   // Recompute synchronously when leaving edit mode so pre-edit content never flashes.
@@ -51,7 +60,7 @@ export function TextNGPanel(props: Props) {
     if (!isEditing) {
       setProcessed({
         mode: options.mode,
-        content: renderPanelContent(options, data.series, replaceVariables),
+        content: renderPanelContent(options, series, replaceVariables),
       });
     }
   }
@@ -64,7 +73,7 @@ export function TextNGPanel(props: Props) {
       if (isEditing) {
         return;
       }
-      const next = renderPanelContent(options, data.series, replaceVariables);
+      const next = renderPanelContent(options, series, replaceVariables);
       if (next !== processed.content || options.mode !== processed.mode) {
         setProcessed({
           mode: options.mode,
@@ -79,35 +88,58 @@ export function TextNGPanel(props: Props) {
       options.mode,
       options.renderMode,
       options.code?.language,
-      data.series,
+      series,
       replaceVariables,
       renderCounter,
     ]
   );
 
-  if (isEditing) {
-    return (
-      // Show the rendered content while the editor chunk loads; the editor
-      // opens in Preview view, so the content stays in place.
-      <Suspense
-        fallback={<EditorLoadingFallback options={options} series={data.series} replaceVariables={replaceVariables} />}
-      >
-        <TextNGEditor
-          content={content}
-          mode={options.mode}
-          showLineNumbers={options.code?.showLineNumbers ?? false}
-          codeLanguage={options.code?.language}
-          renderMode={options.renderMode}
-          series={data.series}
-          replaceVariables={replaceVariables}
-          suggestions={suggestions}
-          onChange={(change) => onOptionsChange(applyEditorChange(options, change))}
-        />
-      </Suspense>
-    );
+  const panel = isEditing ? (
+    // Show the rendered content while the editor chunk loads; the editor
+    // opens in Preview view, so the content stays in place.
+    <Suspense
+      fallback={<EditorLoadingFallback options={options} series={series} replaceVariables={replaceVariables} />}
+    >
+      <TextNGEditor
+        content={content}
+        mode={options.mode}
+        showLineNumbers={options.code?.showLineNumbers ?? false}
+        codeLanguage={options.code?.language}
+        renderMode={options.renderMode}
+        series={series}
+        replaceVariables={replaceVariables}
+        suggestions={suggestions}
+        onChange={(change) => onOptionsChange(applyEditorChange(options, change))}
+      />
+    </Suspense>
+  ) : (
+    <TextNGView mode={processed.mode} content={processed.content} code={options.code} />
+  );
+
+  if (frames.length <= 1) {
+    return panel;
   }
 
-  return <TextNGView mode={processed.mode} content={processed.content} code={options.code} />;
+  const frameOptions = frames.map((frame, index) => ({
+    label: getFrameDisplayName(frame),
+    value: index,
+  }));
+
+  return (
+    <Stack direction="column" gap={1} height="100%">
+      <Stack grow={1} minHeight={0}>
+        {panel}
+      </Stack>
+      <Field noMargin>
+        <Combobox
+          aria-label={t('textng.frame-picker.label', 'Query')}
+          options={frameOptions}
+          value={frameOptions[currentFrameIndex]}
+          onChange={(val) => onOptionsChange({ ...options, frameIndex: val.value ?? 0 })}
+        />
+      </Field>
+    </Stack>
+  );
 }
 
 interface TextNGViewProps {

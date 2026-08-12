@@ -56,6 +56,10 @@ export const defaultCodeOptions: Partial<CodeOptions> = {
 export interface Options {
   code?: CodeOptions;
   content: string;
+  /**
+   * Index of the selected frame, when the query returns more than one
+   */
+  frameIndex: number;
   mode: TextMode;
   renderMode?: RenderMode;
 }
@@ -64,6 +68,7 @@ export const defaultOptions: Partial<Options> = {
   content: `# Title
 
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)`,
+  frameIndex: 0,
   mode: TextMode.Markdown,
   renderMode: RenderMode.Once,
 };

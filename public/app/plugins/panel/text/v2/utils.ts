@@ -1,9 +1,13 @@
-import { renderTextPanelMarkdown, textUtil } from '@grafana/data';
+import { renderTextPanelMarkdown, textUtil, type DataFrame } from '@grafana/data';
 import { type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 
 import { CodeLanguage, TextMode } from '../panelcfg.gen';
 
 export const EMPTY_CONTENT = ' ';
+
+export function getCurrentFrameIndex(frames: DataFrame[], options: { frameIndex: number }) {
+  return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
+}
 
 export function getInterpolateFormat(codeLanguage?: CodeLanguage): 'json' | 'html' {
   return codeLanguage === CodeLanguage.Json ? 'json' : 'html';

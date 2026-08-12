@@ -27,6 +27,7 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
   addHiddenOption('content', defaultOptions.content);
   addHiddenOption('code.language', defaultCodeOptions.language);
   addHiddenOption('code.showLineNumbers', defaultCodeOptions.showLineNumbers);
+  addHiddenOption('frameIndex', defaultOptions.frameIndex);
 
   builder.addRadio({
     path: 'renderMode',

@@ -2,12 +2,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { type Props, TextNGPanel } from './TextNGPanel';
 import { createData, createProps, renderPanel } from './test-utils';
+
+mockComboboxRect();
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
@@ -345,6 +348,53 @@ describe('TextNGPanel', () => {
       ['an unset render mode', undefined],
     ])('renders once with no row context in %s', (_name, renderMode) => {
       expect(setupWithData(renderMode)).toContain('no row context');
+    });
+
+    it('renders rows from only the selected frame when multiple frames are returned', () => {
+      const frames = [
+        toDataFrame({ refId: 'A', fields: [{ name: 'host', values: ['web-1'] }] }),
+        toDataFrame({ refId: 'B', fields: [{ name: 'host', values: ['web-2', 'web-3'] }] }),
+      ];
+      const props = createProps(reportRowContext, {
+        data: createData(frames),
+        options: { content: 'no row context', mode: TextMode.Markdown, renderMode: RenderMode.PerRow, frameIndex: 1 },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      const html = screen.getByTestId('TextNGPanel-converted-content').innerHTML;
+      expect(html).toContain('row-0');
+      expect(html).toContain('row-1');
+      expect(html.match(/row-\d/g)).toHaveLength(2);
+    });
+  });
+
+  describe('frame selector', () => {
+    const frameA = toDataFrame({ name: 'Frame A', fields: [{ name: 'host', values: ['web-1'] }] });
+    const frameB = toDataFrame({ name: 'Frame B', fields: [{ name: 'host', values: ['web-2'] }] });
+
+    it('does not show a frame picker for a single frame', () => {
+      setup(createProps(replaceVariablesMock, { data: createData([frameA]) }), CoreApp.Dashboard);
+
+      expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    });
+
+    it('lets the user pick which frame to render', async () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const onOptionsChange = jest.fn();
+      const props = createProps(replaceVariablesMock, {
+        data: createData([frameA, frameB]),
+        options: { content: 'hello', mode: TextMode.Markdown },
+        onOptionsChange,
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      const picker = screen.getByRole('combobox');
+      await userEvent.click(picker);
+      await userEvent.click(await screen.findByRole('option', { name: 'Frame B' }));
+
+      expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ frameIndex: 1 }));
     });
   });
 });
