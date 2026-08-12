@@ -62,6 +62,14 @@ const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.error.background,
       border: `1px solid ${theme.colors.error.border}`,
       color: theme.colors.error.text,
+
+      a: {
+        color: theme.colors.error.text,
+
+        '&:hover': {
+          color: theme.colors.error.textEmphasis,
+        },
+      },
     }
   );
 
