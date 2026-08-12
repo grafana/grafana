@@ -87,11 +87,16 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       // express — a cell pointing at a missing element is structurally valid and renders as a silently
       // absent cell.
       let notebookSpec: NotebookSpec;
+      // Non-fatal findings from the schema, which for a notebook means an element no cell references:
+      // an orphan that never renders. Not an error, because that is what a spec looks like halfway
+      // through an edit that removes a cell, but the caller is the one holding the spec that has it.
+      let schemaWarnings: string[] = [];
       if (payload.validate) {
         const result = validateNotebookSpec(payload.spec);
         if (!result.success || !result.data) {
           return { success: false, error: `Validation failed: ${result.errors.join(', ')}`, changes: [] };
         }
+        schemaWarnings = result.warnings;
         // Apply the PARSED spec: the schema normalizes Go's `null` slices to `[]`, `elements: null` to
         // `{}`, and fills CUE `*` defaults, so the scene is rebuilt from the same shape validation saw.
         notebookSpec = result.data;
@@ -118,7 +123,7 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         appliedNotebook = undefined;
       }
 
-      const warnings = droppedCellWarnings(notebookSpec, appliedNotebook);
+      const warnings = [...schemaWarnings, ...droppedCellWarnings(notebookSpec, appliedNotebook)];
 
       return {
         success: true,

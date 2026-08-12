@@ -71,11 +71,15 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
   handler: async (payload) => {
     try {
       let spec: NotebookSpec;
+      // An element no cell references. Worth saying on a create above all, because this is the one
+      // command that persists: the orphan is now in a saved notebook, not just an in-memory scene.
+      let warnings: string[] = [];
       if (payload.validate) {
         const result = validateNotebookSpec(payload.spec);
         if (!result.success || !result.data) {
           return { success: false, error: `Validation failed: ${result.errors.join(', ')}`, changes: [] };
         }
+        warnings = result.warnings;
         // Write the PARSED spec: the schema fills the CUE `*` defaults and normalizes absent
         // collections, so what is persisted is the shape validation saw.
         spec = result.data;
@@ -96,7 +100,12 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
         opened = locationService.getLocation().pathname === created.url;
       }
 
-      return { success: true, data: { created: true, opened, ...created }, changes: [] };
+      return {
+        success: true,
+        data: { created: true, opened, ...created },
+        changes: [],
+        ...(warnings.length > 0 ? { warnings } : {}),
+      };
     } catch (error) {
       return {
         success: false,

@@ -49,14 +49,23 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
       // Opt-in structural + referential validation (default off to avoid breaking reads). Worth
       // requesting on a notebook: a read that comes back with dangling cell references means the
       // scene lost elements on the way out.
+      let warnings: string[] = [];
       if (payload.validate) {
         const result = validateNotebookSpec(notebook);
         if (!result.success) {
           return { success: false, error: `Validation failed: ${result.errors.join(', ')}`, changes: [] };
         }
+        // An orphaned element is not a reason to fail a read, but it is worth saying on one: the spec
+        // the caller is about to edit carries an element that renders nowhere.
+        warnings = result.warnings;
       }
 
-      return { success: true, data: { spec: notebook }, changes: [] };
+      return {
+        success: true,
+        data: { spec: notebook },
+        changes: [],
+        ...(warnings.length > 0 ? { warnings } : {}),
+      };
     } catch (error) {
       return {
         success: false,

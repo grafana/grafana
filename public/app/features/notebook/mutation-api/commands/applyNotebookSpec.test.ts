@@ -99,6 +99,25 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(result.warnings).toEqual(['These cells were not applied and are missing from the notebook: ghost.']);
   });
 
+  it('passes the schema warnings through on a validated write', async () => {
+    const client = new NotebookMutationClient(notebookScene());
+
+    // An element no cell references: it saves cleanly and renders nowhere, so the schema calls it a
+    // warning rather than an error. The caller is the one holding the spec that has it, so a write
+    // that swallowed this would leave the orphan to be discovered on a later read, or never.
+    const next = notebookSpec({
+      elements: { intro: markdownCell('## Intro'), orphan: markdownCell('unused') },
+      cells: ['intro'],
+    });
+
+    const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next, validate: true } });
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toEqual([
+      'elements.orphan: not referenced by any cell in layout.spec.cells, so it will not render',
+    ]);
+  });
+
   it('says so when it cannot tell which cells survived', async () => {
     const scene = notebookScene();
     const client = new NotebookMutationClient(scene);
