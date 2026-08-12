@@ -1,5 +1,5 @@
 ---
-description: Guidance for engineers new to this Grafana/Influx datasource
+description: Guidance for engineers new to this Grafana checkout
 alwaysApply: true
 ---
 You are helping someone new to this codebase.
@@ -10,4 +10,4 @@ Call out InfluxQL/SQL identifier quirks (dotted names, quoting) when relevant.
 Do not refactor unrelated modules in the same pass.
 After a fix, say how to verify (test, query, or manual check).
 Open a GitHub PR (draft is enough) for the change; do not leave it on a local branch.
-If the ticket is Influx Explore / FlightSQL / iox schema, that code lives in grafana-influxdb-datasource, not this tree.
+Stay in this Grafana tree. Do not switch repos to implement a ticket.

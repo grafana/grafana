@@ -40,7 +40,7 @@ key:
    `isLast`.
 4. Present a compact table: key (linked to browse URL), summary, status,
    priority, labels, updated.
-5. Group or call out themes if obvious (e.g. several Influx SQL tickets).
+5. Group or call out themes if obvious (e.g. several `@grafana/sql` tickets).
 6. Do **not** start implementation unless the user picks a ticket next.
 
 Browse URL pattern:
@@ -89,16 +89,13 @@ Before coding, state:
 - Acceptance criteria (bulleted)
 - Files you expect to touch and why
 - Scope boundaries (what this ticket is **not**)
-- Whether the work belongs in this Grafana repo or in grafana-influxdb-datasource
 - Whether visual verification is feasible in this tree
 
 ### 4. Research the codebase
 
 - Read file hints and callers before editing.
-- Decide the repo first: `@grafana/sql` / SQL Expressions / KAN-6 → this tree.
-  Influx Explore, FlightSQL, `iox`/`system`, `src/fsql`, KAN-7/8/9 →
-  `../grafana-influxdb-datasource` (clone if missing). Do not search this
-  tree for `public.iox` / `fsql` and treat empty results as a dead ticket.
+- Stay in this Grafana tree (`packages/grafana-sql`, SQL Expressions, and other
+  in-repo paths). Do not treat a missing plugin folder as a blocker.
 - Prefer the smallest change that meets acceptance criteria.
 - Do not refactor unrelated modules in the same pass.
 - Read subtree `AGENTS.md` when working under documented paths
@@ -134,8 +131,8 @@ Run targeted tests first, then broader suites only if cheap:
 
 For user-visible fixes (panels, Explore, generated SQL in UI), note visual
 verification steps per `.cursor/rules/visual-verification.mdc`. If the
-affected UI is not runnable in this tree (e.g. decoupled InfluxDB plugin),
-say so in the PR/summary and rely on unit tests.
+affected UI is not runnable in this checkout, say so in the PR/summary and
+rely on unit tests.
 
 ### 8. Commit, push, and open a PR
 
@@ -157,9 +154,9 @@ fix(scope): short imperative summary
 One sentence on why. Reference KAN-N in body or footer.
 ```
 
-If the implementation landed in grafana-influxdb-datasource, open the PR on
-that repository. If this Grafana tree cannot implement the ticket, still
-open a findings PR here rather than stopping at a chat note.
+If this Grafana tree cannot implement the ticket, open a findings PR here
+rather than stopping at a chat note. Do not switch to another repository
+unless the user explicitly asks.
 
 The restore-broken-baseline skill is the exception: it must not open a PR.
 

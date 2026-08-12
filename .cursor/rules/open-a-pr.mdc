@@ -9,5 +9,3 @@ After a code, test, docs, or findings change: commit on a unique feature branch,
 Do not merge unless asked. Do not commit ticket work to `main` or to `fix/influx-dotted-identifiers`.
 
 Exception: the restore-broken-baseline skill is restore-only and must not open a PR.
-
-If the change belongs in `grafana-influxdb-datasource`, open the PR on that repository.
