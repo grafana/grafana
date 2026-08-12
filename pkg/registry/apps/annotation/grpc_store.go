@@ -197,8 +197,9 @@ func fromProtoListOptions(opts *storev1.ListOptions) ListOptions {
 // toProtoTagListOptions converts TagListOptions to proto TagListOptions
 func toProtoTagListOptions(opts TagListOptions) *storev1.TagListOptions {
 	return &storev1.TagListOptions{
-		Prefix: opts.Prefix,
-		Limit:  int32(opts.Limit),
+		Prefix:   opts.Prefix,
+		Contains: opts.Contains,
+		Limit:    int32(opts.Limit),
 	}
 }
 
@@ -209,8 +210,9 @@ func fromProtoTagListOptions(opts *storev1.TagListOptions) TagListOptions {
 	}
 
 	return TagListOptions{
-		Prefix: opts.Prefix,
-		Limit:  int(opts.Limit),
+		Prefix:   opts.Prefix,
+		Contains: opts.Contains,
+		Limit:    int(opts.Limit),
 	}
 }
 

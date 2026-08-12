@@ -3,6 +3,7 @@ package annotation
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -49,9 +51,13 @@ func newTagsHandler(
 		opts := TagListOptions{}
 		queryParams := request.URL.Query()
 
-		if v := queryParams.Get("prefix"); v != "" {
-			opts.Prefix = v
+		prefix := queryParams.Get("prefix")
+		contains := queryParams.Get("contains")
+		if prefix != "" && contains != "" {
+			return apierrors.NewBadRequest(fmt.Sprintf("%v: prefix and contains are mutually exclusive", ErrInvalidInput))
 		}
+		opts.Prefix = prefix
+		opts.Contains = contains
 
 		opts.Limit = 100 // default limit
 		if v := queryParams.Get("limit"); v != "" {
