@@ -30,6 +30,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -307,6 +308,34 @@ type KVBackendOptions struct {
 	// is not lost while a slow write is still in flight. Only effective when
 	// EnableKVLeases is true.
 	LeaseAutoRenew bool
+}
+
+// NewKVBackendOptions returns the options that come from Grafana's config. The
+// caller adds the rest: the KV store, the logger, the metrics registry.
+//
+// Config is read here and nowhere else, so a new setting reaches every wiring
+// rather than only the one it was added to.
+func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
+	return KVBackendOptions{
+		DisablePruner:           cfg.DisablePruner,
+		LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
+		EventRetentionPeriod:    cfg.EventRetentionPeriod,
+		EventPruningInterval:    cfg.EventPruningInterval,
+		SearchLookback:          cfg.SearchLookback,
+		WatchOptions:            WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
+		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+		TenantWatcherConfig:     NewTenantWatcherConfig(cfg),
+		TenantDeleterConfig:     NewTenantDeleterConfig(cfg),
+		GarbageCollection: GarbageCollectionConfig{
+			Enabled:          cfg.EnableGarbageCollection,
+			DryRun:           cfg.GarbageCollectionDryRun,
+			Interval:         cfg.GarbageCollectionInterval,
+			BatchSize:        cfg.GarbageCollectionBatchSize,
+			BatchWait:        cfg.GarbageCollectionBatchWait,
+			MaxAge:           cfg.GarbageCollectionMaxAge,
+			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
+		},
+	}
 }
 
 var (
