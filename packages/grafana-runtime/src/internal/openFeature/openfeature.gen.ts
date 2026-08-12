@@ -163,6 +163,8 @@ export const FlagKeys = {
   TableAutoColumnWidths: "table.autoColumnWidths",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
+  /** Enables the new features in text panel */
+  TextNewFeatures: "text.newFeatures",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -990,6 +992,17 @@ export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOption
  */
 export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.paginationPageSize", false, options).value;
+};
+
+/**
+ * Enables the new features in text panel
+ *
+ * **Details:**
+ * - flag key: `text.newFeatures`
+ * - default value: `false`
+ */
+export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("text.newFeatures", false, options).value;
 };
 
 /**

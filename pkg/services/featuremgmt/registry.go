@@ -2028,6 +2028,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "text.newFeatures",
+			Description:  "Enables the new features in text panel",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Generate:     Generate{React: true},
+			Expression:   "false",
+		},
+		{
 			Name:        "interactiveLearning",
 			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
