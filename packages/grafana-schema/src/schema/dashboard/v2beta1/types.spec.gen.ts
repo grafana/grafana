@@ -245,6 +245,7 @@ export const defaultDataTopic = (): DataTopic => ("series");
 
 export interface QueryOptionsSpec {
 	timeFrom?: string;
+	timeTo?: string;
 	maxDataPoints?: number;
 	timeShift?: string;
 	queryCachingTTL?: number;

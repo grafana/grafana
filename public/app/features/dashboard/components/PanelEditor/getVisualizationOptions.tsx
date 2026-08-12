@@ -235,6 +235,9 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     getValue: (path) => lodashGet(currentOptions, path),
     onChange: (path, value) => {
       const newOptions = setOptionImmutably(currentOptions, path, value);
+      // Merged rather than replaced, so an editor that drops a key from an object value keeps the old
+      // key — clearing requires setting it to undefined. Documented on StandardEditorProps.onChange.
+      // Switching to replace here would break editors that emit partial values for their own path.
       panel.onOptionsChange(newOptions);
       // Record interaction for analytics
       DashboardInteractions.setVisualOption({

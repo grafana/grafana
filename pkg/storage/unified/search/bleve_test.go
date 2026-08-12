@@ -1257,6 +1257,81 @@ func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
 		require.ErrorContains(t, err, "missing required index features [alpha]")
 	})
 }
+
+// A local index whose build info cannot be read is discarded: there is no way to
+// tell whether it declares a requirement this binary cannot meet.
+func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {
+	newIndexOnDisk := func(t *testing.T, rawBuildInfo []byte) string {
+		t.Helper()
+		resourceDir := t.TempDir()
+		idx, err := newBleveIndex(filepath.Join(resourceDir, "index-dir"), bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+		require.NoError(t, err)
+		require.NoError(t, setRV(idx, 42))
+		if rawBuildInfo != nil {
+			require.NoError(t, idx.SetInternal([]byte(internalBuildInfoKey), rawBuildInfo))
+		}
+		require.NoError(t, idx.Close())
+		return resourceDir
+	}
+
+	logger := log.New("bleve-test")
+
+	t.Run("reused when build info is readable", func(t *testing.T) {
+		backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+		idx, _, rv, err := backend.tryReuseFileIndex(newIndexOnDisk(t, nil), time.Time{}, logger)
+		require.NoError(t, err)
+		require.NotNil(t, idx)
+		require.Equal(t, int64(42), rv)
+		require.NoError(t, idx.Close())
+	})
+
+	t.Run("discarded when build info cannot be parsed", func(t *testing.T) {
+		backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+		idx, _, _, err := backend.tryReuseFileIndex(newIndexOnDisk(t, []byte("{not json")), time.Time{}, logger)
+		require.NoError(t, err)
+		require.Nil(t, idx)
+	})
+}
+
+// Stands in for an index written by a newer binary.
+func newIndexDeclaringRequirements(t *testing.T, requirements ...resource.IndexFeature) bleve.Index {
+	t.Helper()
+	idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = idx.Close() })
+	require.NoError(t, setRV(idx, 42))
+
+	bi, err := getBuildInfo(idx)
+	require.NoError(t, err)
+	bi.ReaderRequirements = requirements
+	raw, err := json.Marshal(bi)
+	require.NoError(t, err)
+	require.NoError(t, idx.SetInternal([]byte(internalBuildInfoKey), raw))
+	return idx
+}
+
+// Backstops selection, which can only check snapshots whose manifest carries the
+// requirements.
+func TestValidateDownloadedIndexChecksReaderRequirements(t *testing.T) {
+	backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+
+	t.Run("rejected for a requirement this binary does not know", func(t *testing.T) {
+		_, err := backend.validateDownloadedIndex(newIndexDeclaringRequirements(t, "feature-from-the-future"))
+		require.ErrorContains(t, err, "does not understand [feature-from-the-future]")
+	})
+
+	t.Run("accepted when every requirement is understood", func(t *testing.T) {
+		rv, err := backend.validateDownloadedIndex(newIndexDeclaringRequirements(t, resource.IndexFeatureDeletedMarker))
+		require.NoError(t, err)
+		require.Equal(t, int64(42), rv)
+	})
+
+	t.Run("accepted when none are declared", func(t *testing.T) {
+		rv, err := backend.validateDownloadedIndex(newIndexDeclaringRequirements(t))
+		require.NoError(t, err)
+		require.Equal(t, int64(42), rv)
+	})
+}
 func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)

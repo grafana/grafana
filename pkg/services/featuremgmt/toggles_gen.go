@@ -99,10 +99,6 @@ const (
 	// Enables the synthetic 'test' provisioning job type for load and performance testing of the job queue and controllers
 	FlagProvisioningPerformance = "provisioning.performance"
 
-	// FlagGrafanaAPIServerEnsureKubectlAccess
-	// Start an additional https handler and write kubectl options
-	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
-
 	// FlagAwsAsyncQueryCaching
 	// Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
@@ -946,6 +942,10 @@ const (
 	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
 	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
 
+	// FlagDatetimeUseLuxon
+	// Uses the Luxon-backed compatibility implementation for Grafana date and time APIs
+	FlagDatetimeUseLuxon = "datetime.useLuxon"
+
 	// FlagAuthTokenRotationGracePeriod
 	// Keeps a recently rotated previous session token valid instead of forcing an urgent re-rotation, which should prevent multi-tab race-condition logouts
 	FlagAuthTokenRotationGracePeriod = "auth.tokenRotationGracePeriod"
@@ -989,6 +989,10 @@ const (
 	// FlagAlertingStateManagerRequireWarm
 	// Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.
 	FlagAlertingStateManagerRequireWarm = "alerting.stateManagerRequireWarm"
+
+	// FlagGrafanaPluginPathNesting
+	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
+	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
 
 	// FlagGrafanaRspackBuild
 	// Switches the backend to load frontend assets built with rspack instead of webpack

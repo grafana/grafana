@@ -78,6 +78,11 @@ type VectorBackend interface {
 	// Exists reports whether any row exists for the uid. Unused in production since ContentVersion replaced it; kept for tooling/tests.
 	Exists(ctx context.Context, namespace, model, resource, uid string) (bool, error)
 
+	// CountStoredEmbeddings returns row counts per (partition key, model)
+	// across every partition leaf. Postgres caches no row count, so this
+	// is a full aggregate scan — callers must keep it on a slow timer.
+	CountStoredEmbeddings(ctx context.Context) ([]EmbeddingCount, error)
+
 	// ContentVersion returns MIN(content_version) across the uid's rows (a partially-updated uid counts as its oldest row); exists=false when no rows.
 	ContentVersion(ctx context.Context, namespace, model, resource, uid string) (version int, exists bool, err error)
 
@@ -161,6 +166,13 @@ type BackfillJob struct {
 	LastSeenKey string // empty when starting from the beginning
 	IsComplete  bool
 	LastError   string
+}
+
+// EmbeddingCount is the stored row count for one (partition key, model).
+type EmbeddingCount struct {
+	Resource string
+	Model    string
+	Count    int64
 }
 
 // Vector is one embeddable subresource (e.g. a dashboard panel).

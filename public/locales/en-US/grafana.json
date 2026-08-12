@@ -3619,6 +3619,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Time intervals",
+      "imported-not-usable": "Imported from an external Alertmanager — promote it to use it here",
       "placeholder-select-time-intervals": "Select time intervals..."
     },
     "time-intervals-table": {
@@ -5662,6 +5663,8 @@
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
       "edit-time-range-rule": "Change time range rule",
+      "group-into-row": "Group into row",
+      "group-into-tab": "Group into tab",
       "move": "Move {{typeName}}",
       "panel-background": "Change panel background",
       "panel-description": "Change panel description",
@@ -6302,6 +6305,12 @@
         "title-hidden_one": "Hidden ({{count}})",
         "title-hidden_other": "Hidden ({{count}})",
         "tooltip": "Filters overview"
+      },
+      "group": {
+        "different-parents": "Select items within the same row, tab, or grid to group them",
+        "into-row": "Group into row",
+        "into-tab": "Group into tab",
+        "title": "Group"
       },
       "links": {
         "add-link": "Add link",
@@ -8068,7 +8077,8 @@
       "title-missing-rights": "Missing rights"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Select a data source"
+      "aria-label-select-a-data-source": "Select a data source",
+      "clear-button": "Clear data source"
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Page not found: {{page}}"
@@ -10975,6 +10985,12 @@
       "view-all": "View all firing alerts",
       "view-rules": "View all alert rules"
     },
+    "header-actions": {
+      "active-incidents": "Active incidents",
+      "firing-alerts": "Firing alerts",
+      "no-active-incidents": "All clear",
+      "no-firing-alerts": "All clear"
+    },
     "home-page": {
       "edition": {
         "cloud": "Grafana Cloud",
@@ -12451,6 +12467,10 @@
     "new-folder": {
       "title": "New folder"
     },
+    "notebooks": {
+      "subtitle": "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+      "title": "Notebooks"
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12745,10 +12765,39 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": "Notebooks",
     "errors": {
       "failed-to-load": "Failed to load notebook",
       "not-found-title": "Not found"
+    }
+  },
+  "notebooks": {
+    "list": {
+      "all-authors": "All authors",
+      "author-filter": "Filter by author",
+      "count_one": "{{count}} notebook",
+      "count_other": "{{count}} notebooks",
+      "count-truncated_one": "First {{count}} notebook loaded",
+      "count-truncated_other": "First {{count}} notebooks loaded",
+      "create-error": "Failed to create notebook",
+      "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
+      "empty-title": "You haven't created any notebooks yet",
+      "empty-title-read-only": "No notebooks available to you",
+      "load-error": "Failed to load notebooks",
+      "new-notebook": "New notebook",
+      "new-notebook-title": "New notebook",
+      "no-results": "No notebooks found",
+      "search-placeholder": "Search notebooks by title...",
+      "table": {
+        "author": "Author",
+        "copy-link": "Copy link",
+        "created": "Created",
+        "edit": "Edit",
+        "more-actions": "More actions",
+        "tags": "Tags",
+        "title": "Title",
+        "updated": "Updated"
+      },
+      "unknown-author": "Anonymous"
     }
   },
   "notifications": {

@@ -150,6 +150,14 @@
     },
     "input": {
       "background": "palette.white"
+    },
+    "home": {
+      "background": {
+        "fade": "palette.violet100",
+        "highlight": "palette.violet200",
+        "right": "palette.orange200",
+        "left": "palette.blue200"
+      }
     }
   },
   "shape": {

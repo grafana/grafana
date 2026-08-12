@@ -16,7 +16,7 @@ export function NotebookPageError({ error }: NotebookPageErrorProps) {
 
   return (
     <Page
-      navId="dashboards/browse"
+      navId="notebooks"
       layout={PageLayoutType.Canvas}
       pageNav={{
         text: isNotFound
