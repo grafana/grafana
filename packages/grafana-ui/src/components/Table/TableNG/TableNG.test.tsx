@@ -526,9 +526,6 @@ describe('TableNG', () => {
     });
 
     it('expands nested data when clicking expand button', async () => {
-      // Mock scrollIntoView
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
       const { container } = render(
         <TableNG enableVirtualization={false} data={createNestedDataFrame()} width={800} height={600} />
       );
@@ -678,8 +675,6 @@ describe('TableNG', () => {
     });
 
     it('preserves expanded state by stable key when row order changes on re-render', async () => {
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
       const makeStableFrame = (order: Array<'key-A' | 'key-B'>): DataFrame => {
         const nestedA = {
           meta: { custom: { stableRowKey: 'key-A', noHeader: true } },

@@ -137,17 +137,13 @@ const setUp = (
 
 describe('LogsTable', () => {
   let origResizeObserver = global.ResizeObserver;
-  let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
-  let jestScrollIntoView = jest.fn();
 
   beforeAll(() => {
     mockTransformationsRegistry([organizeFieldsTransformer, extractFieldsTransformer]);
   });
 
   beforeEach(() => {
-    jestScrollIntoView = jest.fn();
     origResizeObserver = global.ResizeObserver;
-    origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
     // Mock ResizeObserver
     global.ResizeObserver = class ResizeObserver {
       callback: unknown;
@@ -158,13 +154,10 @@ describe('LogsTable', () => {
       unobserve() {}
       disconnect() {}
     };
-
-    window.HTMLElement.prototype.scrollIntoView = jestScrollIntoView;
   });
 
   afterEach(() => {
     global.ResizeObserver = origResizeObserver;
-    window.HTMLElement.prototype.scrollIntoView = origScrollIntoView;
   });
 
   it('should render', async () => {
