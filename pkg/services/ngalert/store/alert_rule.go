@@ -47,6 +47,19 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 	}
 	logger := st.Logger.New("org_id", orgID, "rule_uids", ruleUID)
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		// Read the parent folders before the delete, since the rows carrying namespace_uid are gone
+		// afterwards and RuleChangeEvent subscribers need to know which folders were affected. Gated
+		// because this is an extra query on every delete and the only subscriber is behind the flag.
+		var folderKeys []ngmodels.FolderKey
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
+			var err error
+			folderKeys, err = deletedRuleFolderKeys(sess, orgID, ruleUID)
+			if err != nil {
+				return err
+			}
+		}
+
 		rows, err := sess.Table(alertRule{}).Where("org_id = ?", orgID).In("uid", ruleUID).Delete(alertRule{})
 		if err != nil {
 			return err
@@ -57,8 +70,9 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 			for _, uid := range ruleUID {
 				keys = append(keys, ngmodels.AlertRuleKey{OrgID: orgID, UID: uid})
 			}
-			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
-				RuleKeys: keys,
+			sess.PublishAfterCommit(&RuleChangeEvent{
+				RuleKeys:   keys,
+				FolderKeys: folderKeys,
 			})
 		}
 
@@ -457,6 +471,28 @@ func collectNamespaceUIDsByOrg(rules []*ngmodels.AlertRule) []orgNamespaces {
 	return result
 }
 
+// deletedRuleFolderKeys returns the deduplicated parent folders of the given rules. It runs on the
+// caller's session so it must be invoked before the rules are deleted in the same transaction.
+func deletedRuleFolderKeys(sess *db.Session, orgID int64, ruleUIDs []string) ([]ngmodels.FolderKey, error) {
+	var rules []alertRule
+	if err := sess.Table(alertRule{}).Select("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&rules); err != nil {
+		return nil, err
+	}
+	seen := make(map[string]struct{}, len(rules))
+	keys := make([]ngmodels.FolderKey, 0, len(rules))
+	for _, r := range rules {
+		if r.NamespaceUID == "" {
+			continue
+		}
+		if _, ok := seen[r.NamespaceUID]; ok {
+			continue
+		}
+		seen[r.NamespaceUID] = struct{}{}
+		keys = append(keys, ngmodels.FolderKey{OrgID: orgID, UID: r.NamespaceUID})
+	}
+	return keys, nil
+}
+
 // fetchFolderFullpathsByOrg fetches folder fullpaths for all namespace UIDs grouped by org ID.
 // Returns a map where keys are org IDs and values are maps of namespace UID to folder fullpath.
 // If fetching fails for an org, that org will not be in the result map.
@@ -480,6 +516,7 @@ func (st DBstore) fetchFolderFullpathsByOrg(ctx context.Context, orgNamespaces [
 func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, rules []ngmodels.InsertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
 	ids := make([]ngmodels.AlertRuleKeyWithId, 0, len(rules))
 	keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
+	folderKeys := make([]ngmodels.FolderKey, 0, len(rules))
 
 	alertRules := make([]*ngmodels.AlertRule, len(rules))
 	for i := range rules {
@@ -545,6 +582,10 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 
 				ids = append(ids, ngmodels.AlertRuleKeyWithId{AlertRuleKey: key, ID: r.ID, GUID: r.GUID})
 				keys = append(keys, key)
+				folderKeys = append(folderKeys, ngmodels.FolderKey{
+					OrgID: r.OrgID,
+					UID:   r.NamespaceUID,
+				})
 			}
 		}
 
@@ -555,8 +596,9 @@ func (st DBstore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 		}
 
 		if len(keys) > 0 {
-			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
-				RuleKeys: keys,
+			sess.PublishAfterCommit(&RuleChangeEvent{
+				RuleKeys:   keys,
+				FolderKeys: folderKeys,
 			})
 		}
 		return nil
@@ -574,6 +616,8 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 	folderFullpathsByOrg := st.fetchFolderFullpathsByOrg(ctx, orgNamespaces)
 
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		folderKeys := make([]ngmodels.FolderKey, 0, len(rules)*2)
+
 		err := st.preventIntermediateUniqueConstraintViolations(sess, rules)
 		if err != nil {
 			return fmt.Errorf("failed when preventing intermediate unique constraint violation: %w", err)
@@ -628,6 +672,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			}
 
 			keys = append(keys, ngmodels.AlertRuleKey{OrgID: r.New.OrgID, UID: r.New.UID})
+			folderKeys = append(folderKeys, r.Existing.GetFolderKey(), r.New.GetFolderKey())
 		}
 		if len(ruleVersions) > 0 {
 			if _, err := sess.Insert(&ruleVersions); err != nil {
@@ -636,8 +681,9 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			st.deleteOldAlertRuleVersions(ctx, sess, ruleVersions)
 		}
 		if len(keys) > 0 {
-			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
-				RuleKeys: keys,
+			sess.PublishAfterCommit(&RuleChangeEvent{
+				RuleKeys:   keys,
+				FolderKeys: folderKeys,
 			})
 		}
 		return nil
