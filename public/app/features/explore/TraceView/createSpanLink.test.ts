@@ -91,21 +91,39 @@ describe('createSpanLinkFactory', () => {
       { trace: 'otel_trace_id', span: 'otel_span_id' },
     ] as const;
 
-    // Explore opens with the first/default query only; the full variation list lives on interpolatedParams.
+    // Explore href includes every Loki query variation (default/job per id field + line-contains).
     const lokiExploreHref = (
       tagSelector: string,
-      _serviceNames: string[],
+      serviceNames: string[],
       range: { from: string; to: string } = defaultRange
     ) => {
-      const { trace, span } = fieldVariants[0];
-      const pipeline = `| logfmt | json | drop __error__ | ${trace}="${traceId}" | ${span}="${spanId}"`;
-      const queries = [
-        {
+      const jobSelector =
+        serviceNames.length > 0
+          ? `{job=~"(.*/)?(${serviceNames.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})"}`
+          : undefined;
+      const queries: Array<{ expr: string; refId: string; datasource: { uid: string } }> = [];
+
+      for (const { trace, span } of fieldVariants) {
+        const pipeline = `| logfmt | json | drop __error__ | ${trace}="${traceId}" | ${span}="${spanId}"`;
+        queries.push({
           expr: `{${tagSelector}} ${pipeline}`,
-          refId: `t2l:default:${trace}:${span}`,
+          refId: `t2l:default:${trace}`,
           datasource: { uid: 'loki1_uid' },
-        },
-      ];
+        });
+        if (jobSelector) {
+          queries.push({
+            expr: `${jobSelector} ${pipeline}`,
+            refId: `t2l:job:${trace}`,
+            datasource: { uid: 'loki1_uid' },
+          });
+        }
+      }
+
+      queries.push({
+        expr: `{${tagSelector}} |= "${traceId}" |= "${spanId}"`,
+        refId: 't2l:line-contains',
+        datasource: { uid: 'loki1_uid' },
+      });
 
       return `/explore?left=${encodeURIComponent(
         JSON.stringify({
@@ -1145,7 +1163,7 @@ describe('createSpanLinkFactory', () => {
           JSON.stringify([
             {
               expr: '{service="serviceName", pod="podName"} |="serviceName" |="trace1"',
-              refId: 'custom',
+              refId: 't2l:custom',
               datasource: { uid: 'loki1_uid' },
             },
           ])

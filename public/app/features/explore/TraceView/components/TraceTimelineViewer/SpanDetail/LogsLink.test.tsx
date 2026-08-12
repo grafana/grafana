@@ -26,7 +26,7 @@ import {
   addNoSpanIdFallback,
   getLogsButtonCTA,
   getLogsButtonTooltip,
-  lokiDatasourceMatchStorageKey,
+  LOKI_DATASOURCE_MATCH_STORAGE_KEY_PREFIX,
   lokiQueryMatchStorageKey,
   LogsLinkButton,
   LogsLinkMenuItem,
@@ -84,7 +84,7 @@ function queryMatchKey(logsDatasourceUid: string) {
 }
 
 function datasourceMatchKey() {
-  return lokiDatasourceMatchStorageKey(TRACE_DATASOURCE_UID);
+  return `${LOKI_DATASOURCE_MATCH_STORAGE_KEY_PREFIX}.${TRACE_DATASOURCE_UID}`;
 }
 
 function mockLokiDatasourceList(uids: string[], isLoading = false) {
@@ -320,10 +320,10 @@ describe('LogsLinkButton', () => {
     getDataSourceInstanceMock.mockResolvedValue({ query, type: 'loki' } as unknown as DataSourceApi);
 
     const queries: DataQuery[] = [
-      { refId: 't2l:default:traceID:spanID', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
-      { refId: 't2l:default:trace_id:span_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
-      { refId: 't2l:job:trace_id:span_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
-      { refId: 'line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:default:traceID', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:default:trace_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:job:trace_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
     ];
 
     render(
@@ -334,13 +334,13 @@ describe('LogsLinkButton', () => {
     );
 
     await waitFor(() => expect(query).toHaveBeenCalledTimes(3));
-    expect(store.get(queryMatchKey('logs-ds-uid'))).toBe('t2l:job:trace_id:span_id');
+    expect(store.get(queryMatchKey('logs-ds-uid'))).toBe('t2l:job:trace_id');
     await userEvent.hover(screen.getByRole('button'));
     expect(await screen.findByText('See related logs')).toBeInTheDocument();
   });
 
   it('uses a stored loki query match immediately without probing other variations', async () => {
-    store.set(queryMatchKey('logs-ds-uid'), 't2l:job:trace_id:span_id');
+    store.set(queryMatchKey('logs-ds-uid'), 't2l:job:trace_id');
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -349,9 +349,9 @@ describe('LogsLinkButton', () => {
     const query = mockDatasourceReturningFrames([logsFrame], 'loki');
 
     const queries: DataQuery[] = [
-      { refId: 't2l:default:traceID:spanID', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
-      { refId: 't2l:job:trace_id:span_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
-      { refId: 'line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:default:traceID', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:job:trace_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
     ];
 
     render(
@@ -364,14 +364,14 @@ describe('LogsLinkButton', () => {
     await waitFor(() => expect(query).toHaveBeenCalledTimes(1));
     expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
-        targets: [expect.objectContaining({ refId: 't2l:job:trace_id:span_id', maxLines: 1 })],
+        targets: [expect.objectContaining({ refId: 't2l:job:trace_id', maxLines: 1 })],
       })
     );
   });
 
   it('does not rediscover variants when a stored loki query match returns no logs', async () => {
     store.set(datasourceMatchKey(), 'logs-ds-uid');
-    store.set(queryMatchKey('logs-ds-uid'), 't2l:job:trace_id:span_id');
+    store.set(queryMatchKey('logs-ds-uid'), 't2l:job:trace_id');
     mockLokiDatasourceList(['logs-ds-uid', 'loki-fallback-uid']);
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
@@ -381,9 +381,9 @@ describe('LogsLinkButton', () => {
     const query = mockDatasourceReturningFrames([emptyFrame], 'loki');
 
     const queries: DataQuery[] = [
-      { refId: 't2l:default:traceID:spanID', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
-      { refId: 't2l:job:trace_id:span_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
-      { refId: 'line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:default:traceID', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:job:trace_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
     ];
 
     render(
@@ -396,7 +396,7 @@ describe('LogsLinkButton', () => {
     await waitFor(() => expect(query).toHaveBeenCalledTimes(1));
     expect(query).toHaveBeenCalledWith(
       expect.objectContaining({
-        targets: [expect.objectContaining({ refId: 't2l:job:trace_id:span_id', maxLines: 1 })],
+        targets: [expect.objectContaining({ refId: 't2l:job:trace_id', maxLines: 1 })],
       })
     );
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'true'));
@@ -410,8 +410,8 @@ describe('LogsLinkButton', () => {
     });
     const query = mockDatasourceReturningFrames([emptyFrame], 'loki');
     const queries: DataQuery[] = [
-      { refId: 't2l:default:traceID:spanID', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
-      { refId: 'line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:default:traceID', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
     ];
 
     render(
@@ -446,8 +446,8 @@ describe('LogsLinkButton', () => {
     });
 
     const queries: DataQuery[] = [
-      { refId: 't2l:default:trace_id:span_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
-      { refId: 'line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:default:trace_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
     ];
 
     render(
@@ -459,14 +459,14 @@ describe('LogsLinkButton', () => {
 
     await waitFor(() => expect(fallbackQuery).toHaveBeenCalled());
     expect(store.get(datasourceMatchKey())).toBe('loki-fallback-uid');
-    expect(store.get(queryMatchKey('loki-fallback-uid'))).toBe('t2l:default:trace_id:span_id');
+    expect(store.get(queryMatchKey('loki-fallback-uid'))).toBe('t2l:default:trace_id');
     await userEvent.hover(screen.getByRole('button'));
     expect(await screen.findByText('See related logs')).toBeInTheDocument();
   });
 
   it('uses a stored loki datasource match immediately before probing the configured datasource', async () => {
     store.set(datasourceMatchKey(), 'loki-fallback-uid');
-    store.set(queryMatchKey('loki-fallback-uid'), 'line-contains');
+    store.set(queryMatchKey('loki-fallback-uid'), 't2l:line-contains');
     mockLokiDatasourceList(['logs-ds-uid', 'loki-fallback-uid']);
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
@@ -485,8 +485,8 @@ describe('LogsLinkButton', () => {
     });
 
     const queries: DataQuery[] = [
-      { refId: 't2l:default:trace_id:span_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
-      { refId: 'line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:default:trace_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
     ];
 
     render(
@@ -502,7 +502,7 @@ describe('LogsLinkButton', () => {
       expect.objectContaining({
         targets: [
           expect.objectContaining({
-            refId: 'line-contains',
+            refId: 't2l:line-contains',
             datasource: expect.objectContaining({ uid: 'loki-fallback-uid' }),
           }),
         ],
@@ -512,7 +512,7 @@ describe('LogsLinkButton', () => {
 
   it('retries a stored match without its span_id filter when the span-scoped query returns no logs', async () => {
     store.set(datasourceMatchKey(), 'logs-ds-uid');
-    store.set(queryMatchKey('logs-ds-uid'), 't2l:default:trace_id:span_id');
+    store.set(queryMatchKey('logs-ds-uid'), 't2l:default:trace_id');
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -531,11 +531,11 @@ describe('LogsLinkButton', () => {
 
     const queries: DataQuery[] = [
       {
-        refId: 't2l:default:trace_id:span_id',
+        refId: 't2l:default:trace_id',
         expr: withSpanExpr,
         datasource: { uid: 'logs-ds-uid', type: 'loki' },
       } as DataQuery,
-      { refId: 'line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
     ];
 
     render(
@@ -842,7 +842,7 @@ describe('addNoSpanIdFallback', () => {
   it('strips structured span_id filters from span-level queries generated by logsLink', () => {
     const { query } = getTraceToLogsSpanQuery(createSpan(), lokiSettings, defaultOptions);
     const queries = query as LokiQuery[];
-    const structured = queries.find((q) => q.refId === 't2l:default:trace_id:span_id');
+    const structured = queries.find((q) => q.refId === 't2l:default:trace_id');
     expect(structured).toBeDefined();
     expect(structured!.expr).toContain('span_id="6605c7b08e715d6c"');
 
@@ -858,7 +858,7 @@ describe('addNoSpanIdFallback', () => {
     const { query } = getTraceToLogsSpanQuery(createSpan(), lokiSettings, defaultOptions);
     const queries = query as LokiQuery[];
 
-    for (const refId of ['t2l:default:traceID:spanID', 't2l:default:otel_trace_id:otel_span_id'] as const) {
+    for (const refId of ['t2l:default:traceID', 't2l:default:otel_trace_id'] as const) {
       const structured = queries.find((q) => q.refId === refId);
       expect(structured).toBeDefined();
       const [, fallback] = addNoSpanIdFallback(structured!) as LokiQuery[];
@@ -867,18 +867,46 @@ describe('addNoSpanIdFallback', () => {
     }
   });
 
-  it('strips the trailing line-contains span filter from generated queries', () => {
+  it('strips every structured id-field variant produced by getTraceToLogsSpanQuery', () => {
+    const span = createSpan();
+    const { query } = getTraceToLogsSpanQuery(span, lokiSettings, defaultOptions);
+    const queries = (query as LokiQuery[]).filter((q) => q.refId.startsWith('t2l:default:'));
+
+    expect(queries.length).toBeGreaterThan(0);
+    for (const structured of queries) {
+      expect(structured.expr).toMatch(/\|\s*(?:span_?id|otel_span_id)\b/i);
+      const result = addNoSpanIdFallback(structured) as LokiQuery[];
+      expect(result).toHaveLength(2);
+      expect(result[0].expr).toBe(structured.expr);
+      expect(result[1].expr).toContain(`="${span.traceID}"`);
+      expect(result[1].expr).not.toMatch(/\|\s*(?:span_?id|otel_span_id)\b/i);
+      expect(result[1].expr).not.toContain(span.spanID);
+    }
+  });
+
+  it('strips span filters from job-selector variants generated by logsLink', () => {
+    const { query } = getTraceToLogsSpanQuery(createSpan(), lokiSettings, defaultOptions);
+    const jobQuery = (query as LokiQuery[]).find((q) => q.refId === 't2l:job:trace_id');
+    expect(jobQuery).toBeDefined();
+    expect(jobQuery!.expr.startsWith('{job=~')).toBe(true);
+
+    const [, fallback] = addNoSpanIdFallback(jobQuery!) as LokiQuery[];
+    expect(fallback.expr).toBe(
+      '{job=~"(.*/)?(checkout)"} | logfmt | json | drop __error__ | trace_id="7946b05c2e2e4e5a"'
+    );
+  });
+
+  it('does not strip line-contains queries because they have no span field name', () => {
     const { query } = getTraceToLogsSpanQuery(createSpan(), lokiSettings, defaultOptions);
     const queries = query as LokiQuery[];
-    const lineContains = queries.find((q) => q.refId === 'line-contains');
+    const lineContains = queries.find((q) => q.refId === 't2l:line-contains');
     expect(lineContains).toBeDefined();
     expect(lineContains!.expr).toBe(
       '{cluster="cluster1", hostname="hostname1"} |= "7946b05c2e2e4e5a" |= "6605c7b08e715d6c"'
     );
 
-    const [original, fallback] = addNoSpanIdFallback(lineContains!) as LokiQuery[];
-    expect(original.expr).toBe(lineContains!.expr);
-    expect(fallback.expr).toBe('{cluster="cluster1", hostname="hostname1"} |= "7946b05c2e2e4e5a"');
+    // Line filters only embed the span id value, not a span_* field name, so no fallback is added.
+    expect(addNoSpanIdFallback(lineContains!)).toEqual([lineContains]);
   });
 
   it('does not add a fallback for trace-level queries that already omit span filters', () => {
@@ -892,7 +920,7 @@ describe('addNoSpanIdFallback', () => {
     const { query } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
     const queries = query as LokiQuery[];
     const structured = queries.find((q) => q.refId === 't2l:default:trace_id');
-    const lineContains = queries.find((q) => q.refId === 'line-contains');
+    const lineContains = queries.find((q) => q.refId === 't2l:line-contains');
 
     expect(structured?.expr).not.toMatch(/span/i);
     expect(addNoSpanIdFallback(structured!)).toHaveLength(1);

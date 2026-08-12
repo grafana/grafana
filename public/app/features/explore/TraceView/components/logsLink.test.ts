@@ -70,7 +70,7 @@ describe('getTraceToLogsQuery loki alternatives', () => {
       '6605c7b08e715d6c'
     );
 
-    expect(query).toEqual([{ expr: '{job="custom"} |= "${__trace.traceId}"', refId: 'custom' }]);
+    expect(query).toEqual([{ expr: '{job="custom"} |= "${__trace.traceId}"', refId: 't2l:custom' }]);
   });
 
   it('returns the legacy query when dynamicTraceToLogs is disabled', () => {
@@ -99,21 +99,20 @@ describe('getTraceToLogsQuery loki alternatives', () => {
 
     for (const [index, { trace, span }] of TRACE_SPAN_FIELD_VARIANTS.entries()) {
       const pipeline = `| logfmt | json | drop __error__ | ${trace}="7946b05c2e2e4e5a" | ${span}="6605c7b08e715d6c"`;
-      const fieldRef = `${trace}:${span}`;
 
       expect(queries[index * 2]).toEqual({
         expr: `${tagSelector} ${pipeline}`,
-        refId: `t2l:default:${fieldRef}`,
+        refId: `t2l:default:${trace}`,
       });
       expect(queries[index * 2 + 1]).toEqual({
         expr: `${jobSelector} ${pipeline}`,
-        refId: `t2l:job:${fieldRef}`,
+        refId: `t2l:job:${trace}`,
       });
     }
 
     expect(queries[12]).toEqual({
       expr: `${tagSelector} |= "7946b05c2e2e4e5a" |= "6605c7b08e715d6c"`,
-      refId: 'line-contains',
+      refId: 't2l:line-contains',
     });
   });
 
@@ -137,7 +136,7 @@ describe('getTraceToLogsQuery loki alternatives', () => {
     expect(queries[1].refId).toBe('t2l:job:traceID');
     expect(queries[12]).toEqual({
       expr: '{cluster="cluster1", service_name="api"} |= "7946b05c2e2e4e5a"',
-      refId: 'line-contains',
+      refId: 't2l:line-contains',
     });
   });
 
@@ -176,13 +175,13 @@ describe('getTraceToLogsQuery loki alternatives', () => {
     // 6 default variants + line-contains
     expect(queries).toHaveLength(7);
     expect(queries.map((q) => q.refId)).toEqual([
-      't2l:default:traceID:spanID',
-      't2l:default:trace_id:span_id',
-      't2l:default:traceId:spanId',
-      't2l:default:TraceID:SpanID',
-      't2l:default:TraceId:SpanId',
-      't2l:default:otel_trace_id:otel_span_id',
-      'line-contains',
+      't2l:default:traceID',
+      't2l:default:trace_id',
+      't2l:default:traceId',
+      't2l:default:TraceID',
+      't2l:default:TraceId',
+      't2l:default:otel_trace_id',
+      't2l:line-contains',
     ]);
   });
 
@@ -246,7 +245,7 @@ describe('getTraceToLogsQuery loki alternatives', () => {
     expect(queries.find((q) => q.refId === 't2l:job:traceID')?.expr).toContain('(checkout|payments)');
     expect(queries.at(-1)).toEqual({
       expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} |= "7946b05c2e2e4e5a"',
-      refId: 'line-contains',
+      refId: 't2l:line-contains',
     });
   });
 });
