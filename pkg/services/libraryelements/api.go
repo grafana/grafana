@@ -51,13 +51,43 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
 		uidScope := ScopeLibraryPanelsProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 		entities.Post("/", authorize(ac.EvalPermission(ActionLibraryPanelsCreate)), routing.Wrap(l.createHandler))
-		entities.Delete("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsDelete, uidScope)), routing.Wrap(l.deleteHandler))
+		entities.Delete("/:uid", l.authorizeLibraryPanelUID(ac.EvalPermission(ActionLibraryPanelsDelete, uidScope)), routing.Wrap(l.deleteHandler))
 		entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler))
 		entities.Get("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getHandler))
-		entities.Get("/:uid/connections/", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getConnectionsHandler))
+		entities.Get("/:uid/connections/", l.authorizeLibraryPanelUID(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getConnectionsHandler))
 		entities.Get("/name/:name", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getByNameHandler))
-		entities.Patch("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler))
+		entities.Patch("/:uid", l.authorizeLibraryPanelUID(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler))
 	})
+}
+
+// authorizeLibraryPanelUID makes the legacy UID-scoped RBAC middleware work for
+// panels that exist only in the k8s store. The scope resolver normally discovers
+// a panel's folder from legacy SQL, which is unavailable in standalone/unified
+// storage. Fetch the k8s metadata with the service identity and seed the request
+// cache before evaluating the same legacy permission.
+func (l *LibraryElementService) authorizeLibraryPanelUID(evaluator ac.Evaluator) web.Handler {
+	authorize := ac.Middleware(l.AccessControl)(evaluator).(func(*contextmodel.ReqContext))
+	return func(c *contextmodel.ReqContext) {
+		if useKubernetesLibraryPanels(c.Req.Context()) {
+			uid := web.Params(c.Req)[":uid"]
+			client, ok := l.k8sHandler.getClient(c)
+			if !ok {
+				return
+			}
+			serviceCtx, _ := identity.WithServiceIdentity(c.Req.Context(), c.OrgID)
+			panel, err := client.Get(serviceCtx, uid, v1.GetOptions{})
+			if err != nil {
+				l.k8sHandler.writeError(c, err)
+				return
+			}
+			folderUID := panel.GetAnnotations()[utils.AnnoKeyFolder]
+			c.Req = c.Req.WithContext(withPanelFolders(c.Req.Context(), []model.LibraryElementDTO{{
+				UID:       uid,
+				FolderUID: folderUID,
+			}}))
+		}
+		authorize(c)
+	}
 }
 
 // useKubernetesLibraryPanels reports whether legacy /api/library-elements requests

@@ -4,23 +4,100 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+type testDirectRestConfigProvider struct {
+	host string
+}
+
+func (p testDirectRestConfigProvider) GetDirectRestConfig(*contextmodel.ReqContext) *clientrest.Config {
+	return &clientrest.Config{Host: p.host}
+}
+
+func (testDirectRestConfigProvider) DirectlyServeHTTP(http.ResponseWriter, *http.Request) {}
+func (testDirectRestConfigProvider) IsReady() bool                                        { return true }
+
+var _ grafanaapiserver.DirectRestConfigProvider = testDirectRestConfigProvider{}
+
+type panelFolderCaptureAccessControl struct {
+	actest.FakeAccessControl
+	uid       string
+	folderUID string
+}
+
+func (a *panelFolderCaptureAccessControl) Evaluate(ctx context.Context, _ identity.Requester, _ accesscontrol.Evaluator) (bool, error) {
+	a.folderUID, _ = panelFolderFromContext(ctx, a.uid)
+	return a.folderUID != "", nil
+}
+
+func TestAuthorizeLibraryPanelUIDUsesK8sFolderForRBAC(t *testing.T) {
+	flag := featuremgmt.FlagLibraryelementsKubernetesLibraryPanels
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		flag: {
+			Key:            flag,
+			DefaultVariant: "enabled",
+			Variants:       map[string]any{"enabled": true},
+		},
+	})))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"apiVersion":"dashboard.grafana.app/v0alpha1",
+			"kind":"LibraryPanel",
+			"metadata":{"name":"panel-uid","annotations":{"grafana.app/folder":"folder-uid"}}
+		}`))
+	}))
+	t.Cleanup(server.Close)
+
+	accessControl := &panelFolderCaptureAccessControl{uid: "panel-uid"}
+	service := &LibraryElementService{
+		AccessControl: accessControl,
+		k8sHandler: newLibraryElementsK8sHandler(
+			nil,
+			testDirectRestConfigProvider{host: server.URL},
+			nil,
+			nil,
+			nil,
+		),
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/library-elements/panel-uid/connections", nil)
+	req = web.SetURLParams(req, map[string]string{":uid": "panel-uid"})
+	ctx := &contextmodel.ReqContext{
+		Context: &web.Context{Req: req},
+		SignedInUser: &user.SignedInUser{
+			OrgID: 1,
+		},
+	}
+
+	service.authorizeLibraryPanelUID(accesscontrol.EvalPermission(ActionLibraryPanelsRead)).(func(*contextmodel.ReqContext))(ctx)
+
+	require.Equal(t, "folder-uid", accessControl.folderUID)
+}
 
 func TestFilterK8sLibraryPanelsEmptyFolderFilter(t *testing.T) {
 	handler := &libraryElementsK8sHandler{}
