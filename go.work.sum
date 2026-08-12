@@ -2884,6 +2884,8 @@ k8s.io/code-generator v0.36.0 h1:XWAkrhnArm0VWMmSFO7kyB+wE2LROwep7hEH0GPGkqA=
 k8s.io/code-generator v0.36.0/go.mod h1:Tr2UhfBRdlyRoadfob9aPCmmGe8PUs5XPK9MEJ2nx+w=
 k8s.io/code-generator v0.36.2 h1:iBNFYhClojQaVrF99Z3iTAad7LztQh3yCtwR8L8Ocpg=
 k8s.io/code-generator v0.36.2/go.mod h1:IfnsRW1IAq9iPxqs/FfOnVnWWONxS2mPDvWNR4fPlzI=
+k8s.io/code-generator v0.36.3 h1:tsiHI6NepXQncnexlTAf52w5VxZ4HYDU4ZqCNLFb9tA=
+k8s.io/code-generator v0.36.3/go.mod h1:Unn13Mp8X+H803jgZi4f4ExxK11aj0llXcSsl++UTkE=
 k8s.io/component-base v0.35.1/go.mod h1:HI/6jXlwkiOL5zL9bqA3en1Ygv60F03oEpnuU1G56Bs=
 k8s.io/component-base v0.36.0/go.mod h1:JZvIfcNHk+uck+8LhJzhSBtydWXaZNQwX2OdL+Mnwsk=
 k8s.io/gengo v0.0.0-20190128074634-0689ccc1d7d6 h1:4s3/R4+OYYYUKptXPhZKjQ04WJ6EhQQVFdjOFvCazDk=
@@ -2891,6 +2893,8 @@ k8s.io/gengo/v2 v2.0.0-20250604051438-85fd79dbfd9f/go.mod h1:EJykeLsmFC60UQbYJez
 k8s.io/gengo/v2 v2.0.0-20250922181213-ec3ebc5fd46b/go.mod h1:CgujABENc3KuTrcsdpGmrrASjtQsWCT7R99mEV4U/fM=
 k8s.io/gengo/v2 v2.0.0-20251215205346-5ee0d033ba5b h1:0YkdvW3rX2vaBWsqCGZAekxPRwaI5NuYNprOsMNVLns=
 k8s.io/gengo/v2 v2.0.0-20251215205346-5ee0d033ba5b/go.mod h1:yvyl3l9E+UxlqOMUULdKTAYB0rEhsmjr7+2Vb/1pCSo=
+k8s.io/gengo/v2 v2.0.0-20260408192533-25e2208e0dc3 h1:3L6PNkMLXkU/pz3jWzaaIUz0Rs2V9h+5O51AeRC7poc=
+k8s.io/gengo/v2 v2.0.0-20260408192533-25e2208e0dc3/go.mod h1:yvyl3l9E+UxlqOMUULdKTAYB0rEhsmjr7+2Vb/1pCSo=
 k8s.io/klog v1.0.0 h1:Pt+yjF5aB1xDSVbau4VsWe+dQNzA0qv1LlXdC2dF6Q8=
 k8s.io/klog v1.0.0/go.mod h1:4Bi6QPql/J/LkTDqv7R/cd3hPo4k2DG6Ptcz060Ez5I=
 k8s.io/klog/v2 v2.80.1/go.mod h1:y1WjHnz7Dj687irZUWR/WLkLc5N1YHtjLdmgWjndZn0=
