@@ -286,12 +286,15 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 
 			loginToCheck := ""
 			emailToCheck := ""
-			if cmd.Login != "" && cmd.Login != strings.ToLower(strings.TrimSpace(existing.Login)) {
-				loginToCheck = cmd.Login
-			}
-			if cmd.Email != "" && cmd.Email != strings.ToLower(strings.TrimSpace(existing.Email)) {
-				emailToCheck = cmd.Email
-			}
+		// Detect a real column change against the stored value (lowercased only). Comparing after
+		// TrimSpace would treat whitespace normalization as "unchanged", skip conflict checks,
+		// then still write the trimmed value and collide with peers that differ only by spacing.
+		if cmd.Login != "" && cmd.Login != strings.ToLower(existing.Login) {
+			loginToCheck = cmd.Login
+		}
+		if cmd.Email != "" && cmd.Email != strings.ToLower(existing.Email) {
+			emailToCheck = cmd.Email
+		}
 			if err := ss.loginConflict(sess, loginToCheck, emailToCheck, cmd.UserID); err != nil {
 				return err
 			}

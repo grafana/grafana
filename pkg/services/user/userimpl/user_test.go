@@ -756,6 +756,39 @@ func TestIntegrationCreateUser(t *testing.T) {
 		})
 		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
 	})
+
+	t.Run("Update normalizing spaced login conflicts with peer that differs only by spacing", func(t *testing.T) {
+		trailingID, err := userStore.Insert(context.Background(), &user.User{
+			Email:   "trailing-space@example.com",
+			Login:   "normlogin ",
+			Name:    "trailing",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		_, err = userStore.Insert(context.Background(), &user.User{
+			Email:   "leading-space@example.com",
+			Login:   " normlogin",
+			Name:    "leading",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		// Normalizing "normlogin " -> "normlogin" must not skip conflict against " normlogin".
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID: trailingID,
+			Login:  "normlogin",
+			Email:  "trailing-space@example.com",
+			Name:   "trailing",
+		})
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+
+		usr, err := userStore.GetByID(context.Background(), trailingID)
+		require.NoError(t, err)
+		require.Equal(t, "normlogin ", usr.Login, "failed normalization must leave login unchanged")
+	})
 }
 
 type FakeUserStore struct {
