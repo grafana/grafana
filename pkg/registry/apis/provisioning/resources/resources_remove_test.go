@@ -377,10 +377,11 @@ func TestRenameResourceFile(t *testing.T) {
 			Return(&unstructured.Unstructured{Object: map[string]any{"metadata": map[string]any{"name": "new-uid"}}}, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
-		newName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/rule.json", "old-ref", "new-path/rule.json", "new-ref")
+		newName, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/rule.json", "old-ref", "new-path/rule.json", "new-ref")
 
 		require.ErrorIs(t, err, ErrResourceManagedByOtherFile, "skipped delete surfaces as a managed-by-other warning")
 		require.Equal(t, "new-uid", newName, "the renamed file's new resource is still created")
+		require.Empty(t, folderName, "old folder must not be signalled for cleanup — it belongs to the file that took the UID over")
 		mockClient.AssertCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})

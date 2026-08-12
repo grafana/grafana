@@ -508,16 +508,20 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
 	}
 
-	if currentPath := existing.GetAnnotations()[utils.AnnoKeySourcePath]; currentPath != "" && currentPath != sourcePath {
-		return NewResourceManagedByOtherFileError(oldName, currentPath, sourcePath)
-	}
-
+	// Confirm this repo still manages the resource before interpreting a sourcePath
+	// mismatch. If a different manager (e.g. another repo) now owns it, that is a
+	// hard ownership conflict, not the non-failing same-repo cross-file takeover
+	// that the managed-by-other warning is meant for.
 	requestingManager := utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
 		Identity: cfg.GetName(),
 	}
 	if err := CheckResourceOwnership(ctx, existing, oldName, requestingManager); err != nil {
 		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
+	}
+
+	if currentPath := existing.GetAnnotations()[utils.AnnoKeySourcePath]; currentPath != "" && currentPath != sourcePath {
+		return NewResourceManagedByOtherFileError(oldName, currentPath, sourcePath)
 	}
 
 	if err := client.Delete(ctx, oldName, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
@@ -588,6 +592,11 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 				return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, fmt.Errorf("failed to delete old resource: %w", derr)
 			}
 			skippedOldDelete = derr
+			// The old resource was not deleted — it still exists under the file that
+			// took the UID over, so its folder is not orphaned. oldFolderName came
+			// from that (foreign-owned) resource, so drop it: signalling it for
+			// cleanup could delete the other file's folder.
+			oldFolderName = ""
 		}
 	}
 
