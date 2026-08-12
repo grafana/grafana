@@ -13,7 +13,8 @@ import {
 import { useStyles2 } from '@grafana/ui';
 import { type DashboardLayoutManager } from 'app/features/dashboard-scene/scene/types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/types/LayoutRegistryItem';
-import { type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
+import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 
 import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../types';
 
@@ -83,8 +84,19 @@ export class NotebookLayoutManager
     return this.clone({});
   }
 
-  public duplicate(_panelIdGenerator?: PanelIdGenerator): NotebookLayoutManager {
-    return this.clone({ key: undefined });
+  // Same as the dashboard layout managers: a plain clone would reuse the originals' panel-<id> keys,
+  // which collide in findVizPanelByKey and in the panelId enrichDataRequest feeds to query caching.
+  public duplicate(panelIdGenerator?: PanelIdGenerator): NotebookLayoutManager {
+    const nextId = panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(this);
+
+    const cells = this.state.cells.map((cell) =>
+      cell.clone({
+        key: undefined,
+        body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
+      })
+    );
+
+    return this.clone({ key: undefined, cells });
   }
 
   public getOutlineChildren(): SceneObject[] {
