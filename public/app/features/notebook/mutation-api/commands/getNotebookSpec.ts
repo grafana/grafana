@@ -55,8 +55,6 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
         if (!result.success) {
           return { success: false, error: `Validation failed: ${result.errors.join(', ')}`, changes: [] };
         }
-        // An orphaned element is not a reason to fail a read, but it is worth saying on one: the spec
-        // the caller is about to edit carries an element that renders nowhere.
         warnings = result.warnings;
       }
 
@@ -64,7 +62,7 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
         success: true,
         data: { spec: notebook },
         changes: [],
-        ...(warnings.length > 0 ? { warnings } : {}),
+        warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {
       return {

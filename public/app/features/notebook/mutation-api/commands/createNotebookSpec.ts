@@ -82,8 +82,7 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
   handler: async (payload) => {
     try {
       let spec: NotebookSpec;
-      // An element no cell references. Worth saying on a create above all, because this is the one
-      // command that persists: the orphan is now in a saved notebook, not just an in-memory scene.
+      // Surfaced above all here: a create persists, so an orphaned element is in a saved notebook.
       let warnings: string[] = [];
       if (payload.validate) {
         const result = validateNotebookSpec(payload.spec);
@@ -109,10 +108,7 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
         // not the mounted document — so GET_NOTEBOOK_SPEC and APPLY_NOTEBOOK_SPEC are still out of
         // reach. The create itself is saved either way, hence success.
         //
-        // `false` here is conclusive; `true` is not the same as "the notebook client is mounted". This
-        // reads the history entry, and the route behind it is a lazy chunk plus a fetch, so a caller
-        // that acts on it immediately can still race the mount. getAvailableCommands() is what
-        // actually answers which document is mounted.
+        // See the `open` field's description for why `true` is weaker than "mounted".
         opened = locationService.getLocation().pathname === created.url;
       }
 
@@ -120,7 +116,7 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
         success: true,
         data: { created: true, opened, ...created },
         changes: [],
-        ...(warnings.length > 0 ? { warnings } : {}),
+        warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {
       return {

@@ -26,6 +26,14 @@ import { type Spec as NotebookSpec } from '../../types';
 import { requiresNotebookEdit } from './permissions';
 
 /**
+ * Said rather than returning nothing when the check could not run at all. An empty warning list reads as
+ * "every cell survived", and this is the case where the one check this command exists to run is the one
+ * that did not happen.
+ */
+const UNKNOWN_SURVIVORS_WARNING =
+  'The notebook could not be checked after the write, so it is unknown which cells survived it.';
+
+/**
  * Cells that were asked for and are not in the notebook that came back.
  *
  * A write can lose a cell and still succeed: `deserializeNotebookLayout` skips a reference it cannot
@@ -34,12 +42,7 @@ import { requiresNotebookEdit } from './permissions';
  * and only the OUTCOME shows which cells actually survived. So the result says so rather than leaving
  * the caller to notice on its next read — or not notice, and write the loss back.
  */
-function droppedCellWarnings(requested: NotebookSpec, applied: NotebookSpec | undefined): string[] {
-  if (!applied) {
-    // Say so rather than returning nothing. An empty list reads as "every cell survived", and the one
-    // check this command exists to run is the one that did not happen.
-    return ['The notebook could not be checked after the write, so it is unknown which cells survived it.'];
-  }
+function droppedCellWarnings(requested: NotebookSpec, applied: NotebookSpec): string[] {
   const cellNames = (spec: NotebookSpec) => spec.layout.spec.cells.map((cell) => cell.spec.element.name);
   const survived = new Set(cellNames(applied));
   const dropped = [...new Set(cellNames(requested))].filter((name) => !survived.has(name));
@@ -86,17 +89,14 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       // self-correct on. The notebook check also covers referential integrity, which zod alone cannot
       // express — a cell pointing at a missing element is structurally valid and renders as a silently
       // absent cell.
+      const warnings: string[] = [];
       let notebookSpec: NotebookSpec;
-      // Non-fatal findings from the schema, which for a notebook means an element no cell references:
-      // an orphan that never renders. Not an error, because that is what a spec looks like halfway
-      // through an edit that removes a cell, but the caller is the one holding the spec that has it.
-      let schemaWarnings: string[] = [];
       if (payload.validate) {
         const result = validateNotebookSpec(payload.spec);
         if (!result.success || !result.data) {
           return { success: false, error: `Validation failed: ${result.errors.join(', ')}`, changes: [] };
         }
-        schemaWarnings = result.warnings;
+        warnings.push(...result.warnings);
         // Apply the PARSED spec: the schema normalizes Go's `null` slices to `[]`, `elements: null` to
         // `{}`, and fills CUE `*` defaults, so the scene is rebuilt from the same shape validation saw.
         notebookSpec = result.data;
@@ -115,29 +115,23 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       scene.setState(sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key }));
 
       // Echo the re-serialized spec so the caller sees what landed without a follow-up read, and check
-      // it for dropped cells.
-      //
-      // One guard around both, because from here on this is reporting on a write that has already
-      // landed: nothing below may turn it into `success: false`. That is the one report shape a caller
-      // cannot act on, since it would say nothing happened to a notebook that has already changed. The
-      // comparison is included because the spec it reads is a caller-supplied cast on the unvalidated
-      // path. `undefined` is what droppedCellWarnings reads as "it is unknown which cells survived".
+      // it for dropped cells. One guard around both: from here on this reports on a write that already
+      // landed, so nothing below may turn it into `success: false`, which would say nothing happened to
+      // a notebook that has already changed. The comparison is inside it because on the unvalidated path
+      // the spec it reads is a caller-supplied cast.
       let appliedNotebook: NotebookSpec | undefined;
-      let dropped: string[];
       try {
         appliedNotebook = transformNotebookSceneToSaveModel(scene);
-        dropped = droppedCellWarnings(notebookSpec, appliedNotebook);
+        warnings.push(...droppedCellWarnings(notebookSpec, appliedNotebook));
       } catch {
-        dropped = droppedCellWarnings(notebookSpec, undefined);
+        warnings.push(UNKNOWN_SURVIVORS_WARNING);
       }
-
-      const warnings = [...schemaWarnings, ...dropped];
 
       return {
         success: true,
         data: { applied: true, spec: appliedNotebook },
         changes: [],
-        ...(warnings.length > 0 ? { warnings } : {}),
+        warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {
       return {
