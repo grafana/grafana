@@ -793,20 +793,13 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 				// mark the key as seen
 				seenKeys[k] = struct{}{}
 
-				startKeyToDelete := k.Prefix()
-				// end key is exclusive, so we need to add a suffix to make sure we include all the versions we want to delete
-				endKeyToDelete := PrefixRangeEnd(dk.String())
-
-				keysToDelete := []string{}
-				for deleteKey, err := range b.kv.Keys(ctx, kv.DataSection, ListOptions{
-					StartKey: startKeyToDelete,
-					EndKey:   endKeyToDelete,
-					Sort:     kv.SortOrderAsc,
-				}) {
+				// Collect all revisions of this resource, oldest-first, via the datastore.
+				keysToDelete := []DataKey{}
+				for parsed, err := range b.dataStore.Keys(ctx, k, SortOrderAsc) {
 					if err != nil {
 						return fmt.Errorf("failed to get keys for resource '%s': %s", dk, err)
 					}
-					keysToDelete = append(keysToDelete, deleteKey)
+					keysToDelete = append(keysToDelete, parsed)
 				}
 
 				// check if the resource still exists
@@ -831,13 +824,14 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 					continue
 				}
 
-				// batch delete the keys. keysToDelete is oldest-first (SortOrderAsc above), so
-				// the deletion marker (highest RV) goes last: a partial/chunked failure leaves
-				// the marker behind and the next GC pass finishes. Do not reorder.
+				// batch delete the keys via the datastore, which chunks them (and SqlKV chunks
+				// again per statement). keysToDelete is oldest-first (SortOrderAsc above), so the
+				// deletion marker (highest RV) goes last: a partial/chunked failure leaves the
+				// marker behind and the next GC pass finishes. Do not reorder.
 				// Bound the delete so a slow statement self-limits instead of stalling writes;
 				// GC is idempotent, so a timed-out delete just retries next pass.
 				deleteCtx, cancel := context.WithTimeout(ctx, gcDeleteTimeout)
-				err = b.kv.BatchDelete(deleteCtx, kv.DataSection, keysToDelete)
+				err = b.dataStore.batchDelete(deleteCtx, keysToDelete)
 				cancel()
 				if err != nil {
 					return fmt.Errorf("failed to batch delete keys: %s", err)
