@@ -998,7 +998,7 @@ func runTestKVBatchDelete(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 
 	t.Run("batch delete spanning multiple chunks", func(t *testing.T) {
 		// SqlKV chunks the IN list; delete more keys than one chunk to exercise the loop.
-		const n = 450 // > deleteChunkSize (200)
+		const n = 450 // > deleteChunkSize (199)
 		keys := make([]string, n)
 		for i := range keys {
 			keys[i] = namespacedKey(nsPrefix, fmt.Sprintf("chunk/%04d", i))

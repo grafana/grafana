@@ -134,6 +134,7 @@ type kvBackendMetrics struct {
 	NatsNotifierDropped              *prometheus.CounterVec
 	WatchNotificationsPublished      *prometheus.CounterVec
 	WatchNotificationPublishFailures *prometheus.CounterVec
+	GCGroupResourceDuration          *prometheus.HistogramVec
 }
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
@@ -160,7 +161,22 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name: "storage_server_watch_notifications_publish_failures_total",
 			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
 		}, []string{"group", "resource", "action"}),
+		GCGroupResourceDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "storage_server",
+			Name:      "gc_group_resource_duration_seconds",
+			Help:      "Duration of a garbage-collection pass over one group/resource.",
+			Buckets:   []float64{0.01, 0.05, 0.1, 0.5, 1, 5, 30, 60, 300, 1800, 7200},
+		}, []string{"group", "resource"}),
 	}
+}
+
+// observeGCGroupResource records how long a GC pass over one group/resource took.
+// Nil-safe for test backends.
+func (m *kvBackendMetrics) observeGCGroupResource(group, resource string, d time.Duration) {
+	if m == nil {
+		return
+	}
+	m.GCGroupResourceDuration.WithLabelValues(group, resource).Observe(d.Seconds())
 }
 
 func (m *kvBackendMetrics) recordConflict(event WriteEvent) {
@@ -676,6 +692,10 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 	}
 }
 
+// gcDeleteTimeout bounds a single GC history delete so a slow statement self-limits instead
+// of stalling writes. A healthy indexed delete is milliseconds. Var so tests can shorten it.
+var gcDeleteTimeout = 30 * time.Second
+
 // garbageCollectGroupResource scans batches of entries in the datastore for a given group+resource,
 // in descending order of resource version, looking for deleted entries with resource versions
 // older than the cutoff timestamp.
@@ -691,6 +711,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 	//nolint:staticcheck
 	start := time.Now()
+	defer func() { b.metrics.observeGCGroupResource(group, resourceName, time.Since(start)) }()
 
 	totalDeleted := int64(0)
 	totalDryRun := int64(0)
@@ -810,12 +831,14 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 					continue
 				}
 
-				// if not in dry run mode, batch delete the keys.
-				// keysToDelete is ordered oldest-first (SortOrderAsc above), so the deletion
-				// marker (highest RV) is deleted last. BatchDelete may delete in chunks and
-				// stop on the first failure, so a partial delete always leaves the marker
-				// behind; the next GC pass re-finds it and finishes. Do not reorder.
-				err = b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
+				// batch delete the keys. keysToDelete is oldest-first (SortOrderAsc above), so
+				// the deletion marker (highest RV) goes last: a partial/chunked failure leaves
+				// the marker behind and the next GC pass finishes. Do not reorder.
+				// Bound the delete so a slow statement self-limits instead of stalling writes;
+				// GC is idempotent, so a timed-out delete just retries next pass.
+				deleteCtx, cancel := context.WithTimeout(ctx, gcDeleteTimeout)
+				err = b.kv.BatchDelete(deleteCtx, kv.DataSection, keysToDelete)
+				cancel()
 				if err != nil {
 					return fmt.Errorf("failed to batch delete keys: %s", err)
 				}

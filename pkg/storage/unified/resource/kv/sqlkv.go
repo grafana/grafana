@@ -559,12 +559,11 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 	return nil
 }
 
-// deleteChunkSize caps the IN-list size per DELETE. A large key_path IN list makes
-// the MySQL optimizer abandon the key_path index (index dives stop past
-// eq_range_index_dive_limit, and the range optimizer exceeds range_optimizer_max_mem_size),
-// degrading the delete to a full table scan of resource_history. Chunking keeps each
-// statement in the index-friendly range.
-const deleteChunkSize = 200
+// deleteChunkSize caps the IN-list size per DELETE. A large key_path IN list makes MySQL
+// stop using the key_path index (dives stop past eq_range_index_dive_limit, range optimizer
+// exceeds range_optimizer_max_mem_size). MySQL permits index dives for up to
+// eq_range_index_dive_limit (default 200), so 199 respects the default path.
+const deleteChunkSize = 199
 
 func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) error {
 	if len(keys) == 0 {

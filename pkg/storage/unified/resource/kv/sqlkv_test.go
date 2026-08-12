@@ -3,6 +3,7 @@ package kv
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"testing"
@@ -254,19 +255,29 @@ func TestSQLKVInsertDataImportBatchUsesLegacyFields(t *testing.T) {
 func TestSQLKV_BatchDelete_ChunksLargeKeyList(t *testing.T) {
 	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
 
-	// A large key_path IN list makes MySQL abandon the index and full-scan, so BatchDelete
-	// chunks into <= deleteChunkSize keys per DELETE. 450 keys -> 3 DELETEs (200,200,50).
-	keys := make([]string, 2*deleteChunkSize+50)
+	// BatchDelete chunks into <= deleteChunkSize keys per DELETE to keep each statement on
+	// the key_path index. 450 keys -> 3 DELETEs with 199, 199, 52 key_path args.
+	keys := make([]string, 2*deleteChunkSize+52)
 	for i := range keys {
 		keys[i] = fmt.Sprintf("k-%04d", i)
 	}
-	for range 3 {
+	for _, argCount := range []int{deleteChunkSize, deleteChunkSize, 52} {
 		mock.ExpectExec(`(?i)delete from .*resource_history.* where .*key_path.* in \(`).
+			WithArgs(anyArgs(argCount)...).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 	}
 
 	require.NoError(t, sqlKV.BatchDelete(context.Background(), DataSection, keys))
 	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+// anyArgs returns n matchers, so WithArgs asserts exactly n arguments in the statement.
+func anyArgs(n int) []driver.Value {
+	args := make([]driver.Value, n)
+	for i := range args {
+		args[i] = sqlmock.AnyArg()
+	}
+	return args
 }
 
 func TestSQLKV_Batch_RejectsDataSection(t *testing.T) {
