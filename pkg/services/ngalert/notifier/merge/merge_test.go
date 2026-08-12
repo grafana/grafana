@@ -473,7 +473,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should fail if identifier conflicts with existing managed route", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		input.ManagedRoutes = v1.ManagedRoutes{identifier: nil}
+		input.ManagedRoutes = map[string]*v1.Route{identifier: nil}
 		_, _, err := MergeExtraConfig(context.Background(), &input)
 		require.ErrorContains(t, err, identifier)
 	})
@@ -545,7 +545,7 @@ func TestMergeExtraConfig(t *testing.T) {
 
 	t.Run("should preserve existing managed routes in result", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
-		input.ManagedRoutes = v1.ManagedRoutes{"existing-managed": {Receiver: "existing"}}
+		input.ManagedRoutes = map[string]*v1.Route{"existing-managed": {Receiver: "existing"}}
 		config, _, err := MergeExtraConfig(context.Background(), &input)
 		require.NoError(t, err)
 
