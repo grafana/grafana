@@ -18,7 +18,7 @@ test.use({
 const EXTRA_TABS_TO_APPEND = 10;
 
 async function buildOverflowTabs(sidebar: Sidebar, canvas: Canvas, tabs: Tabs) {
-  await sidebar.addOptions.clickAddTabButton();
+  await sidebar.addOptions.addTab();
 
   for (let i = 0; i < EXTRA_TABS_TO_APPEND; i++) {
     await canvas.addTab();

@@ -172,7 +172,7 @@ test.describe(
       // verify panel title change in panel editor UI
       await expect(panels.getHeader(editedSinglePanelName('1'))).toBeVisible();
 
-      await controls.clickBackToDashboard();
+      await controls.goBackToDashboard();
       await expect(canvas.getContainer()).toBeVisible(); // verifying that dashboard loaded
 
       // close first row to make sure we are viewing second row

@@ -142,7 +142,7 @@ test.describe(
 
         await verifyPanelsStackedVertically(panels);
 
-        await gridLayoutOptions.clickClearCustomMinColumnWidth();
+        await gridLayoutOptions.clearCustomMinColumnWidth();
         await expect(gridLayoutOptions.getMinColumnWidthSelect()).toHaveValue('Standard');
       });
 
@@ -268,7 +268,7 @@ test.describe(
 
         await expect(gridLayoutOptions.getCustomRowHeightInput()).toHaveValue('800');
 
-        await gridLayoutOptions.clickClearCustomRowHeight();
+        await gridLayoutOptions.clearCustomRowHeight();
         await expect(gridLayoutOptions.getRowHeightSelect()).toHaveValue('Standard');
       });
 

@@ -53,7 +53,7 @@ test.describe(
         'second label',
         'fourth value',
       ]);
-      await sidebar.variableOptions.custom.clickApplyButton();
+      await sidebar.variableOptions.custom.applyChanges();
 
       const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();
@@ -66,7 +66,7 @@ test.describe(
       const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText(`${variable.name}: first value`);
 
-      await sidebar.clickDeleteButton({ confirm: true });
+      await sidebar.deleteSelection({ confirm: true });
       await expect(variableLabel).toBeHidden();
     });
 
@@ -85,11 +85,11 @@ test.describe(
       await sidebar.variableOptions.custom.openEditor();
       await sidebar.variableOptions.custom.selectFormat('CSV');
       await sidebar.variableOptions.custom.setValues('first value, second label : second value, fourth value');
-      await sidebar.variableOptions.custom.clickApplyButton();
+      await sidebar.variableOptions.custom.applyChanges();
 
       // make sure the variable is deselected in order to be able to interact with the content outline item
       // if not, the item is selected and does not receive click events
-      await sidebar.clickCloseButton();
+      await sidebar.closePane();
 
       await sidebar.toolbar.clickButton('Outline');
       await sidebar.contentOutline.toggleNode('Variables');
@@ -105,7 +105,7 @@ test.describe(
         'second label updated',
         'fourth value',
       ]);
-      await sidebar.variableOptions.custom.clickApplyButton();
+      await sidebar.variableOptions.custom.applyChanges();
 
       const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();
@@ -156,7 +156,7 @@ test.describe(
         await expect(previewRows.nth(i + 1).getByRole('cell')).toHaveText(Object.values(option));
       }
 
-      await sidebar.variableOptions.custom.clickApplyButton();
+      await sidebar.variableOptions.custom.applyChanges();
 
       const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();

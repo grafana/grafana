@@ -4,6 +4,21 @@ import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e'
 
 import { type Tabs, type Panels, type Rows } from '../page-objects';
 
+/**
+ * Reusable assertion bundles built on page-object locators (and occasional
+ * save-drawer chrome not yet owned by a page object).
+ *
+ * An assertion helper IS a multi-step or multi-element `expect` sequence that
+ * several specs need verbatim (e.g. "all repeated panel titles visible").
+ *
+ * An assertion helper is NOT:
+ * - a single `expect` — leave that in the spec;
+ * - a user interaction or locator lookup — that belongs to a page object;
+ * - a multi-step setup/navigation flow — that belongs in `flows.ts`;
+ * - drag-and-drop / `boundingBox()` geometry — that belongs in `utils.ts`.
+ *
+ * Add a new helper only when a second spec needs the same bundle.
+ */
 export async function expectRepeatedPanelTitlesToBe(
   panels: Panels,
   title: string,

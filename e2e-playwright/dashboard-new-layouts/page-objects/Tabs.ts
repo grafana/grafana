@@ -1,4 +1,4 @@
-import test, { type Locator } from '@playwright/test';
+import { test, type Locator } from '@playwright/test';
 
 import { PageObject } from './PageObject';
 

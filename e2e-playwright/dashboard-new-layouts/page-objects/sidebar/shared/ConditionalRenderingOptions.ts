@@ -10,9 +10,8 @@ export class ConditionalRenderingOptions extends PageObject {
   /** Selects whether matching rules show or hide the element */
   async selectVisibility(visibility: 'show' | 'hide') {
     await test.step(`Select conditional rendering visibility: "${visibility}"`, async () => {
-      await this.getByGrafanaSelector(this.selectors.components.RadioButton.container, {
-        root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container),
-      })
+      await this.getByGrafanaSelector(this.selectors.components.Sidebar.container)
+        .getByTestId(this.selectors.components.RadioButton.container)
         .getByRole('radio', { name: visibility === 'show' ? 'Show' : 'Hide' })
         // RadioButton styles the <input> with opacity:0; Playwright treats that as hidden
         .click({ force: true });
@@ -22,9 +21,8 @@ export class ConditionalRenderingOptions extends PageObject {
   /** Selects whether all rules or any rule must match */
   async selectMatchType(matchType: 'all' | 'any') {
     await test.step(`Select conditional rendering match: "Match ${matchType}"`, async () => {
-      await this.getByGrafanaSelector(this.selectors.components.RadioButton.container, {
-        root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container),
-      })
+      await this.getByGrafanaSelector(this.selectors.components.Sidebar.container)
+        .getByTestId(this.selectors.components.RadioButton.container)
         .getByRole('radio', { name: matchType === 'all' ? 'Match all' : 'Match any' })
         // RadioButton styles the <input> with opacity:0; Playwright treats that as hidden
         .click({ force: true });

@@ -147,7 +147,7 @@ test.describe(
       // verify panel title change in panel editor UI
       await expect(panels.getPanel('New edited panel')).toBeVisible();
 
-      await controls.clickBackToDashboard();
+      await controls.goBackToDashboard();
       await expect(canvas.getContainer()).toBeVisible(); // verifying that dashboard loaded
 
       await tabs.select(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(1)}`);
