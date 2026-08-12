@@ -82,7 +82,7 @@ export interface DataLinkTransformationConfig {
 
 /** @internal */
 export interface InternalDataLink<T extends DataQuery = any> {
-  query: T | T[] | ((options: { replaceVariables: InterpolateFunction; scopedVars: ScopedVars }) => T | T[]);
+  query: T | ((options: { replaceVariables: InterpolateFunction; scopedVars: ScopedVars }) => T);
   datasourceUid: string;
   datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;
