@@ -36,58 +36,82 @@ export const FieldValidationMessage = ({
 };
 
 const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
-  const baseStyle = css({
-    fontSize: theme.typography.size.sm,
-    fontWeight: theme.typography.fontWeightMedium,
-    padding: theme.spacing(0.5, 1),
-    color: theme.colors.error.contrastText,
-    background: theme.colors.error.main,
-    borderRadius: theme.shape.radius.lg,
-    position: 'relative',
-    display: 'inline-block',
-    alignSelf: 'flex-start',
-
-    a: {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const baseStyle = css(
+    {
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightMedium,
+      padding: theme.spacing(0.5, 1),
       color: theme.colors.error.contrastText,
-      textDecoration: 'underline',
+      background: theme.colors.error.main,
+      borderRadius: theme.shape.radius.lg,
+      position: 'relative',
+      display: 'inline-block',
+      alignSelf: 'flex-start',
 
-      '&:hover': {
-        textDecoration: 'none',
+      a: {
+        color: theme.colors.error.contrastText,
+        textDecoration: 'underline',
+
+        '&:hover': {
+          textDecoration: 'none',
+        },
       },
     },
-  });
+    visualRefreshEnabled && {
+      background: theme.colors.error.background,
+      border: `1px solid ${theme.colors.error.border}`,
+      color: theme.colors.error.text,
+    }
+  );
 
   return {
-    vertical: css(baseStyle, {
-      margin: theme.spacing(0.5, 0, 0, 0),
+    vertical: css(
+      baseStyle,
+      {
+        margin: theme.spacing(0.5, 0, 0, 0),
 
-      '&:before': {
-        content: '""',
-        position: 'absolute',
-        left: '9px',
-        top: '-5px',
-        width: 0,
-        height: 0,
-        borderWidth: '0 4px 5px 4px',
-        borderColor: `transparent transparent ${theme.colors.error.main} transparent`,
-        borderStyle: 'solid',
+        '&:before': {
+          content: '""',
+          position: 'absolute',
+          left: '9px',
+          top: '-5px',
+          width: 0,
+          height: 0,
+          borderWidth: '0 4px 5px 4px',
+          borderColor: `transparent transparent ${theme.colors.error.main} transparent`,
+          borderStyle: 'solid',
+        },
       },
-    }),
-    horizontal: css(baseStyle, {
-      marginLeft: '10px',
+      visualRefreshEnabled && {
+        '&:before': {
+          borderColor: `transparent transparent ${theme.colors.error.border} transparent`,
+        },
+      }
+    ),
+    horizontal: css(
+      baseStyle,
+      {
+        marginLeft: '10px',
 
-      '&:before': {
-        content: '""',
-        position: 'absolute',
-        left: '-5px',
-        top: '9px',
-        width: 0,
-        height: 0,
-        borderWidth: '4px 5px 4px 0',
-        borderColor: `transparent ${theme.colors.error.main} transparent transparent`,
-        borderStyle: 'solid',
+        '&:before': {
+          content: '""',
+          position: 'absolute',
+          left: '-5px',
+          top: '9px',
+          width: 0,
+          height: 0,
+          borderWidth: '4px 5px 4px 0',
+          borderColor: `transparent ${theme.colors.error.main} transparent transparent`,
+          borderStyle: 'solid',
+        },
       },
-    }),
+      visualRefreshEnabled && {
+        '&:before': {
+          borderColor: `transparent ${theme.colors.error.border} transparent transparent`,
+        },
+      }
+    ),
     fieldValidationMessageIcon: css({
       marginRight: theme.spacing(),
     }),
