@@ -121,7 +121,6 @@ describe('NotebookScene', () => {
 
     afterEach(() => {
       config.featureToggles.scopeFilters = false;
-      config.publicDashboardAccessToken = undefined;
     });
 
     function buildScopesContext(value: Scope[]): ScopesContextValue {
@@ -141,14 +140,6 @@ describe('NotebookScene', () => {
 
     it('has no scopes variable when scopeFilters is off', () => {
       config.featureToggles.scopeFilters = false;
-
-      expect(buildScene(false).state.$variables).toBeUndefined();
-    });
-
-    // Same opt-out as the dashboard transform.
-    it('has no scopes variable under a public dashboard access token', () => {
-      config.featureToggles.scopeFilters = true;
-      config.publicDashboardAccessToken = 'token';
 
       expect(buildScene(false).state.$variables).toBeUndefined();
     });

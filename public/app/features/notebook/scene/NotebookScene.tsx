@@ -100,16 +100,18 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
 }
 
 /**
- * A notebook's only scene variable is the scopes one, and only when scopes are on. The same
- * condition as the dashboard v2 transform, including the public-dashboard opt-out.
+ * A notebook's only scene variable is the scopes one, and only when scopes are on.
  *
  * SceneQueryRunner reads scopes off the graph (sceneGraph.getScopes -> lookupVariable('__scopes')),
  * so a notebook without this variable runs its queries unscoped while the same panels on a
  * dashboard are scoped. The variable is also what enables the scope selector at all: its
  * setContext calls ScopesContext.setEnabled.
+ *
+ * No publicDashboardAccessToken guard, unlike the dashboard transform: that token is only set by
+ * middleware on the /public-dashboards/:accessToken routes, which never render a notebook.
  */
 function buildNotebookVariables(): SceneVariableSet | undefined {
-  if (!config.featureToggles.scopeFilters || config.publicDashboardAccessToken) {
+  if (!config.featureToggles.scopeFilters) {
     return undefined;
   }
 
