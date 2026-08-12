@@ -79,14 +79,12 @@ public/css/*.min.css
 .cursor/*
 !.cursor/hooks.json
 !.cursor/hooks/
-.cursor/hooks/*
-!.cursor/hooks/*.sh
+!.cursor/hooks/**
 !.cursor/commands/
 .cursor/commands/*
 !.cursor/commands/*.md
 !.cursor/rules/
-.cursor/rules/*
-!.cursor/rules/*.mdc
+!.cursor/rules/**
 !.cursor/skills/
 !.cursor/skills/**
 !.cursor/README.md
