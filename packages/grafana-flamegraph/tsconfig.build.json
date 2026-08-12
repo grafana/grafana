@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "paths": {
+      "@emotion/core": ["./src/types/emotion-core-stub.d.ts"]
+    }
+  },
+  "exclude": ["**/*.test.ts*"],
+  "extends": "./tsconfig.json"
+}

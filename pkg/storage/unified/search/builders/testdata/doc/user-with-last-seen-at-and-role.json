@@ -1,0 +1,16 @@
+{
+    "apiVersion": "iam.grafana.app/v0alpha1",
+    "kind": "User",
+    "metadata": {
+        "name": "with-last-seen-at-and-role",
+        "namespace": "default"
+    },
+    "spec": {
+        "login": "user.three",
+        "email": "user.three@test.com",
+        "role": "Editor"
+    },
+    "status": {
+        "lastSeenAt": 1698321600
+    }
+}

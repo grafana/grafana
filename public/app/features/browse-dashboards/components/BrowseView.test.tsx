@@ -1,0 +1,334 @@
+import { act, getByLabelText, render, screen, userEvent } from 'test/test-utils';
+
+import { selectors } from '@grafana/e2e-selectors';
+import { setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
+import * as useFolderReadmeModule from 'app/features/provisioning/hooks/useFolderReadme';
+import { type DashboardViewItem } from 'app/features/search/types';
+import { AccessControlAction } from 'app/types/accessControl';
+
+import { BrowseView } from './BrowseView';
+
+const [mockTree, { folderA, folderA_folderA, folderA_folderB, folderA_folderB_dashbdB, dashbdD, folderB_empty }] =
+  getFolderFixtures();
+
+setBackendSrv(backendSrv);
+setupMockServer();
+
+describe('browse-dashboards BrowseView', () => {
+  const WIDTH = 800;
+  const HEIGHT = 600;
+  const mockPermissions = {
+    canEditFolders: true,
+    canEditDashboards: true,
+    canDeleteFolders: true,
+    canDeleteDashboards: true,
+  };
+
+  beforeEach(() => {
+    jest.spyOn(contextSrv, 'hasPermission').mockImplementation((permission: string) => {
+      if (permission === AccessControlAction.FoldersRead) {
+        return true;
+      }
+      return false;
+    });
+  });
+
+  it('expands and collapses a folder', async () => {
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    await screen.findByText(folderA.item.title);
+
+    await expandFolder(folderA.item);
+    expect(screen.getByText(folderA_folderA.item.title)).toBeInTheDocument();
+
+    await collapseFolder(folderA.item);
+    expect(screen.queryByText(folderA_folderA.item.title)).not.toBeInTheDocument();
+  });
+
+  it('checks items when selected', async () => {
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+
+    const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashbdD.item.uid));
+    expect(checkbox).not.toBeChecked();
+
+    await userEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+  });
+
+  it('checks all descendants when a folder is selected', async () => {
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    await screen.findByText(folderA.item.title);
+
+    // First expand then click folderA
+    await expandFolder(folderA.item);
+    await clickCheckbox(folderA.item);
+
+    // All the visible items in it should be checked now
+    const directChildren = mockTree.filter((v) => v.item.kind !== 'ui' && v.item.parentUID === folderA.item.uid);
+
+    for (const child of directChildren) {
+      const childCheckbox = screen.queryByTestId(selectors.pages.BrowseDashboards.table.checkbox(child.item.uid));
+      expect(childCheckbox).toBeChecked();
+    }
+  });
+
+  it('checks descendants loaded after a folder is selected', async () => {
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    await screen.findByText(folderA.item.title);
+
+    // First expand then click folderA
+    await expandFolder(folderA.item);
+    await clickCheckbox(folderA.item);
+
+    // When additional children are loaded (by expanding a folder), those items
+    // should also be selected
+    await expandFolder(folderA_folderB.item);
+
+    const grandchildren = mockTree.filter((v) => v.item.kind !== 'ui' && v.item.parentUID === folderA_folderB.item.uid);
+
+    for (const child of grandchildren) {
+      const childCheckbox = screen.queryByTestId(selectors.pages.BrowseDashboards.table.checkbox(child.item.uid));
+      expect(childCheckbox).toBeChecked();
+    }
+  });
+
+  it('unchecks ancestors when unselecting an item', async () => {
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    await screen.findByText(folderA.item.title);
+
+    await expandFolder(folderA.item);
+    await expandFolder(folderA_folderB.item);
+
+    await clickCheckbox(folderA.item);
+    await clickCheckbox(folderA_folderB_dashbdB.item);
+
+    const itemCheckbox = screen.queryByTestId(
+      selectors.pages.BrowseDashboards.table.checkbox(folderA_folderB_dashbdB.item.uid)
+    );
+    expect(itemCheckbox).not.toBeChecked();
+
+    const parentCheckbox = screen.queryByTestId(
+      selectors.pages.BrowseDashboards.table.checkbox(folderA_folderB.item.uid)
+    );
+    expect(parentCheckbox).not.toBeChecked();
+
+    const grandparentCheckbox = screen.queryByTestId(selectors.pages.BrowseDashboards.table.checkbox(folderA.item.uid));
+    expect(grandparentCheckbox).not.toBeChecked();
+  });
+
+  it('shows indeterminate checkboxes when a descendant is selected', async () => {
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+    await screen.findByText(folderA.item.title);
+
+    await expandFolder(folderA.item);
+    await expandFolder(folderA_folderB.item);
+
+    await clickCheckbox(folderA_folderB_dashbdB.item);
+
+    const parentCheckbox = screen.queryByTestId(
+      selectors.pages.BrowseDashboards.table.checkbox(folderA_folderB.item.uid)
+    );
+    expect(parentCheckbox).not.toBeChecked();
+    expect(parentCheckbox).toBePartiallyChecked();
+
+    const grandparentCheckbox = screen.queryByTestId(selectors.pages.BrowseDashboards.table.checkbox(folderA.item.uid));
+    expect(grandparentCheckbox).not.toBeChecked();
+    expect(grandparentCheckbox).toBePartiallyChecked();
+  });
+
+  describe('when there is no item in the folder', () => {
+    it('shows a CTA for creating a dashboard if the user has editor rights', async () => {
+      render(
+        <BrowseView permissions={mockPermissions} folderUID={folderB_empty.item.uid} width={WIDTH} height={HEIGHT} />
+      );
+      expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
+    });
+
+    it('shows a simple message if the user has viewer rights', async () => {
+      const mockPermissionsDisabled = {
+        canEditFolders: false,
+        canEditDashboards: false,
+        canDeleteFolders: false,
+        canDeleteDashboards: false,
+      };
+
+      render(
+        <BrowseView
+          permissions={mockPermissionsDisabled}
+          folderUID={folderB_empty.item.uid}
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+      expect(await screen.findByText('This folder is empty')).toBeInTheDocument();
+    });
+  });
+
+  describe('inline README row', () => {
+    function mockReadme(markdownContent = '# README\n\nbody') {
+      jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
+        repository: {
+          name: 'r',
+          target: 'folder',
+          title: 'r',
+          type: 'github',
+          url: 'https://github.com/o/r',
+          branch: 'main',
+          workflows: [],
+        } as never,
+        folder: undefined,
+        readmePath: 'README.md',
+        status: 'ok',
+        isLoading: false,
+        markdownContent,
+        refetch: jest.fn(),
+      });
+    }
+
+    function mockReadmeMissing() {
+      jest.spyOn(useFolderReadmeModule, 'useFolderReadme').mockReturnValue({
+        repository: {
+          name: 'r',
+          target: 'folder',
+          title: 'r',
+          type: 'github',
+          url: 'https://github.com/o/r',
+          branch: 'main',
+          workflows: [],
+        } as never,
+        folder: undefined,
+        readmePath: 'README.md',
+        status: 'missing',
+        isLoading: false,
+        markdownContent: undefined,
+        refetch: jest.fn(),
+      });
+    }
+
+    afterEach(() => {
+      act(() => {
+        setTestFlags({});
+      });
+      jest.restoreAllMocks();
+    });
+
+    it('appends the README panel as the last row when the folder is provisioned and has children', async () => {
+      setTestFlags({ 'provisioning.readmes': true });
+      mockReadme();
+
+      render(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={folderA.item.uid}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+
+      expect(await screen.findByText('README.md')).toBeInTheDocument();
+    });
+
+    it('does not append the README row when the toggle is off', async () => {
+      setTestFlags({ 'provisioning.readmes': false });
+      mockReadme();
+
+      render(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={folderA.item.uid}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+      await screen.findByText(folderA_folderA.item.title);
+
+      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+    });
+
+    it('does not append the README row when the folder is not provisioned', async () => {
+      setTestFlags({ 'provisioning.readmes': true });
+      mockReadme();
+
+      render(<BrowseView permissions={mockPermissions} folderUID={folderA.item.uid} width={WIDTH} height={HEIGHT} />);
+      await screen.findByText(folderA_folderA.item.title);
+
+      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+    });
+
+    it('does not append the README row when there is no folderUID (root)', async () => {
+      setTestFlags({ 'provisioning.readmes': true });
+      mockReadme();
+
+      render(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={undefined}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+      await screen.findByText(folderA.item.title);
+
+      expect(screen.queryByText('README.md')).not.toBeInTheDocument();
+    });
+
+    it('appends the README panel for empty provisioned folders', async () => {
+      setTestFlags({ 'provisioning.readmes': true });
+      mockReadme();
+
+      render(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={folderB_empty.item.uid}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+
+      expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('README.md')).toBeInTheDocument();
+    });
+
+    it('shows the Add README CTA for empty provisioned folders without a README', async () => {
+      setTestFlags({ 'provisioning.readmes': true });
+      mockReadmeMissing();
+
+      render(
+        <BrowseView
+          permissions={mockPermissions}
+          folderUID={folderB_empty.item.uid}
+          isProvisionedFolder
+          width={WIDTH}
+          height={HEIGHT}
+        />
+      );
+
+      expect(await screen.findByText('Create dashboard')).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: /Add README/i })).toBeInTheDocument();
+    });
+  });
+});
+
+async function expandFolder(item: DashboardViewItem) {
+  const row = screen.getByTestId(selectors.pages.BrowseDashboards.table.row(item.title));
+  const expandButton = getByLabelText(row, /Expand folder/);
+  await userEvent.click(expandButton);
+}
+
+async function collapseFolder(item: DashboardViewItem) {
+  const row = screen.getByTestId(selectors.pages.BrowseDashboards.table.row(item.title));
+  const expandButton = getByLabelText(row, /Collapse folder/);
+  await userEvent.click(expandButton);
+}
+
+async function clickCheckbox(item: DashboardViewItem) {
+  const checkbox = screen.getByTestId(selectors.pages.BrowseDashboards.table.checkbox(item.uid));
+  await userEvent.click(checkbox);
+}

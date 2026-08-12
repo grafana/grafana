@@ -1,0 +1,28 @@
+{
+  "title": "All Colapsed Rows",
+  "tags": null,
+  "datasource": [
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
+  ],
+  "panels": [
+    {
+      "id": 0,
+      "title": "New panel",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 0,
+  "linkCount": 0,
+  "timeFrom": "",
+  "timeTo": "",
+  "timezone": ""
+}

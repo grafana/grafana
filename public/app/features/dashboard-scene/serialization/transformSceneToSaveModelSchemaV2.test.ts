@@ -1,0 +1,2304 @@
+import {
+  VariableRefresh,
+  type PanelData,
+  LoadingState,
+  toDataFrame,
+  FieldType,
+  getDefaultTimeRange,
+} from '@grafana/data';
+import { config, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import {
+  AdHocFiltersVariable,
+  behaviors,
+  ConstantVariable,
+  CustomVariable,
+  DataSourceVariable,
+  GroupByVariable,
+  IntervalVariable,
+  QueryVariable,
+  SceneGridLayout,
+  SceneRefreshPicker,
+  SceneTimePicker,
+  SceneTimeRange,
+  SceneVariableSet,
+  LocalValueVariable,
+  TextBoxVariable,
+  VizPanel,
+  type SceneDataQuery,
+  SceneQueryRunner,
+  SceneDataTransformer,
+  SceneDataNode,
+  sceneUtils,
+  dataLayers,
+} from '@grafana/scenes';
+import {
+  DashboardCursorSync as DashboardCursorSyncV1,
+  VariableHide as VariableHideV1,
+  VariableSort as VariableSortV1,
+} from '@grafana/schema';
+import {
+  type GridLayoutSpec,
+  type AutoGridLayoutSpec,
+  type RowsLayoutSpec,
+  type TabsLayoutSpec,
+  defaultDataQueryKind,
+  type PanelSpec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DashboardScene } from '../scene/DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardSceneState } from '../scene/types/dashboard';
+import { DashboardSidebar } from '../sidebar/DashboardSidebar';
+import { djb2Hash } from '../utils/djb2Hash';
+
+import {
+  getPersistedDSFor,
+  getElementDatasource,
+  normalizeDataSourceRef,
+  transformSceneToSaveModelSchemaV2,
+  validateDashboardSchemaV2,
+  getDataQueryKind,
+  getAutoAssignedDSRef,
+  getVizPanelQueries,
+  vizPanelToSchemaV2,
+} from './transformSceneToSaveModelSchemaV2';
+
+// Mock dependencies
+jest.mock('../utils/dashboardSceneGraph', () => {
+  const original = jest.requireActual('../utils/dashboardSceneGraph');
+  const getElementIdentifierForVizPanel = jest.fn().mockImplementation((panel) => {
+    // Return the panel key if it exists, otherwise use panel-1 as default
+    return panel?.state?.key || 'panel-1';
+  });
+  // Walk up from a panel collecting the full chain of enclosing repeat-clone section keys.
+  const getEnclosingRepeatCloneKeys = jest.fn().mockImplementation((panel) => {
+    const keys = [];
+    let current = panel?.parent;
+    while (current) {
+      if (current.state?.repeatSourceKey && current.state?.key) {
+        keys.push(current.state.key);
+      }
+      current = current.parent;
+    }
+    return keys;
+  });
+  return {
+    ...original,
+    dashboardSceneGraph: {
+      ...original.dashboardSceneGraph,
+      getElementIdentifierForVizPanel,
+      getEnclosingRepeatCloneKeys,
+      getSnapshotElementIdentifierForVizPanel: jest.fn().mockImplementation((panel) => {
+        const base =
+          panel?.state?.repeatSourceKey && panel?.state?.key ? panel.state.key : getElementIdentifierForVizPanel(panel);
+        const enclosingCloneKeys = getEnclosingRepeatCloneKeys(panel);
+        return enclosingCloneKeys.length ? `${enclosingCloneKeys.join('-')}-${base}` : base;
+      }),
+      getPanelLinks: jest.fn().mockImplementation(() => {
+        return new VizPanelLinks({
+          rawLinks: [
+            { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
+            { title: 'Test Link 2', url: 'http://test2.com' },
+          ],
+          menu: new VizPanelLinksMenu({}),
+        });
+      }),
+    },
+  };
+});
+
+jest.mock('../utils/utils', () => {
+  const original = jest.requireActual('../utils/utils');
+  return {
+    ...original,
+    getDashboardSceneFor: jest.fn().mockImplementation(() => ({
+      serializer: {
+        getDSReferencesMapping: jest.fn().mockReturnValue({
+          panels: new Map([['panel-1', new Set(['A'])]]),
+          variables: new Set(),
+          annotations: new Set(),
+        }),
+      },
+    })),
+  };
+});
+
+function setupDashboardScene(state: Partial<DashboardSceneState>): DashboardScene {
+  return new DashboardScene(state);
+}
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    defaultDatasource: 'loki',
+    datasources: {
+      Prometheus: {
+        name: 'Prometheus',
+        meta: { id: 'prometheus' },
+        type: 'prometheus',
+      },
+      '-- Grafana --': {
+        name: 'Grafana',
+        meta: { id: 'grafana' },
+        type: 'grafana',
+      },
+      loki: {
+        name: 'Loki',
+        meta: {
+          id: 'loki',
+          name: 'Loki',
+          type: 'datasource',
+          info: { version: '1.0.0' },
+          module: 'app/plugins/datasource/loki/module',
+          baseUrl: '/plugins/loki',
+        },
+        type: 'loki',
+      },
+    },
+  },
+}));
+
+describe('transformSceneToSaveModelSchemaV2', () => {
+  let dashboardScene: DashboardScene;
+  let prevFeatureToggleValue: boolean;
+
+  beforeAll(() => {
+    prevFeatureToggleValue = !!config.featureToggles.groupByVariable;
+    config.featureToggles.groupByVariable = true;
+  });
+
+  afterAll(() => {
+    config.featureToggles.groupByVariable = prevFeatureToggleValue;
+  });
+
+  beforeEach(() => {
+    // The intention is to have a complete dashboard scene
+    // with all the possible properties set
+    dashboardScene = setupDashboardScene({
+      $data: new DashboardDataLayerSet({ annotationLayers: createAnnotationLayers() }),
+      title: 'Test Dashboard',
+      description: 'Test Description',
+      preload: true,
+      tags: ['tag1', 'tag2'],
+      uid: 'test-uid',
+      version: 1,
+      $timeRange: new SceneTimeRange({
+        timeZone: 'UTC',
+        from: 'now-1h',
+        to: 'now',
+        weekStart: 'monday',
+        fiscalYearStartMonth: 1,
+        UNSAFE_nowDelay: '1m',
+        refreshOnActivate: {
+          afterMs: 10,
+          percent: 0.1,
+        },
+      }),
+      controls: new DashboardControls({
+        refreshPicker: new SceneRefreshPicker({
+          refresh: '5s',
+          intervals: ['5s', '10s', '30s'],
+          autoEnabled: true,
+          autoMinInterval: '5s',
+          autoValue: '5s',
+          isOnCanvas: true,
+          primary: true,
+          withText: true,
+          minRefreshInterval: '5s',
+        }),
+        timePicker: new SceneTimePicker({
+          isOnCanvas: true,
+          hidePicker: true,
+        }),
+      }),
+      links: [
+        {
+          title: 'Test Link',
+          url: 'http://test.com',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          type: 'link',
+        },
+        // This link is was added by a datasource, we wouldn't like it to end up in the JSON schema
+        {
+          title: 'Default link',
+          url: 'http://test.com',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          type: 'link',
+          origin: {
+            type: 'datasource',
+            group: 'datasource',
+          },
+        },
+      ],
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          isLazy: false,
+          children: [
+            new DashboardGridItem({
+              y: 0,
+              height: 10,
+              body: new VizPanel({
+                key: 'panel-1',
+                pluginId: 'timeseries',
+                title: 'Test Panel',
+                titleItems: [
+                  new VizPanelLinks({
+                    rawLinks: [
+                      { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
+                      { title: 'Test Link 2', url: 'http://test2.com' },
+                    ],
+                    menu: new VizPanelLinksMenu({}),
+                  }),
+                ],
+                description: 'Test Description',
+                hoverHeader: true,
+                hoverHeaderOffset: 10,
+                fieldConfig: {
+                  defaults: {
+                    mappings: [],
+                    max: undefined,
+                  },
+                  overrides: [],
+                },
+                displayMode: 'transparent',
+                pluginVersion: '7.0.0',
+                $timeRange: new SceneTimeRange({
+                  timeZone: 'UTC',
+                  from: 'now-3h',
+                  to: 'now',
+                }),
+              }),
+              // Props related to repeatable panels
+              // repeatedPanels?: VizPanel[],
+              // variableName?: string,
+              // itemHeight?: number,
+              // repeatDirection?: RepeatDirection,
+              // maxPerRow?: number,
+            }),
+          ],
+        }),
+      }),
+      meta: {},
+      sidebar: new DashboardSidebar(),
+      $behaviors: [
+        new behaviors.CursorSync({
+          sync: DashboardCursorSyncV1.Crosshair,
+        }),
+        new behaviors.LiveNowTimer({
+          enabled: true,
+        }),
+      ],
+      $variables: new SceneVariableSet({
+        // Test each of the variables
+        variables: [
+          new QueryVariable({
+            name: 'queryVar',
+            label: 'Query Variable',
+            description: 'A query variable',
+            skipUrlSync: false,
+            hide: VariableHideV1.hideLabel,
+            value: 'value1',
+            text: 'text1',
+            query: {
+              expr: 'label_values(node_boot_time_seconds)',
+              refId: 'A',
+            },
+            definition: 'definition1',
+            datasource: { uid: 'datasource1', type: 'prometheus' },
+            sort: VariableSortV1.alphabeticalDesc,
+            refresh: VariableRefresh.onDashboardLoad,
+            regex: 'regex1',
+            regexApplyTo: 'value',
+            allValue: '*',
+            includeAll: true,
+            isMulti: true,
+          }),
+          new CustomVariable({
+            name: 'customVar',
+            label: 'Custom Variable',
+            description: 'A custom variable',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+            value: 'option1',
+            text: 'option1',
+            query: 'option1, option2',
+            options: [
+              { label: 'option1', value: 'option1' },
+              { label: 'option2', value: 'option2' },
+            ],
+            isMulti: true,
+            allValue: 'All',
+            includeAll: true,
+          }),
+          new DataSourceVariable({
+            name: 'datasourceVar',
+            label: 'Datasource Variable',
+            description: 'A datasource variable',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+            value: 'value1',
+            text: 'text1',
+            regex: 'regex1',
+            pluginId: 'datasource1',
+            defaultOptionEnabled: true,
+          }),
+          new ConstantVariable({
+            name: 'constantVar',
+            label: 'Constant Variable',
+            description: 'A constant variable',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+            value: 'value4',
+          }),
+          new IntervalVariable({
+            name: 'intervalVar',
+            label: 'Interval Variable',
+            description: 'An interval variable',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+            value: '1m',
+            intervals: ['1m', '5m', '10m'],
+            autoEnabled: false,
+            autoMinInterval: '1m',
+            autoStepCount: 10,
+          }),
+          new TextBoxVariable({
+            name: 'textVar',
+            label: 'Text Variable',
+            description: 'A text variable',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+            value: 'value6',
+          }),
+          new GroupByVariable({
+            name: 'groupByVar',
+            label: 'Group By Variable',
+            description: 'A group by variable',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+            value: 'value7',
+            text: 'text7',
+            datasource: { uid: 'datasource2', type: 'prometheus' },
+            defaultOptions: [
+              { text: 'option1', value: 'option1' },
+              { text: 'option2', value: 'option2' },
+            ],
+            isMulti: false,
+            includeAll: false,
+          }),
+          new AdHocFiltersVariable({
+            name: 'adhocVar',
+            label: 'Adhoc Variable',
+            description: 'An adhoc variable',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+            datasource: { uid: 'datasource3', type: 'prometheus' },
+            baseFilters: [
+              {
+                key: 'key1',
+                operator: '=',
+                value: 'value1',
+                condition: 'AND',
+              },
+              {
+                key: 'key2',
+                operator: '=',
+                value: 'value2',
+                condition: 'OR',
+              },
+            ],
+            filters: [
+              {
+                key: 'key3',
+                operator: '=',
+                value: 'value3',
+                condition: 'AND',
+              },
+            ],
+            defaultKeys: [
+              {
+                text: 'defaultKey1',
+                value: 'defaultKey1',
+                group: 'defaultGroup1',
+                expandable: true,
+              },
+            ],
+          }),
+        ],
+      }),
+    });
+  });
+
+  it('should transform scene to save model schema v2', () => {
+    const result = transformSceneToSaveModelSchemaV2(dashboardScene);
+    expect(result).toMatchSnapshot();
+
+    // Check that the annotation layers are correctly transformed
+    expect(result.annotations).toHaveLength(2);
+  });
+
+  it('should transform links with placement property', () => {
+    const sceneWithPlacementLink = new DashboardScene({
+      links: [
+        {
+          title: 'Link in Controls Menu',
+          url: 'http://test.com',
+          type: 'link',
+          placement: 'inControlsMenu',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+        },
+        {
+          title: 'Link without placement',
+          url: 'http://test2.com',
+          type: 'link',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+        },
+      ],
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithPlacementLink);
+
+    expect(result.links).toBeDefined();
+    expect(result.links).toHaveLength(2);
+    expect(result.links![0]).toHaveProperty('placement', 'inControlsMenu');
+    expect(result.links![1]).not.toHaveProperty('placement');
+  });
+
+  it('should omit links with origin from serialized save model', () => {
+    const sceneWithOriginLink = new DashboardScene({
+      links: [
+        {
+          title: 'Editable Link',
+          url: 'http://example.com',
+          type: 'link',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+        },
+        {
+          title: 'Default link',
+          url: 'http://ds.com',
+          type: 'link',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource', group: 'loki' },
+        },
+      ],
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithOriginLink);
+
+    expect(result.links).toHaveLength(1);
+    expect(result.links![0].title).toBe('Editable Link');
+    expect(result.links![0].origin).toBeUndefined();
+  });
+
+  it('should omit variables with origin from serialized save model', () => {
+    const sceneWithOriginVariable = new DashboardScene({
+      $variables: new SceneVariableSet({
+        variables: [
+          new CustomVariable({
+            name: 'editableVar',
+            label: 'Editable',
+            query: 'a,b',
+            value: 'a',
+            text: 'a',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+          }),
+          new CustomVariable({
+            name: 'dsVar',
+            label: 'From datasource',
+            query: 'x,y',
+            value: 'x',
+            text: 'x',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+            origin: { type: 'datasource', group: 'loki' },
+          }),
+        ],
+      }),
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithOriginVariable);
+
+    expect(result.variables).toHaveLength(1);
+    expect(result.variables![0].spec.name).toBe('editableVar');
+    expect(result.variables![0].spec.origin).toBeUndefined();
+  });
+
+  it('should transform the minimum scene to save model schema v2', () => {
+    const minimalScene = new DashboardScene({});
+
+    expect(() => {
+      transformSceneToSaveModelSchemaV2(minimalScene);
+    }).not.toThrow();
+  });
+
+  describe('getPersistedDSFor query', () => {
+    it('should respect datasource reference mapping when determining query datasource', () => {
+      // Setup test data
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+        // No datasource defined originally
+      };
+      const queryWithDS: SceneDataQuery = {
+        refId: 'B',
+        datasource: { uid: 'panel-level-d', type: 'prometheus' },
+      };
+
+      const queryWithOnlyDSType: SceneDataQuery = {
+        refId: 'C',
+        datasource: { type: 'prometheus' },
+      };
+
+      // Mock query runner with runtime-resolved datasource
+      const queryRunner = new SceneQueryRunner({
+        queries: [queryWithoutDS, queryWithDS],
+        datasource: { uid: 'panel-level-d', type: 'prometheus' },
+      });
+
+      // Get a reference to the DS references mapping
+      const dsReferencesMap = new Map<string, string | undefined>([['A', undefined]]);
+
+      // Test the query without DS originally - should return panel level datasource
+      const resultA = getPersistedDSFor(queryWithoutDS, dsReferencesMap, 'query', queryRunner);
+      expect(resultA).toEqual({ uid: 'panel-level-d', type: 'prometheus' });
+
+      // Test the query with DS that differs from panel - same as PanelQueryRunner: use panel ref
+      const resultB = getPersistedDSFor(queryWithDS, dsReferencesMap, 'query', queryRunner);
+      expect(resultB).toEqual({ uid: 'panel-level-d', type: 'prometheus' });
+
+      // Query with only type (no uid) differs from panel - use panel ref
+      const resultC = getPersistedDSFor(queryWithOnlyDSType, dsReferencesMap, 'query', queryRunner);
+      expect(resultC).toEqual({ uid: 'panel-level-d', type: 'prometheus' });
+
+      // Test a query with no DS originally but not in the mapping - should get the runner's datasource
+      const queryNotInMapping: SceneDataQuery = {
+        refId: 'D',
+        // No datasource, but not in mapping
+      };
+      const resultD = getPersistedDSFor(queryNotInMapping, dsReferencesMap, 'query', queryRunner);
+      expect(resultD).toEqual({ uid: 'panel-level-d', type: 'prometheus' });
+    });
+
+    it('should not override expression queries with panel datasource', () => {
+      const expressionQuery: SceneDataQuery = {
+        refId: 'E',
+        datasource: { uid: ExpressionDatasourceRef.uid, type: ExpressionDatasourceRef.type },
+      };
+
+      const queryRunner = new SceneQueryRunner({
+        queries: [expressionQuery],
+        datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+      });
+
+      const dsReferencesMap = new Map<string, string | undefined>();
+
+      const result = getPersistedDSFor(expressionQuery, dsReferencesMap, 'query', queryRunner);
+      expect(result).toEqual({ uid: ExpressionDatasourceRef.uid, type: ExpressionDatasourceRef.type });
+    });
+
+    it('should not override queries when panel datasource is mixed', () => {
+      const queryWithDS: SceneDataQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+      };
+
+      const queryRunner = new SceneQueryRunner({
+        queries: [queryWithDS],
+        datasource: { uid: MIXED_DATASOURCE_NAME, type: 'mixed' },
+      });
+
+      const dsReferencesMap = new Map<string, string | undefined>();
+
+      const result = getPersistedDSFor(queryWithDS, dsReferencesMap, 'query', queryRunner);
+      expect(result).toEqual({ uid: 'prometheus-uid', type: 'prometheus' });
+    });
+  });
+
+  describe('getPersistedDSFor variable', () => {
+    it('should respect datasource reference mapping when determining variable datasource', () => {
+      // Setup test data - variable without datasource
+      const variableWithoutDS = new QueryVariable({
+        name: 'A',
+        // No datasource defined originally
+      });
+
+      // Variable with datasource
+      const variableWithDS = new QueryVariable({
+        name: 'B',
+        datasource: { uid: 'prometheus', type: 'prometheus' },
+      });
+
+      // Variable with only type defined
+      const variableWithOnlyDSType = new QueryVariable({
+        name: 'C',
+        datasource: { type: 'prometheus' },
+      });
+
+      // Get a reference to the DS references mapping
+      const dsReferencesMap = new Map<string, string | undefined>([['A', undefined]]);
+
+      // Test the variable without DS originally - should return undefined
+      const resultA = getPersistedDSFor(variableWithoutDS, dsReferencesMap, 'variable');
+      expect(resultA).toBeUndefined();
+
+      // Test the variable with DS originally - should return the original datasource
+      const resultB = getPersistedDSFor(variableWithDS, dsReferencesMap, 'variable');
+      expect(resultB).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+      // Test the variable with only type defined - should return the type
+      const resultC = getPersistedDSFor(variableWithOnlyDSType, dsReferencesMap, 'variable');
+      expect(resultC).toEqual({ type: 'prometheus' });
+
+      // Test a variable with no DS originally but not in the mapping - should return undefined
+      const variableNotInMapping = new QueryVariable({
+        name: 'D',
+        // No datasource, but not in mapping
+      });
+      const resultD = getPersistedDSFor(variableNotInMapping, dsReferencesMap, 'variable');
+      expect(resultD).toBeUndefined();
+    });
+  });
+
+  describe('getDataQueryKind', () => {
+    it('should use panel datasource type when panel UID differs from query UID (panel ref applied)', () => {
+      // Query-level datasource (original target) — will be overridden by panel ref
+      const query: SceneDataQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-1', type: 'prometheus' },
+      };
+
+      // Panel-level datasource — different UID means panel ref was applied
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'panel-level-d', type: 'loki' },
+        queries: [],
+      });
+
+      // Panel ref takes precedence over stale query datasource (matches backend behavior)
+      expect(getDataQueryKind(query, queryRunner)).toBe('loki');
+    });
+
+    it('should use queryRunner datasource type as fallback when query has no datasource', () => {
+      // 2. Test with a query that has no datasource
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+      };
+
+      // Create a query runner with a datasource
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'influxdb-1', type: 'influxdb' },
+        queries: [],
+      });
+
+      // Should fall back to queryRunner's datasource type
+      expect(getDataQueryKind(queryWithoutDS, queryRunner)).toBe('influxdb');
+    });
+
+    it('should fall back to default datasource when neither query nor queryRunner has datasource type', () => {
+      const queryWithoutDS: SceneDataQuery = {
+        refId: 'A',
+      };
+
+      const queryRunner = new SceneQueryRunner({
+        queries: [],
+      });
+
+      expect(getDataQueryKind(queryWithoutDS, queryRunner)).toBe('loki');
+      expect(queryWithoutDS.datasource?.type).toBeUndefined();
+      expect(queryRunner.state.datasource?.type).toBeUndefined();
+    });
+
+    it('should fall back to default when panel ref applied but queryRunner has no type', () => {
+      // Query has type, but panel overrides with unknown datasource (no type)
+      const query: SceneDataQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-1', type: 'prometheus' },
+      };
+
+      // Panel has UID but no type (unknown datasource)
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'unknown-ds' },
+        queries: [],
+      });
+
+      // queryRunner has no type → fall back to default
+      expect(getDataQueryKind(query, queryRunner)).toBe('loki');
+    });
+
+    it('should use queryRunner type when query and queryRunner have the same UID', () => {
+      const query: SceneDataQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-1' }, // same UID, no type
+      };
+
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'prometheus-1', type: 'prometheus' },
+        queries: [],
+      });
+
+      // Same UID — use queryRunner's type
+      expect(getDataQueryKind(query, queryRunner)).toBe('prometheus');
+    });
+
+    it('should fall back to default when no queryRunner is provided', () => {
+      const query: SceneDataQuery = {
+        refId: 'A',
+        datasource: { uid: 'prometheus-1', type: 'prometheus' },
+      };
+
+      // No queryRunner — fall back to default
+      expect(getDataQueryKind(query, undefined)).toBe('loki');
+    });
+
+    it('should return default datasource type for undefined or string queries', () => {
+      expect(getDataQueryKind(undefined)).toBe('loki');
+      expect(getDataQueryKind('some-string')).toBe('loki');
+    });
+  });
+
+  it('should test annotation with legacyOptions field', () => {
+    // Create a scene with an annotation layer that has options
+    const annotationWithOptions = new DashboardAnnotationsDataLayer({
+      key: 'layerWithLegacyOptions',
+      query: {
+        datasource: {
+          type: 'prometheus',
+          uid: 'abc123',
+        },
+        name: 'annotation-with-options',
+        enable: true,
+        iconColor: 'red',
+        customProp1: true,
+        customProp2: 'test',
+      },
+      name: 'layerWithOptions',
+      isEnabled: true,
+      isHidden: false,
+    });
+
+    const scene = setupDashboardScene({
+      $data: new DashboardDataLayerSet({
+        annotationLayers: [annotationWithOptions],
+      }),
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({ children: [] }),
+      }),
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(scene);
+
+    // Verify the annotation options are properly serialized
+    expect(result.annotations.length).toBe(1);
+    expect(result.annotations[0].spec.legacyOptions).toBeDefined();
+    expect(result.annotations[0].spec.legacyOptions).toEqual({
+      customProp1: true,
+      customProp2: 'test',
+    });
+
+    // Ensure these properties are not at the root level
+    expect(result).not.toHaveProperty('annotations[0].spec.customProp1');
+    expect(result).not.toHaveProperty('annotations[0].spec.customProp2');
+  });
+});
+
+describe('getElementDatasource', () => {
+  it('should handle panel query datasources correctly', () => {
+    // Create test elements
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+    });
+
+    const queryWithDS: SceneDataQuery = {
+      refId: 'B',
+      datasource: { uid: 'prometheus', type: 'prometheus' },
+    };
+
+    const queryWithoutDS: SceneDataQuery = {
+      refId: 'A',
+    };
+
+    const queryWithOnlyType: SceneDataQuery = {
+      refId: 'C',
+      datasource: { type: 'prometheus' },
+    };
+
+    // Mock query runner
+    const queryRunner = new SceneQueryRunner({
+      queries: [queryWithoutDS, queryWithDS],
+      datasource: { uid: 'default-ds', type: 'default' },
+    });
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map<string, Map<string, string>>([['panel-1', new Map<string, string>([['A', '']])]]),
+      variables: new Map<string, string>(),
+      annotations: new Map<string, string>(),
+    };
+
+    // Query with DS that differs from panel → same as PanelQueryRunner: use panel ref
+    const resultWithDS = getElementDatasource(vizPanel, queryWithDS, 'panel', queryRunner, dsReferencesMapping);
+    expect(resultWithDS).toEqual({ uid: 'default-ds', type: 'default' });
+
+    // Call the function with the panel and query without DS
+    const resultWithoutDS = getElementDatasource(vizPanel, queryWithoutDS, 'panel', queryRunner, dsReferencesMapping);
+    expect(resultWithoutDS).toEqual({ uid: 'default-ds', type: 'default' });
+
+    // Query with only type differs from panel → use panel ref
+    const resultWithOnlyType = getElementDatasource(
+      vizPanel,
+      queryWithOnlyType,
+      'panel',
+      queryRunner,
+      dsReferencesMapping
+    );
+    expect(resultWithOnlyType).toEqual({ uid: 'default-ds', type: 'default' });
+  });
+
+  it('should handle variable datasources correctly', () => {
+    // Create a variable set
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new QueryVariable({
+          name: 'A',
+          // No datasource
+        }),
+        new QueryVariable({
+          name: 'B',
+          datasource: { uid: 'prometheus', type: 'prometheus' },
+        }),
+      ],
+    });
+
+    // Variable with DS
+    const variableWithDS = variableSet.getByName('B');
+
+    // Variable without DS
+    const variableWithoutDS = variableSet.getByName('A');
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map<string, Map<string, string>>([['panel-1', new Map<string, string>([['A', '']])]]),
+      variables: new Map<string, string>([['A', '']]),
+      annotations: new Map<string, string>(),
+    };
+
+    // Call the function with variables
+    if (variableWithDS && sceneUtils.isQueryVariable(variableWithDS)) {
+      const resultWithDS = getElementDatasource(
+        variableSet,
+        variableWithDS,
+        'variable',
+        undefined,
+        dsReferencesMapping
+      );
+      expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
+    }
+
+    if (variableWithoutDS && sceneUtils.isQueryVariable(variableWithoutDS)) {
+      // Test with auto-assigned variable (in the mapping)
+      const resultWithoutDS = getElementDatasource(variableSet, variableWithoutDS, 'variable');
+      expect(resultWithoutDS).toEqual(undefined);
+    }
+  });
+
+  it('should return undefined for non-query variables', () => {
+    // Create a variable set with non-query variable
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new ConstantVariable({
+          name: 'constant',
+          value: 'value',
+        }),
+      ],
+    });
+
+    // Non-query variable
+    const constantVar = variableSet.getByName('constant');
+
+    // Call the function
+    // @ts-expect-error
+    const result = getElementDatasource(variableSet, constantVar, 'variable');
+    expect(result).toBeUndefined();
+  });
+
+  it('should return undefined for non-query variables', () => {
+    // Create a variable set with non-query variable types
+    const variableSet = new SceneVariableSet({
+      variables: [
+        // Use TextBoxVariable which is not a QueryVariable
+        new TextBoxVariable({
+          name: 'textVar',
+          value: 'text-value',
+        }),
+      ],
+    });
+
+    // Non-query variable - this is safe because getElementDatasource checks if it's a query variable
+    const textVar = variableSet.getByName('textVar');
+
+    // Call the function
+    // @ts-expect-error
+    const result = getElementDatasource(variableSet, textVar, 'variable');
+    expect(result).toBeUndefined();
+  });
+
+  it('should handle annotation datasources correctly', () => {
+    // Use the dataLayers.AnnotationsDataLayer directly
+    const annotationLayer = new dataLayers.AnnotationsDataLayer({
+      key: 'annotation-1',
+      name: 'Test Annotation',
+      isEnabled: true,
+      isHidden: false,
+      query: {
+        name: 'Test Annotation',
+        enable: true,
+        hide: false,
+        iconColor: 'red',
+        datasource: { uid: 'prometheus', type: 'prometheus' },
+      },
+    });
+
+    // Create an annotation query without datasource
+    const annotationWithoutDS = {
+      name: 'No DS Annotation',
+      enable: true,
+      hide: false,
+      iconColor: 'blue',
+    };
+
+    // Create an annotation query with only type defined
+    const annotationLayerWithOnlyType = new dataLayers.AnnotationsDataLayer({
+      name: 'Annotation with only datasource type',
+      isEnabled: true,
+      isHidden: false,
+      query: {
+        name: 'Test Annotation',
+        enable: true,
+        hide: false,
+        iconColor: 'blue',
+        datasource: { type: 'prometheus' },
+      },
+    });
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map<string, Map<string, string>>([['panel-1', new Map<string, string>([['A', '']])]]),
+      variables: new Map<string, string>(),
+      annotations: new Map<string, string>(),
+    };
+
+    // Test with annotation that has datasource defined
+    const resultWithDS = getElementDatasource(
+      annotationLayer,
+      annotationLayer.state.query,
+      'annotation',
+      undefined,
+      dsReferencesMapping
+    );
+    expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+    // Test with annotation that has no datasource defined
+    const resultWithoutDS = getElementDatasource(
+      annotationLayer,
+      annotationWithoutDS,
+      'annotation',
+      undefined,
+      dsReferencesMapping
+    );
+    expect(resultWithoutDS).toBeUndefined();
+
+    // Test with annotation that has only type defined
+    const resultWithOnlyType = getElementDatasource(
+      annotationLayer,
+      annotationLayerWithOnlyType.state.query,
+      'annotation',
+      undefined,
+      dsReferencesMapping
+    );
+    expect(resultWithOnlyType).toEqual({ type: 'prometheus' });
+  });
+
+  it('should handle invalid input combinations', () => {
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+    });
+
+    const variableSet = new SceneVariableSet({
+      variables: [
+        new QueryVariable({
+          name: 'A',
+        }),
+      ],
+    });
+
+    const variable = variableSet.getByName('A');
+    const query: SceneDataQuery = { refId: 'A' };
+
+    if (variable && sceneUtils.isQueryVariable(variable)) {
+      // Panel with variable
+      expect(getElementDatasource(vizPanel, variable, 'panel')).toBeUndefined();
+    }
+    // Variable set with query
+    expect(getElementDatasource(variableSet, query, 'variable')).toBeUndefined();
+  });
+
+  it('should throw error when invalid type is passed to getAutoAssignedDSRef', () => {
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+    });
+
+    const dsReferencesMapping = {
+      panels: new Map([['panel-1', new Set(['A'])]]),
+      variables: new Set<string>(),
+      annotations: new Set<string>(),
+    };
+
+    expect(() => {
+      // @ts-expect-error - intentionally passing invalid type to test error handling
+      getAutoAssignedDSRef(vizPanel, 'invalid-type', dsReferencesMapping);
+    }).toThrow('Invalid type invalid-type for getAutoAssignedDSRef');
+  });
+});
+
+describe('getVizPanelQueries', () => {
+  it('should handle panel query datasources correctly', () => {
+    const queryWithDS: SceneDataQuery = {
+      refId: 'B',
+      datasource: { uid: 'prometheus-uid', type: 'prometheus' },
+    };
+
+    const queryWithoutDS: SceneDataQuery = {
+      refId: 'A',
+    };
+
+    // Mock query runner
+    const queryRunner = new SceneQueryRunner({
+      queries: [queryWithoutDS, queryWithDS],
+      datasource: { uid: 'default-ds', type: 'default' },
+    });
+    // Create test elements
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      $data: queryRunner,
+    });
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map<string, Map<string, string>>([['panel-1', new Map<string, string>([['A', '']])]]),
+      variables: new Map<string, string>(),
+      annotations: new Map<string, string>(),
+    };
+
+    const result = getVizPanelQueries(vizPanel, dsReferencesMapping);
+    expect(result.length).toBe(2);
+    expect(result[0].spec.query.kind).toBe('DataQuery');
+    expect(result[0].spec.query.datasource).toEqual({ name: 'default-ds' }); // picks up panel level when no datasource is provided
+    expect(result[0].spec.query.group).toBe('default'); // this is a default query that contains only refId and therefore group should be the default group
+    expect(result[0].spec.query.version).toBe('v0');
+
+    expect(result[1].spec.query.kind).toBe('DataQuery');
+    // Query ref differs from panel → persist panel ref (same as PanelQueryRunner); schema stores uid as .name
+    expect(result[1].spec.query.datasource?.name).toBe('default-ds');
+    expect(result[1].spec.query.group).toBe('default');
+    expect(result[1].spec.query.version).toBe('v0');
+  });
+
+  describe('snapshot mode', () => {
+    it('should return empty queries when isSnapshot is true but panel has no data provider', () => {
+      const vizPanel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        // No $data provider
+      });
+
+      const result = getVizPanelQueries(vizPanel, undefined, true);
+      expect(result).toEqual([]);
+    });
+
+    it('should create snapshot query from SceneQueryRunner data when isSnapshot is true', () => {
+      const mockDataFrame = toDataFrame({
+        name: 'test-series',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+        ],
+      });
+
+      const panelData: PanelData = {
+        series: [mockDataFrame],
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+      };
+
+      const queryRunner = new SceneQueryRunner({
+        queries: [],
+        data: panelData,
+      });
+
+      const vizPanel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: queryRunner,
+      });
+
+      const result = getVizPanelQueries(vizPanel, undefined, true);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].kind).toBe('PanelQuery');
+      expect(result[0].spec.refId).toBe('A');
+      expect(result[0].spec.hidden).toBe(false);
+      expect(result[0].spec.query.kind).toBe('DataQuery');
+      expect(result[0].spec.query.version).toBe(defaultDataQueryKind().version);
+      expect(result[0].spec.query.group).toBe('grafana');
+      expect(result[0].spec.query.datasource).toEqual({ name: 'grafana' });
+      expect(result[0].spec.query.spec.queryType).toBe(GrafanaQueryType.Snapshot);
+      expect(result[0].spec.query.spec.snapshot).toBeDefined();
+      expect(result[0].spec.query.spec.snapshot).toHaveLength(1);
+      expect(result[0].spec.query.spec.snapshot[0].schema?.fields).toBeDefined();
+    });
+
+    it('should create snapshot query from SceneDataTransformer data when isSnapshot is true', () => {
+      const mockDataFrame = toDataFrame({
+        name: 'transformed-series',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'transformed', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+
+      const panelData: PanelData = {
+        series: [mockDataFrame],
+        state: LoadingState.Done,
+        timeRange: getDefaultTimeRange(),
+      };
+
+      const dataNode = new SceneDataNode({
+        data: panelData,
+      });
+
+      const dataTransformer = new SceneDataTransformer({
+        $data: dataNode,
+        transformations: [],
+      });
+
+      const vizPanel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: dataTransformer,
+      });
+
+      const result = getVizPanelQueries(vizPanel, undefined, true);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].kind).toBe('PanelQuery');
+      expect(result[0].spec.query.kind).toBe('DataQuery');
+      expect(result[0].spec.query.spec.queryType).toBe(GrafanaQueryType.Snapshot);
+      expect(result[0].spec.query.spec.snapshot).toBeDefined();
+      expect(result[0].spec.query.spec.snapshot).toHaveLength(1);
+      // Verify it gets data from the nested $data (SceneDataNode) not the transformer
+      expect(result[0].spec.query.spec.snapshot[0].schema?.fields).toBeDefined();
+    });
+  });
+});
+
+function getMinimalSceneState(body: DashboardLayoutManager): Partial<DashboardSceneState> {
+  return {
+    title: 'Test Dashboard',
+    description: 'Test Description',
+    preload: true,
+    tags: ['tag1', 'tag2'],
+    uid: 'test-uid',
+    version: 1,
+
+    controls: new DashboardControls({
+      refreshPicker: new SceneRefreshPicker({
+        refresh: '5s',
+        intervals: ['5s', '10s', '30s'],
+        autoEnabled: true,
+        autoMinInterval: '5s',
+        autoValue: '5s',
+        isOnCanvas: true,
+        primary: true,
+        withText: true,
+        minRefreshInterval: '5s',
+      }),
+      timePicker: new SceneTimePicker({
+        isOnCanvas: true,
+        hidePicker: true,
+        quickRanges: [
+          {
+            display: 'Last 6 hours',
+            from: 'now-6h',
+            to: 'now',
+          },
+          {
+            display: 'Last 3 days',
+            from: 'now-3d',
+            to: 'now',
+          },
+        ],
+      }),
+    }),
+
+    $timeRange: new SceneTimeRange({
+      timeZone: 'UTC',
+      from: 'now-1h',
+      to: 'now',
+      weekStart: 'monday',
+      fiscalYearStartMonth: 1,
+      UNSAFE_nowDelay: '1m',
+      refreshOnActivate: {
+        afterMs: 10,
+        percent: 0.1,
+      },
+    }),
+
+    body,
+  };
+}
+
+describe('dynamic layouts', () => {
+  it('should transform scene with rows layout with default grids in rows to save model schema v2', () => {
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new RowsLayoutManager({
+          rows: [
+            new RowItem({
+              layout: new DefaultGridLayoutManager({
+                grid: new SceneGridLayout({
+                  children: [
+                    new DashboardGridItem({
+                      y: 0,
+                      height: 10,
+                      body: new VizPanel({}),
+                    }),
+                  ],
+                }),
+              }),
+            }),
+          ],
+        })
+      )
+    );
+
+    const result = transformSceneToSaveModelSchemaV2(scene);
+    expect(result.layout.kind).toBe('RowsLayout');
+    const rowsLayout = result.layout.spec as RowsLayoutSpec;
+    expect(rowsLayout.rows.length).toBe(1);
+    expect(rowsLayout.rows[0].kind).toBe('RowsLayoutRow');
+    expect(rowsLayout.rows[0].spec.layout.kind).toBe('GridLayout');
+  });
+
+  it('should transform scene with rows layout with multiple rows with different grids to save model schema v2', () => {
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new RowsLayoutManager({
+          rows: [
+            new RowItem({
+              layout: new AutoGridLayoutManager({
+                layout: new AutoGridLayout({
+                  children: [
+                    new AutoGridItem({
+                      body: new VizPanel({}),
+                    }),
+                  ],
+                }),
+              }),
+            }),
+            new RowItem({
+              layout: new DefaultGridLayoutManager({
+                grid: new SceneGridLayout({
+                  children: [
+                    new DashboardGridItem({
+                      y: 0,
+                      height: 10,
+                      body: new VizPanel({}),
+                    }),
+                  ],
+                }),
+              }),
+            }),
+          ],
+        })
+      )
+    );
+
+    const result = transformSceneToSaveModelSchemaV2(scene);
+    expect(result.layout.kind).toBe('RowsLayout');
+    const rowsLayout = result.layout.spec as RowsLayoutSpec;
+    expect(rowsLayout.rows.length).toBe(2);
+    expect(rowsLayout.rows[0].kind).toBe('RowsLayoutRow');
+    expect(rowsLayout.rows[0].spec.layout.kind).toBe('AutoGridLayout');
+    const layout1 = rowsLayout.rows[0].spec.layout.spec as AutoGridLayoutSpec;
+    expect(layout1.items[0].kind).toBe('AutoGridLayoutItem');
+
+    expect(rowsLayout.rows[1].spec.layout.kind).toBe('GridLayout');
+    const layout2 = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
+    expect(layout2.items[0].kind).toBe('GridLayoutItem');
+  });
+
+  it('should transform scene with auto grid layout to schema v2', () => {
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new AutoGridLayoutManager({
+          columnWidth: 100,
+          rowHeight: 'standard',
+          maxColumnCount: 4,
+          fillScreen: true,
+          layout: new AutoGridLayout({
+            children: [
+              new AutoGridItem({
+                body: new VizPanel({}),
+              }),
+              new AutoGridItem({
+                body: new VizPanel({}),
+              }),
+            ],
+          }),
+        })
+      )
+    );
+    const result = transformSceneToSaveModelSchemaV2(scene);
+    expect(result.layout.kind).toBe('AutoGridLayout');
+    const respGridLayout = result.layout.spec as AutoGridLayoutSpec;
+    expect(respGridLayout.columnWidthMode).toBe('custom');
+    expect(respGridLayout.columnWidth).toBe(100);
+    expect(respGridLayout.rowHeightMode).toBe('standard');
+    expect(respGridLayout.rowHeight).toBeUndefined();
+    expect(respGridLayout.maxColumnCount).toBe(4);
+    expect(respGridLayout.fillScreen).toBe(true);
+    expect(respGridLayout.items.length).toBe(2);
+    expect(respGridLayout.items[0].kind).toBe('AutoGridLayoutItem');
+  });
+
+  it('should transform scene with tabs layout to schema v2', () => {
+    const tabs = [
+      new TabItem({
+        layout: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                y: 0,
+                height: 10,
+                body: new VizPanel({}),
+              }),
+            ],
+          }),
+        }),
+      }),
+    ];
+
+    const scene = setupDashboardScene(getMinimalSceneState(new TabsLayoutManager({ tabs })));
+    const result = transformSceneToSaveModelSchemaV2(scene);
+    expect(result.layout.kind).toBe('TabsLayout');
+    const tabsLayout = result.layout.spec as TabsLayoutSpec;
+    expect(tabsLayout.tabs.length).toBe(1);
+    expect(tabsLayout.tabs[0].kind).toBe('TabsLayoutTab');
+    expect(tabsLayout.tabs[0].spec.layout.kind).toBe('GridLayout');
+  });
+});
+
+describe('snapshot mode: repeated panels', () => {
+  it('should include repeated panel clones in elements and expanded grid layout items', () => {
+    const sourcePanel = new VizPanel({
+      key: 'panel-10',
+      pluginId: 'timeseries',
+      title: 'Source',
+    });
+
+    const clone1Key = 'panel-10-clone-1';
+    const clone2Key = 'panel-10-clone-2';
+
+    const clone1 = sourcePanel.clone({ key: clone1Key, repeatSourceKey: sourcePanel.state.key });
+    const clone2 = sourcePanel.clone({ key: clone2Key, repeatSourceKey: sourcePanel.state.key });
+
+    const repeater = new DashboardGridItem({
+      key: 'grid-item-10',
+      x: 2,
+      y: 3,
+      width: 24,
+      height: 21,
+      itemHeight: 7,
+      body: sourcePanel,
+      variableName: 'var',
+      repeatDirection: 'v',
+      maxPerRow: 4,
+      repeatedPanels: [clone1, clone2],
+    });
+
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [repeater],
+          }),
+        })
+      )
+    );
+
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+
+    // Snapshot mode must include repeat clones in `elements` or layout references break.
+    expect(result.elements[clone1Key]).toBeDefined();
+    expect(result.elements[clone2Key]).toBeDefined();
+
+    expect(result.elements[clone1Key].kind).toBe('Panel');
+    expect(result.elements[clone1Key].spec.id).toBe(djb2Hash(clone1Key));
+    expect(result.elements[clone2Key].spec.id).toBe(djb2Hash(clone2Key));
+
+    expect(result.layout.kind).toBe('GridLayout');
+    const gridLayout = result.layout.spec as GridLayoutSpec;
+
+    // Source + clones expanded into explicit items in snapshot mode.
+    expect(gridLayout.items).toHaveLength(3);
+    expect(gridLayout.items.map((i) => i.spec.element.name)).toEqual(['panel-10', clone1Key, clone2Key]);
+
+    // Snapshot output shouldn't contain a repeater definition; just explicit items.
+    expect(gridLayout.items[0].spec.repeat).toBeUndefined();
+
+    // Repeat positioning should be anchored to the repeater's original x/y.
+    expect(gridLayout.items[0].spec.x).toBe(2);
+    expect(gridLayout.items[0].spec.y).toBe(3);
+    expect(gridLayout.items[1].spec.y).toBe(10);
+    expect(gridLayout.items[2].spec.y).toBe(17);
+  });
+
+  it('should expand auto grid repeaters to explicit items in snapshot mode', () => {
+    const sourcePanel = new VizPanel({
+      key: 'panel-20',
+      pluginId: 'timeseries',
+      title: 'AutoGrid source',
+    });
+
+    const cloneKey = 'panel-20-clone-1';
+    const clone = sourcePanel.clone({ key: cloneKey, repeatSourceKey: sourcePanel.state.key });
+
+    const autoGridRepeater = new AutoGridItem({
+      key: 'auto-grid-item-1',
+      body: sourcePanel,
+      variableName: 'var',
+      repeatedPanels: [clone],
+    });
+
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new AutoGridLayoutManager({
+          columnWidth: 'standard',
+          rowHeight: 'standard',
+          maxColumnCount: 4,
+          fillScreen: false,
+          layout: new AutoGridLayout({
+            children: [autoGridRepeater],
+          }),
+        })
+      )
+    );
+
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+
+    expect(result.layout.kind).toBe('AutoGridLayout');
+    const layout = result.layout.spec as AutoGridLayoutSpec;
+
+    // Snapshot mode should include explicit panels, not a repeat definition.
+    expect(layout.items).toHaveLength(2);
+    expect(layout.items[0].spec.repeat).toBeUndefined();
+
+    // Base item references the original panel, clone item references clone key.
+    expect(layout.items[0].spec.element.name).toBe('panel-20');
+    expect(layout.items[1].spec.element.name).toBe(cloneKey);
+
+    // Snapshot mode must include repeat clones in `elements`.
+    expect(result.elements[cloneKey]).toBeDefined();
+    expect(result.elements[cloneKey].spec.id).toBe(djb2Hash(cloneKey));
+  });
+});
+
+describe('snapshot mode: repeated rows', () => {
+  it('should materialize repeated row clones into concrete rows with unique, baked panels', () => {
+    // A repeated row clone reuses the source row's inner panel keys, so the source and clone both
+    // reference a panel keyed `panel-1`. Snapshot serialization must disambiguate them.
+    const buildRow = (rowKey: string, panelKey: string, serverValue: string, repeatSourceKey?: string) =>
+      new RowItem({
+        key: rowKey,
+        title: 'Row for server $server',
+        repeatByVariable: 'server',
+        repeatSourceKey,
+        $variables: new SceneVariableSet({
+          variables: [new LocalValueVariable({ name: 'server', value: serverValue, text: serverValue })],
+        }),
+        layout: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                key: `grid-item-${rowKey}`,
+                body: new VizPanel({ key: panelKey, pluginId: 'timeseries', title: 'server = $server' }),
+              }),
+            ],
+          }),
+        }),
+      });
+
+    const sourceRow = buildRow('row-1', 'panel-1', 'A');
+    const cloneRow = buildRow('row-1-clone-1', 'panel-1', 'B', 'row-1');
+    sourceRow.setState({ repeatedRows: [cloneRow] });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+    const rowsLayout = result.layout.spec as RowsLayoutSpec;
+
+    // Both the source row and its clone are materialized as concrete rows.
+    expect(result.layout.kind).toBe('RowsLayout');
+    expect(rowsLayout.rows).toHaveLength(2);
+
+    // Repeat directive must be stripped so the viewer doesn't re-expand (and collapse) the repeat.
+    expect(rowsLayout.rows[0].spec.repeat).toBeUndefined();
+    expect(rowsLayout.rows[1].spec.repeat).toBeUndefined();
+
+    // The title's $server is baked per row (the repeat's local value isn't persisted in the snapshot).
+    expect(rowsLayout.rows[0].spec.title).toBe('Row for server A');
+    expect(rowsLayout.rows[1].spec.title).toBe('Row for server B');
+
+    // The clone row's panel is disambiguated by the enclosing clone key.
+    const sourceGrid = rowsLayout.rows[0].spec.layout.spec as GridLayoutSpec;
+    const cloneGrid = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
+    expect(sourceGrid.items[0].spec.element.name).toBe('panel-1');
+    expect(cloneGrid.items[0].spec.element.name).toBe('row-1-clone-1-panel-1');
+
+    // Both panels exist as distinct elements with distinct ids so their baked data doesn't collide.
+    expect(result.elements['panel-1']).toBeDefined();
+    expect(result.elements['row-1-clone-1-panel-1']).toBeDefined();
+    expect(result.elements['panel-1'].spec.id).not.toBe(result.elements['row-1-clone-1-panel-1'].spec.id);
+  });
+
+  it('should uniquely key panel-repeat clones nested inside a row-repeat clone', () => {
+    // Reproduces the reported "Repeating rows" dashboard: a row repeats on $server and contains a panel
+    // that repeats on $pod. Both the source row and its clone hold a pod repeater whose body/clones reuse
+    // the same keys, so nested clones must be disambiguated by the enclosing row-clone key.
+    const localVar = (name: string, value: string, text: string) =>
+      new SceneVariableSet({ variables: [new LocalValueVariable({ name, value, text })] });
+
+    // pod is a key:value variable (Bob:1, Rob:2) — titles should show the display text, not the value.
+    const buildRow = (rowKey: string, serverValue: string, repeatSourceKey?: string) => {
+      const podBody = new VizPanel({
+        key: 'panel-2',
+        pluginId: 'timeseries',
+        title: 'server = $server, pod = $pod',
+        description: 'srv=$server pod=$pod',
+        $variables: localVar('pod', '1', 'Bob'),
+      });
+      const podClone = podBody.clone({ key: 'panel-2-clone-1', repeatSourceKey: 'panel-2' });
+      podClone.setState({ $variables: localVar('pod', '2', 'Rob') });
+      return new RowItem({
+        key: rowKey,
+        title: 'Row for server $server',
+        repeatByVariable: 'server',
+        repeatSourceKey,
+        $variables: localVar('server', serverValue, serverValue),
+        layout: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                key: `grid-item-${rowKey}`,
+                body: podBody,
+                variableName: 'pod',
+                repeatedPanels: [podClone],
+              }),
+            ],
+          }),
+        }),
+      });
+    };
+
+    const sourceRow = buildRow('row-1', 'A', undefined);
+    const cloneRow = buildRow('row-1-clone-1', 'B', 'row-1');
+    sourceRow.setState({ repeatedRows: [cloneRow] });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+    const rowsLayout = result.layout.spec as RowsLayoutSpec;
+
+    expect(rowsLayout.rows).toHaveLength(2);
+
+    // Source row expands its pod repeater with the base keys.
+    const sourceGrid = rowsLayout.rows[0].spec.layout.spec as GridLayoutSpec;
+    expect(sourceGrid.items.map((i) => i.spec.element.name)).toEqual(['panel-2', 'panel-2-clone-1']);
+
+    // Clone row expands its pod repeater with keys prefixed by the enclosing row-clone key.
+    const cloneGrid = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
+    expect(cloneGrid.items.map((i) => i.spec.element.name)).toEqual([
+      'row-1-clone-1-panel-2',
+      'row-1-clone-1-panel-2-clone-1',
+    ]);
+
+    // All four panels are distinct elements.
+    for (const name of ['panel-2', 'panel-2-clone-1', 'row-1-clone-1-panel-2', 'row-1-clone-1-panel-2-clone-1']) {
+      expect(result.elements[name]).toBeDefined();
+    }
+    const ids = ['panel-2', 'panel-2-clone-1', 'row-1-clone-1-panel-2', 'row-1-clone-1-panel-2-clone-1'].map(
+      (name) => result.elements[name].spec.id
+    );
+    expect(new Set(ids).size).toBe(4);
+
+    // Panel titles bake both the row's $server and the panel's own $pod per repeat.
+    expect(result.elements['panel-2'].spec.title).toBe('server = A, pod = Bob');
+    expect(result.elements['panel-2-clone-1'].spec.title).toBe('server = A, pod = Rob');
+    expect(result.elements['row-1-clone-1-panel-2'].spec.title).toBe('server = B, pod = Bob');
+    expect(result.elements['row-1-clone-1-panel-2-clone-1'].spec.title).toBe('server = B, pod = Rob');
+
+    // Descriptions are baked with the default (value) format, matching the panel renderer / live
+    // dashboard: the title shows the display text (Bob) but the description shows the value (1).
+    expect((result.elements['panel-2'].spec as PanelSpec).description).toBe('srv=A pod=1');
+    expect((result.elements['row-1-clone-1-panel-2'].spec as PanelSpec).description).toBe('srv=B pod=1');
+  });
+
+  it('keeps element references resolvable for an unexpanded (single-value) panel repeater inside a row clone', () => {
+    // A panel repeater with no repeatedPanels (single value) hits the fallback path. Its element reference
+    // must still be prefixed with the enclosing row-clone key so it resolves against `elements`.
+    const buildRow = (rowKey: string, repeatSourceKey?: string) =>
+      new RowItem({
+        key: rowKey,
+        title: 'Row $server',
+        repeatByVariable: 'server',
+        repeatSourceKey,
+        layout: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                key: `grid-item-${rowKey}`,
+                variableName: 'pod',
+                repeatedPanels: [], // unexpanded → fallback path
+                body: new VizPanel({ key: 'panel-9', pluginId: 'timeseries', title: 'p' }),
+              }),
+            ],
+          }),
+        }),
+      });
+
+    const sourceRow = buildRow('row-1');
+    const cloneRow = buildRow('row-1-clone-1', 'row-1');
+    sourceRow.setState({ repeatedRows: [cloneRow] });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+    const rowsLayout = result.layout.spec as RowsLayoutSpec;
+
+    // Every element referenced by the layout must exist in `elements` (no dangling references).
+    for (const row of rowsLayout.rows) {
+      const grid = row.spec.layout.spec as GridLayoutSpec;
+      for (const item of grid.items) {
+        expect(result.elements[item.spec.element.name]).toBeDefined();
+      }
+    }
+
+    const cloneGrid = rowsLayout.rows[1].spec.layout.spec as GridLayoutSpec;
+    expect(cloneGrid.items[0].spec.element.name).toBe('row-1-clone-1-panel-9');
+
+    // The single-value panel repeat is materialized (repeatedPanels: []), so its repeat directive must be
+    // stripped — otherwise the snapshot viewer would re-expand it and could collapse to an "All" placeholder.
+    for (const row of rowsLayout.rows) {
+      for (const item of (row.spec.layout.spec as GridLayoutSpec).items) {
+        expect(item.spec.repeat).toBeUndefined();
+      }
+    }
+  });
+
+  it('keeps the repeat directive when a repeat row has not been materialized', () => {
+    // If the repeat hasn't produced clones yet (e.g. variables still loading), we must not strip the
+    // directive — otherwise the snapshot would silently lose the repeat configuration.
+    const sourceRow = new RowItem({
+      key: 'row-1',
+      title: 'Row $server',
+      repeatByVariable: 'server',
+      // no repeatedRows → not materialized
+      layout: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({
+              key: 'grid-item-1',
+              body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries' }),
+            }),
+          ],
+        }),
+      }),
+    });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+    const rowsLayout = transformSceneToSaveModelSchemaV2(scene, true).layout.spec as RowsLayoutSpec;
+
+    expect(rowsLayout.rows).toHaveLength(1);
+    expect(rowsLayout.rows[0].spec.repeat).toEqual({ mode: 'variable', value: 'server' });
+  });
+
+  it('materializes a finished single-value repeat (repeatedRows is an empty array, not undefined)', () => {
+    // An empty `repeatedRows` means the repeat ran and resolved to a single value — it IS materialized, so
+    // the title must be baked and the repeat directive stripped (unlike the not-yet-run `undefined` case).
+    const sourceRow = new RowItem({
+      key: 'row-1',
+      title: 'Row $server',
+      repeatByVariable: 'server',
+      repeatedRows: [], // ran, single value → materialized
+      $variables: new SceneVariableSet({
+        variables: [new LocalValueVariable({ name: 'server', value: 'A', text: 'A' })],
+      }),
+      layout: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({
+              key: 'grid-item-1',
+              body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries' }),
+            }),
+          ],
+        }),
+      }),
+    });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+    const rowsLayout = transformSceneToSaveModelSchemaV2(scene, true).layout.spec as RowsLayoutSpec;
+
+    expect(rowsLayout.rows).toHaveLength(1);
+    expect(rowsLayout.rows[0].spec.repeat).toBeUndefined();
+    expect(rowsLayout.rows[0].spec.title).toBe('Row A');
+  });
+
+  it('disambiguates AutoGrid panels inside a row clone (AutoGrid is the default row layout)', () => {
+    const buildRow = (rowKey: string, panelKey: string, repeatSourceKey?: string) =>
+      new RowItem({
+        key: rowKey,
+        title: 'Row $server',
+        repeatByVariable: 'server',
+        repeatSourceKey,
+        layout: new AutoGridLayoutManager({
+          columnWidth: 'standard',
+          rowHeight: 'standard',
+          maxColumnCount: 4,
+          fillScreen: false,
+          layout: new AutoGridLayout({
+            children: [
+              new AutoGridItem({
+                key: `auto-grid-item-${rowKey}`,
+                body: new VizPanel({ key: panelKey, pluginId: 'timeseries', title: 'p' }),
+              }),
+            ],
+          }),
+        }),
+      });
+
+    const sourceRow = buildRow('row-1', 'panel-1');
+    const cloneRow = buildRow('row-1-clone-1', 'panel-1', 'row-1');
+    sourceRow.setState({ repeatedRows: [cloneRow] });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+    const rowsLayout = result.layout.spec as RowsLayoutSpec;
+
+    // Source and clone rows reference distinct AutoGrid elements, both present (no dangling refs).
+    const sourceItems = (rowsLayout.rows[0].spec.layout.spec as AutoGridLayoutSpec).items;
+    const cloneItems = (rowsLayout.rows[1].spec.layout.spec as AutoGridLayoutSpec).items;
+    expect(sourceItems[0].spec.element.name).toBe('panel-1');
+    expect(cloneItems[0].spec.element.name).toBe('row-1-clone-1-panel-1');
+    expect(result.elements['panel-1']).toBeDefined();
+    expect(result.elements['row-1-clone-1-panel-1']).toBeDefined();
+    expect(result.elements['panel-1'].spec.id).not.toBe(result.elements['row-1-clone-1-panel-1'].spec.id);
+  });
+
+  it('disambiguates nested section clones by the full chain of enclosing clone keys', () => {
+    // A repeating tab lives inside a repeating row. cloneLayout does not rekey children, so the tab clone
+    // keeps key `tab-1-clone-1` inside BOTH the source row and the row clone, and its panel keeps `panel-1`.
+    // Prefixing by only the nearest clone key would collide (both → `tab-1-clone-1-panel-1`) and drop a
+    // panel from `elements`; the full chain keeps them distinct.
+    const buildTabsLayout = () => {
+      const buildTab = (tabKey: string, repeatSourceKey?: string) =>
+        new TabItem({
+          key: tabKey,
+          repeatByVariable: repeatSourceKey ? undefined : 'pod',
+          repeatSourceKey,
+          layout: new DefaultGridLayoutManager({
+            grid: new SceneGridLayout({
+              children: [
+                new DashboardGridItem({
+                  key: 'grid-item-1',
+                  body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'p' }),
+                }),
+              ],
+            }),
+          }),
+        });
+      const sourceTab = buildTab('tab-1');
+      sourceTab.setState({ repeatedTabs: [buildTab('tab-1-clone-1', 'tab-1')] });
+      return new TabsLayoutManager({ tabs: [sourceTab] });
+    };
+
+    const buildRow = (rowKey: string, repeatSourceKey?: string) =>
+      new RowItem({ key: rowKey, repeatByVariable: 'server', repeatSourceKey, layout: buildTabsLayout() });
+
+    const sourceRow = buildRow('row-1');
+    sourceRow.setState({ repeatedRows: [buildRow('row-1-clone-1', 'row-1')] });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new RowsLayoutManager({ rows: [sourceRow] })));
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+
+    // All four (row × tab) source/clone combinations must be present as distinct elements.
+    const expectedKeys = [
+      'panel-1', // source row / source tab
+      'tab-1-clone-1-panel-1', // source row / tab clone
+      'row-1-clone-1-panel-1', // row clone / source tab
+      'tab-1-clone-1-row-1-clone-1-panel-1', // row clone / tab clone (full chain)
+    ];
+    for (const key of expectedKeys) {
+      expect(result.elements[key]).toBeDefined();
+    }
+    expect(new Set(expectedKeys.map((k) => result.elements[k].spec.id)).size).toBe(4);
+  });
+});
+
+describe('snapshot mode: repeated tabs', () => {
+  it('should materialize repeated tab clones into concrete tabs with unique, baked panels', () => {
+    const buildTab = (tabKey: string, panelKey: string, serverValue: string, repeatSourceKey?: string) =>
+      new TabItem({
+        key: tabKey,
+        title: 'Tab for $server',
+        repeatByVariable: 'server',
+        repeatSourceKey,
+        $variables: new SceneVariableSet({
+          variables: [new LocalValueVariable({ name: 'server', value: serverValue, text: serverValue })],
+        }),
+        layout: new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [
+              new DashboardGridItem({
+                key: `grid-item-${tabKey}`,
+                body: new VizPanel({ key: panelKey, pluginId: 'timeseries', title: 'srv $server' }),
+              }),
+            ],
+          }),
+        }),
+      });
+
+    const sourceTab = buildTab('tab-1', 'panel-1', 'A', undefined);
+    const cloneTab = buildTab('tab-1-clone-1', 'panel-1', 'B', 'tab-1');
+    sourceTab.setState({ repeatedTabs: [cloneTab] });
+
+    const scene = setupDashboardScene(getMinimalSceneState(new TabsLayoutManager({ tabs: [sourceTab] })));
+
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+    const tabsLayout = result.layout.spec as TabsLayoutSpec;
+
+    // Both the source tab and its clone are materialized as concrete tabs, with the repeat stripped.
+    expect(result.layout.kind).toBe('TabsLayout');
+    expect(tabsLayout.tabs).toHaveLength(2);
+    expect(tabsLayout.tabs[0].spec.repeat).toBeUndefined();
+    expect(tabsLayout.tabs[1].spec.repeat).toBeUndefined();
+
+    // Titles are baked per tab.
+    expect(tabsLayout.tabs[0].spec.title).toBe('Tab for A');
+    expect(tabsLayout.tabs[1].spec.title).toBe('Tab for B');
+
+    // Clone tab's panel is disambiguated and both panels are distinct baked elements.
+    const cloneGrid = tabsLayout.tabs[1].spec.layout.spec as GridLayoutSpec;
+    expect(cloneGrid.items[0].spec.element.name).toBe('tab-1-clone-1-panel-1');
+    expect(result.elements['panel-1']).toBeDefined();
+    expect(result.elements['tab-1-clone-1-panel-1']).toBeDefined();
+    expect(result.elements['panel-1'].spec.title).toBe('srv A');
+    expect(result.elements['tab-1-clone-1-panel-1'].spec.title).toBe('srv B');
+  });
+});
+
+describe('vizPanelToSchemaV2 snapshot repeat clones', () => {
+  it('should assign a stable unique id per repeat clone in snapshot mode', () => {
+    const sourcePanel = new VizPanel({
+      key: 'panel-30',
+      pluginId: 'timeseries',
+      title: 'Source',
+    });
+
+    const cloneKey = 'panel-30-clone-1';
+    const clone = sourcePanel.clone({ key: cloneKey, repeatSourceKey: sourcePanel.state.key });
+
+    const snapshotElement = vizPanelToSchemaV2(clone, undefined, true);
+    const normalElement = vizPanelToSchemaV2(clone, undefined, false);
+
+    expect(snapshotElement.kind).toBe('Panel');
+    expect(snapshotElement.spec.id).toBe(djb2Hash(cloneKey));
+    expect(snapshotElement.spec.id).not.toBe(normalElement.spec.id);
+  });
+});
+
+describe('vizPanelToSchemaV2 time range fields', () => {
+  function buildPanel(timeRange?: SceneTimeRange | PanelTimeRange) {
+    return new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      ...(timeRange && { $timeRange: timeRange }),
+    });
+  }
+
+  function getQueryOptions(timeRange?: SceneTimeRange | PanelTimeRange) {
+    const result = vizPanelToSchemaV2(buildPanel(timeRange), undefined, false);
+    expect(result.kind).toEqual('Panel');
+    return (result.spec as PanelSpec).data.spec.queryOptions;
+  }
+
+  function expectNoTimeRangeFields(queryOptions: ReturnType<typeof getQueryOptions>, except?: string) {
+    const fields = ['timeFrom', 'timeShift', 'hideTimeOverride', 'timeCompare'] as const;
+    for (const f of fields) {
+      if (f !== except) {
+        expect(queryOptions[f]).toBeUndefined();
+      }
+    }
+  }
+
+  it('should omit time range fields when the panel has no $timeRange', () => {
+    expectNoTimeRangeFields(getQueryOptions());
+  });
+
+  it('should omit time range fields when $timeRange is a SceneTimeRange (not PanelTimeRange)', () => {
+    expectNoTimeRangeFields(getQueryOptions(new SceneTimeRange({})));
+  });
+
+  it('should serialize all four time range fields when set on PanelTimeRange', () => {
+    const queryOptions = getQueryOptions(
+      new PanelTimeRange({
+        timeFrom: '2h',
+        timeShift: '1h',
+        hideTimeOverride: true,
+        compareWith: '1d',
+      })
+    );
+
+    expect(queryOptions).toMatchObject({
+      timeFrom: '2h',
+      timeShift: '1h',
+      hideTimeOverride: true,
+      timeCompare: '1d',
+    });
+  });
+
+  it.each([
+    ['timeFrom only', { timeFrom: '2h' }, 'timeFrom', '2h'],
+    ['timeShift only', { timeShift: '1h' }, 'timeShift', '1h'],
+    ['hideTimeOverride only', { hideTimeOverride: true }, 'hideTimeOverride', true],
+    ['compareWith only maps to timeCompare', { compareWith: '1d' }, 'timeCompare', '1d'],
+  ] as const)('should serialize %s', (_, state, field, value) => {
+    const queryOptions = getQueryOptions(new PanelTimeRange(state));
+
+    expect(queryOptions[field]).toBe(value);
+    expectNoTimeRangeFields(queryOptions, field);
+  });
+});
+
+// Instead of reusing annotation layer objects, create a factory function to generate new ones each time
+function createAnnotationLayers() {
+  return [
+    new DashboardAnnotationsDataLayer({
+      key: 'layer1',
+      query: {
+        datasource: {
+          type: 'grafana',
+          uid: '-- Grafana --',
+        },
+        name: 'query1',
+        enable: true,
+        iconColor: 'red',
+      },
+      name: 'layer1',
+      isEnabled: true,
+      isHidden: false,
+    }),
+    new DashboardAnnotationsDataLayer({
+      key: 'layer2',
+      query: {
+        datasource: {
+          type: 'prometheus',
+          uid: 'abcdef',
+        },
+        name: 'query2',
+        enable: true,
+        iconColor: 'blue',
+      },
+      name: 'layer2',
+      isEnabled: true,
+      isHidden: true,
+    }),
+  ];
+}
+
+describe('validateDashboardSchemaV2', () => {
+  const validDashboard = {
+    title: 'Test Dashboard',
+    timeSettings: {
+      from: 'now-1h',
+      to: 'now',
+      autoRefresh: '5s',
+      hideTimepicker: false,
+      timezone: 'UTC',
+      autoRefreshIntervals: ['5s', '10s', '30s'],
+      quickRanges: [],
+      weekStart: 'monday',
+      nowDelay: '1m',
+      fiscalYearStartMonth: 1,
+    },
+    variables: [],
+    elements: {},
+    annotations: [],
+    layout: {
+      kind: 'GridLayout',
+      spec: {
+        items: [],
+      },
+    },
+  };
+
+  it('should validate a valid dashboard', () => {
+    expect(validateDashboardSchemaV2(validDashboard)).toBe(true);
+  });
+
+  it('should throw error if dashboard is not an object', () => {
+    expect(() => validateDashboardSchemaV2(null)).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2(undefined)).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2('string')).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2(123)).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2(true)).toThrow('Dashboard is not an object or is null');
+    expect(() => validateDashboardSchemaV2([])).toThrow('Dashboard is not an object or is null');
+  });
+
+  it('should validate required properties', () => {
+    const requiredProps = {
+      title: 'Title is not a string',
+      timeSettings: 'TimeSettings is not an object or is null',
+      variables: 'Variables is not an array',
+      elements: 'Elements is not an object or is null',
+      annotations: 'Annotations is not an array',
+      layout: 'Layout is not an object or is null',
+    };
+
+    for (const [prop, message] of Object.entries(requiredProps)) {
+      const invalidDashboard = { ...validDashboard };
+      delete invalidDashboard[prop as keyof typeof invalidDashboard];
+      expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow(message);
+    }
+  });
+
+  it('should validate timeSettings required properties', () => {
+    const timeSettingsErrors = {
+      from: 'From is not a string',
+      to: 'To is not a string',
+      autoRefresh: 'AutoRefresh is not a string',
+      hideTimepicker: 'HideTimepicker is not a boolean',
+    } as const;
+
+    for (const [prop, message] of Object.entries(timeSettingsErrors)) {
+      const invalidDashboard = {
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings },
+      };
+      delete invalidDashboard.timeSettings[prop as keyof typeof invalidDashboard.timeSettings];
+      expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow(message);
+    }
+  });
+
+  it('should validate optional properties when present', () => {
+    const invalidDashboard = {
+      ...validDashboard,
+      description: 123, // Should be string
+      cursorSync: 'Invalid', // Should be one of ['Off', 'Crosshair', 'Tooltip']
+      liveNow: 'true', // Should be boolean
+      preload: 'true', // Should be boolean
+      editable: 'true', // Should be boolean
+      links: 'not-an-array', // Should be array
+      tags: 'not-an-array', // Should be array
+      id: 'not-a-number', // Should be number
+    };
+
+    expect(() => validateDashboardSchemaV2(invalidDashboard)).toThrow('Description is not a string');
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, cursorSync: 'Invalid' })).toThrow(
+      'CursorSync is not a valid value'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, liveNow: 'true' })).toThrow('LiveNow is not a boolean');
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, preload: 'true' })).toThrow('Preload is not a boolean');
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, editable: 'true' })).toThrow(
+      'Editable is not a boolean'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, links: 'not-an-array' })).toThrow(
+      'Links is not an array'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, tags: 'not-an-array' })).toThrow(
+      'Tags is not an array'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, id: 'not-a-number' })).toThrow('ID is not a number');
+  });
+
+  it('should validate optional timeSettings properties when present', () => {
+    const invalidTimeSettings = {
+      ...validDashboard.timeSettings,
+      autoRefreshIntervals: 'not-an-array',
+      timezone: 123,
+      quickRanges: 'not-an-array',
+      weekStart: 'invalid-day',
+      nowDelay: 123,
+      fiscalYearStartMonth: 'not-a-number',
+    };
+
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, timeSettings: invalidTimeSettings })).toThrow(
+      'AutoRefreshIntervals is not an array'
+    );
+    expect(() =>
+      validateDashboardSchemaV2({ ...validDashboard, timeSettings: { ...validDashboard.timeSettings, timezone: 123 } })
+    ).toThrow('Timezone is not a string');
+    expect(() =>
+      validateDashboardSchemaV2({
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings, quickRanges: 'not-an-array' },
+      })
+    ).toThrow('QuickRanges is not an array');
+    expect(() =>
+      validateDashboardSchemaV2({
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings, weekStart: 'invalid-day' },
+      })
+    ).toThrow('WeekStart should be one of "saturday", "sunday" or "monday"');
+    expect(() =>
+      validateDashboardSchemaV2({ ...validDashboard, timeSettings: { ...validDashboard.timeSettings, nowDelay: 123 } })
+    ).toThrow('NowDelay is not a string');
+    expect(() =>
+      validateDashboardSchemaV2({
+        ...validDashboard,
+        timeSettings: { ...validDashboard.timeSettings, fiscalYearStartMonth: 'not-a-number' },
+      })
+    ).toThrow('FiscalYearStartMonth is not a number');
+  });
+
+  it('should validate layout kind and structure', () => {
+    // Missing kind
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { spec: { items: [] } } })).toThrow(
+      'Layout kind is required'
+    );
+
+    // Invalid GridLayout
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'GridLayout' } })).toThrow(
+      'Layout spec is not an object or is null'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'GridLayout', spec: {} } })).toThrow(
+      'Layout spec items is not an array'
+    );
+
+    // Invalid RowsLayout
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout' } })).toThrow(
+      'Layout spec is not an object or is null'
+    );
+    expect(() => validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout', spec: {} } })).toThrow(
+      'Layout spec items is not an array'
+    );
+
+    // Valid GridLayout
+    expect(validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'GridLayout', spec: { items: [] } } })).toBe(
+      true
+    );
+
+    // Valid RowsLayout
+    expect(validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout', spec: { rows: [] } } })).toBe(
+      true
+    );
+  });
+});
+
+describe('normalizeDataSourceRef', () => {
+  let originalSrv: DataSourceSrv | undefined;
+  const getInstanceSettings = jest.fn(() => ({ uid: 'prom-uid', type: 'prometheus', apiVersion: 'v1' }));
+
+  beforeAll(() => {
+    try {
+      originalSrv = jest.requireActual('@grafana/runtime').getDataSourceSrv();
+    } catch {
+      originalSrv = undefined;
+    }
+    setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
+  });
+
+  afterAll(() => {
+    setDataSourceSrv(originalSrv as DataSourceSrv);
+  });
+
+  it('passes through existing DataSourceRef and nullish inputs unchanged', () => {
+    const ref = { uid: 'abc', type: 'prometheus' };
+    expect(normalizeDataSourceRef(ref)).toBe(ref);
+
+    expect(normalizeDataSourceRef(undefined)).toBeUndefined();
+    expect(normalizeDataSourceRef(null)).toBeUndefined();
+  });
+
+  it('resolves a string datasource into a DataSourceRef', () => {
+    expect(normalizeDataSourceRef('prometheus')).toEqual({
+      uid: 'prom-uid',
+      type: 'prometheus',
+      apiVersion: 'v1',
+    });
+
+    // Falls back to a UID-only ref when the datasource is unknown.
+    getInstanceSettings.mockReturnValueOnce(undefined as never);
+    expect(normalizeDataSourceRef('nonexistent-ds')).toEqual({ uid: 'nonexistent-ds' });
+
+    // Template variables short-circuit and never call getInstanceSettings.
+    expect(normalizeDataSourceRef('$datasource')).toEqual({ uid: '$datasource' });
+    expect(normalizeDataSourceRef('${datasource}')).toEqual({ uid: '${datasource}' });
+  });
+});

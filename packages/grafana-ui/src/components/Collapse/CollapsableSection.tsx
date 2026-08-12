@@ -1,0 +1,155 @@
+import { css, cx } from '@emotion/css';
+import { type ReactNode, useId, useState } from 'react';
+import * as React from 'react';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
+import { Icon } from '../Icon/Icon';
+import { Spinner } from '../Spinner/Spinner';
+
+export interface Props {
+  label: ReactNode;
+  isOpen: boolean;
+  /** Callback for the toggle functionality */
+  onToggle?: (isOpen: boolean) => void;
+  children: ReactNode;
+  className?: string;
+  contentClassName?: string;
+  loading?: boolean;
+  labelId?: string;
+  headerDataTestId?: string;
+  contentDataTestId?: string;
+  unmountContentWhenClosed?: boolean;
+}
+
+/**
+ * A simple container for enabling collapsing/expanding of content.
+ *
+ * https://developers.grafana.com/ui/latest/index.html?path=/docs/layout-collapsablesection--docs
+ */
+export const CollapsableSection = ({
+  label,
+  isOpen,
+  onToggle,
+  className,
+  contentClassName,
+  children,
+  labelId,
+  loading = false,
+  headerDataTestId,
+  contentDataTestId,
+  unmountContentWhenClosed = true,
+}: Props) => {
+  const [internalOpenState, toggleInternalOpenState] = useState<boolean>(isOpen);
+  const styles = useStyles2(collapsableSectionStyles);
+
+  const isControlled = isOpen !== undefined && onToggle !== undefined;
+  const isSectionOpen = isControlled ? isOpen : internalOpenState;
+
+  const onClick = (e: React.MouseEvent) => {
+    if (e.target instanceof HTMLElement && e.target.tagName === 'A') {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    onToggle?.(!isOpen);
+
+    if (!isControlled) {
+      toggleInternalOpenState(!internalOpenState);
+    }
+  };
+  const id = useId();
+
+  const buttonLabelId = labelId ?? `collapse-label-${id}`;
+
+  const content = (
+    <div
+      id={`collapse-content-${id}`}
+      className={cx(styles.content, contentClassName, {
+        [styles.contentHidden]: !unmountContentWhenClosed && !isSectionOpen,
+      })}
+      data-testid={contentDataTestId}
+    >
+      {children}
+    </div>
+  );
+
+  return (
+    <>
+      {/* disabling the a11y rules here as the button handles keyboard interactions */}
+      {/* this is just to provide a better experience for mouse users */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+      <div onClick={onClick} className={cx(styles.header, className)}>
+        <button
+          type="button"
+          id={`collapse-button-${id}`}
+          className={styles.button}
+          onClick={onClick}
+          aria-expanded={isSectionOpen && !loading}
+          aria-controls={`collapse-content-${id}`}
+          aria-labelledby={buttonLabelId}
+        >
+          {loading ? (
+            <Spinner className={styles.spinner} />
+          ) : (
+            <Icon name={isSectionOpen ? 'angle-down' : 'angle-right'} className={styles.icon} />
+          )}
+        </button>
+        <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
+          {label}
+        </div>
+      </div>
+      {unmountContentWhenClosed ? isSectionOpen && content : content}
+    </>
+  );
+};
+
+const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
+  header: css({
+    display: 'flex',
+    alignItems: 'center',
+    cursor: 'pointer',
+    boxSizing: 'border-box',
+    position: 'relative',
+    justifyContent: 'flex-start',
+    fontSize: theme.typography.size.lg,
+    padding: `${theme.spacing(0.5)} 0`,
+    '&:focus-within': getFocusStyles(theme),
+  }),
+  button: css({
+    all: 'unset',
+    marginRight: theme.spacing(1),
+    '&:focus-visible': {
+      outline: 'none',
+      outlineOffset: 'unset',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'none',
+      },
+      boxShadow: 'none',
+    },
+  }),
+  icon: css({
+    color: theme.colors.text.secondary,
+  }),
+  content: css({
+    padding: `${theme.spacing(2)} 0`,
+  }),
+  contentHidden: css({
+    display: 'none',
+  }),
+  spinner: css({
+    display: 'flex',
+    alignItems: 'center',
+    width: theme.spacing(2),
+  }),
+  label: css({
+    display: 'flex',
+    flex: '1 1 auto',
+    fontWeight: theme.typography.fontWeightMedium,
+    color: theme.colors.text.maxContrast,
+  }),
+});

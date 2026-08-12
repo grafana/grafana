@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+. scripts/grafana-server/variables
+
+HOST=${HOST:-$DEFAULT_HOST}
+PORT=${PORT:-$DEFAULT_PORT}
+
+printf "Waiting for grafana-server to finish starting, host=%s, port=%s" "$HOST" "$PORT"
+
+timeout=180
+elapsed=0
+
+while ! curl -s -f http://$HOST:$PORT/health > /dev/null 2>&1; do
+  if [ $elapsed -ge $timeout ]; then
+    printf "\nTimeout after %d seconds waiting for grafana-server to start\n" "$timeout"
+    exit 1
+  fi
+
+  printf "."
+  sleep 1
+  elapsed=$((elapsed + 1))
+done
+
+printf "\n"

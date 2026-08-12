@@ -1,0 +1,29 @@
+{
+    "title": "Provisioning test - invalid schema",
+    "uid": "invalid-schema-uid",
+    "schemaVersion": 41,
+    "tags": [
+        "tag"
+      ],
+    "revision": "this-is-not-a-number",
+    "panels": [
+      {
+        "gridPos": {
+          "h": 3,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 34,
+        "options": {
+          "content": "# All panels\n\nThis dashboard was created to quickly check accessiblity issues on a lot of panels at the same time           ",
+          "mode": "markdown"
+        },
+        "pluginVersion": "8.1.0-pre",
+        "transparent": true,
+        "type": "text",
+        "repeat": "something",
+        "repeatDirection": "this is not an allowed value"
+      }
+    ]
+}

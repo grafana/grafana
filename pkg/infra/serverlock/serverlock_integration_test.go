@@ -1,0 +1,261 @@
+package serverlock
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/stretchr/testify/require"
+)
+
+func TestIntegrationServerLock_LockAndExecute(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sl, _ := createTestableServerLock(t)
+
+	counter := 0
+	fn := func(context.Context) { counter++ }
+	atInterval := time.Hour
+	ctx := context.Background()
+
+	// this time `fn` should be executed
+	require.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
+	require.Equal(t, 1, counter)
+
+	// this should not execute `fn`
+	require.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
+	require.Nil(t, sl.LockAndExecute(ctx, "test-operation", atInterval, fn))
+	require.Equal(t, 1, counter)
+
+	atInterval = time.Millisecond
+
+	// now `fn` should be executed again
+	err := sl.LockAndExecute(ctx, "test-operation", atInterval, fn)
+	require.Nil(t, err)
+	require.Equal(t, 2, counter)
+}
+
+func TestIntegrationServerLock_LockExecuteAndRelease(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("lock is released", func(t *testing.T) {
+		sl, _ := createTestableServerLock(t)
+
+		counter := 0
+		fn := func(context.Context) { counter++ }
+		atInterval := time.Hour
+		ctx := context.Background()
+
+		err := sl.LockExecuteAndRelease(ctx, "test-operation", atInterval, fn)
+		require.NoError(t, err)
+		require.Equal(t, 1, counter)
+
+		// the function will be executed again, as everytime the lock is released
+		err = sl.LockExecuteAndRelease(ctx, "test-operation", atInterval, fn)
+		require.NoError(t, err)
+		err = sl.LockExecuteAndRelease(ctx, "test-operation", atInterval, fn)
+		require.NoError(t, err)
+		err = sl.LockExecuteAndRelease(ctx, "test-operation", atInterval, fn)
+		require.NoError(t, err)
+
+		require.Equal(t, 4, counter)
+	})
+
+	t.Run("lock is released when context is cancelled", func(t *testing.T) {
+		sl, store := createTestableServerLock(t)
+		operationUID := "test-operation-context-cancel"
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err := sl.LockExecuteAndRelease(ctx, operationUID, time.Hour, func(ctx context.Context) {
+			cancel()
+		})
+		require.NoError(t, err)
+
+		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
+			lockRows := []*serverLock{}
+			err := sess.Where("operation_uid = ?", operationUID).Find(&lockRows)
+			require.NoError(t, err)
+			require.Equal(t, 0, len(lockRows), "Lock should be released even when context is cancelled")
+			return nil
+		})
+		require.NoError(t, err)
+	})
+}
+
+func TestIntegrationServerLock_LockExecuteAndReleaseWithRetries(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("retries when lock is already taken", func(t *testing.T) {
+		sl, _ := createTestableServerLock(t)
+
+		retries := 0
+		expectedRetries := 10
+		funcRuns := 0
+		fn := func(context.Context) {
+			funcRuns++
+		}
+		lockTimeConfig := LockTimeConfig{
+			MaxInterval: time.Hour,
+			MinWait:     0 * time.Millisecond,
+			MaxWait:     1 * time.Millisecond,
+		}
+		ctx := context.Background()
+		actionName := "test-operation"
+
+		// Acquire lock so that when `LockExecuteAndReleaseWithRetries` runs, it is forced
+		// to retry
+		err := sl.acquireForRelease(ctx, actionName, lockTimeConfig.MaxInterval)
+		require.NoError(t, err)
+
+		wgRetries := sync.WaitGroup{}
+		wgRetries.Add(expectedRetries)
+		wgRelease := sync.WaitGroup{}
+		wgRelease.Add(1)
+		wgCompleted := sync.WaitGroup{}
+		wgCompleted.Add(1)
+
+		onRetryFn := func(int) error {
+			retries++
+			wgRetries.Done()
+			if retries == expectedRetries {
+				// When we reach `expectedRetries`, wait for the lock to be released
+				// to guarantee that next try will succeed
+				wgRelease.Wait()
+			}
+			return nil
+		}
+
+		go func() {
+			err := sl.LockExecuteAndReleaseWithRetries(ctx, actionName, lockTimeConfig, fn, onRetryFn)
+			require.NoError(t, err)
+			wgCompleted.Done()
+		}()
+
+		// Wait to release the lock until `LockExecuteAndReleaseWithRetries` has retried `expectedRetries` times.
+		wgRetries.Wait()
+		err = sl.releaseLock(ctx, actionName)
+		require.NoError(t, err)
+		wgRelease.Done()
+
+		// `LockExecuteAndReleaseWithRetries` has run completely.
+		// Check that it had to retry because the lock was already taken.
+		wgCompleted.Wait()
+		require.Equal(t, expectedRetries, retries)
+		require.Equal(t, 1, funcRuns)
+	})
+
+	t.Run("lock is released when context is cancelled", func(t *testing.T) {
+		sl, store := createTestableServerLock(t)
+		operationUID := "test-operation-context-cancel-retries"
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		lockTimeConfig := LockTimeConfig{
+			MaxInterval: time.Hour,
+			MinWait:     0 * time.Millisecond,
+			MaxWait:     1 * time.Millisecond,
+		}
+
+		err := sl.LockExecuteAndReleaseWithRetries(ctx, operationUID, lockTimeConfig, func(ctx context.Context) {
+			cancel()
+		})
+		require.NoError(t, err)
+
+		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
+			lockRows := []*serverLock{}
+			err := sess.Where("operation_uid = ?", operationUID).Find(&lockRows)
+			require.NoError(t, err)
+			require.Equal(t, 0, len(lockRows), "Lock should be released even when context is cancelled")
+			return nil
+		})
+		require.NoError(t, err)
+	})
+}
+
+// getOrCreate reads without locking before inserting, so concurrent callers on the same action name race
+// to create the row and all but one hit a unique constraint violation. They should contend through the
+// version check rather than surfacing the driver error and skipping the run.
+func TestIntegrationServerLock_ConcurrentLockAndExecuteSameAction(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sl, _ := createTestableServerLock(t)
+
+	// every goroutine shares this context, mirroring the background services that all run off the same
+	// root context. Each acquisition must still get its own session and transaction.
+	ctx := context.Background()
+
+	// the window between the select and the insert is narrow, so a single round only provokes the race
+	// about half the time. Repeat over fresh action names to make this a reliable regression guard.
+	for round := range 8 {
+		actionName := fmt.Sprintf("concurrent-same-action-%d", round)
+
+		const concurrency = 16
+		var mu sync.Mutex
+		executed := 0
+		errs := make([]error, concurrency)
+
+		start := make(chan struct{})
+		var wg sync.WaitGroup
+		for i := range concurrency {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				<-start
+				errs[i] = sl.LockAndExecute(ctx, actionName, time.Hour, func(context.Context) {
+					mu.Lock()
+					defer mu.Unlock()
+					executed++
+				})
+			}(i)
+		}
+		close(start)
+		wg.Wait()
+
+		for i, err := range errs {
+			require.NoError(t, err, "round %d goroutine %d should not surface a lock creation error", round, i)
+		}
+		require.Equal(t, 1, executed, "round %d: exactly one caller should have run the action", round)
+	}
+}
+
+// Distinct action names still contend on MySQL: when the lock row is missing the SELECT ... FOR UPDATE
+// gap-locks the index range, so concurrent inserts into the same gap deadlock. Run with
+// GRAFANA_TEST_DB=mysql to exercise that path.
+func TestIntegrationServerLock_ConcurrentDistinctActionNames(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sl, _ := createTestableServerLock(t)
+
+	const concurrency = 16
+	executed := make([]int, concurrency)
+	errs := make([]error, concurrency)
+
+	// released together so the acquisitions overlap as tightly as possible
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := range concurrency {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			<-start
+			errs[i] = sl.LockExecuteAndRelease(context.Background(), fmt.Sprintf("concurrent-operation-%d", i),
+				time.Hour, func(context.Context) { executed[i]++ })
+		}(i)
+	}
+	close(start)
+	wg.Wait()
+
+	for i, err := range errs {
+		require.False(t, sl.isDeadlock(context.Background(), err),
+			"deadlock escaped acquireForRelease for action %d: %v", i, err)
+		require.NoError(t, err)
+		require.Equal(t, 1, executed[i], "action %d should have executed exactly once", i)
+	}
+}

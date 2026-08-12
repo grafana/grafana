@@ -1,0 +1,352 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { TestProvider } from 'test/helpers/TestProvider';
+
+import {
+  CoreApp,
+  createTheme,
+  type DataSourceApi,
+  EventBusSrv,
+  getDefaultTimeRange,
+  LoadingState,
+  PluginExtensionTypes,
+  store,
+} from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { usePluginLinks } from '@grafana/runtime';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { configureStore } from 'app/store/configureStore';
+
+import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
+import { Explore, type Props } from './Explore';
+import { QueryLibraryContextProviderMock } from './QueryLibrary/mocks';
+import { initialExploreState } from './state/main';
+import { scanStopAction } from './state/query';
+import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
+
+const resizeWindow = (x: number, y: number) => {
+  global.innerWidth = x;
+  global.innerHeight = y;
+  global.dispatchEvent(new Event('resize'));
+};
+
+const makeEmptyQueryResponse = (loadingState: LoadingState) => {
+  const baseEmptyResponse = createEmptyQueryResponse();
+
+  baseEmptyResponse.request = {
+    requestId: '1',
+    intervalMs: 0,
+    interval: '1s',
+    panelId: 1,
+    range: baseEmptyResponse.timeRange,
+    scopedVars: {
+      apps: {
+        value: 'value',
+        text: 'text',
+      },
+    },
+    targets: [
+      {
+        refId: 'A',
+      },
+    ],
+    timezone: 'UTC',
+    app: CoreApp.Explore,
+    startTime: 0,
+  };
+
+  baseEmptyResponse.state = loadingState;
+
+  return baseEmptyResponse;
+};
+
+const dummyProps: Props = {
+  setShowQueryInspector: (value: boolean) => {},
+  showQueryInspector: false,
+  logsResult: undefined,
+  changeSize: jest.fn(),
+  datasourceInstance: {
+    meta: {
+      metrics: true,
+      logs: true,
+    },
+    components: {
+      QueryEditorHelp: {},
+    },
+  } as DataSourceApi,
+  exploreId: 'left',
+  loading: false,
+  modifyQueries: jest.fn(),
+  scanStart: jest.fn(),
+  scanStopAction: scanStopAction,
+  setQueries: jest.fn(),
+  queryKeys: [],
+  queries: [],
+  isLive: false,
+  syncedTimes: false,
+  updateTimeRange: jest.fn(),
+  graphResult: [],
+  timeZone: 'UTC',
+  queryResponse: makeEmptyQueryResponse(LoadingState.NotStarted),
+  addQueryRow: jest.fn(),
+  theme: createTheme(),
+  showMetrics: true,
+  showLogs: true,
+  showTable: true,
+  showTrace: true,
+  showCustom: true,
+  showNodeGraph: true,
+  showFlameGraph: true,
+  splitOpen: jest.fn(),
+  splitted: false,
+  eventBus: new EventBusSrv(),
+  showRawPrometheus: false,
+  showLogsSample: false,
+  logsSample: { enabled: false },
+  setSupplementaryQueryEnabled: jest.fn(),
+  correlationEditorDetails: undefined,
+  correlationEditorHelperData: undefined,
+  exploreActiveDS: {
+    exploreToDS: [],
+    dsToExplore: [],
+  },
+  changeDatasource: jest.fn(),
+  compact: false,
+  changeCompactMode: jest.fn(),
+  editSavedQueryRef: undefined,
+  addingSavedQuery: undefined,
+  queriesChangedIndexAtRun: 0,
+  range: getDefaultTimeRange(),
+};
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      savedQueriesRBAC: false,
+    },
+  },
+  getDataSourceSrv: () => ({
+    get: () => Promise.resolve({}),
+    getList: () => [],
+    getInstanceSettings: () => {},
+  }),
+  usePluginLinks: jest.fn(() => ({ links: [] })),
+}));
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    ...jest.requireActual('app/core/services/context_srv').contextSrv,
+    hasPermission: () => true,
+    isSignedIn: true,
+    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
+  },
+}));
+
+// for the AutoSizer component to have a width
+jest.mock('react-virtualized-auto-sizer', () => {
+  return ({ children }: AutoSizerProps) =>
+    children({
+      height: 1,
+      scaledHeight: 1,
+      scaledWidth: 1,
+      width: 1,
+    });
+});
+
+const usePluginLinksMock = jest.mocked(usePluginLinks);
+
+const setup = (overrideProps?: Partial<Props>) => {
+  const store = configureStore({
+    explore: {
+      ...initialExploreState,
+      panes: {
+        left: makeExplorePaneState(),
+      },
+    },
+  });
+  const exploreProps = { ...dummyProps, ...overrideProps };
+
+  return render(
+    <TestProvider store={store}>
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <ContentOutlineContextProvider>
+          <Explore {...exploreProps} />
+        </ContentOutlineContextProvider>
+      </OpenFeatureProvider>
+    </TestProvider>
+  );
+};
+
+describe('Explore', () => {
+  it('should not render no data with not started loading state', async () => {
+    setup();
+
+    // Wait for the Explore component to render
+    await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+    expect(screen.queryByTestId('explore-no-data')).not.toBeInTheDocument();
+  });
+
+  it('should render no data with done loading state', async () => {
+    setup({ queryResponse: makeEmptyQueryResponse(LoadingState.Done) });
+
+    // Wait for the Explore component to render
+    await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+    expect(screen.getByTestId('explore-no-data')).toBeInTheDocument();
+  });
+
+  it('should render toolbar extension point if extensions is available', async () => {
+    usePluginLinksMock.mockReturnValue({
+      links: [
+        {
+          id: '1',
+          pluginId: 'grafana',
+          title: 'Test 1',
+          description: '',
+          type: PluginExtensionTypes.link,
+          onClick: () => {},
+        },
+        {
+          id: '2',
+          pluginId: 'grafana',
+          title: 'Test 2',
+          description: '',
+          type: PluginExtensionTypes.link,
+          onClick: () => {},
+        },
+      ],
+      isLoading: false,
+    });
+
+    setup({ queryResponse: makeEmptyQueryResponse(LoadingState.Done) });
+    // Wait for the Explore component to render
+    await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+    expect(screen.getByRole('button', { name: 'Add' })).toBeVisible();
+  });
+
+  describe('On small screens', () => {
+    const windowWidth = global.innerWidth,
+      windowHeight = global.innerHeight;
+
+    beforeAll(() => {
+      resizeWindow(500, 500);
+    });
+
+    afterAll(() => {
+      resizeWindow(windowWidth, windowHeight);
+    });
+
+    it('should render data source picker', async () => {
+      setup();
+
+      const dataSourcePicker = await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+      expect(dataSourcePicker).toBeInTheDocument();
+    });
+  });
+
+  describe('Content Outline', () => {
+    afterEach(() => {
+      act(() => {
+        setTestFlags({});
+      });
+    });
+
+    it('should retrieve the last visible state from local storage', async () => {
+      const getBoolMock = jest.spyOn(store, 'getBool').mockReturnValue(false);
+      setup();
+      // Wait for the Explore component to render
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+      const showContentOutlineButton = screen.queryByRole('button', { name: 'Collapse outline' });
+      expect(showContentOutlineButton).not.toBeInTheDocument();
+      getBoolMock.mockRestore();
+    });
+
+    it('shows an expandable query card when a Mixed datasource contains a managed Prometheus flavor query', async () => {
+      setTestFlags({ 'grafana.exploreMetricsSidebar': true });
+      setup({
+        datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
+        queries: [{ refId: 'A', datasource: { type: 'grafana-amazonprometheus-datasource', uid: 'amp-uid' } }],
+      });
+
+      expect(await screen.findByTestId('signal-card-A')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+
+      expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
+    });
+
+    it('does not show the query cards for a non-Prometheus Mixed datasource query', async () => {
+      setTestFlags({ 'grafana.exploreMetricsSidebar': true });
+      setup({
+        datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
+        queries: [{ refId: 'A', datasource: { type: 'loki', uid: 'loki-uid' } }],
+      });
+
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+      expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Saved Queries Integration', () => {
+    it('should enable add query buttons when editSavedQueryRef is undefined', async () => {
+      setup({ editSavedQueryRef: undefined });
+
+      // Wait for the Explore component to render
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+      const addQueryButton = screen.getByRole('button', { name: /Add query$/i });
+      expect(addQueryButton).toBeEnabled();
+    });
+
+    it('should disable add query buttons when editSavedQueryRef is set (editing from library)', async () => {
+      setup({ editSavedQueryRef: 'library-query-123' });
+
+      // Wait for the Explore component to render
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+      const addQueryButton = screen.getByRole('button', { name: /Add query$/i });
+      expect(addQueryButton).toBeDisabled();
+    });
+
+    it('should disable both add query and add from library buttons when editing from library', async () => {
+      const store = configureStore({
+        explore: {
+          ...initialExploreState,
+          panes: {
+            left: makeExplorePaneState(),
+          },
+        },
+      });
+      const exploreProps = { ...dummyProps, editSavedQueryRef: 'library-query-123' };
+
+      render(
+        <TestProvider store={store}>
+          <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+            <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
+              <ContentOutlineContextProvider>
+                <Explore {...exploreProps} />
+              </ContentOutlineContextProvider>
+            </QueryLibraryContextProviderMock>
+          </OpenFeatureProvider>
+        </TestProvider>
+      );
+
+      // Wait for the Explore component to render
+      await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+      const addQueryButton = screen.getByRole('button', { name: /Add query$/i });
+      const addFromLibraryButton = screen.getByRole('button', { name: /Add from saved queries/i });
+
+      expect(addQueryButton).toBeDisabled();
+      expect(addFromLibraryButton).toBeDisabled();
+    });
+  });
+});

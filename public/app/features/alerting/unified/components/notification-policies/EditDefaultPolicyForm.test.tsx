@@ -1,0 +1,206 @@
+import { noop } from 'lodash';
+import { render, screen } from 'test/test-utils';
+import { byRole } from 'testing-library-selector';
+
+import { Button } from '@grafana/ui';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { AccessControlAction } from 'app/types/accessControl';
+
+import { type RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
+import { type FormAmRoute } from '../../types/amroutes';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+
+import { AmRootRouteForm } from './EditDefaultPolicyForm';
+
+const ui = {
+  error: byRole('alert'),
+  timingOptionsBtn: byRole('button', { name: /Timing options/ }),
+  submitBtn: byRole('button', { name: /Update default policy/ }),
+  createBtn: byRole('button', { name: /Create/ }),
+  groupWaitInput: byRole('textbox', { name: /Group wait/ }),
+  groupIntervalInput: byRole('textbox', { name: /Group interval/ }),
+  repeatIntervalInput: byRole('textbox', { name: /Repeat interval/ }),
+  routeNameInput: byRole('textbox', { name: /Name/ }),
+};
+setupMswServer();
+// TODO Default and Notification policy form should be unified so we don't need to maintain two almost identical forms
+describe('EditDefaultPolicyForm', function () {
+  beforeEach(() => {
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+    ]);
+  });
+  describe('Timing options', function () {
+    it('should render prometheus duration strings in form inputs', async function () {
+      const { user } = renderRouteForm({
+        id: '0',
+        group_wait: '1m30s',
+        group_interval: '2d4h30m35s',
+        repeat_interval: '1w2d6h',
+      });
+
+      await user.click(ui.timingOptionsBtn.get());
+      expect(ui.groupWaitInput.get()).toHaveValue('1m30s');
+      expect(ui.groupIntervalInput.get()).toHaveValue('2d4h30m35s');
+      expect(ui.repeatIntervalInput.get()).toHaveValue('1w2d6h');
+    });
+    it('should allow submitting valid prometheus duration strings', async function () {
+      const onSubmit = jest.fn();
+      const { user } = renderRouteForm(
+        {
+          id: '0',
+          receiver: 'default',
+        },
+        onSubmit
+      );
+
+      await user.click(ui.timingOptionsBtn.get());
+
+      await user.type(ui.groupWaitInput.get(), '5m25s');
+      await user.type(ui.groupIntervalInput.get(), '35m40s');
+      await user.type(ui.repeatIntervalInput.get(), '4h30m');
+
+      await user.click(ui.submitBtn.get());
+
+      expect(ui.error.queryAll()).toHaveLength(0);
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining<Partial<FormAmRoute>>({
+          groupWaitValue: '5m25s',
+          groupIntervalValue: '35m40s',
+          repeatIntervalValue: '4h30m',
+        }),
+        expect.anything()
+      );
+    });
+  });
+
+  it('should show an error if repeat interval is lower than group interval', async function () {
+    const onSubmit = jest.fn();
+    const { user } = renderRouteForm(
+      {
+        id: '0',
+        receiver: 'default',
+      },
+      onSubmit
+    );
+
+    await user.click(ui.timingOptionsBtn.get());
+
+    await user.type(ui.groupWaitInput.get(), '5m25s');
+    await user.type(ui.groupIntervalInput.get(), '35m40s');
+    await user.type(ui.repeatIntervalInput.get(), '30m');
+
+    await user.click(ui.submitBtn.get());
+
+    expect(ui.error.getAll()).toHaveLength(1);
+    expect(ui.error.get()).toHaveTextContent('Repeat interval should be higher or equal to Group interval');
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('should allow resetting existing timing options', async function () {
+    const onSubmit = jest.fn();
+    const { user } = renderRouteForm(
+      {
+        id: '0',
+        receiver: 'default',
+        group_wait: '1m30s',
+        group_interval: '2d4h30m35s',
+        repeat_interval: '1w2d6h',
+      },
+      onSubmit
+    );
+
+    await user.click(ui.timingOptionsBtn.get());
+    await user.clear(ui.groupWaitInput.get());
+    await user.clear(ui.groupIntervalInput.get());
+    await user.clear(ui.repeatIntervalInput.get());
+
+    await user.click(ui.submitBtn.get());
+
+    expect(ui.error.queryAll()).toHaveLength(0);
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining<Partial<FormAmRoute>>({
+        groupWaitValue: '',
+        groupIntervalValue: '',
+        repeatIntervalValue: '',
+      }),
+      expect.anything()
+    );
+  });
+
+  describe('Create Policy', function () {
+    it('should render policy name in form inputs if showNameField=true', async function () {
+      const onSubmit = jest.fn();
+      renderRouteForm(
+        {
+          id: '0',
+          name: 'custom policy name',
+        },
+        onSubmit,
+        true
+      );
+
+      expect(ui.routeNameInput.get()).toHaveValue('custom policy name');
+    });
+    it('should not render policy name in form inputs if showNameField omitted', async function () {
+      renderRouteForm({
+        id: '0',
+        name: 'custom policy name',
+      });
+
+      expect(ui.routeNameInput.query()).not.toBeInTheDocument();
+    });
+    it('should show inline error when name matches an existing policy', async function () {
+      const onSubmit = jest.fn();
+      const { user } = renderRouteForm({ id: '0', name: '', receiver: 'grafana-default-email' }, onSubmit, true, {
+        existingPolicyNames: ['existing-policy'],
+      });
+
+      await user.type(ui.routeNameInput.get(), 'existing-policy');
+      await user.click(ui.createBtn.get());
+
+      expect(screen.getByText('A notification policy with this name already exists')).toBeInTheDocument();
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+    it('should allow submitting a unique name', async function () {
+      const onSubmit = jest.fn();
+      const { user } = renderRouteForm({ id: '0', name: '', receiver: 'grafana-default-email' }, onSubmit, true, {
+        existingPolicyNames: ['existing-policy'],
+      });
+
+      await user.type(ui.routeNameInput.get(), 'unique-policy-name');
+      await user.click(ui.createBtn.get());
+
+      expect(screen.queryByText('A notification policy with this name already exists')).not.toBeInTheDocument();
+      expect(onSubmit).toHaveBeenCalled();
+    });
+  });
+});
+
+interface RenderRouteFormOptions {
+  existingPolicyNames?: string[];
+}
+
+function renderRouteForm(
+  route: RouteWithID,
+  onSubmit: (route: Partial<FormAmRoute>) => void = noop,
+  showNameField?: boolean,
+  options?: RenderRouteFormOptions
+) {
+  const isCreateMode = options?.existingPolicyNames !== undefined && showNameField;
+  return render(
+    <AlertmanagerProvider accessType="instance">
+      <AmRootRouteForm
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        actionButtons={<Button type="submit">{isCreateMode ? 'Create' : 'Update default policy'}</Button>}
+        existingPolicyNames={options?.existingPolicyNames}
+        onSubmit={onSubmit}
+        route={route}
+        showNameField={showNameField}
+      />
+    </AlertmanagerProvider>
+  );
+}

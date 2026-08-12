@@ -1,0 +1,114 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+import { VariableHide } from '@grafana/data';
+import { mockComboboxRect } from '@grafana/test-utils';
+
+import { VariableDisplaySelect } from './VariableDisplaySelect';
+
+beforeAll(() => {
+  // For testing combobox
+  mockComboboxRect();
+});
+
+describe('VariableDisplaySelect', () => {
+  it('should render all options when opening the combobox', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    render(<VariableDisplaySelect onChange={onChange} display={VariableHide.dontHide} type="query" />);
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    expect(await screen.findByText('Above dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Above dashboard, label hidden')).toBeInTheDocument();
+    expect(screen.getByText('Controls menu')).toBeInTheDocument();
+    expect(screen.getByText('Hidden')).toBeInTheDocument();
+  });
+
+  it('should hide "Controls menu" when hideControlsMenuOption is true', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    render(
+      <VariableDisplaySelect
+        onChange={onChange}
+        display={VariableHide.dontHide}
+        type="query"
+        hideControlsMenuOption={true}
+      />
+    );
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    expect(await screen.findByText('Above dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Above dashboard, label hidden')).toBeInTheDocument();
+    expect(screen.queryByText('Controls menu')).not.toBeInTheDocument();
+    expect(screen.getByText('Hidden')).toBeInTheDocument();
+  });
+
+  it('should call onChange() with the selected value', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+
+    render(<VariableDisplaySelect onChange={onChange} display={VariableHide.dontHide} type="query" />);
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    const controlsMenuOption = await screen.findByText('Controls menu');
+    await user.click(controlsMenuOption);
+
+    expect(onChange).toHaveBeenCalledWith(VariableHide.inControlsMenu);
+  });
+
+  it('should have "Controls menu" selected when `hide` is set to "inControlsMenu"', () => {
+    const onChange = jest.fn();
+    render(<VariableDisplaySelect onChange={onChange} display={VariableHide.inControlsMenu} type="query" />);
+
+    expect(screen.getByDisplayValue('Controls menu')).toBeInTheDocument();
+  });
+
+  it('should not render anything for constant type variables', () => {
+    const onChange = jest.fn();
+    const { container } = render(
+      <VariableDisplaySelect onChange={onChange} display={VariableHide.dontHide} type="constant" />
+    );
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('should call onChange() when switching from "Controls menu" to "Above dashboard"', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+
+    render(<VariableDisplaySelect onChange={onChange} display={VariableHide.inControlsMenu} type="query" />);
+
+    const combobox = screen.getByRole('combobox', { name: 'Display' });
+    await user.click(combobox);
+
+    const aboveDashboardOption = await screen.findByText('Above dashboard');
+    await user.click(aboveDashboardOption);
+
+    expect(onChange).toHaveBeenCalledWith(VariableHide.dontHide);
+  });
+
+  it('uses section top placement labels when provided', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    render(
+      <VariableDisplaySelect
+        onChange={onChange}
+        display={VariableHide.dontHide}
+        type="query"
+        topPlacementLabel="Top of row"
+      />
+    );
+
+    const combobox = screen.getByRole('combobox');
+    await user.click(combobox);
+
+    expect(await screen.findByText('Top of row')).toBeInTheDocument();
+    expect(screen.getByText('Top of row, label hidden')).toBeInTheDocument();
+  });
+});

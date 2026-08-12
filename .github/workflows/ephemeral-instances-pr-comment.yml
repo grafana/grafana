@@ -1,0 +1,82 @@
+name: "Ephemeral instances"
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [closed]
+
+permissions: {}
+
+jobs:
+  handle-ephemeral-instances:
+    if: |
+      github.repository_owner == 'grafana' &&
+      (
+        (github.event.issue.pull_request && startsWith(github.event.comment.body, '/deploy-to-hg') && (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')) ||
+        github.event.action == 'closed'
+      )
+    runs-on: ubuntu-arm64-small
+    continue-on-error: true
+    permissions:
+      id-token: write # required for token broker
+
+    steps:
+      - name: Get GitHub App token
+        id: generate_token
+        uses: grafana/shared-workflows/actions/create-github-app-token@ae92934a14a48b94494dbc06d74a81d47fe08a40 # create-github-app-token/v0.2.2
+        with:
+          github_app: ephemeral-instances-bot
+
+      - name: Dispatch (comment)
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          REPO_ID: ${{ github.event.repository.id }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_AUTHOR: ${{ github.event.issue.user.login }}
+          PR_HTML_URL: ${{ github.event.issue.html_url }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          gh workflow run pr-comment-action.yml \
+            --repo grafana/ephemeral-grafana-instances-github-action \
+            --ref main \
+            -f mode=comment \
+            -f repo-name="$REPO_NAME" \
+            -f repo-id="$REPO_ID" \
+            -f repo-owner="$REPO_OWNER" \
+            -f pr-number="$PR_NUMBER" \
+            -f pr-author="$PR_AUTHOR" \
+            -f pr-html-url="$PR_HTML_URL" \
+            -f comment-body="$COMMENT_BODY" \
+            -f comment-id="$COMMENT_ID" \
+            -f triggering-actor="$TRIGGERING_ACTOR"
+
+      - name: Dispatch (pr-closed)
+        if: github.event_name == 'pull_request' && github.event.action == 'closed'
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          REPO_ID: ${{ github.event.repository.id }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_HTML_URL: ${{ github.event.pull_request.html_url }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          gh workflow run pr-comment-action.yml \
+            --repo grafana/ephemeral-grafana-instances-github-action \
+            --ref main \
+            -f mode=pr-closed \
+            -f repo-name="$REPO_NAME" \
+            -f repo-id="$REPO_ID" \
+            -f repo-owner="$REPO_OWNER" \
+            -f pr-number="$PR_NUMBER" \
+            -f pr-author="$PR_AUTHOR" \
+            -f pr-html-url="$PR_HTML_URL" \
+            -f comment-body="" \
+            -f triggering-actor="$TRIGGERING_ACTOR"

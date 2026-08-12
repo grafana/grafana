@@ -1,0 +1,288 @@
+package resource
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"testing"
+
+	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
+	"github.com/stretchr/testify/require"
+	"gocloud.dev/blob"
+)
+
+var _ CDKBucket = (*fakeCDKBucket)(nil)
+
+type fakeCDKBucket struct {
+	attributesFunc func(ctx context.Context, key string) (*blob.Attributes, error)
+	writeAllFunc   func(ctx context.Context, key string, p []byte, opts *blob.WriterOptions) error
+	readAllFunc    func(ctx context.Context, key string) ([]byte, error)
+	signedURLFunc  func(ctx context.Context, key string, opts *blob.SignedURLOptions) (string, error)
+	listFunc       func(opts *blob.ListOptions) *blob.ListIterator
+	listPageFunc   func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error)
+	deleteFunc     func(ctx context.Context, key string) error
+	uploadFunc     func(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error
+	downloadFunc   func(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error
+}
+
+func (f *fakeCDKBucket) Attributes(ctx context.Context, key string) (*blob.Attributes, error) {
+	if f.attributesFunc != nil {
+		return f.attributesFunc(ctx, key)
+	}
+	return nil, nil
+}
+
+func (f *fakeCDKBucket) WriteAll(ctx context.Context, key string, p []byte, opts *blob.WriterOptions) error {
+	if f.writeAllFunc != nil {
+		return f.writeAllFunc(ctx, key, p, opts)
+	}
+	return nil
+}
+
+func (f *fakeCDKBucket) ReadAll(ctx context.Context, key string) ([]byte, error) {
+	if f.readAllFunc != nil {
+		return f.readAllFunc(ctx, key)
+	}
+	return nil, nil
+}
+
+func (f *fakeCDKBucket) SignedURL(ctx context.Context, key string, opts *blob.SignedURLOptions) (string, error) {
+	if f.signedURLFunc != nil {
+		return f.signedURLFunc(ctx, key, opts)
+	}
+	return "", nil
+}
+
+func (f *fakeCDKBucket) List(opts *blob.ListOptions) *blob.ListIterator {
+	if f.listFunc != nil {
+		return f.listFunc(opts)
+	}
+	return nil
+}
+
+func (f *fakeCDKBucket) ListPage(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
+	if f.listPageFunc != nil {
+		return f.listPageFunc(ctx, pageToken, pageSize, opts)
+	}
+	return nil, nil, nil
+}
+
+func (f *fakeCDKBucket) Delete(ctx context.Context, key string) error {
+	if f.deleteFunc != nil {
+		return f.deleteFunc(ctx, key)
+	}
+	return nil
+}
+
+func (f *fakeCDKBucket) Upload(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
+	if f.uploadFunc != nil {
+		return f.uploadFunc(ctx, key, r, opts)
+	}
+	return nil
+}
+
+func (f *fakeCDKBucket) Download(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
+	if f.downloadFunc != nil {
+		return f.downloadFunc(ctx, key, w, opts)
+	}
+	return nil
+}
+
+func TestInstrumentedBucket(t *testing.T) {
+	operations := []struct {
+		name      string
+		operation string
+		setup     func(fakeBucket *fakeCDKBucket, success bool)
+		call      func(instrumentedBucket *InstrumentedBucket) error
+	}{
+		{
+			name:      "Attributes",
+			operation: "Attributes",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.attributesFunc = func(ctx context.Context, key string) (*blob.Attributes, error) {
+						return &blob.Attributes{}, nil
+					}
+				} else {
+					fakeBucket.attributesFunc = func(ctx context.Context, key string) (*blob.Attributes, error) {
+						return nil, fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				_, err := instrumentedBucket.Attributes(context.Background(), "key")
+				return err
+			},
+		},
+		{
+			name:      "WriteAll",
+			operation: "WriteAll",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.writeAllFunc = func(ctx context.Context, key string, p []byte, opts *blob.WriterOptions) error {
+						return nil
+					}
+				} else {
+					fakeBucket.writeAllFunc = func(ctx context.Context, key string, p []byte, opts *blob.WriterOptions) error {
+						return fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				return instrumentedBucket.WriteAll(context.Background(), "key", []byte("data"), nil)
+			},
+		},
+		{
+			name:      "Delete",
+			operation: "Delete",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.deleteFunc = func(ctx context.Context, key string) error {
+						return nil
+					}
+				} else {
+					fakeBucket.deleteFunc = func(ctx context.Context, key string) error {
+						return fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				return instrumentedBucket.Delete(context.Background(), "key")
+			},
+		},
+		{
+			name:      "ReadAll",
+			operation: "ReadAll",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.readAllFunc = func(ctx context.Context, key string) ([]byte, error) {
+						return []byte("data"), nil
+					}
+				} else {
+					fakeBucket.readAllFunc = func(ctx context.Context, key string) ([]byte, error) {
+						return nil, fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				_, err := instrumentedBucket.ReadAll(context.Background(), "key")
+				return err
+			},
+		},
+		{
+			name:      "Upload",
+			operation: "Upload",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.uploadFunc = func(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
+						return nil
+					}
+				} else {
+					fakeBucket.uploadFunc = func(ctx context.Context, key string, r io.Reader, opts *blob.WriterOptions) error {
+						return fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				return instrumentedBucket.Upload(context.Background(), "key", nil, nil)
+			},
+		},
+		{
+			name:      "Download",
+			operation: "Download",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.downloadFunc = func(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
+						return nil
+					}
+				} else {
+					fakeBucket.downloadFunc = func(ctx context.Context, key string, w io.Writer, opts *blob.ReaderOptions) error {
+						return fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				return instrumentedBucket.Download(context.Background(), "key", nil, nil)
+			},
+		},
+		{
+			name:      "SignedURL",
+			operation: "SignedURL",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.signedURLFunc = func(ctx context.Context, key string, opts *blob.SignedURLOptions) (string, error) {
+						return "http://signed.url", nil
+					}
+				} else {
+					fakeBucket.signedURLFunc = func(ctx context.Context, key string, opts *blob.SignedURLOptions) (string, error) {
+						return "", fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				_, err := instrumentedBucket.SignedURL(context.Background(), "key", nil)
+				return err
+			},
+		},
+		{
+			name:      "ListPage",
+			operation: "ListPage",
+			setup: func(fakeBucket *fakeCDKBucket, success bool) {
+				if success {
+					fakeBucket.listPageFunc = func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
+						return []*blob.ListObject{}, nil, nil
+					}
+				} else {
+					fakeBucket.listPageFunc = func(ctx context.Context, pageToken []byte, pageSize int, opts *blob.ListOptions) ([]*blob.ListObject, []byte, error) {
+						return nil, nil, fmt.Errorf("some error")
+					}
+				}
+			},
+			call: func(instrumentedBucket *InstrumentedBucket) error {
+				_, _, err := instrumentedBucket.ListPage(context.Background(), nil, 10, nil)
+				return err
+			},
+		},
+	}
+
+	for _, op := range operations {
+		for _, tc := range []struct {
+			name               string
+			success            bool
+			expectedCountLabel string
+		}{
+			{
+				name:               "success",
+				success:            true,
+				expectedCountLabel: cdkBucketStatusSuccess,
+			},
+			{
+				name:               "failure",
+				success:            false,
+				expectedCountLabel: cdkBucketStatusError,
+			},
+		} {
+			t.Run(op.name+" "+tc.name, func(t *testing.T) {
+				fakeBucket := &fakeCDKBucket{}
+				reg := prometheus.NewPedanticRegistry()
+				instrumentedBucket := NewInstrumentedBucket(fakeBucket, reg)
+
+				op.setup(fakeBucket, tc.success)
+				err := op.call(instrumentedBucket)
+
+				if tc.success {
+					require.NoError(t, err)
+				} else {
+					require.Error(t, err)
+				}
+
+				obs, err := instrumentedBucket.latency.GetMetricWithLabelValues(op.operation, tc.expectedCountLabel)
+				require.NoError(t, err)
+				m := &dto.Metric{}
+				require.NoError(t, obs.(prometheus.Metric).Write(m))
+				require.Equal(t, uint64(1), m.Histogram.GetSampleCount())
+			})
+		}
+	}
+}

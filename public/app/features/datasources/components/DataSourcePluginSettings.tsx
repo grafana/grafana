@@ -1,0 +1,42 @@
+import { createElement, memo } from 'react';
+
+import { type DataSourceConfigValidationAPI, type DataSourcePluginMeta, type DataSourceSettings } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { writableProxy } from 'app/features/plugins/extensions/utils';
+
+import { type GenericDataSourcePlugin } from '../types';
+
+export interface Props {
+  plugin: GenericDataSourcePlugin;
+  dataSource: DataSourceSettings;
+  dataSourceMeta: DataSourcePluginMeta;
+  onModelChange: (dataSource: DataSourceSettings) => void;
+  validation?: DataSourceConfigValidationAPI;
+}
+
+export const DataSourcePluginSettings = memo(({ plugin, dataSource, onModelChange, validation }: Props) => {
+  if (!plugin) {
+    return null;
+  }
+
+  const pluginId = plugin.meta?.id;
+
+  return (
+    <div
+      data-testid={pluginId ? selectors.components.Plugins.dataSourceConfigEditor(pluginId) : undefined}
+      data-plugin-id={pluginId}
+    >
+      {plugin.components.ConfigEditor &&
+        createElement(plugin.components.ConfigEditor, {
+          options: writableProxy(dataSource, {
+            source: 'datasource',
+            pluginId: plugin.meta?.id,
+            pluginVersion: plugin.meta?.info?.version,
+          }),
+          onOptionsChange: onModelChange,
+          validation,
+        })}
+    </div>
+  );
+});
+DataSourcePluginSettings.displayName = 'DataSourcePluginSettings';

@@ -1,0 +1,11 @@
+{
+  "excludeRegExp": ["Table/TableRT/ExpandedRow\\.tsx$"],
+  "detectiveOptions": {
+    "ts": {
+      "skipTypeImports": true
+    },
+    "tsx": {
+      "skipTypeImports": true
+    }
+  }
+}

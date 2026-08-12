@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Grouping to Matrix generates Matrix ignoring special value when value type is frame 1`] = `
+[
+  {
+    "config": {},
+    "name": "Row\\Column",
+    "type": "string",
+    "values": [
+      "R1",
+      "R2",
+    ],
+  },
+  {
+    "config": {},
+    "name": "C1",
+    "type": "frame",
+    "values": [
+      {},
+      undefined,
+    ],
+  },
+  {
+    "config": {},
+    "name": "C2",
+    "type": "frame",
+    "values": [
+      {},
+      undefined,
+    ],
+  },
+]
+`;

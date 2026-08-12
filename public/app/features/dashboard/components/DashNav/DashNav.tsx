@@ -1,0 +1,307 @@
+import { css } from '@emotion/css';
+import { memo, type ReactNode } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
+import { useLocation } from 'react-router-dom-v5-compat';
+
+import { textUtil } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
+import {
+  ButtonGroup,
+  ModalsController,
+  ToolbarButton,
+  useForceUpdate,
+  ToolbarButtonRow,
+  ConfirmModal,
+} from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
+import config from 'app/core/config';
+import { useAppNotification } from 'app/core/copy/appNotification';
+import { useBusEvent } from 'app/core/hooks/useBusEvent';
+import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
+import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PublicDashboardBadgeLegacy } from 'app/features/dashboard-scene/scene/new-toolbar/actions/PublicDashboardBadge';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
+import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
+import { type KioskMode } from 'app/types/dashboard';
+import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
+
+import {
+  type DynamicDashNavButtonModel,
+  dynamicDashNavActions,
+  registerDynamicDashNavAction,
+} from '../../../dashboard-scene/utils/registerDynamicDashNavAction';
+
+import { DashNavTimeControls } from './DashNavTimeControls';
+import { ShareButton } from './ShareButton';
+
+const mapDispatchToProps = {
+  updateTimeZoneForSession,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+interface OwnProps {
+  dashboard: DashboardModel;
+  isFullscreen: boolean;
+  kioskMode?: KioskMode | null;
+  hideTimePicker: boolean;
+  folderTitle?: string;
+  title: string;
+}
+
+export function addCustomLeftAction(content: DynamicDashNavButtonModel) {
+  registerDynamicDashNavAction('left', content);
+}
+
+export function addCustomRightAction(content: DynamicDashNavButtonModel) {
+  registerDynamicDashNavAction('right', content);
+}
+
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+const DashNav = memo<Props>((props) => {
+  // this ensures the component rerenders when the location changes
+  useLocation();
+  const forceUpdate = useForceUpdate();
+
+  // We don't really care about the event payload here only that it triggeres a re-render of this component
+  useBusEvent(props.dashboard.events, DashboardMetaChangedEvent);
+
+  const originalUrl = props.dashboard.snapshot?.originalUrl ?? '';
+  const gotoSnapshotOrigin = () => {
+    window.location.href = textUtil.sanitizeUrl(props.dashboard.snapshot.originalUrl);
+  };
+
+  const notifyApp = useAppNotification();
+
+  const onOpenSnapshotOriginal = () => {
+    try {
+      const sanitizedUrl = new URL(textUtil.sanitizeUrl(originalUrl), config.appUrl);
+      const appUrl = new URL(config.appUrl);
+      if (sanitizedUrl.host !== appUrl.host) {
+        appEvents.publish(
+          new ShowModalReactEvent({
+            component: ConfirmModal,
+            props: {
+              title: t(
+                'dashboard.dash-nav.on-open-snapshot-original.title.proceed-to-external-site',
+                'Proceed to external site?'
+              ),
+              modalClass: modalStyles,
+              body: (
+                <>
+                  <p>
+                    {`This link connects to an external website at`} <code>{originalUrl}</code>
+                  </p>
+                  <p>{"Are you sure you'd like to proceed?"}</p>
+                </>
+              ),
+              confirmVariant: 'primary',
+              confirmText: t('dashboard.dash-nav.on-open-snapshot-original.confirmText.proceed', 'Proceed'),
+              onConfirm: gotoSnapshotOrigin,
+            },
+          })
+        );
+      } else {
+        gotoSnapshotOrigin();
+      }
+    } catch (err) {
+      notifyApp.error('Invalid URL', err instanceof Error ? err.message : undefined);
+    }
+  };
+
+  const onOpenSettings = () => {
+    DashboardInteractions.toolbarSettingsClick();
+    locationService.partial({ editview: 'settings' });
+  };
+
+  const onPlaylistPrev = () => {
+    playlistSrv.prev();
+  };
+
+  const onPlaylistNext = () => {
+    playlistSrv.next();
+  };
+
+  const onPlaylistStop = () => {
+    playlistSrv.stop();
+    forceUpdate();
+  };
+
+  const addCustomContent = (actions: DynamicDashNavButtonModel[], buttons: ReactNode[]) => {
+    actions.map((action, index) => {
+      const Component = action.component;
+      const element = <Component {...props} key={`button-custom-${index}`} />;
+      typeof action.index === 'number' ? buttons.splice(action.index, 0, element) : buttons.push(element);
+    });
+  };
+
+  const isPlaylistRunning = () => {
+    return playlistSrv.state.isPlaying;
+  };
+
+  const renderLeftActions = () => {
+    const { dashboard, kioskMode } = props;
+    const { canStar } = dashboard.meta;
+    const buttons: ReactNode[] = [];
+
+    if (kioskMode || isPlaylistRunning()) {
+      return [];
+    }
+
+    // uid check narrows the type for StarToolbarButton's required `id` prop
+    if (canStar && dashboard.uid) {
+      buttons.push(
+        <StarToolbarButton
+          key="button-star"
+          group="dashboard.grafana.app"
+          kind="Dashboard"
+          title={dashboard.title}
+          id={dashboard.uid}
+        />
+      );
+    }
+
+    if (dashboard.uid) {
+      buttons.push(<PublicDashboardBadgeLegacy key="public-dashboard-badge" uid={dashboard.uid} />);
+    }
+
+    addCustomContent(dynamicDashNavActions.left, buttons);
+    return buttons;
+  };
+
+  const renderPlaylistControls = () => {
+    return (
+      <ButtonGroup key="playlist-buttons">
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.playlist-previous', 'Go to previous dashboard')}
+          icon="backward"
+          onClick={onPlaylistPrev}
+          narrow
+        />
+        <ToolbarButton onClick={onPlaylistStop}>
+          <Trans i18nKey="dashboard.toolbar.playlist-stop">Stop playlist</Trans>
+        </ToolbarButton>
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.playlist-next', 'Go to next dashboard')}
+          icon="forward"
+          onClick={onPlaylistNext}
+          narrow
+        />
+      </ButtonGroup>
+    );
+  };
+
+  const renderTimeControls = () => {
+    const { dashboard, updateTimeZoneForSession, hideTimePicker } = props;
+
+    if (hideTimePicker) {
+      return null;
+    }
+    return (
+      <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} key="time-controls" />
+    );
+  };
+
+  const renderRightActions = () => {
+    const { dashboard, isFullscreen, hideTimePicker } = props;
+    const { canSave, canEdit, showSettings, canShare, isEmbedded } = dashboard.meta;
+    const { snapshot } = dashboard;
+    const snapshotUrl = snapshot && snapshot.originalUrl;
+    const buttons: ReactNode[] = [];
+
+    if (isPlaylistRunning()) {
+      return [renderPlaylistControls(), renderTimeControls()];
+    }
+
+    if (snapshotUrl) {
+      buttons.push(
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
+          onClick={onOpenSnapshotOriginal}
+          icon="link"
+          key="button-snapshot"
+        />
+      );
+    }
+
+    if (canSave && !isFullscreen) {
+      buttons.push(
+        <ModalsController key="button-save">
+          {({ showModal, hideModal }) => (
+            <ToolbarButton
+              tooltip={t('dashboard.toolbar.save', 'Save dashboard')}
+              icon="save"
+              onClick={() => {
+                showModal(SaveDashboardDrawer, {
+                  dashboard,
+                  onDismiss: hideModal,
+                });
+              }}
+            />
+          )}
+        </ModalsController>
+      );
+    }
+
+    addCustomContent(dynamicDashNavActions.right, buttons);
+
+    if (showSettings) {
+      buttons.push(
+        <ToolbarButton
+          tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
+          icon="cog"
+          onClick={onOpenSettings}
+          key="button-settings"
+        />
+      );
+    }
+
+    if (canEdit && !isFullscreen) {
+      buttons.push(
+        <AddPanelButton
+          onToolbarAddMenuOpen={DashboardInteractions.toolbarAddClick}
+          dashboard={dashboard}
+          key="panel-add-dropdown"
+        />
+      );
+    }
+    if (canShare && !isEmbedded) {
+      buttons.push(<ShareButton key="button-share" dashboard={dashboard} />);
+    }
+
+    // if the timepicker is hidden, we don't need to add this separator
+    if (!hideTimePicker) {
+      buttons.push(<NavToolbarSeparator key="toolbar-separator" />);
+    }
+
+    buttons.push(renderTimeControls());
+
+    return buttons;
+  };
+
+  return (
+    <AppChromeUpdate
+      actions={
+        <>
+          {renderLeftActions()}
+          <NavToolbarSeparator leftActionsSeparator />
+          <ToolbarButtonRow alignment="right">{renderRightActions()}</ToolbarButtonRow>
+        </>
+      }
+    />
+  );
+});
+
+DashNav.displayName = 'DashNav';
+
+const modalStyles = css({
+  width: 'max-content',
+  maxWidth: '80vw',
+});

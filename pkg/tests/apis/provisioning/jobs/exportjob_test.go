@@ -1,0 +1,408 @@
+package jobs
+
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+)
+
+func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
+	helper := sharedHelper(t)
+
+	// Write dashboards at
+	dashboard := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
+	createdV0, err := helper.DashboardsV0.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v0 dashboard")
+
+	// FIXME: add helper and template for dashboards in different versions
+	dashboard = helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
+	createdV1, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v1 dashboard")
+
+	dashboard = helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2alpha1.yaml")
+	createdV2alpha, err := helper.DashboardsV2alpha1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v2alpha1 dashboard")
+
+	dashboard = helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v2beta1.yaml")
+	createdV2beta, err := helper.DashboardsV2beta1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v2beta1 dashboard")
+
+	// Now for the repository.
+	const repo = "local-repository"
+	testRepo := common.TestRepo{
+		Name:       repo,
+		SyncTarget: "instance", // Export is only supported for instance sync
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{}, // No initial files needed for export test
+	}
+	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireDashboards(t, createdV0.GetName(), createdV1.GetName(), createdV2alpha.GetName(), createdV2beta.GetName())
+	helper.RequireRepoFolderCount(t, repo, 0)
+
+	// Now export
+	helper.DebugState(t, repo, "BEFORE EXPORT TO REPOSITORY")
+
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Folder: "", // export entire instance
+			Path:   "", // no prefix necessary for testing
+		},
+	}
+	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+
+	helper.DebugState(t, repo, "AFTER EXPORT TO REPOSITORY")
+
+	type props struct {
+		title      string
+		apiVersion string
+		name       string
+		fileName   string
+	}
+
+	common.PrintFileTree(t, helper.ProvisioningPath)
+
+	// Check that each file was exported with its stored version and new UIDs.
+	// A dashboard created at v0 is relabeled to v1 on export: its body is already
+	// the lossless v1 representation, and a file labeled v0alpha1 cannot be loaded
+	// by the frontend dashboard loader once it is synced back in.
+	for _, test := range []props{
+		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v1", name: "test-v0", fileName: "test-dashboard-created-at-v0.json"},
+		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1", name: "test-v1", fileName: "test-dashboard-created-at-v1.json"},
+		{title: "Test dashboard. Created at v2alpha1", apiVersion: "dashboard.grafana.app/v2alpha1", name: "test-v2alpha1", fileName: "test-dashboard-created-at-v2alpha1.json"},
+		{title: "Test dashboard. Created at v2beta1", apiVersion: "dashboard.grafana.app/v2beta1", name: "test-v2beta1", fileName: "test-dashboard-created-at-v2beta1.json"},
+	} {
+		fpath := filepath.Join(helper.ProvisioningPath, test.fileName)
+		//nolint:gosec // we are ok with reading files in testdata
+		body, err := os.ReadFile(fpath)
+		require.NoError(t, err, "exported file was not created at path %s", fpath)
+		obj := map[string]any{}
+		err = json.Unmarshal(body, &obj)
+		require.NoError(t, err, "exported file not json %s", fpath)
+
+		val, _, err := unstructured.NestedString(obj, "apiVersion")
+		require.NoError(t, err)
+		require.Equal(t, test.apiVersion, val)
+
+		val, _, err = unstructured.NestedString(obj, "spec", "title")
+		require.NoError(t, err)
+		require.Equal(t, test.title, val)
+
+		// Standalone export generates new UIDs — name must differ from original
+		val, _, err = unstructured.NestedString(obj, "metadata", "name")
+		require.NoError(t, err)
+		require.NotEmpty(t, val, "exported file should have a metadata.name")
+		require.NotEqual(t, test.name, val,
+			"standalone export should generate a new UID for %s", test.title)
+
+		require.Nil(t, obj["status"], "should not have a status element")
+	}
+}
+
+// TestIntegrationProvisioning_ExportJob_SkipsSLOManagedResources verifies that
+// resources generated by the SLO app (identified by the "grafana_slo_app-" name
+// prefix) are excluded from an export: they are derived, app-owned artifacts and
+// must not be written to the repository.
+func TestIntegrationProvisioning_ExportJob_SkipsSLOManagedResources(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "export-skip-slo-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "instance", // Export is only supported for instance sync
+		Workflows:  []string{"write"},
+		SkipSync:   true,
+	})
+
+	// Folders: one normal, one SLO-app-generated (grafana_slo_app- name prefix).
+	const (
+		normalFolder = "normal-folder-uid"
+		sloFolder    = "grafana_slo_app-slofolder"
+	)
+	helper.CreateUnmanagedFolderWithName(t, normalFolder, "normal-folder", "")
+	helper.CreateUnmanagedFolderWithName(t, sloFolder, "slo-folder", "")
+
+	// Dashboards: one normal (generated name), one SLO-app-generated.
+	normalDashboard := helper.CreateUnmanagedDashboard(t, "normal-dashboard", "")
+
+	const sloDashboard = "grafana_slo_app-slodash"
+	sloDash := common.NewUnmanagedDashboard("dashboard.grafana.app/v1", "slo-dashboard", "")
+	sloMeta, ok := sloDash.Object["metadata"].(map[string]interface{})
+	require.True(t, ok, "dashboard metadata should be a map")
+	delete(sloMeta, "generateName")
+	sloMeta["name"] = sloDashboard
+	_, err := helper.DashboardsV1.Resource.Create(t.Context(), sloDash, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create SLO-app dashboard")
+
+	// Ensure everything is listable before exporting.
+	helper.RequireDashboards(t, normalDashboard, sloDashboard)
+	helper.RequireFolders(t, normalFolder, sloFolder)
+
+	job := triggerExport(t, helper, repo)
+	// Skipped resources are recorded as ignored (not errors/warnings), so the job succeeds.
+	require.Equal(t, provisioning.JobStateSuccess, job.Status.State,
+		"export should succeed; skipping SLO resources is not an error: %+v", job.Status)
+
+	common.PrintFileTree(t, helper.ProvisioningPath)
+
+	// Normal resources ARE exported.
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "normal-folder"),
+		"normal folder should be exported")
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, "normal-dashboard.json"),
+		"normal dashboard should be exported")
+
+	// SLO-app-generated resources are NOT exported.
+	_, err = os.Stat(filepath.Join(helper.ProvisioningPath, "slo-folder"))
+	require.True(t, os.IsNotExist(err), "SLO-app folder must not be exported to the repository")
+	_, err = os.Stat(filepath.Join(helper.ProvisioningPath, "slo-dashboard.json"))
+	require.True(t, os.IsNotExist(err), "SLO-app dashboard must not be exported to the repository")
+
+	// The SLO resources are skipped, not deleted — they still exist in Grafana.
+	helper.RequireDashboards(t, sloDashboard)
+	helper.RequireFolders(t, sloFolder)
+}
+
+// TestIntegrationProvisioning_ExportJob_ExplicitSLOManagedResourceFails verifies
+// that naming an SLO-app-generated dashboard in the explicit Push.Resources list
+// fails the export. On the bulk path SLO resources are quietly ignored, but a
+// caller that explicitly asks for one gets an error rather than a silent drop:
+// the resource cannot be exported (its underscore name is invalid on sync-back),
+// so the job surfaces the failure.
+func TestIntegrationProvisioning_ExportJob_ExplicitSLOManagedResourceFails(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "export-explicit-slo-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "instance", // Export is only supported for instance sync
+		Workflows:  []string{"write"},
+		SkipSync:   true,
+	})
+
+	// An SLO-app-generated dashboard (grafana_slo_app- name prefix).
+	const sloDashboard = "grafana_slo_app-slodash"
+	sloDash := common.NewUnmanagedDashboard("dashboard.grafana.app/v1", "slo-dashboard", "")
+	sloMeta, ok := sloDash.Object["metadata"].(map[string]any)
+	require.True(t, ok, "dashboard metadata should be a map")
+	delete(sloMeta, "generateName")
+	sloMeta["name"] = sloDashboard
+	_, err := helper.DashboardsV1.Resource.Create(t.Context(), sloDash, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create SLO-app dashboard")
+
+	helper.RequireDashboards(t, sloDashboard)
+
+	// Explicitly name the SLO dashboard in the export.
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: sloDashboard, Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			},
+		},
+	}
+
+	job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
+
+	jobObj := &provisioning.Job{}
+	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+
+	require.Equal(t, provisioning.JobStateError, jobObj.Status.State,
+		"explicitly requesting an SLO-app resource should fail the job: %+v", jobObj.Status)
+
+	foundError := false
+	for _, e := range jobObj.Status.Errors {
+		if strings.Contains(e, sloDashboard) && strings.Contains(e, "generated by another app") {
+			foundError = true
+			break
+		}
+	}
+	require.True(t, foundError,
+		"expected an error that the SLO resource is generated by another app; got: %v", jobObj.Status.Errors)
+
+	// The SLO dashboard must not be exported to the repository.
+	_, err = os.Stat(filepath.Join(helper.ProvisioningPath, "slo-dashboard.json"))
+	require.True(t, os.IsNotExist(err), "SLO-app dashboard must not be exported to the repository")
+
+	// It is not deleted either — it still exists in Grafana.
+	helper.RequireDashboards(t, sloDashboard)
+}
+
+func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T) {
+	helper := sharedHelper(t)
+
+	// Test table for different dashboard versions
+	tests := []struct {
+		name          string
+		file          string
+		createFunc    func(*unstructured.Unstructured, metav1.CreateOptions) (*unstructured.Unstructured, error)
+		expectedTitle string
+		expectedName  string
+		expectedVer   string
+		fileName      string
+	}{
+		{
+			name: "v0alpha1",
+			file: "../exportunifiedtorepository/dashboard-test-v0.yaml",
+			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
+				return helper.DashboardsV0.Resource.Create(t.Context(), dashboard, opts)
+			},
+			expectedTitle: "Test dashboard. Created at v0",
+			expectedName:  "test-v0",
+			// v0 is relabeled to v1 on export so the synced file remains loadable;
+			// see the conversion shim in jobs/export/resources.go.
+			expectedVer: "dashboard.grafana.app/v1",
+			fileName:    "test-dashboard-created-at-v0.json",
+		},
+		{
+			name: "v1",
+			file: "../exportunifiedtorepository/dashboard-test-v1.yaml",
+			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
+				return helper.DashboardsV1.Resource.Create(t.Context(), dashboard, opts)
+			},
+			expectedTitle: "Test dashboard. Created at v1",
+			expectedName:  "test-v1",
+			expectedVer:   "dashboard.grafana.app/v1",
+			fileName:      "test-dashboard-created-at-v1.json",
+		},
+		{
+			name: "v2alpha1",
+			file: "../exportunifiedtorepository/dashboard-test-v2alpha1.yaml",
+			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
+				return helper.DashboardsV2alpha1.Resource.Create(t.Context(), dashboard, opts)
+			},
+			expectedTitle: "Test dashboard. Created at v2alpha1",
+			expectedName:  "test-v2alpha1",
+			expectedVer:   "dashboard.grafana.app/v2alpha1",
+			fileName:      "test-dashboard-created-at-v2alpha1.json",
+		},
+		{
+			name: "v2beta1",
+			file: "../exportunifiedtorepository/dashboard-test-v2beta1.yaml",
+			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
+				return helper.DashboardsV2beta1.Resource.Create(t.Context(), dashboard, opts)
+			},
+			expectedTitle: "Test dashboard. Created at v2beta1",
+			expectedName:  "test-v2beta1",
+			expectedVer:   "dashboard.grafana.app/v2beta1",
+			fileName:      "test-dashboard-created-at-v2beta1.json",
+		},
+	}
+
+	// Create dashboards in different versions
+	names := make([]string, 0, len(tests))
+	for _, tt := range tests {
+		dashboard := helper.LoadYAMLOrJSONFile(tt.file)
+		created, err := tt.createFunc(dashboard, metav1.CreateOptions{})
+		require.NoError(t, err, "should be able to create %s dashboard", tt.name)
+		names = append(names, created.GetName())
+	}
+
+	// Create repository
+	const repo = "version-test-repository"
+	testRepo := common.TestRepo{
+		Name:       repo,
+		SyncTarget: "instance", // Export is only supported for instance sync
+		Workflows:  []string{"write"},
+		Copies:     map[string]string{},
+	}
+	helper.CreateLocalRepo(t, testRepo)
+
+	helper.RequireDashboards(t, names...)
+	helper.RequireRepoFolderCount(t, repo, 0)
+
+	// Export dashboards
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Folder: "",
+			Path:   "",
+		},
+	}
+	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+
+	// Verify each dashboard was exported with its original stored version
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fpath := filepath.Join(helper.ProvisioningPath, tt.fileName)
+			//nolint:gosec // we are ok with reading files in testdata
+			body, err := os.ReadFile(fpath)
+			require.NoError(t, err, "exported file was not created at path %s", fpath)
+
+			obj := map[string]any{}
+			err = json.Unmarshal(body, &obj)
+			require.NoError(t, err, "exported file not json %s", fpath)
+
+			// Verify the exported apiVersion. Non-v0 versions are preserved as stored;
+			// v0 is relabeled to v1 so the synced file stays loadable.
+			val, _, err := unstructured.NestedString(obj, "apiVersion")
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedVer, val, "exported dashboard should have expected apiVersion")
+
+			// Verify title
+			val, _, err = unstructured.NestedString(obj, "spec", "title")
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedTitle, val)
+
+			// Standalone export generates new UIDs — name must differ from original
+			val, _, err = unstructured.NestedString(obj, "metadata", "name")
+			require.NoError(t, err)
+			require.NotEmpty(t, val, "exported file should have a metadata.name")
+			require.NotEqual(t, tt.expectedName, val,
+				"standalone export should generate a new UID for %s", tt.name)
+
+			// Verify no status field in exported file
+			require.Nil(t, obj["status"], "exported file should not have status element")
+		})
+	}
+
+	// Verify that listing via v1 API shows storedVersion when conversion fails
+	// This tests the generic version handling logic
+	dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err, "should be able to list dashboards via v1 API")
+
+	for _, dashboard := range dashboards.Items {
+		// Check if there's a storedVersion in conversion status
+		status, found, _ := unstructured.NestedMap(dashboard.Object, "status")
+		if found && status != nil {
+			conversion, convFound, _ := unstructured.NestedMap(status, "conversion")
+			if convFound && conversion != nil {
+				storedVersion, storedFound, _ := unstructured.NestedString(conversion, "storedVersion")
+				if storedFound && storedVersion != "" {
+					// Verify that the storedVersion is preserved during export
+					// by checking the exported file has the correct version
+					dashboardName := dashboard.GetName()
+					for _, tt := range tests {
+						if tt.expectedName == dashboardName {
+							fpath := filepath.Join(helper.ProvisioningPath, tt.fileName)
+							//nolint:gosec // we are ok with reading files in testdata
+							body, err := os.ReadFile(fpath)
+							require.NoError(t, err, "exported file should exist for %s", dashboardName)
+
+							obj := map[string]any{}
+							err = json.Unmarshal(body, &obj)
+							require.NoError(t, err)
+
+							exportedVersion, _, err := unstructured.NestedString(obj, "apiVersion")
+							require.NoError(t, err)
+							// The exported apiVersion tracks the stored version, except v0
+							// which is relabeled to v1 (see the export conversion shim).
+							require.Equal(t, tt.expectedVer, exportedVersion,
+								"exported version for dashboard %s should be %s (storedVersion=%s)", dashboardName, tt.expectedVer, storedVersion)
+						}
+					}
+				}
+			}
+		}
+	}
+}

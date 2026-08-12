@@ -1,0 +1,1 @@
+SELECT MAX(updated) FROM {{ .Ident .PreferencesTable }}

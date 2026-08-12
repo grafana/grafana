@@ -1,0 +1,392 @@
+[
+ {
+  "uid": "dingding-uid",
+  "name": "all-integrations",
+  "type": "dingding",
+  "settings": {
+   "message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved",
+   "msgType": "actionCard",
+   "title": "Alerts firing: {{ len .Alerts.Firing }}",
+   "url": "[REDACTED]"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "discord-uid",
+  "name": "all-integrations",
+  "type": "discord",
+  "settings": {
+   "avatar_url": "http://avatar",
+   "message": "test-message",
+   "title": "test-title",
+   "url": "[REDACTED]",
+   "use_discord_username": true
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "email-uid",
+  "name": "all-integrations",
+  "type": "email",
+  "settings": {
+   "addresses": "test@grafana.com",
+   "message": "test-message",
+   "singleEmail": true,
+   "subject": "test-subject"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "googlechat-uid",
+  "name": "all-integrations",
+  "type": "googlechat",
+  "settings": {
+   "hide_open_button": true,
+   "hide_version_info": true,
+   "message": "test-message",
+   "title": "test-title",
+   "url": "[REDACTED]"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "jira-uid",
+  "name": "all-integrations",
+  "type": "jira",
+  "settings": {
+   "api_url": "http://localhost",
+   "dedup_key_field": "10000",
+   "description": "Test Description",
+   "fields": {
+    "test-field": "test-value"
+   },
+   "issue_type": "Test Issue Type",
+   "labels": [
+    "Test Label",
+    "Test Label 2"
+   ],
+   "password": "[REDACTED]",
+   "priority": "Test Priority",
+   "project": "Test Project",
+   "reopen_duration": "1m",
+   "reopen_transition": "Test Reopen Transition",
+   "resolve_transition": "Test Resolve Transition",
+   "summary": "Test Summary",
+   "user": "[REDACTED]",
+   "wont_fix_resolution": "Test Won't Fix Resolution"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "kafka-uid",
+  "name": "all-integrations",
+  "type": "kafka",
+  "settings": {
+   "apiVersion": "v2",
+   "description": "test-description",
+   "details": "test-details",
+   "kafkaClusterId": "12345",
+   "kafkaRestProxy": "http://localhost/",
+   "kafkaTopic": "test-topic",
+   "password": "[REDACTED]",
+   "username": "test-user"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "line-uid",
+  "name": "all-integrations",
+  "type": "LINE",
+  "settings": {
+   "description": "test-description",
+   "title": "test-title",
+   "token": "[REDACTED]"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "mqtt-uid",
+  "name": "all-integrations",
+  "type": "mqtt",
+  "settings": {
+   "brokerUrl": "tcp://localhost:1883",
+   "clientId": "grafana-test-client-id",
+   "messageFormat": "json",
+   "password": "[REDACTED]",
+   "qos": "0",
+   "retain": false,
+   "tlsConfig": {
+    "caCertificate": "[REDACTED]",
+    "clientCertificate": "[REDACTED]",
+    "clientKey": "[REDACTED]",
+    "insecureSkipVerify": false
+   },
+   "topic": "grafana/alerts",
+   "username": "test-username"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "oncall-uid",
+  "name": "all-integrations",
+  "type": "oncall",
+  "settings": {
+   "authorization_scheme": "basic",
+   "httpMethod": "PUT",
+   "maxAlerts": "2",
+   "message": "test-message",
+   "password": "[REDACTED]",
+   "title": "test-title",
+   "url": "http://localhost",
+   "username": "test-user"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "opsgenie-uid",
+  "name": "all-integrations",
+  "type": "opsgenie",
+  "settings": {
+   "apiKey": "[REDACTED]",
+   "apiUrl": "http://localhost",
+   "autoClose": false,
+   "description": "test-description",
+   "message": "test-message",
+   "overridePriority": false,
+   "responders": [
+    {
+     "id": "test-id",
+     "type": "team"
+    },
+    {
+     "type": "user",
+     "username": "test-user"
+    },
+    {
+     "name": "test-schedule",
+     "type": "schedule"
+    }
+   ],
+   "sendTagsAs": "both"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "pagerduty-uid",
+  "name": "all-integrations",
+  "type": "pagerduty",
+  "settings": {
+   "class": "test-class",
+   "client": "test-client",
+   "client_url": "http://localhost/test-client-url",
+   "component": "test-component",
+   "group": "test-group",
+   "integrationKey": "[REDACTED]",
+   "severity": "test-severity",
+   "source": "test-source",
+   "summary": "test-summary",
+   "url": "http://localhost/test-api-url"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "prometheus-alertmanager-uid",
+  "name": "all-integrations",
+  "type": "prometheus-alertmanager",
+  "settings": {
+   "basicAuthPassword": "[REDACTED]",
+   "basicAuthUser": "grafana",
+   "url": "https://alertmanager-01.com"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "pushover-uid",
+  "name": "all-integrations",
+  "type": "pushover",
+  "settings": {
+   "apiToken": "[REDACTED]",
+   "device": "test-device",
+   "expire": 333,
+   "message": "test-message",
+   "okPriority": 2,
+   "okSound": "test-ok-sound",
+   "priority": 1,
+   "retry": 555,
+   "sound": "test-sound",
+   "title": "test-title",
+   "uploadImage": false,
+   "userKey": "[REDACTED]"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "sensugo-uid",
+  "name": "all-integrations",
+  "type": "sensugo",
+  "settings": {
+   "apikey": "[REDACTED]",
+   "check": "test-check",
+   "entity": "test-entity",
+   "handler": "test-handler",
+   "message": "test-message",
+   "namespace": "test-namespace",
+   "url": "http://localhost"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "slack-uid",
+  "name": "all-integrations",
+  "type": "slack",
+  "settings": {
+   "color": "test-color",
+   "endpointUrl": "http://localhost/endpoint_url",
+   "icon_emoji": "test-icon",
+   "icon_url": "http://localhost/icon_url",
+   "mentionChannel": "channel",
+   "mentionGroups": "test-mentionGroups",
+   "mentionUsers": "test-mentionUsers",
+   "recipient": "test-recipient",
+   "text": "test-text",
+   "title": "test-title",
+   "token": "[REDACTED]",
+   "url": "[REDACTED]",
+   "username": "test-username"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "sns-uid",
+  "name": "all-integrations",
+  "type": "sns",
+  "settings": {
+   "api_url": "https://sns.us-east-1.amazonaws.com",
+   "attributes": {
+    "attr1": "val1"
+   },
+   "message": "message",
+   "phone_number": "123-456-7890",
+   "sigv4": {
+    "access_key": "[REDACTED]",
+    "profile": "default",
+    "region": "us-east-1",
+    "role_arn": "arn:aws:iam:us-east-1:0123456789:role/my-role",
+    "secret_key": "[REDACTED]"
+   },
+   "subject": "subject",
+   "target_arn": "arn:aws:sns:us-east-1:0123456789:SNSTopicName",
+   "topic_arn": "arn:aws:sns:us-east-1:0123456789:SNSTopicName"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "teams-uid",
+  "name": "all-integrations",
+  "type": "teams",
+  "settings": {
+   "message": "test-message",
+   "sectiontitle": "test-second-title",
+   "title": "test-title",
+   "url": "http://localhost"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "telegram-uid",
+  "name": "all-integrations",
+  "type": "telegram",
+  "settings": {
+   "bottoken": "[REDACTED]",
+   "chatid": "12345678",
+   "disable_notifications": true,
+   "disable_web_page_preview": true,
+   "message": "test-message",
+   "message_thread_id": "13579",
+   "parse_mode": "html",
+   "protect_content": true
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "threema-uid",
+  "name": "all-integrations",
+  "type": "threema",
+  "settings": {
+   "api_secret": "[REDACTED]",
+   "description": "test-description",
+   "gateway_id": "*1234567",
+   "recipient_id": "*1234567",
+   "title": "test-title"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "victorops-uid",
+  "name": "all-integrations",
+  "type": "victorops",
+  "settings": {
+   "description": "test-description",
+   "messageType": "test-messagetype",
+   "title": "test-title",
+   "url": "[REDACTED]"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "webex-uid",
+  "name": "all-integrations",
+  "type": "webex",
+  "settings": {
+   "api_url": "http://localhost",
+   "bot_token": "[REDACTED]",
+   "message": "test-message",
+   "room_id": "test-room-id"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "webhook-uid",
+  "name": "all-integrations",
+  "type": "webhook",
+  "settings": {
+   "authorization_scheme": "basic",
+   "hmacConfig": {
+    "header": "X-Grafana-Alerting-Signature",
+    "secret": "[REDACTED]",
+    "timestampHeader": "X-Grafana-Alerting-Timestamp"
+   },
+   "httpMethod": "PUT",
+   "maxAlerts": "2",
+   "message": "test-message",
+   "password": "[REDACTED]",
+   "title": "test-title",
+   "tlsConfig": {
+    "caCertificate": "[REDACTED]",
+    "clientCertificate": "[REDACTED]",
+    "clientKey": "[REDACTED]",
+    "insecureSkipVerify": false
+   },
+   "url": "grafana://noop",
+   "username": "test-user"
+  },
+  "disableResolveMessage": false
+ },
+ {
+  "uid": "wecom-uid",
+  "name": "all-integrations",
+  "type": "wecom",
+  "settings": {
+   "agent_id": "test-agent_id",
+   "corp_id": "test-corp_id",
+   "endpointUrl": "http://localhost/test-endpointUrl",
+   "message": "test-message",
+   "msgtype": "markdown",
+   "secret": "[REDACTED]",
+   "title": "test-title",
+   "touser": "test-touser",
+   "url": "[REDACTED]"
+  },
+  "disableResolveMessage": false
+ }
+]

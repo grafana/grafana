@@ -1,0 +1,43 @@
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
+package v1beta1
+
+// +k8s:openapi-gen=true
+type ReceiverIntegration struct {
+	Uid                   *string                `json:"uid,omitempty"`
+	Type                  string                 `json:"type"`
+	Version               string                 `json:"version"`
+	DisableResolveMessage *bool                  `json:"disableResolveMessage,omitempty"`
+	Settings              map[string]interface{} `json:"settings"`
+	SecureFields          map[string]bool        `json:"secureFields,omitempty"`
+}
+
+// NewReceiverIntegration creates a new ReceiverIntegration object.
+func NewReceiverIntegration() *ReceiverIntegration {
+	return &ReceiverIntegration{
+		Settings: map[string]interface{}{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ReceiverIntegration.
+func (ReceiverIntegration) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverIntegration"
+}
+
+// +k8s:openapi-gen=true
+type ReceiverSpec struct {
+	Title        string                `json:"title"`
+	Integrations []ReceiverIntegration `json:"integrations"`
+}
+
+// NewReceiverSpec creates a new ReceiverSpec object.
+func NewReceiverSpec() *ReceiverSpec {
+	return &ReceiverSpec{
+		Integrations: []ReceiverIntegration{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ReceiverSpec.
+func (ReceiverSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSpec"
+}

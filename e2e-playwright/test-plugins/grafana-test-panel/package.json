@@ -1,0 +1,40 @@
+{
+  "name": "@test-plugins/grafana-e2etest-panel",
+  "version": "13.3.0-pre",
+  "private": true,
+  "scripts": {
+    "build": "webpack -c ./webpack.config.ts --env production",
+    "dev": "webpack -w -c ./webpack.config.ts --env development",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint --cache --ignore-path ./.gitignore --ext .js,.jsx,.ts,.tsx .",
+    "i18n-extract": "i18next-cli extract --sync-primary"
+  },
+  "author": "Grafana",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@grafana/plugin-configs": "workspace:*",
+    "@types/node": "24.9.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "i18next-cli": "^1.48.0",
+    "typescript": "6.0.2",
+    "webpack": "^5.105.0",
+    "webpack-merge": "5.10.0"
+  },
+  "engines": {
+    "node": ">= 22 <25"
+  },
+  "dependencies": {
+    "@emotion/css": "11.11.2",
+    "@grafana/data": "workspace:*",
+    "@grafana/i18n": "workspace:*",
+    "@grafana/runtime": "workspace:*",
+    "@grafana/ui": "workspace:*",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "peerDependencies": {
+    "@grafana/runtime": "*"
+  },
+  "packageManager": "yarn@4.17.1"
+}

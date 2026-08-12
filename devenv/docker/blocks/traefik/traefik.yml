@@ -1,0 +1,18 @@
+## traefik.yml
+
+# Entrypoints enabled
+entryPoints:
+  web:
+    address: ':80'
+
+# API and dashboard configuration
+api:
+  insecure: true
+
+# Loggings
+log: {}
+
+# File configurations folder
+providers:
+  file:
+    directory: /etc/traefik/configs

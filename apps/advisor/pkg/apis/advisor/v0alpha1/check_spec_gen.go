@@ -1,0 +1,19 @@
+// Code generated - EDITING IS FUTILE. DO NOT EDIT.
+
+package v0alpha1
+
+// +k8s:openapi-gen=true
+type CheckSpec struct {
+	// Generic data input that a check can receive
+	Data map[string]string `json:"data,omitempty"`
+}
+
+// NewCheckSpec creates a new CheckSpec object.
+func NewCheckSpec() *CheckSpec {
+	return &CheckSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for CheckSpec.
+func (CheckSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.advisor.pkg.apis.advisor.v0alpha1.CheckSpec"
+}

@@ -1,0 +1,25 @@
+SELECT tm.id as id, tm.uid as uid, t.uid as team_uid, t.id as team_id, u.uid as user_uid, u.id as user_id, tm.created, tm.updated, tm.permission, tm.external
+FROM {{ .Ident .TeamMemberTable }} tm
+INNER JOIN {{ .Ident .TeamTable }} t ON tm.team_id = t.id
+INNER JOIN {{ .Ident .UserTable }} u ON tm.user_id  = u.id
+WHERE
+  tm.org_id = {{ .Arg .Query.OrgID}}
+  {{ if .Query.UID }}
+    AND tm.uid = {{ .Arg .Query.UID }}
+  {{ end }}
+  {{ if .Query.TeamUID }}
+    AND t.uid = {{ .Arg .Query.TeamUID }}
+  {{ else if .Query.TeamUIDs }}
+    AND t.uid IN ({{ .ArgList .Query.TeamUIDs }})
+  {{ end }}
+  {{ if .Query.UserUID }}
+    AND u.uid = {{ .Arg .Query.UserUID }}
+  {{ end }}
+  {{- if .Query.Pagination.Continue }}
+    AND tm.id > {{ .Arg .Query.Pagination.Continue }}
+  {{- end }}
+  {{- if ne .Query.External nil }}
+    AND tm.external = {{ .Arg .ExternalValue }}
+  {{- end }}
+ORDER BY tm.id ASC
+LIMIT {{ .Arg .Query.Pagination.Limit }};

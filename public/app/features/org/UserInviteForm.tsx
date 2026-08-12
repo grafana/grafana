@@ -1,0 +1,155 @@
+import { Controller } from 'react-hook-form';
+
+import { locationUtil, OrgRole, type SelectableValue } from '@grafana/data';
+import { Trans, t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
+import {
+  Button,
+  LinkButton,
+  Input,
+  Switch,
+  RadioButtonGroup,
+  Field,
+  FieldSet,
+  Icon,
+  TextLink,
+  Tooltip,
+  Label,
+  Stack,
+  Alert,
+} from '@grafana/ui';
+import { getConfig } from 'app/core/config';
+import { useDispatch } from 'app/types/store';
+
+import { Form } from '../../core/components/Form/Form';
+import { addInvitee } from '../invites/state/actions';
+import { getCanInviteUsersToOrg } from '../users/utils';
+
+const tooltipMessage = (
+  <>
+    <Trans i18nKey="org.user-invite-form.tooltip">
+      You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find
+      more information in&nbsp;
+      <TextLink
+        href="https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles"
+        variant="bodySmall"
+        external
+      >
+        our documentation
+      </TextLink>
+      .
+    </Trans>
+  </>
+);
+
+const roles: Array<SelectableValue<OrgRole>> = Object.values(OrgRole).map((r) => ({
+  label: r === OrgRole.None ? 'No basic role' : r,
+  value: r,
+}));
+
+export interface FormModel {
+  role: OrgRole;
+  name: string;
+  loginOrEmail?: string;
+  sendEmail: boolean;
+  email: string;
+}
+
+const defaultValues: FormModel = {
+  name: '',
+  email: '',
+  role: OrgRole.Editor,
+  sendEmail: true,
+};
+
+const UserInviteForm = () => {
+  const dispatch = useDispatch();
+  const disabled = !getCanInviteUsersToOrg();
+
+  const onSubmit = async (formData: FormModel) => {
+    await dispatch(addInvitee(formData)).unwrap();
+    locationService.push('/admin/users/');
+  };
+
+  return (
+    <>
+      {disabled && (
+        <Alert severity="warning" title={t('org.user-invite-form.disabled-title', 'Externally managed users')}>
+          <Trans i18nKey="org.user-invite-form.disabled-message">
+            This form is no longer in use. To invite a new user, please click the button to manage invitations
+            externally.
+          </Trans>
+        </Alert>
+      )}
+
+      <Form defaultValues={defaultValues} onSubmit={onSubmit}>
+        {({ register, control, errors }) => {
+          return (
+            <>
+              <FieldSet>
+                <Field
+                  invalid={!!errors.loginOrEmail}
+                  error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
+                  label={t('org.user-invite-form.label-email-or-username', 'Email or username')}
+                  disabled={disabled}
+                >
+                  {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
+                  <Input {...register('loginOrEmail', { required: true })} placeholder="email@example.com" />
+                </Field>
+                <Field invalid={!!errors.name} label={t('org.user-invite-form.label-name', 'Name')} disabled={disabled}>
+                  <Input
+                    {...register('name')}
+                    placeholder={t('org.user-invite-form.placeholder-optional', '(optional)')}
+                  />
+                </Field>
+                <Field
+                  invalid={!!errors.role}
+                  label={
+                    <Label>
+                      <Stack gap={0.5}>
+                        <span>
+                          <Trans i18nKey="org.user-invite-form.role">Role</Trans>
+                        </span>
+                        {tooltipMessage && (
+                          <Tooltip placement="right-end" interactive={true} content={tooltipMessage}>
+                            <Icon name="info-circle" size="xs" />
+                          </Tooltip>
+                        )}
+                      </Stack>
+                    </Label>
+                  }
+                  disabled={disabled}
+                >
+                  <Controller
+                    render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
+                    control={control}
+                    name="role"
+                  />
+                </Field>
+                <Field
+                  label={t('org.user-invite-form.label-send-invite-email', 'Send invite email')}
+                  disabled={disabled}
+                >
+                  <Switch id="send-email-switch" {...register('sendEmail')} />
+                </Field>
+              </FieldSet>
+              <Stack>
+                <Button type="submit" disabled={disabled}>
+                  <Trans i18nKey="org.user-invite-form.submit">Submit</Trans>
+                </Button>
+                <LinkButton
+                  href={locationUtil.assureBaseUrl(getConfig().appSubUrl + '/admin/users')}
+                  variant="secondary"
+                >
+                  <Trans i18nKey="org.user-invite-form.back">Back</Trans>
+                </LinkButton>
+              </Stack>
+            </>
+          );
+        }}
+      </Form>
+    </>
+  );
+};
+
+export default UserInviteForm;

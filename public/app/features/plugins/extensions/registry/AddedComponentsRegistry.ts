@@ -1,0 +1,94 @@
+import { type ReplaySubject } from 'rxjs';
+
+import { type AppPluginConfig, type PluginExtensionAddedComponentConfig } from '@grafana/data';
+
+import * as errors from '../errors';
+import { isGrafanaDevMode, wrapWithPluginContext } from '../utils';
+import { isAddedComponentMetaInfoMissing } from '../validators';
+
+import { type PluginExtensionConfigs, Registry, type RegistryType } from './Registry';
+
+const logPrefix = 'Could not register component extension. Reason:';
+
+export type AddedComponentRegistryItem<Props = {}> = {
+  pluginId: string;
+  title: string;
+  description?: string;
+  component: React.ComponentType<Props>;
+};
+
+export class AddedComponentsRegistry extends Registry<
+  AddedComponentRegistryItem[],
+  PluginExtensionAddedComponentConfig
+> {
+  constructor(
+    apps: AppPluginConfig[],
+    options: {
+      registrySubject?: ReplaySubject<RegistryType<AddedComponentRegistryItem[]>>;
+      initialState?: RegistryType<AddedComponentRegistryItem[]>;
+    } = {}
+  ) {
+    super(apps, options);
+  }
+
+  mapToRegistry(
+    registry: RegistryType<AddedComponentRegistryItem[]>,
+    item: PluginExtensionConfigs<PluginExtensionAddedComponentConfig>
+  ): RegistryType<AddedComponentRegistryItem[]> {
+    const { pluginId, configs, pluginMeta } = item;
+
+    for (const config of configs) {
+      const configLog = this.logger.child({
+        description: config.description,
+        title: config.title,
+        pluginId,
+      });
+
+      if (!config.title) {
+        configLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
+        continue;
+      }
+
+      if (
+        pluginId !== 'grafana' &&
+        isGrafanaDevMode() &&
+        isAddedComponentMetaInfoMissing(pluginId, config, configLog, this.apps)
+      ) {
+        continue;
+      }
+
+      const extensionPointIds = Array.isArray(config.targets) ? config.targets : [config.targets];
+      for (const extensionPointId of extensionPointIds) {
+        const pointIdLog = configLog.child({ extensionPointId });
+
+        const result = {
+          pluginId,
+          component: wrapWithPluginContext({
+            pluginId,
+            extensionTitle: config.title,
+            Component: config.component,
+            log: pointIdLog,
+            pluginMeta,
+          }),
+          description: config.description,
+          title: config.title,
+        };
+
+        pointIdLog.debug('Added component extension successfully registered');
+
+        // Creating a new array instead of pushing to get a new reference
+        const slice = registry[extensionPointId] ?? [];
+        registry[extensionPointId] = slice.concat(result);
+      }
+    }
+
+    return registry;
+  }
+
+  // Returns a read-only version of the registry.
+  readOnly() {
+    return new AddedComponentsRegistry(this.apps, {
+      registrySubject: this.registrySubject,
+    });
+  }
+}

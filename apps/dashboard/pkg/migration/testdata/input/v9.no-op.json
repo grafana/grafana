@@ -1,0 +1,18 @@
+{
+    "title": "V9 No-Op Migration Test",
+    "schemaVersion": 8,
+    "panels": [
+      {
+        "id": 1,
+        "type": "singlestat"
+      },
+      {
+        "id": 2,
+        "type": "singlestat"
+      },
+      {
+        "id": 3,
+        "type": "graph"
+      }
+    ]
+  }

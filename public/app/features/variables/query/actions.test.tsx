@@ -1,0 +1,501 @@
+import {
+  type DataSourceRef,
+  getDefaultTimeRange,
+  LoadingState,
+  type QueryVariableModel,
+  VariableHide,
+  VariableRefresh,
+  VariableSort,
+} from '@grafana/data';
+import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+
+import { reduxTester } from '../../../../test/core/redux/reduxTester';
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { notifyApp } from '../../../core/reducers/appNotification';
+import { getTimeSrv, setTimeSrv, type TimeSrv } from '../../dashboard/services/TimeSrv';
+import { variableAdapters } from '../adapters';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
+import { updateOptions } from '../state/actions';
+import { getRootReducer, type RootReducerType } from '../state/helpers';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import {
+  addVariable,
+  setCurrentVariableValue,
+  variableStateFailed,
+  variableStateFetching,
+} from '../state/sharedReducer';
+import { variablesInitTransaction } from '../state/transactionReducer';
+import { type VariableQueryEditorProps } from '../types';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunner';
+import { flattenQuery, hasSelfReferencingQuery, updateQueryVariableOptions } from './actions';
+import { createQueryVariableAdapter } from './adapter';
+import { updateVariableOptions } from './reducer';
+
+const mocks: Record<string, any> = {
+  datasource: {
+    metricFindQuery: jest.fn().mockResolvedValue([]),
+  },
+  dataSourceSrv: {
+    get: (ref: DataSourceRef) => Promise.resolve(mocks[ref.uid!]),
+    getList: jest.fn().mockReturnValue([]),
+  },
+  pluginLoader: {
+    importDataSource: jest.fn().mockResolvedValue({ components: {} }),
+  },
+  VariableQueryEditor(props: VariableQueryEditorProps) {
+    return <div>this is a variable query editor</div>;
+  },
+};
+
+setDataSourceSrv(mocks.dataSourceSrv as DataSourceSrv);
+
+jest.mock('../../plugins/importer/pluginImporter', () => ({
+  pluginImporter: { importDataSource: () => mocks.pluginLoader.importDataSource() },
+}));
+
+jest.mock('../../templating/template_srv', () => ({
+  replace: jest.fn().mockReturnValue(''),
+}));
+
+describe('query actions', () => {
+  let originalTimeSrv: TimeSrv;
+
+  beforeEach(() => {
+    originalTimeSrv = getTimeSrv();
+    setTimeSrv({
+      timeRange: jest.fn().mockReturnValue(getDefaultTimeRange()),
+    } as unknown as TimeSrv);
+    setVariableQueryRunner(new VariableQueryRunner());
+  });
+
+  afterEach(() => {
+    setTimeSrv(originalTimeSrv);
+  });
+
+  variableAdapters.setInit(() => [createQueryVariableAdapter()]);
+
+  describe('when updateQueryVariableOptions is dispatched but there is no ongoing transaction', () => {
+    it('then correct actions are dispatched', async () => {
+      const variable = createVariable({ includeAll: false });
+      const optionsMetrics = [createMetric('A'), createMetric('B')];
+
+      mockDatasourceMetrics(variable, optionsMetrics);
+
+      const tester = await reduxTester<RootReducerType>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable)), true);
+
+      tester.thenNoActionsWhereDispatched();
+    });
+  });
+
+  describe('when updateQueryVariableOptions is dispatched for variable without both tags and includeAll', () => {
+    it('then correct actions are dispatched', async () => {
+      const variable = createVariable({ includeAll: false });
+      const optionsMetrics = [createMetric('A'), createMetric('B')];
+
+      mockDatasourceMetrics(variable, optionsMetrics);
+
+      const tester = await reduxTester<RootReducerType>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable)), true);
+
+      const option = createOption('A');
+      const update = { results: optionsMetrics, templatedRegex: '' };
+
+      tester.thenDispatchedActionsShouldEqual(
+        toKeyedAction('key', updateVariableOptions(toVariablePayload(variable, update))),
+        toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
+      );
+    });
+  });
+
+  describe('when updateQueryVariableOptions is dispatched for variable with includeAll but without tags', () => {
+    it('then correct actions are dispatched', async () => {
+      const variable = createVariable({ includeAll: true });
+      const optionsMetrics = [createMetric('A'), createMetric('B')];
+
+      mockDatasourceMetrics(variable, optionsMetrics);
+
+      const tester = await reduxTester<RootReducerType>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable)), true);
+
+      const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
+      const update = { results: optionsMetrics, templatedRegex: '' };
+
+      tester.thenDispatchedActionsShouldEqual(
+        toKeyedAction('key', updateVariableOptions(toVariablePayload(variable, update))),
+        toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
+      );
+    });
+  });
+
+  describe('when updateQueryVariableOptions is dispatched for variable with searchFilter', () => {
+    it('then correct actions are dispatched', async () => {
+      const variable = createVariable({ includeAll: true });
+      const optionsMetrics = [createMetric('A'), createMetric('B')];
+
+      mockDatasourceMetrics(variable, optionsMetrics);
+
+      const tester = await reduxTester<RootReducerType>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
+        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), 'search'), true);
+
+      const update = { results: optionsMetrics, templatedRegex: '' };
+
+      tester.thenDispatchedActionsShouldEqual(
+        toKeyedAction('key', updateVariableOptions(toVariablePayload(variable, update)))
+      );
+    });
+  });
+
+  describe('when updateQueryVariableOptions is dispatched and fails for variable open in editor', () => {
+    silenceConsoleOutput();
+    it('then correct actions are dispatched', async () => {
+      const variable = createVariable({ includeAll: true });
+      const error = new Error('failed to fetch metrics');
+
+      mocks[variable.datasource!.uid!].metricFindQuery = jest.fn(() => Promise.reject(error));
+
+      const tester = await reduxTester<RootReducerType>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
+        .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(variable)), true);
+
+      tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
+        const expectedNumberOfActions = 3;
+
+        expect(dispatchedActions[0]).toEqual(toKeyedAction('key', variableStateFetching(toVariablePayload(variable))));
+        expect(dispatchedActions[1]).toEqual(
+          toKeyedAction('key', variableStateFailed(toVariablePayload(variable, { error })))
+        );
+        expect(dispatchedActions[2].type).toEqual(notifyApp.type);
+        expect(dispatchedActions[2].payload.title).toEqual('Templating [0]');
+        expect(dispatchedActions[2].payload.text).toEqual('Error updating options: failed to fetch metrics');
+        expect(dispatchedActions[2].payload.severity).toEqual('error');
+
+        return dispatchedActions.length === expectedNumberOfActions;
+      });
+    });
+  });
+
+  describe('hasSelfReferencingQuery', () => {
+    it('when called with a string', () => {
+      const query = '$query';
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(true);
+    });
+
+    it('when called with an array', () => {
+      const query = ['$query'];
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(true);
+    });
+
+    it('when called with a simple object', () => {
+      const query = { a: '$query' };
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(true);
+    });
+
+    it('when called with a complex object', () => {
+      const query = {
+        level2: {
+          level3: {
+            query: 'query3',
+            refId: 'C',
+            num: 2,
+            bool: true,
+            arr: [
+              { query: 'query4', refId: 'D', num: 4, bool: true },
+              {
+                query: 'query5',
+                refId: 'E',
+                num: 5,
+                bool: true,
+                arr: [{ query: '$query', refId: 'F', num: 6, bool: true }],
+              },
+            ],
+          },
+          query: 'query2',
+          refId: 'B',
+          num: 1,
+          bool: false,
+        },
+        query: 'query1',
+        refId: 'A',
+        num: 0,
+        bool: true,
+        arr: [
+          { query: 'query7', refId: 'G', num: 7, bool: true },
+          {
+            query: 'query8',
+            refId: 'H',
+            num: 8,
+            bool: true,
+            arr: [{ query: 'query9', refId: 'I', num: 9, bool: true }],
+          },
+        ],
+      };
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(true);
+    });
+
+    it('when called with a number', () => {
+      const query = 1;
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(false);
+    });
+  });
+
+  describe('flattenQuery', () => {
+    it('when called with a complex object', () => {
+      const query = {
+        level2: {
+          level3: {
+            query: '${query3}',
+            refId: 'C',
+            num: 2,
+            bool: true,
+            arr: [
+              { query: '${query4}', refId: 'D', num: 4, bool: true },
+              {
+                query: '${query5}',
+                refId: 'E',
+                num: 5,
+                bool: true,
+                arr: [{ query: '${query6}', refId: 'F', num: 6, bool: true }],
+              },
+            ],
+          },
+          query: '${query2}',
+          refId: 'B',
+          num: 1,
+          bool: false,
+        },
+        query: '${query1}',
+        refId: 'A',
+        num: 0,
+        bool: true,
+        arr: [
+          { query: '${query7}', refId: 'G', num: 7, bool: true },
+          {
+            query: '${query8}',
+            refId: 'H',
+            num: 8,
+            bool: true,
+            arr: [{ query: '${query9}', refId: 'I', num: 9, bool: true }],
+          },
+        ],
+      };
+
+      expect(flattenQuery(query)).toEqual({
+        query: '${query1}',
+        refId: 'A',
+        num: 0,
+        bool: true,
+        level2_query: '${query2}',
+        level2_refId: 'B',
+        level2_num: 1,
+        level2_bool: false,
+        level2_level3_query: '${query3}',
+        level2_level3_refId: 'C',
+        level2_level3_num: 2,
+        level2_level3_bool: true,
+        level2_level3_arr_0_query: '${query4}',
+        level2_level3_arr_0_refId: 'D',
+        level2_level3_arr_0_num: 4,
+        level2_level3_arr_0_bool: true,
+        level2_level3_arr_1_query: '${query5}',
+        level2_level3_arr_1_refId: 'E',
+        level2_level3_arr_1_num: 5,
+        level2_level3_arr_1_bool: true,
+        level2_level3_arr_1_arr_0_query: '${query6}',
+        level2_level3_arr_1_arr_0_refId: 'F',
+        level2_level3_arr_1_arr_0_num: 6,
+        level2_level3_arr_1_arr_0_bool: true,
+        arr_0_query: '${query7}',
+        arr_0_refId: 'G',
+        arr_0_num: 7,
+        arr_0_bool: true,
+        arr_1_query: '${query8}',
+        arr_1_refId: 'H',
+        arr_1_num: 8,
+        arr_1_bool: true,
+        arr_1_arr_0_query: '${query9}',
+        arr_1_arr_0_refId: 'I',
+        arr_1_arr_0_num: 9,
+        arr_1_arr_0_bool: true,
+      });
+    });
+  });
+
+  it('returns correct result when called with an object with null values inside', () => {
+    const query = {
+      level2: {
+        level3: {
+          query: '${query3}',
+          refId: 'C',
+          num: 2,
+          bool: true,
+          null: null,
+          arr: [
+            { query: '${query4}', refId: 'D', num: 4, bool: true },
+            {
+              query: '${query5}',
+              refId: 'E',
+              num: 5,
+              bool: true,
+              arr: [{ query: '${query6}', refId: 'F', num: 6, bool: true }],
+            },
+          ],
+        },
+        query: '${query2}',
+        refId: 'B',
+        num: 1,
+        bool: false,
+      },
+      query: '${query1}',
+      refId: 'A',
+      num: 0,
+      bool: true,
+      arr: [
+        { query: '${query7}', refId: 'G', num: 7, bool: true },
+        {
+          query: '${query8}',
+          refId: 'H',
+          num: 8,
+          bool: true,
+          arr: [{ query: '${query9}', refId: 'I', num: 9, bool: true, null: null }],
+        },
+      ],
+    };
+
+    expect(flattenQuery(query)).toEqual({
+      query: '${query1}',
+      refId: 'A',
+      num: 0,
+      bool: true,
+      level2_query: '${query2}',
+      level2_refId: 'B',
+      level2_num: 1,
+      level2_bool: false,
+      level2_level3_query: '${query3}',
+      level2_level3_refId: 'C',
+      level2_level3_num: 2,
+      level2_level3_bool: true,
+      level2_level3_null: null,
+      level2_level3_arr_0_query: '${query4}',
+      level2_level3_arr_0_refId: 'D',
+      level2_level3_arr_0_num: 4,
+      level2_level3_arr_0_bool: true,
+      level2_level3_arr_1_query: '${query5}',
+      level2_level3_arr_1_refId: 'E',
+      level2_level3_arr_1_num: 5,
+      level2_level3_arr_1_bool: true,
+      level2_level3_arr_1_arr_0_query: '${query6}',
+      level2_level3_arr_1_arr_0_refId: 'F',
+      level2_level3_arr_1_arr_0_num: 6,
+      level2_level3_arr_1_arr_0_bool: true,
+      arr_0_query: '${query7}',
+      arr_0_refId: 'G',
+      arr_0_num: 7,
+      arr_0_bool: true,
+      arr_1_query: '${query8}',
+      arr_1_refId: 'H',
+      arr_1_num: 8,
+      arr_1_bool: true,
+      arr_1_arr_0_query: '${query9}',
+      arr_1_arr_0_refId: 'I',
+      arr_1_arr_0_num: 9,
+      arr_1_arr_0_bool: true,
+      arr_1_arr_0_null: null,
+    });
+  });
+
+  it('returns correct result when called with null', () => {
+    const query = null;
+
+    expect(flattenQuery(query)).toEqual({ query: null });
+  });
+});
+
+function mockDatasourceMetrics(variable: QueryVariableModel, optionsMetrics: unknown[]) {
+  const metrics: Record<string, unknown[]> = {
+    [variable.query]: optionsMetrics,
+  };
+
+  const { metricFindQuery } = mocks[variable.datasource?.uid!];
+
+  metricFindQuery.mockReset();
+  metricFindQuery.mockImplementation((query: string) => Promise.resolve(metrics[query] ?? []));
+}
+
+function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableModel {
+  return {
+    type: 'query',
+    id: '0',
+    rootStateKey: 'key',
+    global: false,
+    current: createOption(''),
+    options: [],
+    query: 'options-query',
+    name: 'Constant',
+    label: '',
+    hide: VariableHide.dontHide,
+    skipUrlSync: false,
+    index: 0,
+    datasource: { uid: 'datasource' },
+    definition: '',
+    sort: VariableSort.alphabeticalAsc,
+    refresh: VariableRefresh.onDashboardLoad,
+    regex: '',
+    multi: true,
+    includeAll: true,
+    state: LoadingState.NotStarted,
+    error: null,
+    description: null,
+    ...(extend ?? {}),
+  };
+}
+
+function createOption(text: string, value?: string) {
+  const metric = createMetric(text);
+  return {
+    ...metric,
+    value: value ?? metric.text,
+    selected: false,
+  };
+}
+
+function createMetric(value: string) {
+  return {
+    text: value,
+  };
+}

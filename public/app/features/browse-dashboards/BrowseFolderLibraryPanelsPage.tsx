@@ -1,0 +1,60 @@
+import { useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
+
+import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { Page } from 'app/core/components/Page/Page';
+import { useNavModel } from 'app/features/browse-dashboards/hooks/useNavModel';
+
+import { type GrafanaRouteComponentProps } from '../../core/navigation/types';
+import { LibraryPanelsSearch } from '../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
+import { OpenLibraryPanelModal } from '../library-panels/components/OpenLibraryPanelModal/OpenLibraryPanelModal';
+import { type LibraryElementDTO } from '../library-panels/types';
+
+import { FolderDetailsActions } from './components/FolderDetailsActions/FolderDetailsActions';
+
+export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
+
+export function BrowseFolderLibraryPanelsPage() {
+  const { uid: folderUID = '' } = useParams();
+  const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
+  const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
+  const [saveFolder] = useUpdateFolder();
+
+  const navModel = useNavModel(folderDTO, 'panels');
+
+  const onEditTitle = folderUID
+    ? async (newValue: string) => {
+        if (folderDTO) {
+          const result = await saveFolder({
+            ...folderDTO,
+            title: newValue,
+          });
+          if ('error' in result) {
+            throw result.error;
+          }
+        }
+      }
+    : undefined;
+
+  return (
+    <Page
+      navId="dashboards/browse"
+      pageNav={navModel}
+      onEditTitle={onEditTitle}
+      actions={folderDTO && <FolderDetailsActions folderDTO={folderDTO} />}
+    >
+      <Page.Contents>
+        <LibraryPanelsSearch
+          onClick={setSelected}
+          currentFolderUID={folderUID}
+          showSecondaryActions
+          showSort
+          showPanelFilter
+        />
+        {selected ? <OpenLibraryPanelModal onDismiss={() => setSelected(undefined)} libraryPanel={selected} /> : null}
+      </Page.Contents>
+    </Page>
+  );
+}
+
+export default BrowseFolderLibraryPanelsPage;

@@ -1,0 +1,38 @@
+{
+ "apiVersion": 1,
+ "policies": [
+  {
+   "orgId": 1,
+   "receiver": "default-receiver",
+   "group_by": [
+    "..."
+   ],
+   "routes": [
+    {
+     "object_matchers": [
+      [
+       "utf8",
+       "=",
+       "🤖🔥✨👩🏽‍💻🚀🧪🧠😂💥🫠🇨🇦"
+      ]
+     ]
+    },
+    {},
+    {
+     "object_matchers": [
+      [
+       "path",
+       "=~",
+       "^/api/v[0-9]+/\\p{L}[\\p{L}\\p{N}_\\-]*$"
+      ],
+      [
+       "special_regex_chars",
+       "=",
+       ".*+?^()|[]\\"
+      ]
+     ]
+    }
+   ]
+  }
+ ]
+}

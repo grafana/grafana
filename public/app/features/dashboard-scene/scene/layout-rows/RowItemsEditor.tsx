@@ -1,0 +1,46 @@
+import { t } from '@grafana/i18n';
+import { Checkbox } from '@grafana/ui';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+
+import { getGroupSelectedCategory } from '../layouts-shared/GroupSelectedActions';
+
+import { type RowItems } from './RowItems';
+
+export function getSidebarOptions(model: RowItems): OptionsPaneCategoryDescriptor[] {
+  const categoryId = 'rows-options';
+  const options = new OptionsPaneCategoryDescriptor({ title: '', id: categoryId }).addItem(
+    new OptionsPaneItemDescriptor({
+      title: t('dashboard.sidebar.row.header.title', 'Row header'),
+      id: `${categoryId}-row-header`,
+      render: () => <RowHeaderCheckboxMulti model={model} />,
+    })
+  );
+
+  return [getGroupSelectedCategory(model.getRows()), options];
+}
+
+function RowHeaderCheckboxMulti({ model }: { model: RowItems }) {
+  const rows = model.getRows();
+
+  let value = false;
+  let indeterminate = false;
+
+  for (let i = 0; i < rows.length; i++) {
+    const { hideHeader } = rows[i].useState();
+
+    const prevElement = rows[i - 1];
+    indeterminate = indeterminate || (prevElement && !!prevElement.state.hideHeader !== !!hideHeader);
+
+    value = value || !!hideHeader;
+  }
+
+  return (
+    <Checkbox
+      label={t('dashboard.sidebar.row.header.hide', 'Hide')}
+      value={value}
+      indeterminate={indeterminate}
+      onChange={() => model.onHeaderHiddenToggle(value, indeterminate)}
+    />
+  );
+}

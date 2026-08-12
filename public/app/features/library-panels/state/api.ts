@@ -1,0 +1,221 @@
+import { lastValueFrom } from 'rxjs';
+
+import { type VizPanel } from '@grafana/scenes';
+import { type LibraryPanel, defaultDashboard } from '@grafana/schema';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { AutoGridItem } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItem';
+import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
+import { vizPanelToPanel } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModel';
+import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/utils';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
+
+import { getBackendSrv } from '../../../core/services/backend_srv';
+import {
+  type LibraryElementConnectionDTO,
+  type LibraryElementDTO,
+  LibraryElementKind,
+  type LibraryElementsSearchResult,
+  type PanelModelWithLibraryPanel,
+} from '../types';
+
+export interface GetLibraryPanelsOptions {
+  searchString?: string;
+  perPage?: number;
+  page?: number;
+  excludeUid?: string;
+  sortDirection?: string;
+  typeFilter?: string[];
+  folderFilterUIDs?: string[];
+  signal?: AbortSignal;
+}
+
+export async function getLibraryPanels({
+  searchString = '',
+  perPage = 100,
+  page = 1,
+  excludeUid = '',
+  sortDirection = '',
+  typeFilter = [],
+  folderFilterUIDs = [],
+  signal,
+}: GetLibraryPanelsOptions = {}): Promise<LibraryElementsSearchResult> {
+  const params = new URLSearchParams();
+  params.append('searchString', searchString);
+  params.append('sortDirection', sortDirection);
+  params.append('typeFilter', typeFilter.join(','));
+  params.append('folderFilterUIDs', folderFilterUIDs.join(','));
+  params.append('excludeUid', excludeUid);
+  params.append('perPage', perPage.toString(10));
+  params.append('page', page.toString(10));
+  params.append('kind', LibraryElementKind.Panel.toString(10));
+
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<{ result: LibraryElementsSearchResult }>({
+      method: 'GET',
+      url: `/api/library-elements?${params.toString()}`,
+      abortSignal: signal,
+      showErrorAlert: false,
+    })
+  );
+  return response.data.result;
+}
+
+export async function getLibraryPanel(uid: string, isHandled = false): Promise<LibraryElementDTO> {
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<{ result: LibraryElementDTO }>({
+      method: 'GET',
+      url: `/api/library-elements/${uid}`,
+      showSuccessAlert: !isHandled,
+      showErrorAlert: !isHandled,
+    })
+  );
+  // kinda heavy weight migration process!!!
+  const { result } = response.data;
+  const dash = new DashboardModel({
+    ...defaultDashboard,
+    schemaVersion: 35, // should be saved in the library panel
+    panels: [result.model],
+  });
+  const { scopedVars, ...model } = dash.panels[0].getSaveModel(); // migrated panel
+
+  //These properties should not exist on LibraryPanel.model which is of type Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>
+  delete model.gridPos;
+  delete model.id;
+  delete model.libraryPanel;
+
+  dash.destroy(); // kill event listeners
+  return {
+    ...result,
+    model,
+  };
+}
+
+export async function getLibraryPanelByName(name: string): Promise<LibraryElementDTO[]> {
+  const { result } = await getBackendSrv().get<{ result: LibraryElementDTO[] }>(
+    `/api/library-elements/name/${name}`,
+    undefined,
+    undefined,
+    {
+      validatePath: true,
+    }
+  );
+  return result;
+}
+
+export async function addLibraryPanel(
+  panelSaveModel: PanelModelWithLibraryPanel,
+  folderUid: string,
+  uid?: string
+): Promise<LibraryElementDTO> {
+  const { result } = await getBackendSrv().post(`/api/library-elements`, {
+    folderUid,
+    name: panelSaveModel.libraryPanel.name,
+    model: panelSaveModel,
+    kind: LibraryElementKind.Panel,
+    ...(uid ? { uid } : {}),
+  });
+  return result;
+}
+
+export async function updateLibraryPanel(panelSaveModel: PanelModelWithLibraryPanel): Promise<LibraryElementDTO> {
+  const { libraryPanel, ...model } = panelSaveModel;
+  const { uid, name, version, folderUid } = libraryPanel;
+  const kind = LibraryElementKind.Panel;
+  const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
+    folderUid,
+    name,
+    model,
+    version,
+    kind,
+  });
+  return result;
+}
+
+export function deleteLibraryPanel(uid: string): Promise<{ message: string }> {
+  return getBackendSrv().delete(`/api/library-elements/${uid}`);
+}
+
+export async function getLibraryPanelConnectedDashboards(
+  libraryPanelUid: string
+): Promise<LibraryElementConnectionDTO[]> {
+  const { result } = await getBackendSrv().get<{ result: LibraryElementConnectionDTO[] }>(
+    `/api/library-elements/${libraryPanelUid}/connections`
+  );
+  return result;
+}
+
+export async function getConnectedDashboards(uid: string): Promise<DashboardQueryResult[] | null> {
+  const connections = await getLibraryPanelConnectedDashboards(uid);
+  if (connections.length === 0) {
+    return null;
+  }
+
+  const result = await getGrafanaSearcher().search({ uid: connections.map((c) => c.connectionUid) });
+  return result.view.toArray();
+}
+
+export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {
+  const libraryPanelBehavior = getLibraryPanelBehavior(vizPanel);
+
+  const { uid, name, _loadedPanel } = libraryPanelBehavior!.state;
+
+  const layoutItem = vizPanel.parent;
+  if (!layoutItem) {
+    throw new Error('Trying to save a library panel that does not have a layout parent');
+  }
+
+  const gridPos =
+    layoutItem instanceof DashboardGridItem
+      ? {
+          x: layoutItem.state.x ?? 0,
+          y: layoutItem.state.y ?? 0,
+          w: layoutItem.state.width ?? 0,
+          h: layoutItem.state.height ?? 0,
+        }
+      : layoutItem instanceof AutoGridItem
+        ? { x: 0, y: 0, w: 6, h: 3 }
+        : undefined;
+
+  if (!gridPos) {
+    throw new Error('Trying to save a library panel that does not have a supported layout parent');
+  }
+
+  // we need all the panel properties to save the library panel,
+  // so we clone it and remove the behaviour to get what we need
+  const saveModel = {
+    ..._loadedPanel,
+    uid,
+    name,
+    type: vizPanel.state.pluginId,
+    model: vizPanelToPanel(vizPanel.clone({ $behaviors: undefined }), gridPos, false, layoutItem),
+    kind: LibraryElementKind.Panel,
+    version: _loadedPanel?.version || 0,
+  };
+  return saveModel;
+}
+
+async function updateLibraryVizPanel(vizPanel: VizPanel): Promise<LibraryPanel> {
+  const { uid, folderUid, name, model, version, kind } = libraryVizPanelToSaveModel(vizPanel);
+
+  const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
+    folderUid,
+    name,
+    model,
+    version,
+    kind,
+  });
+  return result;
+}
+
+export async function saveLibPanel(panel: VizPanel) {
+  const updatedLibPanel = await updateLibraryVizPanel(panel);
+
+  const libPanelBehavior = getLibraryPanelBehavior(panel);
+
+  if (!libPanelBehavior) {
+    throw new Error('Could not find library panel behavior for panel');
+  }
+
+  libPanelBehavior.setPanelFromLibPanel(updatedLibPanel);
+}

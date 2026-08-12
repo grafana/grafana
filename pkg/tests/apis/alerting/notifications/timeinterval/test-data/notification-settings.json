@@ -1,0 +1,63 @@
+{
+  "template_files": {},
+  "template_file_provenances": {},
+  "alertmanager_config": {
+    "route": {
+      "receiver": "empty",
+      "routes": [
+        {
+          "object_matchers": [
+            [
+              "test",
+              "=",
+              "test"
+            ]
+          ],
+          "mute_time_intervals": [
+            "test-interval",
+            "persisted-interval"
+          ],
+          "active_time_intervals": [
+            "test-interval",
+            "persisted-interval",
+            "test-interval-for-active-time-interval"
+          ]
+        }
+      ]
+    },
+    "mute_time_intervals": [
+      {
+        "name": "test-interval",
+        "time_intervals": [
+          {
+            "start_time": "06:00",
+            "end_time": "23:59"
+          }
+        ]
+      },
+      {
+        "name": "persisted-interval",
+        "time_intervals": [
+          {
+            "start_time": "06:00",
+            "end_time": "23:59"
+          }
+        ]
+      },
+      {
+        "name": "test-interval-for-active-time-interval",
+        "time_intervals": [
+          {
+            "start_time": "06:00",
+            "end_time": "23:59"
+          }
+        ]
+      }
+    ],
+    "receivers": [
+      {
+        "name": "empty"
+      }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+stream_over_http_enabled: true
+
+server:
+  http_listen_port: 3200
+  log_level: info
+
+distributor:
+  usage:
+    cost_attribution:
+      enabled: true
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 'tempo:4317'
+        http:
+          endpoint: 'tempo:4318'
+
+storage:
+  trace:
+    backend: local # Specify local storage explicitly
+
+    # The Write-Ahead Log (WAL) is a logging mechanism used to ensure data integrity. In the context of Tempo,
+    # the WAL is used to record changes to trace data before they are committed to the main storage.
+    #This helps in recovering data in case of a failure. The WAL stores these changes in a sequential log file,
+    #which can be replayed to reconstruct the state of the system.
+    wal:
+      path: /var/lib/tempo/wal
+    # indicates that the storage backend is local, meaning the data will be stored on the local filesystem.
+    local:
+      path: /var/lib/tempo/blocks # Path for block storage
+
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      cluster: docker-compose
+  storage:
+    path: /var/lib/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+  traces_storage:
+    path: /var/lib/tempo/generator/traces
+  processor:
+    local_blocks:
+      filter_server_spans: false
+      flush_to_storage: true

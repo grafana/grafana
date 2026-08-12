@@ -1,0 +1,876 @@
+import { type Observable, of } from 'rxjs';
+
+import {
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  DataSourceApi,
+  type DataSourceInstanceListItem,
+  type DataSourceInstanceSettings,
+  DataSourcePlugin,
+  type ScopedVars,
+} from '@grafana/data';
+import { type GetDataSourceListFilters, RuntimeDataSource, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import {
+  ExpressionDatasourceRef,
+  initDataSourceInstanceSettings,
+  setExpressionDataSourceInstance,
+} from '@grafana/runtime/internal';
+import {
+  type GetDataSourceInstanceListFilters,
+  getDataSourceInstanceList,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime/unstable';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
+
+// Datasource variable $datasource with current value 'BBB'
+const templateSrv = {
+  getVariables: () => [
+    {
+      type: 'datasource',
+      name: 'datasource',
+      current: {
+        value: 'BBB',
+      },
+    },
+    {
+      type: 'datasource',
+      name: 'datasourceByUid',
+      current: {
+        value: 'uid-code-DDDD',
+      },
+    },
+    {
+      type: 'datasource',
+      name: 'datasourceDefault',
+      current: {
+        value: 'default',
+      },
+    },
+  ],
+  replace: (v: string, scopedVars: ScopedVars) => {
+    if (scopedVars && scopedVars.datasource) {
+      return v.replace('${datasource}', scopedVars.datasource.value);
+    }
+
+    let result = v.replace('${datasource}', 'BBB');
+    result = result.replace('${datasourceByUid}', 'DDDD');
+    result = result.replace('${datasourceDefault}', 'default');
+    return result;
+  },
+} as TemplateSrv;
+
+class TestDataSource {
+  constructor(public instanceSettings: DataSourceInstanceSettings) {}
+}
+
+class TestRuntimeDataSource extends RuntimeDataSource {
+  query(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
+    return of({ data: [] });
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const importDataSourceMock = jest.fn((_meta?: any) => Promise.resolve(new DataSourcePlugin(TestDataSource as any)));
+
+jest.mock('./importer/pluginImporter', () => ({
+  pluginImporter: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    importDataSource: (meta: any) => importDataSourceMock(meta),
+  },
+}));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getDatasourcePluginMeta: jest.fn(),
+  refetchDatasourcePluginMetas: jest.fn(() => Promise.resolve()),
+  logPluginMetaError: jest.fn(),
+  logPluginMetaWarning: jest.fn(),
+}));
+
+const { getDatasourcePluginMeta, refetchDatasourcePluginMetas, logPluginMetaError, logPluginMetaWarning } =
+  jest.requireMock('@grafana/runtime/internal');
+
+const getBackendSrvGetMock = jest.fn();
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({
+    get: getBackendSrvGetMock,
+  }),
+}));
+
+describe('datasource_srv', () => {
+  beforeEach(() => {
+    jest.resetModules();
+  });
+
+  const dataSourceSrv = new DatasourceSrv(templateSrv);
+  const dataSourceInit = {
+    mmm: {
+      type: 'test-db',
+      name: 'mmm',
+      uid: 'uid-code-mmm',
+      meta: { metrics: true, annotations: true },
+    },
+    '-- Grafana --': {
+      type: 'datasource',
+      name: '-- Grafana --',
+      meta: { builtIn: true, metrics: true, id: 'grafana' },
+    },
+    '-- Dashboard --': {
+      type: 'datasource',
+      name: '-- Dashboard --',
+      meta: { builtIn: true, metrics: true, id: 'dashboard' },
+    },
+    '-- Mixed --': {
+      type: 'datasource',
+      name: '-- Mixed --',
+      meta: { builtIn: true, metrics: true, id: 'mixed' },
+    },
+    ZZZ: {
+      type: 'test-db',
+      name: 'ZZZ',
+      uid: 'uid-code-ZZZ',
+      meta: { metrics: true },
+    },
+    aaa: {
+      type: 'test-db',
+      name: 'aaa',
+      uid: 'uid-code-aaa',
+      meta: { metrics: true },
+    },
+    BBB: {
+      type: 'test-db',
+      name: 'BBB',
+      uid: 'uid-code-BBB',
+      meta: { metrics: true },
+      isDefault: true,
+    },
+    DDDD: {
+      type: 'test-db',
+      name: 'DDDD',
+      uid: 'uid-code-DDDD',
+      meta: { metrics: true },
+    },
+    Jaeger: {
+      type: 'jaeger-db',
+      name: 'Jaeger',
+      uid: 'uid-code-Jaeger',
+      meta: { tracing: true, id: 'jaeger' },
+    },
+    CannotBeQueried: {
+      type: 'no-query',
+      name: 'no-query',
+      uid: 'no-query',
+      meta: { id: 'no-query' },
+    },
+    TestData: {
+      type: 'grafana-testdata-datasource',
+      name: 'TestData',
+      uid: 'testdata',
+      meta: { metrics: true, id: 'grafana-testdata-datasource', aliasIDs: ['testdata'] },
+    },
+    Prometheus: {
+      type: 'prometheus',
+      name: 'Prometheus',
+      uid: 'uid-code-prometheus',
+      meta: { metrics: true, id: 'prometheus' },
+    },
+    AmazonPrometheus: {
+      type: 'grafana-amazonprometheus-datasource',
+      name: 'Amazon Prometheus',
+      uid: 'uid-code-amp',
+      meta: { metrics: true, id: 'grafana-amazonprometheus-datasource' },
+    },
+    AzurePrometheus: {
+      type: 'grafana-azureprometheus-datasource',
+      name: 'Azure Prometheus',
+      uid: 'uid-code-azp',
+      meta: { metrics: true, id: 'grafana-azureprometheus-datasource' },
+    },
+  };
+
+  describe('Given a list of data sources', () => {
+    const runtimeDataSource = new TestRuntimeDataSource('grafana-runtime-datasource', 'uuid-runtime-ds');
+
+    beforeAll(() => {
+      dataSourceSrv.registerRuntimeDataSource({
+        dataSource: runtimeDataSource,
+      });
+    });
+
+    beforeEach(() => {
+      importDataSourceMock.mockClear();
+      getDatasourcePluginMeta.mockReset();
+      // Mirrors production semantics: one plugin meta per plugin type, shared across instances.
+      getDatasourcePluginMeta.mockImplementation(async (type: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const entry = Object.values(dataSourceInit).find((d: any) => d.type === type) as any;
+        return entry?.meta ?? { id: type };
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      dataSourceSrv.init(dataSourceInit as any, 'BBB');
+    });
+
+    describe('when getting data source class instance', () => {
+      it('should load plugin and create instance and set meta', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const ds = (await dataSourceSrv.get('mmm')) as any;
+        expect(ds.meta).toBe(dataSourceInit.mmm.meta);
+        expect(ds.instanceSettings).toBe(dataSourceInit.mmm);
+
+        // validate that it caches instance
+        const ds2 = await dataSourceSrv.get('mmm');
+        expect(ds).toBe(ds2);
+      });
+
+      it('should be able to load data source using uid as well', async () => {
+        const dsByUid = await dataSourceSrv.get('uid-code-mmm');
+        const dsByName = await dataSourceSrv.get('mmm');
+        expect(dsByUid.meta).toBe(dsByName.meta);
+        expect(dsByUid).toBe(dsByName);
+      });
+
+      it('should patch legacy datasources', async () => {
+        expect(TestDataSource instanceof DataSourceApi).toBe(false);
+        const instance = await dataSourceSrv.get('mmm');
+        expect(instance.name).toBe('mmm');
+        expect(instance.type).toBe('test-db');
+        expect(instance.uid).toBe('uid-code-mmm');
+        expect(instance.getRef()).toEqual({ type: 'test-db', uid: 'uid-code-mmm' });
+      });
+
+      it('Can get by variable', async () => {
+        const ds = await dataSourceSrv.get('${datasource}');
+        expect(ds.uid).toBe(dataSourceInit.BBB.uid);
+
+        const ds2 = await dataSourceSrv.get('${datasource}', { datasource: { text: 'Prom', value: 'uid-code-aaa' } });
+        expect(ds2.uid).toBe(dataSourceInit.aaa.uid);
+      });
+    });
+
+    describe('when getting instance settings', () => {
+      it('should work by name or uid', () => {
+        const ds = dataSourceSrv.getInstanceSettings('mmm');
+        expect(dataSourceSrv.getInstanceSettings('uid-code-mmm')).toBe(ds);
+        expect(dataSourceSrv.getInstanceSettings({ uid: 'uid-code-mmm' })).toBe(ds);
+      });
+
+      it('should work with variable by ds name', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasource}');
+        expect(ds?.name).toBe('${datasource}');
+        expect(ds?.uid).toBe('${datasource}');
+        expect(ds?.rawRef).toMatchInlineSnapshot(`
+          {
+            "type": "test-db",
+            "uid": "uid-code-BBB",
+          }
+        `);
+      });
+
+      it('should work with variable by ds value (uid)', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasourceByUid}');
+        expect(ds?.name).toBe('${datasourceByUid}');
+        expect(ds?.uid).toBe('${datasourceByUid}');
+        expect(ds?.rawRef).toMatchInlineSnapshot(`
+          {
+            "type": "test-db",
+            "uid": "uid-code-DDDD",
+          }
+        `);
+      });
+
+      it('should work with variable via scopedVars', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasource}', {
+          datasource: { text: 'Prom', value: 'uid-code-aaa' },
+        });
+        expect(ds?.rawRef?.uid).toBe('uid-code-aaa');
+      });
+
+      it('should not set isDefault when being fetched via variable', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasource}');
+        expect(ds?.isDefault).toBe(false);
+      });
+
+      it('should work with variable', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasourceDefault}');
+        expect(ds?.name).toBe('${datasourceDefault}');
+        expect(ds?.uid).toBe('${datasourceDefault}');
+        expect(ds?.rawRef).toMatchInlineSnapshot(`
+          {
+            "type": "test-db",
+            "uid": "uid-code-BBB",
+          }
+        `);
+      });
+
+      it('should return expression settings with either expression UIDs', () => {
+        const exprWithOldUID = dataSourceSrv.getInstanceSettings('-100');
+        expect(exprWithOldUID?.name).toBe('Expression');
+        expect(exprWithOldUID?.uid).toBe(ExpressionDatasourceRef.uid);
+        expect(exprWithOldUID?.type).toBe(ExpressionDatasourceRef.type);
+
+        const exprWithNewUID = dataSourceSrv.getInstanceSettings('__expr__');
+        expect(exprWithNewUID?.name).toBe('Expression');
+        expect(exprWithNewUID?.uid).toBe(ExpressionDatasourceRef.uid);
+        expect(exprWithNewUID?.type).toBe(ExpressionDatasourceRef.type);
+      });
+
+      it('should return expression settings with expression name', () => {
+        const exprWithName = dataSourceSrv.getInstanceSettings('Expression');
+        expect(exprWithName?.name).toBe(ExpressionDatasourceRef.name);
+        expect(exprWithName?.uid).toBe(ExpressionDatasourceRef.uid);
+        expect(exprWithName?.type).toBe(ExpressionDatasourceRef.type);
+      });
+
+      it('should return settings for runtime datasource when called with uid', () => {
+        const settings = dataSourceSrv.getInstanceSettings(runtimeDataSource.uid);
+        expect(settings).toBe(runtimeDataSource.instanceSettings);
+      });
+
+      it('should not return settings for runtime datasource when called with name', () => {
+        const settings = dataSourceSrv.getInstanceSettings(runtimeDataSource.name);
+        expect(settings).toBe(undefined);
+      });
+
+      it('should handle type-only datasource references consistently', async () => {
+        const typeOnlyRef = { type: 'jaeger-db' };
+
+        const datasource = await dataSourceSrv.get(typeOnlyRef);
+        const settings = dataSourceSrv.getInstanceSettings(typeOnlyRef);
+
+        expect(datasource.uid).toBe('uid-code-Jaeger');
+        expect(datasource.type).toBe('jaeger-db');
+        expect(settings?.uid).toBe(datasource.uid);
+        expect(settings?.type).toBe(datasource.type);
+        expect(settings?.name).toBe('Jaeger');
+      });
+    });
+
+    describe('when loading datasource', () => {
+      it('should load expressions', async () => {
+        let api = await dataSourceSrv.loadDatasource('-100'); // Legacy expression id
+        expect(api.uid).toBe(ExpressionDatasourceRef.uid);
+
+        api = await dataSourceSrv.loadDatasource('__expr__'); // Legacy expression id
+        expect(api.uid).toBe(ExpressionDatasourceRef.uid);
+
+        api = await dataSourceSrv.loadDatasource('Expression'); // Legacy expression id
+        expect(api.uid).toBe(ExpressionDatasourceRef.uid);
+      });
+
+      it('should load by variable', async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const api = (await dataSourceSrv.loadDatasource('${datasource}')) as any;
+        expect(api.instanceSettings.rawRef.uid).toBe(dataSourceInit.BBB.uid);
+      });
+
+      it('should load by name', async () => {
+        const api = await dataSourceSrv.loadDatasource('ZZZ');
+        expect(api.uid).toBe(dataSourceInit.ZZZ.uid);
+      });
+
+      it('should use meta from getDatasourcePluginMeta when available', async () => {
+        const freshSrv = new DatasourceSrv(templateSrv);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        freshSrv.init(dataSourceInit as any, 'BBB');
+        const apiMeta = { id: 'test-db', metrics: true, fromApi: true };
+        getDatasourcePluginMeta.mockResolvedValueOnce(apiMeta);
+
+        await freshSrv.loadDatasource('ZZZ');
+
+        expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-db');
+        expect(importDataSourceMock).toHaveBeenCalledWith(apiMeta);
+      });
+
+      it('should fall back to instanceSettings.meta when getDatasourcePluginMeta returns null', async () => {
+        const freshSrv = new DatasourceSrv(templateSrv);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        freshSrv.init(dataSourceInit as any, 'BBB');
+        getDatasourcePluginMeta.mockResolvedValueOnce(null);
+        importDataSourceMock.mockClear();
+        logPluginMetaWarning.mockClear();
+
+        await freshSrv.loadDatasource('ZZZ');
+
+        expect(getDatasourcePluginMeta).toHaveBeenCalledWith('test-db');
+        expect(importDataSourceMock).toHaveBeenCalledWith(dataSourceInit.ZZZ.meta);
+        expect(logPluginMetaWarning).toHaveBeenCalledWith(
+          expect.stringContaining('falling back to instanceSettings.meta'),
+          { key: 'ZZZ', pluginId: 'test-db' }
+        );
+      });
+    });
+
+    describe('when getting datasource by type', () => {
+      it('should return the first value of each type', async () => {
+        const jaeger = await dataSourceSrv.get({ type: `jaeger-db` });
+        const testdata = await dataSourceSrv.get({ type: `grafana-testdata-datasource` });
+        expect(jaeger.uid).toBe('uid-code-Jaeger');
+        expect(testdata.uid).toBe('testdata');
+      });
+
+      it('should prefer the default value', async () => {
+        const api = await dataSourceSrv.get({ type: `test-db` });
+        expect(api.uid).toBe('uid-code-BBB');
+      });
+    });
+
+    it('Should by default filter out data sources that cannot be queried', () => {
+      const list = dataSourceSrv.getList({});
+      expect(list.find((x) => x.name === 'no-query')).toBeUndefined();
+      const all = dataSourceSrv.getList({ all: true });
+      expect(all.find((x) => x.name === 'no-query')).toBeDefined();
+    });
+
+    it('Can get list of data sources with variables: true', () => {
+      const list = dataSourceSrv.getList({ metrics: true, variables: true });
+      expect(list[0].name).toBe('${datasourceByUid}');
+      expect(list[1].name).toBe('${datasourceDefault}');
+      expect(list[2].name).toBe('${datasource}');
+    });
+
+    it('Should filter out the -- Grafana -- datasource', () => {
+      const list = dataSourceSrv.getList({ filter: (x) => x.name !== '-- Grafana --' });
+      expect(list.find((x) => x.name === '-- Grafana --')).toBeUndefined();
+    });
+
+    it('Can get list of data sources with tracing: true', () => {
+      const list = dataSourceSrv.getList({ tracing: true });
+      expect(list[0].name).toBe('Jaeger');
+    });
+
+    it('Can get list of data sources with annotation: true', () => {
+      const list = dataSourceSrv.getList({ annotations: true });
+      expect(list[0].name).toBe('mmm');
+    });
+
+    describe('get list filtered by plugin Id', () => {
+      it('should list all data sources for specified plugin id', () => {
+        const list = dataSourceSrv.getList({ pluginId: 'jaeger' });
+        expect(list.length).toBe(1);
+        expect(list[0].name).toBe('Jaeger');
+      });
+
+      it('should include Prometheus flavor data sources when pluginId is prometheus', () => {
+        const list = dataSourceSrv.getList({ pluginId: 'prometheus' });
+        expect(list.length).toBe(3);
+        expect(list[0].name).toBe('Amazon Prometheus');
+        expect(list[0].type).toBe('grafana-amazonprometheus-datasource');
+        expect(list[1].name).toBe('Azure Prometheus');
+        expect(list[1].type).toBe('grafana-azureprometheus-datasource');
+        expect(list[2].name).toBe('Prometheus');
+        expect(list[2].type).toBe('prometheus');
+      });
+
+      it('should include compatible Prometheus data sources when pluginId is a flavor of prometheus', () => {
+        const list = dataSourceSrv.getList({ pluginId: 'grafana-amazonprometheus-datasource' });
+        expect(list.length).toBe(3);
+        expect(list[0].name).toBe('Amazon Prometheus');
+        expect(list[0].type).toBe('grafana-amazonprometheus-datasource');
+        expect(list[1].name).toBe('Azure Prometheus');
+        expect(list[1].type).toBe('grafana-azureprometheus-datasource');
+        expect(list[2].name).toBe('Prometheus');
+        expect(list[2].type).toBe('prometheus');
+      });
+
+      it('should not include runtime datasources in list', () => {
+        const list = dataSourceSrv.getList({ pluginId: 'grafana-runtime-datasource' });
+        expect(list.length).toBe(0);
+      });
+    });
+
+    it('Can get get list and filter by an alias', () => {
+      const list = dataSourceSrv.getList({ pluginId: 'testdata' });
+      expect(list[0].name).toBe('TestData');
+      expect(list.length).toBe(1);
+    });
+
+    it('Can get list  of data sources with metrics: true, builtIn: true, mixed: true', () => {
+      expect(dataSourceSrv.getList({ metrics: true, dashboard: true, mixed: true })).toMatchInlineSnapshot(`
+        [
+          {
+            "meta": {
+              "metrics": true,
+            },
+            "name": "aaa",
+            "type": "test-db",
+            "uid": "uid-code-aaa",
+          },
+          {
+            "meta": {
+              "id": "grafana-amazonprometheus-datasource",
+              "metrics": true,
+            },
+            "name": "Amazon Prometheus",
+            "type": "grafana-amazonprometheus-datasource",
+            "uid": "uid-code-amp",
+          },
+          {
+            "meta": {
+              "id": "grafana-azureprometheus-datasource",
+              "metrics": true,
+            },
+            "name": "Azure Prometheus",
+            "type": "grafana-azureprometheus-datasource",
+            "uid": "uid-code-azp",
+          },
+          {
+            "isDefault": true,
+            "meta": {
+              "metrics": true,
+            },
+            "name": "BBB",
+            "type": "test-db",
+            "uid": "uid-code-BBB",
+          },
+          {
+            "meta": {
+              "metrics": true,
+            },
+            "name": "DDDD",
+            "type": "test-db",
+            "uid": "uid-code-DDDD",
+          },
+          {
+            "meta": {
+              "annotations": true,
+              "metrics": true,
+            },
+            "name": "mmm",
+            "type": "test-db",
+            "uid": "uid-code-mmm",
+          },
+          {
+            "meta": {
+              "id": "prometheus",
+              "metrics": true,
+            },
+            "name": "Prometheus",
+            "type": "prometheus",
+            "uid": "uid-code-prometheus",
+          },
+          {
+            "meta": {
+              "aliasIDs": [
+                "testdata",
+              ],
+              "id": "grafana-testdata-datasource",
+              "metrics": true,
+            },
+            "name": "TestData",
+            "type": "grafana-testdata-datasource",
+            "uid": "testdata",
+          },
+          {
+            "meta": {
+              "metrics": true,
+            },
+            "name": "ZZZ",
+            "type": "test-db",
+            "uid": "uid-code-ZZZ",
+          },
+          {
+            "meta": {
+              "builtIn": true,
+              "id": "mixed",
+              "metrics": true,
+            },
+            "name": "-- Mixed --",
+            "type": "datasource",
+            "uid": "-- Mixed --",
+          },
+          {
+            "meta": {
+              "builtIn": true,
+              "id": "dashboard",
+              "metrics": true,
+            },
+            "name": "-- Dashboard --",
+            "type": "datasource",
+            "uid": "-- Dashboard --",
+          },
+          {
+            "meta": {
+              "builtIn": true,
+              "id": "grafana",
+              "metrics": true,
+            },
+            "name": "-- Grafana --",
+            "type": "datasource",
+            "uid": "-- Grafana --",
+          },
+        ]
+      `);
+    });
+
+    describe('when calling reload', () => {
+      it('should reload the datasource list', async () => {
+        // arrange
+        getBackendSrvGetMock.mockReturnValueOnce({
+          datasources: {
+            ...dataSourceInit,
+          },
+          defaultDatasource: 'aaa',
+        });
+        const initMock = jest.spyOn(dataSourceSrv, 'init').mockImplementation(() => {});
+        // act
+        await dataSourceSrv.reload();
+        // assert
+        expect(getBackendSrvGetMock).toHaveBeenCalledWith('/api/frontend/settings');
+        expect(initMock).toHaveBeenCalledWith(dataSourceInit, 'aaa');
+      });
+
+      it('should still be possible to get registered runtime data source', async () => {
+        getBackendSrvGetMock.mockReturnValueOnce({
+          datasources: {
+            ...dataSourceInit,
+          },
+          defaultDatasource: 'aaa',
+        });
+
+        await dataSourceSrv.reload();
+        const ds = await dataSourceSrv.get(runtimeDataSource.getRef());
+        expect(ds).toBe(runtimeDataSource);
+      });
+
+      it('should forward the fetched settings to refetchDatasourcePluginMetas to avoid a second /api/frontend/settings request', async () => {
+        const settings = {
+          datasources: { ...dataSourceInit },
+          defaultDatasource: 'aaa',
+        };
+        getBackendSrvGetMock.mockReset();
+        getBackendSrvGetMock.mockReturnValueOnce(settings);
+        refetchDatasourcePluginMetas.mockClear();
+
+        await dataSourceSrv.reload();
+
+        expect(getBackendSrvGetMock).toHaveBeenCalledTimes(1);
+        expect(refetchDatasourcePluginMetas).toHaveBeenCalledWith(settings);
+      });
+
+      it('should sync the new async instance-settings cache from the same fetched payload', async () => {
+        // Mirror startup: the expression datasource is injected into the new cache.
+        setExpressionDataSourceInstance(expressionDatasource);
+
+        getBackendSrvGetMock.mockReset();
+        getBackendSrvGetMock.mockReturnValueOnce({
+          datasources: { ...dataSourceInit },
+          defaultDatasource: 'aaa',
+        });
+
+        await dataSourceSrv.reload();
+
+        // The new API reflects the freshly fetched datasources...
+        const list = await getDataSourceInstanceList({ all: true });
+        expect(list.some((x) => x.name === 'mmm')).toBe(true);
+        // ...the expression built-in still resolves...
+        expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
+        // ...and the sync added no second /api/frontend/settings request.
+        expect(getBackendSrvGetMock).toHaveBeenCalledTimes(1);
+      });
+
+      it('should log via logPluginMetaError when refetchDatasourcePluginMetas rejects', async () => {
+        getBackendSrvGetMock.mockReturnValueOnce({
+          datasources: { ...dataSourceInit },
+          defaultDatasource: 'aaa',
+        });
+        const error = new Error('boom');
+        refetchDatasourcePluginMetas.mockReturnValueOnce(Promise.reject(error));
+        logPluginMetaError.mockClear();
+
+        await dataSourceSrv.reload();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(logPluginMetaError).toHaveBeenCalledWith('Failed to refresh datasource plugin metadata', error);
+      });
+    });
+
+    describe('when registering runtime datasources', () => {
+      it('should have registered a runtime datasource', async () => {
+        const ds = await dataSourceSrv.get(runtimeDataSource.getRef());
+        expect(ds).toBe(runtimeDataSource);
+      });
+
+      it('should throw when trying to re-register a runtime datasource', () => {
+        expect(() =>
+          dataSourceSrv.registerRuntimeDataSource({
+            dataSource: runtimeDataSource,
+          })
+        ).toThrow();
+      });
+
+      it('should throw when trying to register a runtime datasource with the same uid as an "regular" datasource', async () => {
+        expect(() =>
+          dataSourceSrv.registerRuntimeDataSource({
+            dataSource: new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-code-Jaeger'),
+          })
+        ).toThrow();
+      });
+    });
+  });
+
+  describe('getNameOrUid', () => {
+    it('should return expression uid __expr__', () => {
+      expect(getNameOrUid('__expr__')).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid('-100')).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid('Expression')).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid({ type: '__expr__' })).toBe(ExpressionDatasourceRef.uid);
+      expect(getNameOrUid({ type: '-100' })).toBe(ExpressionDatasourceRef.uid);
+    });
+
+    it('should return ref if it is string', () => {
+      const value = 'mixed-datasource';
+      const nameOrUid = getNameOrUid(value);
+      expect(nameOrUid).not.toBeUndefined();
+      expect(nameOrUid).toBe(value);
+    });
+
+    it('should return the uid if the ref is not string', () => {
+      const value = { type: 'mixed', uid: 'theUID' };
+      const nameOrUid = getNameOrUid(value);
+      expect(nameOrUid).not.toBeUndefined();
+      expect(nameOrUid).toBe(value.uid);
+    });
+
+    it('should return undefined if the ref has no uid', () => {
+      const value = { type: 'mixed' };
+      const nameOrUid = getNameOrUid(value);
+      expect(nameOrUid).toBeUndefined();
+    });
+  });
+});
+
+// Pins the new async list API to the exact behaviour of the legacy DatasourceSrv.getList:
+// same capability/pluginId/type filtering, datasource-variable injection, alphabetical
+// sorting and built-in (-- Grafana --/-- Mixed --/-- Dashboard --) ordering. Both impls are
+// seeded with identical data and their outputs compared across a filter matrix. This is the
+// only place both can be imported together (the runtime package can't import core).
+describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', () => {
+  const DEFAULT_NAME = 'BBB';
+
+  // Datasource variables consumed by the `variables: true` filter.
+  const parityTemplateSrv = {
+    getVariables: () => [
+      { type: 'datasource', name: 'datasource', current: { value: 'BBB' } },
+      { type: 'datasource', name: 'datasourceByUid', current: { value: 'uid-code-DDDD' } },
+      { type: 'datasource', name: 'datasourceDefault', current: { value: 'default' } },
+    ],
+    replace: (v: string) => v,
+  } as unknown as TemplateSrv;
+
+  const paritySources = {
+    mmm: {
+      type: 'test-db',
+      name: 'mmm',
+      uid: 'uid-code-mmm',
+      meta: { metrics: true, annotations: true, id: 'test-db' },
+    },
+    '-- Grafana --': {
+      type: 'datasource',
+      name: '-- Grafana --',
+      meta: { builtIn: true, metrics: true, id: 'grafana' },
+    },
+    '-- Dashboard --': {
+      type: 'datasource',
+      name: '-- Dashboard --',
+      meta: { builtIn: true, metrics: true, id: 'dashboard' },
+    },
+    '-- Mixed --': { type: 'datasource', name: '-- Mixed --', meta: { builtIn: true, metrics: true, id: 'mixed' } },
+    ZZZ: { type: 'test-db', name: 'ZZZ', uid: 'uid-code-ZZZ', meta: { metrics: true, id: 'test-db' } },
+    aaa: { type: 'test-db', name: 'aaa', uid: 'uid-code-aaa', meta: { metrics: true, id: 'test-db' } },
+    BBB: { type: 'test-db', name: 'BBB', uid: 'uid-code-BBB', meta: { metrics: true, id: 'test-db' }, isDefault: true },
+    DDDD: { type: 'test-db', name: 'DDDD', uid: 'uid-code-DDDD', meta: { metrics: true, id: 'test-db' } },
+    Jaeger: { type: 'jaeger-db', name: 'Jaeger', uid: 'uid-code-Jaeger', meta: { tracing: true, id: 'jaeger' } },
+    CannotBeQueried: { type: 'no-query', name: 'no-query', uid: 'no-query', meta: { id: 'no-query' } },
+    Loki: { type: 'loki', name: 'Loki', uid: 'uid-code-loki', meta: { logs: true, category: 'logging', id: 'loki' } },
+    TestData: {
+      type: 'grafana-testdata-datasource',
+      name: 'TestData',
+      uid: 'testdata',
+      meta: { metrics: true, id: 'grafana-testdata-datasource', aliasIDs: ['testdata'] },
+    },
+    Prometheus: {
+      type: 'prometheus',
+      name: 'Prometheus',
+      uid: 'uid-code-prometheus',
+      meta: { metrics: true, id: 'prometheus' },
+    },
+  };
+
+  // Independent clone per cache so in-place uid assignment can't leak between them.
+  const clone = () => JSON.parse(JSON.stringify(paritySources));
+
+  // Stable, comparable projection. Keeps array order so sort / built-in ordering drift is caught.
+  const project = (list: DataSourceInstanceSettings[]) =>
+    list.map((d) => ({ name: d.name, uid: d.uid, type: d.type, isDefault: d.isDefault ?? false }));
+
+  // The async list returns slim items; project to the same shape as the legacy projection.
+  const projectListItems = (list: DataSourceInstanceListItem[]) =>
+    list.map((d) => ({ name: d.name, uid: d.uid, type: d.type, isDefault: d.isDefault }));
+
+  // Adapt GetDataSourceInstanceListFilters for the legacy getList() call: the slim filter
+  // callback receives a DataSourceInstanceListItem, so wrap it to construct one from the full
+  // DataSourceInstanceSettings. This avoids an `any` cast and stays safe if future cases add
+  // filter callbacks that read uid/type/meta or other DataSourceInstanceListItem fields.
+  const toLegacyFilters = (filters: GetDataSourceInstanceListFilters): GetDataSourceListFilters => {
+    const { filter, ...rest } = filters;
+    if (!filter) {
+      return rest;
+    }
+    return {
+      ...rest,
+      filter: (ds: DataSourceInstanceSettings) =>
+        filter({
+          uid: ds.uid,
+          type: ds.type,
+          apiVersion: ds.apiVersion,
+          name: ds.name,
+          meta: ds.meta,
+          readOnly: ds.readOnly,
+          isDefault: ds.isDefault ?? false,
+        }),
+    };
+  };
+
+  let legacySrv: DatasourceSrv;
+
+  beforeEach(() => {
+    setTemplateSrv(parityTemplateSrv);
+    legacySrv = new DatasourceSrv(parityTemplateSrv);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    legacySrv.init(clone() as any, DEFAULT_NAME);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    initDataSourceInstanceSettings(clone() as any, DEFAULT_NAME);
+  });
+
+  const cases: Array<{ label: string; filters: GetDataSourceInstanceListFilters }> = [
+    { label: 'no filters', filters: {} },
+    { label: 'all: true (includes non-queryable)', filters: { all: true } },
+    { label: 'metrics: true', filters: { metrics: true } },
+    { label: 'tracing: true', filters: { tracing: true } },
+    { label: 'logs: true', filters: { logs: true } },
+    { label: 'annotations: true', filters: { annotations: true } },
+    { label: 'alerting: true (suppresses built-ins)', filters: { alerting: true } },
+    { label: 'mixed: true', filters: { mixed: true } },
+    { label: 'dashboard: true', filters: { dashboard: true } },
+    { label: 'metrics + mixed + dashboard', filters: { metrics: true, mixed: true, dashboard: true } },
+    { label: 'type as string', filters: { type: 'test-db' } },
+    { label: 'type as array', filters: { type: ['prometheus', 'test-db'] } },
+    { label: 'type matched via aliasIDs', filters: { type: 'testdata' } },
+    { label: 'pluginId', filters: { pluginId: 'jaeger' } },
+    { label: 'pluginId matched via aliasIDs', filters: { pluginId: 'testdata' } },
+    { label: 'pluginId suppresses built-ins', filters: { pluginId: 'test-db', mixed: true, dashboard: true } },
+    { label: 'variables: true', filters: { variables: true } },
+    { label: 'variables + metrics', filters: { variables: true, metrics: true } },
+    { label: 'custom filter excludes -- Grafana --', filters: { filter: (x) => x.name !== '-- Grafana --' } },
+  ];
+
+  it.each(cases)('matches getList for $label', async ({ filters }) => {
+    const legacy = project(legacySrv.getList(toLegacyFilters(filters)));
+    const asyncList = projectListItems(await getDataSourceInstanceList(filters));
+    expect(asyncList).toEqual(legacy);
+  });
+});

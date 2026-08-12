@@ -1,0 +1,58 @@
+import { useMemo } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
+
+import { type AlertmanagerAlert, type Silence } from 'app/plugins/datasource/alertmanager/types';
+
+import { alertSilencesApi } from '../api/alertSilencesApi';
+import { alertmanagerApi } from '../api/alertmanagerApi';
+import { useAlertmanager } from '../state/AlertmanagerContext';
+import { getDatasourceAPIUid } from '../utils/datasource';
+
+import { isGranted } from './abilities/abilityUtils';
+import { useSilenceAbility } from './abilities/alertmanager/useSilenceAbility';
+import { SilenceAction } from './abilities/types';
+
+interface UseSilenceViewDataResult {
+  silence?: Silence;
+  silencedAlerts: AlertmanagerAlert[];
+  isLoading: boolean;
+  error: unknown;
+}
+
+export function useSilenceViewData(): UseSilenceViewDataResult {
+  const { id: silenceId = '' } = useParams();
+  const { selectedAlertmanager: alertManagerSourceName = '' } = useAlertmanager();
+
+  const {
+    data: silence,
+    isLoading,
+    error,
+  } = alertSilencesApi.endpoints.getSilence.useQuery({
+    id: silenceId,
+    datasourceUid: getDatasourceAPIUid(alertManagerSourceName),
+    ruleMetadata: true,
+    accessControl: true,
+  });
+
+  const previewAbility = useSilenceAbility({ action: SilenceAction.Preview });
+  const canPreview = isGranted(previewAbility);
+
+  const { data: alertManagerAlerts = [] } = alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
+    {
+      amSourceName: alertManagerSourceName,
+      filter: { silenced: true, active: false, inhibited: false },
+    },
+    { skip: !canPreview }
+  );
+
+  const silencedAlerts = useMemo(() => {
+    return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(silenceId));
+  }, [alertManagerAlerts, silenceId]);
+
+  return {
+    silence,
+    silencedAlerts,
+    isLoading,
+    error,
+  };
+}

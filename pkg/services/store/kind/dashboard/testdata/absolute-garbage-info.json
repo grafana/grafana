@@ -1,0 +1,58 @@
+{
+  "title": "adfbg6f",
+  "tags": null,
+  "datasource": [
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "green pie",
+      "libraryPanel": "a7975b7a-fb53-4ab7-951d-15810953b54f",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 0,
+      "title": "",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 0,
+  "linkCount": 4,
+  "timeFrom": "",
+  "timeTo": "",
+  "timezone": ""
+}

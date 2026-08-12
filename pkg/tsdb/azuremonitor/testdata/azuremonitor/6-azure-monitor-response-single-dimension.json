@@ -1,0 +1,128 @@
+{
+  "cost": 0,
+  "timespan": "2019-02-09T15:21:39Z\/2019-02-09T21:21:39Z",
+  "interval": "PT1H",
+  "value": [
+    {
+      "id": "\/subscriptions\/xxx\/resourceGroups\/grafanastaging\/providers\/Microsoft.Storage\/storageAccounts\/grafanastaging\/blobServices\/default\/providers\/Microsoft.Insights\/metrics\/BlobCount",
+      "type": "Microsoft.Insights\/metrics",
+      "name": {
+        "value": "BlobCount",
+        "localizedValue": "Blob Count"
+      },
+      "unit": "Count",
+      "timeseries": [
+        {
+          "metadatavalues": [
+            {
+              "name": {
+                "value": "blobtype",
+                "localizedValue": "blobtype"
+              },
+              "value": "PageBlob"
+            }
+          ],
+          "data": [
+            {
+              "timeStamp": "2019-02-09T15:21:00Z",
+              "average": 3
+            },
+            {
+              "timeStamp": "2019-02-09T16:21:00Z",
+              "average": 3
+            },
+            {
+              "timeStamp": "2019-02-09T17:21:00Z",
+              "average": 3
+            },
+            {
+              "timeStamp": "2019-02-09T18:21:00Z",
+              "average": 3
+            },
+            {
+              "timeStamp": "2019-02-09T19:21:00Z",
+              "average": 3
+            },
+            {
+              "timeStamp": "2019-02-09T20:21:00Z"
+            }
+          ]
+        },
+        {
+          "metadatavalues": [
+            {
+              "name": {
+                "value": "blobtype",
+                "localizedValue": "blobtype"
+              },
+              "value": "BlockBlob"
+            }
+          ],
+          "data": [
+            {
+              "timeStamp": "2019-02-09T15:21:00Z",
+              "average": 1
+            },
+            {
+              "timeStamp": "2019-02-09T16:21:00Z",
+              "average": 1
+            },
+            {
+              "timeStamp": "2019-02-09T17:21:00Z",
+              "average": 1
+            },
+            {
+              "timeStamp": "2019-02-09T18:21:00Z",
+              "average": 1
+            },
+            {
+              "timeStamp": "2019-02-09T19:21:00Z",
+              "average": 1
+            },
+            {
+              "timeStamp": "2019-02-09T20:21:00Z"
+            }
+          ]
+        },
+        {
+          "metadatavalues": [
+            {
+              "name": {
+                "value": "blobtype",
+                "localizedValue": "blobtype"
+              },
+              "value": "Azure Data Lake Storage"
+            }
+          ],
+          "data": [
+            {
+              "timeStamp": "2019-02-09T15:21:00Z",
+              "average": 0
+            },
+            {
+              "timeStamp": "2019-02-09T16:21:00Z",
+              "average": 0
+            },
+            {
+              "timeStamp": "2019-02-09T17:21:00Z",
+              "average": 0
+            },
+            {
+              "timeStamp": "2019-02-09T18:21:00Z",
+              "average": 0
+            },
+            {
+              "timeStamp": "2019-02-09T19:21:00Z",
+              "average": 0
+            },
+            {
+              "timeStamp": "2019-02-09T20:21:00Z"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "namespace": "Microsoft.Storage\/storageAccounts\/blobServices",
+  "resourceregion": "westeurope"
+}

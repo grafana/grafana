@@ -1,0 +1,527 @@
+package teamapi
+
+import (
+	"errors"
+	"net/http"
+	"strconv"
+
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
+	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/folderownership"
+	"github.com/grafana/grafana/pkg/services/team/sortopts"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
+	"github.com/open-feature/go-sdk/openfeature"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+)
+
+var ofClient = openfeature.NewDefaultClient()
+
+// swagger:route POST /teams teams createTeam
+//
+// Add Team.
+//
+// Responses:
+// 200: createTeamResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 409: conflictError
+// 500: internalServerError
+func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
+	cmd := team.CreateTeamCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	cmd.OrgID = c.GetOrgID()
+
+	t, err := tapi.teamService.CreateTeam(c.Req.Context(), &cmd)
+	if err != nil {
+		if errors.Is(err, team.ErrTeamNameTaken) {
+			return response.Error(http.StatusConflict, "Team name taken", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to create Team", err)
+	}
+
+	// Clear permission cache for the user who's created the team, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	tapi.ac.ClearUserPermissionCache(c.SignedInUser)
+
+	// if the request is authenticated using API tokens
+	// the SignedInUser is an empty struct therefore
+	// an additional check whether it is an actual user is required
+	if c.IsIdentityType(claims.TypeUser) {
+		userID, _ := c.GetInternalID()
+		ctx := c.Req.Context()
+		// K8s-stored teams have t.ID=0, so route the write by UID.
+		if ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
+			if err := tapi.addCreatorAsAdminViaK8s(c, t.UID, userID); err != nil {
+				c.Logger.Error("Could not add creator to team", "error", err)
+			}
+		} else if err := addOrUpdateTeamMember(ctx, tapi.teamPermissionsService, userID, c.GetOrgID(),
+			t.ID, dashboardaccess.PERMISSION_ADMIN.String()); err != nil {
+			c.Logger.Error("Could not add creator to team", "error", err)
+		}
+	}
+
+	return response.JSON(http.StatusOK, &util.DynMap{
+		"teamId":  t.ID,
+		"uid":     t.UID,
+		"message": "Team created",
+	})
+}
+
+// swagger:route PUT /teams/{team_id} teams updateTeam
+//
+// Update Team.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 409: conflictError
+// 500: internalServerError
+func (tapi *TeamAPI) updateTeam(c *contextmodel.ReqContext) response.Response {
+	cmd := team.UpdateTeamCommand{}
+	var err error
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	cmd.OrgID = c.GetOrgID()
+	cmd.ID, err = strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
+
+	existingTeam, err := tapi.getTeamDTOByID(c, cmd.ID)
+	if err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return response.Error(http.StatusNotFound, "Team not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
+	}
+
+	if existingTeam.IsProvisioned && existingTeam.Name != cmd.Name {
+		return response.Error(http.StatusBadRequest, "Team name cannot be changed for provisioned teams", err)
+	}
+
+	if err := tapi.teamService.UpdateTeam(c.Req.Context(), &cmd); err != nil {
+		if errors.Is(err, team.ErrTeamNameTaken) {
+			return response.Error(http.StatusBadRequest, "Team name taken", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to update Team", err)
+	}
+
+	return response.Success("Team updated")
+}
+
+// swagger:route DELETE /teams/{team_id} teams deleteTeamByID
+//
+// Delete Team By ID.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 409: conflictError
+// 500: internalServerError
+func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Response {
+	orgID := c.GetOrgID()
+	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
+
+	resp := tapi.validateTeam(c, teamID, "Cannot delete provisioned teams")
+	if resp != nil {
+		return resp
+	}
+
+	ctx := c.Req.Context()
+	txCtx := openfeature.TransactionContext(ctx)
+	redirectsToK8s := ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, txCtx) &&
+		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersApi, false, txCtx)
+	if !redirectsToK8s {
+		teamUID, errResp := tapi.resolveTeamUID(c, teamID)
+		if errResp != nil {
+			return errResp
+		}
+
+		namespace := apirequest.GetNamespaceMapper(tapi.cfg)(orgID)
+		if err := folderownership.ValidateNoOwnedFolders(ctx, tapi.folderSearcher, namespace, teamUID); err != nil {
+			if errors.Is(err, folderownership.ErrTeamOwnsFolders) {
+				return response.Error(http.StatusConflict, "Cannot delete team that owns folders", err)
+			}
+			return response.Error(http.StatusInternalServerError, "Failed to check if team owns folders", err)
+		}
+	}
+
+	if err := tapi.teamService.DeleteTeam(ctx, &team.DeleteTeamCommand{OrgID: orgID, ID: teamID}); err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return response.Error(http.StatusNotFound, "Failed to delete Team. ID not found", nil)
+		}
+		if apierrors.IsConflict(err) {
+			return response.Error(http.StatusConflict, "Cannot delete team that owns folders", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to delete Team", err)
+	}
+
+	// Clear associated team assignments, managed role and permissions
+	if err := tapi.ac.DeleteTeamPermissions(c.Req.Context(), orgID, teamID); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete Team permissions", err)
+	}
+
+	return response.Success("Team deleted")
+}
+
+// swagger:route GET /teams/search teams searchTeams
+//
+// Team Search With Paging.
+//
+// Responses:
+// 200: searchTeamsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+	if page < 1 {
+		page = 1
+	}
+
+	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
+	if err != nil {
+		return response.Err(err)
+	}
+
+	stringTeamIDs := c.QueryStrings("teamId")
+	queryTeamIDs := make([]int64, 0)
+	for _, id := range stringTeamIDs {
+		teamID, err := strconv.ParseInt(id, 10, 64)
+		if err == nil {
+			queryTeamIDs = append(queryTeamIDs, teamID)
+		}
+	}
+
+	query := team.SearchTeamsQuery{
+		OrgID:             c.GetOrgID(),
+		Query:             c.Query("query"),
+		Name:              c.Query("name"),
+		TeamIds:           queryTeamIDs,
+		Page:              page,
+		Limit:             perPage,
+		SignedInUser:      c.SignedInUser,
+		HiddenUsers:       tapi.cfg.HiddenUsers,
+		SortOpts:          sortOpts,
+		WithAccessControl: c.QueryBool("accesscontrol"),
+	}
+
+	queryResult, err := tapi.teamService.SearchTeams(c.Req.Context(), &query)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to search Teams", err)
+	}
+
+	teamIDs := map[string]bool{}
+	for _, team := range queryResult.Teams {
+		team.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, team.Email, team.Name)
+		if team.ID != 0 {
+			teamIDs[strconv.FormatInt(team.ID, 10)] = true
+		}
+	}
+
+	// Only fetch legacy access control metadata for teams with legacy IDs.
+	// Teams returned via the K8s path already have AccessControl populated.
+	if len(teamIDs) > 0 {
+		metadata := tapi.getMultiAccessControlMetadata(c, "teams:id:", teamIDs)
+		if len(metadata) > 0 {
+			for _, team := range queryResult.Teams {
+				team.AccessControl = metadata[strconv.FormatInt(team.ID, 10)]
+			}
+		}
+	}
+
+	queryResult.Page = page
+	queryResult.PerPage = perPage
+
+	return response.JSON(http.StatusOK, queryResult)
+}
+
+// swagger:route GET /teams/{team_id} teams getTeamByID
+//
+// Get Team By ID.
+//
+// Responses:
+// 200: getTeamByIDResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (tapi *TeamAPI) getTeamByID(c *contextmodel.ReqContext) response.Response {
+	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
+
+	query := team.GetTeamByIDQuery{
+		OrgID:        c.GetOrgID(),
+		ID:           teamId,
+		SignedInUser: c.SignedInUser,
+		HiddenUsers:  tapi.cfg.HiddenUsers,
+	}
+
+	queryResult, err := tapi.teamService.GetTeamByID(c.Req.Context(), &query)
+	if err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return response.Error(http.StatusNotFound, "Team not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
+	}
+
+	// Add accesscontrol metadata
+	queryResult.AccessControl = tapi.getAccessControlMetadata(c, "teams:id:", strconv.FormatInt(queryResult.ID, 10))
+
+	queryResult.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, queryResult.Email, queryResult.Name)
+	return response.JSON(http.StatusOK, &queryResult)
+}
+
+// swagger:route GET /teams/{team_id}/preferences teams preferences getTeamPreferences
+//
+// Get Team Preferences.
+//
+// Responses:
+// 200: getPreferencesResponse
+// 401: unauthorisedError
+// 500: internalServerError
+func (tapi *TeamAPI) getTeamPreferences(c *contextmodel.ReqContext) response.Response {
+	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
+
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
+		uid, errResp := tapi.resolveTeamUID(c, teamId)
+		if errResp != nil {
+			return errResp
+		}
+		return tapi.preferenceK8sHandler.GetPreferences(c, prefutils.TeamOwner(uid))
+	}
+
+	return prefapi.GetPreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.GetOrgID(), 0, teamId)
+}
+
+// swagger:route PUT /teams/{team_id}/preferences teams preferences updateTeamPreferences
+//
+// Update Team Preferences.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 500: internalServerError
+func (tapi *TeamAPI) updateTeamPreferences(c *contextmodel.ReqContext) response.Response {
+	dtoCmd := dtos.UpdatePrefsCmd{}
+	if err := web.Bind(c.Req, &dtoCmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
+
+	ctx := c.Req.Context()
+	if ofClient.Boolean(ctx, featuremgmt.FlagPreferencesRerouteLegacyAPIs, false, openfeature.TransactionContext(ctx)) {
+		uid, errResp := tapi.resolveTeamUID(c, teamId)
+		if errResp != nil {
+			return errResp
+		}
+		return tapi.preferenceK8sHandler.UpdatePreferences(c, prefutils.TeamOwner(uid), &dtoCmd)
+	}
+
+	return prefapi.UpdatePreferencesFor(c.Req.Context(), tapi.ds, tapi.preferenceService, tapi.features, c.GetOrgID(), 0, teamId, &dtoCmd)
+}
+
+// resolveTeamUID returns the team UID. When the request used a UID in the
+// URL it is already stashed in the context by the team UID resolver
+// middleware; otherwise we look it up by ID.
+func (tapi *TeamAPI) resolveTeamUID(c *contextmodel.ReqContext, teamID int64) (string, response.Response) {
+	if uid, ok := team.TeamUIDFrom(c.Req.Context()); ok {
+		return uid, nil
+	}
+	t, err := tapi.teamService.GetTeamByID(c.Req.Context(), &team.GetTeamByIDQuery{ID: teamID, OrgID: c.GetOrgID()})
+	if err != nil {
+		return "", response.Error(http.StatusNotFound, "Team not found", err)
+	}
+	return t.UID, nil
+}
+
+// swagger:parameters updateTeamPreferences
+type UpdateTeamPreferencesParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+	// in:body
+	// required:true
+	Body dtos.UpdatePrefsCmd `json:"body"`
+}
+
+// swagger:parameters getTeamByID
+type GetTeamByIDParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+	// in:query
+	// required:false
+	// default: false
+	AccessControl bool `json:"accesscontrol"`
+}
+
+// swagger:parameters deleteTeamByID
+type DeleteTeamByIDParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+}
+
+// swagger:parameters getTeamPreferences
+type GetTeamPreferencesParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+}
+
+// swagger:parameters searchTeams
+type SearchTeamsParams struct {
+	// in:query
+	// required:false
+	// default: 1
+	Page int `json:"page"`
+	// Number of items per page
+	// The totalCount field in the response can be used for pagination list E.g. if totalCount is equal to 100 teams and the perpage parameter is set to 10 then there are 10 pages of teams.
+	// in:query
+	// required:false
+	// default: 1000
+	PerPage int    `json:"perpage"`
+	Name    string `json:"name"`
+	// If set it will return results where the query value is contained in the name field. Query values with spaces need to be URL encoded.
+	// required:false
+	Query string `json:"query"`
+	// in:query
+	// required:false
+	// default: false
+	AccessControl bool `json:"accesscontrol"`
+	// in:query
+	// required:false
+	Sort string `json:"sort"`
+}
+
+// swagger:parameters createTeam
+type CreateTeamParams struct {
+	// in:body
+	// required:true
+	Body team.CreateTeamCommand `json:"body"`
+}
+
+// swagger:parameters updateTeam
+type UpdateTeamParams struct {
+	// in:body
+	// required:true
+	Body team.UpdateTeamCommand `json:"body"`
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+}
+
+// swagger:response searchTeamsResponse
+type SearchTeamsResponse struct {
+	// The response message
+	// in: body
+	Body team.SearchTeamQueryResult `json:"body"`
+}
+
+// swagger:response getTeamByIDResponse
+type GetTeamByIDResponse struct {
+	// The response message
+	// in: body
+	Body *team.TeamDTO `json:"body"`
+}
+
+// swagger:response createTeamResponse
+type CreateTeamResponse struct {
+	// The response message
+	// in: body
+	Body struct {
+		TeamId  int64  `json:"teamId"`
+		Uid     string `json:"uid"`
+		Message string `json:"message"`
+	} `json:"body"`
+}
+
+// getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
+// Context must contain permissions in the given org (see LoadPermissionsMiddleware or AuthorizeInOrgMiddleware)
+func (tapi *TeamAPI) getMultiAccessControlMetadata(c *contextmodel.ReqContext,
+	prefix string, resourceIDs map[string]bool) map[string]accesscontrol.Metadata {
+	if !c.QueryBool("accesscontrol") {
+		return map[string]accesscontrol.Metadata{}
+	}
+
+	if len(c.GetPermissions()) == 0 {
+		return map[string]accesscontrol.Metadata{}
+	}
+
+	return accesscontrol.GetResourcesMetadata(c.Req.Context(), c.GetPermissions(), prefix, resourceIDs)
+}
+
+// Metadata helpers
+// getAccessControlMetadata returns the accesscontrol metadata associated with a given resource
+func (tapi *TeamAPI) getAccessControlMetadata(c *contextmodel.ReqContext,
+	prefix string, resourceID string) accesscontrol.Metadata {
+	ids := map[string]bool{resourceID: true}
+	return tapi.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
+}
+
+func (tapi *TeamAPI) getTeamDTOByID(c *contextmodel.ReqContext, teamID int64) (*team.TeamDTO, error) {
+	query := team.GetTeamByIDQuery{
+		OrgID:        c.GetOrgID(),
+		ID:           teamID,
+		SignedInUser: c.SignedInUser,
+	}
+
+	return tapi.teamService.GetTeamByID(c.Req.Context(), &query)
+}
+
+func (tapi *TeamAPI) validateTeam(c *contextmodel.ReqContext, teamID int64, provisionedMessage string) *response.NormalResponse {
+	teamDTO, err := tapi.getTeamDTOByID(c, teamID)
+	if err != nil {
+		if errors.Is(err, team.ErrTeamNotFound) {
+			return response.Error(http.StatusNotFound, "Team not found", err)
+		}
+
+		return response.Error(http.StatusInternalServerError, "Failed to get Team", err)
+	}
+
+	isGroupSyncEnabled := tapi.cfg.Raw.Section("auth.scim").Key("group_sync_enabled").MustBool(false)
+	if isGroupSyncEnabled && teamDTO.IsProvisioned {
+		return response.Error(http.StatusBadRequest, provisionedMessage, err)
+	}
+
+	return nil
+}

@@ -1,0 +1,59 @@
+name: Build tar.gz
+description: >
+  Assembles a Grafana release tarball from pre-built frontend and backend
+  artifacts. Callers are responsible for uploading the output in dist/.
+
+inputs:
+  os:
+    required: false
+    default: linux
+  arch:
+    required: false
+    default: amd64
+  arm:
+    description: GOARM value, e.g. "7". Leave empty for non-ARM targets.
+    required: false
+    default: ''
+  build-number:
+    description: Unique build identifier (github.run_id).
+    required: true
+  build-version:
+    description: Grafana version string used to name the tarball and bundle plugins.
+    required: true
+  frontend-artifact:
+    description: Name of the Actions artifact containing the built frontend (public/).
+    required: true
+  backend-artifact:
+    description: Name of the Actions artifact containing the compiled binary.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      with:
+        name: ${{ inputs.frontend-artifact }}
+        path: public
+
+    - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      with:
+        name: ${{ inputs.backend-artifact }}
+        path: bin/${{ inputs.os }}/${{ inputs.arch }}
+
+    - name: Fix backend binary permissions
+      if: inputs.os != 'windows'
+      shell: bash
+      env:
+        TARGET_OS: ${{ inputs.os }}
+        TARGET_ARCH: ${{ inputs.arch }}
+      run: chmod +x bin/${TARGET_OS}/${TARGET_ARCH}/grafana*
+
+    - name: Build tar.gz
+      shell: bash
+      env:
+        GOOS: ${{ inputs.os }}
+        GOARCH: ${{ inputs.arch }}
+        GOARM: ${{ inputs.arm }}
+        BUILD_NUMBER: ${{ inputs.build-number }}
+        BUILD_VERSION: ${{ inputs.build-version }}
+      run: make build-targz BUILD_VERSION="$BUILD_VERSION" BUILD_NUMBER="$BUILD_NUMBER"

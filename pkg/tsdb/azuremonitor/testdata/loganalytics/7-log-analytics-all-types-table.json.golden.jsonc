@@ -1,0 +1,205 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "azureColumnTypes": [
+//              "bool",
+//              "string",
+//              "datetime",
+//              "dynamic",
+//              "guid",
+//              "int",
+//              "long",
+//              "real",
+//              "timespan",
+//              "decimal",
+//              "object",
+//              "number"
+//          ]
+//      }
+//  }
+//  Name: 
+//  Dimensions: 12 Fields by 1 Rows
+//  +---------------+-----------------+---------------------------------+---------------------------------------------------------------+--------------------------------------+----------------+---------------------+-------------------------+------------------+-----------------------+--------------------------------------------------------------------------+-----------------------+
+//  | Name: XBool   | Name: XString   | Name: XDateTime                 | Name: XDynamic                                                | Name: XGuid                          | Name: XInt     | Name: XLong         | Name: XReal             | Name: XTimeSpan  | Name: XDecimal        | Name: XObject                                                            | Name: XNumber         |
+//  | Labels:       | Labels:         | Labels:                         | Labels:                                                       | Labels:                              | Labels:        | Labels:             | Labels:                 | Labels:          | Labels:               | Labels:                                                                  | Labels:               |
+//  | Type: []*bool | Type: []*string | Type: []*time.Time              | Type: []*string                                               | Type: []*string                      | Type: []*int32 | Type: []*int64      | Type: []*float64        | Type: []*string  | Type: []*float64      | Type: []*string                                                          | Type: []*float64      |
+//  +---------------+-----------------+---------------------------------+---------------------------------------------------------------+--------------------------------------+----------------+---------------------+-------------------------+------------------+-----------------------+--------------------------------------------------------------------------+-----------------------+
+//  | true          | Grafana         | 2006-01-02 22:04:05.1 +0000 UTC | [{"person":"Daniel"},{"cats":23},{"diagnosis":"cat problem"}] | 74be27de-1e4e-49d9-b579-fe0b331d3642 | 2147483647     | 9223372036854775807 | 1.7976931348623157e+308 | 00:00:00.0000001 | 7.922816251426434e+28 | "{\"person\": \"Daniel\", \"cats\": 23, \"diagnosis\": \"cat problem\"}" | 7.922816251426434e+28 |
+//  +---------------+-----------------+---------------------------------+---------------------------------------------------------------+--------------------------------------+----------------+---------------------+-------------------------+------------------+-----------------------+--------------------------------------------------------------------------+-----------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "azureColumnTypes": [
+              "bool",
+              "string",
+              "datetime",
+              "dynamic",
+              "guid",
+              "int",
+              "long",
+              "real",
+              "timespan",
+              "decimal",
+              "object",
+              "number"
+            ]
+          }
+        },
+        "fields": [
+          {
+            "name": "XBool",
+            "type": "boolean",
+            "typeInfo": {
+              "frame": "bool",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XString",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XDateTime",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XDynamic",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XGuid",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XInt",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int32",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XLong",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XReal",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XTimeSpan",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XDecimal",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XObject",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XNumber",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            true
+          ],
+          [
+            "Grafana"
+          ],
+          [
+            1136239445100
+          ],
+          [
+            "[{\"person\":\"Daniel\"},{\"cats\":23},{\"diagnosis\":\"cat problem\"}]"
+          ],
+          [
+            "74be27de-1e4e-49d9-b579-fe0b331d3642"
+          ],
+          [
+            2147483647
+          ],
+          [
+            9223372036854775807
+          ],
+          [
+            1.7976931348623157e+308
+          ],
+          [
+            "00:00:00.0000001"
+          ],
+          [
+            7.922816251426434e+28
+          ],
+          [
+            "\"{\\\"person\\\": \\\"Daniel\\\", \\\"cats\\\": 23, \\\"diagnosis\\\": \\\"cat problem\\\"}\""
+          ],
+          [
+            7.922816251426434e+28
+          ]
+        ]
+      }
+    }
+  ]
+}

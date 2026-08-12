@@ -1,0 +1,10 @@
+  webdav:
+    image: sigoden/dufs
+    ports:
+      - "5000:5000"
+    volumes:
+      - "webdav-data:/data"
+    command: "/data -A"
+
+volumes:
+  webdav-data: {}

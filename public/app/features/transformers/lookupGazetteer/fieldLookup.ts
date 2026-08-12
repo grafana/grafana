@@ -1,0 +1,83 @@
+import { mergeMap, from } from 'rxjs';
+
+import {
+  type DataFrame,
+  DataTransformerID,
+  type Field,
+  type FieldMatcher,
+  FieldMatcherID,
+  fieldMatchers,
+  type DataTransformerInfo,
+} from '@grafana/data';
+import { GAZETTEER_OPTIONS, type Gazetteer, getGazetteer } from 'app/features/geo/gazetteer/gazetteer';
+
+export interface FieldLookupOptions {
+  lookupField?: string;
+  gazetteer?: string;
+}
+
+export const fieldLookupTransformer: DataTransformerInfo<FieldLookupOptions> = {
+  id: DataTransformerID.fieldLookup,
+  name: 'Lookup fields from resource',
+  description: 'Use a field value to lookup countries, states, or airports.',
+  defaultOptions: {},
+
+  operator: (options) => (source) => source.pipe(mergeMap((data) => from(doGazetteerXform(data, options)))),
+};
+
+async function doGazetteerXform(frames: DataFrame[], options: FieldLookupOptions): Promise<DataFrame[]> {
+  const fieldMatches = fieldMatchers.get(FieldMatcherID.byName).get(options?.lookupField);
+
+  const gazetteer = await getGazetteer(options?.gazetteer ?? GAZETTEER_OPTIONS.countries.path);
+
+  if (!gazetteer.frame) {
+    const reason = gazetteer.error ?? 'it contains no lookup data';
+    return Promise.reject(new Error(`Could not look up fields in "${gazetteer.path}": ${reason}`));
+  }
+
+  return addFieldsFromGazetteer(frames, gazetteer, fieldMatches);
+}
+
+export function addFieldsFromGazetteer(frames: DataFrame[], gazetteer: Gazetteer, matcher: FieldMatcher): DataFrame[] {
+  const gazetteerFields = gazetteer.frame!()?.fields;
+
+  if (!gazetteerFields) {
+    return frames;
+  }
+
+  return frames.map((frame) => {
+    const frameLength = frame.length;
+    const fields: Field[] = [];
+
+    for (const field of frame.fields) {
+      fields.push(field);
+
+      if (matcher(field, frame, frames)) {
+        const values = field.values;
+        const gazetteerFieldValuesBuffer: unknown[][] = [];
+
+        for (const gazetteerField of gazetteerFields) {
+          const buffer = new Array(frameLength);
+          gazetteerFieldValuesBuffer.push(buffer);
+          fields.push({ ...gazetteerField, values: buffer });
+        }
+
+        // One lookup per row: the buffers above are sized to the frame, not to the gazetteer
+        for (let valueIndex = 0; valueIndex < frameLength; valueIndex++) {
+          const foundValue = gazetteer.find(values[valueIndex]);
+
+          if (foundValue?.index != null) {
+            for (let fieldIndex = 0; fieldIndex < gazetteerFields.length; fieldIndex++) {
+              gazetteerFieldValuesBuffer[fieldIndex][valueIndex] = gazetteerFields[fieldIndex].values[foundValue.index];
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      ...frame,
+      fields,
+    };
+  });
+}

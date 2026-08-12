@@ -1,0 +1,97 @@
+// Copyright (c) 2017 Uber Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { css } from '@emotion/css';
+import memoizeOne from 'memoize-one';
+import { memo } from 'react';
+
+import {
+  type ViewRange,
+  type TUpdateViewRangeTimeFunction,
+  type ViewRangeTimeUpdate,
+} from '../../TraceTimelineViewer/types';
+import { type Trace, type TraceSpan } from '../../types/trace';
+import { getServiceColorKey } from '../../utils/service-name';
+
+import CanvasSpanGraph from './CanvasSpanGraph';
+import TickLabels from './TickLabels';
+import ViewingLayer from './ViewingLayer';
+import { type SpanGraphItem } from './render-into-canvas';
+
+const getStyles = () => {
+  return {
+    canvasContainer: css({
+      position: 'relative',
+    }),
+  };
+};
+
+const DEFAULT_HEIGHT = 60;
+export const TIMELINE_TICK_INTERVAL = 4;
+
+export type SpanGraphProps = {
+  height?: number;
+  trace: Trace;
+  viewRange: ViewRange;
+  updateViewRangeTime: TUpdateViewRangeTimeFunction;
+  updateNextViewRangeTime: (nextUpdate: ViewRangeTimeUpdate) => void;
+};
+
+// exported for tests
+export function getItem(span: TraceSpan): SpanGraphItem {
+  return {
+    valueOffset: span.relativeStartTime,
+    valueWidth: span.duration,
+    serviceName: getServiceColorKey(span.process),
+    isSummary: span.aggregation?.isSummary === true,
+    spanCount: span.aggregation?.spanCount ?? 0,
+  };
+}
+
+function getItems(trace: Trace): SpanGraphItem[] {
+  return trace.spans.map(getItem);
+}
+
+const memoizedGetitems = memoizeOne(getItems);
+
+const SpanGraph = memo(
+  ({ height = DEFAULT_HEIGHT, trace, viewRange, updateNextViewRangeTime, updateViewRangeTime }: SpanGraphProps) => {
+    const styles = getStyles();
+
+    if (!trace) {
+      return <div />;
+    }
+
+    const items = memoizedGetitems(trace);
+    return (
+      <div>
+        <TickLabels numTicks={TIMELINE_TICK_INTERVAL} duration={trace.duration} />
+        <div className={styles.canvasContainer}>
+          <CanvasSpanGraph valueWidth={trace.duration} items={items} />
+          <ViewingLayer
+            viewRange={viewRange}
+            numTicks={TIMELINE_TICK_INTERVAL}
+            height={height}
+            updateViewRangeTime={updateViewRangeTime}
+            updateNextViewRangeTime={updateNextViewRangeTime}
+          />
+        </div>
+      </div>
+    );
+  }
+);
+
+SpanGraph.displayName = 'SpanGraph';
+
+export default SpanGraph;

@@ -1,0 +1,102 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: system
+//  Dimensions: 5 Fields by 4 Rows
+//  +----------------+-------------------------------+------------------+------------------+-----------------+
+//  | Name: labels   | Name: time                    | Name: sensor     | Name: sensor2    | Name: state     |
+//  | Labels:        | Labels:                       | Labels:          | Labels:          | Labels:         |
+//  | Type: []string | Type: []time.Time             | Type: []*float64 | Type: []*float64 | Type: []*string |
+//  +----------------+-------------------------------+------------------+------------------+-----------------+
+//  | host=A         | 2021-03-22 08:51:30 +0000 UTC | 0                | null             | aaa             |
+//  | host=B         | 2021-03-22 08:51:30 +0000 UTC | null             | 0                | bbb             |
+//  | host=A         | 2021-03-22 08:51:31 +0000 UTC | null             | 0                | ccc             |
+//  | host=B         | 2021-03-22 08:51:31 +0000 UTC | 0                | null             | 1               |
+//  +----------------+-------------------------------+------------------+------------------+-----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "system",
+        "fields": [
+          {
+            "name": "labels",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "sensor",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "sensor2",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "state",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "host=A",
+            "host=B",
+            "host=A",
+            "host=B"
+          ],
+          [
+            1616403090000,
+            1616403090000,
+            1616403091000,
+            1616403091000
+          ],
+          [
+            0,
+            null,
+            null,
+            0
+          ],
+          [
+            null,
+            0,
+            0,
+            null
+          ],
+          [
+            "aaa",
+            "bbb",
+            "ccc",
+            "1"
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+import { useMemo } from 'react';
+
+import { type PluginExtensionCommandPaletteContext, PluginExtensionPoints } from '@grafana/data';
+import { usePluginLinks } from '@grafana/runtime';
+
+import { type CommandPaletteAction } from '../types';
+import { EXTENSIONS_PRIORITY, SECTION_EXTENSIONS } from '../values';
+
+// NOTE: we are defining this here, as if we would define it in the hook, it would be recreated on every render, which would cause unnecessary re-renders.
+const context: PluginExtensionCommandPaletteContext = {};
+
+export default function useExtensionActions(): CommandPaletteAction[] {
+  const { links } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.CommandPalette,
+    context,
+    limitPerPlugin: 80,
+  });
+
+  return useMemo(() => {
+    return links.map((link) => ({
+      section: link.category ?? 'Extensions',
+      sectionId: SECTION_EXTENSIONS,
+      priority: EXTENSIONS_PRIORITY,
+      id: link.id,
+      name: link.title,
+      perform: () => link.onClick && link.onClick(),
+      url: link.path,
+    }));
+  }, [links]);
+}

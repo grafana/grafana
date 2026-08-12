@@ -1,0 +1,281 @@
+package pluginstore
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+)
+
+func TestStore_ProvideService(t *testing.T) {
+	t.Run("Plugin sources are added in order", func(t *testing.T) {
+		tests := []struct {
+			name                  string
+			featureEnabled        bool
+			expectedLoadOnStartup bool
+			expectedBeforeStart   []plugins.Class
+			expectedAfterStart    []plugins.Class
+		}{
+			{
+				name:                  "with FlagPluginStoreServiceLoading disabled",
+				featureEnabled:        false,
+				expectedLoadOnStartup: false,
+				expectedBeforeStart:   []plugins.Class{"1", "2", "3"},
+				expectedAfterStart:    []plugins.Class{"1", "2", "3"},
+			},
+			{
+				name:                  "with FlagPluginStoreServiceLoading enabled",
+				featureEnabled:        true,
+				expectedLoadOnStartup: true,
+				expectedBeforeStart:   nil,
+				expectedAfterStart:    []plugins.Class{"1", "2", "3"},
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				var loadedSrcs []plugins.Class
+				l := &pluginfakes.FakeLoader{
+					LoadFunc: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+						loadedSrcs = append(loadedSrcs, src.PluginClass(ctx))
+						return nil, nil
+					},
+				}
+
+				srcs := &pluginfakes.FakeSourceRegistry{ListFunc: func(_ context.Context) []plugins.PluginSource {
+					return []plugins.PluginSource{
+						&pluginfakes.FakePluginSource{
+							PluginClassFunc: func(ctx context.Context) plugins.Class {
+								return "1"
+							},
+						},
+						&pluginfakes.FakePluginSource{
+							PluginClassFunc: func(ctx context.Context) plugins.Class {
+								return "2"
+							},
+						},
+						&pluginfakes.FakePluginSource{
+							PluginClassFunc: func(ctx context.Context) plugins.Class {
+								return "3"
+							},
+						},
+					}
+				}}
+
+				var features featuremgmt.FeatureToggles
+				if tt.featureEnabled {
+					features = featuremgmt.WithFeatures(featuremgmt.FlagPluginStoreServiceLoading)
+				} else {
+					features = featuremgmt.WithFeatures()
+				}
+
+				service, err := ProvideService(pluginfakes.NewFakePluginRegistry(), srcs, l, features)
+				require.Equal(t, tt.expectedLoadOnStartup, service.loadOnStartup)
+				require.Equal(t, tt.expectedBeforeStart, loadedSrcs)
+				require.NoError(t, err)
+				ctx := context.Background()
+				err = service.StartAsync(ctx)
+				require.NoError(t, err)
+				err = service.AwaitRunning(ctx)
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedAfterStart, loadedSrcs)
+			})
+		}
+	})
+}
+
+func TestStore_Plugin(t *testing.T) {
+	t.Run("Plugin returns all non-decommissioned plugins", func(t *testing.T) {
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource"}}
+		p1.RegisterClient(&DecommissionedPlugin{})
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel"}}
+
+		ps, err := NewPluginStoreForTest(&pluginfakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+			},
+		}, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+		require.NoError(t, err)
+
+		p, exists := ps.Plugin(context.Background(), p1.ID)
+		require.False(t, exists)
+		require.Equal(t, Plugin{}, p)
+
+		p, exists = ps.Plugin(context.Background(), p2.ID)
+		require.True(t, exists)
+		require.Equal(t, p, ToGrafanaDTO(p2))
+	})
+}
+
+func TestStore_Plugins(t *testing.T) {
+	t.Run("Plugin returns all non-decommissioned plugins by type", func(t *testing.T) {
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-datasource", Type: plugins.TypeDataSource}}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.TypePanel}}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-panel", Type: plugins.TypePanel}}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-app", Type: plugins.TypeApp}}
+		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-panel", Type: plugins.TypePanel}}
+		p5.RegisterClient(&DecommissionedPlugin{})
+
+		ps, err := NewPluginStoreForTest(&pluginfakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+				p4.ID: p4,
+				p5.ID: p5,
+			},
+		}, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+		require.NoError(t, err)
+
+		ToGrafanaDTO(p1)
+		pss := ps.Plugins(context.Background())
+		require.Equal(t, pss, []Plugin{
+			ToGrafanaDTO(p1), ToGrafanaDTO(p2),
+			ToGrafanaDTO(p3), ToGrafanaDTO(p4),
+		})
+
+		pss = ps.Plugins(context.Background(), plugins.TypeApp)
+		require.Equal(t, pss, []Plugin{ToGrafanaDTO(p4)})
+
+		pss = ps.Plugins(context.Background(), plugins.TypePanel)
+		require.Equal(t, pss, []Plugin{ToGrafanaDTO(p2), ToGrafanaDTO(p3)})
+
+		pss = ps.Plugins(context.Background(), plugins.TypeDataSource)
+		require.Equal(t, pss, []Plugin{ToGrafanaDTO(p1)})
+
+		pss = ps.Plugins(context.Background(), plugins.TypeDataSource, plugins.TypeApp, plugins.TypePanel)
+		require.Equal(t, pss, []Plugin{
+			ToGrafanaDTO(p1), ToGrafanaDTO(p2),
+			ToGrafanaDTO(p3), ToGrafanaDTO(p4),
+		})
+	})
+}
+
+func TestStore_Routes(t *testing.T) {
+	t.Run("Routes returns all static routes for non-decommissioned plugins", func(t *testing.T) {
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.TypeRenderer}, FS: pluginfakes.NewFakePluginFS("/some/dir")}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.TypePanel}, FS: pluginfakes.NewFakePluginFS("/grafana/")}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.TypeDataSource}, FS: pluginfakes.NewFakePluginFS("../test")}
+		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.TypeApp}, FS: pluginfakes.NewFakePluginFS("any/path")}
+		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.TypeApp}}
+		p6.RegisterClient(&DecommissionedPlugin{})
+
+		ps, err := NewPluginStoreForTest(&pluginfakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p4.ID: p4,
+				p5.ID: p5,
+				p6.ID: p6,
+			},
+		}, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+		require.NoError(t, err)
+
+		sr := func(p *plugins.Plugin) *plugins.StaticRoute {
+			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.FS.Base()}
+		}
+
+		rs := ps.Routes(context.Background())
+		require.Equal(t, []*plugins.StaticRoute{sr(p1), sr(p2), sr(p4), sr(p5)}, rs)
+	})
+}
+
+func TestProcessManager_shutdown(t *testing.T) {
+	t.Run("When context is cancelled the plugin is stopped", func(t *testing.T) {
+		p := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}} // Backend: true
+		backend := &pluginfakes.FakeBackendPlugin{}
+		p.RegisterClient(backend)
+		p.SetLogger(log.NewTestLogger())
+
+		unloaded := false
+		ps := New(&pluginfakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p.ID: p,
+			},
+		}, &pluginfakes.FakeLoader{
+			UnloadFunc: func(_ context.Context, plugin *plugins.Plugin) (*plugins.Plugin, error) {
+				require.Equal(t, p, plugin)
+				unloaded = true
+				return nil, nil
+			},
+		}, &pluginfakes.FakeSourceRegistry{})
+
+		ctx, cancel := context.WithCancel(context.Background())
+
+		err := ps.StartAsync(ctx)
+		require.NoError(t, err)
+		err = ps.AwaitRunning(ctx)
+		require.NoError(t, err)
+
+		// Cancel context to trigger shutdown
+		cancel()
+
+		// Wait for service to be fully terminated
+		err = ps.AwaitTerminated(context.Background())
+		require.NoError(t, err)
+		require.True(t, unloaded)
+	})
+
+	t.Run("When shutdown fails, stopping method returns error", func(t *testing.T) {
+		p := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}}
+		backend := &pluginfakes.FakeBackendPlugin{}
+		p.RegisterClient(backend)
+		p.SetLogger(log.NewTestLogger())
+
+		expectedErr := errors.New("unload failed")
+		ps, err := NewPluginStoreForTest(&pluginfakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p.ID: p,
+			},
+		}, &pluginfakes.FakeLoader{
+			UnloadFunc: func(_ context.Context, plugin *plugins.Plugin) (*plugins.Plugin, error) {
+				return nil, expectedErr
+			},
+		}, &pluginfakes.FakeSourceRegistry{})
+		require.NoError(t, err)
+
+		err = ps.stopping(nil)
+		require.Error(t, err)
+		require.ErrorIs(t, err, expectedErr)
+	})
+}
+
+func TestStore_availablePlugins(t *testing.T) {
+	t.Run("Decommissioned plugins are excluded from availablePlugins", func(t *testing.T) {
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource"}}
+		p1.RegisterClient(&DecommissionedPlugin{})
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app"}}
+
+		ps, err := NewPluginStoreForTest(&pluginfakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+			},
+		}, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+		require.NoError(t, err)
+
+		aps := ps.availablePlugins(context.Background())
+		require.Len(t, aps, 1)
+		require.Equal(t, p2, aps[0])
+	})
+}
+
+type DecommissionedPlugin struct {
+	backendplugin.Plugin
+}
+
+func (p *DecommissionedPlugin) Decommission() error {
+	return nil
+}
+
+func (p *DecommissionedPlugin) IsDecommissioned() bool {
+	return true
+}

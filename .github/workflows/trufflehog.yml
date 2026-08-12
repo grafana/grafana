@@ -1,0 +1,36 @@
+name: Trufflehog
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  trufflehog:
+    name: Run Trufflehog
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read # clone the repo
+
+    steps:
+      - name: Calculate fetch depth
+        id: fetch_depth
+        shell: bash
+        run: echo "fetch_depth=$(( ${{ github.event.pull_request.commits }} + 2 ))" >> "$GITHUB_OUTPUT"
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          fetch-depth: ${{ steps.fetch_depth.outputs.fetch_depth }}
+      - name: Trufflehog
+        uses: trufflesecurity/trufflehog@d411fff7b8879a62509f3fa98c07f247ac089a51 # v3.95.5
+        with:
+          extra_args: --results=verified

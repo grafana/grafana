@@ -1,0 +1,23 @@
+{
+  "config-editor": {
+    "api-key": {
+      "label": "Clave de API",
+      "placeholder": "Ingrese su clave de API",
+      "tooltip": "Campo JSON seguro (solo backend)"
+    },
+    "auth-type": {
+      "label": "Tipo de autenticación"
+    },
+    "checkbox-enabled": {
+      "label": "Casilla habilitada"
+    },
+    "path": {
+      "label": "Ruta",
+      "placeholder": "Ingrese la ruta, p. ej. /api/v1",
+      "tooltip": "Campo JSON devuelto al frontend"
+    },
+    "switch-enabled": {
+      "label": "Interruptor habilitado"
+    }
+  }
+}

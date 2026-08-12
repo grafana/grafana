@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Set default values for dist-tag and registry for local development
+# to prevent running this script and accidentally publishing to npm
+dist_tag="canary"
+registry="http://localhost:4873"
+
+# Require either ACTIONS_ID_TOKEN_REQUEST_URL or NPM_TOKEN to be set
+if [ -z "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && [ -z "$NPM_TOKEN" ]; then
+    echo "ERROR: Either ACTIONS_ID_TOKEN_REQUEST_URL or NPM_TOKEN environment variable must be set."
+    echo "If running in Github Actions, ensure that 'id-token: write' permission is granted."
+    exit 1
+fi
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case $key in
+        --dist-tag)
+        dist_tag="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        --registry)
+        registry="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        *)    # unknown option
+        echo "Unknown option: $1"
+        exit 1
+        ;;
+    esac
+done
+
+echo "Starting to release $dist_tag version with NPM version $(npm --version) to registry $registry"
+
+if [ -n "$NPM_TOKEN" ]; then
+  echo "Configured NPM_TOKEN in ~/.npmrc"
+  registry_without_protocol=${registry#*:}
+  echo "$registry_without_protocol/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+fi
+
+# Loop over .tar files in directory and publish them to npm registry
+failed_packages=()
+for file in ./npm-artifacts/*.tgz; do
+    if ! npm publish "$file" --tag "$dist_tag" --registry "$registry"; then
+        failed_packages+=("$file")
+    fi
+done
+
+# Log failed packages and exit with error if any failed
+if (( ${#failed_packages[@]} > 0 )); then
+    echo ""
+    echo "ERROR: The following packages failed to publish:"
+    for pkg in "${failed_packages[@]}"; do
+        echo "  - $pkg"
+    done
+    exit 1
+fi
+

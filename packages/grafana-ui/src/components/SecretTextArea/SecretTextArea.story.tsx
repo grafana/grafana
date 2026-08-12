@@ -1,0 +1,68 @@
+import { type StoryFn, type Meta } from '@storybook/react-webpack5';
+import { useState, type ChangeEvent } from 'react';
+
+import { Field } from '../Forms/Field';
+
+import { SecretTextArea } from './SecretTextArea';
+
+const meta: Meta<typeof SecretTextArea> = {
+  title: 'Inputs/SecretTextArea',
+  component: SecretTextArea,
+  parameters: {
+    controls: {
+      exclude: [
+        'prefix',
+        'suffix',
+        'addonBefore',
+        'addonAfter',
+        'type',
+        'disabled',
+        'invalid',
+        'loading',
+        'before',
+        'after',
+      ],
+    },
+  },
+  args: {
+    rows: 3,
+    cols: 30,
+    placeholder: 'Enter your secret...',
+  },
+  argTypes: {
+    rows: { control: { type: 'range', min: 1, max: 50, step: 1 } },
+    cols: { control: { type: 'range', min: 1, max: 200, step: 10 } },
+  },
+};
+
+const Template: StoryFn<typeof SecretTextArea> = (args) => {
+  const [secret, setSecret] = useState('');
+
+  return (
+    <Field label="My secret">
+      <SecretTextArea
+        rows={args.rows}
+        cols={args.cols}
+        value={secret}
+        isConfigured={args.isConfigured}
+        placeholder={args.placeholder}
+        onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setSecret(event.target.value.trim())}
+        onReset={() => setSecret('')}
+      />
+    </Field>
+  );
+};
+
+export const basic = Template.bind({});
+
+basic.args = {
+  isConfigured: false,
+};
+
+export const secretIsConfigured = Template.bind({});
+
+secretIsConfigured.args = {
+  isConfigured: true,
+};
+
+export default meta;

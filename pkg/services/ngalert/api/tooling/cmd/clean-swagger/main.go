@@ -1,0 +1,118 @@
+package main
+
+import (
+	"encoding/json"
+	"flag"
+	"log"
+	"os"
+	"strings"
+)
+
+const RefKey = "$ref"
+
+func main() {
+	var input, output string
+	flag.StringVar(&input, "if", "", "input file")
+	flag.StringVar(&output, "of", "", "output file")
+
+	flag.Parse()
+
+	if input == "" || output == "" {
+		log.Fatal("no file specified, input", input, ", output", output)
+	}
+
+	//nolint
+	b, err := os.ReadFile(input)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data := make(map[string]any)
+	if err := json.Unmarshal(b, &data); err != nil {
+		log.Fatal(err)
+	}
+
+	info, ok := data["info"].(map[string]any)
+	if info == nil {
+		log.Fatal("expecting 'info' field")
+	}
+	if !ok {
+		log.Fatal("unable to turn info field into map[string]any")
+	}
+
+	if info["title"] == nil {
+		info["title"] = "Unified Alerting API"
+	}
+
+	// The alertmanager dependency (api/v2/restapi/doc.go) contains its own
+	// swagger:meta block that go-swagger picks up during spec generation.
+	// This injects the alertmanager's host, basePath, and license into the
+	// ngalert spec, overriding the values from our own swagger:meta in
+	// definitions/api.go. Strip these so the ngalert sub-spec doesn't
+	// pollute the merged Grafana API spec with incorrect values.
+	delete(info, "license")
+	delete(data, "host")
+	data["basePath"] = "/api"
+
+	definitions, ok := data["definitions"]
+	if !ok {
+		log.Fatal("no definitions")
+	}
+
+	defs := definitions.(map[string]any)
+	for k, v := range defs {
+		vMap := v.(map[string]any)
+		refKey, ok := vMap[RefKey]
+		if !ok {
+			continue
+		}
+
+		if strings.TrimPrefix(refKey.(string), "#/definitions/") == k {
+			log.Println("removing circular ref key", refKey)
+			delete(vMap, RefKey)
+		}
+	}
+
+	paths, ok := data["paths"].(map[string]any)
+	if !ok {
+		log.Fatal("no paths")
+	}
+
+	for _, path := range paths {
+		path, ok := path.(map[string]any)
+		if !ok {
+			log.Fatal("invalid path")
+		}
+
+		for _, op := range path {
+			op, ok := op.(map[string]any)
+			if !ok {
+				continue
+			}
+
+			tags, ok := op["tags"].([]any)
+			if !ok {
+				log.Println("invalid op, skipping")
+				continue
+			}
+
+			// Remove "stable" tag. Multiple tags cause routes to render strangely in the final docs.
+			for i, tag := range tags {
+				if tag == "stable" {
+					log.Println("removing stable tag")
+					op["tags"] = append(tags[:i], tags[i+1:]...)
+				}
+			}
+		}
+	}
+
+	out, err := json.MarshalIndent(data, "", " ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = os.WriteFile(output, out, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
