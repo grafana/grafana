@@ -16,7 +16,7 @@ export function NotebookPageError({ error }: NotebookPageErrorProps) {
 
   return (
     <Page
-      navId="dashboards/browse"
+      navId="notebooks"
       layout={PageLayoutType.Canvas}
       pageNav={{
         text: isNotFound
@@ -26,7 +26,7 @@ export function NotebookPageError({ error }: NotebookPageErrorProps) {
     >
       <Box paddingY={4} display="flex" direction="column" alignItems="center">
         {isNotFound ? (
-          <EntityNotFound entity="Notebook" />
+          <EntityNotFound entity={t('notebook.errors.entity', 'Notebook')} />
         ) : (
           <Alert
             title={t('notebook.errors.failed-to-load', 'Failed to load notebook')}

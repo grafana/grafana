@@ -287,16 +287,6 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
-			Name:            "grafanaAPIServerEnsureKubectlAccess",
-			Description:     "Start an additional https handler and write kubectl options",
-			Stage:           FeatureStageExperimental,
-			RequiresDevMode: true,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,
@@ -388,6 +378,14 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:        "snapshots.kubernetesSnapshots",
+			Description: "Routes snapshot requests from /api to the /apis endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:        "libraryelements.kubernetesLibraryPanels",
@@ -2959,30 +2957,12 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:         "table.protoRowParser",
-			Description:  "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{React: true},
-		},
-		{
 			Name:        "grafana.queryVarEditorRedesign",
 			Description: "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
 			Generate:    Generate{React: true},
-		},
-		{
-			Name:         "table.refactorNested",
-			Description:  "Enables the refactored TableNG nested-table implementation",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{React: true},
 		},
 		{
 			Name:         "table.paginationPageSize",
@@ -3018,7 +2998,7 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{React: true},
+			Generate:     Generate{Go: true},
 		},
 		{
 			Name:        "grafana.customizableMegaMenu",
@@ -3183,6 +3163,14 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:        "grafana.pluginPathNesting",
+			Description: "Nest app plugin navigation items in the mega menu based on their URL path hierarchy",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "grafana.rspackBuild",
 			Description: "Switches the backend to load frontend assets built with rspack instead of webpack",
 			Stage:       FeatureStageExperimental,
@@ -3197,6 +3185,14 @@ var (
 			Owner:       grafanaDataSourcesPlugins,
 			Generate:    Generate{LegacyGo: true},
 			Expression:  "false",
+		},
+		{
+			Name:        "grafana.unifiedDataSourcePicker",
+			Description: "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "true", // enabled by default
+			Generate:    Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

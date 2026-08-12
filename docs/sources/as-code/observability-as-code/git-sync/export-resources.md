@@ -19,7 +19,7 @@ aliases:
   - ../provision-resources/export-resources/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
 ---
 
-# Export non-provisioned resources from Grafana
+# Add non-provisioned resources from Grafana
 
 {{< admonition type="note" >}}
 
@@ -31,8 +31,8 @@ You can add dashboards to Git Sync using any of the following options:
 
 - [Add a dashboard using Import dashboards](#add-a-dashboard-using-import-dashboards)
 - [Export an existing dashboard from the Grafana UI as a copy](#copy-an-existing-dashboard-from-the-grafana-ui)
-- [Export a dashboard with Grafana CLI](#add-a-dashboard-with-the-grafana-cli)
-- [Copy a dashboard as JSON and commit to the repository](#add-a-dashboard-via-json-export)
+- [Add a dashboard with Grafana CLI](#add-a-dashboard-with-the-grafana-cli)
+- [Copy a dashboard as JSON and commit to the provisioned repository](#add-a-dashboard-via-json-export)
 
 ## Add a dashboard using Import dashboards
 
@@ -80,29 +80,43 @@ To do so, follow these steps:
 
 ## Add a dashboard with the Grafana CLI
 
-You can also export an existing dashboard with `gcx`, the [Grafana CLI](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/). Use `gcx` to download the resources you want to sync from Grafana, and then commit and push those files to your provisioned Git repository. Git Sync will then detect the commit, and synchronize with Grafana.
+You can also export an existing dashboard from the terminal or from agentic coding tools using the CLI `gcx`. With `gcx` you can download the resources you want to sync from Grafana, and then commit and push those files to your provisioned Git repository. Git Sync will then detect the commit, and synchronize with Grafana.
 
-To do so, follow these steps:
+{{< admonition type="note" >}}
+
+For more information refer to the [`gcx` documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx/).
+
+{{< /admonition >}}
+
+To add a dashboard with `gcx`, follow these steps:
 
 1. Set up the `gcx` context to point to your instance as documented in [Defining contexts](https://github.com/grafana/gcx/#1-authenticate).
 1. Pull the resources you want to sync from the instance to your local repository:
 
-```
-gcx resources pull dashboards --path <REPO_PATH>
-```
+   ```
+   gcx resources pull dashboards --path <REPO_PATH>
+   ```
 
-Next, commit and push the resources to your Git repository:
+1. Commit and push the resources to your Git repository:
 
-```
-git add <DASHBOARDS_PATH>
-git commit -m "Add dashboards from Grafana"
-git push
-```
+   ```
+   git add <DASHBOARDS_PATH>
+   git commit -m "Add dashboards from Grafana"
+   git push
+   ```
 
-Where:
+   Where:
+   - _<GIT_REPO>_: The path to the repository synced with Git Sync
+   - _<DASHBOARDS_PATH>_: The path where the dashboards you want to export are located. The dashboards path must be under the repository
 
-- _<GIT_REPO>_: The path to the repository synced with Git Sync
-- _<DASHBOARDS_PATH>_: The path where the dashboards you want to export are located. The dashboards path must be under the repository
+1. Delete the original unmanaged resources you want to sync from Grafana. This step is required because Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
+1. Trigger a new pull to complete the sync. The resources are recreated as provisioned, with their original UIDs, so existing links keep working.
+
+{{< admonition type="note" >}}
+
+Deleting resources implies certain operational caveats. Refer to [How to delete existing resources in Grafana](#how-to-delete-existing-resources-in-grafana) for more information.
+
+{{< /admonition >}}
 
 ## Add a dashboard via JSON export
 
@@ -111,6 +125,14 @@ To add an existing dashboard to Git Sync via JSON export, you need to:
 1. Export the dashboard as JSON.
 1. Convert it to the Custom Resource Definition (CRD) format required by the Grafana App Platform.
 1. Commit the converted file to your Git repository.
+1. Delete the original unmanaged resources you want to sync from Grafana. This step is required because Git Sync will not adopt a resource while an unmanaged resource with the same UID (`metadata.name`) still exists in Grafana.
+1. Trigger a new pull to complete the sync. The resources are recreated as provisioned, with their original UIDs, so existing links keep working.
+
+{{< admonition type="note" >}}
+
+Deleting resources implies certain operational caveats. Refer to [How to delete existing resources in Grafana](#how-to-delete-existing-resources-in-grafana) for more information.
+
+{{< /admonition >}}
 
 ### Required JSON format
 
@@ -128,9 +150,21 @@ To export a dashboard as a JSON file it must follow this CRD structure:
 The structure includes:
 
 - `apiVersion`: Specifies the API version. Both classic and `v2` JSON models are supported. For more information, refer to [Dashboard JSON model](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/).
-- `kind`: Identifies the resource type (Dashboard).
+- `kind`: Identifies the resource type. For example, dashboard.
 - `metadata`: Contains the dashboard identifier `uid`. You can find the identifier in the dashboard's URL or in the exported JSON.
 - `spec`: Wraps your original dashboard JSON.
+
+## How to delete existing resources in Grafana
+
+If you add existing resources using `gcx` or via JSON import, the resource UID is kept, so you need to manually delete the original resource in Grafana to provision it with Git Sync.
+
+When you delete a resource, keep in mind the following:
+
+- You cannot restore deleted resources from the UI.
+- Dashboard version history does not carry over.
+- You need to reapply custom folder permissions. Refer to [Git Sync permissions and access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana) for more details.
+- Git Sync does not support alerts for the moment.
+- Deleting a folder deletes its alert rules. Move them out before deleting the folder.
 
 ## Work with Git-managed dashboards
 

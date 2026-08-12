@@ -2,6 +2,7 @@
 // forked names); it is a shared leaf type, so it comes straight from the generated module.
 import { defaultDataQueryKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { NotebookScene } from '../scene/NotebookScene';
 import { defaultSpec as defaultNotebookSpec, type NotebookElement, type Spec as NotebookSpec } from '../types';
@@ -16,6 +17,22 @@ function notebookSpec(): NotebookSpec {
   const elements: Record<string, NotebookElement> = {
     intro: { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: '## Checkout latency spike' } } } },
     query: { kind: 'Cell', spec: { content: { kind: 'Code', spec: { language: 'promql', code: 'up == 0' } } } },
+    // A LibraryPanel cell serializes down a different branch to a Panel one: vizPanelToSchemaV2 only
+    // emits LibraryPanelKind when it finds the behavior buildLibraryPanelState attaches, and otherwise
+    // falls through and inlines the panel. Without a library element in this fixture, a notebook cell
+    // built without that behavior would silently save as a fully inlined PanelKind — the library
+    // reference gone from the spec and edits to the library panel no longer propagating — and nothing
+    // here would fail. `id` and `title` mirror what the deserializer puts on the VizPanel so the
+    // round-trip stays exact, same as the Panel fixture. Nothing activates the cell, so the library
+    // panel is never fetched and no API mock is needed.
+    'saved-cpu-panel': {
+      kind: 'LibraryPanel',
+      spec: {
+        id: 2,
+        title: 'CPU usage',
+        libraryPanel: { uid: 'lib-cpu-1', name: 'CPU usage' },
+      },
+    },
     'latency-panel': {
       kind: 'Panel',
       spec: {
@@ -61,6 +78,8 @@ function notebookSpec(): NotebookSpec {
             fieldConfig: { defaults: {}, overrides: [] },
           },
         },
+        // Only `true` round-trips: the save path emits undefined for a non-transparent panel.
+        transparent: true,
       },
     },
   };
@@ -96,6 +115,10 @@ function notebookSpec(): NotebookSpec {
             kind: 'NotebookLayoutItem',
             spec: { element: { kind: 'ElementReference', name: 'query' }, source: 'user' },
           },
+          {
+            kind: 'NotebookLayoutItem',
+            spec: { element: { kind: 'ElementReference', name: 'saved-cpu-panel' }, source: 'user' },
+          },
         ],
       },
     },
@@ -120,18 +143,33 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(scene.state.uid).toBe('nb-1');
     expect(scene.state.hideTimeControls).toBe(false);
     expect(scene.state.$timeRange.state.from).toBe('now-6h');
-    expect(scene.state.body.state.cells).toHaveLength(3);
+    expect(scene.state.body.state.cells).toHaveLength(4);
     // Title and tags are surfaced on the layout manager for the document header.
     expect(scene.state.body.state.title).toBe('Checkout latency investigation');
     expect(scene.state.body.state.tags).toEqual(['incident', 'checkout']);
   });
 
-  it('round-trips the full spec: cells, order, source, timeSettings and metadata', () => {
+  // V2PanelSpec.subtitle is deliberately absent from the fixture: neither buildVizPanelState nor
+  // vizPanelToSchemaV2 handles it, so it would not survive. Add it here once they do.
+  it('round-trips cells, order, source, panel config, timeSettings and metadata', () => {
     const spec = notebookSpec();
 
     const scene = transformNotebookToScene(notebookResource());
     const saveModel = transformNotebookSceneToSaveModel(scene);
 
     expect(saveModel).toEqual(spec);
+  });
+
+  // The save path borrows the dashboard's vizPanelToSchemaV2, which is only safe here because both
+  // optional args are omitted: a dsReferencesMapping routes it through getElementIdentifierForVizPanel
+  // -> getDashboardSceneFor, which throws for a NotebookScene root. Nothing in the signature says so,
+  // and the save PR is where someone would thread a mapping through to preserve datasource references.
+  // Pinning both halves so adding the arg fails here rather than at runtime on notebook save.
+  it('serializes panel cells without reaching for a DashboardScene root', () => {
+    const scene = transformNotebookToScene(notebookResource());
+    const panel = scene.state.body.state.cells.find((cell) => cell.state.body)!.state.body!;
+
+    expect(() => getDashboardSceneFor(panel)).toThrow();
+    expect(() => transformNotebookSceneToSaveModel(scene)).not.toThrow();
   });
 });

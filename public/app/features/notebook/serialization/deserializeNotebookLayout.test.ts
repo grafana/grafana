@@ -74,4 +74,32 @@ describe('deserializeNotebookLayout', () => {
     expect(manager.state.title).toBe('My notebook');
     expect(manager.state.tags).toEqual(['incident']);
   });
+
+  describe('panel ids', () => {
+    it('keys panels off their element id when no generator is given', () => {
+      const { layout, elements } = fixture();
+      elements.panel1 = { ...defaultPanelKind(), spec: { ...defaultPanelKind().spec, id: 7 } };
+
+      const manager = deserializeNotebookLayout(layout, elements);
+
+      expect(manager.getVizPanels()[0].state.key).toBe('panel-7');
+    });
+
+    // Two elements carrying the same id is what the generator exists for: without it both panels get
+    // the same key, and findVizPanelByKey plus the panelId enrichDataRequest sends cannot tell them
+    // apart. Nothing validates uniqueness at load, same as the dashboard.
+    it('reassigns keys from the generator when one is given', () => {
+      const { layout, elements } = fixture();
+      elements.panel1 = { ...defaultPanelKind(), spec: { ...defaultPanelKind().spec, id: 3 } };
+      elements.lib1 = { ...defaultLibraryPanelKind(), spec: { ...defaultLibraryPanelKind().spec, id: 3 } };
+
+      const collided = deserializeNotebookLayout(layout, elements).getVizPanels();
+      expect(collided.map((panel) => panel.state.key)).toEqual(['panel-3', 'panel-3']);
+
+      let next = 10;
+      const manager = deserializeNotebookLayout(layout, elements, undefined, () => next++);
+
+      expect(manager.getVizPanels().map((panel) => panel.state.key)).toEqual(['panel-10', 'panel-11']);
+    });
+  });
 });

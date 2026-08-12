@@ -843,6 +843,47 @@ func (b *pgvectorBackend) TryAcquireBackfillLock(ctx context.Context) (func(), b
 	return release, true, nil
 }
 
+// CountStoredEmbeddings aggregates over the partitioned parent, so it covers
+// every leaf including ones attached at runtime. The PK leads with
+// (resource, namespace, model, ...) so Postgres can satisfy this with an
+// index-only scan, but it is still O(rows) — keep it off any hot path.
+func (b *pgvectorBackend) CountStoredEmbeddings(ctx context.Context) (counts []EmbeddingCount, retErr error) {
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.CountStoredEmbeddings")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+
+	rows, err := b.db.QueryContext(ctx,
+		`SELECT resource, model, COUNT(*) FROM embeddings GROUP BY resource, model`)
+	if err != nil {
+		return nil, fmt.Errorf("count stored embeddings: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	var out []EmbeddingCount
+	var total int64
+	for rows.Next() {
+		var c EmbeddingCount
+		if err := rows.Scan(&c.Resource, &c.Model, &c.Count); err != nil {
+			return nil, fmt.Errorf("scan embedding count: %w", err)
+		}
+		total += c.Count
+		out = append(out, c)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	span.SetAttributes(
+		attribute.Int("groups", len(out)),
+		attribute.Int64("embeddings", total),
+	)
+	return out, nil
+}
+
 func (b *pgvectorBackend) GetLatestRV(ctx context.Context) (int64, error) {
 	var rv int64
 	row := b.db.QueryRowContext(ctx, `SELECT latest_rv FROM vector_latest_rv WHERE id = 1`)

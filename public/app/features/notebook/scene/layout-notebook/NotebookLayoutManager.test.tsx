@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { SceneTimeRange } from '@grafana/scenes';
+import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type NotebookLayoutKind } from 'app/features/notebook/types';
 
 import { NotebookCellItem } from './NotebookCellItem';
@@ -60,5 +60,56 @@ describe('NotebookLayoutManager', () => {
     const result: NotebookLayoutKind = manager.serialize();
 
     expect(result.kind).toBe('NotebookLayout');
+  });
+
+  describe('duplicate', () => {
+    function buildManager() {
+      return new NotebookLayoutManager({
+        cells: [
+          new NotebookCellItem({
+            elementName: 'md1',
+            source: 'assistant',
+            content: { kind: 'Markdown', spec: { text: 'Hello' } },
+          }),
+          new NotebookCellItem({
+            elementName: 'latency',
+            source: 'user',
+            body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries' }),
+          }),
+          new NotebookCellItem({
+            elementName: 'errors',
+            source: 'user',
+            body: new VizPanel({ key: 'panel-2', pluginId: 'timeseries' }),
+          }),
+        ],
+      });
+    }
+
+    it('rekeys the cloned panels from the generator', () => {
+      let next = 41;
+
+      const clone = buildManager().duplicate(() => next++);
+
+      expect(clone.getVizPanels().map((panel) => panel.state.key)).toEqual(['panel-41', 'panel-42']);
+    });
+
+    // Without a generator the manager seeds one off its own max id, so a duplicate never reuses the
+    // originals' keys.
+    it('rekeys past the existing ids when no generator is given', () => {
+      const manager = buildManager();
+
+      const clone = manager.duplicate();
+
+      expect(clone.getVizPanels().map((panel) => panel.state.key)).toEqual(['panel-3', 'panel-4']);
+      expect(manager.getVizPanels().map((panel) => panel.state.key)).toEqual(['panel-1', 'panel-2']);
+    });
+
+    it('clones narrative cells unchanged', () => {
+      const clone = buildManager().duplicate();
+
+      expect(clone.state.cells).toHaveLength(3);
+      expect(clone.state.cells[0].state.body).toBeUndefined();
+      expect(clone.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
   });
 });

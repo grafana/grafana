@@ -54,6 +54,12 @@ function getElements(scene: NotebookScene): Record<string, NotebookElement> {
     const { elementName, body: panel, content } = cell.state;
 
     if (panel) {
+      // Both optional args must stay omitted. A dsReferencesMapping routes vizPanelToSchemaV2
+      // through getAutoAssignedDSRef -> getElementIdentifierForVizPanel -> getDashboardSceneFor,
+      // which throws for a NotebookScene root. isSnapshot does not throw, but it keys elements by
+      // the dashboard's snapshot identifier rather than by elementName, so it would not round-trip
+      // here either. Neither constraint is visible in the signature, and the save PR is where
+      // someone would thread a mapping through to preserve datasource references.
       elements[elementName] = vizPanelToSchemaV2(panel);
     } else if (content) {
       elements[elementName] = { kind: 'Cell', spec: { content } };

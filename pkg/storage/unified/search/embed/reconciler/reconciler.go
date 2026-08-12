@@ -90,6 +90,10 @@ type Options struct {
 	Backfiller        Backfiller
 	Interval          time.Duration
 	LockRetryInterval time.Duration
+	// EmbeddingCountInterval paces the stored-embedding gauge. Each sample
+	// is a full aggregate scan of the embeddings table, so it belongs far
+	// above Interval. Zero disables the sampling entirely.
+	EmbeddingCountInterval time.Duration
 	// Metrics is optional; when nil the reconciler runs without
 	// observability instrumentation (handy for unit tests).
 	Metrics *resource.VectorMetrics
@@ -101,15 +105,16 @@ type Options struct {
 // pagination doesn't ping-pong across replicas. Connection-bound pg
 // session locks release naturally if the pod crashes.
 type Reconciler struct {
-	storage           resource.StorageBackend
-	vectorBackend     vector.VectorBackend
-	batchEmbedder     *embedder.BatchEmbedder
-	builders          map[string]embed.Builder
-	backfiller        Backfiller
-	interval          time.Duration
-	lockRetryInterval time.Duration
-	log               log.Logger
-	metrics           *resource.VectorMetrics
+	storage                resource.StorageBackend
+	vectorBackend          vector.VectorBackend
+	batchEmbedder          *embedder.BatchEmbedder
+	builders               map[string]embed.Builder
+	backfiller             Backfiller
+	interval               time.Duration
+	lockRetryInterval      time.Duration
+	embeddingCountInterval time.Duration
+	log                    log.Logger
+	metrics                *resource.VectorMetrics
 
 	// folderTitleResolver is uncached: event rate is low and fresh titles beat cache staleness.
 	folderTitleResolver *foldertitle.Resolver
@@ -146,18 +151,19 @@ func New(opts Options) (*Reconciler, error) {
 		opts.LockRetryInterval = defaultLockRetryInterval
 	}
 	return &Reconciler{
-		storage:             opts.Storage,
-		vectorBackend:       opts.VectorBackend,
-		batchEmbedder:       opts.BatchEmbedder,
-		builders:            builders,
-		backfiller:          opts.Backfiller,
-		interval:            opts.Interval,
-		lockRetryInterval:   opts.LockRetryInterval,
-		log:                 log.New("embeddings_reconciler"),
-		metrics:             opts.Metrics,
-		pending:             make(map[string]*pendingEvent),
-		ensuredResources:    make(map[string]struct{}),
-		folderTitleResolver: foldertitle.NewResolver(opts.Storage),
+		storage:                opts.Storage,
+		vectorBackend:          opts.VectorBackend,
+		batchEmbedder:          opts.BatchEmbedder,
+		builders:               builders,
+		backfiller:             opts.Backfiller,
+		interval:               opts.Interval,
+		lockRetryInterval:      opts.LockRetryInterval,
+		embeddingCountInterval: opts.EmbeddingCountInterval,
+		log:                    log.New("embeddings_reconciler"),
+		metrics:                opts.Metrics,
+		pending:                make(map[string]*pendingEvent),
+		ensuredResources:       make(map[string]struct{}),
+		folderTitleResolver:    foldertitle.NewResolver(opts.Storage),
 	}, nil
 }
 
@@ -240,6 +246,12 @@ func (s *Reconciler) Run(ctx context.Context) error {
 		}()
 	}
 
+	// Gauge sampling runs only on the lock holder so the aggregate scan
+	// happens once per cluster rather than once per replica.
+	if s.metrics != nil && s.embeddingCountInterval > 0 {
+		go s.runEmbeddingCounts(ctx)
+	}
+
 	// Subscribe before startupReconcile so events between the
 	// startupReconcile snapshot and the subscription join can't slip through;
 	// the broadcaster's replay buffer covers the brief overlap.
@@ -298,6 +310,36 @@ func (s *Reconciler) acquireLockBlocking(ctx context.Context) (func(), error) {
 			return nil, ctx.Err()
 		case <-time.After(s.lockRetryInterval):
 		}
+	}
+}
+
+func (s *Reconciler) runEmbeddingCounts(ctx context.Context) {
+	t := time.NewTicker(s.embeddingCountInterval)
+	defer t.Stop()
+	for {
+		s.recordEmbeddingCounts(ctx)
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+		}
+	}
+}
+
+// recordEmbeddingCounts refreshes the stored-embedding gauge. Reset drops
+// label pairs that no longer exist — e.g. the superseded model after a
+// rollout — instead of pinning them at their last observed value.
+func (s *Reconciler) recordEmbeddingCounts(ctx context.Context) {
+	counts, err := s.vectorBackend.CountStoredEmbeddings(ctx)
+	if err != nil {
+		if ctx.Err() == nil {
+			s.log.Warn("reconciler: count stored embeddings", "err", err)
+		}
+		return
+	}
+	s.metrics.EmbeddingsStored.Reset()
+	for _, c := range counts {
+		s.metrics.EmbeddingsStored.WithLabelValues(c.Resource, c.Model).Set(float64(c.Count))
 	}
 }
 

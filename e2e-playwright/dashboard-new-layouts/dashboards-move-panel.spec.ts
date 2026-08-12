@@ -1,7 +1,5 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panels } from './page-objects';
-import { getPanelBox, movePanel } from './utils';
+import { test, expect } from './fixtures';
+import { getPanelBox, movePanel } from './helpers';
 
 const PAGE_UNDER_TEST = 'ed155665/annotation-filtering';
 
@@ -21,12 +19,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can drag and drop panels', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
+    test('can drag and drop panels', async ({ gotoDashboardPage, controls, panels }) => {
+      await gotoDashboardPage({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
       await controls.enterEditMode();
 
       // Move panel three to panel one position

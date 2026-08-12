@@ -14,6 +14,7 @@ import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
+import { NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -57,11 +58,22 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/notebook/:uid/:slug?',
+      path: `${NOTEBOOKS_BASE_URL}/:uid/:slug?`,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage')
+      ),
+    },
+    {
+      // Notebooks reuse dashboard RBAC actions, so dashboards:read is what gates both notebook
+      // routes. The feature flag is enforced inside the pages instead, since getAppRoutes cannot
+      // use hooks.
+      path: NOTEBOOKS_BASE_URL,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsRead]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebooksListPage" */ '../features/notebook/pages/NotebooksListPage')
       ),
     },
     {

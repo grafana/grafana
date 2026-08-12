@@ -429,6 +429,9 @@ func (f *fakeVector) GetLatestRV(context.Context) (int64, error) {
 	defer f.mu.Unlock()
 	return f.latestRV, nil
 }
+func (f *fakeVector) CountStoredEmbeddings(context.Context) ([]vector.EmbeddingCount, error) {
+	return nil, nil
+}
 func (f *fakeVector) SetLatestRV(context.Context, int64) error { return nil }
 func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {
 	return func() {}, true, nil

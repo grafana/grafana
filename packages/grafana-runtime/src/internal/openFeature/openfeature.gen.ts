@@ -45,8 +45,6 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
-  /** Uses the Luxon-backed compatibility implementation for Grafana date and time APIs */
-  DatetimeUseLuxon: "datetime.useLuxon",
   /** A/A test for recently viewed dashboards feature */
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
@@ -103,6 +101,8 @@ export const FlagKeys = {
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
+  /** Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins */
+  GrafanaUnifiedDataSourcePicker: "grafana.unifiedDataSourcePicker",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
   /** Enables semantic (vector) dashboard search in the command palette */
@@ -149,6 +149,8 @@ export const FlagKeys = {
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
+  /** Routes snapshot requests from /api to the /apis endpoint */
+  SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
   /** Enables CodeMirror editor for SQL Expressions */
@@ -163,10 +165,6 @@ export const FlagKeys = {
   TableAutoColumnWidths: "table.autoColumnWidths",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
-  /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
-  TableProtoRowParser: "table.protoRowParser",
-  /** Enables the refactored TableNG nested-table implementation */
-  TableRefactorNested: "table.refactorNested",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -345,17 +343,6 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
-};
-
-/**
- * Uses the Luxon-backed compatibility implementation for Grafana date and time APIs
- *
- * **Details:**
- * - flag key: `datetime.useLuxon`
- * - default value: `false`
- */
-export const useFlagDatetimeUseLuxon = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datetime.useLuxon", false, options).value;
 };
 
 /**
@@ -667,6 +654,17 @@ export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluat
 };
 
 /**
+ * Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins
+ *
+ * **Details:**
+ * - flag key: `grafana.unifiedDataSourcePicker`
+ * - default value: `true`
+ */
+export const useFlagGrafanaUnifiedDataSourcePicker = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.unifiedDataSourcePicker", true, options).value;
+};
+
+/**
  * Use the find default scope endpoint to seed the initial scope selection when none is set.
  *
  * **Details:**
@@ -920,6 +918,17 @@ export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Routes snapshot requests from /api to the /apis endpoint
+ *
+ * **Details:**
+ * - flag key: `snapshots.kubernetesSnapshots`
+ * - default value: `false`
+ */
+export const useFlagSnapshotsKubernetesSnapshots = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("snapshots.kubernetesSnapshots", false, options).value;
+};
+
+/**
  * Enables the splash screen modal for introducing new Grafana features on first session
  *
  * **Details:**
@@ -994,28 +1003,6 @@ export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOption
  */
 export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.paginationPageSize", false, options).value;
-};
-
-/**
- * Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.
- *
- * **Details:**
- * - flag key: `table.protoRowParser`
- * - default value: `false`
- */
-export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("table.protoRowParser", false, options).value;
-};
-
-/**
- * Enables the refactored TableNG nested-table implementation
- *
- * **Details:**
- * - flag key: `table.refactorNested`
- * - default value: `false`
- */
-export const useFlagTableRefactorNested = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("table.refactorNested", false, options).value;
 };
 
 /**

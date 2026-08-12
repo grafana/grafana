@@ -651,7 +651,7 @@ func schema_pkg_apis_search_v0alpha1_WhereNode(ref common.ReferenceCallback) com
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text and filter leaves; In/NotIn filter operators). Everything else is rejected with 400 BadRequest by the validation layer. range and exists are sketched for future versions and always rejected today.",
+				Description: "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text and filter leaves; In/NotIn filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. range and exists are sketched for future versions and always rejected today.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"and": {

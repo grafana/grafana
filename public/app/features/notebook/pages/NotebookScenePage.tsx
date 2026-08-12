@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
@@ -11,6 +10,7 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
 import { type NotebookScene } from '../scene/NotebookScene';
+import { NotebookToolbar } from '../toolbar/NotebookToolbar';
 
 import { NotebookPageError } from './NotebookPageError';
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
@@ -45,7 +45,7 @@ export function NotebookScenePage() {
     return loadError ? (
       <NotebookPageError error={loadError} />
     ) : (
-      <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid="notebook-scene-page">
+      <Page navId="notebooks" layout={PageLayoutType.Canvas} data-testid="notebook-scene-page">
         <Box paddingY={4} display="flex" direction="column" alignItems="center">
           {isLoading && <PageLoader />}
         </Box>
@@ -69,17 +69,18 @@ export function NotebookScenePage() {
 }
 
 function NotebookDocument({ scene }: { scene: NotebookScene }) {
-  const { title } = scene.useState();
+  // uid comes off the scene rather than the route param: it is the notebook's identity
+  // (metadata.name), and the scene already carries it for the same reason it carries the title.
+  const { title, uid } = scene.useState();
 
   useEffect(() => scene.activate(), [scene]);
 
-  // Show a "Notebooks" breadcrumb parent rather than nesting under the raw title.
-  const pageNav = { text: title, parentItem: { text: t('notebook.breadcrumb-title', 'Notebooks') } };
+  // The Notebooks nav section supplies the parent breadcrumb, so pageNav only carries the title.
+  const pageNav = { text: title };
 
-  // Notebooks currently live under the Dashboards nav section, so the page highlights it. A
-  // dedicated top-level Notebooks nav section is deferred to its own follow-up.
   return (
-    <Page navId="dashboards/browse" pageNav={pageNav} layout={PageLayoutType.Custom}>
+    <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
+      {uid && <NotebookToolbar uid={uid} />}
       <scene.Component model={scene} />
     </Page>
   );
