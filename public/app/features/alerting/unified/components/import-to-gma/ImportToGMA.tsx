@@ -1134,14 +1134,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       minWidth: '150px',
     },
   }),
-  badge: css({
-    padding: theme.spacing(0.5, 1),
-    borderRadius: theme.shape.radius.default,
-    backgroundColor: theme.colors.success.transparent,
-    color: theme.colors.success.text,
-    fontSize: theme.typography.bodySmall.fontSize,
-    fontWeight: theme.typography.fontWeightMedium,
-  }),
   badgeSkipped: css({
     padding: theme.spacing(0.5, 1),
     borderRadius: theme.shape.radius.default,
