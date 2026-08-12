@@ -20,6 +20,9 @@ outputs:
   frontend-src:
     description: Whether the frontend or self has changed, excluding test-only changes
     value: ${{ steps.changed-files.outputs.frontend_src_any_modified || 'true' }}
+  api-specs:
+    description: Whether the OpenAPI specs the generated API clients are built from have changed
+    value: ${{ steps.changed-files.outputs.api_specs_any_modified || 'true' }}
   frontend-dependencies:
     description: Whether the frontend dependencies or self have changed in any way
     value: ${{ steps.changed-files.outputs.frontend_dependencies_any_modified || 'true' }}
@@ -243,6 +246,11 @@ runs:
             - '!e2e-playwright/**'
             # apps/dashboard/pkg/migration/** carries Go tests; exclude them too.
             - '!**_test.go'
+          api_specs:
+            # The specs are JSON, so the frontend group's extension list does
+            # not match them.
+            - 'packages/grafana-openapi/**'
+            - '${{ inputs.self }}'
           frontend_dependencies:
             - 'yarn.lock'
             - 'package.json'

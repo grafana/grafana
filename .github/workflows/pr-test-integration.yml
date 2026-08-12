@@ -366,3 +366,34 @@ jobs:
         if: always()
         run: |
           make devenv-down sources=postgres_tests
+
+  # Every job the matrices depend on must be listed below, or a failure there
+  # skips them and reports as a green gate.
+  required-integration-tests:
+    needs:
+      - warm-go-cache
+      - sqlite
+      - mysql
+      - postgres
+      - sqlite-enterprise
+      - mysql-enterprise
+      - postgres-enterprise
+    # always() is the best function here.
+    # success() || failure() will skip this job if any need is also skipped.
+    # That means conditional test suites would fail the entire requirement check.
+    if: always()
+
+    name: All integration tests complete
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Check test suites
+        uses: ./.github/actions/check-jobs
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more integration test suites have failed"
+          success-message: "All integration test suites passed"

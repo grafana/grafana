@@ -304,6 +304,13 @@ jobs:
       contents: read
       id-token: write
     steps:
+      # Checkout wipes the workspace, so it has to precede the downloads below.
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/actions/check-jobs
+
       - name: Download blob reports from GitHub Actions Artifacts
         if: needs.run-playwright-tests.result != 'skipped'
         uses: actions/download-artifact@v8
@@ -338,7 +345,7 @@ jobs:
 
       - name: Check test suites
         id: check-jobs
-        uses: grafana/grafana/.github/actions/check-jobs@main
+        uses: ./.github/actions/check-jobs
         continue-on-error: true # Failure will be reported on Check test results step
         with:
           needs: ${{ toJson(needs) }}
