@@ -1,6 +1,6 @@
 ---
 name: restore-broken-baseline
-description: Restore this workspace to the known broken baseline for the dotted-identifier bug on fix/influx-dotted-identifiers, and move every Task Tracking Jira issue back to To Do. Use after an investigation or fix cycle. Restore only — never implement or re-apply product changes.
+description: Restore this workspace to the known broken baseline for the dotted-identifier bug on fix/influx-dotted-identifiers, move every Task Tracking Jira issue back to To Do, and remove the jira-ticket-e2e skill so it can be built live next time. Use after an investigation or fix cycle. Restore only — never implement or re-apply product changes.
 ---
 
 # Restore workspace to the known broken baseline
@@ -12,6 +12,10 @@ issue on the Task Tracking board to To Do, and tidy leftover agent work.
 
 This skill is restore-only. Do not fix the identifier bug, do not cherry-pick
 the fix commit, and do not make any other product change while running it.
+
+After restore, remove the `jira-ticket-e2e` skill if it is present. That skill
+is built live in the next session; it must not be waiting in `.cursor/skills`
+when the run starts.
 
 ## Baseline refs
 
@@ -73,13 +77,25 @@ back to To Do is enough for the next In Progress transition to fire again.
    git clean -fd -e .cursor
    ```
 
-4. Confirm the fix ref is still available for the next cycle:
+4. Remove the Jira ticket end-to-end skill so the next session can construct
+   it live. `git clean -e .cursor` will not touch this path. Delete it even
+   if it is tracked, untracked, or was recreated during the run. Do not
+   recreate it, and do not copy it back from git.
+
+   ```bash
+   rm -rf .cursor/skills/jira-ticket-e2e .agents/skills/jira-ticket-e2e
+   ```
+
+   If `git status` then shows a deletion of `jira-ticket-e2e`, leave it
+   deleted. Do not `git restore` that path.
+
+5. Confirm the fix ref is still available for the next cycle:
 
    ```bash
    git rev-parse dotted-identifiers/fix
    ```
 
-5. Move every Jira board item back to To Do (do this; do not only remind
+6. Move every Jira board item back to To Do (do this; do not only remind
    the user):
 
    1. Search `project = KAN ORDER BY key ASC` (`searchJiraIssuesUsingJql`).
@@ -94,7 +110,7 @@ back to To Do is enough for the next In Progress transition to fire again.
    Git restore is complete even if a Jira call fails. Report any keys that
    could not be moved so the user can fix them by hand.
 
-6. List leftover local work and tell the user what to close out:
+7. List leftover local work and tell the user what to close out:
    - `git branch --list | grep -v -E 'main|fix/influx-dotted-identifiers'` —
      list branches created during the run; suggest deleting ones that are done.
    - `git stash list` — flag stashes that should be dropped or applied.
@@ -103,9 +119,12 @@ back to To Do is enough for the next In Progress transition to fire again.
    - The Cursor Automation and the Jira "Send web request" rule stay in place;
      do not delete them.
 
-7. Print a short summary:
+8. Print a short summary:
    - current SHA (`git rev-parse --short HEAD`) and branch
-   - working tree state (`git status --short` should be empty)
+   - working tree state (`git status --short` should be empty except an
+     expected deletion of `jira-ticket-e2e` if that skill was in HEAD)
+   - confirm `.cursor/skills/jira-ticket-e2e` is absent
    - every Jira key on the board and its status after the reset
    - next suggested step: start a fresh chat and pick up a To Do ticket
      from the board (moving it to In Progress starts the Cloud Agent).
+     Construct `jira-ticket-e2e` live if that workflow is needed.
