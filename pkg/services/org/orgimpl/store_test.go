@@ -138,7 +138,7 @@ func TestIntegrationOrgDeleteRenderers(t *testing.T) {
 		Marker string `xorm:"marker"`
 	}
 
-	dbStore := db.InitTestDB(t)
+	dbStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	store := &sqlStore{sql: legacysql.NewDatabaseProvider(dbStore), log: log.NewNopLogger()}
 	err := dbStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		if _, err := sess.Exec("DROP TABLE IF EXISTS org_delete_renderer_test"); err != nil {

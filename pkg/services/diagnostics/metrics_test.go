@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 
 func TestMetricsConcurrentInstancesDoNotLoseIncrements(t *testing.T) {
 	ctx := context.Background()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	clearDiagnosticsMetrics(t, sqlStore)
 	firstUsage := &usagestats.UsageStatsMock{T: t}
 	secondUsage := &usagestats.UsageStatsMock{T: t}
@@ -86,7 +86,7 @@ func TestMetricsPersistsUsageStatsAfterRequestCancellation(t *testing.T) {
 
 func TestMetricsCountersSurviveRecreation(t *testing.T) {
 	ctx := context.Background()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	clearDiagnosticsMetrics(t, sqlStore)
 	firstUsage := &usagestats.UsageStatsMock{T: t}
 	first := NewMetrics(sqlStore, firstUsage, prometheus.NewPedanticRegistry())
