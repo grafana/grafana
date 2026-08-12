@@ -1,0 +1,11 @@
+---
+description: Visual verification expectations for user-visible fixes
+alwaysApply: true
+---
+When a fix changes user-visible behavior (panels, editors, Explore, generated queries shown in the UI):
+
+Verify visually in addition to tests when feasible: capture a screenshot, a short recording, or both, showing the broken behavior and the fixed behavior.
+Use what the repo provides: Playwright e2e (yarn e2e:playwright) records screenshots and video; a running instance (make run + yarn start) can be exercised with browser tooling.
+Attach captures to the PR description and reference them from the ticket; name the exact page, query, or panel shown so a reviewer can reproduce it.
+If visual verification is not feasible (pure logic change, or the affected UI path is not runnable in this tree), say so explicitly, rely on tests, and describe what a capture would show.
+Never include credentials, tokens, or real user data in any capture.
