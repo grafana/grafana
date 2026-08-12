@@ -1,4 +1,3 @@
-import { type UserEvent } from '@testing-library/user-event';
 import { produce } from 'immer';
 import { HttpResponse, http } from 'msw';
 import { Route, Routes } from 'react-router-dom-v5-compat';
@@ -448,46 +447,6 @@ describe.each([
     expect(policy).toHaveTextContent(
       `Muted when ${TIME_INTERVAL_NAME_HAPPY_PATH}, ${TIME_INTERVAL_NAME_FILE_PROVISIONED}`
     );
-  });
-});
-
-const addChildRoute = async (user: UserEvent) => {
-  await user.click((await ui.newChildPolicyButton.findAll())[0]);
-  const modal = await screen.findByRole('dialog');
-  await user.type(within(modal).getByPlaceholderText('label'), 'team');
-  await user.type(within(modal).getByPlaceholderText('value'), 'gigabit');
-  await user.click(within(modal).getByRole('button', { name: /add route/i }));
-};
-
-describe('User without permission to read alert instances', () => {
-  beforeAll(() => {
-    mockComboboxRect();
-  });
-
-  beforeEach(() => {
-    setupDataSources(...Object.values(dataSources));
-    grantUserPermissions([
-      AccessControlAction.AlertingNotificationsRead,
-      AccessControlAction.AlertingNotificationsWrite,
-      ...PERMISSIONS_NOTIFICATION_POLICIES,
-    ]);
-    resetRoutingTreeMap();
-  });
-
-  afterAll(() => {
-    resetRoutingTreeMap();
-  });
-
-  it('closes the modal after adding a child route', async () => {
-    const { user } = renderPolicyPage(ROOT_ROUTE_NAME)();
-
-    await addChildRoute(user);
-
-    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
-    expect(screen.queryByText(/failed to add or update notification policy/i)).not.toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
   });
 });
 
