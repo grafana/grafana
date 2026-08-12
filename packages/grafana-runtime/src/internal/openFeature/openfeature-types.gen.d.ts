@@ -43,6 +43,7 @@ declare module "@openfeature/core" {
     | "otelLogsFormatting"
     | "grafana.starredFolders"
     | "grafana.newTextPanel"
+    | "text.newFeatures"
     | "plugins.useMTPlugins"
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
