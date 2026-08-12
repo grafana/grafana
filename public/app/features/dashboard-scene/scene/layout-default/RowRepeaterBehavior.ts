@@ -179,6 +179,28 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     updateLayout(layout, this._clonedRows, maxYOfRows, rowToRepeat.state.key!);
   }
 
+  /**
+   * Whether the layout currently reflects the repeat variable's latest values.
+   * Missing or incompatible variables are non-blocking because this repeater
+   * cannot render them and the source row remains visible.
+   */
+  public isRepeatComplete(): boolean {
+    if (this._variableDependency.hasDependencyInLoadingState()) {
+      return false;
+    }
+
+    const variable = sceneGraph.lookupVariable(this.state.variableName, this.parent?.parent!);
+    if (!(variable instanceof MultiValueVariable)) {
+      return true;
+    }
+
+    return isEqual(this._prevRepeatValues, getMultiVariableValues(variable).values);
+  }
+
+  public getRepeatedRows(): SceneGridRow[] | undefined {
+    return this._clonedRows;
+  }
+
   public removeBehavior() {
     const row = this._getRow();
     const layout = this._getLayout();

@@ -40,7 +40,10 @@ import { recordDashboardFetchTiming } from 'app/features/dashboard/services/Dash
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
+import {
+  clearReportRenderReadinessObserver,
+  initializeReportRenderReadinessObserver,
+} from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { initializeScenePerformanceLogger } from 'app/features/dashboard/services/ScenePerformanceLogger';
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
@@ -145,16 +148,27 @@ type HomeDashboardFetchResult =
 
 interface DashboardScenePageStateManagerLike<T> {
   fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
+
   getDashboardFromCache(cacheKey: string): T | null;
+
   loadDashboard(options: LoadDashboardOptions): Promise<void>;
+
   transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
+
   reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
+
   loadSnapshot(slug: string): Promise<void>;
+
   setDashboardCache(cacheKey: string, dashboard: T): void;
+
   clearSceneCache(): void;
+
   clearDashboardCache(): void;
+
   clearState(): void;
+
   getCache(): Record<string, DashboardScene>;
+
   useState: () => DashboardScenePageState;
 }
 
@@ -191,8 +205,11 @@ abstract class DashboardScenePageStateManagerBase<T>
   implements DashboardScenePageStateManagerLike<T>
 {
   abstract fetchDashboard(options: LoadDashboardOptions): Promise<T | null>;
+
   abstract reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
+
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
+
   abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
 
   protected cache: Record<string, DashboardScene> = {};
@@ -307,9 +324,10 @@ abstract class DashboardScenePageStateManagerBase<T>
    * @param base64EncodedKey base64 encoded key of the dashboard in the user storage
    * @returns Promise with dashboard data (can be v1 or v2 format) and meta
    */
-  protected async loadAssistantPreviewDashboard(
-    base64EncodedKey: string
-  ): Promise<{ dashboard: DashboardDataDTO | DashboardV2Spec; meta: DashboardDTO['meta'] }> {
+  protected async loadAssistantPreviewDashboard(base64EncodedKey: string): Promise<{
+    dashboard: DashboardDataDTO | DashboardV2Spec;
+    meta: DashboardDTO['meta'];
+  }> {
     const decodedKey = atob(decodeURIComponent(base64EncodedKey));
     const userStorage = new UserStorage('grafana-assistant-app');
     const dashboard = await userStorage.getItem(decodeURIComponent(decodedKey));
@@ -482,8 +500,10 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       if (renderTarget) {
         // Register the report render readiness observer so the image renderer can detect
-        // when the dashboard has fully rendered (queries + transforms + fieldConfig + render)
-        initializeReportRenderReadinessObserver();
+        // when the dashboard has fully rendered, including repeated rows/tabs/panels.
+        initializeReportRenderReadinessObserver(dashboard);
+      } else {
+        clearReportRenderReadinessObserver();
       }
 
       // Start dashboard_view profiling (both services are now guaranteed to be listening)
@@ -1564,6 +1584,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       this.activeManager = this.v2Manager;
     }
   }
+
   public resetActiveManager() {
     this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
   }

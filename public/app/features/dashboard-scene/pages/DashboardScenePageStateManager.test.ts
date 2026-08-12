@@ -23,7 +23,10 @@ import {
   type DashboardLoaderSrvV2,
   setDashboardLoaderSrv,
 } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
+import {
+  clearReportRenderReadinessObserver,
+  initializeReportRenderReadinessObserver,
+} from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
@@ -40,6 +43,7 @@ import {
   UnifiedDashboardScenePageStateManager,
   DASHBOARD_CACHE_TTL,
 } from './DashboardScenePageStateManager';
+
 const fetchMock = jest.fn();
 
 jest.mock('@grafana/runtime', () => {
@@ -96,6 +100,7 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
 }));
 
 jest.mock('app/features/dashboard/services/ReportRenderReadinessObserver', () => ({
+  clearReportRenderReadinessObserver: jest.fn(),
   initializeReportRenderReadinessObserver: jest.fn(),
 }));
 
@@ -115,8 +120,7 @@ jest.mock('@grafana/runtime/internal', () => ({
 
 const mockFetchPredefinedVariables = jest.fn();
 jest.mock('../utils/predefinedVariables', () => ({
-  ...jest.requireActual('../utils/predefinedVariables'),
-  // Default to no predefined variables so unrelated tests are unaffected.
+  ...jest.requireActual('../utils/predefinedVariables'), // Default to no predefined variables so unrelated tests are unaffected.
   fetchPredefinedVariables: (...args: unknown[]) => {
     const result = mockFetchPredefinedVariables(...args);
     // Preserve null (fetch failure); only default when the mock is unset.
@@ -298,6 +302,7 @@ describe('DashboardScenePageStateManager v1', () => {
         await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
         expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
         expect(initializeReportRenderReadinessObserver as jest.Mock).not.toHaveBeenCalled();
+        expect(clearReportRenderReadinessObserver as jest.Mock).toHaveBeenCalled();
       } finally {
         contextSrv.user.authenticatedBy = originalAuthBy;
       }
