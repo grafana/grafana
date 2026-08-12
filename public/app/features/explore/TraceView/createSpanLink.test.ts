@@ -9,6 +9,8 @@ import {
 } from '@grafana/data';
 import { type TraceToLogsOptionsV2, type TraceToMetricsOptions } from '@grafana/o11y-ds-frontend';
 import { type DataSourceSrv, getDataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { LinkSrv, setLinkSrv } from '../../panel/panellinks/link_srv';
@@ -123,6 +125,14 @@ describe('createSpanLinkFactory', () => {
 
       setLinkSrv(new LinkSrv());
       setTemplateSrv(new TemplateSrv());
+    });
+
+    beforeEach(() => {
+      setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
     });
 
     it('with default keys when tags not configured', () => {

@@ -15,9 +15,15 @@ import {
   useDataSourceInstanceSettings,
 } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type LokiQuery } from 'app/features/loki-helpers/types';
+
+import { getTraceToLogsSpanQuery, getTraceToLogsTraceQuery } from '../../logsLink';
+import { type Trace, type TraceSpan } from '../../types/trace';
 
 import {
+  addNoSpanIdFallback,
   getLogsButtonCTA,
   getLogsButtonTooltip,
   lokiDatasourceMatchStorageKey,
@@ -220,9 +226,7 @@ describe('LogsLinkButton', () => {
     );
 
     await userEvent.hover(await screen.findByRole('button'));
-    expect(
-      await screen.findByText('No related logs found using the trace data source configuration.')
-    ).toBeInTheDocument();
+    expect(await screen.findByText('No matching logs found for this span')).toBeInTheDocument();
   });
 
   it('keeps the button as present when the query returns logs', async () => {
@@ -243,7 +247,7 @@ describe('LogsLinkButton', () => {
 
     await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalled());
     await userEvent.hover(screen.getByRole('button'));
-    expect(await screen.findByText('View related logs using the trace data source configuration.')).toBeInTheDocument();
+    expect(await screen.findByText('See related logs')).toBeInTheDocument();
   });
 
   it('keeps the link disabled when the presence check errors', async () => {
@@ -267,9 +271,7 @@ describe('LogsLinkButton', () => {
     await waitFor(() => expect(query).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'true'));
     await userEvent.hover(screen.getByRole('button'));
-    expect(
-      await screen.findByText('No related logs found using the trace data source configuration.')
-    ).toBeInTheDocument();
+    expect(await screen.findByText('No matching logs found for this span')).toBeInTheDocument();
   });
 
   it('keeps the link disabled until a query variation resolves', async () => {
@@ -334,7 +336,7 @@ describe('LogsLinkButton', () => {
     await waitFor(() => expect(query).toHaveBeenCalledTimes(3));
     expect(store.get(queryMatchKey('logs-ds-uid'))).toBe('t2l:job:trace_id:span_id');
     await userEvent.hover(screen.getByRole('button'));
-    expect(await screen.findByText('View related logs using the trace data source configuration.')).toBeInTheDocument();
+    expect(await screen.findByText('See related logs')).toBeInTheDocument();
   });
 
   it('uses a stored loki query match immediately without probing other variations', async () => {
@@ -422,9 +424,7 @@ describe('LogsLinkButton', () => {
     await waitFor(() => expect(query).toHaveBeenCalledTimes(2));
     expect(store.get(queryMatchKey('logs-ds-uid'))).toBeUndefined();
     await userEvent.hover(await screen.findByRole('button'));
-    expect(
-      await screen.findByText('No related logs found using the trace data source configuration.')
-    ).toBeInTheDocument();
+    expect(await screen.findByText('No matching logs found for this span')).toBeInTheDocument();
   });
 
   it('falls back to other loki datasources when the configured one has no logs and stores the match', async () => {
@@ -461,7 +461,7 @@ describe('LogsLinkButton', () => {
     expect(store.get(datasourceMatchKey())).toBe('loki-fallback-uid');
     expect(store.get(queryMatchKey('loki-fallback-uid'))).toBe('t2l:default:trace_id:span_id');
     await userEvent.hover(screen.getByRole('button'));
-    expect(await screen.findByText('View related logs using the trace data source configuration.')).toBeInTheDocument();
+    expect(await screen.findByText('See related logs')).toBeInTheDocument();
   });
 
   it('uses a stored loki datasource match immediately before probing the configured datasource', async () => {
@@ -508,6 +508,57 @@ describe('LogsLinkButton', () => {
         ],
       })
     );
+  });
+
+  it('retries a stored match without its span_id filter when the span-scoped query returns no logs', async () => {
+    store.set(datasourceMatchKey(), 'logs-ds-uid');
+    store.set(queryMatchKey('logs-ds-uid'), 't2l:default:trace_id:span_id');
+    useDataSourceInstanceSettingsMock.mockReturnValue({
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      settings: { jsonData: {} } as any,
+    });
+
+    const withSpanExpr =
+      '{cluster="cluster1"} | logfmt | json | drop __error__ | trace_id="7946b05c2e2e4e5a" | span_id="6605c7b08e715d6c"';
+    const withoutSpanExpr = '{cluster="cluster1"} | logfmt | json | drop __error__ | trace_id="7946b05c2e2e4e5a"';
+
+    const query = jest
+      .fn()
+      .mockReturnValueOnce(of({ data: [emptyFrame] }))
+      .mockReturnValueOnce(of({ data: [logsFrame] }));
+    getDataSourceInstanceMock.mockResolvedValue({ query, type: 'loki' } as unknown as DataSourceApi);
+
+    const queries: DataQuery[] = [
+      {
+        refId: 't2l:default:trace_id:span_id',
+        expr: withSpanExpr,
+        datasource: { uid: 'logs-ds-uid', type: 'loki' },
+      } as DataQuery,
+      { refId: 'line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+    ];
+
+    render(
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: queries } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
+    );
+
+    await waitFor(() => expect(query).toHaveBeenCalledTimes(2));
+    expect(query).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        targets: [expect.objectContaining({ expr: withSpanExpr, maxLines: 1 })],
+      })
+    );
+    expect(query).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        targets: [expect.objectContaining({ expr: withoutSpanExpr, maxLines: 1 })],
+      })
+    );
+    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
   });
 });
 
@@ -736,5 +787,115 @@ describe('getLogsButtonTooltip', () => {
     },
   ])('$name', ({ settings, presence, expected }) => {
     expect(getLogsButtonTooltip(settings as DataSourceInstanceSettings, presence)).toBe(expected);
+  });
+});
+
+describe('addNoSpanIdFallback', () => {
+  const lokiSettings = {
+    uid: 'loki1_uid',
+    name: 'Loki',
+    type: 'loki',
+  } as DataSourceInstanceSettings;
+
+  const defaultOptions = {
+    customQuery: false,
+    datasourceUid: 'loki1_uid',
+  };
+
+  function createSpan(overrides: Partial<TraceSpan> = {}): TraceSpan {
+    return {
+      spanID: '6605c7b08e715d6c',
+      traceID: '7946b05c2e2e4e5a',
+      processID: 'processId',
+      operationName: 'operation',
+      logs: [],
+      startTime: new Date('2020-10-14T01:00:00Z').valueOf() * 1000,
+      duration: 1000 * 1000,
+      flags: 0,
+      hasChildren: false,
+      dataFrameRowIndex: 0,
+      tags: [],
+      process: {
+        serviceName: 'checkout',
+        tags: [
+          { key: 'cluster', value: 'cluster1' },
+          { key: 'hostname', value: 'hostname1' },
+        ],
+      },
+      ...overrides,
+    } as TraceSpan;
+  }
+
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
+  it('returns the original query when there is no expr', () => {
+    const query: DataQuery = { refId: 'A' };
+    expect(addNoSpanIdFallback(query)).toEqual([query]);
+  });
+
+  it('strips structured span_id filters from span-level queries generated by logsLink', () => {
+    const { query } = getTraceToLogsSpanQuery(createSpan(), lokiSettings, defaultOptions);
+    const queries = query as LokiQuery[];
+    const structured = queries.find((q) => q.refId === 't2l:default:trace_id:span_id');
+    expect(structured).toBeDefined();
+    expect(structured!.expr).toContain('span_id="6605c7b08e715d6c"');
+
+    const [original, fallback] = addNoSpanIdFallback(structured!) as LokiQuery[];
+    expect(original.expr).toBe(structured!.expr);
+    expect(fallback.expr).toBe(
+      '{cluster="cluster1", hostname="hostname1"} | logfmt | json | drop __error__ | trace_id="7946b05c2e2e4e5a"'
+    );
+    expect(fallback.expr).not.toMatch(/span_?id/i);
+  });
+
+  it('strips spanID / otel_span_id field-name variants from generated queries', () => {
+    const { query } = getTraceToLogsSpanQuery(createSpan(), lokiSettings, defaultOptions);
+    const queries = query as LokiQuery[];
+
+    for (const refId of ['t2l:default:traceID:spanID', 't2l:default:otel_trace_id:otel_span_id'] as const) {
+      const structured = queries.find((q) => q.refId === refId);
+      expect(structured).toBeDefined();
+      const [, fallback] = addNoSpanIdFallback(structured!) as LokiQuery[];
+      expect(fallback.expr).toContain('trace');
+      expect(fallback.expr).not.toMatch(/\|\s*(?:span_?id|otel_span_id)\b/i);
+    }
+  });
+
+  it('strips the trailing line-contains span filter from generated queries', () => {
+    const { query } = getTraceToLogsSpanQuery(createSpan(), lokiSettings, defaultOptions);
+    const queries = query as LokiQuery[];
+    const lineContains = queries.find((q) => q.refId === 'line-contains');
+    expect(lineContains).toBeDefined();
+    expect(lineContains!.expr).toBe(
+      '{cluster="cluster1", hostname="hostname1"} |= "7946b05c2e2e4e5a" |= "6605c7b08e715d6c"'
+    );
+
+    const [original, fallback] = addNoSpanIdFallback(lineContains!) as LokiQuery[];
+    expect(original.expr).toBe(lineContains!.expr);
+    expect(fallback.expr).toBe('{cluster="cluster1", hostname="hostname1"} |= "7946b05c2e2e4e5a"');
+  });
+
+  it('does not add a fallback for trace-level queries that already omit span filters', () => {
+    const span = createSpan();
+    const trace = {
+      traceID: span.traceID,
+      spans: [span],
+      processes: { p1: span.process },
+    } as unknown as Trace;
+
+    const { query } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
+    const queries = query as LokiQuery[];
+    const structured = queries.find((q) => q.refId === 't2l:default:trace_id');
+    const lineContains = queries.find((q) => q.refId === 'line-contains');
+
+    expect(structured?.expr).not.toMatch(/span/i);
+    expect(addNoSpanIdFallback(structured!)).toHaveLength(1);
+    expect(addNoSpanIdFallback(lineContains!)).toHaveLength(1);
   });
 });

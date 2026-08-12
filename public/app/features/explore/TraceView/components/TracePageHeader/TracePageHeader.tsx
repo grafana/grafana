@@ -265,13 +265,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
                 : null}
             </div>
 
-            {logsLinkModel && (
-              <LogsLinkButton
-                linkModel={logsLinkModel}
-                traceDatasourceUid={datasourceUid}
-                forTrace
-              />
-            )}
+            {logsLinkModel && <LogsLinkButton linkModel={logsLinkModel} traceDatasourceUid={datasourceUid} forTrace />}
 
             {config.feedbackLinksEnabled && (
               <Tooltip

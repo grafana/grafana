@@ -40,9 +40,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 jest.mock('../TraceTimelineViewer/SpanDetail/LogsLink', () => ({
-  LogsLinkButton: ({ linkModel }: { linkModel: LinkModel }) => (
-    <button type="button">{linkModel.title}</button>
-  ),
+  LogsLinkButton: ({ linkModel }: { linkModel: LinkModel }) => <button type="button">{linkModel.title}</button>,
 }));
 
 // Mock useAppNotification
@@ -148,16 +146,12 @@ describe('TracePageHeader test', () => {
   });
 
   it('should render the trace-level logs link when provided', () => {
-    setup(
-      { links: [], isLoading: false },
-      false,
-      {
-        href: '/explore?logs',
-        title: 'Logs for this trace',
-        target: '_blank',
-        origin: {},
-      }
-    );
+    setup({ links: [], isLoading: false }, false, {
+      href: '/explore?logs',
+      title: 'Logs for this trace',
+      target: '_blank',
+      origin: {},
+    });
 
     expect(screen.getByRole('button', { name: /Logs for this trace/i })).toBeInTheDocument();
   });
