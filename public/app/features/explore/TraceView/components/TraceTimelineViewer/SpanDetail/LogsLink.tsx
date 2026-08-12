@@ -264,9 +264,8 @@ function remapQueriesToDatasource(queries: DataQuery[], datasourceUid: string): 
 
 /**
  * Datasources to probe for Loki multi-query links:
- * 1. previously successful Loki datasource (if still available)
- * 2. the link's configured datasource
- * 3. up to MAX_FALLBACK_LOKI_DATASOURCES other Loki datasources
+ * 1. previously successful Loki datasource alone (discovery already ran — do not rediscover)
+ * 2. otherwise the link's configured datasource, then up to MAX_FALLBACK_LOKI_DATASOURCES others
  */
 function getLokiDatasourcesToTry(
   primaryUid: string | undefined,
@@ -279,12 +278,13 @@ function getLokiDatasourcesToTry(
     .slice(0, MAX_FALLBACK_LOKI_DATASOURCES);
 
   const storedUid = getStoredLokiDatasourceMatch(traceDatasourceUid);
-  const uids: string[] = [];
-
+  // A stored datasource means discovery already found a working Loki; only re-check that one.
   if (storedUid && (storedUid === primaryUid || otherUids.includes(storedUid))) {
-    uids.push(storedUid);
+    return [storedUid];
   }
-  if (primaryUid && !uids.includes(primaryUid)) {
+
+  const uids: string[] = [];
+  if (primaryUid) {
     uids.push(primaryUid);
   }
   for (const uid of otherUids) {
@@ -298,7 +298,8 @@ function getLokiDatasourcesToTry(
 
 /**
  * Checks whether logs exist for any of the given queries.
- * When a prior successful Loki variation is stored for the datasource, that query is used immediately.
+ * When a prior successful Loki variation/datasource is stored, only that option is re-checked —
+ * discovery already ran, so empty results mean logs are absent rather than that we should probe again.
  * Otherwise each variation is probed in order; the first match is stored for future checks.
  * If the configured Loki datasource has no logs, other Loki datasources are tried.
  */
@@ -354,7 +355,8 @@ function checkForLogsInQueries(
 
 /**
  * Probes query variations against a single datasource.
- * Uses a stored refId for that datasource immediately when available.
+ * When a stored refId exists for that datasource, only that variation is checked —
+ * discovery already identified the working query, so empty results mean no logs for this span/trace.
  */
 function probeForMatchingQuery(
   queries: DataQuery[],
@@ -364,13 +366,14 @@ function probeForMatchingQuery(
 ): Observable<DataQuery | undefined> {
   const storedRefId = getStoredLokiQueryMatch(traceDatasourceUid, logsDatasourceUid);
   const storedQuery = storedRefId ? queries.find((q) => q.refId === storedRefId) : undefined;
-  const orderedQueries = storedQuery ? [storedQuery, ...queries.filter((q) => q.refId !== storedQuery.refId)] : queries;
+  // Prefer the known match exclusively; do not fall through to other naming conventions.
+  const queriesToProbe = storedQuery ? [storedQuery] : queries;
 
-  return from(orderedQueries).pipe(
+  return from(queriesToProbe).pipe(
     concatMap((query) =>
       checkForLogs(query, timeRange).pipe(
         map((hasLogs) => (hasLogs ? query : undefined)),
-        // Skip variants that error so later naming conventions can still be tried.
+        // Skip variants that error so later naming conventions can still be tried (discovery only).
         catchError(() => of(undefined))
       )
     ),
