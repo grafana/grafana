@@ -1,4 +1,13 @@
-import { VizPanel, SceneGridLayout } from '@grafana/scenes';
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
+import {
+  VizPanel,
+  SceneGridLayout,
+  SceneFlexItem,
+  SceneFlexLayout,
+  SceneQueryRunner,
+  SceneTimeRange,
+} from '@grafana/scenes';
 import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -9,10 +18,76 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 
-import { isValidLibraryPanelRef, hasLibraryPanelsInV1Dashboard, getLayoutForObject } from './utils';
+import { activateFullSceneTree } from './test-utils';
+import {
+  isValidLibraryPanelRef,
+  hasLibraryPanelsInV1Dashboard,
+  getLayoutForObject,
+  forceRenderChildren,
+} from './utils';
+
+setPluginImportUtils({
+  importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: () => undefined,
+});
 
 describe('utils', () => {
+  describe('forceRenderChildren', () => {
+    function buildPanelWithTimeOverride() {
+      const panelTimeRange = new PanelTimeRange({ timeFrom: '2h' });
+      // Manual mode keeps the runner from issuing real requests; these tests only care about
+      // whether forceRenderChildren touches the providers hanging off the panel.
+      const queryRunner = new SceneQueryRunner({
+        datasource: { uid: 'ds-1' },
+        queries: [{ refId: 'A' }],
+        runQueriesMode: 'manual',
+      });
+      const panel = new VizPanel({ pluginId: 'timeseries', $timeRange: panelTimeRange, $data: queryRunner });
+      const layout = new SceneFlexLayout({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        children: [new SceneFlexItem({ body: panel })],
+      });
+
+      activateFullSceneTree(layout);
+
+      return { layout, panel, panelTimeRange, queryRunner };
+    }
+
+    it('force renders layout children', () => {
+      const { layout, panel } = buildPanelWithTimeOverride();
+      const forceRender = jest.spyOn(panel, 'forceRender');
+
+      forceRenderChildren(layout, true);
+
+      expect(forceRender).toHaveBeenCalled();
+    });
+
+    it('leaves a panel time range untouched so the panel does not re-issue its queries', () => {
+      // forceRender() publishes an empty state change. SceneQueryRunner re-runs its queries on any
+      // state change of the closest time range, so touching $timeRange here made panels with a time
+      // override query twice when entering edit mode (#129876).
+      const { layout, panelTimeRange } = buildPanelWithTimeOverride();
+
+      const stateChanges: unknown[] = [];
+      panelTimeRange.subscribeToState((newState) => stateChanges.push(newState));
+
+      forceRenderChildren(layout, true);
+
+      expect(stateChanges).toEqual([]);
+    });
+
+    it('leaves a panel data provider untouched', () => {
+      const { layout, queryRunner } = buildPanelWithTimeOverride();
+      const forceRender = jest.spyOn(queryRunner, 'forceRender');
+
+      forceRenderChildren(layout, true);
+
+      expect(forceRender).not.toHaveBeenCalled();
+    });
+  });
+
   describe('isValidLibraryPanelRef', () => {
     it('should return true for valid library panel reference', () => {
       const panel: Panel = {

@@ -147,6 +147,14 @@ export function forceRenderChildren(model: SceneObject, recursive?: boolean) {
       return;
     }
 
+    // forceRender() publishes an empty state change, which is harmless for layout children but
+    // not for the providers attached to an object. SceneQueryRunner re-issues its queries on any
+    // state change of the closest time range, so force rendering a panel's $timeRange makes the
+    // panel query twice. None of these providers render layout, so skip them.
+    if (child === model.state.$timeRange || child === model.state.$data || child === model.state.$variables) {
+      return;
+    }
+
     child.forceRender();
     forceRenderChildren(child, recursive);
   });
