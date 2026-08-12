@@ -150,7 +150,7 @@ function parseIfComplexJson(value: unknown) {
 }
 
 export type KeyValuesTableLink = Pick<PluginExtensionLink, 'path' | 'title' | 'onClick' | 'icon'> &
-  Partial<Pick<PluginExtensionLink, 'id' | 'description' | 'pluginId' | 'category' | 'group'>>;
+  Partial<Pick<PluginExtensionLink, 'description' | 'pluginId' | 'category' | 'group'>>;
 
 type ResourceLinkClickLocation = 'value' | 'menu';
 
@@ -163,10 +163,8 @@ function reportResourceLinkClick(
     grafana_version: config.buildInfo.version,
     datasourceType,
     pluginId: link.pluginId,
-    linkId: link.id,
     group: link.group?.name,
     category: link.category,
-    title: link.title,
     location,
   });
 }

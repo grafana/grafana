@@ -78,7 +78,6 @@ describe('LinkValue', () => {
     const user = userEvent.setup();
     const onClick = jest.fn();
     const link = {
-      id: 'grafana-asserts-app/view-service/v1',
       title: 'View in Asserts',
       path: 'http://example.com/asserts',
       pluginId: 'grafana-asserts-app',
@@ -98,10 +97,8 @@ describe('LinkValue', () => {
       grafana_version: '11.0.0',
       datasourceType: 'tempo',
       pluginId: 'grafana-asserts-app',
-      linkId: 'grafana-asserts-app/view-service/v1',
       group: 'service.name',
       category: 'service.name',
-      title: 'View in Asserts',
       location: 'value',
     });
     expect(onClick).toHaveBeenCalled();
@@ -162,7 +159,6 @@ describe('KeyValuesTable tests', () => {
         array[i].key === 'span.kind'
           ? [
               {
-                id: 'grafana-asserts-app/span-kind/v1',
                 path: 'http://example.com/docs',
                 title: 'More info about client',
                 pluginId: 'grafana-asserts-app',
@@ -179,10 +175,8 @@ describe('KeyValuesTable tests', () => {
       grafana_version: '11.0.0',
       datasourceType: 'tempo',
       pluginId: 'grafana-asserts-app',
-      linkId: 'grafana-asserts-app/span-kind/v1',
       group: 'span.kind',
       category: undefined,
-      title: 'More info about client',
       location: 'value',
     });
     expect(onClick).toHaveBeenCalled();
@@ -232,7 +226,6 @@ describe('KeyValuesTable tests', () => {
         array[i].key === 'span.kind'
           ? [
               {
-                id: 'grafana-asserts-app/docs/v1',
                 path: 'http://example.com/docs',
                 title: 'Docs',
                 description: 'Documentation',
@@ -241,7 +234,6 @@ describe('KeyValuesTable tests', () => {
                 onClick,
               },
               {
-                id: 'grafana-other-app/dashboard/v1',
                 path: 'http://example.com/dashboard',
                 title: 'Dashboard',
                 description: 'Service dashboard',
@@ -259,10 +251,8 @@ describe('KeyValuesTable tests', () => {
       grafana_version: '11.0.0',
       datasourceType: 'tempo',
       pluginId: 'grafana-asserts-app',
-      linkId: 'grafana-asserts-app/docs/v1',
       group: 'span.kind',
       category: undefined,
-      title: 'Docs',
       location: 'menu',
     });
     expect(onClick).toHaveBeenCalled();
