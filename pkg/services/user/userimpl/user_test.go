@@ -663,6 +663,47 @@ func TestIntegrationCreateUser(t *testing.T) {
 		err = userStore.LoginConflict(context.Background(), "  legacyuser  ", "another@example.com")
 		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
 	})
+
+	t.Run("Update cannot take trimmed login of a different legacy spaced user", func(t *testing.T) {
+		spacedID, err := userStore.Insert(context.Background(), &user.User{
+			Email:   "spaced-owner@example.com",
+			Login:   "spacedlogin ",
+			Name:    "spaced-owner",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		otherID, err := userStore.Insert(context.Background(), &user.User{
+			Email:   "other-owner@example.com",
+			Login:   "otherlogin",
+			Name:    "other-owner",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.NoError(t, err)
+
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID: otherID,
+			Login:  "spacedlogin",
+			Email:  "other-owner@example.com",
+			Name:   "other-owner",
+		})
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+
+		// The spaced user can still normalize their own login.
+		err = userStore.Update(context.Background(), &user.UpdateUserCommand{
+			UserID: spacedID,
+			Login:  "spacedlogin",
+			Email:  "spaced-owner@example.com",
+			Name:   "spaced-owner",
+		})
+		require.NoError(t, err)
+
+		usr, err := userStore.GetByID(context.Background(), spacedID)
+		require.NoError(t, err)
+		require.Equal(t, "spacedlogin", usr.Login)
+	})
 }
 
 type FakeUserStore struct {

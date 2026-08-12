@@ -223,25 +223,46 @@ func (ss *sqlStore) getByExactOrTrimmed(sess *db.Session, usr *user.User, column
 // LoginConflict returns an error if the provided email or login are already
 // associated with a user.
 func (ss *sqlStore) LoginConflict(ctx context.Context, login, email string) error {
-	// Trim then lowercase so create/update cannot collide with legacy spaced rows, and so
-	// whitespace-only differences are treated as the same identity.
+	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		return ss.loginConflict(sess, login, email, 0)
+	})
+}
+
+// loginConflict returns ErrUserAlreadyExists if login/email collide with another user,
+// including legacy rows that still have leading/trailing whitespace. excludeUserID, when
+// non-zero, is ignored so a user can normalize their own spaced login/email on update.
+func (ss *sqlStore) loginConflict(sess *db.Session, login, email string, excludeUserID int64) error {
 	login = strings.ToLower(strings.TrimSpace(login))
 	email = strings.ToLower(strings.TrimSpace(email))
 
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		where := "email=? OR login=? OR TRIM(email)=? OR TRIM(login)=?"
-
-		exists, err := sess.Where(where, email, login, email, login).Get(&user.User{})
-		if err != nil {
-			return err
-		}
-		if exists {
-			return user.ErrUserAlreadyExists
-		}
-
+	var parts []string
+	var args []any
+	if login != "" {
+		parts = append(parts, "login=? OR TRIM(login)=?")
+		args = append(args, login, login)
+	}
+	if email != "" {
+		parts = append(parts, "email=? OR TRIM(email)=?")
+		args = append(args, email, email)
+	}
+	if len(parts) == 0 {
 		return nil
-	})
-	return err
+	}
+
+	where := "(" + strings.Join(parts, " OR ") + ")"
+	if excludeUserID > 0 {
+		where += " AND id<>?"
+		args = append(args, excludeUserID)
+	}
+
+	exists, err := sess.Where(where, args...).Get(&user.User{})
+	if err != nil {
+		return err
+	}
+	if exists {
+		return user.ErrUserAlreadyExists
+	}
+	return nil
 }
 
 func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
@@ -250,6 +271,12 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 	cmd.Email = strings.ToLower(strings.TrimSpace(cmd.Email))
 
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		// Block updates that would take the trimmed identity of a different legacy spaced row.
+		// Excludes the user being updated so they can still normalize their own login/email.
+		if err := ss.loginConflict(sess, cmd.Login, cmd.Email, cmd.UserID); err != nil {
+			return err
+		}
+
 		usr := user.User{
 			Name:    cmd.Name,
 			Theme:   cmd.Theme,
