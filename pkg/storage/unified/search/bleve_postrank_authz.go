@@ -132,7 +132,7 @@ func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
 // request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel tells
 // hitsToTable to use the curated allFields column list.
 func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) error {
-	if len(searchrequest.Fields) < 1 && req.Limit > 0 {
+	if len(req.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
 		if err != nil {
 			return err

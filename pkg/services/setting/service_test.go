@@ -219,7 +219,7 @@ func TestRemoteSettingService_List(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Nil(t, result)
-		assert.Contains(t, err.Error(), "could not find the requested resource")
+		assert.Contains(t, err.Error(), "not found")
 	})
 
 	t.Run("should handle 500 internal server error", func(t *testing.T) {
@@ -247,7 +247,8 @@ func TestRemoteSettingService_List(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Nil(t, result)
-		assert.Contains(t, err.Error(), "error on the server")
+		// Now decodes the server's Status message instead of a generic one.
+		assert.Contains(t, err.Error(), "database connection failed")
 	})
 
 	t.Run("should handle connection errors", func(t *testing.T) {

@@ -38,13 +38,13 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 		{
 			name:        "mode 0 - legacy only",
 			dualWrite:   grafanarest.Mode0,
-			features:    []string{featuremgmt.FlagKubernetesSnapshots},
+			features:    []string{featuremgmt.FlagSnapshotsKubernetesSnapshots},
 			description: "In mode 0, all operations go through legacy storage only",
 		},
 		{
 			name:        "mode 5 - unified storage read-write",
 			dualWrite:   grafanarest.Mode5,
-			features:    []string{featuremgmt.FlagKubernetesSnapshots},
+			features:    []string{featuremgmt.FlagSnapshotsKubernetesSnapshots},
 			description: "In mode 5, all operations go through unified storage only",
 		},
 	}

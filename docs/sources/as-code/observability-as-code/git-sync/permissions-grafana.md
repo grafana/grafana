@@ -45,7 +45,7 @@ refs:
 
 # Git Sync permissions and access control
 
-For Git Sync you need to configure permissions at two layers to function correctly:
+For Git Sync to work correctly you need to configure permissions at two layers:
 
 - At the Grafana level for repository management and resource access, as described in this document.
 - At your Git provider level, to protect your repository. Refer to [Repository protection for Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-git) for more information.
@@ -88,21 +88,6 @@ As an Admin you can:
 - View sync status, logs, and statistics
 - Access the Provisioning admin UI at **Administration > General > Provisioning**
 
-### Viewer users
-
-Users with the `Viewer` role can view provisioned resources. Their access to specific dashboards and folders depends on the permissions assigned to them.
-
-**Organization-level capabilities**:
-
-- Read Git Sync settings, via the `provisioning.settings:read` permission
-- View dashboard preview links in pull requests
-
-**Resource access** depends on folder and dashboard permissions:
-
-- **Folder Viewer**: View all dashboards and subfolders within that folder
-- **Dashboard Viewer**: View specific dashboards (even if they don't have folder access)
-- Cannot edit dashboards or manage Git Sync repositories
-
 ### Editor users
 
 Users with the `Editor` role can work with provisioned dashboards and folders. Their specific capabilities depend on the folder-level and dashboard-level permissions assigned to them.
@@ -124,6 +109,21 @@ Users with the `Editor` role can work with provisioned dashboards and folders. T
 - **Dashboard Viewer**: View specific dashboards only
 
 Editors don't need access to the Provisioning admin UI or repository configuration. Refer to [Configure folder and dashboard permissions](#configure-folder-and-dashboard-permissions) and [Configure fine-grained access control (RBAC)](#configure-fine-grained-access-control-rbac) for details.
+
+### Viewer users
+
+Users with the `Viewer` role can view provisioned resources. Their access to specific dashboards and folders depends on the permissions assigned to them.
+
+**Organization-level capabilities**:
+
+- Read Git Sync settings, via the `provisioning.settings:read` permission
+- View dashboard preview links in pull requests
+
+**Resource access** depends on folder and dashboard permissions:
+
+- **Folder Viewer**: View all dashboards and subfolders within that folder
+- **Dashboard Viewer**: View specific dashboards (even if they don't have folder access)
+- Cannot edit dashboards or manage Git Sync repositories
 
 ## Configure folder and dashboard permissions
 
@@ -273,9 +273,9 @@ Provisioned dashboards and folders use the Grafana standard permission model. To
 
 The following applies for Git Sync:
 
-- Users need standard `dashboards:*` and `folders:*` permissions to work with provisioned resources
+- You need standard `dashboards:*` and `folders:*` permissions to work with provisioned resources
 - `Editors` and `Viewers` need `provisioning.settings:read` and `provisioning.repositories:read` to view Git Sync configuration
-- Users do **not** need repository write/delete or connection permissions to edit dashboards
+- You do **not** need repository write/delete or connection permissions to edit dashboards
 - Dashboard-level permissions override folder-level permissions
 - Changes made by users with appropriate permissions automatically sync to Git
 
@@ -326,22 +326,43 @@ For detailed information about configuring repository write access and branch pr
 **Solution**:
 
 1. Verify the user's folder-level permissions in Grafana
-2. Navigate to **Folder settings > Permissions**
-3. Grant the user or their team **Editor** or **Admin** role
+1. Navigate to **Folder settings > Permissions**
+1. Grant the user or their team **Editor** or **Admin** role
 
 ### Git Sync fails with "403 Forbidden" or "Unauthorized"
 
-**Cause**: The Git provider credentials lack the required permissions.
+**Cause**: The Git provider authentication credentials lack the required repository permissions.
 
 **Solution**:
 
-1. Verify the authentication credentials (GitHub App, Personal Access Token, etc.) have **read and write** permissions on the repository
-2. Check that the credentials have permission to create pull requests (if branch protection is enabled)
-3. If using a GitHub App or OAuth app, verify it is installed and authorized for the target repository
-4. For expired or revoked tokens, generate new credentials and update the Git Sync connection configuration
+1. Verify the authentication credentials (GitHub App, Personal Access Token) have **read and write** permissions on the repository
+1. If using a GitHub App or OAuth app, verify it is installed and authorized for the target repository
+1. Check that the credentials have permission to create pull requests (if branch protection is enabled)
+1. Verify authentication credentials haven't expired
+1. For expired or revoked tokens, generate new credentials and update the Git Sync connection configuration
 
 ### Dashboard changes commit directly instead of creating pull requests
 
 **Cause**: Branch protection is not configured at the Git provider.
 
 **Solution**: Enable branch protection rules at your Git provider to enforce pull request workflows or in your Grafana repository settings. Refer to your Git provider's documentation for instructions on configuring branch protection.
+
+### Dashboard changes commit directly without review
+
+**Cause**: Branch protection is not configured at the Git provider.
+
+**Solution**:
+
+1. Enable branch protection on the target branch at your Git provider
+1. Configure the branch to require pull requests before merging
+1. Verify the branch name in protection rules matches the branch configured in Grafana
+
+### Pull requests not created when expected
+
+**Cause**: Branch protection is not enabled or the authentication credentials lack pull request creation permission.
+
+**Solution**:
+
+1. Verify branch protection is enabled on the correct branch
+1. Check that the credentials have permission to create pull requests
+1. Ensure the branch name in Git Sync settings matches the protected branch exactly

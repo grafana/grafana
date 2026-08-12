@@ -13,6 +13,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -38,11 +39,15 @@ func (d *sqlmockTeamDB) WithDbSession(_ context.Context, callback sqlstore.DBTra
 	return callback(sess)
 }
 
+func (d *sqlmockTeamDB) WithTransactionalDbSession(_ context.Context, callback sqlstore.DBTransactionFunc) error {
+	return d.WithDbSession(context.Background(), callback)
+}
+
 func (d *sqlmockTeamDB) GetDBType() core.DbType {
 	return core.SQLITE
 }
 
-func TestStoreReadQueriesUseProviderTables(t *testing.T) {
+func TestStoreQueriesUseProviderTables(t *testing.T) {
 	registerTeamSQLMockXormDriverOnce.Do(func() {
 		if core.QueryDriver("sqlmock") == nil {
 			core.RegisterDriver("sqlmock", teamSQLMockXormDriver{})
@@ -62,17 +67,26 @@ func TestStoreReadQueriesUseProviderTables(t *testing.T) {
 	type contextKey struct{}
 	ctx := context.WithValue(context.Background(), contextKey{}, "provider context")
 	providerCalls := 0
+	dbHelper := &legacysql.LegacyDatabaseHelper{
+		DB: legacyDB,
+		Table: func(name string) string {
+			return "test_schema." + name
+		},
+	}
 	provider := func(gotCtx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		require.Equal(t, "provider context", gotCtx.Value(contextKey{}))
 		providerCalls++
-		return &legacysql.LegacyDatabaseHelper{
-			DB: legacyDB,
-			Table: func(name string) string {
-				return "test_schema." + name
-			},
-		}, nil
+		return dbHelper, nil
 	}
 	store := &xormStore{sql: provider}
+	store.RegisterDelete(func(dbHelper *legacysql.LegacyDatabaseHelper, orgID, teamID int64) (teamdelete.Query, error) {
+		table, err := dbHelper.DialectForDriver().Ident(dbHelper.Table("team_group"))
+		require.NoError(t, err)
+		return teamdelete.Query{
+			SQL:  "DELETE FROM " + table + " WHERE org_id = ? AND team_id = ?",
+			Args: []any{orgID, teamID},
+		}, nil
+	})
 	signedInUser := &user.SignedInUser{
 		OrgID: 7,
 		Permissions: map[int64]map[string][]string{
@@ -124,6 +138,55 @@ FROM "test_schema"."team_member" AS team_member`)).
 	require.NoError(t, err)
 	require.True(t, isMember)
 
-	require.Equal(t, 5, providerCalls)
+	mock.ExpectQuery(regexp.QuoteMeta(`FROM "test_schema"."team"
+WHERE org_id = ?
+  AND id = ?`)).
+		WithArgs(int64(7), int64(11)).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."team_member"`)).
+		WithArgs(int64(7), int64(11)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."team"`)).
+		WithArgs(int64(7), int64(11)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."dashboard_acl"`)).
+		WithArgs(int64(7), int64(11)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."team_group"`)).
+		WithArgs(int64(7), int64(11)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	require.NoError(t, store.Delete(ctx, &team.DeleteTeamCommand{OrgID: 7, ID: 11}))
+
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."team_member"
+WHERE user_id = ?`)).
+		WithArgs(int64(42)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	require.NoError(t, store.RemoveUsersMemberships(ctx, 42))
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT *
+FROM "test_schema"."team_member"`)).
+		WithArgs(int64(7), int64(11), int64(42)).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(1)))
+	require.NoError(t, legacyDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := getTeamMember(dbHelper, sess, 7, 11, 42)
+		return err
+	}))
+
+	mock.ExpectQuery(regexp.QuoteMeta(`FROM "test_schema"."team"
+WHERE org_id = ?
+  AND id = ?`)).
+		WithArgs(int64(7), int64(11)).
+		WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "test_schema"."team_member"
+WHERE org_id = ?
+  AND team_id = ?
+  AND user_id = ?`)).
+		WithArgs(int64(7), int64(11), int64(42)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	require.NoError(t, legacyDB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return removeTeamMember(dbHelper, sess, &team.RemoveTeamMemberCommand{OrgID: 7, TeamID: 11, UserID: 42})
+	}))
+
+	require.Equal(t, 7, providerCalls)
 	require.NoError(t, mock.ExpectationsWereMet())
 }

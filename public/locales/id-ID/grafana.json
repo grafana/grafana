@@ -3593,6 +3593,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Interval waktu",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Pilih interval waktu..."
     },
     "time-intervals-table": {
@@ -5622,6 +5623,8 @@
       "edit-query-result-rule": "Ubah aturan hasil kueri",
       "edit-template-variable-rule": "Ubah aturan variabel templat",
       "edit-time-range-rule": "Ubah aturan rentang waktu",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Pindahkan {{typeName}}",
       "panel-background": "Ubah latar belakang panel",
       "panel-description": "Ubah deskripsi panel",
@@ -5874,8 +5877,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Ini akan membatalkan pengelompokan semua grup yang bersarang.",
-      "ungroup-nested-title": "Batalkan pengelompokan grup yang bersarang?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} dari {{numberOfPages}}",
@@ -6087,6 +6094,13 @@
       "save-json-to-file": "Simpan JSON ke file",
       "see-docs": "Lihat <2>dokumentasi</2> untuk informasi selengkapnya tentang penyediaan."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": "Tidak ada panel yang cocok"
     },
@@ -6244,6 +6258,12 @@
         "title-above-dashboard_other": "",
         "title-controls-menu_other": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -7196,6 +7216,7 @@
         "title-someone-else-has-updated-this-dashboard": "Orang lain telah memperbarui dasbor ini",
         "would-still-dashboard": "Ingin tetap menyimpan dasbor ini?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Simpan dan timpa"
     },
     "legacy": {
@@ -7998,7 +8019,8 @@
       "title-missing-rights": "Hak tidak ada"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Pilih sumber data"
+      "aria-label-select-a-data-source": "Pilih sumber data",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Halaman tidak ditemukan: {{page}}"
@@ -10889,6 +10911,12 @@
       "critical-count_other": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12344,6 +12372,10 @@
     "new-folder": {
       "title": "Folder baru"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12634,8 +12666,33 @@
       "title-zoom-out": "Perkecil"
     }
   },
-  "notebook": {
-    "breadcrumb-title": ""
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_other": "",
+      "count-truncated_other": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -14638,7 +14695,6 @@
     },
     "header": {
       "alert": "Peringatan",
-      "expression": "Ekspresi",
       "pending-expression": "",
       "pending-expression-cancel": "Batalkan",
       "pending-transformation": "",
@@ -14652,6 +14708,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

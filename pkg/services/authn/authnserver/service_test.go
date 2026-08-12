@@ -13,6 +13,7 @@ import (
 
 	authnv1 "github.com/grafana/authlib/authn/proto/v1"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
@@ -222,11 +223,13 @@ func TestAuthenticate(t *testing.T) {
 		gotTestNS, ok := request.NamespaceFrom(client.gotTestCtx)
 		require.True(t, ok, "namespace must be set on Test ctx")
 		assert.Equal(t, "stacks-1234", gotTestNS)
+		assert.Equal(t, []any{"namespace", "stacks-1234"}, log.FromContext(client.gotTestCtx))
 
 		require.NotNil(t, client.gotAuthCtx)
 		gotAuthNS, ok := request.NamespaceFrom(client.gotAuthCtx)
 		require.True(t, ok, "namespace must be set on Authenticate ctx")
 		assert.Equal(t, "stacks-1234", gotAuthNS)
+		assert.Equal(t, []any{"namespace", "stacks-1234"}, log.FromContext(client.gotAuthCtx))
 	})
 
 	t.Run("all clients decline via NOT_HANDLED returns NOT_HANDLED", func(t *testing.T) {
