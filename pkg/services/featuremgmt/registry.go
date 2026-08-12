@@ -3155,6 +3155,14 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:        "grafana.pluginPathNesting",
+			Description: "Nest app plugin navigation items in the mega menu based on their URL path hierarchy",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "grafana.rspackBuild",
 			Description: "Switches the backend to load frontend assets built with rspack instead of webpack",
 			Stage:       FeatureStageExperimental,
