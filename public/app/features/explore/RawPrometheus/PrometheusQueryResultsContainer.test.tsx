@@ -5,6 +5,14 @@ import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { PrometheusQueryResultsContainer } from './PrometheusQueryResultsContainer';
 
+// These tests render without an OpenFeatureProvider in scope; keep the toggle at its default (off)
+// so the legacy Table path (the one under test here) renders. See RawPrometheusContainerPure.test.tsx
+// for the rawPrometheus.tableNg=true coverage.
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagRawPrometheusTableNg: jest.fn().mockReturnValue(false),
+}));
+
 function getTable(): HTMLElement {
   return screen.getAllByRole('table')[0];
 }
