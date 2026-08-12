@@ -23,7 +23,10 @@ export function transformNotebookToScene(resource: Resource<NotebookSpec>): Note
     title: spec.title,
     description: spec.description,
     tags: spec.tags,
-    uid: resource.metadata.name,
+    // An unsaved notebook has no name to carry. `Resource.metadata.name` is not optional, so the
+    // in-memory envelope `notebookResourceFor` synthesizes spells that absence as '', and '' is not a
+    // uid the rest of the scene should ever see on a field that means the resource's k8s name.
+    uid: resource.metadata.name || undefined,
     body: deserializeNotebookLayout(spec.layout, spec.elements, { title: spec.title, tags: spec.tags }),
     $timeRange: buildSceneTimeRange(timeSettings),
     timePicker: new SceneTimePicker({

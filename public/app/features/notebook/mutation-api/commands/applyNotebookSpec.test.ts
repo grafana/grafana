@@ -1,7 +1,9 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { notebookResourceFor } from '../../api/notebookResource';
 import { NotebookLayoutManager } from '../../scene/layout-notebook/NotebookLayoutManager';
+import { transformNotebookToScene } from '../../serialization/transformNotebookToScene';
 import { NotebookMutationClient } from '../NotebookMutationClient';
 import {
   NOTEBOOKS_FLAG,
@@ -97,6 +99,29 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
 
     expect(result.success).toBe(true);
     expect(result.warnings).toEqual(['These cells were not applied and are missing from the notebook: ghost.']);
+  });
+
+  it('leaves the uid alone, including when the notebook has none', async () => {
+    const withUid = notebookScene();
+    await new NotebookMutationClient(withUid).execute({
+      type: 'APPLY_NOTEBOOK_SPEC',
+      payload: { spec: notebookSpec({ title: 'Renamed' }) },
+    });
+
+    // An apply replaces the contents, not the identity of the document.
+    expect(withUid.state.uid).toBe('nb-1');
+
+    // Built here rather than through the fixture, whose `uid` default swallows an explicit undefined.
+    const withoutUid = transformNotebookToScene(notebookResourceFor(undefined, notebookSpec()));
+    withoutUid.activate();
+    await new NotebookMutationClient(withoutUid).execute({
+      type: 'APPLY_NOTEBOOK_SPEC',
+      payload: { spec: notebookSpec({ title: 'Renamed' }) },
+    });
+
+    // The synthesized envelope carries '' for an absent uid, to satisfy Resource. That must not land
+    // on a field documented as the resource's k8s name.
+    expect(withoutUid.state.uid).toBeUndefined();
   });
 
   it('passes the schema warnings through on a validated write', async () => {
