@@ -20,10 +20,12 @@ posts:
     items:
       - whats-new/2026-06-25-variables-and-annotations-removed-from-dashboards-settings-page.md
       - whats-new/2026-06-30-redesigned-query-variable-editor.md
+      - whats-new/2026-07-08-organize-dashboards-faster-with-multi-select-grouping.md
       - whats-new/2026-07-18-saved-queries-is-now-generally-available-with-command-palette-and-provisioning-support.md
   - title: Data sources
     items:
       - whats-new/2026-07-28-opensearch-added-index-browser-to-datasource-configuration-and-query.md
+      - whats-new/2026-08-03-oracle-easy-connect-plus-support.md
 whats_new_grafana_version: 13.2
 weight: -56
 ---
