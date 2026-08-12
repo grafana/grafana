@@ -1110,9 +1110,14 @@ Unlike every other command here this one **persists immediately**, and the serve
 `validate` defaults to `true`. Set `open: false` to create without navigating. Use
 `APPLY_NOTEBOOK_SPEC` to change a notebook that already exists.
 
-`opened` is whether the navigation actually landed, which is not the same as `open`: a dirty dashboard's
+`opened` is whether the navigation was accepted, which is not the same as `open`: a dirty dashboard's
 unsaved-changes prompt blocks it. The notebook exists either way, but `GET_NOTEBOOK_SPEC` and
 `APPLY_NOTEBOOK_SPEC` only reach it once its page is mounted.
+
+`opened: false` is conclusive. `opened: true` is not the same as "the notebook client is mounted": it
+reads the history entry, and the route behind it is a lazy chunk plus a fetch, so a command sent
+immediately afterwards can still land on the previous document. `getAvailableCommands()` is the
+authoritative answer to which document is mounted.
 
 The command is registered on a dashboard only when the `dashboard.notebooks` flag is on, so
 `getAvailableCommands()` names it exactly where it can run.

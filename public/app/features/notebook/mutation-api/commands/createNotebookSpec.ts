@@ -47,7 +47,13 @@ const createNotebookSpecPayloadSchema = z
       .boolean()
       .optional()
       .default(true)
-      .describe('Navigate to the new notebook. Turn off to create one without leaving the current page.'),
+      .describe(
+        'Navigate to the new notebook. Turn off to create one without leaving the current page. The ' +
+          'response reports `opened`, which is whether the navigation was accepted, not whether the ' +
+          'notebook page has finished mounting: the route is loaded lazily, so GET_NOTEBOOK_SPEC and ' +
+          'APPLY_NOTEBOOK_SPEC can still reach the previous document for a moment afterwards. Check ' +
+          'getAvailableCommands() rather than assuming.'
+      ),
   })
   .strict();
 
@@ -98,10 +104,15 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
       let opened = false;
       if (payload.open) {
         locationService.push(created.url);
-        // Report whether the navigation landed, not that it was asked for. A dirty dashboard's
+        // Report whether the navigation was accepted, not that it was asked for. A dirty dashboard's
         // unsaved-changes prompt blocks the push, and the notebook the caller now holds a uid for is
         // not the mounted document — so GET_NOTEBOOK_SPEC and APPLY_NOTEBOOK_SPEC are still out of
         // reach. The create itself is saved either way, hence success.
+        //
+        // `false` here is conclusive; `true` is not the same as "the notebook client is mounted". This
+        // reads the history entry, and the route behind it is a lazy chunk plus a fetch, so a caller
+        // that acts on it immediately can still race the mount. getAvailableCommands() is what
+        // actually answers which document is mounted.
         opened = locationService.getLocation().pathname === created.url;
       }
 
