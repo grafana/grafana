@@ -12775,6 +12775,14 @@
     }
   },
   "notebooks": {
+    "cell": {
+      "code": {
+        "aria-label-editor": "Code",
+        "aria-label-language": "Code language",
+        "label": "code",
+        "language-plain-text": "Plain text"
+      }
+    },
     "list": {
       "all-authors": "All authors",
       "author-filter": "Filter by author",
