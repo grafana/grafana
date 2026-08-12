@@ -6,7 +6,7 @@ require (
 	cuelang.org/go v0.11.1
 	github.com/dave/dst v0.27.4
 	github.com/grafana/codejen v0.0.4
-	github.com/grafana/cog v0.1.22
+	github.com/grafana/cog v0.1.23
 	github.com/grafana/cuetsy v0.1.11
 	github.com/matryer/is v1.4.1
 	golang.org/x/tools v0.48.0
@@ -17,9 +17,9 @@ require (
 	github.com/dave/jennifer v1.7.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dlclark/regexp2 v1.12.0 // indirect
-	github.com/emicklei/proto v1.14.2 // indirect
+	github.com/emicklei/proto v1.14.3 // indirect
 	github.com/fatih/color v1.19.0 // indirect
-	github.com/getkin/kin-openapi v0.144.0 // indirect
+	github.com/getkin/kin-openapi v0.145.0 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/golang/glog v1.2.5 // indirect
@@ -36,8 +36,7 @@ require (
 	github.com/oasdiff/yaml v0.1.1 // indirect
 	github.com/oasdiff/yaml3 v0.0.14 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/protocolbuffers/txtpbfmt v0.0.0-20251124094003-fcb97cc64c7b // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
+	github.com/protocolbuffers/txtpbfmt v0.0.0-20260420112717-c39628bde8b5 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
