@@ -543,7 +543,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		require.NoError(t, err)
 		managedRoute := v1model.NewManagedRoute(models.DefaultRoutingTreeName, &route)
 		managedRoute.Version = "" // Avoid version conflict.
-		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, func(int64) string { return "default" }, nil)
+		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, managedRoute.GetUID(), func(int64) string { return "default" }, nil)
 		require.NoError(t, err)
 		_, err = routeClient.Update(ctx, v1Route, resource.UpdateOptions{})
 		require.NoError(t, err)
@@ -1514,7 +1514,7 @@ func k8sRoute(t *testing.T, name string, r *v1model.Route) *v1beta1.RoutingTree 
 	allPermissions.Set(models.RoutePermissionWrite, true)
 	allPermissions.Set(models.RoutePermissionDelete, true)
 	allPermissions.Set(models.RoutePermissionAdmin, true)
-	v1Route, err := routingtree.ConvertToK8sResource(-1, managedRoute, func(int64) string { return apis.DefaultNamespace }, &allPermissions)
+	v1Route, err := routingtree.ConvertToK8sResource(-1, managedRoute, name, func(int64) string { return apis.DefaultNamespace }, &allPermissions)
 	require.NoError(t, err)
 	v1Route.TypeMeta = v1.TypeMeta{
 		Kind:       v1beta1.RoutingTreeKind().Kind(),
