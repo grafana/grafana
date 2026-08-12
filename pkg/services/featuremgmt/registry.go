@@ -3186,6 +3186,15 @@ var (
 			Expression:  "true", // enabled by default
 			Generate:    Generate{React: true},
 		},
+		{
+			Name:         "plugins.appSDK",
+			Description:  "Enables support for App SDK usage in plugins.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAppPlatformSquad,
+			Expression:   "false",
+			HideFromDocs: true,
+			Generate:     Generate{Go: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

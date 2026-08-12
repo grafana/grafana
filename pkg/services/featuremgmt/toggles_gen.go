@@ -1001,4 +1001,8 @@ const (
 	// FlagPluginsForceTls13
 	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client
 	FlagPluginsForceTls13 = "pluginsForceTls13"
+
+	// FlagPluginsAppSDK
+	// Enables support for App SDK usage in plugins.
+	FlagPluginsAppSDK = "plugins.appSDK"
 )
