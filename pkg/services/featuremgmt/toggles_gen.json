@@ -6124,7 +6124,8 @@
       "metadata": {
         "name": "table.protoRowParser",
         "resourceVersion": "1782139478281",
-        "creationTimestamp": "2026-06-22T14:44:38Z"
+        "creationTimestamp": "2026-06-22T14:44:38Z",
+        "deletionTimestamp": "2026-08-11T20:21:15Z"
       },
       "spec": {
         "description": "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
@@ -6139,7 +6140,8 @@
       "metadata": {
         "name": "table.refactorNested",
         "resourceVersion": "1782413661913",
-        "creationTimestamp": "2026-06-25T18:54:21Z"
+        "creationTimestamp": "2026-06-25T18:54:21Z",
+        "deletionTimestamp": "2026-08-11T20:20:39Z"
       },
       "spec": {
         "description": "Enables the refactored TableNG nested-table implementation",

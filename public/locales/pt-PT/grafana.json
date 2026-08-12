@@ -3619,6 +3619,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Intervalos de tempo",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Selecionar intervalos de tempo..."
     },
     "time-intervals-table": {
@@ -5662,6 +5663,8 @@
       "edit-query-result-rule": "Alterar regra de resultado da consulta",
       "edit-template-variable-rule": "Alterar regra de variável de modelo",
       "edit-time-range-rule": "Alterar regra de intervalo de tempo",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Mover {{typeName}}",
       "panel-background": "Alterar fundo do painel",
       "panel-description": "Alterar descrição do painel",
@@ -6302,6 +6305,12 @@
         "title-controls-menu_other": "",
         "title-hidden_one": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -8068,7 +8077,8 @@
       "title-missing-rights": "Direitos em falta"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Selecionar uma origem de dados"
+      "aria-label-select-a-data-source": "Selecionar uma origem de dados",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Página não encontrada: {{page}}"
@@ -10975,6 +10985,12 @@
       "high-count_one": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12451,6 +12467,10 @@
     "new-folder": {
       "title": "Nova pasta"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12744,8 +12764,35 @@
       "title-zoom-out": "Diminuir"
     }
   },
-  "notebook": {
-    "breadcrumb-title": ""
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_other": ""
+    }
   },
   "notifications": {
     "empty-state": {
