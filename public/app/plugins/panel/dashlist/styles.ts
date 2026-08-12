@@ -13,9 +13,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     dashlistCardContainer: css({
       display: 'block',
       height: '100%',
-      paddingTop: theme.spacing(1.25),
-      paddingBottom: theme.spacing(1.25),
-      paddingRight: theme.spacing(1.25),
+      paddingLeft: theme.spacing(2),
 
       '&:has(a:hover)': {
         backgroundImage: gradient,
