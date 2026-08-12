@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -17,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/plugins"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
@@ -84,7 +87,7 @@ func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event fro
 			},
 		}
 
-		sourceMapStore := frontendlogging.NewSourceMapStore(cfg, &pm, readSourceMap)
+		sourceMapStore := frontendlogging.NewSourceMapStore(cfg, &pm, readSourceMap, webassets.WebpackBuildDir)
 
 		loggingHandler := GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)
 
@@ -290,6 +293,42 @@ func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 				assertContextContains(t, logs, "CLS", float64(1))
 			})
 	})
+}
+
+// Core assets are served under public/build whichever bundler produced them, so the
+// source URL cannot say which directory holds the maps. The store has to use the build
+// directory the server resolved at startup.
+func TestSourceMapStore_ReadsFromResolvedBuildDir(t *testing.T) {
+	for _, buildDir := range []string{webassets.WebpackBuildDir, webassets.RspackBuildDir} {
+		t.Run(buildDir, func(t *testing.T) {
+			var reads []SourceMapReadRecord
+			readSourceMap := func(dir string, path string) ([]byte, error) {
+				reads = append(reads, SourceMapReadRecord{dir: dir, path: path})
+				return nil, os.ErrNotExist
+			}
+
+			store := frontendlogging.NewSourceMapStore(
+				&setting.Cfg{StaticRootPath: "/staticroot"},
+				&fakePluginStaticRouteResolver{},
+				readSourceMap,
+				buildDir,
+			)
+
+			frontendlogging.TransformException(context.Background(), &frontendlogging.Exception{
+				Stacktrace: &frontendlogging.Stacktrace{
+					Frames: []frontendlogging.Frame{{
+						Filename: "http://localhost:3000/public/build/foo.js",
+						Lineno:   20,
+						Colno:    30,
+					}},
+				},
+			}, store)
+
+			require.Len(t, reads, 1)
+			assert.Equal(t, "/staticroot", reads[0].dir)
+			assert.Equal(t, filepath.Join(buildDir, "foo.js.map"), reads[0].path)
+		})
+	}
 }
 
 func assertContextContains(t *testing.T, logRecord map[string]any, label string, value any) {

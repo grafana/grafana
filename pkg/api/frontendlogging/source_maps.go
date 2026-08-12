@@ -50,14 +50,20 @@ type SourceMapStore struct {
 	cfg           *setting.Cfg
 	readSourceMap ReadSourceMapFn
 	routeResolver plugins.StaticRouteResolver
+
+	// buildDir is the static root subdirectory core assets are served from. Every build
+	// serves under the public/build URL prefix, so the URL alone cannot tell us which
+	// directory holds the maps.
+	buildDir string
 }
 
-func NewSourceMapStore(cfg *setting.Cfg, routeResolver plugins.StaticRouteResolver, readSourceMap ReadSourceMapFn) *SourceMapStore {
+func NewSourceMapStore(cfg *setting.Cfg, routeResolver plugins.StaticRouteResolver, readSourceMap ReadSourceMapFn, buildDir string) *SourceMapStore {
 	return &SourceMapStore{
 		cache:         make(map[string]*sourceMap),
 		cfg:           cfg,
 		routeResolver: routeResolver,
 		readSourceMap: readSourceMap,
+		buildDir:      buildDir,
 	}
 }
 
@@ -79,7 +85,7 @@ func (store *SourceMapStore) guessSourceMapLocation(ctx context.Context, sourceU
 		if len(pathParts) == 2 {
 			return &sourceMapLocation{
 				dir:      store.cfg.StaticRootPath,
-				path:     filepath.Join("build", pathParts[1]+".map"),
+				path:     filepath.Join(store.buildDir, pathParts[1]+".map"),
 				pluginID: "",
 			}, nil
 		}
