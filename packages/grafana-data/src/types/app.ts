@@ -20,6 +20,7 @@ export enum CoreApp {
   CloudAlerting = 'cloud-alerting',
   UnifiedAlerting = 'unified-alerting',
   Dashboard = 'dashboard',
+  Notebook = 'notebook',
   Explore = 'explore',
   Correlations = 'correlations',
   Unknown = 'unknown',

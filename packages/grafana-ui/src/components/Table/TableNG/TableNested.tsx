@@ -35,6 +35,7 @@ import {
   useRowHeight,
   useScrollbarWidth,
   useSortedRows,
+  useTypographyCtx,
 } from './hooks';
 import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
@@ -49,8 +50,6 @@ import {
 } from './types';
 import {
   calculateFooterHeight,
-  createTypographyContext,
-  extractPixelValue,
   getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
@@ -195,8 +194,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   // nested tables don't support frozen columns; subtract expander column width
   const frozenColumns = 0;
   const numFrozenColsFullyInView = 0;
-  // `width` may already be debounced by RefactoredTableNG. scrollbarWidth never is, so a scrollbar
-  // appearing/disappearing re-sizes columns immediately instead of lagging behind that debounce.
+  // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out.
   const availableWidth = useMemo(() => width - COLUMN.EXPANDER_WIDTH - scrollbarWidth, [width, scrollbarWidth]);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
@@ -206,15 +204,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   );
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
-  const typographyCtx = useMemo(
-    () =>
-      createTypographyContext(
-        theme.typography.fontSize,
-        theme.typography.fontFamily,
-        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize
-      ),
-    [theme]
-  );
+  const typographyCtx = useTypographyCtx(theme);
 
   // When a width override is removed from field config, the configured-width count drops. That
   // change to field.config.custom.width is a mutation on the existing field objects, so it doesn't

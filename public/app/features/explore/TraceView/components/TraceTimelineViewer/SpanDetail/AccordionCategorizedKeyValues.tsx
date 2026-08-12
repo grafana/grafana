@@ -159,6 +159,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     summary: css({
       marginLeft: '0.7em',
+      flex: 1,
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
     }),
     categories: css({
       padding: `0 ${categoryIndent}`,

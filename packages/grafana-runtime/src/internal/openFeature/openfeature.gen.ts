@@ -29,8 +29,6 @@ export const FlagKeys = {
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
-  /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
-  AzureMonitorBatchAPI: "azureMonitorBatchAPI",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -39,14 +37,14 @@ export const FlagKeys = {
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
+  /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
+  DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
   /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
-  /** Uses the Luxon-backed compatibility implementation for Grafana date and time APIs */
-  DatetimeUseLuxon: "datetime.useLuxon",
   /** A/A test for recently viewed dashboards feature */
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
@@ -103,6 +101,8 @@ export const FlagKeys = {
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
+  /** Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins */
+  GrafanaUnifiedDataSourcePicker: "grafana.unifiedDataSourcePicker",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
   /** Enables semantic (vector) dashboard search in the command palette */
@@ -149,6 +149,8 @@ export const FlagKeys = {
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
+  /** Routes snapshot requests from /api to the /apis endpoint */
+  SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
   /** Enables CodeMirror editor for SQL Expressions */
@@ -161,12 +163,12 @@ export const FlagKeys = {
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
   /** Sizes TableNG auto-width columns to fit their content instead of distributing evenly */
   TableAutoColumnWidths: "table.autoColumnWidths",
+  /** Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT) */
+  TableInspectDataTableNG: "table.inspectDataTableNG",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
-  /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
-  TableProtoRowParser: "table.protoRowParser",
-  /** Enables the refactored TableNG nested-table implementation */
-  TableRefactorNested: "table.refactorNested",
+  /** Enables the new features in text panel */
+  TextNewFeatures: "text.newFeatures",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
@@ -260,17 +262,6 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
 };
 
 /**
- * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
- *
- * **Details:**
- * - flag key: `azureMonitorBatchAPI`
- * - default value: `false`
- */
-export const useFlagAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("azureMonitorBatchAPI", false, options).value;
-};
-
-/**
  * Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
  *
  * **Details:**
@@ -315,6 +306,17 @@ export const useFlagDatasourcesApiserverUseNewAPIsForDatasourceResources = (opti
 };
 
 /**
+ * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+ *
+ * **Details:**
+ * - flag key: `datasources.azureMonitorBatchAPI`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.azureMonitorBatchAPI", false, options).value;
+};
+
+/**
  * Use the new datasource API groups for datasource CRUD requests, frontend flag
  *
  * **Details:**
@@ -345,17 +347,6 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
-};
-
-/**
- * Uses the Luxon-backed compatibility implementation for Grafana date and time APIs
- *
- * **Details:**
- * - flag key: `datetime.useLuxon`
- * - default value: `false`
- */
-export const useFlagDatetimeUseLuxon = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datetime.useLuxon", false, options).value;
 };
 
 /**
@@ -667,6 +658,17 @@ export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluat
 };
 
 /**
+ * Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins
+ *
+ * **Details:**
+ * - flag key: `grafana.unifiedDataSourcePicker`
+ * - default value: `true`
+ */
+export const useFlagGrafanaUnifiedDataSourcePicker = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.unifiedDataSourcePicker", true, options).value;
+};
+
+/**
  * Use the find default scope endpoint to seed the initial scope selection when none is set.
  *
  * **Details:**
@@ -920,6 +922,17 @@ export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Routes snapshot requests from /api to the /apis endpoint
+ *
+ * **Details:**
+ * - flag key: `snapshots.kubernetesSnapshots`
+ * - default value: `false`
+ */
+export const useFlagSnapshotsKubernetesSnapshots = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("snapshots.kubernetesSnapshots", false, options).value;
+};
+
+/**
  * Enables the splash screen modal for introducing new Grafana features on first session
  *
  * **Details:**
@@ -986,6 +999,17 @@ export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOption
 };
 
 /**
+ * Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)
+ *
+ * **Details:**
+ * - flag key: `table.inspectDataTableNG`
+ * - default value: `false`
+ */
+export const useFlagTableInspectDataTableNG = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.inspectDataTableNG", false, options).value;
+};
+
+/**
  * Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height
  *
  * **Details:**
@@ -997,25 +1021,14 @@ export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOpti
 };
 
 /**
- * Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.
+ * Enables the new features in text panel
  *
  * **Details:**
- * - flag key: `table.protoRowParser`
+ * - flag key: `text.newFeatures`
  * - default value: `false`
  */
-export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("table.protoRowParser", false, options).value;
-};
-
-/**
- * Enables the refactored TableNG nested-table implementation
- *
- * **Details:**
- * - flag key: `table.refactorNested`
- * - default value: `false`
- */
-export const useFlagTableRefactorNested = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("table.refactorNested", false, options).value;
+export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("text.newFeatures", false, options).value;
 };
 
 /**

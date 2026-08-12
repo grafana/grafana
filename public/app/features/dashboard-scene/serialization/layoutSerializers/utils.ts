@@ -48,7 +48,13 @@ import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
 import { normalizeTransformation } from '../transformationCompat';
 
-export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
+/**
+ * Everything a VizPanel needs that has no DashboardScene dependency. Sibling resources rendering
+ * panels through their own scene root (the notebook) construct panels from this state directly;
+ * buildVizPanel layers the dashboard-only chrome on top (menu, header actions, sub header, panel
+ * context — all of which reach the root via getDashboardSceneFor and would throw elsewhere).
+ */
+export function buildVizPanelState(panel: PanelKind, id?: number): VizPanelState {
   const titleItems: SceneObject[] = [];
 
   titleItems.push(
@@ -95,14 +101,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     seriesLimit: config.panelSeriesLimit,
     $data: createPanelDataProvider(panel),
     titleItems,
-    headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
-    }),
-    subHeader: new VizPanelSubHeader({
-      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
-    }),
     $behaviors: [],
-    extendPanelContext: setDashboardPanelContext,
     _UNSAFE_clearPreviousFieldValues: true,
   };
 
@@ -110,12 +109,6 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   // This enables proper migration of options from Angular panels (e.g., singlestat format/valueName)
   if (angularMigration) {
     vizPanelState._UNSAFE_customMigrationHandler = getV2AngularMigrationHandler(angularMigration);
-  }
-
-  if (!config.publicDashboardAccessToken) {
-    vizPanelState.menu = new VizPanelMenu({
-      $behaviors: [panelMenuBehavior],
-    });
   }
 
   if (queryOptions.timeFrom || queryOptions.timeShift || queryOptions.timeCompare) {
@@ -127,10 +120,45 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     });
   }
 
+  return vizPanelState;
+}
+
+export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
+  const vizPanelState = buildVizPanelState(panel, id);
+
+  addDashboardPanelChrome(vizPanelState);
+
   return new VizPanel(vizPanelState);
 }
 
-export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPanel {
+/**
+ * The dashboard-only parts of a panel: the panel dropdown (View / Edit / Share / Explore /
+ * Inspect / More), drilldown header actions and sub header, and the panel context extension
+ * (annotations, ad-hoc filters). All of these resolve the scene root via getDashboardSceneFor
+ * and therefore require a DashboardScene ancestor.
+ */
+function addDashboardPanelChrome(vizPanelState: VizPanelState): void {
+  vizPanelState.headerActions = new VizPanelHeaderActions({
+    hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
+  });
+  vizPanelState.subHeader = new VizPanelSubHeader({
+    hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
+  });
+  vizPanelState.extendPanelContext = setDashboardPanelContext;
+
+  if (!config.publicDashboardAccessToken) {
+    vizPanelState.menu = new VizPanelMenu({
+      $behaviors: [panelMenuBehavior],
+    });
+  }
+}
+
+/**
+ * Same split as buildVizPanelState: the dashboard-free core of a library panel. The
+ * LibraryPanelBehavior (which loads the library panel definition) belongs to the core — it works
+ * under any scene root.
+ */
+export function buildLibraryPanelState(panel: LibraryPanelKind, id?: number): VizPanelState {
   const titleItems: SceneObject[] = [];
 
   titleItems.push(
@@ -149,9 +177,6 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     titleItems,
-    subHeader: new VizPanelSubHeader({
-      hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
-    }),
     seriesLimit: config.panelSeriesLimit,
     $behaviors: [
       new LibraryPanelBehavior({
@@ -159,10 +184,6 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
         name: panel.spec.libraryPanel.name,
       }),
     ],
-    extendPanelContext: setDashboardPanelContext,
-    headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
-    }),
     pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
     title: panel.spec.title,
     hoverHeader: !panel.spec.title,
@@ -175,11 +196,13 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
     _UNSAFE_clearPreviousFieldValues: true,
   };
 
-  if (!config.publicDashboardAccessToken) {
-    vizPanelState.menu = new VizPanelMenu({
-      $behaviors: [panelMenuBehavior],
-    });
-  }
+  return vizPanelState;
+}
+
+export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPanel {
+  const vizPanelState = buildLibraryPanelState(panel, id);
+
+  addDashboardPanelChrome(vizPanelState);
 
   return new VizPanel(vizPanelState);
 }

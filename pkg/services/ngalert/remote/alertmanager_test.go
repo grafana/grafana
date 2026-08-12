@@ -626,7 +626,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 					AlertmanagerConfig: func() definition.PostableApiAlertingConfig {
 						c := policy_exports.Config()
 						c.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(c.AlertmanagerConfig.Route, c.ManagedRoutes)
-						return notifier.PostableApiAlertingConfigToAPI(c.AlertmanagerConfig)
+						return notifier.PostableApiAlertingConfigToAPI(c.AlertmanagerConfig, c.SortedTimeIntervals())
 					}(),
 				},
 			},

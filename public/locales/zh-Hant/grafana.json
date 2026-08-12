@@ -3593,6 +3593,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "時間間隔",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "選擇時間間隔…"
     },
     "time-intervals-table": {
@@ -5622,6 +5623,8 @@
       "edit-query-result-rule": "變更查詢結果規則",
       "edit-template-variable-rule": "變更範本變數規則",
       "edit-time-range-rule": "變更時間範圍規則",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "移動 {{typeName}}",
       "panel-background": "變更面板背景",
       "panel-description": "變更面板描述",
@@ -6091,6 +6094,13 @@
       "save-json-to-file": "將 JSON 儲存至檔案",
       "see-docs": "有關佈建的更多資訊，請參閱<2>文件</2>。"
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6248,6 +6258,12 @@
         "title-above-dashboard_other": "",
         "title-controls-menu_other": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -7200,6 +7216,7 @@
         "title-someone-else-has-updated-this-dashboard": "其他人已更新此儀表板",
         "would-still-dashboard": "仍要儲存此儀表板嗎？"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "儲存並覆寫"
     },
     "legacy": {
@@ -8002,7 +8019,8 @@
       "title-missing-rights": "缺少權限"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "選擇一個資料來源"
+      "aria-label-select-a-data-source": "選擇一個資料來源",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "找不到頁面：{{page}}"
@@ -10893,6 +10911,12 @@
       "critical-count_other": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12348,6 +12372,10 @@
     "new-folder": {
       "title": "新資料夾"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12638,8 +12666,33 @@
       "title-zoom-out": "縮小"
     }
   },
-  "notebook": {
-    "breadcrumb-title": ""
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_other": "",
+      "count-truncated_other": ""
+    }
   },
   "notifications": {
     "empty-state": {

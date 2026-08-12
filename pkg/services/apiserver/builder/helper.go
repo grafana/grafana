@@ -102,6 +102,10 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
 		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
 
+		// Must wrap DefaultBuildHandlerChain: it reports a client disconnect as a 504
+		// timeout, and this rewrites that to 499. See filters.WithCanceledRequestStatus.
+		handler = filters.WithCanceledRequestStatus(handler)
+
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, PathRewriters)
 		handler = k8stracing.WithTracing(handler, c.TracerProvider, "KubernetesAPI")

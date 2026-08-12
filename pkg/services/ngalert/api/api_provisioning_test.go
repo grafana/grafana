@@ -2208,34 +2208,16 @@ func TestApiGetSnapshots(t *testing.T) {
 			Location: &timeinterval.Location{Location: location},
 		}
 	}
-	cfg.AlertmanagerConfig.TimeIntervals = append(cfg.AlertmanagerConfig.TimeIntervals,
-		v1.TimeInterval{
-			Name: "MuteTimeIntervalA",
-			TimeIntervals: []timeinterval.TimeInterval{
-				timeIntervalExample(),
-			},
-		},
-		v1.TimeInterval{
-			Name: "MuteTimeIntervalB",
-			TimeIntervals: []timeinterval.TimeInterval{
-				timeIntervalExample(),
-			},
-		},
-	)
-	cfg.AlertmanagerConfig.TimeIntervals = append(cfg.AlertmanagerConfig.TimeIntervals,
-		v1.TimeInterval{
-			Name: "TimeIntervalA",
-			TimeIntervals: []timeinterval.TimeInterval{
-				timeIntervalExample(),
-			},
-		},
-		v1.TimeInterval{
-			Name: "TimeIntervalB",
-			TimeIntervals: []timeinterval.TimeInterval{
-				timeIntervalExample(),
-			},
-		},
-	)
+	// Add to the intervals already present in the base config (referenced by routes) rather than
+	// replacing the map, otherwise the route references become dangling and validation fails.
+	for _, interval := range []v1.TimeInterval{
+		v1.NewTimeInterval("MuteTimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval("MuteTimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval("TimeIntervalA", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+		v1.NewTimeInterval("TimeIntervalB", []timeinterval.TimeInterval{timeIntervalExample()}, models.ProvenanceNone),
+	} {
+		cfg.TimeIntervals[interval.UID] = interval
+	}
 
 	amConfig, err := legacy_storage.SerializeAlertmanagerConfig(*cfg)
 	require.NoError(t, err)
