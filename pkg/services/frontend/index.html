@@ -222,6 +222,11 @@
         window.__grafanaOFREPRootUrlEnabled = true;
       [[end]]
 
+      [[if .PreviewAssetsFolder]]
+        // Set when the assets on this page come from a PR preview build
+        window.__grafanaPreviewAssets = '[[.PreviewAssetsFolder]]';
+      [[end]]
+
       window.__grafanaLegacyAPIMode = [[.LegacyAPIMode]];
       window.__grafanaPublicDashboardAccessToken = [[.PublicDashboardAccessToken]];
 

@@ -1036,11 +1036,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/import-to-gma/ImportToGMA.tsx": {
-    "@grafana/no-plain-links": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/import-to-gma/NamespaceAndGroupFilter.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -1919,11 +1914,6 @@
   "public/app/features/dashboard/containers/NewDashboardWithDS.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
-    }
-  },
-  "public/app/features/dashboard/dashgrid/DashboardLibrary/CompatibilityBadge.tsx": {
-    "@grafana/no-plain-links": {
-      "count": 2
     }
   },
   "public/app/features/dashboard/dashgrid/DashboardLibrary/utils/communityDashboardHelpers.test.ts": {
