@@ -42,6 +42,7 @@ import (
 	apiprometheus "github.com/grafana/grafana/pkg/services/ngalert/api/prometheus"
 	"github.com/grafana/grafana/pkg/services/ngalert/cluster"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/folderlabel"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -199,6 +200,8 @@ type AlertNG struct {
 	pluginsStore    pluginstore.Store
 	tracer          tracing.Tracer
 	clientGenerator resource.ClientGenerator
+
+	folderLabel *folderlabel.Service
 
 	evaluationCoordinator EvaluationCoordinator
 	schedCfg              schedule.SchedulerCfg
@@ -665,6 +668,11 @@ func (ng *AlertNG) init() error {
 		return key.LogContext(), true
 	})
 
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
+		ng.folderLabel = folderlabel.NewService(ng.Cfg, ng.bus, ng.store, ng.clientGenerator)
+	}
+
 	return ac.DeclareFixedRoles(ng.AccesscontrolService)
 }
 
@@ -759,6 +767,21 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		}
 		return nil
 	})
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) && ng.folderLabel != nil {
+		children.Go(func() error {
+			return ng.folderLabel.Run(subCtx)
+		})
+		// Queues work onto the worker above, so it must start after it. Failures are logged and
+		// tolerated: a missed backfill leaves stale labels, it does not break rule evaluation.
+		children.Go(func() error {
+			if err := ng.folderLabel.Backfill(subCtx, ng.SQLStore, ng.store); err != nil {
+				ng.Log.Warn("Failed to backfill folder rules labels", "error", err)
+			}
+			return nil
+		})
+	}
 
 	children.Go(func() error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)

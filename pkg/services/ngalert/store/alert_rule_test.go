@@ -59,6 +59,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+	capture := captureRuleChangeEvents(sqlStore)
 	usr := models.UserUID("1234")
 
 	gen := models.RuleGen
@@ -139,17 +140,15 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	t.Run("should emit event when rules are updated", func(t *testing.T) {
 		rule := createRule(t, store, gen)
 		called := false
-		b.publishFn = func(ctx context.Context, msg bus.Msg) error {
-			event, ok := msg.(*RuleChangeEvent)
-			require.True(t, ok)
+		capture.fn = func(event *RuleChangeEvent) {
 			require.NotNil(t, event)
 			require.Len(t, event.RuleKeys, 1)
 			require.Equal(t, rule.GetKey(), event.RuleKeys[0])
+			require.Contains(t, event.FolderKeys, models.FolderKey{OrgID: rule.OrgID, UID: rule.NamespaceUID})
 			called = true
-			return nil
 		}
 		t.Cleanup(func() {
-			b.publishFn = nil
+			capture.fn = nil
 		})
 
 		newRule := models.CopyRule(rule)
@@ -652,22 +651,27 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 	gen := models.RuleGen
 
 	t.Run("should emit event when rules are deleted", func(t *testing.T) {
-		// Create a new store to pass the custom bus to check the signal
+		// Create a new store to pass the custom bus to check the signal. The flag is required for
+		// FolderKeys: the pre-delete lookup that resolves them is gated on it.
 		b := &fakeBus{}
 		logger := log.New("test-dbstore")
-		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b)
+		store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, b,
+			featuremgmt.FlagAlertingFolderHasRulesLabel)
 
 		rule := createRule(t, store, gen)
 		called := false
-		b.publishFn = func(ctx context.Context, msg bus.Msg) error {
-			event, ok := msg.(*RuleChangeEvent)
-			require.True(t, ok)
+		capture := captureRuleChangeEvents(sqlStore)
+		capture.fn = func(event *RuleChangeEvent) {
 			require.NotNil(t, event)
 			require.Len(t, event.RuleKeys, 1)
 			require.Equal(t, rule.GetKey(), event.RuleKeys[0])
+			// Captured before the rows are deleted, so the parent folder is still resolvable.
+			require.Contains(t, event.FolderKeys, models.FolderKey{OrgID: rule.OrgID, UID: rule.NamespaceUID})
 			called = true
-			return nil
 		}
+		t.Cleanup(func() {
+			capture.fn = nil
+		})
 		err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, false, rule.UID)
 		require.NoError(t, err)
 		require.True(t, called)
@@ -1016,17 +1020,16 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	t.Run("should emit event when rules are inserted", func(t *testing.T) {
 		rule := gen.Generate()
 		called := false
+		capture := captureRuleChangeEvents(sqlStore)
 		t.Cleanup(func() {
-			b.publishFn = nil
+			capture.fn = nil
 		})
-		b.publishFn = func(ctx context.Context, msg bus.Msg) error {
-			event, ok := msg.(*RuleChangeEvent)
-			require.True(t, ok)
+		capture.fn = func(event *RuleChangeEvent) {
 			require.NotNil(t, event)
 			require.Len(t, event.RuleKeys, 1)
 			require.Equal(t, rule.GetKey(), event.RuleKeys[0])
+			require.Contains(t, event.FolderKeys, models.FolderKey{OrgID: rule.OrgID, UID: rule.NamespaceUID})
 			called = true
-			return nil
 		}
 
 		rules, err := store.InsertAlertRules(context.Background(), &usr, []models.InsertRule{{AlertRule: rule}})
@@ -4005,6 +4008,7 @@ func createTestStore(
 	logger log.Logger,
 	cfg setting.UnifiedAlertingSettings,
 	bus bus.Bus,
+	features ...any,
 ) *DBstore {
 	return &DBstore{
 		SQLStore:       sqlStore,
@@ -4012,7 +4016,7 @@ func createTestStore(
 		Logger:         logger,
 		Cfg:            cfg,
 		Bus:            bus,
-		FeatureToggles: featuremgmt.WithFeatures(),
+		FeatureToggles: featuremgmt.WithFeatures(features...),
 	}
 }
 
@@ -4109,6 +4113,26 @@ func Test_collectNamespaceUIDsByOrg(t *testing.T) {
 		assert.Equal(t, int64(1), result[0].OrgID)
 		assert.ElementsMatch(t, []string{"folder-1", "folder-2"}, result[0].NamespaceUIDs)
 	})
+}
+
+// ruleChangeCapture observes RuleChangeEvents on the SQLStore's own bus. Rule writes publish via
+// DBSession.PublishAfterCommit, which dispatches through the bus the SQLStore was built with — not
+// DBstore.Bus — so a fakeBus injected into DBstore never sees these events.
+type ruleChangeCapture struct {
+	fn func(*RuleChangeEvent)
+}
+
+// captureRuleChangeEvents registers a listener for the lifetime of the SQLStore. Set fn per subtest
+// and clear it in t.Cleanup, since bus listeners cannot be removed.
+func captureRuleChangeEvents(sqlStore *sqlstore.SQLStore) *ruleChangeCapture {
+	c := &ruleChangeCapture{}
+	sqlStore.Bus().AddEventListener(func(_ context.Context, e *RuleChangeEvent) error {
+		if c.fn != nil {
+			c.fn(e)
+		}
+		return nil
+	})
+	return c
 }
 
 type fakeBus struct {

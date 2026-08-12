@@ -3239,6 +3239,15 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
 		},
+		{
+			Name:         "alerting.folderHasRulesLabel",
+			Description:  "Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle
