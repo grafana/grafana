@@ -5,13 +5,19 @@ import { appEvents } from 'app/core/app_events';
 import { type NotebookLayoutKind } from 'app/features/notebook/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-// Monaco does not run in jsdom; a textarea carries readOnly into the DOM so the edit-mode
+// CodeMirror does not run in jsdom; a textarea carries readOnly into the DOM so the edit-mode
 // propagation is observable end to end.
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  CodeEditor: ({ value, readOnly }: { value: string; readOnly?: boolean }) => (
-    <textarea aria-label="Code" defaultValue={value} readOnly={readOnly} />
-  ),
+jest.mock('@grafana/ui/unstable', () => ({
+  ...jest.requireActual('@grafana/ui/unstable'),
+  CodeMirrorEditor: ({
+    value,
+    readOnly,
+    'aria-label': ariaLabel,
+  }: {
+    value: string;
+    readOnly?: boolean;
+    'aria-label'?: string;
+  }) => <textarea aria-label={ariaLabel} defaultValue={value} readOnly={readOnly} />,
 }));
 
 import { NotebookCellItem } from './NotebookCellItem';
