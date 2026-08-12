@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 
+import { config } from '@grafana/runtime';
+import { type VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { type RowItem } from '../layout-rows/RowItem';
@@ -117,4 +119,52 @@ export function mapIdToGridLayoutType(id?: string): GridLayoutType | undefined {
     default:
       return undefined;
   }
+}
+
+/**
+ * Given the sibling being removed and the full list of siblings it lived in, finds the nearest
+ * remaining VizPanel to move keyboard focus to (next sibling first, then previous). Used so that
+ * removing a panel doesn't drop keyboard/screen reader focus back to document.body.
+ */
+export function findAdjacentVizPanel<T>(
+  removedSibling: T,
+  siblings: T[],
+  getPanel: (sibling: T) => VizPanel | undefined
+): VizPanel | undefined {
+  const index = siblings.indexOf(removedSibling);
+  if (index === -1) {
+    return undefined;
+  }
+
+  for (let i = index + 1; i < siblings.length; i++) {
+    const panel = getPanel(siblings[i]);
+    if (panel) {
+      return panel;
+    }
+  }
+
+  for (let i = index - 1; i >= 0; i--) {
+    const panel = getPanel(siblings[i]);
+    if (panel) {
+      return panel;
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Moves keyboard focus to the given panel's chrome. Deferred to the next animation frame because
+ * the caller removes another panel from the layout first, and the DOM needs to reflect that
+ * removal before we can safely move focus into what's left.
+ */
+export function focusVizPanel(panel: VizPanel | undefined): void {
+  if (!panel) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const panelEl = document.querySelector<HTMLElement>(`[data-viz-panel-key="${panel.state.key}"] section`);
+    panelEl?.focus();
+  });
 }
