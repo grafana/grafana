@@ -78,13 +78,13 @@
     },
     "info": {
       "main": "palette.blue500",
-      "borderEmphasis": "palette.blue600",
+      "mainEmphasis": "palette.blue600",
       "text": "palette.blue700",
       "textEmphasis": "palette.blue800",
       "background": "palette.blue50",
       "backgroundEmphasis": "palette.blue100",
       "border": "palette.blue200",
-      "borderTransparent": "palette.blue300"
+      "borderEmphasis": "palette.blue300"
     },
     "text": {
       "primary": "palette.neutral800",
