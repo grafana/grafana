@@ -87,6 +87,7 @@ type kvStorageBackend struct {
 	natsShadow              *natsShadow
 	log                     log.Logger
 	disablePruner           bool
+	disableStorageServices  bool
 	dashboardVersionsToKeep int
 	eventRetentionPeriod    time.Duration
 	eventPruningInterval    time.Duration
@@ -246,6 +247,10 @@ type KVBackendOptions struct {
 	Reg                  prometheus.Registerer
 	Log                  log.Logger
 	GarbageCollection    GarbageCollectionConfig
+
+	// DisableStorageServices stops the background jobs that write, for a process
+	// that reads through this backend without running the storage server.
+	DisableStorageServices bool
 
 	// GCGate defers the start of the GC until released (optional).
 	GCGate *GCGate
@@ -432,6 +437,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		gcGate:                  opts.GCGate,
 		searchLookback:          opts.SearchLookback,
 		disablePruner:           opts.DisablePruner,
+		disableStorageServices:  opts.DisableStorageServices,
 		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
 		cancel:                  cancel,
 		metrics:                 metrics,
@@ -441,7 +447,11 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
 	if backend.garbageCollection.Enabled {
-		if err := backend.initGarbageCollection(ctx); err != nil {
+		if opts.DisableStorageServices {
+			// Otherwise every replica of a process that only reads would run its
+			// own garbage collector.
+			logger.Warn("garbage collection is enabled but storage services are disabled, not starting it")
+		} else if err := backend.initGarbageCollection(ctx); err != nil {
 			return nil, fmt.Errorf("failed to initialize garbage collection: %w", err)
 		}
 	}
@@ -610,7 +620,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 }
 
 func (k *kvStorageBackend) initPruner(ctx context.Context, reg prometheus.Registerer) error {
-	if k.disablePruner {
+	if k.disablePruner || k.disableStorageServices {
 		k.log.Debug("Pruner disabled, using noop pruner")
 		k.historyPruner = &NoopPruner{}
 		return nil

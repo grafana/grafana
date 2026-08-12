@@ -3930,3 +3930,37 @@ func collectHistory(t *testing.T, backend *kvStorageBackend, ctx context.Context
 	require.NoError(t, err)
 	return items
 }
+
+func TestKVStorageBackendDisableStorageServices(t *testing.T) {
+	gc := GarbageCollectionConfig{Enabled: true, Interval: 0, MaxAge: time.Hour}
+
+	// Garbage collection refuses a zero interval, so a backend that starts it with
+	// one fails to build. That is what makes "did it start" observable here without
+	// waiting on the loop.
+	t.Run("starts garbage collection when storage services are enabled", func(t *testing.T) {
+		_, err := NewKVStorageBackend(KVBackendOptions{
+			KvStore:           setupBadgerKV(t),
+			GarbageCollection: gc,
+			// Construction fails here, so there is no backend to stop and the
+			// pruner would be left running.
+			DisablePruner: true,
+		})
+		require.ErrorContains(t, err, "garbage collection")
+	})
+
+	t.Run("does not start garbage collection when storage services are disabled", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
+			o.GarbageCollection = gc
+			o.DisableStorageServices = true
+		})
+		require.NotNil(t, backend)
+	})
+
+	// Writes add to the pruner without checking whether it exists.
+	t.Run("the pruner is present but does nothing", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
+			o.DisableStorageServices = true
+		})
+		require.IsType(t, &NoopPruner{}, backend.historyPruner)
+	})
+}

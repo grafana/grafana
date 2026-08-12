@@ -208,6 +208,7 @@ func NewStorageBackend(
 	kvBackendOpts.Log = log.New("storage-backend")
 	kvBackendOpts.DBKeepAlive = eDB
 	kvBackendOpts.GCGate = gcGate
+	kvBackendOpts.DisableStorageServices = disableStorageServices
 
 	for _, opt := range opts {
 		opt(&kvBackendOpts)
