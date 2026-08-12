@@ -22,6 +22,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
+import { TableNG } from '@grafana/ui/unstable';
 
 import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -40,6 +41,11 @@ type Props = {
   onSandwich: (str?: string) => void;
   onTableSort?: (sort: string) => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
+  // Render the top table with TableNG instead of the legacy Table.
+  useTableNG?: boolean;
+  // Escape hatch to disable table virtualization when useTableNG is set. Only intended for tests, where jsdom
+  // cannot measure the grid and virtualization would otherwise render no rows.
+  enableVirtualization?: boolean;
 };
 
 const FlameGraphTopTableContainer = memo(
@@ -53,6 +59,8 @@ const FlameGraphTopTableContainer = memo(
     onSandwich,
     onTableSort,
     colorScheme,
+    useTableNG,
+    enableVirtualization,
   }: Props) => {
     const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
 
@@ -81,19 +89,34 @@ const FlameGraphTopTableContainer = memo(
               search,
               sandwichItem
             );
+
+            const onSortByChange = (s: TableSortByFieldState[]) => {
+              if (s && s.length) {
+                onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+              }
+              setSort(s);
+            };
+
+            if (useTableNG) {
+              // TableNG sizes its root grid to its container (CSS 100%) rather than the height prop directly,
+              // so it needs a definite-size ancestor here — AutoSizer's render prop doesn't provide one on its own.
+              return (
+                <div style={{ width, height }}>
+                  <TableNG
+                    sortBy={sort}
+                    sortByBehavior="managed"
+                    onSortByChange={onSortByChange}
+                    data={frame}
+                    width={width}
+                    height={height}
+                    enableVirtualization={enableVirtualization}
+                  />
+                </div>
+              );
+            }
+
             return (
-              <Table
-                initialSortBy={sort}
-                onSortByChange={(s) => {
-                  if (s && s.length) {
-                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                  }
-                  setSort(s);
-                }}
-                data={frame}
-                width={width}
-                height={height}
-              />
+              <Table initialSortBy={sort} onSortByChange={onSortByChange} data={frame} width={width} height={height} />
             );
           }}
         </AutoSizer>

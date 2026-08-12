@@ -322,3 +322,44 @@ describe('FlameGraphContainer (new UI)', () => {
     expect(screen.queryAllByText(matchingText2).length).toBe(1);
   });
 });
+
+describe('FlameGraphContainer with useTableNG', () => {
+  // Needed for AutoSizer to work in test
+  mockBoundingClientRect({ width: 500, height: 500 });
+
+  const getTheme = () => createTheme({ colors: { mode: 'dark' } });
+  const makeFlameGraphData = () => {
+    const flameGraphData = createDataFrame(data);
+    flameGraphData.meta = { custom: { ProfileTypeID: 'cpu:foo:bar' } };
+    return flameGraphData;
+  };
+
+  it('should update search when row selected in top table (legacy container)', async () => {
+    render(
+      <FlameGraphContainer
+        data={makeFlameGraphData()}
+        getTheme={getTheme}
+        useTableNG={true}
+        enableVirtualization={false}
+      />
+    );
+
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
+    expect(screen.getByDisplayValue('^net/http\\.HandlerFunc\\.ServeHTTP$')).toBeInTheDocument();
+  });
+
+  it('should update search when row selected in top table (new UI container)', async () => {
+    render(
+      <FlameGraphContainer
+        data={makeFlameGraphData()}
+        getTheme={getTheme}
+        enableNewUI={true}
+        useTableNG={true}
+        enableVirtualization={false}
+      />
+    );
+
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
+    expect(screen.getByDisplayValue('^net/http\\.HandlerFunc\\.ServeHTTP$')).toBeInTheDocument();
+  });
+});

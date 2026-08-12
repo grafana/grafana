@@ -2679,6 +2679,35 @@
     },
     {
       "metadata": {
+        "name": "flameGraph.tableNg",
+        "resourceVersion": "1786550707819",
+        "creationTimestamp": "2026-08-12T16:05:07Z"
+      },
+      "spec": {
+        "description": "Renders the flame graph's top table using TableNG instead of the legacy Table",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "flameGraphTableNG",
+        "resourceVersion": "1786550660287",
+        "creationTimestamp": "2026-08-12T16:04:20Z",
+        "deletionTimestamp": "2026-08-12T16:05:07Z"
+      },
+      "spec": {
+        "description": "Renders the flame graph's top table using TableNG instead of the legacy Table",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "flameGraphWithCallTree",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

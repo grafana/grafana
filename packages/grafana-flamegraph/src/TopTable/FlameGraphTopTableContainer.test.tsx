@@ -12,7 +12,7 @@ import { ColorScheme } from '../types';
 import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
 
 describe('FlameGraphTopTableContainer', () => {
-  const setup = () => {
+  const setup = (props?: { useTableNG?: boolean }) => {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
     const onSearch = jest.fn();
@@ -25,6 +25,8 @@ describe('FlameGraphTopTableContainer', () => {
         onSearch={onSearch}
         onSandwich={onSandwich}
         colorScheme={ColorScheme.ValueBased}
+        useTableNG={props?.useTableNG}
+        enableVirtualization={props?.useTableNG ? false : undefined}
       />
     );
 
@@ -81,6 +83,102 @@ describe('FlameGraphTopTableContainer', () => {
     await userEvents.click(sandwichButtons[0]);
 
     expect(mocks.onSandwich).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+  });
+});
+
+describe('FlameGraphTopTableContainer with useTableNG', () => {
+  const setup = () => {
+    const flameGraphData = createDataFrame(data);
+    const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
+    const onSearch = jest.fn();
+    const onSandwich = jest.fn();
+
+    const renderResult = render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={onSearch}
+        onSandwich={onSandwich}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={true}
+        enableVirtualization={false}
+      />
+    );
+
+    return { renderResult, mocks: { onSearch, onSandwich } };
+  };
+
+  it('should render correctly', async () => {
+    // Needed for AutoSizer to work in test
+    mockBoundingClientRect({ width: 500, height: 500 });
+
+    setup();
+
+    // Columns: an actions column followed by Symbol / Self / Total.
+    const columnHeaders = screen.getAllByRole('columnheader');
+    expect(columnHeaders).toHaveLength(4);
+    expect(columnHeaders[1].textContent).toEqual('Symbol');
+    expect(columnHeaders[2].textContent).toEqual('Self');
+    expect(columnHeaders[3].textContent).toEqual('Total');
+
+    // Sample rows render with their (unique) symbol names + self/total values. Content-based assertions since
+    // react-data-grid's virtualized role="grid" doesn't have the same fixed row/cell counts as TableRT.
+    expect(screen.getByText('net/http.HandlerFunc.ServeHTTP')).toBeInTheDocument();
+    expect(screen.getByText('net/http.(*conn).serve')).toBeInTheDocument();
+    expect(screen.getAllByText('31.7 K').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('5.58 Bil').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('5.63 K').length).toBeGreaterThan(0);
+  });
+
+  it('should render search and sandwich buttons', async () => {
+    // Needed for AutoSizer to work in test
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: jest.fn(() => ({
+        width: 500,
+        height: 500,
+        left: 0,
+      })),
+    });
+
+    const { mocks } = setup();
+
+    const searchButtons = screen.getAllByLabelText(/Search for symbol/);
+    expect(searchButtons.length > 0).toBeTruthy();
+    await userEvents.click(searchButtons[0]);
+
+    expect(mocks.onSearch).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+
+    const sandwichButtons = screen.getAllByLabelText(/Show in sandwich view/);
+    expect(sandwichButtons.length > 0).toBeTruthy();
+    await userEvents.click(sandwichButtons[0]);
+
+    expect(mocks.onSandwich).toHaveBeenCalledWith('net/http.HandlerFunc.ServeHTTP');
+  });
+
+  it('should sort by column header and call onTableSort', async () => {
+    mockBoundingClientRect({ width: 500, height: 500 });
+    const onTableSort = jest.fn();
+    const flameGraphData = createDataFrame(data);
+    const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        onTableSort={onTableSort}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={true}
+        enableVirtualization={false}
+      />
+    );
+
+    const totalHeader = screen.getByRole('columnheader', { name: 'Total' });
+    await userEvents.click(totalHeader);
+
+    // First click on a column that isn't already sorted sorts ascending.
+    expect(onTableSort).toHaveBeenCalledWith('Total_asc');
   });
 });
 

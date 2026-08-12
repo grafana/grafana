@@ -32,6 +32,9 @@ type FlameGraphPaneProps = {
   setFocusedItemIndexes?: (itemIndexes: number[] | undefined) => void;
   sharedSandwichItem?: string;
   setSharedSandwichItem?: (item: string | undefined) => void;
+  useTableNG?: boolean;
+  // Test-only escape hatch to disable top-table virtualization in jsdom.
+  enableVirtualization?: boolean;
 };
 
 const FlameGraphPane = ({
@@ -54,6 +57,8 @@ const FlameGraphPane = ({
   setFocusedItemIndexes,
   sharedSandwichItem,
   setSharedSandwichItem,
+  useTableNG,
+  enableVirtualization,
 }: FlameGraphPaneProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
   const [rangeMin, setRangeMin] = useState(0);
@@ -240,6 +245,8 @@ const FlameGraphPane = ({
             onSearch={onTopTableSearch}
             onTableSort={onTableSort}
             colorScheme={colorScheme}
+            useTableNG={useTableNG}
+            enableVirtualization={enableVirtualization}
           />
         </div>
       );

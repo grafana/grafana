@@ -2602,6 +2602,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "flameGraph.tableNg",
+			Description: "Renders the flame graph's top table using TableNG instead of the legacy Table",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+			Generate:    Generate{React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "inlineLogDetailsNoScrolls",
 			Description: "Enables an inline version of Log Details that creates no new scrolls",
 			Stage:       FeatureStageExperimental,
