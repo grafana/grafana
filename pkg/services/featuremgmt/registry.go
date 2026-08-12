@@ -2983,6 +2983,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "table.inspectDataTableNG",
+			Description:  "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "dataviz.experimentalColorSchemes",
 			Description:  "Enables additional experimental color schemes for visualizations.",
 			Stage:        FeatureStageExperimental,
