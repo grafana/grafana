@@ -6185,6 +6185,21 @@
     },
     {
       "metadata": {
+        "name": "table.refresh",
+        "resourceVersion": "1786399613696",
+        "creationTimestamp": "2026-08-10T22:06:53Z"
+      },
+      "spec": {
+        "description": "Enables the refreshed table experience: reworked column headers and ad hoc column interactions",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "tableSharedCrosshair",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-12-13T09:33:14Z"

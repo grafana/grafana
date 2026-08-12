@@ -77,6 +77,7 @@ declare module "@openfeature/core" {
     | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
+    | "table.refresh"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"

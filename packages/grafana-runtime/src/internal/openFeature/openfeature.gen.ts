@@ -165,6 +165,8 @@ export const FlagKeys = {
   TableAutoColumnWidths: "table.autoColumnWidths",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
+  /** Enables the refreshed table experience: reworked column headers and ad hoc column interactions */
+  TableRefresh: "table.refresh",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
@@ -1005,6 +1007,17 @@ export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOption
  */
 export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.paginationPageSize", false, options).value;
+};
+
+/**
+ * Enables the refreshed table experience: reworked column headers and ad hoc column interactions
+ *
+ * **Details:**
+ * - flag key: `table.refresh`
+ * - default value: `false`
+ */
+export const useFlagTableRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.refresh", false, options).value;
 };
 
 /**
