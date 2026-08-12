@@ -207,9 +207,7 @@ describe('SceneMutationClient', () => {
         }),
       ]);
 
-      // A write payload is deep-cloned, and structuredClone throws on a function. Every other failure
-      // on this path is a result, and a plugin calling across the restricted-API boundary should not
-      // have to handle both shapes.
+      // A write payload is deep-cloned, and structuredClone throws on a function.
       const result = await client.execute({ type: 'TEST_COMMAND', payload: { value: () => 'not cloneable' } });
 
       expect(result.success).toBe(false);

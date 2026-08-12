@@ -23,10 +23,8 @@ import { NOTEBOOK_COMMANDS } from 'app/features/notebook/mutation-api/registry';
  * module is evaluated, `DASHBOARD_COMMANDS` may still be mid-initialization and read as undefined.
  * Deferring the read to call time steps over the cycle instead of depending on module order.
  *
- * The notebook commands are gated on the same flag that gates them out of a dashboard's client, for the
- * same reason: both this and `getAvailableCommands()` are how a caller discovers what exists, and an
- * instance with notebooks off has no notebook page to run them on. A schema for a command that cannot
- * exist here is a tool an agent will build and then always fail on.
+ * Notebook commands are gated on the flag for the same reason `DashboardMutationClient` gates them:
+ * this list is a discovery surface, and an instance with notebooks off has no page to run them on.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous by construction: commands from every resource, each typed on its own scene
 export function allMutationCommands(): Array<MutationCommand<any, any>> {
