@@ -351,6 +351,21 @@ describe('libraryPanelsK8sClient request options', () => {
     expect(result.elements).toHaveLength(1);
   });
 
+  it('normalizes invalid page sizes to the legacy default', async () => {
+    const resource = makeResource();
+    delete resource.metadata.annotations!['grafana.app/folder'];
+    fetch.mockReturnValue(
+      of({
+        data: { metadata: { resourceVersion: '1' }, items: [resource] },
+      })
+    );
+
+    const result = await libraryPanelsK8sClient.list({ perPage: -1 });
+
+    expect(result.perPage).toBe(100);
+    expect(result.elements).toHaveLength(1);
+  });
+
   it('uses the current resource version when updating', async () => {
     const resource = makeResource({
       metadata: {

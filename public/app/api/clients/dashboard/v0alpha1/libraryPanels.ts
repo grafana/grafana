@@ -409,7 +409,8 @@ export const libraryPanelsK8sClient = {
   }: K8sGetLibraryPanelsOptions = {}): Promise<K8sLibraryPanelsSearchResult> {
     const items = await listAll(signal);
     const search = searchString.trim().toLowerCase();
-    const currentPage = Math.max(page, 1);
+    const pageSize = Number.isSafeInteger(perPage) && perPage > 0 ? perPage : 100;
+    const currentPage = Number.isSafeInteger(page) && page > 0 ? page : 1;
 
     // the legacy search also matches panels whose folder title contains the search
     // string (unless an explicit folder filter is set), so resolve folder titles
@@ -466,8 +467,8 @@ export const libraryPanelsK8sClient = {
       return sortAsc ? compared : -compared;
     });
 
-    const start = Math.min(perPage * (currentPage - 1), filtered.length);
-    const pageItems = filtered.slice(start, start + perPage);
+    const start = Math.min(pageSize * (currentPage - 1), filtered.length);
+    const pageItems = filtered.slice(start, start + pageSize);
     if (!matchByFolderTitle) {
       folderNames = await resolveFolderNames(
         pageItems.map((item) => item.metadata.annotations?.[AnnoKeyFolder] ?? ''),
@@ -484,7 +485,7 @@ export const libraryPanelsK8sClient = {
           folderName: folderNames.get(item.metadata.annotations?.[AnnoKeyFolder] ?? ''),
         })
       ),
-      perPage,
+      perPage: pageSize,
       page: currentPage,
     };
   },
