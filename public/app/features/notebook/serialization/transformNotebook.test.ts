@@ -2,6 +2,7 @@
 // forked names); it is a shared leaf type, so it comes straight from the generated module.
 import { defaultDataQueryKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { NotebookScene } from '../scene/NotebookScene';
 import { defaultSpec as defaultNotebookSpec, type NotebookElement, type Spec as NotebookSpec } from '../types';
@@ -153,5 +154,18 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     const saveModel = transformNotebookSceneToSaveModel(scene);
 
     expect(saveModel).toEqual(spec);
+  });
+
+  // The save path borrows the dashboard's vizPanelToSchemaV2, which is only safe here because both
+  // optional args are omitted: a dsReferencesMapping routes it through getElementIdentifierForVizPanel
+  // -> getDashboardSceneFor, which throws for a NotebookScene root. Nothing in the signature says so,
+  // and the save PR is where someone would thread a mapping through to preserve datasource references.
+  // Pinning both halves so adding the arg fails here rather than at runtime on notebook save.
+  it('serializes panel cells without reaching for a DashboardScene root', () => {
+    const scene = transformNotebookToScene(notebookResource());
+    const panel = scene.state.body.state.cells.find((cell) => cell.state.body)!.state.body!;
+
+    expect(() => getDashboardSceneFor(panel)).toThrow();
+    expect(() => transformNotebookSceneToSaveModel(scene)).not.toThrow();
   });
 });
