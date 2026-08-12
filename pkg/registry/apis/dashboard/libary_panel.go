@@ -124,7 +124,9 @@ func (s *LibraryPanelStore) Update(ctx context.Context, name string, objInfo res
 	}
 
 	// NOTE: this includes all access control checks
-	obj, err := objInfo.UpdatedObject(ctx, old)
+	// Keep the fetched object immutable so an in-place PATCH transformer cannot
+	// erase the source folder before conversion and authorization use it.
+	obj, err := objInfo.UpdatedObject(ctx, old.DeepCopyObject())
 	if err != nil {
 		return nil, false, err
 	}

@@ -32,6 +32,8 @@ func TestLibraryPanelAccessStorageMaterializesAndAuthorizesUpdate(t *testing.T) 
 			authorizedNamespace = namespace
 			return nil
 		},
+		func(context.Context, string, string) error { return nil },
+		func(context.Context, runtime.Object) error { return nil },
 	)
 
 	patchInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _ runtime.Object, oldObj runtime.Object) (runtime.Object, error) {
@@ -74,6 +76,8 @@ func TestLibraryPanelAccessStorageRejectsDeniedUpdateAndDelete(t *testing.T) {
 			return nil
 		},
 		func(context.Context, runtime.Object, runtime.Object, string) error { return denied },
+		func(context.Context, string, string) error { return nil },
+		func(context.Context, runtime.Object) error { return nil },
 	)
 
 	_, _, err := storage.Update(context.Background(), panel.GetName(), rest.DefaultUpdatedObjectInfo(panel.DeepCopy()), nil, nil, false, &metav1.UpdateOptions{})
@@ -83,6 +87,66 @@ func TestLibraryPanelAccessStorageRejectsDeniedUpdateAndDelete(t *testing.T) {
 	_, _, err = storage.Delete(context.Background(), panel.GetName(), nil, &metav1.DeleteOptions{})
 	require.ErrorIs(t, err, denied)
 	require.False(t, backend.deleteCalled)
+}
+
+func TestLibraryPanelAccessStorageRejectsConnectedDelete(t *testing.T) {
+	panel := testLibraryPanel("panel-a", "general")
+	backend := &recordingLibraryPanelStorage{object: panel}
+	connected := apierrors.NewForbidden(
+		schema.GroupResource{Group: "dashboard.grafana.app", Resource: "librarypanels"},
+		panel.GetName(),
+		errors.New("the library element has connections"),
+	)
+	var validatedName, validatedNamespace string
+	storage := newLibraryPanelAccessStorage(
+		backend,
+		func(context.Context, runtime.Object, string, string) error { return nil },
+		func(context.Context, runtime.Object, runtime.Object, string) error { return nil },
+		func(_ context.Context, name, namespace string) error {
+			validatedName = name
+			validatedNamespace = namespace
+			return connected
+		},
+		func(context.Context, runtime.Object) error { return nil },
+	)
+
+	ctx := requestcontext.WithNamespace(context.Background(), "stacks-1")
+	_, _, err := storage.Delete(ctx, panel.GetName(), nil, &metav1.DeleteOptions{})
+	require.ErrorIs(t, err, connected)
+	require.Equal(t, panel.GetName(), validatedName)
+	require.Equal(t, "stacks-1", validatedNamespace)
+	require.False(t, backend.deleteCalled)
+}
+
+func TestLibraryPanelAccessStorageValidatesDestinationFolder(t *testing.T) {
+	oldPanel := testLibraryPanel("panel-a", "source")
+	backend := &recordingLibraryPanelStorage{object: oldPanel}
+	folderErr := apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, "missing")
+	validated := 0
+	storage := newLibraryPanelAccessStorage(
+		backend,
+		func(context.Context, runtime.Object, string, string) error { return nil },
+		func(context.Context, runtime.Object, runtime.Object, string) error { return nil },
+		func(context.Context, string, string) error { return nil },
+		func(_ context.Context, obj runtime.Object) error {
+			validated++
+			_, folder, err := libraryPanelAuthorizationTarget(obj)
+			require.NoError(t, err)
+			if folder == "missing" {
+				return folderErr
+			}
+			return nil
+		},
+	)
+
+	_, err := storage.Create(context.Background(), testLibraryPanel("new-panel", "missing"), nil, &metav1.CreateOptions{})
+	require.ErrorIs(t, err, folderErr)
+
+	patchInfo := rest.DefaultUpdatedObjectInfo(testLibraryPanel("panel-a", "missing"))
+	_, _, err = storage.Update(context.Background(), oldPanel.GetName(), patchInfo, nil, nil, false, &metav1.UpdateOptions{})
+	require.ErrorIs(t, err, folderErr)
+	require.Equal(t, 2, validated)
+	require.False(t, backend.updateCalled)
 }
 
 type recordingLibraryPanelStorage struct {

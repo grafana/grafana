@@ -86,6 +86,22 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	require.NotNil(t, connectionsData)
 	connections := connectionsData["result"].([]interface{})
 	require.Len(t, connections, 1)
+
+	// The legacy API must not delete a panel while a dashboard still references
+	// it, even when the operation is routed through unified storage.
+	deleteResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:   ctx.AdminUser,
+		Method: http.MethodDelete,
+		Path:   fmt.Sprintf("/api/library-elements/%s", uid),
+	}, &struct{}{})
+	require.Equal(t, http.StatusForbidden, deleteResp.Response.StatusCode)
+	var deleteError map[string]interface{}
+	require.NoError(t, json.Unmarshal(deleteResp.Body, &deleteError))
+	require.Equal(t, model.ErrLibraryElementHasConnections.Error(), deleteError["message"])
+
+	stillExists, err := getDashboardViaHTTP(t, &ctx, fmt.Sprintf("/api/library-elements/%s", uid), ctx.AdminUser)
+	require.NoError(t, err)
+	require.Equal(t, uid, stillExists["result"].(map[string]interface{})["uid"])
 }
 
 // this tests the /apis path to ensure authorization is being enforced. /api integration tests are within the service package

@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -897,6 +898,22 @@ func (lk8s *libraryElementsK8sHandler) deleteK8sLibraryElement(c *contextmodel.R
 		id = meta.GetDeprecatedInternalID() // nolint:staticcheck
 	}
 
+	// Keep the legacy /api contract: a library element cannot be deleted while a
+	// dashboard still references it. Unified storage does not enforce this
+	// relationship itself, so the compatibility handler must check it before the
+	// k8s delete. Use a service identity to include dashboards the caller cannot
+	// view, matching DeleteLibraryElement's behavior.
+	serviceCtx, _ := identity.WithServiceIdentity(c.Req.Context(), c.OrgID)
+	connectedDashboards, err := lk8s.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, uid, c.OrgID)
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "Failed to delete library element", err)
+		return
+	}
+	if len(connectedDashboards) > 0 {
+		c.JsonApiErr(http.StatusForbidden, model.ErrLibraryElementHasConnections.Error(), model.ErrLibraryElementHasConnections)
+		return
+	}
+
 	if err := client.Delete(c.Req.Context(), uid, v1.DeleteOptions{}); err != nil {
 		lk8s.writeError(c, err)
 		return
@@ -943,17 +960,10 @@ func (lk8s *libraryElementsK8sHandler) getAllK8sLibraryElements(c *contextmodel.
 	sortK8sLibraryPanelsByTitle(filtered, sortAsc)
 
 	totalCount := int64(len(filtered))
-	start := query.PerPage * (query.Page - 1)
-	if start > len(filtered) {
-		start = len(filtered)
-	}
-	end := start + query.PerPage
-	if end > len(filtered) {
-		end = len(filtered)
-	}
+	pageItems := paginateK8sLibraryPanels(filtered, query.PerPage, query.Page)
 
-	elements := make([]model.LibraryElementDTO, 0, end-start)
-	for _, item := range filtered[start:end] {
+	elements := make([]model.LibraryElementDTO, 0, len(pageItems))
+	for _, item := range pageItems {
 		dto, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, item)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
@@ -968,6 +978,21 @@ func (lk8s *libraryElementsK8sHandler) getAllK8sLibraryElements(c *contextmodel.
 		Page:       query.Page,
 		PerPage:    query.PerPage,
 	}})
+}
+
+func paginateK8sLibraryPanels(items []unstructured.Unstructured, perPage, page int) []unstructured.Unstructured {
+	start := len(items)
+	pageIndex := page - 1
+	// Division checks the multiplication before it happens, avoiding an integer
+	// overflow for extreme but valid query parameters.
+	if pageIndex <= len(items)/perPage {
+		start = perPage * pageIndex
+	}
+	end := len(items)
+	if perPage < len(items)-start {
+		end = start + perPage
+	}
+	return items[start:end]
 }
 
 func sortK8sLibraryPanelsByTitle(items []unstructured.Unstructured, sortAsc bool) {
@@ -1399,6 +1424,8 @@ func (lk8s *libraryElementsK8sHandler) writeError(c *contextmodel.ReqContext, er
 		message := statusError.Status().Message
 		// keep the legacy /api contract for errors the k8s apiserver expresses differently
 		switch {
+		case k8serrors.IsNotFound(err) && (c.Req.Method == http.MethodPost || isK8sFolderNotFound(statusError)):
+			message = dashboards.ErrFolderNotFound.Error()
 		case k8serrors.IsNotFound(err):
 			message = model.ErrLibraryElementNotFound.Error()
 		case k8serrors.IsAlreadyExists(err):
@@ -1416,4 +1443,14 @@ func (lk8s *libraryElementsK8sHandler) writeError(c *contextmodel.ReqContext, er
 		return
 	}
 	errhttp.Write(c.Req.Context(), err, c.Resp)
+}
+
+func isK8sFolderNotFound(err *k8serrors.StatusError) bool {
+	status := err.Status()
+	if status.Details != nil && (status.Details.Group == folderV1.GROUP || status.Details.Kind == folderV1.RESOURCE) {
+		return true
+	}
+	// Aggregation layers may replace or omit StatusDetails while retaining the
+	// upstream resource-qualified message.
+	return strings.Contains(status.Message, folderV1.RESOURCEGROUP)
 }
