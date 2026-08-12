@@ -12766,6 +12766,7 @@
   },
   "notebook": {
     "errors": {
+      "entity": "Notebook",
       "failed-to-load": "Failed to load notebook",
       "not-found-title": "Not found"
     }

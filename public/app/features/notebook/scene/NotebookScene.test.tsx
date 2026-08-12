@@ -57,7 +57,18 @@ function buildSceneWithPanel() {
   return { scene, panel };
 }
 
+// activate() registers the scene on window.__grafanaSceneContext; leaving it registered leaks into
+// later tests in this file.
+const deactivators: Array<() => void> = [];
+function activate(scene: NotebookScene) {
+  deactivators.push(scene.activate());
+}
+
 describe('NotebookScene', () => {
+  afterEach(() => {
+    deactivators.splice(0).forEach((deactivate) => deactivate());
+  });
+
   // activate() only propagates to $timeRange/$variables/$data/$behaviors; the pickers are plain
   // state and are otherwise activated by their renderers. With the controls row hidden nothing
   // renders the refresh picker, so without an explicit activation its interval never starts and the
@@ -76,7 +87,7 @@ describe('NotebookScene', () => {
   it('leaves the refresh picker to its renderer when the time controls are shown', () => {
     const scene = buildScene(false);
 
-    scene.activate();
+    activate(scene);
 
     expect(scene.state.refreshPicker.isActive).toBe(false);
   });
@@ -159,7 +170,7 @@ describe('NotebookScene', () => {
       config.featureToggles.scopeFilters = true;
       const { scene, panel } = buildSceneWithPanel();
 
-      scene.activate();
+      activate(scene);
       // act: rendering the cell activates its VizPanel, which loads its plugin asynchronously.
       await act(async () => {
         render(
@@ -181,7 +192,7 @@ describe('NotebookScene', () => {
       const scene = buildScene(false);
       const variable = scene.state.$variables!.state.variables[0];
 
-      scene.activate();
+      activate(scene);
       expect(variable.state.loading).toBe(true);
 
       render(
@@ -201,7 +212,7 @@ describe('NotebookScene', () => {
       const scene = buildScene(false);
       const context = buildScopesContext([scope]);
 
-      scene.activate();
+      activate(scene);
       render(
         <ScopesContext.Provider value={context}>
           <scene.Component model={scene} />

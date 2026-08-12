@@ -78,6 +78,8 @@ function notebookSpec(): NotebookSpec {
             fieldConfig: { defaults: {}, overrides: [] },
           },
         },
+        // Only `true` round-trips: the save path emits undefined for a non-transparent panel.
+        transparent: true,
       },
     },
   };
@@ -147,7 +149,9 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(scene.state.body.state.tags).toEqual(['incident', 'checkout']);
   });
 
-  it('round-trips the full spec: cells, order, source, timeSettings and metadata', () => {
+  // V2PanelSpec.subtitle is deliberately absent from the fixture: neither buildVizPanelState nor
+  // vizPanelToSchemaV2 handles it, so it would not survive. Add it here once they do.
+  it('round-trips cells, order, source, panel config, timeSettings and metadata', () => {
     const spec = notebookSpec();
 
     const scene = transformNotebookToScene(notebookResource());

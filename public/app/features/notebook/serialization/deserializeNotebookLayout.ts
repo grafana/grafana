@@ -33,6 +33,9 @@ export function deserializeNotebookLayout(
       continue;
     }
 
+    // Read before the branches narrow `element` away, so the guard below can name the kind.
+    const elementKind = element.kind;
+
     // collapsed is optional in the schema; keep it undefined when omitted so serialize round-trips faithfully.
     const base = {
       elementName,
@@ -48,6 +51,10 @@ export function deserializeNotebookLayout(
       cells.push(new NotebookCellItem({ ...base, body: new VizPanel(buildLibraryPanelState(element)) }));
     } else if (element.kind === 'Cell') {
       cells.push(new NotebookCellItem({ ...base, content: element.spec.content }));
+    } else {
+      // serialize() walks cells, so an unhandled element kind would drop both the element and its
+      // layout item on the next save. Unreachable today: this fails when a fourth kind is added.
+      throw new Error(`Unknown notebook element kind: ${elementKind}`);
     }
   }
 

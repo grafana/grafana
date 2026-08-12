@@ -23,13 +23,11 @@ import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 
 interface NotebookLayoutManagerState extends SceneObjectState {
   cells: NotebookCellItem[];
-  // The notebook's title and tags, shown in the document header. Held on the manager's own
-  // state (set by the notebook loader) instead of read from the parent DashboardScene —
-  // reaching up to the scene would import the dashboard-scene module graph and reintroduce a
-  // dependency cycle.
+  // Seeded by the notebook loader from the same spec fields as NotebookScene, so the document
+  // header renders without reaching up to the parent. Read them off the scene once editing lands,
+  // or the two copies drift.
   title?: string;
   tags?: string[];
-  isEditing?: boolean;
 }
 
 export class NotebookLayoutManager
@@ -75,10 +73,6 @@ export class NotebookLayoutManager
   // intentionally invisible to the rest of the scene (query runner, edit tooling).
   public getVizPanels(): VizPanel[] {
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
-  }
-
-  public editModeChanged(isEditing: boolean): void {
-    this.setState({ isEditing });
   }
 
   // Editing (add/reorder/remove) is out of scope for the POC; these satisfy the
