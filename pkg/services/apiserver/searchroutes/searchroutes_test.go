@@ -108,7 +108,37 @@ func TestBuild_MountsEveryServedVersion(t *testing.T) {
 
 	assert.Len(t, got, len(dashboardGVs))
 	for _, gv := range dashboardGVs {
-		assert.Equal(t, []string{"dashboards/search"}, got[gv.String()], "missing route for %s", gv)
+		// Contains, not Equal: a version may declare more than one allowed kind
+		// (v2beta1 serves Notebook alongside Dashboard).
+		assert.Contains(t, got[gv.String()], "dashboards/search", "missing route for %s", gv)
+	}
+}
+
+// Notebook is declared only in v2beta1, so its route is mounted there and nowhere
+// else — the endpoint follows the kind's served versions, not the group's.
+func TestBuild_MountsNotebooksOnDeclaringVersionOnly(t *testing.T) {
+	var dashboardGVs []schema.GroupVersion
+	for _, m := range resource.AppManifests() {
+		if m.ManifestData == nil || m.ManifestData.Group != "dashboard.grafana.app" {
+			continue
+		}
+		for _, v := range m.ManifestData.Versions {
+			if v.Served {
+				dashboardGVs = append(dashboardGVs, schema.GroupVersion{Group: m.ManifestData.Group, Version: v.Name})
+			}
+		}
+	}
+	require.NotEmpty(t, dashboardGVs)
+
+	got := paths(Build(true, nil, fakeClient{},
+		[]builder.APIGroupBuilder{&fakeBuilder{gvs: dashboardGVs}}, nil))
+
+	for _, gv := range dashboardGVs {
+		if gv.Version == "v2beta1" {
+			assert.Contains(t, got[gv.String()], "notebooks/search", "expected notebooks route on %s", gv)
+			continue
+		}
+		assert.NotContains(t, got[gv.String()], "notebooks/search", "unexpected notebooks route on %s", gv)
 	}
 }
 
