@@ -54,21 +54,31 @@ export function ExtensionSidebar() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
-    sidebarWrapper: css({
-      backgroundColor: theme.colors.background.primary,
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-      width: '100%',
-      height: '100%',
-      overflow: 'auto',
-      // Temp fix for AI assistant, remove in a 1-2 months
-      ' > div > div': {
-        margin: 0,
+    sidebarWrapper: css(
+      {
+        backgroundColor: theme.colors.background.primary,
+        borderLeft: `1px solid ${theme.colors.border.weak}`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: theme.spacing(1),
+        width: '100%',
+        height: '100%',
+        overflow: 'auto',
+        // Temp fix for AI assistant, remove in a 1-2 months
+        ' > div > div': {
+          margin: 0,
+        },
       },
-    }),
+      visualRefreshEnabled && {
+        backgroundColor: theme.colors.background.page,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderRadius: theme.shape.radius.lg,
+        height: `calc(100% - ${theme.spacing(0.5)})`,
+        width: `calc(100% - ${theme.spacing(0.5)})`,
+      }
+    ),
     content: css({
       flex: 1,
       minHeight: 0,
