@@ -1085,13 +1085,7 @@ export class DashboardModel implements TimeModel {
 
   hasTimeChanged() {
     const { time, originalTime } = this;
-
-    // Compare moment values vs strings values
-    return !(
-      isEqual(time, originalTime) ||
-      (isEqual(dateTime(time?.from), dateTime(originalTime?.from)) &&
-        isEqual(dateTime(time?.to), dateTime(originalTime?.to)))
-    );
+    return time.from !== originalTime.from || time.to !== originalTime.to;
   }
 
   autoFitPanels(viewHeight: number, kioskMode?: UrlQueryValue) {
