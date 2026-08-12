@@ -82,10 +82,14 @@ func newIAMAuthorizer(
 	// registered. Interim: allow authenticated identities; real settings:write
 	// RBAC is a follow-up (tracked with the SSO settings migration).
 	resourceAuthorizer[legacyiamv0.SSOSettingResourceInfo.GetName()] = authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		if _, ok := authlib.AuthInfoFrom(ctx); ok {
-			return authorizer.DecisionAllow, "", nil
+		requester, err := identity.GetRequester(ctx)
+		if err != nil || requester == nil {
+			return authorizer.DecisionDeny, "cannot access ssosettings without an identity", nil
 		}
-		return authorizer.DecisionDeny, "cannot access ssosettings without an identity", nil
+		if requester.IsIdentityType(authlib.TypeAnonymous) {
+			return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
+		}
+		return authorizer.DecisionAllow, "", nil
 	})
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
