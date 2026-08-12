@@ -12656,6 +12656,7 @@
       "customise-saving": "Saving…",
       "dialog-label": "Navigation",
       "dock": "Dock menu",
+      "header-title": "Navigation",
       "list-label": "Navigation",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
@@ -12766,6 +12767,13 @@
       "title-zoom-out": "Zoom out"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "Notebook",
+      "failed-to-load": "Failed to load notebook",
+      "not-found-title": "Not found"
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "All authors",
@@ -12796,7 +12804,9 @@
       "unknown-author": "Anonymous"
     },
     "view": {
-      "copy-link": "Copy link"
+      "copy-link": "Copy link",
+      "edit-mode": "Edit",
+      "editing": "Editing"
     }
   },
   "notifications": {

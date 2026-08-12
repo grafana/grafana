@@ -130,9 +130,15 @@ func RegisterAPIService(
 	// Mode lever for the SSO settings migration: any configured storage mode
 	// above 0 hands the SSOSetting kind to the MT-Settings store.
 	ssoUseMTSettings := false
+	var ssoSettingsClient settingsvc.Service
 	if cfg != nil {
 		if resCfg, ok := cfg.UnifiedStorage[legacyiamv0.SSOSettingResourceInfo.GroupResource().String()]; ok && resCfg.DualWriterMode > grafanarest.Mode0 {
 			ssoUseMTSettings = true
+			c, err := sso.NewSettingsClient(cfg)
+			if err != nil {
+				log.New("iam.apis").Error("failed to build MT-Settings client for SSOSetting store", "error", err)
+			}
+			ssoSettingsClient = c
 		}
 	}
 
@@ -145,6 +151,7 @@ func RegisterAPIService(
 		teamBindingLegacyStore:            teambinding.NewLegacyBindingStore(store, tracing),
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
 		ssoUseMTSettings:                  ssoUseMTSettings,
+		ssoSettingsClient:                 ssoSettingsClient,
 		roleApiInstaller:                  roleApiInstaller,
 		globalRoleApiInstaller:            globalRoleApiInstaller,
 		teamLBACApiInstaller:              teamLBACApiInstaller,
@@ -443,14 +450,15 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	// SSO settings apis
 	if enableSsoSettingsApi && b.ssoLegacyStore != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
-		// The storage mode of [unified_storage.ssosettings.iam.grafana.app]
-		// decides which store serves the kind: at mode 0 (the default) the
-		// legacy store behaves as before; any higher mode engages the
-		// MT-Settings store, which fails loudly until it is implemented.
-		// The standard dual-writer cannot wrap this kind yet: it requires
-		// rest.CreaterUpdater and SSO settings are update-only.
+		// The [unified_storage.ssosettings.iam.grafana.app] storage mode decides
+		// which store serves the kind: mode 0 (default) keeps the legacy store;
+		// any higher mode engages the MT-Settings store.
 		if b.ssoUseMTSettings {
-			storage[ssoResource.StoragePath()] = sso.NewMTSettingsStore()
+			var writer settingsvc.Writer
+			if b.ssoSettingsClient != nil {
+				writer, _ = b.ssoSettingsClient.(settingsvc.Writer)
+			}
+			storage[ssoResource.StoragePath()] = sso.NewMTSettingsStore(b.ssoSettingsClient, writer)
 		} else {
 			storage[ssoResource.StoragePath()] = b.ssoLegacyStore
 		}

@@ -15,7 +15,7 @@ const PANEL_HEIGHT = 300;
 // A notebook cell is one of two things: a panel (a chart) or narrative content (a markdown or
 // code block). This chooses the matching renderer, or shows a compact placeholder when the cell
 // is collapsed.
-export function NotebookCellRenderer({ cell }: { cell: NotebookCellItem }) {
+export function NotebookCellRenderer({ cell, isEditing }: { cell: NotebookCellItem; isEditing: boolean }) {
   const { body: panel, content: narrative, collapsed, elementName } = cell.useState();
 
   if (collapsed) {
@@ -27,7 +27,7 @@ export function NotebookCellRenderer({ cell }: { cell: NotebookCellItem }) {
   }
 
   if (narrative) {
-    return <NarrativeCell content={narrative} />;
+    return <NarrativeCell content={narrative} isEditing={isEditing} />;
   }
 
   return null;
@@ -45,7 +45,7 @@ function PanelCell({ panel }: { panel: VizPanel }) {
 }
 
 // A narrative cell: markdown or code, rendered by the component registered for its content kind.
-function NarrativeCell({ content }: { content: CellContentKind }) {
+function NarrativeCell({ content, isEditing }: { content: CellContentKind; isEditing: boolean }) {
   const styles = useStyles2(getStyles);
 
   const registered = cellTypeRegistry.getIfExists(content.kind);
@@ -56,7 +56,7 @@ function NarrativeCell({ content }: { content: CellContentKind }) {
   const Renderer = registered.render;
   return (
     <div className={styles.content}>
-      <Renderer content={content} />
+      <Renderer content={content} isEditing={isEditing} />
     </div>
   );
 }

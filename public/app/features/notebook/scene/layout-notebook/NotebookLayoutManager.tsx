@@ -11,11 +11,12 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
-import { type NotebookLayoutItemKind, type NotebookLayoutKind } from 'app/features/notebook/types';
+import { type DashboardLayoutManager } from 'app/features/dashboard-scene/scene/types/DashboardLayoutManager';
+import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/types/LayoutRegistryItem';
+import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 
-import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
-import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
+import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { NotebookCellRenderer } from './NotebookCellRenderer';
@@ -23,12 +24,13 @@ import { NotebookDocumentHeader } from './NotebookDocumentHeader';
 
 interface NotebookLayoutManagerState extends SceneObjectState {
   cells: NotebookCellItem[];
-  // The notebook's title and tags, shown in the document header. Held on the manager's own
-  // state (set by the notebook loader) instead of read from the parent DashboardScene —
-  // reaching up to the scene would import the dashboard-scene module graph and reintroduce a
-  // dependency cycle.
+  // Seeded by the notebook loader from the same spec fields as NotebookScene, so the document
+  // header renders without reaching up to the parent. Read them off the scene once editing lands,
+  // or the two copies drift.
   title?: string;
   tags?: string[];
+  /** Mirrors the scene's edit mode, pushed down by editModeChanged. */
+  isEditing?: boolean;
 }
 
 export class NotebookLayoutManager
@@ -76,6 +78,14 @@ export class NotebookLayoutManager
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
   }
 
+  /**
+   * The scene calls this when the mode flips. Recording it here rather than reaching up to the
+   * NotebookScene keeps the import one-directional — the scene only type-imports this manager.
+   */
+  public editModeChanged(isEditing: boolean): void {
+    this.setState({ isEditing });
+  }
+
   // Editing (add/reorder/remove) is out of scope for the POC; these satisfy the
   // DashboardLayoutManager contract minimally.
   public addPanel(): void {}
@@ -84,8 +94,19 @@ export class NotebookLayoutManager
     return this.clone({});
   }
 
-  public duplicate(_panelIdGenerator?: PanelIdGenerator): NotebookLayoutManager {
-    return this.clone({ key: undefined });
+  // Same as the dashboard layout managers: a plain clone would reuse the originals' panel-<id> keys,
+  // which collide in findVizPanelByKey and in the panelId enrichDataRequest feeds to query caching.
+  public duplicate(panelIdGenerator?: PanelIdGenerator): NotebookLayoutManager {
+    const nextId = panelIdGenerator ?? dashboardSceneGraph.getPanelIdGenerator(this);
+
+    const cells = this.state.cells.map((cell) =>
+      cell.clone({
+        key: undefined,
+        body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
+      })
+    );
+
+    return this.clone({ key: undefined, cells });
   }
 
   public getOutlineChildren(): SceneObject[] {
@@ -103,7 +124,7 @@ export class NotebookLayoutManager
 
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { cells, title, tags } = model.useState();
+  const { cells, title, tags, isEditing } = model.useState();
 
   const timeRange = sceneGraph.getTimeRange(model).useState();
 
@@ -115,7 +136,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
 
       <div className={styles.column}>
         {cells.map((cell) => (
-          <NotebookCellRenderer cell={cell} key={cell.state.key} />
+          <NotebookCellRenderer cell={cell} isEditing={Boolean(isEditing)} key={cell.state.key} />
         ))}
       </div>
     </div>
