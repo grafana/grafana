@@ -84,14 +84,18 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
       return { success: false, error: validationResult.error, changes: [] };
     }
 
-    // Deep-clone write payloads so downstream code (e.g. getPanelOptionsWithDefaults) can mutate
-    // in-place. A schema does not copy what it passes through — `z.unknown()` hands back the caller's
-    // own object — so without this a handler's in-place edit reaches into the plugin's argument.
-    const payload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
-
     const context: MutationContext<TScene> = { scene: this.scene };
 
     try {
+      // Deep-clone write payloads so downstream code (e.g. getPanelOptionsWithDefaults) can mutate
+      // in-place. A schema does not copy what it passes through — `z.unknown()` hands back the caller's
+      // own object — so without this a handler's in-place edit reaches into the plugin's argument.
+      //
+      // Inside the try because structuredClone throws on a payload it cannot clone (a function, a DOM
+      // node, a proxy), and every other failure on this path is reported as a result. A plugin calling
+      // across the restricted-API boundary should not have to handle both.
+      const payload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
+
       const result = await registration.handler(payload, context);
 
       if (result.success && !registration.readOnly) {

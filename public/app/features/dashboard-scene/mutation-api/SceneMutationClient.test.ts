@@ -196,6 +196,28 @@ describe('SceneMutationClient', () => {
       expect(target.forceRender).not.toHaveBeenCalled();
     });
 
+    it('turns a non-cloneable payload into a result instead of rejecting', async () => {
+      const handler = jest.fn(async () => ({ success: true, changes: [] }));
+      const target = scene();
+      const client = new SceneMutationClient(target, [
+        command({
+          // Passes through whatever it is handed, which is what a spec-shaped `z.unknown()` field does.
+          payloadSchema: z.object({ value: z.unknown() }),
+          handler,
+        }),
+      ]);
+
+      // A write payload is deep-cloned, and structuredClone throws on a function. Every other failure
+      // on this path is a result, and a plugin calling across the restricted-API boundary should not
+      // have to handle both shapes.
+      const result = await client.execute({ type: 'TEST_COMMAND', payload: { value: () => 'not cloneable' } });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toEqual(expect.stringMatching(/clone/i));
+      expect(handler).not.toHaveBeenCalled();
+      expect(target.forceRender).not.toHaveBeenCalled();
+    });
+
     it('stringifies a thrown non-Error', async () => {
       const client = new SceneMutationClient(scene(), [
         command({
