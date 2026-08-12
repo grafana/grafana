@@ -13,6 +13,16 @@
         }
       ]
     },
+    "start:rspack": {
+      "dependsOn": [
+        "check-frontend-dev",
+        "themes-generate",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ]
+    },
     "build": {
       "dependsOn": [
         "themes-generate",
@@ -33,6 +43,17 @@
         }
       ],
       "outputs": ["{workspaceRoot}/public/build"],
+      "cache": true
+    },
+    "dev:rspack": {
+      "dependsOn": [
+        "themes-generate",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "outputs": ["{workspaceRoot}/public/build-rspack"],
       "cache": true
     },
     "build:swagger": {
