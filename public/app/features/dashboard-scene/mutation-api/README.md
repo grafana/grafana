@@ -1104,7 +1104,7 @@ to apply a spec into the way `/dashboard/new` is one for a dashboard.
 ```
 
 **Response:**
-`{ "success": true, "data": { "created": true, "opened": true, "uid": "n-abc123", "url": "/notebook/n-abc123" } }`
+`{ "success": true, "data": { "created": true, "opened": true, "uid": "n-abc123", "url": "/notebooks/n-abc123" } }`
 
 Unlike every other command here this one **persists immediately**, and the server assigns the uid — so
 `validate` defaults to `true`. Set `open: false` to create without navigating. Use

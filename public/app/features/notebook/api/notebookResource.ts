@@ -14,6 +14,7 @@ import { type Resource } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
 import { type Spec as NotebookSpec } from '../types';
+import { notebookViewUrl } from '../urls';
 
 /**
  * Prefix for a server-generated notebook name. Grafana's own new-dashboard save uses `generateName:
@@ -25,11 +26,6 @@ const NOTEBOOK_NAME_PREFIX = 'n';
 const NOTEBOOK_KIND = 'Notebook';
 
 const NOTEBOOK_API_VERSION = `${API_GROUP}/${API_VERSION}`;
-
-/** Where a notebook renders, matching the `/notebook/:uid/:slug?` route. */
-function notebookPageUrl(uid: string): string {
-  return `/notebook/${encodeURIComponent(uid)}`;
-}
 
 export interface CreatedNotebook {
   uid: string;
@@ -89,7 +85,10 @@ export async function createNotebook(spec: NotebookSpec): Promise<CreatedNoteboo
     throw new Error('The notebook was created but the response carried no name, so it cannot be opened.');
   }
 
-  return { uid, url: notebookPageUrl(uid) };
+  // The route's own helper, not a path restated here: `opened` is decided by comparing this against
+  // the location the push landed on, so a second spelling of the notebook route is a create that
+  // reports success from a page that never mounted a notebook.
+  return { uid, url: notebookViewUrl(uid) };
 }
 
 /**

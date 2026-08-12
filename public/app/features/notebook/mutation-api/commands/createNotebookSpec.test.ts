@@ -8,6 +8,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { notebookViewUrl } from '../../urls';
 import { NotebookMutationClient } from '../NotebookMutationClient';
 import { NOTEBOOKS_FLAG, markdownCell, notebookScene, notebookSpec } from '../test-utils';
 
@@ -60,11 +61,13 @@ describe('CREATE_NOTEBOOK_SPEC', () => {
 
     const result = await client.execute({ type: 'CREATE_NOTEBOOK_SPEC', payload: { spec: notebookSpec() } });
 
+    // Through the route's own helper, not a literal. A literal here agrees with whatever the command
+    // happens to build, which is how a create that navigated to a non-existent route stayed green.
     expect(result).toMatchObject({
       success: true,
-      data: { created: true, opened: true, uid: 'n-abc123', url: '/notebook/n-abc123' },
+      data: { created: true, opened: true, uid: 'n-abc123', url: notebookViewUrl('n-abc123') },
     });
-    expect(push).toHaveBeenCalledWith('/notebook/n-abc123');
+    expect(push).toHaveBeenCalledWith(notebookViewUrl('n-abc123'));
     // generateName, not a client-invented uid: the apiserver appends the random suffix.
     expect(fetch).toHaveBeenCalledWith(
       expect.objectContaining({ method: 'POST', data: expect.objectContaining({ metadata: { generateName: 'n' } }) })
