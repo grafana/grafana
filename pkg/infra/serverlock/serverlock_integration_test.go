@@ -179,6 +179,48 @@ func TestIntegrationServerLock_LockExecuteAndReleaseWithRetries(t *testing.T) {
 	})
 }
 
+// getOrCreate reads without locking before inserting, so concurrent callers on the same action name race
+// to create the row and all but one hit a unique constraint violation. They should contend through the
+// version check rather than surfacing the driver error and skipping the run.
+func TestIntegrationServerLock_ConcurrentLockAndExecuteSameAction(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sl, _ := createTestableServerLock(t)
+
+	// the window between the select and the insert is narrow, so a single round only provokes the race
+	// about half the time. Repeat over fresh action names to make this a reliable regression guard.
+	for round := range 8 {
+		actionName := fmt.Sprintf("concurrent-same-action-%d", round)
+
+		const concurrency = 16
+		var mu sync.Mutex
+		executed := 0
+		errs := make([]error, concurrency)
+
+		start := make(chan struct{})
+		var wg sync.WaitGroup
+		for i := range concurrency {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				<-start
+				errs[i] = sl.LockAndExecute(context.Background(), actionName, time.Hour, func(context.Context) {
+					mu.Lock()
+					defer mu.Unlock()
+					executed++
+				})
+			}(i)
+		}
+		close(start)
+		wg.Wait()
+
+		for i, err := range errs {
+			require.NoError(t, err, "round %d goroutine %d should not surface a lock creation error", round, i)
+		}
+		require.Equal(t, 1, executed, "round %d: exactly one caller should have run the action", round)
+	}
+}
+
 // Distinct action names still contend on MySQL: when the lock row is missing the SELECT ... FOR UPDATE
 // gap-locks the index range, so concurrent inserts into the same gap deadlock. Run with
 // GRAFANA_TEST_DB=mysql to exercise that path.

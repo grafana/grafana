@@ -138,34 +138,65 @@ func (getLockQuery) Validate() error {
 	return nil
 }
 
+// getLock returns nil when no lock row exists for actionName.
+func (sl *ServerLockService) getLock(actionName string, dbHelper *legacysql.LegacyDatabaseHelper,
+	dbSession *db.Session,
+) (*serverLock, error) {
+	query := getLockQuery{
+		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+		ServerLockTable: dbHelper.Table("server_lock"),
+		OperationUID:    actionName,
+	}
+	rawSQL, err := sqltemplate.Execute(getLockTemplate, query)
+	if err != nil {
+		return nil, err
+	}
+	lock := &serverLock{}
+	has, err := dbSession.SQL(rawSQL, query.GetArgs()...).Get(lock)
+	if err != nil || !has {
+		return nil, err
+	}
+	return lock, nil
+}
+
+// createRaceRetries bounds how many times getOrCreate starts a fresh transaction after losing the race
+// to create the lock row. A retry is needed rather than a re-read because under REPEATABLE READ this
+// transaction's snapshot predates the winner's commit, so it cannot see the row no matter how often we
+// select it. A new transaction gets a new snapshot and finds it.
+const createRaceRetries = 3
+
 func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string) (*serverLock, error) {
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.getOrCreate")
 	defer span.End()
 
-	var result *serverLock
 	dbHelper, err := sl.sql(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get legacy DB: %w", err)
 	}
 
-	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
-		query := getLockQuery{
-			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
-			ServerLockTable: dbHelper.Table("server_lock"),
-			OperationUID:    actionName,
-		}
-		rawSQL, err := sqltemplate.Execute(getLockTemplate, query)
-		if err != nil {
-			return err
-		}
-		sqlRes := &serverLock{}
-		has, err := dbSession.SQL(rawSQL, query.GetArgs()...).Get(sqlRes)
-		if err != nil {
-			return err
+	for attempt := 0; ; attempt++ {
+		result, err := sl.getOrCreateOnce(ctx, dbHelper, actionName)
+		var existsErr *ServerLockExistsError
+		if !errors.As(err, &existsErr) || attempt == createRaceRetries {
+			return result, err
 		}
 
-		if has {
-			result = sqlRes
+		sl.log.FromContext(ctx).Debug("Another server created the lock first, re-reading",
+			"actionName", actionName, "attempt", attempt+1)
+	}
+}
+
+func (sl *ServerLockService) getOrCreateOnce(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper,
+	actionName string,
+) (*serverLock, error) {
+	var result *serverLock
+	err := dbHelper.DB.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+		lock, err := sl.getLock(actionName, dbHelper, dbSession)
+		if err != nil {
+			return err
+		}
+		if lock != nil {
+			result = lock
 			return nil
 		}
 
@@ -546,6 +577,11 @@ func (sl *ServerLockService) createLock(ctx context.Context,
 	} else {
 		res, err := dbSession.Exec(append([]any{rawSQL}, query.GetArgs()...)...)
 		if err != nil {
+			// same race the postgres branch above handles with ON CONFLICT DO NOTHING, except MySQL and
+			// SQLite surface it as a unique constraint violation instead of an empty result
+			if dbHelper.DB.GetDialect().IsUniqueConstraintViolation(err) {
+				return nil, &ServerLockExistsError{actionName: lockRow.OperationUID}
+			}
 			return nil, err
 		}
 		lastID, err := res.LastInsertId()
