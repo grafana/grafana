@@ -152,7 +152,7 @@ func PostableGrafanaReceiverToIntegration(p *v1.PostableGrafanaReceiver) (*model
 	return integration, nil
 }
 
-func ManagedRouteToRoute(r *ManagedRoute) v1.Route {
+func ManagedRouteToRoute(r *v1.ManagedRoute) v1.Route {
 	groupByAll, groupBy := ToGroupBy(r.GroupBy...)
 
 	// Only need to copy the fields that are valid for a root route.
