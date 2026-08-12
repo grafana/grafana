@@ -4033,37 +4033,24 @@ func TestKvStorageBackend_CanReplayFrom(t *testing.T) {
 	recentRV := snowflakeFromTime(now.Add(-time.Minute))
 	saveEvent("recent-resource", recentRV)
 
-	// Inside the replay window, events are guaranteed to still be there.
+	// Inside the replay window (younger than half the retention period), events
+	// are guaranteed to still be there.
 	require.NoError(t, backend.CanReplayFrom(ctx, recentRV))
 
-	// Older than the replay window, but the store holds no history that old, so
-	// nothing can be missing from the range we would replay
+	// Older than the replay window: events written after it may already have been
+	// pruned, so the resume is refused.
 	oldRV := snowflakeFromTime(now.Add(-2 * time.Hour))
-	require.NoError(t, backend.CanReplayFrom(ctx, oldRV))
-
-	// Once the store holds events older than the window, resuming from a resource
-	// version below it may skip pruned events, so it is refused.
-	saveEvent("old-resource", snowflakeFromTime(now.Add(-time.Hour)))
 	err := backend.CanReplayFrom(ctx, oldRV)
 	require.Error(t, err)
 	require.True(t, IsResourceVersionExpired(err), "expected an expired resource version error, got %v", err)
-	require.NoError(t, backend.CanReplayFrom(ctx, recentRV))
 
-	// rv ahead of the latest write: there is nothing to replay.
+	err = backend.CanReplayFrom(ctx, 1)
+	require.Error(t, err)
+	require.True(t, IsResourceVersionExpired(err), "expected an expired resource version error, got %v", err)
+
+	// rv ahead of the latest write: there is nothing to replay, so it is allowed
+	// regardless of age.
 	require.NoError(t, backend.CanReplayFrom(ctx, recentRV+1))
-
-	// older than replay window, but still ahead of the latest write is allowed: nothing to replay
-	idle := setupTestStorageBackend(t)
-	idleRV := snowflakeFromTime(now.Add(-45 * time.Minute))
-	require.NoError(t, idle.eventStore.Save(ctx, Event{
-		Namespace:       "default",
-		Group:           "apps",
-		Resource:        "resources",
-		Name:            "last-write",
-		ResourceVersion: idleRV,
-		Action:          DataActionCreated,
-	}))
-	require.NoError(t, idle.CanReplayFrom(ctx, idleRV))
 }
 
 func TestKvStorageBackend_MaxEventReplayAge(t *testing.T) {
@@ -4077,8 +4064,7 @@ func TestKvStorageBackend_MaxEventReplayAge(t *testing.T) {
 }
 
 func TestKvStorageBackend_EventRetentionPeriodMinimum(t *testing.T) {
-	// A retention below the minimum is ignored in favour of the default, so the
-	// replay window keeps a safe margin below the pruner cutoff.
+	// A retention below the minimum is ignored in favour of the default.
 	belowMin := setupTestStorageBackend(t, func(o *KVBackendOptions) {
 		o.EventRetentionPeriod = time.Minute
 	})

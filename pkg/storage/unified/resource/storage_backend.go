@@ -2544,33 +2544,14 @@ func (k *kvStorageBackend) CanReplayFrom(ctx context.Context, sinceRV int64) err
 	case err != nil:
 		return err
 	case sinceRV >= latest.ResourceVersion:
-		// Nothing was written after sinceRV, so there is nothing to replay
+		// Nothing was written after sinceRV, so there is nothing to replay.
 		return nil
 	}
 
-	oldest, err := k.eventStore.FirstEventKey(ctx)
-	switch {
-	case errors.Is(err, ErrNotFound):
-		return nil
-	case err != nil:
-		return err
+	if ResourceVersionTime(sinceRV).Before(time.Now().Add(-k.maxEventReplayAge())) {
+		return NewResourceVersionExpiredError(sinceRV)
 	}
-
-	cutoff := time.Now().Add(-k.maxEventReplayAge())
-	switch {
-	case !ResourceVersionTime(oldest.ResourceVersion).Before(cutoff):
-		// The store holds no history older than the replay window, so nothing can
-		// be missing from the range we are about to replay.
-		return nil
-	case sinceRV >= oldest.ResourceVersion && !ResourceVersionTime(sinceRV).Before(cutoff):
-		// Every event after sinceRV is still stored, and sinceRV is recent enough
-		// that a prune running right now cannot reach into that range.
-		return nil
-	}
-
-	// Either events before the oldest stored one are already gone, or sinceRV is
-	// old enough that they may disappear while we replay them.
-	return NewResourceVersionExpiredError(sinceRV)
+	return nil
 }
 
 // ListEventsSince returns all write events with a resource version greater than

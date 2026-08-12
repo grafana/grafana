@@ -2195,6 +2195,13 @@ func (s *server) replayEventsSince(ctx context.Context, since int64, send func(*
 			maxRV = event.ResourceVersion
 		}
 	}
+
+	// If replaying took long enough that `since` aged out of the replay window,
+	// a concurrent prune may have deleted events in the range we just streamed.
+	if err := replayer.CanReplayFrom(ctx, since); err != nil {
+		s.log.Info("watch: events aged out while replaying; asking client to re-list", "since", since, "error", err)
+		return maxRV, err
+	}
 	return maxRV, nil
 }
 

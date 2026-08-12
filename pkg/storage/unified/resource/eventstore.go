@@ -140,20 +140,6 @@ func (n *eventStore) LastEventKey(ctx context.Context) (EventKey, error) {
 	return EventKey{}, ErrNotFound
 }
 
-func (n *eventStore) FirstEventKey(ctx context.Context) (EventKey, error) {
-	ctx, span := tracer.Start(ctx, "resource.eventStore.FirstEventKey")
-	defer span.End()
-
-	for key, err := range n.kv.Keys(ctx, eventsSection, ListOptions{Sort: SortOrderAsc, Limit: 1}) {
-		if err != nil {
-			return EventKey{}, err
-		}
-		return ParseEventKey(key)
-	}
-
-	return EventKey{}, ErrNotFound
-}
-
 // Save an event to the store.
 func (n *eventStore) Save(ctx context.Context, event Event) error {
 	eventKey := EventKey{
