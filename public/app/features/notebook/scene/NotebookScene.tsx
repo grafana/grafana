@@ -35,6 +35,14 @@ export interface NotebookSceneState extends SceneObjectState {
   hideTimeControls?: boolean;
   overlay?: SceneObject;
   $timeRange: SceneTimeRange;
+  /**
+   * Whether the notebook is being edited. Owned here, the same place DashboardScene owns it, and
+   * pushed down to the layout on activation. The layout renders the editing affordances but must not
+   * read this off its parent: reaching up to the notebook scene is what pulls the dashboard-scene
+   * module graph into the layout and reintroduces the dependency cycle. Same reason title/tags live
+   * on the layout manager.
+   */
+  isEditing?: boolean;
 }
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
@@ -43,6 +51,9 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   public constructor(state: NotebookSceneState) {
     super({
       ...state,
+      // TODO: hardcoded until the notebook edit mode (toolbar toggle, save, discard) lands. Edit mode
+      // has a single source of truth, so this is the only line to remove.
+      isEditing: state.isEditing ?? true,
       // Composed in here rather than by the deserializer: scopes are runtime context, not part of
       // the notebook spec, so every NotebookScene needs them regardless of how it was built.
       $variables: state.$variables ?? buildNotebookVariables(),
@@ -54,6 +65,9 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     });
 
     this.addActivationHandler(() => {
+      // Push edit mode down rather than letting the layout read it from here; see isEditing above.
+      this.state.body.editModeChanged(Boolean(this.state.isEditing));
+
       // template_srv and TimeSrv resolve variables/time for panel plugins through the global
       // scene context; without this, plugin-side interpolation silently degrades.
       const prevSceneContext = window.__grafanaSceneContext;

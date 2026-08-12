@@ -23,7 +23,7 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-function buildScene(hideTimeControls: boolean) {
+function buildScene(hideTimeControls: boolean, isEditing?: boolean) {
   return new NotebookScene({
     title: 'My notebook',
     body: new NotebookLayoutManager({
@@ -39,6 +39,7 @@ function buildScene(hideTimeControls: boolean) {
     timePicker: new SceneTimePicker({}),
     refreshPicker: new SceneRefreshPicker({ refresh: '10s', intervals: ['10s', '1m'] }),
     hideTimeControls,
+    isEditing,
   });
 }
 
@@ -90,6 +91,28 @@ describe('NotebookScene', () => {
     activate(scene);
 
     expect(scene.state.refreshPicker.isActive).toBe(false);
+  });
+
+  // The layout renders the editing affordances but must not read edit mode off its parent — that
+  // import direction is what reintroduces the dashboard-scene dependency cycle — so the scene pushes
+  // it down instead.
+  it('pushes edit mode down to the layout on activation', () => {
+    const scene = buildScene(false);
+
+    expect(scene.state.body.state.isEditing).toBeUndefined();
+
+    scene.activate();
+
+    expect(scene.state.body.state.isEditing).toBe(true);
+  });
+
+  // Without this the hardcoded `isEditing ?? true` default would mask a mirror that never propagates.
+  it('leaves the layout out of edit mode when the notebook is not editing', () => {
+    const scene = buildScene(false, false);
+
+    scene.activate();
+
+    expect(scene.state.body.state.isEditing).toBe(false);
   });
 
   describe('enrichDataRequest', () => {

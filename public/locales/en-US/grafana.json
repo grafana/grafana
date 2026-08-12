@@ -12767,6 +12767,17 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "Code",
+      "heading": "Heading",
+      "label": "Add block",
+      "paragraph": "Paragraph",
+      "visualization": "Visualization",
+      "visualization-placeholder": "Coming soon"
+    },
+    "cell": {
+      "drag-handle": "Drag to reorder"
+    },
     "errors": {
       "entity": "Notebook",
       "failed-to-load": "Failed to load notebook",
