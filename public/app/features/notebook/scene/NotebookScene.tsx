@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   behaviors,
@@ -17,9 +18,13 @@ import {
   ScopesVariable,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import { useStyles2 } from '@grafana/ui';
+import { Text, useStyles2 } from '@grafana/ui';
 import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
 
+import { canEditNotebooks } from '../permissions';
+
+import { NotebookEditToggle } from './NotebookEditToggle';
+import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 
 export interface NotebookSceneState extends SceneObjectState {
@@ -35,10 +40,19 @@ export interface NotebookSceneState extends SceneObjectState {
   hideTimeControls?: boolean;
   overlay?: SceneObject;
   $timeRange: SceneTimeRange;
+  /**
+   * Whether the notebook is being edited rather than read. Runtime only — nothing is saved yet, and
+   * the cells gain no real editing UI beyond becoming writable.
+   */
+  isEditing?: boolean;
 }
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
   public static Component = NotebookSceneRenderer;
+
+  // Edit mode is reflected in the url by this handler rather than by the methods below, so the url
+  // stays a projection of the state instead of a second copy of it.
+  protected _urlSync = new NotebookSceneUrlSync(this);
 
   public constructor(state: NotebookSceneState) {
     super({
@@ -90,6 +104,25 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     };
   }
 
+  /**
+   * Permission is checked here rather than only where the toggle renders, so no caller — including
+   * a hand-typed `?edit=true` — can force edit mode for a user without `dashboards:write`.
+   */
+  public onEnterEditMode = () => {
+    if (!canEditNotebooks()) {
+      return;
+    }
+
+    this.setState({ isEditing: true });
+    // Same channel DashboardScene uses to tell its layout the mode changed.
+    this.state.body.editModeChanged?.(true);
+  };
+
+  public onExitEditMode = () => {
+    this.setState({ isEditing: false });
+    this.state.body.editModeChanged?.(false);
+  };
+
   public showModal(modal: SceneObject) {
     this.setState({ overlay: modal });
   }
@@ -120,17 +153,30 @@ function buildNotebookVariables(): SceneVariableSet | undefined {
 
 function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   const styles = useStyles2(getStyles);
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay } = model.useState();
+  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
 
   return (
     <>
       <NotebookHiddenVariables model={model} />
-      {!hideTimeControls && (
-        <div className={styles.controls}>
-          <timePicker.Component model={timePicker} />
-          <refreshPicker.Component model={refreshPicker} />
-        </div>
-      )}
+      {/* The row itself always renders: the edit toggle must not inherit the pickers' visibility.
+          Only the pickers are conditional. */}
+      <div className={styles.controls}>
+        {isEditing && (
+          // Pushed to the far left of the row; everything else stays right-aligned.
+          <span className={styles.mode}>
+            <Text variant="bodySmall" color="secondary">
+              <Trans i18nKey="notebooks.view.editing">Editing</Trans>
+            </Text>
+          </span>
+        )}
+        <NotebookEditToggle notebook={model} />
+        {!hideTimeControls && (
+          <>
+            <timePicker.Component model={timePicker} />
+            <refreshPicker.Component model={refreshPicker} />
+          </>
+        )}
+      </div>
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}
     </>
@@ -165,8 +211,12 @@ function NotebookHiddenVariables({ model }: SceneComponentProps<NotebookScene>) 
 const getStyles = (theme: GrafanaTheme2) => ({
   controls: css({
     display: 'flex',
+    alignItems: 'center',
     justifyContent: 'flex-end',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
+  }),
+  mode: css({
+    marginRight: 'auto',
   }),
 });

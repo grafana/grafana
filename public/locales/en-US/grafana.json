@@ -12804,7 +12804,9 @@
       "unknown-author": "Anonymous"
     },
     "view": {
-      "copy-link": "Copy link"
+      "copy-link": "Copy link",
+      "edit-mode": "Edit",
+      "editing": "Editing"
     }
   },
   "notifications": {

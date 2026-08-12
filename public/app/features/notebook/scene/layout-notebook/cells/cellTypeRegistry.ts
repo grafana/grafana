@@ -8,8 +8,9 @@ import { MarkdownCell } from './MarkdownCell';
 
 export interface CellTypeRegistryItem extends RegistryItem {
   // id matches CellContentKind['kind'] ('Markdown' | 'Code'); each renderer narrows
-  // the content by that kind.
-  render: ComponentType<{ content: CellContentKind }>;
+  // the content by that kind. `isEditing` is offered to every cell type; a renderer that has
+  // nothing to change yet simply does not accept it.
+  render: ComponentType<{ content: CellContentKind; isEditing: boolean }>;
 }
 
 export const cellTypeRegistry = new Registry<CellTypeRegistryItem>(() => [

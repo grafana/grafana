@@ -53,14 +53,11 @@ export function NotebookScenePage() {
     );
   }
 
-  // A notebook with the time picker hidden has no time state to reflect in the URL, so skip URL
-  // sync entirely (same as the public dashboard page). Otherwise SceneTimeRange (from/to/timezone)
-  // and SceneRefreshPicker (refresh) sync their own keys — the notebook has no scene-level URL
-  // handler, so no dashboard chrome keys (editPanel, editview, shareView) exist at all.
-  if (scene.state.hideTimeControls) {
-    return <NotebookDocument scene={scene} />;
-  }
-
+  // Mounted for every notebook, including one with the time picker hidden: the scene syncs its edit
+  // mode through NotebookSceneUrlSync, so skipping this would leave ?edit=true ignored and the
+  // toggle unable to write the url. SceneTimeRange (from/to/timezone) and SceneRefreshPicker
+  // (refresh) sync their own keys alongside it; the notebook has no dashboard chrome keys
+  // (editPanel, editview, shareView) at all.
   return (
     <UrlSyncContextProvider scene={scene} updateUrlOnInit={true} createBrowserHistorySteps={true}>
       <NotebookDocument scene={scene} />
