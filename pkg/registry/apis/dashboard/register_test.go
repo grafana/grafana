@@ -380,7 +380,11 @@ func TestValidateLibraryPanelDeleteChecksUnifiedReferences(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var captured *resourcepb.ResourceSearchRequest
-			client := &recordingResourceClient{search: func(_ context.Context, request *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+			client := &recordingResourceClient{search: func(ctx context.Context, request *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+				require.True(t, identity.IsServiceIdentity(ctx), "referential-integrity search must include hidden dashboards")
+				requester, err := identity.GetRequester(ctx)
+				require.NoError(t, err)
+				require.Equal(t, "stacks-1", requester.GetNamespace())
 				captured = request
 				return &resourcepb.ResourceSearchResponse{TotalHits: tt.totalHits}, nil
 			}}
