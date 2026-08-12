@@ -40,13 +40,16 @@ export interface CreatedNotebook {
  * synthesized from what the live scene knows rather than round-tripping through the apiserver. Only
  * `metadata.name` and `spec` are read by the transform; the rest is here because a `Resource` is not
  * partial, and a fabricated `generation` would be a lie either way (nothing was saved).
+ *
+ * An unsaved notebook has no name, and the cast is what lets that be absent rather than `''`: a uid the
+ * scene would then carry on a field that means the resource's k8s name.
  */
 export function notebookResourceFor(uid: string | undefined, spec: NotebookSpec): Resource<NotebookSpec> {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- in-memory envelope: the transform reads metadata.name and spec, and there is no server response to carry the rest
   return {
     apiVersion: NOTEBOOK_API_VERSION,
     kind: NOTEBOOK_KIND,
-    metadata: { name: uid ?? '' },
+    metadata: uid ? { name: uid } : {},
     spec,
   } as Resource<NotebookSpec>;
 }

@@ -119,8 +119,6 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
       payload: { spec: notebookSpec({ title: 'Renamed' }) },
     });
 
-    // The synthesized envelope carries '' for an absent uid, to satisfy Resource. That must not land
-    // on a field documented as the resource's k8s name.
     expect(withoutUid.state.uid).toBeUndefined();
   });
 
