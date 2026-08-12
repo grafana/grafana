@@ -254,6 +254,14 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 		CreatedBy: obj.GetCreatedBy(),
 		UpdatedBy: obj.GetUpdatedBy(),
 	}
+	// Tags are read here rather than in a per-kind builder so that any kind
+	// declaring spec.tags is filterable and facetable without one. A kind with its
+	// own builder may still overwrite this: dashboards do, from their parsed summary.
+	if spec, err := obj.GetSpec(); err == nil {
+		if specValue, ok := spec.(map[string]any); ok {
+			doc.Tags = specTags(specValue["tags"])
+		}
+	}
 	m, ok := obj.GetManagerProperties()
 	if ok {
 		doc.Manager = &m
@@ -278,6 +286,28 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 		}
 	}
 	return doc.UpdateCopyFields()
+}
+
+// specTags reads a spec.tags value, which unstructured decoding yields as a
+// []any of strings. Anything else — a missing key, a non-list, a non-string
+// entry — is skipped rather than failing: a malformed tag should not keep the
+// whole resource out of the index. Returns nil when nothing usable is found, so
+// the field stays omitted rather than serializing as an empty list.
+func specTags(raw any) []string {
+	values, ok := raw.([]any)
+	if !ok {
+		return nil
+	}
+	tags := make([]string, 0, len(values))
+	for _, v := range values {
+		if s, ok := v.(string); ok && s != "" {
+			tags = append(tags, s)
+		}
+	}
+	if len(tags) == 0 {
+		return nil
+	}
+	return tags
 }
 
 // StandardDocumentBuilder returns the standard document builder backed by the

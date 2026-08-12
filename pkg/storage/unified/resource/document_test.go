@@ -309,3 +309,53 @@ func TestStandardDocumentBuilder_ReloadThroughRegistry(t *testing.T) {
 	require.Contains(t, doc.SelectableFields, "spec.y")
 	require.NotContains(t, doc.SelectableFields, "spec.x")
 }
+
+// Tags come from spec.tags via the standard builder, so a kind gets them without
+// registering its own document builder. Before this, doc.Tags was only ever set by
+// the dashboard builder, and every other kind indexed with no tags at all — the
+// field was declared and mapped, but never populated.
+func TestStandardDocumentBuilder_Tags(t *testing.T) {
+	ctx := context.Background()
+	builder := StandardDocumentBuilder(nil)
+
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "notebooks",
+		Name:      "nb1",
+	}
+
+	build := func(t *testing.T, spec string) *IndexableDocument {
+		t.Helper()
+		body := []byte(`{
+			"apiVersion": "dashboard.grafana.app/v2beta1",
+			"kind": "Notebook",
+			"metadata": {"name": "nb1"},
+			"spec": ` + spec + `
+		}`)
+		doc, err := builder.BuildDocument(ctx, key, 1, body)
+		require.NoError(t, err)
+		return doc
+	}
+
+	t.Run("reads spec.tags", func(t *testing.T) {
+		doc := build(t, `{"title": "Checkout latency", "tags": ["incident", "checkout"]}`)
+		assert.Equal(t, []string{"incident", "checkout"}, doc.Tags)
+	})
+
+	t.Run("leaves tags unset when there are none", func(t *testing.T) {
+		assert.Nil(t, build(t, `{"title": "No tags"}`).Tags, "absent")
+		assert.Nil(t, build(t, `{"title": "Empty", "tags": []}`).Tags, "empty list")
+	})
+
+	// One malformed entry should not cost the resource its place in the index, nor
+	// the tags around it.
+	t.Run("skips entries that are not usable strings", func(t *testing.T) {
+		doc := build(t, `{"title": "Mixed", "tags": ["good", 42, null, "", "also-good"]}`)
+		assert.Equal(t, []string{"good", "also-good"}, doc.Tags)
+	})
+
+	t.Run("ignores a tags value that is not a list", func(t *testing.T) {
+		assert.Nil(t, build(t, `{"title": "Wrong shape", "tags": "incident"}`).Tags)
+	})
+}
