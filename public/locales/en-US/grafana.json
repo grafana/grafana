@@ -6178,7 +6178,7 @@
         "query-editor-close": "Close",
         "query-editor-modal-title": "Annotation Query",
         "show-in": "Show in"
-      }, 
+      },
       "annotations": {
         "add-annotation-query": "Add annotation query",
         "name-builtin": "{{annoName}} (Built-in)",
@@ -6361,6 +6361,7 @@
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
+        "title-above-dashboard": "Above dashboard",
         "title-controls-menu": "Controls menu",
         "title-hidden": "Hidden",
         "top-placement": "Above dashboard"

@@ -53,7 +53,7 @@ export function isEditableVariableType(type: VariableType): type is EditableVari
 }
 
 export const getDefaultTopPlacementLabel = () =>
-  t('dashboard.sidebar.variables.top-placement-default', 'Above dashboard');
+  t('dashboard.sidebar.variables.top-placement', 'Above dashboard');
 
 export const getEditableVariables: () => Record<EditableVariableType, EditableVariableConfig> = () => ({
   custom: {

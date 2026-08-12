@@ -1,4 +1,3 @@
-
 import { t } from '@grafana/i18n';
 import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes';
 import { Stack } from '@grafana/ui';
