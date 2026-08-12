@@ -18,7 +18,7 @@ import { getDashboardSnapshotSrv } from './SnapshotSrv';
 type ScriptedDashboardExecution = { data: DashboardDataDTO };
 
 export const SCRIPTED_DASHBOARDS_DEPRECATION_URL =
-  'https://grafana.com/whats-new/2026-07-29-grafana-cloud-docs-get-a-new-home-for-ai/';
+  'https://grafana.com/whats-new/2026-08-12-scripted-dashboards-will-be-removed-in-grafana-14/';
 export const SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID = 'scripted-dashboards-disabled';
 
 // Scripted dashboards are arbitrary user code, so nothing has validated what they return.
