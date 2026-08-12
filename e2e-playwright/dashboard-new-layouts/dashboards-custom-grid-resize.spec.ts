@@ -45,17 +45,15 @@ test.describe(
         );
       }).toPass();
 
-      await flows.dashboards.saveDashboard(page, controls, { reloadPageAfterSave: false, title: test.info().title });
-
       const panelBoxAfterResize = await getPanelBox(panels, 'New panel');
 
-      await page.reload();
+      await flows.dashboards.saveDashboard(page, controls, { title: test.info().title });
 
-      // Poll while panels re-render after reload
+      // Poll while panels re-render after reload (±1px for edit/view chrome / scrollbar shifts)
       await expect(async () => {
         const panelBox = await getPanelBox(panels, 'New panel');
-        expect(panelBox.width).toBe(panelBoxAfterResize.width);
-        expect(panelBox.height).toBe(panelBoxAfterResize.height);
+        expect(Math.abs(panelBox.width - panelBoxAfterResize.width)).toBeLessThanOrEqual(1);
+        expect(Math.abs(panelBox.height - panelBoxAfterResize.height)).toBeLessThanOrEqual(1);
       }).toPass();
     });
 
