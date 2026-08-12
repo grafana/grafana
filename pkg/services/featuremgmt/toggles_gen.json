@@ -2172,14 +2172,16 @@
     {
       "metadata": {
         "name": "datetime.useLuxon",
-        "resourceVersion": "1785947524842",
-        "creationTimestamp": "2026-08-05T16:32:04Z"
+        "resourceVersion": "1786019066815",
+        "creationTimestamp": "2026-08-05T16:32:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-06 12:24:26.815649031 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3173,6 +3175,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.rspackBuild",
+        "resourceVersion": "1786019246422",
+        "creationTimestamp": "2026-08-06T12:27:26Z"
+      },
+      "spec": {
+        "description": "Switches the backend to load frontend assets built with rspack instead of webpack",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.savedQueriesPage",
         "resourceVersion": "1784068714544",
         "creationTimestamp": "2026-07-14T22:38:34Z"
@@ -3261,6 +3276,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.unifiedDataSourcePicker",
+        "resourceVersion": "1786018155159",
+        "creationTimestamp": "2026-08-06T12:09:15Z"
+      },
+      "spec": {
+        "description": "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.unifiedHomepage",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z",
@@ -3343,7 +3372,8 @@
       "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-12-06T20:21:21Z"
+        "creationTimestamp": "2023-12-06T20:21:21Z",
+        "deletionTimestamp": "2026-06-29T17:32:22Z"
       },
       "spec": {
         "description": "Start an additional https handler and write kubectl options",
@@ -4955,6 +4985,19 @@
     },
     {
       "metadata": {
+        "name": "pluginsForceTls13",
+        "resourceVersion": "1786362691770",
+        "creationTimestamp": "2026-08-10T11:51:31Z"
+      },
+      "spec": {
+        "description": "Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsSriChecks",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-10-04T12:55:09Z"
@@ -6081,7 +6124,8 @@
       "metadata": {
         "name": "table.protoRowParser",
         "resourceVersion": "1782139478281",
-        "creationTimestamp": "2026-06-22T14:44:38Z"
+        "creationTimestamp": "2026-06-22T14:44:38Z",
+        "deletionTimestamp": "2026-08-11T20:21:15Z"
       },
       "spec": {
         "description": "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
@@ -6096,7 +6140,8 @@
       "metadata": {
         "name": "table.refactorNested",
         "resourceVersion": "1782413661913",
-        "creationTimestamp": "2026-06-25T18:54:21Z"
+        "creationTimestamp": "2026-06-25T18:54:21Z",
+        "deletionTimestamp": "2026-08-11T20:20:39Z"
       },
       "spec": {
         "description": "Enables the refactored TableNG nested-table implementation",
@@ -6283,6 +6328,34 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-catalog",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorage.vectorStore",
+        "resourceVersion": "1785880163909",
+        "creationTimestamp": "2026-08-04T21:49:23Z",
+        "deletionTimestamp": "2026-08-04T22:01:34Z"
+      },
+      "spec": {
+        "description": "Enables the VectorStore write RPCs on the unified storage server",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageVectorStore",
+        "resourceVersion": "1785880096317",
+        "creationTimestamp": "2026-08-04T21:48:16Z",
+        "deletionTimestamp": "2026-08-04T21:49:23Z"
+      },
+      "spec": {
+        "description": "Enables the VectorStore write RPCs on the unified storage server",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "expression": "false"
       }
     },

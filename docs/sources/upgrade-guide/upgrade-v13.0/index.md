@@ -24,7 +24,7 @@ weight: 495
 {{< admonition type="warning" >}}
 **Git Sync early adopters:** A migration bug in Grafana v13.0.0 might cause dashboards and folders to be lost or reverted when upgrading from Grafana v12.x.x with Git Sync enabled. Upgrading from v13.0.0 to v13.0.1 does **not** recover lost data, and if you already upgraded, you must restore your database first, then upgrade to v13.0.1.
 
-The bug only affects self-managed instances with Git Sync feature flags (`provisioning`, `kubernetesClientDashboardsFolders`, `kubernetesDashboards`, and `grafanaAPIServerEnsureKubectlAccess`) enabled on Grafana v12.x.x.
+The bug only affects self-managed instances with Git Sync feature flags (`provisioning`, `kubernetesClientDashboardsFolders`, and `kubernetesDashboards`) enabled on Grafana v12.x.x.
 
 Grafana v13.0.0 has been removed from distribution and the fix has shipped in Grafana v13.0.1.
 

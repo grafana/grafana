@@ -104,3 +104,18 @@ func TestDenseEmbedder_EmbedText_PropagatesError(t *testing.T) {
 	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: []string{"a", "b"}})
 	require.Error(t, err)
 }
+
+func TestDenseEmbedder_EmbedText_SumsTokensAcrossChunks(t *testing.T) {
+	fc := &fakeClient{dim: 3, failAfter: -1, tokens: 7}
+	e := NewDenseEmbedder(fc, 0, 50)
+
+	// 130 inputs at batchSize=50 → 3 concurrent chunks, each reporting 7
+	// tokens; the sum must land on the output despite concurrent dispatch.
+	texts := make([]string, 130)
+	for i := range texts {
+		texts[i] = "x"
+	}
+	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: texts})
+	require.NoError(t, err)
+	assert.Equal(t, 21, out.InputTokens)
+}

@@ -29,16 +29,15 @@ const config: KnipConfig = {
     'public/app/features/alerting/unified/search/search.terms.js',
     'scripts/grafana-server/tmp/**',
     'devenv/**',
+
+    // vendored temporarily
+    'packages/grafana-data/src/datetime/easytz.js',
   ],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],
   workspaces: {
     '.': {
       ignoreDependencies: [
-        // TODO remove these ignores when react 19 is released
-        'react-19',
-        'react-dom-19',
-
         // used by yarn test:ci
         'jest-junit',
 

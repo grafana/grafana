@@ -429,6 +429,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	_ "github.com/grafana/grafana/pkg/services/ofrep"
 	_ "github.com/grafana/grafana/pkg/services/org"
+	_ "github.com/grafana/grafana/pkg/services/org/orgdelete"
 	_ "github.com/grafana/grafana/pkg/services/org/orgimpl"
 	_ "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	_ "github.com/grafana/grafana/pkg/services/pluginsintegration"
