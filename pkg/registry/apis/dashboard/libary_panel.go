@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -15,7 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 )
 
 var (
@@ -57,6 +61,37 @@ func (s *LibraryPanelStore) ConvertToTable(ctx context.Context, object runtime.O
 	return s.ResourceInfo.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
+// translateLegacyError maps library element service errors onto k8s status errors
+// so that API clients (and the legacy /api wrapper handlers) can react to the
+// failure reason instead of receiving an opaque 500.
+func (s *LibraryPanelStore) translateLegacyError(name string, err error) error {
+	if err == nil {
+		return nil
+	}
+	gr := s.ResourceInfo.GroupResource()
+	switch {
+	case errors.Is(err, model.ErrLibraryElementNotFound):
+		return s.ResourceInfo.NewNotFound(name)
+	case errors.Is(err, model.ErrLibraryElementAlreadyExists):
+		return apierrors.NewAlreadyExists(gr, name)
+	// the legacy API reports both as 409 Conflict; the /api wrapper distinguishes
+	// them by message to keep returning 412 for version mismatches
+	case errors.Is(err, model.ErrLibraryElementVersionMismatch),
+		errors.Is(err, model.ErrLibraryElementProvisionedFolder):
+		return apierrors.NewConflict(gr, name, err)
+	case errors.Is(err, model.ErrLibraryElementHasConnections),
+		errors.Is(err, model.ErrLibraryElementInsufficientPermissions),
+		errors.Is(err, folder.ErrAccessDenied):
+		return apierrors.NewForbidden(gr, name, err)
+	case errors.Is(err, model.ErrLibraryElementInvalidUID),
+		errors.Is(err, model.ErrLibraryElementUIDTooLong),
+		errors.Is(err, model.ErrLibraryElementUnSupportedElementKind),
+		errors.Is(err, dashboards.ErrFolderNotFound):
+		return apierrors.NewBadRequest(err.Error())
+	}
+	return err
+}
+
 func (s *LibraryPanelStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -64,13 +99,13 @@ func (s *LibraryPanelStore) Create(ctx context.Context, obj runtime.Object, crea
 	}
 	cmd, err := libraryelements.ToCreateLibraryElementCommand(obj)
 	if err != nil {
-		return nil, err
+		return nil, apierrors.NewBadRequest(err.Error())
 	}
 
 	// NOTE: this includes all access control checks
 	out, err := s.service.CreateElement(ctx, user, *cmd)
 	if err != nil {
-		return nil, err
+		return nil, s.translateLegacyError(cmd.UID, err)
 	}
 	if out.UID == "" {
 		return nil, fmt.Errorf("created library panel has empty UID")
@@ -94,14 +129,14 @@ func (s *LibraryPanelStore) Update(ctx context.Context, name string, objInfo res
 		return nil, false, err
 	}
 
-	cmd, err := libraryelements.ToPatchLibraryElementCommand(obj)
+	cmd, err := libraryelements.ToPatchLibraryElementCommand(obj, old)
 	if err != nil {
-		return nil, false, err
+		return nil, false, apierrors.NewBadRequest(err.Error())
 	}
 
 	out, err := s.service.PatchLibraryElement(ctx, user, *cmd, name)
 	if err != nil {
-		return nil, false, err
+		return nil, false, s.translateLegacyError(name, err)
 	}
 	if out.UID == "" {
 		return nil, false, fmt.Errorf("created library panel has empty UID")
@@ -119,7 +154,7 @@ func (s *LibraryPanelStore) Delete(ctx context.Context, name string, deleteValid
 	// NOTE: this includes all access control checks
 	_, err = s.service.DeleteLibraryElement(ctx, user, name)
 	if err != nil {
-		return nil, false, err
+		return nil, false, s.translateLegacyError(name, err)
 	}
 	return nil, true, nil
 }
