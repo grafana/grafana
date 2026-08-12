@@ -41,6 +41,7 @@ export class HistoryWrapper implements LocationService, H.History {
   private readonly base: H.History;
   private locationObservable: BehaviorSubject<H.Location>;
   private orgIdGetter?: () => number;
+  private singleHistoryEntryMode = false;
 
   constructor(history?: H.History) {
     this.base =
@@ -67,7 +68,10 @@ export class HistoryWrapper implements LocationService, H.History {
 
   // Arrow class fields auto-bind, so detached calls (`const m = history.push; m(loc)`)
   // keep `this` and the orgId injection still fires.
-  push: H.History['push'] = (location, state) => this.base.push(this.appendOrgId(location), state);
+  push: H.History['push'] = (location, state) =>
+    this.singleHistoryEntryMode
+      ? this.base.replace(this.appendOrgId(location), state)
+      : this.base.push(this.appendOrgId(location), state);
   replace: H.History['replace'] = (location, state) => this.base.replace(this.appendOrgId(location), state);
   createHref: H.History['createHref'] = (location) => this.base.createHref(this.appendOrgId(location));
 
@@ -79,6 +83,12 @@ export class HistoryWrapper implements LocationService, H.History {
 
   setOrgIdGetter(fn: () => number) {
     this.orgIdGetter = fn;
+  }
+
+  // While enabled, `push` behaves as `replace`, so everything navigated to stays within
+  // the entry that was current when the mode was enabled
+  setSingleHistoryEntryMode(enabled: boolean) {
+    this.singleHistoryEntryMode = enabled;
   }
 
   appendOrgId(location: H.LocationDescriptorObject): H.LocationDescriptorObject;

@@ -149,7 +149,7 @@ func (c TestContext) createOrg(name string) int64 {
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
 	require.NoError(c.t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider)
-	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	orgId, err := orgService.GetOrCreate(context.Background(), name)
 	require.NoError(c.t, err)
@@ -165,7 +165,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
 	require.NoError(c.t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider)
-	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgService, c.env.Cfg, nil, nil, tracing.InitializeTracerForTest(),

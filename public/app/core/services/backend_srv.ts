@@ -80,6 +80,7 @@ export class BackendSrv implements BackendService {
   private readonly fetchQueue: FetchQueue;
   private readonly responseQueue: ResponseQueue;
   private _tokenRotationInProgress?: Observable<FetchResponse> | null = null;
+  private _loginPingInProgress?: Observable<FetchResponse> | null = null;
   private deviceID?: string | null = null;
 
   private dependencies: BackendSrvDependencies = {
@@ -487,8 +488,6 @@ export class BackendSrv implements BackendService {
   }
 
   private handleStreamError<T>(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<T>> {
-    const { isSignedIn } = this.dependencies.contextSrv.user;
-
     return (inputStream) =>
       inputStream.pipe(
         retryWhen((attempts) =>
@@ -496,7 +495,12 @@ export class BackendSrv implements BackendService {
             mergeMap((error, i) => {
               const firstAttempt = i === 0 && options.retry === 0;
 
-              if (error.status === 401 && isLocalUrl(options.url) && firstAttempt && isSignedIn) {
+              if (
+                error.status === 401 &&
+                isLocalUrl(options.url) &&
+                firstAttempt &&
+                this.dependencies.contextSrv.user.isSignedIn
+              ) {
                 if (error.data?.error?.id === 'ERR_TOKEN_REVOKED') {
                   this.dependencies.appEvents.publish(
                     new ShowModalReactEvent({
@@ -521,10 +525,10 @@ export class BackendSrv implements BackendService {
                 return from(authChecker).pipe(
                   catchError((err) => {
                     if (err.status === 401) {
-                      this.dependencies.logout();
-                      return throwError(err);
+                      // Rethrow the original per-request error instead so each caller gets its own config/traceId
+                      return throwError(() => error);
                     }
-                    return throwError(err);
+                    return throwError(() => err);
                   })
                 );
               }
@@ -615,6 +619,14 @@ export class BackendSrv implements BackendService {
     }
 
     this._tokenRotationInProgress = this.fetch({ url: '/api/user/auth-tokens/rotate', method: 'POST', retry: 1 }).pipe(
+      // Runs once against the shared source, upstream of share(), so a failure logs out exactly once
+      // no matter how many requests are waiting on this same rotation.
+      catchError((err) => {
+        if (err.status === 401) {
+          this.dependencies.logout();
+        }
+        return throwError(() => err);
+      }),
       finalize(() => {
         this._tokenRotationInProgress = null;
       }),
@@ -625,7 +637,26 @@ export class BackendSrv implements BackendService {
   }
 
   loginPing() {
-    return this.fetch({ url: '/api/login/ping', method: 'GET', retry: 1 });
+    if (this._loginPingInProgress) {
+      return this._loginPingInProgress;
+    }
+
+    this._loginPingInProgress = this.fetch({ url: '/api/login/ping', method: 'GET', retry: 1 }).pipe(
+      // Runs once against the shared source, upstream of share(), so a failure logs out exactly once
+      // no matter how many requests are waiting on this same ping.
+      catchError((err) => {
+        if (err.status === 401) {
+          this.dependencies.logout();
+        }
+        return throwError(() => err);
+      }),
+      finalize(() => {
+        this._loginPingInProgress = null;
+      }),
+      share()
+    );
+
+    return this._loginPingInProgress;
   }
 
   /** @deprecated */

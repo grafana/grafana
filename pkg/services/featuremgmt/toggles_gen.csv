@@ -342,13 +342,11 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-25,grafana.vectorSearchCmdk,experimental,@grafana/search-and-storage,false,false,true
 2026-06-22,assistant.fullscreenWorkspace,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-06-19,splunk.useLegacyResultsApi,experimental,@grafana/data-sources-plugins,false,false,false
-2026-06-22,table.protoRowParser,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-17,grafana.queryVarEditorRedesign,GA,@grafana/dashboards-squad,false,false,true
-2026-06-25,table.refactorNested,experimental,@grafana/dataviz-squad,false,false,true
 2026-07-29,table.paginationPageSize,experimental,@grafana/dataviz-squad,false,false,true
 2026-07-24,table.autoColumnWidths,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-23,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
-2026-08-05,datetime.useLuxon,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-08-05,datetime.useLuxon,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-06-25,grafana.customizableMegaMenu,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-04-20,cujTracking,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-26,auth.tokenRotationGracePeriod,experimental,@grafana/identity-access-team,false,false,false
@@ -368,6 +366,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-24,authz.listFoldersViaSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-06-24,libraryElements.folderTreeViaSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-08-03,alerting.stateManagerRequireWarm,experimental,@grafana/alerting-squad,false,false,false
+2026-08-05,grafana.pluginPathNesting,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2026-08-06,grafana.rspackBuild,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-08-10,pluginsForceTls13,experimental,@grafana/data-sources-plugins,false,false,false
 2026-08-06,grafana.unifiedDataSourcePicker,GA,@grafana/grafana-datasources-core-services,false,false,true
