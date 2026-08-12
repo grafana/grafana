@@ -399,5 +399,43 @@ describe('TextNGPanel', () => {
 
       expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ frameIndex: 1 }));
     });
+
+    // Crossing one frame adds or removes the picker, which changes the tree shape
+    // and remounts the editor. The view mode lives in the panel so it survives.
+    describe('keeps the editor view mode when the query count changes', () => {
+      const frames = (count: number) =>
+        Array.from({ length: count }, (_, i) =>
+          toDataFrame({ name: `Frame ${i}`, fields: [{ name: 'host', values: [`web-${i}`] }] })
+        );
+
+      const editing = (props: Props) => (
+        <PanelContextProvider value={{ app: CoreApp.PanelEditor } as PanelContext}>
+          <TextNGPanel {...props} />
+        </PanelContextProvider>
+      );
+
+      it.each([
+        ['a query is added', 1, 2],
+        ['a query is removed', 2, 1],
+        ['the picker stays visible', 2, 3],
+      ])('when %s', async (_name, from, to) => {
+        replaceVariablesMock.mockImplementation((str: string) => str);
+        const props = createProps(replaceVariablesMock, {
+          data: createData(frames(from)),
+          options: { content: 'hello', mode: TextMode.Markdown },
+        });
+
+        const { rerender } = render(editing(props));
+        expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
+
+        await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+        expect(screen.getByRole('radio', { name: 'Split' })).toBeChecked();
+
+        rerender(editing(Object.assign({}, props, { data: createData(frames(to)) })));
+
+        expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: 'Split' })).toBeChecked();
+      });
+    });
   });
 });

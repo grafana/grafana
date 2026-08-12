@@ -26,7 +26,7 @@ import {
 } from '../panelcfg.gen';
 
 import { TextNGCodeView } from './TextNGCodeView';
-import { type TextNGEditorChange } from './editor/TextNGEditor';
+import { type TextNGEditorChange, type ViewMode } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { renderContent } from './renderContent';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat } from './utils';
@@ -46,6 +46,10 @@ export function TextNGPanel(props: Props) {
   const series = useMemo(() => (frames.length > 1 ? [frames[currentFrameIndex]] : frames), [frames, currentFrameIndex]);
 
   const suggestions = useMemo(() => (isEditing ? getDataLinksVariableSuggestions(series) : []), [isEditing, series]);
+
+  // Adding or removing a query toggles the frame picker, which changes the tree
+  // shape and remounts the editor, so its view mode is held here instead.
+  const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
 
   const [processed, setProcessed] = useState<Options>(() => ({
     mode: options.mode,
@@ -110,6 +114,8 @@ export function TextNGPanel(props: Props) {
         replaceVariables={replaceVariables}
         suggestions={suggestions}
         onChange={(change) => onOptionsChange(applyEditorChange(options, change))}
+        view={view}
+        onViewChange={setView}
       />
     </Suspense>
   ) : (
