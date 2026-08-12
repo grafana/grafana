@@ -13,7 +13,7 @@ const CODE_PANEL = '5';
 const DATA_DASHBOARD_UID = 'adssfc8';
 const EVERY_ROW_PANEL = '6';
 
-test.use({ openFeature: { flags: { 'grafana.newTextPanel': true } } });
+test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
 test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
   test('renders all panels on dashboard without errors', async ({ gotoDashboardPage, selectors, page }) => {
