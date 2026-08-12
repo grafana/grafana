@@ -169,13 +169,39 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
 function RowHeaderSwitch({ row, id }: { row: RowItem; id?: string }) {
   const { hideHeader: isHeaderHidden = false } = row.useState();
 
-  return <Switch id={id} value={isHeaderHidden} onChange={() => row.onHeaderHiddenToggle()} />;
+  return (
+    <Switch
+      id={id}
+      value={isHeaderHidden}
+      onChange={() => {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.row-hide-header', 'Change row header visibility'),
+          source: row,
+          perform: () => row.onHeaderHiddenToggle(!isHeaderHidden),
+          undo: () => row.onHeaderHiddenToggle(isHeaderHidden),
+        });
+      }}
+    />
+  );
 }
 
 function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
-  const { fillScreen } = row.useState();
+  const { fillScreen = false } = row.useState();
 
-  return <Switch id={id} value={fillScreen} onChange={() => row.onChangeFillScreen(!fillScreen)} />;
+  return (
+    <Switch
+      id={id}
+      value={fillScreen}
+      onChange={() => {
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.row-fill-screen', 'Change row fill screen'),
+          source: row,
+          perform: () => row.onChangeFillScreen(!fillScreen),
+          undo: () => row.onChangeFillScreen(fillScreen),
+        });
+      }}
+    />
+  );
 }
 
 function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
@@ -196,7 +222,19 @@ function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
         id={id}
         sceneContext={row}
         repeat={row.state.repeatByVariable}
-        onChange={(repeat) => row.onChangeRepeat(repeat)}
+        onChange={(repeat) => {
+          const prevRepeat = row.state.repeatByVariable;
+          if (repeat === prevRepeat) {
+            return;
+          }
+
+          dashboardEditActions.edit({
+            description: t('dashboard.edit-actions.row-repeat-variable', 'Row repeat by'),
+            source: row,
+            perform: () => row.onChangeRepeat(repeat),
+            undo: () => row.onChangeRepeat(prevRepeat),
+          });
+        }}
       />
       {isAnyPanelUsingDashboardDS ? (
         <Alert

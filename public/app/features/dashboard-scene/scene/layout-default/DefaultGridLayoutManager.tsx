@@ -526,26 +526,38 @@ export class DefaultGridLayoutManager
   }
 
   public collapseAllRows() {
-    this.state.grid.state.children.forEach((child) => {
-      if (!(child instanceof SceneGridRow)) {
-        return;
-      }
-
-      if (!child.state.isCollapsed) {
-        this.state.grid.toggleRow(child);
-      }
-    });
+    this.setAllRowsCollapsedState(true);
   }
 
   public expandAllRows() {
-    this.state.grid.state.children.forEach((child) => {
-      if (!(child instanceof SceneGridRow)) {
-        return;
-      }
+    this.setAllRowsCollapsedState(false);
+  }
 
-      if (child.state.isCollapsed) {
-        this.state.grid.toggleRow(child);
-      }
+  private setAllRowsCollapsedState(collapse: boolean) {
+    const affectedRows = this.state.grid.state.children.filter(
+      (child): child is SceneGridRow => child instanceof SceneGridRow && Boolean(child.state.isCollapsed) !== collapse
+    );
+
+    if (affectedRows.length === 0) {
+      return;
+    }
+
+    // toggleRow is self-inverse, so re-toggling the same rows restores the previous state
+    const toggleAll = () => affectedRows.forEach((row) => this.state.grid.toggleRow(row));
+
+    // Collapsing rows in view mode should not be registered in the edit history
+    if (!config.featureToggles.dashboardNewLayouts || !getDashboardSceneFor(this).state.isEditing) {
+      toggleAll();
+      return;
+    }
+
+    dashboardEditActions.edit({
+      description: collapse
+        ? t('dashboard.edit-actions.collapse-all-rows', 'Collapse all rows')
+        : t('dashboard.edit-actions.expand-all-rows', 'Expand all rows'),
+      source: this,
+      perform: toggleAll,
+      undo: toggleAll,
     });
   }
 

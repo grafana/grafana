@@ -2,6 +2,7 @@ import { noop } from 'lodash';
 import { type ChangeEvent, type FormEvent } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { IntervalVariable, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import {
@@ -10,6 +11,7 @@ import {
 } from 'app/features/dashboard-scene/utils/utils';
 
 import { IntervalVariableForm } from '../components/IntervalVariableForm';
+import { undoableVariableEdit } from '../undoableVariableEdit';
 
 interface IntervalVariableEditorProps {
   variable: IntervalVariable;
@@ -27,21 +29,51 @@ export function IntervalVariableEditor({ variable, onRunQuery, inline }: Interva
     const newIntervals = getIntervalsFromQueryString(event.currentTarget.value);
     // if the current value is not in the new intervals, set the value to the first interval
     const newValue = newIntervals.includes(value) ? value : newIntervals[0];
+    const prevIntervals = intervals;
+    const prevValue = value;
 
-    variable.setState({
-      intervals: newIntervals,
-      value: newValue,
+    if (getIntervalsQueryFromNewIntervalModel(newIntervals) === intervalsCombined) {
+      return;
+    }
+
+    undoableVariableEdit(inline, {
+      description: t('dashboard.edit-actions.variable-interval-values', 'Change interval values'),
+      source: variable,
+      perform: () => {
+        variable.setState({ intervals: newIntervals, value: newValue });
+        onRunQuery();
+      },
+      undo: () => {
+        variable.setState({ intervals: prevIntervals, value: prevValue });
+        onRunQuery();
+      },
     });
-
-    onRunQuery();
   };
 
   const onAutoCountChanged = (option: SelectableValue<number>) => {
-    variable.setState({ autoStepCount: option.value });
+    const prevAutoStepCount = variable.state.autoStepCount;
+    if (option.value === prevAutoStepCount) {
+      return;
+    }
+
+    undoableVariableEdit(inline, {
+      description: t('dashboard.edit-actions.variable-interval-step-count', 'Change interval step count'),
+      source: variable,
+      perform: () => variable.setState({ autoStepCount: option.value }),
+      undo: () => variable.setState({ autoStepCount: prevAutoStepCount }),
+    });
   };
 
   const onAutoEnabledChange = (event: ChangeEvent<HTMLInputElement>) => {
-    variable.setState({ autoEnabled: event.target.checked });
+    const autoEnabled = event.target.checked;
+    const prevAutoEnabled = variable.state.autoEnabled;
+
+    undoableVariableEdit(inline, {
+      description: t('dashboard.edit-actions.variable-interval-auto', 'Change interval auto option'),
+      source: variable,
+      perform: () => variable.setState({ autoEnabled }),
+      undo: () => variable.setState({ autoEnabled: prevAutoEnabled }),
+    });
   };
 
   const onAutoMinIntervalChanged = (event: FormEvent<HTMLInputElement>) => {

@@ -490,7 +490,17 @@ function RefreshSelect({ variable }: { variable: QueryVariable }) {
       options={options}
       value={refresh}
       onChange={(o) => {
-        variable.setState({ refresh: o.value });
+        const prevRefresh = variable.state.refresh;
+        if (o.value === prevRefresh) {
+          return;
+        }
+
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.variable-refresh', 'Change variable refresh'),
+          source: variable,
+          perform: () => variable.setState({ refresh: o.value }),
+          undo: () => variable.setState({ refresh: prevRefresh }),
+        });
       }}
     />
   );

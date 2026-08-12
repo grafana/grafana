@@ -6,6 +6,7 @@ import { type SceneVariable, TextBoxVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { TextBoxVariableForm } from '../components/TextBoxVariableForm';
+import { undoableVariableEdit } from '../undoableVariableEdit';
 
 interface TextBoxVariableEditorProps {
   variable: TextBoxVariable;
@@ -17,7 +18,18 @@ export function TextBoxVariableEditor({ variable, inline }: TextBoxVariableEdito
   const { value } = variable.useState();
 
   const onTextValueChange = (e: FormEvent<HTMLInputElement>) => {
-    variable.setState({ value: e.currentTarget.value });
+    const newValue = e.currentTarget.value;
+    const prevValue = variable.state.value;
+    if (newValue === prevValue) {
+      return;
+    }
+
+    undoableVariableEdit(inline, {
+      description: t('dashboard.edit-actions.variable-value', 'Change variable value'),
+      source: variable,
+      perform: () => variable.setState({ value: newValue }),
+      undo: () => variable.setState({ value: prevValue }),
+    });
   };
 
   return <TextBoxVariableForm defaultValue={value} onBlur={onTextValueChange} inline={inline} />;

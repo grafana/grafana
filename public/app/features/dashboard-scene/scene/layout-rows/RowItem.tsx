@@ -301,7 +301,22 @@ export class RowItem
   }
 
   public onCollapseToggle() {
-    this.setState({ collapse: !this.state.collapse });
+    const collapse = !this.state.collapse;
+
+    // Collapsing rows in view mode should not be registered in the edit history
+    if (!getDashboardSceneFor(this).state.isEditing) {
+      this.setCollapsedState(collapse);
+      return;
+    }
+
+    dashboardEditActions.edit({
+      description: collapse
+        ? t('dashboard.edit-actions.row-collapse', 'Collapse row')
+        : t('dashboard.edit-actions.row-expand', 'Expand row'),
+      source: this,
+      perform: () => this.setCollapsedState(collapse),
+      undo: () => this.setCollapsedState(!collapse),
+    });
   }
 
   public getParentLayout(): RowsLayoutManager {

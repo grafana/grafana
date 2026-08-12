@@ -132,9 +132,15 @@ export function applyJsonToDashboard(
       },
     };
 
-    const previousState = sceneUtils.cloneSceneObjectState(dashboard.state);
+    // Keep the live sidebar instance in both states. Swapping it out would discard
+    // the undo/redo stacks and the current selection.
+    const { sidebar } = dashboard.state;
+    const previousState = sceneUtils.cloneSceneObjectState(dashboard.state, { sidebar });
     const newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
-    const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
+    const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, {
+      key: dashboard.state.key,
+      sidebar,
+    });
 
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();

@@ -143,7 +143,7 @@ export const annotationEditActions = {
     dashboardEditActions.edit({
       description: t(
         'dashboard-scene.annotation-edit-actions.description.change-annotation-controls-display',
-        'Change annotation controls display'
+        'Change annotation display option'
       ),
       source,
       perform() {

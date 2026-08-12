@@ -271,14 +271,22 @@ export class AutoGridLayoutManager
     });
 
     const sourceIndex = grid.state.children.indexOf(gridItem);
-    const newChildren = [...grid.state.children];
 
-    // insert after
-    newChildren.splice(sourceIndex + 1, 0, newGridItem);
-
-    grid.setState({ children: newChildren });
-
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.duplicate-panel', 'Duplicate panel'),
+      addedObject: newPanel,
+      source: this,
+      perform: () => {
+        const newChildren = [...grid.state.children];
+        newChildren.splice(sourceIndex + 1, 0, newGridItem);
+        grid.setState({ children: newChildren });
+      },
+      undo: () => {
+        grid.setState({
+          children: grid.state.children.filter((child) => child !== newGridItem),
+        });
+      },
+    });
   }
 
   public getVizPanels(): VizPanel[] {
@@ -321,7 +329,21 @@ export class AutoGridLayoutManager
   }
 
   public onMaxColumnCountChanged(maxColumnCount: number) {
-    this.setState({ maxColumnCount: maxColumnCount });
+    const prevMaxColumnCount = this.state.maxColumnCount;
+    if (prevMaxColumnCount === maxColumnCount) {
+      return;
+    }
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.auto-grid-max-columns', 'Change max columns'),
+      source: this,
+      perform: () => this.applyMaxColumnCount(maxColumnCount),
+      undo: () => this.applyMaxColumnCount(prevMaxColumnCount),
+    });
+  }
+
+  private applyMaxColumnCount(maxColumnCount: number) {
+    this.setState({ maxColumnCount });
     this.state.layout.setState({
       templateColumns: getTemplateColumnsTemplate(maxColumnCount, this.state.columnWidth),
     });
@@ -332,13 +354,41 @@ export class AutoGridLayoutManager
       columnWidth = getNamedColumWidthInPixels(this.state.columnWidth);
     }
 
-    this.setState({ columnWidth: columnWidth });
+    const prevColumnWidth = this.state.columnWidth;
+    if (prevColumnWidth === columnWidth) {
+      return;
+    }
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.auto-grid-column-width', 'Change column width'),
+      source: this,
+      perform: () => this.applyColumnWidth(columnWidth),
+      undo: () => this.applyColumnWidth(prevColumnWidth),
+    });
+  }
+
+  private applyColumnWidth(columnWidth: AutoGridColumnWidth) {
+    this.setState({ columnWidth });
     this.state.layout.setState({
       templateColumns: getTemplateColumnsTemplate(this.state.maxColumnCount, this.state.columnWidth),
     });
   }
 
   public onFillScreenChanged(fillScreen: boolean) {
+    const prevFillScreen = this.state.fillScreen;
+    if (prevFillScreen === fillScreen) {
+      return;
+    }
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.auto-grid-fill-screen', 'Change fill screen'),
+      source: this,
+      perform: () => this.applyFillScreen(fillScreen),
+      undo: () => this.applyFillScreen(prevFillScreen),
+    });
+  }
+
+  private applyFillScreen(fillScreen: boolean) {
     this.setState({ fillScreen });
     this.state.layout.setState({
       autoRows: getAutoRowsTemplate(this.state.rowHeight, fillScreen),
@@ -350,6 +400,20 @@ export class AutoGridLayoutManager
       rowHeight = getNamedHeightInPixels(this.state.rowHeight);
     }
 
+    const prevRowHeight = this.state.rowHeight;
+    if (prevRowHeight === rowHeight) {
+      return;
+    }
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.auto-grid-row-height', 'Change row height'),
+      source: this,
+      perform: () => this.applyRowHeight(rowHeight),
+      undo: () => this.applyRowHeight(prevRowHeight),
+    });
+  }
+
+  private applyRowHeight(rowHeight: AutoGridRowHeight) {
     this.setState({ rowHeight });
     this.state.layout.setState({
       autoRows: getAutoRowsTemplate(rowHeight, this.state.fillScreen),

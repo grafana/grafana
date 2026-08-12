@@ -35,6 +35,7 @@ import { type RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
+import { generateUniqueTitle } from '../layouts-shared/utils';
 import { type BulkActionElement } from '../types/BulkActionElement';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -301,6 +302,8 @@ export class TabItem
   /**
    * Accept a dropped row into this tab.
    * If the tab doesn't have a RowsLayoutManager, convert the layout first.
+   * Does not register an undo entry on its own — the layout orchestrator wraps
+   * the whole cross-tab row move (source removal + this drop) in a single undoable action.
    */
   public acceptDroppedRow(row: RowItem): void {
     const currentLayout = this.getLayout();
@@ -310,7 +313,19 @@ export class TabItem
 
     if (currentLayout instanceof RowsLayoutManager) {
       // Already has a RowsLayoutManager, just add the row
-      currentLayout.addNewRow(row);
+      const existingNames = new Set(
+        currentLayout.state.rows.map((r) => r.state.title).filter((title): title is string => title !== undefined)
+      );
+      const newTitle = generateUniqueTitle(row.state.title, existingNames);
+      if (newTitle !== row.state.title) {
+        row.setState({ title: newTitle });
+      }
+
+      currentLayout.setState({ rows: [...currentLayout.state.rows, row] });
+
+      if (getDashboardSceneFor(this).state.isEditing) {
+        row.getLayout().editModeChanged?.(true);
+      }
     } else {
       // Need to convert the layout to RowsLayoutManager
       let rowsLayout: RowsLayoutManager;

@@ -15,7 +15,7 @@ export function changeVariableHideValue({ source, oldValue, newValue }: ChangeVa
     variableSet instanceof SceneVariableSet ? [...(variableSet.state.variables ?? [])] : undefined;
 
   edit({
-    description: t('dashboard.edit-actions.variable-hide', 'Change variable hide option'),
+    description: t('dashboard.edit-actions.variable-hide', 'Change variable display option'),
     source,
     perform: () => {
       source.setState({ hide: newValue });

@@ -15,6 +15,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { AdHocOriginFiltersController } from '../components/AdHocOriginFiltersController';
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
+import { undoableVariableEdit } from '../undoableVariableEdit';
 
 interface AdHocFiltersVariableEditorProps {
   variable: AdHocFiltersVariable;
@@ -116,29 +117,60 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   const onDataSourceChange = async (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);
     const dsInstance = await getDataSourceSrv().get(dsRef);
+    const prevState = {
+      datasource: variable.state.datasource,
+      supportsMultiValueOperators: variable.state.supportsMultiValueOperators,
+      enableGroupBy: variable.state.enableGroupBy,
+    };
 
-    variable.setState({
-      datasource: dsRef,
-      supportsMultiValueOperators: ds.meta.multiValueFilterOperators,
-      ...(config.featureToggles.dashboardUnifiedDrilldownControls && {
-        enableGroupBy: !!dsInstance?.getGroupByKeys,
-      }),
+    undoableVariableEdit(props.inline, {
+      description: t('dashboard.edit-actions.variable-datasource', 'Change variable data source'),
+      source: variable,
+      perform: () =>
+        variable.setState({
+          datasource: dsRef,
+          supportsMultiValueOperators: ds.meta.multiValueFilterOperators,
+          ...(config.featureToggles.dashboardUnifiedDrilldownControls && {
+            enableGroupBy: !!dsInstance?.getGroupByKeys,
+          }),
+        }),
+      undo: () => variable.setState(prevState),
     });
   };
 
   const onDefaultKeysChange = (defaultKeys?: MetricFindValue[]) => {
-    variable.setState({
-      defaultKeys,
+    const prevDefaultKeys = variable.state.defaultKeys;
+
+    undoableVariableEdit(props.inline, {
+      description: t('dashboard.edit-actions.variable-default-keys', 'Change variable default keys'),
+      source: variable,
+      perform: () => variable.setState({ defaultKeys }),
+      undo: () => variable.setState({ defaultKeys: prevDefaultKeys }),
     });
   };
 
   const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
-    variable.setState({ allowCustomValue: event.currentTarget.checked });
+    const newAllowCustomValue = event.currentTarget.checked;
+    const prevAllowCustomValue = variable.state.allowCustomValue;
+
+    undoableVariableEdit(props.inline, {
+      description: t('dashboard.edit-actions.variable-allow-custom-value', 'Change variable allow custom value'),
+      source: variable,
+      perform: () => variable.setState({ allowCustomValue: newAllowCustomValue }),
+      undo: () => variable.setState({ allowCustomValue: prevAllowCustomValue }),
+    });
   };
 
   const onEnableGroupByChange = (event: FormEvent<HTMLInputElement>) => {
     const enabled = event.currentTarget.checked;
-    variable.setState({ enableGroupBy: enabled });
+    const prevEnabled = variable.state.enableGroupBy;
+
+    undoableVariableEdit(props.inline, {
+      description: t('dashboard.edit-actions.variable-enable-group-by', 'Change variable group by option'),
+      source: variable,
+      perform: () => variable.setState({ enableGroupBy: enabled }),
+      undo: () => variable.setState({ enableGroupBy: prevEnabled }),
+    });
     reportInteraction('grafana_unified_drilldown_enable_groupby_toggled', { enabled });
   };
 

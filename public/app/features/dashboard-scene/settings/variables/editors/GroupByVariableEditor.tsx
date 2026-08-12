@@ -8,11 +8,13 @@ import {
   type SelectableValue,
   getDataSourceRef,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { GroupByVariable, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { GroupByVariableForm } from '../components/GroupByVariableForm';
+import { undoableVariableEdit } from '../undoableVariableEdit';
 
 interface GroupByVariableEditorProps {
   variable: GroupByVariable;
@@ -43,14 +45,37 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
 
   const onDataSourceChange = async (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);
+    const prevDsRef = variable.state.datasource;
 
-    variable.setState({ datasource: dsRef });
-    onRunQuery();
+    undoableVariableEdit(inline, {
+      description: t('dashboard.edit-actions.variable-datasource', 'Change variable data source'),
+      source: variable,
+      perform: () => {
+        variable.setState({ datasource: dsRef });
+        onRunQuery();
+      },
+      undo: () => {
+        variable.setState({ datasource: prevDsRef });
+        onRunQuery();
+      },
+    });
   };
 
   const onDefaultOptionsChange = async (defaultOptions?: MetricFindValue[]) => {
-    variable.setState({ defaultOptions });
-    onRunQuery();
+    const prevDefaultOptions = variable.state.defaultOptions;
+
+    undoableVariableEdit(inline, {
+      description: t('dashboard.edit-actions.variable-default-options', 'Change variable default options'),
+      source: variable,
+      perform: () => {
+        variable.setState({ defaultOptions });
+        onRunQuery();
+      },
+      undo: () => {
+        variable.setState({ defaultOptions: prevDefaultOptions });
+        onRunQuery();
+      },
+    });
   };
 
   const onDefaultValueChange = (options: Array<SelectableValue<string>>) => {
@@ -83,7 +108,15 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     : [];
 
   const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
-    variable.setState({ allowCustomValue: event.currentTarget.checked });
+    const newAllowCustomValue = event.currentTarget.checked;
+    const prevAllowCustomValue = variable.state.allowCustomValue;
+
+    undoableVariableEdit(inline, {
+      description: t('dashboard.edit-actions.variable-allow-custom-value', 'Change variable allow custom value'),
+      source: variable,
+      perform: () => variable.setState({ allowCustomValue: newAllowCustomValue }),
+      undo: () => variable.setState({ allowCustomValue: prevAllowCustomValue }),
+    });
   };
 
   return (

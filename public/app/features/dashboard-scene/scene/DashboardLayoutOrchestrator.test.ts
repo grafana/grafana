@@ -1,4 +1,6 @@
-import { VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+
+import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from '../sidebar/events';
 
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardScene } from './DashboardScene';
@@ -6,6 +8,9 @@ import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { RowItem } from './layout-rows/RowItem';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
@@ -326,6 +331,148 @@ describe('DashboardLayoutOrchestrator', () => {
     });
   });
 
+  describe('cross-container drag undo', () => {
+    it('registers a single undoable move action for a cross-tab panel drop', async () => {
+      const { orchestrator, tab1Manager, tab2Manager, gridItem, tab1, tab2, dashboard } = setupWithTwoTabs();
+      const actions = collectEditActions(dashboard);
+
+      orchestrator.setState({ draggingGridItem: gridItem.getRef(), sourceTabKey: tab1.state.key });
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._sourceDropTarget = tab1Manager;
+
+      // Simulate hovering over tab 2 long enough for it to activate (detaches the item)
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._activateTab(tab2.state.key);
+      expect(tab1Manager.state.layout.state.children).toHaveLength(0);
+
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._lastDropTarget = tab2Manager;
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(tab2Manager);
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._stopDraggingSync({ clientX: 100, clientY: 100 } as PointerEvent);
+      await flushDropTimeout();
+
+      expect(tab2Manager.state.layout.state.children).toEqual([gridItem]);
+      expect(actions).toHaveLength(1);
+      expect(actions[0].movedObject).toBeInstanceOf(VizPanel);
+
+      actions[0].undo();
+      expect(tab2Manager.state.layout.state.children).toHaveLength(0);
+      expect(tab1Manager.state.layout.state.children).toEqual([gridItem]);
+      expect(gridItem.parent).toBe(tab1Manager.state.layout);
+
+      actions[0].perform();
+      expect(tab1Manager.state.layout.state.children).toHaveLength(0);
+      expect(tab2Manager.state.layout.state.children).toEqual([gridItem]);
+    });
+
+    it('restores the original grid item and position when undoing a converted cross-layout drop', async () => {
+      const { orchestrator, tab1, tab2, gridItem, panel, customGrid, autoGridManager, dashboard } =
+        setupWithCustomAndAutoGridTabs();
+      const actions = collectEditActions(dashboard);
+
+      orchestrator.setState({ draggingGridItem: gridItem.getRef(), sourceTabKey: tab1.state.key });
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._sourceDropTarget = tab1;
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._lastDropTarget = tab2;
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._getDropTargetUnderMouse = jest.fn().mockReturnValue(tab2);
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._stopDraggingSync({ clientX: 100, clientY: 100 } as PointerEvent);
+      await flushDropTimeout();
+
+      // Item was converted to an AutoGridItem in the destination
+      expect(customGrid.state.children).toHaveLength(0);
+      expect(autoGridManager.state.layout.state.children).toHaveLength(1);
+      const convertedItem = autoGridManager.state.layout.state.children[0];
+      expect(convertedItem.state.body).toBe(panel);
+      expect(actions).toHaveLength(1);
+
+      actions[0].undo();
+      expect(autoGridManager.state.layout.state.children).toHaveLength(0);
+      expect(customGrid.state.children).toEqual([gridItem]);
+      expect(gridItem.state.x).toBe(6);
+      expect(gridItem.state.y).toBe(3);
+      expect(panel.parent).toBe(gridItem);
+
+      actions[0].perform();
+      expect(customGrid.state.children).toHaveLength(0);
+      expect(autoGridManager.state.layout.state.children).toEqual([convertedItem]);
+      expect(panel.parent).toBe(convertedItem);
+    });
+
+    it('registers a single undoable move action for a cross-tab row drop', () => {
+      const { orchestrator, tab2, rowA, rowB, rowC, tab1Rows, tab2Rows, dashboard } = setupWithRowTabs();
+      const actions = collectEditActions(dashboard);
+
+      orchestrator.setState({ draggingRow: rowA.getRef() });
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._sourceRowsLayout = tab1Rows;
+
+      // Simulate hovering over tab 2 long enough for it to activate (detaches the row)
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._activateTab(tab2.state.key);
+      expect(tab1Rows.state.rows).toEqual([rowB]);
+
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._lastDropTarget = tab2;
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._onRowDragPointerUp({ clientX: 100, clientY: 100 } as PointerEvent);
+
+      expect(tab2Rows.state.rows).toEqual([rowC, rowA]);
+      expect(actions).toHaveLength(1);
+      expect(actions[0].movedObject).toBe(rowA);
+
+      actions[0].undo();
+      expect(tab2Rows.state.rows).toEqual([rowC]);
+      expect(tab1Rows.state.rows).toEqual([rowA, rowB]);
+      expect(rowA.parent).toBe(tab1Rows);
+
+      actions[0].perform();
+      expect(tab1Rows.state.rows).toEqual([rowB]);
+      expect(tab2Rows.state.rows).toEqual([rowC, rowA]);
+    });
+
+    it('restores source and destination layouts when undoing a cross-tab drag of the last row', () => {
+      const { orchestrator, tab1, tab2, rowA, tab1Rows, dashboard } = setupWithLastRowAndAutoGridTabs();
+      const actions = collectEditActions(dashboard);
+
+      orchestrator.setState({ draggingRow: rowA.getRef() });
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._sourceRowsLayout = tab1Rows;
+
+      // Detaching the only row swaps the source layout for an empty auto grid
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._activateTab(tab2.state.key);
+      expect(tab1.getLayout()).toBeInstanceOf(AutoGridLayoutManager);
+
+      // @ts-expect-error - accessing private property for testing
+      orchestrator._lastDropTarget = tab2;
+      // @ts-expect-error - accessing private method for testing
+      orchestrator._onRowDragPointerUp({ clientX: 100, clientY: 100 } as PointerEvent);
+
+      // Destination tab was converted to a rows layout containing the dropped row
+      const tab2Layout = tab2.getLayout();
+      expect(tab2Layout).toBeInstanceOf(RowsLayoutManager);
+      expect(tab2Layout.state).toMatchObject({ rows: [rowA] });
+      expect(actions).toHaveLength(1);
+
+      actions[0].undo();
+      expect(tab2.getLayout()).toBeInstanceOf(AutoGridLayoutManager);
+      expect(tab1.getLayout()).toBe(tab1Rows);
+      expect(tab1Rows.state.rows).toEqual([rowA]);
+      expect(rowA.parent).toBe(tab1Rows);
+
+      actions[0].perform();
+      expect(tab1.getLayout()).toBeInstanceOf(AutoGridLayoutManager);
+      const tab2LayoutAfterRedo = tab2.getLayout();
+      expect(tab2LayoutAfterRedo).toBeInstanceOf(RowsLayoutManager);
+      expect(tab2LayoutAfterRedo.state).toMatchObject({ rows: [rowA] });
+    });
+  });
+
   describe('isDroppedElsewhere', () => {
     it('should return false when not dragging', () => {
       const { orchestrator } = setup();
@@ -581,6 +728,92 @@ function setupAutoGrid() {
   return { manager, gridItem1, gridItem2, panel1, panel2 };
 }
 
+function collectEditActions(dashboard: DashboardScene): DashboardEditActionEventPayload[] {
+  const actions: DashboardEditActionEventPayload[] = [];
+
+  // Mimics how DashboardSidebar handles edit actions: collect and perform
+  dashboard.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
+    actions.push(payload);
+    payload.perform();
+  });
+
+  return actions;
+}
+
+function flushDropTimeout() {
+  return new Promise<void>((resolve) => setTimeout(resolve, 0));
+}
+
+function setupWithCustomAndAutoGridTabs() {
+  const panel = new VizPanel({ title: 'Panel in Tab 1', key: 'panel-tab1', pluginId: 'table' });
+
+  const gridItem = new DashboardGridItem({
+    key: 'grid-item-tab1',
+    x: 6,
+    y: 3,
+    width: 8,
+    height: 6,
+    body: panel,
+  });
+
+  const customGrid = new SceneGridLayout({ children: [gridItem], isDraggable: true, isResizable: true });
+  const tab1 = new TabItem({
+    key: 'tab-1',
+    title: 'Tab 1',
+    layout: new DefaultGridLayoutManager({ grid: customGrid }),
+  });
+
+  const autoGridManager = new AutoGridLayoutManager({
+    key: 'tab2-manager',
+    layout: new AutoGridLayout({ children: [] }),
+  });
+  const tab2 = new TabItem({ key: 'tab-2', title: 'Tab 2', layout: autoGridManager });
+
+  const tabsManager = new TabsLayoutManager({ tabs: [tab1, tab2] });
+  // DashboardScene always creates its own orchestrator, so use that instance
+  const dashboard = new DashboardScene({ body: tabsManager });
+  const orchestrator = dashboard.state.layoutOrchestrator!;
+  dashboard.activate();
+
+  return { orchestrator, tabsManager, tab1, tab2, gridItem, panel, customGrid, autoGridManager, dashboard };
+}
+
+function setupWithRowTabs() {
+  const rowA = new RowItem({ key: 'row-a', title: 'Row A', layout: AutoGridLayoutManager.createEmpty() });
+  const rowB = new RowItem({ key: 'row-b', title: 'Row B', layout: AutoGridLayoutManager.createEmpty() });
+  const rowC = new RowItem({ key: 'row-c', title: 'Row C', layout: AutoGridLayoutManager.createEmpty() });
+
+  const tab1Rows = new RowsLayoutManager({ rows: [rowA, rowB] });
+  const tab2Rows = new RowsLayoutManager({ rows: [rowC] });
+
+  const tab1 = new TabItem({ key: 'tab-1', title: 'Tab 1', layout: tab1Rows });
+  const tab2 = new TabItem({ key: 'tab-2', title: 'Tab 2', layout: tab2Rows });
+
+  const tabsManager = new TabsLayoutManager({ tabs: [tab1, tab2] });
+  // DashboardScene always creates its own orchestrator, so use that instance
+  const dashboard = new DashboardScene({ body: tabsManager });
+  const orchestrator = dashboard.state.layoutOrchestrator!;
+  dashboard.activate();
+
+  return { orchestrator, tabsManager, tab1, tab2, rowA, rowB, rowC, tab1Rows, tab2Rows, dashboard };
+}
+
+function setupWithLastRowAndAutoGridTabs() {
+  const rowA = new RowItem({ key: 'row-a', title: 'Row A', layout: AutoGridLayoutManager.createEmpty() });
+  const tab1Rows = new RowsLayoutManager({ rows: [rowA] });
+  const tab1 = new TabItem({ key: 'tab-1', title: 'Tab 1', layout: tab1Rows });
+
+  const tab2 = new TabItem({ key: 'tab-2', title: 'Tab 2', layout: AutoGridLayoutManager.createEmpty() });
+
+  const tabsManager = new TabsLayoutManager({ tabs: [tab1, tab2] });
+  // DashboardScene always creates its own orchestrator, so use that instance
+  const dashboard = new DashboardScene({ body: tabsManager });
+  const orchestrator = dashboard.state.layoutOrchestrator!;
+  dashboard.activate();
+
+  return { orchestrator, tabsManager, tab1, tab2, rowA, tab1Rows, dashboard };
+}
+
 function setupWithTwoTabs() {
   // Create panel for Tab 1
   const panel1 = new VizPanel({
@@ -621,12 +854,11 @@ function setupWithTwoTabs() {
     tabs: [tab1, tab2],
   });
 
-  const orchestrator = new DashboardLayoutOrchestrator();
-
+  // DashboardScene always creates its own orchestrator, so use that instance
   const dashboard = new DashboardScene({
     body: tabsManager,
-    layoutOrchestrator: orchestrator,
   });
+  const orchestrator = dashboard.state.layoutOrchestrator!;
 
   // Activate the scene hierarchy to set up parent relationships
   dashboard.activate();

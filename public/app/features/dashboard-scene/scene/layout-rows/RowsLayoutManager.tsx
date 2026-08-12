@@ -495,7 +495,8 @@ export class RowsLayoutManager
 
     const perform = () => {
       if (!rowsAfterRemoval.length) {
-        parent.switchLayout(AutoGridLayoutManager.createEmpty());
+        // skipUndo: this switch is part of the row removal and must not register its own undo entry
+        parent.switchLayout(AutoGridLayoutManager.createEmpty(), true);
       } else {
         this.setState({ rows: rowsAfterRemoval });
       }
@@ -504,7 +505,7 @@ export class RowsLayoutManager
     const thisLayout = this;
     const undo = () => {
       if (!rowsAfterRemoval.length) {
-        parent.switchLayout(thisLayout);
+        parent.switchLayout(thisLayout, true);
       } else {
         this.setState({ rows: rowsBeforeRemoval });
       }
@@ -523,6 +524,20 @@ export class RowsLayoutManager
   }
 
   public moveRow(_rowKey: string, fromIndex: number, toIndex: number) {
+    const movedRow = this.state.rows[fromIndex];
+    if (!movedRow || fromIndex === toIndex) {
+      return;
+    }
+
+    dashboardEditActions.moveElement({
+      source: this,
+      movedObject: movedRow,
+      perform: () => this.rearrangeRows(fromIndex, toIndex),
+      undo: () => this.rearrangeRows(toIndex, fromIndex),
+    });
+  }
+
+  private rearrangeRows(fromIndex: number, toIndex: number) {
     const rows = [...this.state.rows];
     const [removed] = rows.splice(fromIndex, 1);
     rows.splice(toIndex, 0, removed);
@@ -657,28 +672,46 @@ export class RowsLayoutManager
   }
 
   public collapseAllRows() {
-    this.state.rows.forEach((row) => {
-      if (!row.getCollapsedState()) {
-        row.setCollapsedState(true);
-      }
-      row.state.repeatedRows?.forEach((repeatedRow) => {
-        if (!repeatedRow.getCollapsedState()) {
-          repeatedRow.setCollapsedState(true);
-        }
-      });
-    });
+    this.setAllRowsCollapsedState(true);
   }
 
   public expandAllRows() {
+    this.setAllRowsCollapsedState(false);
+  }
+
+  private setAllRowsCollapsedState(collapse: boolean) {
+    const affectedRows: RowItem[] = [];
+
     this.state.rows.forEach((row) => {
-      if (row.getCollapsedState()) {
-        row.setCollapsedState(false);
+      if (row.getCollapsedState() !== collapse) {
+        affectedRows.push(row);
       }
       row.state.repeatedRows?.forEach((repeatedRow) => {
-        if (repeatedRow.getCollapsedState()) {
-          repeatedRow.setCollapsedState(false);
+        if (repeatedRow.getCollapsedState() !== collapse) {
+          affectedRows.push(repeatedRow);
         }
       });
+    });
+
+    if (affectedRows.length === 0) {
+      return;
+    }
+
+    const apply = (value: boolean) => affectedRows.forEach((row) => row.setCollapsedState(value));
+
+    // Collapsing rows in view mode should not be registered in the edit history
+    if (!getDashboardSceneFor(this).state.isEditing) {
+      apply(collapse);
+      return;
+    }
+
+    dashboardEditActions.edit({
+      description: collapse
+        ? t('dashboard.edit-actions.collapse-all-rows', 'Collapse all rows')
+        : t('dashboard.edit-actions.expand-all-rows', 'Expand all rows'),
+      source: this,
+      perform: () => apply(collapse),
+      undo: () => apply(!collapse),
     });
   }
 }

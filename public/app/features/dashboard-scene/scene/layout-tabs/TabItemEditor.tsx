@@ -167,7 +167,19 @@ function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
         id={id}
         sceneContext={tab}
         repeat={tab.state.repeatByVariable}
-        onChange={(repeat) => tab.onChangeRepeat(repeat)}
+        onChange={(repeat) => {
+          const prevRepeat = tab.state.repeatByVariable;
+          if (repeat === prevRepeat) {
+            return;
+          }
+
+          dashboardEditActions.edit({
+            description: t('dashboard.edit-actions.tab-repeat-variable', 'Tab repeat by'),
+            source: tab,
+            perform: () => tab.onChangeRepeat(repeat),
+            undo: () => tab.onChangeRepeat(prevRepeat),
+          });
+        }}
       />
       {isAnyPanelUsingDashboardDS ? (
         <Alert

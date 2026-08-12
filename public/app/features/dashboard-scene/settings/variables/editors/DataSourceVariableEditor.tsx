@@ -8,6 +8,7 @@ import { DataSourceVariable, type SceneVariable } from '@grafana/scenes';
 import { Combobox, type ComboboxOption, Input } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { dashboardEditActions } from '../../../sidebar/shared';
 import { DataSourceVariableForm } from '../components/DataSourceVariableForm';
 import { getOptionDataSourceTypes } from '../utils';
 
@@ -104,9 +105,24 @@ function DataSourceTypeSelect({ variable, id }: InputProps) {
   const { pluginId } = variable.useState();
   const options = getOptionDataSourceTypes();
 
-  const onChange = async (value: ComboboxOption<string>) => {
-    variable.setState({ pluginId: value.value });
-    await lastValueFrom(variable.validateAndUpdate!());
+  const onChange = (value: ComboboxOption<string>) => {
+    const prevPluginId = variable.state.pluginId;
+    if (value.value === prevPluginId) {
+      return;
+    }
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.variable-datasource-type', 'Change variable data source type'),
+      source: variable,
+      perform: () => {
+        variable.setState({ pluginId: value.value });
+        lastValueFrom(variable.validateAndUpdate!());
+      },
+      undo: () => {
+        variable.setState({ pluginId: prevPluginId });
+        lastValueFrom(variable.validateAndUpdate!());
+      },
+    });
   };
 
   return (
@@ -124,9 +140,25 @@ function DataSourceTypeSelect({ variable, id }: InputProps) {
 function DataSourceNameFilter({ variable, id }: InputProps) {
   const { regex } = variable.useState();
 
-  const onBlur = async (evt: React.FormEvent<HTMLInputElement>) => {
-    variable.setState({ regex: evt.currentTarget.value });
-    await lastValueFrom(variable.validateAndUpdate!());
+  const onBlur = (evt: React.FormEvent<HTMLInputElement>) => {
+    const newRegex = evt.currentTarget.value;
+    const prevRegex = variable.state.regex;
+    if (newRegex === prevRegex) {
+      return;
+    }
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.variable-name-filter', 'Change variable name filter'),
+      source: variable,
+      perform: () => {
+        variable.setState({ regex: newRegex });
+        lastValueFrom(variable.validateAndUpdate!());
+      },
+      undo: () => {
+        variable.setState({ regex: prevRegex });
+        lastValueFrom(variable.validateAndUpdate!());
+      },
+    });
   };
 
   return (

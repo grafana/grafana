@@ -76,8 +76,19 @@ function QueryLibraryButton({ layer, onQuerySelected }: { layer: AnnotationLayer
       onSelectQuery: async (selectedQuery: DataQuery) => {
         try {
           const updatedQuery = await updateAnnotationFromSavedQuery(query, selectedQuery);
-          layer.setState({ query: updatedQuery });
-          layer.runLayer();
+          const oldQuery = layer.state.query;
+          dashboardEditActions.edit({
+            description: t('dashboard.sidebar.annotation.change-query', 'Change annotation query'),
+            source: layer,
+            perform: () => {
+              layer.setState({ query: updatedQuery });
+              layer.runLayer();
+            },
+            undo: () => {
+              layer.setState({ query: oldQuery });
+              layer.runLayer();
+            },
+          });
         } catch (error) {
           console.error('Failed to replace annotation query!', error);
           getAppEvents().publish({
@@ -161,8 +172,19 @@ function AnnotationQueryEditor({ layer }: { layer: AnnotationLayer }) {
 
   const onChange = useCallback(
     (newQuery: typeof query) => {
-      layer.setState({ query: newQuery });
-      layer.runLayer();
+      const oldQuery = layer.state.query;
+      dashboardEditActions.edit({
+        description: t('dashboard.sidebar.annotation.change-query', 'Change annotation query'),
+        source: layer,
+        perform: () => {
+          layer.setState({ query: newQuery });
+          layer.runLayer();
+        },
+        undo: () => {
+          layer.setState({ query: oldQuery });
+          layer.runLayer();
+        },
+      });
     },
     [layer]
   );

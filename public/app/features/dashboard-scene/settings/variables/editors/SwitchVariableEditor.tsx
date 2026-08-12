@@ -1,7 +1,9 @@
+import { t } from '@grafana/i18n';
 import { type SceneVariable, SwitchVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { SwitchVariableForm } from '../components/SwitchVariableForm';
+import { undoableVariableEdit } from '../undoableVariableEdit';
 
 interface SwitchVariableEditorProps {
   variable: SwitchVariable;
@@ -31,12 +33,34 @@ export function SwitchVariableEditor({ variable, inline = false }: SwitchVariabl
     }
   };
 
+  const onValuePairChange = (newEnabledValue: string, newDisabledValue: string) => {
+    if (newEnabledValue === enabledValue && newDisabledValue === disabledValue) {
+      return;
+    }
+
+    const prevState = { enabledValue, disabledValue, value };
+    const isCurrentlyEnabled = value === enabledValue;
+
+    undoableVariableEdit(inline, {
+      description: t('dashboard.edit-actions.variable-switch-values', 'Change switch variable values'),
+      source: variable,
+      perform: () =>
+        variable.setState({
+          enabledValue: newEnabledValue,
+          disabledValue: newDisabledValue,
+          value: isCurrentlyEnabled ? newEnabledValue : newDisabledValue,
+        }),
+      undo: () => variable.setState(prevState),
+    });
+  };
+
   return (
     <SwitchVariableForm
       enabledValue={enabledValue}
       disabledValue={disabledValue}
       onEnabledValueChange={onEnabledValueChange}
       onDisabledValueChange={onDisabledValueChange}
+      onValuePairChange={onValuePairChange}
       inline={inline}
     />
   );

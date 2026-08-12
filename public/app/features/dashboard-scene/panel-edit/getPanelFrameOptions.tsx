@@ -100,7 +100,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         },
         addon: (
           <GenAIPanelDescriptionButton
-            onGenerate={(description) => panel.setState({ description })}
+            onGenerate={(description) => editPanelDescriptionAction(panel, description)}
             panel={vizPanelToPanel(panel)}
           />
         ),
@@ -158,7 +158,19 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
   return (
     <DataLinksInlineEditor
       links={links}
-      onChange={(links) => panelLinks?.setState({ rawLinks: links })}
+      onChange={(newLinks) => {
+        if (!panelLinks) {
+          return;
+        }
+
+        const prevLinks = links;
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.panel-links', 'Change panel links'),
+          source: panelLinks,
+          perform: () => panelLinks.setState({ rawLinks: newLinks }),
+          undo: () => panelLinks.setState({ rawLinks: prevLinks }),
+        });
+      }}
       getSuggestions={getPanelLinksVariableSuggestions}
       data={[]}
     />
@@ -207,14 +219,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
       value={description}
       onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
       onFocus={() => setPrevDescription(panel.state.description)}
-      onBlur={() => {
-        dashboardEditActions.edit({
-          description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
-          source: panel,
-          perform: () => panel.setState({ description: description }),
-          undo: () => panel.setState({ description: prevDescription }),
-        });
-      }}
+      onBlur={() => editPanelDescriptionAction(panel, description ?? '', prevDescription)}
     />
   );
 }
@@ -250,5 +255,22 @@ export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: 
     source: panel,
     perform: () => updatePanelTitleState(panel, title),
     undo: () => updatePanelTitleState(panel, prevTitle),
+  });
+}
+
+export function editPanelDescriptionAction(
+  panel: VizPanel,
+  description: string,
+  prevDescription: string | undefined = panel.state.description
+) {
+  if (description === prevDescription) {
+    return;
+  }
+
+  dashboardEditActions.edit({
+    description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
+    source: panel,
+    perform: () => panel.setState({ description }),
+    undo: () => panel.setState({ description: prevDescription }),
   });
 }

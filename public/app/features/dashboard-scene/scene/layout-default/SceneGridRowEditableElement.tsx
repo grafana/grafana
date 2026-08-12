@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -10,6 +10,7 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { dashboardEditActions } from '../../sidebar/shared';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { type DashboardScene } from '../DashboardScene';
@@ -83,8 +84,30 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
 
 function RowTitleInput({ row, id }: { row: SceneGridRow; id?: string }) {
   const { title } = row.useState();
+  const prevTitle = useRef('');
 
-  return <Input id={id} value={title} onChange={(e) => row.setState({ title: e.currentTarget.value })} />;
+  return (
+    <Input
+      id={id}
+      value={title}
+      onFocus={() => (prevTitle.current = title ?? '')}
+      onChange={(e) => row.setState({ title: e.currentTarget.value })}
+      onBlur={() => {
+        const newTitle = row.state.title ?? '';
+        if (newTitle === prevTitle.current) {
+          return;
+        }
+
+        const oldTitle = prevTitle.current;
+        dashboardEditActions.edit({
+          description: t('dashboard.edit-actions.row-title', 'Change row title'),
+          source: row,
+          perform: () => row.setState({ title: newTitle }),
+          undo: () => row.setState({ title: oldTitle }),
+        });
+      }}
+    />
+  );
 }
 
 function RowRepeatSelect({ row, dashboard, id }: { row: SceneGridRow; dashboard: DashboardScene; id?: string }) {
@@ -111,13 +134,27 @@ function RowRepeatSelect({ row, dashboard, id }: { row: SceneGridRow; dashboard:
         sceneContext={row}
         repeat={repeatBehavior?.state.variableName}
         onChange={(repeat) => {
-          if (repeat) {
-            repeatBehavior?.removeBehavior();
-            repeatBehavior = new RowRepeaterBehavior({ variableName: repeat });
-            row.setState({ $behaviors: [...(row.state.$behaviors ?? []), repeatBehavior] });
-          } else {
-            repeatBehavior?.removeBehavior();
+          const prevRepeat = repeatBehavior?.state.variableName;
+          if (repeat === prevRepeat) {
+            return;
           }
+
+          const setRepeat = (variableName: string | undefined) => {
+            const existingBehavior = row.state.$behaviors?.find((b) => b instanceof RowRepeaterBehavior);
+            existingBehavior?.removeBehavior();
+
+            if (variableName) {
+              repeatBehavior = new RowRepeaterBehavior({ variableName });
+              row.setState({ $behaviors: [...(row.state.$behaviors ?? []), repeatBehavior] });
+            }
+          };
+
+          dashboardEditActions.edit({
+            description: t('dashboard.edit-actions.row-repeat-variable', 'Row repeat by'),
+            source: row,
+            perform: () => setRepeat(repeat),
+            undo: () => setRepeat(prevRepeat),
+          });
         }}
       />
       {isAnyPanelUsingDashboardDS ? (

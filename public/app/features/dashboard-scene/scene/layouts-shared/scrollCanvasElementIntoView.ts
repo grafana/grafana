@@ -18,7 +18,8 @@ export function scrollCanvasElementIntoView(sceneObject: SceneObject, ref: React
   let parent = sceneObject.parent;
   while (parent) {
     if (parent instanceof RowItem && parent.state.collapse) {
-      parent.onCollapseToggle();
+      // Use the raw setter to avoid registering an edit action for this automatic expansion
+      parent.setCollapsedState(false);
     }
 
     if (parent instanceof SceneGridRow && parent.state.isCollapsed) {

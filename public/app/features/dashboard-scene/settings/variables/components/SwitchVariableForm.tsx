@@ -11,6 +11,8 @@ interface SwitchVariableFormProps {
   disabledValue: string;
   onEnabledValueChange: (value: string) => void;
   onDisabledValueChange: (value: string) => void;
+  /** When provided, used for predefined value pair selections so both values change as a single edit */
+  onValuePairChange?: (enabledValue: string, disabledValue: string) => void;
   inline?: boolean;
 }
 
@@ -26,6 +28,7 @@ export function SwitchVariableForm({
   disabledValue,
   onEnabledValueChange,
   onDisabledValueChange,
+  onValuePairChange,
   inline,
 }: SwitchVariableFormProps) {
   const currentValuePairType = getCurrentValuePairType(enabledValue, disabledValue);
@@ -37,6 +40,15 @@ export function SwitchVariableForm({
     'Enabled and disabled values cannot be the same'
   );
 
+  const applyValuePair = (newEnabledValue: string, newDisabledValue: string) => {
+    if (onValuePairChange) {
+      onValuePairChange(newEnabledValue, newDisabledValue);
+    } else {
+      onEnabledValueChange(newEnabledValue);
+      onDisabledValueChange(newDisabledValue);
+    }
+  };
+
   const onValuePairTypeChange = (selection: ComboboxOption<string> | null) => {
     if (!selection?.value) {
       return;
@@ -47,18 +59,15 @@ export function SwitchVariableForm({
 
     switch (selection.value) {
       case 'boolean':
-        onEnabledValueChange('true');
-        onDisabledValueChange('false');
+        applyValuePair('true', 'false');
         setIsCustomValuePairType(false);
         break;
       case 'number':
-        onEnabledValueChange('1');
-        onDisabledValueChange('0');
+        applyValuePair('1', '0');
         setIsCustomValuePairType(false);
         break;
       case 'string':
-        onEnabledValueChange('yes');
-        onDisabledValueChange('no');
+        applyValuePair('yes', 'no');
         setIsCustomValuePairType(false);
         break;
       case 'custom':
