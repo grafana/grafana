@@ -8,6 +8,7 @@ import (
 	badger "github.com/dgraph-io/badger/v4"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
+	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -77,8 +78,8 @@ func TestIntegrationDiscoveryDisabled(t *testing.T) {
 	// Two nodes share a registry, but discovery is off, so neither should register
 	// or dial the other.
 	store := newSharedTestKV(t)
-	a, _ := newTestDiscoveryServer(t, store, false)
-	b, _ := newTestDiscoveryServer(t, store, false)
+	a, _ := newTestDiscoveryServer(t, store, false, 50*time.Millisecond, time.Minute)
+	b, _ := newTestDiscoveryServer(t, store, false, 50*time.Millisecond, time.Minute)
 	startService(t, ctx, a)
 	startService(t, ctx, b)
 
@@ -90,6 +91,43 @@ func TestIntegrationDiscoveryDisabled(t *testing.T) {
 	require.Never(t, func() bool {
 		return numRoutes(a) > 0 || numRoutes(b) > 0
 	}, time.Second, 100*time.Millisecond, "nodes formed a cluster route with discovery disabled")
+}
+
+// TestIntegrationDiscoveryWakeOnLeave asserts a departing node's hint makes the
+// remaining peers drop its route ahead of their own periodic tick. The wake
+// counters are zero until c leaves, so the drop cannot be explained by a tick
+// that merely happened to land inside the window.
+func TestIntegrationDiscoveryWakeOnLeave(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	const interval = 5 * time.Second
+	const ttl = 5 * time.Minute
+
+	store := newSharedTestKV(t)
+	a, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
+	b, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
+	c, _ := newTestDiscoveryServer(t, store, true, interval, ttl)
+	startService(t, ctx, a)
+	startService(t, ctx, b)
+	startService(t, ctx, c)
+	routeC := selfRoute(c)
+
+	require.Eventually(t, func() bool {
+		return hasDiscoveryRoute(a, routeC) && hasDiscoveryRoute(b, routeC)
+	}, 30*time.Second, 50*time.Millisecond, "a and b did not pick up c before the leave")
+	require.Zero(t, wakesReceived(a)+wakesReceived(b), "no wake hint is expected before a peer leaves")
+
+	c.StopAsync()
+	require.NoError(t, c.AwaitTerminated(ctx))
+
+	require.Eventually(t, func() bool {
+		return !hasDiscoveryRoute(a, routeC) && !hasDiscoveryRoute(b, routeC)
+	}, 2*time.Second, 20*time.Millisecond, "a and b did not drop the departed peer within the %s interval", interval)
+	require.NotZero(t, wakesReceived(a), "a dropped the departed peer without a wake hint")
+	require.NotZero(t, wakesReceived(b), "b dropped the departed peer without a wake hint")
 }
 
 // nodeCfg bundles a node's full Cfg with the Server it drives, so callers can
@@ -108,8 +146,8 @@ func startTwoNodeCluster(t *testing.T) (context.Context, *Server, *Server, nodeC
 	t.Cleanup(cancel)
 
 	store := newSharedTestKV(t)
-	a, cfgA := newTestDiscoveryServer(t, store, true)
-	b, cfgB := newTestDiscoveryServer(t, store, true)
+	a, cfgA := newTestDiscoveryServer(t, store, true, 50*time.Millisecond, time.Minute)
+	b, cfgB := newTestDiscoveryServer(t, store, true, 50*time.Millisecond, time.Minute)
 	startService(t, ctx, a)
 	startService(t, ctx, b)
 
@@ -118,7 +156,7 @@ func startTwoNodeCluster(t *testing.T) (context.Context, *Server, *Server, nodeC
 
 // newTestDiscoveryServer builds a Server running a real embedded NATS server on
 // OS-chosen ports, sharing the given KV-backed peer registry for auto-discovery.
-func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool) (*Server, *setting.Cfg) {
+func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool, interval, ttl time.Duration) (*Server, *setting.Cfg) {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.NATS = setting.NATSSettings{
@@ -130,8 +168,8 @@ func newTestDiscoveryServer(t *testing.T, store kv.KV, discoveryEnabled bool) (*
 		ClientPort:        natsserver.RANDOM_PORT,
 		ClusterPort:       natsserver.RANDOM_PORT,
 		DiscoveryEnabled:  discoveryEnabled,
-		DiscoveryInterval: 50 * time.Millisecond,
-		DiscoveryTTL:      time.Minute,
+		DiscoveryInterval: interval,
+		DiscoveryTTL:      ttl,
 	}
 	s, err := ProvideServer(cfg, nil, prometheus.NewRegistry())
 	require.NoError(t, err)
@@ -168,4 +206,32 @@ func numRoutes(s *Server) int {
 		return 0
 	}
 	return s.server.NumRoutes()
+}
+
+// selfRoute is the route URL a node advertises, which identifies it in its
+// peers' route sets.
+func selfRoute(s *Server) string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.discovery == nil {
+		return ""
+	}
+	return s.discovery.self.RouteURL
+}
+
+// hasDiscoveryRoute reports whether the discovery loop has reconciled routeURL
+// into its applied route set, read under the locks both fields are written with.
+func hasDiscoveryRoute(s *Server, routeURL string) bool {
+	s.mu.RLock()
+	d := s.discovery
+	s.mu.RUnlock()
+	if d == nil {
+		return false
+	}
+	_, ok := d.routeSet()[routeURL]
+	return ok
+}
+
+func wakesReceived(s *Server) float64 {
+	return promtestutil.ToFloat64(s.metrics.discoveryWakesReceived)
 }

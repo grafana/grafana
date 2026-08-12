@@ -146,7 +146,8 @@ func (m *subscriberMetrics) collectors() []prometheus.Collector {
 // environments that actually run the embedded server, so external/Cloud
 // deployments never export a misleading `embedded_server_up 0`.
 type serverMetrics struct {
-	embeddedServerUp prometheus.Gauge
+	embeddedServerUp       prometheus.Gauge
+	discoveryWakesReceived prometheus.Counter
 }
 
 func newServerMetrics(reg prometheus.Registerer) *serverMetrics {
@@ -157,9 +158,15 @@ func newServerMetrics(reg prometheus.Registerer) *serverMetrics {
 			Name:      "embedded_server_up",
 			Help:      "Whether the embedded NATS server is running (1 = up, 0 = down).",
 		}),
+		discoveryWakesReceived: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "discovery_wakes_received_total",
+			Help:      "Total number of departing-peer hints this node received that triggered an early discovery tick.",
+		}),
 	}
 
-	reg.MustRegister(m.embeddedServerUp)
+	reg.MustRegister(m.embeddedServerUp, m.discoveryWakesReceived)
 
 	return m
 }
