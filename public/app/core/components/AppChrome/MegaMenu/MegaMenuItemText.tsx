@@ -187,6 +187,9 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], visualRefr
     backgroundColor: theme.colors.accent.background,
     position: 'relative',
     borderRadius: theme.shape.radius.default,
+    '&:hover': {
+      color: theme.colors.accent.textEmphasis,
+    },
   });
 
   return {

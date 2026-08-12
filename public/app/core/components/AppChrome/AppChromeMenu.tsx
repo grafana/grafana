@@ -13,6 +13,7 @@ import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
+import { getChromeHeaderLevelHeight } from './TopBar/useChromeHeaderHeight';
 
 interface Props {}
 
@@ -84,12 +85,11 @@ export function AppChromeMenu({}: Props) {
 const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   return {
     backdrop: css({
-      backgroundColor: theme.components.overlay.background,
       bottom: 0,
       left: 0,
       position: 'fixed',
       right: 0,
-      top: 0,
+      top: `${getChromeHeaderLevelHeight()}px`,
       zIndex: theme.zIndex.modalBackdrop,
     }),
     menu: css({
@@ -101,7 +101,8 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       // Needs to below navbar should we change the navbarFixed? add add a new level?
       zIndex: theme.zIndex.modal,
       position: 'fixed',
-      top: 0,
+      top: `${getChromeHeaderLevelHeight()}px`,
+      borderRight: `1px solid ${theme.colors.border.weak}`,
       backgroundColor: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
       flex: '1 1 0',
 

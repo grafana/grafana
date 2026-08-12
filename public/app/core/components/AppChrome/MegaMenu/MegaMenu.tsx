@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, type DraggableProvided, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { type DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useId } from 'react';
@@ -7,13 +7,13 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { ScrollContainer, Text, useStyles2, Button } from '@grafana/ui';
+import { ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
-import { MegaMenuHeader } from './MegaMenuHeader';
+import { DOCK_MENU_BUTTON_ID, MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { MegaMenuPinnedItem } from './MegaMenuPinnedItem';
 import { MegaMenuSkeleton } from './MegaMenuSkeleton';
@@ -230,7 +230,7 @@ export const MegaMenu = memo(
     return (
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
-        <nav className={styles.content}>
+        <nav className={cx(styles.content, state.megaMenuDocked && styles.contentDocked)} aria-label={navLabel}>
           <div className={styles.scrollArea}>
             <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
               <>
@@ -252,29 +252,37 @@ export const MegaMenu = memo(
               </>
             </ScrollContainer>
           </div>
-          {/* Hidden until preferences have loaded: entering edit mode early would start from an empty
-              pinned list and pressing Done before the pins arrive would overwrite them with []. */}
-          {canCustomise && !isLoading && (
-            <>
-              <hr className={styles.dividerLine} />
-              <div className={styles.editFooter}>
-                {editMode && (
-                  <MegaMenuCustomiseControls
-                    canReset={canReset}
-                    onResetToDefault={onResetToDefault}
-                    onCancelEdit={onCancelEdit}
-                    onSaveEdit={onSaveEdit}
-                    saving={isSaving}
-                  />
-                )}
-                {!editMode && (
-                  <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
-                    <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
+          <hr className={styles.dividerLine} />
+          <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
+            {editMode && (
+              <MegaMenuCustomiseControls
+                canReset={canReset}
+                onResetToDefault={onResetToDefault}
+                onCancelEdit={onCancelEdit}
+                onSaveEdit={onSaveEdit}
+                saving={isSaving}
+              />
+            )}
+            {!editMode && canCustomise && !isLoading && (
+              <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
+                <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
+              </Button>
+            )}
+            {!editMode && !state.fullscreenWorkspace && (
+              <IconButton
+                id={DOCK_MENU_BUTTON_ID}
+                className={styles.dockMenuButton}
+                tooltip={
+                  state.megaMenuDocked
+                    ? t('navigation.megamenu.undock', 'Undock menu')
+                    : t('navigation.megamenu.dock', 'Dock menu')
+                }
+                name="web-section-alt"
+                onClick={handleDockedMenu}
+                variant="secondary"
+              />
+            )}
+          </div>
         </nav>
       </div>
     );
@@ -291,6 +299,10 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       minHeight: 0,
       flexGrow: 1,
       position: 'relative',
+      paddingTop: theme.spacing(0.5),
+    }),
+    contentDocked: css({
+      paddingTop: theme.spacing(0),
     }),
     scrollArea: css({
       flex: 1,
@@ -313,9 +325,6 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       padding: 0,
       margin: 0,
     }),
-    // Subtle grey box around the pinned items. Left inset (margin-left + padding-left = 1.5) matches
-    // the nav row icon inset (itemList padding-left 1 + label padding-left 0.5) so the breadcrumb leaf
-    // icons line up with the nav section icons. No bottom margin — the divider owns the gap below.
     pinnedBox: css({
       margin: visualRefreshEnabled ? theme.spacing(0, 1, 1, 1) : theme.spacing(1, 1, 0, 1),
     }),
@@ -346,12 +355,23 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       margin: theme.spacing(1),
     }),
     // Edit-mode footer: the Reset/Cancel/Done controls
-    editFooter: css({
+    footer: css({
       alignItems: 'center',
       display: 'flex',
       flexShrink: 0,
-      justifyContent: 'center',
+      justifyContent: 'space-between',
       padding: theme.spacing(0.5, 2, 1.5, 2),
+    }),
+    footerEditMode: css({
+      justifyContent: 'center',
+    }),
+    dockMenuButton: css({
+      display: 'none',
+      marginLeft: 'auto',
+
+      [theme.breakpoints.up('xl')]: {
+        display: 'inline-flex',
+      },
     }),
   };
 };
