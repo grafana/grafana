@@ -995,23 +995,6 @@ func runTestKVBatchDelete(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		err = reader.Close()
 		require.NoError(t, err)
 	})
-
-	t.Run("batch delete spanning multiple chunks", func(t *testing.T) {
-		// SqlKV chunks the IN list; delete more keys than one chunk to exercise the loop.
-		const n = 450 // > deleteChunkSize (199)
-		keys := make([]string, n)
-		for i := range keys {
-			keys[i] = namespacedKey(nsPrefix, fmt.Sprintf("chunk/%04d", i))
-			saveKVHelper(t, kv, ctx, testSection, keys[i], strings.NewReader("v"))
-		}
-
-		require.NoError(t, kv.BatchDelete(ctx, testSection, keys))
-
-		for _, key := range keys {
-			_, err := kv.Get(ctx, testSection, key)
-			assert.Equal(t, kvpkg.ErrNotFound, err)
-		}
-	})
 }
 
 // saveKVHelper is a helper function to save data to KV store using the new WriteCloser interface

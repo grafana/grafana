@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"iter"
-	"slices"
 	"strings"
 	"time"
 
@@ -559,15 +558,15 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 	return nil
 }
 
-// deleteChunkSize caps the IN-list size per DELETE. A large key_path IN list makes MySQL
-// stop using the key_path index (dives stop past eq_range_index_dive_limit, range optimizer
-// exceeds range_optimizer_max_mem_size). MySQL permits index dives for up to
-// eq_range_index_dive_limit (default 200), so 199 respects the default path.
-const deleteChunkSize = 199
+// maxBatchDeleteKeys bounds a DELETE's IN list.
+const maxBatchDeleteKeys = 200
 
 func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) error {
 	if len(keys) == 0 {
 		return nil
+	}
+	if len(keys) >= maxBatchDeleteKeys {
+		return fmt.Errorf("batch delete of %d keys exceeds max %d; caller must chunk", len(keys), maxBatchDeleteKeys-1)
 	}
 
 	qb, err := k.getQueryBuilder(section)
@@ -575,11 +574,10 @@ func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 		return err
 	}
 
-	for chunk := range slices.Chunk(getKeyPaths(section, keys), deleteChunkSize) {
-		query, args := qb.buildBatchDeleteQuery(chunk)
-		if _, err := k.conn(ctx).ExecContext(ctx, query, args...); err != nil {
-			return fmt.Errorf("failed to batch delete keys: %w", err)
-		}
+	keyPaths := getKeyPaths(section, keys)
+	query, args := qb.buildBatchDeleteQuery(keyPaths)
+	if _, err := k.conn(ctx).ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("failed to batch delete keys: %w", err)
 	}
 
 	return nil

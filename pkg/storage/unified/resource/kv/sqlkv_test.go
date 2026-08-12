@@ -252,22 +252,23 @@ func TestSQLKVInsertDataImportBatchUsesLegacyFields(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestSQLKV_BatchDelete_ChunksLargeKeyList(t *testing.T) {
+func TestSQLKV_BatchDelete_RejectsOversizedBatch(t *testing.T) {
 	sqlKV, _, mock := setupSQLKVMock(t, "sqlite")
 
-	// BatchDelete chunks into <= deleteChunkSize keys per DELETE to keep each statement on
-	// the key_path index. 450 keys -> 3 DELETEs with 199, 199, 52 key_path args.
-	keys := make([]string, 2*deleteChunkSize+52)
+	keys := make([]string, maxBatchDeleteKeys)
 	for i := range keys {
 		keys[i] = fmt.Sprintf("k-%04d", i)
 	}
-	for _, argCount := range []int{deleteChunkSize, deleteChunkSize, 52} {
-		mock.ExpectExec(`(?i)delete from .*resource_history.* where .*key_path.* in \(`).
-			WithArgs(anyArgs(argCount)...).
-			WillReturnResult(sqlmock.NewResult(0, 1))
-	}
 
-	require.NoError(t, sqlKV.BatchDelete(context.Background(), DataSection, keys))
+	// A batch at or above the max is rejected before any DELETE runs.
+	require.Error(t, sqlKV.BatchDelete(context.Background(), DataSection, keys))
+
+	// One below the max runs as a single DELETE with that many key_path args.
+	allowed := keys[:maxBatchDeleteKeys-1]
+	mock.ExpectExec(`(?i)delete from .*resource_history.* where .*key_path.* in \(`).
+		WithArgs(anyArgs(len(allowed))...).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	require.NoError(t, sqlKV.BatchDelete(context.Background(), DataSection, allowed))
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 

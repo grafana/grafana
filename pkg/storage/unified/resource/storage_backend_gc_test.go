@@ -37,20 +37,6 @@ func (p *partialDeleteKV) BatchDelete(ctx context.Context, section string, keys 
 	return p.KV.BatchDelete(ctx, section, keys)
 }
 
-// slowDeleteKV blocks on data-section deletes until the context is cancelled, simulating a
-// statement that hangs (e.g. on a pathological plan).
-type slowDeleteKV struct {
-	KV
-}
-
-func (s *slowDeleteKV) BatchDelete(ctx context.Context, section string, keys []string) error {
-	if section == dataSection {
-		<-ctx.Done()
-		return ctx.Err()
-	}
-	return s.KV.BatchDelete(ctx, section, keys)
-}
-
 // writeEventOption is a function that modifies writeEventOptions
 type writeEventOption func(*writeEventOptions)
 
@@ -746,37 +732,6 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 1)
 	})
-}
-
-func TestIntegrationGarbageCollectionDeleteTimeout(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	orig := gcDeleteTimeout
-	gcDeleteTimeout = 50 * time.Millisecond
-	t.Cleanup(func() { gcDeleteTimeout = orig })
-
-	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-
-	b := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
-		opts.GarbageCollection = GarbageCollectionConfig{
-			Enabled: true, DryRun: false, Interval: time.Minute, BatchSize: 100, DashboardsMaxAge: 24 * time.Hour,
-		}
-		opts.KvStore = &slowDeleteKV{KV: setupBadgerKV(t)}
-	})
-
-	rv1, err := writeEvent(t, ctx, b, "resource1", resourcepb.WatchEvent_ADDED)
-	require.NoError(t, err)
-	_, err = writeEvent(t, ctx, b, "resource1", resourcepb.WatchEvent_DELETED,
-		func(o *writeEventOptions) { o.PreviousRV = rv1 })
-	require.NoError(t, err)
-
-	cutoff := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro())
-
-	// The hanging delete self-limits at gcDeleteTimeout instead of blocking forever.
-	start := time.Now()
-	err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoff)
-	require.Error(t, err)
-	require.Less(t, time.Since(start), 5*time.Second)
 }
 
 func TestIntegrationGarbageCollectionPartialDeleteConverges(t *testing.T) {

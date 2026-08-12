@@ -692,10 +692,6 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 	}
 }
 
-// gcDeleteTimeout bounds a single GC history delete so a slow statement self-limits instead
-// of stalling writes. A healthy indexed delete is milliseconds. Var so tests can shorten it.
-var gcDeleteTimeout = 30 * time.Second
-
 // garbageCollectGroupResource scans batches of entries in the datastore for a given group+resource,
 // in descending order of resource version, looking for deleted entries with resource versions
 // older than the cutoff timestamp.
@@ -795,11 +791,11 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 				// Collect all revisions of this resource, oldest-first, via the datastore.
 				keysToDelete := []DataKey{}
-				for parsed, err := range b.dataStore.Keys(ctx, k, SortOrderAsc) {
+				for deleteKey, err := range b.dataStore.Keys(ctx, k, SortOrderAsc) {
 					if err != nil {
 						return fmt.Errorf("failed to get keys for resource '%s': %s", dk, err)
 					}
-					keysToDelete = append(keysToDelete, parsed)
+					keysToDelete = append(keysToDelete, deleteKey)
 				}
 
 				// check if the resource still exists
@@ -824,15 +820,9 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 					continue
 				}
 
-				// batch delete the keys via the datastore, which chunks them (and SqlKV chunks
-				// again per statement). keysToDelete is oldest-first (SortOrderAsc above), so the
-				// deletion marker (highest RV) goes last: a partial/chunked failure leaves the
-				// marker behind and the next GC pass finishes. Do not reorder.
-				// Bound the delete so a slow statement self-limits instead of stalling writes;
-				// GC is idempotent, so a timed-out delete just retries next pass.
-				deleteCtx, cancel := context.WithTimeout(ctx, gcDeleteTimeout)
-				err = b.dataStore.batchDelete(deleteCtx, keysToDelete)
-				cancel()
+				// Oldest-first (SortOrderAsc), so a partial delete leaves the deletion marker
+				// behind and the next GC pass finishes.
+				err = b.dataStore.batchDelete(ctx, keysToDelete)
 				if err != nil {
 					return fmt.Errorf("failed to batch delete keys: %s", err)
 				}
