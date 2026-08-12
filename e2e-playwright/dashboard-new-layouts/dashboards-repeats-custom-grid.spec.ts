@@ -9,6 +9,7 @@ import {
   movePanel,
   getPanelBox,
 } from './helpers';
+import { type Panels } from './page-objects';
 
 const REPEAT_TITLE_BASE = 'repeat - ';
 const NEW_TITLE_BASE = 'edited rep - ';
@@ -78,6 +79,59 @@ test.describe(
         await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
 
         await expect(panels.getHeaders()).toHaveCount(3);
+      });
+    });
+
+    test.describe('Repeat direction and max per row', () => {
+      test('can set repeat direction to vertical', async ({ selectors, page, controls, sidebar, panels }) => {
+        await flows.dashboards.importTestDashboard(
+          page,
+          selectors,
+          'Custom grid repeats - vertical direction',
+          JSON.stringify(testV2DashWithRepeats)
+        );
+
+        await controls.enterEditMode();
+
+        await panels.selectByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
+        await sidebar.panelOptions.repeatOptions.setRepeatDirection('Vertical');
+
+        await expect(sidebar.panelOptions.repeatOptions.getMaxPerRowSelect()).toBeHidden();
+        await expectRepeatedPanelsStackedVertically(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+
+        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
+        await page.reload();
+
+        await expectRepeatedPanelsStackedVertically(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+      });
+
+      test('can set repeat direction to horizontal and change max per row', async ({
+        selectors,
+        page,
+        controls,
+        sidebar,
+        panels,
+      }) => {
+        await flows.dashboards.importTestDashboard(
+          page,
+          selectors,
+          'Custom grid repeats - horizontal max per row',
+          JSON.stringify(testV2DashWithRepeats)
+        );
+
+        await controls.enterEditMode();
+
+        await panels.selectByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
+        await sidebar.panelOptions.repeatOptions.setRepeatDirection('Horizontal');
+
+        await expect(sidebar.panelOptions.repeatOptions.getMaxPerRowSelect()).toBeVisible();
+        await sidebar.panelOptions.repeatOptions.selectMaxPerRow(2);
+        await expectRepeatedPanelsWrappedHorizontally(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS, 2);
+
+        await flows.dashboards.saveDashboardAndCloseToast(page, controls);
+        await page.reload();
+
+        await expectRepeatedPanelsWrappedHorizontally(panels, REPEAT_TITLE_BASE, REPEAT_OPTIONS, 2);
       });
     });
 
@@ -351,3 +405,55 @@ test.describe(
     });
   }
 );
+
+async function expectRepeatedPanelsStackedVertically(
+  panels: Panels,
+  titleBase: string,
+  values: Array<string | number>
+) {
+  await expect(async () => {
+    let previousBox: { x: number; y: number } | null = null;
+
+    for (const value of values) {
+      const box = await getPanelBox(panels, `${titleBase}${value}`);
+
+      if (previousBox) {
+        expect(box.y, `Panel ${value} should be below the previous repeat`).toBeGreaterThan(previousBox.y);
+        expect(box.x, `Panel ${value} should be left-aligned with the previous repeat`).toBe(previousBox.x);
+      }
+
+      previousBox = box;
+    }
+  }).toPass();
+}
+
+async function expectRepeatedPanelsWrappedHorizontally(
+  panels: Panels,
+  titleBase: string,
+  values: Array<string | number>,
+  maxPerRow: number
+) {
+  await expect(async () => {
+    const boxes = [];
+
+    for (const value of values) {
+      boxes.push(await getPanelBox(panels, `${titleBase}${value}`));
+    }
+
+    for (let i = 0; i < boxes.length; i++) {
+      const row = Math.floor(i / maxPerRow);
+      const col = i % maxPerRow;
+      const firstInRow = boxes[row * maxPerRow];
+
+      if (col === 0 && row > 0) {
+        expect(boxes[i].y, `Panel at index ${i} should start a new row`).toBeGreaterThan(boxes[i - maxPerRow].y);
+        expect(boxes[i].x, `Panel at index ${i} should align with the first column`).toBe(boxes[0].x);
+      } else if (col > 0) {
+        expect(boxes[i].y, `Panel at index ${i} should share a row with the previous panel`).toBe(firstInRow.y);
+        expect(boxes[i].x, `Panel at index ${i} should be to the right of the previous panel`).toBeGreaterThan(
+          boxes[i - 1].x
+        );
+      }
+    }
+  }).toPass();
+}
