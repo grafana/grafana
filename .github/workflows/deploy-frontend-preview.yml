@@ -1,12 +1,8 @@
 name: Deploy frontend preview
 
-# Builds the frontend of a pull request and uploads it to the preview assets
-# bucket, so it can be loaded in the shared preview Grafana instance via
-# /-/set-preview-assets (see pkg/services/frontend/preview_assets.go).
-#
-# Opt in by commenting `/deploy-to-fs` on a PR that only changes frontend
-# code. Once opted in (tracked with the deploy-frontend-preview label), every
-# push to the PR rebuilds and redeploys the preview.
+# Triggered by commenting /deploy-to-fs, builds the frontend of the pull
+# request and uploads it to the preview assets bucket, to use with the new
+# frontend PR preview feature
 #
 # NOTE: the `/deploy-to-fs` command is temporary, while we test this
 # mechanism. The plan is to later fold it into `/deploy-to-hg`: that command
@@ -18,11 +14,6 @@ on:
     types: [created]
   pull_request:
     types: [synchronize]
-
-# Concurrency is scoped to the build and deploy jobs rather than the workflow:
-# every created comment on a PR spawns a run of this workflow, and a
-# workflow-level group is joined before job-level `if`s are evaluated, so an
-# unrelated comment could cancel an in-flight build or deploy.
 
 permissions: {}
 
@@ -189,12 +180,7 @@ jobs:
           PR_NUMBER: ${{ needs.check.outputs.pr-number }}
         run: echo "deploy-name=pr_grafana_${PR_NUMBER}" >> "$GITHUB_OUTPUT"
 
-      # The manifest is the pointer to a build: every file it references is
-      # content-hashed and uploads never delete existing objects, so uploading
-      # chunks first and the manifest last means the preview backend (which
-      # fetches only the manifest) always sees a complete build, even if this
-      # run dies mid-upload. Files within one push-to-gcs call upload in
-      # parallel with no ordering guarantee, hence two calls.
+      # Upload the assets manifest last to help make uploads more atomic.
       - name: Stage manifests to upload last
         run: |
           mkdir -p preview-manifest
