@@ -10,6 +10,7 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
 import { type NotebookScene } from '../scene/NotebookScene';
+import { NotebookToolbar } from '../toolbar/NotebookToolbar';
 
 import { NotebookPageError } from './NotebookPageError';
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
@@ -68,7 +69,9 @@ export function NotebookScenePage() {
 }
 
 function NotebookDocument({ scene }: { scene: NotebookScene }) {
-  const { title } = scene.useState();
+  // uid comes off the scene rather than the route param: it is the notebook's identity
+  // (metadata.name), and the scene already carries it for the same reason it carries the title.
+  const { title, uid } = scene.useState();
 
   useEffect(() => scene.activate(), [scene]);
 
@@ -77,6 +80,7 @@ function NotebookDocument({ scene }: { scene: NotebookScene }) {
 
   return (
     <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
+      {uid && <NotebookToolbar uid={uid} />}
       <scene.Component model={scene} />
     </Page>
   );

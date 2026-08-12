@@ -12798,6 +12798,9 @@
         "updated": "Updated"
       },
       "unknown-author": "Anonymous"
+    },
+    "view": {
+      "copy-link": "Copy link"
     }
   },
   "notifications": {
