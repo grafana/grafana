@@ -2433,6 +2433,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "kubernetesUsersRedirectNoFallback",
+			Description:  "Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:         "alertingPolicyRoutingSettings",
 			Description:  "Use notification settings policy field instead of labels for named policy routing in alert rules",
 			Stage:        FeatureStageExperimental,

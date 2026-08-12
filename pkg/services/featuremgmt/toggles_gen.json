@@ -4174,6 +4174,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesUsersRedirectNoFallback",
+        "resourceVersion": "1786539440242",
+        "creationTimestamp": "2026-08-12T12:57:20Z"
+      },
+      "spec": {
+        "description": "Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "libpanels.kubernetesLibraryPanels",
         "resourceVersion": "1784652694911",
         "creationTimestamp": "2026-07-21T16:51:34Z",

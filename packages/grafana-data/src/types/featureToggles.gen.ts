@@ -1247,6 +1247,11 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirect?: boolean;
   /**
+  * Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
+  * @default false
+  */
+  kubernetesUsersRedirectNoFallback?: boolean;
+  /**
   * Use notification settings policy field instead of labels for named policy routing in alert rules
   * @default false
   */
