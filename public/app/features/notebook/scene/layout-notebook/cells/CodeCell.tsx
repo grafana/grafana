@@ -53,25 +53,27 @@ export function CodeCell({ content, isEditing, onChange }: Props) {
     onChange({ kind: 'Code', spec: { ...content.spec, ...changes } });
 
   return (
-    <Box borderStyle="solid" borderColor="weak" borderRadius="default" padding={1}>
-      <Stack direction="column" gap={0.5}>
-        <Stack justifyContent="flex-end" alignItems="center">
-          {isEditing ? (
-            <Combobox
-              options={getCodeLanguageOptions(language)}
-              value={language}
-              width="auto"
-              minWidth={12}
-              aria-label={t('notebooks.cell.code.aria-label-language', 'Code language')}
-              onChange={(option: ComboboxOption<string>) => changeSpec({ language: option.value })}
-            />
-          ) : (
-            <Text variant="bodySmall" color="secondary">
-              {language === PLAIN_TEXT_LANGUAGE ? t('notebooks.cell.code.label', 'code') : codeLanguageLabel(language)}
-            </Text>
-          )}
-        </Stack>
+    // The language sits above the frame rather than inside it: in the box it stole a full row of
+    // height from every cell, which reads as padding around short snippets.
+    <Stack direction="column" gap={0.5}>
+      <Stack justifyContent="flex-end" alignItems="center">
+        {isEditing ? (
+          <Combobox
+            options={getCodeLanguageOptions(language)}
+            value={language}
+            width="auto"
+            minWidth={12}
+            aria-label={t('notebooks.cell.code.aria-label-language', 'Code language')}
+            onChange={(option: ComboboxOption<string>) => changeSpec({ language: option.value })}
+          />
+        ) : (
+          <Text variant="bodySmall" color="secondary">
+            {language === PLAIN_TEXT_LANGUAGE ? t('notebooks.cell.code.label', 'code') : codeLanguageLabel(language)}
+          </Text>
+        )}
+      </Stack>
 
+      <Box borderStyle="solid" borderColor="weak" borderRadius="default" padding={1}>
         <CodeMirrorEditor
           value={code}
           language={toCodeMirrorLanguage(language)}
@@ -87,8 +89,8 @@ export function CodeCell({ content, isEditing, onChange }: Props) {
           loadingFallback={<pre className={styles.loadingFallback}>{code}</pre>}
           onChange={(value) => changeSpec({ code: value })}
         />
-      </Stack>
-    </Box>
+      </Box>
+    </Stack>
   );
 }
 
