@@ -503,6 +503,34 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     ).not.toBeVisible();
   });
 
+  test('Tooltip from field picker can be cleared', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ editPanel: '12' }),
+    });
+
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Tooltip from field'))
+    ).toBeVisible();
+    await waitForTableLoad(page);
+
+    // this panel ships with a field override that renders a tooltip caret on the "Info" column.
+    const caret = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Caret);
+    await expect(caret.first()).toBeVisible();
+
+    const overrideGroup = dashboardPage.getByGrafanaSelector(
+      selectors.components.OptionsGroup.group('panel-options-override-1')
+    );
+    const tooltipFieldPicker = overrideGroup.getByLabel('Tooltip from field');
+    await expect(tooltipFieldPicker).toHaveValue('Long Text');
+
+    // clearing the picker should remove the tooltip entirely, not just leave it stuck on a value.
+    await overrideGroup.getByRole('button', { name: 'Clear value' }).click();
+
+    await expect(tooltipFieldPicker).toHaveValue('');
+    await expect(caret).toHaveCount(0);
+  });
+
   test('Styling overrides with styling from field', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
