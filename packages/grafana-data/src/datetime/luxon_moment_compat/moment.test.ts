@@ -86,6 +86,28 @@ describe('formatted string parsing', () => {
   });
 });
 
+describe('relative time', () => {
+  it('matches moment invalid-date behavior for every relative helper', () => {
+    const invalid = moment('not a date');
+    const valid = moment.utc('2024-05-08T00:00:00Z');
+
+    expect(invalid.fromNow()).toBe('Invalid date');
+    expect(invalid.toNow()).toBe('Invalid date');
+    expect(valid.from(invalid)).toBe('Invalid date');
+  });
+
+  it.each([
+    ['en', '2 days'],
+    ['de', '2 Tage'],
+    ['fr', '2 jours'],
+  ])('formats suffixless durations in %s', (locale, expected) => {
+    const base = moment.utc('2024-05-06T00:00:00Z');
+    const target = moment.utc('2024-05-08T00:00:00Z').locale(locale);
+
+    expect(target.from(base, true)).toBe(expected);
+  });
+});
+
 describe('string parsing fallbacks', () => {
   it('parses RFC 2822 strings missing their timezone via the js Date() fallback (like moment)', () => {
     // real-world example: grafana.com's RSS feed emits zoneless pubDates, which the luxon

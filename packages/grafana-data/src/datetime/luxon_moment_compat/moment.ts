@@ -445,8 +445,39 @@ function parseWithFallbacks(value: string, options?: MomentOptions): DateTime {
   return DateTime.invalid('unsupported string input');
 }
 
-function stripRelativeAffixes(value: string): string {
-  return value.replace(/^in\s+/, '').replace(/\s+ago$/, '');
+type RelativeUnit = 'years' | 'months' | 'days' | 'hours' | 'minutes' | 'seconds';
+
+const RELATIVE_UNITS: RelativeUnit[] = ['years', 'months', 'days', 'hours', 'minutes', 'seconds'];
+const RELATIVE_UNIT_FLOORS: Partial<Record<RelativeUnit, number>> = {
+  years: 365 * 86400000 - 26 * 3600000,
+  months: 28 * 86400000 - 26 * 3600000,
+  hours: 3600000,
+  minutes: 60000,
+  seconds: 1000,
+};
+
+function relativeDurationToHuman(value: number, unit: RelativeUnit, locale: string | null): string {
+  return Duration.fromObject({ [unit]: value }, { locale: locale ?? undefined })
+    .toHuman()
+    .replace(/[\u00a0\u202f]/g, ' ');
+}
+
+function toRelativeWithoutSuffix(target: DateTime, base: DateTime, locale: string | null): string {
+  const spread = Math.abs(target.toMillis() - base.toMillis());
+
+  for (const unit of RELATIVE_UNITS) {
+    const floor = RELATIVE_UNIT_FLOORS[unit];
+    if (floor != null && spread < floor) {
+      continue;
+    }
+
+    const count = target.diff(base, unit).get(unit);
+    if (Math.abs(count) >= 1) {
+      return relativeDurationToHuman(Math.abs(Math.round(count)), unit, locale);
+    }
+  }
+
+  return relativeDurationToHuman(0, 'seconds', locale);
 }
 
 function toRelativeString(
@@ -455,18 +486,23 @@ function toRelativeString(
   locale: string | null,
   withoutSuffix: boolean
 ): string {
+  if (!target.isValid || (base != null && !base.isValid)) {
+    return 'Invalid date';
+  }
+
+  const relativeBase = base ?? DateTime.now().setZone(target.zone);
+  if (withoutSuffix) {
+    return toRelativeWithoutSuffix(target, relativeBase, locale);
+  }
+
   const relative = target.toRelative({
-    base,
+    base: relativeBase,
     style: 'long',
     locale: locale ?? undefined,
     rounding: 'round',
   });
 
-  if (!withoutSuffix || relative == null) {
-    return relative ?? '';
-  }
-
-  return stripRelativeAffixes(relative);
+  return relative ?? 'Invalid date';
 }
 
 function toMomentDay(weekday: number): number {
