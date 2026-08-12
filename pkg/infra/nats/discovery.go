@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"slices"
 	"time"
 
 	natsserver "github.com/nats-io/nats-server/v2/server"
@@ -15,6 +16,8 @@ import (
 )
 
 const (
+	maxPeerDeleteBatch = 199
+
 	// discoveryClusterName scopes peer rows so independent Grafana clusters can
 	// share one DB without cross-wiring meshes; matches Cluster.Name.
 	discoveryClusterName = "grafana"
@@ -255,10 +258,8 @@ func (s *kvPeerStore) listActive(ctx context.Context, ttl time.Duration) ([]peer
 		}
 		peers = append(peers, peer{ServerName: rec.ServerName, RouteURL: rec.RouteURL})
 	}
-	// Best-effort prune in one round-trip; the active set above already excludes
-	// these, so a failed delete just leaves them for the next tick.
-	if len(stale) > 0 {
-		if err := s.kv.BatchDelete(ctx, kv.NATSPeersSection, stale); err != nil {
+	for chunk := range slices.Chunk(stale, maxPeerDeleteBatch) {
+		if err := s.kv.BatchDelete(ctx, kv.NATSPeersSection, chunk); err != nil {
 			return peers, err
 		}
 	}
