@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -269,117 +270,119 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
-	t.Run("different name, failed new write leaves old resource intact", func(t *testing.T) {
+	t.Run("identity change, new UID is a cross-file duplicate → rejected, old preserved", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
 
-		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old-path/dash.json"}
-		repo.On("Read", mock.Anything, "old-path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old-path/rule.json"}
+		repo.On("Read", mock.Anything, "old-path/rule.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(mustBuildParsedResource("old-uid", mockClient), nil)
 
-		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
-			Obj: &unstructured.Unstructured{Object: map[string]any{
-				"apiVersion": "dashboard.grafana.app/v0alpha1",
-				"kind":       "Dashboard",
-				"metadata":   map[string]any{"name": "old-uid"},
-			}},
-			GVK:    dashboardGVK,
-			Client: mockClient,
-			Repo:   testRepoInfo(),
-		}, nil)
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/rule.json"}
+		repo.On("Read", mock.Anything, "new-path/rule.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(mustBuildParsedResource("new-uid", mockClient), nil)
 
-		newObj := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "dashboard.grafana.app/v0alpha1",
-			"kind":       "Dashboard",
-			"metadata":   map[string]any{"name": "new-uid"},
-		}}
-		newMeta, err := utils.MetaAccessor(newObj)
-		require.NoError(t, err)
+		// Delete dry-run of the old resource populates the folder for cleanup.
+		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).
+			Return(managedGrafanaObj("old-uid", "default", map[string]any{utils.AnnoKeyFolder: "src-folder"}), nil)
+		// new-uid already exists owned by a third file that still declares it → duplicate.
+		mockClient.On("Get", mock.Anything, "new-uid", metav1.GetOptions{}, mock.Anything).
+			Return(managedGrafanaObj("new-uid", "default", map[string]any{utils.AnnoKeySourcePath: "third/rule.json"}), nil)
+		thirdFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "third/rule.json"}
+		repo.On("Read", mock.Anything, "third/rule.json", "new-ref").Return(thirdFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, thirdFileInfo).Return(mustBuildParsedResource("new-uid", nil), nil)
 
-		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json"}
-		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+		mgr := NewResourcesManager(repo, nil, mockParser, NewMockResourceClients(t))
+		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/rule.json", "old-ref", "new-path/rule.json", "new-ref")
 
-		// writeResourceFromParsed reuses newParsed directly — no second parse.
-		// Client is nil so the new write fails, exercising the write-before-delete
-		// ordering: the old resource must NOT be deleted when the write is rejected.
-		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
-			Obj:  newObj,
-			Meta: newMeta,
-			GVK:  dashboardGVK,
-			Repo: testRepoInfo(),
-		}, nil)
-
-		grafanaObj := managedGrafanaObj("old-uid", "default", map[string]any{
-			utils.AnnoKeyFolder: "src-folder",
-		})
-		// The delete dry-run fetches the old resource; the real delete never runs.
-		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
-
-		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
-
-		require.Error(t, err, "write step fails (no client)")
-		require.Contains(t, err.Error(), "failed to write resource")
-		require.Equal(t, "src-folder", folderName, "should return the previous folder for cleanup")
-
+		require.ErrorIs(t, err, ErrDuplicateName)
+		require.Equal(t, "src-folder", folderName, "old folder is returned for cleanup")
+		// The old resource must not be deleted and the new one must not be written.
 		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		mockClient.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
-	t.Run("different name, successful new write deletes old resource", func(t *testing.T) {
+	t.Run("identity change, new UID free → old deleted first, new created", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
+		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return([]SupportedResource{
+			{GroupKind: replaceTestGVK.GroupKind(), Capabilities: sets.New[string]()},
+		}).Maybe()
+		mockClients.On("ForResource", mock.Anything, replaceTestGVR).Return(mockClient, replaceTestGVK, nil)
+		repo.On("Config").Return(replaceRepoConfig())
 
-		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old-path/dash.json"}
-		repo.On("Read", mock.Anything, "old-path/dash.json", "old-ref").Return(oldFileInfo, nil)
-		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
-			Obj: &unstructured.Unstructured{Object: map[string]any{
-				"apiVersion": "dashboard.grafana.app/v0alpha1",
-				"kind":       "Dashboard",
-				"metadata":   map[string]any{"name": "old-uid"},
-			}},
-			GVK:    dashboardGVK,
-			Client: mockClient,
-			Repo:   testRepoInfo(),
-		}, nil)
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old-path/rule.json"}
+		repo.On("Read", mock.Anything, "old-path/rule.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(mustBuildParsedResource("old-uid", mockClient), nil)
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/rule.json"}
+		repo.On("Read", mock.Anything, "new-path/rule.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(mustBuildParsedResource("new-uid", mockClient), nil)
 
-		newObj := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "dashboard.grafana.app/v0alpha1",
-			"kind":       "Dashboard",
-			"metadata":   map[string]any{"name": "new-uid"},
-		}}
-		newMeta, err := utils.MetaAccessor(newObj)
-		require.NoError(t, err)
-		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json"}
-		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
-		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
-			Obj:    newObj,
-			Meta:   newMeta,
-			GVK:    dashboardGVK,
-			Client: mockClient,
-			Repo:   testRepoInfo(),
-		}, nil)
-
-		grafanaObj := managedGrafanaObj("old-uid", "default", map[string]any{
-			utils.AnnoKeyFolder: "src-folder",
-		})
-		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
-		// The new UID is free, so the new write creates it (Run tries update first,
-		// gets NotFound, then falls back to create), then the old is deleted.
+		// old-uid is still owned by this file (sourcePath == previousPath) → deletable.
+		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).
+			Return(managedGrafanaObj("old-uid", "default", map[string]any{
+				utils.AnnoKeySourcePath: "old-path/rule.json",
+				utils.AnnoKeyFolder:     "src-folder",
+			}), nil)
+		mockClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
+		// new-uid is free → probe passes, write creates it.
 		mockClient.On("Get", mock.Anything, "new-uid", metav1.GetOptions{}, mock.Anything).
 			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "new-uid"))
 		mockClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "new-uid"))
-		mockClient.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(newObj, nil)
-		mockClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
+		mockClient.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(&unstructured.Unstructured{Object: map[string]any{"metadata": map[string]any{"name": "new-uid"}}}, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
-		newName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
+		mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
+		newName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/rule.json", "old-ref", "new-path/rule.json", "new-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "new-uid", newName)
-		mockClient.AssertCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		mockClient.AssertCalled(t, "Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything)
+		mockClient.AssertCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("identity change, old UID taken over by another file → skip delete with warning, new created", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+		mockClients := NewMockResourceClients(t)
+		mockClients.EXPECT().SupportedResources().Return([]SupportedResource{
+			{GroupKind: replaceTestGVK.GroupKind(), Capabilities: sets.New[string]()},
+		}).Maybe()
+		mockClients.On("ForResource", mock.Anything, replaceTestGVR).Return(mockClient, replaceTestGVK, nil)
+		repo.On("Config").Return(replaceRepoConfig())
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old-path/rule.json"}
+		repo.On("Read", mock.Anything, "old-path/rule.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(mustBuildParsedResource("old-uid", mockClient), nil)
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/rule.json"}
+		repo.On("Read", mock.Anything, "new-path/rule.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(mustBuildParsedResource("new-uid", mockClient), nil)
+
+		// old-uid's sourcePath now points at another file → deleteOldResource skips it.
+		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).
+			Return(managedGrafanaObj("old-uid", "default", map[string]any{
+				utils.AnnoKeySourcePath: "other/rule.json",
+				utils.AnnoKeyFolder:     "src-folder",
+			}), nil)
+		mockClient.On("Get", mock.Anything, "new-uid", metav1.GetOptions{}, mock.Anything).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "new-uid"))
+		mockClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "new-uid"))
+		mockClient.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(&unstructured.Unstructured{Object: map[string]any{"metadata": map[string]any{"name": "new-uid"}}}, nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
+		newName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/rule.json", "old-ref", "new-path/rule.json", "new-ref")
+
+		require.ErrorIs(t, err, ErrResourceManagedByOtherFile, "skipped delete surfaces as a managed-by-other warning")
+		require.Equal(t, "new-uid", newName, "the renamed file's new resource is still created")
+		mockClient.AssertCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
 	t.Run("new file parse error does not delete old resource", func(t *testing.T) {

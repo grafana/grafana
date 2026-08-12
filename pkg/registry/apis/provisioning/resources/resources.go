@@ -545,55 +545,66 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse new file: %w", err)
 	}
 
-	// Dry-run the delete: fetch the existing object (with ownership validation)
-	// without mutating it, populating oldParsed.Existing for the folder lookup and
-	// so a later real delete can reuse it. Crucially, the old resource is NOT
-	// deleted yet — a rename whose new UID is rejected as a cross-file duplicate
-	// must leave the original resource intact rather than orphan the file.
+	// Dry-run the delete to fetch the old object without mutating it, only so we
+	// know its folder for orphan-cleanup signalling. The real delete below goes
+	// through the sourcePath-aware deleteOldResource, which re-reads the resource.
 	oldParsed.Action = provisioning.ResourceActionDelete
 	if err := oldParsed.DryRun(ctx); err != nil {
 		return "", "", schema.GroupVersionKind{}, err
 	}
-
-	// Pure path-only rename (same identity, git blob hash unchanged): the file
-	// content is byte-identical, so the UPDATE we are about to send carries the
-	// same spec the cluster already accepted. Skip strict schema validation so a
-	// path/folder change is not blocked by stricter rules introduced after the
-	// resource was first persisted (e.g. legacy dashboards saved before the CUE
-	// validator was enforced). Rename-with-edits keeps strict validation.
-	if oldParsed.SameIdentity(newParsed) && oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
-		newParsed.SkipStrictValidation = true
-	}
-
 	oldFolderName := oldParsed.ExistingFolder()
 
-	// Write the new resource first. If it is rejected (e.g. its UID collides with
-	// a third file), the old resource is still present — never delete before the
-	// replacement is committed.
+	// skippedOldDelete carries a managed-by-other warning when the old UID has been
+	// taken over by another file: the rename's new resource is still written and
+	// the skipped delete is surfaced as a non-fatal warning.
+	var skippedOldDelete error
+	if oldParsed.SameIdentity(newParsed) {
+		// Pure path/folder rename: writeResourceFromParsed updates the resource in
+		// place, so there is no old resource to delete. Byte-identical content skips
+		// strict validation so a path/folder change is not blocked by stricter rules
+		// introduced after the resource was first persisted (e.g. legacy dashboards).
+		if oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
+			newParsed.SkipStrictValidation = true
+		}
+	} else {
+		// Identity-changing rename. Reject up front if the new UID is a cross-file
+		// duplicate, leaving the old resource intact (no data loss, and no wasted
+		// quota slot). Otherwise delete the old resource FIRST so its quota slot is
+		// freed before the new one is created — a net-zero rename must not require a
+		// temporary extra slot. deleteOldResource re-reads the resource under the
+		// provisioning identity and, if another file has taken the UID over, skips
+		// the delete and returns a managed-by-other warning rather than destroying it.
+		owner, dup, derr := r.accidentalDuplicateOwner(ctx, newPath, newRef, newParsed)
+		if derr != nil {
+			return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, derr
+		}
+		if dup {
+			return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, NewResourceValidationError(
+				fmt.Errorf("duplicate resource name: %s, %s and %s: %w", newParsed.Obj.GetName(), newPath, owner, ErrDuplicateName),
+			)
+		}
+		if derr := r.deleteOldResource(ctx, previousPath, oldParsed.Obj.GetName(), oldParsed.GVR, newParsed.Obj.GetName()); derr != nil {
+			if !errors.Is(derr, ErrResourceManagedByOtherFile) {
+				return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, fmt.Errorf("failed to delete old resource: %w", derr)
+			}
+			skippedOldDelete = derr
+		}
+	}
+
 	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
 	if err != nil {
 		return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
 	}
 
-	// Identity changed (name or kind): the old resource is now orphaned, so delete
-	// it now that the new one is committed. When the identity matched,
-	// writeResourceFromParsed updated it in place and there is nothing to delete.
-	if !oldParsed.SameIdentity(newParsed) {
-		oldParsed.Action = provisioning.ResourceActionDelete
-		if err := oldParsed.Run(ctx); err != nil {
-			return newName, oldFolderName, gvk, fmt.Errorf("failed to delete old resource: %w", err)
-		}
-	}
-
-	// When the resource's parent folder didn't change (e.g. the entire
-	// directory was renamed and the folder was updated in place with the
-	// same UID), the old folder was not emptied — suppress the signal so
-	// the caller doesn't mark it for orphan deletion.
+	// When the resource's parent folder didn't change (e.g. the entire directory
+	// was renamed and the folder was updated in place with the same UID), the old
+	// folder was not emptied — suppress the signal so the caller doesn't mark it
+	// for orphan deletion.
 	if newParsed.Meta.GetFolder() == oldFolderName {
 		oldFolderName = ""
 	}
 
-	return newName, oldFolderName, gvk, nil
+	return newName, oldFolderName, gvk, skippedOldDelete
 }
 
 func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, string, schema.GroupVersionKind, error) {
