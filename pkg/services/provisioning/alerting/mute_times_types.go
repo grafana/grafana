@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
@@ -13,20 +15,26 @@ type MuteTimeV1 struct {
 	MuteTime definitions.MuteTimeInterval `json:",inline" yaml:",inline"`
 }
 
-func (v1 *MuteTimeV1) mapToModel() MuteTime {
-	orgID := v1.OrgID.Value()
+func (mt *MuteTimeV1) mapToModel() MuteTime {
+	orgID := mt.OrgID.Value()
 	if orgID < 1 {
 		orgID = 1
 	}
 	return MuteTime{
-		OrgID:    orgID,
-		MuteTime: v1.MuteTime,
+		OrgID: orgID,
+		MuteTime: v1.TimeInterval{
+			ResourceMetadata: v1.ResourceMetadata{
+				Provenance: models.ProvenanceFile,
+			},
+			Title:         mt.MuteTime.Name,
+			TimeIntervals: mt.MuteTime.TimeIntervals,
+		},
 	}
 }
 
 type MuteTime struct {
 	OrgID    int64
-	MuteTime definitions.MuteTimeInterval
+	MuteTime v1.TimeInterval
 }
 
 type DeleteMuteTimeV1 struct {

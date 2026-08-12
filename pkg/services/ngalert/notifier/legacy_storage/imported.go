@@ -77,22 +77,19 @@ func (e ImportedConfigRevision) GetTimeIntervals() ([]v1.TimeInterval, error) {
 
 	// Merge to get the renames map (only renamed if name collision occurs)
 	timeIntervals, _, added := merge.TimeIntervals(
-		e.rev.Config.AlertmanagerConfig.TimeIntervals,
+		e.rev.Config.TimeIntervals,
 		imported,
 		e.identifier,
 	)
 
-	importedTitles := make(map[string]struct{}, len(added))
-	for _, title := range added {
-		importedTitles[title] = struct{}{}
-	}
-
-	// Filter to imported intervals
 	result := make([]v1.TimeInterval, 0, len(added))
-	for _, ti := range timeIntervals {
-		if _, ok := importedTitles[ti.Name]; !ok {
+	for _, uid := range added {
+		ti, ok := timeIntervals[uid]
+		if !ok {
 			continue
 		}
+
+		ti.Provenance = models.ProvenanceConvertedPrometheus
 		result = append(result, ti)
 	}
 
@@ -123,7 +120,7 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 
 	route := e.importedConfig.ToGrafanaRoute()
 
-	renamed := merge.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.identifier)
+	renamed := merge.DeduplicateResources(*e.rev.Config, *e.importedConfig, e.identifier)
 
 	merge.RenameResourceUsagesInRoutes([]*v1.Route{route}, renamed)
 
