@@ -27,6 +27,7 @@ export const FlameGraphPanel = (props: PanelProps<Options>) => {
       data={props.data.series[0]}
       stickyHeader={false}
       getTheme={() => theme}
+      enableNewUI={true}
       showFlameGraphOnly={props.options?.showFlameGraphOnly ?? false}
       onTableSymbolClick={() => interaction('table_item_selected')}
       onViewSelected={(view: string) => interaction('view_selected', { view })}

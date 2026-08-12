@@ -2,7 +2,7 @@ import { type Meta, type StoryObj } from '@storybook/react';
 
 import { createDataFrame } from '@grafana/data';
 
-import { ColorScheme, SelectedView } from '../types';
+import { ColorScheme } from '../types';
 
 import FlameGraph from './FlameGraph';
 import { CollapsedMap, FlameGraphDataContainer } from './dataTransform';
@@ -16,7 +16,8 @@ const meta: Meta<typeof FlameGraph> = {
     rangeMax: 1,
     textAlign: 'left',
     colorScheme: ColorScheme.PackageBased,
-    selectedView: SelectedView.Both,
+    onColorSchemeChange: () => {},
+    onTextAlignChange: () => {},
     search: '',
   },
 };

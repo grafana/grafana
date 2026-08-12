@@ -2718,7 +2718,8 @@
       "metadata": {
         "name": "flameGraphWithCallTree",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-08-11T17:51:24Z"
       },
       "spec": {
         "description": "Enables the new Flame Graph UI containing the Call Tree view",
