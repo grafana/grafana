@@ -8,8 +8,10 @@ import {
   type ZoneOffsetOptions,
   DateTime,
   Duration,
+  FixedOffsetZone,
   IANAZone,
   Settings,
+  type Zone,
 } from './luxon';
 
 export type MomentUnit =
@@ -86,7 +88,7 @@ type MomentDurationInput = number | string | undefined | null;
 
 interface MomentOptions {
   locale?: string;
-  zone?: string | IANAZone;
+  zone?: string | Zone;
 }
 
 interface ParseOptions {
@@ -409,6 +411,34 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
     return parsed;
   }
 
+  if (typeof format === 'string') {
+    const permissiveInputs: Array<[string, string]> = [];
+    const abbreviatedMonthFormat = format.replaceAll('MMMM', 'MMM');
+    const valueWithoutCommas = value.replaceAll(',', '');
+    const formatWithoutCommas = format.replaceAll(',', '');
+
+    if (abbreviatedMonthFormat !== format) {
+      permissiveInputs.push([value, abbreviatedMonthFormat]);
+    }
+    if (valueWithoutCommas !== value || formatWithoutCommas !== format) {
+      permissiveInputs.push([valueWithoutCommas, formatWithoutCommas]);
+      if (abbreviatedMonthFormat !== format) {
+        permissiveInputs.push([valueWithoutCommas, formatWithoutCommas.replaceAll('MMMM', 'MMM')]);
+      }
+    }
+
+    for (const [permissiveValue, permissiveFormat] of permissiveInputs) {
+      const permissiveParsed = parseFromCachedFormat(
+        permissiveValue,
+        convertMomentToLuxonForParsing(permissiveFormat),
+        options
+      );
+      if (permissiveParsed.isValid) {
+        return permissiveParsed;
+      }
+    }
+  }
+
   // try to handle partial parse 'yyyy' from '2017-07-19 00:00:00.000'
   const fallbackParsed = parseWithFallbacks(value, options);
   if (fallbackParsed.isValid) {
@@ -572,12 +602,16 @@ class EasyTzZone extends IANAZone {
   }
 }
 
-function normalizeZone(zone: string | IANAZone): IANAZone {
-  if (zone instanceof IANAZone) {
+function normalizeZone(zone: string | Zone): Zone {
+  if (typeof zone !== 'string') {
     return zone;
   }
 
   const name = normalizeZoneName(zone);
+  if (name === 'UTC') {
+    return FixedOffsetZone.instance(0);
+  }
+
   let normalized = easyTzZoneCache.get(name);
 
   if (!normalized) {

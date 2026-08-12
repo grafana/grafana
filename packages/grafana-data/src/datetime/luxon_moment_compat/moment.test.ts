@@ -53,6 +53,10 @@ describe('diff', () => {
 });
 
 describe('format', () => {
+  it('uses Z for UTC in the default format', () => {
+    expect(moment.utc('2024-05-08T10:30:45Z').format()).toBe('2024-05-08T10:30:45Z');
+  });
+
   it('matches the longest moment token first', () => {
     expect(convertMomentToLuxonWithOrdinal('zz')).toBe('ZZZZZ');
     expect(convertMomentToLuxonWithOrdinal('z')).toBe('ZZZZ');
@@ -78,6 +82,13 @@ describe('format', () => {
 });
 
 describe('formatted string parsing', () => {
+  it('accepts abbreviated month names for the long month token like moment', () => {
+    const parsed = moment.utc('Aug 20, 2020 10:30:20 am', 'MMMM D, YYYY, h:mm:ss a');
+
+    expect(parsed.isValid()).toBe(true);
+    expect(parsed.toISOString()).toBe('2020-08-20T10:30:20.000Z');
+  });
+
   it('parses lowercase meridiem tokens without falling back to the local timezone', () => {
     const parsed = moment.utc('Aug 20, 2020 10:30:20 am', 'MMM D, YYYY h:mm:ss a');
 
