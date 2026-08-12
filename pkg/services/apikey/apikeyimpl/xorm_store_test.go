@@ -109,9 +109,11 @@ func TestStoreUsesProviderTables(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	require.NoError(t, store.UpdateAPIKeyLastUsedDate(ctx, 7))
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) AS count FROM `test_schema`.`api_key`")).
+	// The count template renders with sqltemplate's dialect quoting (double
+	// quotes on the sqlite-flavored mock), unlike the xorm-built queries above.
+	mock.ExpectQuery(regexp.QuoteMeta(`FROM "test_schema"."api_key"`)).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(3)))
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT COUNT(*) AS count FROM `test_schema`.`api_key` WHERE org_id = ?")).
+	mock.ExpectQuery(regexp.QuoteMeta(`WHERE org_id = ?`)).
 		WithArgs(int64(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(2)))
 	_, err = store.Count(ctx, &quota.ScopeParameters{OrgID: 1})

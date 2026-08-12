@@ -10,15 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 type sqlStore struct {
 	sql legacysql.LegacyDatabaseProvider
-}
-
-// quoteTable resolves a table name and quotes it for use in raw SQL.
-func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
-	return dbHelper.DB.Quote(dbHelper.Table(name))
 }
 
 // timeNow makes it possible to test usage of time
@@ -145,6 +141,38 @@ func (ss *sqlStore) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64)
 	})
 }
 
+type countAPIKeysQuery struct {
+	sqltemplate.SQLTemplate
+	APIKeyTable string
+	OrgID       int64
+}
+
+func (q countAPIKeysQuery) Validate() error { return nil }
+
+func countAPIKeys(dbHelper *legacysql.LegacyDatabaseHelper, sess *sqlstore.DBSession, scope quota.Scope, orgID int64, u *quota.Map) error {
+	query := countAPIKeysQuery{
+		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
+		APIKeyTable: dbHelper.Table("api_key"),
+		OrgID:       orgID,
+	}
+	rawSQL, err := sqltemplate.Execute(countAPIKeysTemplate, query)
+	if err != nil {
+		return err
+	}
+
+	r := struct{ Count int64 }{}
+	if _, err := sess.SQL(rawSQL, query.GetArgs()...).Get(&r); err != nil {
+		return err
+	}
+
+	tag, err := quota.NewTag(apikey.QuotaTargetSrv, apikey.QuotaTarget, scope)
+	if err != nil {
+		return err
+	}
+	u.Set(tag, r.Count)
+	return nil
+}
+
 func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	dbHelper, err := ss.sql(ctx)
 	if err != nil {
@@ -152,44 +180,14 @@ func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 	}
 
 	u := &quota.Map{}
-	type result struct {
-		Count int64
-	}
-
-	r := result{}
-	if err := dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rawSQL := "SELECT COUNT(*) AS count FROM " + quoteTable(dbHelper, "api_key")
-		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		if err := countAPIKeys(dbHelper, sess, quota.GlobalScope, 0, u); err != nil {
 			return err
 		}
+		if scopeParams != nil && scopeParams.OrgID != 0 {
+			return countAPIKeys(dbHelper, sess, quota.OrgScope, scopeParams.OrgID, u)
+		}
 		return nil
-	}); err != nil {
-		return u, err
-	} else {
-		tag, err := quota.NewTag(apikey.QuotaTargetSrv, apikey.QuotaTarget, quota.GlobalScope)
-		if err != nil {
-			return nil, err
-		}
-		u.Set(tag, r.Count)
-	}
-
-	if scopeParams != nil && scopeParams.OrgID != 0 {
-		if err := dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			rawSQL := "SELECT COUNT(*) AS count FROM " + quoteTable(dbHelper, "api_key") + " WHERE org_id = ?"
-			if _, err := sess.SQL(rawSQL, scopeParams.OrgID).Get(&r); err != nil {
-				return err
-			}
-			return nil
-		}); err != nil {
-			return u, err
-		} else {
-			tag, err := quota.NewTag(apikey.QuotaTargetSrv, apikey.QuotaTarget, quota.OrgScope)
-			if err != nil {
-				return nil, err
-			}
-			u.Set(tag, r.Count)
-		}
-	}
-
-	return u, nil
+	})
+	return u, err
 }
