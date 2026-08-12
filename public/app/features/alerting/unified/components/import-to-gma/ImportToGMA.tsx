@@ -49,7 +49,6 @@ import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
 import { RenamedResourcesList } from './CollapsibleRenameList';
 import { PolicyTreeNameHelp } from './PolicyTreeNameHelp';
-import { PromoteMergeSummary } from './PromoteMergeSummary';
 import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
@@ -283,7 +282,7 @@ function ImportWizardContent() {
       yamlFile: formValues.notificationsYamlFile,
       templateFiles: formValues.notificationsTemplateFiles,
       configIdentifier: formValues.policyTreeName,
-      promote: formValues.importMethod === 'promote',
+      promote: false,
     });
   }, [getValues, runDryRun]);
 
@@ -369,7 +368,7 @@ function ImportWizardContent() {
           yamlFile: values.notificationsYamlFile,
           templateFiles: values.notificationsTemplateFiles,
           configIdentifier: values.policyTreeName,
-          promote: values.importMethod === 'promote',
+          promote: false,
         });
       }
 
@@ -417,13 +416,11 @@ function ImportWizardContent() {
         skipSubPath: true,
       });
 
-      // A staged (non-promoted) notifications import lands on the Import tab so the user can review the
-      // staged copy and decide to promote or revert it. Everything else keeps the rule-list redirect.
-      const stagedNotifications = willImportNotifications && values.importMethod !== 'promote';
-
       setTimeout(() => {
         setShowConfirmModal(false);
-        if (stagedNotifications) {
+        // A staged notifications import lands on the Import tab so the user can review the staged
+        // copy and decide to promote or revert it. Everything else keeps the rule-list redirect.
+        if (willImportNotifications) {
           notifyApp.success(
             t('alerting.wizard-import-to-gma.staged-success-title', 'Configuration staged'),
             t(
@@ -853,20 +850,9 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                       <PolicyTreeNameHelp />
                     </Stack>
                   </div>
-                  {formData.importMethod === 'promote' && (
-                    <div className={styles.row}>
-                      <Text color="secondary">{t('alerting.import-to-gma.review.method', 'Method')}</Text>
-                      <Text weight="medium">{t('alerting.import-to-gma.review.method-promote', 'Promote')}</Text>
-                    </div>
-                  )}
                   {dryRunResult && (
                     <Box marginTop={1}>
                       <ValidationStatusIndicator result={dryRunResult} />
-                    </Box>
-                  )}
-                  {formData.importMethod === 'promote' && dryRunResult?.stats && (
-                    <Box marginTop={1}>
-                      <PromoteMergeSummary stats={dryRunResult.stats} />
                     </Box>
                   )}
                 </Stack>

@@ -43,7 +43,6 @@ const ui = {
   autosyncRadio: byRole('radio', { name: /auto-sync/i }),
   nextButton: byRole('button', { name: /notification resources|review & enable/i }),
   picker: byRole('combobox'),
-  promoteWarning: byText(/promoting can't be undone/i),
   noDatasources: byText(/no mimir or cortex data sources/i),
 };
 
@@ -51,12 +50,6 @@ describe('StepImportMethod — segment panels', () => {
   it('shows the Stage description when Stage is selected', () => {
     renderStep('stage');
     expect(screen.getByText(/stage brings the config in safely/i)).toBeInTheDocument();
-    expect(ui.promoteWarning.query()).not.toBeInTheDocument();
-  });
-
-  it('shows the irreversible-merge warning when Promote is selected', () => {
-    renderStep('promote');
-    expect(ui.promoteWarning.get()).toBeInTheDocument();
   });
 });
 
@@ -86,26 +79,24 @@ describe('StepImportMethod — Auto-sync segment gating', () => {
 });
 
 describe('StepImportMethod — option order', () => {
-  it('renders Stage then Promote when Auto-sync is unavailable', () => {
+  it('renders only Stage when Auto-sync is unavailable', () => {
     grantUserRole('Admin');
     renderStep('stage');
     const radios = screen.getAllByRole('radio');
-    expect(radios).toHaveLength(2);
+    expect(radios).toHaveLength(1);
     expect(radios[0]).toHaveAccessibleName('Stage');
-    expect(radios[1]).toHaveAccessibleName('Promote');
   });
 
   describe('with the feature flag on', () => {
     testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
-    it('renders Stage, then Promote, then Auto-sync for org admins', () => {
+    it('renders Stage, then Auto-sync for org admins', () => {
       grantUserRole('Admin');
       renderStep('stage');
       const radios = screen.getAllByRole('radio');
-      expect(radios).toHaveLength(3);
+      expect(radios).toHaveLength(2);
       expect(radios[0]).toHaveAccessibleName('Stage');
-      expect(radios[1]).toHaveAccessibleName('Promote');
-      expect(radios[2]).toHaveAccessibleName('Auto-sync');
+      expect(radios[1]).toHaveAccessibleName('Auto-sync');
     });
   });
 });
