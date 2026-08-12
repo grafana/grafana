@@ -6,6 +6,8 @@ import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import {
   SceneCanvasText,
   type SceneDataTransformer,
+  SceneFlexItem,
+  SceneFlexLayout,
   sceneGraph,
   SceneGridLayout,
   type SceneQueryRunner,
@@ -285,6 +287,39 @@ describe('LibraryPanelBehavior', () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel();
 
       expect(gridItem.state.variableName).toBeUndefined();
+    });
+
+    // The reason getDashboardSceneFor sits inside the DashboardGridItem branch rather than above it.
+    // A notebook cell holding a library panel whose model carries `repeat` has a NotebookCellItem
+    // parent and a NotebookScene root, so hoisting the lookup back out throws
+    // "SceneObject root is not a DashboardScene" and the cell fails to render. Every other case in
+    // this file builds a DashboardScene root, so none of them would catch that.
+    it('does not look up the dashboard when the panel is not in a DashboardGridItem', () => {
+      const behavior = new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' });
+      const vizPanel = new VizPanel({ pluginId: 'lib-panel-loading', key: 'panel-1', $behaviors: [behavior] });
+
+      // Stands in for a NotebookCellItem: a non-DashboardGridItem parent under a root that is not a
+      // DashboardScene. Built directly rather than via getLibraryPanel so there is no mock in the path.
+      new SceneFlexLayout({ children: [new SceneFlexItem({ body: vizPanel })] });
+
+      expect(() =>
+        behavior.setPanelFromLibPanel({
+          name: 'LibraryPanel A',
+          uid: '111',
+          type: 'table',
+          version: 1,
+          model: {
+            title: 'LibraryPanel A title',
+            type: 'table',
+            options: {},
+            fieldConfig: { defaults: {}, overrides: [] },
+            targets: [{ refId: 'A' }],
+            // The field that reaches the getDashboardSceneFor call.
+            repeat: 'server',
+            repeatDirection: 'h',
+          },
+        })
+      ).not.toThrow();
     });
   });
 });
