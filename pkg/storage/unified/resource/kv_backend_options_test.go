@@ -79,6 +79,8 @@ func requirePopulated(t *testing.T, v reflect.Value, path string) {
 			if value.Elem().Kind() == reflect.Struct {
 				requirePopulated(t, value.Elem(), fieldPath)
 			}
+		default:
+			// Anything else is a leaf, and the non-zero check above is all there is to do.
 		}
 	}
 }
@@ -142,6 +144,8 @@ func fullyPopulatedCfg() *setting.Cfg {
 			field.SetUint(uint64(i + 1))
 		case reflect.Float32, reflect.Float64:
 			field.SetFloat(float64(i + 1))
+		default:
+			// Only scalars: nothing reads a config field of another kind into the options.
 		}
 	}
 
