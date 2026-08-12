@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   behaviors,
   type CancelActivationHandler,
@@ -12,6 +13,8 @@ import {
   type SceneRefreshPicker,
   type SceneTimePicker,
   type SceneTimeRange,
+  SceneVariableSet,
+  ScopesVariable,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -40,6 +43,9 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   public constructor(state: NotebookSceneState) {
     super({
       ...state,
+      // Composed in here rather than by the deserializer: scopes are runtime context, not part of
+      // the notebook spec, so every NotebookScene needs them regardless of how it was built.
+      $variables: state.$variables ?? buildNotebookVariables(),
       $behaviors: [
         new behaviors.CursorSync({ sync: DashboardCursorSync.Crosshair }),
         new behaviors.SceneQueryController(),
@@ -93,12 +99,30 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   }
 }
 
+/**
+ * A notebook's only scene variable is the scopes one, and only when scopes are on. The same
+ * condition as the dashboard v2 transform, including the public-dashboard opt-out.
+ *
+ * SceneQueryRunner reads scopes off the graph (sceneGraph.getScopes -> lookupVariable('__scopes')),
+ * so a notebook without this variable runs its queries unscoped while the same panels on a
+ * dashboard are scoped. The variable is also what enables the scope selector at all: its
+ * setContext calls ScopesContext.setEnabled.
+ */
+function buildNotebookVariables(): SceneVariableSet | undefined {
+  if (!config.featureToggles.scopeFilters || config.publicDashboardAccessToken) {
+    return undefined;
+  }
+
+  return new SceneVariableSet({ variables: [new ScopesVariable({ enable: true })] });
+}
+
 function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   const styles = useStyles2(getStyles);
   const { body, timePicker, refreshPicker, hideTimeControls, overlay } = model.useState();
 
   return (
     <>
+      <NotebookHiddenVariables model={model} />
       {!hideTimeControls && (
         <div className={styles.controls}>
           <timePicker.Component model={timePicker} />
@@ -107,6 +131,31 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
       )}
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}
+    </>
+  );
+}
+
+/**
+ * ScopesVariable is UNSAFE_renderAsHidden and reaches ScopesContext only through its own renderer,
+ * so mounting it is mandatory, not cosmetic: it starts with `loading: true` and resolves
+ * validateAndUpdate only once setContext sees the context. Left unmounted, every query runner
+ * depending on it (SceneQueryRunner sets dependsOnScopes) waits forever and no panel loads.
+ * Same reason SoloPanelPage renders its hidden variables.
+ */
+function NotebookHiddenVariables({ model }: SceneComponentProps<NotebookScene>) {
+  const { $variables } = model.useState();
+
+  if (!$variables) {
+    return null;
+  }
+
+  return (
+    <>
+      {$variables.state.variables
+        .filter((variable) => variable.UNSAFE_renderAsHidden)
+        .map((variable) => (
+          <variable.Component model={variable} key={variable.state.key} />
+        ))}
     </>
   );
 }
