@@ -3619,6 +3619,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Intervalos de tiempo",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Seleccionar intervalos de tiempo..."
     },
     "time-intervals-table": {
@@ -5662,6 +5663,8 @@
       "edit-query-result-rule": "Cambiar regla de resultado de consulta",
       "edit-template-variable-rule": "Cambiar regla de variable de plantilla",
       "edit-time-range-rule": "Cambiar regla de intervalo de tiempo",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Mover {{typeName}}",
       "panel-background": "Cambiar fondo del panel",
       "panel-description": "Cambiar descripción del panel",
@@ -5914,8 +5917,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Esto desagrupará todos los grupos anidados.",
-      "ungroup-nested-title": "¿Desagrupar grupos anidados?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} de {{numberOfPages}}",
@@ -6128,6 +6135,13 @@
       "save-json-to-file": "Guardar JSON en un archivo",
       "see-docs": "Consulta la <2>documentación</2> para obtener más información sobre el aprovisionamiento."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6291,6 +6305,12 @@
         "title-controls-menu_other": "",
         "title-hidden_one": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -7250,6 +7270,7 @@
         "title-someone-else-has-updated-this-dashboard": "Otra persona ha actualizado este dashboard",
         "would-still-dashboard": "¿Seguro que quieres guardar este dashboard?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Guardar y sobrescribir"
     },
     "legacy": {
@@ -8056,7 +8077,8 @@
       "title-missing-rights": "Faltan derechos"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Seleccionar una fuente de datos"
+      "aria-label-select-a-data-source": "Seleccionar una fuente de datos",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Página no encontrada: {{page}}"
@@ -10963,6 +10985,12 @@
       "high-count_one": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12439,6 +12467,10 @@
     "new-folder": {
       "title": "Nueva carpeta"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12732,8 +12764,35 @@
       "title-zoom-out": "Alejar"
     }
   },
-  "notebook": {
-    "breadcrumb-title": ""
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_other": ""
+    }
   },
   "notifications": {
     "empty-state": {
@@ -14757,7 +14816,6 @@
     },
     "header": {
       "alert": "Alerta",
-      "expression": "Expresión",
       "pending-expression": "",
       "pending-expression-cancel": "Cancelar",
       "pending-transformation": "",
@@ -14771,6 +14829,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },

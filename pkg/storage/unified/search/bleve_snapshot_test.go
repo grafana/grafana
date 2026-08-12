@@ -42,8 +42,9 @@ func writeFakeSnapshot(dir string, meta *IndexMeta) error {
 		return err
 	}
 	bi, err := json.Marshal(buildInfo{
-		BuildTime:    meta.UploadTimestamp.Unix(),
-		BuildVersion: meta.BuildVersion,
+		BuildTime:          meta.UploadTimestamp.Unix(),
+		BuildVersion:       meta.BuildVersion,
+		ReaderRequirements: meta.ReaderRequirements,
 	})
 	if err != nil {
 		return err
@@ -163,6 +164,38 @@ func TestPickBestSnapshot(t *testing.T) {
 		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): snap("not-a-version", 100, time.Minute)}
 		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		assert.False(t, ok)
+	})
+
+	requiring := func(ver string, rv int64, age time.Duration, requirements ...resource.IndexFeature) *IndexMeta {
+		m := snap(ver, rv, age)
+		m.ReaderRequirements = requirements
+		return m
+	}
+
+	t.Run("dropped for unknown reader requirements", func(t *testing.T) {
+		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): requiring("11.5.0", 100, time.Minute, "feature-from-the-future")}
+		_, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		assert.False(t, ok)
+	})
+
+	t.Run("requirements this instance understands are accepted", func(t *testing.T) {
+		key := makeULID(t, now)
+		all := map[ulid.ULID]*IndexMeta{key: requiring("11.5.0", 100, time.Minute, resource.IndexFeatureDeletedMarker)}
+		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, key, c.key)
+	})
+
+	// Without the filter the newer one wins as tier 2 and its documents are misread.
+	t.Run("falls back to an older snapshot when the newest needs an unknown feature", func(t *testing.T) {
+		compatible := makeULID(t, now.Add(-30*time.Second))
+		all := map[ulid.ULID]*IndexMeta{
+			compatible:       snap("11.5.0", 100, time.Minute),
+			makeULID(t, now): requiring("12.0.0", 999, time.Minute, "feature-from-the-future"),
+		}
+		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, compatible, c.key)
 	})
 
 	t.Run("tier 0 preferred over 1 and 2", func(t *testing.T) {

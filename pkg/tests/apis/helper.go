@@ -198,7 +198,7 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 	cfgProvider, err := configprovider.ProvideService(c.env.Cfg)
 	require.NoError(c.t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(c.env.SQLStore), cfgProvider)
-	orgSvc, err := orgimpl.ProvideService(c.env.SQLStore, c.env.Cfg, quotaService)
+	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(c.env.SQLStore), c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 	c.orgSvc = orgSvc
 

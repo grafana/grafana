@@ -1,9 +1,8 @@
 import { type Page } from '@playwright/test';
 
-import { expect, test } from '@grafana/plugin-e2e';
-
-import { Canvas, Sidebar, Tabs } from './page-objects';
-import { saveDashboard } from './utils';
+import { expect, test } from './fixtures';
+import { flows } from './helpers';
+import { type Canvas, type Sidebar, type Tabs } from './page-objects';
 
 test.use({
   featureToggles: {
@@ -51,15 +50,12 @@ test.describe(
   () => {
     test('shows scroll buttons and supports paged scrolling', async ({
       gotoDashboardPage,
-      selectors,
       page,
-      components,
+      sidebar,
+      tabs,
+      canvas,
     }) => {
-      const dashboardPage = await gotoDashboardPage({});
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const canvas = new Canvas({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
+      await gotoDashboardPage({});
       const { firstTab, lastTab } = await buildOverflowTabs(sidebar, canvas, tabs);
 
       const scrollLeftButton = page.getByRole('button', { name: 'Scroll tabs left' });
@@ -94,15 +90,12 @@ test.describe(
 
     test('auto-scrolls selected tabs into view from outline', async ({
       gotoDashboardPage,
-      selectors,
       page,
-      components,
+      sidebar,
+      tabs,
+      canvas,
     }) => {
-      const dashboardPage = await gotoDashboardPage({});
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const canvas = new Canvas({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
+      await gotoDashboardPage({});
       const { firstTab, lastTab, lastTabTitle } = await buildOverflowTabs(sidebar, canvas, tabs);
 
       await openContentOutline(page, sidebar);
@@ -114,12 +107,8 @@ test.describe(
       await expect(lastTab).toBeInViewport();
     });
 
-    test('auto-scrolls newly appended tab into view', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({});
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const canvas = new Canvas({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
+    test('auto-scrolls newly appended tab into view', async ({ gotoDashboardPage, page, sidebar, tabs, canvas }) => {
+      await gotoDashboardPage({});
       const { firstTab } = await buildOverflowTabs(sidebar, canvas, tabs);
 
       await openContentOutline(page, sidebar);
@@ -134,18 +123,16 @@ test.describe(
 
     test('keeps overflow controls after save and reload', async ({
       gotoDashboardPage,
-      selectors,
       page,
-      components,
+      controls,
+      sidebar,
+      tabs,
+      canvas,
     }) => {
-      const dashboardPage = await gotoDashboardPage({});
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const canvas = new Canvas({ page, dashboardPage, selectors, components });
-      const tabs = new Tabs({ page, dashboardPage, selectors, components });
-
+      await gotoDashboardPage({});
       await buildOverflowTabs(sidebar, canvas, tabs);
 
-      await saveDashboard(dashboardPage, page, selectors, `test dashboard scroll ${Date.now()}`);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls, `test dashboard scroll ${Date.now()}`);
       await page.reload();
       await expect(page.getByRole('button', { name: 'Scroll tabs left' })).toBeVisible();
     });

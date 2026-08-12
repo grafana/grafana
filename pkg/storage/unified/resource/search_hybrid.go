@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
@@ -34,6 +36,27 @@ import (
 func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (resp *resourcepb.HybridSearchResponse, retErr error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.HybridSearch")
 	defer span.End()
+
+	start := time.Now()
+	// Labels captured before validation so the missing-key early returns
+	// still observe a labeled sample, mirroring VectorSearch.
+	group, resource := "unknown", "unknown"
+	if req != nil && req.Key != nil {
+		if g := req.Key.GetGroup(); g != "" {
+			group = g
+		}
+		if r := req.Key.GetResource(); r != "" {
+			resource = r
+		}
+	}
+	defer func() {
+		if s.vectorMetrics != nil {
+			metricutil.ObserveWithExemplar(ctx,
+				s.vectorMetrics.HybridSearchDuration.WithLabelValues(group, resource, status.Code(retErr).String()),
+				time.Since(start).Seconds(),
+			)
+		}
+	}()
 
 	if s.embedder == nil || s.vectorBackend == nil {
 		return nil, status.Error(codes.Unimplemented, "hybrid search not configured")

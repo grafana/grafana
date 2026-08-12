@@ -203,9 +203,40 @@ func TestIntegrationProvisioningStore(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, models.ProvenanceNone, p)
 			})
+
+			t.Run("Deleting provenance of a resource with an empty ResourceID does not affect siblings of the same type", func(t *testing.T) {
+				// Some Provisionable resources (e.g. the default alerting route) use "" as their
+				// ResourceID for backwards compatibility, while sharing ResourceType with sibling
+				// resources that have real, non-empty IDs. Deleting the empty-ID one must not wipe
+				// out provenance for the others.
+				const orgID = 5678
+				empty := fakeProvisionable{resourceType: "route", resourceID: ""}
+				sibling := fakeProvisionable{resourceType: "route", resourceID: "route-a"}
+
+				require.NoError(t, store.SetProvenance(context.Background(), empty, orgID, models.ProvenanceFile))
+				require.NoError(t, store.SetProvenance(context.Background(), sibling, orgID, models.ProvenanceAPI))
+
+				require.NoError(t, store.DeleteProvenance(context.Background(), empty, orgID))
+
+				p, err := store.GetProvenance(context.Background(), empty, orgID)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceNone, p)
+
+				p, err = store.GetProvenance(context.Background(), sibling, orgID)
+				require.NoError(t, err)
+				require.Equal(t, models.ProvenanceAPI, p)
+			})
 		})
 	}
 }
+
+type fakeProvisionable struct {
+	resourceType string
+	resourceID   string
+}
+
+func (f fakeProvisionable) ResourceType() string { return f.resourceType }
+func (f fakeProvisionable) ResourceID() string   { return f.resourceID }
 
 func TestIntegrationProvisioningStoreManagerProperties(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)

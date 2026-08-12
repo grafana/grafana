@@ -54,7 +54,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		cfgProvider, err := configprovider.ProvideService(cfg)
 		require.NoError(t, err)
 		quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfgProvider)
-		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
@@ -506,7 +506,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				cfgProvider, err := configprovider.ProvideService(cfg)
 				require.NoError(t, err)
 				quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfgProvider)
-				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+				orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
 					sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
@@ -752,7 +752,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		cfgProvider, err := configprovider.ProvideService(cfg)
 		require.NoError(t, err)
 		quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider)
-		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			store, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),

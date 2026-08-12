@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -248,7 +249,7 @@ func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 	apiKeyService, err := apikeyimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(db)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),

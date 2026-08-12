@@ -17,6 +17,7 @@ const (
 	WeightDashboard
 	WeightExplore
 	WeightDrilldown
+	WeightNotebooks
 	WeightAssistant
 	WeightSigil
 	WeightAlerting
@@ -43,6 +44,7 @@ const (
 	NavIDDashboards           = "dashboards/browse"
 	NavIDExplore              = "explore"
 	NavIDDrilldown            = "drilldown"
+	NavIDNotebooks            = "notebooks"
 	NavIDAdaptiveTelemetry    = "adaptive-telemetry"
 	NavIDCfg                  = "cfg" // NavIDCfg is the id for org configuration navigation node
 	NavIDAlertsAndIncidents   = "alerts-and-incidents"

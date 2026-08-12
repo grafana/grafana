@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -67,7 +68,7 @@ func testScenario(t *testing.T, desc string, isViewer bool, hasDatasourceExplore
 		}
 		service.Cfg.QueryHistoryEnabled = true
 		quotaService := quotatest.New(false, nil)
-		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+		orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 		require.NoError(t, err)
 		usrSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),

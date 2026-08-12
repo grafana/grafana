@@ -12,12 +12,79 @@ export type PredefinedVariableResolutionInput = {
   annotations?: Record<string, string | undefined> | null;
 };
 
+/** Coarse injection mode for analytics and the sidebar radio. */
+export type GlobalVariablesMode = 'none' | 'all' | 'global' | 'folder';
+
+/**
+ * Map a deny list to the coarse mode used by the sidebar radio and load analytics.
+ *
+ * - Missing annotation (`undefined`) → `none` (opt-out by default)
+ * - Empty list (`[]`) → `all` (explicit opt-in)
+ * - `*` → `none`
+ * - `folder:*` only → `global` (keep globals)
+ * - `global:*` only → `folder` (keep folder)
+ * - Name-level / mixed denylists → `undefined` (no radio selected; per-name UI is not shipped yet)
+ */
+export function getGlobalVariablesMode(denyList: string[] | undefined): GlobalVariablesMode | undefined {
+  if (denyList === undefined) {
+    return 'none';
+  }
+  if (denyList.length === 0) {
+    return 'all';
+  }
+  if (denyList.includes(DENY_ALL_PREDEFINED)) {
+    return 'none';
+  }
+  // Mode names the bucket to KEEP, so folder:* deny → Global and global:* deny → Folder.
+  if (denyList.length === 1 && denyList[0] === DENY_ALL_FOLDER_PREDEFINED) {
+    return 'global';
+  }
+  if (denyList.length === 1 && denyList[0] === DENY_ALL_GLOBAL_PREDEFINED) {
+    return 'folder';
+  }
+  return undefined;
+}
+
+export function denyListFromGlobalVariablesMode(mode: GlobalVariablesMode): string[] | undefined {
+  switch (mode) {
+    // Empty list is the explicit opt-in persisted by the sidebar (`[]` annotation).
+    case 'all':
+      return [];
+    case 'none':
+      return [DENY_ALL_PREDEFINED];
+    // Mode names the bucket to KEEP, so we deny the *other* bucket.
+    case 'global':
+      return [DENY_ALL_FOLDER_PREDEFINED];
+    case 'folder':
+      return [DENY_ALL_GLOBAL_PREDEFINED];
+  }
+}
+
+/** Count injected variables by predefined origin for load analytics. */
+export function countPredefinedVariableOrigins(variables: VariableKind[]): {
+  global_count: number;
+  folder_count: number;
+  total_count: number;
+} {
+  let global_count = 0;
+  let folder_count = 0;
+  for (const variable of variables) {
+    const origin = getPredefinedOrigin(variable.spec.origin);
+    if (origin?.type === 'global') {
+      global_count += 1;
+    } else if (origin?.type === 'folder') {
+      folder_count += 1;
+    }
+  }
+  return { global_count, folder_count, total_count: global_count + folder_count };
+}
+
 /**
  * Parse the dashboard ignore/deny annotation.
  *
- * - Missing / empty annotation → `undefined` (inject all; fail-open default)
- * - Present but invalid JSON / non-string-array → `undefined` (fail open)
- * - Valid JSON array of strings → that deny list
+ * - Missing / empty annotation → `undefined` (opted out; inject none)
+ * - Present but invalid JSON / non-string-array → `undefined` (same as absent)
+ * - Valid JSON array of strings → that deny list (`[]` means inject all)
  */
 export function parseIgnorePredefinedVariables(
   annotations?: Record<string, string | undefined> | null
@@ -77,14 +144,19 @@ export function applyPredefinedVariableDenyList(variables: VariableKind[], denyL
 /**
  * Resolve which predefined variables to inject for a dashboard.
  *
- * Absent or empty deny list → inject all. Otherwise apply the deny filter.
+ * Absent / invalid annotation → inject none (opt-out by default).
+ * Empty deny list (`[]`) → inject all (explicit opt-in).
+ * Otherwise apply the deny filter.
  */
 export function resolvePredefinedVariablesForDashboard(
   variables: VariableKind[],
   input: PredefinedVariableResolutionInput
 ): VariableKind[] {
   const denyList = parseIgnorePredefinedVariables(input.annotations);
-  if (denyList === undefined || denyList.length === 0) {
+  if (denyList === undefined) {
+    return [];
+  }
+  if (denyList.length === 0) {
     return variables;
   }
   return applyPredefinedVariableDenyList(variables, denyList);
@@ -96,7 +168,10 @@ export function resolvePredefinedVariablesForDashboard(
  */
 export function mayInjectAnyPredefinedVariables(input: PredefinedVariableResolutionInput): boolean {
   const denyList = parseIgnorePredefinedVariables(input.annotations);
-  if (denyList === undefined || denyList.length === 0) {
+  if (denyList === undefined) {
+    return false;
+  }
+  if (denyList.length === 0) {
     return true;
   }
   return !denyList.includes(DENY_ALL_PREDEFINED);
