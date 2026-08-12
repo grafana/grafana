@@ -251,14 +251,24 @@ function getQueryForLoki(
 function getLegacyQueryForLoki(traceID: string, spanID: string | undefined, options: TraceToLogsOptionsV2): LokiQuery {
   const { filterByTraceID, filterBySpanID } = options;
 
+  const scopedVar = spanID ? '__span' : '__trace';
+
   let expr = '{${__tags}}';
   if (filterByTraceID && traceID) {
     expr +=
-      ' | label_format log_line_contains_trace_id=`{{ contains "${__span.traceId}" __line__  }}` | log_line_contains_trace_id="true" or trace_id="${__span.traceId}"';
+      ' | label_format log_line_contains_trace_id=`{{ contains "${' +
+      scopedVar +
+      '.traceId}" __line__  }}` | log_line_contains_trace_id="true" or trace_id="${' +
+      scopedVar +
+      '.traceId}"';
   }
   if (filterBySpanID && spanID) {
     expr +=
-      ' | label_format log_line_contains_span_id=`{{ contains "${__span.spanId}" __line__  }}` | log_line_contains_span_id="true" or span_id="${__span.spanId}"';
+      ' | label_format log_line_contains_span_id=`{{ contains "${' +
+      scopedVar +
+      '.spanId}" __line__  }}` | log_line_contains_span_id="true" or span_id="${' +
+      scopedVar +
+      '.spanId}"';
   }
 
   return {
