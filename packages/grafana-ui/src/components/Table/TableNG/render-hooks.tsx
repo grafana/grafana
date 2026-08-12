@@ -40,7 +40,7 @@ import {
 import { type PanelContext } from '../../PanelChrome';
 
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
-import { HeaderCell } from './components/HeaderCell';
+import { HeaderCell, HeaderCellContainer } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
@@ -147,6 +147,7 @@ export interface ColumnBuildConfig {
   applyToRowBgFn: ((rowIdx: number) => Partial<CSSProperties>) | undefined;
   disableKeyboardEvents?: boolean;
   disableSanitizeHtml?: boolean;
+  enableColumnReorder?: boolean;
   filter: FilterType;
   frozenColumns: number;
   getCellActions: GetActionsFunctionLocal;
@@ -155,11 +156,19 @@ export interface ColumnBuildConfig {
   gridRef: RefObject<DataGridHandle | null>;
   maxRowHeight?: number;
   numFrozenColsFullyInView: number;
+  groupedFieldName?: string;
+  onGroupByColumn?: (displayName: string) => void;
+  onUngroup?: () => void;
+  ungroupDisabledReason?: string;
+  onHideColumn?: (displayName: string) => void;
   onCellFilterAdded?: TableFilterActionCallback;
+  onTogglePin?: (displayName: string) => void;
+  pinnedColumns?: ReadonlySet<string>;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   rowHeightFn: (row: TableRow) => number;
   setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
+  settlingColumnKeys?: ReadonlySet<string>;
   showTypeIcons?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
@@ -206,8 +215,17 @@ function buildColumnsFromFields(
     maxRowHeight,
     disableKeyboardEvents,
     disableSanitizeHtml,
+    enableColumnReorder,
     showTypeIcons,
     timeRange,
+    groupedFieldName,
+    onGroupByColumn,
+    onUngroup,
+    ungroupDisabledReason,
+    onHideColumn,
+    onTogglePin,
+    pinnedColumns,
+    settlingColumnKeys,
   } = config;
 
   const result: FromFieldsResult = {
@@ -508,25 +526,36 @@ function buildColumnsFromFields(
       name: displayName,
       width,
       headerCellClass,
+      draggable: enableColumnReorder,
+      cellClass: settlingColumnKeys?.has(displayName) ? 'table-ng-column-settling' : undefined,
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
-        <HeaderCell
-          column={column}
-          rows={rawRows}
-          field={field}
-          filter={filter}
-          setFilter={setFilter}
-          disableKeyboardEvents={disableKeyboardEvents}
-          direction={sortDirection}
-          showTypeIcons={showTypeIcons}
-          parentIndex={parentIndex}
-          crossFilterRows={crossFilterRows}
-          crossFilterTailRows={crossFilterTailRows}
-          selectFirstCell={() => {
-            gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
-          }}
-        />
+        <HeaderCellContainer column={column} field={field}>
+          <HeaderCell
+            column={column}
+            rows={rawRows}
+            field={field}
+            filter={filter}
+            setFilter={setFilter}
+            disableKeyboardEvents={disableKeyboardEvents}
+            direction={sortDirection}
+            showTypeIcons={showTypeIcons}
+            parentIndex={parentIndex}
+            crossFilterRows={crossFilterRows}
+            crossFilterTailRows={crossFilterTailRows}
+            selectFirstCell={() => {
+              gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
+            }}
+            onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
+            canHideColumn={fields.length > 1}
+            isPinned={pinnedColumns?.has(displayName)}
+            onTogglePin={onTogglePin ? () => onTogglePin(displayName) : undefined}
+            onGroupByColumn={onGroupByColumn ? () => onGroupByColumn(displayName) : undefined}
+            onUngroup={displayName === groupedFieldName ? onUngroup : undefined}
+            ungroupDisabledReason={displayName === groupedFieldName ? ungroupDisabledReason : undefined}
+          />
+        </HeaderCellContainer>
       ),
       renderSummaryCell: () => (
         <SummaryCell

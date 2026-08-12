@@ -6,7 +6,7 @@ import { type Column } from '@grafana/react-data-grid';
 
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 
-import { HeaderCell } from './HeaderCell';
+import { HeaderCell, HeaderCellContainer } from './HeaderCell';
 
 function makeField(overrides: Partial<Field> = {}): Field {
   return {
@@ -34,12 +34,12 @@ const baseProps = {
 describe('HeaderCell', () => {
   it('renders the display name', () => {
     render(<HeaderCell {...baseProps} field={makeField()} />);
-    expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
+    expect(screen.getByText('Field1')).toBeInTheDocument();
   });
 
   it('prefers the state displayName over the field name', () => {
     render(<HeaderCell {...baseProps} field={makeField({ state: { displayName: 'Pretty Name' } })} />);
-    expect(screen.getByRole('button', { name: 'Pretty Name' })).toBeInTheDocument();
+    expect(screen.getByText('Pretty Name')).toBeInTheDocument();
   });
 
   it('renders a type icon when showTypeIcons is set', () => {
@@ -65,7 +65,7 @@ describe('HeaderCell', () => {
 
   it('renders with wrapped header text when wrapHeaderText is enabled', () => {
     render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { wrapHeaderText: true } } })} />);
-    expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
+    expect(screen.getByText('Field1')).toBeInTheDocument();
   });
 
   it('renders a filter button when the field is filterable', () => {
@@ -84,6 +84,24 @@ describe('HeaderCell', () => {
     expect(filterButton).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(filterButton);
     expect(filterButton).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('pins a column from the column menu', async () => {
+    const onTogglePin = jest.fn();
+    render(<HeaderCell {...baseProps} field={makeField()} onHideColumn={jest.fn()} onTogglePin={onTogglePin} />);
+
+    await userEvent.click(screen.getByLabelText('Column menu for Field1'));
+    await userEvent.click(screen.getByText('Pin column left'));
+
+    expect(onTogglePin).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the unpin action for a pinned column', async () => {
+    render(<HeaderCell {...baseProps} field={makeField()} onHideColumn={jest.fn()} onTogglePin={jest.fn()} isPinned />);
+
+    await userEvent.click(screen.getByLabelText('Column menu for Field1'));
+
+    expect(screen.getByText('Unpin column')).toBeInTheDocument();
   });
 
   it('removes a stale filter for a field that is no longer filterable', () => {
@@ -125,11 +143,14 @@ describe('HeaderCell', () => {
     // Mimics react-data-grid's DOM: <row><otherCell/><headerCell><HeaderCell/></headerCell></row>
     function renderInGrid(props = {}, { headerCellIsLast = true } = {}) {
       const selectFirstCell = jest.fn();
+      const field = makeField();
       render(
         <div role="row">
           <div>other cell</div>
           <div data-testid="header-cell">
-            <HeaderCell {...baseProps} selectFirstCell={selectFirstCell} field={makeField()} {...props} />
+            <HeaderCellContainer column={column} field={field}>
+              <HeaderCell {...baseProps} selectFirstCell={selectFirstCell} field={field} {...props} />
+            </HeaderCellContainer>
           </div>
           {!headerCellIsLast && <div>trailing cell</div>}
         </div>
@@ -139,52 +160,54 @@ describe('HeaderCell', () => {
 
     it('calls selectFirstCell when tabbing out of the last element of the last header cell', () => {
       const { selectFirstCell } = renderInGrid();
-      fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Tab' });
+      fireEvent.keyDown(screen.getByText('Field1'), { key: 'Tab' });
       expect(selectFirstCell).toHaveBeenCalledTimes(1);
     });
 
     it('does not call selectFirstCell for a shift+tab', () => {
       const { selectFirstCell } = renderInGrid();
-      fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Tab', shiftKey: true });
+      fireEvent.keyDown(screen.getByText('Field1'), { key: 'Tab', shiftKey: true });
       expect(selectFirstCell).not.toHaveBeenCalled();
     });
 
     it('does not call selectFirstCell for a non-Tab key', () => {
       const { selectFirstCell } = renderInGrid();
-      fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Enter' });
+      fireEvent.keyDown(screen.getByText('Field1'), { key: 'Enter' });
       expect(selectFirstCell).not.toHaveBeenCalled();
     });
 
     it('does not call selectFirstCell when the header cell is not the last cell in the row', () => {
       const { selectFirstCell } = renderInGrid({}, { headerCellIsLast: false });
-      fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Tab' });
+      fireEvent.keyDown(screen.getByText('Field1'), { key: 'Tab' });
       expect(selectFirstCell).not.toHaveBeenCalled();
     });
 
     it('does not call selectFirstCell when tabbing from an element that is not the last in the header', () => {
       const selectFirstCell = jest.fn();
+      const field = makeField({ config: { custom: { filterable: true } } });
       render(
         <div role="row">
           <div data-testid="header-cell">
-            <HeaderCell
-              {...baseProps}
-              selectFirstCell={selectFirstCell}
-              field={makeField({ config: { custom: { filterable: true } } })}
-            />
+            <HeaderCellContainer column={column} field={field}>
+              <HeaderCell {...baseProps} selectFirstCell={selectFirstCell} field={field} />
+            </HeaderCellContainer>
           </div>
         </div>
       );
-      // the filter button is the last element in the header; tabbing from the (earlier) label button should not trigger
-      fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Tab' });
+      // the filter button is the last element in the header; tabbing from the earlier label should not trigger
+      fireEvent.keyDown(screen.getByText('Field1'), { key: 'Tab' });
       expect(selectFirstCell).not.toHaveBeenCalled();
     });
 
     it('ignores the keydown when the event target is not an HTMLElement', () => {
       const selectFirstCell = jest.fn();
+      const field = makeField();
       const { container } = render(
         <div role="row">
           <div data-testid="header-cell">
-            <HeaderCell {...baseProps} selectFirstCell={selectFirstCell} field={makeField()} showTypeIcons />
+            <HeaderCellContainer column={column} field={field}>
+              <HeaderCell {...baseProps} selectFirstCell={selectFirstCell} field={field} showTypeIcons />
+            </HeaderCellContainer>
           </div>
         </div>
       );
@@ -196,7 +219,7 @@ describe('HeaderCell', () => {
 
     it('does not attach a keydown handler when disableKeyboardEvents is set', () => {
       const { selectFirstCell } = renderInGrid({ disableKeyboardEvents: true });
-      fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Tab' });
+      fireEvent.keyDown(screen.getByText('Field1'), { key: 'Tab' });
       expect(selectFirstCell).not.toHaveBeenCalled();
     });
     /* eslint-enable testing-library/prefer-user-event */

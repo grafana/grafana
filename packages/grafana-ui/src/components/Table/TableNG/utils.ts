@@ -1124,6 +1124,82 @@ export function getVisibleFields(fields: Field[]): Field[] {
 }
 
 /**
+ * Reorders fields to match a persisted column order. Unknown or new fields are appended at the end
+ * in their original relative order.
+ */
+export function orderFieldsByDisplayNames(fields: Field[], columnOrder?: string[]): Field[] {
+  if (!columnOrder?.length) {
+    return fields;
+  }
+
+  const remaining = new Map(fields.map((field) => [getDisplayName(field), field]));
+  const ordered: Field[] = [];
+
+  for (const displayName of columnOrder) {
+    const field = remaining.get(displayName);
+    if (field) {
+      ordered.push(field);
+      remaining.delete(displayName);
+    }
+  }
+
+  for (const field of fields) {
+    const displayName = getDisplayName(field);
+    if (remaining.has(displayName)) {
+      ordered.push(field);
+      remaining.delete(displayName);
+    }
+  }
+
+  return ordered;
+}
+
+/**
+ * Excludes fields whose display names appear in hiddenColumns.
+ */
+export function filterFieldsByHiddenColumns(fields: Field[], hiddenColumns?: ReadonlySet<string>): Field[] {
+  if (!hiddenColumns?.size) {
+    return fields;
+  }
+
+  return fields.filter((field) => !hiddenColumns.has(getDisplayName(field)));
+}
+
+/**
+ * Moves pinned fields to the start while preserving relative order within both groups.
+ */
+export function orderFieldsByPinnedColumns(fields: Field[], pinnedColumns?: ReadonlySet<string>): Field[] {
+  if (!pinnedColumns?.size) {
+    return fields;
+  }
+
+  const pinned: Field[] = [];
+  const unpinned: Field[] = [];
+
+  for (const field of fields) {
+    (pinnedColumns.has(getDisplayName(field)) ? pinned : unpinned).push(field);
+  }
+
+  return [...pinned, ...unpinned];
+}
+
+export function updatePinnedColumnsAfterReorder(
+  pinnedColumns: string[],
+  sourceColumn: string,
+  targetColumn: string
+): string[] {
+  const pinnedColumnSet = new Set(pinnedColumns);
+  const sourceIsPinned = pinnedColumnSet.has(sourceColumn);
+  const targetIsPinned = pinnedColumnSet.has(targetColumn);
+
+  if (sourceIsPinned === targetIsPinned) {
+    return pinnedColumns;
+  }
+
+  return sourceIsPinned ? pinnedColumns.filter((column) => column !== sourceColumn) : [...pinnedColumns, sourceColumn];
+}
+
+/**
  * @internal
  * returns a map of column types by display name
  */

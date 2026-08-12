@@ -346,11 +346,7 @@ describe('TableNG', () => {
         throw new Error('No column header found');
       }
 
-      // Look for a button inside the header
-      const sortButton = columnHeader.querySelector('button') || columnHeader;
-
-      // Click the sort button
-      await user.click(sortButton);
+      await user.click(columnHeader);
 
       expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
     });
@@ -569,6 +565,79 @@ describe('TableNG', () => {
         const expandedRow = container.querySelector('[aria-expanded="true"]');
         expect(expandedRow).toBeInTheDocument();
       }
+    });
+
+    it('lets nested content use the full viewport when the group column has a fixed width', async () => {
+      const nestedFrame = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            { name: 'Server', type: FieldType.string, values: ['server-1'], config: { custom: {} } },
+            { name: 'Priority', type: FieldType.string, values: ['high'], config: { custom: {} } },
+          ],
+        })
+      );
+      const groupedFrame = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'Status',
+              type: FieldType.string,
+              values: ['Running'],
+              config: { custom: { width: 188 } },
+            },
+            {
+              name: '__nestedFrames',
+              type: FieldType.nestedFrames,
+              values: [[nestedFrame]],
+              config: { custom: {} },
+            },
+          ],
+        })
+      );
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={groupedFrame} width={800} height={600} />
+      );
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      const nestedGrid = screen.getByText('server-1').closest('[role="grid"]');
+      expect(nestedGrid?.parentElement).toHaveStyle({ width: '800px' });
+    });
+
+    it('shows an ungroup action on the grouped column header', async () => {
+      const onUngroup = jest.fn();
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createNestedDataFrame()}
+          width={800}
+          height={600}
+          groupedFieldName="Column A"
+          onUngroup={onUngroup}
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Ungroup Column A' }));
+      expect(onUngroup).toHaveBeenCalledTimes(1);
+    });
+
+    it('explains when transformation grouping cannot be removed directly', async () => {
+      const reason = 'This table was grouped by a data transformation.';
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createNestedDataFrame()}
+          width={800}
+          height={600}
+          groupedFieldName="Column A"
+          ungroupDisabledReason={reason}
+        />
+      );
+
+      const ungroupButton = screen.getByRole('button', { name: reason });
+      expect(ungroupButton).toBeDisabled();
+      await user.hover(ungroupButton);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(reason);
     });
 
     it('auto-expands all rows when expandAllRows is set in frame meta', () => {
@@ -836,11 +905,58 @@ describe('TableNG', () => {
       );
 
       const headers = container.querySelectorAll('[role="columnheader"]');
-      const firstHeaderSpan = headers[0].querySelector('button');
-      const secondHeaderSpan = headers[1].querySelector('button');
+      const firstHeaderSpan = headers[0].querySelector('.table-ng-header-label');
+      const secondHeaderSpan = headers[1].querySelector('.table-ng-header-label');
 
       expect(firstHeaderSpan).toHaveAttribute('title', 'Column A');
       expect(secondHeaderSpan).toHaveAttribute('title', 'Column B');
+    });
+
+    it('pins a column from its header menu and moves it into the pinned region', async () => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Column menu for Column B' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Pin column left' }));
+
+      const headers = container.querySelectorAll('[role="columnheader"]');
+      expect(headers[0]).toHaveTextContent('Column B');
+      expect(screen.getByRole('slider', { name: 'Pinned column boundary' })).toHaveAttribute('aria-valuenow', '1');
+    });
+
+    it('hides and restores a column without the options sidebar', async () => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Column menu for Column A' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Hide column' }));
+      expect(container.querySelectorAll('[role="columnheader"]')).toHaveLength(1);
+
+      await user.click(screen.getByRole('button', { name: 'Columns (1 hidden)' }));
+      await user.click(screen.getByRole('checkbox', { name: 'Column A' }));
+      expect(container.querySelectorAll('[role="columnheader"]')).toHaveLength(2);
+    });
+
+    it('requests ephemeral grouping from a column header menu', async () => {
+      const user = userEvent.setup();
+      const onGroupByColumn = jest.fn();
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          onGroupByColumn={onGroupByColumn}
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Column menu for Column A' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Group by this column' }));
+      expect(onGroupByColumn).toHaveBeenCalledWith('Column A');
     });
   });
 
@@ -1106,11 +1222,7 @@ describe('TableNG', () => {
       // Store the initial state of the header
       const initialSortAttribute = columnHeader.getAttribute('aria-sort');
 
-      // Look for a button inside the header
-      const sortButton = columnHeader.querySelector('button') || columnHeader;
-
-      // Click the sort button
-      await user.click(sortButton);
+      await user.click(columnHeader);
 
       // After clicking, the header should have an aria-sort attribute
       const newSortAttribute = columnHeader.getAttribute('aria-sort');
@@ -1151,21 +1263,19 @@ describe('TableNG', () => {
       expect(columnHeader).toBeInTheDocument();
 
       if (columnHeader) {
-        const sortButton = columnHeader.querySelector('button') || columnHeader;
-
         // Initial state - no sort
         expect(columnHeader).not.toHaveAttribute('aria-sort');
 
         // First click - should sort ascending
-        await user.click(sortButton);
+        await user.click(columnHeader);
         expect(columnHeader).toHaveAttribute('aria-sort', 'ascending');
 
         // Second click - should sort descending
-        await user.click(sortButton);
+        await user.click(columnHeader);
         expect(columnHeader).toHaveAttribute('aria-sort', 'descending');
 
         // Third click - should remove sort
-        await user.click(sortButton);
+        await user.click(columnHeader);
         expect(columnHeader).not.toHaveAttribute('aria-sort');
       }
     });
@@ -1224,10 +1334,8 @@ describe('TableNG', () => {
       expect(initialRows[4][1]).toBe('2');
       expect(initialRows[4][2]).toBe('Charlie');
 
-      // First column button (Category)
-      const categoryColumnButton = columnHeaders[0].querySelector('button') || columnHeaders[0];
-      // Second column button (Value)
-      const valueColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
+      const categoryColumnButton = columnHeaders[0];
+      const valueColumnButton = columnHeaders[1];
 
       // 1. First sort by Category (ascending)
       await user.click(categoryColumnButton);
@@ -1437,7 +1545,7 @@ describe('TableNG', () => {
       const columnHeaders = container.querySelectorAll('[role="columnheader"]');
 
       // Test string column sorting
-      const stringColumnButton = columnHeaders[0].querySelector('button') || columnHeaders[0];
+      const stringColumnButton = columnHeaders[0];
       await user.click(stringColumnButton);
 
       // Get cell values after sorting
@@ -1449,7 +1557,7 @@ describe('TableNG', () => {
       expect(stringValues).toEqual(['A', 'B', 'C']);
 
       // Test number column sorting
-      const numberColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
+      const numberColumnButton = columnHeaders[1];
       await user.click(numberColumnButton);
 
       // Get cell values after sorting
@@ -1483,11 +1591,7 @@ describe('TableNG', () => {
         throw new Error('No column header found');
       }
 
-      // Look for a button inside the header
-      const sortButton = columnHeader.querySelector('button') || columnHeader;
-
-      // Click the sort button
-      await user.click(sortButton);
+      await user.click(columnHeader);
 
       // After clicking, the header should have an aria-sort attribute
       expect(onSortByChange).toHaveBeenCalledTimes(1);

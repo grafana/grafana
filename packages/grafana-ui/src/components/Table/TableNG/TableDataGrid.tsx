@@ -1,7 +1,16 @@
 import '@grafana/react-data-grid/lib/styles.css';
 
 import { clsx } from 'clsx';
-import { type Dispatch, type RefObject, type SetStateAction, useEffect, useMemo, useState } from 'react';
+import {
+  type Dispatch,
+  type ReactNode,
+  type RefObject,
+  type SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { Trans } from '@grafana/i18n';
 import { DataGrid, type DataGridHandle, type DataGridProps, type SortColumn } from '@grafana/react-data-grid';
@@ -80,6 +89,8 @@ export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSu
   onTooltipClose: () => void;
   inspectCell?: InspectCellProps | null;
   onInspectCellDismiss: () => void;
+  toolbar?: ReactNode;
+  renderGridOverlay?: (gridContainerRef: RefObject<HTMLDivElement | null>) => ReactNode;
 }
 
 export function TableDataGrid({
@@ -116,9 +127,12 @@ export function TableDataGrid({
   onTooltipClose,
   inspectCell,
   onInspectCellDismiss,
+  toolbar,
+  renderGridOverlay,
   ...dataGridOverrides
 }: TableDataGridProps) {
   const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
+  const gridContainerRef = useRef<HTMLDivElement>(null);
 
   const [scrollToIndex, setScrollToIndex] = useState(initialRowIndex);
   useEffect(() => {
@@ -175,29 +189,36 @@ export function TableDataGrid({
 
   return (
     <>
-      <DataGrid<TableRow, TableSummaryRow, string>
-        {...dataGridOverrides}
-        {...commonDataGridProps}
-        role={role}
-        ref={gridRef}
-        className={styles.grid}
-        columns={columns}
-        rows={rows}
-        rowKeyGetter={rowKeyGetter}
-        isRowSelectionDisabled={() => initialRowIndex !== undefined}
-        selectedRows={selectedRows}
-        onSelectedRowsChange={setSelectedRows}
-        headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
-        headerRowHeight={headerHeight}
-        onColumnResize={onColumnResize}
-        onCellClick={onCellClick}
-        onCellKeyDown={onCellKeyDown}
-        renderers={{
-          renderRow: renderers.renderRow,
-          renderCell: renderers.renderCell,
-          noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
-        }}
-      />
+      {toolbar != null && <div className={styles.interactionToolbar}>{toolbar}</div>}
+      <div
+        ref={gridContainerRef}
+        className={clsx(styles.gridViewport, toolbar != null && styles.gridViewportWithToolbar)}
+      >
+        <DataGrid<TableRow, TableSummaryRow, string>
+          {...dataGridOverrides}
+          {...commonDataGridProps}
+          role={role}
+          ref={gridRef}
+          className={styles.grid}
+          columns={columns}
+          rows={rows}
+          rowKeyGetter={rowKeyGetter}
+          isRowSelectionDisabled={() => initialRowIndex !== undefined}
+          selectedRows={selectedRows}
+          onSelectedRowsChange={setSelectedRows}
+          headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
+          headerRowHeight={headerHeight}
+          onColumnResize={onColumnResize}
+          onCellClick={onCellClick}
+          onCellKeyDown={onCellKeyDown}
+          renderers={{
+            renderRow: renderers.renderRow,
+            renderCell: renderers.renderCell,
+            noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
+          }}
+        />
+        {renderGridOverlay?.(gridContainerRef)}
+      </div>
 
       {showPagination && (
         <div className={styles.paginationContainer}>

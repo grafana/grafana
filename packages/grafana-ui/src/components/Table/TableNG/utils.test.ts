@@ -53,10 +53,14 @@ import {
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
   migrateTableDisplayModeToCellOptions,
+  orderFieldsByDisplayNames,
+  filterFieldsByHiddenColumns,
+  orderFieldsByPinnedColumns,
   parseStyleJson,
   predicateByName,
   prepareSparklineValue,
   SINGLE_LINE_ESTIMATE_THRESHOLD,
+  updatePinnedColumnsAfterReorder,
 } from './utils';
 
 describe('TableNG utils', () => {
@@ -2305,6 +2309,74 @@ describe('TableNG utils', () => {
         values: [],
       };
       expect(getDisplayName(field)).toBe('test');
+    });
+  });
+
+  describe('orderFieldsByDisplayNames', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.number, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.boolean, config: {}, values: [] };
+
+    it('returns fields unchanged when no column order is provided', () => {
+      expect(orderFieldsByDisplayNames([fieldA, fieldB, fieldC])).toEqual([fieldA, fieldB, fieldC]);
+    });
+
+    it('reorders fields to match the provided column order', () => {
+      expect(orderFieldsByDisplayNames([fieldA, fieldB, fieldC], ['C', 'A'])).toEqual([fieldC, fieldA, fieldB]);
+    });
+
+    it('appends fields missing from the column order at the end', () => {
+      expect(orderFieldsByDisplayNames([fieldA, fieldB, fieldC], ['B'])).toEqual([fieldB, fieldA, fieldC]);
+    });
+  });
+
+  describe('filterFieldsByHiddenColumns', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.number, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.boolean, config: {}, values: [] };
+
+    it('returns fields unchanged when no columns are hidden', () => {
+      expect(filterFieldsByHiddenColumns([fieldA, fieldB, fieldC])).toEqual([fieldA, fieldB, fieldC]);
+      expect(filterFieldsByHiddenColumns([fieldA, fieldB, fieldC], new Set())).toEqual([fieldA, fieldB, fieldC]);
+    });
+
+    it('excludes hidden columns by display name', () => {
+      expect(filterFieldsByHiddenColumns([fieldA, fieldB, fieldC], new Set(['B']))).toEqual([fieldA, fieldC]);
+    });
+  });
+
+  describe('orderFieldsByPinnedColumns', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.number, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.boolean, config: {}, values: [] };
+
+    it('returns fields unchanged when no columns are pinned', () => {
+      expect(orderFieldsByPinnedColumns([fieldA, fieldB, fieldC])).toEqual([fieldA, fieldB, fieldC]);
+      expect(orderFieldsByPinnedColumns([fieldA, fieldB, fieldC], new Set())).toEqual([fieldA, fieldB, fieldC]);
+    });
+
+    it('moves pinned fields first while preserving group order', () => {
+      expect(orderFieldsByPinnedColumns([fieldA, fieldB, fieldC], new Set(['C', 'B']))).toEqual([
+        fieldB,
+        fieldC,
+        fieldA,
+      ]);
+    });
+  });
+
+  describe('updatePinnedColumnsAfterReorder', () => {
+    it('pins a column dragged onto a pinned column', () => {
+      expect(updatePinnedColumnsAfterReorder(['A'], 'C', 'A')).toEqual(['A', 'C']);
+    });
+
+    it('unpins a column dragged onto an unpinned column', () => {
+      expect(updatePinnedColumnsAfterReorder(['A', 'B'], 'B', 'C')).toEqual(['A']);
+    });
+
+    it('does not change pinning within the same region', () => {
+      const pinnedColumns = ['A', 'B'];
+      expect(updatePinnedColumnsAfterReorder(pinnedColumns, 'A', 'B')).toBe(pinnedColumns);
+      expect(updatePinnedColumnsAfterReorder(pinnedColumns, 'C', 'D')).toBe(pinnedColumns);
     });
   });
 

@@ -89,6 +89,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
+    groupedFieldName,
+    onUngroup,
+    ungroupDisabledReason,
   } = props;
 
   const uniqueId = useId();
@@ -388,6 +391,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       disableSanitizeHtml,
       showTypeIcons,
       timeRange,
+      groupedFieldName,
+      onUngroup,
+      ungroupDisabledReason,
     }),
     [
       applyToRowBgFn,
@@ -397,8 +403,11 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       getCellActions,
       getCellColorInlineStyles,
       getTextColorForBackground,
+      groupedFieldName,
       maxRowHeight,
       onCellFilterAdded,
+      onUngroup,
+      ungroupDisabledReason,
       rowHeight,
       rowHeightFn,
       setFilter,
@@ -475,7 +484,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
         const nestedColumns = nestedColumnsMatrix[row.__index].columns;
 
         return (
-          <div id={rowId}>
+          <div id={rowId} style={{ width: availableWidth + COLUMN.EXPANDER_WIDTH }}>
             <DataGrid<TableRow, TableSummaryRow>
               {...commonDataGridProps}
               className={clsx(styles.grid, styles.gridNested)}
@@ -509,6 +518,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       styles.noDataNested,
       data.fields.length,
       commonDataGridProps,
+      availableWidth,
       expandedRows,
       getRowStableKeyForRowIdx,
       nestedRows,

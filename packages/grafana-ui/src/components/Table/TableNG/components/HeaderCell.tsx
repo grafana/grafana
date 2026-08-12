@@ -1,17 +1,57 @@
 import { css } from '@emotion/css';
+import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import React, { useEffect, useRef } from 'react';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { type Column, type SortDirection } from '@grafana/react-data-grid';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
+import { IconButton } from '../../../IconButton/IconButton';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Filter } from '../Filter/Filter';
+import { getJustifyContent } from '../styles';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
-import { getDisplayName } from '../utils';
+import { getAlignment, getDisplayName } from '../utils';
+
+import { HeaderColumnMenu } from './HeaderColumnMenu';
+
+interface HeaderCellContainerProps {
+  column: Column<TableRow, TableSummaryRow>;
+  /** Kept for call-site compatibility; label alignment is handled inside HeaderCell. */
+  field?: Field;
+  children: React.ReactNode;
+}
+
+/** Full-width header shell: label alignment is handled by children; trailing actions stay right. */
+export function HeaderCellContainer({ column, children }: HeaderCellContainerProps) {
+  const columnWidth = typeof column.width === 'number' ? `${column.width}px` : undefined;
+
+  return (
+    <div
+      data-table-ng-header-cell=""
+      style={{
+        flex: 1,
+        width: '100%',
+        minWidth: columnWidth,
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        gap: 4,
+        minHeight: 0,
+        pointerEvents: 'none',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 interface HeaderCellProps {
   column: Column<TableRow, TableSummaryRow>;
@@ -26,6 +66,13 @@ interface HeaderCellProps {
   parentIndex?: number;
   crossFilterRows: Record<string, TableRow[]>;
   crossFilterTailRows: TableRow[];
+  onHideColumn?: () => void;
+  canHideColumn?: boolean;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
+  onGroupByColumn?: () => void;
+  onUngroup?: () => void;
+  ungroupDisabledReason?: string;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -41,12 +88,21 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   parentIndex,
   crossFilterRows,
   crossFilterTailRows,
+  onHideColumn,
+  canHideColumn = true,
+  isPinned = false,
+  onTogglePin,
+  onGroupByColumn,
+  onUngroup,
+  ungroupDisabledReason,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
   const styles = useStyles2(getStyles, headerCellWrap);
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;
+  const textAlign = getAlignment(field);
+  const justifyContent = getJustifyContent(textAlign);
 
   // we have to remove/reset the filter if the column is not filterable
   useEffect(() => {
@@ -61,11 +117,9 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 
   /* eslint-disable jsx-a11y/no-static-element-interactions */
   return (
-    <Stack
+    <div
       ref={ref}
-      direction="row"
-      gap={0.5}
-      alignItems="center"
+      className={styles.headerCellRoot}
       onKeyDown={
         disableKeyboardEvents
           ? undefined
@@ -85,7 +139,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               }
 
               const headerContent = ref.current;
-              const headerCell = ref.current?.parentNode;
+              const headerCell = ref.current?.parentNode?.parentNode;
               const row = headerCell?.parentNode;
               const isLastElementInHeader =
                 headerContent?.lastElementChild?.contains(tableTabbedElement) && headerCell === row?.lastElementChild;
@@ -96,48 +150,109 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
             }
       }
     >
-      {/* eslint-enable jsx-a11y/no-static-element-interactions */}
-      {showTypeIcons && (
-        <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
-      )}
-      <button tabIndex={0} className={styles.headerCellLabel} title={displayName}>
-        {displayName}
-        {direction && (
-          <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
-        )}
-      </button>
+      <div className={styles.headerCellContent}>
+        <Stack direction="row" gap={0.5} alignItems="center" justifyContent={justifyContent} width="100%">
+          {showTypeIcons && (
+            <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
+          )}
+          <span className={clsx(styles.headerCellLabel, 'table-ng-header-label')} title={displayName}>
+            {displayName}
+            {direction && (
+              <Icon
+                className={styles.headerCellIcon}
+                size="lg"
+                name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'}
+              />
+            )}
+          </span>
+        </Stack>
+      </div>
 
-      {filterable && (
-        <Filter
-          name={column.key}
-          rows={rows}
-          filter={filter}
-          setFilter={setFilter}
-          field={field}
-          iconClassName={styles.headerCellIcon}
-          parentIndex={parentIndex}
-          crossFilterRows={crossFilterRows}
-          crossFilterTailRows={crossFilterTailRows}
-        />
+      {(filterable || onHideColumn || onTogglePin || onGroupByColumn || onUngroup || ungroupDisabledReason) && (
+        <div className={styles.headerCellActions}>
+          {filterable && (
+            <Filter
+              name={column.key}
+              rows={rows}
+              filter={filter}
+              setFilter={setFilter}
+              field={field}
+              iconClassName={styles.headerCellIcon}
+              parentIndex={parentIndex}
+              crossFilterRows={crossFilterRows}
+              crossFilterTailRows={crossFilterTailRows}
+            />
+          )}
+
+          {(onHideColumn || onGroupByColumn) && (
+            <HeaderColumnMenu
+              displayName={displayName}
+              onHideColumn={onHideColumn}
+              canHideColumn={canHideColumn}
+              isPinned={isPinned}
+              onTogglePin={onTogglePin}
+              onGroupByColumn={onGroupByColumn}
+            />
+          )}
+          {(onUngroup || ungroupDisabledReason) && (
+            <IconButton
+              className={styles.ungroupButton}
+              name="layers-slash"
+              size="sm"
+              tooltip={
+                ungroupDisabledReason ??
+                t('grafana-ui.table.ungroup-column', 'Ungroup {{name}}', { name: displayName })
+              }
+              disabled={Boolean(ungroupDisabledReason)}
+              onClick={(event) => {
+                event.stopPropagation();
+                onUngroup?.();
+              }}
+              onMouseDown={(event) => event.stopPropagation()}
+            />
+          )}
+        </div>
       )}
-    </Stack>
+    </div>
   );
 };
 
 const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
+  headerCellRoot: css({
+    label: 'headerCellRoot',
+    display: 'flex',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+    pointerEvents: 'none',
+  }),
+  headerCellContent: css({
+    label: 'headerCellContent',
+    pointerEvents: 'none',
+    flex: 1,
+    minWidth: 0,
+  }),
+  headerCellActions: css({
+    label: 'headerCellActions',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.25),
+    flexShrink: 0,
+    marginLeft: 'auto',
+    pointerEvents: 'auto',
+  }),
+  ungroupButton: css({
+    marginRight: 6,
+  }),
   headerCellLabel: css({
-    all: 'unset',
-    cursor: 'pointer',
+    label: 'headerCellLabel',
     fontWeight: theme.typography.fontWeightMedium,
     color: theme.colors.text.secondary,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: headerTextWrap ? 'pre-line' : 'nowrap',
-    borderRadius: theme.spacing(0.25),
     lineHeight: '20px',
-    '&:hover': {
-      textDecoration: 'underline',
-    },
+    pointerEvents: 'none',
     '&::selection': {
       backgroundColor: 'var(--rdg-background-color)',
       color: theme.colors.text.secondary,
@@ -145,5 +260,6 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
   }),
   headerCellIcon: css({
     color: theme.colors.text.secondary,
+    pointerEvents: 'none',
   }),
 }));
