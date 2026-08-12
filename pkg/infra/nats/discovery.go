@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	// keeps each prune under the KV BatchDelete limit (200 keys).
 	maxPeerDeleteBatch = 199
 
 	// discoveryClusterName scopes peer rows so independent Grafana clusters can
