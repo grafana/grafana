@@ -380,6 +380,14 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "snapshots.kubernetesSnapshots",
+			Description: "Routes snapshot requests from /api to the /apis endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
+		},
+		{
 			Name:        "libraryelements.kubernetesLibraryPanels",
 			Description: "Routes library panel requests from /api to the /apis endpoint",
 			Stage:       FeatureStageExperimental,
@@ -2028,6 +2036,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "text.newFeatures",
+			Description:  "Enables the new features in text panel",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Generate:     Generate{React: true},
+			Expression:   "false",
+		},
+		{
 			Name:        "interactiveLearning",
 			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
@@ -3153,6 +3170,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:        "grafana.pluginPathNesting",
+			Description: "Nest app plugin navigation items in the mega menu based on their URL path hierarchy",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:        "grafana.rspackBuild",

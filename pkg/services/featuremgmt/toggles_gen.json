@@ -3161,6 +3161,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.pluginPathNesting",
+        "resourceVersion": "1785918906185",
+        "creationTimestamp": "2026-08-05T08:35:06Z"
+      },
+      "spec": {
+        "description": "Nest app plugin navigation items in the mega menu based on their URL path hierarchy",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1781718345897",
         "creationTimestamp": "2026-06-17T17:45:45Z"
@@ -5896,6 +5909,19 @@
     },
     {
       "metadata": {
+        "name": "snapshots.kubernetesSnapshots",
+        "resourceVersion": "1785421660642",
+        "creationTimestamp": "2026-07-30T14:27:40Z"
+      },
+      "spec": {
+        "description": "Routes snapshot requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "splashScreen",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -6245,6 +6271,21 @@
         "description": "Enables creating alerts from Tempo data source",
         "stage": "experimental",
         "codeowner": "@grafana/data-sources-plugins",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "text.newFeatures",
+        "resourceVersion": "1786536451233",
+        "creationTimestamp": "2026-08-12T12:07:31Z"
+      },
+      "spec": {
+        "description": "Enables the new features in text panel",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

@@ -14,6 +14,8 @@ import { type DashboardControls } from 'app/features/dashboard-scene/scene/Dashb
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardRoutes } from 'app/types/dashboard';
 
+import { NotebookToolbar } from '../toolbar/NotebookToolbar';
+
 import { getNotebookScenePageStateManager } from './NotebookScenePageStateManager';
 
 // Fetch a notebook, wrap it into the scene envelope, hand it to the existing transformer
@@ -59,12 +61,12 @@ export function NotebookScenePage() {
   // A notebook with the time picker hidden has no time state to reflect in the URL, so skip URL
   // sync entirely (same as the public dashboard page).
   if (notebookScene.state.controls?.state.hideTimeControls) {
-    return <NotebookDocument scene={notebookScene} />;
+    return <NotebookDocument scene={notebookScene} uid={uid} />;
   }
 
   return (
     <UrlSyncContextProvider scene={notebookScene} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      <NotebookDocument scene={notebookScene} />
+      <NotebookDocument scene={notebookScene} uid={uid} />
     </UrlSyncContextProvider>
   );
 }
@@ -73,7 +75,7 @@ export function NotebookScenePage() {
 // Page instead of DashboardScene.Component — that keeps the dashboard toolbar, sidebar
 // and outline sidebar out. The scene is activated so panels still run their queries and
 // resolve the shared time range; the title stays via the page breadcrumb (pageNav).
-function NotebookDocument({ scene }: { scene: DashboardScene }) {
+function NotebookDocument({ scene, uid }: { scene: DashboardScene; uid?: string }) {
   const { body, controls, title } = scene.useState();
 
   useEffect(() => scene.activate(), [scene]);
@@ -83,6 +85,7 @@ function NotebookDocument({ scene }: { scene: DashboardScene }) {
 
   return (
     <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
+      {uid && <NotebookToolbar uid={uid} />}
       {/* ScopesVariable (and other UNSAFE_renderAsHidden vars) must mount so query runners aren't blocked forever on dependsOnScopes — same as SoloPanelPage. */}
       {renderHiddenVariables(scene)}
       {controls && <NotebookControls controls={controls} />}

@@ -135,6 +135,10 @@ const (
 	// On a SnapshotPublicMode instance with kubernetesSnapshots enabled, keep accepting anonymous /api/snapshots pushes by routing them through CreateDashboardSnapshotPublic instead of the authenticated k8s create endpoint. Default off: the migrated end state rejects anonymous legacy pushes. Turn on as a temporary backward-compat lever while senders migrate to the authenticated k8s API push, then turn off once migration completes. Not compatible with snapshot dual-write Mode5 (k8s-only storage), where the k8s create API is mandatory.
 	FlagExternalSnapshotsSupportLegacyAPI = "externalSnapshotsSupportLegacyAPI"
 
+	// FlagSnapshotsKubernetesSnapshots
+	// Routes snapshot requests from /api to the /apis endpoint
+	FlagSnapshotsKubernetesSnapshots = "snapshots.kubernetesSnapshots"
+
 	// FlagLibraryelementsKubernetesLibraryPanels
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagLibraryelementsKubernetesLibraryPanels = "libraryelements.kubernetesLibraryPanels"
@@ -989,6 +993,10 @@ const (
 	// FlagAlertingStateManagerRequireWarm
 	// Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.
 	FlagAlertingStateManagerRequireWarm = "alerting.stateManagerRequireWarm"
+
+	// FlagGrafanaPluginPathNesting
+	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
+	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
 
 	// FlagGrafanaRspackBuild
 	// Switches the backend to load frontend assets built with rspack instead of webpack

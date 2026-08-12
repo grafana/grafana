@@ -3568,6 +3568,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryOptionsSpec(ref common.Refe
 							Format: "",
 						},
 					},
+					"timeTo": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"maxDataPoints": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
@@ -6836,6 +6842,12 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookQueryOptionsSpec(ref common.Refer
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"timeFrom": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"timeTo": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
