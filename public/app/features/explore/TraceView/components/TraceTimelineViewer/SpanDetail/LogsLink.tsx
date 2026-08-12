@@ -44,7 +44,7 @@ import { useStyles2, DataLinkButton, Menu } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 
 /** Persists which Loki query variation found logs for a given trace + logs datasource pair. */
-export const LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.lokiQueryMatch';
+const LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.lokiQueryMatch';
 
 /** Persists which Loki datasource last returned related logs for a given trace datasource. */
 export const LOKI_DATASOURCE_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.lokiDatasourceMatch';
@@ -53,7 +53,7 @@ export function lokiQueryMatchStorageKey(traceDatasourceUid: string, logsDatasou
   return `${LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX}.${traceDatasourceUid}.${logsDatasourceUid}`;
 }
 
-export function lokiDatasourceMatchStorageKey(traceDatasourceUid: string): string {
+function lokiDatasourceMatchStorageKey(traceDatasourceUid: string): string {
   return `${LOKI_DATASOURCE_MATCH_STORAGE_KEY_PREFIX}.${traceDatasourceUid}`;
 }
 
@@ -212,7 +212,7 @@ function useHasLogs(
   return { presence, resolvedLinkModel };
 }
 
-export function getStoredLokiQueryMatch(
+function getStoredLokiQueryMatch(
   traceDatasourceUid: string | undefined,
   logsDatasourceUid: string
 ): string | undefined {

@@ -14,7 +14,7 @@ const normalize = (tag: string) => {
   };
 };
 
-export const DEFAULT_CROSS_SIGNAL_TAGS = [
+const DEFAULT_CROSS_SIGNAL_TAGS = [
   'cluster',
   'hostname',
   'namespace',
@@ -30,7 +30,7 @@ export function getDefaultMetricTags(): TraceToLogsTag[] {
   return DEFAULT_CROSS_SIGNAL_TAGS.map(normalize);
 }
 
-export const DEFAULT_PROFILING_TAGS = ['service.name', 'service.namespace'];
+const DEFAULT_PROFILING_TAGS = ['service.name', 'service.namespace'];
 export function getDefaultProfilingTags() {
   return DEFAULT_PROFILING_TAGS.map(normalize);
 }
