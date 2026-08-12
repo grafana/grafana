@@ -8,6 +8,7 @@ import { getFocusStyles } from '@grafana/ui/internal';
 
 import { NotebookAddBlockDivider } from './NotebookAddBlockDivider';
 import { type NotebookBlockType } from './NotebookBlockTypeMenu';
+import { NotebookCellActions } from './NotebookCellActions';
 import { type NotebookCellItem } from './NotebookCellItem';
 import { NotebookCellRenderer } from './NotebookCellRenderer';
 
@@ -41,6 +42,12 @@ interface Props {
   dropIndicator?: NotebookCellDropIndicator;
   /** Forwarded to the divider; still unwired in production. See NotebookAddBlockDivider. */
   onAdd?: (type: NotebookBlockType, index: number) => void;
+  /**
+   * Supplied by the layout, which owns the cells list. Optional so the frame stays renderable on its
+   * own; the actions bar is left out entirely when they are absent, rather than shown doing nothing.
+   */
+  onDuplicate?: () => void;
+  onDelete?: () => void;
 }
 
 /**
@@ -48,7 +55,16 @@ interface Props {
  * point below it, both revealed by hovering (or focusing into) the cell. The cell renderer itself stays
  * a pure content dispatcher — everything editing-related lives here.
  */
-export function NotebookCellFrame({ cell, index, isEditing, isDragActive, dropIndicator, onAdd }: Props) {
+export function NotebookCellFrame({
+  cell,
+  index,
+  isEditing,
+  isDragActive,
+  dropIndicator,
+  onAdd,
+  onDuplicate,
+  onDelete,
+}: Props) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -81,6 +97,14 @@ export function NotebookCellFrame({ cell, index, isEditing, isDragActive, dropIn
                 <Icon name="draggabledots" size="md" />
               </Tooltip>
             </div>
+          )}
+
+          {isEditing && onDuplicate && onDelete && (
+            <NotebookCellActions
+              onDuplicate={onDuplicate}
+              onDelete={onDelete}
+              className={NOTEBOOK_CELL_AFFORDANCES_CLASS}
+            />
           )}
 
           <NotebookCellRenderer cell={cell} isEditing={Boolean(isEditing)} />

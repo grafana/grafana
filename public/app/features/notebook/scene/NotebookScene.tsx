@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, useChromeHeaderHeight } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import {
   behaviors,
   type CancelActivationHandler,
@@ -152,11 +153,15 @@ function buildNotebookVariables(): SceneVariableSet | undefined {
 }
 
 function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
-  const styles = useStyles2(getStyles);
+  // The app header is fixed and its height varies (single vs docked mega menu), so the sticky offset has
+  // to come from the chrome rather than a constant.
+  const headerHeight = useChromeHeaderHeight();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
   const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
 
   return (
-    <>
+    <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
       {/* The row itself always renders: the edit toggle must not inherit the pickers' visibility.
           Only the pickers are conditional. */}
@@ -179,7 +184,7 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
       </div>
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}
-    </>
+    </div>
   );
 }
 
@@ -208,13 +213,33 @@ function NotebookHiddenVariables({ model }: SceneComponentProps<NotebookScene>) 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) => ({
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flexGrow: 1,
+  }),
   controls: css({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'flex-end',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
+    // Opaque, or the document shows through as it slides under. Which opaque colour is the same choice
+    // DashboardControlsChrome makes, and for the same reason: the visual refresh repaints the page
+    // surface, so a row still painting canvas would show a seam against it. No rounded top corners
+    // though, unlike the dashboard's — those nest inside the page wrapper's lg radius, and the wrapper's
+    // first child here is the notebook toolbar, not this row.
+    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
+    // Only from md up: on a narrow viewport the row is a large share of the screen, so the dashboard lets
+    // it scroll away rather than eat the reading area, and this follows suit.
+    [theme.breakpoints.up('md')]: {
+      position: 'sticky',
+      top: headerHeight,
+      // Above the docked sidebar, or the time picker's popover opens behind it. Same reasoning and same
+      // token the dashboard's controls chrome uses.
+      zIndex: theme.zIndex.sidemenu,
+    },
   }),
   mode: css({
     marginRight: 'auto',

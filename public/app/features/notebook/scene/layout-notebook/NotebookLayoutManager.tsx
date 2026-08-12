@@ -112,6 +112,56 @@ export class NotebookLayoutManager
     this.setState({ cells });
   }
 
+  /**
+   * Inserts a copy of a cell directly below it.
+   *
+   * The copy needs a fresh element name, not the original's: serialize() writes those names as the keys
+   * of the notebook's `elements` map, so two cells sharing one would collapse into a single element on
+   * the next round-trip — the duplicate would silently become an alias rather than a copy. A panel cell
+   * also needs a fresh panel key, for the same reasons duplicate() rekeys.
+   */
+  public duplicateCell(cell: NotebookCellItem): void {
+    const index = this.state.cells.indexOf(cell);
+    if (index === -1) {
+      return;
+    }
+
+    const nextId = dashboardSceneGraph.getPanelIdGenerator(this);
+    const copy = cell.clone({
+      key: undefined,
+      elementName: this.nextElementName(cell.state.elementName),
+      body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
+    });
+
+    const cells = [...this.state.cells];
+    cells.splice(index + 1, 0, copy);
+    this.setState({ cells });
+  }
+
+  public removeCell(cell: NotebookCellItem): void {
+    const cells = this.state.cells.filter((candidate) => candidate !== cell);
+
+    if (cells.length !== this.state.cells.length) {
+      this.setState({ cells });
+    }
+  }
+
+  /**
+   * A name derived from the original and not yet taken. Checked against every cell rather than a counter,
+   * because the names a saved notebook arrives with are arbitrary and a counter would eventually land on
+   * one of them.
+   */
+  private nextElementName(base: string): string {
+    const taken = new Set(this.state.cells.map((current) => current.state.elementName));
+
+    let suffix = 1;
+    while (taken.has(`${base}-copy-${suffix}`)) {
+      suffix++;
+    }
+
+    return `${base}-copy-${suffix}`;
+  }
+
   // Adding a panel is out of scope for the POC; this satisfies the DashboardLayoutManager contract
   // minimally.
   public addPanel(): void {}
@@ -212,6 +262,10 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     isEditing={isEditing}
                     isDragActive={drag !== null}
                     dropIndicator={getCellDropIndicator(drag, index)}
+                    // Bound here rather than resolved inside the frame: the cells list belongs to the
+                    // manager, so the frame never needs to reach back up for its own position.
+                    onDuplicate={() => model.duplicateCell(cell)}
+                    onDelete={() => model.removeCell(cell)}
                   />
                 ))}
                 {dropProvided.placeholder}

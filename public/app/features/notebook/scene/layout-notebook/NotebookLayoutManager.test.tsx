@@ -205,6 +205,95 @@ describe('NotebookLayoutManager', () => {
     });
   });
 
+  describe('cell actions', () => {
+    it('does not offer them outside edit mode', () => {
+      renderNotebook();
+
+      expect(screen.queryByRole('button', { name: 'Duplicate block' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Delete block' })).not.toBeInTheDocument();
+    });
+
+    it('offers duplicate and delete on every cell in edit mode', () => {
+      renderNotebook(true);
+
+      expect(screen.getAllByRole('button', { name: 'Duplicate block' })).toHaveLength(2);
+      expect(screen.getAllByRole('button', { name: 'Delete block' })).toHaveLength(2);
+    });
+
+    // Inside the frame, so the existing hover rule reveals them with the rest of the cell's affordances
+    // rather than needing a second mechanism.
+    it('places them inside the frame of their own cell', async () => {
+      renderNotebook(true);
+
+      const frame = (await screen.findByText('Hello notebook')).closest<HTMLElement>('[data-rfd-draggable-id]');
+
+      expect(within(frame!).getByRole('button', { name: 'Duplicate block' })).toBeInTheDocument();
+    });
+
+    it('deletes the cell it belongs to', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b', 'c']), true));
+
+      await user.click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+
+      expect(cellNames(manager)).toEqual(['a', 'c']);
+    });
+
+    it('duplicates the cell directly below itself', async () => {
+      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+
+      await user.click(screen.getAllByRole('button', { name: 'Duplicate block' })[0]);
+
+      expect(cellNames(manager)).toEqual(['a', 'a-copy-1', 'b']);
+    });
+  });
+
+  describe('duplicateCell', () => {
+    it('copies the content rather than sharing it', () => {
+      const manager = buildManager(buildNarrativeCells(['a']));
+
+      manager.duplicateCell(manager.state.cells[0]);
+
+      const [original, copy] = manager.state.cells;
+      expect(copy).not.toBe(original);
+      expect(copy.state.content).toEqual(original.state.content);
+    });
+
+    // serialize() writes elementName as the key into the notebook's `elements` map, so a shared name
+    // would collapse the two cells into one element on the next round-trip — an alias, not a copy.
+    it('gives the copy an unused element name', () => {
+      const manager = buildManager(buildNarrativeCells(['a']));
+
+      manager.duplicateCell(manager.state.cells[0]);
+      manager.duplicateCell(manager.state.cells[0]);
+
+      expect(cellNames(manager)).toEqual(['a', 'a-copy-2', 'a-copy-1']);
+    });
+
+    // A reused panel-<id> key collides in findVizPanelByKey and in the panelId that feeds query caching.
+    it('rekeys a duplicated panel cell', () => {
+      const manager = buildManager([
+        new NotebookCellItem({
+          elementName: 'latency',
+          source: 'user',
+          body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries' }),
+        }),
+      ]);
+
+      manager.duplicateCell(manager.state.cells[0]);
+
+      const keys = manager.getVizPanels().map((panel) => panel.state.key);
+      expect(new Set(keys).size).toBe(2);
+    });
+
+    it('ignores a cell that is not in the notebook', () => {
+      const manager = buildManager(buildNarrativeCells(['a']));
+
+      manager.duplicateCell(buildNarrativeCells(['stranger'])[0]);
+
+      expect(cellNames(manager)).toEqual(['a']);
+    });
+  });
+
   describe('drag handles', () => {
     it('does not render drag handles outside edit mode', () => {
       const { container } = renderNotebook();

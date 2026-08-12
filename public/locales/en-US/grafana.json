@@ -12778,7 +12778,9 @@
       "visualization-placeholder": "Coming soon"
     },
     "cell": {
-      "drag-handle": "Drag to reorder"
+      "delete": "Delete block",
+      "drag-handle": "Drag to reorder",
+      "duplicate": "Duplicate block"
     },
     "errors": {
       "entity": "Notebook",
