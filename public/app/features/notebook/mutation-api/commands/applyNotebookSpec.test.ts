@@ -160,7 +160,29 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrowing the command's own result shape
     expect((result.data as { spec?: unknown }).spec).toBeUndefined();
     expect(result.warnings).toEqual([
-      'The notebook could not be re-serialized after the write, so it is unknown which cells survived it.',
+      'The notebook could not be checked after the write, so it is unknown which cells survived it.',
+    ]);
+  });
+
+  it('still reports success when the dropped-cell check itself fails', async () => {
+    const scene = notebookScene();
+    const client = new NotebookMutationClient(scene);
+
+    // On the unvalidated path the spec is an unchecked cast, so `cells` is whatever the caller sent. A
+    // Set survives the dispatcher's structuredClone and is iterable, so the rebuild walks it and the
+    // write lands — and then the comparison calls .map on it and throws. That used to reach the
+    // handler's outer catch and report success: false for a write that had already replaced the
+    // document, which is the one answer a caller cannot act on: it says nothing happened to a notebook
+    // that has already changed.
+    const spec = notebookSpec({ elements: { intro: markdownCell('## Intro') }, cells: ['intro'] });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- exercising a payload shape only an unvalidated caller can produce
+    spec.layout.spec.cells = new Set(spec.layout.spec.cells) as unknown as typeof spec.layout.spec.cells;
+
+    const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec } });
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toEqual([
+      'The notebook could not be checked after the write, so it is unknown which cells survived it.',
     ]);
   });
 

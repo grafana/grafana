@@ -38,7 +38,7 @@ function droppedCellWarnings(requested: NotebookSpec, applied: NotebookSpec | un
   if (!applied) {
     // Say so rather than returning nothing. An empty list reads as "every cell survived", and the one
     // check this command exists to run is the one that did not happen.
-    return ['The notebook could not be re-serialized after the write, so it is unknown which cells survived it.'];
+    return ['The notebook could not be checked after the write, so it is unknown which cells survived it.'];
   }
   const cellNames = (spec: NotebookSpec) => spec.layout.spec.cells.map((cell) => cell.spec.element.name);
   const survived = new Set(cellNames(applied));
@@ -114,16 +114,24 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       // swap.
       scene.setState(sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key }));
 
-      // Echo the re-serialized spec so the caller sees what landed without a follow-up read. Best
-      // effort: a serialization failure still reports success, since the write itself already landed.
+      // Echo the re-serialized spec so the caller sees what landed without a follow-up read, and check
+      // it for dropped cells.
+      //
+      // One guard around both, because from here on this is reporting on a write that has already
+      // landed: nothing below may turn it into `success: false`. That is the one report shape a caller
+      // cannot act on, since it would say nothing happened to a notebook that has already changed. The
+      // comparison is included because the spec it reads is a caller-supplied cast on the unvalidated
+      // path. `undefined` is what droppedCellWarnings reads as "it is unknown which cells survived".
       let appliedNotebook: NotebookSpec | undefined;
+      let dropped: string[];
       try {
         appliedNotebook = transformNotebookSceneToSaveModel(scene);
+        dropped = droppedCellWarnings(notebookSpec, appliedNotebook);
       } catch {
-        appliedNotebook = undefined;
+        dropped = droppedCellWarnings(notebookSpec, undefined);
       }
 
-      const warnings = [...schemaWarnings, ...droppedCellWarnings(notebookSpec, appliedNotebook)];
+      const warnings = [...schemaWarnings, ...dropped];
 
       return {
         success: true,
