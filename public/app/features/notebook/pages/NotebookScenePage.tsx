@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box, useStyles2 } from '@grafana/ui';
@@ -14,6 +13,8 @@ import { DashboardPageError } from 'app/features/dashboard/containers/DashboardP
 import { type DashboardControls } from 'app/features/dashboard-scene/scene/DashboardControls';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardRoutes } from 'app/types/dashboard';
+
+import { NotebookToolbar } from '../toolbar/NotebookToolbar';
 
 import { getNotebookScenePageStateManager } from './NotebookScenePageStateManager';
 
@@ -49,7 +50,7 @@ export function NotebookScenePage() {
     return loadError ? (
       <DashboardPageError error={loadError} />
     ) : (
-      <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid="notebook-scene-page">
+      <Page navId="notebooks" layout={PageLayoutType.Canvas} data-testid="notebook-scene-page">
         <Box paddingY={4} display="flex" direction="column" alignItems="center">
           {isLoading && <PageLoader />}
         </Box>
@@ -60,12 +61,12 @@ export function NotebookScenePage() {
   // A notebook with the time picker hidden has no time state to reflect in the URL, so skip URL
   // sync entirely (same as the public dashboard page).
   if (notebookScene.state.controls?.state.hideTimeControls) {
-    return <NotebookDocument scene={notebookScene} />;
+    return <NotebookDocument scene={notebookScene} uid={uid} />;
   }
 
   return (
     <UrlSyncContextProvider scene={notebookScene} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      <NotebookDocument scene={notebookScene} />
+      <NotebookDocument scene={notebookScene} uid={uid} />
     </UrlSyncContextProvider>
   );
 }
@@ -74,18 +75,17 @@ export function NotebookScenePage() {
 // Page instead of DashboardScene.Component — that keeps the dashboard toolbar, sidebar
 // and outline sidebar out. The scene is activated so panels still run their queries and
 // resolve the shared time range; the title stays via the page breadcrumb (pageNav).
-function NotebookDocument({ scene }: { scene: DashboardScene }) {
+function NotebookDocument({ scene, uid }: { scene: DashboardScene; uid?: string }) {
   const { body, controls, title } = scene.useState();
 
   useEffect(() => scene.activate(), [scene]);
 
-  // Show a "Notebooks" breadcrumb parent rather than nesting under the raw title.
-  const pageNav = { text: title, parentItem: { text: t('notebook.breadcrumb-title', 'Notebooks') } };
+  // The Notebooks nav section supplies the parent breadcrumb, so pageNav only carries the title.
+  const pageNav = { text: title };
 
-  // Notebooks currently live under the Dashboards nav section, so the page highlights it. A
-  // dedicated top-level Notebooks nav section is deferred to its own follow-up.
   return (
-    <Page navId="dashboards/browse" pageNav={pageNav} layout={PageLayoutType.Custom}>
+    <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
+      {uid && <NotebookToolbar uid={uid} />}
       {/* ScopesVariable (and other UNSAFE_renderAsHidden vars) must mount so query runners aren't blocked forever on dependsOnScopes — same as SoloPanelPage. */}
       {renderHiddenVariables(scene)}
       {controls && <NotebookControls controls={controls} />}

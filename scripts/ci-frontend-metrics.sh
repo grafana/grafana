@@ -11,7 +11,8 @@ EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.
 TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
 DEPRECATED_DATA_SOURCE_SRV="$(grep -r -oE --include="*.ts*" --exclude="*.test.*" --exclude="*.spec.*" --exclude-dir={__mocks__,mocks,spec,node_modules,dist,compiled} "get(DataSource|Datasource)Srv\(\)" public/app packages | grep -cvE "packages/grafana-runtime/src/services/|public/app/features/plugins/datasource_srv" || true)"
 SCSS_FILES="$(find public packages -name '*.scss' -not -path '*/node_modules/*' | wc -l)"
-OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)')"
+OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)' || true)"
+TOTAL_OUTDATED_DEPENDENCIES="${OUTDATED_DEPENDENCIES:-0}"
 CIRCULAR_DEPENDENCIES="$(yarn lint:circular 2>&1 >/dev/null | sed -n 's/.*Found \([0-9]*\) circular.*/\1/p')"
 TOTAL_CIRCULAR_DEPENDENCIES="${CIRCULAR_DEPENDENCIES:-0}"
 
@@ -20,7 +21,7 @@ echo -e "Directives: $DIRECTIVES"
 echo -e "Controllers: $CONTROLLERS"
 echo -e "Legacy forms: $LEGACY_FORMS"
 echo -e "Barrel imports: $BARREL_IMPORTS"
-echo -e "Total outdated dependencies: $OUTDATED_DEPENDENCIES"
+echo -e "Total outdated dependencies: $TOTAL_OUTDATED_DEPENDENCIES"
 echo -e "ClassName in props: $CLASSNAME_PROP"
 echo -e "@emotion/css imports: $EMOTION_IMPORTS"
 echo -e "Total TS files: $TS_FILES"
@@ -72,7 +73,7 @@ echo "Metrics: {
   \"grafana.ci-code.directives\": \"${DIRECTIVES}\",
   \"grafana.ci-code.controllers\": \"${CONTROLLERS}\",
   \"grafana.ci-code.legacyForms\": \"${LEGACY_FORMS}\",
-  \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\",
+  \"grafana.ci-code.dependencies.outdated\": \"${TOTAL_OUTDATED_DEPENDENCIES}\",
   \"grafana.ci-code.props.className\": \"${CLASSNAME_PROP}\",
   \"grafana.ci-code.imports.emotion\": \"${EMOTION_IMPORTS}\",
   \"grafana.ci-code.tsFiles\": \"${TS_FILES}\",

@@ -3500,6 +3500,12 @@ func schema_pkg_apis_dashboard_v2_DashboardQueryOptionsSpec(ref common.Reference
 							Format: "",
 						},
 					},
+					"timeTo": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"maxDataPoints": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},

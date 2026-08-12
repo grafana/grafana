@@ -6,14 +6,14 @@ import { PageObject } from './PageObject';
 export class Controls extends PageObject {
   /** Returns the controls container above the dashboard */
   getContainer(): Locator {
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.Controls);
+    return this.getByGrafanaSelector(this.selectors.pages.Dashboard.Controls);
   }
 
   /** Returns the edit-mode toolbar button matching the given label ("Edit" or "Exit edit") */
   private getEditButton(buttonLabel: RegExp): Locator {
-    return this.dashboardPage
-      .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.editButton)
-      .filter({ hasText: buttonLabel });
+    return this.getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.editButton).filter({
+      hasText: buttonLabel,
+    });
   }
 
   /** Enters dashboard edit mode by clicking the "Edit" button */
@@ -36,9 +36,7 @@ export class Controls extends PageObject {
    */
   async saveDashboard(dashboardTitle?: string) {
     await test.step(dashboardTitle ? `Save dashboard with title "${dashboardTitle}"` : 'Save dashboard', async () => {
-      await this.dashboardPage
-        .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.saveButton)
-        .click();
+      await this.getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.saveButton).click();
 
       if (dashboardTitle) {
         await this.page
@@ -46,37 +44,29 @@ export class Controls extends PageObject {
           .fill(dashboardTitle);
       }
 
-      await this.dashboardPage
-        .getByGrafanaSelector(this.selectors.components.Drawer.DashboardSaveDrawer.saveButton)
-        .click();
+      await this.getByGrafanaSelector(this.selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
     });
   }
 
   /** Opens the share snapshot drawer via the share button's arrow menu */
   async openShareSnapshotDrawer() {
     await test.step('Open share snapshot drawer', async () => {
-      await this.dashboardPage
-        .getByGrafanaSelector(this.selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu)
-        .click();
-      await this.dashboardPage
-        .getByGrafanaSelector(this.selectors.pages.Dashboard.DashNav.newShareButton.menu.shareSnapshot)
-        .click();
+      await this.getByGrafanaSelector(this.selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu).click();
+      await this.getByGrafanaSelector(this.selectors.pages.Dashboard.DashNav.newShareButton.menu.shareSnapshot).click();
     });
   }
 
   /** Returns to the dashboard by clicking the "Back to dashboard" button in the edit toolbar */
   async clickBackToDashboard() {
     await test.step('Click back to dashboard', async () => {
-      await this.dashboardPage
-        .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.backToDashboardButton)
-        .click();
+      await this.getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.backToDashboardButton).click();
     });
   }
 
   /** Opens the dashboard controls menu */
   async openControlsMenu() {
     await test.step('Open controls menu', async () => {
-      await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.ControlsButton).click();
+      await this.getByGrafanaSelector(this.selectors.pages.Dashboard.ControlsButton).click();
     });
   }
 
@@ -84,22 +74,21 @@ export class Controls extends PageObject {
     /** Sets an absolute time range through the timepicker's from/to fields */
     set: async (from: string, to: string) => {
       await test.step(`Set time range from "${from}" to "${to}"`, async () => {
-        await this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.openButton).click();
-        const fromField = this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.fromField);
+        await this.getByGrafanaSelector(this.selectors.components.TimePicker.openButton).click();
+        const fromField = this.getByGrafanaSelector(this.selectors.components.TimePicker.fromField);
         await fromField.click();
         await fromField.fill(from);
-        const toField = this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.toField);
+        const toField = this.getByGrafanaSelector(this.selectors.components.TimePicker.toField);
         await toField.click();
         await toField.fill(to);
-        await this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.applyTimeRange).click();
+        await this.getByGrafanaSelector(this.selectors.components.TimePicker.applyTimeRange).click();
       });
     },
     /** Selects a time range preset (e.g. "Last 6 hours") from the timepicker overlay */
     selectPreset: async (presetLabel: string) => {
       await test.step(`Select time range preset "${presetLabel}"`, async () => {
-        await this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.openButton).click();
-        await this.dashboardPage
-          .getByGrafanaSelector(this.selectors.components.TimePicker.overlayContent)
+        await this.getByGrafanaSelector(this.selectors.components.TimePicker.openButton).click();
+        await this.getByGrafanaSelector(this.selectors.components.TimePicker.overlayContent)
           .getByText(presetLabel)
           .click();
       });
@@ -109,7 +98,7 @@ export class Controls extends PageObject {
   readonly variables = {
     /** Returns the variable's label in the submenu */
     getLabel: (variableLabel: string): Locator =>
-      this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.SubMenu.submenuItemLabels(variableLabel)),
+      this.getByGrafanaSelector(this.selectors.pages.Dashboard.SubMenu.submenuItemLabels(variableLabel)),
     /** Returns the variable's dropdown trigger */
     getDropdownTrigger: (variableLabel: string): Locator => {
       // the trigger is the next sibling of its label

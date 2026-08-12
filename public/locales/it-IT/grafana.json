@@ -3619,6 +3619,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "Intervalli di tempo",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "Seleziona gli intervalli di tempo..."
     },
     "time-intervals-table": {
@@ -5662,6 +5663,8 @@
       "edit-query-result-rule": "Modifica regola del risultato della query",
       "edit-template-variable-rule": "Modifica la regola della variabile del modello",
       "edit-time-range-rule": "Modifica regola intervallo di tempo",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "Sposta {{typeName}}",
       "panel-background": "Modifica lo sfondo del pannello",
       "panel-description": "Modifica la descrizione del pannello",
@@ -6132,6 +6135,13 @@
       "save-json-to-file": "Salva JSON nel file",
       "see-docs": "Consulta la <2>documentazione</2> per ulteriori informazioni sul provisioning."
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6295,6 +6305,12 @@
         "title-controls-menu_other": "",
         "title-hidden_one": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -7254,6 +7270,7 @@
         "title-someone-else-has-updated-this-dashboard": "Qualcun altro ha aggiornato questa dashboard",
         "would-still-dashboard": "Desideri comunque salvare questa dashboard?"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "Salva e sovrascrivi"
     },
     "legacy": {
@@ -8060,7 +8077,8 @@
       "title-missing-rights": "Diritti mancanti"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "Seleziona un'origine dei dati"
+      "aria-label-select-a-data-source": "Seleziona un'origine dei dati",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "Pagina non trovata: {{page}}"
@@ -10967,6 +10985,12 @@
       "high-count_one": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12443,6 +12467,10 @@
     "new-folder": {
       "title": "Nuova cartella"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12736,8 +12764,35 @@
       "title-zoom-out": "Rimpicciolisci"
     }
   },
-  "notebook": {
-    "breadcrumb-title": ""
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_one": "",
+      "count_other": "",
+      "count-truncated_one": "",
+      "count-truncated_other": ""
+    }
   },
   "notifications": {
     "empty-state": {

@@ -1,6 +1,4 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panels, Sidebar } from './page-objects';
+import { test, expect } from './fixtures';
 
 test.use({
   featureToggles: {
@@ -18,13 +16,8 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can edit panel title and description', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-
+    test('can edit panel title and description', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await controls.enterEditMode();
 
       const oldTitle = /^No Data Points Warning$/;
