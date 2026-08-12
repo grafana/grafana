@@ -240,6 +240,20 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
+					"authorName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"authorEmail": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"signerName": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to \"Grafana\".",

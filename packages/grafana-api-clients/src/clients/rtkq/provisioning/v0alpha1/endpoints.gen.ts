@@ -1854,6 +1854,10 @@ export type BranchOptions = {
   nameTemplate?: string;
 };
 export type CommitOptions = {
+  /** Email used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset. */
+  authorEmail?: string;
+  /** Name used as the commit author instead of the user who triggered the commit. Only valid when signingMethod is unset. */
+  authorName?: string;
   /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. */
   enforceTemplate?: boolean;
   /** Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to "noreply@grafana.com". */

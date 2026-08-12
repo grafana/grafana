@@ -540,6 +540,10 @@ func validateUpdate(existing, updated *annotationV0.Annotation) error {
 }
 
 func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
+	if anno.Spec.Time <= 0 {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is required and must be positive", ErrInvalidInput))
+	}
+
 	now := time.Now().UTC()
 	maxFuture := now.Add(maxFutureWindow).UnixMilli()
 

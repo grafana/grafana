@@ -1,8 +1,8 @@
 import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { test, expect } from './fixtures';
+import { expectRowToBeVisible, expectTabToBeVisible } from './helpers';
 import { type Sidebar } from './page-objects';
-import { expectVisibleRow, expectVisibleTab } from './utils';
 
 test.use({
   featureToggles: {
@@ -39,7 +39,6 @@ test.describe(
     test('adds new panels from the sidebar and from the canvas', async ({
       gotoDashboardPage,
       selectors,
-      components,
       sidebar,
       panels,
       canvas,
@@ -83,7 +82,7 @@ test.describe(
 
       // group the new panel into a tab
       await canvas.groupPanels('tab');
-      const tab1 = await expectVisibleTab('New tab', tabs);
+      const tab1 = await expectTabToBeVisible('New tab', tabs);
 
       // add a new panel to this tab
       await addPanelFromSidebar(sidebar);
@@ -91,7 +90,7 @@ test.describe(
 
       // add another tab and a new panel inside
       await canvas.addTab();
-      const tab2 = await expectVisibleTab('New tab 1', tabs);
+      const tab2 = await expectTabToBeVisible('New tab 1', tabs);
 
       await addPanelFromSidebar(sidebar);
       await expect(panels.getPanels('New panel', tab2)).toHaveCount(1);
@@ -101,7 +100,7 @@ test.describe(
 
       // group into row
       await canvas.groupPanels('row', tab2);
-      const row1 = await expectVisibleRow('New row', rows);
+      const row1 = await expectRowToBeVisible('New row', rows);
 
       // add a panel to the row
       await addPanelFromSidebar(sidebar);
@@ -109,7 +108,7 @@ test.describe(
 
       // add another row and a couple of panels to it
       await canvas.addRow();
-      const row2 = await expectVisibleRow('New row 1', rows);
+      const row2 = await expectRowToBeVisible('New row 1', rows);
 
       await addPanelFromSidebar(sidebar);
       await expect(panels.getPanels('New panel', row2)).toHaveCount(1);

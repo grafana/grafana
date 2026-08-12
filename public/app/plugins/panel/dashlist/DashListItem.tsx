@@ -74,7 +74,7 @@ export function DashListItem({
           }
         />
       ) : (
-        <Card noMargin variant="secondary" className={css.dashlistCardContainer}>
+        <Card noMargin variant="secondary" isCompact className={css.dashlistCardContainer}>
           <Stack justifyContent="space-between" alignItems="start" height="100%">
             <Link
               className={css.dashlistCard}

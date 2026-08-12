@@ -169,11 +169,6 @@ export interface FeatureToggles {
   */
   externalServiceAccounts?: boolean;
   /**
-  * Routes snapshot requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesSnapshots?: boolean;
-  /**
   * When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.
   * @default false
   */
@@ -859,7 +854,7 @@ export interface FeatureToggles {
   * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
   * @default false
   */
-  azureMonitorBatchAPI?: boolean;
+  ['datasources.azureMonitorBatchAPI']?: boolean;
   /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
