@@ -98,3 +98,12 @@ export async function moveRow(
     targetBox.y + targetBox.height
   );
 }
+
+export async function undockMegaMenu(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
+  await test.step('Undock the mega menu', async () => {
+    await dashboardPage
+      .getByGrafanaSelector(selectors.components.NavMenu.Menu)
+      .getByRole('button', { name: 'Undock menu' })
+      .click();
+  });
+}

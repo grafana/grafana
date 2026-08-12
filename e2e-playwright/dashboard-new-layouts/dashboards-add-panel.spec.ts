@@ -1,7 +1,5 @@
-import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
-
 import { test, expect } from './fixtures';
-import { expectRowToBeVisible, expectTabToBeVisible } from './helpers';
+import { expectRowToBeVisible, expectTabToBeVisible, undockMegaMenu } from './helpers';
 import { type Sidebar } from './page-objects';
 
 test.use({
@@ -11,15 +9,6 @@ test.use({
     groupByVariable: true,
   },
 });
-
-async function undockMegaMenu(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await test.step('Undock the mega menu', async () => {
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.NavMenu.Menu)
-      .getByRole('button', { name: 'Undock menu' })
-      .click();
-  });
-}
 
 async function addPanelFromSidebar(sidebar: Sidebar, clickAddButton = true) {
   await test.step('Add panel from sidebar', async () => {
