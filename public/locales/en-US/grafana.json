@@ -12766,6 +12766,13 @@
       "title-zoom-out": "Zoom out"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "Notebook",
+      "failed-to-load": "Failed to load notebook",
+      "not-found-title": "Not found"
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "All authors",
