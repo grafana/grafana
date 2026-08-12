@@ -6,40 +6,56 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// allNamespaces is the NATS single-token wildcard ("*") used in the namespace
-// position to watch every namespace's notifications for a resource.
-const allNamespaces = "*"
+// subjectRoot prefixes every resource-change subject. It isolates this traffic
+// from the rest of the bus, so a ">" tail wildcard can never deliver unrelated
+// messages (e.g. $SYS.*), and its version token lets the layout below change
+// without a flag day: publisher and consumers move root by root.
+const subjectRoot = "us.watch.v1"
 
-// SubjectAllResources matches every Subject(...) whose group is a single-token
-// grafana.app group ({group}.grafana.app.{namespace}.{resource}). Single-token
-// "*" wildcards keep out non-resource bus traffic (e.g. $SYS.*) that a ">"
-// firehose would deliver and fail to unmarshal. Groups with >1 token before
-// .grafana.app are not matched.
-const SubjectAllResources = "*.grafana.app.*.*"
+// anyToken is the NATS single-token wildcard, used in the namespace or resource
+// position to match every value of it.
+const anyToken = "*"
+
+// coreGroup stands in for the empty (core) group, which would otherwise yield an
+// empty token. The leading underscore is illegal in a DNS label and therefore in
+// an API group, so it cannot collide with a real group.
+const coreGroup = "_core"
+
+// SubjectAllResources matches every Subject(...), whatever the group's token
+// count. It is confined to subjectRoot, so it is a firehose over resource
+// notifications only.
+const SubjectAllResources = subjectRoot + ".>"
 
 // Subject returns the NATS subject that carries change notifications for a
 // resource type within a namespace, as the dotted tokens
 //
-//	{group}.{namespace}.{resource}
+//	us.watch.v1.{group}.{namespace}.{resource}
+//
+// The components follow the Kubernetes path order
+// (/apis/{group}/{version}/namespaces/{namespace}/{resource}), so a subject in a
+// log line reads the same way as the API path it came from. The group keeps its
+// own dots and so spans a variable number of tokens; nothing depends on a fixed
+// offset, because publisher, consumer and the us-nats auth callout all compose
+// the subject from a group they know textually, using only the single-token "*"
+// wildcard. Namespace and resource are always exactly one token: Grafana
+// namespaces and resource names contain no dots.
 //
 // The version is intentionally absent: notifications are version-agnostic and a
 // consumer resolves the object at its own version via GET, so a single subject
-// serves every version. An empty namespace yields the "*" single-token wildcard
-// in the namespace position, so a consumer can watch every namespace's
-// notifications for the resource (Grafana namespaces have no dots, so a concrete
-// namespace is always exactly one token and never bleeds into the wildcard).
-//
-// The group keeps its dots and therefore spans several tokens
-// (provisioning.grafana.app -> three tokens); publisher and consumer build the
-// subject the same way from the same GVR, so this is consistent on both sides.
+// serves every version. An empty namespace or resource yields the single-token
+// wildcard in its position, so a consumer can watch every namespace, or every
+// resource of a group.
 func Subject(gvr schema.GroupVersionResource, namespace string) string {
-	ns := namespace
-	if ns == "" {
-		ns = allNamespaces
+	group := gvr.Group
+	if group == "" {
+		group = coreGroup
 	}
-	return strings.Join([]string{
-		gvr.Group,
-		ns,
-		gvr.Resource,
-	}, ".")
+	if namespace == "" {
+		namespace = anyToken
+	}
+	resource := gvr.Resource
+	if resource == "" {
+		resource = anyToken
+	}
+	return strings.Join([]string{subjectRoot, group, namespace, resource}, ".")
 }
