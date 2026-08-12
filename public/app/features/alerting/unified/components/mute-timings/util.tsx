@@ -38,9 +38,12 @@ export const isValidStartAndEndTime = (startTime?: string, endTime?: string): bo
   return minutesSinceMidnight(startTime) < minutesSinceMidnight(endTime);
 };
 
-// "HH:mm" clock string to minutes since midnight; NaN (which never compares true) for malformed input
 const minutesSinceMidnight = (time: string): number => {
-  const [hours = 0, minutes = 0] = time.split(':').map(Number);
+  if (!TIME_RANGE_REGEX.test(time)) {
+    return Number.NaN;
+  }
+
+  const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
 };
 
