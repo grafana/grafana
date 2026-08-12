@@ -229,6 +229,27 @@ describe('LogsLinkButton', () => {
     expect(await screen.findByText('No matching logs found for this span')).toBeInTheDocument();
   });
 
+  it('uses the trace-level absent tooltip when forTrace is set', async () => {
+    useDataSourceInstanceSettingsMock.mockReturnValue({
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      settings: { jsonData: {} } as any,
+    });
+    mockDatasourceReturningFrames([emptyFrame], 'loki');
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+        forTrace
+      />
+    );
+
+    await userEvent.hover(await screen.findByRole('button'));
+    expect(await screen.findByText('No matching logs found for this trace')).toBeInTheDocument();
+  });
+
   it('keeps the button as present when the query returns logs', async () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
@@ -707,38 +728,61 @@ describe('LogsLinkMenuItem', () => {
 });
 
 describe('getLogsButtonCTA', () => {
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   it.each([
     {
       name: 'shows "Related logs" when the datasource has no settings',
       settings: undefined,
+      type: 'span' as const,
       expected: 'Related logs',
     },
     {
       name: 'shows "Related logs" when neither filterBySpanID nor filterByTraceID is set',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false } } },
+      type: 'span' as const,
       expected: 'Related logs',
     },
     {
       name: 'shows "Logs for this trace" when filterByTraceID is set',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterByTraceID: true } } },
+      type: 'span' as const,
       expected: 'Logs for this trace',
     },
     {
       name: 'shows "Logs for this span" when filterBySpanID is set',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true } } },
+      type: 'span' as const,
       expected: 'Logs for this span',
     },
     {
       name: 'prefers "Logs for this span" when both filters are set',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true, filterByTraceID: true } } },
+      type: 'span' as const,
       expected: 'Logs for this span',
     },
-  ])('$name', ({ settings, expected }) => {
-    expect(getLogsButtonCTA(settings as DataSourceInstanceSettings | undefined)).toBe(expected);
+  ])('$name', ({ settings, type, expected }) => {
+    expect(getLogsButtonCTA(settings as DataSourceInstanceSettings | undefined, type)).toBe(expected);
+  });
+
+  it('uses the link type when dynamic trace-to-logs is enabled, ignoring filter settings', () => {
+    setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
+    const settings = {
+      jsonData: { tracesToLogsV2: { customQuery: false, filterByTraceID: true } },
+    } as DataSourceInstanceSettings;
+
+    expect(getLogsButtonCTA(settings, 'span')).toBe('Logs for this span');
+    expect(getLogsButtonCTA(settings, 'trace')).toBe('Logs for this trace');
   });
 });
 
 describe('getLogsButtonTooltip', () => {
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   it('returns the generic tooltip when there are no settings, regardless of presence', () => {
     expect(getLogsButtonTooltip(undefined, 'present')).toBe(
       'View related logs using the trace data source configuration.'
@@ -753,40 +797,92 @@ describe('getLogsButtonTooltip', () => {
       name: 'span filter, logs present',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true } } },
       presence: 'present' as const,
+      type: 'span' as const,
       expected: 'See logs related to this span using the trace data source configuration.',
     },
     {
       name: 'span filter, logs absent',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true } } },
       presence: 'absent' as const,
+      type: 'span' as const,
       expected: 'No logs found for this span using the trace data source configuration.',
     },
     {
       name: 'trace filter, logs present',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterByTraceID: true } } },
       presence: 'present' as const,
+      type: 'span' as const,
       expected: 'See logs related to this trace using the trace data source configuration.',
     },
     {
       name: 'trace filter, logs absent',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterByTraceID: true } } },
       presence: 'absent' as const,
+      type: 'span' as const,
+      expected: 'No logs found for this trace using the trace data source configuration.',
+    },
+    {
+      name: 'explicit trace type, logs present',
+      settings: { jsonData: {} },
+      presence: 'present' as const,
+      type: 'trace' as const,
+      expected: 'See logs related to this trace using the trace data source configuration.',
+    },
+    {
+      name: 'explicit trace type, logs absent',
+      settings: { jsonData: {} },
+      presence: 'absent' as const,
+      type: 'trace' as const,
       expected: 'No logs found for this trace using the trace data source configuration.',
     },
     {
       name: 'no filter, logs absent',
       settings: { jsonData: {} },
       presence: 'absent' as const,
+      type: 'span' as const,
       expected: 'No related logs found using the trace data source configuration.',
     },
     {
       name: 'no filter, logs present',
       settings: { jsonData: {} },
       presence: 'present' as const,
+      type: 'span' as const,
       expected: 'View related logs using the trace data source configuration.',
     },
-  ])('$name', ({ settings, presence, expected }) => {
-    expect(getLogsButtonTooltip(settings as DataSourceInstanceSettings, presence)).toBe(expected);
+  ])('$name', ({ settings, presence, type, expected }) => {
+    expect(getLogsButtonTooltip(settings as DataSourceInstanceSettings, presence, type)).toBe(expected);
+  });
+
+  it.each([
+    {
+      name: 'span, logs present',
+      presence: 'present' as const,
+      type: 'span' as const,
+      expected: 'See related logs',
+    },
+    {
+      name: 'trace, logs present',
+      presence: 'present' as const,
+      type: 'trace' as const,
+      expected: 'See related logs',
+    },
+    {
+      name: 'span, logs absent',
+      presence: 'absent' as const,
+      type: 'span' as const,
+      expected: 'No matching logs found for this span',
+    },
+    {
+      name: 'trace, logs absent',
+      presence: 'absent' as const,
+      type: 'trace' as const,
+      expected: 'No matching logs found for this trace',
+    },
+  ])('dynamic flag: $name', ({ presence, type, expected }) => {
+    setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
+    const settings = { jsonData: {} } as DataSourceInstanceSettings;
+
+    expect(getLogsButtonTooltip(settings, presence, type)).toBe(expected);
   });
 });
 
