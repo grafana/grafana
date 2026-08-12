@@ -19,6 +19,7 @@ import {
   type FetchResponse,
   getBackendSrv,
   getTemplateSrv,
+  isExpressionReference,
   toDataQueryResponse,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
@@ -30,6 +31,8 @@ import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from './types';
 
 const SQL_DISPLAY_NAME_FIELD = '__display_name__';
+// Source frames consumed by SQL expressions are returned with these internal full-long conversion types.
+const SQL_FULL_LONG_FRAME_TYPES = new Set(['numeric-full-long', 'timeseries-full-long']);
 
 function restoreSQLDisplayName(frame: DataFrame): DataFrame {
   const displayFields = frame.fields.filter((field) => field.name === SQL_DISPLAY_NAME_FIELD);
@@ -60,16 +63,24 @@ function restoreSQLDisplayName(frame: DataFrame): DataFrame {
 
 function restoreSQLDisplayNames(response: DataQueryResponse, queries: ExpressionQuery[]): DataQueryResponse {
   const sqlRefIds = new Set(
-    queries.filter((query) => query.type === ExpressionQueryType.sql).map((query) => query.refId)
+    queries
+      .filter((query) => isExpressionReference(query.datasource) && query.type === ExpressionQueryType.sql)
+      .map((query) => query.refId)
   );
   if (sqlRefIds.size === 0) {
     return response;
   }
 
+  const queryRefIds = new Set(queries.map((query) => query.refId));
   return {
     ...response,
     data: response.data.map((frame) =>
-      isDataFrame(frame) && frame.refId && sqlRefIds.has(frame.refId) ? restoreSQLDisplayName(frame) : frame
+      isDataFrame(frame) &&
+      frame.refId &&
+      (sqlRefIds.has(frame.refId) ||
+        (queryRefIds.has(frame.refId) && SQL_FULL_LONG_FRAME_TYPES.has(frame.meta?.type ?? '')))
+        ? restoreSQLDisplayName(frame)
+        : frame
     ),
   };
 }
