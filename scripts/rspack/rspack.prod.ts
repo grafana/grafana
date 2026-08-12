@@ -27,8 +27,9 @@ import swaggerConfig from './rspack.swagger.ts';
 //   plugin's option normalisation.
 // - webpack-subresource-integrity → rspack's native SubresourceIntegrityPlugin, a top-level
 //   export in rspack 2 rather than an `experiments` entry. Its default
-//   hashFuncNames: ['sha384'] matches webpack-subresource-integrity's, so the script tags
-//   the backend renders carry the same algorithm.
+//   hashFuncNames: ['sha384'] matches webpack-subresource-integrity's, so runtime-loaded
+//   chunks carry the same algorithm. It has no say in the script tags the backend renders —
+//   those read integrity from the manifest, which AssetsManifestPlugin hashes itself.
 // - webpack-assets-manifest → AssetsManifestPlugin.
 // - No persistent `cache: { type: 'filesystem' }`. rspack's native cache covers it, and the
 //   webpack-style cache costs ~2.6GB per checkout. Same call as rspack.dev.ts.
@@ -85,10 +86,6 @@ export default (env: Env = {}) => {
 
     plugins: [
       new rspack.SubresourceIntegrityPlugin(),
-      // Rewrites the load_script runtime module to gate the SRI attributes behind
-      // window.__grafanaAssetSriChecksEnabled. It taps compilation.hooks.runtimeModule,
-      // which runs during code generation, so it is ordered against neither the SRI plugin
-      // nor AssetsManifestPlugin — both of those work on finished assets.
       new FeatureFlaggedSRIPlugin(),
       new AssetsManifestPlugin(),
       function (this: Compiler) {
