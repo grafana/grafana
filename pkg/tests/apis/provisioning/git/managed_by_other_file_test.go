@@ -14,55 +14,45 @@ import (
 )
 
 // TestIntegrationProvisioning_IncrementalGitSync_ManagedByOtherFileWarning
-// reproduces the customer scenario where a dashboard UID is reused across files.
+// exercises the deleteOldResource skip-delete guard: a replace that would delete
+// a UID now legitimately owned by a DIFFERENT file is skipped and surfaced as a
+// "skipping delete of old resource" warning instead of failing the sync (or
+// orphaning the resource the other file now owns).
 //
-// Only incremental sync reaches this path: a modified file goes through
-// ReplaceResourceFromFileByRef, which derives the old UID from the file's
-// previous git ref and, after writing the new resource, deletes that old UID to
-// avoid orphans. When the old UID is now owned by a different file, the delete
-// is skipped and surfaced as a warning instead of failing the sync.
+// It must be reached through an INTENTIONAL UID takeover, not an accidental
+// cross-file duplicate: the latter is now blocked at write time by the cross-file
+// duplicate guard. Incremental sync processes files sequentially in alphabetical
+// order, so within a single sync:
 //
-// The takeover must be persisted in an earlier sync than the replace, otherwise
-// the create and the replace collapse into one order-dependent pass. Hence the
-// three separate syncs below:
-//
-//	c1: dir-a = shared-uid            → resource shared-uid owned by dir-a
-//	c2: add dir-b = shared-uid        → upsert of the same resource; now owned by dir-b
-//	c3: dir-a: shared-uid → new-uid   → replace writes new-uid, skips deleting
-//	                                    shared-uid (owned by dir-b) → warning
+//	c1: dir-a = uid-a, dir-b = uid-b
+//	c2: dir-a: uid-a → uid-b   (takes over uid-b, which dir-b is releasing)
+//	    dir-b: uid-b → uid-new (moves to a fresh UID)
+//	      1. dir-a runs first: writes uid-b (dir-b already declares uid-new at this
+//	         ref, so the write is a legitimate takeover, not a duplicate) → uid-b's
+//	         sourcePath flips to dir-a; then deletes uid-a (still owned by dir-a).
+//	      2. dir-b runs next: writes uid-new, then tries to delete uid-b — now owned
+//	         by dir-a — which is skipped and surfaced as the managed-by-other warning.
 func TestIntegrationProvisioning_IncrementalGitSync_ManagedByOtherFileWarning(t *testing.T) {
 	helper := sharedGitHelper(t)
 
 	const repoName = "git-incremental-managed-by-other"
 
-	// c1: only dir-a exists, owning "shared-uid".
+	// c1: dir-a owns uid-a, dir-b owns uid-b.
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dir-a/dashboard.json": common.DashboardJSON("shared-uid", "Dashboard A", 1),
+		"dir-a/dashboard.json": common.DashboardJSON("uid-a", "Dashboard A", 1),
+		"dir-b/dashboard.json": common.DashboardJSON("uid-b", "Dashboard B", 1),
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	require.Equal(t, "dir-a/dashboard.json",
-		dashboardSourcePath(t, helper, "shared-uid"),
-		"after c1, shared-uid must be owned by dir-a")
+	require.Equal(t, "dir-a/dashboard.json", dashboardSourcePath(t, helper, "uid-a"),
+		"after c1, uid-a must be owned by dir-a")
+	require.Equal(t, "dir-b/dashboard.json", dashboardSourcePath(t, helper, "uid-b"),
+		"after c1, uid-b must be owned by dir-b")
 
-	// c2: add dir-b with the SAME UID. In its own incremental sync this is an
-	// upsert of the single shared-uid resource (K8s keys by name, same-repo
-	// manager passes the ownership check), so it succeeds and flips ownership to
-	// dir-b. The cross-file duplicate guard is per-sync/in-memory, so it does not
-	// fire here — dir-a is not part of this diff.
-	require.NoError(t, local.CreateFile("dir-b/dashboard.json", string(common.DashboardJSON("shared-uid", "Dashboard B", 1))))
-	gitCommitPush(t, local, "add dir-b with duplicate uid")
-
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	require.Equal(t, "dir-b/dashboard.json",
-		dashboardSourcePath(t, helper, "shared-uid"),
-		"after c2, shared-uid ownership must have flipped to dir-b")
-
-	// c3: change dir-a's UID. The replace writes new-uid, then tries to delete
-	// the old shared-uid — now owned by dir-b — and skips it, surfacing the
-	// "skipping delete of old resource" warning without failing the sync.
-	require.NoError(t, local.UpdateFile("dir-a/dashboard.json", string(common.DashboardJSON("new-uid", "Dashboard A v2", 2))))
-	gitCommitPush(t, local, "change dir-a uid to new-uid")
+	// c2 (single incremental sync): dir-a takes uid-b while dir-b moves to uid-new.
+	require.NoError(t, local.UpdateFile("dir-a/dashboard.json", string(common.DashboardJSON("uid-b", "Dashboard A takes B", 2))))
+	require.NoError(t, local.UpdateFile("dir-b/dashboard.json", string(common.DashboardJSON("uid-new", "Dashboard B moved", 2))))
+	gitCommitPush(t, local, "dir-a takes uid-b, dir-b moves to uid-new")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName),
 		common.Incremental,
@@ -70,18 +60,13 @@ func TestIntegrationProvisioning_IncrementalGitSync_ManagedByOtherFileWarning(t 
 		common.Expect(hasWarningContaining("skipping delete of old resource")),
 	)
 
-	// dir-a's new resource must exist.
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		_, err := helper.DashboardsV1.Resource.Get(t.Context(), "new-uid", metav1.GetOptions{})
-		assert.NoError(c, err, "new-uid dashboard should exist")
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "new-uid should be created")
+	// uid-b was taken over by dir-a; dir-b owns its new uid; uid-a was deleted.
+	require.Equal(t, "dir-a/dashboard.json", dashboardSourcePath(t, helper, "uid-b"),
+		"uid-b must be taken over by dir-a")
+	require.Equal(t, "dir-b/dashboard.json", dashboardSourcePath(t, helper, "uid-new"),
+		"dir-b must own its new uid")
 
-	// The old UID must NOT have been deleted — it is legitimately owned by dir-b.
-	require.Equal(t, "dir-b/dashboard.json",
-		dashboardSourcePath(t, helper, "shared-uid"),
-		"shared-uid must survive the replace, still owned by dir-b")
-
-	// Exactly the two distinct dashboards remain.
+	// Exactly the two surviving dashboards remain (uid-b, uid-new); uid-a is gone.
 	helper.RequireRepoDashboardCount(t, repoName, 2)
 }
 
