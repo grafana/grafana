@@ -1,4 +1,4 @@
-import { type Configuration, type RspackPluginInstance } from '@rspack/core';
+import { SubresourceIntegrityPlugin, type Configuration, type RspackPluginInstance } from '@rspack/core';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -83,6 +83,35 @@ describe('AssetsManifestPlugin', () => {
       const filename = entry.src.replace(PUBLIC_PATH, '');
       expect(entry.integrity).toBe(expectedIntegrity(assets[filename]));
     }
+  });
+
+  // SubresourceIntegrityPlugin injects an sriHashes map into the entry chunk, changing the
+  // very bytes this plugin hashes. It is a native plugin, so that injection lands before
+  // any JS processAssets tap and registration order does not affect the result — both
+  // orders are asserted so a future move to a JS-side SRI implementation fails here rather
+  // than shipping a manifest whose digests no longer match the served files.
+  describe.each([
+    ['SRI registered first', () => [new SubresourceIntegrityPlugin(), new AssetsManifestPlugin()]],
+    ['SRI registered last', () => [new AssetsManifestPlugin(), new SubresourceIntegrityPlugin()]],
+  ])('with SubresourceIntegrityPlugin (%s)', (_label, buildPlugins) => {
+    it('hashes the bytes that are actually emitted', async () => {
+      const config = createConfig(buildPlugins());
+      const { outputFs } = await compile({
+        ...config,
+        output: { ...config.output, crossOriginLoading: 'anonymous' },
+      });
+      const assets = readAssets(outputFs, OUTPUT_PATH);
+      const manifest = readManifest(assets);
+
+      // Guards the guard: without the injection there is no rewrite to be wrong about.
+      expect(assets['main.js']).toContain('sriHashes');
+      expect(Object.keys(manifest).length).toBeGreaterThan(0);
+
+      for (const [, entry] of Object.entries(manifest)) {
+        const filename = entry.src.replace(PUBLIC_PATH, '');
+        expect(entry.integrity).toBe(expectedIntegrity(assets[filename]));
+      }
+    });
   });
 
   it('keys chunk assets by chunk name rather than output filename', async () => {
