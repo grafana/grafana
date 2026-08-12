@@ -77,6 +77,12 @@ const getStyles = (theme: GrafanaTheme2) => {
         borderRadius: theme.shape.radius.lg,
         height: `calc(100% - ${theme.spacing(0.5)})`,
         width: `calc(100% - ${theme.spacing(0.5)})`,
+
+        [theme.breakpoints.down('sm')]: {
+          height: `calc(100% - ${theme.spacing(0.5)})`,
+          margin: theme.spacing(0, 0.5, 0.5, 0.5),
+          width: `calc(100% - ${theme.spacing(1)})`,
+        },
       }
     ),
     content: css({
