@@ -68,6 +68,17 @@ describe('dashboardMutationApi', () => {
       expect(dashboardMutationApi.getPayloadSchema('UNKNOWN_COMMAND')).toBeNull();
     });
 
+    it('answers for a notebook command only when notebooks are enabled', () => {
+      // Both this and getAvailableCommands() are discovery surfaces, and DashboardMutationClient
+      // already keeps CREATE_NOTEBOOK_SPEC out of the second one when the flag is off. A schema for a
+      // command that cannot run anywhere on this instance is a tool an agent builds and never uses.
+      expect(dashboardMutationApi.getPayloadSchema('GET_NOTEBOOK_SPEC')).toBeNull();
+
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+
+      expect(dashboardMutationApi.getPayloadSchema('GET_NOTEBOOK_SPEC')).toBeDefined();
+    });
+
     it('is case-insensitive', () => {
       for (const cmd of allMutationCommands()) {
         const lower = dashboardMutationApi.getPayloadSchema(cmd.name.toLowerCase());
