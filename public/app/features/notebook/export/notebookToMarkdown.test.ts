@@ -58,6 +58,24 @@ describe('notebookToMarkdown', () => {
       expect(full).toContain('What happened');
     });
 
+    it('omits the link when no url is given', () => {
+      // The Cursor export leaves it out rather than stripping it back out afterwards, which could
+      // not tell the generated line from an identical line in the notebook's own prose.
+      const markdown = notebookToMarkdown(buildSpec({}, []), {});
+
+      expect(markdown).not.toContain('**Link:**');
+      expect(markdown).toContain('# Q2 latency regression');
+    });
+
+    it('keeps a Link-shaped line in the description, which stripping would have eaten', () => {
+      const description = '- **Link:** see the runbook';
+
+      const markdown = notebookToMarkdown(buildSpec({}, [], { description }), META);
+
+      expect(markdown).toContain(description);
+      expect(markdown).toContain('[Open in Grafana](https://host/notebooks/nb1?orgId=1)');
+    });
+
     it('produces just the header for a notebook with no cells', () => {
       // An empty notebook must not crash the export.
       expect(notebookToMarkdown(buildSpec({}, []), META)).toContain('# Q2 latency regression');
@@ -94,6 +112,24 @@ describe('notebookToMarkdown', () => {
       const spec = buildSpec({ q: codeElement('a ``` b', 'sql') }, ['q']);
 
       expect(notebookToMarkdown(spec, META)).toContain('````sql\na ``` b\n````');
+    });
+
+    it('drops a language that would break the fence', () => {
+      // The schema allows any string here; a backtick or newline in the info string would end the
+      // opening delimiter and render the code as prose.
+      const spec = buildSpec({ q: codeElement('select 1', 'sql`\n```') }, ['q']);
+
+      const markdown = notebookToMarkdown(spec, META);
+
+      expect(markdown).toContain('```\nselect 1\n```');
+      expect(markdown).not.toContain('sql`');
+    });
+
+    it('survives a code cell with very many backtick runs', () => {
+      // Spreading these into Math.max would exceed the engine's argument limit and throw.
+      const spec = buildSpec({ q: codeElement('`x`'.repeat(200000), 'text') }, ['q']);
+
+      expect(() => notebookToMarkdown(spec, META)).not.toThrow();
     });
 
     it('emits an element referenced by two layout items twice', () => {
@@ -167,6 +203,27 @@ describe('notebookToMarkdown', () => {
       expect(markdown).toContain('"refId": "A"');
       expect(markdown).toContain('"datasource": "gdev-prometheus"');
       expect(markdown).toContain('"expr": "up == 0"');
+    });
+
+    it('records whether a query is hidden', () => {
+      // A disabled query would otherwise read as one the panel is actually running.
+      const hidden: NotebookElement = {
+        ...panel,
+        spec: {
+          ...panel.spec,
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              ...panel.spec.data.spec,
+              queries: [
+                { ...panel.spec.data.spec.queries[0], spec: { ...panel.spec.data.spec.queries[0].spec, hidden: true } },
+              ],
+            },
+          },
+        },
+      };
+
+      expect(notebookToMarkdown(buildSpec({ p: hidden }, ['p']), META)).toContain('"hidden": true');
     });
 
     it('says so when a panel has no queries', () => {

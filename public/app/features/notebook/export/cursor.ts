@@ -10,14 +10,6 @@ const CURSOR_PROMPT_URL = 'cursor://anysphere.cursor-deeplink/prompt';
 const MAX_URL_LENGTH = 8000;
 const TRUNCATION_NOTICE = '\n\n[Notebook truncated to fit the Cursor deep link limit]';
 
-/**
- * Removes the `- **Link:** ...` line the markdown header carries. Cursor's deep link handler
- * mis-parses URLs embedded in prompt text, so the link is stripped before handing the notebook over.
- */
-export function stripNotebookLink(markdown: string): string {
-  return markdown.replace(/^- \*\*Link:\*\*.*\n?/m, '');
-}
-
 /** Builds the deep link, truncating the notebook if the url would exceed Cursor's limit. */
 export function buildCursorPromptDeeplink(promptText: string): string {
   const full = buildUrl(promptText);

@@ -7,8 +7,14 @@ import {
 } from '../types';
 
 interface NotebookExportMeta {
-  /** Absolute link back to the notebook, so an exported document can be traced to its source. */
-  url: string;
+  /**
+   * Absolute link back to the notebook, so an exported document can be traced to its source.
+   *
+   * Optional because the Cursor export leaves it out: Cursor's deep link handler mis-parses
+   * embedded URLs. Omitting it here is safer than generating the link and stripping it back out,
+   * which cannot tell the generated line from an identical line in the notebook's own prose.
+   */
+  url?: string;
 }
 
 /**
@@ -51,7 +57,9 @@ function buildHeader(spec: NotebookSpec, meta: NotebookExportMeta): string {
   }
 
   lines.push(`- **Time range:** ${spec.timeSettings.from} to ${spec.timeSettings.to}`);
-  lines.push(`- **Link:** [Open in Grafana](${meta.url})`);
+  if (meta.url) {
+    lines.push(`- **Link:** [Open in Grafana](${meta.url})`);
+  }
 
   return `${lines.join('\n')}\n\n---`;
 }
@@ -95,8 +103,12 @@ function panelToMarkdown(title: string, queries: PanelQueryKind[]): string {
 
   const described = queries.map((query) => ({
     refId: query.spec.refId,
+    // A disabled query would otherwise read as one the panel is actually running.
+    hidden: query.spec.hidden,
     datasource: query.spec.query.datasource?.name,
-    ...query.spec.query.spec,
+    // Nested rather than spread: a datasource's own query model commonly carries its own refId and
+    // hidden, which merging would silently overwrite these with.
+    query: query.spec.query.spec,
   }));
 
   return `${heading}\n\n${fence(JSON.stringify(described, null, 2), 'json')}`;
@@ -104,9 +116,23 @@ function panelToMarkdown(title: string, queries: PanelQueryKind[]): string {
 
 function fence(body: string, language: string): string {
   // A body containing its own ``` run would end the block early, so the fence grows past the
-  // longest run inside it — the same rule CommonMark uses.
-  const longestRun = Math.max(2, ...[...body.matchAll(/`+/g)].map((match) => match[0].length));
+  // longest run inside it — the same rule CommonMark uses. Tracked in a loop rather than spread
+  // into Math.max, which a body with tens of thousands of runs would blow the argument limit on.
+  let longestRun = 2;
+  for (const match of body.matchAll(/`+/g)) {
+    longestRun = Math.max(longestRun, match[0].length);
+  }
+
   const delimiter = '`'.repeat(longestRun + 1);
 
-  return `${delimiter}${language}\n${body}\n${delimiter}`;
+  return `${delimiter}${infoString(language)}\n${body}\n${delimiter}`;
+}
+
+/**
+ * The schema allows any string as a cell's language. A backtick or a line break in the fence's info
+ * string breaks the opening delimiter, which would render the whole cell as prose — so an unusable
+ * language is dropped rather than emitted.
+ */
+function infoString(language: string): string {
+  return /[`\r\n]/.test(language) ? '' : language;
 }

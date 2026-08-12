@@ -1,27 +1,4 @@
-import { buildCursorPromptDeeplink, openCursorPromptDeeplink, stripNotebookLink } from './cursor';
-
-describe('stripNotebookLink', () => {
-  it('removes the link line, which Cursor mis-parses', () => {
-    const markdown = [
-      '# Notebook',
-      '',
-      '- **Tags:** incident',
-      '- **Link:** [Open in Grafana](https://host/n/1)',
-      '',
-      'Body',
-    ].join('\n');
-
-    const stripped = stripNotebookLink(markdown);
-
-    expect(stripped).not.toContain('Open in Grafana');
-    expect(stripped).toContain('- **Tags:** incident');
-    expect(stripped).toContain('Body');
-  });
-
-  it('leaves markdown without a link line alone', () => {
-    expect(stripNotebookLink('# Notebook\n\nBody')).toBe('# Notebook\n\nBody');
-  });
-});
+import { buildCursorPromptDeeplink, openCursorPromptDeeplink } from './cursor';
 
 describe('buildCursorPromptDeeplink', () => {
   it('uses the native scheme and never cursor.com', () => {
