@@ -2,6 +2,7 @@ package serverlock
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -176,4 +177,39 @@ func TestIntegrationServerLock_LockExecuteAndReleaseWithRetries(t *testing.T) {
 		})
 		require.NoError(t, err)
 	})
+}
+
+// Distinct action names still contend on MySQL: when the lock row is missing the SELECT ... FOR UPDATE
+// gap-locks the index range, so concurrent inserts into the same gap deadlock. Run with
+// GRAFANA_TEST_DB=mysql to exercise that path.
+func TestIntegrationServerLock_ConcurrentDistinctActionNames(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sl, _ := createTestableServerLock(t)
+
+	const concurrency = 16
+	executed := make([]int, concurrency)
+	errs := make([]error, concurrency)
+
+	// released together so the acquisitions overlap as tightly as possible
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := range concurrency {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			<-start
+			errs[i] = sl.LockExecuteAndRelease(context.Background(), fmt.Sprintf("concurrent-operation-%d", i),
+				time.Hour, func(context.Context) { executed[i]++ })
+		}(i)
+	}
+	close(start)
+	wg.Wait()
+
+	for i, err := range errs {
+		require.False(t, sl.isDeadlock(context.Background(), err),
+			"deadlock escaped acquireForRelease for action %d: %v", i, err)
+		require.NoError(t, err)
+		require.Equal(t, 1, executed[i], "action %d should have executed exactly once", i)
+	}
 }

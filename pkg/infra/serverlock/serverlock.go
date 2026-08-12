@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/dskit/backoff"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
@@ -244,8 +244,7 @@ func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Contex
 		// could not get the lock
 		if err != nil {
 			var lockedErr *ServerLockExistsError
-			var deadlockErr *mysql.MySQLError
-			if errors.As(err, &lockedErr) || (errors.As(err, &deadlockErr) && deadlockErr.Number == 1213) {
+			if errors.As(err, &lockedErr) || sl.isDeadlock(ctx, err) {
 				// if the lock is already taken, wait and try again
 				if lockChecks == 1 { // only warn on first lock check
 					ctxLogger.Warn("another instance has the lock, waiting for it to be released", "actionName", actionName)
@@ -308,6 +307,27 @@ func (updateLastExecutionQuery) Validate() error {
 	return nil
 }
 
+// on a lock miss the SELECT ... FOR UPDATE takes a gap lock, so servers inserting different action names
+// into the same index gap deadlock. The loser is rolled back whole, so retrying is safe. The waits are
+// kept far below the ~1s callers already sleep between their own attempts, since those run under request
+// deadlines as short as 15s and compounding the two would turn a deadlock into a timeout.
+var acquireDeadlockBackoff = backoff.Config{
+	MinBackoff: 2 * time.Millisecond,
+	MaxBackoff: 32 * time.Millisecond,
+	MaxRetries: 5,
+}
+
+func (sl *ServerLockService) isDeadlock(ctx context.Context, err error) bool {
+	if err == nil {
+		return false
+	}
+	dbHelper, dbErr := sl.sql(ctx)
+	if dbErr != nil {
+		return false
+	}
+	return dbHelper.DB.GetDialect().IsDeadlock(err)
+}
+
 // acquireForRelease will check if the lock is already on the database, if it is, will check with maxInterval if it is
 // timeouted. Returns nil error if the lock was acquired correctly
 func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName string, maxInterval time.Duration) error {
@@ -319,8 +339,31 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 		return fmt.Errorf("get legacy DB: %w", err)
 	}
 
+	boff := backoff.New(ctx, acquireDeadlockBackoff)
+	for {
+		err = sl.acquireForReleaseOnce(ctx, dbHelper, actionName, maxInterval)
+		if !sl.isDeadlock(ctx, err) || !boff.Ongoing() {
+			break
+		}
+
+		sl.log.FromContext(ctx).Debug("Retrying lock acquisition after deadlock",
+			"actionName", actionName, "attempt", boff.NumRetries()+1)
+		boff.Wait()
+	}
+
+	// preferring the context error over the deadlock keeps errors.Is checks on context.Canceled working,
+	// and stops callers retrying a request that is already gone
+	if ctxErr := ctx.Err(); ctxErr != nil && sl.isDeadlock(ctx, err) {
+		return fmt.Errorf("context done while retrying deadlocked lock acquisition: %w", ctxErr)
+	}
+	return err
+}
+
+func (sl *ServerLockService) acquireForReleaseOnce(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper,
+	actionName string, maxInterval time.Duration,
+) error {
 	// getting the lock - as the action name has a Unique constraint, this will fail if the lock is already on the database
-	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+	return dbHelper.DB.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
 		query := getLockForUpdateQuery{
 			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
 			ServerLockTable: dbHelper.Table("server_lock"),
@@ -380,8 +423,6 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 		_, err = sl.createLock(ctx, lock, dbHelper, dbSession)
 		return err
 	})
-
-	return err
 }
 
 type releaseLockQuery struct {
