@@ -37,7 +37,7 @@ export function FullscreenWorkspacePlatformBar() {
         <>
           <div className={styles.backdrop} onClick={closeMenu} role="presentation" />
           <nav className={styles.drawer} aria-label={t('navigation.megamenu.dialog-label', 'Navigation')}>
-            <MegaMenu onClose={closeMenu} />
+            <MegaMenu className={styles.menu} onClose={closeMenu} />
           </nav>
         </>
       )}
@@ -76,10 +76,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: MENU_WIDTH,
     maxWidth: '100%',
     zIndex: theme.zIndex.modal,
-    overflowY: 'auto',
-    overflowX: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
     background: theme.colors.background.primary,
     borderRight: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z3,
+  }),
+  menu: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    minHeight: 0,
   }),
 });
