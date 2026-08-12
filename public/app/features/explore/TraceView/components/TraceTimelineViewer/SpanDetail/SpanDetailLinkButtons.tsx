@@ -103,7 +103,7 @@ export const SpanDetailLinkButtons = ({
           return createLinkModel(
             link,
             SpanLinkType.Logs,
-            getLogsButtonCTA(settings),
+            getLogsButtonCTA(settings, 'span'),
             'gf-logs',
             datasourceType,
             datasourceUid

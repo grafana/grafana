@@ -34,7 +34,7 @@ import {
 import { t } from '@grafana/i18n';
 import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import {
   getDataSourceInstance,
   useDataSourceInstanceList,
@@ -431,13 +431,14 @@ export function addNoSpanIdFallback(query: DataQuery) {
   if (!query.expr.toLowerCase().includes('span')) {
     return [query];
   }
-  const spanIdFilter =
-  /\s*\|\s*(?:span_?id|otel_span_id)\b\s*(?:=~|!~|!=|=)\s*(?:"(?:\\.|[^"\\])*"|`[^`]*`|[^\s|]+)/gi;
+  const spanIdFilter = /\s*\|\s*(?:span_?id|otel_span_id)\b\s*(?:=~|!~|!=|=)\s*(?:"(?:\\.|[^"\\])*"|`[^`]*`|[^\s|]+)/gi;
 
   // Add fallback without span_id filter
   const fallbackQuery = {
     ...query,
-    expr: query.expr.includes('!=') ? query.expr.substring(0, query.expr.lastIndexOf('|=')-1) : query.expr.replace(spanIdFilter, ""),
+    expr: query.expr.includes('!=')
+      ? query.expr.substring(0, query.expr.lastIndexOf('|=') - 1)
+      : query.expr.replace(spanIdFilter, ''),
   };
 
   return [query, fallbackQuery];
@@ -460,10 +461,19 @@ function checkForLogs(query: DataQuery, timeRange: TimeRange): Observable<boolea
   );
 }
 
-export function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined) {
+export function getLogsButtonCTA(
+  settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined,
+  type: 'trace' | 'span'
+) {
   const defaultCTA = t('explore.span-detail-link-buttons.related-logs', 'Related logs');
   if (!settings) {
     return defaultCTA;
+  }
+
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDynamicTraceToLogs, false)) {
+    return type === 'trace'
+      ? t('explore.span-detail-link-buttons.logs-for-this-trace.button', 'Logs for this trace')
+      : t('explore.span-detail-link-buttons.logs-for-this-span.button', 'Logs for this span');
   }
 
   // The trace-to-logs config lives on jsonData; getTraceToLogsOptions also
@@ -482,7 +492,7 @@ export function getLogsButtonCTA(settings: DataSourceInstanceSettings<DataSource
 export function getLogsButtonTooltip(
   settings: DataSourceInstanceSettings<DataSourceJsonData> | undefined,
   presence: LogsPresence,
-  level: 'span' | 'trace' = 'span'
+  type: 'span' | 'trace' = 'span'
 ) {
   const defaultCTA = t(
     'explore.span-detail-link-buttons.related-logs-tooltip',
@@ -491,10 +501,20 @@ export function getLogsButtonTooltip(
   if (!settings) {
     return defaultCTA;
   }
+
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDynamicTraceToLogs, false)) {
+    if (presence === 'present') {
+      return t('explore.span-detail-link-buttons.logs-for-this-trace.logs-found-tooltip', 'See related logs');
+    }
+    return type === 'trace'
+      ? t('explore.span-detail-link-buttons.logs-for-this-trace.no-logs-found-tooltip', 'No matching logs found for this trace')
+      : t('explore.span-detail-link-buttons.logs-for-this-span.no-logs-found-tooltip', 'No matching logs found for this span');
+  }
+
   const options = getTraceToLogsOptions(settings.jsonData);
 
   if (presence === 'absent') {
-    if (level === 'trace') {
+    if (type === 'trace') {
       return t(
         'explore.span-detail-link-buttons.logs-for-this-trace.no-logs-tooltip',
         'No logs found for this trace using the trace data source configuration.'
@@ -518,7 +538,7 @@ export function getLogsButtonTooltip(
     );
   }
 
-  if (level === 'trace') {
+  if (type === 'trace') {
     return t(
       'explore.span-detail-link-buttons.logs-for-this-trace.tooltip',
       'See logs related to this trace using the trace data source configuration.'

@@ -210,20 +210,22 @@ export function TraceView(props: Props) {
   const logsLinkModel = useMemo(
     () =>
       createTraceLogsLink({
-        splitOpenFn: props.splitOpenFn!,
+        splitOpenFn: props.splitOpenFn,
         traceToLogsOptions,
         trace: traceProp,
         dataFrame: props.dataFrames[0],
         dataLinkPostProcessor: dataLinksContext?.dataLinkPostProcessor,
         logsDataSourceSettings,
+        traceDataSourceSettings: instanceSettings,
       }),
     [
       props.splitOpenFn,
+      props.dataFrames,
       traceToLogsOptions,
       traceProp,
-      props.dataFrames,
       dataLinksContext?.dataLinkPostProcessor,
       logsDataSourceSettings,
+      instanceSettings,
     ]
   );
   const timeZone = useSelector((state) => getTimeZone(state.user));

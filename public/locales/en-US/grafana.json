@@ -8918,11 +8918,14 @@
     "span-detail-link-buttons": {
       "logs-for-this-span": {
         "button": "Logs for this span",
+        "no-logs-found-tooltip": "No matching logs found for this span",
         "no-logs-tooltip": "No logs found for this span using the trace data source configuration.",
         "tooltip": "See logs related to this span using the trace data source configuration."
       },
       "logs-for-this-trace": {
         "button": "Logs for this trace",
+        "logs-found-tooltip": "See related logs",
+        "no-logs-found-tooltip": "No matching logs found for this trace",
         "no-logs-tooltip": "No logs found for this trace using the trace data source configuration.",
         "tooltip": "See logs related to this trace using the trace data source configuration."
       },

@@ -26,6 +26,7 @@ import { Icon } from '@grafana/ui';
 
 import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
+import { getLogsButtonCTA } from './components/TraceTimelineViewer/SpanDetail/LogsLink';
 import { getTraceToLogsSpanQuery, getTraceToLogsTraceQuery } from './components/logsLink';
 import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from './components/types/links';
 import { type Trace, type TraceSpan, type TraceSpanReference } from './components/types/trace';
@@ -416,13 +417,15 @@ export function createTraceLogsLink({
   dataFrame,
   dataLinkPostProcessor,
   logsDataSourceSettings,
+  traceDataSourceSettings,
 }: {
-  splitOpenFn: SplitOpen;
+  splitOpenFn: SplitOpen | undefined;
   traceToLogsOptions?: TraceToLogsOptionsV2;
   trace: Trace;
   dataFrame?: DataFrame;
   dataLinkPostProcessor?: DataLinkPostProcessor;
   logsDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>;
+  traceDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>;
 }): LinkModel | undefined {
   if (!logsDataSourceSettings || !traceToLogsOptions) {
     return undefined;
@@ -441,14 +444,16 @@ export function createTraceLogsLink({
       datasourceUid: logsDataSourceSettings.uid,
       datasourceName: logsDataSourceSettings.name,
       query,
-      range: getTimeRangeFromTrace(trace, {
-        startMs: traceToLogsOptions.spanStartTimeShift
-          ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-          : 0,
-        endMs: traceToLogsOptions.spanEndTimeShift
-          ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
-          : 0,
-      }, isSplunkDS),
+      range: getTimeRangeFromTrace(
+        trace,
+        {
+          startMs: traceToLogsOptions.spanStartTimeShift
+            ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
+            : 0,
+          endMs: traceToLogsOptions.spanEndTimeShift ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift) : 0,
+        },
+        isSplunkDS
+      ),
     },
   };
 
@@ -496,7 +501,7 @@ export function createTraceLogsLink({
 
   return {
     ...link,
-    title: t('explore.create-trace-logs-link.title.logs-for-this-trace', 'Logs for this trace'),
+    title: getLogsButtonCTA(traceDataSourceSettings, 'trace'),
   };
 }
 
