@@ -1,14 +1,14 @@
 ---
 name: restore-broken-baseline
-description: Restore this workspace to the known broken baseline for the dotted-identifier bug on fix/influx-dotted-identifiers, and move the related Jira tickets back to To Do. Use after an investigation or fix cycle. Restore only — never implement or re-apply product changes.
+description: Restore this workspace to the known broken baseline for the dotted-identifier bug on fix/influx-dotted-identifiers, and move every Task Tracking Jira issue back to To Do. Use after an investigation or fix cycle. Restore only — never implement or re-apply product changes.
 ---
 
 # Restore workspace to the known broken baseline
 
 This workspace tracks a known-broken state of SQL/Influx dotted-identifier
 handling on the branch `fix/influx-dotted-identifiers`. After a fix cycle,
-run this skill to put the working tree back to that baseline, return the
-board tickets to To Do, and tidy leftover agent work.
+run this skill to put the working tree back to that baseline, return every
+issue on the Task Tracking board to To Do, and tidy leftover agent work.
 
 This skill is restore-only. Do not fix the identifier bug, do not cherry-pick
 the fix commit, and do not make any other product change while running it.
@@ -27,19 +27,22 @@ If neither resolves, stop and report; do not guess a SHA.
 
 ## Jira board to reset
 
-Always return these Task Tracking issues to **To Do** (the open column),
-even if the invoking chat did not mention them:
-
-- KAN-6
-- KAN-7
-- KAN-8
-- KAN-9
-
-Also include any extra issue keys named in the chat that invoked this skill.
+Return **every** issue on the Task Tracking board to **To Do** (the open
+column), not a hardcoded subset. Do this even if the invoking chat did not
+mention any keys.
 
 Site: `https://anysphere-team-mpn5t3b7.atlassian.net`
 Cloud ID: `66ddee92-383a-4439-a196-3f7bacef6888`
 Project key: `KAN`
+
+Discover the full set with JQL (paginate until complete):
+
+```
+project = KAN ORDER BY key ASC
+```
+
+Also include any extra issue keys named in the chat that invoked this skill,
+even if they are outside KAN.
 
 The open-column transition is named **To Do** (not "Open"). Look up the
 current transition id with `getTransitionsForJiraIssue` rather than hard-coding
@@ -76,14 +79,15 @@ back to To Do is enough for the next In Progress transition to fire again.
    git rev-parse dotted-identifiers/fix
    ```
 
-5. Move Jira tickets back to To Do (do this; do not only remind the user):
+5. Move every Jira board item back to To Do (do this; do not only remind
+   the user):
 
-   For each key in the list above:
-
-   1. Read the issue (`getJiraIssue`).
-   2. If status is already `To Do`, skip it.
-   3. Otherwise list transitions (`getTransitionsForJiraIssue`) and apply the
-      one whose target status name is `To Do` (`transitionJiraIssue`).
+   1. Search `project = KAN ORDER BY key ASC` (`searchJiraIssuesUsingJql`).
+      Follow `nextPageToken` until every issue is listed.
+   2. Union that set with any extra keys named in the invoking chat.
+   3. For each issue: if status is already `To Do`, skip it. Otherwise list
+      transitions (`getTransitionsForJiraIssue`) and apply the one whose
+      target status name is `To Do` (`transitionJiraIssue`).
    4. If a ticket is Done and still has a Resolution set, clear `resolution`
       if the transition is blocked.
 
@@ -102,6 +106,6 @@ back to To Do is enough for the next In Progress transition to fire again.
 7. Print a short summary:
    - current SHA (`git rev-parse --short HEAD`) and branch
    - working tree state (`git status --short` should be empty)
-   - each Jira key and its status after the reset
+   - every Jira key on the board and its status after the reset
    - next suggested step: start a fresh chat and pick up a To Do ticket
      from the board (moving it to In Progress starts the Cloud Agent).
