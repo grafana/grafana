@@ -5,12 +5,6 @@ import { NavigationType, type To, Router } from 'react-router-dom-v5-compat';
 
 import type { LocationService } from '@grafana/runtime';
 
-const NAVIGATION_TYPE: Record<Action, NavigationType> = {
-  POP: NavigationType.Pop,
-  PUSH: NavigationType.Push,
-  REPLACE: NavigationType.Replace,
-};
-
 function toHistoryLocation(to: To): LocationDescriptorObject {
   return typeof to === 'string' ? parsePath(to) : to;
 }
@@ -31,6 +25,14 @@ function toHistoryLocation(to: To): LocationDescriptorObject {
  * route in `app/features/plugins/routes.tsx` ends in `/*`.
  */
 export function LocationServiceRouter({ service, children }: { service: LocationService; children: ReactNode }) {
+  // Built here, not at module scope: tests that `jest.mock('react-router-dom-v5-compat', ...)` without
+  // re-exporting `NavigationType` would throw on import alone, before ever rendering this component.
+  const NAVIGATION_TYPE: Record<Action, NavigationType> = {
+    POP: NavigationType.Pop,
+    PUSH: NavigationType.Push,
+    REPLACE: NavigationType.Replace,
+  };
+
   const history = service.getHistory();
   const [state, setState] = useState({
     action: history.action,

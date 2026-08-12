@@ -6,9 +6,6 @@ import { createMemoryHistory, type MemoryHistoryBuildOptions } from 'history';
 import { Fragment, type PropsWithChildren } from 'react';
 import * as React from 'react';
 import { Provider } from 'react-redux';
-// eslint-disable-next-line no-restricted-imports
-import { Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { type FeatureToggles } from '@grafana/data';
@@ -22,6 +19,7 @@ import {
 import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { GrafanaContext, type GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
+import { LocationServiceRouter } from 'app/core/navigation/LocationServiceRouter';
 import { configureStore } from 'app/store/configureStore';
 import { type StoreState } from 'app/types/store';
 
@@ -68,13 +66,13 @@ const getWrapper = ({
   setLocationService(locationService);
 
   /**
-   * Conditional router - either a MemoryRouter or just a Fragment
+   * Conditional router - either a LocationServiceRouter or just a Fragment
    */
   const PotentialRouter = renderWithRouter
-    ? ({ children }: PropsWithChildren) => <Router history={locationService.getHistory()}>{children}</Router>
-    : ({ children }: PropsWithChildren) => <Fragment>{children}</Fragment>;
-
-  const PotentialCompatRouter = renderWithRouter ? CompatRouter : Fragment;
+    ? ({ children }: PropsWithChildren) => (
+        <LocationServiceRouter service={locationService}>{children}</LocationServiceRouter>
+      )
+    : Fragment;
 
   const context = {
     ...getGrafanaContextMock(),
@@ -92,9 +90,7 @@ const getWrapper = ({
           <GrafanaContext.Provider value={context}>
             <PotentialRouter>
               <LocationServiceProvider service={locationService}>
-                <PotentialCompatRouter>
-                  <ModalsContextProvider>{children}</ModalsContextProvider>
-                </PotentialCompatRouter>
+                <ModalsContextProvider>{children}</ModalsContextProvider>
               </LocationServiceProvider>
             </PotentialRouter>
           </GrafanaContext.Provider>
