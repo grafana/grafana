@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
+	"github.com/grafana/grafana/pkg/registry/apps/network"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
@@ -49,6 +50,7 @@ func ProvideAppInstallers(
 	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
 	dashvalidatorAppInstaller *dashvalidator.DashValidatorAppInstaller,
+	networkAppInstaller *network.NetworkAppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
@@ -57,6 +59,7 @@ func ProvideAppInstallers(
 		quotasAppInstaller,
 	}
 	installers = append(installers, shorturlAppInstaller)
+	installers = append(installers, networkAppInstaller)
 
 	if rulesAppInstaller != nil {
 		installers = append(installers, rulesAppInstaller)
