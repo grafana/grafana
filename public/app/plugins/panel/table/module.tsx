@@ -93,6 +93,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
             'Render a cell from a field (hidden or visible) in a tooltip'
           ),
           category: cellCategory,
+          settings: {
+            isClearable: true,
+          },
         })
         .addSelect({
           path: 'tooltip.placement',
