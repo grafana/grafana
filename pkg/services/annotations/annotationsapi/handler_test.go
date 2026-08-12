@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -117,6 +118,16 @@ func TestItemAnnotationConversion(t *testing.T) {
 		dto, err := annoToItemDTO(anno)
 		require.NoError(t, err)
 		require.Nil(t, dto.Data)
+	})
+
+	t.Run("missing epoch defaults to now matching legacy behavior", func(t *testing.T) {
+		before := time.Now().UnixMilli()
+		anno, err := itemToAnnotation(&annotations.Item{Text: "hello"})
+		require.NoError(t, err)
+		after := time.Now().UnixMilli()
+
+		require.GreaterOrEqual(t, anno.Spec.Time, before)
+		require.LessOrEqual(t, anno.Spec.Time, after)
 	})
 
 	t.Run("point annotation reads back TimeEnd == Time", func(t *testing.T) {

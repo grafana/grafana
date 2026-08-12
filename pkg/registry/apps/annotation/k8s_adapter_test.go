@@ -161,7 +161,10 @@ func TestK8sAdapter_StoreErrorMapping(t *testing.T) {
 			})
 
 			t.Run("Create", func(t *testing.T) {
-				obj := &annotationV0.Annotation{ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns}}
+				obj := &annotationV0.Annotation{
+					ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns},
+					Spec:       annotationV0.AnnotationSpec{Time: 1000},
+				}
 				_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 				assert.True(t, tc.predicate(err), "got %v", err)
 			})
@@ -182,7 +185,10 @@ func TestK8sAdapter_Create(t *testing.T) {
 		adapter := newTestAdapter(NewMemoryStore(), allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
-		obj := &annotationV0.Annotation{ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns}}
+		obj := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Time: 1000},
+		}
 		_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
@@ -687,6 +693,7 @@ func TestK8sAdapter_ValidateAnnotation(t *testing.T) {
 		errContains       string
 	}{
 		{name: "time is current", time: now, retentionTTL: defaultTTL},
+		{name: "time not present", time: 0, retentionTTL: defaultTTL, expectErr: true, errContains: "time is required"},
 		{name: "recent past within retention", time: now - retentionMs/2, retentionTTL: defaultTTL},
 		{name: "inside future bound", time: now + futureWindowMs - second, retentionTTL: defaultTTL},
 		{name: "too far in the future", time: now + futureWindowMs + second, retentionTTL: defaultTTL, expectErr: true, errContains: "time cannot be more than 1 week in the future"},
