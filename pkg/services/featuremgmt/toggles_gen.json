@@ -5513,6 +5513,20 @@
     },
     {
       "metadata": {
+        "name": "rawPrometheus.tableNg",
+        "resourceVersion": "1786565901949",
+        "creationTimestamp": "2026-08-12T20:18:21Z"
+      },
+      "spec": {
+        "description": "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "react19",
         "resourceVersion": "1781168092989",
         "creationTimestamp": "2026-05-22T09:03:04Z",
