@@ -117,7 +117,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     if (this.variable instanceof LocalValueVariable) {
       return {
         typeName: t('dashboard.sidebar.elements.local-variable', 'Local variable'),
-        icon: 'dollar-alt',
+        icon: 'gf-variable',
         instanceName: this.variable.state.name,
         isHidden: true,
       };
@@ -141,7 +141,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
     return {
       typeName: t('dashboard.sidebar.elements.variable', '{{type}} variable', { type: variableEditorDef.name }),
-      icon: 'dollar-alt',
+      icon: 'gf-variable',
       instanceName,
       tooltip,
       isHidden: this.variable.state.hide === VariableHide.hideVariable,
