@@ -20,7 +20,7 @@ import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboa
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../types';
+import { type CellContentKind, type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
@@ -95,6 +95,25 @@ export class NotebookLayoutManager
   public editModeChanged(isEditing: boolean): void {
     this.setState({ isEditing });
   }
+
+  /**
+   * Applies narrative content to every cell referencing the same element.
+   *
+   * Two layout items may legally reference one element, and the deserializer gives each its own
+   * cell — two views of one thing. serialize() collapses them back into a single elements[name]
+   * entry where the last cell processed wins, so updating only the edited cell loses the edit
+   * outright whenever an unedited duplicate follows it.
+   *
+   * It lives on the manager because that is what owns `cells`; a cell cannot see its siblings.
+   */
+  public setCellContent = (target: NotebookCellItem, content: CellContentKind): void => {
+    for (const cell of this.state.cells) {
+      // Panel cells carry no content and must not gain any.
+      if (cell.state.content && cell.state.elementName === target.state.elementName) {
+        cell.setState({ content });
+      }
+    }
+  };
 
   /**
    * Reorders a cell, mirroring RowsLayoutManager.moveRow. The cell objects move rather than being
@@ -258,6 +277,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     // manager, so the frame never needs to reach back up for its own position.
                     onDuplicate={() => model.duplicateCell(cell)}
                     onDelete={() => confirmRemoveCell(model, cell)}
+                    onContentChange={model.setCellContent}
                   />
                 ))}
                 {dropProvided.placeholder}

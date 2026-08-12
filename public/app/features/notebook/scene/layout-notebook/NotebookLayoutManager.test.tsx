@@ -455,6 +455,62 @@ describe('NotebookLayoutManager', () => {
     });
   });
 
+  describe('setCellContent', () => {
+    const edited = { kind: 'Code' as const, spec: { code: 'select 2', language: 'sql' } };
+
+    function codeCell(elementName: string) {
+      return new NotebookCellItem({
+        elementName,
+        source: 'user',
+        content: { kind: 'Code', spec: { code: 'select 1', language: 'sql' } },
+      });
+    }
+
+    it('applies the content to the edited cell', () => {
+      const cell = codeCell('query');
+      const manager = new NotebookLayoutManager({ cells: [cell] });
+
+      manager.setCellContent(cell, edited);
+
+      expect(cell.state.content).toEqual(edited);
+    });
+
+    // Two layout items may legally reference one element. serialize() folds them back into a single
+    // elements[name] entry where the last cell wins, so an edit that reached only the edited cell
+    // would be silently discarded by an unedited duplicate that follows it.
+    it('applies the content to every cell referencing the same element', () => {
+      const first = codeCell('query');
+      const second = codeCell('query');
+      const manager = new NotebookLayoutManager({ cells: [first, second] });
+
+      manager.setCellContent(first, edited);
+
+      expect(second.state.content).toEqual(edited);
+    });
+
+    it('leaves cells referencing a different element alone', () => {
+      const cell = codeCell('query');
+      const other = codeCell('other-query');
+      const manager = new NotebookLayoutManager({ cells: [cell, other] });
+
+      manager.setCellContent(cell, edited);
+
+      expect(other.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+    });
+
+    it('does not give a panel cell narrative content', () => {
+      const cell = codeCell('query');
+      // A panel and a narrative cell should never share a name, but a panel must not sprout content
+      // if they do — getElements branches on `panel` first, so it would corrupt the panel's element.
+      const panel = new NotebookCellItem({ elementName: 'query', source: 'user' });
+      const manager = new NotebookLayoutManager({ cells: [cell, panel] });
+
+      manager.setCellContent(cell, edited);
+
+      expect(panel.state.content).toBeUndefined();
+    });
+  });
+
   it('serializes to the notebook layout kind, not a dashboard layout kind', () => {
     const manager = new NotebookLayoutManager({
       cells: [new NotebookCellItem({ elementName: 'md1', source: 'assistant' })],

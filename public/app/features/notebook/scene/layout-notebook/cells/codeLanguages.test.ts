@@ -17,6 +17,12 @@ describe('toCodeMirrorLanguage', () => {
     expect(toCodeMirrorLanguage('python')).toBeUndefined();
   });
 
+  // `language` is free-form, so an Object.prototype key can reach the lookup. Answering it with `in`
+  // would narrow these to real languages, and the loader has no branch for them.
+  it.each(['constructor', 'toString', 'hasOwnProperty', '__proto__'])('does not treat %s as a language', (key) => {
+    expect(toCodeMirrorLanguage(key)).toBeUndefined();
+  });
+
   it('treats the empty language as no highlighting', () => {
     expect(toCodeMirrorLanguage(PLAIN_TEXT_LANGUAGE)).toBeUndefined();
   });
@@ -34,6 +40,11 @@ describe('codeLanguageLabel', () => {
 
   it('shows an unrecognised language as it was stored', () => {
     expect(codeLanguageLabel('promql')).toBe('promql');
+  });
+
+  // Without an own-key check this returns Object's constructor, and React throws on a function child.
+  it('does not return a prototype member as a label', () => {
+    expect(codeLanguageLabel('constructor')).toBe('constructor');
   });
 });
 

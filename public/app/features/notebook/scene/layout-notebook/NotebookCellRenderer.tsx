@@ -15,7 +15,15 @@ const PANEL_HEIGHT = 300;
 // A notebook cell is one of two things: a panel (a chart) or narrative content (a markdown or
 // code block). This chooses the matching renderer, or shows a compact placeholder when the cell
 // is collapsed.
-export function NotebookCellRenderer({ cell, isEditing }: { cell: NotebookCellItem; isEditing: boolean }) {
+export function NotebookCellRenderer({
+  cell,
+  isEditing,
+  onContentChange,
+}: {
+  cell: NotebookCellItem;
+  isEditing: boolean;
+  onContentChange: (cell: NotebookCellItem, content: CellContentKind) => void;
+}) {
   const { body: panel, content: narrative, collapsed, elementName } = cell.useState();
 
   if (collapsed) {
@@ -27,7 +35,7 @@ export function NotebookCellRenderer({ cell, isEditing }: { cell: NotebookCellIt
   }
 
   if (narrative) {
-    return <NarrativeCell cell={cell} content={narrative} isEditing={isEditing} />;
+    return <NarrativeCell cell={cell} content={narrative} isEditing={isEditing} onContentChange={onContentChange} />;
   }
 
   return null;
@@ -46,17 +54,20 @@ function PanelCell({ panel }: { panel: VizPanel }) {
 
 // A narrative cell: markdown or code, rendered by the component registered for its content kind.
 //
-// Edits land on the cell's own state, which is where transformNotebookSceneToSaveModel reads content
-// from — so an export (and, later, a save) serializes what the reader actually sees. Nothing is
-// persisted to the API yet.
+// Edits go back through the layout manager rather than straight onto this cell, because a cell
+// cannot see the siblings that may reference the same element. They end up on cell state, which is
+// where transformNotebookSceneToSaveModel reads content from — so an export (and, later, a save)
+// serializes what the reader actually sees. Nothing is persisted to the API yet.
 function NarrativeCell({
   cell,
   content,
   isEditing,
+  onContentChange,
 }: {
   cell: NotebookCellItem;
   content: CellContentKind;
   isEditing: boolean;
+  onContentChange: (cell: NotebookCellItem, content: CellContentKind) => void;
 }) {
   const styles = useStyles2(getStyles);
 
@@ -68,7 +79,7 @@ function NarrativeCell({
   const Renderer = registered.render;
   return (
     <div className={styles.content}>
-      <Renderer content={content} isEditing={isEditing} onChange={(updated) => cell.setState({ content: updated })} />
+      <Renderer content={content} isEditing={isEditing} onChange={(updated) => onContentChange(cell, updated)} />
     </div>
   );
 }
