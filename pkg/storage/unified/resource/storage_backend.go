@@ -442,15 +442,16 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		cancel:                  cancel,
 		metrics:                 metrics,
 	}
-	// Every replica would run its own copy, and collection deletes. The pruner is
-	// switched to the noop one rather than skipped, because writes add to it
-	// without checking whether it exists.
 	err = backend.initPruner(ctx, opts.Reg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
-	if backend.garbageCollection.Enabled && !opts.DisableStorageServices {
-		if err := backend.initGarbageCollection(ctx); err != nil {
+	if backend.garbageCollection.Enabled {
+		if opts.DisableStorageServices {
+			// Otherwise every replica of a process that only reads would run its
+			// own garbage collector.
+			logger.Warn("garbage collection is enabled but storage services are disabled, not starting it")
+		} else if err := backend.initGarbageCollection(ctx); err != nil {
 			return nil, fmt.Errorf("failed to initialize garbage collection: %w", err)
 		}
 	}
