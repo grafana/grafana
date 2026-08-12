@@ -130,18 +130,10 @@ describe('NotebookScene', () => {
       expect(scene.state.body.state.isEditing).toBe(true);
     });
 
-    it('puts the mode in the url, so a reload or a copied link keeps it', () => {
-      const scene = buildScene(false);
-
-      scene.onEnterEditMode();
-
-      // The raw search text, not getSearchObject(), which coerces 'true' to a boolean — the page
-      // seeds off the literal string, and this is what a copied link carries.
-      expect(locationService.getLocation().search).toContain('edit=true');
-    });
-
+    // Reflecting the mode in the url is NotebookSceneUrlSync's job, not these methods' — covered by
+    // its own tests and by the page test that mounts the sync provider.
     it('refuses a user without edit permission, whatever the caller', () => {
-      // The url seeding calls this directly, so the guard cannot live only in the toggle.
+      // NotebookSceneUrlSync calls this directly, so the guard cannot live only in the toggle.
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
       const scene = buildScene(false);
 
@@ -149,10 +141,9 @@ describe('NotebookScene', () => {
 
       expect(scene.state.isEditing).toBeUndefined();
       expect(scene.state.body.state.isEditing).toBeUndefined();
-      expect(locationService.getLocation().search).not.toContain('edit');
     });
 
-    it('leaves edit mode again, clearing the layout and the url', () => {
+    it('leaves edit mode again, clearing the layout too', () => {
       const scene = buildScene(false);
       scene.onEnterEditMode();
 
@@ -160,7 +151,6 @@ describe('NotebookScene', () => {
 
       expect(scene.state.isEditing).toBe(false);
       expect(scene.state.body.state.isEditing).toBe(false);
-      expect(locationService.getLocation().search).not.toContain('edit');
     });
   });
 

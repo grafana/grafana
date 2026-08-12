@@ -71,7 +71,7 @@ describe('NotebookScenePage', () => {
       jest.restoreAllMocks();
     });
 
-    function buildScene() {
+    function buildScene(hideTimeControls = false) {
       return new NotebookScene({
         title: 'Checkout latency investigation',
         uid: 'nb-1',
@@ -79,6 +79,7 @@ describe('NotebookScenePage', () => {
         $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
         timePicker: new SceneTimePicker({}),
         refreshPicker: new SceneRefreshPicker({}),
+        hideTimeControls,
       });
     }
 
@@ -128,6 +129,18 @@ describe('NotebookScenePage', () => {
       await renderLoaded(scene, '/notebooks/nb-1');
 
       expect(scene.state.isEditing).toBe(false);
+    });
+
+    // Edit mode syncs through the scene, so the page has to mount UrlSyncContextProvider for every
+    // notebook. It used to skip it when the time controls were hidden, on the grounds that such a
+    // notebook had no url state — which stopped being true once edit mode moved onto the scene.
+    it('still honours the url for a notebook with the time controls hidden', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const scene = buildScene(true);
+
+      await renderLoaded(scene, '/notebooks/nb-1?edit=true');
+
+      expect(scene.state.isEditing).toBe(true);
     });
   });
 });

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
@@ -11,7 +11,6 @@ import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookToolbar } from '../toolbar/NotebookToolbar';
-import { NOTEBOOK_EDIT_PARAM, NOTEBOOK_EDIT_PARAM_ON } from '../urls';
 
 import { NotebookPageError } from './NotebookPageError';
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
@@ -54,14 +53,11 @@ export function NotebookScenePage() {
     );
   }
 
-  // A notebook with the time picker hidden has no time state to reflect in the URL, so skip URL
-  // sync entirely (same as the public dashboard page). Otherwise SceneTimeRange (from/to/timezone)
-  // and SceneRefreshPicker (refresh) sync their own keys — the notebook has no scene-level URL
-  // handler, so no dashboard chrome keys (editPanel, editview, shareView) exist at all.
-  if (scene.state.hideTimeControls) {
-    return <NotebookDocument scene={scene} />;
-  }
-
+  // Mounted for every notebook, including one with the time picker hidden: the scene syncs its edit
+  // mode through NotebookSceneUrlSync, so skipping this would leave ?edit=true ignored and the
+  // toggle unable to write the url. SceneTimeRange (from/to/timezone) and SceneRefreshPicker
+  // (refresh) sync their own keys alongside it; the notebook has no dashboard chrome keys
+  // (editPanel, editview, shareView) at all.
   return (
     <UrlSyncContextProvider scene={scene} updateUrlOnInit={true} createBrowserHistorySteps={true}>
       <NotebookDocument scene={scene} />
@@ -70,26 +66,11 @@ export function NotebookScenePage() {
 }
 
 function NotebookDocument({ scene }: { scene: NotebookScene }) {
-  const [searchParams] = useSearchParams();
   // uid comes off the scene rather than the route param: it is the notebook's identity
   // (metadata.name), and the scene already carries it for the same reason it carries the title.
   const { title, uid } = scene.useState();
 
   useEffect(() => scene.activate(), [scene]);
-
-  // The url decides the mode at load, so the list page's Edit action lands straight in edit mode and
-  // a reload keeps you there. Both directions are handled because the page state manager caches
-  // scenes per uid: revisiting a notebook can hand back one that is still in edit mode from last
-  // time, which the url must be able to clear. Guarded so neither branch rewrites the url for a
-  // mode the scene is already in.
-  const wantsEditing = searchParams.get(NOTEBOOK_EDIT_PARAM) === NOTEBOOK_EDIT_PARAM_ON;
-  useEffect(() => {
-    if (wantsEditing && !scene.state.isEditing) {
-      scene.onEnterEditMode();
-    } else if (!wantsEditing && scene.state.isEditing) {
-      scene.onExitEditMode();
-    }
-  }, [scene, wantsEditing]);
 
   // The Notebooks nav section supplies the parent breadcrumb, so pageNav only carries the title.
   const pageNav = { text: title };

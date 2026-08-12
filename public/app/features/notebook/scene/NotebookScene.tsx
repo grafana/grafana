@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   behaviors,
   type CancelActivationHandler,
@@ -22,9 +22,9 @@ import { Text, useStyles2 } from '@grafana/ui';
 import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
 
 import { canEditNotebooks } from '../permissions';
-import { NOTEBOOK_EDIT_PARAM, NOTEBOOK_EDIT_PARAM_ON } from '../urls';
 
 import { NotebookEditToggle } from './NotebookEditToggle';
+import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 
 export interface NotebookSceneState extends SceneObjectState {
@@ -49,6 +49,10 @@ export interface NotebookSceneState extends SceneObjectState {
 
 export class NotebookScene extends SceneObjectBase<NotebookSceneState> implements DataRequestEnricher {
   public static Component = NotebookSceneRenderer;
+
+  // Edit mode is reflected in the url by this handler rather than by the methods below, so the url
+  // stays a projection of the state instead of a second copy of it.
+  protected _urlSync = new NotebookSceneUrlSync(this);
 
   public constructor(state: NotebookSceneState) {
     super({
@@ -112,15 +116,11 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     this.setState({ isEditing: true });
     // Same channel DashboardScene uses to tell its layout the mode changed.
     this.state.body.editModeChanged?.(true);
-    // Replace, not push: toggling is not a navigation, and pushing would make the back button undo
-    // toggles instead of leaving the notebook.
-    locationService.partial({ [NOTEBOOK_EDIT_PARAM]: NOTEBOOK_EDIT_PARAM_ON }, true);
   };
 
   public onExitEditMode = () => {
     this.setState({ isEditing: false });
     this.state.body.editModeChanged?.(false);
-    locationService.partial({ [NOTEBOOK_EDIT_PARAM]: null }, true);
   };
 
   public showModal(modal: SceneObject) {
