@@ -328,6 +328,7 @@ function createActionField(
 
   const actionFieldTableConfig: TableFieldOptions = {
     filterable: false,
+    sortable: false,
     width: actionColumnWidth,
     hideHeader: true,
     inspect: false,

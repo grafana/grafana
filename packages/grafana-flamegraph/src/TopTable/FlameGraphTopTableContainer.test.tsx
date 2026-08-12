@@ -117,6 +117,8 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
     // Columns: an actions column followed by Symbol / Self / Total.
     const columnHeaders = screen.getAllByRole('columnheader');
     expect(columnHeaders).toHaveLength(4);
+    // The actions column sets hideHeader: true - its label should be blank, not the literal text "actions".
+    expect(columnHeaders[0].textContent).toEqual('');
     expect(columnHeaders[1].textContent).toEqual('Symbol');
     expect(columnHeaders[2].textContent).toEqual('Self');
     expect(columnHeaders[3].textContent).toEqual('Total');
@@ -179,6 +181,33 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
 
     // First click on a column that isn't already sorted sorts ascending.
     expect(onTableSort).toHaveBeenCalledWith('Total_asc');
+  });
+
+  it('does not sort when the actions column header is clicked', async () => {
+    mockBoundingClientRect({ width: 500, height: 500 });
+    const onTableSort = jest.fn();
+    const flameGraphData = createDataFrame(data);
+    const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        onTableSort={onTableSort}
+        colorScheme={ColorScheme.ValueBased}
+        useTableNG={true}
+        enableVirtualization={false}
+      />
+    );
+
+    // The actions column sets sortable: false and has a blank header (hideHeader), so it's the first
+    // columnheader with no accessible name.
+    const actionsHeader = screen.getAllByRole('columnheader')[0];
+    await userEvents.click(actionsHeader);
+
+    expect(onTableSort).not.toHaveBeenCalled();
   });
 });
 
