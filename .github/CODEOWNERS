@@ -111,6 +111,8 @@
 /apps/logsdrilldown/ @grafana/observability-logs
 /apps/annotation/ @grafana/grafana-backend-services-squad
 /apps/dashvalidator/ @grafana/sharing-squad
+/apps/dashboard/kinds/notebook.cue @grafana/sharing-squad
+/apps/dashboard/kinds/v2beta1/notebook_spec.cue @grafana/sharing-squad
 /pkg/api/ @grafana/grafana-backend-services-squad
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/appplugin @grafana/grafana-catalog
@@ -713,6 +715,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/logsnew @grafana/observability-logs
 /packages/grafana-schema/src/**/news @grafana/dataviz-squad
 /packages/grafana-schema/src/**/nodegraph @grafana/observability-traces-and-profiling @grafana/app-o11y-visualizations
+/packages/grafana-schema/src/**/notebook @grafana/sharing-squad
 /packages/grafana-schema/src/**/piechart @grafana/dataviz-squad
 /packages/grafana-schema/src/**/stat @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
