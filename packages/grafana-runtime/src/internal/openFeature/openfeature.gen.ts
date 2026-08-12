@@ -149,6 +149,8 @@ export const FlagKeys = {
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
+  /** Routes snapshot requests from /api to the /apis endpoint */
+  SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
   /** Enables CodeMirror editor for SQL Expressions */
@@ -913,6 +915,17 @@ export const useFlagRecentlyViewedDashboards = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagReportingAnyPageReporting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reporting.anyPageReporting", false, options).value;
+};
+
+/**
+ * Routes snapshot requests from /api to the /apis endpoint
+ *
+ * **Details:**
+ * - flag key: `snapshots.kubernetesSnapshots`
+ * - default value: `false`
+ */
+export const useFlagSnapshotsKubernetesSnapshots = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("snapshots.kubernetesSnapshots", false, options).value;
 };
 
 /**
