@@ -30,22 +30,27 @@ function buildCodeCell() {
 }
 
 describe('NotebookCellRenderer', () => {
-  it('records an edit on the cell, which is what the save model is built from', async () => {
+  it('hands an edit to the layout manager rather than writing it to the cell', async () => {
     const cell = buildCodeCell();
-    const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+    const onContentChange = jest.fn();
+    const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} onContentChange={onContentChange} />);
 
     await user.type(screen.getByLabelText('Code'), '0');
 
-    // transformNotebookSceneToSaveModel reads elements straight off cell.state.content, so an edit
-    // that stops short of here would export the original code.
-    expect(cell.state.content).toEqual({ kind: 'Code', spec: { code: 'select 10', language: 'sql' } });
+    // The manager applies it, because cells sharing an element have to move together.
+    expect(onContentChange).toHaveBeenLastCalledWith(cell, {
+      kind: 'Code',
+      spec: { code: 'select 10', language: 'sql' },
+    });
+    expect(cell.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
   });
 
   it('leaves the cell alone while the notebook is being read', () => {
     const cell = buildCodeCell();
-    render(<NotebookCellRenderer cell={cell} isEditing={false} />);
+    const onContentChange = jest.fn();
+    render(<NotebookCellRenderer cell={cell} isEditing={false} onContentChange={onContentChange} />);
 
     expect(screen.getByLabelText('Code')).toHaveAttribute('readonly');
-    expect(cell.state.content).toEqual({ kind: 'Code', spec: { code: 'select 1', language: 'sql' } });
+    expect(onContentChange).not.toHaveBeenCalled();
   });
 });

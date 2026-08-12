@@ -16,7 +16,7 @@ import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/type
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 
-import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../types';
+import { type CellContentKind, type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { NotebookCellRenderer } from './NotebookCellRenderer';
@@ -86,6 +86,25 @@ export class NotebookLayoutManager
     this.setState({ isEditing });
   }
 
+  /**
+   * Applies narrative content to every cell referencing the same element.
+   *
+   * Two layout items may legally reference one element, and the deserializer gives each its own
+   * cell — two views of one thing. serialize() collapses them back into a single elements[name]
+   * entry where the last cell processed wins, so updating only the edited cell loses the edit
+   * outright whenever an unedited duplicate follows it.
+   *
+   * It lives on the manager because that is what owns `cells`; a cell cannot see its siblings.
+   */
+  public setCellContent = (target: NotebookCellItem, content: CellContentKind): void => {
+    for (const cell of this.state.cells) {
+      // Panel cells carry no content and must not gain any.
+      if (cell.state.content && cell.state.elementName === target.state.elementName) {
+        cell.setState({ content });
+      }
+    }
+  };
+
   // Editing (add/reorder/remove) is out of scope for the POC; these satisfy the
   // DashboardLayoutManager contract minimally.
   public addPanel(): void {}
@@ -136,7 +155,12 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
 
       <div className={styles.column}>
         {cells.map((cell) => (
-          <NotebookCellRenderer cell={cell} isEditing={Boolean(isEditing)} key={cell.state.key} />
+          <NotebookCellRenderer
+            cell={cell}
+            isEditing={Boolean(isEditing)}
+            onContentChange={model.setCellContent}
+            key={cell.state.key}
+          />
         ))}
       </div>
     </div>

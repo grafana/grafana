@@ -25,8 +25,12 @@ const LANGUAGE_LABELS: Record<CodeMirrorEditorLanguage, string> = {
 // also what the markdown export wants: an empty info string produces a correct bare fence.
 export const PLAIN_TEXT_LANGUAGE = '';
 
+// Own keys only. `in` would also answer true for 'constructor', 'toString' and the rest of
+// Object.prototype, and since `language` is free-form those reach here: the value would be narrowed
+// to a language the loader has no branch for, which surfaces as a "syntax highlighting failed to
+// load" alert, and the label lookup would hand a function to React.
 function isHighlightable(language: string): language is CodeMirrorEditorLanguage {
-  return language in LANGUAGE_LABELS;
+  return Object.hasOwn(LANGUAGE_LABELS, language);
 }
 
 /**
