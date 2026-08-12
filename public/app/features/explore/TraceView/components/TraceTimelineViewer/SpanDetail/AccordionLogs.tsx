@@ -39,6 +39,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       background: autoColor(theme, '#f0f0f0'),
+      padding: theme.spacing(0.5, 1),
     }),
     AccordionLogsContent: css({
       label: 'AccordionLogsContent',
