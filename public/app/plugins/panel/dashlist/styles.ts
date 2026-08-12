@@ -15,6 +15,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       paddingTop: theme.spacing(1.25),
       paddingBottom: theme.spacing(1.25),
+      paddingRight: theme.spacing(1.25),
 
       '&:has(a:hover)': {
         backgroundImage: gradient,
