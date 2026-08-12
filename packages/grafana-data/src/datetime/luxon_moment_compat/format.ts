@@ -116,10 +116,7 @@ function getOrdinal(day: number): string {
 }
 
 export function formatWithOrdinal(luxonDateTime: DateTime, momentFormat: string): string {
-  const { luxonFormat, hasOrdinal, hasMeridiem } = convertFormat(
-    momentFormat,
-    luxonDateTime.zone.type === 'system'
-  );
+  const { luxonFormat, hasOrdinal, hasMeridiem } = convertFormat(momentFormat, luxonDateTime.zone.type === 'system');
   // ZZZZ doesnt work
   // https://github.com/moment/luxon/discussions/1041
   // https://github.com/moment/luxon/issues/499#issuecomment-865017957
