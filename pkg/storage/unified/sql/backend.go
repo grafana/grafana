@@ -201,31 +201,13 @@ func NewStorageBackend(
 		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 	}
 
-	kvBackendOpts := resource.KVBackendOptions{
-		KvStore:              kvStore,
-		Reg:                  reg,
-		UseChannelNotifier:   !isHA,
-		Log:                  log.New("storage-backend"),
-		DBKeepAlive:          eDB,
-		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
-		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
-		TenantDeleterConfig:  resource.NewTenantDeleterConfig(cfg),
-		GCGate:               gcGate,
-		GarbageCollection: resource.GarbageCollectionConfig{
-			Enabled:          cfg.EnableGarbageCollection,
-			DryRun:           cfg.GarbageCollectionDryRun,
-			Interval:         cfg.GarbageCollectionInterval,
-			BatchSize:        cfg.GarbageCollectionBatchSize,
-			BatchWait:        cfg.GarbageCollectionBatchWait,
-			MaxAge:           cfg.GarbageCollectionMaxAge,
-			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
-		},
-		EventRetentionPeriod:    cfg.EventRetentionPeriod,
-		EventPruningInterval:    cfg.EventPruningInterval,
-		SearchLookback:          cfg.SearchLookback,
-		WatchOptions:            resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
-		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
-	}
+	kvBackendOpts := resource.NewKVBackendOptions(cfg)
+	kvBackendOpts.KvStore = kvStore
+	kvBackendOpts.Reg = reg
+	kvBackendOpts.UseChannelNotifier = !isHA
+	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.DBKeepAlive = eDB
+	kvBackendOpts.GCGate = gcGate
 
 	for _, opt := range opts {
 		opt(&kvBackendOpts)

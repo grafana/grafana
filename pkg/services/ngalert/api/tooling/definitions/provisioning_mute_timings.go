@@ -136,14 +136,6 @@ type MuteTimeInterval struct {
 	Provenance              Provenance `json:"provenance,omitempty"`
 }
 
-func (mt *MuteTimeInterval) ResourceType() string {
-	return "muteTimeInterval"
-}
-
-func (mt *MuteTimeInterval) ResourceID() string {
-	return mt.Name
-}
-
 type MuteTimeIntervalExport struct {
 	OrgID                   int64 `json:"orgId" yaml:"orgId"`
 	config.MuteTimeInterval `json:",inline" yaml:",inline"`

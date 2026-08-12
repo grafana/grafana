@@ -3593,6 +3593,7 @@
     },
     "time-intervals-selector": {
       "aria-label-time-intervals": "時間間隔",
+      "imported-not-usable": "",
       "placeholder-select-time-intervals": "時間間隔を選択..."
     },
     "time-intervals-table": {
@@ -5622,6 +5623,8 @@
       "edit-query-result-rule": "クエリ結果ルールを変更",
       "edit-template-variable-rule": "テンプレート変数ルールを変更",
       "edit-time-range-rule": "時間範囲ルールを変更",
+      "group-into-row": "",
+      "group-into-tab": "",
       "move": "{{typeName}}を移動",
       "panel-background": "パネルの背景を変更",
       "panel-description": "パネルの説明を変更",
@@ -6091,6 +6094,13 @@
       "save-json-to-file": "JSONをファイルに保存",
       "see-docs": "プロビジョニングについての詳細は<2>ドキュメント</2>をご覧ください。"
     },
+    "schema-editor": {
+      "identifier-change-unsupported": "",
+      "invalid-api-version": "",
+      "invalid-kind": "",
+      "metadata-edit-unsupported": "",
+      "missing-spec": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6248,6 +6258,12 @@
         "title-above-dashboard_other": "",
         "title-controls-menu_other": "",
         "title-hidden_other": ""
+      },
+      "group": {
+        "different-parents": "",
+        "into-row": "",
+        "into-tab": "",
+        "title": ""
       },
       "links": {
         "add-link": "",
@@ -7200,6 +7216,7 @@
         "title-someone-else-has-updated-this-dashboard": "他のユーザーがこのダッシュボードを更新しました",
         "would-still-dashboard": "このダッシュボードの保存を続行しますか？"
       },
+      "resource-validation-error-title": "",
       "save-and-overwrite": "保存して上書き"
     },
     "legacy": {
@@ -8002,7 +8019,8 @@
       "title-missing-rights": "権限が不足しています"
     },
     "data-source-picker": {
-      "aria-label-select-a-data-source": "データソースを選択"
+      "aria-label-select-a-data-source": "データソースを選択",
+      "clear-button": ""
     },
     "data-source-plugin-config-page": {
       "page-not-found": "ページが見つかりません：{{page}}"
@@ -10893,6 +10911,12 @@
       "critical-count_other": "",
       "high-count_other": ""
     },
+    "header-actions": {
+      "active-incidents": "",
+      "firing-alerts": "",
+      "no-active-incidents": "",
+      "no-firing-alerts": ""
+    },
     "home-page": {
       "edition": {
         "cloud": "",
@@ -12348,6 +12372,10 @@
     "new-folder": {
       "title": "新規フォルダ"
     },
+    "notebooks": {
+      "subtitle": "",
+      "title": ""
+    },
     "oncall": {
       "title": "OnCall"
     },
@@ -12638,8 +12666,33 @@
       "title-zoom-out": "ズームアウト"
     }
   },
-  "notebook": {
-    "breadcrumb-title": ""
+  "notebooks": {
+    "list": {
+      "all-authors": "",
+      "author-filter": "",
+      "create-error": "",
+      "empty-body": "",
+      "empty-title": "",
+      "empty-title-read-only": "",
+      "load-error": "",
+      "new-notebook": "",
+      "new-notebook-title": "",
+      "no-results": "",
+      "search-placeholder": "",
+      "table": {
+        "author": "",
+        "copy-link": "",
+        "created": "",
+        "edit": "",
+        "more-actions": "",
+        "tags": "",
+        "title": "",
+        "updated": ""
+      },
+      "unknown-author": "",
+      "count_other": "",
+      "count-truncated_other": ""
+    }
   },
   "notifications": {
     "empty-state": {

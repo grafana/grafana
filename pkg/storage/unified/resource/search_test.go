@@ -674,6 +674,32 @@ func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
 	}
 }
 
+// Anything this binary builds with, it must also know how to read, or it would
+// refuse its own indexes.
+func TestKnownIndexFeaturesCoverCurrent(t *testing.T) {
+	for _, current := range CurrentIndexFeatures() {
+		require.Contains(t, knownIndexFeatures, current)
+	}
+}
+
+// Declaring a requirement this binary cannot read would reject every index it
+// builds.
+func TestReaderRequiredFeaturesAreKnown(t *testing.T) {
+	for _, required := range readerRequiredFeatures {
+		require.Contains(t, knownIndexFeatures, required)
+	}
+	require.Empty(t, UnknownIndexRequirements(IndexReaderRequirements()))
+}
+
+func TestUnknownIndexRequirements(t *testing.T) {
+	// An index built before requirements were recorded.
+	require.Empty(t, UnknownIndexRequirements(nil))
+
+	// Refused by name, so an older instance needs no knowledge of the feature.
+	require.Equal(t, []IndexFeature{"feature-from-the-future"},
+		UnknownIndexRequirements([]IndexFeature{IndexFeatureDeletedMarker, "feature-from-the-future"}))
+}
+
 // TestRequiredIndexFeaturesStoredFacets covers the gating that keeps the stored
 // facet mapping from rebuilding indexes where post-rank authorization is off.
 func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
@@ -1735,6 +1761,30 @@ func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
 	require.Equal(t, codes.Unimplemented, status.Code(err))
 
 	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "vector_storage_search_duration_seconds"))
+}
+
+// TestSearchServer_HybridSearch_ObservesDuration mirrors the VectorSearch
+// test above: the Unimplemented path confirms the histogram wiring.
+func TestSearchServer_HybridSearch_ObservesDuration(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := ProvideVectorMetrics(reg)
+	s := &searchServer{
+		log:           log.New("test-hybrid-search"),
+		vectorMetrics: m,
+	}
+
+	_, err := s.HybridSearch(context.Background(), &resourcepb.HybridSearchRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: "stack-1",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+		},
+		Query: "test",
+	})
+	require.Error(t, err)
+	require.Equal(t, codes.Unimplemented, status.Code(err))
+
+	require.Equal(t, 1, testutil.CollectAndCount(m.HybridSearchDuration, "vector_storage_hybrid_search_duration_seconds"))
 }
 
 func TestFolderFilterSet(t *testing.T) {

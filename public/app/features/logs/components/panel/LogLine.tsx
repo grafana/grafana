@@ -551,11 +551,13 @@ export const getStyles = (
     logLineBody: maxContrast,
   };
 
-  const hoverColor = tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
-  const pinnedColor = tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString();
-  const detailsColor = tinycolor(theme.colors.background.canvas)
-    .darken(theme.isDark ? 2 : 5)
-    .toRgbString();
+  const hoverColor = theme.isDark
+    ? tinycolor(theme.colors.background.canvas).lighten(11).toRgbString()
+    : tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
+  const pinnedColor = tinycolor(theme.colors.info.background).setAlpha(0.25).toString();
+  const detailsColor = theme.isDark
+    ? tinycolor(theme.colors.background.canvas).lighten(11).toRgbString()
+    : tinycolor(theme.colors.background.canvas).darken(5).toRgbString();
 
   return {
     logLine: css({

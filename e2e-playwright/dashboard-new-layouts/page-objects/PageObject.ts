@@ -2,9 +2,17 @@ import { type Page } from '@playwright/test';
 
 import { type Components, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
+/**
+ * Resolves a Grafana E2E selector to a Locator. Same signature as
+ * `GrafanaPage.getByGrafanaSelector` from plugin-e2e, so the type tracks
+ * upstream changes. Page objects receive only this function (not a whole
+ * `DashboardPage`) so they cannot navigate, mock, or wait — those belong to specs and fixtures.
+ */
+export type GetByGrafanaSelector = DashboardPage['getByGrafanaSelector'];
+
 export interface PageObjectArgs {
   page: Page;
-  dashboardPage: DashboardPage;
+  getByGrafanaSelector: GetByGrafanaSelector;
   selectors: E2ESelectorGroups;
   components: Components;
 }
@@ -24,13 +32,13 @@ export interface PageObjectArgs {
  */
 export abstract class PageObject {
   protected page: Page;
-  protected dashboardPage: DashboardPage;
+  protected getByGrafanaSelector: GetByGrafanaSelector;
   protected selectors: E2ESelectorGroups;
   protected components: Components;
 
-  constructor({ page, dashboardPage, selectors, components }: PageObjectArgs) {
+  constructor({ page, getByGrafanaSelector, selectors, components }: PageObjectArgs) {
     this.page = page;
-    this.dashboardPage = dashboardPage;
+    this.getByGrafanaSelector = getByGrafanaSelector;
     this.selectors = selectors;
     this.components = components;
   }
