@@ -66,6 +66,7 @@ function getStyles(theme: GrafanaTheme2, builtIn = false) {
     card: css({
       cursor: 'pointer',
       backgroundColor: 'transparent',
+      border: 'none',
       padding: theme.spacing(1),
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: 'none',
