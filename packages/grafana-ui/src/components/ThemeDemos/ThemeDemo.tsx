@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { Badge, type BadgeColor } from '../Badge/Badge';
 import { allButtonVariants, Button } from '../Button/Button';
 import { Card } from '../Card/Card';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
@@ -27,7 +28,12 @@ import { type BackgroundColor, type BorderColor, Box, type BoxShadow } from '../
 import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Switch } from '../Switch/Switch';
+import { Tag } from '../Tags/Tag';
+import { TagItem } from '../TagsInput/TagItem';
 import { Text, type TextProps } from '../Text/Text';
+
+const badgeColors: BadgeColor[] = ['blue', 'red', 'green', 'orange', 'purple', 'darkgrey', 'brand'];
+const exampleTagNames = ['frontend', 'backend', 'alerting', 'dashboard', 'prometheus', 'loki', 'tempo', 'mimir'];
 
 interface DemoBoxProps {
   bg?: BackgroundColor;
@@ -298,6 +304,52 @@ export const ThemeDemo = () => {
                   </Button>
                 </Card.Actions>
               </Card>
+            </Stack>
+          </DemoBox>
+        </CollapsableSection>
+        <CollapsableSection label="Badges" isOpen={true}>
+          <DemoBox bg="primary">
+            <Stack direction="column" gap={2}>
+              <Stack wrap="wrap" gap={1} alignItems="center">
+                {badgeColors.map((color) => (
+                  <Badge key={color} text={color} color={color} />
+                ))}
+              </Stack>
+              <Stack wrap="wrap" gap={1} alignItems="center">
+                {badgeColors.map((color) => (
+                  <Badge key={`${color}-icon`} text={color} color={color} icon="check" />
+                ))}
+              </Stack>
+            </Stack>
+          </DemoBox>
+        </CollapsableSection>
+        <CollapsableSection label="Tags" isOpen={true}>
+          <DemoBox bg="primary">
+            <Stack direction="column" gap={2}>
+              <Stack wrap="wrap" gap={1} alignItems="center">
+                {t.components.tag.colors.map((_, index) => (
+                  <Tag key={index} name={`color ${index}`} colorIndex={index} />
+                ))}
+              </Stack>
+              <Stack wrap="wrap" gap={1} alignItems="center">
+                {exampleTagNames.map((name) => (
+                  <Tag key={name} name={name} icon="tag-alt" />
+                ))}
+              </Stack>
+              <ul
+                className={css({
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: t.spacing(0.5),
+                  margin: 0,
+                  padding: 0,
+                  listStyle: 'none',
+                })}
+              >
+                {exampleTagNames.map((name) => (
+                  <TagItem key={`removable-${name}`} name={name} onRemove={() => {}} />
+                ))}
+              </ul>
             </Stack>
           </DemoBox>
         </CollapsableSection>

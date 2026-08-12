@@ -73,7 +73,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       lineHeight: `${height - 2}px`,
       borderWidth: visualRefreshEnabled ? 0 : '1px',
       borderStyle: 'solid',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.pill,
       padding: `0 ${theme.spacing(0.5)}`,
       whiteSpace: 'nowrap',
       textShadow: 'none',

@@ -88,7 +88,7 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
       whiteSpace: 'pre',
       textShadow: 'none',
       padding: '3px 6px',
-      borderRadius: theme.shape.radius.sm,
+      borderRadius: theme.shape.radius.pill,
     }),
     hover: css({
       '&:hover': {
