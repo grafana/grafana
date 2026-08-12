@@ -147,7 +147,7 @@ describe('withV5UsageTelemetry function exports', () => {
     logger = mockLogger('features.plugins');
   });
 
-  // Must come first in this block. An unattributed report is keyed on the export
+  // Must come first in this block. A report with no plugin id is keyed on the export
   // name alone, so once another test in this file has called `useHistory` through
   // a wrapper, later calls are correctly suppressed for the rest of the run.
   it('reports the call, and repeats from one place only once', () => {

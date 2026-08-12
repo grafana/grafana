@@ -63,7 +63,7 @@ export function getPluginIdFromStack(stack: string | undefined): string | undefi
  */
 export function reportV5Usage(exportName: string, stack?: string): void {
   const pluginId = getPluginIdFromStack(stack);
-  const key = pluginId ? `${pluginId}:${exportName}` : `unattributed:${exportName}`;
+  const key = pluginId ? `${pluginId}:${exportName}` : `unknownPluginId:${exportName}`;
 
   if (reported.has(key)) {
     return;
@@ -80,6 +80,7 @@ function isFunction(value: unknown): value is UnknownFunction {
   return typeof value === 'function';
 }
 
+// Functions are called by the plugin, so the plugin is on the stack.
 function reportingFunction(exportName: string, original: UnknownFunction): UnknownFunction {
   return function reportingWrapper(...args) {
     reportV5Usage(exportName, new Error().stack);
