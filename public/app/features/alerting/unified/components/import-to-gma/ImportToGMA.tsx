@@ -54,11 +54,9 @@ import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
 import { getPauseRulesLabel } from './Wizard/steps';
-import { type ImportMethod, StepKey } from './Wizard/types';
+import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
-import { StepImportMethod } from './steps/StepImportMethod';
-import { StepReviewEnableAutoSync } from './steps/StepReviewEnableAutoSync';
 import { type DryRunValidationResult } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
 import {
@@ -71,11 +69,6 @@ import {
 import { getRoutingTreeLabel } from './useRoutingTrees';
 
 export interface ImportFormValues {
-  // Step 0: how the resources are brought into Grafana
-  importMethod: ImportMethod;
-  /** Selected Mimir/Cortex data source UID when importMethod is 'autosync' */
-  autosyncDatasourceUID?: string;
-
   // Step 1: Alertmanager resources
   step1Completed: boolean;
   step1Skipped: boolean;
@@ -224,9 +217,6 @@ function ImportWizardContent() {
 
   const formAPI = useForm<ImportFormValues>({
     defaultValues: {
-      // Step 0 — default to the staged one-time import (auto-sync stays opt-in)
-      importMethod: 'stage',
-      autosyncDatasourceUID: undefined,
       // Step 1
       step1Completed: false,
       step1Skipped: false,
@@ -401,7 +391,6 @@ function ImportWizardContent() {
       const isRootFolder = isEmpty(targetFolder?.uid);
 
       trackImportToGMASuccess({
-        importMethod: values.importMethod,
         notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
         rulesSource: willImportRules ? values.rulesSource : undefined,
         isRootFolder,
@@ -439,7 +428,6 @@ function ImportWizardContent() {
     } catch (err) {
       setImportStatus('error');
       trackImportToGMAError({
-        importMethod: values.importMethod,
         notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
         rulesSource: willImportRules ? values.rulesSource : undefined,
       });
@@ -480,12 +468,6 @@ function ImportWizardContent() {
 
       <FormProvider {...formAPI}>
         <WizardLayout>
-          {/* Step 0: Import method */}
-          {activeStep === StepKey.Method && <StepImportMethod onNext={() => true} onCancel={handleWizardCancel} />}
-
-          {/* Auto-sync: Review & enable */}
-          {activeStep === StepKey.ReviewEnable && <StepReviewEnableAutoSync onCancel={handleWizardCancel} />}
-
           {/* Step 1: Notification Resources */}
           {activeStep === StepKey.Notifications && (
             <Step1Wrapper
