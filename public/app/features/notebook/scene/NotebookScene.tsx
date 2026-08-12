@@ -73,7 +73,11 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     const panel = getClosestVizPanel(source);
 
     return {
-      app: CoreApp.Unknown,
+      // Not Unknown: that is indistinguishable from a genuinely unattributed query, and it would
+      // also overwrite the 'scenes' SceneQueryRunner already sets. Not Dashboard either — that value
+      // is a behavioural branch, not just a label (SqlDatasource skips its query-executed
+      // interaction for it), and notebooks are not dashboards.
+      app: CoreApp.Notebook,
       panelId: (panel && getPanelIdForVizPanel(panel)) ?? 0,
       panelName: panel?.state.title,
       panelPluginId: panel?.state.pluginId,
