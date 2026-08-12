@@ -4,6 +4,8 @@
 
 This suite contains Playwright E2E tests for the V2 dashboard layout system. Tests use **page objects** to wrap raw selector chains behind user-intent methods. The full rationale is in [`_page_objects_strategy.md`](./_page_objects_strategy.md).
 
+When adding or extending specs here, invoke the **`add-e2e-tests`** skill — it points agents at this `AGENTS.md`, page objects, and `--repeat-each=3` verification.
+
 ## Page Objects Reference
 
 All page objects live in `page-objects/`. Only the top-level ones (`Controls`, `Sidebar`, `Panels`, `Rows`, `Tabs`, `Canvas`) are re-exported from `page-objects/index.ts` — import those in specs. Sidebar panes (`Toolbar`, `AddOptions`, `DashboardOptions`, `PanelOptions`, `RowOptions`, `TabOptions`, `VariableOptions`, `ContentOutline`) and shared sub-options (`ConditionalRenderingOptions`, `GridLayoutOptions`, `RepeatOptions` under `sidebar/shared/`) are not exported; reach them via `sidebar.*` (e.g. `sidebar.toolbar`, `sidebar.panelOptions.repeatOptions`). Every page object extends the abstract `PageObject` base class (`PageObject.ts`), which holds the shared `page`, `dashboardPage`, `selectors`, and `components` dependencies as `protected` fields.

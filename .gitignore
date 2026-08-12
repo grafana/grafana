@@ -74,7 +74,19 @@ public/css/*.min.css
 .vscode/
 !.vscode/launch.json
 .vs/
-.cursor/
+# Cursor demo surfaces everyone should have. Ignore contents, then re-include
+# step by step (git won't descend into a fully excluded directory).
+.cursor/*
+!.cursor/hooks.json
+!.cursor/hooks/
+.cursor/hooks/*
+!.cursor/hooks/*.sh
+!.cursor/commands/
+.cursor/commands/*
+!.cursor/commands/*.md
+!.cursor/README.md
+# Agent edit audit log written by .cursor/hooks/audit-edit.sh
+.cursor/hooks-audit.log
 .devcontainer/
 .claude/*
 
@@ -85,6 +97,7 @@ public/css/*.min.css
 .claude/skills/*
 !.claude/skills/add-e2e-selectors/
 !.claude/skills/panel-testing-strategy/
+!.claude/skills/add-e2e-tests/
 
 .eslintcache
 .stylelintcache
