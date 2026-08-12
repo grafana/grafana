@@ -3,8 +3,8 @@ import { type Page } from '@playwright/test';
 import { type DashboardPage, type DashboardPageArgs, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { test, expect } from './fixtures';
+import { getPanelBox, flows, undockMegaMenu } from './helpers';
 import { type Panels, type Sidebar } from './page-objects';
-import { getPanelBox, saveDashboardAndCloseToast } from './utils';
 
 test.use({
   featureToggles: {
@@ -45,18 +45,18 @@ test.describe(
         );
       }).toPass();
 
-      const uniqueTitle = `Test custom grid resizing [${Date.now().toString(36)}-${test.info().workerIndex}]`;
-      await saveDashboardAndCloseToast(page, controls, uniqueTitle);
-
       const panelBoxAfterResize = await getPanelBox(panels, 'New panel');
+
+      const uniqueTitle = `${test.info().title} [${Date.now().toString(36)}-${test.info().workerIndex}]`;
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls, uniqueTitle);
 
       await page.reload();
 
-      // Poll while panels re-render after reload
+      // Poll while panels re-render after reload (±1px for edit/view chrome / scrollbar shifts)
       await expect(async () => {
         const panelBox = await getPanelBox(panels, 'New panel');
-        expect(panelBox.width).toBe(panelBoxAfterResize.width);
-        expect(panelBox.height).toBe(panelBoxAfterResize.height);
+        expect(Math.abs(panelBox.width - panelBoxAfterResize.width)).toBeLessThanOrEqual(1);
+        expect(Math.abs(panelBox.height - panelBoxAfterResize.height)).toBeLessThanOrEqual(1);
       }).toPass();
     });
 
@@ -140,15 +140,5 @@ async function dragResizeCorner(
     await page.mouse.down();
     await page.mouse.move(centerX + deltaX, centerY + deltaY, { steps: 12 });
     await page.mouse.up();
-  });
-}
-
-// TODO: move to utils, as it's duplicated from dashboards-add-panel.spec.ts
-async function undockMegaMenu(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await test.step('Undock the mega menu', async () => {
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.NavMenu.Menu)
-      .getByRole('button', { name: 'Undock menu' })
-      .click();
   });
 }
