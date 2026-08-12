@@ -1,0 +1,16 @@
+---
+description: Grafana core vs InfluxDB datasource plugin — which tree to edit
+alwaysApply: true
+---
+This checkout is Grafana core (`liam-morrissy-cursor/grafana`). It is one Grafana monorepo. The InfluxDB datasource is a separate repository, not a missing folder in this tree.
+
+The plugin is not under `public/app/plugins/datasource/influxdb`. Searching this repo for `public.iox`, `flightsql`, or `fsql` returning nothing is expected.
+
+Map work before editing or promising a fix:
+
+- This repo: `@grafana/sql`, `packages/grafana-sql`, SQL Expressions, KAN-6 (dotted identifier quoting).
+- Plugin repo (`liam-morrissy-cursor/grafana-influxdb-datasource`, sibling path `../grafana-influxdb-datasource` when cloned): Explore Influx SQL builder, FlightSQL, `iox` / `system` schema, `src/fsql/*`, KAN-7, KAN-8, KAN-9.
+
+The plugin has its own `quoteIdentifierIfNecessary` in `src/fsql/sqlUtil.ts`. A fix in `@grafana/sql` does not change plugin SQL generation.
+
+If this tree cannot implement the ticket, say which repo owns it, and still open a findings PR here (or implement in the plugin checkout and open a PR there). Do not stop at a chat-only note.
