@@ -160,10 +160,6 @@ function useHasLogs(
   const { isLoading: isLoadingDsList, items: dsList } = useDataSourceInstanceList({ type: 'loki' });
 
   useEffect(() => {
-    setResolvedLinkModel(linkModel);
-  }, [linkModel, queryKey, timeRangeKey]);
-
-  useEffect(() => {
     // Without an interpolated query we can't check, so assume logs may exist and leave the link enabled.
     // Same when the feature flag is off — skip probing and keep the configured link.
     if (!query || !dynamicTraceToLogsEnabled) {
@@ -216,7 +212,7 @@ function useHasLogs(
   return { presence, resolvedLinkModel };
 }
 
-function getStoredLokiQueryMatch(
+export function getStoredLokiQueryMatch(
   traceDatasourceUid: string | undefined,
   logsDatasourceUid: string
 ): string | undefined {
@@ -367,7 +363,7 @@ function probeForMatchingQuery(
   const storedRefId = getStoredLokiQueryMatch(traceDatasourceUid, logsDatasourceUid);
   const storedQuery = storedRefId ? queries.find((q) => q.refId === storedRefId) : undefined;
   // Prefer the known match exclusively; do not fall through to other naming conventions.
-  const queriesToProbe = storedQuery ? [storedQuery] : queries;
+  const queriesToProbe = storedQuery ? addNoSpanIdFallback(storedQuery) : queries;
 
   return from(queriesToProbe).pipe(
     concatMap((query) =>
@@ -423,6 +419,28 @@ function rebuildExploreHref(linkModel: LinkModel, queries: DataQuery[], datasour
   } catch {
     return linkModel.href;
   }
+}
+
+/**
+ * Adds a fallback query for environments where there is a trace_id filter but no span_id filters.
+ */
+export function addNoSpanIdFallback(query: DataQuery) {
+  if ('expr' in query === false || typeof query.expr !== 'string') {
+    return [query];
+  }
+  if (!query.expr.toLowerCase().includes('span')) {
+    return [query];
+  }
+  const spanIdFilter =
+  /\s*\|\s*(?:span_?id|otel_span_id)\b\s*(?:=~|!~|!=|=)\s*(?:"(?:\\.|[^"\\])*"|`[^`]*`|[^\s|]+)/gi;
+
+  // Add fallback without span_id filter
+  const fallbackQuery = {
+    ...query,
+    expr: query.expr.includes('!=') ? query.expr.substring(0, query.expr.lastIndexOf('|=')-1) : query.expr.replace(spanIdFilter, ""),
+  };
+
+  return [query, fallbackQuery];
 }
 
 function checkForLogs(query: DataQuery, timeRange: TimeRange): Observable<boolean> {

@@ -195,7 +195,7 @@ function getQueryForLoki(
 ): LokiQuery | LokiQuery[] | undefined {
   // If the user configured a custom query, respect it
   if (customQuery) {
-    return [{ expr: customQuery, refId: 'custom' }];
+    return [{ expr: customQuery, refId: 't2l:custom' }];
   }
 
   if (!tags.length) {
@@ -218,7 +218,7 @@ function getQueryForLoki(
       structuredIdFilters.push(`${spanField}="${spanID}"`);
     }
     const structuredPipeline = `| logfmt | json | drop __error__ | ${structuredIdFilters.join(' | ')}`;
-    const fieldRef = spanID ? `${traceField}:${spanField}` : traceField;
+    const fieldRef = traceField;
 
     queries.push({
       expr: `${tagSelector} ${structuredPipeline}`,
@@ -239,7 +239,7 @@ function getQueryForLoki(
   }
   queries.push({
     expr: `${tagSelector} ${lineContainsFilters.join(' ')}`,
-    refId: 'line-contains',
+    refId: 't2l:line-contains',
   });
 
   return queries;
