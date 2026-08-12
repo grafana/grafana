@@ -101,6 +101,8 @@ public/css/*.min.css
 !.claude/skills/add-e2e-selectors/
 !.claude/skills/panel-testing-strategy/
 !.claude/skills/add-e2e-tests/
+!.claude/skills/run-grafana/
+!.claude/skills/run-grafana/**
 
 .eslintcache
 .stylelintcache
