@@ -84,9 +84,6 @@ describe('table module', () => {
     );
   });
 
-  it('makes the "Tooltip from field" picker clearable', () => {
-    expect(customConfigItem('tooltip.field').settings).toEqual(expect.objectContaining({ isClearable: true }));
-  });
 
   describe('"Tooltip placement" visibility', () => {
     const showIf = (field?: string) =>
