@@ -1,5 +1,6 @@
 import { type DataQuery, type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
 import { type TraceToLogsTag, type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type LokiQuery } from 'app/features/loki-helpers/types';
 
 import {
@@ -116,6 +117,7 @@ export function getTraceToLogsQuery(
         traceID,
         spanID,
         tagMatchers,
+        traceToLogsOptions,
         customQuery,
         serviceNames.length > 0 ? serviceNames : getServiceNames(allTags)
       );
@@ -187,9 +189,10 @@ function getQueryForLoki(
   traceID: string,
   spanID: string | undefined,
   tags: string[],
+  options: TraceToLogsOptionsV2,
   customQuery?: string,
   serviceNames: string[] = []
-): LokiQuery[] | undefined {
+): LokiQuery | LokiQuery[] | undefined {
   // If the user configured a custom query, respect it
   if (customQuery) {
     return [{ expr: customQuery, refId: 'custom' }];
@@ -199,11 +202,13 @@ function getQueryForLoki(
     return undefined;
   }
 
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDynamicTraceToLogs, false)) {
+    return getLegacyQueryForLoki(traceID, spanID, options);
+  }
+
   const tagSelector = `{${tags.join(', ')}}`;
   const jobSelector =
-    serviceNames.length > 0
-      ? `{job=~"(.*/)?(${serviceNames.map(escapeRegExp).join('|')})"}`
-      : undefined;
+    serviceNames.length > 0 ? `{job=~"(.*/)?(${serviceNames.map(escapeRegExp).join('|')})"}` : undefined;
 
   const queries: LokiQuery[] = [];
 
@@ -238,6 +243,28 @@ function getQueryForLoki(
   });
 
   return queries;
+}
+
+/**
+ * Legacy function to use if the dynamic traces to logs feature flag is disabled.
+ */
+function getLegacyQueryForLoki(traceID: string, spanID: string | undefined, options: TraceToLogsOptionsV2): LokiQuery {
+  const { filterByTraceID, filterBySpanID } = options;
+
+  let expr = '{${__tags}}';
+  if (filterByTraceID && traceID) {
+    expr +=
+      ' | label_format log_line_contains_trace_id=`{{ contains "${__span.traceId}" __line__  }}` | log_line_contains_trace_id="true" or trace_id="${__span.traceId}"';
+  }
+  if (filterBySpanID && spanID) {
+    expr +=
+      ' | label_format log_line_contains_span_id=`{{ contains "${__span.spanId}" __line__  }}` | log_line_contains_span_id="true" or span_id="${__span.spanId}"';
+  }
+
+  return {
+    expr: expr,
+    refId: '',
+  };
 }
 
 // we do not have access to the dataquery type for opensearch,

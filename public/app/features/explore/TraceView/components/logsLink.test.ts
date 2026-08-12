@@ -1,5 +1,7 @@
 import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
 import { type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type LokiQuery } from 'app/features/loki-helpers/types';
 
 import { getTraceToLogsQuery, getTraceToLogsSpanQuery, getTraceToLogsTraceQuery } from './logsLink';
@@ -51,6 +53,14 @@ function createSpan(overrides: Partial<TraceSpan> = {}): TraceSpan {
 }
 
 describe('getTraceToLogsQuery loki alternatives', () => {
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   it('returns custom query only when configured', () => {
     const { query } = getTraceToLogsQuery(
       [{ key: 'cluster', value: 'cluster1' }],
@@ -61,6 +71,21 @@ describe('getTraceToLogsQuery loki alternatives', () => {
     );
 
     expect(query).toEqual([{ expr: '{job="custom"} |= "${__trace.traceId}"', refId: 'custom' }]);
+  });
+
+  it('returns the legacy query when dynamicTraceToLogs is disabled', () => {
+    setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: false });
+
+    const { query } = getTraceToLogsSpanQuery(createSpan(), lokiSettings, {
+      ...defaultOptions,
+      filterByTraceID: true,
+      filterBySpanID: true,
+    });
+
+    expect(query).toEqual({
+      expr: '{${__tags}} | label_format log_line_contains_trace_id=`{{ contains "${__span.traceId}" __line__  }}` | log_line_contains_trace_id="true" or trace_id="${__span.traceId}" | label_format log_line_contains_span_id=`{{ contains "${__span.spanId}" __line__  }}` | log_line_contains_span_id="true" or span_id="${__span.spanId}"',
+      refId: '',
+    });
   });
 
   it('creates default and job variants for each id field name, plus line-contains', () => {
@@ -126,11 +151,7 @@ describe('getTraceToLogsQuery loki alternatives', () => {
       lokiSettings,
       {
         ...defaultOptions,
-        tags: [
-          { key: 'service.name', value: '' },
-          { key: 'k8s.pod.name' },
-          { key: 'http.request.method' },
-        ],
+        tags: [{ key: 'service.name', value: '' }, { key: 'k8s.pod.name' }, { key: 'http.request.method' }],
       },
       '7946b05c2e2e4e5a'
     );
@@ -214,7 +235,7 @@ describe('getTraceToLogsQuery loki alternatives', () => {
         p1: rootSpan.process,
         p2: childSpan.process,
       },
-    } as Trace;
+    } as unknown as Trace;
 
     const { query } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
     const queries = query as LokiQuery[];
