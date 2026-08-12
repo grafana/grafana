@@ -25,7 +25,7 @@ Before you begin to set up Git Sync, ensure you have the following:
 - Administration rights in your Grafana organization
 - A [Git provider](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits#compatible-providers)
 - If you're [using webhooks or image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend), a public instance with external access
-  - Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
+- Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
 
 ## Enable required feature toggles
 
@@ -55,29 +55,20 @@ Git Sync requires network connectivity between your Grafana instance and Git ser
 
 Git Sync uses two types of network traffic:
 
-- **Sync operations (pull and push)**: Grafana → Git Server
-  - Egress traffic from Hosted Grafana IPs
-  - Customer Git servers must allow inbound traffic from these IPs
-  - For a list of IPs to add to your Git server's allowlist, refer to [Hosted Grafana source IPs](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-grafana)
-- **Webhooks (instantaneous sync)**: Git Server → Grafana stack
+- **Sync operations (pull and push)**: From Grafana to the Git Server
+  - Egress traffic from Hosted Grafana IP addresses
+  - Your Git servers must allow inbound traffic from these IP addresses
+  - For a list of IP addresses to add to your Git server's allowlist, refer to [Hosted Grafana source IPs](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-grafana)
+- **Webhooks (instantaneous sync)**: From the Git Server to Grafana stack
   - Inbound traffic to the stack's public endpoint
-  - The Git server must be able to reach `*.grafana.net`
+  - Your Git server must be able to reach `*.grafana.net`
   - Required only if you're [using webhooks](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend)
 
 ### AWS PrivateLink and Private Data Source Connect
 
-Git Sync does not route over AWS PrivateLink or Private Data Source Connect (PDC).
+Git Sync doesn't route over AWS PrivateLink or Private Data Source Connect (PDC). Instead, Git Sync uses the normal public path from the Hosted Grafana IPs, which is independent from PrivateLink and PDC. AWS PrivateLink and PDC provide a separate tunnel for data source query traffic, from Grafana to your private databases or data sources.
 
-AWS PrivateLink and PDC provide a separate tunnel for data source query traffic (Grafana → your private databases or data sources). Git Sync uses the normal public path from the Hosted Grafana IPs and is independent of PrivateLink/PDC.
-
-If you use AWS PrivateLink or PDC for data sources, you can still use Git Sync. The two features neither interfere with nor depend on each other.
-
-Finally, get acquainted with the following topics:
-
-- [Git Sync supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/#supported-resources)
-- [Git Sync usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits)
-- [Role and resource permissions](#resource-and-role-permissions)
-- For further details on how Git Sync operates, refer to the [key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts)
+**If you use AWS PrivateLink or PDC for data sources, you can still use Git Sync**. The two features neither interfere with nor depend on each other.
 
 ## Allow internal or private Git servers
 
@@ -158,3 +149,11 @@ Finally, install the app:
 1. On the installation page, copy **`installationID`** from the page URL https://github.com/settings/installations/installationID
 
 You can now proceed to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/)!
+
+## Next steps
+
+For further details on how Git Sync operates, refer to:
+
+- [Git Sync key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts)
+- [Git Sync supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/#supported-resources)
+- [Git Sync usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits)
