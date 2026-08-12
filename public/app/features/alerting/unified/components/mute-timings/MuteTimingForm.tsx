@@ -3,8 +3,9 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config, isFetchError, locationService } from '@grafana/runtime';
 import { Alert, Button, Field, FieldSet, Input, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import {
   type MuteTiming,
   useCreateMuteTiming,
@@ -12,10 +13,11 @@ import {
   useValidateMuteTiming,
 } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 
+import { logError, logWarning } from '../../Analytics';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { type MuteTimingFields } from '../../types/mute-timing-form';
 import { isImportedResource, isProvisionedResource } from '../../utils/k8s/utils';
-import { makeAMLink } from '../../utils/misc';
+import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { createMuteTiming, defaultTimeInterval, isTimeIntervalDisabled } from '../../utils/mute-timings';
 import { ALERTING_PATHS } from '../../utils/navigation';
 import { ImportedTimeIntervalAlert, ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -60,6 +62,7 @@ const useDefaultValues = (muteTiming?: MuteTiming): MuteTimingFields => {
 
 const MuteTimingForm = ({ muteTiming, showError, loading, provenance, editMode }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
+  const notifyApp = useAppNotification();
   const hookArgs = { alertmanager: selectedAlertmanager! };
 
   const [createTimeInterval] = useCreateMuteTiming(hookArgs);
@@ -89,9 +92,24 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance, editMode }
       return createTimeInterval.execute({ interval });
     };
 
-    return updateOrCreate().then(() => {
+    try {
+      await updateOrCreate();
       locationService.push(returnLink);
-    });
+    } catch (error) {
+      if (error instanceof Error || isFetchError(error)) {
+        const title = t('alerting.time-interval-form.error-save-time-interval', 'Failed to save time interval');
+        const message = stringifyErrorLike(error);
+        notifyApp.error(title, message);
+
+        if (isFetchError(error) && error.status >= 400 && error.status < 500) {
+          logWarning(title, { status: String(error.status), message });
+        } else {
+          const saveError = new Error(title);
+          saveError.cause = error;
+          logError(saveError);
+        }
+      }
+    }
   };
 
   if (loading) {
