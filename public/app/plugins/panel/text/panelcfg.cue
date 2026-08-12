@@ -45,7 +45,7 @@ composableKinds: PanelCfg: {
 						For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
 						"""
 					// Index of the selected frame, when the query returns more than one
-					frameIndex: number | *0
+					frameIndex?: number & (*0 | _)
 				} @cuetsy(kind="interface")
 			}
 		}]

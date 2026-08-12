@@ -59,7 +59,7 @@ export interface Options {
   /**
    * Index of the selected frame, when the query returns more than one
    */
-  frameIndex: number;
+  frameIndex?: number;
   mode: TextMode;
   renderMode?: RenderMode;
 }
