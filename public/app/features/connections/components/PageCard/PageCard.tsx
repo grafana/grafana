@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Card, Icon, useStyles2 } from '@grafana/ui';
 
 type PageCardProps = {
   title: string;
@@ -14,75 +13,41 @@ type PageCardProps = {
 
 export default function PageCard({ title, description, icon, url, index }: PageCardProps) {
   const styles = useStyles2(getStyles);
-
-  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      locationService.push(url);
-    }
-  };
-
+  
   return (
-    <div
-      className={styles.card}
-      role="button"
-      tabIndex={0}
-      onClick={() => locationService.push(url)}
-      onKeyDown={onKeyDown}
-    >
-      <Icon name={icon} className={`${styles.logo} ${index % 2 === 0 ? styles.evenLogo : styles.oddLogo}`} />
-      <div className={styles.contentColumn}>
-        <Stack direction="column" gap={1}>
-          <Text element="h2" variant="h4">
-            {title}
-          </Text>
-          <p className={styles.description}>{description}</p>
-        </Stack>
-      </div>
-    </div>
+    <Card  href={url} className={styles.card}>
+      <Card.Figure className={`${styles.figure} ${index % 2 === 0 ? styles.evenLogo : styles.oddLogo}`}>
+          <Icon name={icon} size="xl"  />
+      </Card.Figure>
+      <Card.Heading className={styles.heading}>{title}</Card.Heading>
+      <Card.Description>{description}</Card.Description>
+    </Card>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   card: css({
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: theme.spacing(2),
-    paddingTop: theme.spacing(2),
-    backgroundColor: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.default,
-    padding: `${theme.spacing(3)} ${theme.spacing(4)} ${theme.spacing(2.25)} ${theme.spacing(4)}`,
-    minHeight: theme.spacing(19.4),
-    '&:hover': {
-      cursor: 'pointer',
-      backgroundColor: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
-    },
     width: theme.spacing(48),
   }),
-  contentColumn: css({
-    flex: 1,
-  }),
-  description: css({
-    WebkitLineClamp: 3,
-    WebkitBoxOrient: 'vertical',
-    display: '-webkit-box',
-    overflow: 'hidden',
-    margin: '0',
-    color: theme.colors.text.secondary,
-  }),
-  logo: css({
+  figure: css({
     objectFit: 'contain',
     width: '47px',
     height: '47px',
     padding: theme.spacing(1.2),
     borderRadius: theme.spacing(1),
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
+  heading: css({
+    fontSize: theme.typography.h4.fontSize,
   }),
   evenLogo: css({
-    color: '#4ADE80',
-    backgroundColor: 'rgba(34, 197, 94, 0.10)',
+    color: theme.colors.success.text,
+    backgroundColor: theme.colors.success.background,
   }),
   oddLogo: css({
-    color: '#FB923C',
-    backgroundColor: 'rgba(249, 115, 22, 0.10)',
+    color: theme.colors.accent.text,
+    backgroundColor: theme.colors.accent.background,
   }),
 });
