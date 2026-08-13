@@ -24,9 +24,9 @@ import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../type
 
 import { type NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
-import { NotebookAddBlockDivider } from './edition/NotebookAddBlockDivider';
-import { NotebookAddBlockPrompt } from './edition/NotebookAddBlockPrompt';
-import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edition/NotebookCellFrame';
+import { NotebookAddBlockDivider } from './edit/NotebookAddBlockDivider';
+import { NotebookAddBlockPrompt } from './edit/NotebookAddBlockPrompt';
+import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
 
 interface NotebookLayoutManagerState extends SceneObjectState {
   cells: NotebookCellItem[];
