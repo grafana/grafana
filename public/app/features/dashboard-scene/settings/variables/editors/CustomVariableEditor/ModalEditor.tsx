@@ -18,6 +18,7 @@ interface ModalEditorProps {
 
 export function ModalEditor(props: ModalEditorProps) {
   const {
+    draftVariable,
     previewOptions,
     valuesFormat,
     query,
@@ -30,7 +31,9 @@ export function ModalEditor(props: ModalEditorProps) {
 
   return (
     <Modal
-      title={t('dashboard.sidebar.variable.custom-options.modal-title', 'Custom options')}
+      title={t('dashboard.sidebar.variable.custom-options.modal-title', 'Custom variable: {{name}}', {
+        name: draftVariable.state.name,
+      })}
       isOpen={true}
       onDismiss={onCloseModal}
       closeOnBackdropClick={false}
@@ -84,7 +87,7 @@ export function ModalEditor(props: ModalEditorProps) {
 }
 
 function useDraftVariable(variable: CustomVariable) {
-  const draftVariableRef = useRef<CustomVariable>(undefined);
+  const draftVariableRef = useRef<CustomVariable | undefined>(undefined);
   if (!draftVariableRef.current) {
     draftVariableRef.current = new CustomVariable(variable.state);
   }
@@ -109,6 +112,7 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
   };
 
   return {
+    draftVariable,
     previewOptions: options,
     valuesFormat,
     query,

@@ -1171,40 +1171,6 @@ export function computeColWidths(fields: Field[], availWidth: number) {
   );
 }
 
-// cells which have to re-measure or re-draw themselves when their column width changes. pills
-// re-wrap, sparklines and gauges re-render their viz against the new width. every other cell type
-// just re-flows text, which the browser handles without us recomputing anything.
-// the legacy basic/gradient/lcd gauge modes aren't listed: getCellOptions migrates them to Gauge.
-const WIDTH_SENSITIVE_CELL_TYPES = new Set<TableCellOptions['type']>([
-  TableCellDisplayMode.Pill,
-  TableCellDisplayMode.Sparkline,
-  TableCellDisplayMode.Gauge,
-]);
-
-/**
- * @internal
- * Whether panel width changes should be debounced before they drive the column layout. Debouncing
- * trades a moment of staleness for fewer layout passes, so it only pays off when applying a width
- * is actually expensive: some column has to be both auto-sized (a configured width doesn't move
- * with the panel) and width-sensitive - either a cell which redraws itself against the new width,
- * or wrapped text, which makes us re-measure every row height.
- */
-export function shouldDebounceWidth(fields: Field[]): boolean {
-  return fields.some((field) => {
-    if (field.config.custom?.width) {
-      return false;
-    }
-    if (shouldTextWrap(field)) {
-      return true;
-    }
-    const cellType = getCellOptions(field).type;
-    return WIDTH_SENSITIVE_CELL_TYPES.has(
-      // auto cells resolve to a sparkline when the field holds time series frames.
-      cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType
-    );
-  });
-}
-
 export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {
   return new Map<string, ColumnWidth>(
     fields.map((field, idx) => [getDisplayName(field), { type: 'resized', width: widths[idx] }])

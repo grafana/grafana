@@ -44,6 +44,9 @@ export declare global {
      * isn't set up yet when the OFREP provider's baseUrl is constructed.
      */
     __grafanaOFREPRootUrlEnabled?: boolean;
+
+    /** Selects the Luxon-backed implementation before the application bundle loads. */
+    __grafanaUseLuxon?: boolean;
   }
 
   // Augment DOMParser to accept TrustedType sanitised content

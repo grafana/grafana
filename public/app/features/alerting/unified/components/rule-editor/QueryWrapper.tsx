@@ -53,7 +53,7 @@ interface Props {
   onDuplicateQuery: (query: AlertQuery) => void;
   onRunQueries: () => void;
   index: number;
-  thresholds: ThresholdsConfig;
+  thresholds?: ThresholdsConfig;
   thresholdsType?: GraphThresholdsStyleMode;
   condition: string | null;
   onSetCondition: (refId: string) => void;

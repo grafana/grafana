@@ -19,3 +19,16 @@ export const TABLE = {
   BORDER_RIGHT: 1,
   SCROLLBAR_AFFORDANCE: 16,
 };
+
+/**
+ * Horizontal chrome around a cell's content: left + right padding plus the right border. Subtract
+ * from a column's pixel width to get its usable content width, or add to size a column to content.
+ */
+export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGHT;
+
+// Space a single header affordance icon (filter / sort / type) reserves next to the label. Sized to
+// the widest of them — the sort arrow, rendered at Icon size "lg" (18px) — plus the flex gap, so a
+// filterable or sorted column doesn't ellipsize its title once its icon appears.
+const HEADER_ICON_WIDTH = 18;
+const HEADER_ICON_GAP = 4;
+export const HEADER_ICON_SPACE = HEADER_ICON_WIDTH + HEADER_ICON_GAP;
