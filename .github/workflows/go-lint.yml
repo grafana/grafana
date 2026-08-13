@@ -21,6 +21,8 @@ jobs:
           persist-credentials: false
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache: 'false'
       - name: Run gofmt
         run: |
           GOFMT="$(go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}' | xargs gofmt -s -e -l 2>&1 | grep -v '/pkg/build/' || true)"
