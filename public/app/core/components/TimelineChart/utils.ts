@@ -7,6 +7,7 @@ import {
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
+  getFieldColorModeForField,
   getFieldDisplayName,
   getValueFormat,
   type GrafanaTheme2,
@@ -285,11 +286,12 @@ export function toEnumField(field: Field, theme: GrafanaTheme2): Field {
   };
 
   const hasMappings = (field.config.mappings?.length ?? 0) > 0;
+  const isContinuous = getFieldColorModeForField(field).isContinuous;
 
   // already-enum fields pass through untouched, as do continuous color schemes (gradient render
   // path) without mappings. mappings win over continuous color modes, same as in getEnumConfig,
   // since continuous-GrYlRd is the panel-wide default that mappings are layered onto.
-  if (field.type === FieldType.enum || (!hasMappings && field.config.color?.mode?.startsWith('continuous'))) {
+  if (field.type === FieldType.enum || (!hasMappings && isContinuous)) {
     return {
       ...field,
       config: {
