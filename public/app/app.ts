@@ -392,3 +392,5 @@ function initExtensions() {
 }
 
 export default new GrafanaApp();
+
+// CI trigger placeholder, remove before merge.

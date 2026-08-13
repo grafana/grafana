@@ -33,8 +33,10 @@ runs:
         # Print the needs context, debugging
         echo "$NEEDS" | jq
 
-        # Extract failures
-        FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure")) | map_values(.result)')"
+        # Extract failures. A cancelled job is counted too: unlike a skip, a
+        # cancellation is never a deliberate condition, so treating it as a pass
+        # would report a green gate for work that never ran.
+        FAILURES="$(echo "$NEEDS" | jq 'with_entries(select(.value.result == "failure" or .value.result == "cancelled")) | map_values(.result)')"
 
         # Check if there are any failures
         if [ "$(echo "$FAILURES" | jq '. | length')" != "0" ]; then

@@ -50,7 +50,7 @@ jobs:
           persist-credentials: false
 
       - name: Cache backend build
-        uses: actions/cache@v5  # zizmor: ignore[cache-poisoning] key derived only from hashFiles of tracked source
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # zizmor: ignore[cache-poisoning] v5.0.4 — key derived only from hashFiles of tracked source
         id: cache
         with:
           key: "e2e-build-backend-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum', 'go.work', 'go.work.sum', 'pkg/**/*.go', 'apps/**/*.go', '!**_test.go', 'Makefile', 'embed.go') }}"
@@ -86,7 +86,7 @@ jobs:
           persist-credentials: false
 
       - name: Cache frontend build
-        uses: actions/cache@v5  # zizmor: ignore[cache-poisoning] key derived only from hashFiles of tracked source
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # zizmor: ignore[cache-poisoning] v5.0.4 — key derived only from hashFiles of tracked source
         id: cache
         with:
           key: "e2e-build-frontend-v2-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'scripts/webpack/**', 'scripts/rspack/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc') }}"
@@ -149,7 +149,7 @@ jobs:
         uses: ./.github/actions/yarn-install
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        uses: ./.github/actions/setup-playwright
 
       - name: Run Storybook and E2E tests
         run: yarn e2e:playwright:storybook
@@ -229,7 +229,7 @@ jobs:
           echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        uses: ./.github/actions/setup-playwright
 
       - name: Wait for Grafana server to start
         run: |
@@ -336,9 +336,12 @@ jobs:
           path: playwright-report
           retention-days: 7
 
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Check test suites
         id: check-jobs
-        uses: grafana/grafana/.github/actions/check-jobs@main
+        uses: ./.github/actions/check-jobs
         continue-on-error: true # Failure will be reported on Check test results step
         with:
           needs: ${{ toJson(needs) }}

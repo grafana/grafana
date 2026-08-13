@@ -75,7 +75,7 @@ runs:
         echo "NPM_GLOBAL_CACHE_FOLDER=$(npm config get cache)" >> $GITHUB_OUTPUT
 
     - name: Restore yarn cache
-      uses: actions/cache@v5
+      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
       id: yarn-download-cache
       with:
         path: ${{ steps.yarn-config.outputs.CACHE_FOLDER }}
@@ -86,7 +86,7 @@ runs:
     - name: Restore node_modules
       if: inputs.cache-node-modules == 'true'
       id: yarn-nm-cache
-      uses: actions/cache@v5
+      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
       with:
         path: |
           ${{ inputs.cwd }}/**/node_modules
@@ -96,7 +96,7 @@ runs:
     - name: Restore global npm cache folder
       if: inputs.cache-npm-cache == 'true'
       id: npm-global-cache
-      uses: actions/cache@v5
+      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
       with:
         path: ${{ steps.yarn-config.outputs.NPM_GLOBAL_CACHE_FOLDER }}
         key: yarn-npm-global-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
@@ -104,7 +104,7 @@ runs:
     - name: Restore yarn install state
       if: inputs.cache-install-state == 'true' && inputs.cache-node-modules == 'true'
       id: yarn-install-state-cache
-      uses: actions/cache@v5
+      uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
       with:
         path: ${{ inputs.cwd }}/.yarn/install-state.gz
         key: yarn-install-state-cache-${{ inputs.cache-prefix }}-${{ runner.os }}-${{ steps.yarn-config.outputs.CURRENT_NODE_VERSION }}-${{ steps.yarn-config.outputs.CURRENT_BRANCH }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}

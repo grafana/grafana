@@ -23,7 +23,27 @@ runs:
   steps:
     # When cache-build is enabled, use the built-in setup-go caching
     # which stores both GOMODCACHE and GOCACHE together.
+    # The toolchain download can hit GitHub rate limits (HTTP 403) when many
+    # jobs start at once; retry once after a delay before failing the job.
     - uses: actions/setup-go@v6.0.0
+      id: setup-go
+      continue-on-error: true
+      with:
+        go-version-file: ${{ inputs.go-version-file }}
+        cache: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' }}
+        cache-dependency-path: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' && '**/*.mod' || '' }}
+
+    # Jitter the delay: jobs throttled together would otherwise retry together
+    # and rebuild the burst that throttled them.
+    - name: Wait before retrying Go setup
+      if: steps.setup-go.outcome == 'failure'
+      shell: bash
+      run: |
+        echo "::warning::actions/setup-go failed; retrying after a delay"
+        sleep $((30 + RANDOM % 60))
+
+    - uses: actions/setup-go@v6.0.0
+      if: steps.setup-go.outcome == 'failure'
       with:
         go-version-file: ${{ inputs.go-version-file }}
         cache: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' }}
@@ -34,7 +54,7 @@ runs:
     # do little or no compilation (lint, codegen, workspace checks).
     - name: Cache Go modules only
       if: inputs.cache == 'true' && inputs.cache-build != 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ~/go/pkg/mod
         key: gomod-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.mod') }}

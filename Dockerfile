@@ -402,3 +402,5 @@ CMD ["cfg:default.log.mode=console"]
 # Default stage — alpine. Builds without --target produce an alpine image.
 # Use --target=final-ubuntu to build the ubuntu variant instead.
 FROM final-alpine
+
+# CI trigger placeholder, remove before merge.
