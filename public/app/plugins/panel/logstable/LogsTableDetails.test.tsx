@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, dateTime, EventBusSrv, LogLevel } from '@grafana/data';
+import { CoreApp, dateTime, EventBusSrv, LogLevel, LogsSortOrder } from '@grafana/data';
 import { type DataSourceSrv, getDataSourceSrv, usePluginLinks } from '@grafana/runtime';
 import { defaultTableOptions } from '@grafana/schema';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
@@ -326,6 +326,85 @@ describe('LogsTableDetails', () => {
 
     expect(replaceDetails).toHaveBeenCalledTimes(1);
     expect(replaceDetails).toHaveBeenCalledWith(logA);
+  });
+
+  test('ArrowDown and ArrowUp follow table sort order, not query order', async () => {
+    const oldest = createLogLine({
+      uid: 'oldest',
+      timeEpochMs: 1546297200000,
+      datasourceUid: lokiDS.uid,
+    });
+    const middle = createLogLine({
+      uid: 'middle',
+      timeEpochMs: 1546297200001,
+      datasourceUid: lokiDS.uid,
+    });
+    const newest = createLogLine({
+      uid: 'newest',
+      timeEpochMs: 1546297200002,
+      datasourceUid: lokiDS.uid,
+    });
+    // Query/frame order is oldest-first; the table is sorted newest-first.
+    const replaceDetails = jest.fn();
+    setup(
+      { currentLog: middle, showDetails: [oldest, middle, newest], replaceDetails },
+      { sortOrder: LogsSortOrder.Descending, sortBy: [{ displayName: 'Time', desc: true }] },
+      undefined,
+      jest.fn(),
+      [oldest, middle, newest]
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Log line')).toBeInTheDocument();
+    });
+
+    await userEvent.keyboard('{ArrowDown}');
+
+    expect(replaceDetails).toHaveBeenCalledWith(oldest);
+
+    replaceDetails.mockClear();
+    await userEvent.keyboard('{ArrowUp}');
+
+    expect(replaceDetails).toHaveBeenCalledWith(newest);
+  });
+
+  test('ArrowDown and ArrowUp follow sort order of a non-time column', async () => {
+    const zebra = createLogLine({
+      uid: 'zebra',
+      labels: { env: 'zebra' },
+      datasourceUid: lokiDS.uid,
+    });
+    const middle = createLogLine({
+      uid: 'middle',
+      labels: { env: 'middle' },
+      datasourceUid: lokiDS.uid,
+    });
+    const alpha = createLogLine({
+      uid: 'alpha',
+      labels: { env: 'alpha' },
+      datasourceUid: lokiDS.uid,
+    });
+    const replaceDetails = jest.fn();
+    setup(
+      { currentLog: middle, showDetails: [zebra, middle, alpha], replaceDetails },
+      { sortBy: [{ displayName: 'env', desc: false }] },
+      undefined,
+      jest.fn(),
+      [zebra, middle, alpha]
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Log line')).toBeInTheDocument();
+    });
+
+    await userEvent.keyboard('{ArrowDown}');
+
+    expect(replaceDetails).toHaveBeenCalledWith(zebra);
+
+    replaceDetails.mockClear();
+    await userEvent.keyboard('{ArrowUp}');
+
+    expect(replaceDetails).toHaveBeenCalledWith(alpha);
   });
 
   test('forwards label filters to the panel ad-hoc filter handler', async () => {
