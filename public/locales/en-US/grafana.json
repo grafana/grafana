@@ -6100,7 +6100,6 @@
       "title": "Title"
     },
     "save-dashboard-diff": {
-      "full-json-diff": "Full JSON diff",
       "no-changes-in-the-dashboard-json": "No changes in the dashboard JSON",
       "title-because-dashboard-migrated-grafana-format": "The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format",
       "title-folder": "folder",
@@ -6251,6 +6250,12 @@
         "collapse": "Collapse editor",
         "copy-as-resource": "Copy as resource",
         "copy-as-resource-tooltip": "Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files",
+        "diff-disabled-tooltip": "Fix JSON syntax errors to view the diff",
+        "diff-no-changes": "No changes to show",
+        "diff-no-changes-body": "The dashboard matches the original. Changes appear here as you make them.",
+        "diff-toggle": "Show diff",
+        "diff-unavailable": "Cannot show changes",
+        "diff-unavailable-body": "The original dashboard is not available for comparison.",
         "expand": "Expand editor",
         "modal-title": "Edit dashboard as code",
         "pane-header": "Edit as code",
@@ -7845,7 +7850,6 @@
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>."
   },
   "dashboard-schema-editor": {
-    "format-label": "Format:",
     "json-disabled-tooltip": "Fix YAML syntax errors to switch to JSON",
     "yaml-disabled-tooltip": "Fix JSON syntax errors to switch to YAML"
   },
@@ -8214,9 +8218,6 @@
       "current-value": "Current value: {{currentValue}} ",
       "label-state-name": "State name"
     }
-  },
-  "diff-viewer": {
-    "loading": "Loading diff..."
   },
   "dimensions": {
     "background-size-editor": {
@@ -12224,6 +12225,10 @@
       "link-title": "More questions? Talk to an expert",
       "title": "Why host with Grafana?"
     }
+  },
+  "monaco-diff-editor": {
+    "view-inline": "Inline",
+    "view-side-by-side": "Side by side"
   },
   "multicombobox": {
     "all": {

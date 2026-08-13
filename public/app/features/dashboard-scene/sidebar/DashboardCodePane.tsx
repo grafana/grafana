@@ -1,15 +1,29 @@
 import { css } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
-import { Alert, Button, ClipboardButton, IconButton, Modal, Sidebar, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  ClipboardButton,
+  EmptyState,
+  IconButton,
+  InlineSwitch,
+  Modal,
+  Sidebar,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
+import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
+import { InlineDiffToggle, useInlineDiffPreference } from 'app/core/components/MonacoDiffEditor/inlineDiffPreference';
 
 import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
-import { applyJsonToDashboard, getDashboardResourceText } from './codePaneUtils';
+import { applyJsonToDashboard, getDashboardDiffTexts, getDashboardResourceText } from './codePaneUtils';
 
 export class DashboardCodePane extends SceneObjectBase {
   public static Component = DashboardCodePaneRenderer;
@@ -29,6 +43,22 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
   const [jsonText, setJsonText] = useState(() => getDashboardResourceText(dashboard, 'json'));
   const [isExpanded, setIsExpanded] = useState(false);
   const [editorFormat, setEditorFormat] = useState<SchemaEditorFormat>('json');
+  const [showDiff, setShowDiff] = useState(false);
+  const [inlineDiff, setInlineDiff] = useInlineDiffPreference();
+
+  const isJsonParseable = useMemo(() => {
+    try {
+      JSON.parse(jsonText);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [jsonText]);
+
+  const diffTexts = useMemo(
+    () => (showDiff ? getDashboardDiffTexts(dashboard, jsonText, editorFormat) : null),
+    [showDiff, dashboard, jsonText, editorFormat]
+  );
 
   const handleChange = useCallback((value: string) => {
     setJsonText(value);
@@ -62,6 +92,24 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
     >
       {t('dashboard.sidebar.edit-schema.copy-as-resource', 'Copy as resource')}
     </ClipboardButton>
+  );
+
+  const diffToggle = (
+    <Tooltip
+      content={t('dashboard.sidebar.edit-schema.diff-disabled-tooltip', 'Fix JSON syntax errors to view the diff')}
+      placement="top"
+      show={isJsonParseable ? false : undefined}
+    >
+      <div>
+        <InlineSwitch
+          label={t('dashboard.sidebar.edit-schema.diff-toggle', 'Show diff')}
+          showLabel
+          value={showDiff}
+          disabled={!isJsonParseable}
+          onChange={(e) => setShowDiff(e.currentTarget.checked)}
+        />
+      </div>
+    </Tooltip>
   );
 
   const applyTooltip =
@@ -101,16 +149,61 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
     onValidationChange: setHasValidationErrors,
     onFormatChange: setEditorFormat,
     showFormatToggle: true,
+    headerLeftActions: (
+      <>
+        {diffToggle}
+        {showDiff && <InlineDiffToggle value={inlineDiff} onChange={setInlineDiff} />}
+      </>
+    ),
   };
+
+  // Null diff texts means there is no comparable original: the dashboard has no initial save
+  // model, or it was loaded as v1 and the v1->v2 conversion of the original failed.
+  const diffView = !diffTexts ? (
+    <Alert
+      severity="info"
+      title={t('dashboard.sidebar.edit-schema.diff-unavailable', 'Cannot show changes')}
+      topSpacing={0}
+      bottomSpacing={0}
+    >
+      {t(
+        'dashboard.sidebar.edit-schema.diff-unavailable-body',
+        'The original dashboard is not available for comparison.'
+      )}
+    </Alert>
+  ) : diffTexts.original === diffTexts.current ? (
+    <EmptyState variant="completed" message={t('dashboard.sidebar.edit-schema.diff-no-changes', 'No changes to show')}>
+      {t(
+        'dashboard.sidebar.edit-schema.diff-no-changes-body',
+        'The dashboard matches the original. Changes appear here as you make them.'
+      )}
+    </EmptyState>
+  ) : (
+    <div className={styles.diffContainer}>
+      <MonacoDiffEditor
+        original={diffTexts.original}
+        modified={diffTexts.current}
+        language={editorFormat}
+        height="100%"
+        inline={inlineDiff}
+      />
+    </div>
+  );
+
+  const editorArea = (containerStyles?: string) => (
+    <DashboardSchemaEditor
+      {...editorProps}
+      containerStyles={containerStyles}
+      contentOverride={showDiff ? diffView : undefined}
+    />
+  );
 
   return (
     <div className={styles.wrapper}>
       <Sidebar.PaneHeader title={t('dashboard.sidebar.edit-schema.pane-header', 'Edit as code')} />
       <div className={styles.content}>
         {errorAlert}
-        <div className={styles.editorContainer}>
-          <DashboardSchemaEditor {...editorProps} containerStyles={styles.codeEditor} />
-        </div>
+        <div className={styles.editorContainer}>{editorArea(styles.codeEditor)}</div>
         <div className={styles.toolbar}>
           <Stack gap={1} alignItems="center">
             {applyButton}
@@ -137,7 +230,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
         >
           <div className={styles.modalEditorWrapper}>
             {errorAlert}
-            <DashboardSchemaEditor {...editorProps} />
+            {editorArea()}
             <div className={styles.toolbar}>
               <Stack gap={1} alignItems="center">
                 {applyButton}
@@ -181,6 +274,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   codeEditor: css({
     height: '100%',
+  }),
+  diffContainer: css({
+    height: '100%',
+    flex: '1 1 0',
+    minHeight: 0,
+    overflow: 'auto',
   }),
   toolbar: css({
     display: 'flex',

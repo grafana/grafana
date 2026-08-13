@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import yaml from 'js-yaml';
 import type * as MonacoEditorModule from 'monaco-editor';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -38,6 +38,12 @@ export interface DashboardSchemaEditorProps {
   showFormatToggle?: boolean;
   initialFormat?: SchemaEditorFormat;
   onFormatChange?: (format: SchemaEditorFormat) => void;
+  /** Rendered right-aligned in the header row */
+  headerActions?: ReactNode;
+  /** Rendered on the left side of the header row, next to the format toggle */
+  headerLeftActions?: ReactNode;
+  /** When set, replaces the code editor area while the header row (format toggle, actions) stays visible */
+  contentOverride?: ReactNode;
 }
 
 export function DashboardSchemaEditor({
@@ -49,6 +55,9 @@ export function DashboardSchemaEditor({
   showFormatToggle = false,
   initialFormat = 'json',
   onFormatChange,
+  headerActions,
+  headerLeftActions,
+  contentOverride,
 }: DashboardSchemaEditorProps) {
   const styles = useStyles2(getStyles);
 
@@ -230,50 +239,56 @@ export function DashboardSchemaEditor({
 
   return (
     <div className={wrapperClassName}>
-      {showFormatToggle && (
+      {(showFormatToggle || headerLeftActions || headerActions) && (
         <div className={styles.formatToggleContainer}>
-          <Stack direction="row" gap={1} alignItems="center">
-            <span className={styles.formatLabel}>{t('dashboard-schema-editor.format-label', 'Format:')}</span>
-            <Tooltip
-              content={
-                yamlParseError
-                  ? t('dashboard-schema-editor.json-disabled-tooltip', 'Fix YAML syntax errors to switch to JSON')
-                  : t('dashboard-schema-editor.yaml-disabled-tooltip', 'Fix JSON syntax errors to switch to YAML')
-              }
-              show={disabledFormats ? undefined : false}
-              placement="top"
-            >
-              <div>
-                <RadioButtonGroup
-                  options={formatOptions}
-                  value={format}
-                  onChange={handleFormatChange}
-                  disabledOptions={disabledFormats}
-                  size="sm"
-                />
-              </div>
-            </Tooltip>
-          </Stack>
+          {(showFormatToggle || headerLeftActions) && (
+            <Stack direction="row" gap={1} alignItems="center">
+              {showFormatToggle && (
+                <Tooltip
+                  content={
+                    yamlParseError
+                      ? t('dashboard-schema-editor.json-disabled-tooltip', 'Fix YAML syntax errors to switch to JSON')
+                      : t('dashboard-schema-editor.yaml-disabled-tooltip', 'Fix JSON syntax errors to switch to YAML')
+                  }
+                  show={disabledFormats ? undefined : false}
+                  placement="top"
+                >
+                  <div>
+                    <RadioButtonGroup
+                      options={formatOptions}
+                      value={format}
+                      onChange={handleFormatChange}
+                      disabledOptions={disabledFormats}
+                    />
+                  </div>
+                </Tooltip>
+              )}
+              {headerLeftActions}
+            </Stack>
+          )}
+          {headerActions && <div className={styles.headerActions}>{headerActions}</div>}
         </div>
       )}
       <div className={styles.editorContainer}>
-        <CodeEditor
-          key={format}
-          width="100%"
-          height="100%"
-          value={displayValue}
-          language={format}
-          showLineNumbers={true}
-          showMiniMap={true}
-          readOnly={readOnly}
-          containerStyles={styles.codeEditorContainer}
-          onBeforeEditorMount={(monaco) => {
-            monacoRef.current = monaco;
-          }}
-          onEditorDidMount={format === 'json' ? handleEditorDidMount : undefined}
-          onChange={handleChange}
-          monacoOptions={{ hover: { enabled: true, delay: 300 }, overviewRulerLanes: 3, fixedOverflowWidgets: false }}
-        />
+        {contentOverride ?? (
+          <CodeEditor
+            key={format}
+            width="100%"
+            height="100%"
+            value={displayValue}
+            language={format}
+            showLineNumbers={true}
+            showMiniMap={true}
+            readOnly={readOnly}
+            containerStyles={styles.codeEditorContainer}
+            onBeforeEditorMount={(monaco) => {
+              monacoRef.current = monaco;
+            }}
+            onEditorDidMount={format === 'json' ? handleEditorDidMount : undefined}
+            onChange={handleChange}
+            monacoOptions={{ hover: { enabled: true, delay: 300 }, overviewRulerLanes: 3, fixedOverflowWidgets: false }}
+          />
+        )}
       </div>
     </div>
   );
@@ -307,10 +322,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   formatToggleContainer: css({
     flex: '0 0 auto',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   }),
-  formatLabel: css({
-    fontSize: theme.typography.bodySmall.fontSize,
-    color: theme.colors.text.secondary,
+  headerActions: css({
+    marginLeft: 'auto',
   }),
   editorContainer: css({
     flex: '1 1 0',
