@@ -1,5 +1,7 @@
+import { type Unsubscribable } from 'rxjs';
+
 import { config } from '@grafana/runtime';
-import { type SceneQueryControllerLike, type Unsubscribable, type performanceUtils } from '@grafana/scenes';
+import { type SceneQueryControllerLike, type performanceUtils } from '@grafana/scenes';
 
 import { registerPerformanceObserver } from './performanceUtils';
 
