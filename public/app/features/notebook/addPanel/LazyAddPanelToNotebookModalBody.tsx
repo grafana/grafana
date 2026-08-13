@@ -30,3 +30,10 @@ export function LazyAddPanelToNotebookModalBody(props: Props) {
 export function addPanelToNotebookTitle(): string {
   return t('notebooks.add-panel.title', 'Add panel to notebook');
 }
+
+/**
+ * Wider than the 750px default so a notebook title, its meta line and its tags fit on one row
+ * without the card wrapping. Shared with Explore, whose modal chrome takes a width rather than a
+ * class.
+ */
+export const ADD_PANEL_MODAL_WIDTH = 900;

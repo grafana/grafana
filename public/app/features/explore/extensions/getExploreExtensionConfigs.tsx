@@ -1,7 +1,10 @@
 import { type PluginExtensionAddedLinkConfig, PluginExtensionPoints } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
-import { addPanelToNotebookTitle } from 'app/features/notebook/addPanel/LazyAddPanelToNotebookModalBody';
+import {
+  ADD_PANEL_MODAL_WIDTH,
+  addPanelToNotebookTitle,
+} from 'app/features/notebook/addPanel/LazyAddPanelToNotebookModalBody';
 import { canAddPanelToNotebook } from 'app/features/notebook/permissions';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -85,6 +88,7 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
         onClick: (_, { context, openModal }) => {
           openModal({
             title: addPanelToNotebookTitle(),
+            width: ADD_PANEL_MODAL_WIDTH,
             body: ({ onDismiss }) => <ExploreToNotebookPanel onClose={onDismiss!} exploreId={context?.exploreId!} />,
           });
         },

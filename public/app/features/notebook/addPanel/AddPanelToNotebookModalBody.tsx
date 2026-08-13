@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import {
+  Box,
   Button,
   Combobox,
   FilterInput,
@@ -103,58 +104,62 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
         )}
       </TabsBar>
 
+      {/* TabContent is a bare div with no padding of its own, so the gap under the tab bar's border
+          has to come from here. */}
       <TabContent>
-        {tab === 'existing' ? (
-          <Stack direction="column" gap={2}>
-            <Stack gap={1} alignItems="flex-start">
-              <FilterInput
-                value={picker.searchQuery}
-                onChange={picker.setSearchQuery}
-                placeholder={t('notebooks.add-panel.search-placeholder', 'Search by title')}
-                autoFocus
-              />
-              <Combobox
-                value={picker.sort}
-                options={getSortOptions()}
-                onChange={(option) => picker.setSort(option.value)}
-                width={22}
-                aria-label={t('notebooks.add-panel.sort-label', 'Sort notebooks')}
+        <Box paddingTop={3}>
+          {tab === 'existing' ? (
+            <Stack direction="column" gap={2}>
+              <Stack gap={1} alignItems="flex-start">
+                <FilterInput
+                  value={picker.searchQuery}
+                  onChange={picker.setSearchQuery}
+                  placeholder={t('notebooks.add-panel.search-placeholder', 'Search by title')}
+                  autoFocus
+                />
+                <Combobox
+                  value={picker.sort}
+                  options={getSortOptions()}
+                  onChange={(option) => picker.setSort(option.value)}
+                  width={22}
+                  aria-label={t('notebooks.add-panel.sort-label', 'Sort notebooks')}
+                />
+              </Stack>
+
+              <Stack gap={1}>
+                <MultiCombobox
+                  value={picker.tagFilter}
+                  options={picker.tagOptions}
+                  onChange={(options) => picker.setTagFilter(options.map((option) => option.value))}
+                  placeholder={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
+                  width={30}
+                  aria-label={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
+                />
+                <Combobox
+                  value={picker.authorFilter}
+                  options={picker.authorOptions}
+                  onChange={(option) => picker.setAuthorFilter(option?.value ?? '')}
+                  placeholder={t('notebooks.add-panel.author-placeholder', 'All authors')}
+                  width={30}
+                  isClearable
+                  aria-label={t('notebooks.add-panel.author-label', 'Filter by author')}
+                />
+              </Stack>
+
+              <NotebookPickerList
+                notebooks={picker.rows}
+                totalCount={picker.totalCount}
+                isLoading={picker.isLoading}
+                error={picker.error}
+                isTruncated={picker.isTruncated}
+                selectedUid={selectedUid}
+                onSelect={setSelectedUid}
               />
             </Stack>
-
-            <Stack gap={1}>
-              <MultiCombobox
-                value={picker.tagFilter}
-                options={picker.tagOptions}
-                onChange={(options) => picker.setTagFilter(options.map((option) => option.value))}
-                placeholder={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
-                width={30}
-                aria-label={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
-              />
-              <Combobox
-                value={picker.authorFilter}
-                options={picker.authorOptions}
-                onChange={(option) => picker.setAuthorFilter(option?.value ?? '')}
-                placeholder={t('notebooks.add-panel.author-placeholder', 'All authors')}
-                width={30}
-                isClearable
-                aria-label={t('notebooks.add-panel.author-label', 'Filter by author')}
-              />
-            </Stack>
-
-            <NotebookPickerList
-              notebooks={picker.rows}
-              totalCount={picker.totalCount}
-              isLoading={picker.isLoading}
-              error={picker.error}
-              isTruncated={picker.isTruncated}
-              selectedUid={selectedUid}
-              onSelect={setSelectedUid}
-            />
-          </Stack>
-        ) : (
-          <CreateNotebookForm formId={CREATE_FORM_ID} onSubmit={onCreate} disabled={isSubmitting} />
-        )}
+          ) : (
+            <CreateNotebookForm formId={CREATE_FORM_ID} onSubmit={onCreate} disabled={isSubmitting} />
+          )}
+        </Box>
       </TabContent>
 
       <Modal.ButtonRow>

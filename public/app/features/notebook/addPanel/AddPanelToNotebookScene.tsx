@@ -1,3 +1,5 @@
+import { css } from '@emotion/css';
+
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -5,11 +7,15 @@ import {
   type SceneObjectState,
   type VizPanel,
 } from '@grafana/scenes';
-import { Modal } from '@grafana/ui';
+import { Modal, useStyles2 } from '@grafana/ui';
 import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
-import { addPanelToNotebookTitle, LazyAddPanelToNotebookModalBody } from './LazyAddPanelToNotebookModalBody';
+import {
+  ADD_PANEL_MODAL_WIDTH,
+  addPanelToNotebookTitle,
+  LazyAddPanelToNotebookModalBody,
+} from './LazyAddPanelToNotebookModalBody';
 
 interface AddPanelToNotebookSceneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -35,9 +41,18 @@ export class AddPanelToNotebookScene extends SceneObjectBase<AddPanelToNotebookS
 }
 
 function AddPanelToNotebookSceneRenderer({ model }: SceneComponentProps<AddPanelToNotebookScene>) {
+  const styles = useStyles2(getStyles);
+
   return (
-    <Modal isOpen={true} title={addPanelToNotebookTitle()} onDismiss={model.onDismiss}>
+    <Modal isOpen={true} className={styles.modal} title={addPanelToNotebookTitle()} onDismiss={model.onDismiss}>
       <LazyAddPanelToNotebookModalBody buildPanel={model.buildPanel} onDismiss={model.onDismiss} />
     </Modal>
   );
 }
+
+const getStyles = () => ({
+  modal: css({
+    width: ADD_PANEL_MODAL_WIDTH,
+    maxWidth: '100%',
+  }),
+});
