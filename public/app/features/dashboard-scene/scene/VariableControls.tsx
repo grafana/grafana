@@ -17,7 +17,7 @@ import {
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { duplicateVariable } from '../../actions/variable/duplicateVariable';
+import { duplicateVariable } from '../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
 import { SourceIcon } from '../settings/ProvisionedControlsSection';
 import { VariableEditorModal } from '../settings/variables/editors/VariableEditorModal';
