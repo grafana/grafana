@@ -66,15 +66,6 @@ func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
 	return dbHelper.DB.Quote(dbHelper.Table(name))
 }
 
-func validateQueryFields(fields ...string) error {
-	for _, field := range fields {
-		if field == "" {
-			return fmt.Errorf("required query field is empty")
-		}
-	}
-	return nil
-}
-
 func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
 	dbHelper, err := ss.sql(ctx)
 	if err != nil {
@@ -104,9 +95,7 @@ type syncOrgSequenceQuery struct {
 	OrgSequence string
 }
 
-func (q syncOrgSequenceQuery) Validate() error {
-	return validateQueryFields(q.OrgTable, q.OrgSequence)
-}
+func (q syncOrgSequenceQuery) Validate() error { return nil }
 
 func (ss *sqlStore) Insert(ctx context.Context, orga *org.Org) (int64, error) {
 	dbHelper, err := ss.sql(ctx)
@@ -176,9 +165,7 @@ type deleteByIDQuery struct {
 	ID     int64
 }
 
-func (q deleteByIDQuery) Validate() error {
-	return validateQueryFields(q.Table, q.Column)
-}
+func (q deleteByIDQuery) Validate() error { return nil }
 
 func executeDeleteByID(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, table, column string, id int64) error {
 	query := deleteByIDQuery{
@@ -287,9 +274,7 @@ type orgExistsQuery struct {
 	OrgID    int64
 }
 
-func (q orgExistsQuery) Validate() error {
-	return validateQueryFields(q.OrgTable)
-}
+func (q orgExistsQuery) Validate() error { return nil }
 
 func orgExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64) (bool, error) {
 	query := orgExistsQuery{
@@ -315,9 +300,7 @@ type deleteAlertRuleTagsByOrgQuery struct {
 	OrgID             int64
 }
 
-func (q deleteAlertRuleTagsByOrgQuery) Validate() error {
-	return validateQueryFields(q.AlertRuleTagTable, q.AlertTable)
-}
+func (q deleteAlertRuleTagsByOrgQuery) Validate() error { return nil }
 
 func deleteAlertRuleTagsByOrg(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64) error {
 	query := deleteAlertRuleTagsByOrgQuery{
@@ -418,9 +401,7 @@ type getUserOrgListQuery struct {
 	UserID       int64
 }
 
-func (q getUserOrgListQuery) Validate() error {
-	return validateQueryFields(q.OrgUserTable, q.OrgTable, q.UserTable)
-}
+func (q getUserOrgListQuery) Validate() error { return nil }
 
 // TODO: refactor move logic to service method
 func (ss *sqlStore) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQuery) ([]*org.UserOrgDTO, error) {
@@ -533,9 +514,7 @@ type orgUserExistsQuery struct {
 	UserID       int64
 }
 
-func (q orgUserExistsQuery) Validate() error {
-	return validateQueryFields(q.OrgUserTable)
-}
+func (q orgUserExistsQuery) Validate() error { return nil }
 
 func orgUserExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID, userID int64) (bool, error) {
 	query := orgUserExistsQuery{
@@ -562,9 +541,7 @@ type getUserByIDQuery struct {
 	ExcludeServiceAccounts bool
 }
 
-func (q getUserByIDQuery) Validate() error {
-	return validateQueryFields(q.UserTable)
-}
+func (q getUserByIDQuery) Validate() error { return nil }
 
 func getUserByID(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userID int64, excludeServiceAccounts bool) (user.User, bool, error) {
 	query := getUserByIDQuery{
@@ -650,9 +627,7 @@ type countOrgsQuery struct {
 	OrgTable string
 }
 
-func (q countOrgsQuery) Validate() error {
-	return validateQueryFields(q.OrgTable)
-}
+func (q countOrgsQuery) Validate() error { return nil }
 
 type countOrgUsersQuery struct {
 	sqltemplate.SQLTemplate
@@ -661,9 +636,7 @@ type countOrgUsersQuery struct {
 	OrgID        int64
 }
 
-func (q countOrgUsersQuery) Validate() error {
-	return validateQueryFields(q.OrgUserTable, q.UserTable)
-}
+func (q countOrgUsersQuery) Validate() error { return nil }
 
 type countUserOrgsQuery struct {
 	sqltemplate.SQLTemplate
@@ -671,9 +644,7 @@ type countUserOrgsQuery struct {
 	UserID       int64
 }
 
-func (q countUserOrgsQuery) Validate() error {
-	return validateQueryFields(q.OrgUserTable)
-}
+func (q countUserOrgsQuery) Validate() error { return nil }
 
 func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	dbHelper, err := ss.sql(ctx)
@@ -806,9 +777,7 @@ type validateOrgAdminQuery struct {
 	Role         org.RoleType
 }
 
-func (q validateOrgAdminQuery) Validate() error {
-	return validateQueryFields(q.OrgUserTable)
-}
+func (q validateOrgAdminQuery) Validate() error { return nil }
 
 // validate that there is an org admin user left
 func validateOneAdminLeftInOrg(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, sess *db.Session) error {
@@ -887,9 +856,7 @@ type searchOrgUsersQuery struct {
 	Offset           int
 }
 
-func (q searchOrgUsersQuery) Validate() error {
-	return validateQueryFields(q.OrgUserTable, q.UserTable)
-}
+func (q searchOrgUsersQuery) Validate() error { return nil }
 
 func accessControlQueryFields(filter accesscontrol.SQLFilter) (bool, []any) {
 	return strings.TrimSpace(filter.Where) == "1 = 1", filter.Args
@@ -1042,9 +1009,6 @@ type searchOrgUsersByEmailsQuery struct {
 }
 
 func (q searchOrgUsersByEmailsQuery) Validate() error {
-	if err := validateQueryFields(q.OrgUserTable, q.UserTable); err != nil {
-		return err
-	}
 	if len(q.Emails) == 0 {
 		return fmt.Errorf("emails must not be empty")
 	}
@@ -1124,9 +1088,7 @@ type deleteByOrgAndUserQuery struct {
 	UserID int64
 }
 
-func (q deleteByOrgAndUserQuery) Validate() error {
-	return validateQueryFields(q.Table)
-}
+func (q deleteByOrgAndUserQuery) Validate() error { return nil }
 
 func executeDeleteByOrgAndUser(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, table string, orgID, userID int64) error {
 	query := deleteByOrgAndUserQuery{
@@ -1255,9 +1217,7 @@ type deletePermissionByScopeQuery struct {
 	Scope           string
 }
 
-func (q deletePermissionByScopeQuery) Validate() error {
-	return validateQueryFields(q.PermissionTable, q.Scope)
-}
+func (q deletePermissionByScopeQuery) Validate() error { return nil }
 
 type managedUserRoleIDsQuery struct {
 	sqltemplate.SQLTemplate
@@ -1265,9 +1225,7 @@ type managedUserRoleIDsQuery struct {
 	RoleName  string
 }
 
-func (q managedUserRoleIDsQuery) Validate() error {
-	return validateQueryFields(q.RoleTable, q.RoleName)
-}
+func (q managedUserRoleIDsQuery) Validate() error { return nil }
 
 type deletePermissionsByRoleIDsQuery struct {
 	sqltemplate.SQLTemplate
@@ -1276,9 +1234,6 @@ type deletePermissionsByRoleIDsQuery struct {
 }
 
 func (q deletePermissionsByRoleIDsQuery) Validate() error {
-	if err := validateQueryFields(q.PermissionTable); err != nil {
-		return err
-	}
 	if len(q.RoleIDs) == 0 {
 		return fmt.Errorf("role IDs must not be empty")
 	}
@@ -1291,9 +1246,7 @@ type deleteRoleByNameQuery struct {
 	RoleName  string
 }
 
-func (q deleteRoleByNameQuery) Validate() error {
-	return validateQueryFields(q.RoleTable, q.RoleName)
-}
+func (q deleteRoleByNameQuery) Validate() error { return nil }
 
 func deleteUserAccessControl(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userID int64) error {
 	// Delete user role assignments

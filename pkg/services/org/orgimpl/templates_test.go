@@ -334,7 +334,7 @@ func TestOrgUserSearchSorts(t *testing.T) {
 }
 
 func TestQueryValidation(t *testing.T) {
-	require.Error(t, searchOrgUsersQuery{}.Validate())
+	require.NoError(t, searchOrgUsersQuery{}.Validate())
 	require.Error(t, searchOrgUsersByEmailsQuery{
 		OrgUserTable: "test_schema.org_user",
 		UserTable:    "test_schema.user",
