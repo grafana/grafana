@@ -16,15 +16,18 @@ jest.mock('../v2schema/DashboardSchemaEditor', () => ({
     headerActions,
     headerLeftActions,
     contentOverride,
+    onParseErrorChange,
   }: {
     headerActions?: ReactNode;
     headerLeftActions?: ReactNode;
     contentOverride?: ReactNode;
+    onParseErrorChange?: (hasParseError: boolean) => void;
   }) => (
     <div data-testid="schema-editor">
       {headerLeftActions}
       {headerActions}
       {contentOverride ?? <div data-testid="code-editor" />}
+      <button data-testid="trigger-parse-error" onClick={() => onParseErrorChange?.(true)} />
     </div>
   ),
 }));
@@ -68,7 +71,7 @@ describe('DashboardCodePane', () => {
   });
 
   it('shows the diff in place of the code editor when the switch is turned on', async () => {
-    jest.mocked(getDashboardDiffTexts).mockReturnValue({ original: 'a', current: 'b' });
+    jest.mocked(getDashboardDiffTexts).mockReturnValue({ original: 'a', current: 'b', migratedFromV1: false });
     setup();
 
     await userEvent.click(screen.getByRole('switch', { name: 'Show diff' }));
@@ -78,7 +81,7 @@ describe('DashboardCodePane', () => {
   });
 
   it('returns to the code editor when the switch is turned off again', async () => {
-    jest.mocked(getDashboardDiffTexts).mockReturnValue({ original: 'a', current: 'b' });
+    jest.mocked(getDashboardDiffTexts).mockReturnValue({ original: 'a', current: 'b', migratedFromV1: false });
     setup();
 
     await userEvent.click(screen.getByRole('switch', { name: 'Show diff' }));
@@ -89,7 +92,7 @@ describe('DashboardCodePane', () => {
   });
 
   it('shows an empty state when there are no changes', async () => {
-    jest.mocked(getDashboardDiffTexts).mockReturnValue({ original: 'a', current: 'a' });
+    jest.mocked(getDashboardDiffTexts).mockReturnValue({ original: 'a', current: 'a', migratedFromV1: false });
     setup();
 
     await userEvent.click(screen.getByRole('switch', { name: 'Show diff' }));
@@ -108,7 +111,7 @@ describe('DashboardCodePane', () => {
   });
 
   it('shows the inline/side-by-side selector only while the diff is shown', async () => {
-    jest.mocked(getDashboardDiffTexts).mockReturnValue({ original: 'a', current: 'b' });
+    jest.mocked(getDashboardDiffTexts).mockReturnValue({ original: 'a', current: 'b', migratedFromV1: false });
     setup();
 
     expect(screen.queryByRole('radio', { name: 'Inline' })).not.toBeInTheDocument();
@@ -124,5 +127,23 @@ describe('DashboardCodePane', () => {
     setup();
 
     expect(screen.getByRole('switch', { name: 'Show diff' })).toBeDisabled();
+  });
+
+  it('disables the diff switch while the buffer has a syntax error', async () => {
+    setup();
+
+    await userEvent.click(screen.getByTestId('trigger-parse-error'));
+
+    expect(screen.getByRole('switch', { name: 'Show diff' })).toBeDisabled();
+  });
+
+  it('shows a migration notice when the original was converted from v1', async () => {
+    jest.mocked(getDashboardDiffTexts).mockReturnValue({ original: 'a', current: 'b', migratedFromV1: true });
+    setup();
+
+    await userEvent.click(screen.getByRole('switch', { name: 'Show diff' }));
+
+    expect(screen.getByText(/migrated to the new Grafana dashboard format/)).toBeInTheDocument();
+    expect(screen.getByTestId('diff-viewer')).toBeInTheDocument();
   });
 });

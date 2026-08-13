@@ -33,6 +33,8 @@ export interface DashboardSchemaEditorProps {
   /** Called when the value changes (value is always JSON regardless of display format) */
   onChange?: (value: string) => void;
   onValidationChange?: (hasErrors: boolean) => void;
+  /** Reports whether the current buffer has a syntax error (YAML that does not parse to JSON) */
+  onParseErrorChange?: (hasParseError: boolean) => void;
   readOnly?: boolean;
   containerStyles?: string;
   showFormatToggle?: boolean;
@@ -50,6 +52,7 @@ export function DashboardSchemaEditor({
   value,
   onChange,
   onValidationChange,
+  onParseErrorChange,
   readOnly = false,
   containerStyles,
   showFormatToggle = false,
@@ -144,6 +147,12 @@ export function DashboardSchemaEditor({
       onValidationChange?.(true);
     }
   }, [yamlParseError, onValidationChange]);
+
+  // A YAML parse error means `value` no longer reflects the buffer on screen - consumers that
+  // derive views from `value` (e.g. the diff) need to know.
+  useEffect(() => {
+    onParseErrorChange?.(yamlParseError !== null);
+  }, [yamlParseError, onParseErrorChange]);
 
   // Validate YAML by creating a hidden JSON model with schema validation
   useEffect(() => {

@@ -121,6 +121,7 @@ describe('getDashboardDiffTexts', () => {
     expect(original.metadata.name).toBe('abc-123');
     expect(original.spec.title).toBe('Original title');
     expect(current.spec.title).toBe('Changed title');
+    expect(result!.migratedFromV1).toBe(false);
     expect(mockEnsureV2Response).not.toHaveBeenCalled();
   });
 
@@ -155,6 +156,7 @@ describe('getDashboardDiffTexts', () => {
       expect.objectContaining({ dashboard: expect.objectContaining(v1Initial) })
     );
     expect(JSON.parse(result!.original).spec.title).toBe('Converted title');
+    expect(result!.migratedFromV1).toBe(true);
   });
 
   it('returns null when the v1 conversion fails', () => {

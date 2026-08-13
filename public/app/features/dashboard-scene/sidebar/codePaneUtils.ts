@@ -2,6 +2,7 @@ import yaml from 'js-yaml';
 
 import { t } from '@grafana/i18n';
 import { sceneUtils } from '@grafana/scenes';
+import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { type DashboardDataDTO } from 'app/types/dashboard';
@@ -53,8 +54,15 @@ export function getDashboardDiffTexts(
   dashboard: DashboardScene,
   currentJsonText: string,
   format: SchemaEditorFormat = 'json'
-): { original: string; current: string } | null {
-  const originalSpec = getOriginalV2Spec(dashboard);
+): { original: string; current: string; migratedFromV1: boolean } | null {
+  const initialSaveModel = dashboard.getInitialSaveModel();
+  if (!initialSaveModel) {
+    return null;
+  }
+
+  const originalSpec = isDashboardV2Spec(initialSaveModel)
+    ? initialSaveModel
+    : convertInitialSaveModelToV2(dashboard, initialSaveModel);
   if (!originalSpec) {
     return null;
   }
@@ -69,21 +77,17 @@ export function getDashboardDiffTexts(
   return {
     original: serializeResource(sortedDeepCloneWithoutNulls(buildDashboardResource(dashboard, originalSpec)), format),
     current: serializeResource(sortedDeepCloneWithoutNulls(current), format),
+    // The v1->v2 conversion does not produce the exact spec the scene serializer emits, so a
+    // migrated diff contains changes the user did not make - consumers show a notice for it.
+    migratedFromV1: !isDashboardV2Spec(initialSaveModel),
   };
 }
 
-function getOriginalV2Spec(dashboard: DashboardScene): DashboardV2Spec | null {
-  const initialSaveModel = dashboard.getInitialSaveModel();
-  if (!initialSaveModel) {
-    return null;
-  }
-  if (isDashboardV2Spec(initialSaveModel)) {
-    return initialSaveModel;
-  }
-  // The code pane always renders the current scene as a v2 resource, but the dashboard may have
-  // been loaded through the v1/unified API (getDashboardsApiVersion returns v2 only with
-  // dashboardNewLayouts or an explicit v2 request). Those dashboards have a v1 initial save model,
-  // which must be converted so both diff sides use the same schema version.
+// The code pane always renders the current scene as a v2 resource, but the dashboard may have
+// been loaded through the v1/unified API (getDashboardsApiVersion returns v2 only with
+// dashboardNewLayouts or an explicit v2 request). Those dashboards have a v1 initial save model,
+// which must be converted so both diff sides use the same schema version.
+function convertInitialSaveModelToV2(dashboard: DashboardScene, initialSaveModel: Dashboard): DashboardV2Spec | null {
   try {
     const dashboardData: DashboardDataDTO = {
       ...initialSaveModel,

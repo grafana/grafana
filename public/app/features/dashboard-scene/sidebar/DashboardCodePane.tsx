@@ -45,6 +45,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
   const [editorFormat, setEditorFormat] = useState<SchemaEditorFormat>('json');
   const [showDiff, setShowDiff] = useState(false);
   const [inlineDiff, setInlineDiff] = useInlineDiffPreference();
+  const [hasSyntaxError, setHasSyntaxError] = useState(false);
 
   const isJsonParseable = useMemo(() => {
     try {
@@ -54,6 +55,10 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
       return false;
     }
   }, [jsonText]);
+
+  // In YAML mode a parse error means jsonText no longer reflects the buffer on screen, so a diff
+  // built from it would compare stale content.
+  const canShowDiff = isJsonParseable && !hasSyntaxError;
 
   const diffTexts = useMemo(
     () => (showDiff ? getDashboardDiffTexts(dashboard, jsonText, editorFormat) : null),
@@ -96,16 +101,16 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
 
   const diffToggle = (
     <Tooltip
-      content={t('dashboard.sidebar.edit-schema.diff-disabled-tooltip', 'Fix JSON syntax errors to view the diff')}
+      content={t('dashboard.sidebar.edit-schema.diff-disabled-tooltip', 'Fix syntax errors to view the diff')}
       placement="top"
-      show={isJsonParseable ? false : undefined}
+      show={canShowDiff ? false : undefined}
     >
       <div>
         <InlineSwitch
           label={t('dashboard.sidebar.edit-schema.diff-toggle', 'Show diff')}
           showLabel
           value={showDiff}
-          disabled={!isJsonParseable}
+          disabled={!canShowDiff}
           onChange={(e) => setShowDiff(e.currentTarget.checked)}
         />
       </div>
@@ -147,6 +152,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
     value: jsonText,
     onChange: handleChange,
     onValidationChange: setHasValidationErrors,
+    onParseErrorChange: setHasSyntaxError,
     onFormatChange: setEditorFormat,
     showFormatToggle: true,
     headerLeftActions: (
@@ -179,15 +185,28 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
       )}
     </EmptyState>
   ) : (
-    <div className={styles.diffContainer}>
-      <MonacoDiffEditor
-        original={diffTexts.original}
-        modified={diffTexts.current}
-        language={editorFormat}
-        height="100%"
-        inline={inlineDiff}
-      />
-    </div>
+    <>
+      {diffTexts.migratedFromV1 && (
+        <Alert
+          severity="info"
+          topSpacing={0}
+          bottomSpacing={0}
+          title={t(
+            'dashboard.sidebar.edit-schema.diff-migrated',
+            'The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format'
+          )}
+        />
+      )}
+      <div className={styles.diffContainer}>
+        <MonacoDiffEditor
+          original={diffTexts.original}
+          modified={diffTexts.current}
+          language={editorFormat}
+          height="100%"
+          inline={inlineDiff}
+        />
+      </div>
+    </>
   );
 
   const editorArea = (containerStyles?: string) => (
