@@ -3,10 +3,6 @@ name: "K8s Codegen Check"
 on:
   workflow_call:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   check:
     name: K8s Codegen Check

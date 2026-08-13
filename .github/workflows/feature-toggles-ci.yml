@@ -2,39 +2,22 @@ name: Feature toggles CI
 
 on:
   workflow_call:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    inputs:
+      backend:
+        description: Whether backend code changed.
+        required: true
+        type: string
+      docs:
+        description: Whether docs changed.
+        required: true
+        type: string
 
 permissions: {}
 
 jobs:
-  detect-changes:
-    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    name: Detect whether code changed
-    runs-on: ubuntu-arm64-small
-    permissions:
-      contents: read
-    outputs:
-      changedbackend: ${{ steps.detect-changes.outputs.backend }}
-      changeddocs: ${{ steps.detect-changes.outputs.docs }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 0
-          filter: blob:none
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/feature-toggles-ci.yml
 
   test:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changedbackend == 'true' || needs.detect-changes.outputs.changeddocs == 'true'
+    if: inputs.backend == 'true' || inputs.docs == 'true'
 
     name: Feature toggles documentation is in sync with source
 
