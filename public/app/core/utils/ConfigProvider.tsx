@@ -57,14 +57,20 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
       setTheme(newTheme);
     });
 
-    if (contextSrv.user.theme === 'system') {
-      const query = window.matchMedia('(prefers-color-scheme: dark)');
-      query.addEventListener('change', (e) => {
-        setTheme(maybeRemapTheme(getThemeById(e.matches ? 'dark' : 'light'), visualRefreshEnabled));
-      });
-    }
-
     return () => sub.unsubscribe();
+  }, [visualRefreshEnabled]);
+
+  useEffect(() => {
+    if (contextSrv.user.theme !== 'system') {
+      return;
+    }
+    const query = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => {
+      setTheme(maybeRemapTheme(getThemeById(e.matches ? 'dark' : 'light'), visualRefreshEnabled));
+    };
+    query.addEventListener('change', handler);
+
+    return () => query.removeEventListener('change', handler);
   }, [visualRefreshEnabled]);
 
   useEffect(() => {
