@@ -21,12 +21,16 @@ interface RenderBindingMessage<T extends MessageEventType> {
  * has finished rendering all panels for report capture.
  *
  * Sends a `REPORT_RENDER_COMPLETE` message via the `window.__grafanaImageRendererMessageChannel`
- * chromedp binding once a `dashboard_view` interaction completes AND the query controller has then
- * stayed idle for `config.reportRenderQueryGracePeriodMs` (see the `report_render_query_grace_period`
- * setting) — the scenes profiler's own completion signal fires as soon as queries momentarily hit
+ * chromedp binding once a `dashboard_view` interaction completes. Behind the `reportRenderQueryDebounce`
+ * feature toggle, it instead waits until the query controller has then stayed idle for
+ * `config.reportRenderQueryGracePeriodMs` (see the `report_render_query_grace_period` setting) before
+ * sending — the scenes profiler's own completion signal fires as soon as queries momentarily hit
  * zero, which races with repeat panels that register their queries late (e.g. after a repeat
  * variable's own query resolves). The grace window pauses while any query is running, however long
- * it takes, and only counts down once the controller is genuinely idle.
+ * it takes, and only counts down once the controller is genuinely idle. This has no ceiling today: a
+ * report-rendered dashboard whose queries never fully settle (e.g. a fast auto-refresh or "Live now")
+ * will wait indefinitely for this signal rather than completing early, bounded only by the backend's
+ * own render request timeout — this is why the behavior is opt-in rather than the default.
  *
  * This observer is only registered for report routes to avoid any overhead on
  * normal dashboard usage.
@@ -45,7 +49,10 @@ export class ReportRenderReadinessObserver implements performanceUtils.ScenePerf
       return;
     }
 
-    if (!this.queryController) {
+    // Behind an experimental, default-off toggle: this changes *when* the render-complete signal
+    // fires for every report/embed capture, so it can be enabled selectively (e.g. for a customer
+    // hitting the repeat-panel race) without changing behavior for everyone else.
+    if (!config.featureToggles.reportRenderQueryDebounce || !this.queryController) {
       sendMessageEvent('REPORT_RENDER_COMPLETE', { success: true });
       return;
     }

@@ -23,6 +23,9 @@ import { ReportRenderReadinessObserver } from './ReportRenderReadinessObserver';
  * This test drives the real SceneQueryController + SceneRenderProfiler + ReportRenderReadinessObserver
  * through that exact query timeline, using the controller's real `queryStarted`/`queryCompleted` API
  * so the timeline is deterministic instead of dependent on browser render timing.
+ *
+ * The fix is gated behind the `reportRenderQueryDebounce` feature toggle (default off) so it can be
+ * enabled selectively rather than changing behavior for every report render by default.
  */
 
 // Keep in sync with POST_STORM_WINDOW in @grafana/scenes.
@@ -37,6 +40,7 @@ function makeQueryEntry(type = 'data-source-request'): QueryEntry {
 describe('ReportRenderReadinessObserver — repeat panel render readiness', () => {
   let channel: jest.Mock;
   const originalGracePeriodMs = config.reportRenderQueryGracePeriodMs;
+  const originalToggleValue = config.featureToggles.reportRenderQueryDebounce;
 
   beforeEach(() => {
     jest.useFakeTimers();
@@ -50,12 +54,14 @@ describe('ReportRenderReadinessObserver — repeat panel render readiness', () =
     perf.clearResourceTimings = () => {};
     channel = jest.fn();
     window.__grafanaImageRendererMessageChannel = channel;
+    config.featureToggles.reportRenderQueryDebounce = true;
   });
 
   afterEach(() => {
     performanceUtils.getScenePerformanceTracker().clearObservers();
     delete (window as Record<string, unknown>).__grafanaImageRendererMessageChannel;
     config.reportRenderQueryGracePeriodMs = originalGracePeriodMs;
+    config.featureToggles.reportRenderQueryDebounce = originalToggleValue;
     jest.useRealTimers();
   });
 
@@ -130,6 +136,24 @@ describe('ReportRenderReadinessObserver — repeat panel render readiness', () =
     // Would still be pending at this point under the 3s default, but the configured 500ms grace
     // period has already elapsed.
     jest.advanceTimersByTime(500);
+    expect(channel).toHaveBeenCalledWith(JSON.stringify({ type: 'REPORT_RENDER_COMPLETE', data: { success: true } }));
+  });
+
+  it('only runs the debounce logic when reportRenderQueryDebounce is enabled — reproduces the original bug when it is off', () => {
+    config.featureToggles.reportRenderQueryDebounce = false;
+    const queryController = setupProfiledDashboard();
+
+    // Same race as the other tests: the repeat variable's query completes, and nothing else has
+    // registered a query yet.
+    const variableQuery = makeQueryEntry('variable');
+    queryController.queryStarted(variableQuery);
+    queryController.queryCompleted(variableQuery);
+    expect(queryController.runningQueriesCount()).toBe(0);
+
+    jest.advanceTimersByTime(POST_STORM_WINDOW + 500);
+
+    // With the toggle off, the observer never subscribes to the query controller at all — it sends
+    // the moment the profiler's own (racy) signal fires, exactly like the pre-fix behavior.
     expect(channel).toHaveBeenCalledWith(JSON.stringify({ type: 'REPORT_RENDER_COMPLETE', data: { success: true } }));
   });
 });

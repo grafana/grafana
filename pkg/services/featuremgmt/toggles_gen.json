@@ -5681,6 +5681,20 @@
     },
     {
       "metadata": {
+        "name": "reportRenderQueryDebounce",
+        "resourceVersion": "1786652038666",
+        "creationTimestamp": "2026-08-13T20:13:58Z"
+      },
+      "spec": {
+        "description": "On the report render page, wait for panel queries to settle (including late-registering repeat panel queries) before signaling the image renderer that the dashboard is done",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reporting.anyPageReporting",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

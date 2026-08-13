@@ -325,6 +325,11 @@ export interface FeatureToggles {
   */
   reportRenderBinding?: boolean;
   /**
+  * On the report render page, wait for panel queries to settle (including late-registering repeat panel queries) before signaling the image renderer that the dashboard is done
+  * @default false
+  */
+  reportRenderQueryDebounce?: boolean;
+  /**
   * Allow pan and zoom in canvas panel
   * @default false
   */
