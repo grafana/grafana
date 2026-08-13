@@ -21,7 +21,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { getVariableUsageInfo } from '../utils/links';
 
 import { getLogsButtonCTA } from './components/TraceTimelineViewer/SpanDetail/LogsLink';
-import { getTraceToLogsTraceQuery } from './components/logsLink';
+import { getTraceToLogsTraceQuery, interpolateQueries } from './components/logsLink';
 import { type Trace } from './components/types/trace';
 
 /**
@@ -96,6 +96,8 @@ export function createTraceLogsLink({
     values: [],
   };
 
+  const replaceVariables = getTemplateSrv().replace.bind(getTemplateSrv());
+
   let link = mapInternalLinkToExplore({
     link: dataLink,
     internalLink: dataLink.internal!,
@@ -103,7 +105,7 @@ export function createTraceLogsLink({
     range: dataLink.internal!.range,
     field,
     onClickFn: splitOpenFn,
-    replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+    replaceVariables,
   });
 
   link =
@@ -112,7 +114,7 @@ export function createTraceLogsLink({
         frame: dataFrame,
         field,
         dataLinkScopedVars: scopedVars,
-        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+        replaceVariables,
         config: {},
         link: dataLink,
         linkModel: link,
@@ -122,7 +124,7 @@ export function createTraceLogsLink({
   if (Array.isArray(query)) {
     link.interpolatedParams = {
       ...link.interpolatedParams,
-      alternativeQueries: query,
+      alternativeQueries: interpolateQueries(query, scopedVars, replaceVariables),
     };
   }
 

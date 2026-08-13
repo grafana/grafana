@@ -1,4 +1,10 @@
-import { type DataQuery, type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
+import {
+  type InterpolateFunction,
+  type ScopedVars,
+  type DataQuery,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+} from '@grafana/data';
 import { type TraceToLogsTag, type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type LokiQuery } from 'app/features/loki-helpers/types';
@@ -463,4 +469,18 @@ function getQueryForVictoriaLogs(
     expr: parts.join(' AND '),
     refId: '',
   };
+}
+
+export function interpolateQueries<T>(
+  queries: DataQuery[],
+  scopedVars: ScopedVars,
+  replaceVariables: InterpolateFunction
+) {
+  return queries.map((query) => {
+    const interpolated = { ...query };
+    if ('expr' in interpolated && typeof interpolated.expr === 'string') {
+      interpolated.expr = replaceVariables(interpolated.expr, scopedVars);
+    }
+    return interpolated;
+  });
 }
