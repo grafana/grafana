@@ -38,7 +38,7 @@ jobs:
 
     name: Feature toggles documentation is in sync with source
 
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-x64
 
     permissions:
       contents: read

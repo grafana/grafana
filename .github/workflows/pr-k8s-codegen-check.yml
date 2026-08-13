@@ -18,7 +18,7 @@ concurrency:
 jobs:
   check:
     name: K8s Codegen Check
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-x64
     permissions:
       contents: read
 

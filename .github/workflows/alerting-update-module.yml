@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   update-grafana:
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-x64
     permissions:
       contents: write
       pull-requests: write

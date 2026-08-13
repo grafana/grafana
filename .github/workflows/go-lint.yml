@@ -41,7 +41,7 @@ jobs:
   go-fmt:
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-x64
     steps:
       - uses: actions/checkout@v5
         with:
