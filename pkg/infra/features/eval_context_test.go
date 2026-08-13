@@ -40,7 +40,9 @@ func TestEvaluationContextFromBaggage(t *testing.T) {
 
 	t.Run("absent fields are not added to attributes", func(t *testing.T) {
 		req := baggageCtx(t, "slug=mystack,namespace=stacks-42")
+
 		evalCtx := EvaluationContextFromBaggage(req.Context())
+		assert.Equal(t, "stacks-42", evalCtx.TargetingKey())
 
 		attrs := evalCtx.Attributes()
 		assert.Contains(t, attrs, "slug")
