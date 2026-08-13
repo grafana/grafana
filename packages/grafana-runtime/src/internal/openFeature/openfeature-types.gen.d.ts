@@ -96,7 +96,8 @@ declare module "@openfeature/core" {
     | "datasources.queryGateway"
     | "grafana.panelPluginTransformations"
     | "tracesDrilldown.useValueTypeFiltering"
-    | "grafana.dashboardsAutoHeightPanels";
+    | "grafana.dashboardsAutoHeightPanels"
+    | "grafana.dashboardAutoGridDefault";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

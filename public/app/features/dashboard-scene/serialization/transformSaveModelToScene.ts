@@ -2,6 +2,7 @@ import { uniqueId } from 'lodash';
 
 import { type DataFrameDTO, type DataFrameJSON } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   VizPanel,
   SceneTimePicker,
@@ -420,6 +421,10 @@ export function createDashboardSceneFromDashboardModel(
       version: oldModel.version,
       scopeMeta,
       body,
+      preferences:
+        targetVersion === 'v2' && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardAutoGridDefault, true)
+          ? { defaultLayoutTemplate: DefaultGridLayoutManager.createEmpty() }
+          : undefined,
       $timeRange: new SceneTimeRange({
         from: oldModel.time.from,
         to: oldModel.time.to,
