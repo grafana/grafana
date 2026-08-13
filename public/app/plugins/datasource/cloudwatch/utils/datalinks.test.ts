@@ -1,9 +1,21 @@
-import { type DataQueryRequest, type DataQueryResponse, dateMath, FieldType } from '@grafana/data';
-import { config, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
+import {
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  dateMath,
+  FieldType,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { type CloudWatchQuery } from '../types';
 
 import { addDataLinksToLogsResponse } from './datalinks';
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn(),
+}));
 
 describe('addDataLinksToLogsResponse', () => {
   // @ts-ignore ignore feature toggle type error
@@ -55,13 +67,9 @@ describe('addDataLinksToLogsResponse', () => {
       range: { ...time, raw: time },
     } as DataQueryRequest<CloudWatchQuery>;
 
-    setDataSourceSrv({
-      async get() {
-        return {
-          name: 'Xray',
-        };
-      },
-    } as DataSourceSrv);
+    jest
+      .mocked(getDataSourceInstanceSettings)
+      .mockResolvedValue({ name: 'Xray' } as unknown as DataSourceInstanceSettings);
 
     await addDataLinksToLogsResponse(
       mockResponse,
