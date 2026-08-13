@@ -255,11 +255,6 @@ Starting in Grafana 13.1.0, you can **configure a verified account** with a sign
 
 Starting in Grafana 13.2.0, you can **include authoring details** to your commits.
 
-For the moment, Git Sync doesn't support:
-
-- Passphrase-protected keys.
-- Verification of individual accounts.
-
 Follow the UI wizard to fill in the required fields to set up any of these options, and refer to the sections below for more details.
 
 #### Unsigned commits
@@ -277,6 +272,11 @@ If you enable commit signing:
 - If you enable the signer as the commit author, Git Sync will use the `author` and `committer` fields you fill in.
 - If you don't enable the signer as the commit author, and the commit author is retrievable from the code, Git Sync will use the user as `author` and the configured committer.
 - Otherwise, `author` will be `noreply`, and `committer` will be as configured.
+
+For the moment, Git Sync doesn't support:
+
+- Passphrase-protected keys.
+- Verification of individual accounts.
 
 ##### Pre-requirements
 
