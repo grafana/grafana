@@ -102,6 +102,8 @@ type schedule struct {
 	scheduledEvalEnabled bool // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add scheduled evaluation enabled config
 
 	store *store.DBstore // LOGZ.IO GRAFANA CHANGE :: DEV-47243 Handle state cache inconsistency on eval - warm cache in scheduler as temporary solution
+
+	offenders *offenderReporter // LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Report the heaviest evaluations instead of labelling metrics by rule_uid
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -149,6 +151,9 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager, store *store.DB
 		tracer:                cfg.Tracer,
 		scheduledEvalEnabled:  cfg.ScheduledEvalEnabled, // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add scheduled evaluation enabled config
 		store:                 store,                    // LOGZ.IO GRAFANA CHANGE :: DEV-47243 Handle state cache inconsistency on eval - warm cache in scheduler as temporary solution
+		// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Report the heaviest evaluations instead of labelling metrics by rule_uid
+		offenders: newOffenderReporter(cfg.Log, offenderReportSize, offenderReportInterval),
+		// LOGZ.IO GRAFANA CHANGE :: End
 	}
 
 	return &sch
@@ -158,6 +163,10 @@ func (sch *schedule) Run(ctx context.Context) error {
 	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval, "maxAttempts", sch.maxAttempts)
 	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker)
 	defer t.Stop()
+
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Periodically log the heaviest evaluations
+	go sch.offenders.run(ctx, sch.clock)
+	// LOGZ.IO GRAFANA CHANGE :: End
 
 	if err := sch.schedulePeriodic(ctx, t); err != nil {
 		sch.log.Error("Failure while running the rule evaluation loop", "error", err)
@@ -404,11 +413,13 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 
 	orgID := fmt.Sprint(key.OrgID)
 	evalTotal := sch.metrics.EvalTotal.WithLabelValues(orgID)
-	// LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add more observability to alerting based on rule uid
-	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID, key.UID)
-	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID, key.UID)
-	processDuration := sch.metrics.ProcessDuration.WithLabelValues(orgID, key.UID)
-	sendDuration := sch.metrics.SendDuration.WithLabelValues(orgID, key.UID)
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3027: These were labelled by rule_uid, which created one
+	// never-released metric child per rule and dominated the /metrics payload. Per-rule attribution
+	// now comes from the bounded offender report in offenders.go instead.
+	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
+	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
+	processDuration := sch.metrics.ProcessDuration.WithLabelValues(orgID)
+	sendDuration := sch.metrics.SendDuration.WithLabelValues(orgID)
 	// LOGZ.IO GRAFANA CHANGE :: End
 
 	notify := func(states []state.StateTransition) {
@@ -509,7 +520,20 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			results,
 			state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !sch.disableGrafanaFolder),
 		)
-		processDuration.Observe(sch.clock.Now().Sub(start).Seconds())
+		procDur := sch.clock.Now().Sub(start)
+		processDuration.Observe(procDur.Seconds())
+
+		// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 The number of results a single evaluation produces is
+		// what drives both memory and state-processing time, and it was previously recorded nowhere.
+		sch.offenders.observe(sample{
+			ruleUID:     key.UID,
+			orgID:       key.OrgID,
+			results:     len(results),
+			transitions: len(processedStates),
+			evalDur:     dur,
+			procDur:     procDur,
+		})
+		// LOGZ.IO GRAFANA CHANGE :: End
 
 		start = sch.clock.Now()
 		alerts := state.FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL, e.logzHeaders) // LOGZ.IO GRAFANA CHANGE :: DEV-45327: Add switch to account query param

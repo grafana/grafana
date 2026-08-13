@@ -60,7 +60,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "rule_evaluation_failures_total",
 				Help:      "The total number of rule evaluation failures.",
 			},
-			[]string{"org", "rule_uid"}, // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add more observability to alerting based on rule uid
+			[]string{"org"},
 		),
 		EvalDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -70,7 +70,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Help:      "The time to evaluate a rule.",
 				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
 			},
-			[]string{"org", "rule_uid"}, // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add more observability to alerting based on rule uid
+			[]string{"org"},
 		),
 		ProcessDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -78,9 +78,11 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Subsystem: Subsystem,
 				Name:      "rule_process_evaluation_duration_seconds",
 				Help:      "The time to process the evaluation results for a rule.",
-				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
+				// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Extended past 300s: observed state processing
+				// reaches 400-700s for high-cardinality rules, which all landed in +Inf before.
+				Buckets: []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300, 600, 900, 1800},
 			},
-			[]string{"org", "rule_uid"}, // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add more observability to alerting based on rule uid
+			[]string{"org"},
 		),
 		SendDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -90,7 +92,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Help:      "The time to send the alerts to Alertmanager.",
 				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
 			},
-			[]string{"org", "rule_uid"}, // LOGZ.IO GRAFANA CHANGE :: DEV-47164: Add more observability to alerting based on rule uid
+			[]string{"org"},
 		),
 		SimpleNotificationRules: promauto.With(r).NewGaugeVec(
 			prometheus.GaugeOpts{
@@ -126,7 +128,9 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Subsystem: Subsystem,
 				Name:      "schedule_periodic_duration_seconds",
 				Help:      "The time taken to run the scheduler.",
-				Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
+				// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Extended past 10s: a tick routinely takes 20s+
+				// because processTick warms the whole state cache, so every observation was in +Inf.
+				Buckets: []float64{0.1, 0.25, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600},
 			},
 		),
 		SchedulableAlertRules: promauto.With(r).NewGauge(

@@ -15,14 +15,24 @@ const (
 	profilingEnabledEnvName = "GF_DIAGNOSTICS_PROFILING_ENABLED"
 	profilingAddrEnvName    = "GF_DIAGNOSTICS_PROFILING_ADDR"
 	profilingPortEnvName    = "GF_DIAGNOSTICS_PROFILING_PORT"
-	tracingEnabledEnvName   = "GF_DIAGNOSTICS_TRACING_ENABLED"
-	tracingFileEnvName      = "GF_DIAGNOSTICS_TRACING_FILE"
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Make the block profile rate opt-in
+	profilingBlockRateEnvName = "GF_DIAGNOSTICS_PROFILING_BLOCK_RATE"
+	// LOGZ.IO GRAFANA CHANGE :: End
+	tracingEnabledEnvName = "GF_DIAGNOSTICS_TRACING_ENABLED"
+	tracingFileEnvName    = "GF_DIAGNOSTICS_TRACING_FILE"
 )
 
 type profilingDiagnostics struct {
 	enabled bool
 	addr    string
 	port    uint64
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 blockRate is passed to runtime.SetBlockProfileRate. It is the
+	// average number of nanoseconds of blocking per sampled event, so 1 samples every blocking event and
+	// 0 disables block profiling entirely. Enabling profiling used to hardcode 1, which instruments every
+	// channel and mutex wait in the process - too expensive to leave on in production, and not needed for
+	// heap profiles, which are always sampled regardless of this setting.
+	blockRate int
+	// LOGZ.IO GRAFANA CHANGE :: End
 }
 
 func newProfilingDiagnostics(enabled bool, addr string, port uint64) *profilingDiagnostics {
@@ -30,6 +40,9 @@ func newProfilingDiagnostics(enabled bool, addr string, port uint64) *profilingD
 		enabled: enabled,
 		addr:    addr,
 		port:    port,
+		// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Off unless explicitly asked for
+		blockRate: 0,
+		// LOGZ.IO GRAFANA CHANGE :: End
 	}
 }
 
@@ -56,6 +69,17 @@ func (pd *profilingDiagnostics) overrideWithEnv() error {
 		}
 		pd.port = port
 	}
+
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Make the block profile rate opt-in
+	blockRateEnv := os.Getenv(profilingBlockRateEnvName)
+	if blockRateEnv != "" {
+		blockRate, parseErr := strconv.Atoi(blockRateEnv)
+		if parseErr != nil {
+			return fmt.Errorf("failed to parse %s environment variable to integer", profilingBlockRateEnvName)
+		}
+		pd.blockRate = blockRate
+	}
+	// LOGZ.IO GRAFANA CHANGE :: End
 
 	return nil
 }
@@ -97,8 +121,14 @@ func setupProfiling(profile bool, profileAddr string, profilePort uint64) error 
 	}
 
 	if profileDiagnostics.enabled {
-		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port)
-		runtime.SetBlockProfileRate(1)
+		fmt.Println("diagnostics: pprof profiling enabled", "addr", profileDiagnostics.addr, "port", profileDiagnostics.port,
+			"blockRate", profileDiagnostics.blockRate) // LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Report the block rate in use
+		// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Only instrument blocking events when explicitly asked to.
+		// Heap and CPU profiles do not depend on this, so leaving it off keeps enabling pprof cheap.
+		if profileDiagnostics.blockRate > 0 {
+			runtime.SetBlockProfileRate(profileDiagnostics.blockRate)
+		}
+		// LOGZ.IO GRAFANA CHANGE :: End
 		go func() {
 			// TODO: We should enable the linter and fix G114 here.
 			//	G114: Use of net/http serve function that has no support for setting timeouts (gosec)
