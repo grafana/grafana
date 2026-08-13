@@ -2,6 +2,7 @@ package search_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -415,4 +416,101 @@ func TestTrashAuthz_AppliesOnEveryPage(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TotalHits must count only what the caller may see. The unfiltered count would
+// let someone with one deletion of their own vary filters and read other people's
+// deletions off the total, which no "inexact" flag prevents.
+func TestTrashAuthz_TotalHitsCountOnlyAuthorizedHits(t *testing.T) {
+	// Alice owns one; Bob owns four that match the same query.
+	build := func(t *testing.T, postRank bool) resource.ResourceIndex {
+		var index resource.ResourceIndex
+		if postRank {
+			index = newTestDashboardsIndexPostRank(t, 20)
+		} else {
+			index = newTestDashboardsIndex(t, threshold, 20, func(resource.ResourceIndex) (int64, error) { return 1, nil })
+		}
+		bobs := []string{"bob-1", "bob-2", "bob-3", "bob-4"}
+		docs := make([]*resource.BulkIndexItem, 0, len(bobs)+1)
+		docs = append(docs, trashDoc("alice-1", "folder-1", trashAlice))
+		for _, name := range bobs {
+			docs = append(docs, trashDoc(name, "folder-1", trashBob))
+		}
+		indexDocs(t, index, docs)
+		return index
+	}
+
+	for _, path := range []struct {
+		name     string
+		postRank bool
+	}{{"in-searcher", false}, {"post-rank", true}} {
+		t.Run(path.name, func(t *testing.T) {
+			// limit 1 is the case that used to leak: the page fills on Alice's only
+			// hit, so the scan stopped before exhausting and reported Bleve's
+			// unfiltered count of 5.
+			for _, limit := range []int64{1, 2, 100} {
+				t.Run(fmt.Sprintf("limit %d", limit), func(t *testing.T) {
+					index := build(t, path.postRank)
+					q := trashQueryFor(func(q *resourcepb.ResourceSearchRequest) { q.Limit = limit })
+
+					res := runTrashSearch(t, index, &trashAccessClient{}, "alice", q)
+
+					assert.Equal(t, []string{"alice-1"}, namesOf(res))
+					assert.Equal(t, int64(1), res.TotalHits, "Bob's four deletions must not be counted")
+					assert.True(t, res.TotalHitsExact, "the whole match set was scanned, so the count is exact")
+				})
+			}
+		})
+	}
+}
+
+// A zero limit means "count only" to the backend: it returns the total and no rows
+// at all. Not reachable through /trash, which resolves a zero limit to the default
+// page size, and deliberately so -- this covers the backend contract for callers
+// that reach it directly.
+func TestTrashAuthz_CountOnlyTotalIsAuthorized(t *testing.T) {
+	index := newTestDashboardsIndexPostRank(t, 20)
+	indexDocs(t, index, []*resource.BulkIndexItem{
+		trashDoc("alice-1", "folder-1", trashAlice),
+		trashDoc("bob-1", "folder-1", trashBob),
+		trashDoc("bob-2", "folder-1", trashBob),
+	})
+
+	q := trashQueryFor(func(q *resourcepb.ResourceSearchRequest) { q.Limit = 0 })
+	res := runTrashSearch(t, index, &trashAccessClient{}, "alice", q)
+
+	assert.Empty(t, namesOf(res))
+	assert.Equal(t, int64(1), res.TotalHits)
+	assert.True(t, res.TotalHitsExact)
+}
+
+// Counting from a cursor cannot produce a total, so the count is marked inexact
+// rather than being topped up from the unfiltered count.
+func TestTrashAuthz_CursorPageTotalIsInexactNotUnfiltered(t *testing.T) {
+	index := newTestDashboardsIndexPostRank(t, 20)
+	docs := make([]*resource.BulkIndexItem, 0, 8)
+	for i := range 4 {
+		suffix := string(rune('a' + i))
+		docs = append(docs, trashDoc(suffix+"-alice", "folder-1", trashAlice))
+		docs = append(docs, trashDoc(suffix+"-bob", "folder-1", trashBob))
+	}
+	indexDocs(t, index, docs)
+
+	first := runTrashSearch(t, index, &trashAccessClient{}, "alice",
+		trashQueryFor(func(q *resourcepb.ResourceSearchRequest) { q.Limit = 2 }))
+	require.Len(t, first.Results.GetRows(), 2)
+	assert.Equal(t, int64(4), first.TotalHits, "the first page sees the whole set")
+	assert.True(t, first.TotalHitsExact)
+
+	after := first.Results.GetRows()[1].SortFields
+	require.NotEmpty(t, after)
+
+	second := runTrashSearch(t, index, &trashAccessClient{}, "alice",
+		trashQueryFor(func(q *resourcepb.ResourceSearchRequest) {
+			q.Limit = 2
+			q.SearchAfter = after
+		}))
+
+	assert.LessOrEqual(t, second.TotalHits, int64(4), "never more than Alice's own deletions")
+	assert.False(t, second.TotalHitsExact, "counted from the cursor, so not a total")
 }
