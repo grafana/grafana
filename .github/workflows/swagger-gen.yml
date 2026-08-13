@@ -37,7 +37,7 @@ jobs:
 
   verify:
     name: Verify committed API specs match
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-x64
     needs: detect-changes
     if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.changed == 'true'
     permissions:

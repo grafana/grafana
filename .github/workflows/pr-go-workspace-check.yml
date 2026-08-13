@@ -27,7 +27,7 @@ jobs:
       id-token: write
     uses: ./.github/workflows/bootstrap-go-mod-cache.yml
     with:
-      runs-on: ubuntu-arm64
+      runs-on: ubuntu-x64
       enterprise: true
 
   go-build-cache:
@@ -37,14 +37,14 @@ jobs:
       id-token: write
     uses: ./.github/workflows/bootstrap-go-build-cache.yml
     with:
-      runs-on: ubuntu-arm64
+      runs-on: ubuntu-x64
       enterprise: true
 
   check-workspace:
     needs: [detect-changes, go-build-cache]
     if: needs.detect-changes.outputs.backend == 'true'
     name: Go Workspace Check
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-x64
 
     permissions:
       contents: read
@@ -90,7 +90,7 @@ jobs:
     needs: [detect-changes, go-build-cache]
     if: needs.detect-changes.outputs.backend == 'true'
     name: Check Wire Changes
-    runs-on: ubuntu-arm64
+    runs-on: ubuntu-x64
 
     permissions:
       contents: read
