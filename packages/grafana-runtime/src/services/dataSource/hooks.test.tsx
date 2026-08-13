@@ -13,7 +13,7 @@ import {
   useDefaultDataSourceInstance,
   useHasDataSourceInstance,
 } from './hooks';
-import { _resetForTests as resetInstanceSettings, initDataSourceInstanceSettings } from './settings';
+import { setDataSourceInstanceSettings } from './settings';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
   return {
@@ -64,9 +64,8 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  resetInstanceSettings();
   resetPlugin();
-  initDataSourceInstanceSettings(fixtures, 'Bravo');
+  setDataSourceInstanceSettings(fixtures, 'Bravo');
 });
 
 describe('useDataSourceInstanceSettings', () => {
