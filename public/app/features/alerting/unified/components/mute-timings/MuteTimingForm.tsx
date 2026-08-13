@@ -101,7 +101,9 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance, editMode }
         const message = stringifyErrorLike(error);
         notifyApp.error(title, message);
 
-        if (isFetchError(error) && error.status >= 400 && error.status < 500) {
+const isClientFetchError = (error: unknown): error is FetchError =>
+     isFetchError(error) && error.status >= 400 && error.status < 500;
+        if (isClientFetchError(error)) {
           logWarning(title, { status: String(error.status), message });
         } else {
           const saveError = new Error(title);
