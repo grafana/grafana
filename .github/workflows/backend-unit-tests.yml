@@ -70,23 +70,11 @@ jobs:
           CGO_ENABLED=0 go test -vet=off -short -timeout=30m "${PACKAGES[@]}"
 
   warm-go-cache:
-    # Populate the tooling cache once; the shards below would otherwise each
-    # download the same release asset and get throttled.
     needs: detect-changes
     if: needs.detect-changes.outputs.changed == 'true'
-    name: Warm Go cache tooling
-    runs-on: ubuntu-x64-small
     permissions:
       contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-      - name: Warm the tooling cache
-        uses: ./.github/actions/setup-go-remote-cache
-        with:
-          download-only: 'true'
+    uses: ./.github/workflows/bootstrap-go-remote-cache.yml
 
   grafana-enterprise:
     needs: [detect-changes, warm-go-cache]
