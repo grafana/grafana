@@ -160,9 +160,7 @@ function useHasLogs(
   const { isLoading: isLoadingDsList, items: dsList } = useDataSourceInstanceList({ type: 'loki' });
 
   useEffect(() => {
-    // Without an interpolated query we can't check, so assume logs may exist and leave the link enabled.
-    // Same when the feature flag is off — skip probing and keep the configured link.
-    if (!query || !alternativeQueries || !dynamicTraceToLogsEnabled) {
+    if (!query || !queryKey || !dynamicTraceToLogsEnabled) {
       setPresence('present');
       return;
     }
@@ -178,7 +176,6 @@ function useHasLogs(
     setPresence('loading');
     const subscription = checkForLogsInQueries(queries, effectiveTimeRange, dsList, traceDatasourceUid).subscribe({
       next: (result) => {
-        // Only enable navigation once we know which query (and datasource) works.
         if (result.hasLogs && result.match) {
           setResolvedLinkModel(rewriteLinkForMatch(linkModel, result.match));
           setPresence('present');
@@ -186,12 +183,10 @@ function useHasLogs(
         }
         setPresence('absent');
       },
-      // No resolved match — keep the link disabled rather than opening an unverified query.
+      // No resolved match — keep the link disabled
       error: () => setPresence('absent'),
     });
 
-    // Unsubscribing cancels the in-flight datasource request when the component
-    // unmounts or the query changes before the check resolves.
     return () => {
       subscription.unsubscribe();
     };
@@ -477,8 +472,6 @@ export function getLogsButtonCTA(
       : t('explore.span-detail-link-buttons.logs-for-this-span.button', 'Logs for this span');
   }
 
-  // The trace-to-logs config lives on jsonData; getTraceToLogsOptions also
-  // migrates the legacy `tracesToLogs` shape to the v2 shape.
   const options = getTraceToLogsOptions(settings.jsonData);
   if (options?.filterBySpanID) {
     return t('explore.span-detail-link-buttons.logs-for-this-span.button', 'Logs for this span');
