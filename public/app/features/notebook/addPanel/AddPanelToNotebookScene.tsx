@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { lazy, Suspense } from 'react';
 
 import {
   type SceneComponentProps,
@@ -7,15 +8,17 @@ import {
   type SceneObjectState,
   type VizPanel,
 } from '@grafana/scenes';
-import { Modal, useStyles2 } from '@grafana/ui';
+import { Modal, Spinner, useStyles2 } from '@grafana/ui';
 import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
-import {
-  ADD_PANEL_MODAL_WIDTH,
-  addPanelToNotebookTitle,
-  LazyAddPanelToNotebookModalBody,
-} from './LazyAddPanelToNotebookModalBody';
+import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from './addPanelModal';
+
+// The panel menu loads with every dashboard, so the picker, its API client and its form are split
+// out of the main bundle for the sessions that never open it.
+const AddPanelToNotebookModalBody = lazy(() =>
+  import('./AddPanelToNotebookModalBody').then((module) => ({ default: module.AddPanelToNotebookModalBody }))
+);
 
 interface AddPanelToNotebookSceneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -45,7 +48,9 @@ function AddPanelToNotebookSceneRenderer({ model }: SceneComponentProps<AddPanel
 
   return (
     <Modal isOpen={true} className={styles.modal} title={addPanelToNotebookTitle()} onDismiss={model.onDismiss}>
-      <LazyAddPanelToNotebookModalBody buildPanel={model.buildPanel} onDismiss={model.onDismiss} />
+      <Suspense fallback={<Spinner />}>
+        <AddPanelToNotebookModalBody buildPanel={model.buildPanel} onDismiss={model.onDismiss} />
+      </Suspense>
     </Modal>
   );
 }

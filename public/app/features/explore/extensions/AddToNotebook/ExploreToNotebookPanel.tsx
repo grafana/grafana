@@ -1,4 +1,4 @@
-import { LazyAddPanelToNotebookModalBody } from 'app/features/notebook/addPanel/LazyAddPanelToNotebookModalBody';
+import { AddPanelToNotebookModalBody } from 'app/features/notebook/addPanel/AddPanelToNotebookModalBody';
 import { buildPanelElementFromExplore } from 'app/features/notebook/addPanel/buildPanelElementFromExplore';
 import { useSelector } from 'app/types/store';
 
@@ -12,6 +12,9 @@ interface Props {
 /**
  * Explore's half of the notebook picker: it supplies the panel, the shared modal body does the rest.
  * Mirrors ExploreToDashboardPanel next door, which does the same for dashboards.
+ *
+ * Imports the picker and the panel builder directly — this whole module is behind the lazy boundary
+ * in getExploreExtensionConfigs, which is what keeps them out of the main bundle.
  */
 export function ExploreToNotebookPanel({ exploreId, onClose }: Props) {
   const exploreItem = useSelector(getExploreItemSelector(exploreId))!;
@@ -24,5 +27,5 @@ export function ExploreToNotebookPanel({ exploreId, onClose }: Props) {
       panelState: exploreItem.panelsState,
     });
 
-  return <LazyAddPanelToNotebookModalBody buildPanel={buildPanel} onDismiss={onClose} />;
+  return <AddPanelToNotebookModalBody buildPanel={buildPanel} onDismiss={onClose} />;
 }

@@ -1,10 +1,10 @@
+import { lazy, Suspense } from 'react';
+
 import { type PluginExtensionAddedLinkConfig, PluginExtensionPoints } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { Spinner } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import {
-  ADD_PANEL_MODAL_WIDTH,
-  addPanelToNotebookTitle,
-} from 'app/features/notebook/addPanel/LazyAddPanelToNotebookModalBody';
+import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from 'app/features/notebook/addPanel/addPanelModal';
 import { canAddPanelToNotebook } from 'app/features/notebook/permissions';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -16,8 +16,15 @@ import { runQueries } from '../state/query';
 
 import { ExploreToDashboardPanel } from './AddToDashboard/ExploreToDashboardPanel';
 import { getAddToDashboardTitle } from './AddToDashboard/getAddToDashboardTitle';
-import { ExploreToNotebookPanel } from './AddToNotebook/ExploreToNotebookPanel';
 import { type PluginExtensionExploreContext } from './ToolbarExtensionPoint';
+
+// This module is evaluated at startup, so the notebook picker and the panel builder it pulls in
+// (dashboard-scene serialization, PanelModel) are split out behind this boundary rather than at the
+// modal body — importing ExploreToNotebookPanel directly would put the builder in the main bundle
+// whether or not anyone opens the picker.
+const ExploreToNotebookPanel = lazy(() =>
+  import('./AddToNotebook/ExploreToNotebookPanel').then((module) => ({ default: module.ExploreToNotebookPanel }))
+);
 
 export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
   try {
@@ -89,7 +96,11 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
           openModal({
             title: addPanelToNotebookTitle(),
             width: ADD_PANEL_MODAL_WIDTH,
-            body: ({ onDismiss }) => <ExploreToNotebookPanel onClose={onDismiss!} exploreId={context?.exploreId!} />,
+            body: ({ onDismiss }) => (
+              <Suspense fallback={<Spinner />}>
+                <ExploreToNotebookPanel onClose={onDismiss!} exploreId={context?.exploreId!} />
+              </Suspense>
+            ),
           });
         },
       }),
