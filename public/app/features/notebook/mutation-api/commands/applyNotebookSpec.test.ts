@@ -248,6 +248,43 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(before.isActive).toBe(false);
   });
 
+  // Edit mode lives on the scene (the header reads it) AND on the layout manager (the cells read
+  // it). setState merges, so the rebuild keeps `isEditing: true` on the scene while handing it a
+  // fresh body with no edit state: the header keeps saying Editing over cells that have silently
+  // gone read-only. Same class as the refresh-picker case above, different piece of state.
+  it('keeps the rebuilt body in edit mode when the notebook was being edited', async () => {
+    const scene = notebookScene();
+    scene.onEnterEditMode();
+    expect(scene.state.isEditing).toBe(true);
+    expect(scene.state.body.state.isEditing).toBe(true);
+    const before = scene.state.body;
+
+    const client = new NotebookMutationClient(scene);
+    const result = await client.execute({
+      type: 'APPLY_NOTEBOOK_SPEC',
+      payload: { spec: notebookSpec({ elements: { only: markdownCell('## After') }, cells: ['only'] }) },
+    });
+
+    expect(result.success).toBe(true);
+    expect(scene.state.body).not.toBe(before);
+    // The header and the cells must not disagree about the mode.
+    expect(scene.state.isEditing).toBe(true);
+    expect(scene.state.body.state.isEditing).toBe(true);
+  });
+
+  it('leaves the rebuilt body out of edit mode when the notebook was not being edited', async () => {
+    const scene = notebookScene();
+    expect(scene.state.isEditing).toBeFalsy();
+
+    const client = new NotebookMutationClient(scene);
+    await client.execute({
+      type: 'APPLY_NOTEBOOK_SPEC',
+      payload: { spec: notebookSpec({ elements: { only: markdownCell('## After') }, cells: ['only'] }) },
+    });
+
+    expect(scene.state.body.state.isEditing).toBe(false);
+  });
+
   it('is refused without dashboard write permission', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     const scene = notebookScene();

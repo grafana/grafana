@@ -95,6 +95,18 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         ) {
           syncRefreshPickerActivation(newState);
         }
+        // Edit mode is held in two places: here, where the header reads it, and on the layout
+        // manager, where the cells do. `setState` MERGES, so a whole-state swap keeps this scene's
+        // `isEditing` while replacing `body` with a rebuilt one that has no edit state — the header
+        // would keep saying Editing over cells that had gone read-only. Pushing it down on every
+        // change to either makes the swap safe by construction, rather than leaving each caller that
+        // replaces `body` to remember.
+        //
+        // onEnterEditMode/onExitEditMode still push it themselves, so the mode also propagates
+        // before this scene is activated. Both paths land on the same idempotent setState.
+        if (newState.body !== prevState.body || newState.isEditing !== prevState.isEditing) {
+          newState.body.editModeChanged?.(Boolean(newState.isEditing));
+        }
       });
 
       const destroyMutationClient = createMutationClient(this, 'notebook');
