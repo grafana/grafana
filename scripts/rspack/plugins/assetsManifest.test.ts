@@ -31,8 +31,9 @@ function createConfig(plugins: RspackPluginInstance[]): Configuration {
     },
     mode: 'production',
     devtool: false,
-    // Explicit target so the compilation doesn't depend on the repo's .browserslistrc,
-    // which rspack's bundled browserslist database cannot parse.
+    // Explicit target so the compilation doesn't depend on the repo's .browserslistrc, which
+    // has no section matching NODE_ENV=test and no defaults — rspack would resolve an empty
+    // browserslist and throw.
     target: ['web', 'es2022'],
     optimization: { minimize: false, runtimeChunk: 'single' },
     experiments: { css: true },
