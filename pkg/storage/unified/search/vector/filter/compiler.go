@@ -139,8 +139,7 @@ func (c *compiler) compileComparison(e *ComparisonExpression) error {
 		return nil
 	}
 
-	switch e.Operator {
-	case In, Nin:
+	if e.Operator == In || e.Operator == Nin {
 		return c.compileIn(e)
 	}
 
