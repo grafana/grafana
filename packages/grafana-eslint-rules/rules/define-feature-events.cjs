@@ -31,6 +31,21 @@ const defineFeatureEventsRule = createRule({
       return false;
     }
 
+    // Counts only the JSDoc blocks
+    /** @param {import('@typescript-eslint/utils').TSESTree.Node} node */
+    function countJsDocsBefore(node) {
+      const previousToken = context.sourceCode.getTokenBefore(node, { includeComments: false });
+
+      return context.sourceCode
+        .getCommentsBefore(node)
+        .filter(
+          (comment) =>
+            comment.type === 'Block' &&
+            comment.value.startsWith('*') &&
+            (!previousToken || comment.loc.start.line > previousToken.loc.end.line)
+        ).length;
+    }
+
     // Also handles arrow-wrapper variant: (props: X) => factory<X>('event')({ ...props })
     /** @param {import('@typescript-eslint/utils').TSESTree.Node} valueNode */
     function propertyValueCallsFactory(valueNode) {
@@ -112,17 +127,16 @@ const defineFeatureEventsRule = createRule({
           }
 
           for (const prop of init.properties) {
-            const numberOfComments = context.sourceCode.getCommentsBefore(prop).length;
             if (prop.type !== AST_NODE_TYPES.Property) {
               continue;
             }
             if (!propertyValueCallsFactory(prop.value)) {
               continue;
             }
-            if (numberOfComments === 0) {
+            const numberOfJsDocs = countJsDocsBefore(prop);
+            if (numberOfJsDocs === 0) {
               context.report({ node: prop, messageId: 'missingEventComment' });
-            }
-            if (numberOfComments >= 2) {
+            } else if (numberOfJsDocs >= 2) {
               context.report({ node: prop, messageId: 'stackedJSDocComment' });
             }
           }
@@ -131,8 +145,11 @@ const defineFeatureEventsRule = createRule({
 
         // Pattern (b) — individual export
         if (callsFactoryVariable(init)) {
-          if (context.sourceCode.getCommentsBefore(node).length === 0) {
+          const numberOfJsDocs = countJsDocsBefore(node);
+          if (numberOfJsDocs === 0) {
             context.report({ node: decl.declarations[0].id, messageId: 'missingEventComment' });
+          } else if (numberOfJsDocs >= 2) {
+            context.report({ node: decl.declarations[0].id, messageId: 'stackedJSDocComment' });
           }
         }
       },
@@ -154,11 +171,10 @@ const defineFeatureEventsRule = createRule({
         }
 
         for (const member of node.body.body) {
-          const numberOfComments = context.sourceCode.getCommentsBefore(member).length;
-          if (numberOfComments === 0) {
+          const numberOfJsDocs = countJsDocsBefore(member);
+          if (numberOfJsDocs === 0) {
             context.report({ node: member, messageId: 'missingPropertyComment' });
-          }
-          if (numberOfComments >= 2) {
+          } else if (numberOfJsDocs >= 2) {
             context.report({ node: member, messageId: 'stackedJSDocComment' });
           }
         }
