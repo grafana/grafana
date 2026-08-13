@@ -49,13 +49,6 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
     showIf: (_options, data) =>
       getFeatureFlagClient().getBooleanValue('text.newFeatures', false) && hasRenderableData(data),
   });
-
-  builder.addBooleanSwitch({
-    path: 'handlebars',
-    name: t('textng.options.handlebars', 'Handlebars'),
-    category: [t('textng.category-data', 'Data')],
-    defaultValue: defaultOptions.handlebars,
-  });
 };
 
 export const plugin = new PanelPlugin<Options>(TextNGPanel)

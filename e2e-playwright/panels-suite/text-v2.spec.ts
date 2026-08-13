@@ -192,30 +192,15 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       await expect(panel.locator('li').filter({ hasText: '⚠️' })).toHaveCount(1);
     });
 
-    test('leaves expressions literal when turned off in the options pane', async ({
-      gotoDashboardPage,
-      selectors,
-      page,
-    }) => {
-      const dashboardPage = await gotoDashboardPage({
+    test('evaluates expressions in the edit preview', async ({ gotoDashboardPage, page }) => {
+      await gotoDashboardPage({
         uid: DATA_DASHBOARD_UID,
         queryParams: new URLSearchParams({ editPanel: HANDLEBARS_PANEL }),
       });
 
       const preview = page.getByTestId('TextNGEditor-preview');
       await expect(preview).toContainText('84.0%');
-
-      // Unlike Mode, Handlebars lives in the options pane, not the toolbar.
-      const handlebarsField = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.OptionsPane.fieldLabel('Data Handlebars')
-      );
-      const handlebarsInput = handlebarsField.locator('input[type="checkbox"]');
-      await expect(handlebarsInput).toBeChecked();
-
-      await handlebarsField.getByText('Handlebars', { exact: true }).click();
-
-      await expect(handlebarsInput).not.toBeChecked();
-      await expect(preview).toContainText('{{#each data}}');
+      await expect(preview).not.toContainText('{{#each data}}');
     });
   });
 });

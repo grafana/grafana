@@ -370,15 +370,11 @@ describe('TextNGPanel', () => {
       return screen.getByTestId('TextNGPanel-converted-content').innerHTML;
     }
 
-    it('evaluates expressions against the query data when enabled', () => {
-      const html = setupWithData({ content: '{{#each data}}- {{host}}\n{{/each}}', handlebars: true });
+    it('evaluates expressions against the query data', () => {
+      const html = setupWithData({ content: '{{#each data}}- {{host}}\n{{/each}}' });
 
       expect(html).toContain('web-1');
       expect(html).toContain('web-2');
-    });
-
-    it('leaves expressions untouched when disabled', () => {
-      expect(setupWithData({ content: '{{#each data}}x{{/each}}' })).toContain('{{#each data}}x{{/each}}');
     });
   });
 });

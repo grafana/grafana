@@ -36,15 +36,6 @@ function interpolate(
   return interpolateTemplate({ content, series, renderMode, mode }, createReplaceVariables());
 }
 
-function interpolateHandlebars(
-  content: string,
-  series: DataFrame[] | undefined,
-  renderMode: RenderMode | undefined,
-  mode = TextMode.Markdown
-) {
-  return interpolateTemplate({ content, series, renderMode, mode, handlebars: true }, createReplaceVariables());
-}
-
 describe('hasRenderableData', () => {
   it.each([
     ['undefined', undefined],
@@ -123,26 +114,18 @@ describe('interpolateTemplate', () => {
   });
 
   describe('handlebars', () => {
-    it('leaves expressions alone when the option is off', () => {
-      expect(interpolate('{{#each data}}{{host}}{{/each}}', [hosts], RenderMode.Once)).toBe(
-        '{{#each data}}{{host}}{{/each}}'
-      );
-    });
-
     it('renders the whole result set for Once', () => {
-      expect(interpolateHandlebars('{{#each data}}- {{host}}\n{{/each}}', [hosts], RenderMode.Once)).toBe(
-        '- web-1\n- web-2\n'
-      );
+      expect(interpolate('{{#each data}}- {{host}}\n{{/each}}', [hosts], RenderMode.Once)).toBe('- web-1\n- web-2\n');
     });
 
     it('exposes every frame for Once', () => {
-      expect(
-        interpolateHandlebars('{{#each frames}}{{name}}:{{data.length}} {{/each}}', [hosts, regions], undefined)
-      ).toBe('frameA:2 frameB:1 ');
+      expect(interpolate('{{#each frames}}{{name}}:{{data.length}} {{/each}}', [hosts, regions], undefined)).toBe(
+        'frameA:2 frameB:1 '
+      );
     });
 
     it('gives each row its own context for PerRow', () => {
-      expect(interpolateHandlebars('{{#if (gt cpu 50)}}**{{host}}** hot{{/if}}', [hosts], RenderMode.PerRow)).toBe(
+      expect(interpolate('{{#if (gt cpu 50)}}**{{host}}** hot{{/if}}', [hosts], RenderMode.PerRow)).toBe(
         '**web-1** hot\n\n'
       );
     });
@@ -155,17 +138,15 @@ describe('interpolateTemplate', () => {
         ],
       });
 
-      expect(interpolateHandlebars('{{host}}', [nested], RenderMode.PerRow)).toBe('84');
+      expect(interpolate('{{host}}', [nested], RenderMode.PerRow)).toBe('84');
     });
 
     it('is skipped in code mode, where escaping would mangle the source', () => {
-      expect(interpolateHandlebars('{ "a": "{{b}}" }', [hosts], RenderMode.Once, TextMode.Code)).toBe(
-        '{ "a": "{{b}}" }'
-      );
+      expect(interpolate('{ "a": "{{b}}" }', [hosts], RenderMode.Once, TextMode.Code)).toBe('{ "a": "{{b}}" }');
     });
 
     it('renders a broken template as an error message rather than throwing', () => {
-      expect(interpolateHandlebars('{{#each data}}', [hosts], RenderMode.Once)).toContain('Handlebars error:');
+      expect(interpolate('{{#each data}}', [hosts], RenderMode.Once)).toContain('Handlebars error:');
     });
   });
 });

@@ -245,8 +245,7 @@
                 },
                 "content": "{{#each data}}\n- **{{host}}** \u2014 {{toFixed cpu 1}}%{{#if (gt cpu 50)}} \u26a0\ufe0f{{/if}}\n{{/each}}",
                 "mode": "markdown",
-                "renderMode": "once",
-                "handlebars": true
+                "renderMode": "once"
               },
               "fieldConfig": {
                 "defaults": {},

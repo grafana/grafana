@@ -15,7 +15,6 @@ export interface TextTemplate {
   mode: TextMode;
   series?: DataFrame[];
   renderMode?: RenderMode;
-  handlebars?: boolean;
   format?: string;
 }
 
@@ -24,10 +23,10 @@ export function hasRenderableData(series?: DataFrame[]): series is DataFrame[] {
 }
 
 export function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction): string {
-  const { content, mode, series, renderMode, handlebars, format } = template;
+  const { content, mode, series, renderMode, format } = template;
 
   // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
-  const compiled = handlebars && mode !== TextMode.Code ? compileTemplate(content, replaceVariables) : undefined;
+  const compiled = mode !== TextMode.Code ? compileTemplate(content, replaceVariables) : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
     return interpolateEveryRow(template, series, replaceVariables, compiled);

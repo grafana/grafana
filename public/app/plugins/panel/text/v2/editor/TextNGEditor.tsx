@@ -38,7 +38,6 @@ export interface TextNGEditorProps {
   codeLanguage?: CodeLanguage;
   /** Owned by the options pane, read here only so the preview matches the panel. */
   renderMode?: RenderMode;
-  handlebars?: boolean;
   series?: DataFrame[];
   replaceVariables: InterpolateFunction;
   suggestions?: VariableSuggestion[];
@@ -68,7 +67,6 @@ export function TextNGEditor({
   showLineNumbers,
   codeLanguage,
   renderMode,
-  handlebars,
   series,
   replaceVariables,
   suggestions,
@@ -135,12 +133,9 @@ export function TextNGEditor({
   const interpolatedContent = useMemo(
     () =>
       showPreview
-        ? interpolateTemplate(
-            { content: previewSource, mode, series, renderMode, handlebars, format },
-            replaceVariables
-          )
+        ? interpolateTemplate({ content: previewSource, mode, series, renderMode, format }, replaceVariables)
         : '',
-    [showPreview, previewSource, mode, series, renderMode, handlebars, format, replaceVariables]
+    [showPreview, previewSource, mode, series, renderMode, format, replaceVariables]
   );
 
   const previewHtml = useMemo(

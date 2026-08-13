@@ -56,10 +56,6 @@ export const defaultCodeOptions: Partial<CodeOptions> = {
 export interface Options {
   code?: CodeOptions;
   content: string;
-  /**
-   * Evaluate Handlebars expressions in the content before variable interpolation.
-   */
-  handlebars?: boolean;
   mode: TextMode;
   renderMode?: RenderMode;
 }
@@ -68,7 +64,6 @@ export const defaultOptions: Partial<Options> = {
   content: `# Title
 
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)`,
-  handlebars: false,
   mode: TextMode.Markdown,
   renderMode: RenderMode.Once,
 };

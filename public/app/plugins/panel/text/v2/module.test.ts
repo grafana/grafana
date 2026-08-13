@@ -21,15 +21,13 @@ function getItems() {
   return builder.getItems();
 }
 
-function getItem(path: string) {
-  const item = getItems().find((option) => option.path === path);
+function getRenderModeItem() {
+  const item = getItems().find((option) => option.path === 'renderMode');
   if (!item) {
-    throw new Error(`${path} option is not registered`);
+    throw new Error('renderMode option is not registered');
   }
   return item;
 }
-
-const getRenderModeItem = () => getItem('renderMode');
 
 describe('textNGPanelOptions', () => {
   beforeEach(() => {
@@ -40,18 +38,12 @@ describe('textNGPanelOptions', () => {
     expect(getRenderModeItem().defaultValue).toBe(RenderMode.Once);
   });
 
-  it('registers handlebars off by default', () => {
-    expect(getItem('handlebars').defaultValue).toBe(false);
-  });
+  it('is the only option visible in the pane', () => {
+    const visible = getItems().filter((option) =>
+      option.showIf?.({} as Options, [toDataFrame({ fields: [{ name: 'a', values: [1] }] })])
+    );
 
-  it.each([
-    ['with data', [toDataFrame({ fields: [{ name: 'a', values: [1] }] })]],
-    // Handlebars is still useful without data, through the variable and date helpers.
-    ['without data', []],
-  ])('shows only the data options in the pane %s', (_name, data) => {
-    const visible = getItems().filter((option) => option.showIf?.({} as Options, data) ?? true);
-
-    expect(visible.map((option) => option.path)).toEqual(data.length ? ['renderMode', 'handlebars'] : ['handlebars']);
+    expect(visible.map((option) => option.path)).toEqual(['renderMode']);
   });
 
   it.each([
