@@ -263,7 +263,6 @@ If you don't enable commit signing:
 
 - If you add an author override, the `author` for every commit will be the configured override.
 - If you don't select author override, the signed in Grafana user name and email will be used as the commit author
-- Otherwise, the `author` and `committer` fields will be `noreply`.
 
 #### Signed commits
 
