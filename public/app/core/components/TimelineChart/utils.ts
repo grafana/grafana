@@ -702,8 +702,7 @@ export function prepareTimelineLegendItems(
       // continuous color schemes remain non-enum and contribute no legend items (eventually a color bar)
       const { text = [], color = [] } = field.config.type?.enum ?? {};
       const showAllStates =
-        field.config.color?.mode === FieldColorModeId.Thresholds &&
-        (field.config.thresholds?.steps.length ?? 0) > 1;
+        field.config.color?.mode === FieldColorModeId.Thresholds && (field.config.thresholds?.steps.length ?? 0) > 1;
       const presentStates = showAllStates ? undefined : new Set(field.values);
 
       for (let i = 0; i < text.length; i++) {
