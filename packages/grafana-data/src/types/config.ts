@@ -216,7 +216,11 @@ export interface GrafanaConfig {
   publicDashboardAccessToken: string;
   publicDashboardsEnabled: boolean;
   snapshotEnabled: boolean;
-  /** @deprecated it will be removed in a future release */
+  /**
+   * @deprecated it will be removed in a future release. For instance settings, use
+   * getDataSourceInstanceSettings, getDataSourceInstanceList or the matching hooks from
+   * `@grafana/runtime/unstable`.
+   */
   datasources: { [str: string]: DataSourceInstanceSettings };
   /** @deprecated it will be removed in a future release */
   panels: { [key: string]: PanelPluginMeta };

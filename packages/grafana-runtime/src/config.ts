@@ -88,8 +88,8 @@ export class GrafanaBootConfig {
   /**
    * @deprecated it will be removed in a future release. For instance settings, use
    * getDataSourceInstanceSettings, getDataSourceInstanceList or the matching hooks from
-   * `@grafana/runtime/unstable`. For plugin capability/metadata, use getDatasourcePluginMeta,
-   * getDatasourcePluginMetas or the matching hooks from `@grafana/runtime/internal`.
+   * `@grafana/runtime/unstable` — the returned settings/list items already include `meta`
+   * with the plugin's capability/metadata.
    */
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   /** @deprecated it will be removed in a future release, use isPanelPluginInstalled, getPanelPluginVersion or getListedPanelPluginIds instead */
