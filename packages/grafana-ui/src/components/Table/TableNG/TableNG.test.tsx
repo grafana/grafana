@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
+import * as uwrap from 'uwrap';
 
 import {
   applyFieldOverrides,
@@ -20,6 +21,7 @@ import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
+import { TABLE } from './constants';
 
 // Shared helpers for test data frame construction
 const withFieldOverrides = (frame: ReturnType<typeof toDataFrame>): DataFrame =>
@@ -1889,6 +1891,34 @@ describe('TableNG', () => {
 
       expect(jsonCellStyles.getPropertyValue('white-space')).toBe('pre-wrap');
       expect(jsonCellStyles.getPropertyValue('font-family')).toBe('monospace');
+    });
+
+    it('grows a wrapped JSON row to fit every pretty-printed line', () => {
+      // uwrap's `count()` is globally auto-mocked to always return 1 in this suite (see
+      // TableNG/__mocks__/uwrap.ts), which would mask the exact bug this guards against: a row
+      // height measured against the wrong (unprepared) field also looks like "1 line" here, since
+      // its raw object value stringifies to a single-line "[object Object]". Give this test its own
+      // real newline counter so the fix (measuring the field actually rendered, pretty-printed JSON
+      // and all) is distinguishable from the regression (measuring an unprepared field's `.display`).
+      jest.spyOn(uwrap, 'varPreLine').mockReturnValue({
+        count: (str: string) => str.split('\n').length,
+        each: () => {},
+        split: () => [],
+        test: () => false,
+      });
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(true)} width={800} height={600} />
+      );
+
+      // metadata's value ({ region: 'us-east-1', replicas: 3 }) pretty-prints to 4 lines:
+      // `{\n "region": "us-east-1",\n "replicas": 3\n}`.
+      const expectedRowHeight = 4 * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+      const grid = container.querySelector('.rdg');
+      const gridStyles = window.getComputedStyle(grid!);
+      expect(gridStyles.getPropertyValue('grid-template-rows')).toBe(
+        `repeat(1, ${TABLE.HEADER_HEIGHT}px) ${expectedRowHeight}px`
+      );
     });
 
     it("never shrinks a hover-expanded JSON cell below the column's own width", async () => {

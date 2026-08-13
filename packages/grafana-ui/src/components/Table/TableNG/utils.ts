@@ -277,7 +277,14 @@ export function getTextHeightEstimator(avgCharWidth: number): MeasureCellHeight 
     }
 
     const charsPerLine = width / avgCharWidth;
-    const lines = Math.ceil(strValue.length / charsPerLine);
+    // A pretty-printed JSON value (and any other multi-line string) carries real newlines that the
+    // renderer preserves (`pre-wrap`/`pre-line`), so each one forces a line break regardless of width.
+    // Estimating off the total string length alone ignores those breaks and badly undercounts a value
+    // with many short lines. Sum the wrapped-line estimate per newline-delimited segment instead,
+    // matching how the precise uwrap measurer already treats embedded newlines.
+    const lines = strValue
+      .split('\n')
+      .reduce((total, line) => total + Math.max(1, Math.ceil(line.length / charsPerLine)), 0);
     return lines * lineHeight;
   };
 }

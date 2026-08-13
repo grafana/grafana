@@ -38,7 +38,12 @@ import {
   useSortedRows,
   useTypographyCtx,
 } from './hooks';
-import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
+import {
+  type ColumnBuildConfig,
+  prepareFieldsForDisplay,
+  useColumnBuilderFromFields,
+  useDataGridRows,
+} from './render-hooks';
 import { getGridStyles, IS_SAFARI_26 } from './styles';
 import {
   type CellRootRenderer,
@@ -138,6 +143,15 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const firstRowNestedData = nestedData[0];
   const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
+  // Row-height measurement must see the same rendered value column-building does: a JSON cell's
+  // `.display` is only JSON-aware on the prepared copy (see `prepareFieldsForDisplay`), so measuring
+  // against the raw visible fields would stringify its raw object value to "[object Object]" and
+  // never grow the row past a single line.
+  const rowHeightFields = useMemo(() => prepareFieldsForDisplay(visibleFields, theme), [visibleFields, theme]);
+  const nestedRowHeightFields = useMemo(
+    () => prepareFieldsForDisplay(nestedVisibleFields, theme),
+    [nestedVisibleFields, theme]
+  );
   const nestedHasFooter = useMemo(
     () => nestedVisibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
     [nestedVisibleFields]
@@ -274,7 +288,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   const rowHeight = useRowHeight({
     columnWidths: widths,
-    fields: visibleFields,
+    fields: rowHeightFields,
     hasNestedFrames: true,
     defaultHeight: defaultRowHeight,
     defaultNestedHeight: defaultNestedRowHeight,
@@ -282,7 +296,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     typographyCtx,
     maxHeight: maxRowHeight,
     nestedColWidths: nestedFieldWidths,
-    nestedFields: nestedVisibleFields,
+    nestedFields: nestedRowHeightFields,
     nestedRows,
     nestedFooterHeight,
   });

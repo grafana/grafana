@@ -25,7 +25,12 @@ import {
   useRowCompiler,
   useTypographyCtx,
 } from './hooks';
-import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
+import {
+  type ColumnBuildConfig,
+  prepareFieldsForDisplay,
+  useColumnBuilderFromFields,
+  useDataGridRows,
+} from './render-hooks';
 import {
   type CellRootRenderer,
   type InspectCellProps,
@@ -95,6 +100,11 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  // Row-height measurement must see the same rendered value column-building does: a JSON cell's
+  // `.display` is only JSON-aware on the prepared copy (see `prepareFieldsForDisplay`), so measuring
+  // against `visibleFields` directly would stringify its raw object value to "[object Object]" and
+  // never grow the row past a single line.
+  const rowHeightFields = useMemo(() => prepareFieldsForDisplay(visibleFields, theme), [visibleFields, theme]);
   const hasHeader = !noHeader;
   const hasFooter = useMemo(
     () => visibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
@@ -202,7 +212,7 @@ export function TableFlat(props: TableNGProps) {
 
   const rowHeight = useFlatRowHeight({
     columnWidths: widths,
-    fields: visibleFields,
+    fields: rowHeightFields,
     defaultHeight: defaultRowHeight,
     typographyCtx,
     maxHeight: maxRowHeight,

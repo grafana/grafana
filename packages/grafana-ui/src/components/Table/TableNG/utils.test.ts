@@ -1211,6 +1211,14 @@ describe('TableNG utils', () => {
     it('calculates an approximate rendered height for the text based on the width and avgCharWidth', () => {
       expect(estimator('asdfas dfasdfasdf asdfasdfasdfa sdfasdfasdfasdf 23', 200, field, 0, 20)).toBe(60);
     });
+
+    it('counts embedded newlines as forced line breaks rather than folding them into the total length', () => {
+      // Each short line is far under charsPerLine (200/10 = 20), so length-based estimation across
+      // the whole string would collapse them into far fewer wrapped lines than the value actually
+      // renders as. A pretty-printed JSON value looks like this: many short, newline-delimited lines.
+      const json = '{\n  "a": 1,\n  "b": 2,\n  "c": 3\n}';
+      expect(estimator(json, 200, field, 0, 20)).toBe(5 * 20);
+    });
   });
 
   describe('getDataLinksHeightMeasurer', () => {
