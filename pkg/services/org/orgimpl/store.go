@@ -412,11 +412,10 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 
 type getUserOrgListQuery struct {
 	sqltemplate.SQLTemplate
-	OrgUserTable     string
-	OrgTable         string
-	UserTable        string
-	UserID           int64
-	IsServiceAccount any
+	OrgUserTable string
+	OrgTable     string
+	UserTable    string
+	UserID       int64
 }
 
 func (q getUserOrgListQuery) Validate() error {
@@ -433,12 +432,11 @@ func (ss *sqlStore) GetUserOrgList(ctx context.Context, query *org.GetUserOrgLis
 	result := make([]*org.UserOrgDTO, 0)
 	err = dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
 		templateQuery := getUserOrgListQuery{
-			SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
-			OrgUserTable:     dbHelper.Table("org_user"),
-			OrgTable:         dbHelper.Table("org"),
-			UserTable:        dbHelper.Table("user"),
-			UserID:           query.UserID,
-			IsServiceAccount: dbHelper.DB.GetDialect().BooleanValue(false),
+			SQLTemplate:  sqltemplate.New(dbHelper.DialectForDriver()),
+			OrgUserTable: dbHelper.Table("org_user"),
+			OrgTable:     dbHelper.Table("org"),
+			UserTable:    dbHelper.Table("user"),
+			UserID:       query.UserID,
 		}
 		querySQL, err := sqltemplate.Execute(getUserOrgListTemplate, templateQuery)
 		if err != nil {
@@ -562,7 +560,6 @@ type getUserByIDQuery struct {
 	UserTable              string
 	UserID                 int64
 	ExcludeServiceAccounts bool
-	IsServiceAccount       any
 }
 
 func (q getUserByIDQuery) Validate() error {
@@ -575,7 +572,6 @@ func getUserByID(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, use
 		UserTable:              dbHelper.Table("user"),
 		UserID:                 userID,
 		ExcludeServiceAccounts: excludeServiceAccounts,
-		IsServiceAccount:       dbHelper.DB.GetDialect().BooleanValue(false),
 	}
 	querySQL, err := sqltemplate.Execute(getUserByIDTemplate, query)
 	if err != nil {
@@ -660,10 +656,9 @@ func (q countOrgsQuery) Validate() error {
 
 type countOrgUsersQuery struct {
 	sqltemplate.SQLTemplate
-	OrgUserTable     string
-	UserTable        string
-	OrgID            int64
-	IsServiceAccount any
+	OrgUserTable string
+	UserTable    string
+	OrgID        int64
 }
 
 func (q countOrgUsersQuery) Validate() error {
@@ -716,11 +711,10 @@ func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 	if scopeParams != nil && scopeParams.OrgID != 0 {
 		if err := dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			query := countOrgUsersQuery{
-				SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
-				OrgUserTable:     dbHelper.Table("org_user"),
-				UserTable:        dbHelper.Table("user"),
-				OrgID:            scopeParams.OrgID,
-				IsServiceAccount: dbHelper.DB.GetDialect().BooleanValue(false),
+				SQLTemplate:  sqltemplate.New(dbHelper.DialectForDriver()),
+				OrgUserTable: dbHelper.Table("org_user"),
+				UserTable:    dbHelper.Table("user"),
+				OrgID:        scopeParams.OrgID,
 			}
 			querySQL, err := sqltemplate.Execute(countOrgUsersTemplate, query)
 			if err != nil {
@@ -884,7 +878,6 @@ type searchOrgUsersQuery struct {
 	OrgID            int64
 	FilterByUserID   bool
 	UserID           int64
-	IsServiceAccount any
 	AccessAll        bool
 	AccessUserIDs    []any
 	HiddenUserLogins []string
@@ -964,7 +957,6 @@ func newSearchOrgUsersQuery(dbHelper *legacysql.LegacyDatabaseHelper, query *org
 		OrgID:            query.OrgID,
 		FilterByUserID:   query.UserID != 0,
 		UserID:           query.UserID,
-		IsServiceAccount: dbHelper.DB.GetDialect().BooleanValue(false),
 		AccessAll:        accessAll,
 		AccessUserIDs:    accessUserIDs,
 		HiddenUserLogins: hiddenUserLogins,
@@ -1046,7 +1038,6 @@ type searchOrgUsersByEmailsQuery struct {
 	UserTable        string
 	OrgID            int64
 	Emails           []string
-	IsServiceAccount any
 	HiddenUserLogins []string
 }
 
@@ -1087,7 +1078,6 @@ func (ss *sqlStore) SearchOrgUsersByEmails(ctx context.Context, query *org.Searc
 			UserTable:        dbHelper.Table("user"),
 			OrgID:            query.OrgID,
 			Emails:           emails,
-			IsServiceAccount: dbHelper.DB.GetDialect().BooleanValue(false),
 			HiddenUserLogins: hiddenUserLogins,
 		}
 		querySQL, err := sqltemplate.Execute(searchOrgUsersByEmailsTemplate, templateQuery)

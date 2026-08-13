@@ -6,6 +6,6 @@ FROM (
     AND user_id IN (
       SELECT id
       FROM {{ .Ident .UserTable }}
-      WHERE is_service_account = {{ .Arg .IsServiceAccount }}
+      WHERE is_service_account = FALSE
     )
 ) AS subq

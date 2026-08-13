@@ -15,7 +15,7 @@ FROM {{ .Ident .OrgUserTable }} AS org_user
 INNER JOIN {{ .Ident .UserTable }} AS u ON org_user.user_id = u.id
 WHERE org_user.org_id = {{ .Arg .OrgID }}
   AND u.email IN ({{ .ArgList .Emails }})
-  AND u.is_service_account = {{ .Arg .IsServiceAccount }}
+  AND u.is_service_account = FALSE
 {{ if .HiddenUserLogins -}}
   AND u.login NOT IN ({{ .ArgList .HiddenUserLogins }})
 {{ end -}}
