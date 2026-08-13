@@ -224,7 +224,7 @@ const getActionsCell = (
         )}
         {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, original) &&
           (original.isDisabled ? (
-            <Button variant="secondary" size="sm" onClick={() => onEnable(original)} icon="ban">
+            <Button variant="secondary" size="sm" onClick={() => onEnable(original)} icon="check">
               <Trans i18nKey="serviceaccounts.get-actions-cell.enable">Enable</Trans>
             </Button>
           ) : (
