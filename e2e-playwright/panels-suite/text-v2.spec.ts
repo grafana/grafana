@@ -179,7 +179,7 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
 
       const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, {
-        root: dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Handlebars')),
+        root: dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Handlebars support')),
       });
 
       // Below the fold, so the panel doesn't query until it scrolls into view.
