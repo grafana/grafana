@@ -2847,9 +2847,6 @@
     }
   },
   "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/XrayLinkConfig.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "@grafana/no-gf-form": {
       "count": 1
     },
