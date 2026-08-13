@@ -365,16 +365,26 @@ func TestMapperRegistry_Notebooks(t *testing.T) {
 	require.True(t, ok)
 	require.NotNil(t, mapping)
 
-	// Reuses dashboard actions so existing dashboard/basic-role grants apply.
-	action, ok := mapping.Action(utils.VerbGet)
-	require.True(t, ok)
-	assert.Equal(t, "dashboards:read", action)
-	action, ok = mapping.Action(utils.VerbUpdate)
-	require.True(t, ok)
-	assert.Equal(t, "dashboards:write", action)
+	// Reuses dashboard actions across every verb so existing dashboard/basic-role grants apply.
+	for verb, want := range map[string]string{
+		utils.VerbGet:              "dashboards:read",
+		utils.VerbList:             "dashboards:read",
+		utils.VerbWatch:            "dashboards:read",
+		utils.VerbCreate:           "dashboards:create",
+		utils.VerbUpdate:           "dashboards:write",
+		utils.VerbPatch:            "dashboards:write",
+		utils.VerbDelete:           "dashboards:delete",
+		utils.VerbDeleteCollection: "dashboards:delete",
+	} {
+		action, ok := mapping.Action(verb)
+		require.True(t, ok, "verb %q should map to an action", verb)
+		assert.Equal(t, want, action, "verb %q", verb)
+	}
 
-	// Folder action sets make folder permissions grant notebook access.
+	// Read verbs are satisfied by the folder view sets; create only by the folder edit/admin
+	// sets (so editors, not viewers, can create).
 	assert.Contains(t, mapping.ActionSets(utils.VerbGet), "folders:view")
+	assert.ElementsMatch(t, []string{"folders:edit", "folders:admin"}, mapping.ActionSets(utils.VerbCreate))
 	assert.True(t, mapping.HasFolderSupport())
 
 	// Object scope stays in the notebook's own namespace, never dashboards:uid:.

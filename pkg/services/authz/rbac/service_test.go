@@ -424,6 +424,7 @@ func TestService_checkPermission(t *testing.T) {
 			name: "should allow reading a notebook via a folder permission",
 			permissions: []accesscontrol.Permission{
 				{
+					Action:     "dashboards:read",
 					Scope:      "folders:uid:parent",
 					Kind:       "folders",
 					Attribute:  "uid",
@@ -447,6 +448,7 @@ func TestService_checkPermission(t *testing.T) {
 			name: "should deny reading a notebook when the folder permission is on an unrelated folder",
 			permissions: []accesscontrol.Permission{
 				{
+					Action:     "dashboards:read",
 					Scope:      "folders:uid:other",
 					Kind:       "folders",
 					Attribute:  "uid",

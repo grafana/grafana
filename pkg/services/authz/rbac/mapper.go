@@ -193,6 +193,11 @@ func newDashboardTranslation() translation {
 func newNotebookTranslation() translation {
 	t := newDashboardTranslation()
 	t.resource = "notebooks"
+	// Notebooks expose no permissions subresource in the preview, so drop the inherited
+	// dashboards.permissions:* verbs rather than let a notebook permissions request resolve
+	// onto dashboard permission actions.
+	delete(t.verbMapping, utils.VerbGetPermissions)
+	delete(t.verbMapping, utils.VerbSetPermissions)
 	return t
 }
 
