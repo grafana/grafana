@@ -1,10 +1,4 @@
-import {
-  createDataFrame,
-  createTheme,
-  FieldType,
-  getDisplayProcessor,
-  type Field,
-} from '@grafana/data';
+import { createDataFrame, createTheme, FieldType, getDisplayProcessor, type Field } from '@grafana/data';
 import { AxisPlacement, VisibilityMode } from '@grafana/schema';
 
 import { PointShape } from './panelcfg.gen';

@@ -770,13 +770,13 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
 
       index.text = steps.map((s, i) => (i === 0 ? `< ${steps[i + 1].value}` : getLabelForRange(s.value, null)));
     } else {
-      const { min: fieldMin = 0, max: fieldMax = 0 } = getFieldConfigWithMinMax(f);
+      const fieldConfig = getFieldConfigWithMinMax(f);
+      const fieldMin = fieldConfig.min ?? 0;
+      const fieldMax = fieldConfig.max ?? 0;
       const hasExplicitRange = typeof f.config.min === 'number' && typeof f.config.max === 'number';
       const formatPercent = getValueFormat('percent');
 
-      index.text = steps.map(
-        (step) => `${formattedValueToString(formatPercent(step.value, f.config.decimals))}+`
-      );
+      index.text = steps.map((step) => `${formattedValueToString(formatPercent(step.value, f.config.decimals))}+`);
 
       getOne = (value, min = fieldMin, max = fieldMax) => {
         const rangeMin = hasExplicitRange ? fieldMin : min;

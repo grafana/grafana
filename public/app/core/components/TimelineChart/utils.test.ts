@@ -322,26 +322,7 @@ describe('prepare timeline graph', () => {
         undefined,
         null,
       ],
-      [
-        undefined,
-        undefined,
-        undefined,
-        0,
-        1,
-        null,
-        0,
-        1,
-        null,
-        0,
-        1,
-        null,
-        0,
-        1,
-        null,
-        2,
-        null,
-        undefined,
-      ],
+      [undefined, undefined, undefined, 0, 1, null, 0, 1, null, 0, 1, null, 0, 1, null, 2, null, undefined],
     ]);
   });
 
