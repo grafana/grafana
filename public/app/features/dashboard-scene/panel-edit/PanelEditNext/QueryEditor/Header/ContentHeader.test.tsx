@@ -10,7 +10,7 @@ import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
 import { renderWithQueryEditorProvider } from '../testUtils';
-import { type Transformation } from '../types';
+import { EMPTY_ALERT, type Transformation } from '../types';
 
 import { ContentHeader, ContentHeaderSceneWrapper } from './ContentHeader';
 
@@ -56,6 +56,12 @@ function renderHeader(
 }
 
 const pickerProps = () => mockDataSourcePicker.mock.lastCall?.[0];
+
+function expectProportionalFont(element: HTMLElement) {
+  expect(getComputedStyle(element).fontFamily.replaceAll(' ', '')).toBe(
+    createTheme().typography.fontFamily.replaceAll(' ', '')
+  );
+}
 
 describe('ContentHeader datasource picker', () => {
   beforeEach(() => {
@@ -122,8 +128,26 @@ describe('ContentHeader transformation name', () => {
       />
     );
 
-    expect(getComputedStyle(screen.getByText('Reduce')).fontFamily.replaceAll(' ', '')).toBe(
-      createTheme().typography.fontFamily.replaceAll(' ', '')
+    expectProportionalFont(screen.getByText('Reduce'));
+  });
+});
+
+describe('ContentHeader alert name', () => {
+  it('uses the proportional body font', () => {
+    const alert = { ...EMPTY_ALERT, rule: { ...EMPTY_ALERT.rule, name: 'High latency' } };
+
+    render(
+      <ContentHeader
+        selectedAlert={alert}
+        selectedQuery={null}
+        selectedTransformation={null}
+        queries={[]}
+        cardType={QueryEditorType.Alert}
+        onChangeDataSource={jest.fn()}
+        onUpdateQuery={jest.fn()}
+      />
     );
+
+    expectProportionalFont(screen.getByText('High latency'));
   });
 });

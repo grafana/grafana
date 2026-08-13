@@ -195,7 +195,7 @@ export function ContentHeader({
               <Trans i18nKey="query-editor-next.header.alert">Alert</Trans>
             </Text>
             <NavToolbarSeparator />
-            <Text weight="light" variant="code" color="primary">
+            <Text weight="light" variant="body" color="primary">
               {selectedAlert.rule.name}
             </Text>
           </>
