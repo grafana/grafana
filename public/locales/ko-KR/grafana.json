@@ -5619,6 +5619,7 @@
       "add-conditional-rule": "{{ruleDescription}} 규칙 추가",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "패널 복제",
       "edit-query-result-rule": "쿼리 결과 규칙 변경",
       "edit-template-variable-rule": "템플릿 변수 규칙 변경",
@@ -6809,7 +6810,8 @@
         "change-annotation-enabled-state": "주석 활성화 상태 변경",
         "change-annotation-name": "주석 이름 변경",
         "change-annotation-panel-filter": "주석 패널 필터 변경"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "주석 쿼리 삭제",
@@ -6885,13 +6887,9 @@
       "placeholder-your-metric-prefix": "메트릭 접두사"
     },
     "control-edit-actions": {
-      "aria-label-delete": "삭제",
-      "aria-label-edit": "편집",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "규칙 표시/숨기기가 작동하지 않습니다",
@@ -7689,6 +7687,10 @@
     },
     "variable-controls": {
       "add-variable": "변수 추가"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "변수 삭제",
@@ -12559,6 +12561,7 @@
       "customise-saving": "",
       "dialog-label": "내비게이션",
       "dock": "메뉴 고정",
+      "header-title": "",
       "list-label": "내비게이션",
       "open": "메인 메뉴",
       "pin-error": "",
@@ -12666,6 +12669,13 @@
       "title-zoom-out": "줌 아웃"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12692,6 +12702,11 @@
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
     }
   },
   "notifications": {
@@ -15929,6 +15944,7 @@
     "name-show-mini-map": "미니 지도 표시"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -15957,6 +15973,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

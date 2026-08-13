@@ -16082,6 +16082,7 @@
     "name-show-mini-map": "Show mini map"
   },
   "textng": {
+    "category-data": "Data",
     "category-text": "Text",
     "code-view": {
       "aria-label-code-content": "Code content"
@@ -16110,6 +16111,16 @@
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
+    },
+    "options": {
+      "render-mode": "Render mode"
+    },
+    "render": {
+      "truncated": "Showing the first {{maxRows}} rows."
+    },
+    "render-mode": {
+      "once": "Once",
+      "per-row": "Per row"
     }
   },
   "theme-playground": {

@@ -5739,6 +5739,7 @@
       "add-conditional-rule": "Добавить {{ruleDescription}} правило",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Дублировать панель",
       "edit-query-result-rule": "Изменить правило результата запроса",
       "edit-template-variable-rule": "Изменить правило переменной шаблона",
@@ -6971,7 +6972,8 @@
         "change-annotation-enabled-state": "Изменить состояние включенной аннотации",
         "change-annotation-name": "Изменить имя аннотации",
         "change-annotation-panel-filter": "Изменить фильтр панели аннотаций"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Удалить запрос аннотаций",
@@ -7047,13 +7049,9 @@
       "placeholder-your-metric-prefix": "Префикс метрик"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Удалить",
-      "aria-label-edit": "Редактировать",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Правила отображения/скрытия не будут действовать",
@@ -7857,6 +7855,10 @@
     },
     "variable-controls": {
       "add-variable": "Добавить переменную"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Удалить переменную",
@@ -12844,6 +12846,7 @@
       "customise-saving": "",
       "dialog-label": "Навигация",
       "dock": "Закрепить меню",
+      "header-title": "",
       "list-label": "Навигация",
       "open": "Главное меню",
       "pin-error": "",
@@ -12960,6 +12963,13 @@
       "title-zoom-out": "Уменьшить масштаб"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12992,6 +13002,11 @@
       "count-truncated_few": "",
       "count-truncated_many": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
     }
   },
   "notifications": {
@@ -16319,6 +16334,7 @@
     "name-show-mini-map": "Показать мини-карту"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16347,6 +16363,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

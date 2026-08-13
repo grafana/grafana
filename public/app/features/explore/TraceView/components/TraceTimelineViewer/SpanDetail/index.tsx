@@ -477,6 +477,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         linksGetter={resourceLinksGetter}
         onToggle={() => summaryAttributesToggle(spanID)}
         promoGetter={promoGetter}
+        datasourceType={datasourceType}
       />
     );
   }
@@ -490,6 +491,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       linksGetter={resourceLinksGetter}
       onToggle={() => tagsToggle(spanID)}
       promoGetter={promoGetter}
+      datasourceType={datasourceType}
     />
   );
 
@@ -514,6 +516,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         isOpen={isProcessOpen}
         onToggle={() => processToggle(spanID)}
         promoGetter={promoGetter}
+        datasourceType={datasourceType}
       />
     );
   }
