@@ -924,6 +924,31 @@ describe('sceneVariablesSetToVariables', () => {
 
       expect(() => sceneVariablesSetToVariables(set)).toThrow('Unsupported variable type');
     });
+
+    it('should omit GroupByVariable without throwing when the scene is not a dashboard', () => {
+      const groupByVariable = new GroupByVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
+        defaultOptions: [
+          {
+            text: 'Foo',
+            value: 'foo',
+          },
+        ],
+      });
+      const constantVariable = new ConstantVariable({ name: 'keep-me', value: 'val' });
+      const set = new SceneVariableSet({
+        variables: [groupByVariable, constantVariable],
+      });
+
+      const result = sceneVariablesSetToVariables(set, undefined, undefined, undefined, false);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('keep-me');
+    });
   });
 
   it('should handle SwitchVariable with "true" value', () => {

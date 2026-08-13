@@ -5,13 +5,15 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { sceneVariablesSetToVariables } from '../serialization/sceneVariablesSetToVariables';
 
 export function getVariablesCompatibility(sceneObject: SceneObject): TypedVariableModel[] {
+  const isDashboardScene = sceneObject instanceof DashboardScene;
+
   // When a panel is being edited, scope variables to that panel's ancestry.
   // This ensures the query editor autocomplete only shows the panel's own
   // section variables + dashboard globals, not variables from other sections.
   if (sceneObject instanceof DashboardScene && sceneObject.state.editPanel) {
     const panel = sceneObject.state.editPanel.state.panelRef.resolve();
     // @ts-expect-error
-    return collectAncestorVariables(panel);
+    return collectAncestorVariables(panel, isDashboardScene);
   }
 
   // When a scene object is selected in the sidebar (e.g., editing a section variable),
@@ -22,15 +24,15 @@ export function getVariablesCompatibility(sceneObject: SceneObject): TypedVariab
 
     if (selectedObject) {
       // @ts-expect-error
-      return collectAncestorVariables(selectedObject);
+      return collectAncestorVariables(selectedObject, isDashboardScene);
     }
   }
 
   // Default: dashboard global vars
-  return collectGlobalVariables(sceneObject);
+  return collectGlobalVariables(sceneObject, isDashboardScene);
 }
 
-function collectAncestorVariables(sceneObject: SceneObject): VariableModel[] {
+function collectAncestorVariables(sceneObject: SceneObject, isDashboardScene: boolean): VariableModel[] {
   const allModels: VariableModel[] = [];
   const seenNames = new Set<string>();
   const keepQueryOptions = true;
@@ -42,7 +44,7 @@ function collectAncestorVariables(sceneObject: SceneObject): VariableModel[] {
   while (current) {
     if (current.state.$variables instanceof SceneVariableSet) {
       const set = current.state.$variables;
-      const models = sceneVariablesSetToVariables(set, keepQueryOptions, excludedVariable, true);
+      const models = sceneVariablesSetToVariables(set, keepQueryOptions, excludedVariable, true, isDashboardScene);
 
       for (const model of models) {
         if (!seenNames.has(model.name)) {
@@ -57,11 +59,11 @@ function collectAncestorVariables(sceneObject: SceneObject): VariableModel[] {
   return allModels;
 }
 
-function collectGlobalVariables(sceneObject: SceneObject): TypedVariableModel[] {
+function collectGlobalVariables(sceneObject: SceneObject, isDashboardScene: boolean): TypedVariableModel[] {
   const set = sceneGraph.getVariables(sceneObject);
   const keepQueryOptions = true;
 
-  const legacyModels = sceneVariablesSetToVariables(set, keepQueryOptions, undefined, true);
+  const legacyModels = sceneVariablesSetToVariables(set, keepQueryOptions, undefined, true, isDashboardScene);
 
   // Sadly templateSrv.getVariables returns TypedVariableModel but sceneVariablesSetToVariables return persisted schema model
   // They look close to identical (differ in what is optional in some places).

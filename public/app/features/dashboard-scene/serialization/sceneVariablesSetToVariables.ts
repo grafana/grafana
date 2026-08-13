@@ -51,7 +51,12 @@ import {
  *                           If `true`, the options for query variables are kept.
  * @param excludeVariable - (Optional) Scene variable instance to omit. Is used to avoid self-reference in that variable's editor.
  *                          e.g when editing it as a section variable.
- *
+ * @param isDashboardScene - (Optional, default `true`) Whether `set` belongs to a Grafana dashboard.
+ *                           Dashboards are already gated against unsupported/toggle-gated variable
+ *                           types at deserialization time, so encountering one here is a real bug and
+ *                           should throw. Non-dashboard scenes (e.g. an app plugin's own scene) can
+ *                           construct variable types directly with no such gating, so those are
+ *                           safely omitted instead of crashing the caller.
  *
  *  */
 
@@ -60,7 +65,8 @@ export function sceneVariablesSetToVariables(
   keepQueryOptions?: boolean,
   excludedVariable?: SceneObject,
   /** Include variables with `origin` (e.g. predefined global/folder). Default excludes them for persistence. */
-  includeRuntimeVariables?: boolean
+  includeRuntimeVariables?: boolean,
+  isDashboardScene = true
 ) {
   const variables: VariableModel[] = [];
 
@@ -279,6 +285,10 @@ export function sceneVariablesSetToVariables(
     } else if (variable.state.type === 'system' || variable.state.type === 'snapshot') {
       // Not persisted. Snapshot variables are read-only frozen values; the scene graph
       // interpolates them directly, so there is nothing to serialize here.
+    } else if (sceneUtils.isGroupByVariable(variable) && !isDashboardScene) {
+      // Recognized type, just gated off by the core groupByVariable toggle. Only safe to omit here
+      // because this isn't a Grafana dashboard (e.g. a plugin's own scene) — dashboards are already
+      // gated at deserialization time, so reaching this branch for one would mean that gate failed.
     } else {
       throw new Error('Unsupported variable type: ' + variable.state.type);
     }

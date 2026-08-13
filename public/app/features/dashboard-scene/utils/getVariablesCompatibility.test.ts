@@ -5,22 +5,26 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { sceneVariablesSetToVariables } from '../serialization/sceneVariablesSetToVariables';
 
 import { getVariablesCompatibility } from './getVariablesCompatibility';
 import { toControlSourceRef } from './predefinedVariables';
 
 jest.mock('../serialization/sceneVariablesSetToVariables', () => ({
-  sceneVariablesSetToVariables: (
-    set: { state: { variables: Array<{ state: { name: string; type?: string; origin?: unknown } }> } },
-    _keepQueryOptions?: boolean,
-    excludeVariable?: unknown,
-    includeRuntimeVariables?: boolean
-  ) => {
-    return set.state.variables
-      .filter((v) => v !== excludeVariable)
-      .filter((v) => includeRuntimeVariables || v.state.origin === undefined)
-      .map((v) => ({ name: v.state.name, type: v.state.type ?? 'custom' }));
-  },
+  sceneVariablesSetToVariables: jest.fn(
+    (
+      set: { state: { variables: Array<{ state: { name: string; type?: string; origin?: unknown } }> } },
+      _keepQueryOptions?: boolean,
+      excludeVariable?: unknown,
+      includeRuntimeVariables?: boolean,
+      _isDashboardScene?: boolean
+    ) => {
+      return set.state.variables
+        .filter((v) => v !== excludeVariable)
+        .filter((v) => includeRuntimeVariables || v.state.origin === undefined)
+        .map((v) => ({ name: v.state.name, type: v.state.type ?? 'custom' }));
+    }
+  ),
 }));
 
 function makeVar(name: string) {
@@ -245,6 +249,33 @@ describe('getVariablesCompatibility', () => {
       const matched = result.filter((v) => v.name === 'sharedName');
 
       expect(matched).toHaveLength(1);
+    });
+  });
+
+  describe('isDashboardScene flag', () => {
+    it('passes true when the scene object is a DashboardScene', () => {
+      const dashboard = new DashboardScene({
+        $variables: new SceneVariableSet({ variables: [makeVar('dashVar')] }),
+        body: new RowsLayoutManager({ rows: [] }),
+      });
+
+      getVariablesCompatibility(dashboard);
+
+      const isDashboardScene = jest.mocked(sceneVariablesSetToVariables).mock.calls.at(-1)?.[4];
+      expect(isDashboardScene).toBe(true);
+    });
+
+    it('passes false when the scene object is not a DashboardScene (e.g. a plugin scene)', () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+        $variables: new SceneVariableSet({ variables: [makeVar('pluginVar')] }),
+      });
+
+      getVariablesCompatibility(panel);
+
+      const isDashboardScene = jest.mocked(sceneVariablesSetToVariables).mock.calls.at(-1)?.[4];
+      expect(isDashboardScene).toBe(false);
     });
   });
 });
