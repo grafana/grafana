@@ -46,6 +46,11 @@ function buildAutoCellStyles(
         whiteSpace,
         ...(boundExpansion &&
           maxHeight == null && {
+            // never shrink below the column's own width — only grow past it, up to the cap. Without
+            // this, a cell in a column wider than the cap would visually shrink to the cap on hover:
+            // the cursor ends up past the now-narrower box, hover ends, the box snaps back under the
+            // cursor, hover re-fires, and it flickers between the two sizes.
+            minWidth: '100%',
             maxWidth: TABLE.JSON_OVERFLOW_MAX_WIDTH,
             maxHeight: TABLE.JSON_OVERFLOW_MAX_HEIGHT,
             overflowY: 'auto',

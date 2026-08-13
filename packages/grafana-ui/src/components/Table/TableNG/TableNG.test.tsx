@@ -1891,6 +1891,23 @@ describe('TableNG', () => {
       expect(jsonCellStyles.getPropertyValue('font-family')).toBe('monospace');
     });
 
+    it("never shrinks a hover-expanded JSON cell below the column's own width", async () => {
+      // Only a max-width cap here would shrink a column already wider than it down to the cap the
+      // moment it's hovered, which un-hovers it, which snaps it back — an infinite flicker. min-width
+      // pins the floor to the cell's own size so the cap can only ever grow it, never shrink it.
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
+      );
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      await user.click(cells[1]);
+
+      const jsonCellStyles = window.getComputedStyle(cells[1]);
+      expect(jsonCellStyles.getPropertyValue('min-width')).toBe('100%');
+      expect(jsonCellStyles.getPropertyValue('max-width')).toBe('600px');
+    });
+
     it('renders an unwrapped JSON cell with the indentation intact in the DOM', () => {
       // the collapsing happens in CSS, so the text node itself must still carry the newlines and
       // indentation for the hover expansion to have anything to reveal.
