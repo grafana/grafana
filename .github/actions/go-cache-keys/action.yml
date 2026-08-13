@@ -1,0 +1,61 @@
+name: Go cache keys
+description: >-
+  The keys and paths the Go caches are stored under. Anything that reads or
+  writes one of them derives it here, so a writer and its readers cannot
+  disagree about where an entry lives.
+
+inputs:
+  go-version-file:
+    description: Path to the go.mod or go.work file the toolchain version is read from.
+    required: false
+    default: 'go.mod'
+
+outputs:
+  toolchain-version:
+    description: The pinned Go version.
+    value: ${{ steps.compute.outputs.toolchain-version }}
+  toolchain-key:
+    description: Cache key for the Go toolchain.
+    value: ${{ steps.compute.outputs.toolchain-key }}
+  toolchain-path:
+    description: Cache path for the Go toolchain.
+    value: ${{ runner.tool_cache }}/go/${{ steps.compute.outputs.toolchain-version }}
+  mod-key:
+    description: Cache key for the module cache.
+    value: ${{ steps.compute.outputs.mod-key }}
+  mod-restore-key:
+    description: Prefix that matches any module cache for this toolchain.
+    value: ${{ steps.compute.outputs.mod-restore-key }}
+  mod-path:
+    description: Cache path for the module cache.
+    value: ~/go/pkg/mod
+  build-key:
+    description: Cache key for the build cache.
+    value: ${{ steps.compute.outputs.build-key }}
+  build-restore-key:
+    description: Prefix that matches any build cache for this toolchain.
+    value: ${{ steps.compute.outputs.build-restore-key }}
+  build-path:
+    description: Cache path for the build cache.
+    value: ~/.cache/go-build
+
+runs:
+  using: composite
+  steps:
+    - id: compute
+      shell: bash
+      env:
+        GO_VERSION_FILE: ${{ inputs.go-version-file }}
+        MODULE_HASH: ${{ hashFiles('**/*.mod', '**/*.sum') }}
+      run: |
+        set -euo pipefail
+        VERSION="$(awk '$1 == "go" { print $2; exit }' "$GO_VERSION_FILE")"
+        BASE="${RUNNER_OS}-${RUNNER_ARCH}-${VERSION}"
+        {
+          echo "toolchain-version=${VERSION}"
+          echo "toolchain-key=gotoolchain-${BASE}"
+          echo "mod-key=gomod-${BASE}-${MODULE_HASH}"
+          echo "mod-restore-key=gomod-${BASE}-"
+          echo "build-key=gobuild-${BASE}-${MODULE_HASH}"
+          echo "build-restore-key=gobuild-${BASE}-"
+        } >> "$GITHUB_OUTPUT"
