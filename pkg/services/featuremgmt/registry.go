@@ -625,6 +625,14 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "annotationDefaultRetention",
+			Description: "Applies a default 395-day retention TTL to legacy-sql annotation cleanup on instances that had zero annotations the first time this was checked",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendServicesSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true},
+		},
+		{
 			Name:        "dashboardNewLayouts",
 			Description: "Enables new dashboard layouts",
 			Stage:       FeatureStageGeneralAvailability,

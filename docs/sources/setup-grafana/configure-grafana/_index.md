@@ -2149,6 +2149,10 @@ This section controls retention of annotations automatically created while evalu
 
 Configures for how long alert annotations are stored. Default is 0, which keeps them forever. This setting should be expressed as an duration. Ex 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
+{{< admonition type="note" >}}
+When the `annotationDefaultRetention` feature toggle is enabled and this setting is left unset, Grafana applies a default of 395 days (13 months), but only on instances that had zero annotations of any kind the first time this check ran. This determination is made once, at that first check, and is never re-evaluated: an instance that was empty at that moment keeps the default permanently, and an instance that already had at least one annotation keeps unlimited retention unless you set `max_age` explicitly. Set `max_age` to any value, including `0`, to opt out of this behavior.
+{{< /admonition >}}
+
 #### `max_annotations_to_keep`
 
 Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
@@ -2188,6 +2192,10 @@ Dashboard annotations means that annotations are associated with the dashboard t
 Configures how long dashboard annotations are stored. Default is 0, which keeps them forever.
 This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
+{{< admonition type="note" >}}
+When the `annotationDefaultRetention` feature toggle is enabled and this setting is left unset, Grafana applies a default of 395 days (13 months), but only on instances that had zero annotations of any kind the first time this check ran. This determination is made once, at that first check, and is never re-evaluated: an instance that was empty at that moment keeps the default permanently, and an instance that already had at least one annotation keeps unlimited retention unless you set `max_age` explicitly. Set `max_age` to any value, including `0`, to opt out of this behavior.
+{{< /admonition >}}
+
 #### `max_annotations_to_keep`
 
 Configures max number of dashboard annotations that Grafana stores. Default value is 0, which keeps all dashboard annotations.
@@ -2200,6 +2208,10 @@ API annotations means that the annotations have been created using the API witho
 
 Configures how long Grafana stores API annotations. Default is 0, which keeps them forever.
 This setting should be expressed as a duration. Examples: 6h (hours), 10d (days), 2w (weeks), 1M (month).
+
+{{< admonition type="note" >}}
+When the `annotationDefaultRetention` feature toggle is enabled and this setting is left unset, Grafana applies a default of 395 days (13 months), but only on instances that had zero annotations of any kind the first time this check ran. This determination is made once, at that first check, and is never re-evaluated: an instance that was empty at that moment keeps the default permanently, and an instance that already had at least one annotation keeps unlimited retention unless you set `max_age` explicitly. Set `max_age` to any value, including `0`, to opt out of this behavior.
+{{< /admonition >}}
 
 #### `max_annotations_to_keep`
 

@@ -1200,8 +1200,9 @@ func (cfg *Cfg) readAnnotationSettings() error {
 		}
 
 		return AnnotationCleanupSettings{
-			MaxAge:   maxAge,
-			MaxCount: section.Key("max_annotations_to_keep").MustInt64(0),
+			MaxAge:    maxAge,
+			MaxCount:  section.Key("max_annotations_to_keep").MustInt64(0),
+			MaxAgeSet: section.HasKey(maxAgeField),
 		}
 	}
 
@@ -1236,8 +1237,9 @@ func (cfg *Cfg) readExpressionsSettings() {
 }
 
 type AnnotationCleanupSettings struct {
-	MaxAge   time.Duration
-	MaxCount int64
+	MaxAge    time.Duration
+	MaxCount  int64
+	MaxAgeSet bool
 }
 
 // envNameFromIniName converts an ini-style name (section or key) to the

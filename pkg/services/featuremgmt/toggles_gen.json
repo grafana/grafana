@@ -990,6 +990,19 @@
     },
     {
       "metadata": {
+        "name": "annotationDefaultRetention",
+        "resourceVersion": "1786652474376",
+        "creationTimestamp": "2026-08-13T20:21:14Z"
+      },
+      "spec": {
+        "description": "Applies a default 395-day retention TTL to legacy-sql annotation cleanup on instances that had zero annotations the first time this was checked",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "annotationPermissionUpdate",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-10-31T13:30:13Z"
