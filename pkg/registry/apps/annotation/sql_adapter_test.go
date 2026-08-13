@@ -10,6 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -26,7 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
+var testSpanRecorder = tracetest.NewSpanRecorder()
+
 func TestMain(m *testing.M) {
+	otel.SetTracerProvider(tracesdk.NewTracerProvider(tracesdk.WithSpanProcessor(testSpanRecorder)))
 	testsuite.Run(m)
 }
 
