@@ -8,7 +8,6 @@ import { config } from '@grafana/runtime';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { VariableEditableElement } from '../../settings/variables/VariableEditableElement';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
 import {
   getDefaultTopPlacementLabel,
@@ -21,7 +20,7 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
 import { partitionSceneObjects } from './helpers';
-import { createDragEndHandler } from './variablesDragEndHandler';
+import { confirmDeleteVariable, createDragEndHandler, duplicateVariable } from './variableListActions';
 
 const ID_VISIBLE_LIST = 'variables-list-visible';
 const ID_CONTROLS_MENU_LIST = 'variables-list-controls-menu';
@@ -66,11 +65,11 @@ export function DashboardVariablesList({
   }, []);
 
   const onDuplicateVariable = useCallback((variable: SceneVariable) => {
-    new VariableEditableElement(variable).onDuplicate();
+    duplicateVariable(variable);
   }, []);
 
   const onDeleteVariable = useCallback((variable: SceneVariable) => {
-    new VariableEditableElement(variable).onConfirmDelete();
+    confirmDeleteVariable(variable);
   }, []);
 
   const onDragEnd = useMemo(
