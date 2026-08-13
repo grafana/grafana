@@ -5236,17 +5236,17 @@
     {
       "metadata": {
         "name": "provisioning.userAttribution",
-        "resourceVersion": "1783717809512",
+        "resourceVersion": "1786613782023",
         "creationTimestamp": "2026-07-08T13:32:58Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-07-10 21:10:09.512157 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-08-13 09:36:22.023466 +0000 UTC"
         }
       },
       "spec": {
         "description": "Author Git Sync commits as the acting Grafana user",
         "stage": "preview",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

@@ -849,10 +849,10 @@ export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions)
  *
  * **Details:**
  * - flag key: `provisioning.userAttribution`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagProvisioningUserAttribution = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.userAttribution", false, options).value;
+  return useFlag("provisioning.userAttribution", true, options).value;
 };
 
 /**
