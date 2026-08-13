@@ -26,6 +26,7 @@ import { changeVariableHideValue } from '../../actions/variable/changeVariableHi
 import { changeVariableLabel } from '../../actions/variable/changeVariableLabel';
 import { changeVariableName } from '../../actions/variable/changeVariableName';
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
+import { removeVariable } from '../../actions/variable/removeVariable';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { type BulkActionElement } from '../../scene/types/BulkActionElement';
@@ -184,7 +185,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
       return;
     }
 
-    dashboardEditActions.removeVariable({
+    removeVariable({
       source: set,
       removedObject: this.variable,
     });
