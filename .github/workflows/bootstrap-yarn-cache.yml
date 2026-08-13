@@ -1,31 +1,12 @@
 name: Bootstrap Yarn Cache
 
-# yarn-install restores the download cache in every job that needs it, and only
-# this workflow saves it. One install here means the entry exists before those
-# jobs start, instead of each of them racing to create it.
-#
-# Asking whether the key exists needs nothing but the two files it is derived
-# from, so the probe checks those out and stops. The install only happens on a
-# miss.
-#
-# A workflow that installs from a base branch checkout as well as its own reads
-# a second entry, keyed on that tree's lock file. Pointing this at the base ref
-# populates it, so those jobs restore rather than write like every other
-# consumer.
+# Every other job restores the yarn download cache; only this workflow saves
+# it. The ref decides which tree's lock file is hashed, so a caller that needs
+# the base branch entry as well asks for it by ref.
 
 on:
   workflow_call:
     inputs:
-      runs-on:
-        description: Runner for the install, which only happens on a miss.
-        required: false
-        default: ubuntu-x64
-        type: string
-      probe-runner:
-        description: Runner for the key lookup.
-        required: false
-        default: ubuntu-arm64-small
-        type: string
       ref:
         description: Tree whose lock file is cached. Defaults to the running ref.
         required: false
@@ -37,7 +18,7 @@ permissions: {}
 jobs:
   probe:
     name: Warm yarn cache
-    runs-on: ${{ inputs.probe-runner }}
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
@@ -60,8 +41,6 @@ jobs:
           key: yarn-download-cache-default-${{ hashFiles('yarn.lock', '.yarnrc.yml') }}
           lookup-only: true
 
-      # A miss is slow rather than wrong, so it is reported without failing the
-      # run, which would block every workflow waiting on this one.
       - name: Report a miss
         if: steps.probe.outputs.cache-hit != 'true'
         env:
@@ -72,7 +51,7 @@ jobs:
     name: Populate yarn cache
     needs: probe
     if: needs.probe.outputs.hit != 'true'
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ubuntu-x64
     permissions:
       contents: read
     steps:

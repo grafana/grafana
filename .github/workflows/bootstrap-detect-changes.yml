@@ -2,11 +2,6 @@ name: Bootstrap Detect Changes
 
 on:
   workflow_call:
-    inputs:
-      self:
-        description: Path to the calling workflow, treated as any change category.
-        required: true
-        type: string
     outputs:
       self:
         value: ${{ jobs.detect-changes.outputs.self }}
@@ -79,8 +74,4 @@ jobs:
         id: detect-changes
         uses: ./.github/actions/change-detection
         with:
-          self: ${{ inputs.self }}
-
-  # The cache keys carry the runner arch and a hash of the module files, so an
-  # arm64 job and an x64 job, or an OSS job and an enterprise job, never share
-  # an entry. Each combination needs its own writer.
+          self: .github/workflows/**
