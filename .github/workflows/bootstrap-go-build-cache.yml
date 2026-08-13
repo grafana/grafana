@@ -1,13 +1,16 @@
 name: Bootstrap Go Build Cache
 
-# Compiles every non-test package for one bucket so that jobs which build the
-# same tree restore the result instead of repeating it. Callers run this after
-# the module cache for the same bucket: it restores those modules read-only
-# rather than downloading its own, which would put a second writer on that key.
+# Makes sure the Go build cache exists for one bucket, so that jobs which build
+# the same tree restore the result instead of repeating it.
 #
-# This compiles against the local build cache rather than the S3 one. The remote
-# cache replaces GOCACHE with its own store, which leaves nothing on disk in the
-# layout the consuming jobs restore.
+# The usual outcome is that the entry is already there, so the job only asks
+# whether the key exists and stops, without downloading anything. On a miss it
+# restores the modules the sibling workflow saved, compiles every non-test
+# package and saves the result.
+#
+# It compiles against the local build cache rather than the S3 one: the remote
+# cache replaces GOCACHE with its own store, which would leave nothing on disk
+# in the layout the consuming jobs restore.
 
 on:
   workflow_call:
@@ -35,6 +38,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+          filter: blob:none
 
       - name: Get GitHub App token
         if: ${{ inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
@@ -49,14 +53,41 @@ jobs:
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
 
+      # The key has to match the one setup-go computes, so it is derived the
+      # same way: the pinned Go version and a hash of the module files, which
+      # for an enterprise run includes the enterprise tree checked out above.
+      - name: Compute the cache key
+        id: key
+        run: |
+          set -euo pipefail
+          GO_VERSION="$(awk '$1 == "go" { print $2; exit }' go.mod)"
+          echo "key=gobuild-${RUNNER_OS}-${RUNNER_ARCH}-${GO_VERSION}-${{ hashFiles('**/*.mod', '**/*.sum') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Is the cache already populated?
+        id: probe
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/go-build
+          key: ${{ steps.key.outputs.key }}
+          lookup-only: true
+
       - name: Setup Go
+        if: steps.probe.outputs.cache-hit != 'true'
         uses: ./.github/actions/setup-go
         with:
-          cache-write: 'build'
+          build-cache: 'false'
 
       - name: Build all packages
+        if: steps.probe.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           for dir in $(go list -m -f '{{.Dir}}'); do
             (cd "$dir" && go build ./...)
           done
+
+      - name: Save the build cache
+        if: steps.probe.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/go-build
+          key: ${{ steps.key.outputs.key }}
