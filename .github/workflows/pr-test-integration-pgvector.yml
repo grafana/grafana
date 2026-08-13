@@ -1,27 +1,7 @@
 name: Integration Tests (pgvector)
 
 on:
-  push:
-    branches:
-      - main
-      - release-*.*.*
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-    paths:
-      - Makefile
-      - '**/go.mod'
-      - '**/go.sum'
-      - '**/go.work'
-      - '**/go.work.sum'
-      - pkg/storage/unified/search/vector/**
-      - pkg/storage/unified/search/embed/**
-      - devenv/docker/blocks/pgvector/**
-      - devenv/.env
-      - .github/actions/setup-go/**
-      - .github/workflows/pr-test-integration-pgvector.yml
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,25 +10,7 @@ concurrency:
 permissions: {}
 
 jobs:
-  go-mod-cache:
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
-    with:
-      runs-on: ubuntu-x64
-
-  go-build-cache:
-    needs: go-mod-cache
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/bootstrap-go-build-cache.yml
-    with:
-      runs-on: ubuntu-x64
-
   pgvector:
-    needs: go-build-cache
     # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: pgvector

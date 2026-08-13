@@ -1,30 +1,7 @@
 name: Integration Tests
 
 on:
-  push:
-    branches:
-      - main
-      - release-*.*.*
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-    paths:
-      - Makefile
-      - '**/go.mod'
-      - '**/go.sum'
-      - '**/go.work'
-      - '**/go.work.sum'
-      - '**.go'
-      - pkg/**
-      - apps/**
-      - scripts/ci/backend-tests/**
-      - devenv/**
-      - .github/actions/setup-go/**
-      - .github/actions/setup-go-remote-cache/**
-      - .github/actions/setup-enterprise/**
-      - .github/workflows/pr-test-integration.yml
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -62,25 +39,7 @@ jobs:
           self: .github/workflows/pr-test-integration.yml
 
   #### OSS
-  go-mod-cache:
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
-    with:
-      runs-on: ubuntu-x64
-
-  go-build-cache:
-    needs: go-mod-cache
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/bootstrap-go-build-cache.yml
-    with:
-      runs-on: ubuntu-x64
-
   sqlite:
-    needs: go-build-cache
     # Run this workflow only for PRs from forks
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     strategy:
@@ -112,7 +71,6 @@ jobs:
           go test -vet=off -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql:
-    needs: go-build-cache
     # Run this workflow only for PRs from forks
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     strategy:
@@ -164,7 +122,6 @@ jobs:
         run: make devenv-down sources=mysql_tests
 
   postgres:
-    needs: go-build-cache
     # Run this workflow only for PRs from forks
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     strategy:
@@ -213,15 +170,9 @@ jobs:
           make devenv-down sources=postgres_tests
 
   #### Enterprise
-  warm-go-cache:
-    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
-    permissions:
-      contents: read
-    uses: ./.github/workflows/bootstrap-go-remote-cache.yml
 
   sqlite-enterprise:
-    needs: warm-go-cache
-    # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+        # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
       matrix:
@@ -268,8 +219,7 @@ jobs:
           go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql-enterprise:
-    needs: warm-go-cache
-    # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+        # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
       matrix:
@@ -334,8 +284,7 @@ jobs:
         run: make devenv-down sources=mysql_tests
 
   postgres-enterprise:
-    needs: warm-go-cache
-    # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+        # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
       matrix:
