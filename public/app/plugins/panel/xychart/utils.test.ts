@@ -6,6 +6,7 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   MappingType,
+  SpecialValueMatch,
   ThresholdsMode,
   type DataFrame,
   type Field,

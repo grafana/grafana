@@ -579,11 +579,7 @@ interface FieldColorValuesWithCache extends FieldColorValues {
 type GetAllValues = (values: unknown[], min?: number, max?: number) => number[];
 type GetOneValue = (value: unknown, min?: number, max?: number) => number;
 
-function getLabelForRange(
-  from: number | null,
-  to: number | null,
-  formatValue: (value: number) => string = String
-) {
+function getLabelForRange(from: number | null, to: number | null, formatValue: (value: number) => string = String) {
   let text: string;
 
   if (from != null) {
@@ -687,12 +683,13 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
         }
 
         const result = mapping.options.result;
-        const regexIdx = regexStates.push({
-          regex: stringToJsRegex(mapping.options.pattern),
-          color: result.color,
-          text: result.text,
-          icon: result.icon,
-        }) - 1;
+        const regexIdx =
+          regexStates.push({
+            regex: stringToJsRegex(mapping.options.pattern),
+            color: result.color,
+            text: result.text,
+            icon: result.icon,
+          }) - 1;
         conds += `(s = regexState(${regexIdx}, v)) !== -1 ? s : `;
       } else {
         const { match, result } = mapping.options;
