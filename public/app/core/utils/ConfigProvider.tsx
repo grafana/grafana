@@ -8,6 +8,7 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 
 import { appEvents } from '../app_events';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { contextSrv } from '../services/context_srv';
 
 // temporarily remap dark/light to the visual refresh themes if the flag is enabled
 // when delivering the visual refresh, remove this remapping and use the updated dark/light themes directly
@@ -55,6 +56,13 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
       const newTheme = maybeRemapTheme(event.payload, visualRefreshEnabled);
       setTheme(newTheme);
     });
+
+    if (contextSrv.user.theme === 'system') {
+      const query = window.matchMedia('(prefers-color-scheme: dark)');
+      query.addEventListener('change', (e) => {
+        setTheme(maybeRemapTheme(getThemeById(e.matches ? 'dark' : 'light'), visualRefreshEnabled));
+      });
+    }
 
     return () => sub.unsubscribe();
   }, [visualRefreshEnabled]);
