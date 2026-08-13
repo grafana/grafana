@@ -30,7 +30,11 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 
 ## Human Review Gates
 
-Before running `git push`, stop and get explicit human approval. When changes are ready, show a summary of changes and wait for instruction. "Open a PR" in a task description is intent, not permission to push without review.
+For interactive local chats: before running `git push`, stop and get explicit human approval. When changes are ready, show a summary and wait for instruction.
+
+**Unattended Cloud Agents and ticket-driven automation:** after committing on a unique feature branch, push and open a pull request immediately. Do not wait for a human. Fill `.github/PULL_REQUEST_TEMPLATE.md` in the PR body (API-created PRs do not get the GitHub UI template automatically). Do not merge.
+
+"Open a PR" in a task description is permission to push and open the PR for unattended agent runs.
 
 ## Commands
 

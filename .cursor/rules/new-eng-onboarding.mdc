@@ -10,4 +10,5 @@ Call out InfluxQL/SQL identifier quirks (dotted names, quoting) when relevant.
 Do not refactor unrelated modules in the same pass.
 After a fix, say how to verify (test, query, or manual check).
 Open a GitHub PR (draft is enough) for the change; do not leave it on a local branch.
+Fill `.github/PULL_REQUEST_TEMPLATE.md` in the PR body.
 Stay in this Grafana tree. Do not switch repos to implement a ticket.
