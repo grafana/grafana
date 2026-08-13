@@ -15,6 +15,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/features"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -60,16 +61,18 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 
 // Process will start a job
 func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
-	enabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningExport, false, openfeature.TransactionContext(ctx))
+	options := job.Spec.Push
+	if options == nil {
+		return errors.New("missing export settings")
+	}
+
+	cfg := repo.Config()
+	evalCtx := features.EvaluationContextFromTargetingKey(cfg.Namespace)
+	enabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningExport, false, evalCtx)
 	if !enabled {
 		// A disabled feature is an expected configuration state, not a failure:
 		// complete the job in a warning state so it is not logged or alerted as an error.
 		return jobs.AsWarning(errors.New("export functionality is disabled"))
-	}
-
-	options := job.Spec.Push
-	if options == nil {
-		return errors.New("missing export settings")
 	}
 
 	logger := logging.FromContext(ctx).With("options", options)
@@ -88,7 +91,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		attribute.Int("export.resources_count", len(options.Resources)),
 	)
 
-	cfg := repo.Config()
 	// Can write to external branch
 	if err := repository.IsWriteAllowed(cfg, options.Branch); err != nil {
 		return err

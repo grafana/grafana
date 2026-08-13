@@ -1325,16 +1325,14 @@ func TestExportWorker_ConfigurationDisabled(t *testing.T) {
 			// Create a minimal mock repository
 			mockRepo := repository.NewMockRepository(t)
 
-			// Set up mock expectations for when enabled
-			if tt.enabled {
-				mockRepo.On("Config").Return(&v0alpha1.Repository{
-					Spec: v0alpha1.RepositorySpec{
-						Sync: v0alpha1.SyncOptions{
-							Target: "instance",
-						},
+			// Config() is read to build the flag's evaluation context regardless of enabled state.
+			mockRepo.On("Config").Return(&v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Sync: v0alpha1.SyncOptions{
+						Target: "instance",
 					},
-				})
-			}
+				},
+			})
 
 			// Create a test job
 			job := v0alpha1.Job{

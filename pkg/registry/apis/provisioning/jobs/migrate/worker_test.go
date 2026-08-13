@@ -66,6 +66,7 @@ func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
 	progressRecorder.On("SetTotal", mock.Anything, 10).Return()
 
 	repo := repository.NewMockReader(t)
+	repo.On("Config").Return(&provisioning.Repository{})
 	err := worker.Process(context.Background(), repo, job, progressRecorder)
 	require.EqualError(t, err, "migration job submitted targeting repository that is not a ReaderWriter")
 }
@@ -106,7 +107,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			setupRepo: func(repo *repository.MockRepository) {
-				// No Config() call needed anymore
+				repo.On("Config").Return(&provisioning.Repository{})
 			},
 		},
 		{
@@ -122,7 +123,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
 			setupRepo: func(repo *repository.MockRepository) {
-				// No Config() call needed anymore
+				repo.On("Config").Return(&provisioning.Repository{})
 			},
 			expectedError: "",
 		},
@@ -195,6 +196,7 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 
 			// Create a mock repository (ReaderWriter interface required)
 			mockRepo := repository.NewMockReaderWriter(t)
+			mockRepo.On("Config").Return(&provisioning.Repository{})
 
 			// Create a test job
 			job := provisioning.Job{
