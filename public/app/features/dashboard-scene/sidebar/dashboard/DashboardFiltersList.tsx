@@ -6,7 +6,6 @@ import { t } from '@grafana/i18n';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { VariableEditableElement } from '../../settings/variables/VariableEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { openAddFilterForm } from '../add-new/AddFilters';
@@ -14,7 +13,7 @@ import { openAddFilterForm } from '../add-new/AddFilters';
 import { partitionVariablesByDisplay } from './DashboardVariablesList';
 import { DraggableList } from './DraggableList';
 import { SidebarAddButton } from './SidebarAddButton';
-import { createDragEndHandler } from './variablesDragEndHandler';
+import { confirmDeleteVariable, createDragEndHandler, duplicateVariable } from './variableListActions';
 
 const ID_FILTERS_VISIBLE_LIST = 'filters-list-visible';
 const ID_FILTERS_CONTROLS_MENU_LIST = 'filters-list-controls-menu';
@@ -37,11 +36,11 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
   }, []);
 
   const onDuplicateFilter = useCallback((variable: SceneVariable) => {
-    new VariableEditableElement(variable).onDuplicate();
+    duplicateVariable(variable);
   }, []);
 
   const onDeleteFilter = useCallback((variable: SceneVariable) => {
-    new VariableEditableElement(variable).onConfirmDelete();
+    confirmDeleteVariable(variable);
   }, []);
 
   const onDragEnd = useMemo(

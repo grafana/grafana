@@ -1,8 +1,12 @@
 import { type DropResult } from '@hello-pangea/dnd';
 
 import { VariableHide } from '@grafana/data';
-import { type SceneVariable, type SceneVariableSet } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
+import { type SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { DashboardInteractions } from '../../utils/interactions';
 import { dashboardEditActions } from '../shared';
 
 export interface ListIds {
@@ -85,4 +89,50 @@ export function createDragEndHandler(
       },
     });
   };
+}
+
+export function duplicateVariable(variable: SceneVariable) {
+  const set = variable.parent;
+  if (!(set instanceof SceneVariableSet)) {
+    return;
+  }
+
+  dashboardEditActions.addVariable({
+    source: set,
+    addedObject: variable.clone({
+      key: undefined,
+      name: `${variable.state.name}_copy${set.state.variables.length}`,
+    }),
+  });
+  DashboardInteractions.variableActionButtonClicked('duplicate', { type: variable.state.type });
+}
+
+export function confirmDeleteVariable(variable: SceneVariable) {
+  const name = variable.state.name;
+  appEvents.publish(
+    new ShowConfirmModalEvent({
+      title: t('dashboard-scene.variable-editable-element.delete-title', 'Delete variable'),
+      text: t('dashboard-scene.variable-editable-element.delete-text', 'Are you sure you want to delete: {{name}}?', {
+        name,
+      }),
+      yesText: t('dashboard-scene.variable-editable-element.delete-confirm', 'Delete variable'),
+      onConfirm: () => {
+        deleteVariable(variable);
+      },
+    })
+  );
+}
+
+export function deleteVariable(variable: SceneVariable) {
+  const set = variable.parent;
+  if (!(set instanceof SceneVariableSet)) {
+    return;
+  }
+
+  DashboardInteractions.variableActionButtonClicked('delete', { type: variable.state.type });
+
+  dashboardEditActions.removeVariable({
+    source: set,
+    removedObject: variable,
+  });
 }
