@@ -143,6 +143,6 @@ jobs:
               done | grep -v '^$'
             )"
             echo "::group::Compiling $(echo "$PACKAGES" | wc -l) packages${tags:+ (${tags})}"
-            echo "$PACKAGES" | xargs go test -run='^$' -vet=off -tags="$tags"
+            echo "$PACKAGES" | xargs go test -exec=true -toolexec="${GITHUB_WORKSPACE}/scripts/ci/go-compile-without-link" -vet=off -tags="$tags"
             echo "::endgroup::"
           done
