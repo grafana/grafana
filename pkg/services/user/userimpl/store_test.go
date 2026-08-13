@@ -41,7 +41,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(ss), cfgProvider)
-	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(ss), cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
 	usrSvc, err := ProvideService(
@@ -558,7 +558,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
+		orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(ss), cfg, quotaService)
 		require.NoError(t, err)
 		usrSvc, err := ProvideService(
 			ss, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -1088,7 +1088,7 @@ func TestIntegrationMetricsUsage(t *testing.T) {
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(ss), cfgProvider)
-	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(ss), cfg, quotaService)
 	require.NoError(t, err)
 
 	_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
@@ -1137,7 +1137,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider)
-	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := ProvideService(
 		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),

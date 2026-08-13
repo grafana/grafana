@@ -10,8 +10,8 @@ import { RepeatOptions } from './shared/RepeatOptions';
  * shared repeat and conditional rendering option groups
  */
 export class TabOptions extends PageObject {
-  public conditionalRenderingOptions: ConditionalRenderingOptions;
-  public repeatOptions: RepeatOptions;
+  readonly conditionalRenderingOptions: ConditionalRenderingOptions;
+  readonly repeatOptions: RepeatOptions;
 
   constructor(args: PageObjectArgs) {
     super(args);
@@ -22,7 +22,7 @@ export class TabOptions extends PageObject {
   /** Sets the tab title */
   async setTitle(tabTitle: string) {
     await test.step(`Set tab title to "${tabTitle}"`, async () => {
-      const titleInput = this.dashboardPage.getByGrafanaSelector(
+      const titleInput = this.getByGrafanaSelector(
         this.selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput
       );
       await titleInput.fill(tabTitle);

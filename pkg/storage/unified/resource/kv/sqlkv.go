@@ -558,9 +558,15 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 	return nil
 }
 
+// maxBatchDeleteKeys bounds a DELETE's IN list.
+const maxBatchDeleteKeys = 200
+
 func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) error {
 	if len(keys) == 0 {
 		return nil
+	}
+	if len(keys) >= maxBatchDeleteKeys {
+		return fmt.Errorf("batch delete of %d keys exceeds max %d; caller must chunk", len(keys), maxBatchDeleteKeys-1)
 	}
 
 	qb, err := k.getQueryBuilder(section)

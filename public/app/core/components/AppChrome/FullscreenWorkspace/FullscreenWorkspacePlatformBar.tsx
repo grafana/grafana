@@ -36,7 +36,7 @@ export function FullscreenWorkspacePlatformBar() {
       {menuOpen && (
         <>
           <div className={styles.backdrop} onClick={closeMenu} role="presentation" />
-          <nav className={styles.drawer} aria-label={t('navigation.megamenu.dialog-label', 'Navigation')}>
+          <nav className={styles.drawer}>
             <MegaMenu onClose={closeMenu} />
           </nav>
         </>

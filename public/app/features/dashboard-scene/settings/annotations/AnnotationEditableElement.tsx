@@ -109,18 +109,7 @@ export class AnnotationEditableElement implements EditableDashboardElement {
   public useSidebarOptions = useSidebarOptions.bind(this);
 
   public onDuplicate() {
-    const dataLayerSet = this.layer.parent;
-    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
-      return;
-    }
-
-    annotationEditActions.addAnnotation({
-      source: dataLayerSet,
-      addedObject: this.layer.clone({
-        key: undefined,
-        name: `${this.layer.state.name} - Copy`,
-      }),
-    });
+    annotationEditActions.duplicateAnnotation(this.layer);
   }
 
   public onConfirmDelete() {

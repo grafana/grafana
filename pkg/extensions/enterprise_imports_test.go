@@ -43,6 +43,8 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/user/usertest"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource/kv/test"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource/lease"
+	_ "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	_ "github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	_ "github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	_ "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 	_ "github.com/grafana/grafana/pkg/storage/unified/testing"

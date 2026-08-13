@@ -40,8 +40,9 @@ export default class DetailState {
       logs,
       references,
     }: DetailState | Record<string, undefined> = oldState || {};
-    this.isTagsOpen = Boolean(isTagsOpen);
-    this.isProcessOpen = Boolean(isProcessOpen);
+    // Span and resource attributes are open by default when a detail panel is first opened.
+    this.isTagsOpen = oldState ? Boolean(isTagsOpen) : true;
+    this.isProcessOpen = oldState ? Boolean(isProcessOpen) : true;
     this.isSummaryAttributesOpen = Boolean(isSummaryAttributesOpen);
     this.isReferencesOpen = Boolean(isReferencesOpen);
     this.isWarningsOpen = Boolean(isWarningsOpen);

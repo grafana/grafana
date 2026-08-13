@@ -538,23 +538,26 @@ export const getStyles = (
   }
 
   const colors = {
-    critical: '#B877D9',
+    critical: theme.visualization.getColorByName('purple'),
     error: theme.colors.error.text,
-    warning: '#FBAD37',
-    debug: '#6E9FFF',
+    warning: theme.colors.warning.text,
+    // dimgray fails WCAG AA contrast on dark backgrounds, so use a lighter gray in dark theme
+    debug: theme.isDark ? '#9e9e9e' : theme.visualization.getColorByName('dimgray'),
     trace: '#6ed0e0',
-    info: '#6E9FFF',
+    info: theme.visualization.getColorByName('blue'),
     metadata: theme.colors.text.secondary,
     default: colorDefault,
     parsedField: theme.colors.text.secondary,
     logLineBody: maxContrast,
   };
 
-  const hoverColor = tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
-  const pinnedColor = tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString();
-  const detailsColor = tinycolor(theme.colors.background.canvas)
-    .darken(theme.isDark ? 2 : 5)
-    .toRgbString();
+  const hoverColor = theme.isDark
+    ? tinycolor(theme.colors.background.canvas).lighten(11).toRgbString()
+    : tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
+  const pinnedColor = tinycolor(theme.colors.info.background).setAlpha(0.25).toString();
+  const detailsColor = theme.isDark
+    ? tinycolor(theme.colors.background.canvas).lighten(11).toRgbString()
+    : tinycolor(theme.colors.background.canvas).darken(5).toRgbString();
 
   return {
     logLine: css({
