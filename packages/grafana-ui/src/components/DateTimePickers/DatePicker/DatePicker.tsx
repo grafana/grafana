@@ -8,6 +8,7 @@ import { useStyles2 } from '../../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../../Icon/Icon';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
+import { getSelectedTileContent } from '../utils/getSelectedTileContent';
 
 /** @public */
 export interface DatePickerProps {
@@ -46,12 +47,14 @@ DatePicker.displayName = 'DatePicker';
 
 const Body = memo<DatePickerProps>(({ value, minDate, maxDate, onChange }) => {
   const styles = useStyles2(getBodyStyles);
+  const selectedDate = value || new Date();
 
   return (
     <Calendar
       className={styles.body}
       tileClassName={styles.title}
-      value={value || new Date()}
+      tileContent={getSelectedTileContent(selectedDate)}
+      value={selectedDate}
       minDate={minDate}
       maxDate={maxDate}
       nextLabel={<Icon name="angle-right" />}

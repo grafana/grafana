@@ -10390,7 +10390,8 @@
         "today": "Today",
         "today-so-far": "Today so far",
         "yesterday": "Yesterday"
-      }
+      },
+      "tile-selected": "selected"
     },
     "drawer": {
       "close": "Close"

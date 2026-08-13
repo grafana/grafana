@@ -34,6 +34,7 @@ import { TimeOfDayPicker } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 import { isValid } from '../utils';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
+import { getSelectedTileContent } from '../utils/getSelectedTileContent';
 
 export interface Props {
   /** Input date for the component */
@@ -354,6 +355,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
           locale="en"
           className={calendarStyles.body}
           tileClassName={calendarStyles.title}
+          tileContent={getSelectedTileContent(reactCalendarDate)}
           maxDate={maxDate}
           minDate={minDate}
         />

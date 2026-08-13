@@ -9,6 +9,7 @@ import { useStyles2 } from '../../../themes/ThemeContext';
 import { Icon } from '../../Icon/Icon';
 import { getWeekStart, type WeekStart } from '../WeekStartPicker';
 import { adjustDateForReactCalendar } from '../utils/adjustDateForReactCalendar';
+import { getSelectedTileContent } from '../utils/getSelectedTileContent';
 
 import { type TimePickerCalendarProps } from './TimePickerCalendar';
 
@@ -31,6 +32,7 @@ export function Body({ onChange, from, to, timeZone, weekStart }: TimePickerCale
       prev2Label={null}
       className={styles.body}
       tileClassName={styles.title}
+      tileContent={getSelectedTileContent(value)}
       value={value}
       nextLabel={<Icon name="angle-right" />}
       nextAriaLabel={t('time-picker.calendar.next-month', 'Next month')}
