@@ -308,9 +308,6 @@
     }
   },
   "packages/grafana-o11y-ds-frontend/src/TraceToProfiles/TraceToProfilesSettings.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    },
     "react-hooks/exhaustive-deps": {
       "count": 1
     }
