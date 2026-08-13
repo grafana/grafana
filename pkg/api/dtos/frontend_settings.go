@@ -214,10 +214,9 @@ type FrontendSettingsDTO struct {
 
 	AnalyticsConsoleReporting bool `json:"analyticsConsoleReporting"`
 
-	DashboardPerformanceMetrics  []string `json:"dashboardPerformanceMetrics"`
-	PanelSeriesLimit             int      `json:"panelSeriesLimit"`
-	DashboardDefaultPreload      bool     `json:"dashboardDefaultPreload"`
-	ReportRenderQueryGracePeriod int      `json:"reportRenderQueryGracePeriodMs"`
+	DashboardPerformanceMetrics []string `json:"dashboardPerformanceMetrics"`
+	PanelSeriesLimit            int      `json:"panelSeriesLimit"`
+	DashboardDefaultPreload     bool     `json:"dashboardDefaultPreload"`
 
 	FeedbackLinksEnabled                 bool                `json:"feedbackLinksEnabled"`
 	ApplicationInsightsConnectionString  string              `json:"applicationInsightsConnectionString"`
