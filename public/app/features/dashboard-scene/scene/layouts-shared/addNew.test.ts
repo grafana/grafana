@@ -62,6 +62,23 @@ describe('addNewTabTo', () => {
       const newBody = (grid.parent as DashboardScene).state.body as TabsLayoutManager;
       expect(newBody.state.tabs[0].getLayout()).toBeInstanceOf(DefaultGridLayoutManager);
     });
+
+    it('should keep an existing rows layout that has no panels', () => {
+      const rowsLayout = new RowsLayoutManager({
+        rows: [new RowItem({ title: 'Row 1' }), new RowItem({ title: 'Row 2' })],
+      });
+      new DashboardScene({
+        body: rowsLayout,
+        preferences: { defaultLayoutTemplate: DefaultGridLayoutManager.createEmpty() },
+      });
+
+      addNewTabTo(rowsLayout);
+
+      const newBody = (rowsLayout.parent as DashboardScene).state.body as TabsLayoutManager;
+      const tabLayout = newBody.state.tabs[0].getLayout();
+      expect(tabLayout).toBeInstanceOf(RowsLayoutManager);
+      expect((tabLayout as RowsLayoutManager).state.rows.map((row) => row.state.title)).toEqual(['Row 1', 'Row 2']);
+    });
   });
 
   describe('when layout already has tabs', () => {

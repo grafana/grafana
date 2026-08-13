@@ -11,6 +11,18 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 
+/**
+ * Dashboard default layout to start the new group with, when the current layout holds nothing worth keeping.
+ * Only grids qualify: rows and tabs carry structure the user built even while they contain no panels.
+ */
+function getDefaultLayoutForEmptyGrid(layout: DashboardLayoutManager): DashboardLayoutManager | undefined {
+  if (!layout.descriptor.isGridLayout || layout.getVizPanels().length > 0) {
+    return undefined;
+  }
+
+  return getDashboardSceneFor(layout).getDefaultLayout();
+}
+
 export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
   const layoutParent = layout.parent!;
   if (!isLayoutParent(layoutParent)) {
@@ -22,8 +34,7 @@ export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
   }
 
   // Create new tabs layout and wrap the current layout in the first tab
-  const defaultLayout =
-    layout.getVizPanels().length === 0 ? getDashboardSceneFor(layout).getDefaultLayout() : undefined;
+  const defaultLayout = getDefaultLayoutForEmptyGrid(layout);
   const tabsLayout = new TabsLayoutManager({
     tabs: [new TabItem({ layout: defaultLayout ?? layout.clone() })],
   });
@@ -68,8 +79,7 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
   // If we want to add a row and current layout is custom grid or auto we migrate to rows layout
   // And wrap current layout in a row
 
-  const defaultLayout =
-    layout.getVizPanels().length === 0 ? getDashboardSceneFor(layout).getDefaultLayout() : undefined;
+  const defaultLayout = getDefaultLayoutForEmptyGrid(layout);
   const rowsLayout = defaultLayout
     ? new RowsLayoutManager({ rows: [new RowItem({ layout: defaultLayout })] })
     : RowsLayoutManager.createFromLayout(layoutParent.getLayout());
