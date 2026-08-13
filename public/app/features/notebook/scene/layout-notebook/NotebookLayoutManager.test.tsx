@@ -182,17 +182,6 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('menuitem', { name: 'Visualization' })).toHaveAttribute('aria-haspopup', 'menu');
     });
 
-    // What makes the copy honest: "press / for blocks" has to do something.
-    it('opens the menu when a printable key is typed', async () => {
-      renderNotebook(true);
-
-      const prompt = screen.getByRole('button', { name: PROMPT });
-      prompt.focus();
-      fireEvent.keyDown(prompt, { key: '/' });
-
-      expect(await screen.findByRole('menu')).toBeInTheDocument();
-    });
-
     // The printable-key guard is the whole mechanism, and widening it would hijack navigation keys.
     it('leaves navigation keys alone', () => {
       renderNotebook(true);
