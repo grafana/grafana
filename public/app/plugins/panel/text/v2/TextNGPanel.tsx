@@ -133,7 +133,7 @@ export function TextNGPanel(props: Props) {
 
   return (
     <Stack direction="column" gap={1} height="100%">
-      <Stack grow={1} minHeight={0}>
+      <Stack direction="column" grow={1} minHeight={0}>
         {panel}
       </Stack>
       <Field noMargin>

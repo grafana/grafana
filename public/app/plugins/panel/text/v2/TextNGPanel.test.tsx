@@ -400,6 +400,24 @@ describe('TextNGPanel', () => {
       expect(onOptionsChange).toHaveBeenCalledWith(expect.objectContaining({ frameIndex: 1 }));
     });
 
+    it('does not make the rendered content a row flex item', () => {
+      replaceVariablesMock.mockImplementation((str: string) => str);
+      const props = createProps(replaceVariablesMock, {
+        data: createData([frameA, frameB]),
+        options: { content: 'hello', mode: TextMode.Markdown },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      let view: HTMLElement | null = screen.getByTestId('TextNGPanel-converted-content');
+      while (view && getComputedStyle(view).contain !== 'strict') {
+        view = view.parentElement;
+      }
+
+      expect(view).not.toBeNull();
+      expect(getComputedStyle(view!.parentElement!).flexDirection).toBe('column');
+    });
+
     // Crossing one frame adds or removes the picker, which changes the tree shape
     // and remounts the editor. The view mode lives in the panel so it survives.
     describe('keeps the editor view mode when the query count changes', () => {
