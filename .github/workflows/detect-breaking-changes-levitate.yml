@@ -193,6 +193,7 @@ jobs:
         uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: grafana-pr-automation
+          permission_set: pr-automation
 
       - uses: actions/checkout@v5
         with:
