@@ -7,6 +7,11 @@ name: Bootstrap Yarn Cache
 # Asking whether the key exists needs nothing but the two files it is derived
 # from, so the probe checks those out and stops. The install only happens on a
 # miss.
+#
+# A workflow that installs from a base branch checkout as well as its own reads
+# a second entry, keyed on that tree's lock file. Pointing this at the base ref
+# populates it, so those jobs restore rather than write like every other
+# consumer.
 
 on:
   workflow_call:
@@ -20,6 +25,11 @@ on:
         description: Runner for the key lookup.
         required: false
         default: ubuntu-arm64-small
+        type: string
+      ref:
+        description: Tree whose lock file is cached. Defaults to the running ref.
+        required: false
+        default: ''
         type: string
 
 permissions: {}
@@ -36,6 +46,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref }}
           sparse-checkout: |
             yarn.lock
             .yarnrc.yml
@@ -68,6 +79,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+          ref: ${{ inputs.ref }}
       - uses: ./.github/actions/setup-node
       - name: Install JS dependencies
         uses: ./.github/actions/yarn-install
