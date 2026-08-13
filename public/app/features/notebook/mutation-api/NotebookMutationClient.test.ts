@@ -1,4 +1,5 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { contextSrv } from 'app/core/services/context_srv';
 import { DASHBOARD_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
 
 import { NotebookMutationClient } from './NotebookMutationClient';
@@ -9,6 +10,7 @@ import { NOTEBOOKS_FLAG, notebookScene } from './test-utils';
 describe('NotebookMutationClient', () => {
   beforeEach(() => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
   afterEach(() => {
