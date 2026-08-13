@@ -214,6 +214,7 @@ export const getFieldDisplayItems = (
       isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
       numeric,
       lineStyle: field.config.custom?.lineStyle,
+      fieldIdx: i,
     });
   }
 

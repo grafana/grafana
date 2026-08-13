@@ -54,6 +54,13 @@ export interface VizTooltipItem {
   isHiddenFromViz?: boolean;
 
   /**
+   * Index of the field this row was built from, within the frame passed to `getFieldDisplayItems`.
+   * Lets callers correlate a row back to its field (and so to `dataIdxs`) after rows have been
+   * filtered and sorted. Undefined for rows built from `extraFields`, which are not part of that frame.
+   */
+  fieldIdx?: number;
+
+  /**
    * Numeric representation of `value` used for sorting rows.
    * @internal
    */

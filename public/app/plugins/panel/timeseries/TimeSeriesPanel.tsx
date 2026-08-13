@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import {
   alignTimeRangeCompareData,
@@ -32,7 +32,7 @@ import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getTimezones, prepareGraphableFields } from './utils';
+import { getComparePartnerIdxs, getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -134,6 +134,24 @@ export const TimeSeriesPanel = ({
     [getFiltersBasedOnGrouping, onAddAdHocFilters]
   );
 
+  // Pairing is keyed by the aligned frame's field indices, which only exist once GraphNG has joined the
+  // frames, so it is resolved from the aligned frame rather than computed up front. Cached against the
+  // frame identity because the callers below re-run on every hover.
+  const comparePartnersCache = useRef<{ frame: DataFrame; partners?: Map<number, number> } | null>(null);
+  const getComparePartners = useCallback(
+    (alignedFrame: DataFrame) => {
+      if (comparePartnersCache.current?.frame !== alignedFrame) {
+        const partners = getComparePartnerIdxs(alignedFrame, compareDiffMs);
+        // Undefined rather than an empty map: a panel with no time comparison must keep uPlot's default
+        // single hover point, and the tooltip must keep its plain single-series behavior.
+        comparePartnersCache.current = { frame: alignedFrame, partners: partners.size > 0 ? partners : undefined };
+      }
+
+      return comparePartnersCache.current.partners;
+    },
+    [compareDiffMs]
+  );
+
   if (!frames || suggestions) {
     return (
       <PanelDataErrorView
@@ -163,6 +181,7 @@ export const TimeSeriesPanel = ({
       cursorSync={cursorSync}
       annotationLanes={options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined}
       onPinnedToSidebarChange={onPinnedToSidebarChange}
+      getComparePartners={getComparePartners}
     >
       {(uplotConfig, alignedFrame) => {
         return (
@@ -216,6 +235,7 @@ export const TimeSeriesPanel = ({
                       filterByGroupedLabels={getFilterByGroupedLabelsModel(alignedFrame, seriesIdx)}
                       canExecuteActions={userCanExecuteActions}
                       compareDiffMs={compareDiffMs}
+                      comparePartners={getComparePartners(alignedFrame)}
                       assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
                     />
                   );

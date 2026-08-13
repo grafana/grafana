@@ -27,5 +27,12 @@ export function getUplotStyles(theme: GrafanaTheme2) {
     '.shared-crosshair:not(.plot-active) .u-cursor-pt': {
       display: 'none !important',
     },
+
+    // Plots that turn off cursor.points.one (time comparison) get a hover point per series from uPlot,
+    // but should only show the hovered series and its comparison counterpart. preparePlotConfigBuilder
+    // marks that pair on hover; everything else stays hidden.
+    '.u-cursor-pts-paired .u-cursor-pt:not(.u-cursor-pt-visible)': {
+      display: 'none',
+    },
   });
 }

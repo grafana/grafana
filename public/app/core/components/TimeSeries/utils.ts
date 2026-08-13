@@ -97,6 +97,9 @@ import {
   getStackingGroups,
   preparePlotData2,
   type AxisProps,
+  CURSOR_PT_CLASS,
+  CURSOR_PT_VISIBLE_CLASS,
+  CURSOR_PTS_PAIRED_CLASS,
 } from '@grafana/ui/internal';
 
 import { ANNOTATION_LANE_SIZE } from '../../../plugins/panel/timeseries/plugins/utils';
@@ -126,6 +129,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
   hoverProximity,
   orientation = VizOrientation.Horizontal,
   xAxisConfig,
+  comparePartners,
 }) => {
   // we want the Auto and Horizontal orientation to default to Horizontal
   const isHorizontal = orientation !== VizOrientation.Vertical;
@@ -749,10 +753,30 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
     focus: {
       prox: hoverProximity ?? DEFAULT_FOCUS_PROXIMITY,
     },
-    points: { one: true },
+    points: { one: comparePartners == null },
   };
 
   builder.setCursor(cursor);
+
+  // `cursor.points.one` above draws a single hover point on the closest series. Time comparison needs
+  // two — the hovered series and its counterpart — so those panels opt out, letting uPlot create and
+  // position a point per series (it already handles gaps and legend-hidden series via its own `u-off`
+  // class). All that is left is to reveal the hovered pair and keep the rest hidden.
+  if (comparePartners != null) {
+    builder.addHook('init', (u) => {
+      u.root.classList.add(CURSOR_PTS_PAIRED_CLASS);
+    });
+
+    builder.addHook('setSeries', (u, focusedSeriesIdx) => {
+      const partnerIdx = focusedSeriesIdx == null ? undefined : comparePartners.get(focusedSeriesIdx);
+
+      // One point element per series, in series order, so element i belongs to series i + 1.
+      u.over.querySelectorAll(`.${CURSOR_PT_CLASS}`).forEach((pt, i) => {
+        const seriesIdx = i + 1;
+        pt.classList.toggle(CURSOR_PT_VISIBLE_CLASS, seriesIdx === focusedSeriesIdx || seriesIdx === partnerIdx);
+      });
+    });
+  }
 
   return builder;
 };

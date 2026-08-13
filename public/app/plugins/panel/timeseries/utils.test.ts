@@ -1,7 +1,14 @@
-import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
+import { createTheme, type Field, FieldType, createDataFrame, getDisplayProcessor, toDataFrame } from '@grafana/data';
 import { LineInterpolation } from '@grafana/ui';
 
-import { getCompareSeriesIdentityKey, getTimezones, prepareGraphableFields, setClassicPaletteIdxs } from './utils';
+import {
+  getCompareDelta,
+  getComparePartnerIdxs,
+  getCompareSeriesIdentityKey,
+  getTimezones,
+  prepareGraphableFields,
+  setClassicPaletteIdxs,
+} from './utils';
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {
@@ -374,6 +381,150 @@ describe('getCompareSeriesIdentityKey', () => {
       fields: [{ name: 'A-series1', type: FieldType.number, values: [] }],
     });
     expect(getCompareSeriesIdentityKey(frame.fields[0], frame)).toBe('A-series1');
+  });
+});
+
+describe('getComparePartnerIdxs', () => {
+  // Mirrors the aligned frame the tooltip receives: current and compare series are sibling fields
+  // sharing a seriesIndex (assigned by setClassicPaletteIdxs so they render the same color).
+  function makeAlignedFrame(seriesIndexes: Array<number | undefined>, type = FieldType.number) {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000] },
+        ...seriesIndexes.map((_, i) => ({ name: `value${i}`, type, values: [1] })),
+      ],
+    });
+
+    // createDataFrame drops `state`, so assign it after the fact.
+    seriesIndexes.forEach((seriesIndex, i) => {
+      frame.fields[i + 1].state = seriesIndex == null ? {} : { seriesIndex };
+    });
+
+    return frame;
+  }
+
+  it('pairs a compare field with the current field sharing its seriesIndex, in both directions', () => {
+    const partners = getComparePartnerIdxs(makeAlignedFrame([0, 0]), [0, 0, -86400000]);
+
+    expect(partners.get(1)).toBe(2);
+    expect(partners.get(2)).toBe(1);
+  });
+
+  it('leaves two current-period series with distinct seriesIndexes unpaired', () => {
+    const partners = getComparePartnerIdxs(makeAlignedFrame([0, 1]), [0, 0, 0]);
+
+    expect(partners.size).toBe(0);
+  });
+
+  it('leaves a compare series unpaired when no current series shares its seriesIndex', () => {
+    // setClassicPaletteIdxs hands an unmatched compare series a fresh index, so it is alone in its group.
+    const partners = getComparePartnerIdxs(makeAlignedFrame([0, 1]), [0, 0, -86400000]);
+
+    expect(partners.size).toBe(0);
+  });
+
+  it('pairs only within each seriesIndex group when several pairs are present', () => {
+    const partners = getComparePartnerIdxs(makeAlignedFrame([0, 1, 0, 1]), [0, 0, 0, -86400000, -86400000]);
+
+    expect([...partners.entries()].sort()).toEqual([
+      [1, 3],
+      [2, 4],
+      [3, 1],
+      [4, 2],
+    ]);
+  });
+
+  it('leaves a group of two compare fields unpaired, since neither is a current period', () => {
+    const partners = getComparePartnerIdxs(makeAlignedFrame([0, 0]), [0, -86400000, -86400000]);
+
+    expect(partners.size).toBe(0);
+  });
+
+  it('returns no pairs when no field is time-shifted', () => {
+    const partners = getComparePartnerIdxs(makeAlignedFrame([0, 0]), [0, 0, 0]);
+
+    expect(partners.size).toBe(0);
+  });
+
+  it('returns no pairs when compareDiffMs is absent', () => {
+    const partners = getComparePartnerIdxs(makeAlignedFrame([0, 0]), undefined);
+
+    expect(partners.size).toBe(0);
+  });
+
+  it('pairs enum fields, which are graphed like numbers', () => {
+    const partners = getComparePartnerIdxs(makeAlignedFrame([0, 0], FieldType.enum), [0, 0, -86400000]);
+
+    expect(partners.get(1)).toBe(2);
+  });
+
+  it('ignores fields with no seriesIndex, which are not graphed series', () => {
+    const partners = getComparePartnerIdxs(makeAlignedFrame([undefined, undefined]), [0, 0, -86400000]);
+
+    expect(partners.size).toBe(0);
+  });
+});
+
+describe('getCompareDelta', () => {
+  // The display processor is what applies the field's unit and decimals to the absolute delta,
+  // and prepareGraphableFields always installs one, so the fixture must too.
+  const field: Field = {
+    name: 'value',
+    type: FieldType.number,
+    values: [],
+    config: { unit: 'bytes', decimals: 0 },
+  };
+  field.display = getDisplayProcessor({ field, theme: createTheme() });
+
+  it('reads positive when the comparison sits above the current period', () => {
+    // 39 now against 49 a day ago: the comparison is 10 higher, so +10.
+    expect(getCompareDelta(field, 39, 49)).toEqual({ abs: '+10 B', pct: '+25.6%' });
+  });
+
+  it('reads negative when the comparison sits below the current period', () => {
+    expect(getCompareDelta(field, 100, 80)).toEqual({ abs: '\u221220 B', pct: '\u221220%' });
+  });
+
+  it('formats an unchanged value as an unsigned zero', () => {
+    expect(getCompareDelta(field, 100, 100)).toEqual({ abs: '0 B', pct: '0%' });
+  });
+
+  it('omits the percentage when the current value is zero, since it is the percentage baseline', () => {
+    expect(getCompareDelta(field, 0, 100)).toEqual({ abs: '+100 B' });
+  });
+
+  it('still reports an absolute delta when the comparison value is zero', () => {
+    expect(getCompareDelta(field, 50, 0)).toEqual({ abs: '\u221250 B', pct: '\u2212100%' });
+  });
+
+  it('keeps the percentage sign matching the direction of change when both values are negative', () => {
+    // -50 now against -100 then: the comparison sits 50 below, so the delta reads negative.
+    expect(getCompareDelta(field, -50, -100)).toEqual({ abs: '\u221250 B', pct: '\u2212100%' });
+  });
+
+  it('rounds the percentage to one decimal', () => {
+    expect(getCompareDelta(field, 3, 100)?.pct).toBe('+3233.3%');
+  });
+
+  it('returns null when the current value is null, so no delta is claimed', () => {
+    expect(getCompareDelta(field, null, 100)).toBeNull();
+  });
+
+  it('returns null when the compare value is null', () => {
+    expect(getCompareDelta(field, 100, null)).toBeNull();
+  });
+
+  it('returns null for NaN, which would otherwise format as a meaningless delta', () => {
+    expect(getCompareDelta(field, NaN, 100)).toBeNull();
+  });
+
+  it('returns null for Infinity', () => {
+    expect(getCompareDelta(field, Infinity, 100)).toBeNull();
+  });
+
+  it('falls back to the raw magnitude when the field has no display processor', () => {
+    const bare = { name: 'v', type: FieldType.number, config: {}, values: [] };
+    expect(getCompareDelta(bare, 100, 150)).toEqual({ abs: '+50', pct: '+50%' });
   });
 });
 

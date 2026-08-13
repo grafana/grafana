@@ -24,6 +24,9 @@ export {
   getStackingGroups,
   getDisplayValuesForCalcs,
   type StackingGroup,
+  CURSOR_PT_CLASS,
+  CURSOR_PT_VISIBLE_CLASS,
+  CURSOR_PTS_PAIRED_CLASS,
 } from '../components/uPlot/utils';
 export { hasVisibleLegendSeries, PlotLegend } from '../components/uPlot/PlotLegend';
 export { getScaleGradientFn } from '../components/uPlot/config/gradientFills';

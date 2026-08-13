@@ -14,10 +14,25 @@ const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'annotatio
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme' | 'legend'> & {
   legend: TimeSeriesLegendOptions;
   onPinnedToSidebarChange?: (pinned: boolean) => void;
+  /**
+   * Resolves the time-comparison pairing for the aligned frame, keyed by field index (also the uPlot
+   * series index). When it returns a pairing, hovering marks both the hovered series and its counterpart.
+   */
+  getComparePartners?: (alignedFrame: DataFrame) => Map<number, number> | undefined;
 };
 
 export function TimeSeries(props: TimeSeriesProps) {
-  const { timeZone, options, renderers, tweakAxis, tweakScale, legend, frames, onPinnedToSidebarChange } = props;
+  const {
+    timeZone,
+    options,
+    renderers,
+    tweakAxis,
+    tweakScale,
+    legend,
+    frames,
+    onPinnedToSidebarChange,
+    getComparePartners,
+  } = props;
   const theme = useTheme2();
 
   const prepConfig = useCallback(
@@ -34,9 +49,10 @@ export function TimeSeries(props: TimeSeriesProps) {
         hoverProximity: options?.tooltip?.hoverProximity,
         orientation: options?.orientation,
         xAxisConfig: getXAxisConfig(annotationLanes),
+        comparePartners: getComparePartners?.(alignedFrame),
       });
     },
-    [theme, timeZone, options, renderers, tweakAxis, tweakScale]
+    [theme, timeZone, options, renderers, tweakAxis, tweakScale, getComparePartners]
   );
 
   const renderLegend = useCallback(

@@ -1,3 +1,5 @@
+import uPlot from 'uplot';
+
 import {
   createDataFrame,
   createTheme,
@@ -10,6 +12,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { getTheme } from '@grafana/ui';
+import { CURSOR_PT_CLASS, CURSOR_PT_VISIBLE_CLASS, CURSOR_PTS_PAIRED_CLASS } from '@grafana/ui/internal';
 
 import { getXAxisConfig, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';
 
@@ -649,5 +652,170 @@ describe('x-axis time range', () => {
 
     expect(getXTimeRange(builder)()).toEqual([2000, 4000]);
     expect(builder.getState().isPanning).toBe(false);
+  });
+});
+
+describe('time comparison hover points', () => {
+  /** Field/series 1 is the current period, 2 its comparison; they pair in both directions. */
+  const PAIRED = new Map([
+    [1, 2],
+    [2, 1],
+  ]);
+
+  /** Stands in for the plot: the setSeries hook only touches the cursor point elements under `over`. */
+  function makePlotEls(seriesCount: number) {
+    const root = document.createElement('div');
+    const over = document.createElement('div');
+    root.appendChild(over);
+
+    for (let i = 0; i < seriesCount; i++) {
+      const pt = document.createElement('div');
+      pt.classList.add(CURSOR_PT_CLASS);
+      over.appendChild(pt);
+    }
+
+    return { root, over };
+  }
+
+  function fireHooks(
+    builder: ReturnType<typeof preparePlotConfigBuilder>,
+    els: ReturnType<typeof makePlotEls>,
+    focusedSeriesIdx: number | null
+  ) {
+    const hooks = builder.getConfig().hooks ?? {};
+    const u = els as unknown as uPlot;
+
+    hooks.init?.forEach((fn) => fn?.(u, {} as uPlot.Options, [] as unknown as uPlot.AlignedData));
+    hooks.setSeries?.forEach((fn) => fn?.(u, focusedSeriesIdx, {}));
+
+    return Array.from(els.over.querySelectorAll(`.${CURSOR_PT_CLASS}`)).map((pt) =>
+      pt.classList.contains(CURSOR_PT_VISIBLE_CLASS)
+    );
+  }
+
+  it('keeps uPlot\u2019s single hover point when the panel has no time comparison', () => {
+    const builder = buildBuilder(makeTimeFrame());
+
+    expect(builder.getConfig().cursor?.points?.one).toBe(true);
+  });
+
+  it('opts out of the single hover point so a comparison pair can both be marked', () => {
+    const builder = buildBuilder(makeTimeFrame(), { comparePartners: PAIRED });
+
+    expect(builder.getConfig().cursor?.points?.one).toBe(false);
+  });
+
+  it('marks the plot so the stylesheet hides every point that is not opted in', () => {
+    const builder = buildBuilder(makeTimeFrame(), { comparePartners: PAIRED });
+    const els = makePlotEls(2);
+    fireHooks(builder, els, 1);
+
+    expect(els.root).toHaveClass(CURSOR_PTS_PAIRED_CLASS);
+  });
+
+  it('shows the hovered series and its counterpart, hiding the rest', () => {
+    const builder = buildBuilder(makeTimeFrame(), { comparePartners: PAIRED });
+    // Series 1 and 2 are the pair; 3 is an unrelated series that must stay hidden.
+    const visible = fireHooks(builder, makePlotEls(3), 1);
+
+    expect(visible).toEqual([true, true, false]);
+  });
+
+  it('shows the same pair when the comparison series is the hovered one', () => {
+    const builder = buildBuilder(makeTimeFrame(), { comparePartners: PAIRED });
+    const visible = fireHooks(builder, makePlotEls(3), 2);
+
+    expect(visible).toEqual([true, true, false]);
+  });
+
+  it('shows only the hovered series when it has no comparison counterpart', () => {
+    const builder = buildBuilder(makeTimeFrame(), { comparePartners: PAIRED });
+    const visible = fireHooks(builder, makePlotEls(3), 3);
+
+    expect(visible).toEqual([false, false, true]);
+  });
+
+  it('hides every point once the cursor leaves and no series is focused', () => {
+    const builder = buildBuilder(makeTimeFrame(), { comparePartners: PAIRED });
+    const els = makePlotEls(3);
+    fireHooks(builder, els, 1);
+    const visible = fireHooks(builder, els, null);
+
+    expect(visible).toEqual([false, false, false]);
+  });
+
+  it('registers no hover point hooks when there is no time comparison', () => {
+    const builder = buildBuilder(makeTimeFrame());
+    const els = makePlotEls(2);
+    const visible = fireHooks(builder, els, 1);
+
+    // Nothing is opted in, and the plot is not marked, so uPlot's own single-point behavior is untouched.
+    expect(visible).toEqual([false, false]);
+    expect(els.root).not.toHaveClass(CURSOR_PTS_PAIRED_CLASS);
+  });
+});
+
+/**
+ * The suite above drives the hooks with a DOM stand-in. This one builds a real uPlot from the config so
+ * the load-bearing assumption is verified rather than assumed: that turning off `cursor.points.one`
+ * makes uPlot create and position one hover point element per series, in series order.
+ */
+describe('time comparison hover points against a real uPlot instance', () => {
+  function renderRealPlot(comparePartners?: Map<number, number>) {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [1000, 2000, 3000] },
+        { name: 'current', type: FieldType.number, config: {}, values: [39, 41, 43] },
+        { name: 'compare', type: FieldType.number, config: {}, values: [49, 51, 53] },
+      ],
+    });
+
+    const builder = buildBuilder(frame, { comparePartners });
+    const el = document.createElement('div');
+    document.body.appendChild(el);
+
+    return new uPlot(
+      { ...builder.getConfig(), width: 300, height: 200 },
+      [
+        [1000, 2000, 3000],
+        [39, 41, 43],
+        [49, 51, 53],
+      ],
+      el
+    );
+  }
+
+  it('creates one hover point per series when the single-point default is off', () => {
+    const u = renderRealPlot(
+      new Map([
+        [1, 2],
+        [2, 1],
+      ])
+    );
+
+    // Two value series in, two hover point elements out.
+    expect(u.over.querySelectorAll(`.${CURSOR_PT_CLASS}`)).toHaveLength(2);
+  });
+
+  it('creates a single shared hover point when there is no time comparison', () => {
+    const u = renderRealPlot();
+
+    expect(u.over.querySelectorAll(`.${CURSOR_PT_CLASS}`)).toHaveLength(1);
+  });
+
+  it('opts in the hovered series and its counterpart on focus', () => {
+    const u = renderRealPlot(
+      new Map([
+        [1, 2],
+        [2, 1],
+      ])
+    );
+
+    u.setSeries(1, { focus: true });
+
+    const visible = Array.from(u.over.querySelectorAll(`.${CURSOR_PT_CLASS}`)).map((pt) =>
+      pt.classList.contains(CURSOR_PT_VISIBLE_CLASS)
+    );
+    expect(visible).toEqual([true, true]);
   });
 });

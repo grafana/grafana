@@ -24,6 +24,19 @@ import { createLogger } from '../../utils/logger';
 
 import { buildScaleKey } from './internal';
 
+/** uPlot's class on each cursor hover point element. */
+export const CURSOR_PT_CLASS = 'u-cursor-pt';
+
+/**
+ * Opts a cursor hover point in to being shown while `cursor.points.one` is off. Only time comparison
+ * turns `one` off, so that the hovered series and its counterpart are both marked; without it uPlot
+ * positions a point for every series, so the rest stay hidden. See getUplotStyles.
+ */
+export const CURSOR_PT_VISIBLE_CLASS = 'u-cursor-pt-visible';
+
+/** Marks a plot whose hover points are opted in individually, rather than shown one at a time. */
+export const CURSOR_PTS_PAIRED_CLASS = 'u-cursor-pts-paired';
+
 const paddingSide: PaddingSide = (u, side, sidesWithAxes) => {
   let hasCrossAxis = side % 2 ? sidesWithAxes[0] || sidesWithAxes[2] : sidesWithAxes[1] || sidesWithAxes[3];
 

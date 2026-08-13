@@ -317,6 +317,11 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   hoverProximity?: number;
   orientation?: VizOrientation;
   xAxisConfig?: Pick<AxisProps, 'size' | 'gap' | 'ticks'>;
+  /**
+   * Time-comparison pairing, mapping a series index to its counterpart's in both directions. When set,
+   * the cursor marks the hovered series and its counterpart instead of only the closest series.
+   */
+  comparePartners?: Map<number, number>;
 } & T;
 
 export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => UPlotConfigBuilder;

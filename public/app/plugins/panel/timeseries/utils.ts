@@ -3,9 +3,11 @@ import {
   type Field,
   FieldType,
   formatLabels,
+  formattedValueToString,
   getDisplayProcessor,
   type GrafanaTheme2,
   isBooleanUnit,
+  roundDecimals,
   type TimeRange,
   cacheFieldDisplayNames,
   applyNullInsertThreshold,
@@ -48,6 +50,112 @@ export function getCompareSeriesIdentityKey(field: Field, frame?: DataFrame): st
     return `${frame.name} ${name}`;
   }
   return name;
+}
+
+/**
+ * Maps each field index in the aligned frame to its time-comparison counterpart, in both directions
+ * (current -> compare and compare -> current).
+ *
+ * setClassicPaletteIdxs already pairs a compare series with its current-period series by giving both
+ * the same `state.seriesIndex` (that's how they end up the same color), so we reuse that rather than
+ * re-deriving identity here. `compareDiffMs` is the panel's per-field time shift and tells the two
+ * apart: nonzero is the compare series. Compare series with no current-period match get a fresh
+ * unique seriesIndex, so they naturally form a group of one and are skipped.
+ *
+ * @param series - The aligned/joined frame handed to the tooltip
+ * @param compareDiffMs - Per-field time shift in ms, index-aligned with `series.fields`
+ */
+export function getComparePartnerIdxs(series: DataFrame, compareDiffMs?: number[]): Map<number, number> {
+  const partners = new Map<number, number>();
+
+  if (compareDiffMs == null || !compareDiffMs.some((diff) => diff !== 0)) {
+    return partners;
+  }
+
+  // seriesIndex -> field indices sharing it
+  const bySeriesIndex = new Map<number, number[]>();
+
+  series.fields.forEach((field, fieldIdx) => {
+    if (field.type !== FieldType.number && field.type !== FieldType.enum) {
+      return;
+    }
+
+    const seriesIndex = field.state?.seriesIndex;
+    if (seriesIndex == null) {
+      return;
+    }
+
+    const group = bySeriesIndex.get(seriesIndex);
+    group == null ? bySeriesIndex.set(seriesIndex, [fieldIdx]) : group.push(fieldIdx);
+  });
+
+  for (const group of bySeriesIndex.values()) {
+    if (group.length !== 2) {
+      continue;
+    }
+
+    const [a, b] = group;
+    const aIsCompare = (compareDiffMs[a] ?? 0) !== 0;
+    const bIsCompare = (compareDiffMs[b] ?? 0) !== 0;
+
+    // Exactly one of the pair must be the compare series; two compare series (or two current ones)
+    // sharing a seriesIndex means the pairing upstream is not what we assume, so leave them alone.
+    if (aIsCompare === bIsCompare) {
+      continue;
+    }
+
+    partners.set(a, b);
+    partners.set(b, a);
+  }
+
+  return partners;
+}
+
+/**
+ * Formats how far a comparison-period value sits from its current-period counterpart.
+ *
+ * The delta is presented on the comparison row, so it describes the comparison value relative to the
+ * current one: 39 now against 49 a day ago reads as +10, the comparison sitting 10 above today. The
+ * percentage uses the current value as its baseline for the same reason.
+ *
+ * Returns null when either value is not a finite number, since a delta would be meaningless.
+ *
+ * @param currentField - The current-period field, used for its display processor so the absolute
+ *   delta carries the field's unit and decimals
+ * @param currentVal - Raw value from the current period
+ * @param compareVal - Raw value from the comparison period
+ * @returns The signed absolute delta, and the signed percentage delta when the current value is
+ *   nonzero (percent change against a zero baseline is undefined)
+ */
+export function getCompareDelta(
+  currentField: Field,
+  currentVal: unknown,
+  compareVal: unknown
+): { abs: string; pct?: string } | null {
+  if (typeof currentVal !== 'number' || typeof compareVal !== 'number') {
+    return null;
+  }
+
+  if (!Number.isFinite(currentVal) || !Number.isFinite(compareVal)) {
+    return null;
+  }
+
+  const diff = compareVal - currentVal;
+  // Display processors format the magnitude; the sign is prepended so it reads as a delta rather
+  // than a value, and so that "+0" stays distinguishable from a plain reading of zero.
+  const sign = diff > 0 ? '+' : diff < 0 ? '\u2212' : '';
+  const absText = currentField.display
+    ? formattedValueToString(currentField.display(Math.abs(diff)))
+    : `${Math.abs(diff)}`;
+
+  const delta: { abs: string; pct?: string } = { abs: `${sign}${absText}` };
+
+  if (currentVal !== 0) {
+    const pct = (diff / Math.abs(currentVal)) * 100;
+    delta.pct = `${sign}${roundDecimals(Math.abs(pct), 1)}%`;
+  }
+
+  return delta;
 }
 
 // this will re-enumerate all enum fields on the same scale to create one ordinal progression
