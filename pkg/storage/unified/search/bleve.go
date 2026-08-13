@@ -140,8 +140,9 @@ type BleveOptions struct {
 // the two cannot disagree about what is expired. Search and storage can be separate
 // deployments, so these have to be set for this process too.
 type TrashRetentionConfig struct {
-	// Enabled reports whether garbage collection runs. With it off nothing is ever
-	// collected, so old trash is still restorable and must not be hidden.
+	// Enabled reports whether garbage collection removes anything. With it off, or
+	// in dry run, nothing is ever collected, so old trash is still restorable and
+	// must not be hidden.
 	Enabled bool
 	MaxAge  time.Duration
 	// DashboardsMaxAge is separate because dashboards keep trash far longer.
@@ -151,8 +152,9 @@ type TrashRetentionConfig struct {
 // expirationThreshold returns the deletion time, in unix milliseconds, that trash
 // for this resource must be at or after to still be offered.
 //
-// Mirrors kvStorageBackend.garbageCollectionCutoffTimestamp. A window of zero
-// applies none, which would otherwise expire everything at once.
+// Mirrors kvStorageBackend.garbageCollectionCutoffTimestamp, including a window of
+// zero, which expires everything: the collector computes the same cutoff and
+// removes all of it.
 func (c TrashRetentionConfig) expirationThreshold(group, resource string, now time.Time) (int64, bool) {
 	if !c.Enabled {
 		return 0, false
@@ -160,9 +162,6 @@ func (c TrashRetentionConfig) expirationThreshold(group, resource string, now ti
 	window := c.MaxAge
 	if group == dashboardGroup && resource == dashboardResource {
 		window = c.DashboardsMaxAge
-	}
-	if window <= 0 {
-		return 0, false
 	}
 	return now.Add(-window).UnixMilli(), true
 }

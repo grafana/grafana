@@ -59,13 +59,13 @@ func TestTrashRetentionWindow(t *testing.T) {
 			want:      []string{"no-timestamp", "old", "recent"},
 		},
 		{
-			// A window of zero would otherwise expire everything the moment
-			// collection was switched on.
-			name:      "a zero window applies no filter",
+			// The collector computes the same cutoff from a zero window and removes
+			// everything older, so search has to hide the same set.
+			name:      "a zero window expires everything with a deletion time",
 			group:     "dashboard.grafana.app",
 			resource:  "dashboards",
 			retention: search.TrashRetentionConfig{Enabled: true},
-			want:      []string{"no-timestamp", "old", "recent"},
+			want:      []string{"no-timestamp"},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
