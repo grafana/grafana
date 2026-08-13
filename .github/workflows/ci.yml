@@ -25,8 +25,6 @@ jobs:
     uses: ./.github/workflows/bootstrap-detect-changes.yml
 
   go-mod-cache:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true'
     permissions:
       contents: read
       id-token: write
@@ -35,7 +33,7 @@ jobs:
       cache: mod
 
   go-build-cache:
-    needs: [detect-changes, go-mod-cache]
+    needs: go-mod-cache
     permissions:
       contents: read
       id-token: write
@@ -44,8 +42,6 @@ jobs:
       cache: build
 
   go-remote-cache:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true'
     permissions:
       contents: read
     uses: ./.github/workflows/bootstrap-go-remote-cache.yml
@@ -54,7 +50,6 @@ jobs:
   # pull request changing the lock file needs both entries. Empty is this ref.
   yarn-cache:
     needs: detect-changes
-    if: needs.detect-changes.outputs.frontend == 'true'
     strategy:
       matrix:
         ref: ${{ (github.event_name == 'pull_request' && needs.detect-changes.outputs.frontend-dependencies == 'true') && fromJSON(format('["", "{0}"]', github.base_ref)) || fromJSON('[""]') }}

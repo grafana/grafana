@@ -94,6 +94,7 @@ runs:
         key: yarn-download-cache-${{ inputs.cache-prefix }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
         restore-keys: |
           yarn-download-cache-${{ inputs.cache-prefix }}-
+        fail-on-cache-miss: ${{ inputs.cache-write != 'true' }}
 
     - name: Restore node_modules
       if: inputs.cache-node-modules == 'true'
