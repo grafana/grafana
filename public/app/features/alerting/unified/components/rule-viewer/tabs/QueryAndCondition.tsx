@@ -59,49 +59,35 @@ const QueryAndCondition = ({ rule }: Props) => {
 
   const { allDataSourcesAvailable, isLoading: isDsLoading } = useAlertQueriesStatus(queries);
 
-  // Tracks whether a run has been initiated but both runners have not yet emitted their first
-  // LoadingState.Loading value. Without this, isPreviewLoading is transiently false between the
-  // moment onRunQueries fires and the moment the runners populate queryPreviewData.
-  const [isRunning, setIsRunning] = useState(false);
+  const [preparingQueryRuns, setPreparingQueryRuns] = useState(0);
 
   const onRunQueries = useCallback(() => {
     if (queries.length === 0 || isDsLoading || !allDataSourcesAvailable) {
       return;
     }
 
-    let condition;
-    if (rule && rulerRuleType.grafana.rule(rule.rulerRule)) {
-      condition = rule.rulerRule.grafana_alert.condition;
-    }
-    setIsRunning(true);
-    // Run original queries for expression evaluation
-    runExpressionQueries(queries, condition ?? 'A');
-    // Run range-converted data source queries for visualization
-    runVisualizationQueries(visualizationQueries, '');
+    const condition = rulerRuleType.grafana.rule(rule.rulerRule) ? rule.rulerRule.grafana_alert.condition : 'A';
+
+    setPreparingQueryRuns((runs) => runs + 1);
+    void Promise.allSettled([
+      runExpressionQueries(queries, condition),
+      runVisualizationQueries(visualizationQueries, ''),
+    ]).then(() => {
+      setPreparingQueryRuns((runs) => Math.max(0, runs - 1));
+    });
   }, [
     queries,
     visualizationQueries,
     isDsLoading,
     allDataSourcesAvailable,
-    rule,
+    rule.rulerRule,
     runExpressionQueries,
     runVisualizationQueries,
   ]);
 
   useEffect(() => {
-    if (!isDsLoading && allDataSourcesAvailable) {
-      onRunQueries();
-    }
-  }, [isDsLoading, allDataSourcesAvailable, onRunQueries]);
-
-  // Clear isRunning once both runners have settled (neither is in a loading state anymore).
-  // isExpressionLoading and isVisualizationLoading stay false until the runners emit their first
-  // LoadingState.Loading, so we only clear isRunning after at least one run has been kicked off.
-  useEffect(() => {
-    if (isRunning && !isExpressionLoading && !isVisualizationLoading) {
-      setIsRunning(false);
-    }
-  }, [isRunning, isExpressionLoading, isVisualizationLoading]);
+    onRunQueries();
+  }, [onRunQueries]);
 
   // Merge: visualization (range) data for data source queries, expression data for expressions
   const mergedPreviewData = useMemo(() => {
@@ -114,8 +100,8 @@ const QueryAndCondition = ({ rule }: Props) => {
   // the expression runner runs the original raw queries + expression DAG that yield the result data.
   // Both include isDsLoading because the runners can only start once the data source availability
   // check has resolved — without it there is a gap where nothing reports loading yet.
-  const queryGraphLoading = isDsLoading || isRunning || isVisualizationLoading;
-  const queryDataLoading = isDsLoading || isRunning || isExpressionLoading;
+  const queryGraphLoading = isDsLoading || preparingQueryRuns > 0 || isVisualizationLoading;
+  const queryDataLoading = isDsLoading || preparingQueryRuns > 0 || isExpressionLoading;
 
   return (
     <>

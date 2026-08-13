@@ -196,6 +196,31 @@ describe('loading state', () => {
     // Loading bars disappear once both runners have settled
     await waitFor(() => expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument());
   });
+
+  it('keeps the loading bar visible while query preparation is pending', async () => {
+    let resolveDataSource!: (dataSource: DataSourceApi) => void;
+    const dataSourcePending = new Promise<DataSourceApi>((resolve) => {
+      resolveDataSource = resolve;
+    });
+    const getDataSource = jest.mocked(getDataSourceSrv().get);
+    getDataSource.mockImplementation(() => dataSourcePending);
+
+    const rule = makeGrafanaRule([
+      {
+        refId: 'A',
+        datasourceUid: DS_UID,
+        model: { refId: 'A' },
+      },
+    ]);
+
+    render(<QueryAndCondition rule={rule} />);
+
+    await waitFor(() => expect(getDataSource).toHaveBeenCalledTimes(2));
+    expect(screen.getByTestId('eval-loading-bar')).toBeInTheDocument();
+
+    resolveDataSource({ uid: DS_UID } as DataSourceApi);
+    await waitFor(() => expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument());
+  });
 });
 
 // ---------------------------------------------------------------------------
