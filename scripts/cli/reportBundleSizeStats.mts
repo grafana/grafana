@@ -6,11 +6,10 @@ const REPO_ROOT = path.resolve(dirname(fileURLToPath(import.meta.url)), '..', '.
 const BUILD_DIR = path.join(REPO_ROOT, 'public', 'build');
 
 /**
- * The two production builds we emit. The names are used as the metric prefix.
+ * The production builds we emit. The names are used as the metric prefix.
  */
 const MANIFESTS = [
   { name: 'default', fileName: 'assets-manifest.json' },
-  { name: 'react19', fileName: 'assets-manifest-react19.json' },
 ];
 
 interface Entrypoint {

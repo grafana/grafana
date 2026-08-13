@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	ScopeVariablesRoot   = "variables"
-	ScopeVariablesPrefix = "variables:uid:"
+	ScopeVariablesRoot = "variables"
 
 	ActionVariablesCreate = ac.ActionVariablesCreate
 	ActionVariablesRead   = ac.ActionVariablesRead
@@ -23,10 +22,7 @@ const (
 	ActionVariablesDelete = ac.ActionVariablesDelete
 )
 
-var (
-	ScopeVariablesProvider = ac.NewScopeProvider(ScopeVariablesRoot)
-	ScopeVariablesAll      = ScopeVariablesProvider.GetResourceAllScope()
-)
+var ScopeVariablesProvider = ac.NewScopeProvider(ScopeVariablesRoot)
 
 // folderUIDFromVariableMetadataName derives the parent folder UID from a Variable
 // metadata.name. Folder-scoped names are "<specName>--<folderUID>"; stack-wide

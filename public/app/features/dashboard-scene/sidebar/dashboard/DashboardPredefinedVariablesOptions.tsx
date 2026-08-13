@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useFlagGlobalDashboardVariables } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 import {
   AnnoKeyIgnorePredefinedVariables,
@@ -115,7 +115,7 @@ interface Props {
 export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
   const { meta } = dashboard.useState();
   const canEditDenyList = Boolean(meta.canSave) && !dashboard.managedResourceCannotBeEdited();
-  const globalDashboardVariablesEnabled = useFlagGlobalDashboardVariables();
+  const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
 
   const annotationValue = meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
   const mode = useMemo(() => {

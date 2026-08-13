@@ -1309,11 +1309,8 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 	}
 
 	if query.SearchTitle != "" {
-		words := strings.Fields(query.SearchTitle)
-		if len(words) > 0 {
-			// Build sequential pattern: %word1%word2%word3%
-			pattern := strings.Join(words, "%")
-			sql, param := st.SQLStore.GetDialect().LikeOperator("title", true, pattern, true)
+		for _, term := range searchTitleTerms(query.SearchTitle) {
+			sql, param := st.SQLStore.GetDialect().LikeOperator("title", true, term, true)
 			q = q.And(sql, param)
 		}
 	}
@@ -1369,6 +1366,30 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 		q = applyListAlertRulesOrderByNamespace(q)
 	}
 	return q, groupsSet, nil
+}
+
+// searchTitleMinTerm mirrors the term-length floor unified search applies before
+// querying its title index. That check counts bytes rather than runes, so this
+// one does too instead of diverging on multibyte titles.
+const searchTitleMinTerm = 3
+
+// searchTitleTerms splits a title search into terms a title must all contain, in
+// any order, approximating how unified search matches title n-grams. The two
+// still differ where unified's analyzer strips punctuation and English stop
+// words and this does not. Terms below searchTitleMinTerm are dropped unless
+// every term is short, since dropping them all would match every rule.
+func searchTitleTerms(search string) []string {
+	words := strings.Fields(search)
+	terms := make([]string, 0, len(words))
+	for _, w := range words {
+		if len(w) >= searchTitleMinTerm {
+			terms = append(terms, w)
+		}
+	}
+	if len(terms) == 0 {
+		return words
+	}
+	return terms
 }
 
 func applyListAlertRulesOrderByNamespace(q *xorm.Session) *xorm.Session {

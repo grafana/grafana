@@ -160,6 +160,8 @@ describe('formatUtcOffset', () => {
     expect(formatUtcOffset(JAN, 'America/New_York')).toBe('UTC-05:00');
     expect(formatUtcOffset(JUL, 'America/New_York')).toBe('UTC-04:00');
     expect(formatUtcOffset(JUL, 'Asia/Kolkata')).toBe('UTC+05:30');
+    // Legacy spellings resolve through the canonical easy-tz entry.
+    expect(formatUtcOffset(JAN, 'Asia/Calcutta')).toBe('UTC+05:30');
   });
 
   it('resolves the internal utc zone', () => {

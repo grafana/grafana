@@ -2,7 +2,7 @@
 import { render, renderHook, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import memoize from 'micro-memoize';
-import { createRef, type Key } from 'react';
+import { type ComponentProps, createRef, isValidElement, type Key } from 'react';
 
 import {
   createDataFrame,
@@ -11,16 +11,18 @@ import {
   type DataHoverEvent,
   type EventBus,
   type Field,
+  FieldColorModeId,
   FieldType,
 } from '@grafana/data';
-import { type RenderRowProps } from '@grafana/react-data-grid';
+import { type CalculatedColumn, type RenderRowProps } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../utils/colors';
 import { type PanelContext } from '../../PanelChrome';
 
+import { type HeaderCell } from './components/HeaderCell';
 import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
-import { type FilterType, type NestedRowEntry, type TableRow, type TableSummaryRow } from './types';
+import { type FilterType, type NestedRowEntry, type TableColumn, type TableRow, type TableSummaryRow } from './types';
 import { type ApplyFilterResult, applyFilter, getCellColorInlineStylesFactory } from './utils';
 
 // -----------------------------------------------------------------------------
@@ -258,8 +260,30 @@ describe('useDataGridRows', () => {
 // useColumnBuilderFromFields
 // -----------------------------------------------------------------------------
 
-function makeFilterResult(): ApplyFilterResult {
-  return applyFilter([], {}, []);
+/**
+ * With an empty filter, `crossFilterTailRows` is just the depth-0 rows, so passing distinct rows
+ * gives each filter result an identifiable fingerprint to assert on.
+ */
+function makeFilterResult(scopedRows: TableRow[] = []): ApplyFilterResult {
+  return applyFilter(scopedRows, {}, []);
+}
+
+/**
+ * The resolved filter result is only observable through the props the column hands to `HeaderCell`.
+ */
+function getHeaderCellProps(column: TableColumn): ComponentProps<typeof HeaderCell> {
+  const node = column.renderHeaderCell?.({
+    // The grid augments each column into a CalculatedColumn before rendering; the header cell
+    // only reads the properties the column already carries.
+    column: column as unknown as CalculatedColumn<TableRow, TableSummaryRow>,
+    sortDirection: undefined,
+    priority: undefined,
+    tabIndex: -1,
+  });
+  if (!isValidElement<ComponentProps<typeof HeaderCell>>(node)) {
+    throw new Error(`renderHeaderCell did not return an element for column "${column.key}"`);
+  }
+  return node.props;
 }
 
 function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConfig {
@@ -327,10 +351,11 @@ describe('useColumnBuilderFromFields', () => {
     { __depth: 0, __index: 1, A: 'y', B: 2 },
   ];
 
-  it('builds one column per field', () => {
+  it('builds one column per field, keyed and named by the field display name', () => {
     const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
     const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
-    expect(result.columns).toHaveLength(2);
+    expect(result.columns.map((c) => c.key)).toEqual(['A', 'B']);
+    expect(result.columns.map((c) => c.name)).toEqual(['A', 'B']);
   });
 
   it('populates cellRootRenderers keyed by display name', () => {
@@ -338,14 +363,6 @@ describe('useColumnBuilderFromFields', () => {
     const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
     expect(typeof result.cellRootRenderers['A']).toBe('function');
     expect(typeof result.cellRootRenderers['B']).toBe('function');
-  });
-
-  it('sets column key and name to the field display name', () => {
-    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
-    const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
-    expect(result.columns[0].key).toBe('A');
-    expect(result.columns[0].name).toBe('A');
-    expect(result.columns[1].key).toBe('B');
   });
 
   it('marks columns frozen when index is within frozen range', () => {
@@ -363,8 +380,8 @@ describe('useColumnBuilderFromFields', () => {
     expect(result.columns[1].width).toBe(200);
   });
 
-  it('patches Pill cell fields to use FixedColor mode when mappings exist', () => {
-    const mappingFrame = createDataFrame({
+  function makePillFrame({ withMappings }: { withMappings: boolean }): DataFrame {
+    return createDataFrame({
       fields: [
         {
           name: 'Status',
@@ -372,22 +389,43 @@ describe('useColumnBuilderFromFields', () => {
           values: ['ok'],
           config: {
             custom: { cellOptions: { type: TableCellDisplayMode.Pill } },
-            mappings: [{ type: 'value', options: { ok: { text: 'OK' } } } as never],
+            mappings: withMappings ? [{ type: 'value', options: { ok: { text: 'OK' } } } as never] : undefined,
           },
         },
       ],
     });
+  }
+
+  it('patches Pill cell fields to FixedColor mode with the fallback color when mappings exist', () => {
+    const mappingFrame = makePillFrame({ withMappings: true });
     const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+
     const result = callFromFields(hook, mappingFrame.fields, [100], mappingFrame, [], []);
-    expect(result.columns).toHaveLength(1);
+
+    expect(result.columns[0].field.config.color).toEqual({ mode: FieldColorModeId.Fixed, fixedColor: '#808080' });
+    // The patched display processor applies the mapped text but takes its color from Fixed mode.
+    const display = result.columns[0].field.display!('ok');
+    expect(display.text).toBe('OK');
+    expect(display.color).toBe('#808080');
+    // The frame's own field must not be mutated — only the column's copy is patched.
+    expect(mappingFrame.fields[0].config.color).toBeUndefined();
   });
 
-  it('handles an empty fields array', () => {
+  it('leaves Pill cell fields untouched when there are no mappings', () => {
+    const pillFrame = makePillFrame({ withMappings: false });
+    const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+
+    const result = callFromFields(hook, pillFrame.fields, [100], pillFrame, [], []);
+
+    expect(result.columns[0].field.config.color).toBeUndefined();
+  });
+
+  it('builds no columns and no cell renderers for an empty fields array', () => {
     const emptyFrame = createDataFrame({ fields: [] });
     const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
     const result = callFromFields(hook, [], [], emptyFrame, [], []);
-    expect(result.columns).toHaveLength(0);
-    expect(Object.keys(result.cellRootRenderers)).toHaveLength(0);
+    expect(result.columns).toEqual([]);
+    expect(result.cellRootRenderers).toEqual({});
   });
 
   describe('memoization', () => {
@@ -414,34 +452,52 @@ describe('useColumnBuilderFromFields', () => {
   });
 
   describe('nested filter resolution', () => {
-    it('uses the top-level filterResult when visibleRows have no __parentIndex', () => {
-      const topLevel = makeFilterResult();
-      const nestedFilter = makeFilterResult();
-      const nestedRows: NestedRowEntry[] = [{ raw: [], final: [], filterResult: nestedFilter }];
-      const hook = renderColumnBuilderHook({ filterResult: topLevel, config: makeConfig(), nestedRows });
+    const topLevelScope: TableRow[] = [{ __depth: 0, __index: 0, A: 'top-level-scope', B: 1 }];
+    const perParentScope: TableRow[] = [{ __depth: 0, __index: 0, A: 'per-parent-scope', B: 2 }];
+    const nestedVisible: TableRow[] = [{ __depth: 1, __index: 0, __parentIndex: 0, A: 'x', B: 1 }];
 
-      // No __parentIndex on the visible rows → top-level path.
-      expect(() => callFromFields(hook, frame.fields, [100, 100], frame, rows, rows)).not.toThrow();
+    function makeNestedRows(): NestedRowEntry[] {
+      return [{ raw: [], final: [], filterResult: makeFilterResult(perParentScope) }];
+    }
+
+    it('uses the top-level filterResult when visibleRows have no __parentIndex', () => {
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(topLevelScope),
+        config: makeConfig(),
+        nestedRows: makeNestedRows(),
+      });
+
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const headerProps = getHeaderCellProps(result.columns[0]);
+      expect(headerProps.crossFilterTailRows).toEqual(topLevelScope);
+      expect(headerProps.parentIndex).toBeUndefined();
     });
 
     it('uses the per-parent filterResult when visibleRows[0] has __parentIndex set', () => {
-      const topLevel = makeFilterResult();
-      const nestedFilter = makeFilterResult();
-      const nestedRows: NestedRowEntry[] = [{ raw: [], final: [], filterResult: nestedFilter }];
-      const hook = renderColumnBuilderHook({ filterResult: topLevel, config: makeConfig(), nestedRows });
-
-      const nestedVisible: TableRow[] = [{ __depth: 1, __index: 0, __parentIndex: 0, A: 'x', B: 1 }];
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(topLevelScope),
+        config: makeConfig(),
+        nestedRows: makeNestedRows(),
+      });
 
       const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, nestedVisible);
-      expect(result.columns).toHaveLength(2);
+
+      const headerProps = getHeaderCellProps(result.columns[0]);
+      expect(headerProps.crossFilterTailRows).toEqual(perParentScope);
+      expect(headerProps.parentIndex).toBe(0);
     });
 
     it('falls back to the top-level filterResult when nestedRows is undefined', () => {
-      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
-      const visibleWithParentIdx: TableRow[] = [{ __depth: 1, __index: 0, __parentIndex: 0, A: 'x', B: 1 }];
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(topLevelScope),
+        config: makeConfig(),
+      });
 
-      // nestedRows is undefined → must not crash trying to read nestedRows[0].
-      expect(() => callFromFields(hook, frame.fields, [100, 100], frame, rows, visibleWithParentIdx)).not.toThrow();
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, nestedVisible);
+
+      const headerProps = getHeaderCellProps(result.columns[0]);
+      expect(headerProps.crossFilterTailRows).toEqual(topLevelScope);
     });
   });
 });

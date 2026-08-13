@@ -54,6 +54,7 @@ type AlertRuleService struct {
 	log                    log.Logger
 	nsValidatorProvider    NotificationSettingsValidatorProvider
 	authz                  ruleAccessControlService
+	ruleValidator          RuleMutationValidator
 }
 
 func NewAlertRuleService(ruleStore RuleStore,
@@ -67,6 +68,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 	log log.Logger,
 	ns NotificationSettingsValidatorProvider,
 	authz RuleAccessControlService,
+	ruleValidator RuleMutationValidator,
 ) *AlertRuleService {
 	return &AlertRuleService{
 		defaultIntervalSeconds: defaultIntervalSeconds,
@@ -80,6 +82,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 		log:                    log,
 		nsValidatorProvider:    ns,
 		authz:                  newRuleAccessControlService(authz),
+		ruleValidator:          ruleValidator,
 	}
 }
 
@@ -95,9 +98,11 @@ type ListRuleBoolFilter struct {
 }
 
 type ListAlertRulesOptions struct {
-	RuleType                  models.RuleTypeFilter
-	Limit                     int64
-	ContinueToken             string
+	RuleType      models.RuleTypeFilter
+	Limit         int64
+	ContinueToken string
+	// RuleUIDs restricts the results to rules with these UIDs (metadata.name).
+	RuleUIDs                  []string
 	GroupFilter               ListRuleStringFilter
 	FolderFilter              ListRuleStringFilter
 	TitleFilter               ListRuleStringFilter
@@ -109,6 +114,8 @@ type ListAlertRulesOptions struct {
 	RoutingTreeFilter         ListRuleStringFilter
 	MetricFilter              ListRuleStringFilter
 	TargetDatasourceUIDFilter ListRuleStringFilter
+	DatasourceUIDs            []string
+	SearchTitle               string
 }
 
 // extractSingleValue returns the single value from a ListRuleStringFilter's Include or Exclude slice,
@@ -214,6 +221,7 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 	q := models.ListAlertRulesExtendedQuery{
 		ListAlertRulesQuery: models.ListAlertRulesQuery{
 			OrgID:                            user.GetOrgID(),
+			RuleUIDs:                         opts.RuleUIDs,
 			RuleGroups:                       opts.GroupFilter.Include,
 			ExcludeRuleGroups:                opts.GroupFilter.Exclude,
 			RuleGroupExists:                  opts.GroupFilter.Exists,
@@ -235,6 +243,8 @@ func (service *AlertRuleService) ListAlertRules(ctx context.Context, user identi
 			ExcludeRecordMetric:              f.metricExclude,
 			RecordTargetDatasourceUIDExact:   f.targetDSInclude,
 			ExcludeRecordTargetDatasourceUID: f.targetDSExclude,
+			DataSourceUIDs:                   opts.DatasourceUIDs,
+			SearchTitle:                      opts.SearchTitle,
 		},
 		RuleType:      opts.RuleType,
 		Limit:         opts.Limit,
@@ -503,6 +513,9 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	}
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
+		return models.AlertRule{}, err
+	}
+	if err := service.validateRuleMutation(ctx, &rule, manager); err != nil {
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
@@ -844,6 +857,19 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 }
 
 func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *store.GroupDelta, manager utils.ManagerProperties, versionMessage string) error {
+	// Group replace is the path used by file and Terraform provisioning; it does not
+	// flow through CreateAlertRule/UpdateAlertRule, so validate here as well.
+	for _, r := range delta.New {
+		if err := service.validateRuleMutation(ctx, r, manager); err != nil {
+			return err
+		}
+	}
+	for _, u := range delta.Update {
+		if err := service.validateRuleMutation(ctx, u.New, manager); err != nil {
+			return err
+		}
+	}
+
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// Delete first as this could prevent future unique constraint violations.
 		if len(delta.Delete) > 0 {
@@ -1007,6 +1033,9 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
+		return models.AlertRule{}, err
+	}
+	if err := service.validateRuleMutation(ctx, &rule, manager); err != nil {
 		return models.AlertRule{}, err
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {

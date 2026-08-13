@@ -6,8 +6,6 @@ import { Provider } from 'react-redux';
 import { type DataFrame, MutableDataFrame } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
 import {
-  type DataSourceSrv,
-  setDataSourceSrv,
   setPluginLinksHook,
   setPluginComponentsHook,
   useAppPluginInstalled,
@@ -32,6 +30,11 @@ jest.mock('./components/TracePageHeader/SpanGraph/render-into-canvas', () => ({
   ...jest.requireActual('./components/TracePageHeader/SpanGraph/render-into-canvas'),
   __esModule: true,
   default: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
 const mockUseAppPluginInstalled = jest.mocked(useAppPluginInstalled);
@@ -95,12 +98,6 @@ describe('TraceView', () => {
       isLoading: false,
       components: [],
     }));
-
-    setDataSourceSrv({
-      getInstanceSettings() {
-        return undefined;
-      },
-    } as DataSourceSrv);
   });
 
   it('renders TraceTimelineViewer', () => {

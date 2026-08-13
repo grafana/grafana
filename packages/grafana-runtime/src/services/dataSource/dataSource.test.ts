@@ -213,6 +213,23 @@ describe('plugin', () => {
       expect(result).toBe(instance);
     });
 
+    it('resolves a template variable that is not at the start of the ref', async () => {
+      const settings = ds();
+      initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+      setTemplateSrv({
+        getVariables: () => [],
+        replace: (v?: string) => (v === 'logs-${stage}-loki' ? settings.name : (v ?? '')),
+      } as unknown as TemplateSrv);
+
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      setDataSourcePluginImporter(
+        jest.fn().mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} })
+      );
+
+      const result = await getDataSourceInstance('logs-${stage}-loki');
+      expect(result).toBe(instance);
+    });
+
     describe('reference resolution parity with DatasourceSrv.get', () => {
       // Two test-db sources, Bravo is the default.
       const seedAlphaBravo = () => {
@@ -540,6 +557,18 @@ describe('plugin', () => {
 
       const result = await getDataSourceInstance({ type: '__expr__', uid: '__expr__' });
       expect(result).toBe(expr);
+    });
+
+    it('resolves a DataSourceRef with the expression uid but no type', async () => {
+      initDataSourceInstanceSettings({}, '');
+      const expr = registerExpression();
+      const mockImport = jest.fn();
+      setDataSourcePluginImporter(mockImport);
+
+      const result = await getDataSourceInstance({ uid: '__expr__' });
+
+      expect(result).toBe(expr);
+      expect(mockImport).not.toHaveBeenCalled();
     });
 
     it('survives a reload (state is in expressionDs module, independent of the plugin cache)', async () => {

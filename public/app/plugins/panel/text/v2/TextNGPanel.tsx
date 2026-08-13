@@ -195,5 +195,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   codeContainer: css({
     height: '100%',
     overflow: 'hidden',
+    // CodeMirror's wrapper div has no height of its own, so without this the
+    // editor grows past the panel instead of scrolling internally
+    'div:has(> .cm-editor)': {
+      height: '100%',
+    },
   }),
 });

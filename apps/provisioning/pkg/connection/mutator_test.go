@@ -1,7 +1,6 @@
 package connection
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -106,7 +105,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			m := NewAdmissionMutator(factory)
 			attr := newMutatorTestAttributes(tt.obj, nil, admission.Create)
 
-			err := m.Mutate(context.Background(), attr, nil)
+			err := m.Mutate(t.Context(), attr, nil)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -120,6 +119,91 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			if tt.obj != nil {
 				require.Contains(t, tt.obj.(*provisioning.Connection).Name, tt.expectObjectNameContains)
 			}
+		})
+	}
+}
+
+func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
+	tests := []struct {
+		name      string
+		newOAuth  *provisioning.ConnectionOAuthConfig
+		newSecure provisioning.ConnectionSecure
+		oldOAuth  *provisioning.ConnectionOAuthConfig
+		wantToken common.InlineSecureValue
+	}{
+		{
+			name:      "keeps token when oauth credentials are unchanged",
+			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken: common.InlineSecureValue{},
+		},
+		{
+			name:      "removes token when oauth client ID is changed",
+			newOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "new-client"},
+			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "old-client"},
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
+		{
+			name:     "removes token when oauth client secret is changed",
+			newOAuth: &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			newSecure: provisioning.ConnectionSecure{
+				ClientSecret: common.InlineSecureValue{Create: "new-secret-value"},
+			},
+			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
+		{
+			name:     "removes token when oauth client secret reference is changed",
+			newOAuth: &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			newSecure: provisioning.ConnectionSecure{
+				ClientSecret: common.InlineSecureValue{Name: "new-secret"},
+			},
+			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken: common.InlineSecureValue{Remove: true},
+		},
+		{
+			name:     "keeps token when oauth client secret reference is unchanged",
+			newOAuth: &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			newSecure: provisioning.ConnectionSecure{
+				ClientSecret: common.InlineSecureValue{Name: "old-secret"},
+			},
+			oldOAuth:  &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken: common.InlineSecureValue{},
+		},
+		{
+			name:      "keeps token when connection is not oauth",
+			wantToken: common.InlineSecureValue{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			factory := NewMockFactory(t)
+			factory.EXPECT().Mutate(mock.Anything, mock.Anything).Return(nil)
+
+			obj := &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: provisioning.ConnectionSpec{
+					Type:  provisioning.GithubConnectionType,
+					OAuth: tt.newOAuth,
+				},
+				Secure: tt.newSecure,
+			}
+			old := &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: provisioning.ConnectionSpec{
+					Type:  provisioning.GithubConnectionType,
+					OAuth: tt.oldOAuth,
+				},
+				Secure: provisioning.ConnectionSecure{
+					Token:        common.InlineSecureValue{Name: "old-token"},
+					ClientSecret: common.InlineSecureValue{Name: "old-secret"},
+				},
+			}
+
+			m := NewAdmissionMutator(factory)
+			require.NoError(t, m.Mutate(t.Context(), newMutatorTestAttributes(obj, old, admission.Update), nil))
+			assert.Equal(t, tt.wantToken, obj.Secure.Token)
 		})
 	}
 }

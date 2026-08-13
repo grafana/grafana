@@ -281,6 +281,18 @@ jobs:
           path: blob-report
           retention-days: 1
 
+  run-diagnostics-e2e:
+    needs:
+      - build-backend
+      - build-frontend
+    name: Diagnostics e2e (on-prem)
+    permissions:
+      contents: read
+    uses: ./.github/workflows/pr-diagnostics-e2e.yml
+    with:
+      backend-artifact-name: grafana-backend
+      frontend-artifact-name: grafana-frontend
+
   required-playwright-tests:
     needs:
       - run-playwright-tests

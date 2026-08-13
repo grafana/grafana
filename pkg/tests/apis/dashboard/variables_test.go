@@ -25,7 +25,7 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous:     true,
-		EnableFeatureToggles: []string{"globalDashboardVariables"},
+		EnableFeatureToggles: []string{"grafana.dashboardGlobalVariables"},
 	})
 	t.Cleanup(helper.Shutdown)
 
@@ -257,6 +257,36 @@ func containsVariableName(items []unstructured.Unstructured, name string) bool {
 		}
 	}
 	return false
+}
+
+// TestIntegrationVariablesV2Beta1FlagDisabled asserts the flag-off path after
+// Variable storage is always registered: enablement is enforced solely by the
+// authorizer, so disabled means 403 (not 404).
+func TestIntegrationVariablesV2Beta1FlagDisabled(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+	t.Cleanup(helper.Shutdown)
+
+	ctx := context.Background()
+	variableClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+	})
+
+	const denyReason = "global dashboard variables feature is not enabled"
+
+	_, err := variableClient.Resource.List(ctx, metav1.ListOptions{})
+	require.Error(t, err)
+	require.True(t, k8serrors.IsForbidden(err), "expected forbidden error, got: %v", err)
+	require.Contains(t, err.Error(), denyReason)
+
+	_, err = variableClient.Resource.Create(ctx, buildVariableObject("", "region", ""), metav1.CreateOptions{})
+	require.Error(t, err)
+	require.True(t, k8serrors.IsForbidden(err), "expected forbidden error, got: %v", err)
+	require.Contains(t, err.Error(), denyReason)
 }
 
 func buildFolderObject(namespace string, title string) *unstructured.Unstructured {

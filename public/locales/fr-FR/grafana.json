@@ -613,12 +613,6 @@
       "title-restore-version": "Restaurer la version",
       "title-restoring-alertmanager-configuration": "Restauration de la configuration d’Alertmanager"
     },
-    "alerts-activity-banner": {
-      "description": "Une toute nouvelle page est désormais disponible pour traiter les tâches opérationnelles liées à vos règles d’alerte gérées par Grafana. Découvrez quelles alertes sont déclenchées, explorez les informations historiques, et filtrez et regroupez les alertes pour améliorer votre triage et votre analyse des causes profondes.",
-      "open-button": "Afficher l’activité des alertes",
-      "open-button-aria": "Ouvrir l’activité des alertes",
-      "title": "L’activité des alertes est maintenant disponible !"
-    },
     "alerts-folder-view": {
       "aria-label-sort": "Trier",
       "label-filter-placeholder-search-alerts-by-labels": "Rechercher des alertes par étiquette",
@@ -793,7 +787,9 @@
         "value-in-transition": "Valeur en transition"
       },
       "error": {
-        "server-error": "Échec de la requête concernant l’historique des états d’alerte : le serveur a renvoyé une erreur"
+        "server-error": "Échec de la requête concernant l’historique des états d’alerte : le serveur a renvoyé une erreur",
+        "server-error-description": "",
+        "title": ""
       },
       "filter": {
         "clear": "Supprimer les filtres",
@@ -3291,6 +3287,8 @@
         "title": ""
       },
       "import": {
+        "any": "",
+        "collapse-all": "",
         "empty-body": "",
         "empty-cta": "",
         "empty-learn-more": "",
@@ -3298,9 +3296,26 @@
         "error-body": "",
         "error-retry": "",
         "error-title": "",
+        "expand-all": "",
+        "inhibition-equal": "",
         "loading": "",
+        "no-matchers": "",
+        "parse-error-body": "",
+        "parse-error-title": "",
+        "resources": "",
+        "section": {
+          "contact-points": "",
+          "inhibition-rules": "",
+          "notification-policy": "",
+          "templates": "",
+          "time-intervals": ""
+        },
+        "staged-badge": "",
         "staged-description": "",
-        "staged-title": ""
+        "staged-title": "",
+        "view": "",
+        "policy-tree-routes_one": "",
+        "policy-tree-routes_other": ""
       },
       "tabs": {
         "alert-managers": "Gestionnaires d’alerte",
@@ -4422,6 +4437,9 @@
     "create-new": {
       "dashboard-group": ""
     },
+    "create-new-button": {
+      "generate-dashboard": ""
+    },
     "dashboards-tree": {
       "checkbox": {
         "disabled-not-in-same-repo": "Cet élément ne fait pas partie du même référentiel que les éléments sélectionnés."
@@ -4832,6 +4850,7 @@
       "not-found": "<0>Introuvable : </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "",
       "ctrl-right-mouse": "CTRL + bouton droit de la souris",
       "middle-mouse": "Molette de la souris",
       "pan-title": "Panoramique :",
@@ -5400,6 +5419,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Auto",
       "options": {
         "custom-min-height": {
@@ -5417,6 +5437,11 @@
         "min-width-custom": "Largeur personnalisée minimale",
         "min-width-custom-clear": "Retour à la largeur de colonne minimale standard",
         "min-width-error": "Un nombre compris entre 50 et 2 000 est requis"
+      },
+      "resize-intercept": {
+        "edit": "",
+        "header": "",
+        "switch": ""
       }
     },
     "canvas-actions": {
@@ -5564,6 +5589,7 @@
           }
         }
       },
+      "layout-indicator": "",
       "name": "Personnalisé",
       "row-actions": {
         "delete": "Supprimer la ligne",
@@ -5888,8 +5914,12 @@
         }
       },
       "scroll-content": "",
-      "ungroup-nested-text": "Cette action dissociera tous les groupes imbriqués.",
-      "ungroup-nested-title": "Dissocier les groupes imbriqués ?"
+      "ungroup-convert-to-rows": "",
+      "ungroup-convert-to-tabs": "",
+      "ungroup-groups-text": "",
+      "ungroup-groups-title": "",
+      "ungroup-repeat-loss": "",
+      "ungroup-repeat-loss-title": ""
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} sur {{numberOfPages}}",
@@ -6746,6 +6776,21 @@
       "title": "Aucun lien de tableau de bord n'a encore été ajouté"
     }
   },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": ""
+    },
+    "modal": {
+      "title": ""
+    },
+    "prompt": {
+      "cancel": "",
+      "description": "",
+      "input-label": "",
+      "placeholder": "",
+      "submit": ""
+    }
+  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "Cette source de données ne prend pas en charge les filtres.",
@@ -7565,6 +7610,14 @@
       "disabled-tooltip": "Enregistrez le tableau de bord avant de créer des règles d’alerte",
       "new-alert-rule": "Nouvelle règle d'alerte",
       "title-no-alerting-capable-query-found": "Aucune requête capable d’alerter n’a été trouvée"
+    },
+    "scripted-dashboard-deprecation-banner": {
+      "body": "",
+      "title": ""
+    },
+    "scripted-dashboards-disabled": {
+      "body": "",
+      "title": ""
     },
     "section-placement": {
       "top-row": "",
@@ -8856,6 +8909,7 @@
       "open-in-profiles-drilldown": "",
       "profiles-for-this-span": "",
       "related-logs": "",
+      "related-logs-no-logs-tooltip": "",
       "related-logs-tooltip": "",
       "session-for-this-span": ""
     },
@@ -9249,6 +9303,7 @@
       "name-lookup-field": "Champ de correspondance"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "",
       "mode-options": {
         "description-auto": "Identifier automatiquement les données de localisation à partir des noms de champ par défaut",
         "description-coords": "Spécifier les champs de latitude et de longitude",
@@ -9278,9 +9333,9 @@
     "description-mouse-wheel-zoom": "Activer le contrôle du zoom via la molette de la souris",
     "description-no-repeat": "Empêcher la répétition horizontale de la carte",
     "description-share-view": "Utiliser la même vue sur plusieurs panneaux. Remarque : cela peut nécessiter le rechargement du tableau de bord.",
-    "description-show-attribution": "Afficher les mentions de la source cartographique en bas à droite",
     "description-show-debug": "Afficher les informations de la carte",
     "description-show-measure": "Afficher les outils de mesure sur la carte",
+    "description-show-optional-attribution": "",
     "description-show-scale": "Indiquer l’échelle cartographique",
     "description-show-zoom": "Afficher les boutons de contrôle du zoom dans le coin supérieur gauche",
     "description-sync-view-variable": "Stocker les limites de vue dans une variable de tableau de bord pour les utiliser dans les requêtes",
@@ -9341,9 +9396,9 @@
     "name-mouse-wheel-zoom": "Zoom à la molette",
     "name-no-repeat": "Aucune répétition de la carte",
     "name-share-view": "Partager la vue",
-    "name-show-attribution": "Afficher l’attribution",
     "name-show-debug": "Afficher les outils de débogage",
     "name-show-measure": "Afficher les outils de mesure",
+    "name-show-optional-attribution": "",
     "name-show-scale": "Afficher l’échelle",
     "name-show-zoom": "Afficher le contrôle du zoom",
     "name-sync-view-variable": "Synchroniser la vue avec la variable du tableau de bord",
@@ -10025,6 +10080,14 @@
       "log-base": "Base du journal"
     },
     "builder": {
+      "annotation-options": {
+        "canvas-controls-desc": "",
+        "canvas-controls-name": "",
+        "clustering-desc": "",
+        "clustering-name": "",
+        "multi-lane-name": "",
+        "multi-row-desc": ""
+      },
       "annotations": "Annotations",
       "axis": {
         "category-axis": "Axe",
@@ -10360,9 +10423,13 @@
     "matchers": {
       "groups": {
         "annotation": "Annotations",
+        "annotation-description": "",
         "exemplar": "Exemples",
+        "exemplar-description": "",
         "nested": "Imbriqué",
-        "series": "Trame de données"
+        "nested-description": "",
+        "series": "Trame de données",
+        "series-description": ""
       },
       "labels": {
         "base-field-name": "{{name}} (nom du champ de base)",
@@ -12582,6 +12649,7 @@
     },
     "quick-add": {
       "aria-label": "Nouveau",
+      "generate-dashboard-button": "",
       "new-template-dashboard-button": ""
     },
     "rss-button": "Dernières nouvelles sur le blog"
@@ -13419,7 +13487,7 @@
         "repository-label": "Référentiels",
         "repository-read-write-admin": "Lecture et écriture",
         "webhooks-label": "Webhooks",
-        "webhooks-read-write": "Lecture et écriture"
+        "webhooks-read-write-delete": ""
       },
       "pr-workflow-description": "Permet aux utilisateurs de choisir s’ils souhaitent ouvrir une demande de tirage lors de l’enregistrement des modifications. Si le dépôt n’autorise pas les modifications directes sur la branche principale, une demande de tirage peut tout de même être nécessaire.",
       "pr-workflow-label": "Activer l’option de demande de tirage à l’enregistrement",
@@ -14693,7 +14761,6 @@
     },
     "header": {
       "alert": "Alerte",
-      "expression": "Expression",
       "pending-expression": "",
       "pending-expression-cancel": "Annuler",
       "pending-transformation": "",
@@ -14707,6 +14774,7 @@
     "labels": {
       "alert": "",
       "expression": "",
+      "expression-title": "",
       "query": "",
       "transformation": ""
     },
@@ -14715,6 +14783,7 @@
       "message": ""
     },
     "sidebar": {
+      "add": "",
       "add-below": "Ajouter sous {{id}}",
       "add-expression": "Ajouter une expression",
       "add-expression-disabled": "Les expressions ne sont pas prises en charge avec la source de données du tableau de bord",
@@ -14734,6 +14803,7 @@
       "new-type": "Nouveau {{type}}",
       "queries-empty": "",
       "queries-expressions": "Requêtes et expressions",
+      "stacked": "",
       "toggle-size": "Basculer la taille de la barre latérale",
       "transformations": "Transformations",
       "transformations-empty": "",
@@ -15738,6 +15808,7 @@
     "description-column-filter": "Active ou désactive les filtres de champ dans le tableau",
     "description-frozen-columns": "",
     "description-min-column-width": "La largeur minimale pour le redimensionnement automatique des colonnes",
+    "description-page-size": "",
     "description-styling-from-field": "Un champ contenant des objets JSON avec des propriétés CSS",
     "description-tooltip-from-field": "",
     "frame-picker": {
@@ -15771,6 +15842,7 @@
     "name-hide-in-table": "Masquer dans le tableau",
     "name-max-height": "",
     "name-min-column-width": "Largeur minimale de colonne",
+    "name-page-size": "",
     "name-show-table-header": "Afficher l’en-tête du tableau",
     "name-styling-from-field": "Style basé sur le champ",
     "name-tooltip-from-field": "",
@@ -15781,6 +15853,7 @@
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "aucun",
     "placeholder-max-height": "",
+    "placeholder-page-size": "",
     "tooltip-placement-options": {
       "label-auto": "",
       "label-bottom": "",

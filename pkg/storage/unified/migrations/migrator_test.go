@@ -358,7 +358,7 @@ const (
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
-	shorturlsID:            false,
+	shorturlsID:            true,
 	datasourceID:           false,
 	starsID:                false,
 	preferencesID:          false,

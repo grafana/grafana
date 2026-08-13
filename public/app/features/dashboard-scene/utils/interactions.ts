@@ -369,7 +369,22 @@ export const DashboardInteractions = {
   setVisualOption: (properties?: { ui: 'panel-edit' | 'view-panel'; option: string; value: string }) => {
     reportDashboardInteraction('set_visualization_option', properties);
   },
+
+  // tracks attempts to resize a panel that is managed by auto layout
+  autoLayoutResizeIntercepted: (properties: { scope: AutoLayoutScope; trigger: 'hover' | 'drag' }) => {
+    reportDashboardInteraction('auto_layout_resize_intercepted', properties);
+  },
+
+  // track the action a user took after being intercepted. `switch_to_custom` vs `edit_auto_layout`
+  autoLayoutResizeInterceptAction: (properties: {
+    scope: AutoLayoutScope;
+    action: 'edit_auto_layout' | 'switch_to_custom' | 'dismissed';
+  }) => {
+    reportDashboardInteraction('auto_layout_resize_intercept_action', properties);
+  },
 };
+
+export type AutoLayoutScope = 'dashboard' | 'row' | 'tab';
 
 const reportDashboardInteraction = (
   name: string,

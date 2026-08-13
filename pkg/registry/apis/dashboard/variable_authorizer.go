@@ -3,25 +3,43 @@ package dashboard
 import (
 	"context"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
-// NewVariableAuthorizer maps k8s verbs on dashboard.grafana.app/variables to
-// variables:* RBAC actions.
+// newVariableAuthorizer authorizes dashboard.grafana.app/variables requests.
 //
-// Create/update/delete/list/watch use a coarse (any-scope) check; admission
-// enforces the target folder scope and allowMissingFolder orphan cleanup.
-// Get evaluates against variables:uid:<name>, which the scope resolver expands
-// to folder scopes.
-func NewVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer {
+// It first gates on FlagGrafanaDashboardGlobalVariables via OpenFeature (when
+// storage is registered, enablement is enforced here). When enabled, it maps
+// k8s verbs to variables:* RBAC actions. A nil accessControl denies cleanly
+// (standalone NewAPIService does not wire classic RBAC).
+//
+// Create/update/delete/list/watch use a coarse (any-scope) check. Admission
+// narrows mutations to the target folder (and allowMissingFolder orphan
+// cleanup). List/watch per-item filtering is the unified-storage checker
+// (variables is on rbacAllowlist; the RBAC mapper has folder support).
+// Named get evaluates against variables:uid:<name>, which the scope resolver
+// expands to folder scopes.
+func newVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if !attr.IsResourceRequest() {
 				return authorizer.DecisionNoOpinion, "", nil
+			}
+
+			if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaDashboardGlobalVariables, false, openfeature.TransactionContext(ctx)) {
+				return authorizer.DecisionDeny, "global dashboard variables feature is not enabled", nil
+			}
+
+			// NewAPIService (standalone) never wires accessControl. Deny instead of
+			// calling Evaluate on a nil interface (per-request panic).
+			if accessControl == nil {
+				return authorizer.DecisionDeny, "access control is not configured", nil
 			}
 
 			user, err := identity.GetRequester(ctx)

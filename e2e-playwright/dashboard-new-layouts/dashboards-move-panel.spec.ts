@@ -1,7 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { Controls } from './page-objects';
-import { getPanelPosition, movePanel } from './utils';
+import { Controls, Panels } from './page-objects';
+import { getPanelBox, movePanel } from './utils';
 
 const PAGE_UNDER_TEST = 'ed155665/annotation-filtering';
 
@@ -25,26 +25,27 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
 
       const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
 
       // Move panel three to panel one position
-      await movePanel(dashboardPage, selectors, /^Panel three$/, /^Panel one$/);
+      await movePanel(panels, /^Panel three$/, /^Panel one$/);
 
       // Verify panel three is now above panel one
-      const panel3Position = await getPanelPosition(dashboardPage, selectors, /^Panel three$/);
-      const panel1Position = await getPanelPosition(dashboardPage, selectors, /^Panel one$/);
+      const panel3Box = await getPanelBox(panels, 'Panel three');
+      const panel1Box = await getPanelBox(panels, 'Panel one');
 
-      expect(panel3Position?.y).toBeLessThan(panel1Position?.y || 0);
+      expect(panel3Box.y).toBeLessThan(panel1Box.y);
 
       // Move panel two to panel three position
-      await movePanel(dashboardPage, selectors, /^Panel two$/, /^Panel three$/);
+      await movePanel(panels, /^Panel two$/, /^Panel three$/);
 
       // Verify panel two is now above panel three
-      const panel2Position = await getPanelPosition(dashboardPage, selectors, /^Panel two$/);
-      const panel3PositionAfter = await getPanelPosition(dashboardPage, selectors, /^Panel three$/);
+      const panel2Box = await getPanelBox(panels, 'Panel two');
+      const panel3BoxAfter = await getPanelBox(panels, 'Panel three');
 
-      expect(panel2Position?.y).toBeLessThan(panel3PositionAfter?.y || 0);
+      expect(panel2Box.y).toBeLessThan(panel3BoxAfter.y);
     });
   }
 );

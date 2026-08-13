@@ -85,14 +85,14 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
   });
 
   test('Load without data', async ({ page, gotoDashboardPage, selectors, components }) => {
-    const { dashboardPage, panels } = await loadDashboard(page, gotoDashboardPage, selectors, components);
+    const { controls, panels } = await loadDashboard(page, gotoDashboardPage, selectors, components);
 
     await expect(panels.getPanel('Panel - show - data')).not.toBeVisible();
     await expect(panels.getPanel('Panel - hide - data')).toBeVisible();
     await expect(panels.getPanel('Panel - show - no data')).toBeVisible();
     await expect(panels.getPanel('Panel - hide - no data')).not.toBeVisible();
 
-    await fillVariableValue(page, dashboardPage, selectors, testDashboard.spec.variables[0].spec.name, '1,2,3,4');
+    await fillVariableValue(page, controls, testDashboard.spec.variables[0].spec.name, '1,2,3,4');
 
     await expect(panels.getPanel('Panel - show - data')).toBeVisible();
     await expect(panels.getPanel('Panel - hide - data')).not.toBeVisible();
@@ -101,7 +101,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
   });
 
   test('Load with data', async ({ page, gotoDashboardPage, selectors, components }) => {
-    const { dashboardPage, panels } = await loadDashboard(page, gotoDashboardPage, selectors, components, {
+    const { controls, panels } = await loadDashboard(page, gotoDashboardPage, selectors, components, {
       myVariable: '1,2,3,4',
     });
 
@@ -110,7 +110,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(panels.getPanel('Panel - show - no data')).not.toBeVisible();
     await expect(panels.getPanel('Panel - hide - no data')).toBeVisible();
 
-    await fillVariableValue(page, dashboardPage, selectors, testDashboard.spec.variables[0].spec.name, '');
+    await fillVariableValue(page, controls, testDashboard.spec.variables[0].spec.name, '');
 
     await expect(panels.getPanel('Panel - show - data')).not.toBeVisible();
     await expect(panels.getPanel('Panel - hide - data')).toBeVisible();
@@ -164,7 +164,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
   });
 
   test('Load without variable equals/not equals', async ({ page, gotoDashboardPage, selectors, components }) => {
-    const { dashboardPage, panels, rows, tabs } = await loadDashboard(page, gotoDashboardPage, selectors, components);
+    const { controls, panels, rows, tabs } = await loadDashboard(page, gotoDashboardPage, selectors, components);
 
     await expect(panels.getPanel('Panel - show - variable - equals 1,2,3')).not.toBeVisible();
     await expect(panels.getPanel('Panel - hide - variable - equals 1,2,3')).toBeVisible();
@@ -179,7 +179,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(tabs.getTitle('Tab - show - variable - not equals 1,2,3')).toBeVisible();
     await expect(tabs.getTitle('Tab - hide - variable - not equals 1,2,3')).not.toBeVisible();
 
-    await fillVariableValue(page, dashboardPage, selectors, testDashboard.spec.variables[0].spec.name, '1,2,3');
+    await fillVariableValue(page, controls, testDashboard.spec.variables[0].spec.name, '1,2,3');
 
     await expect(panels.getPanel('Panel - show - variable - equals 1,2,3')).toBeVisible();
     await expect(panels.getPanel('Panel - hide - variable - equals 1,2,3')).not.toBeVisible();
@@ -196,7 +196,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
   });
 
   test('Load with variable equals/not equals', async ({ page, gotoDashboardPage, selectors, components }) => {
-    const { dashboardPage, panels, rows, tabs } = await loadDashboard(page, gotoDashboardPage, selectors, components, {
+    const { controls, panels, rows, tabs } = await loadDashboard(page, gotoDashboardPage, selectors, components, {
       myVariable: '1,2,3',
     });
 
@@ -213,7 +213,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(tabs.getTitle('Tab - show - variable - not equals 1,2,3')).not.toBeVisible();
     await expect(tabs.getTitle('Tab - hide - variable - not equals 1,2,3')).toBeVisible();
 
-    await fillVariableValue(page, dashboardPage, selectors, testDashboard.spec.variables[0].spec.name, '');
+    await fillVariableValue(page, controls, testDashboard.spec.variables[0].spec.name, '');
 
     await expect(panels.getPanel('Panel - show - variable - equals 1,2,3')).not.toBeVisible();
     await expect(panels.getPanel('Panel - hide - variable - equals 1,2,3')).toBeVisible();
@@ -230,7 +230,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
   });
 
   test('Load without variable matches/not matches', async ({ page, gotoDashboardPage, selectors, components }) => {
-    const { dashboardPage, panels, rows, tabs } = await loadDashboard(page, gotoDashboardPage, selectors, components);
+    const { controls, panels, rows, tabs } = await loadDashboard(page, gotoDashboardPage, selectors, components);
 
     await expect(panels.getPanel('Panel - show - variable - matches .*2.*')).not.toBeVisible();
     await expect(panels.getPanel('Panel - hide - variable - matches .*2.*')).toBeVisible();
@@ -245,7 +245,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(tabs.getTitle('Tab - show - variable - not matches .*2.*')).toBeVisible();
     await expect(tabs.getTitle('Tab - hide - variable - not matches .*2.*')).not.toBeVisible();
 
-    await fillVariableValue(page, dashboardPage, selectors, testDashboard.spec.variables[0].spec.name, '1,2,3');
+    await fillVariableValue(page, controls, testDashboard.spec.variables[0].spec.name, '1,2,3');
 
     await expect(panels.getPanel('Panel - show - variable - matches .*2.*')).toBeVisible();
     await expect(panels.getPanel('Panel - hide - variable - matches .*2.*')).not.toBeVisible();
@@ -262,7 +262,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
   });
 
   test('Load with variable matches/not matches', async ({ page, gotoDashboardPage, selectors, components }) => {
-    const { dashboardPage, panels, rows, tabs } = await loadDashboard(page, gotoDashboardPage, selectors, components, {
+    const { controls, panels, rows, tabs } = await loadDashboard(page, gotoDashboardPage, selectors, components, {
       myVariable: '1,2,3',
     });
 
@@ -279,7 +279,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(tabs.getTitle('Tab - show - variable - not matches .*2.*')).not.toBeVisible();
     await expect(tabs.getTitle('Tab - hide - variable - not matches .*2.*')).toBeVisible();
 
-    await fillVariableValue(page, dashboardPage, selectors, testDashboard.spec.variables[0].spec.name, '');
+    await fillVariableValue(page, controls, testDashboard.spec.variables[0].spec.name, '');
 
     await expect(panels.getPanel('Panel - show - variable - matches .*2.*')).not.toBeVisible();
     await expect(panels.getPanel('Panel - hide - variable - matches .*2.*')).toBeVisible();
@@ -315,7 +315,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     }
 
     test('Hide when equals, hide when no data', async ({ page, gotoDashboardPage, selectors, components }) => {
-      const { dashboardPage, tabs } = await loadDashboard(page, gotoDashboardPage, selectors, components);
+      const { panels, tabs } = await loadDashboard(page, gotoDashboardPage, selectors, components);
 
       const optionForHiddenPanels = repeatOptions[0];
 
@@ -324,8 +324,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
       await tabs.getTitle('Tab - repeated items').click();
 
       await checkRepeatedPanelTitles(
-        dashboardPage,
-        selectors,
+        panels,
         'Hide panel - ',
         [
           `custom variable equals ${optionForHiddenPanels} (current = ${optionForHiddenPanels})`,
@@ -336,7 +335,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
 
       const optionsForVisiblePanels = repeatOptions.slice(1);
 
-      await checkRepeatedPanelTitles(dashboardPage, selectors, 'Hide panel - ', [
+      await checkRepeatedPanelTitles(panels, 'Hide panel - ', [
         ...optionsForVisiblePanels.map((o) => `custom variable equals ${optionForHiddenPanels} (current = ${o})`),
         ...optionsForVisiblePanels.map((o) => `no data (current = ${o})`),
       ]);

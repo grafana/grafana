@@ -28,6 +28,10 @@ type Route struct {
 	Path    string
 	Spec    *spec3.PathProps
 	Handler http.HandlerFunc
+
+	// Schemas are the components Spec references. They travel with the route
+	// because the envelope types belong to a different group than the one serving.
+	Schemas map[string]spec.Schema
 }
 
 // SearchRoute returns the namespaced route for a kind's search endpoint,
@@ -42,6 +46,7 @@ func (h *Handler) SearchRoute(group, version, resourceName, kindName string) Rou
 		Path:    resourceName + "/" + searchPathSegment,
 		Spec:    searchRouteSpec(kindName, version),
 		Handler: h.SearchFor(kind),
+		Schemas: envelopeSchemas(searchQueryGoName, searchResultsGoName),
 	}
 }
 
@@ -84,9 +89,7 @@ func searchRouteSpec(kindName, version string) *spec3.PathProps {
 					RequestBodyProps: spec3.RequestBodyProps{
 						Required:    true,
 						Description: "A " + searchv0.KindSearchQuery + " describing what to match, sort and return.",
-						Content: map[string]*spec3.MediaType{
-							"application/json": {},
-						},
+						Content:     jsonContent(searchQueryGoName),
 					},
 				},
 				Responses: &spec3.Responses{
@@ -95,9 +98,7 @@ func searchRouteSpec(kindName, version string) *spec3.PathProps {
 							200: {
 								ResponseProps: spec3.ResponseProps{
 									Description: "A " + searchv0.KindSearchResults + " envelope.",
-									Content: map[string]*spec3.MediaType{
-										"application/json": {},
-									},
+									Content:     jsonContent(searchResultsGoName),
 								},
 							},
 						},

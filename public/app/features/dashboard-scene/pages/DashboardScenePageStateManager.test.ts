@@ -845,7 +845,7 @@ describe('DashboardScenePageStateManager v2', () => {
 
     describe('predefined variables', () => {
       beforeEach(() => {
-        setTestFlags({ globalDashboardVariables: true });
+        setTestFlags({ 'grafana.dashboardGlobalVariables': true });
       });
 
       afterEach(() => {

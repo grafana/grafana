@@ -21,6 +21,18 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 )
 
+// shrinkQueryDataLimits lowers the package's query-data size budgets for the duration of the calling
+// test, restored on cleanup, so a test proving truncation happens at the budget doesn't have to
+// allocate a payload at the real (multi-hundred-MiB) production scale to cross it.
+func shrinkQueryDataLimits(t *testing.T, artifactBytes, dashboardBytes int) {
+	t.Helper()
+	prevArtifact, prevDashboard := maxQueryDataArtifactBytes, maxDashboardQueryDataBytes
+	maxQueryDataArtifactBytes, maxDashboardQueryDataBytes = artifactBytes, dashboardBytes
+	t.Cleanup(func() {
+		maxQueryDataArtifactBytes, maxDashboardQueryDataBytes = prevArtifact, prevDashboard
+	})
+}
+
 func TestBundler_Build(t *testing.T) {
 	// No HAR captured (empty buffer, nil response) -> traffic.har omitted; only panel.json present.
 	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil)
@@ -123,6 +135,7 @@ func TestBundler_Build_excludesCaptureFramesFromQueryData(t *testing.T) {
 }
 
 func TestBundler_Build_boundsOversizedQueryData(t *testing.T) {
+	shrinkQueryDataLimits(t, 4096, 16384)
 	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes)}))
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{
 		"A": {Frames: data.Frames{frame}},
@@ -140,6 +153,7 @@ func TestBundler_Build_boundsOversizedQueryData(t *testing.T) {
 }
 
 func TestBundler_Build_boundsOversizedRequestWithoutResponse(t *testing.T) {
+	shrinkQueryDataLimits(t, 4096, 16384)
 	// An oversized request with no response must truncate without claiming a response was omitted.
 	request := json.RawMessage(`{"expr":"` + strings.Repeat("x", maxQueryDataArtifactBytes) + `"}`)
 
@@ -576,6 +590,7 @@ func TestBuildDashboard_recordsQueryDataPerPanel(t *testing.T) {
 }
 
 func TestBuildDashboard_boundsAggregateQueryData(t *testing.T) {
+	shrinkQueryDataLimits(t, 64<<10, 128<<10)
 	panels := make([]DashboardPanel, 0, 5)
 	for i := 1; i <= 5; i++ {
 		frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes-4096)}))
@@ -895,19 +910,64 @@ func TestTruncateDiagnosticString(t *testing.T) {
 }
 
 func TestMarshalQueryDataArtifactWithLimit_reportsTruncation(t *testing.T) {
-	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes)}))
+	const limit = 4096
+	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", limit)}))
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
 
-	_, truncated, err := marshalQueryDataArtifactWithLimit(nil, resp, maxQueryDataArtifactBytes)
+	_, truncated, err := marshalQueryDataArtifactWithLimit(nil, resp, limit)
 	require.NoError(t, err)
 	require.True(t, truncated, "an oversized response must report truncated=true")
 
 	small := &backend.QueryDataResponse{Responses: backend.Responses{
 		"A": {Frames: data.Frames{data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))}},
 	}}
-	_, truncated, err = marshalQueryDataArtifactWithLimit(nil, small, maxQueryDataArtifactBytes)
+	_, truncated, err = marshalQueryDataArtifactWithLimit(nil, small, limit)
 	require.NoError(t, err)
 	require.False(t, truncated, "a response that fits must report truncated=false")
+}
+
+// TestMarshalQueryDataArtifactWithLimit_skipsEncodeForClearlyOversizedResponse proves the early-skip
+// path in marshalQueryDataArtifactWithLimit: a response whose lower-bound estimate alone already
+// exceeds maxBytes must never reach the full MarshalJSON/MarshalIndent encode, so OriginalBytes (which
+// only the full encode can populate) stays unset.
+func TestMarshalQueryDataArtifactWithLimit_skipsEncodeForClearlyOversizedResponse(t *testing.T) {
+	const limit = 4096
+	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", limit+1)}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+	require.Greater(t, estimateResponseBytes(resp), limit, "sanity: the estimate itself must already exceed the limit")
+
+	out, truncated, err := marshalQueryDataArtifactWithLimit(nil, resp, limit)
+	require.NoError(t, err)
+	require.True(t, truncated)
+
+	var art queryDataArtifact
+	require.NoError(t, json.Unmarshal(out, &art))
+	require.True(t, art.ResponseOmitted)
+	require.Zero(t, art.OriginalBytes, "the early-skip path never ran the full encode, so there is nothing to report")
+	require.Contains(t, art.ResponseSummary, "A")
+}
+
+// TestMarshalQueryDataArtifactWithLimit_fullEncodeStillMeasuredWhenEstimateMisses covers the
+// complementary case: a response whose per-value byte estimate stays low (many small numeric fields,
+// each field's own JSON schema/structure overhead is not counted by estimateResponseBytes) but whose
+// real encoded size is still over budget. The full encode must still run and OriginalBytes must still
+// be populated -- the estimate is a fast pre-filter, not a replacement for the real check.
+func TestMarshalQueryDataArtifactWithLimit_fullEncodeStillMeasuredWhenEstimateMisses(t *testing.T) {
+	const limit = 200
+	frames := make(data.Frames, 0, 20)
+	for i := 0; i < 20; i++ {
+		frames = append(frames, data.NewFrame("f", data.NewField("v", nil, []float64{42})))
+	}
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: frames}}}
+	require.LessOrEqual(t, estimateResponseBytes(resp), limit, "sanity: the cheap estimate must not itself exceed the limit")
+
+	out, truncated, err := marshalQueryDataArtifactWithLimit(nil, resp, limit)
+	require.NoError(t, err)
+	require.True(t, truncated, "sanity: the real encoded size must exceed the limit despite the low estimate")
+
+	var art queryDataArtifact
+	require.NoError(t, json.Unmarshal(out, &art))
+	require.Positive(t, art.OriginalBytes, "the full encode ran and its measured size must be recorded")
 }
 
 func TestMarshalQueryDataArtifactWithLimit_truncationTiers(t *testing.T) {
@@ -949,7 +1009,11 @@ func TestMarshalQueryDataArtifactWithLimit_truncationTiers(t *testing.T) {
 		require.Empty(t, art.Request)
 		require.Empty(t, art.ResponseSummary, "tier 3 drops even the per-refID summary")
 		require.Equal(t, 300, art.LimitBytes)
-		require.Positive(t, art.OriginalBytes)
+		// The 4096-byte error text alone clears estimateResponseBytes's lower bound past maxBytes, so
+		// this response is caught before the full encode ever runs -- OriginalBytes has nothing to
+		// report. TestMarshalQueryDataArtifactWithLimit_fullEncodeStillMeasuredWhenEstimateMisses covers
+		// the case where the full encode does run and OriginalBytes is populated.
+		require.Zero(t, art.OriginalBytes)
 	})
 
 	// The two omission markers are how a reader tells "this was dropped to fit the cap" from "this was

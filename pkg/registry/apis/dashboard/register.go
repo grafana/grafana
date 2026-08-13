@@ -373,14 +373,11 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		return nil // OK for now
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
-	// Reachability invariant: this case only fires when the apiserver routes
-	// a request to the v2beta1 Variable storage, which is registered in
-	// UpdateAPIGroupInfo behind FlagGlobalDashboardVariables. No other
-	// dashboard.grafana.app version registers a standalone Variable resource,
-	// so without the flag the apiserver has no route and admission never
-	// dispatches here. If Variable is ever added to another version or moved
-	// to a subresource, update both the storage registration and this switch
-	// in lockstep.
+	// Reachability invariant: Variable storage is registered only when
+	// accessControl is set. The flag is gated per request in GetAuthorizer, so
+	// this case fires when the feature is enabled in embedded mode. Standalone
+	// skips storage. If Variable is added to another version or moved to a
+	// subresource, update storage registration and this switch in lockstep.
 	case dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource:
 		switch op {
 		case admission.Create:
@@ -717,7 +714,15 @@ func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.C
 	folderScope := variableFolderScope(folderUID)
 	ok, err := b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action, folderScope))
 	if err != nil {
-		return err
+		// FolderUIDScopeResolver errors with folder-not-found when the parent is
+		// gone. Treat that as a failed scope check so allowMissingFolder can run
+		// (root writers with folders:uid:general only never match the missing
+		// folder scope before resolution, and returning the resolver error would
+		// incorrectly deny orphan cleanup).
+		if !isFolderNotFound(err) {
+			return err
+		}
+		ok = false
 	}
 	if ok {
 		return nil
@@ -993,8 +998,12 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagGlobalDashboardVariables) {
+	// Variable storage is registered when accessControl is wired (embedded Grafana)
+	// so FlagGrafanaDashboardGlobalVariables can be evaluated per request via
+	// OpenFeature in the authorizer. Standalone NewAPIService leaves accessControl
+	// nil — skip registration so the resource is not served (same idea as snapshots,
+	// which storageForVersion omits when isStandalone). See GetAuthorizer.
+	if b.accessControl != nil {
 		opts.StorageOptsRegister(dashv2beta1.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
 			EnableFolderSupport: true,
 		})
@@ -1011,8 +1020,8 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 
-		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
-		storage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
+		variableStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
+		variableStorage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 	}
 
 	// Notebook storage is always registered so FlagDashboardNotebooks can be
@@ -1472,10 +1481,9 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
 	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
-	variableAuthorizer := NewVariableAuthorizer(b.accessControl)
-	// Notebooks defer to the service authorizer when the feature is enabled, so
-	// the notebook authorizer wraps that same instance as its fallback.
+	// Notebooks defer to the service authorizer when the feature is enabled.
 	notebookAuthorizer := newNotebookAuthorizer(serviceAuthorizer)
+	variableAuthorizer := newVariableAuthorizer(b.accessControl)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -1483,10 +1491,10 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				switch attr.GetResource() {
 				case dashv2beta1.NotebookResourceInfo.GetName():
 					return notebookAuthorizer.Authorize(ctx, attr)
-				case dashv0.SnapshotResourceInfo.GetName():
-					return snapshotAuthorizer.Authorize(ctx, attr)
 				case dashv2beta1.VariableResourceInfo.GetName():
 					return variableAuthorizer.Authorize(ctx, attr)
+				case dashv0.SnapshotResourceInfo.GetName():
+					return snapshotAuthorizer.Authorize(ctx, attr)
 				}
 			}
 			return serviceAuthorizer.Authorize(ctx, attr)

@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -531,6 +532,8 @@ func TestIntegrationAccessControlStore_DeleteTeamPermissions(t *testing.T) {
 
 func createUserAndTeam(t *testing.T, store db.DB, userSrv user.Service, teamSvc team.Service, orgID int64) (*user.User, team.Team) {
 	t.Helper()
+	dbHelper, err := legacysql.NewDatabaseProvider(store)(context.Background())
+	require.NoError(t, err)
 
 	user, err := userSrv.Create(context.Background(), &user.CreateUserCommand{
 		Login: "user",
@@ -546,7 +549,7 @@ func createUserAndTeam(t *testing.T, store db.DB, userSrv user.Service, teamSvc 
 	require.NoError(t, err)
 
 	err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
-		return teamimpl.AddOrUpdateTeamMemberHook(sess, user.ID, orgID, createdTeam.ID, false, team.PermissionTypeMember)
+		return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, sess, user.ID, orgID, createdTeam.ID, false, team.PermissionTypeMember)
 	})
 	require.NoError(t, err)
 
@@ -571,6 +574,8 @@ type dbUser struct {
 
 func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID int64, users []testUser) []dbUser {
 	t.Helper()
+	dbHelper, err := legacysql.NewDatabaseProvider(store)(context.Background())
+	require.NoError(t, err)
 	res := []dbUser{}
 
 	for i := range users {
@@ -600,7 +605,7 @@ func createUsersAndTeams(t *testing.T, store db.DB, svcs helperServices, orgID i
 		require.NoError(t, err)
 
 		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
-			return teamimpl.AddOrUpdateTeamMemberHook(sess, user.ID, orgID, createdTeam.ID, false, team.PermissionTypeMember)
+			return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, sess, user.ID, orgID, createdTeam.ID, false, team.PermissionTypeMember)
 		})
 		require.NoError(t, err)
 
@@ -621,7 +626,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 	cfg.AutoAssignOrgId = 1
 	acstore := database.ProvideService(sql)
 	permissionStore := rs.NewStore(cfg, sql, featuremgmt.WithFeatures())
-	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest(), nil)
+	teamService, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)

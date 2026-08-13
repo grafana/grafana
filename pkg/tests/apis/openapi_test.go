@@ -27,8 +27,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		AppModeProduction:      false, // required for experimental APIs
 		RBACSingleOrganization: true,  // required for the Users API
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagQueryService, // Query Library
-			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagQueryService,                         // Query Library
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
 			featuremgmt.FlagDatasourceUseNewCRUDAPIs,
@@ -43,7 +42,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesServiceAccountsApi,
 			featuremgmt.FlagKubernetesServiceAccountTokensApi,
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,
-			featuremgmt.FlagGlobalDashboardVariables,
+			featuremgmt.FlagGrafanaDashboardGlobalVariables,
 			featuremgmt.FlagDashboardNotebooks,
 		},
 	})

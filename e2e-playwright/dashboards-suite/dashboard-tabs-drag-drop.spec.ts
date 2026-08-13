@@ -52,7 +52,7 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
   });
 
   test('drag a tab to a different tabs manager (in a different row)', async ({ dashboardPage, selectors, page }) => {
-    await importTestDashboard(page, selectors, 'Drag tab within manager', JSON.stringify(v2DashboardWithTabs), {
+    await importTestDashboard(page, selectors, 'Drag tab to a different manager', JSON.stringify(v2DashboardWithTabs), {
       checkPanelsVisible: false,
       requiresDataSourceSelection: false,
     });

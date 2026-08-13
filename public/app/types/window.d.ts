@@ -37,6 +37,13 @@ export declare global {
      * The image renderer can check this to decide whether to use this mechanism or a fallback.
      */
     __grafanaRenderBindingSupported?: boolean;
+
+    /**
+     * Controls whether the frontend OFREP client uses the root `/ofrep/v1` route
+     * instead of the namespaced route. Evaluated server-side since OpenFeature
+     * isn't set up yet when the OFREP provider's baseUrl is constructed.
+     */
+    __grafanaOFREPRootUrlEnabled?: boolean;
   }
 
   // Augment DOMParser to accept TrustedType sanitised content

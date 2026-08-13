@@ -1,7 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
 import { Controls, Panels, Sidebar } from './page-objects';
-import { importTestDashboard, saveDashboard } from './utils';
+import { importTestDashboard, saveDashboardAndCloseToast } from './utils';
 
 test.use({
   featureToggles: {
@@ -38,7 +38,7 @@ test.describe(
 
       await expect(panels.getPanels(panelTitle)).toHaveCount(2);
 
-      await saveDashboard(dashboardPage, page, selectors);
+      await saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       await expect(panels.getPanels(panelTitle)).toHaveCount(2);

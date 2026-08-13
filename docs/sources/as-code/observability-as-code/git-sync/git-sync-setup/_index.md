@@ -148,7 +148,7 @@ If you want to configure Git Sync for Bitbucket, you need a Bitbucket API token 
 
 - **Repositories**: Read and write permission
 - **Pull requests**: Read and write permission
-- **Webhooks**: Read and write permission
+- **Webhooks**: Read, write, and delete permission
 
 Return to Grafana and fill in the following fields:
 

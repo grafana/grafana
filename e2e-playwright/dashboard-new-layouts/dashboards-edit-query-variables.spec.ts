@@ -40,7 +40,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.query.openEditor();
 
@@ -111,7 +111,7 @@ test.describe(
 
       // create a data source and a constant variables
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, {
+      await flows.addNewGenericVariable(page, sidebar, controls, {
         type: 'datasource',
         name: 'ds',
         label: '',
@@ -121,8 +121,8 @@ test.describe(
 
       await flows.addNewGenericVariable(
         page,
-        dashboardPage,
-        selectors,
+        sidebar,
+        controls,
         {
           type: 'constant',
           name: 'query',
@@ -142,7 +142,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable, true);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable, true);
 
       await sidebar.variableOptions.query.openEditor();
 

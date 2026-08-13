@@ -7,7 +7,7 @@ import { type FolderDTO } from 'app/types/folders';
 
 import { buildNavModel, getAlertingTabID, getVariablesTabID } from './navModel';
 
-const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'globalDashboardVariables';
+const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'grafana.dashboardGlobalVariables';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -103,14 +103,14 @@ describe('buildNavModel', () => {
   });
 
   describe('Variables tab visibility', () => {
-    it('should hide Variables tab when globalDashboardVariables is off', () => {
+    it('should hide Variables tab when grafana.dashboardGlobalVariables is off', () => {
       const navModel = buildNavModel(mockFolder);
       const variablesTab = navModel.children?.find((child) => child.id === getVariablesTabID(mockFolder.uid));
 
       expect(variablesTab).toBeUndefined();
     });
 
-    it('should show Variables tab when globalDashboardVariables is on', () => {
+    it('should show Variables tab when grafana.dashboardGlobalVariables is on', () => {
       setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
 
       const navModel = buildNavModel(mockFolder);

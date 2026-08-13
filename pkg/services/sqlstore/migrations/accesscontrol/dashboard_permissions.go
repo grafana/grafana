@@ -704,14 +704,19 @@ func (m *managedFolderVariableActionsMigrator) Exec(sess *xorm.Session, mg *migr
 
 	for id, a := range mapped {
 		for scope, p := range a {
+			kind, attribute, identifier := ac.Permission{Scope: scope}.SplitScope()
+
 			if hasFolderView(p) {
 				if !hasAction(ac.ActionVariablesRead, p) {
 					toAdd = append(toAdd, ac.Permission{
-						RoleID:  id,
-						Updated: now,
-						Created: now,
-						Scope:   scope,
-						Action:  ac.ActionVariablesRead,
+						RoleID:     id,
+						Updated:    now,
+						Created:    now,
+						Scope:      scope,
+						Action:     ac.ActionVariablesRead,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
 					})
 				}
 			}
@@ -719,29 +724,38 @@ func (m *managedFolderVariableActionsMigrator) Exec(sess *xorm.Session, mg *migr
 			if hasFolderAdmin(p) || hasFolderEdit(p) {
 				if !hasAction(ac.ActionVariablesCreate, p) {
 					toAdd = append(toAdd, ac.Permission{
-						RoleID:  id,
-						Updated: now,
-						Created: now,
-						Scope:   scope,
-						Action:  ac.ActionVariablesCreate,
+						RoleID:     id,
+						Updated:    now,
+						Created:    now,
+						Scope:      scope,
+						Action:     ac.ActionVariablesCreate,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
 					})
 				}
 				if !hasAction(ac.ActionVariablesDelete, p) {
 					toAdd = append(toAdd, ac.Permission{
-						RoleID:  id,
-						Updated: now,
-						Created: now,
-						Scope:   scope,
-						Action:  ac.ActionVariablesDelete,
+						RoleID:     id,
+						Updated:    now,
+						Created:    now,
+						Scope:      scope,
+						Action:     ac.ActionVariablesDelete,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
 					})
 				}
 				if !hasAction(ac.ActionVariablesWrite, p) {
 					toAdd = append(toAdd, ac.Permission{
-						RoleID:  id,
-						Updated: now,
-						Created: now,
-						Scope:   scope,
-						Action:  ac.ActionVariablesWrite,
+						RoleID:     id,
+						Updated:    now,
+						Created:    now,
+						Scope:      scope,
+						Action:     ac.ActionVariablesWrite,
+						Kind:       kind,
+						Attribute:  attribute,
+						Identifier: identifier,
 					})
 				}
 			}

@@ -351,6 +351,11 @@ func (r *Repository) ConnectionName() string {
 	return ""
 }
 
+// HasConnection reports whether this repository authenticates through a connection.
+func (r *Repository) HasConnection() bool {
+	return r.ConnectionName() != ""
+}
+
 type ConnectionInfo struct {
 	Name string `json:"name"`
 }

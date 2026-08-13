@@ -35,7 +35,7 @@ test.describe(
         label: 'VariableUnderTest',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.addNewGenericVariable(page, sidebar, controls, variable);
       await sidebar.variableOptions.groupby.selectDatasource('gdev-e2etestdatasource');
 
       // Assert the variable dropdown is visible with correct label

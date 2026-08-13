@@ -2,8 +2,8 @@ import { type Page } from '@playwright/test';
 
 import { expect, test } from '@grafana/plugin-e2e';
 
-import { Canvas, Sidebar, Tabs } from './page-objects';
-import { saveDashboard } from './utils';
+import { Canvas, Controls, Sidebar, Tabs } from './page-objects';
+import { saveDashboardAndCloseToast } from './utils';
 
 test.use({
   featureToggles: {
@@ -139,13 +139,14 @@ test.describe(
       components,
     }) => {
       const dashboardPage = await gotoDashboardPage({});
+      const controls = new Controls({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
       const canvas = new Canvas({ page, dashboardPage, selectors, components });
       const tabs = new Tabs({ page, dashboardPage, selectors, components });
 
       await buildOverflowTabs(sidebar, canvas, tabs);
 
-      await saveDashboard(dashboardPage, page, selectors, `test dashboard scroll ${Date.now()}`);
+      await saveDashboardAndCloseToast(page, controls, `test dashboard scroll ${Date.now()}`);
       await page.reload();
       await expect(page.getByRole('button', { name: 'Scroll tabs left' })).toBeVisible();
     });

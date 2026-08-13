@@ -72,7 +72,7 @@ export function buildNavModel(
     });
   }
 
-  if (!isProvisioned && getFeatureFlagClient().getBooleanValue(FlagKeys.GlobalDashboardVariables, false)) {
+  if (!isProvisioned && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false)) {
     model.children!.push({
       active: false,
       icon: 'brackets-curly',
