@@ -270,7 +270,6 @@ If you enable commit signing:
 
 - If you enable the signer as the commit author, Git Sync will use the signer name & email to author all commits
 - If you don't enable the signer as the commit author, and the commit author is retrievable from the code, Git Sync will use the user as `author` and the configured committer.
-- Otherwise, `author` will be `noreply`, and `committer` will be as configured.
 
 For the moment, Git Sync doesn't support:
 
