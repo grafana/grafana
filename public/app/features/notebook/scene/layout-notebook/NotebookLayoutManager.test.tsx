@@ -1,7 +1,9 @@
-import { act, fireEvent, render, screen, within } from 'test/test-utils';
+import { act, fireEvent, render, screen, userEvent, within } from 'test/test-utils';
 
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { appEvents } from 'app/core/app_events';
 import { type NotebookLayoutKind } from 'app/features/notebook/types';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 // Monaco does not run in jsdom; a textarea carries readOnly into the DOM so the edit-mode
 // propagation is observable end to end.
@@ -63,6 +65,10 @@ function cellNames(manager: NotebookLayoutManager) {
 }
 
 describe('NotebookLayoutManager', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('renders the document header with badge, title, time range and tags', async () => {
     renderNotebook();
 
@@ -195,6 +201,12 @@ describe('NotebookLayoutManager', () => {
   });
 
   describe('cell actions', () => {
+    // The bar is inert until its cell is hovered (see NotebookCellFrame), and jsdom does not apply
+    // :hover styles, so nothing here can reveal it. These tests are about what the buttons do once
+    // reached, not about the reveal, so they opt out of user-event's pointer-events assertion — the
+    // gating itself is pinned in NotebookCellFrame.test.tsx.
+    const reachActions = () => userEvent.setup({ pointerEventsCheck: 0 });
+
     it('does not offer them outside edit mode', () => {
       renderNotebook();
 
@@ -219,18 +231,36 @@ describe('NotebookLayoutManager', () => {
       expect(within(frame!).getByRole('button', { name: 'Duplicate block' })).toBeInTheDocument();
     });
 
-    it('deletes the cell it belongs to', async () => {
-      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b', 'c']), true));
+    // ModalsContextProvider (which test-utils' render supplies) tracks the confirmation but ModalRoot,
+    // which renders it, is not in the tree — so the event is what these two assert on.
+    it('asks before deleting rather than deleting outright', async () => {
+      const publish = jest.spyOn(appEvents, 'publish');
+      const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b', 'c']), true));
 
-      await user.click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+
+      expect(publish).toHaveBeenCalledTimes(1);
+      expect(publish.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
+      expect(cellNames(manager)).toEqual(['a', 'b', 'c']);
+    });
+
+    it('deletes the cell it belongs to once confirmed', async () => {
+      const publish = jest.spyOn(appEvents, 'publish');
+      const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b', 'c']), true));
+
+      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+      act(() => {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        (publish.mock.calls[0][0] as ShowConfirmModalEvent).payload.onConfirm?.();
+      });
 
       expect(cellNames(manager)).toEqual(['a', 'c']);
     });
 
     it('duplicates the cell directly below itself', async () => {
-      const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
+      const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await user.click(screen.getAllByRole('button', { name: 'Duplicate block' })[0]);
+      await reachActions().click(screen.getAllByRole('button', { name: 'Duplicate block' })[0]);
 
       expect(cellNames(manager)).toEqual(['a', 'a-copy-1', 'b']);
     });

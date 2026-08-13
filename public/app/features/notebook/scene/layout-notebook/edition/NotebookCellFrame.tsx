@@ -140,11 +140,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // the divider vanish under its own open menu. `>` keeps it to this frame's own affordances.
     [`&:hover > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}, &:focus-within > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
       opacity: 1,
+      // Paired with the actions bar's own `pointer-events: none`: that bar sits outside this frame's box
+      // and above the previous cell's divider, so while hidden it must not answer the hit test there.
+      // Reaching it from inside the frame still works — the frame is already hovered, so the bar is
+      // already interactive by the time the pointer arrives on it.
+      pointerEvents: 'auto',
     },
   }),
   handle: css({
     position: 'absolute',
-    left: theme.spacing(-7),
+    // Into the document's left padding (see NotebookLayoutManager), which is sized to hold this — the
+    // two move together. Deliberately not pointer-events gated like the actions bar: a strip of bare
+    // gutter separates this from the frame's own box, so a pointer travelling out to grab it leaves the
+    // frame unhovered mid-way, and gating would make it fall through and never become grabbable.
+    left: theme.spacing(-4),
+    [theme.breakpoints.up('md')]: {
+      left: theme.spacing(-7),
+    },
     width: theme.spacing(3),
     height: theme.spacing(3),
     // Top-aligned rather than centred: spacing(1) lines up with the first line of a narrative cell and

@@ -13,10 +13,12 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { type DashboardLayoutManager } from 'app/features/dashboard-scene/scene/types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/types/LayoutRegistryItem';
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../types';
 
@@ -252,7 +254,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
                     // Bound here rather than resolved inside the frame: the cells list belongs to the
                     // manager, so the frame never needs to reach back up for its own position.
                     onDuplicate={() => model.duplicateCell(cell)}
-                    onDelete={() => model.removeCell(cell)}
+                    onDelete={() => confirmRemoveCell(model, cell)}
                   />
                 ))}
                 {dropProvided.placeholder}
@@ -270,11 +272,29 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   );
 }
 
+function confirmRemoveCell(model: NotebookLayoutManager, cell: NotebookCellItem) {
+  appEvents.publish(
+    new ShowConfirmModalEvent({
+      title: t('notebook.cell.delete-confirm-title', 'Delete block?'),
+      text: t(
+        'notebook.cell.delete-confirm-text',
+        'This removes the block and its content from the notebook. Are you sure you want to continue?'
+      ),
+      yesText: t('notebook.cell.delete-confirm-yes', 'Delete'),
+      onConfirm: () => model.removeCell(cell),
+    })
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   document: css({
     maxWidth: 900,
     margin: '0 auto',
-    padding: theme.spacing(3, 7, 6, 7),
+    padding: theme.spacing(3, 4, 6, 4),
+    [theme.breakpoints.up('md')]: {
+      paddingLeft: theme.spacing(7),
+      paddingRight: theme.spacing(7),
+    },
     width: '100%',
   }),
   header: css({

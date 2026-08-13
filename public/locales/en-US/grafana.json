@@ -12779,6 +12779,9 @@
     },
     "cell": {
       "delete": "Delete block",
+      "delete-confirm-text": "This removes the block and its content from the notebook. Are you sure you want to continue?",
+      "delete-confirm-title": "Delete block?",
+      "delete-confirm-yes": "Delete",
       "drag-handle": "Drag to reorder",
       "duplicate": "Duplicate block"
     },
@@ -12819,8 +12822,8 @@
     },
     "view": {
       "copy-link": "Copy link",
-      "edit-mode": "Edit",
-      "editing": "Editing"
+      "mode-edit": "Edit",
+      "mode-view": "View"
     }
   },
   "notifications": {

@@ -46,6 +46,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     boxShadow: theme.shadows.z2,
     opacity: 0,
+    // bottom: 100% puts this outside the frame's box, on top of the previous cell's insertion divider.
+    // Invisible is not enough there — it would still win the hit test and turn a click meant for
+    // "Add block" into a duplicate or delete of this cell. The frame's reveal rule restores
+    // pointer-events along with the opacity.
+    pointerEvents: 'none',
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),
     },

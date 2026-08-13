@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 
 import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import {
@@ -19,7 +18,7 @@ import {
   ScopesVariable,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
-import { Text, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { getClosestVizPanel, getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
 
 import { canEditNotebooks } from '../permissions';
@@ -158,22 +157,12 @@ function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
+  const { body, timePicker, refreshPicker, hideTimeControls, overlay } = model.useState();
 
   return (
     <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
-      {/* The row itself always renders: the edit toggle must not inherit the pickers' visibility.
-          Only the pickers are conditional. */}
       <div className={styles.controls}>
-        {isEditing && (
-          // Pushed to the far left of the row; everything else stays right-aligned.
-          <span className={styles.mode}>
-            <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="notebooks.view.editing">Editing</Trans>
-            </Text>
-          </span>
-        )}
         <NotebookEditToggle notebook={model} />
         {!hideTimeControls && (
           <>
@@ -238,8 +227,5 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
       // token the dashboard's controls chrome uses.
       zIndex: theme.zIndex.sidemenu,
     },
-  }),
-  mode: css({
-    marginRight: 'auto',
   }),
 });

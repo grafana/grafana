@@ -18,17 +18,28 @@ function renderFrame({
   index = 1,
   isEditing,
   onAdd,
+  onDuplicate,
+  onDelete,
 }: {
   index?: number;
   isEditing?: boolean;
   onAdd?: (type: string, index: number) => void;
+  onDuplicate?: () => void;
+  onDelete?: () => void;
 } = {}) {
   return render(
     <DragDropContext onDragEnd={() => {}}>
       <Droppable droppableId="test">
         {(dropProvided) => (
           <div ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
-            <NotebookCellFrame cell={buildCell()} index={index} isEditing={isEditing} onAdd={onAdd} />
+            <NotebookCellFrame
+              cell={buildCell()}
+              index={index}
+              isEditing={isEditing}
+              onAdd={onAdd}
+              onDuplicate={onDuplicate}
+              onDelete={onDelete}
+            />
             {dropProvided.placeholder}
           </div>
         )}
@@ -70,6 +81,18 @@ describe('NotebookCellFrame', () => {
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
     expect(onAdd).toHaveBeenCalledWith('heading', 2);
+  });
+
+  // The actions bar is positioned above this frame's box, over the previous cell's insertion divider.
+  // Hidden but hit-testable, it would swallow clicks meant for that divider's Add block button, so the
+  // hidden state has to be inert and not merely invisible. jsdom does no hit-testing, so this pins the
+  // declaration rather than the collision.
+  it('makes the hidden actions bar inert', async () => {
+    renderFrame({ isEditing: true, onDuplicate: () => {}, onDelete: () => {} });
+
+    const actions = (await screen.findByRole('button', { name: 'Duplicate block' })).parentElement;
+
+    expect(getComputedStyle(actions!).pointerEvents).toBe('none');
   });
 });
 
