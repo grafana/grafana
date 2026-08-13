@@ -31,8 +31,6 @@ export interface Props
   isCompact?: boolean;
   /** Remove the bottom margin */
   noMargin?: boolean;
-  /** The card variant. Primarily affects it's background color. Use secondary for cards sitting on primary containers. Default: primary. */
-  variant?: 'primary' | 'secondary';
 }
 
 export interface CardInterface extends FC<Props> {
@@ -67,7 +65,6 @@ export const Card: CardInterface = ({
   isCompact,
   className,
   noMargin,
-  variant = 'primary',
   ...htmlProps
 }) => {
   const hasHeadingComponent = useMemo(
@@ -93,8 +90,7 @@ export const Card: CardInterface = ({
     hasTagsComponent,
     isSelected,
     isCompact,
-    noMargin,
-    variant
+    noMargin
   );
 
   return (

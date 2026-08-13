@@ -199,7 +199,7 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                     <Stack direction="column">
                       {visibleQueries[category]!.map((query) => {
                         return (
-                          <Card noMargin variant="secondary" className={styles.card} key={query.id}>
+                          <Card noMargin className={styles.card} key={query.id}>
                             <Card.Heading>{query.displayName}</Card.Heading>
                             <ScrollContainer showScrollIndicators maxHeight="100px">
                               <RawQuery
@@ -261,9 +261,14 @@ export default AzureCheatSheet;
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css({
+      background: theme.colors.background.secondary,
       width: '90%',
       display: 'flex',
       flexDirection: 'column',
+
+      '&:hover': {
+        background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+      },
     }),
     rawQuery: css({
       backgroundColor: `${theme.colors.background.primary}`,

@@ -136,6 +136,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 Tooltip.displayName = 'Tooltip';
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const info = buildTooltipTheme(
     theme,
     theme.components.tooltip.background,
@@ -145,9 +146,9 @@ const getStyles = (theme: GrafanaTheme2) => {
   );
   const error = buildTooltipTheme(
     theme,
-    theme.colors.error.main,
-    theme.colors.error.main,
-    theme.colors.error.contrastText,
+    theme.colors.error[visualRefreshEnabled ? 'background' : 'main'],
+    theme.colors.error[visualRefreshEnabled ? 'border' : 'main'],
+    theme.colors.error[visualRefreshEnabled ? 'text' : 'contrastText'],
     { topBottom: 0.5, rightLeft: 1 }
   );
 

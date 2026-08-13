@@ -28,6 +28,7 @@ export function ExpressionTypePicker() {
 
         return (
           <Card
+            className={styles.card}
             key={item.value}
             onClick={() => {
               reportInteraction('dashboards_expression_interaction', {
@@ -38,7 +39,6 @@ export function ExpressionTypePicker() {
               finalizePendingExpression(item.value);
             }}
             noMargin
-            variant="secondary"
           >
             <Card.Heading>{label}</Card.Heading>
             <Card.Description>
@@ -62,5 +62,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'block',
     maxWidth: '100%',
     marginTop: theme.spacing(2),
+  }),
+  card: css({
+    background: theme.colors.background.secondary,
+
+    '&:hover': {
+      background: theme.colors.emphasize(theme.colors.background.secondary, 0.03),
+    },
   }),
 });

@@ -62,7 +62,6 @@ export function TransformationCard({
       data-testid={selectors.components.TransformTab.newTransform(transform.name)}
       onClick={() => onClick(transform.id)}
       noMargin
-      variant="secondary"
       role={role}
     >
       <Card.Heading>

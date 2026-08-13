@@ -92,8 +92,7 @@ export const getCardContainerStyles = (
   hasTagsComponent: boolean,
   isSelected?: boolean,
   isCompact?: boolean,
-  noMargin = false,
-  variant: 'primary' | 'secondary' = 'primary'
+  noMargin = false
 ) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const isSelectable = isSelected !== undefined;
@@ -102,8 +101,7 @@ export const getCardContainerStyles = (
   const metaRow = `"Figure Meta ${hasTagsComponent ? 'Tags' : 'Meta'}"`;
   const descriptionRow = `"Figure Description ${hasTagsComponent ? 'Tags' : 'Description'}" 1fr`;
   const actionsRow = `"Figure Actions Secondary" / auto 1fr auto`;
-  const backgroundColor =
-    variant === 'primary' && visualRefreshEnabled ? theme.colors.background.primary : theme.colors.background.secondary;
+  const backgroundColor = visualRefreshEnabled ? theme.colors.background.primary : theme.colors.background.secondary;
 
   return {
     container: css(
