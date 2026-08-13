@@ -5,8 +5,12 @@ import { CodeLanguage, TextMode } from '../panelcfg.gen';
 
 export const EMPTY_CONTENT = ' ';
 
-export function getInterpolateFormat(codeLanguage?: CodeLanguage): 'json' | 'html' {
-  return codeLanguage === CodeLanguage.Json ? 'json' : 'html';
+export function getInterpolateFormat(mode: TextMode, codeLanguage?: CodeLanguage): 'json' | 'html' | 'raw' {
+  if (mode !== TextMode.Code) {
+    return 'html';
+  }
+
+  return codeLanguage === CodeLanguage.Json ? 'json' : 'raw';
 }
 
 /** Shared by the panel and the edit-time preview so they can't diverge. */

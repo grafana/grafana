@@ -202,7 +202,7 @@ function renderPanelContent(options: Options, series: DataFrame[], replaceVariab
       mode: options.mode,
       series,
       renderMode: options.renderMode,
-      format: getInterpolateFormat(options.code?.language),
+      format: getInterpolateFormat(options.mode, options.code?.language),
     },
     replaceVariables,
     config.disableSanitizeHtml

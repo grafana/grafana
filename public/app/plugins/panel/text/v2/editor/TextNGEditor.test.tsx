@@ -265,13 +265,16 @@ describe('TextNGEditor', () => {
       expect(onChange).not.toHaveBeenCalledWith({ content: 'updated' });
     });
 
-    it('interpolates with the json format when code language is json, regardless of mode', () => {
+    // Must match the panel, which keys the format off the mode rather than code.language alone.
+    it.each([
+      [TextMode.Code, CodeLanguage.Yaml, 'raw'],
+      [TextMode.Code, CodeLanguage.Json, 'json'],
+      [TextMode.Markdown, CodeLanguage.Json, 'html'],
+    ] as const)('interpolates %s mode with the %s language using the %s format', (mode, language, format) => {
       const replaceVariables = jest.fn((value: string) => value);
-      setup('# Hello', TextMode.Markdown, jest.fn(), false, CodeLanguage.Json, replaceVariables);
+      setup('a: ${var}', mode, jest.fn(), false, language, replaceVariables);
 
-      // Matches the panel render path, which keys the interpolation format off
-      // code.language alone.
-      expect(replaceVariables).toHaveBeenCalledWith('# Hello', {}, 'json');
+      expect(replaceVariables).toHaveBeenCalledWith('a: ${var}', {}, format);
     });
   });
 
