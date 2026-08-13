@@ -40,10 +40,11 @@ type RESTOptionsGetter struct {
 	versionPolicy *versionpolicy.VersionPolicyRegistry
 }
 
-// SetVersionPolicy sets the shared registry consulted by apistore.encode, so every resource served by
-// this getter enforces the cap against the same instance.
-func (r *RESTOptionsGetter) SetVersionPolicy(vp *versionpolicy.VersionPolicyRegistry) {
-	r.versionPolicy = vp
+// VersionPolicy returns the registry this getter enforces against; nil when enforcement is disabled.
+// A getter that wraps this one and replaces the RESTOptions decorator has to copy this onto the
+// StorageOptions it builds, or the resources it serves skip the cap.
+func (r *RESTOptionsGetter) VersionPolicy() *versionpolicy.VersionPolicyRegistry {
+	return r.versionPolicy
 }
 
 func NewRESTOptionsGetterForClient(
@@ -51,6 +52,7 @@ func NewRESTOptionsGetterForClient(
 	secrets secret.InlineSecureValueSupport,
 	original storagebackend.Config,
 	configProvider RestConfigProvider,
+	versionPolicy *versionpolicy.VersionPolicyRegistry,
 ) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		client:         client,
@@ -58,6 +60,7 @@ func NewRESTOptionsGetterForClient(
 		original:       original,
 		options:        make(map[string]StorageOptions),
 		configProvider: configProvider,
+		versionPolicy:  versionPolicy,
 	}
 }
 
@@ -94,6 +97,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, sec
 		resource.NewLocalResourceClient(server),
 		secrets,
 		originalStorageConfig,
+		nil,
 		nil,
 	), nil
 }
@@ -134,6 +138,7 @@ func NewRESTOptionsGetterForFileXX(path string,
 		resource.NewLocalResourceClient(server),
 		nil, // secrets
 		originalStorageConfig,
+		nil,
 		nil,
 	), nil
 }
