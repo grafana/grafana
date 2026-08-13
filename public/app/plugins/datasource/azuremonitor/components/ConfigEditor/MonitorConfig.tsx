@@ -9,6 +9,7 @@ import { config } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 
 import { getCredentials, updateCredentials } from '../../credentials';
+import { useBatchAPIFlag } from '../../featureFlags';
 import { trackAzureMonitorBatchAPIToggled } from '../../tracking';
 import { type AzureMonitorDataSourceSettings } from '../../types/types';
 
@@ -28,6 +29,7 @@ export const MonitorConfig = (props: Props) => {
   const { updateOptions, getSubscriptions, options } = props;
   const [subscriptions, setSubscriptions] = useState<Array<SelectableValue<string>>>([]);
   const credentials = useMemo(() => getCredentials(props.options), [props.options]);
+  const batchFlagEnabled = useBatchAPIFlag();
 
   const onCredentialsChange = (credentials: AzureCredentials, subscriptionId?: string): void => {
     if (!subscriptionId) {
@@ -93,7 +95,7 @@ export const MonitorConfig = (props: Props) => {
             options={options.jsonData}
             onAuxiliaryLogsEnabledChange={onAuxiliaryLogsEnabledChange}
           />
-          {config.featureToggles.azureMonitorBatchAPI && (
+          {batchFlagEnabled && (
             <BatchAPIToggle options={options.jsonData} onBatchAPIEnabledChange={onBatchAPIEnabledChange} />
           )}
         </Stack>

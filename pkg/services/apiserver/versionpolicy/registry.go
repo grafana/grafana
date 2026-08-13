@@ -11,9 +11,9 @@ import (
 
 type VersionPolicy struct {
 	// advisory: affects discovery only, never storage
-	PreferredVersion string
+	PreferredVersion string `json:"preferredVersion,omitempty"`
 	// persist ceiling: writes whose version outranks it are rejected
-	MaxAllowedVersion string
+	MaxAllowedVersion string `json:"maxAllowedVersion,omitempty"`
 }
 
 // VersionPolicyRegistry serves the resolved global policy. base holds the static layers

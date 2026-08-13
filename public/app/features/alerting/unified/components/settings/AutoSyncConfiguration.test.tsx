@@ -28,6 +28,11 @@ const server = setupMswServer();
 const MIMIR_DS_UID = 'mimir-uid';
 const MIMIR_DS_NAME = 'Test Mimir Alertmanager';
 
+const SECOND_MIMIR_DS_UID = 'other-mimir-uid';
+const SECOND_MIMIR_DS_NAME = 'Other Mimir Alertmanager';
+// Configured UID with no matching datasource — puts the component in orphan-uid.
+const ORPHAN_DS_UID = 'missing-uid';
+
 const MIMIR_DS_PAYLOAD = {
   id: 1,
   uid: MIMIR_DS_UID,
@@ -36,6 +41,13 @@ const MIMIR_DS_PAYLOAD = {
   type: 'alertmanager',
   url: 'http://localhost:9009',
   jsonData: { implementation: 'mimir' },
+};
+
+const SECOND_MIMIR_DS_PAYLOAD = {
+  ...MIMIR_DS_PAYLOAD,
+  id: 2,
+  uid: SECOND_MIMIR_DS_UID,
+  name: SECOND_MIMIR_DS_NAME,
 };
 
 function registerMimirDataSources(datasources: Array<typeof MIMIR_DS_PAYLOAD> = [MIMIR_DS_PAYLOAD]) {
@@ -82,6 +94,8 @@ const edgeUi = {
   orphanWarning: byText(/is not available\. Disable sync or restore the datasource to continue/i),
   noDatasourcesMessage: byText(/no mimir or cortex datasources available/i),
   addMimirDatasourceLink: byRole('link', { name: /add mimir datasource/i }),
+  stagedConflictWarning: byText(/currently occupies that slot/i),
+  stagedConflictActiveTitle: byText(/auto-sync is not running/i),
 };
 
 describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
@@ -205,7 +219,7 @@ describe('AutoSyncConfiguration — edge-case states (cases 5–8)', () => {
   it('case 8: orphan UID — warning callout + Disable sync action visible, Save remains available for recovery', async () => {
     setupAdminConfigGet(server, {
       alertmanagersChoice: AlertmanagerChoice.Internal,
-      external_alertmanager_uid: 'missing-uid',
+      external_alertmanager_uid: ORPHAN_DS_UID,
     });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
@@ -216,5 +230,93 @@ describe('AutoSyncConfiguration — edge-case states (cases 5–8)', () => {
     expect(ui.disableSyncButton.get()).toBeInTheDocument();
     // Save stays visible in orphan-uid so the admin can recover by picking a real datasource.
     expect(ui.saveButton.get()).toBeInTheDocument();
+  });
+});
+
+describe('AutoSyncConfiguration — staged configuration conflict', () => {
+  it('blocks enabling sync and explains why while a manual import is staged', async () => {
+    setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    render(<AutoSyncConfiguration stagedConfigIdentifier="prometheus-prod" />);
+
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
+    expect(edgeUi.stagedConflictWarning.get()).toBeInTheDocument();
+    expect(ui.saveButton.get()).toBeDisabled();
+  });
+
+  it('reports that sync is not running when a foreign import outlives an enabled sync', async () => {
+    setupAdminConfigGet(server, {
+      alertmanagersChoice: AlertmanagerChoice.Internal,
+      external_alertmanager_uid: MIMIR_DS_UID,
+    });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    render(<AutoSyncConfiguration stagedConfigIdentifier="prometheus-prod" />);
+
+    expect(await edgeUi.stagedConflictActiveTitle.find()).toBeInTheDocument();
+    // Disabling must stay reachable — never trap the user in the broken state.
+    expect(ui.disableSyncButton.get()).toBeEnabled();
+  });
+
+  // Disabling sync leaves the staged config behind, so re-enabling the same datasource must not be blocked
+  // by the config the syncer itself wrote — it will simply overwrite its own entry.
+  it('allows re-enabling the datasource whose UID matches the staged identifier', async () => {
+    setupStatefulAdminConfig(server, postState);
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    const { user } = render(<AutoSyncConfiguration stagedConfigIdentifier={MIMIR_DS_UID} />);
+
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
+
+    await user.click(ui.picker.get());
+    await user.click(await screen.findByText(MIMIR_DS_NAME));
+
+    await waitFor(() => expect(ui.saveButton.get()).toBeEnabled());
+    expect(edgeUi.stagedConflictWarning.query()).not.toBeInTheDocument();
+  });
+
+  // Recovering from orphan-uid means repointing at a live datasource, but the syncer's own leftover still
+  // occupies the slot under the deleted UID, so every tick after the save would fail server-side.
+  it('blocks repointing an orphaned sync while its leftover staged config occupies the slot', async () => {
+    setupAdminConfigGet(server, {
+      alertmanagersChoice: AlertmanagerChoice.Internal,
+      external_alertmanager_uid: ORPHAN_DS_UID,
+    });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    const { user } = render(<AutoSyncConfiguration stagedConfigIdentifier={ORPHAN_DS_UID} />);
+
+    expect(await edgeUi.orphanWarning.find()).toBeInTheDocument();
+    expect(edgeUi.stagedConflictWarning.query()).not.toBeInTheDocument();
+
+    await user.click(ui.picker.get());
+    await user.click(await screen.findByText(MIMIR_DS_NAME));
+
+    await waitFor(() => expect(ui.saveButton.get()).toBeDisabled());
+    expect(edgeUi.stagedConflictWarning.get()).toBeInTheDocument();
+  });
+
+  // The alert describes what the syncer writes today, not what the picker happens to show.
+  it('keeps reporting a broken sync when the picker moves to the staged identifier', async () => {
+    setupAdminConfigGet(server, {
+      alertmanagersChoice: AlertmanagerChoice.Internal,
+      external_alertmanager_uid: MIMIR_DS_UID,
+    });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD, SECOND_MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources([MIMIR_DS_PAYLOAD, SECOND_MIMIR_DS_PAYLOAD]);
+
+    const { user } = render(<AutoSyncConfiguration stagedConfigIdentifier={SECOND_MIMIR_DS_UID} />);
+
+    expect(await edgeUi.stagedConflictActiveTitle.find()).toBeInTheDocument();
+
+    await user.click(ui.picker.get());
+    await user.click(await screen.findByText(SECOND_MIMIR_DS_NAME));
+
+    expect(edgeUi.stagedConflictActiveTitle.get()).toBeInTheDocument();
   });
 });

@@ -299,6 +299,7 @@ func (s *SocialBase) getJWKSCacheKeyForURL(jwkSetURL string) string {
 
 // retrieveJWKSFromCache retrieves JWKS from cache by cache key.
 func (s *SocialBase) retrieveJWKSFromCache(ctx context.Context, cacheKey string) (*keySetJWKS, time.Duration, error) {
+	logger := s.log.FromContext(ctx)
 	if s.cache == nil {
 		return &keySetJWKS{}, 0, nil
 	}
@@ -306,16 +307,17 @@ func (s *SocialBase) retrieveJWKSFromCache(ctx context.Context, cacheKey string)
 	if val, err := s.cache.Get(ctx, cacheKey); err == nil {
 		var jwks keySetJWKS
 		err := json.Unmarshal(val, &jwks)
-		s.log.Debug("Retrieved cached key set", "cacheKey", cacheKey)
+		logger.Debug("Retrieved cached key set", "cacheKey", cacheKey)
 		return &jwks, 0, err
 	}
-	s.log.Debug("Keyset not found in cache")
+	logger.Debug("Keyset not found in cache")
 
 	return &keySetJWKS{}, 0, nil
 }
 
 // cacheJWKS caches the JWKS under the given cache key.
 func (s *SocialBase) cacheJWKS(ctx context.Context, cacheKey string, jwks *keySetJWKS, cacheExpiration time.Duration) error {
+	logger := s.log.FromContext(ctx)
 	if s.cache == nil {
 		return nil
 	}
@@ -326,7 +328,7 @@ func (s *SocialBase) cacheJWKS(ctx context.Context, cacheKey string, jwks *keySe
 	}
 
 	if err := s.cache.Set(ctx, cacheKey, jsonBuf.Bytes(), cacheExpiration); err != nil {
-		s.log.Warn("Failed to cache key set", "err", err)
+		logger.Warn("Failed to cache key set", "err", err)
 	}
 
 	return nil
@@ -361,6 +363,7 @@ func getCacheExpiration(header string) time.Duration {
 
 // retrieveJWKSFromURL retrieves JWKS from the configured URL
 func (s *SocialBase) retrieveJWKSFromURL(ctx context.Context, client *http.Client, jwkSetURL string) (*keySetJWKS, time.Duration, error) {
+	logger := s.log.FromContext(ctx)
 	if jwkSetURL == "" {
 		return nil, 0, fmt.Errorf("JWK Set URL is not configured")
 	}
@@ -377,7 +380,7 @@ func (s *SocialBase) retrieveJWKSFromURL(ctx context.Context, client *http.Clien
 	}
 
 	cacheExpiration := getCacheExpiration(resp.Headers.Get("cache-control"))
-	s.log.Debug("Retrieved key set from URL", "url", jwkSetURL, "cacheExpiration", cacheExpiration)
+	logger.Debug("Retrieved key set from URL", "url", jwkSetURL, "cacheExpiration", cacheExpiration)
 
 	return &jwks, cacheExpiration, nil
 }
@@ -386,6 +389,7 @@ func (s *SocialBase) retrieveJWKSFromURL(ctx context.Context, client *http.Clien
 // For each URL, the cache is checked first (keyed by hash of URL), then the URL is fetched if needed.
 // Tries each URL in order until a key verifies the signature.
 func (s *SocialBase) validateIDTokenSignatureWithURLs(ctx context.Context, client *http.Client, idTokenString string, jwkSetURLs []string) ([]byte, error) {
+	logger := s.log.FromContext(ctx)
 	parsedToken, err := jwt.ParseSigned(idTokenString, []jose.SignatureAlgorithm{
 		jose.EdDSA, jose.HS256, jose.HS384, jose.HS512,
 		jose.RS256, jose.RS384, jose.RS512,
@@ -411,27 +415,27 @@ func (s *SocialBase) validateIDTokenSignatureWithURLs(ctx context.Context, clien
 		// Try cache first for this URL
 		keyset, expiry, err := s.retrieveJWKSFromCache(ctx, cacheKey)
 		if err != nil {
-			s.log.Warn("Error retrieving JWKS from cache", "url", jwkSetURL, "error", err)
+			logger.Warn("Error retrieving JWKS from cache", "url", jwkSetURL, "error", err)
 		}
 		// If cache miss or empty, fetch from URL
 		if keyset == nil || len(keyset.Keys) == 0 {
 			keyset, expiry, err = s.retrieveJWKSFromURL(ctx, client, jwkSetURL)
 			if err != nil {
-				s.log.Warn("Error retrieving JWKS from URL", "url", jwkSetURL, "error", err)
+				logger.Warn("Error retrieving JWKS from URL", "url", jwkSetURL, "error", err)
 				continue
 			}
 		}
 
 		keys := keyset.Key(keyID)
 		for _, key := range keys {
-			s.log.Debug("Trying to verify token with key", "kid", key.KeyID)
+			logger.Debug("Trying to verify token with key", "kid", key.KeyID)
 			var claims map[string]any
 			if err := parsedToken.Claims(key, &claims); err == nil {
 				// Successfully verified, cache the keyset if we got it from URL (expiry > 0)
 				if expiry != 0 {
-					s.log.Debug("Caching key set", "kid", key.KeyID, "expiry", expiry)
+					logger.Debug("Caching key set", "kid", key.KeyID, "expiry", expiry)
 					if err := s.cacheJWKS(ctx, cacheKey, keyset, expiry); err != nil {
-						s.log.Warn("Failed to cache key set", "err", err)
+						logger.Warn("Failed to cache key set", "err", err)
 					}
 				}
 
@@ -441,7 +445,7 @@ func (s *SocialBase) validateIDTokenSignatureWithURLs(ctx context.Context, clien
 				}
 				return rawJSON, nil
 			}
-			s.log.Debug("Failed to verify token with key", "kid", key.KeyID, "err", err)
+			logger.Debug("Failed to verify token with key", "kid", key.KeyID, "err", err)
 		}
 	}
 

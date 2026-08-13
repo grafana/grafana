@@ -3,6 +3,8 @@ import { useEffect, useRef } from 'react';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { type RowItem } from '../layout-rows/RowItem';
+import { type TabItem } from '../layout-tabs/TabItem';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -54,6 +56,24 @@ export function generateUniqueTitle(title: string | undefined, existingTitles: S
   }
 
   return baseTitle;
+}
+
+export function deduplicateTitles(items: TabItem[] | RowItem[]) {
+  const existingTitles = new Set<string>();
+
+  for (const item of items) {
+    if (!item.state.title) {
+      continue;
+    }
+
+    const uniqueTitle = generateUniqueTitle(item.state.title, existingTitles);
+
+    if (uniqueTitle !== item.state.title) {
+      item.setState({ title: uniqueTitle });
+    }
+
+    existingTitles.add(uniqueTitle);
+  }
 }
 
 function switchLayoutOnParent(current: DashboardLayoutManager, newLayout: DashboardLayoutManager, skipUndo?: boolean) {

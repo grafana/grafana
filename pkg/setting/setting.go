@@ -784,16 +784,22 @@ type Cfg struct {
 	// defaults to dashboards; external defaults to none.
 	VectorAllowedInternalCollections []string
 	VectorAllowedExternalCollections []string
-	VectorDBHost                     string
-	VectorDBPort                     string
-	VectorDBName                     string
-	VectorDBUser                     string
-	VectorDBPassword                 string
-	VectorDBSSLMode                  string
-	VectorIndexingEnabled            bool          // run the embedding backfiller and reconciler
-	VectorReconcilerInterval         time.Duration // reconciler tick interval; default 60s
-	VectorPromotionThreshold         int           // row count per tenant to trigger promotion
-	VectorPromoterInterval           time.Duration // promoter tick interval; 0 disables
+	// Registers the VectorStore write RPCs on the storage server.
+	EnableVectorStore bool
+	// Service identities allowed to call the VectorStore write RPCs.
+	// Empty = no identity restriction.
+	VectorAllowedWriteServices   []string
+	VectorDBHost                 string
+	VectorDBPort                 string
+	VectorDBName                 string
+	VectorDBUser                 string
+	VectorDBPassword             string
+	VectorDBSSLMode              string
+	VectorIndexingEnabled        bool          // run the embedding backfiller and reconciler
+	VectorReconcilerInterval     time.Duration // reconciler tick interval; default 60s
+	VectorEmbeddingCountInterval time.Duration // stored-embedding gauge sample interval; 0 disables
+	VectorPromotionThreshold     int           // row count per tenant to trigger promotion
+	VectorPromoterInterval       time.Duration // promoter tick interval; 0 disables
 
 	// VectorSearch per-tenant query-embedding cache (DB-backed, FIFO).
 	VectorQueryCacheEnabled      bool
@@ -939,6 +945,12 @@ func (cfg *Cfg) ResolveGrafanaComProxyAPIToken() {
 // the same intention can be used to hide both features.
 func (cfg *Cfg) AddChangePasswordLink() bool {
 	return !cfg.DisableLoginForm && !cfg.DisableLogin
+}
+
+// IsDevEnv reports whether Grafana is running in a non-production environment.
+// Some experimental startup params should only honoured when this condition is true.
+func (cfg *Cfg) IsDevEnv() bool {
+	return cfg.Env != Prod
 }
 
 type CommandLineArgs struct {

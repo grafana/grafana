@@ -49,7 +49,7 @@ type OmittedDataGridProps =
 
 export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSummaryRow>, OmittedDataGridProps> {
   role: 'grid' | 'treegrid';
-  gridRef: RefObject<DataGridHandle>;
+  gridRef: RefObject<DataGridHandle | null>;
   noValue?: string;
   renderers: {
     renderRow: RenderRowFn;

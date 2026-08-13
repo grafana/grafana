@@ -16,6 +16,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -109,6 +110,10 @@ type APIRouteHandler struct {
 	Path    string           // added to the appropriate level
 	Spec    *spec3.PathProps // Exposed in the open api service discovery
 	Handler http.HandlerFunc // when Level = resource, the resource will be available in context
+
+	// Schemas are components the Spec references. A route whose types belong to
+	// another group must bring them: each group version's spec is self-contained.
+	Schemas map[string]spec.Schema
 }
 
 // GroupVersionRoutes are routes the caller mounts itself, for an endpoint that
