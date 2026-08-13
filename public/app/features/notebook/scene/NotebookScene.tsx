@@ -225,12 +225,6 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
     justifyContent: 'flex-end',
     gap: theme.spacing(1),
     padding: theme.spacing(1, 2),
-    // Opaque, or the document shows through as it slides under. Which opaque colour is the same choice
-    // DashboardControlsChrome makes, and for the same reason: the visual refresh repaints the page
-    // surface, so a row still painting canvas would show a seam against it. No rounded top corners
-    // though, unlike the dashboard's — those nest inside the page wrapper's lg radius, and the wrapper's
-    // first child here is the notebook toolbar, not this row.
-    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
     // Only from md up: on a narrow viewport the row is a large share of the screen, so the dashboard lets
     // it scroll away rather than eat the reading area, and this follows suit.
     [theme.breakpoints.up('md')]: {

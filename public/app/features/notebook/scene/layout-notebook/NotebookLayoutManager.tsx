@@ -97,13 +97,6 @@ export class NotebookLayoutManager
   /**
    * Reorders a cell, mirroring RowsLayoutManager.moveRow. The cell objects move rather than being
    * rebuilt, so a panel cell keeps its VizPanel and its already-fetched data across the move.
-   *
-   * No ObjectsReorderedOnCanvasEvent: its only subscriber is the dashboard sidebar, which a notebook
-   * does not have, so publishing it would achieve nothing except importing the dashboard sidebar
-   * module graph. No dashboardEditActions.moveElement either: it resolves the moved object through
-   * getEditableElementFor, which has no case for a NotebookCellItem, and it publishes an event only
-   * DashboardScene's undo stack consumes. When notebook edit mode grows its own undo stack, this
-   * method becomes that action's perform/undo pair.
    */
   public moveCell(fromIndex: number, toIndex: number) {
     const cells = [...this.state.cells];
@@ -162,8 +155,6 @@ export class NotebookLayoutManager
     return `${base}-copy-${suffix}`;
   }
 
-  // Adding a panel is out of scope for the POC; this satisfies the DashboardLayoutManager contract
-  // minimally.
   public addPanel(): void {}
 
   public cloneLayout(): NotebookLayoutManager {
@@ -238,10 +229,6 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
       </header>
 
       <div className={styles.column}>
-        {/* The one insertion point no cell owns. It sits outside the droppable so it plays no part in
-            dnd's list geometry. Hidden when there are no cells: a divider is a gap *between* things, and
-            with nothing to hover it is an invisible strip found only by accident — the prompt below is
-            the empty notebook's only affordance. */}
         {isEditing && cells.length > 0 && <NotebookAddBlockDivider index={0} />}
 
         <DragDropContext onDragStart={onDragStart} onDragUpdate={onDragUpdate} onDragEnd={onDragEnd}>
@@ -287,10 +274,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   document: css({
     maxWidth: 900,
     margin: '0 auto',
-    // spacing(7) on the sides rather than spacing(3): the left padding is the gutter the cell drag
-    // handles are absolutely positioned into (see NotebookCellFrame), and 56px fits the 24px handle
-    // plus the spacing(4) gap it keeps from the cell. Applied in both modes, so entering edit mode
-    // never shifts the content sideways, and symmetric, so the document stays centred.
     padding: theme.spacing(3, 7, 6, 7),
     width: '100%',
   }),
@@ -311,10 +294,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(2),
     width: '100%',
   }),
-  // In edit mode the add-block dividers are the vertical rhythm; keeping the gap as well would put
-  // spacing(2) above and below every divider and double the space between cells. It is also load
-  // bearing for dragging: dnd does not account for flex `gap` when it translates cells out of the way,
-  // so a non-zero gap here makes them overlap by that amount mid-drag.
   listEditing: css({
     gap: 0,
   }),
