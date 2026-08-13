@@ -58,7 +58,7 @@ Click the panel menu icon that appears and select **Edit**.
 The panel menu also gives you access to several actions.
 If an option is only available in view mode or edit mode, that's indicated:
 
-- **View**: View the panel in full screen. Opens the [View panel sidebar](#view-mode-panel-controls) and displays controls for supported visualizations.
+- **View**: View the panel in full screen. Opens the [View panel sidebar](#view-mode-panel-controls) and displays controls for supported visualizations, if enabled.
 - **Edit**: Open the panel editor to edit panel and visualization options.
 - **Share**: Share the panel as a link, embed, or snapshot.
 - **Explore**: Open the panel in **Explore**, where you can focus on your query.
@@ -81,6 +81,8 @@ If an option is only available in view mode or edit mode, that's indicated:
 - **Remove**: Edit mode only. Remove the panel from the dashboard.
 
 ## View mode panel controls
+
+{{< docs/public-preview product="View panel sidebar" featureFlag="`viewPanelPane`" >}}
 
 When you open a panel in full-screen view mode, Grafana displays a **View panel** sidebar with controls for adjusting the panel.
 These controls make it easier to view specific data or identify patterns and correlations.
