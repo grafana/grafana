@@ -10,12 +10,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // noopExtraConfigAuthz permits all alertmanager import operations — for use in tests
@@ -617,5 +619,92 @@ receivers:
 			require.NotEqual(t, definitions.Provenance(models.ProvenanceConvertedPrometheus), tmpl.Provenance,
 				"template %q must not have converted_prometheus provenance after promotion", tmpl.Title)
 		}
+	})
+}
+
+func TestMultiOrgAlertmanager_ExtraConfigManagedBy(t *testing.T) {
+	orgID := int64(1)
+
+	newStagedConfig := func(identifier string) v1.ExtraConfiguration {
+		return v1.ExtraConfiguration{
+			Identifier: identifier,
+			AlertmanagerConfig: `route:
+  receiver: staged-receiver
+receivers:
+  - name: staged-receiver`,
+		}
+	}
+	cfgWithSyncUID := func(t *testing.T, uid string) *setting.Cfg {
+		return &setting.Cfg{
+			DataPath: t.TempDir(),
+			UnifiedAlerting: setting.UnifiedAlertingSettings{
+				AlertmanagerConfigPollInterval: 3 * time.Minute,
+				DefaultConfiguration:           defaultConfig,
+				ExternalAlertmanagerUID:        uid,
+			},
+		}
+	}
+
+	t.Run("no staged config", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Empty(t, gettableConfig.ExtraConfigs)
+	})
+
+	t.Run("manual import with no active sync is manual", func(t *testing.T) {
+		// setupMam's syncer has no clientGenerator, so this also exercises the resolution-error path.
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("manual-import"), false, false, false)
+		require.NoError(t, err)
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err, "a sync-resolution error must not fail the config read")
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+		require.Equal(t, "manual", gettableConfig.ExtraConfigs[0].ManagedBy)
+	})
+
+	t.Run("identifier matching the ini-configured sync datasource is auto-sync", func(t *testing.T) {
+		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("mimir-ds-uid"), false, false, false)
+		require.NoError(t, err)
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+		require.Equal(t, "auto-sync", gettableConfig.ExtraConfigs[0].ManagedBy)
+	})
+
+	t.Run("manual import staged alongside an unrelated active sync is still manual", func(t *testing.T) {
+		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("manual-import"), false, false, false)
+		require.NoError(t, err)
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+		require.Equal(t, "manual", gettableConfig.ExtraConfigs[0].ManagedBy)
+	})
+
+	t.Run("nil externalAMSyncer defaults to manual without panicking", func(t *testing.T) {
+		mam := &MultiOrgAlertmanager{logger: log.New("testlogger")}
+		extraConfigs := []definitions.ExtraConfiguration{{Identifier: "whatever"}}
+
+		require.NotPanics(t, func() {
+			mam.setExtraConfigOrigin(context.Background(), orgID, extraConfigs)
+		})
+		require.Equal(t, "manual", extraConfigs[0].ManagedBy)
 	})
 }

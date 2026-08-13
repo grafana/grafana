@@ -295,6 +295,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 		},
 		ExtraConfigs: ExtraConfigsToAPI(cfg.ExtraConfigs),
 	}
+	moa.setExtraConfigOrigin(ctx, orgID, result.ExtraConfigs)
 
 	// First we encrypt the secure settings.
 	// This is done to ensure that any secure settings incorrectly stored in Settings are encrypted and moved to
@@ -345,6 +346,30 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	}
 
 	return result, nil
+}
+
+func (moa *MultiOrgAlertmanager) setExtraConfigOrigin(ctx context.Context, orgID int64, extraConfigs []definitions.ExtraConfiguration) {
+	if len(extraConfigs) == 0 {
+		return
+	}
+
+	var syncUID string
+	if moa.externalAMSyncer != nil { // nil in tests that bypass NewMultiOrgAlertmanager
+		uid, _, err := moa.externalAMSyncer.resolveExternalAMUIDForOrg(ctx, orgID)
+		if err != nil {
+			// Degrade to "manual" rather than fail a config read that worked before this field existed.
+			moa.logger.Warn("Failed to resolve external AM sync UID while computing staged config origin", "err", err, "org_id", orgID)
+		}
+		syncUID = uid
+	}
+
+	for i := range extraConfigs {
+		if syncUID != "" && extraConfigs[i].Identifier == syncUID {
+			extraConfigs[i].ManagedBy = "auto-sync"
+		} else {
+			extraConfigs[i].ManagedBy = "manual"
+		}
+	}
 }
 
 // modifyAndApplyExtraConfiguration is a helper function that loads the current configuration,
