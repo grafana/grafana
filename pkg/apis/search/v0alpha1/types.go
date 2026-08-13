@@ -32,8 +32,8 @@ const (
 // All node types are modelled so the schema is future-proof, but v1 only
 // accepts a narrow subset (top-level single leaf or a single and of leaves;
 // text and filter leaves; In/NotIn filter operators). Everything else is
-// rejected with 400 BadRequest by the validation layer. range and exists are
-// sketched for future versions and always rejected today.
+// rejected with 422 Unprocessable Entity by the validation layer. range and
+// exists are sketched for future versions and always rejected today.
 //
 // +k8s:deepcopy-gen=true
 type WhereNode struct {
@@ -92,7 +92,8 @@ type ExistsPredicate struct {
 }
 
 // SortField names a field to sort by and a direction ("asc" or "desc"). V1
-// allows sorting only on scalar string fields that declare the sort capability.
+// allows sorting only on scalar string and numeric fields that declare the sort
+// capability.
 //
 // +k8s:deepcopy-gen=true
 type SortField struct {

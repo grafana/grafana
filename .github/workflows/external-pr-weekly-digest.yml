@@ -100,7 +100,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Get vault secrets
         id: vault-secrets
@@ -117,7 +117,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-digest.mts fetch
+        run: node ./community-triage/.github/workflows/scripts/pr-digest.mts fetch
 
       - name: Build analysis container
         if: steps.fetch-prs.outputs.external_prs == 'true'
@@ -216,7 +216,7 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
           TEAM_FILTER: ${{ inputs.team_filter || '' }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-digest.mts process
+        run: node ./community-triage/.github/workflows/scripts/pr-digest.mts process
 
       - name: No PRs summary
         if: steps.fetch-prs.outputs.external_prs != 'true'

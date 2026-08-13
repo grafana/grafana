@@ -18,6 +18,104 @@ export const versionedPages = {
         [MIN_GRAFANA_VERSION]: (alertRuleUid: string) => `alerting/${alertRuleUid}/edit`,
       },
     },
+    searchInput: {
+      '13.2.0': 'data-testid alerting search-input',
+      [MIN_GRAFANA_VERSION]: 'search-query-input',
+    },
+    Home: {
+      welcomeCtaLink: {
+        '13.2.0': (href: string) => `data-testid alerting welcome-cta-link ${href}`,
+      },
+    },
+    RuleList: {
+      emptyStateNewRuleLink: {
+        '13.2.0': 'data-testid rule-list empty-state-new-rule-link',
+      },
+      newAlertRuleLink: {
+        '13.2.0': 'data-testid rule-list new-alert-rule-link',
+      },
+      moreMenu: {
+        triggerButton: {
+          '13.2.0': 'data-testid rule-list more-menu-trigger-button',
+        },
+        importToGmaLink: {
+          '13.2.0': 'data-testid rule-list import-to-gma-link',
+        },
+      },
+    },
+    ContactPoints: {
+      addContactPointLink: {
+        '13.2.0': 'data-testid contact-points add-contact-point-link',
+      },
+    },
+    ContactPointForm: {
+      nameInput: {
+        '13.2.0': 'data-testid contact-point-form name-input',
+      },
+      saveButton: {
+        '13.2.0': 'data-testid contact-point-form save-button',
+      },
+      integrationTypeField: {
+        '13.2.0': (path: string) => `data-testid contact-point-form integration-type ${path}`,
+        [MIN_GRAFANA_VERSION]: (path: string) => `${path}type`,
+      },
+      settingsField: {
+        '13.2.0': (path: string) => `data-testid contact-point-form settings-field ${path}`,
+        [MIN_GRAFANA_VERSION]: (path: string) => path,
+      },
+    },
+    ImportToGMA: {
+      nextButton: {
+        '13.2.0': 'data-testid import-to-gma next-button',
+        [MIN_GRAFANA_VERSION]: 'wizard-next-button',
+      },
+      skipButton: {
+        '13.2.0': 'data-testid import-to-gma skip-button',
+        [MIN_GRAFANA_VERSION]: 'wizard-skip-button',
+      },
+      policyTreeInput: {
+        '13.2.0': 'data-testid import-to-gma policy-tree-input',
+      },
+      namespaceInput: {
+        '13.2.0': 'data-testid import-to-gma namespace-input',
+      },
+      groupInput: {
+        '13.2.0': 'data-testid import-to-gma group-input',
+      },
+      alertmanagerDataSourceField: {
+        '13.2.0': 'data-testid import-to-gma alertmanager-datasource-field',
+      },
+    },
+    Triage: {
+      groupsContainer: {
+        '13.2.0': 'data-testid triage groups-container',
+        [MIN_GRAFANA_VERSION]: 'groups-container',
+      },
+      sidebarToggleButton: {
+        '13.2.0': 'data-testid triage sidebar-toggle-button',
+      },
+      clearFiltersButton: {
+        '13.2.0': 'data-testid triage clear-filters-button',
+      },
+      stateFilterButton: {
+        '13.2.0': (state: string) => `data-testid triage state-filter ${state}`,
+      },
+      severityFilterButton: {
+        '13.2.0': (level: string) => `data-testid triage severity-filter ${level}`,
+      },
+      groupRow: {
+        '13.2.0': (key: string) => `data-testid triage group-row ${key}`,
+      },
+      openDrawerButton: {
+        '13.2.0': 'data-testid triage open-drawer-button',
+      },
+      notificationToggleButton: {
+        '13.2.0': 'data-testid triage notification-toggle-button',
+      },
+      historyFilterRadioGroup: {
+        '13.2.0': 'data-testid triage history-filter',
+      },
+    },
   },
   Login: {
     url: {
@@ -96,6 +194,9 @@ export const versionedPages = {
       '13.1.0': (pluginName: string) => `data-testid Add new data source ${pluginName}`,
       '9.3.1': (pluginName: string) => `Add new data source ${pluginName}`,
       [MIN_GRAFANA_VERSION]: (pluginName: string) => `Data source plugin item ${pluginName}`,
+    },
+    searchInput: {
+      '13.2.0': 'data-testid Add data source search input',
     },
   },
   Connections: {
@@ -195,6 +296,9 @@ export const versionedPages = {
       addButton: {
         '12.4.0': 'data-testid Dashboard Sidebar new button',
       },
+      codeButton: {
+        '13.2.0': 'data-testid Dashboard Sidebar code button',
+      },
       viewPanelControls: {
         '13.0.0': 'data-testid Dashboard Sidebar view panel controls',
       },
@@ -205,6 +309,9 @@ export const versionedPages = {
           },
           variableSelection: {
             '12.4.0': 'data-testid Dashboard Conditional Rendering Variable variable selection',
+          },
+          operatorSelection: {
+            '13.2.0': 'data-testid Dashboard Conditional Rendering Variable operator selection',
           },
         },
         timeRange: {
@@ -1082,6 +1189,11 @@ export const versionedPages = {
         '11.1.0': 'data-testid QueryHistory',
       },
     },
+    QueryInspector: {
+      container: {
+        '13.2.0': 'data-testid explore query inspector',
+      },
+    },
   },
   SoloPanel: {
     url: {
@@ -1093,10 +1205,12 @@ export const versionedPages = {
       [MIN_GRAFANA_VERSION]: 'Plugins list page',
     },
     list: {
+      '13.2.0': 'data-testid Plugins list',
       [MIN_GRAFANA_VERSION]: 'Plugins list',
     },
     listItem: {
-      [MIN_GRAFANA_VERSION]: 'Plugins list item',
+      '13.2.0': (pluginId: string) => `data-testid Plugins list item ${pluginId}`,
+      [MIN_GRAFANA_VERSION]: (_pluginId: string) => 'Plugins list item',
     },
     signatureErrorNotice: {
       '10.3.0': 'data-testid Unsigned plugins notice',

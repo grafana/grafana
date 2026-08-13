@@ -93,7 +93,7 @@ func TestAlertmanager_SaveAndApplyExtraConfiguration_WithExternalSecrets(t *test
 			},
 			Receivers: []*v1.PostableApiReceiver{
 				{
-					Receiver: definitions.Receiver{Name: "default-receiver"},
+					Name: "default-receiver",
 				},
 			},
 		},
@@ -160,9 +160,7 @@ func TestAlertmanager_ApplyConfig(t *testing.T) {
 			},
 			Receivers: []*v1.PostableApiReceiver{
 				{
-					Receiver: definitions.Receiver{
-						Name: "default-receiver",
-					},
+					Name: "default-receiver",
 				},
 			},
 		}
@@ -263,7 +261,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 		postableReceivers := make([]*v1.PostableApiReceiver, 0, len(receivers))
 		for _, r := range receivers {
 			postableReceivers = append(postableReceivers, &v1.PostableApiReceiver{
-				Receiver: definitions.Receiver{Name: r},
+				Name: r,
 			})
 		}
 		return &v1.AMConfigV1{
@@ -332,7 +330,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 			},
 			mutate: func(cfg *v1.AMConfigV1, _ map[ngmodels.AlertRuleKey]ngmodels.ContactPointRouting) {
 				cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &v1.PostableApiReceiver{
-					Receiver: definitions.Receiver{Name: "new-receiver"},
+					Name: "new-receiver",
 				})
 			},
 		},

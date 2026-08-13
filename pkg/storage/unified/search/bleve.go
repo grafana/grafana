@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"iter"
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -656,11 +657,12 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 	}
 
 	bi := buildInfo{
-		BuildTime:        buildTime.Unix(),
-		BuildVersion:     buildVersion,
-		SelectableFields: selectableFields,
-		SearchFieldsHash: searchFieldsHash,
-		Features:         resource.CurrentIndexFeatures(),
+		BuildTime:          buildTime.Unix(),
+		BuildVersion:       buildVersion,
+		SelectableFields:   selectableFields,
+		SearchFieldsHash:   searchFieldsHash,
+		Features:           resource.CurrentIndexFeatures(),
+		ReaderRequirements: resource.IndexReaderRequirements(),
 	}
 
 	biBytes, err := json.Marshal(bi)
@@ -694,6 +696,10 @@ type buildInfo struct {
 	// Index features the index was built with. Absent on indexes built before
 	// index features existed.
 	Features []resource.IndexFeature `json:"features,omitempty"`
+
+	// Features a reader must understand before using this index. One this binary
+	// does not recognise means the index may hold documents it would misread.
+	ReaderRequirements []resource.IndexFeature `json:"reader_requirements,omitempty"`
 }
 
 type buildIndexSource int
@@ -1079,7 +1085,6 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 	bi, err := getBuildInfo(idx)
 	if err != nil {
 		logger.Warn("failed to get build info from existing index", "error", err)
-		return idx, name, rv, nil
 	}
 
 	indexBuildTime := time.Time{}
@@ -1091,7 +1096,13 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 	// scan replaces it shortly after. Only an index that would answer incorrectly
 	// is rejected. An index with no build time counts as older than any import.
 	reason := ""
-	if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
+	if err != nil {
+		// Without build info there is no way to tell whether this index declares a
+		// requirement this binary cannot meet, so it is not safe to serve.
+		reason = fmt.Sprintf("build info could not be read: %v", err)
+	} else if unknown := resource.UnknownIndexRequirements(bi.ReaderRequirements); len(unknown) > 0 {
+		reason = fmt.Sprintf("index requires features this instance does not understand %v", unknown)
+	} else if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
 		reason = fmt.Sprintf("index is missing required features %v", missing)
 	} else if !lastImportTime.IsZero() && indexBuildTime.Before(lastImportTime) {
 		reason = "index was built before the last import"
@@ -1756,7 +1767,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			// serve the document as live or expose a provisioned one in trash. Remove
 			// it instead, which is how this index behaved before deleted documents were
 			// kept, until it is rebuilt.
-			if item.Doc.IsDeleted != nil && *item.Doc.IsDeleted && !b.mapsTrashMarkers() {
+			if item.Doc.IsDeleted != nil && *item.Doc.IsDeleted && !b.mapsTrashFields() {
 				batch.Delete(resource.SearchID(item.Doc.Key))
 				droppedMarkers++
 				continue
@@ -1801,11 +1812,16 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	return b.addSnapshotMutationCount(int64(len(req.Items)))
 }
 
-// mapsTrashMarkers reports whether this index can hold every marker a deleted
-// document relies on. An index built before those mappings existed cannot, and
-// bleve drops the values silently.
-func (b *bleveIndex) mapsTrashMarkers() bool {
-	return slices.Contains(b.features, resource.IndexFeatureDeletedMarker)
+// mapsTrashFields reports whether this index can hold everything a deleted
+// document relies on: the markers and the trash fields. An index built before
+// those mappings existed cannot, and bleve drops the values silently.
+func (b *bleveIndex) mapsTrashFields() bool {
+	for _, feature := range resource.TrashIndexFeatures() {
+		if !slices.Contains(b.features, feature) {
+			return false
+		}
+	}
+	return true
 }
 
 // isDeclaredField reports whether name is a declared search field for this
@@ -1955,11 +1971,12 @@ func (bi buildInfo) resourceBuildInfo() resource.IndexBuildInfo {
 	}
 
 	return resource.IndexBuildInfo{
-		BuildTime:        bt,
-		BuildVersion:     bv,
-		SelectableFields: bi.SelectableFields,
-		SearchFieldsHash: bi.SearchFieldsHash,
-		Features:         bi.Features,
+		BuildTime:          bt,
+		BuildVersion:       bv,
+		SelectableFields:   bi.SelectableFields,
+		SearchFieldsHash:   bi.SearchFieldsHash,
+		Features:           bi.Features,
+		ReaderRequirements: bi.ReaderRequirements,
 	}
 }
 
@@ -2148,9 +2165,33 @@ func (b *bleveIndex) Search(
 	// TotalHitsExact=false.
 	postRank := b.postRankAuthzEnabled && access != nil
 
+	// A trash search replaces the read check with the trash rule on whichever authz
+	// path runs. Built once per request, because it caches folder-admin results.
+	var trashAuthz *resource.TrashAuthorizer
+	if req.IsDeleted && access != nil {
+		user, ok := authlib.AuthInfoFrom(ctx)
+		if !ok || user == nil {
+			// Falling through would apply the read check, which is more permissive.
+			response.Error = &resourcepb.ErrorResult{
+				Message: "no user found in context",
+				Code:    http.StatusUnauthorized,
+			}
+			return response, nil
+		}
+		trashAuthz = resource.NewTrashAuthorizer(access, user, &resourcepb.ResourceKey{
+			Namespace: b.key.Namespace,
+			Group:     b.key.Group,
+			Resource:  b.key.Resource,
+		}, func(err error) {
+			// Swallowed (the caller is treated as not an admin), so without this the
+			// failure would be invisible.
+			b.logger.FromContext(ctx).Error("trash folder admin check failed, treating user as not an admin", "error", err)
+		})
+	}
+
 	conversionStarts := time.Now()
 	// convert protobuf request to bleve request
-	searchrequest, e := b.toBleveSearchRequest(ctx, req, access, postRank)
+	searchrequest, e := b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz)
 	if e != nil {
 		response.Error = e
 		return response, nil
@@ -2175,7 +2216,7 @@ func (b *bleveIndex) Search(
 	}
 	if postRank && cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
 		postRank = false
-		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank)
+		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz)
 		if e != nil {
 			response.Error = e
 			return response, nil
@@ -2197,12 +2238,12 @@ func (b *bleveIndex) Search(
 	// from "fields returned to the caller" (selectFields).
 	selectFields := slices.Clone(searchrequest.Fields)
 	if postRank {
-		b.ensureAuthzFields(searchrequest)
+		b.ensureAuthzFields(searchrequest, trashAuthz != nil)
 	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	if postRank {
-		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, stats, response)
+		return b.runPostFilterAuthz(ctx, access, req, index, searchrequest, selectFields, stats, response, trashAuthz)
 	}
 
 	res, err := index.SearchInContext(ctx, searchrequest)
@@ -2318,9 +2359,13 @@ func (b *bleveIndex) getIndex(
 	return b.index, nil
 }
 
-func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRankAuthz bool) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
+func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRankAuthz bool, trashAuthz *resource.TrashAuthorizer) (*bleve.SearchRequest, *resourcepb.ErrorResult) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
+
+	if errResult := validateTrashRequest(req); errResult != nil {
+		return nil, errResult
+	}
 
 	facets := bleve.FacetsRequest{}
 	for name, facet := range req.Facet {
@@ -2407,6 +2452,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			namespace: b.key.Namespace,
 			group:     b.key.Group,
 			resources: b.authzResources(req),
+			trash:     trashAuthz,
 		})
 	}
 
@@ -2533,6 +2579,55 @@ func combineFilterAndTextQueries(filters []query.Query, textQuery query.Query) q
 		bq.AddFilter(bleve.NewConjunctionQuery(filters...))
 	}
 	return bq
+}
+
+// validateTrashRequest enforces the rules that separate trash from live search: a
+// live search cannot name trash-only fields, and a trash search cannot federate.
+// Both live here so a read path cannot apply one rule without the other.
+func validateTrashRequest(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	if !req.IsDeleted {
+		return rejectTrashFieldsOnLiveSearch(req)
+	}
+	// Trash authorizes each hit against one index's group and resource, so hits
+	// federated in from another index would be checked against the wrong one.
+	// searchServer.Search refuses this before the indexes are resolved; this is the
+	// backstop for callers that reach an index directly.
+	if len(req.Federated) > 0 {
+		return resource.NewBadRequestError("searching deleted resources does not support federated queries")
+	}
+	return nil
+}
+
+// rejectTrashFieldsOnLiveSearch refuses a live search naming a field only deleted
+// documents carry, so a filter that would match nothing fails loudly instead.
+func rejectTrashFieldsOnLiveSearch(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	refused := func(key string) *resourcepb.ErrorResult {
+		return resource.NewBadRequestError(fmt.Sprintf("field %q is only available when searching deleted resources", key))
+	}
+	for _, f := range req.Fields {
+		if resource.IsTrashSearchField(f) {
+			return refused(f)
+		}
+	}
+	for _, sort := range req.SortBy {
+		if resource.IsTrashSearchField(sort.Field) {
+			return refused(sort.Field)
+		}
+	}
+	// Legacy clients name the fields a text query runs against here.
+	for _, f := range req.QueryFields {
+		if resource.IsTrashSearchField(f.Name) {
+			return refused(f.Name)
+		}
+	}
+	if req.Options != nil {
+		for _, f := range req.Options.Fields {
+			if resource.IsTrashSearchField(f.Key) {
+				return refused(f.Key)
+			}
+		}
+	}
+	return nil
 }
 
 // resolveFieldName maps a public field name to its physical index name. Clients
@@ -3448,6 +3543,7 @@ type permissionScopedQuery struct {
 	namespace string
 	group     string
 	resources map[string]string // resource -> verb mapping
+	trash     *resource.TrashAuthorizer
 	log       log.Logger
 }
 
@@ -3456,6 +3552,8 @@ type permissionScopedQueryConfig struct {
 	namespace string
 	group     string
 	resources map[string]string // resource -> verb mapping
+	// Set for a trash search, nil for a live one.
+	trash *resource.TrashAuthorizer
 }
 
 func newPermissionScopedQuery(q query.Query, cfg permissionScopedQueryConfig) *permissionScopedQuery {
@@ -3465,6 +3563,7 @@ func newPermissionScopedQuery(q query.Query, cfg permissionScopedQueryConfig) *p
 		namespace: cfg.namespace,
 		group:     cfg.group,
 		resources: cfg.resources,
+		trash:     cfg.trash,
 		log:       log.New("search_permissions"),
 	}
 }
@@ -3475,12 +3574,18 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 		return nil, err
 	}
 
-	dvReader, err := i.DocValueReader([]string{"folder"})
+	// Both are doc values, so reading who deleted it costs no fetch.
+	dvFields := []string{resource.SEARCH_FIELD_FOLDER}
+	if q.trash != nil {
+		dvFields = append(dvFields, resource.SEARCH_FIELD_DELETED_BY)
+	}
+	dvReader, err := i.DocValueReader(dvFields)
 	if err != nil {
 		return nil, err
 	}
 
-	return newBatchAuthzSearcher(ctx, searcher, i, dvReader, q.access, q.namespace, q.group, q.resources, q.log.FromContext(ctx)), nil
+	return newBatchAuthzSearcher(ctx, searcher, i, dvReader,
+		q.access, q.namespace, q.group, q.resources, q.trash, q.log.FromContext(ctx)), nil
 }
 
 // docInfo holds document information for authorization
@@ -3492,6 +3597,8 @@ type docInfo struct {
 	name         string
 	folder       string
 	verb         string
+	// Only read on the trash path.
+	deletedBy string
 }
 
 // batchAuthzSearcher implements a batch-aware authorization filtering searcher
@@ -3506,6 +3613,9 @@ type batchAuthzSearcher struct {
 	group       string
 	resources   map[string]string // resource -> verb mapping
 	log         log.Logger
+
+	// Set for a trash search, nil for a live one.
+	trash *resource.TrashAuthorizer
 
 	// Traces the authz-filtered scan and records how many candidate documents
 	// were considered vs. how many survived authorization. Ended in Close.
@@ -3528,6 +3638,7 @@ func newBatchAuthzSearcher(
 	namespace string,
 	group string,
 	resources map[string]string,
+	trash *resource.TrashAuthorizer,
 	logger log.Logger,
 ) *batchAuthzSearcher {
 	ctx, span := tracer.Start(ctx, "search.batchAuthzSearcher", trace.WithAttributes(
@@ -3545,6 +3656,7 @@ func newBatchAuthzSearcher(
 		namespace:   namespace,
 		group:       group,
 		resources:   resources,
+		trash:       trash,
 		log:         logger,
 	}
 }
@@ -3609,6 +3721,9 @@ func (s *batchAuthzSearcher) initPullIterator() {
 	// BatchCheck loop, so the authz phase is visible as a child of this
 	// searcher's span instead of an opaque gap.
 	authzIter := authz.FilterAuthorized(s.ctx, s.access, candidates, extractFn, authz.WithTracer(tracer))
+	if s.trash != nil {
+		authzIter = trashAuthorized(s.ctx, candidates, s.trash)
+	}
 
 	s.next, s.stop = iter.Pull2(func(yield func(docInfo, error) bool) {
 		for item, err := range authzIter {
@@ -3652,11 +3767,15 @@ func (s *batchAuthzSearcher) parseDocInfo(doc *search.DocumentMatch) (docInfo, b
 	resourceType := parts[2]
 	name := parts[3]
 
-	// Get folder from doc values
+	// Get folder (and, for trash, who deleted it) from doc values
 	folder := ""
+	deletedBy := ""
 	err = s.dvReader.VisitDocValues(doc.IndexInternalID, func(field string, value []byte) {
-		if field == "folder" {
+		switch field {
+		case resource.SEARCH_FIELD_FOLDER:
 			folder = string(value)
+		case resource.SEARCH_FIELD_DELETED_BY:
+			deletedBy = string(value)
 		}
 	})
 	if err != nil {
@@ -3679,6 +3798,7 @@ func (s *batchAuthzSearcher) parseDocInfo(doc *search.DocumentMatch) (docInfo, b
 		name:         name,
 		folder:       folder,
 		verb:         verb,
+		deletedBy:    deletedBy,
 	}, true
 }
 

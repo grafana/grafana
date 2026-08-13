@@ -97,6 +97,9 @@ func textQueryKindsForMapping(provider resource.SearchFieldsProvider, group, kin
 	for _, def := range resource.StandardSearchFieldDefinitions() {
 		add(def, "")
 	}
+	for _, def := range resource.TrashSearchFieldDefinitions() {
+		add(def, "")
+	}
 	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
 		add(def, resource.SEARCH_FIELD_PREFIX)
 	}
@@ -154,6 +157,9 @@ func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kind
 	}
 
 	for _, def := range resource.StandardSearchFieldDefinitions() {
+		add(def.Name, def, "")
+	}
+	for _, def := range resource.TrashSearchFieldDefinitions() {
 		add(def.Name, def, "")
 	}
 	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
@@ -497,6 +503,12 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_DELETED, internalBoolField())
 	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_PROVISIONED, internalBoolField())
+
+	// Trash fields sit at the top level next to the standard ones, so /trash reads
+	// them by the names the API layer already uses.
+	for _, def := range resource.TrashSearchFieldDefinitions() {
+		addCapabilityFieldMappings(mapper, def)
+	}
 
 	mapper.AddSubDocumentMapping("manager", managerSubDocumentMapping())
 	mapper.AddSubDocumentMapping("source", sourceSubDocumentMapping())

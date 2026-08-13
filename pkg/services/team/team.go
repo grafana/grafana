@@ -23,7 +23,6 @@ type Service interface {
 	RemoveUsersMemberships(tx context.Context, userID int64) error
 	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*TeamMemberDTO, error)
 	GetTeamMembers(ctx context.Context, query *GetTeamMembersQuery) ([]*TeamMemberDTO, error)
-	RegisterDelete(query string)
 }
 
 func UIDToIDHandler(teamService Service) func(ctx context.Context, orgID int64, resourceID string) (string, error) {

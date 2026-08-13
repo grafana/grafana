@@ -318,6 +318,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
           <Combobox
             width="auto"
             minWidth={10}
+            data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.operatorSelection}
             options={operatorOptions}
             value={operator}
             onChange={(option) => {

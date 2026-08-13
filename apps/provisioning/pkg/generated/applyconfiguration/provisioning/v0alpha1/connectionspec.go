@@ -28,9 +28,8 @@ type ConnectionSpecApplyConfiguration struct {
 	// Bitbucket connection configuration
 	// Only applicable when provider is "bitbucket"
 	Bitbucket *BitbucketConnectionConfigApplyConfiguration `json:"bitbucket,omitempty"`
-	// Gitlab connection configuration
-	// Only applicable when provider is "gitlab"
-	Gitlab *GitlabConnectionConfigApplyConfiguration `json:"gitlab,omitempty"`
+	// OAuth app configuration shared by all OAuth app providers
+	OAuth *ConnectionOAuthConfigApplyConfiguration `json:"oauth,omitempty"`
 	// Webhook configuration for this connection
 	Webhook *ConnectionWebhookConfigApplyConfiguration `json:"webhook,omitempty"`
 }
@@ -97,11 +96,11 @@ func (b *ConnectionSpecApplyConfiguration) WithBitbucket(value *BitbucketConnect
 	return b
 }
 
-// WithGitlab sets the Gitlab field in the declarative configuration to the given value
+// WithOAuth sets the OAuth field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
-// If called multiple times, the Gitlab field is set to the value of the last call.
-func (b *ConnectionSpecApplyConfiguration) WithGitlab(value *GitlabConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
-	b.Gitlab = value
+// If called multiple times, the OAuth field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithOAuth(value *ConnectionOAuthConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.OAuth = value
 	return b
 }
 

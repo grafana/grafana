@@ -12,6 +12,10 @@ on:
       - 'package.json'
       - '.github/CODEOWNERS'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
@@ -348,4 +352,4 @@ jobs:
             echo "❌ Coverage checks failed for one or more teams"
             exit 1
           fi
-          echo "✅ All coverage metrics were maintained or improved."
+          echo "✅ All coverage metrics were maintained, improved, or within tolerance."

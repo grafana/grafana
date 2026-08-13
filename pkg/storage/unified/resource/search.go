@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -101,18 +102,28 @@ type BulkIndexRequest struct {
 }
 
 type IndexBuildInfo struct {
-	BuildTime        time.Time       // Timestamp when the index was built. This value doesn't change on subsequent index updates.
-	BuildVersion     *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
-	SelectableFields []string        // List of selectable fields used when index was built.
-	SearchFieldsHash string          // Hash captured at build time over the SearchFieldDefinition slices registered for (group, resource), across all versions. Empty when no SearchFieldsProvider was in use.
-	Features         []IndexFeature  // Index features the index was built with. Empty on indexes built before index features existed.
+	BuildTime          time.Time       // Timestamp when the index was built. This value doesn't change on subsequent index updates.
+	BuildVersion       *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
+	SelectableFields   []string        // List of selectable fields used when index was built.
+	SearchFieldsHash   string          // Hash captured at build time over the SearchFieldDefinition slices registered for (group, resource), across all versions. Empty when no SearchFieldsProvider was in use.
+	Features           []IndexFeature  // Index features the index was built with. Empty on indexes built before index features existed.
+	ReaderRequirements []IndexFeature  // Features a reader must understand before using this index. Empty on indexes built before requirements were recorded.
 }
 
-// IndexFeature names a mapping change an older index cannot satisfy. Only for
-// changes no declared search field describes, such as an internal marker: a
-// declared field already moves IndexAffectingHash. Choosing wrong is silent — no
-// rebuild, missing data, no error.
+// IndexFeature names something about an index the search fields hash does not
+// capture: an internal marker no field declares, a storage choice a declaration
+// does not describe, or fields kept out of the hash on purpose (see
+// TrashSearchFieldDefinitions). Changes the hash covers already force a rebuild.
+// Making such a change without adding a feature for it is silent: nothing
+// rebuilds, and older indexes keep serving without the mapping.
 type IndexFeature string
+
+// IndexFeatureTrashFields means the index maps TrashSearchFieldDefinitions. An
+// index without them drops the values, so trash would come back missing the
+// deleter and in arbitrary order. Checked by writers alongside
+// IndexFeatureDeletedMarker, so an older index keeps no deleted documents until it
+// rebuilds.
+const IndexFeatureTrashFields IndexFeature = "trash-fields"
 
 // IndexFeatureDeletedMarker means the index maps the markers on deleted
 // documents, SEARCH_FIELD_IS_DELETED and SEARCH_FIELD_IS_PROVISIONED. An index
@@ -129,11 +140,39 @@ const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 // that path reports facet-capable but unstored fields as missing values.
 const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
 
+// TrashIndexFeatures are the features an index needs before a deleted document may
+// be kept in it. Both writers read this one list, so the producer and the
+// BulkIndex backstop cannot disagree about what makes an index usable for trash.
+func TrashIndexFeatures() []IndexFeature {
+	return []IndexFeature{IndexFeatureDeletedMarker, IndexFeatureTrashFields}
+}
+
 // currentIndexFeatures is recorded in every index this binary builds.
+//
+// A feature that changes which documents the index holds, not just how they are
+// mapped, belongs in readerRequiredFeatures too, and must not be enabled here
+// until that check has shipped for longer than the compatibility window —
+// instances without the check ignore the requirement and read the index anyway.
 var currentIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureStoredFacets,
+	IndexFeatureTrashFields,
 }
+
+// knownIndexFeatures is every feature this binary can read. A feature belongs here
+// from the release that implements its reading side, even if nothing builds indexes
+// with it yet. Only ever grows.
+var knownIndexFeatures = []IndexFeature{
+	IndexFeatureDeletedMarker,
+	IndexFeatureStoredFacets,
+	IndexFeatureTrashFields,
+}
+
+// readerRequiredFeatures name features an instance must understand before using an
+// index that has them. Empty today. A mapping alone is not enough to add one:
+// deleted documents are only kept when a config option says so, so a requirement
+// declared from the mapping would make older instances refuse safe indexes.
+var readerRequiredFeatures = []IndexFeature{}
 
 // requiredIndexFeatures is the subset an index must already have to be used. An
 // index without one of these features is rebuilt before it serves anything, even
@@ -166,13 +205,40 @@ func RequiredIndexFeatures(postRankAuthz bool) []IndexFeature {
 // Features the index has and this binary does not require are ignored: an index
 // from a newer binary is the build version check's business.
 func MissingIndexFeatures(buildInfo IndexBuildInfo, requiredFeatures []IndexFeature) []IndexFeature {
+	return MissingFeatures(buildInfo.Features, requiredFeatures)
+}
+
+// MissingFeatures returns the required features absent from have. Takes the
+// feature list on its own, for callers holding a snapshot manifest rather than
+// an opened index.
+func MissingFeatures(have, requiredFeatures []IndexFeature) []IndexFeature {
 	var missing []IndexFeature
 	for _, feature := range requiredFeatures {
-		if !slices.Contains(buildInfo.Features, feature) {
+		if !slices.Contains(have, feature) {
 			missing = append(missing, feature)
 		}
 	}
 	return missing
+}
+
+// IndexReaderRequirements returns the requirements an index built by this binary
+// declares.
+func IndexReaderRequirements() []IndexFeature {
+	return slices.Sorted(slices.Values(readerRequiredFeatures))
+}
+
+// UnknownIndexRequirements returns declared requirements this binary does not
+// recognise; a non-empty result means the index must not be used. Matching on known
+// names rather than required ones is what lets an instance refuse a feature added
+// after it shipped.
+func UnknownIndexRequirements(requirements []IndexFeature) []IndexFeature {
+	var unknown []IndexFeature
+	for _, feature := range requirements {
+		if !slices.Contains(knownIndexFeatures, feature) {
+			unknown = append(unknown, feature)
+		}
+	}
+	return unknown
 }
 
 type ResourceIndex interface {
@@ -649,6 +715,16 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	if req.Offset < 0 {
 		return &resourcepb.ResourceSearchResponse{
 			Error: NewBadRequestError("offset cannot be negative"),
+		}, nil
+	}
+
+	// Trash authorizes each hit against one index's group and resource, so hits
+	// federated in from another index would be checked against the wrong one.
+	// Refused here rather than further in because resolving a federated index below
+	// can build one.
+	if req.IsDeleted && len(req.Federated) > 0 {
+		return &resourcepb.ResourceSearchResponse{
+			Error: NewBadRequestError("searching deleted resources does not support federated queries"),
 		}, nil
 	}
 
@@ -1907,7 +1983,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
 
 		listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
-			Limit: listEverything,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     nsr.Group,
@@ -2157,7 +2232,7 @@ func (s *searchServer) keepsDeletedDocuments(index ResourceIndex, logger log.Log
 		logger.Warn("cannot read index features, removing deleted documents instead of keeping them", "err", err)
 		return false
 	}
-	missing := MissingIndexFeatures(info, []IndexFeature{IndexFeatureDeletedMarker})
+	missing := MissingIndexFeatures(info, TrashIndexFeatures())
 	if len(missing) > 0 {
 		logger.Debug("index does not map the markers on deleted documents, removing them until it is rebuilt", "missing", missing)
 		return false
@@ -2266,6 +2341,15 @@ func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (
 		Folder: obj.GetFolder(),
 
 		IsDeleted: new(true),
+		DeletedRV: new(strconv.FormatInt(rv, 10)),
+	}
+	// The deletion marker records the deleting user as the last updater, which is
+	// also what listFromTrash reads, so both trash views name the same user.
+	if by := obj.GetUpdatedBy(); by != "" {
+		doc.DeletedBy = &by
+	}
+	if ts := obj.GetDeletionTimestamp(); ts != nil {
+		doc.DeletionTime = new(ts.UnixMilli())
 	}
 	// Only provisioned documents carry the marker, so absent means "not
 	// provisioned", matching how the deleted marker works.

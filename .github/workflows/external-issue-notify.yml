@@ -64,7 +64,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Get vault secrets
         id: vault-secrets
@@ -81,7 +81,7 @@ jobs:
           ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-notify.mts metadata
+        run: node ./community-triage/.github/workflows/scripts/issue-notify.mts metadata
 
       - name: Match teams and send notifications
         id: notify
@@ -96,7 +96,7 @@ jobs:
           CREATED_DATE: ${{ steps.metadata.outputs.created_date }}
           IS_CHAMPION: ${{ steps.metadata.outputs.is_champion }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-notify.mts notify
+        run: node ./community-triage/.github/workflows/scripts/issue-notify.mts notify
 
       - name: Post welcome comment
         if: steps.metadata.outputs.skip_processing != 'true' && steps.notify.outputs.notification_sent == 'true'
@@ -104,7 +104,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-notify.mts welcome
+        run: node ./community-triage/.github/workflows/scripts/issue-notify.mts welcome
 
       - name: Ensure auto-triaged label exists
         if: steps.metadata.outputs.skip_processing != 'true' && steps.notify.outputs.notification_sent == 'true'
@@ -124,4 +124,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-notify.mts auto-triaged
+        run: node ./community-triage/.github/workflows/scripts/issue-notify.mts auto-triaged

@@ -90,7 +90,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Get vault secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
@@ -122,7 +122,7 @@ jobs:
           ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts metadata
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts metadata
 
       - name: Check for enabled team matches
         id: check-teams
@@ -132,7 +132,7 @@ jobs:
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
           REPO: ${{ github.repository }}
           CREATED_DATE: ${{ steps.metadata.outputs.created_date }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts check-teams
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts check-teams
 
       - name: Classify PR type
         id: classify
@@ -142,7 +142,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts classify
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts classify
 
       - name: Detect AI slop
         id: detect-slop
@@ -153,7 +153,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts detect-slop
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts detect-slop
 
       - name: Add classification labels
         if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
@@ -163,7 +163,7 @@ jobs:
           PR_TYPE: ${{ steps.classify.outputs.type }}
           PR_SIZE: ${{ steps.metadata.outputs.size }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts labels
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts labels
 
       - name: Add auto-triaged label early
         if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
@@ -171,7 +171,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts auto-triaged
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts auto-triaged
 
   review:
     name: Docker-isolated Oz review
@@ -194,7 +194,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Get vault secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
@@ -400,7 +400,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts post-review
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts post-review
 
   notify:
     name: Notify teams
@@ -424,7 +424,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Get vault secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@f1614b210386ac420af6807a997ac7f6d96e477a  # v1.3.1
@@ -472,7 +472,7 @@ jobs:
           SLOP_STATUS: ${{ needs.triage.outputs.slop_status }}
           SLOP_SCORE: ${{ needs.triage.outputs.slop_score }}
           SLOP_REASON: ${{ needs.triage.outputs.slop_reason }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts notify
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts notify
 
       - name: Post fallback comment
         if: needs.review.outputs.review_line == '' && steps.notify.outputs.notification_sent == 'true'
@@ -480,4 +480,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ needs.triage.outputs.pr_number }}
           REPO: ${{ github.repository }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/pr-notify.mts fallback-comment
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts fallback-comment

@@ -78,6 +78,11 @@
       "description-basic-logs": "이 기능을 활성화하면 <2>기본 로그</2>에 구성된 테이블을 쿼리하는 대시보드 패널에서 Azure Monitor 쿼리당 비용이 발생합니다.",
       "label-enable-basic-logs": "기본 로그 활성화"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "추가 설정은 데이터 소스를 보다 세부적으로 제어하기 위해 구성할 수 있는 선택적 설정입니다. 여기에는 보안 Socks 프록시, 요청 시간 제한, 요청 위임(forwarded) 쿠키가 포함됩니다.",
       "title-additional-settings": "추가 설정"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "메트릭 네임스페이스"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "로딩 중..."
     },
@@ -204,6 +216,10 @@
       "label-by": "기준",
       "label-order-by": "정렬 기준",
       "tooltip-order-by": "하나 이상의 열을 기준으로 결과를 오름차순 또는 내림차순으로 정렬합니다."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Azure Monitor에서 메타데이터를 요청하는 동안 오류가 발생했습니다"

@@ -417,6 +417,62 @@ func TestJobProgressRecorderFolderFailureTracking(t *testing.T) {
 	recorder.mu.RUnlock()
 }
 
+// TestUpdateSummary_TotalChanges verifies the recorder sets the action-aware
+// TotalChanges on each summary as successful results are recorded, matching what
+// each single-purpose worker records: push→writes, delete→deletes, move→creates
+// (a rename is recorded as create+delete, so count creates once), else→create+update+delete.
+func TestUpdateSummary_TotalChanges(t *testing.T) {
+	ctx := context.Background()
+	noop := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+
+	tests := []struct {
+		name    string
+		action  provisioning.JobAction
+		actions []repository.FileAction
+		want    int64
+	}{
+		{
+			name:    "push counts writes",
+			action:  provisioning.JobActionPush,
+			actions: []repository.FileAction{repository.FileActionCreated, repository.FileActionCreated},
+			want:    2,
+		},
+		{
+			name:    "delete counts deletes",
+			action:  provisioning.JobActionDelete,
+			actions: []repository.FileAction{repository.FileActionDeleted, repository.FileActionDeleted},
+			want:    2,
+		},
+		{
+			name:    "move counts creates only",
+			action:  provisioning.JobActionMove,
+			actions: []repository.FileAction{repository.FileActionRenamed, repository.FileActionRenamed},
+			want:    2,
+		},
+		{
+			name:    "pull sums create+update+delete",
+			action:  provisioning.JobActionPull,
+			actions: []repository.FileAction{repository.FileActionCreated, repository.FileActionUpdated, repository.FileActionDeleted},
+			want:    3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			recorder := newJobProgressRecorder(noop, nil, tt.action).(*jobProgressRecorder)
+			for _, a := range tt.actions {
+				recorder.Record(ctx, NewPathOnlyResult("file.json").
+					WithAction(a).
+					Build())
+			}
+
+			summaries := recorder.summary()
+			require.Len(t, summaries, 1)
+			require.Equal(t, tt.want, summaries[0].TotalChanges)
+		})
+	}
+}
+
 func TestJobProgressRecorderFolderFailureTrackingFromWarning(t *testing.T) {
 	ctx := context.Background()
 

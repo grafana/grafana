@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 
 import { CoreApp, type GrafanaTheme2, LoadingState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { defaultTimeZone, type TimeZone } from '@grafana/schema';
@@ -106,7 +107,12 @@ export function ExploreQueryInspector(props: Props) {
   }
   return (
     <ExploreDrawer>
-      <TabbedContainer tabs={tabs} onClose={onClose} closeIconTooltip="Close query inspector" />
+      <TabbedContainer
+        tabs={tabs}
+        onClose={onClose}
+        closeIconTooltip="Close query inspector"
+        testId={selectors.pages.Explore.QueryInspector.container}
+      />
     </ExploreDrawer>
   );
 }

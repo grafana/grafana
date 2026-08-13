@@ -1,12 +1,43 @@
-import { LegacyTableNG } from './legacy/LegacyTableNG';
-import { RefactoredTableNG } from './refactored/RefactoredTableNG';
+import { css } from '@emotion/css';
+import { Suspense, useMemo } from 'react';
+
+import { FieldType } from '@grafana/data';
+
+import { useStyles2 } from '../../../themes/ThemeContext';
+import { hasGeoCell, LazyOpenLayersProvider } from '../geo';
+
+import { TableFlat } from './TableFlat';
+import { TableNested } from './TableNested';
+import { IS_SAFARI_26 } from './styles';
 import { type TableNGProps } from './types';
 
-/**
- * Dispatches between the legacy monolithic implementation and the refactored flat/nested
- * split. The boolean is threaded from TablePanel via the `table.refactorNested` OpenFeature
- * flag (React-only, so it is not on config.featureToggles and must arrive as a prop).
- */
+// Safari 26 shipped with a bug that prevents the table from rendering correctly
+// unless it is wrapped in a container with `contain: strict`.
+function Safari26Wrapper(props: { children: React.ReactNode }) {
+  const className = useStyles2(() => css({ contain: 'strict', height: '100%' }));
+  return <div className={className}>{props.children}</div>;
+}
+
 export function TableNG(props: TableNGProps) {
-  return props.nestedRefactorEnabled ? <RefactoredTableNG {...props} /> : <LegacyTableNG {...props} />;
+  const { data, width } = props;
+
+  const nestedDataField = useMemo(() => data.fields.find((f) => f.type === FieldType.nestedFrames), [data.fields]);
+  const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
+
+  const inner = nestedDataField ? (
+    <TableNested {...props} width={width} nestedFramesField={nestedDataField} />
+  ) : (
+    <TableFlat {...props} width={width} />
+  );
+  const rendered = IS_SAFARI_26 ? <Safari26Wrapper>{inner}</Safari26Wrapper> : inner;
+
+  if (!tableHasGeoCell) {
+    return rendered;
+  }
+
+  return (
+    <Suspense fallback={rendered}>
+      <LazyOpenLayersProvider>{rendered}</LazyOpenLayersProvider>
+    </Suspense>
+  );
 }

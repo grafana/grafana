@@ -148,10 +148,10 @@ var ConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 					appID = m.Spec.GitHubEnterprise.AppID
 					installationID = m.Spec.GitHubEnterprise.InstallationID
 				}
-			case BitbucketConnectionType:
-				clientID = m.Spec.Bitbucket.ClientID
-			case GitlabConnectionType:
-				clientID = m.Spec.Gitlab.ClientID
+			default:
+			}
+			if m.Spec.OAuth != nil {
+				clientID = m.Spec.OAuth.ClientID
 			}
 
 			return []interface{}{

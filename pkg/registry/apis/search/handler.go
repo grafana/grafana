@@ -14,6 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
@@ -63,8 +64,49 @@ func NewHandler(client resourcepb.ResourceIndexClient, provider resource.SearchF
 
 // SearchFor returns the POST handler for the search endpoint of one kind.
 func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
+	return h.handle(kind, "search.v1.search", searchv0.KindSearchQuery,
+		func(r *http.Request, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList, error) {
+			var q searchv0.SearchQuery
+			if err := decodeBody(r, &q); err != nil {
+				return nil, nil, err
+			}
+			req, ferrs := TranslateSearchQuery(&q, kind.gvr(), namespace, h.provider)
+			return req, ferrs, nil
+		},
+		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
+			return searchResults(res, kind, limit)
+		},
+	)
+}
+
+// TrashFor returns the POST handler for the trash endpoint of one kind.
+func (h *Handler) TrashFor(kind kindRef) http.HandlerFunc {
+	return h.handle(kind, "search.v1.trash", searchv0.KindTrashQuery,
+		func(r *http.Request, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList, error) {
+			var q searchv0.TrashQuery
+			if err := decodeBody(r, &q); err != nil {
+				return nil, nil, err
+			}
+			req, ferrs := TranslateTrashQuery(&q, kind.gvr(), namespace)
+			return req, ferrs, nil
+		},
+		func(res *resourcepb.ResourceSearchResponse, limit int64) (any, error) {
+			return trashResults(res, kind, limit)
+		},
+	)
+}
+
+// handle is the request flow both endpoints share. Only the body type and the
+// response envelope differ, which is what translate and respond supply.
+func (h *Handler) handle(
+	kind kindRef,
+	spanName string,
+	queryKind string,
+	translate func(*http.Request, string) (*resourcepb.ResourceSearchRequest, field.ErrorList, error),
+	respond func(*resourcepb.ResourceSearchResponse, int64) (any, error),
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := h.tracer.Start(r.Context(), "search.v1.search", trace.WithAttributes(
+		ctx, span := h.tracer.Start(r.Context(), spanName, trace.WithAttributes(
 			attribute.String("search.group", kind.group),
 			attribute.String("search.version", kind.version),
 			attribute.String("search.resource", kind.resource),
@@ -77,16 +119,14 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 			return
 		}
 
-		var q searchv0.SearchQuery
-		if err := decodeBody(r, &q); err != nil {
+		req, ferrs, err := translate(r, namespace)
+		if err != nil {
 			errhttp.Write(ctx, err, w)
 			return
 		}
-
-		req, ferrs := TranslateSearchQuery(&q, kind.gvr(), namespace, h.provider)
 		if len(ferrs) > 0 {
 			errhttp.Write(ctx, apierrors.NewInvalid(
-				schema.GroupKind{Group: searchv0.GROUP, Kind: searchv0.KindSearchQuery}, "", ferrs), w)
+				schema.GroupKind{Group: searchv0.GROUP, Kind: queryKind}, "", ferrs), w)
 			return
 		}
 
@@ -101,7 +141,7 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 			return
 		}
 
-		out, err := searchResults(res, kind, req.Limit)
+		out, err := respond(res, req.Limit)
 		if err != nil {
 			errhttp.Write(ctx, err, w)
 			return

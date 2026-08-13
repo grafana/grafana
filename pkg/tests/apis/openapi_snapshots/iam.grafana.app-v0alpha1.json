@@ -5177,6 +5177,10 @@
             "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
             "type": "integer",
             "format": "int64"
+          },
+          "role": {
+            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           }
         }
       },
@@ -5353,6 +5357,10 @@
               "admin",
               "member"
             ]
+          },
+          "role": {
+            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           }
         }
       },
@@ -5535,6 +5543,10 @@
               "admin",
               "member"
             ]
+          },
+          "role": {
+            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           }
         }
       },

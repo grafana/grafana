@@ -185,11 +185,11 @@ MyComponent: {
     `MenuItem` with `url`/`href`); use the matching role for inputs, checkboxes, etc. A suffix that
     contradicts the markup — or one carried over from a differently-rendered element nearby — is
     the defect. A single menu can legitimately contain both buttons and links, so their keys
-    *should* differ (`newDashboardLink` next to `newFolderButton`); that is correct, not an
+    _should_ differ (`newDashboardLink` next to `newFolderButton`); that is correct, not an
     inconsistency to flatten.
   - **Same markup ⇒ same name, everywhere in the run — not just within one group.** Two controls
     with the same markup/role are the same kind of thing and must be named identically wherever
-    they appear, across sibling keys *and* across groups. Two dropdown-trigger buttons must both be
+    they appear, across sibling keys _and_ across groups. Two dropdown-trigger buttons must both be
     `triggerButton` — not `triggerButton` in one group and `button` (or `createNewButton`) in
     another; two action `MenuItem`s must both be `…Button` — not `moveButton` next to bare
     `managePermissions`. The usual cause of a violation is naming each group in isolation and
@@ -210,15 +210,15 @@ table: {
 },
 ```
 
-  Parameterize by a **stable value** (a uid, refId, or `from`/`to` token), never by display
-  text — translated or user-editable text reintroduces the i18n fragility the selector exists
-  to remove. Prefer a single parameter: some consumers (e.g. Pathfinder `{grafana:path:param}`
-  tokens) can only pass one. When adding a version key to a function selector, keep the
-  signature compatible across all keys (see the migration example in Step 2).
+Parameterize by a **stable value** (a uid, refId, or `from`/`to` token), never by display
+text — translated or user-editable text reintroduces the i18n fragility the selector exists
+to remove. Prefer a single parameter: some consumers (e.g. Pathfinder `{grafana:path:param}`
+tokens) can only pass one. When adding a version key to a function selector, keep the
+signature compatible across all keys (see the migration example in Step 2).
 
 - **Upgrading legacy aria-label entries.** A value without the `data-testid ` prefix tells the
   framework to match `aria-label` instead. Don't add aria-labels to JSX just to satisfy such an
-  entry — the upgrade path is to add a new prefixed version key to the *existing* entry and wire
+  entry — the upgrade path is to add a new prefixed version key to the _existing_ entry and wire
   `data-testid` in the JSX. Keep an aria-label only where it carries genuine accessibility value
   (see "Aria-Labels vs data-testid" in `contribute/style-guides/e2e-playwright.md`).
 
@@ -240,7 +240,7 @@ table: {
 - **Check for in-flight collisions.** `components.ts` and `pages.ts` are hot files — someone may
   be adding selectors for the same UI right now. Before finalizing group names and values, scan
   open PRs touching them: `gh pr list --search "e2e-selectors" --state open`. Always avoid group
-  names and values those PRs introduce. What to do about overlapping *UI* depends on why you're
+  names and values those PRs introduce. What to do about overlapping _UI_ depends on why you're
   touching it:
   - **The element was explicitly requested** (named in the task, or a weak guide target you were
     asked to fix): do the work anyway and surface the overlap in your summary — an open draft PR

@@ -90,6 +90,7 @@ import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
+import { getLayoutManagerFor } from '../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import {
@@ -102,7 +103,6 @@ import {
   getDashboardSceneFor,
   getDefaultVizPanel,
   getLayoutForObject,
-  getLayoutManagerFor,
   getPanelIdForVizPanel,
   hasActualSaveChanges,
 } from '../utils/utils';
@@ -120,7 +120,7 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
-import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
+import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
@@ -365,7 +365,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * to the live scene (e.g. after save) so a full page reload is not required.
    */
   public async refreshPredefinedVariables(): Promise<void> {
-    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GlobalDashboardVariables, false)) {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false)) {
       return;
     }
 
@@ -1184,7 +1184,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  public getLayout(): DashboardLayoutManager {
+  public getLayout(): AnyDashboardLayoutManager {
     return this.state.body;
   }
 
@@ -1453,7 +1453,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   getRawJsonFromEditor(): Dashboard | DashboardV2Spec | undefined {
     if (this.state.editview instanceof JsonModelEditView) {
       try {
-        return JSON.parse(this.state.editview.state.jsonText);
+        // The v2 editor holds a full resource envelope; getEditedSaveModel unwraps it back to the bare spec.
+        return this.state.editview.getEditedSaveModel();
       } catch {
         return undefined;
       }
@@ -1484,6 +1485,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   isManagedRepository() {
+    if (!config.provisioningEnabled) {
+      return false;
+    }
     return Boolean(this.getManagerKind() === ManagerKind.Repo);
   }
 

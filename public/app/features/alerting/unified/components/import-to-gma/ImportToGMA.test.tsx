@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor, within } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -80,18 +81,25 @@ async function importWith(method: 'stage' | 'promote', user: ReturnType<typeof r
     await user.click(await screen.findByRole('radio', { name: /promote/i }));
   }
   // Method -> Notifications
-  await user.click(await screen.findByTestId('wizard-next-button'));
+  await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
   await screen.findByRole('group', { name: /import notification resources/i });
   // Notifications -> Rules: the stub triggers a dry-run; wait for it to pass so Next is enabled
   // (Next is gated on a passing dry-run, and is disabled while blocked). Re-query each poll — the
   // button node is replaced when its disabled-state tooltip wrapper is removed on enable.
-  await waitFor(() => expect(screen.getByTestId('wizard-next-button')).toHaveAttribute('aria-disabled', 'false'), {
-    timeout: 3000,
-  });
-  await user.click(screen.getByTestId('wizard-next-button'));
+  await waitFor(
+    () =>
+      expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+        'aria-disabled',
+        'false'
+      ),
+    {
+      timeout: 3000,
+    }
+  );
+  await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
   await screen.findByRole('group', { name: /import alert rules/i });
   // Skip Rules -> Review
-  await user.click(await screen.findByTestId('wizard-skip-button'));
+  await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
   // Review -> open confirm modal
   await user.click(await screen.findByRole('button', { name: /start import/i }));
   // Confirm inside the modal
@@ -152,14 +160,14 @@ describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
     const { user } = render(<ImportWizardGate />);
 
     // Method -> Notifications
-    await user.click(await screen.findByTestId('wizard-next-button'));
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
     await screen.findByRole('group', { name: /import notification resources/i });
 
     // The dry-run runs and fails; Next stays disabled (aria-disabled keeps the tooltip reachable).
     await waitFor(() =>
       expect(mockReportInteraction).toHaveBeenCalledWith('grafana_alerting_import_to_gma_dryrun_error')
     );
-    const nextButton = screen.getByTestId('wizard-next-button');
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
     expect(nextButton).toHaveAttribute('aria-disabled', 'true');
 
     // Clicking a blocked Next must not advance to the rules step.
@@ -171,17 +179,24 @@ describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
     const { user } = render(<ImportWizardGate />);
 
     // Method -> Notifications
-    await user.click(await screen.findByTestId('wizard-next-button'));
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
     await screen.findByRole('group', { name: /import notification resources/i });
     // Notifications -> Rules (wait for the seeded dry-run to pass; re-query — the button node is
     // replaced when its disabled-state tooltip wrapper is removed on enable).
-    await waitFor(() => expect(screen.getByTestId('wizard-next-button')).toHaveAttribute('aria-disabled', 'false'), {
-      timeout: 3000,
-    });
-    await user.click(screen.getByTestId('wizard-next-button'));
+    await waitFor(
+      () =>
+        expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+          'aria-disabled',
+          'false'
+        ),
+      {
+        timeout: 3000,
+      }
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
     await screen.findByRole('group', { name: /import alert rules/i });
     // Skip Rules -> Review
-    await user.click(await screen.findByTestId('wizard-skip-button'));
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.skipButton));
 
     // The review notifications card lists the uploaded template files by name.
     expect(await screen.findByText('email.tmpl, slack.tmpl')).toBeInTheDocument();

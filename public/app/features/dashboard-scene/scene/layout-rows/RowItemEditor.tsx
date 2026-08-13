@@ -14,6 +14,7 @@ import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks
 import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../sidebar/SectionFiltersList';
 import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../sidebar/SectionVariablesList';
 import { dashboardEditActions } from '../../sidebar/shared';
+import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
@@ -77,7 +78,7 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
   const sectionVariablesCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.rows-layout.row-options.section-variables.title', 'Variables'),
-      id: 'dash-row-section-variables',
+      id: SidebarCategoryType.RowSectionVariables,
       isOpenDefault: true,
       renderTitle: (isExpanded: boolean) => (
         <SectionVariablesCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
@@ -87,7 +88,7 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
-        id: 'dash-row-section-variables-list',
+        id: SidebarCategoryType.RowSectionVariablesList,
         skipField: true,
         render: () => <SectionVariablesList sectionOwner={model} />,
       })
@@ -99,7 +100,7 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
   const sectionFiltersCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.rows-layout.row-options.section-filters.title', 'Filters'),
-      id: 'dash-row-section-filters',
+      id: SidebarCategoryType.RowSectionFilters,
       isOpenDefault: true,
       renderTitle: () => <SectionFiltersCategoryTitle />,
     });
@@ -107,7 +108,7 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: '',
-        id: 'dash-row-section-filters-list',
+        id: SidebarCategoryType.RowSectionFiltersList,
         skipField: true,
         render: () => <SectionFiltersList sectionOwner={model} />,
       })

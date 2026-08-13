@@ -63,7 +63,7 @@ export function readSeries(frames: DataFrame[], refId: string): FieldSparkline |
  * errors; `partial` callers instead receive the surviving targets' frames and must handle absent
  * refIds themselves — an error response with no frames at all still throws.
  */
-export async function runDatasourceQueries(
+async function runDatasourceQueries(
   queries: DataQuery[],
   range: TimeRange,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
