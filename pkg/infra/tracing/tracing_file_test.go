@@ -286,3 +286,22 @@ func splitFirstLine(b []byte) (line, rest []byte, found bool) {
 	}
 	return b, nil, false
 }
+
+// Running tracing as a background service is what shut the exporter down partway
+// through shutdown, dropping every span that ended later. Having no Run keeps it out
+// of the service graph, so only the process can stop the provider.
+func TestTracingServiceIsNotABackgroundService(t *testing.T) {
+	var svc any = &TracingService{}
+
+	_, isBackgroundService := svc.(interface{ Run(context.Context) error })
+	require.False(t, isBackgroundService, "TracingService must not be registerable as a background service")
+}
+
+func TestShutdownIsIdempotent(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "traces.json")
+	ots, err := ProvideService(newFileTracingConfig(path))
+	require.NoError(t, err)
+
+	require.NoError(t, ots.Shutdown(t.Context()))
+	require.NoError(t, ots.Shutdown(t.Context()), "Shutdown must tolerate being called twice")
+}

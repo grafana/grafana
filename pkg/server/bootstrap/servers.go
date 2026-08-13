@@ -94,6 +94,8 @@ func RunServer(ctx context.Context, cfg RunServerConfig) error {
 		return err
 	}
 
+	defer s.ShutdownTracing()
+
 	go listenToSystemSignals(ctx, s)
 	return s.Run()
 }
@@ -150,6 +152,8 @@ func RunTargetServer(ctx context.Context, cfg RunTargetServerConfig) error {
 	if err != nil {
 		return err
 	}
+
+	defer s.ShutdownTracing()
 
 	go listenToSystemSignals(ctx, s)
 	return s.Run()

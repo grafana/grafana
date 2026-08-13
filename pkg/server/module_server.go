@@ -205,6 +205,9 @@ type ModuleServer struct {
 	// so that operators can signal readiness to the /readyz endpoint.
 	healthNotifier *HealthNotifier
 
+	moduleManagerMtx sync.Mutex
+	moduleManager    modules.Manager
+
 	// StorageServiceOptions allows injecting extra sql.ServiceOption values into the
 	// StorageServer and SearchServer module registrations. This is intended for tests.
 	StorageServiceOptions []sql.ServiceOption
@@ -312,6 +315,8 @@ func (s *ModuleServer) Run() error {
 
 	// Register modules provided by other builds (e.g. enterprise).
 	s.moduleRegisterer.RegisterModules(m)
+
+	s.setModuleManager(m)
 
 	return m.Run(s.context)
 }
@@ -539,6 +544,14 @@ func (s *ModuleServer) Shutdown(ctx context.Context, reason string) error {
 	var err error
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
+		// Stopping the modules through their own manager, rather than by cancelling
+		// the root context, is what puts the shutdown trace in place before any of
+		// them enters Stopping.
+		if m := s.getModuleManager(); m != nil {
+			if err := m.Shutdown(ctx, reason); err != nil {
+				s.log.Error("Failed to shut down modules", "error", err)
+			}
+		}
 		// Call cancel func to stop background services.
 		s.shutdownFn()
 		// Wait for server to shut down
@@ -552,6 +565,33 @@ func (s *ModuleServer) Shutdown(ctx context.Context, reason string) error {
 	})
 
 	return err
+}
+
+func (s *ModuleServer) setModuleManager(m modules.Manager) {
+	s.moduleManagerMtx.Lock()
+	defer s.moduleManagerMtx.Unlock()
+	s.moduleManager = m
+}
+
+func (s *ModuleServer) getModuleManager() modules.Manager {
+	s.moduleManagerMtx.Lock()
+	defer s.moduleManagerMtx.Unlock()
+	return s.moduleManager
+}
+
+// ShutdownTracing flushes and stops the tracer provider. Only the concrete tracing
+// service owns one, so any other implementation has nothing to flush.
+func (s *ModuleServer) ShutdownTracing() {
+	ts, ok := s.tracer.(*tracing.TracingService)
+	if !ok {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), tracingShutdownTimeout)
+	defer cancel()
+	if err := ts.Shutdown(ctx); err != nil {
+		s.log.Error("Failed to shut down tracing", "error", err)
+	}
 }
 
 // writePIDFile retrieves the current process ID and writes it to file.

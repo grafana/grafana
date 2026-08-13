@@ -3,14 +3,19 @@ package modules
 import (
 	"context"
 	"errors"
+	"sync"
+	"time"
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	infratracing "github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules/tracing"
 )
+
+const listenerDrainTimeout = 2 * time.Second
 
 type Engine interface {
 	Run(context.Context) error
@@ -42,6 +47,10 @@ type service struct {
 	moduleManager  *tracing.ModuleManagerWrapper
 	serviceManager *services.Manager
 	serviceMap     map[string]services.Service
+
+	shutdownMu    sync.Mutex
+	shutdownBegun bool
+	shutdownSpan  trace.Span
 }
 
 func New(
@@ -66,9 +75,10 @@ func (m *service) WithDependencies(dependencyMap map[string][]string) *service {
 
 func (m *service) starting(ctx context.Context) error {
 	var err error
-	m.moduleManager.SetContext(ctx)
-	_, span := infratracing.Start(ctx, "modules.service.starting")
+	spanCtx, span := infratracing.Start(ctx, "modules.service.starting")
 	defer span.End()
+	// spanCtx, not ctx: listeners parent their spans on this.
+	m.moduleManager.SetContext(spanCtx)
 	for mod, targets := range m.dependencyMap {
 		if !m.moduleManager.IsModuleRegistered(mod) {
 			continue
@@ -109,12 +119,14 @@ func (m *service) starting(ctx context.Context) error {
 
 	listener := newServiceListener(m.log, m)
 	m.serviceManager.AddListener(listener)
-	if err := m.serviceManager.StartAsync(ctx); err != nil {
+	if err := m.serviceManager.StartAsync(spanCtx); err != nil {
 		return err
 	}
-	if err := m.serviceManager.AwaitHealthy(ctx); err != nil {
+	if err := m.serviceManager.AwaitHealthy(spanCtx); err != nil {
 		m.serviceManager.StopAsync()
 		stopErr := m.serviceManager.AwaitStopped(context.Background())
+		// dskit skips stoppingFn when startingFn fails, so drain here instead.
+		m.drainListeners(spanCtx)
 		if failure := m.firstServiceManagerFailure(); failure != nil {
 			return failure
 		}
@@ -126,10 +138,9 @@ func (m *service) starting(ctx context.Context) error {
 	return nil
 }
 
+// running is not traced: it lasts as long as the process, so its span would only
+// be exported at exit.
 func (m *service) running(ctx context.Context) error {
-	_, span := infratracing.Start(ctx, "modules.service.running")
-	defer span.End()
-
 	// If no service manager was created (no modules registered), just wait for context
 	if m.serviceManager == nil {
 		<-ctx.Done()
@@ -141,8 +152,12 @@ func (m *service) running(ctx context.Context) error {
 }
 
 func (m *service) stopping(failureReason error) error {
-	spanCtx, span := infratracing.Start(context.Background(), "modules.service.stopping")
+	// Deferred first so it runs last, after the spans nested inside it.
+	defer m.endShutdownSpan()
+
+	spanCtx, span := infratracing.StartRoot(m.moduleManager.ShutdownContext(), "modules.service.stopping")
 	defer span.End()
+	defer m.drainListeners(spanCtx)
 	m.log.Debug("Stopping module service manager", "reason", failureReason)
 
 	// If no service manager was created (no modules registered), nothing to stop
@@ -157,6 +172,45 @@ func (m *service) stopping(failureReason error) error {
 	}
 
 	return m.firstServiceManagerFailure()
+}
+
+// drainListeners waits for the listeners to close their spans. Its deadline is
+// independent of ctx, which is usually already spent by this point.
+func (m *service) drainListeners(ctx context.Context) {
+	waitCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), listenerDrainTimeout)
+	defer cancel()
+	m.moduleManager.WaitForListeners(waitCtx)
+}
+
+// beginShutdown opens the root of the shutdown trace, which stopping closes. It has
+// to run before anything triggers the shutdown, or services reaching Stopping first
+// start their own trace. Only the first call opens a span.
+func (m *service) beginShutdown(ctx context.Context) context.Context {
+	m.shutdownMu.Lock()
+	defer m.shutdownMu.Unlock()
+
+	if m.shutdownBegun {
+		return m.moduleManager.ShutdownContext()
+	}
+	m.shutdownBegun = true
+
+	spanCtx, span := infratracing.StartRoot(ctx, "server.Shutdown")
+	m.shutdownSpan = span
+	m.moduleManager.SetShutdownContext(spanCtx)
+	return spanCtx
+}
+
+// endShutdownSpan closes the shutdown trace. Idempotent, so callers can use it as a
+// fallback for paths that skip stopping.
+func (m *service) endShutdownSpan() {
+	m.shutdownMu.Lock()
+	span := m.shutdownSpan
+	m.shutdownSpan = nil
+	m.shutdownMu.Unlock()
+
+	if span != nil {
+		span.End()
+	}
 }
 
 func (m *service) firstServiceManagerFailure() error {
@@ -176,21 +230,35 @@ func (m *service) firstServiceManagerFailure() error {
 
 // Run starts all registered modules.
 func (m *service) Run(ctx context.Context) error {
-	spanCtx, span := infratracing.Start(ctx, "modules.service.Run")
-	defer span.End()
-	if err := m.StartAsync(spanCtx); err != nil {
+	// Closed once the modules are running: a process-lifetime span would only be
+	// exported at exit, leaving its trace rootless.
+	startupCtx, startupSpan := infratracing.StartRoot(ctx, "modules.service.startup")
+	if err := m.StartAsync(startupCtx); err != nil {
+		_ = infratracing.Error(startupSpan, err)
+		startupSpan.End()
 		return err
 	}
+	// Not returned: AwaitTerminated below surfaces any failure, so a shutdown
+	// landing mid-startup stays a clean stop.
+	if err := m.AwaitRunning(startupCtx); err != nil {
+		_ = infratracing.Error(startupSpan, err)
+	}
+	startupSpan.End()
+
 	stopCtx := context.Background()
 	return m.AwaitTerminated(stopCtx)
 }
 
-// Shutdown stops all modules and waits for them to stop.
+// Shutdown stops all modules and waits for them to stop. Callers must trigger the
+// shutdown through here rather than by cancelling the context they passed to Run, so
+// that the shutdown trace is in place before any service enters Stopping.
 func (m *service) Shutdown(ctx context.Context, reason string) error {
-	spanCtx, span := infratracing.Start(ctx, "modules.service.Shutdown")
-	defer span.End()
+	spanCtx := m.beginShutdown(ctx)
 	m.StopAsync()
-	return m.AwaitTerminated(spanCtx)
+	err := m.AwaitTerminated(spanCtx)
+	// Fallback for the startup-failure path, where stopping does not run.
+	m.endShutdownSpan()
+	return err
 }
 
 // RegisterModule registers a module with the dskit module manager.

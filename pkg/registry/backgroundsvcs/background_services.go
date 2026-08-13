@@ -5,7 +5,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
@@ -58,7 +57,7 @@ import (
 func ProvideBackgroundServiceRegistry(
 	httpServer *api.HTTPServer, ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService, live *live.GrafanaLive,
 	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService, pluginStore *pluginStore.Service,
-	rendering *rendering.RenderingService, tokenService auth.UserTokenBackgroundService, tracing *tracing.TracingService,
+	rendering *rendering.RenderingService, tokenService auth.UserTokenBackgroundService,
 	provisioning *provisioning.ProvisioningServiceImpl, usageStats *uss.UsageStats,
 	statsCollector *statscollector.Service, grafanaUpdateChecker *updatemanager.GrafanaService,
 	pluginsUpdateChecker *updatemanager.PluginsService, metrics *metrics.InternalMetricsService,
@@ -111,7 +110,6 @@ func ProvideBackgroundServiceRegistry(
 		metrics,
 		usageStats,
 		statsCollector,
-		tracing,
 		remoteCache,
 		natsServer,
 		natsPublisher,

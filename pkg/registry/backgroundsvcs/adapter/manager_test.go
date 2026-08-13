@@ -9,6 +9,9 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
 	"github.com/grafana/grafana/pkg/registry"
 )
@@ -434,4 +437,74 @@ type simpleBackgroundService struct {
 func (s *simpleBackgroundService) Run(ctx context.Context) error {
 	s.runCalled = true
 	return nil
+}
+
+func TestManagerAdapter_ShutdownTrace(t *testing.T) {
+	setupShutdownTracer := func(t *testing.T) *tracetest.InMemoryExporter {
+		t.Helper()
+		exporter := tracetest.NewInMemoryExporter()
+		tp := tracesdk.NewTracerProvider(
+			tracesdk.WithSyncer(exporter),
+			tracesdk.WithSampler(tracesdk.AlwaysSample()),
+		)
+		prev := otel.GetTracerProvider()
+		otel.SetTracerProvider(tp)
+		t.Cleanup(func() {
+			otel.SetTracerProvider(prev)
+			require.NoError(t, tp.Shutdown(context.Background()))
+		})
+		return exporter
+	}
+
+	newStartedAdapter := func(t *testing.T) *ManagerAdapter {
+		t.Helper()
+		mock := &mockNamedService{name: "test-service"}
+		reg := &mockBackgroundServiceRegistry{services: []registry.BackgroundService{mock}}
+		adapter := NewManagerAdapter(reg)
+		adapter.dependencyMap = map[string][]string{BackgroundServices: {}}
+
+		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+		t.Cleanup(cancel)
+		require.NoError(t, adapter.starting(ctx))
+		return adapter
+	}
+
+	spanNames := func(exporter *tracetest.InMemoryExporter) []string {
+		names := make([]string, 0, len(exporter.GetSpans()))
+		for _, s := range exporter.GetSpans() {
+			names = append(names, s.Name)
+		}
+		return names
+	}
+
+	// The modules manager owns the shutdown trace, so stopping the modules through it
+	// is what gets the trace rooted. Cancelling this service instead would let its
+	// modules reach Stopping first and start traces of their own.
+	t.Run("Shutdown roots the trace through the modules manager", func(t *testing.T) {
+		exporter := setupShutdownTracer(t)
+		adapter := newStartedAdapter(t)
+
+		ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+		defer cancel()
+		require.NoError(t, adapter.Shutdown(ctx, "test"))
+
+		names := spanNames(exporter)
+		require.Contains(t, names, "server.Shutdown")
+
+		for _, s := range exporter.GetSpans() {
+			if s.Name == "server.Shutdown" {
+				require.False(t, s.Parent.IsValid(), "must be a root span")
+				require.True(t, s.EndTime.After(s.StartTime), "must be closed")
+			}
+		}
+	})
+
+	t.Run("stopping stops the modules when the adapter is stopped another way", func(t *testing.T) {
+		exporter := setupShutdownTracer(t)
+		adapter := newStartedAdapter(t)
+
+		require.NoError(t, adapter.stopping(nil))
+
+		require.Contains(t, spanNames(exporter), "server.Shutdown")
+	})
 }

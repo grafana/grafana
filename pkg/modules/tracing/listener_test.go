@@ -8,8 +8,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	oteltrace "go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/dskit/services"
 	tracingmodule "github.com/grafana/grafana/pkg/modules/tracing"
@@ -33,6 +35,26 @@ func setupTestTracer(t *testing.T) (*tracetest.InMemoryExporter, *trace.TracerPr
 	}
 
 	return exporter, tp, cleanup
+}
+
+func createShutdownContext(t *testing.T, tp *trace.TracerProvider) (context.Context, oteltrace.Span, func()) {
+	t.Helper()
+	ctx, span := tp.Tracer("test-tracer").Start(context.Background(), "server.Shutdown")
+
+	return ctx, span, func() {
+		span.End()
+	}
+}
+
+func requireAttribute(t *testing.T, attrs []attribute.KeyValue, key, value string) {
+	t.Helper()
+	for _, attr := range attrs {
+		if string(attr.Key) == key {
+			require.Equal(t, value, attr.Value.AsString(), "attribute %s", key)
+			return
+		}
+	}
+	require.Fail(t, "attribute not found", "expected attribute %s=%s", key, value)
 }
 
 // createTracingContext creates a context with a root span to enable tracing
@@ -71,7 +93,7 @@ func TestListener_Starting(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 1)
+	require.Len(t, spans, 2)
 
 	// First span should be the Starting Service span
 	startingSpan := spans[0]
@@ -106,9 +128,6 @@ func TestListener_Running(t *testing.T) {
 	// Transition to Running
 	listener.Running()
 
-	// End the running span by stopping
-	listener.Stopping(services.Running)
-
 	// Give a moment for spans to be recorded
 	time.Sleep(10 * time.Millisecond)
 
@@ -120,9 +139,36 @@ func TestListener_Running(t *testing.T) {
 	require.Equal(t, "Starting Service", startingSpan.Name)
 	require.True(t, startingSpan.EndTime.After(startingSpan.StartTime))
 
-	// Second span should be the Running span (still active)
-	runningSpan := spans[1]
-	require.Equal(t, "Running Service", runningSpan.Name)
+	parentSpan := spans[1]
+	require.Equal(t, serviceName, parentSpan.Name)
+	require.True(t, parentSpan.EndTime.After(parentSpan.StartTime))
+	requireAttribute(t, parentSpan.Attributes, "modules.tracing.final_state", "Running")
+
+	require.False(t, parentSpan.StartTime.After(startingSpan.StartTime))
+	require.False(t, parentSpan.EndTime.Before(startingSpan.EndTime))
+}
+
+func TestListener_StartupSpansCompleteBeforeShutdown(t *testing.T) {
+	t.Parallel()
+
+	exporter, tp, cleanup := setupTestTracer(t)
+	defer cleanup()
+
+	ctx, ctxCleanup := createTracingContext(t, tp)
+	defer ctxCleanup()
+	serviceName := "startup-complete-service"
+	listener := tracingmodule.NewListener(ctx, serviceName)
+
+	listener.Starting()
+	listener.Running()
+
+	time.Sleep(10 * time.Millisecond)
+
+	spans := exporter.GetSpans()
+	require.Len(t, spans, 2)
+	for _, span := range spans {
+		require.True(t, span.EndTime.After(span.StartTime), "Span %s should be ended", span.Name)
+	}
 }
 
 func TestListener_Stopping(t *testing.T) {
@@ -133,8 +179,12 @@ func TestListener_Stopping(t *testing.T) {
 
 	ctx, ctxCleanup := createTracingContext(t, tp)
 	defer ctxCleanup()
+	shutdownCtx, _, shutdownCleanup := createShutdownContext(t, tp)
+	defer shutdownCleanup()
+
 	serviceName := "test-service"
 	listener := tracingmodule.NewListener(ctx, serviceName)
+	listener.SetShutdownContext(shutdownCtx)
 
 	// Start with Running state
 	listener.Starting()
@@ -149,7 +199,7 @@ func TestListener_Stopping(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 4) // Starting, Running, Stopping, Parent
+	require.Len(t, spans, 4) // Starting, startup parent, Stopping, shutdown parent
 
 	// Check that Stopping span was started (should be the 3rd span, index 2)
 	stoppingSpan := spans[2]
@@ -164,8 +214,12 @@ func TestListener_Terminated(t *testing.T) {
 
 	ctx, ctxCleanup := createTracingContext(t, tp)
 	defer ctxCleanup()
+	shutdownCtx, _, shutdownCleanup := createShutdownContext(t, tp)
+	defer shutdownCleanup()
+
 	serviceName := "test-service"
 	listener := tracingmodule.NewListener(ctx, serviceName)
+	listener.SetShutdownContext(shutdownCtx)
 
 	// Go through normal lifecycle
 	listener.Starting()
@@ -178,7 +232,7 @@ func TestListener_Terminated(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 4) // Starting, Running, Stopping, Parent - all should be ended
+	require.Len(t, spans, 4) // Starting, startup parent, Stopping, shutdown parent - all ended
 
 	// All spans should be completed
 	for _, span := range spans {
@@ -232,8 +286,12 @@ func TestListener_ServiceLifecycleIntegration(t *testing.T) {
 
 	ctx, ctxCleanup := createTracingContext(t, tp)
 	defer ctxCleanup()
+	shutdownCtx, _, shutdownCleanup := createShutdownContext(t, tp)
+	defer shutdownCleanup()
+
 	serviceName := "integration-test-service"
 	listener := tracingmodule.NewListener(ctx, serviceName)
+	listener.SetShutdownContext(shutdownCtx)
 
 	// Simulate complete service lifecycle
 	listener.Starting()
@@ -250,42 +308,83 @@ func TestListener_ServiceLifecycleIntegration(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 4) // Starting, Running, Stopping, Parent
+	require.Len(t, spans, 4)
 
-	// Verify span names and order (excluding parent span which is last)
-	expectedNames := []string{
-		"Starting Service",
-		"Running Service",
-		"Stopping Service",
-	}
+	expectedNames := []string{"Starting Service", serviceName, "Stopping Service", serviceName}
 
-	// Check the first 3 spans (service state spans)
-	for i := range 3 {
-		span := spans[i]
+	for i, span := range spans {
 		require.Equal(t, expectedNames[i], span.Name)
 		require.True(t, span.EndTime.After(span.StartTime), "Span %s should be ended", span.Name)
-
-		// Verify service name attribute
-		found := false
-		for _, attr := range span.Attributes {
-			if attr.Key == "grafana.service.name" && attr.Value.AsString() == serviceName {
-				found = true
-				break
-			}
-		}
-		require.True(t, found, "Expected grafana.service.name attribute not found in span %s", span.Name)
 	}
 
-	// Check the parent span (last span)
-	parentSpan := spans[3]
-	require.Equal(t, serviceName, parentSpan.Name)
-	require.True(t, parentSpan.EndTime.After(parentSpan.StartTime), "Parent span should be ended")
+	requireAttribute(t, spans[0].Attributes, "grafana.service.name", serviceName)
+	requireAttribute(t, spans[2].Attributes, "grafana.service.name", serviceName)
 
-	// Verify timing relationships between state spans
-	require.True(t, spans[0].EndTime.Before(spans[1].StartTime) || spans[0].EndTime.Equal(spans[1].StartTime),
-		"Starting span should end before or when Running span starts")
-	require.True(t, spans[1].EndTime.Before(spans[2].StartTime) || spans[1].EndTime.Equal(spans[2].StartTime),
-		"Running span should end before or when Stopping span starts")
+	require.False(t, spans[1].StartTime.After(spans[0].StartTime))
+	require.False(t, spans[1].EndTime.Before(spans[0].EndTime))
+	require.False(t, spans[3].StartTime.After(spans[2].StartTime))
+	require.False(t, spans[3].EndTime.Before(spans[2].EndTime))
+	require.False(t, spans[1].EndTime.After(spans[2].StartTime))
+}
+
+func TestListener_ShutdownWithoutContext(t *testing.T) {
+	exporter, tp, cleanup := setupTestTracer(t)
+	defer cleanup()
+
+	ctx, ctxCleanup := createTracingContext(t, tp)
+	defer ctxCleanup()
+
+	serviceName := "no-shutdown-ctx-service"
+	listener := tracingmodule.NewListener(ctx, serviceName)
+
+	listener.Starting()
+	listener.Running()
+	listener.Stopping(services.Running)
+	listener.Terminated(services.Stopping)
+
+	time.Sleep(10 * time.Millisecond)
+
+	spans := exporter.GetSpans()
+	require.Len(t, spans, 4)
+
+	require.Equal(t, serviceName, spans[3].Name)
+	require.False(t, spans[3].Parent.IsValid(), "Shutdown parent span should be a root span")
+	require.NotEqual(t, spans[1].SpanContext.TraceID(), spans[3].SpanContext.TraceID())
+	require.Equal(t, spans[3].SpanContext.SpanID(), spans[2].Parent.SpanID())
+}
+
+func TestListener_ShutdownContext(t *testing.T) {
+	t.Parallel()
+
+	exporter, tp, cleanup := setupTestTracer(t)
+	defer cleanup()
+
+	startupCtx, startupCleanup := createTracingContext(t, tp)
+	defer startupCleanup()
+
+	shutdownCtx, shutdownSpan, shutdownCleanup := createShutdownContext(t, tp)
+	defer shutdownCleanup()
+
+	serviceName := "shutdown-ctx-service"
+	listener := tracingmodule.NewListener(startupCtx, serviceName)
+	listener.SetShutdownContext(shutdownCtx)
+
+	listener.Starting()
+	listener.Running()
+	listener.Stopping(services.Running)
+	listener.Terminated(services.Stopping)
+
+	time.Sleep(10 * time.Millisecond)
+
+	spans := exporter.GetSpans()
+	require.Len(t, spans, 4)
+
+	require.Equal(t, spans[1].SpanContext.TraceID(), spans[0].SpanContext.TraceID())
+	require.Equal(t, spans[1].SpanContext.SpanID(), spans[0].Parent.SpanID())
+
+	require.Equal(t, shutdownSpan.SpanContext().TraceID(), spans[3].SpanContext.TraceID())
+	require.Equal(t, shutdownSpan.SpanContext().SpanID(), spans[3].Parent.SpanID())
+	require.Equal(t, spans[3].SpanContext.SpanID(), spans[2].Parent.SpanID())
 }
 
 func TestListener_ErrorRecording(t *testing.T) {
@@ -296,28 +395,31 @@ func TestListener_ErrorRecording(t *testing.T) {
 
 	ctx, ctxCleanup := createTracingContext(t, tp)
 	defer ctxCleanup()
+	shutdownCtx, _, shutdownCleanup := createShutdownContext(t, tp)
+	defer shutdownCleanup()
+
 	serviceName := "error-test-service"
 	listener := tracingmodule.NewListener(ctx, serviceName)
+	listener.SetShutdownContext(shutdownCtx)
 
-	// Start service and then fail with error
 	listener.Starting()
 	listener.Running()
+	listener.Stopping(services.Running)
 
 	testError := errors.New("critical service failure")
-	listener.Failed(services.Running, testError)
+	listener.Failed(services.Stopping, testError)
 
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 3) // Starting, Running, Parent spans
+	require.Len(t, spans, 4)
 
-	// The Running span should have the error recorded
-	runningSpan := spans[1]
-	require.Equal(t, "Running Service", runningSpan.Name)
+	stoppingSpan := spans[2]
+	require.Equal(t, "Stopping Service", stoppingSpan.Name)
 
 	// Check for exception event
 	hasException := false
-	for _, event := range runningSpan.Events {
+	for _, event := range stoppingSpan.Events {
 		if event.Name == "exception" {
 			hasException = true
 			// Check for error message in attributes
@@ -329,6 +431,9 @@ func TestListener_ErrorRecording(t *testing.T) {
 		}
 	}
 	require.True(t, hasException, "Expected exception event in failed span")
+
+	require.Equal(t, serviceName, spans[3].Name)
+	require.Equal(t, "Error", spans[3].Status.Code.String())
 }
 
 func TestListener_SpanAttributes(t *testing.T) {
@@ -340,8 +445,12 @@ func TestListener_SpanAttributes(t *testing.T) {
 	ctx, ctxCleanup := createTracingContext(t, tp)
 	defer ctxCleanup()
 
+	shutdownCtx, _, shutdownCleanup := createShutdownContext(t, tp)
+	defer shutdownCleanup()
+
 	serviceName := "attribute-test-service"
 	listener := tracingmodule.NewListener(ctx, serviceName)
+	listener.SetShutdownContext(shutdownCtx)
 
 	// Test that all state transitions include proper attributes
 	listener.Starting()
@@ -352,7 +461,7 @@ func TestListener_SpanAttributes(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 4) // Starting, Running, Stopping, Parent
+	require.Len(t, spans, 4) // Starting, startup parent, Stopping, shutdown parent
 
 	// Check Starting span attributes
 	startingSpan := spans[0]
@@ -403,17 +512,22 @@ func TestListener_SpanStatusCodes(t *testing.T) {
 		ctx, ctxCleanup := createTracingContext(t, tp)
 		defer ctxCleanup()
 
+		shutdownCtx, _, shutdownCleanup := createShutdownContext(t, tp)
+		defer shutdownCleanup()
+
 		serviceName := "status-test-service"
 		listener := tracingmodule.NewListener(ctx, serviceName)
+		listener.SetShutdownContext(shutdownCtx)
 
 		listener.Starting()
 		listener.Running()
-		listener.Terminated(services.Running)
+		listener.Stopping(services.Running)
+		listener.Terminated(services.Stopping)
 
 		time.Sleep(10 * time.Millisecond)
 
 		spans := exporter.GetSpans()
-		require.Len(t, spans, 3) // Starting, Running, Parent
+		require.Len(t, spans, 4) // Starting, startup parent, Stopping, shutdown parent
 
 		// All spans should have OK status
 		for _, span := range spans {
@@ -465,12 +579,11 @@ func TestListener_ContextPropagation(t *testing.T) {
 
 	listener.Starting()
 	listener.Running()
-	listener.Terminated(services.Running)
 
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.GreaterOrEqual(t, len(spans), 3, "Should have at least service spans")
+	require.GreaterOrEqual(t, len(spans), 2, "Should have at least service spans")
 
 	// Find the service parent span
 	var serviceParentSpan *tracetest.SpanStub
@@ -485,6 +598,8 @@ func TestListener_ContextPropagation(t *testing.T) {
 	// The service parent span should be a child of our test parent span
 	require.Equal(t, parentSpan.SpanContext().TraceID(), serviceParentSpan.SpanContext.TraceID(),
 		"Service spans should be in the same trace as parent context")
+	require.Equal(t, parentSpan.SpanContext().SpanID(), serviceParentSpan.Parent.SpanID(),
+		"Service parent span should be a direct child of the parent context span")
 }
 
 func TestListener_EmptyServiceName(t *testing.T) {
@@ -521,8 +636,12 @@ func TestListener_LongRunningService(t *testing.T) {
 	ctx, ctxCleanup := createTracingContext(t, tp)
 	defer ctxCleanup()
 
+	shutdownCtx, _, shutdownCleanup := createShutdownContext(t, tp)
+	defer shutdownCleanup()
+
 	serviceName := "long-running-service"
 	listener := tracingmodule.NewListener(ctx, serviceName)
+	listener.SetShutdownContext(shutdownCtx)
 
 	listener.Starting()
 	time.Sleep(20 * time.Millisecond) // Simulate startup time
@@ -538,27 +657,30 @@ func TestListener_LongRunningService(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	spans := exporter.GetSpans()
-	require.Len(t, spans, 4) // Starting, Running, Stopping, Parent
+	require.Len(t, spans, 4)
 
-	// Verify timing relationships
 	startingSpan := spans[0]
-	runningSpan := spans[1]
+	startupParentSpan := spans[1]
 	stoppingSpan := spans[2]
-	parentSpan := spans[3]
+	shutdownParentSpan := spans[3]
 
-	// Each span should have reasonable duration
-	require.True(t, startingSpan.EndTime.After(startingSpan.StartTime))
-	require.True(t, runningSpan.EndTime.After(runningSpan.StartTime))
-	require.True(t, stoppingSpan.EndTime.After(stoppingSpan.StartTime))
-	require.True(t, parentSpan.EndTime.After(parentSpan.StartTime))
+	for _, span := range spans {
+		require.True(t, span.EndTime.After(span.StartTime), "Span %s should have a duration", span.Name)
+	}
 
-	// Parent span should encompass the entire lifecycle (compare spans, not wall clock)
-	require.True(t, parentSpan.StartTime.Before(startingSpan.StartTime) ||
-		parentSpan.StartTime.Equal(startingSpan.StartTime),
-		"Parent span should start no later than the Starting child span")
-	require.True(t, parentSpan.EndTime.After(stoppingSpan.EndTime) ||
-		parentSpan.EndTime.Equal(stoppingSpan.EndTime),
-		"Parent span should end no earlier than the Stopping child span")
+	require.False(t, startupParentSpan.StartTime.After(startingSpan.StartTime),
+		"Startup parent span should start no later than the Starting child span")
+	require.False(t, startupParentSpan.EndTime.Before(startingSpan.EndTime),
+		"Startup parent span should end no earlier than the Starting child span")
+	require.Less(t, startupParentSpan.EndTime.Sub(startupParentSpan.StartTime), 50*time.Millisecond,
+		"Startup parent span should not cover the time spent running")
+
+	require.False(t, shutdownParentSpan.StartTime.After(stoppingSpan.StartTime),
+		"Shutdown parent span should start no later than the Stopping child span")
+	require.False(t, shutdownParentSpan.EndTime.Before(stoppingSpan.EndTime),
+		"Shutdown parent span should end no earlier than the Stopping child span")
+	require.Less(t, shutdownParentSpan.EndTime.Sub(shutdownParentSpan.StartTime), 50*time.Millisecond,
+		"Shutdown parent span should not cover the time spent running")
 }
 
 func TestListener_EarlyTermination(t *testing.T) {

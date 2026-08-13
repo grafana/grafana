@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -23,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+const tracingShutdownTimeout = 5 * time.Second
 
 // Options contains parameters for the New function.
 type Options struct {
@@ -142,10 +145,34 @@ func (s *Server) Run() error {
 		return err
 	}
 
-	ctx, span := s.tracerProvider.Start(s.context, "server.Run")
-	defer span.End()
+	// Closed once the background services are running: a process-lifetime span would
+	// only be exported at exit, leaving its trace rootless.
+	startupCtx, startupSpan := s.tracerProvider.Start(s.context, "server.Startup")
 	s.notifySystemd("READY=1")
-	return s.managerAdapter.Run(ctx)
+
+	if err := s.managerAdapter.StartAsync(startupCtx); err != nil {
+		_ = tracing.Error(startupSpan, err)
+		startupSpan.End()
+		return err
+	}
+	// Not returned: AwaitTerminated below surfaces any failure, so a shutdown
+	// landing mid-startup stays a clean stop.
+	if err := s.managerAdapter.AwaitRunning(startupCtx); err != nil {
+		_ = tracing.Error(startupSpan, err)
+	}
+	startupSpan.End()
+
+	return s.managerAdapter.AwaitTerminated(context.Background())
+}
+
+// ShutdownTracing flushes and stops the tracer provider. Called by the process, not
+// Run: this server can be a module inside a ModuleServer that outlives it.
+func (s *Server) ShutdownTracing() {
+	ctx, cancel := context.WithTimeout(context.Background(), tracingShutdownTimeout)
+	defer cancel()
+	if err := s.tracerProvider.Shutdown(ctx); err != nil {
+		s.log.Error("Failed to shut down tracing", "error", err)
+	}
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all

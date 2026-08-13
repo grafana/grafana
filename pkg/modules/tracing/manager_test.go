@@ -340,3 +340,86 @@ type mockNamedService struct {
 func (m *mockNamedService) ServiceName() string {
 	return m.name
 }
+
+func TestModuleManagerWrapper_WaitForListeners(t *testing.T) {
+	newWrapperWithListener := func(t *testing.T, name string) (*ModuleManagerWrapper, *Listener) {
+		t.Helper()
+		wrapper := WrapModuleManager(modules.NewManager(nil))
+		wrapper.SetContext(context.Background())
+
+		mockService := &mockNamedService{name: name}
+		_, err := wrapper.wrapInitFn(func() (services.Service, error) { return mockService, nil })()
+		require.NoError(t, err)
+		require.Len(t, wrapper.listeners, 1)
+
+		return wrapper, wrapper.listeners[0]
+	}
+
+	t.Run("returns once every listener has seen a final state", func(t *testing.T) {
+		wrapper, listener := newWrapperWithListener(t, "test-service")
+
+		listener.Starting()
+		listener.Running()
+		listener.Stopping(services.Running)
+
+		returned := make(chan struct{})
+		go func() {
+			defer close(returned)
+			wrapper.WaitForListeners(context.Background())
+		}()
+
+		select {
+		case <-returned:
+			require.Fail(t, "WaitForListeners returned before the listener was done")
+		case <-time.After(20 * time.Millisecond):
+		}
+
+		listener.Terminated(services.Stopping)
+
+		select {
+		case <-returned:
+		case <-time.After(time.Second):
+			require.Fail(t, "WaitForListeners did not return after the listener was done")
+		}
+	})
+
+	t.Run("gives up when the context is done", func(t *testing.T) {
+		wrapper, listener := newWrapperWithListener(t, "stuck-service")
+		listener.Starting()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+		defer cancel()
+
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			wrapper.WaitForListeners(ctx)
+		}()
+
+		select {
+		case <-done:
+		case <-time.After(time.Second):
+			require.Fail(t, "WaitForListeners ignored the context deadline")
+		}
+	})
+
+	t.Run("Failed also marks the listener done", func(t *testing.T) {
+		wrapper, listener := newWrapperWithListener(t, "failed-service")
+
+		listener.Starting()
+		listener.Failed(services.Starting, errors.New("boom"))
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		wrapper.WaitForListeners(ctx)
+		require.NoError(t, ctx.Err(), "WaitForListeners should have returned before the deadline")
+	})
+
+	t.Run("no listeners returns immediately", func(t *testing.T) {
+		wrapper := WrapModuleManager(modules.NewManager(nil))
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		wrapper.WaitForListeners(ctx)
+		require.NoError(t, ctx.Err())
+	})
+}

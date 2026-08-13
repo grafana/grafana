@@ -1,7 +1,6 @@
 package adapter
 
 import (
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
@@ -23,9 +22,6 @@ const (
 
 	// Provisioning is the module name for the provisioning service.
 	Provisioning = provisioning.ServiceName
-
-	// Tracing is the module name for the tracing service.
-	Tracing = tracing.ServiceName
 
 	// GrafanaAPIServer is the module name for the embedded Grafana API server service.
 	GrafanaAPIServer = modules.GrafanaAPIServer
@@ -66,8 +62,7 @@ const (
 func dependencyMap() map[string][]string {
 	return map[string][]string{
 		SQLStore:           {},
-		Tracing:            {SQLStore},
-		GrafanaAPIServer:   {Tracing},
+		GrafanaAPIServer:   {SQLStore},
 		PluginStore:        {GrafanaAPIServer},
 		PluginInstaller:    {PluginStore},
 		IAMRolesSyncer:     {GrafanaAPIServer},

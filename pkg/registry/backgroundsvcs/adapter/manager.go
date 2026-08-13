@@ -3,10 +3,10 @@ package adapter
 import (
 	"context"
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/grafana/dskit/services"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -22,8 +22,11 @@ type ManagerAdapter struct {
 	services.NamedService
 
 	reg           registry.BackgroundServiceRegistry
-	manager       grafanamodules.Manager
 	dependencyMap map[string][]string
+
+	// mu guards manager, written on the service goroutine.
+	mu      sync.Mutex
+	manager grafanamodules.Manager
 }
 
 // NewManagerAdapter creates a new manager adapter that bridges Grafana's background
@@ -83,17 +86,17 @@ func (m *ManagerAdapter) starting(ctx context.Context) error {
 	manager.RegisterModule(Core, nil)
 	manager.RegisterModule(BackgroundServices, nil)
 
-	m.manager = manager
-	if err := m.manager.StartAsync(ctx); err != nil {
+	m.setManager(manager)
+	if err := manager.StartAsync(spanCtx); err != nil {
 		return err
 	}
-	if err := m.manager.AwaitRunning(ctx); err != nil {
-		if failure := m.manager.FailureCase(); failure != nil {
+	if err := manager.AwaitRunning(spanCtx); err != nil {
+		if failure := manager.FailureCase(); failure != nil {
 			err = failure
 		}
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), stopTimeout)
 		defer cancel()
-		if shutdownErr := m.manager.Shutdown(shutdownCtx, err.Error()); shutdownErr != nil {
+		if shutdownErr := manager.Shutdown(shutdownCtx, err.Error()); shutdownErr != nil {
 			return errors.Join(err, shutdownErr)
 		}
 		return err
@@ -101,23 +104,34 @@ func (m *ManagerAdapter) starting(ctx context.Context) error {
 	return nil
 }
 
+// running is not traced: it lasts as long as the process, so its span would only
+// be exported at exit.
 func (m *ManagerAdapter) running(ctx context.Context) error {
-	newCtx := trace.ContextWithSpan(context.Background(), trace.SpanFromContext(ctx))
-	spanCtx, span := tracing.Start(newCtx, "backgroundsvcs.managerAdapter.running")
-	defer span.End()
-	return m.manager.AwaitTerminated(spanCtx)
+	return m.moduleManager().AwaitTerminated(context.Background())
 }
 
+// stopping is a no-op once Shutdown has stopped the modules, and only does the work
+// itself when the adapter was stopped some other way.
 func (m *ManagerAdapter) stopping(failure error) error {
 	ctx, cancel := context.WithTimeout(context.Background(), stopTimeout)
 	defer cancel()
-	spanCtx, span := tracing.Start(ctx, "backgroundsvcs.managerAdapter.stopping")
-	defer span.End()
 	reason := ""
 	if failure != nil {
 		reason = failure.Error()
 	}
-	return m.manager.Shutdown(spanCtx, reason)
+	return m.moduleManager().Shutdown(ctx, reason)
+}
+
+func (m *ManagerAdapter) setManager(manager grafanamodules.Manager) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.manager = manager
+}
+
+func (m *ManagerAdapter) moduleManager() grafanamodules.Manager {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.manager
 }
 
 // Run initializes and starts all background services using dskit's module and service patterns.
@@ -125,12 +139,27 @@ func (m *ManagerAdapter) Run(ctx context.Context) error {
 	if err := m.StartAsync(ctx); err != nil {
 		return err
 	}
-	stopCtx := trace.ContextWithSpan(context.Background(), trace.SpanFromContext(ctx))
-	return m.AwaitTerminated(stopCtx)
+	// Detached from ctx, whose span covers startup only.
+	return m.AwaitTerminated(context.Background())
 }
 
 // Shutdown calls calls the underlying manager's Shutdown
 func (m *ManagerAdapter) Shutdown(ctx context.Context, reason string) error {
+	// Stopping the modules through their own manager, rather than by cancelling this
+	// service, is what puts the shutdown trace in place before any of them enters
+	// Stopping. It also terminates this service, since running waits on them.
+	var shutdownErr error
+	if manager := m.moduleManager(); manager != nil {
+		shutdownErr = manager.Shutdown(ctx, reason)
+	}
+	// Not returned early on error: this service still has to be stopped, or Run
+	// blocks forever.
 	m.StopAsync()
-	return m.AwaitTerminated(ctx)
+	if err := m.AwaitTerminated(ctx); err != nil {
+		if shutdownErr != nil {
+			return errors.Join(shutdownErr, err)
+		}
+		return err
+	}
+	return shutdownErr
 }
