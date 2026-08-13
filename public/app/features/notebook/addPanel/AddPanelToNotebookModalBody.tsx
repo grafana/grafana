@@ -62,9 +62,13 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss }: Props) {
             t('notebooks.add-panel.success', 'Panel added to {{title}}', { title: added.title }),
             '',
             undefined,
-            <TextLink href={notebookViewHref(added.uid)}>
-              <Trans i18nKey="notebooks.add-panel.success-link">View notebook</Trans>
-            </TextLink>
+            // No uid means the create response carried no name. The panel is in the notebook either
+            // way, so the toast still reports success — it just has nowhere to link to.
+            added.uid ? (
+              <TextLink href={notebookViewHref(added.uid)}>
+                <Trans i18nKey="notebooks.add-panel.success-link">View notebook</Trans>
+              </TextLink>
+            ) : undefined
           )
         )
       );

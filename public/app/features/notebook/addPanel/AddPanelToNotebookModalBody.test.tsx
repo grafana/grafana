@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { mockComboboxRect } from '@grafana/test-utils';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -23,9 +24,15 @@ jest.mock('./useAddPanelToNotebook', () => ({
 
 jest.mock('app/core/services/context_srv');
 
+jest.mock('app/core/copy/appNotification', () => ({
+  ...jest.requireActual('app/core/copy/appNotification'),
+  createSuccessNotification: jest.fn(jest.requireActual('app/core/copy/appNotification').createSuccessNotification),
+}));
+
 const mockUseNotebookPicker = jest.mocked(useNotebookPicker);
 const mockUseAddPanelToNotebook = jest.mocked(useAddPanelToNotebook);
 const mockContextSrv = jest.mocked(contextSrv);
+const mockCreateSuccessNotification = jest.mocked(createSuccessNotification);
 
 const addToExisting = jest.fn();
 const createWithPanel = jest.fn();
@@ -166,6 +173,26 @@ describe('AddPanelToNotebookModalBody', () => {
 
       expect(await screen.findByText('A notebook name is required')).toBeInTheDocument();
       expect(createWithPanel).not.toHaveBeenCalled();
+    });
+
+    // The toast is dispatched to the app notification store rather than rendered in the modal, so
+    // these assert on what the notification was built with.
+    it.each([
+      ['links to the notebook when it has a uid', 'nb3', true],
+      ['still reports success, without a link, when it has none', undefined, false],
+    ])('%s', async (_name, uid, expectsLink) => {
+      createWithPanel.mockResolvedValue({ uid, title: 'New investigation' });
+      const { user, onDismiss } = renderModal();
+
+      await user.click(screen.getByRole('tab', { name: 'Create new' }));
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(onDismiss).toHaveBeenCalled());
+      expect(mockCreateSuccessNotification).toHaveBeenCalled();
+      const [title, , , component] = mockCreateSuccessNotification.mock.calls[0];
+      expect(title).toContain('New investigation');
+      expect(component === undefined).toBe(!expectsLink);
     });
 
     it('creates the notebook with the panel, description and tags', async () => {

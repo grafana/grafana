@@ -137,6 +137,24 @@ describe('useAddPanelToNotebook', () => {
       expect(Object.keys(captured.body!.spec!.elements)).toEqual(['p95-latency']);
     });
 
+    // The panel is in the notebook either way, so this is not a failure — but a uid of '' would build
+    // a "View notebook" link pointing at /notebooks/.
+    it('reports no uid rather than an empty one when the response carries no name', async () => {
+      server.use(
+        http.post<PathParams, NotebookRequestBody>(NOTEBOOKS_URL, async ({ request }) =>
+          HttpResponse.json({ metadata: {}, spec: (await request.json()).spec })
+        )
+      );
+
+      const { result } = renderAddPanel();
+      const added = await act(() =>
+        result.current.createWithPanel({ title: 'Untitled', description: '', tags: [] }, panel('Chart'))
+      );
+
+      expect(added.uid).toBeUndefined();
+      expect(added.title).toBe('Untitled');
+    });
+
     it('omits an empty description rather than writing one the user never typed', async () => {
       const captured: CapturedRequest = {};
       server.use(

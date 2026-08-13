@@ -32,7 +32,12 @@ function toClientSpec(spec: NotebookSpec): ClientNotebookSpec {
 
 /** Enough to build the success toast and its link. */
 export interface AddedToNotebook {
-  uid: string;
+  /**
+   * Absent when the create response carried no name. The panel is in the notebook either way — the
+   * write succeeded — so this is not an error, there is just nowhere to link to. The toast drops its
+   * link rather than offering one that goes to /notebooks/.
+   */
+  uid?: string;
   title: string;
 }
 
@@ -86,7 +91,7 @@ export function useAddPanelToNotebook() {
         notebook: { metadata: { generateName: 'nb' }, spec: toClientSpec(spec) },
       }).unwrap();
 
-      return { uid: created.metadata.name ?? '', title: created.spec.title };
+      return { uid: created.metadata.name, title: created.spec.title };
     },
     [createNotebook]
   );
