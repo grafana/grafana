@@ -126,6 +126,9 @@ func (f *fakeVectorBackend) GetSubresourceContent(context.Context, string, strin
 func (f *fakeVectorBackend) Exists(context.Context, string, string, string, string) (bool, error) {
 	return false, nil
 }
+func (f *fakeVectorBackend) CountStoredEmbeddings(context.Context) ([]vector.EmbeddingCount, error) {
+	return nil, nil
+}
 func (f *fakeVectorBackend) ContentVersion(context.Context, string, string, string, string) (int, bool, error) {
 	return 0, false, nil
 }

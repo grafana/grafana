@@ -7,6 +7,8 @@ import {
   type DynamicDashboardsTrackingInformation,
 } from '../serialization/DashboardSceneSerializer';
 
+import { type GlobalVariablesMode } from './predefinedVariableDenyList';
+
 let isScenesContextSet = false;
 
 type DashboardLibraryTrackingInfo = {
@@ -150,6 +152,23 @@ export const DashboardInteractions = {
   // when a user changes a variable value from dashboard controls, the controls menu, or a section
   variableValueChanged: (properties: { type: string }) => {
     reportDashboardInteraction('variable_value_changed', properties);
+  },
+
+  // dashboards_global_variables_loaded
+  // after global/folder variables are resolved for a V2 dashboard load
+  globalVariablesLoaded: (properties: {
+    global_count: number;
+    folder_count: number;
+    total_count: number;
+    mode?: GlobalVariablesMode;
+  }) => {
+    reportDashboardInteraction('global_variables_loaded', properties);
+  },
+
+  // dashboards_global_variables_mode_changed
+  // when a user changes the predefined variables radio (None / All / Global / Folder)
+  globalVariablesModeChanged: (properties: { from_mode?: GlobalVariablesMode; to_mode: GlobalVariablesMode }) => {
+    reportDashboardInteraction('global_variables_mode_changed', properties);
   },
 
   // dashboards_add_annotation_button_clicked

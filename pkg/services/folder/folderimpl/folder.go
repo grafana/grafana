@@ -197,6 +197,9 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 		SignedInUser:     q.SignedInUser,
 		OrderByTitle:     true,
 		WithFullpathUIDs: true,
+		// Only UID/ParentUID/FullpathUIDs are used below; serve from the search
+		// index rather than a full-object folder list.
+		MetadataOnly: true,
 	})
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)

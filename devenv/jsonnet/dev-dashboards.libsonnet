@@ -125,6 +125,7 @@
     "testdata-variables-textbox": (import '../dev-dashboards/feature-templating/testdata-variables-textbox.json'),
     "testdata-variables-that-update-on-time-c": (import '../dev-dashboards/feature-templating/testdata-variables-that-update-on-time-change.json'),
     "text-options": (import '../dev-dashboards/panel-text/text-options.json'),
+    "text-panel": (import '../dev-dashboards/panel-text/text-panel.json'),
     "time_zone_support": (import '../dev-dashboards/scenarios/time_zone_support.json'),
     "timeline-align-endtime": (import '../dev-dashboards/panel-timeline/timeline-align-endtime.json'),
     "timeline-align-nulls-retain": (import '../dev-dashboards/panel-timeline/timeline-align-nulls-retain.json'),

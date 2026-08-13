@@ -552,6 +552,48 @@ func TestIntegrationVectorExists(t *testing.T) {
 	assert.False(t, exists, "different model should be treated as not-exists")
 }
 
+func TestIntegrationVectorCountStoredEmbeddings(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	// Counts are global, and cleanIntegrationState only wipes the
+	// integration-test namespaces, so assert on the delta.
+	countFor := func(t *testing.T, model string) int64 {
+		t.Helper()
+		counts, err := backend.CountStoredEmbeddings(ctx)
+		require.NoError(t, err)
+		for _, c := range counts {
+			if c.Resource == testResource && c.Model == model {
+				return c.Count
+			}
+		}
+		return 0
+	}
+
+	before := countFor(t, testModel)
+	beforeOther := countFor(t, "other-model")
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		{Namespace: "integration-test", Resource: testResource, UID: "count-dash", Title: "T",
+			Subresource: "panel/1", ResourceVersion: 1, Content: "x",
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
+		{Namespace: "integration-test", Resource: testResource, UID: "count-dash", Title: "T",
+			Subresource: "panel/2", ResourceVersion: 1, Content: "y",
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
+		{Namespace: "integration-test", Resource: testResource, UID: "count-dash", Title: "T",
+			Subresource: "panel/1", ResourceVersion: 1, Content: "z",
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: "other-model"},
+	}))
+
+	assert.Equal(t, before+2, countFor(t, testModel))
+	assert.Equal(t, beforeOther+1, countFor(t, "other-model"), "rows must be grouped per model")
+
+	_, _, err := backend.DeleteRows(ctx, "integration-test", testModel, testResource,
+		DeleteSelector{UIDs: []string{"count-dash"}})
+	require.NoError(t, err)
+	assert.Equal(t, before, countFor(t, testModel))
+	assert.Equal(t, beforeOther+1, countFor(t, "other-model"))
+}
+
 // TestIntegrationVectorContentVersion pins the MIN-across-rows contract:
 // an absent uid reports exists=false, mixed content_version rows report the
 // oldest (MIN), and both Upsert and UpsertReplaceSubresources persist the

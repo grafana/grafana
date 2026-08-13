@@ -78,6 +78,7 @@ export type AccordionKeyValuesProps = {
   linksGetter?: (pairs: TraceKeyValuePair[], index: number) => KeyValuesTableLink[];
   onToggle?: null | (() => void);
   promoGetter?: AttributePluginPromoGetter;
+  datasourceType?: string;
 };
 
 export default function AccordionKeyValues({
@@ -94,6 +95,7 @@ export default function AccordionKeyValues({
   showCountBadge = false,
   onToggle = null,
   promoGetter,
+  datasourceType,
 }: AccordionKeyValuesProps) {
   const isEmpty = (!Array.isArray(data) || !data.length) && !logName;
   const styles = useStyles2(getStyles);
@@ -143,6 +145,7 @@ export default function AccordionKeyValues({
           linksGetter={linksGetter}
           onlyValues={onlyValues}
           promoGetter={promoGetter}
+          datasourceType={datasourceType}
         />
       )}
     </div>

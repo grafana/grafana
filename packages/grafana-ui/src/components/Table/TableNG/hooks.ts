@@ -727,8 +727,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
  */
 export interface ContentAwareWidths {
   typographyCtx: TypographyCtx;
-  /** medium-weight context for measuring header labels; see {@link ContentAwareColWidthsOptions} */
-  headerTypographyCtx?: TypographyCtx;
+  headerTypographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   getActions?: GetActionsFunctionLocal;
   sortColumns?: SortColumn[];
@@ -774,23 +773,28 @@ export function useContentAwareWidths({
   sortColumns,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
+  const headerTypographyCtx = useMemo(
+    () =>
+      createTypographyContext(
+        theme.typography.fontSize,
+        theme.typography.fontFamily,
+        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
+        theme.typography.fontWeightMedium
+      ),
+    [theme]
+  );
   return useMemo(
     () =>
       enabled
         ? {
             typographyCtx,
-            headerTypographyCtx: createTypographyContext(
-              theme.typography.fontSize,
-              theme.typography.fontFamily,
-              extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
-              theme.typography.fontWeightMedium
-            ),
+            headerTypographyCtx,
             showTypeIcons,
             getActions,
             sortColumns,
           }
         : undefined,
-    [enabled, theme, typographyCtx, showTypeIcons, getActions, sortColumns]
+    [enabled, typographyCtx, headerTypographyCtx, showTypeIcons, getActions, sortColumns]
   );
 }
 
