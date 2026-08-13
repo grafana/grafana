@@ -1,9 +1,7 @@
 import { type Locator } from '@playwright/test';
 
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panels, Sidebar } from './page-objects';
-import { flows, type Variable } from './utils';
+import { test, expect } from './fixtures';
+import { flows, type Variable } from './helpers';
 
 test.use({
   featureToggles: {
@@ -34,14 +32,9 @@ test.describe(
       });
     };
 
-    test('can add a new custom variable', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can add a new custom variable', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
       const variable: Variable & { label: string } = {
         type: 'custom',
         name: 'VariableUnderTest',
@@ -49,7 +42,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.custom.openEditor();
       await sidebar.variableOptions.custom.selectFormat('CSV');
@@ -60,7 +53,7 @@ test.describe(
         'second label',
         'fourth value',
       ]);
-      await sidebar.variableOptions.custom.clickApplyButton();
+      await sidebar.variableOptions.custom.applyChanges();
 
       const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();
@@ -73,18 +66,13 @@ test.describe(
       const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText(`${variable.name}: first value`);
 
-      await sidebar.clickDeleteButton({ confirm: true });
+      await sidebar.deleteSelection({ confirm: true });
       await expect(variableLabel).toBeHidden();
     });
 
-    test('can edit a custom variable', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can edit a custom variable', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
       const variable: Variable & { label: string } = {
         type: 'custom',
         name: 'VariableUnderTest',
@@ -92,16 +80,16 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.custom.openEditor();
       await sidebar.variableOptions.custom.selectFormat('CSV');
       await sidebar.variableOptions.custom.setValues('first value, second label : second value, fourth value');
-      await sidebar.variableOptions.custom.clickApplyButton();
+      await sidebar.variableOptions.custom.applyChanges();
 
       // make sure the variable is deselected in order to be able to interact with the content outline item
       // if not, the item is selected and does not receive click events
-      await sidebar.clickCloseButton();
+      await sidebar.closePane();
 
       await sidebar.toolbar.clickButton('Outline');
       await sidebar.contentOutline.toggleNode('Variables');
@@ -117,7 +105,7 @@ test.describe(
         'second label updated',
         'fourth value',
       ]);
-      await sidebar.variableOptions.custom.clickApplyButton();
+      await sidebar.variableOptions.custom.applyChanges();
 
       const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();
@@ -133,17 +121,13 @@ test.describe(
 
     test('can create a custom variable with multiple properties', async ({
       gotoDashboardPage,
-      selectors,
       page,
-      components,
+      controls,
+      sidebar,
+      panels,
     }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
       const variable: Variable & { label: string } = {
         type: 'custom',
         name: 'VariableUnderTest',
@@ -151,7 +135,7 @@ test.describe(
         value: '',
       };
 
-      await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
 
       const options = [
         { value: 'dev', text: 'Development', aws: 'us-east-1' },
@@ -172,7 +156,7 @@ test.describe(
         await expect(previewRows.nth(i + 1).getByRole('cell')).toHaveText(Object.values(option));
       }
 
-      await sidebar.variableOptions.custom.clickApplyButton();
+      await sidebar.variableOptions.custom.applyChanges();
 
       const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();

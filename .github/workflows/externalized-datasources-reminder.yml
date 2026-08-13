@@ -6,10 +6,8 @@ on:
     paths:
       - "public/app/plugins/datasource/cloudwatch/**"
       - "public/app/plugins/datasource/graphite/**"
-      - "public/app/plugins/datasource/influxdb/**"
       - "pkg/tsdb/cloudwatch/**"
       - "pkg/tsdb/graphite/**"
-      - "pkg/tsdb/influxdb/**"
 
 jobs:
   add-comment:

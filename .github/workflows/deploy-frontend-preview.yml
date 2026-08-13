@@ -1,0 +1,285 @@
+name: Deploy frontend preview
+
+# Triggered by commenting /deploy-to-fs, builds the frontend of the pull
+# request and uploads it to the preview assets bucket, to use with the new
+# frontend PR preview feature
+#
+# NOTE: the `/deploy-to-fs` command is temporary, while we test this
+# mechanism. The plan is to later fold it into `/deploy-to-hg`: that command
+# will deploy a frontend preview for frontend-only PRs, and an ephemeral
+# instance for everything else.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request:
+    types: [synchronize]
+
+permissions: {}
+
+jobs:
+  check:
+    name: Check PR is eligible
+    # Deploys are restricted to org members commenting /deploy-to-fs on
+    # non-fork PRs. Pushes to a PR that has already opted in (has the label)
+    # redeploy automatically.
+    if: |
+      github.repository == 'grafana/grafana' &&
+      (
+        (github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          startsWith(github.event.comment.body, '/deploy-to-fs') &&
+          (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')) ||
+        (github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.fork == false &&
+          contains(github.event.pull_request.labels.*.name, 'deploy-frontend-preview'))
+      )
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should-deploy: ${{ steps.check.outputs.should-deploy }}
+      pr-number: ${{ steps.pr.outputs.number }}
+      head-sha: ${{ steps.check.outputs.head-sha }}
+    steps:
+      # Checkout the default branch (not the PR merge ref) so the local
+      # actions used by this job always run trusted code
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Get PR number
+        id: pr
+        env:
+          PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+        run: echo "number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Check PR is eligible for a frontend preview
+        id: check
+        uses: ./.github/actions/frontend-preview-check
+        with:
+          pr-number: ${{ steps.pr.outputs.number }}
+          token: ${{ github.token }}
+
+  label:
+    name: Label PR for future deploys
+    # The label records the opt-in so pushes to the PR redeploy the preview
+    # without another comment.
+    needs: check
+    if: github.event_name == 'issue_comment' && needs.check.outputs.should-deploy == 'true'
+    runs-on: ubuntu-arm64-small
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Add label and acknowledge comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ needs.check.outputs.pr-number }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+        run: |
+          gh api "repos/${REPO}/issues/${PR_NUMBER}/labels" -f "labels[]=deploy-frontend-preview"
+          gh api "repos/${REPO}/issues/comments/${COMMENT_ID}/reactions" -f content=rocket
+
+  comment-building:
+    name: Comment that the build started
+    needs: check
+    if: needs.check.outputs.should-deploy == 'true'
+    runs-on: ubuntu-arm64-small
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Comment that the build started
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: frontend-preview
+          number: ${{ needs.check.outputs.pr-number }}
+          GITHUB_TOKEN: ${{ github.token }}
+          message: |
+            ### Frontend preview
+
+            ⏳ The preview build for commit ${{ needs.check.outputs.head-sha }} is in progress.
+
+  build:
+    name: Build frontend
+    needs: check
+    if: needs.check.outputs.should-deploy == 'true'
+    runs-on: ubuntu-x64-large
+    # Only runs that passed the check gate reach this job, so unrelated
+    # comments never join the group. A newer push cancels a stale in-flight
+    # build, which has no external side effects.
+    concurrency:
+      group: ${{ github.workflow }}-build-${{ needs.check.outputs.pr-number }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.check.outputs.head-sha }}
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        uses: ./.github/actions/yarn-install
+
+      - name: Build frontend
+        run: yarn build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: frontend-preview-build
+          path: public/build
+          retention-days: 1
+
+  deploy:
+    name: Deploy preview assets
+    # Uploads from a separate job so the OIDC-enabled step never runs
+    # alongside code built from the PR.
+    needs: [check, build]
+    runs-on: ubuntu-arm64-small
+    # Never cancel an in-flight upload. Newer deploys queue behind it; GitHub
+    # keeps only the newest pending job in the group, so the last push always
+    # deploys last.
+    concurrency:
+      group: ${{ github.workflow }}-deploy-${{ needs.check.outputs.pr-number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write # required for push-to-gcs
+      pull-requests: write # to update the status comment
+    env:
+      BUCKET_NAME: grafana-frontend-preview-dev
+      PREVIEW_STACK_URL: https://frontendpreview.grafana-dev.net
+    # The environment surfaces the preview URL on the PR
+    environment:
+      name: "frontend-preview-pr-${{ needs.check.outputs.pr-number }}"
+      url: ${{ steps.preview-url.outputs.url }}
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: frontend-preview-build
+          path: public/build
+
+      # The deploy name is the folder users put in the preview assets cookie.
+      # It must match the backend's validation: alphanumeric and underscores
+      # only. It is stable across pushes so an already-set cookie picks up new
+      # builds of the same PR.
+      - name: Create deploy name
+        id: deploy-name
+        env:
+          PR_NUMBER: ${{ needs.check.outputs.pr-number }}
+        run: echo "deploy-name=pr_grafana_${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      # Upload the assets manifest last to help make uploads more atomic.
+      - name: Stage manifests to upload last
+        run: |
+          mkdir -p preview-manifest
+          mv public/build/assets-manifest*.json preview-manifest/
+
+      - name: Upload assets (manifests excluded)
+        uses: grafana/shared-workflows/actions/push-to-gcs@main
+        with:
+          environment: dev
+          bucket: ${{ env.BUCKET_NAME }}
+          # Assets live under <deploy-name>/public/build/ to match the layout
+          # the assets manifest and CDN paths expect
+          bucket_path: ${{ steps.deploy-name.outputs.deploy-name }}/public/build
+          path: public/build
+          service_account: github-gf-frontend-preview-dev@grafanalabs-workload-identity.iam.gserviceaccount.com
+          parent: false
+
+      - name: Upload manifests to switch the preview to this build
+        uses: grafana/shared-workflows/actions/push-to-gcs@main
+        with:
+          environment: dev
+          bucket: ${{ env.BUCKET_NAME }}
+          bucket_path: ${{ steps.deploy-name.outputs.deploy-name }}/public/build
+          path: preview-manifest
+          service_account: github-gf-frontend-preview-dev@grafanalabs-workload-identity.iam.gserviceaccount.com
+          parent: false
+
+      - name: Set preview URL
+        id: preview-url
+        env:
+          DEPLOY_NAME: ${{ steps.deploy-name.outputs.deploy-name }}
+        run: |
+          echo "url=${PREVIEW_STACK_URL}/-/set-preview-assets?assets=${DEPLOY_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Write summary
+        env:
+          DEPLOY_NAME: ${{ steps.deploy-name.outputs.deploy-name }}
+          HEAD_SHA: ${{ needs.check.outputs.head-sha }}
+          PREVIEW_URL: ${{ steps.preview-url.outputs.url }}
+        run: |
+          {
+            echo "## Frontend preview deployed 🚀"
+            echo ""
+            echo "- Deploy name: \`${DEPLOY_NAME}\` (commit ${HEAD_SHA})"
+            echo "- Load it at: ${PREVIEW_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Update comment to say the preview is live
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: frontend-preview
+          number: ${{ needs.check.outputs.pr-number }}
+          GITHUB_TOKEN: ${{ github.token }}
+          message: |
+            ### Frontend preview
+
+            ✅ The preview for commit ${{ needs.check.outputs.head-sha }} is live: **[open the preview](${{ steps.preview-url.outputs.url }})**.
+
+            Each new push to this PR builds and deploys the preview again automatically.
+
+  comment-failure:
+    name: Comment that the deploy failed
+    needs: [check, build, deploy]
+    if: failure() && needs.check.outputs.should-deploy == 'true'
+    runs-on: ubuntu-arm64-small
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Update comment to say the deploy failed
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: frontend-preview
+          number: ${{ needs.check.outputs.pr-number }}
+          GITHUB_TOKEN: ${{ github.token }}
+          message: |
+            ### Frontend preview
+
+            ❌ The preview deploy for commit ${{ needs.check.outputs.head-sha }} failed. See the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+
+  comment-cancelled:
+    name: Comment that the deploy was cancelled
+    needs: [check, build, deploy]
+    # failure() does not match cancelled jobs, so without this a cancelled run
+    # would leave the sticky comment saying the build is in progress forever.
+    if: |
+      always() && needs.check.outputs.should-deploy == 'true' &&
+      !contains(needs.*.result, 'failure') &&
+      contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-arm64-small
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Update comment to say the deploy was cancelled
+        uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        with:
+          header: frontend-preview
+          number: ${{ needs.check.outputs.pr-number }}
+          GITHUB_TOKEN: ${{ github.token }}
+          message: |
+            ### Frontend preview
+
+            ⚠️ The preview deploy for commit ${{ needs.check.outputs.head-sha }} was cancelled ([workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})). If a newer push superseded it, that run will update this comment when it finishes. Any previously deployed preview is still live.

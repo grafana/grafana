@@ -31,7 +31,6 @@ import (
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -137,10 +136,9 @@ func TestIntegrationPluginManager(t *testing.T) {
 	am := azuremonitor.ProvideService(hcp)
 	cw := cloudwatch.ProvideService()
 	grap := graphite.ProvideService(hcp, tracer)
-	idb := influxdb.ProvideService(hcp)
 	td := testdatasource.ProvideService()
 	graf := grafanads.ProvideService(nil, features)
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, grap, idb, td, graf)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, grap, td, graf)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
@@ -216,7 +214,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"cloudwatch":                       {},
 		"grafana-azure-monitor-datasource": {},
 		"graphite":                         {},
-		"influxdb":                         {},
 		"grafana-testdata-datasource":      {},
 		"grafana":                          {},
 		"alertmanager":                     {},

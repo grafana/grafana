@@ -413,7 +413,7 @@ func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecur
 
 // ValidateToken checks the stored JWT. A token that does not parse with the
 // private key or was issued for another appID is invalid.
-func (c *Connection) ValidateToken() (time.Time, error) {
+func (c *Connection) ValidateToken() (expiresAt time.Time, err error) {
 	claims, err := parseJWTToken(c.secrets.Token, c.secrets.PrivateKey)
 	if err != nil {
 		return time.Time{}, err

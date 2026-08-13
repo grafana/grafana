@@ -10,7 +10,7 @@ import {
   toControlSourceRef,
 } from './predefinedVariables';
 
-const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'globalDashboardVariables';
+const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'grafana.dashboardGlobalVariables';
 
 const mockGet = jest.fn();
 

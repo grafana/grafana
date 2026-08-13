@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -15,6 +16,26 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 )
+
+// partialDeleteKV simulates a partial chunked delete: the first data-section BatchDelete
+// deletes only its first key and then returns an error; later calls delegate fully. GC
+// deletes oldest-first, so the deletion marker (highest RV) is last and survives the
+// partial failure — the next GC pass must re-find it and finish.
+type partialDeleteKV struct {
+	KV
+	failedOnce bool
+}
+
+func (p *partialDeleteKV) BatchDelete(ctx context.Context, section string, keys []string) error {
+	if !p.failedOnce && section == dataSection && len(keys) > 1 {
+		p.failedOnce = true
+		if err := p.KV.BatchDelete(ctx, section, keys[:1]); err != nil {
+			return err
+		}
+		return errors.New("simulated partial batch delete failure")
+	}
+	return p.KV.BatchDelete(ctx, section, keys)
+}
 
 // writeEventOption is a function that modifies writeEventOptions
 type writeEventOption func(*writeEventOptions)
@@ -711,4 +732,61 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 		require.Nil(t, trashResp.Error)
 		require.Len(t, trashResp.Items, 1)
 	})
+}
+
+func TestIntegrationGarbageCollectionPartialDeleteConverges(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+	wrapped := &partialDeleteKV{KV: setupBadgerKV(t)}
+	b := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.GarbageCollection = GarbageCollectionConfig{
+			Enabled: true, DryRun: false, Interval: time.Minute, BatchSize: 100, DashboardsMaxAge: 24 * time.Hour,
+		}
+		opts.KvStore = wrapped
+	})
+
+	// One resource, several revisions ending in a deletion.
+	rv1, err := writeEvent(t, ctx, b, "resource1", resourcepb.WatchEvent_ADDED)
+	require.NoError(t, err)
+	rv2, err := writeEvent(t, ctx, b, "resource1", resourcepb.WatchEvent_MODIFIED,
+		func(o *writeEventOptions) { o.PreviousRV = rv1 })
+	require.NoError(t, err)
+	_, err = writeEvent(t, ctx, b, "resource1", resourcepb.WatchEvent_DELETED,
+		func(o *writeEventOptions) { o.PreviousRV = rv2 })
+	require.NoError(t, err)
+
+	countHistory := func() int {
+		it := b.kv.Keys(ctx, dataSection, ListOptions{
+			StartKey: "group/resource/namespace/",
+			EndKey:   "group/resource/namespace0",
+		})
+		count := 0
+		it(func(_ string, err error) bool {
+			require.NoError(t, err)
+			count++
+			return true
+		})
+		return count
+	}
+
+	cutoff := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro())
+
+	initial := countHistory()
+	require.Equal(t, 3, initial, "expected 3 history revisions before GC")
+
+	// First pass fails mid-delete. It must delete something (partial progress) yet leave
+	// the deletion marker (deleted last) behind.
+	err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoff)
+	require.Error(t, err)
+	require.True(t, wrapped.failedOnce, "partial delete was not exercised")
+	afterPartial := countHistory()
+	require.Less(t, afterPartial, initial, "partial delete should have removed at least one revision")
+	require.Greater(t, afterPartial, 0, "partial failure should leave the deletion marker behind")
+
+	// Second pass (no injected failure) re-finds the marker and finishes.
+	err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoff)
+	require.NoError(t, err)
+	require.Equal(t, 0, countHistory(), "GC did not converge after a partial delete")
 }

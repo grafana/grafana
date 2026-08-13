@@ -20,8 +20,8 @@ import {
 
 export function StackedEditorRenderer() {
   const styles = useStyles2(getStyles);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const headingIdPrefix = useId();
 
   const { queries } = useQueryRunnerContext();

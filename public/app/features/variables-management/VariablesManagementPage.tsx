@@ -5,7 +5,7 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagGlobalDashboardVariables } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { Alert, Button, ConfirmModal, EmptyState, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type Variable } from 'app/api/clients/dashboard/v2beta1';
 import { extractErrorMessage } from 'app/api/utils';
@@ -40,7 +40,7 @@ export default function VariablesManagementPage() {
   // The route is registered unconditionally (getAppRoutes is not a React component), so the
   // feature flag is enforced here via the OpenFeature hook. When it is off the variables page
   // is not a real route, so we render the standard not-found page.
-  const globalVariablesEnabled = useFlagGlobalDashboardVariables();
+  const globalVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
 
   const styles = useStyles2(getStyles);
   const { name: editName } = useParams<{ name?: string }>();

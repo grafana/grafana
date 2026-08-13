@@ -50,6 +50,8 @@ const (
 	groupResourcesCacheKey = "group-resources"
 	// batch operations
 	dataBatchSize = 50 // default batch size for BatchGet operations
+	// keyPageSize is the number of raw keys fetched per key-scan page.
+	keyPageSize = 500
 )
 
 // dataStore is a data store that uses a KV store to store data.
@@ -378,6 +380,48 @@ func (d *dataStore) ListLatestResourceKeys(ctx context.Context, key ListRequestK
 	})
 }
 
+// pagedKeys scans keys in the given range one bounded page at a time. Each page
+// is read fully into memory (which lets the underlying KV close its cursor)
+// before its keys are yielded, so no cursor is held open while the consumer
+// reads. It yields the same lexical key sequence as a single unbounded scan.
+func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pageSize int) iter.Seq2[string, error] {
+	return func(yield func(string, error) bool) {
+		opts := base
+		opts.Limit = int64(pageSize)
+
+		for {
+			page := make([]string, 0, pageSize)
+			var scanErr error
+			for key, err := range kv.Keys(ctx, section, opts) {
+				if err != nil {
+					scanErr = err
+					break
+				}
+				page = append(page, key)
+			}
+			// The KV cursor for this page is now closed.
+			if scanErr != nil {
+				yield("", scanErr)
+				return
+			}
+
+			for _, key := range page {
+				if !yield(key, nil) {
+					return
+				}
+			}
+
+			// A short page means we reached the end of the range.
+			if len(page) < pageSize {
+				return
+			}
+
+			// StartKey is inclusive, so advance past the last key we saw.
+			opts.StartKey = PrefixRangeEnd(page[len(page)-1])
+		}
+	}
+}
+
 // ListResourceKeysAtRevision returns an iterator over data keys for resources at a specific revision.
 // If rv is 0, it returns the latest versions. Only returns keys for resources that are not deleted at the given revision.
 func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options ListRequestOptions) iter.Seq2[DataKey, error] {
@@ -420,8 +464,7 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options List
 		attribute.Int64("resourceVersion", rv),
 	))
 
-	// List all keys in the prefix.
-	iter := d.kv.Keys(ctx, dataSection, listOptions)
+	iter := pagedKeys(ctx, d.kv, dataSection, listOptions, keyPageSize)
 
 	return func(yield func(DataKey, error) bool) {
 		defer span.End()

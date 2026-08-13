@@ -17,6 +17,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 )
@@ -30,13 +31,25 @@ type Bundler struct {
 // Query responses can contain substantially more data than the diagnostic traffic itself. Keep
 // their uncompressed JSON bounded independently so adding querydata.json cannot multiply a large
 // panel/dashboard archive without an explicit truncation marker.
-const (
-	maxQueryDataArtifactBytes  = 8 << 20
-	maxDashboardQueryDataBytes = 32 << 20
-	// minQueryDataArtifactBytes is the smallest budget worth attempting: below it not even a truncated
-	// artifact (version + omission markers) fits, so the panel's query data is skipped up front.
-	minQueryDataArtifactBytes = 256
+//
+// This bound is unrelated to the plugin<->core gRPC message size limit that constrains
+// grafana-plugin-sdk-go's own HAR capture caps (backend/harcapture.maxCapturedTotalBytes): by the
+// time marshalQueryDataArtifact runs, resp has already crossed that boundary (or, for an in-process
+// core datasource, never crossed it at all). What these bound instead is the size of the downloaded
+// bundle and the transient memory json.MarshalIndent allocates for the full artifact before the
+// length check below runs -- estimateResponseBytes skips that allocation for the clearest oversized
+// cases, but a response it can't rule out cheaply still costs a full-size allocation once.
+//
+// Declared as vars, not consts, solely so tests can shrink them (see diagnostics_test.go) instead of
+// each allocating a payload at the real multi-hundred-MiB scale.
+var (
+	maxQueryDataArtifactBytes  = 1 << 30    // 1 GiB
+	maxDashboardQueryDataBytes = 1536 << 20 // 1.5 GiB
 )
+
+// minQueryDataArtifactBytes is the smallest budget worth attempting: below it not even a truncated
+// artifact (version + omission markers) fits, so the panel's query data is skipped up front.
+const minQueryDataArtifactBytes = 256
 
 // queryDataArtifactVersion is the schema version stamped into every querydata.json (including its
 // truncated fallbacks) so a reader can tell how to interpret the artifact.
@@ -221,9 +234,25 @@ func marshalQueryDataArtifact(request json.RawMessage, resp *backend.QueryDataRe
 func marshalQueryDataArtifactWithLimit(request json.RawMessage, resp *backend.QueryDataResponse, maxBytes int) ([]byte, bool, error) {
 	artifact := queryDataArtifact{Version: queryDataArtifactVersion, Request: request}
 	if resp != nil {
+		filtered := queryDataResponseWithoutCaptureFrames(resp)
+
+		// estimateResponseBytes only ever undercounts (see its doc comment), so a response it already
+		// calls oversized cannot possibly fit once encoded -- skip straight to the same truncated shape
+		// the full-size check below would produce anyway, without paying for the encode.
+		if estimateResponseBytes(filtered) > maxBytes {
+			out, err := fitQueryDataArtifact(queryDataArtifact{
+				Version:         queryDataArtifactVersion,
+				ResponseSummary: summarizeQueryDataResponse(resp),
+				Truncated:       true,
+				LimitBytes:      maxBytes,
+				ResponseOmitted: true,
+			}, request, maxBytes)
+			return out, true, err
+		}
+
 		// The SDK encoder returns a complete byte slice. The artifact/archive is bounded below, but
 		// serializing an oversized response can still temporarily allocate its full JSON size.
-		responseJSON, err := queryDataResponseWithoutCaptureFrames(resp).MarshalJSON()
+		responseJSON, err := filtered.MarshalJSON()
 		if err != nil {
 			// A response that cannot be encoded (e.g. an unserializable value in a frame's Meta.Custom)
 			// usually still has a serializable request beside it. Degrade to the same request + summary
@@ -640,6 +669,69 @@ func queryDataResponseWithoutCaptureFrames(resp *backend.QueryDataResponse) *bac
 		}
 	}
 	return filtered
+}
+
+// estimateResponseBytes is a fast lower bound on resp's JSON-encoded size, used to skip the real
+// encode (marshalQueryDataArtifactWithLimit) for the clearest oversized cases. It sums only the raw
+// bytes string/JSON field values and response errors already hold in memory -- what actually drives
+// an oversized response -- plus a 1-byte floor per value of any other type, with no allowance for
+// JSON structure (separators, braces, field/schema names). It therefore never overestimates: a
+// response this calls oversized truly is, but one it doesn't catch can still turn out oversized once
+// actually encoded.
+func estimateResponseBytes(resp *backend.QueryDataResponse) int {
+	if resp == nil {
+		return 0
+	}
+	total := 0
+	for _, response := range resp.Responses {
+		if response.Error != nil {
+			total += len(response.Error.Error())
+		}
+		for _, frame := range response.Frames {
+			if frame == nil {
+				continue
+			}
+			for _, field := range frame.Fields {
+				total += estimateFieldBytes(field)
+			}
+		}
+	}
+	return total
+}
+
+// estimateFieldBytes is the per-field half of estimateResponseBytes.
+func estimateFieldBytes(field *data.Field) int {
+	n := field.Len()
+	switch field.Type() {
+	case data.FieldTypeString, data.FieldTypeNullableString:
+		total := 0
+		for i := 0; i < n; i++ {
+			switch v := field.At(i).(type) {
+			case string:
+				total += len(v)
+			case *string:
+				if v != nil {
+					total += len(*v)
+				}
+			}
+		}
+		return total
+	case data.FieldTypeJSON, data.FieldTypeNullableJSON: //nolint:staticcheck
+		total := 0
+		for i := 0; i < n; i++ {
+			switch v := field.At(i).(type) {
+			case json.RawMessage:
+				total += len(v)
+			case *json.RawMessage:
+				if v != nil {
+					total += len(*v)
+				}
+			}
+		}
+		return total
+	default:
+		return n
+	}
 }
 
 // forEachHARFrameCustom calls fn with the Custom map of every frame across all synthetic capture
