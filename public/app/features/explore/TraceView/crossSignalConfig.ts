@@ -14,14 +14,7 @@ const normalize = (tag: string) => {
   };
 };
 
-const DEFAULT_CROSS_SIGNAL_TAGS = [
-  'cluster',
-  'hostname',
-  'namespace',
-  'pod',
-  'service.name',
-  'service.namespace',
-];
+const DEFAULT_CROSS_SIGNAL_TAGS = ['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace'];
 export function getDefaultLogsTags(): TraceToLogsTag[] {
   return DEFAULT_CROSS_SIGNAL_TAGS.map(normalize);
 }

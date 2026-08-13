@@ -15,9 +15,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  type TraceToLogsOptionsV2,
-} from '@grafana/o11y-ds-frontend';
+import { type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { getVariableUsageInfo } from '../utils/links';
@@ -25,7 +23,6 @@ import { getVariableUsageInfo } from '../utils/links';
 import { getLogsButtonCTA } from './components/TraceTimelineViewer/SpanDetail/LogsLink';
 import { getTraceToLogsTraceQuery } from './components/logsLink';
 import { type Trace } from './components/types/trace';
-
 
 /**
  * Builds an Explore link model for related logs at the trace level (no span id filter).
