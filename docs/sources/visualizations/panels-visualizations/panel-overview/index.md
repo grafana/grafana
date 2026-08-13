@@ -107,11 +107,11 @@ This is useful when a single graph has many series and you need to spot which se
 
 In the **Fan-out by series or label** section, choose one of the following:
 
-| Option | Description |
-| --- | --- |
-| **Disabled** | Show the original single panel. |
-| **By series** | Create one panel per series. |
-| **Labels** | Create one panel per value of the selected label (for example, `method` or `status`). |
+| Option        | Description                                                                           |
+| ------------- | ------------------------------------------------------------------------------------- |
+| **Disabled**  | Show the original single panel.                                                       |
+| **By series** | Create one panel per series.                                                          |
+| **Labels**    | Create one panel per value of the selected label (for example, `method` or `status`). |
 
 If the panel data has no labels, Grafana shows **Data has no labels** under **Labels**.
 
