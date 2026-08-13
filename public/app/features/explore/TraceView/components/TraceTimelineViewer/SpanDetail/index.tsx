@@ -109,14 +109,14 @@ const useResourceAttributesExtensionLinks = ({
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.TraceViewResourceAttributes,
-    limitPerPlugin: 10,
+    limitPerPlugin: 15,
     context,
   });
 
   const resourceLinksGetter = useCallback(
     (pairs: TraceKeyValuePair[], index: number) => {
       const { key } = pairs[index] ?? {};
-      return links.filter((link) => link.category === key);
+      return links.filter((link) => (link.group?.name ?? link.category) === key);
     },
     [links]
   );

@@ -787,6 +787,11 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
 	buf generate pkg/registry/apps/annotation/proto --template pkg/registry/apps/annotation/proto/buf.gen.yaml
 
+.PHONY: protobuf-breaking
+protobuf-breaking: ## Check protobuf definitions for breaking changes against main
+	bash scripts/protobuf-check.sh
+	buf breaking pkg/registry/apps/annotation/proto --against '.git#branch=main,subdir=pkg/registry/apps/annotation/proto'
+
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"

@@ -164,7 +164,7 @@ func TestBuild_MountsNotebooksOnDeclaringVersionOnly(t *testing.T) {
 	}
 	require.NotEmpty(t, dashboardGVs)
 
-	got := paths(Build(true, nil, fakeClient{},
+	got := paths(Build(true, false, nil, fakeClient{},
 		[]builder.APIGroupBuilder{&fakeBuilder{gvs: dashboardGVs}}, nil))
 
 	for _, gv := range dashboardGVs {
