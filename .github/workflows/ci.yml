@@ -204,6 +204,7 @@ jobs:
     if: ${{ !cancelled() && needs.yarn-cache.result != 'failure' }}
     permissions:
       contents: read
+      id-token: write
     uses: ./.github/workflows/storybook-a11y.yml
     with:
       frontend: ${{ needs.detect-changes.outputs.frontend }}
@@ -220,6 +221,7 @@ jobs:
     if: ${{ !cancelled() && needs.yarn-cache.result != 'failure' }}
     permissions:
       contents: read
+      id-token: write
     uses: ./.github/workflows/frontend-lint.yml
     with:
       frontend: ${{ needs.detect-changes.outputs.frontend }}
@@ -233,6 +235,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write
     uses: ./.github/workflows/check-frontend-test-coverage.yml
     with:
       frontend: ${{ needs.detect-changes.outputs.frontend }}
@@ -243,6 +246,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write
     uses: ./.github/workflows/detect-breaking-changes-levitate.yml
     with:
       frontend-packages: ${{ needs.detect-changes.outputs.frontend-packages }}

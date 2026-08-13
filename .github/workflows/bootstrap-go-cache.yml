@@ -55,8 +55,9 @@ jobs:
       - name: Report a miss
         if: steps.probe.outputs.cache-hit != 'true'
         env:
+          CACHE: ${{ inputs.cache }}
           KEY: ${{ steps.key.outputs.key }}
-        run: echo "::warning title=Go ${{ inputs.cache }} cache miss::${KEY} is not cached, building it"
+        run: echo "::warning title=Go ${CACHE} cache miss::${KEY} is not cached, building it"
 
   populate:
     name: Populate Go ${{ inputs.cache }} cache
