@@ -3941,9 +3941,6 @@ func TestKVStorageBackendDisableStorageServices(t *testing.T) {
 		_, err := NewKVStorageBackend(KVBackendOptions{
 			KvStore:           setupBadgerKV(t),
 			GarbageCollection: gc,
-			// Construction fails here, so there is no backend to stop and the
-			// pruner would be left running.
-			DisablePruner: true,
 		})
 		require.ErrorContains(t, err, "garbage collection")
 	})
