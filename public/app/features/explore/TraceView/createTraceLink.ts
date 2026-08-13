@@ -179,20 +179,3 @@ function getTimeRangeFromTimestamps(
     },
   };
 }
-
-/**
- * Variables from trace that can be used in the query
- * @param trace
- */
-export function scopedVarsFromTrace(duration: number, name: string, traceId: string): ScopedVars {
-  return {
-    __trace: {
-      text: t('explore.scoped-vars-from-trace.text.trace', 'Trace'),
-      value: {
-        duration,
-        name,
-        traceId,
-      },
-    },
-  };
-}
