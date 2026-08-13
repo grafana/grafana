@@ -103,9 +103,15 @@ export const {
   useDeleteVariableMutation,
   useReplaceVariableMutation,
   // The generated notebook endpoints already provide/invalidate the coarse 'Notebook' tag, so
-  // creating a notebook refetches the list without any extra enhancement here.
+  // creating or replacing a notebook refetches the list without any extra enhancement here.
   useListNotebookQuery,
   useCreateNotebookMutation,
+  // Lazy, because the only reader fetches one notebook's full spec on submit — subscribing would
+  // pull a whole library of specs just to render a picker. The trigger defaults to
+  // preferCacheValue: false, which is what a read-modify-write needs: a stale spec here would be
+  // written straight back, dropping whatever changed in between.
+  useLazyGetNotebookQuery,
+  useReplaceNotebookMutation,
 } = dashboardAPIv2beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files

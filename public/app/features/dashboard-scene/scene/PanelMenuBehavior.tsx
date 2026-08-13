@@ -29,6 +29,8 @@ import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { appendExtensionsToPanelMenu } from 'app/features/dashboard/utils/appendExtensionsToPanelMenu';
 import { InspectTab } from 'app/features/inspector/types';
+import { AddPanelToNotebookScene } from 'app/features/notebook/addPanel/AddPanelToNotebookScene';
+import { canAddPanelToNotebook } from 'app/features/notebook/permissions';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -382,6 +384,23 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         subMenu: moreSubMenu,
         onClick: (e) => {
           e.preventDefault();
+        },
+      });
+    }
+
+    // Not gated on edit mode: putting a panel into a notebook writes to the notebook, not to the
+    // dashboard, so it needs no right to edit the dashboard you happen to be reading.
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false) && canAddPanelToNotebook()) {
+      items.push({
+        text: '',
+        type: 'divider',
+      });
+
+      items.push({
+        text: t('panel.header-menu.choose-notebook', 'Choose notebook...'),
+        iconClassName: 'search',
+        onClick: () => {
+          dashboard.showModal(new AddPanelToNotebookScene({ panelRef: panel.getRef() }));
         },
       });
     }

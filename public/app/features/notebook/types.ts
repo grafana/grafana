@@ -14,14 +14,24 @@ import {
   defaultV2PanelKind,
   type CellContentKind as GeneratedCellContentKind,
   type CellKind as GeneratedCellKind,
+  type LibraryPanelKind as GeneratedLibraryPanelKind,
   type NotebookElement as GeneratedNotebookElement,
   type NotebookLayoutItemKind as GeneratedNotebookLayoutItemKind,
   type NotebookLayoutKind as GeneratedNotebookLayoutKind,
   type Spec as GeneratedSpec,
+  type V2PanelKind as GeneratedPanelKind,
 } from '@grafana/schema/apis/notebook/v2beta1';
 
 // Forked by the notebook spec so it can carry the dashboard v2 shape.
 export const defaultPanelKind = defaultV2PanelKind;
+export type PanelKind = GeneratedPanelKind;
+export type LibraryPanelKind = GeneratedLibraryPanelKind;
+
+/**
+ * The two NotebookElement kinds that carry a panel. vizPanelToSchemaV2 returns exactly this union,
+ * picking the library branch only when the VizPanel carries LibraryPanelBehavior.
+ */
+export type PanelElement = PanelKind | LibraryPanelKind;
 
 // Shared with the dashboard spec, or notebook-only. Either way the generated name is already right.
 export type CellContentKind = GeneratedCellContentKind;

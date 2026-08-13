@@ -30,6 +30,8 @@ export interface NotebookRow {
   /** ISO timestamps. These sort correctly as plain strings. */
   created: string;
   updated: string;
+  /** Cells in the layout, so a picker can say how much is in a notebook without opening it. */
+  blockCount: number;
 }
 
 interface UseNotebooksListOptions {
@@ -40,6 +42,7 @@ interface UseNotebooksListOptions {
 export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   const [searchQuery, setSearchQuery] = useState('');
   const [authorFilter, setAuthorFilter] = useState('');
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
 
   // Filtering is client-side, so debounce only to avoid re-filtering the list on every keystroke.
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -86,10 +89,19 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
           authorName: authorNames.get(authorUid) || anonymousAuthor(),
           created,
           updated: notebook.metadata.annotations?.[AnnoKeyUpdatedTimestamp] ?? created,
+          blockCount: notebook.spec.layout.spec.cells.length,
         };
       }),
     [notebooks, authorNames]
   );
+
+  // Derived from the loaded rows rather than from a tag endpoint: filtering is client-side over the
+  // same page, so offering a tag no row on this page carries would just yield an empty list.
+  const tagOptions = useMemo<Array<ComboboxOption<string>>>(() => {
+    const tags = uniq(rows.flatMap((row) => row.tags));
+    tags.sort(collator.compare);
+    return tags.map((tag) => ({ value: tag, label: tag }));
+  }, [rows]);
 
   const authorOptions = useMemo<Array<ComboboxOption<string>>>(() => {
     const options = authorUids.map((uid) => ({ value: uid, label: authorNames.get(uid) || anonymousAuthor() }));
@@ -112,9 +124,13 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     const needle = debouncedSearch.trim().toLowerCase();
     return rows.filter(
       (row) =>
-        (!needle || row.title.toLowerCase().includes(needle)) && (!authorFilter || row.authorUid === authorFilter)
+        (!needle || row.title.toLowerCase().includes(needle)) &&
+        (!authorFilter || row.authorUid === authorFilter) &&
+        // Every selected tag must match, as elsewhere in Grafana: picking two tags narrows the list
+        // rather than widening it.
+        tagFilter.every((tag) => row.tags.includes(tag))
     );
-  }, [rows, debouncedSearch, authorFilter]);
+  }, [rows, debouncedSearch, authorFilter, tagFilter]);
 
   return {
     rows: filteredRows,
@@ -123,10 +139,13 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     /** The server had more than one page, so the list on screen is not the whole library. */
     isTruncated: Boolean(data?.metadata?.continue),
     authorOptions,
+    tagOptions,
     searchQuery,
     setSearchQuery,
     authorFilter,
     setAuthorFilter,
+    tagFilter,
+    setTagFilter,
     isLoading,
     error,
   };

@@ -27,6 +27,7 @@ function makeNotebook(
     createdBy?: string;
     created?: string;
     updated?: string;
+    cells?: number;
   } // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal fixture standing in for a full k8s resource
 ): Notebook {
   return {
@@ -45,6 +46,16 @@ function makeNotebook(
       elements: {},
       title: overrides.title,
       tags: overrides.tags ?? [],
+      // Only the count is read, so the cells reference elements that aren't there.
+      layout: {
+        kind: 'NotebookLayout',
+        spec: {
+          cells: Array.from({ length: overrides.cells ?? 0 }, (_, index) => ({
+            kind: 'NotebookLayoutItem' as const,
+            spec: { element: { kind: 'ElementReference' as const, name: `cell-${index}` }, source: 'user' as const },
+          })),
+        },
+      },
     },
   };
 }
@@ -282,6 +293,48 @@ describe('useNotebooksList', () => {
         expect(result.current.rows.map((row) => row.uid)).toEqual(['nb2']);
       });
     });
+
+    it('narrows rather than widens when several tags are selected', () => {
+      setList([
+        makeNotebook({ name: 'nb1', title: 'One', tags: ['latency', 'checkout'] }),
+        makeNotebook({ name: 'nb2', title: 'Two', tags: ['latency'] }),
+        makeNotebook({ name: 'nb3', title: 'Three', tags: ['checkout'] }),
+      ]);
+
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.setTagFilter(['latency']);
+      });
+      expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1', 'nb2']);
+
+      act(() => {
+        result.current.setTagFilter(['latency', 'checkout']);
+      });
+      expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
+    });
+
+    it('offers each tag in use once, sorted', () => {
+      setList([
+        makeNotebook({ name: 'nb1', title: 'One', tags: ['latency', 'checkout'] }),
+        makeNotebook({ name: 'nb2', title: 'Two', tags: ['checkout'] }),
+      ]);
+
+      const { result } = setupHook();
+
+      expect(result.current.tagOptions).toEqual([
+        { value: 'checkout', label: 'checkout' },
+        { value: 'latency', label: 'latency' },
+      ]);
+    });
+  });
+
+  it('reports how many cells each notebook holds', () => {
+    setList([makeNotebook({ name: 'nb1', title: 'One', cells: 2 }), makeNotebook({ name: 'nb2', title: 'Two' })]);
+
+    const { result } = setupHook();
+
+    expect(result.current.rows.map((row) => row.blockCount)).toEqual([2, 0]);
   });
 
   it('skips the list request when the feature is disabled', () => {
