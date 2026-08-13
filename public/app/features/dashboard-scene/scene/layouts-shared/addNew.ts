@@ -2,7 +2,6 @@ import { config } from '@grafana/runtime';
 import { type SceneGridRow } from '@grafana/scenes';
 
 import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
-import { getDashboardSceneFor } from '../../utils/utils';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
@@ -10,6 +9,7 @@ import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
+import { getDashboardSceneLike } from '../types/dashboard';
 
 /**
  * Dashboard default layout to start the new group with, when the current layout holds nothing worth keeping.
@@ -20,7 +20,7 @@ function getDefaultLayoutForEmptyGrid(layout: DashboardLayoutManager): Dashboard
     return undefined;
   }
 
-  return getDashboardSceneFor(layout).getDefaultLayout();
+  return getDashboardSceneLike(layout).getDefaultLayout();
 }
 
 export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
