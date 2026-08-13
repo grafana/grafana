@@ -7,6 +7,24 @@ import (
 	"strconv"
 )
 
+// This dialect is ported from grafana-assistant-app
+// (api/internal/search/index). It carries the same known edge-case
+// limitations as the upstream, none of which the current caller (Grafana
+// Assistant, small string-valued metadata) hits in practice:
+//
+//   - $in/$nin extract the field as text (jsonb_extract_path_text), so a
+//     numeric or boolean $in also matches a string-typed stored value
+//     ({"score":{"$in":[42]}} matches {"score":"42"}).
+//   - Filter number literals are decoded as float64, so integers above 2^53
+//     lose precision.
+//   - $nin does not match rows missing the field (NULL NOT IN (...) is NULL),
+//     unlike Mongo semantics.
+//   - $exists:false does not match rows whose metadata column is SQL NULL
+//     (metadata ? key is NULL there).
+//
+// Fixes belong upstream so both stay in sync; revisit here if a caller needs
+// one of these edge cases before then.
+
 // Compile translates a filter expression into a SQL WHERE clause for a JSONB column.
 // It returns the SQL string with placeholders and a slice of arguments.
 // Placeholders start at $1.
