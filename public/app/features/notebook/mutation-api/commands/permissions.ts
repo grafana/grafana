@@ -24,7 +24,14 @@ function requiresNotebooksEnabled(): PermissionCheckResult {
 }
 
 export function requiresNotebookRead(): PermissionCheckResult {
-  return requiresNotebooksEnabled();
+  const enabled = requiresNotebooksEnabled();
+  if (!enabled.allowed) {
+    return enabled;
+  }
+  if (!contextSrv.hasPermission(AccessControlAction.DashboardsRead)) {
+    return { allowed: false, error: 'Cannot read notebook: insufficient permissions.' };
+  }
+  return { allowed: true };
 }
 
 /**
