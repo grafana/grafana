@@ -132,7 +132,7 @@ func (b *pgvectorBackend) UpdateMetadata(ctx context.Context, namespace, resourc
 	}
 	// metaExpr/scope/where are internal fragments; set, unset, scope and filter
 	// values are all bound via p.args.
-	query := fmt.Sprintf(`UPDATE embeddings SET metadata = %s WHERE %s%s`, metaExpr, scope, where) // #nosec G201 nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
+	query := fmt.Sprintf(`UPDATE embeddings SET metadata = %s, updated_at = CURRENT_TIMESTAMP WHERE %s%s`, metaExpr, scope, where) // #nosec G201 nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
 	res, err := b.db.ExecContext(ctx, query, p.args...)
 	if err != nil {
 		return 0, err

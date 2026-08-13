@@ -1336,6 +1336,9 @@ func TestIntegrationVectorDeleteByFilter(t *testing.T) {
 
 func TestIntegrationVectorUpdateMetadata(t *testing.T) {
 	backend, engine, ctx := setupIntegrationTest(t)
+	// Isolate so created_at == updated_at holds for freshly-seeded rows.
+	_, err := backend.DeleteNamespace(ctx, "ns-upd")
+	require.NoError(t, err)
 
 	mk := func(uid, status string) Vector {
 		return Vector{
@@ -1366,6 +1369,17 @@ func TestIntegrationVectorUpdateMetadata(t *testing.T) {
 		`SELECT metadata::text FROM embeddings WHERE resource=$1 AND namespace=$2 AND uid=$3`,
 		testResource, "ns-upd", "u3").Scan(&meta))
 	require.JSONEq(t, `{"status":"closed","owner":"u-old"}`, meta)
+
+	// Updated rows bump updated_at; the untouched row keeps created_at == updated_at.
+	var bumped, untouched bool
+	require.NoError(t, engine.DB().QueryRowContext(ctx,
+		`SELECT updated_at > created_at FROM embeddings WHERE resource=$1 AND namespace=$2 AND uid=$3`,
+		testResource, "ns-upd", "u1").Scan(&bumped))
+	require.True(t, bumped, "updated_at should advance on metadata update")
+	require.NoError(t, engine.DB().QueryRowContext(ctx,
+		`SELECT updated_at > created_at FROM embeddings WHERE resource=$1 AND namespace=$2 AND uid=$3`,
+		testResource, "ns-upd", "u3").Scan(&untouched))
+	require.False(t, untouched, "untouched row keeps its original updated_at")
 }
 
 func TestIntegrationVectorFilterEdgeCases(t *testing.T) {
