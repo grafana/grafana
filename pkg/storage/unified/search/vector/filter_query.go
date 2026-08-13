@@ -79,6 +79,9 @@ func (b *pgvectorBackend) deleteByFilter(ctx context.Context, namespace, model, 
 	}
 	// Outer scope repeats to keep partition pruning; the inner ctid select
 	// already pins the exact rows, so the filter need not repeat.
+	// scope/where are internal fragments (hardcoded columns + $N placeholders);
+	// every caller value is bound via p.args.
+	// #nosec G201 nosemgrep: string-formatted-query
 	query := fmt.Sprintf(
 		`DELETE FROM embeddings WHERE ctid IN (SELECT ctid FROM embeddings WHERE %s%s LIMIT %s) AND %s`,
 		scope, where, p.add(limit), scope)
@@ -99,6 +102,8 @@ func (b *pgvectorBackend) deleteByFilter(ctx context.Context, namespace, model, 
 		if err != nil {
 			return n, false, fmt.Errorf("compile filter: %w", err)
 		}
+		// escope/ewhere are internal fragments; caller values are bound via pe.args.
+		// #nosec G201 nosemgrep: string-formatted-query
 		q := fmt.Sprintf(`SELECT EXISTS (SELECT 1 FROM embeddings WHERE %s%s)`, escope, ewhere)
 		if err := b.db.QueryRowContext(ctx, q, pe.args...).Scan(&hasMore); err != nil {
 			return n, false, fmt.Errorf("check remaining rows: %w", err)
@@ -127,6 +132,9 @@ func (b *pgvectorBackend) UpdateMetadata(ctx context.Context, namespace, resourc
 	if err != nil {
 		return 0, fmt.Errorf("compile filter: %w", err)
 	}
+	// metaExpr/scope/where are internal fragments; set, unset, scope and filter
+	// values are all bound via p.args.
+	// #nosec G201 nosemgrep: string-formatted-query
 	query := fmt.Sprintf(`UPDATE embeddings SET metadata = %s WHERE %s%s`, metaExpr, scope, where)
 	res, err := b.db.ExecContext(ctx, query, p.args...)
 	if err != nil {
