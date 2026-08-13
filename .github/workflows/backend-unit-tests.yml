@@ -35,10 +35,29 @@ jobs:
         with:
           self: .github/workflows/backend-unit-tests.yml
 
+  go-mod-cache:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
+  go-build-cache:
+    needs: go-mod-cache
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-build-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
   grafana:
     # Run this workflow only for PRs from forks
     # the `pr-backend-unit-tests-enterprise` workflow will run instead
-    needs: detect-changes
+    needs: [detect-changes, go-build-cache]
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     strategy:
       matrix:
@@ -139,6 +158,8 @@ jobs:
   #   so they won't be accepted by a ruleset.
   required-backend-unit-tests:
     needs:
+      - go-mod-cache
+      - go-build-cache
       - warm-go-cache
       - grafana
       - grafana-enterprise

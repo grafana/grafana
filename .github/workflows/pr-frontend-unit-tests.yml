@@ -35,11 +35,31 @@ jobs:
         with:
           self: .github/workflows/pr-frontend-unit-tests.yml
 
+  go-mod-cache:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
+  go-build-cache:
+    needs: go-mod-cache
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-build-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
   generate-golden-files:
     permissions:
       contents: read
     needs:
       - detect-changes
+      - go-build-cache
     if: needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-x64-small
     name: Generate golden files
@@ -203,6 +223,8 @@ jobs:
   #   so they won't be accepted by a ruleset.
   required-frontend-unit-tests:
     needs:
+      - go-mod-cache
+      - go-build-cache
       - generate-golden-files
       - frontend-unit-tests
       - frontend-unit-tests-enterprise

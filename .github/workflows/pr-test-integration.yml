@@ -62,7 +62,25 @@ jobs:
           self: .github/workflows/pr-test-integration.yml
 
   #### OSS
+  go-mod-cache:
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
+  go-build-cache:
+    needs: go-mod-cache
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-build-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
   sqlite:
+    needs: go-build-cache
     # Run this workflow only for PRs from forks
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     strategy:
@@ -94,6 +112,7 @@ jobs:
           go test -vet=off -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql:
+    needs: go-build-cache
     # Run this workflow only for PRs from forks
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     strategy:
@@ -145,6 +164,7 @@ jobs:
         run: make devenv-down sources=mysql_tests
 
   postgres:
+    needs: go-build-cache
     # Run this workflow only for PRs from forks
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     strategy:

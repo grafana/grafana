@@ -32,8 +32,27 @@ jobs:
         with:
           self: .github/workflows/feature-toggles-ci.yml
 
-  test:
+  go-mod-cache:
     needs: detect-changes
+    if: needs.detect-changes.outputs.changedbackend == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
+  go-build-cache:
+    needs: go-mod-cache
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-build-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
+  test:
+    needs: [detect-changes, go-build-cache]
     if: needs.detect-changes.outputs.changedbackend == 'true' || needs.detect-changes.outputs.changeddocs == 'true'
 
     name: Feature toggles documentation is in sync with source
