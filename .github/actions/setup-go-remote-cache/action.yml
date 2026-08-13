@@ -14,6 +14,12 @@ inputs:
       cache instead of each downloading it.
     required: false
     default: 'false'
+  cache-write:
+    description: >-
+      Whether this job may save the plugin cache. Only the bootstrap writes;
+      a job that misses downloads the binary for itself.
+    required: false
+    default: 'false'
 
 runs:
   using: composite
@@ -44,7 +50,15 @@ runs:
 
     # Without this, every job in a matrix downloads the same release asset and
     # GitHub throttles them once enough shards start at once.
-    - name: Cache go-cache-plugin
+    - name: Restore go-cache-plugin
+      if: inputs.cache-write != 'true'
+      uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      with:
+        path: ~/.cache/go-cache-plugin
+        key: go-cache-plugin-${{ env.GOCP_VERSION }}-${{ env.GOCP_OS }}
+
+    - name: Restore and save go-cache-plugin
+      if: inputs.cache-write == 'true'
       uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
       with:
         path: ~/.cache/go-cache-plugin
