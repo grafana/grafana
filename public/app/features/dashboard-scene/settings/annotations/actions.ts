@@ -2,9 +2,9 @@ import { t } from '@grafana/i18n';
 import { type dataLayers } from '@grafana/scenes';
 import { type AnnotationPanelFilter } from '@grafana/schema/dist/esm/index.gen';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { dashboardEditActions } from '../../sidebar/shared';
 
 type DataLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 
@@ -21,6 +21,22 @@ export const annotationEditActions = {
       undo() {
         source.setState({ annotationLayers: layersBeforeAddition });
       },
+    });
+  },
+  duplicateAnnotation(layer: DataLayer) {
+    const dataLayerSet = layer.parent;
+    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
+      return;
+    }
+
+    const layersBefore = [...dataLayerSet.state.annotationLayers];
+
+    dashboardEditActions.duplicateElement({
+      duplicatedObject: layer,
+      source: dataLayerSet,
+      cloneState: { name: `${layer.state.name} - Copy` },
+      perform: (copy) => dataLayerSet.setState({ annotationLayers: [...layersBefore, copy] }),
+      undo: () => dataLayerSet.setState({ annotationLayers: layersBefore }),
     });
   },
   removeAnnotation({ source, removedObject }: { removedObject: DataLayer; source: DashboardDataLayerSet }) {

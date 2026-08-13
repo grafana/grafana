@@ -7,6 +7,8 @@ import {
   type DynamicDashboardsTrackingInformation,
 } from '../serialization/DashboardSceneSerializer';
 
+import { type GlobalVariablesMode } from './predefinedVariableDenyList';
+
 let isScenesContextSet = false;
 
 type DashboardLibraryTrackingInfo = {
@@ -78,6 +80,12 @@ export const DashboardInteractions = {
     reportDashboardInteraction('exit_edit_button_clicked');
   },
 
+  // grafana_dashboards_edit_discarded
+  // when a user discards changes by confirming exit from edit mode without saving
+  dashboardEditDiscarded: () => {
+    reportDashboardInteraction('edit_discarded');
+  },
+
   // grafana_dashboards_outline_clicked
   // when a user opens the outline view
   dashboardOutlineClicked: () => {
@@ -146,6 +154,23 @@ export const DashboardInteractions = {
     reportDashboardInteraction('variable_value_changed', properties);
   },
 
+  // dashboards_global_variables_loaded
+  // after global/folder variables are resolved for a V2 dashboard load
+  globalVariablesLoaded: (properties: {
+    global_count: number;
+    folder_count: number;
+    total_count: number;
+    mode?: GlobalVariablesMode;
+  }) => {
+    reportDashboardInteraction('global_variables_loaded', properties);
+  },
+
+  // dashboards_global_variables_mode_changed
+  // when a user changes the predefined variables radio (None / All / Global / Folder)
+  globalVariablesModeChanged: (properties: { from_mode?: GlobalVariablesMode; to_mode: GlobalVariablesMode }) => {
+    reportDashboardInteraction('global_variables_mode_changed', properties);
+  },
+
   // dashboards_add_annotation_button_clicked
   // when a user clicks on 'Add annotation'
   addAnnotationButtonClicked: (properties: { source: 'edit_pane' }) => {
@@ -160,9 +185,10 @@ export const DashboardInteractions = {
   panelActionClicked(
     item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'keyboard'
+    source: 'panel' | 'edit_pane' | 'keyboard',
+    panelType?: string
   ) {
-    reportDashboardInteraction('panel_action_clicked', { item, id, source });
+    reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
   },
 
   // Panel styles copy/paste interactions
@@ -190,9 +216,9 @@ export const DashboardInteractions = {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
   },
   trackPastePanelClick(
-    source: 'sidebar' | 'canvas' | 'editPaneHeader' = 'canvas',
+    source: 'sidebar' | 'canvas' | 'editPaneHeader' | 'keyboard' = 'canvas',
     target?: 'row' | 'tab' | 'dashboard',
-    action: 'drop' | 'click' = 'click'
+    action: 'drop' | 'click' | 'keyboard' = 'click'
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },
@@ -350,8 +376,8 @@ export const DashboardInteractions = {
     reportDashboardInteraction('edit_session_started', properties);
   },
 
-  // click "Take me there" button from the dashboard settings for annotations or variables
-  takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' }) => {
+  // click "Take me there" button from the dashboard settings for annotations, variables or the JSON model
+  takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' | 'json-model' }) => {
     reportDashboardInteraction('take_me_to_sidebar_clicked', properties);
   },
 
@@ -362,7 +388,22 @@ export const DashboardInteractions = {
   setVisualOption: (properties?: { ui: 'panel-edit' | 'view-panel'; option: string; value: string }) => {
     reportDashboardInteraction('set_visualization_option', properties);
   },
+
+  // tracks attempts to resize a panel that is managed by auto layout
+  autoLayoutResizeIntercepted: (properties: { scope: AutoLayoutScope; trigger: 'hover' | 'drag' }) => {
+    reportDashboardInteraction('auto_layout_resize_intercepted', properties);
+  },
+
+  // track the action a user took after being intercepted. `switch_to_custom` vs `edit_auto_layout`
+  autoLayoutResizeInterceptAction: (properties: {
+    scope: AutoLayoutScope;
+    action: 'edit_auto_layout' | 'switch_to_custom' | 'dismissed';
+  }) => {
+    reportDashboardInteraction('auto_layout_resize_intercept_action', properties);
+  },
 };
+
+export type AutoLayoutScope = 'dashboard' | 'row' | 'tab';
 
 const reportDashboardInteraction = (
   name: string,

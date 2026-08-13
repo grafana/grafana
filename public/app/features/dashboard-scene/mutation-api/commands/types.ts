@@ -5,7 +5,7 @@
  * plus the MutationContext passed to handlers and reusable permission checks.
  */
 
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import { config } from '@grafana/runtime';
 
@@ -97,6 +97,6 @@ export function enterEditModeIfNeeded(scene: DashboardScene): void {
   if (!scene.state.isEditing) {
     scene.onEnterEditMode('assistant');
   }
-  // New-layout mutations only run while the edit pane is active, and it may not be mounted here.
-  scene.activateEditPane();
+  // New-layout mutations only run while the sidebar is active, and it may not be mounted here.
+  scene.activateSidebar();
 }

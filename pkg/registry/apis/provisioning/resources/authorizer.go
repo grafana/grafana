@@ -102,6 +102,12 @@ type Authorizer interface {
 	// folder. For instance-scoped repositories the check runs against the root folder.
 	AuthorizeCreateAllSupported(ctx context.Context) error
 
+	// AuthorizeDeleteAllSupported checks if the current user has delete permission
+	// on every supported provisioning resource type at the root level. This is used
+	// before operations that remove all resources (e.g. a full migration, which
+	// deletes the migrated resources from the instance).
+	AuthorizeDeleteAllSupported(ctx context.Context) error
+
 	// AuthorizeUpdateFolder checks if the current user has permission to update
 	// the folder at the specified path. This checks folders:update permission using
 	// the folder's own ID as the authorization context.
@@ -533,6 +539,25 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateAllSupported(ctx context.Context
 			Resource: gvr.Resource,
 			Verb:     utils.VerbCreate,
 		}, targetFolder); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// AuthorizeDeleteAllSupported checks if the current user has delete permission
+// on every supported provisioning resource type at the root level.
+func (a *ProvisioningAuthorizer) AuthorizeDeleteAllSupported(ctx context.Context) error {
+	for _, kind := range a.clients.SupportedResources() {
+		_, gvr, err := a.clients.ForKind(ctx, schema.GroupVersionKind{Group: kind.Group, Kind: kind.Kind})
+		if err != nil {
+			return fmt.Errorf("resolve client for %s/%s: %w", kind.Group, kind.Kind, err)
+		}
+		if err := a.access.Check(ctx, authlib.CheckRequest{
+			Group:    gvr.Group,
+			Resource: gvr.Resource,
+			Verb:     utils.VerbDelete,
+		}, ""); err != nil {
 			return err
 		}
 	}

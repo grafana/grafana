@@ -324,13 +324,38 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderTh
 	minVersion := b.opts.Snapshot.MinBuildVersion
 	running := b.runningBuildVersion
 
-	var droppedAge, droppedUnparseable, droppedFormatUnsupported int
+	var droppedAge, droppedUnparseable, droppedFormatUnsupported, droppedUnknownRequirements, droppedMissingFeatures int
 	candidates := make([]snapshotCandidate, 0, len(all))
 	for k, m := range all {
 		// Hard filter: age.
 		if !notOlderThan.IsZero() && m.UploadTimestamp.Before(notOlderThan) {
 			droppedAge++
 			continue
+		}
+		// Hard filter: needs a feature this instance cannot read. Dropped here rather
+		// than after download so an older snapshot can be used instead.
+		if unknown := resource.UnknownIndexRequirements(m.ReaderRequirements); len(unknown) > 0 {
+			droppedUnknownRequirements++
+			logger.Debug("index snapshot candidate dropped: unknown reader requirements",
+				"key", k.String(),
+				"unknown_requirements", unknown,
+				"version", m.BuildVersion,
+			)
+			continue
+		}
+		// Hard filter: lacks a feature this instance requires, so it would be rejected
+		// after download anyway. Snapshots that recorded no features are kept, since
+		// their contents are unknown rather than known to be unusable.
+		if m.FeaturesRecorded {
+			if missing := resource.MissingFeatures(m.Features, b.requiredFeatures); len(missing) > 0 {
+				droppedMissingFeatures++
+				logger.Debug("index snapshot candidate dropped: missing required features",
+					"key", k.String(),
+					"missing_features", missing,
+					"version", m.BuildVersion,
+				)
+				continue
+			}
 		}
 		if !isSnapshotIndexFormatUnknownOrSupported(m.IndexFormat, b.maxSupportedIndexFormat) {
 			droppedFormatUnsupported++
@@ -371,7 +396,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderTh
 	}
 
 	if len(candidates) == 0 {
-		logger.Debug("no index snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable, "dropped_format_unsupported", droppedFormatUnsupported, "max_supported_format", b.maxSupportedIndexFormat)
+		logger.Debug("no index snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable, "dropped_format_unsupported", droppedFormatUnsupported, "dropped_unknown_requirements", droppedUnknownRequirements, "dropped_missing_features", droppedMissingFeatures, "max_supported_format", b.maxSupportedIndexFormat)
 		return snapshotCandidate{}, false
 	}
 
@@ -416,7 +441,13 @@ func snapshotTier(v, minVersion, running *semver.Version) int {
 }
 
 // validateDownloadedIndex reads the internal RV + buildInfo from the opened
-// index to confirm the snapshot is well-formed. Returns the RV on success.
+// index to confirm the snapshot is well-formed and safe to serve. Returns the RV
+// on success.
+//
+// Snapshot selection accepts an older Grafana version (see snapshotTier), so
+// this is where a snapshot that would answer incorrectly gets rejected. Selection
+// already skips manifests declaring requirements we do not understand or missing a
+// required feature; this covers snapshots uploaded before those fields existed.
 func (b *bleveBackend) validateDownloadedIndex(idx bleve.Index) (int64, error) {
 	rv, err := getRV(idx)
 	if err != nil {
@@ -425,8 +456,15 @@ func (b *bleveBackend) validateDownloadedIndex(idx bleve.Index) (int64, error) {
 	if rv <= 0 {
 		return 0, fmt.Errorf("snapshot has non-positive rv: %d", rv)
 	}
-	if _, err := getBuildInfo(idx); err != nil {
+	bi, err := getBuildInfo(idx)
+	if err != nil {
 		return 0, fmt.Errorf("reading build info: %w", err)
+	}
+	if unknown := resource.UnknownIndexRequirements(bi.ReaderRequirements); len(unknown) > 0 {
+		return 0, fmt.Errorf("snapshot requires index features this instance does not understand %v", unknown)
+	}
+	if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
+		return 0, fmt.Errorf("snapshot is missing required index features %v", missing)
 	}
 	return rv, nil
 }

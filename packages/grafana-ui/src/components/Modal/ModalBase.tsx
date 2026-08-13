@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { FloatingFocusManager, useDismiss, useFloating, useInteractions, useRole } from '@floating-ui/react';
 import { OverlayContainer } from '@react-aria/overlays';
-import { type PropsWithChildren, useRef } from 'react';
+import { type ComponentProps, type PropsWithChildren, useRef } from 'react';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getPortalContainer } from '../Portal/Portal';
@@ -13,6 +13,14 @@ export interface ModalBaseProps {
   closeOnEscape?: boolean;
   closeOnBackdropClick?: boolean;
   trapFocus?: boolean;
+  /**
+   * What receives focus when the modal opens: an index into the modal's
+   * tabbable elements, or a ref to the element itself. Defaults to the first
+   * tabbable element, which is usually the close button. Pass a negative number
+   * to leave focus alone — for content that focuses itself, such as an input
+   * that autofocuses on mount. The focus trap stays active either way.
+   */
+  initialFocus?: ComponentProps<typeof FloatingFocusManager>['initialFocus'];
   isOpen?: boolean;
   onDismiss?: () => void;
   onClickBackdrop?: () => void;
@@ -27,6 +35,7 @@ export function ModalBase({
   closeOnEscape = true,
   closeOnBackdropClick = false,
   trapFocus = true,
+  initialFocus,
   onDismiss,
   onClickBackdrop,
   'aria-label': ariaLabel,
@@ -81,7 +90,12 @@ export function ModalBase({
   return (
     <OverlayContainer>
       <div role="presentation" ref={backdropRef} className={styles.modalBackdrop} />
-      <FloatingFocusManager context={context} modal={trapFocus} getInsideElements={() => [getPortalContainer()]}>
+      <FloatingFocusManager
+        context={context}
+        modal={trapFocus}
+        initialFocus={initialFocus}
+        getInsideElements={() => [getPortalContainer()]}
+      >
         <div
           className={cx(styles.modal, className)}
           ref={refs.setFloating}

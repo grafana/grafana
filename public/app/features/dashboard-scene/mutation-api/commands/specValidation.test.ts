@@ -58,7 +58,7 @@ function makeSceneContext(): MutationContext {
   const scene = {
     state: { isEditing: true, key: 'scene-key', meta: {} },
     onEnterEditMode: jest.fn(),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     serializer: {
       getK8SMetadata: () => ({ name: 'dash-uid', generation: 1, creationTimestamp: '2026-01-01T00:00:00Z' }),
     },

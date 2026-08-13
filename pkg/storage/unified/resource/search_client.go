@@ -157,6 +157,13 @@ func (s *searchWrapper) VectorSearch(ctx context.Context, in *resourcepb.VectorS
 	return s.unifiedClient.VectorSearch(ctx, in, opts...)
 }
 
+// HybridSearch is unified-storage-only — like VectorSearch, there is no
+// legacy fallback path.
+func (s *searchWrapper) HybridSearch(ctx context.Context, in *resourcepb.HybridSearchRequest,
+	opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	return s.unifiedClient.HybridSearch(ctx, in, opts...)
+}
+
 func (s *searchWrapper) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest,
 	opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	client := s.legacyClient

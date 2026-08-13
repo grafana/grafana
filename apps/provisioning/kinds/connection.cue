@@ -39,11 +39,11 @@ connection: {
 					serverUrl: string
 				}
 				#BitbucketConnectionConfig: {
-					// The app clientID
-					clientID: string
+					// The workspace the OAuth consumer belongs to
+					workspace: string
 				}
-				#GitlabConnectionConfig: {
-					// The app clientID
+				#ConnectionOAuthConfig: {
+					// The OAuth app clientID
 					clientID: string
 				}
 				#ConnectionWebhookConfig: {
@@ -75,9 +75,8 @@ connection: {
 					// Bitbucket connection configuration
 					// Only applicable when provider is "bitbucket"
 					bitbucket?: #BitbucketConnectionConfig
-					// Gitlab connection configuration
-					// Only applicable when provider is "gitlab"
-					gitlab?: #GitlabConnectionConfig
+					// OAuth app configuration shared by all OAuth app providers
+					oauth?: #ConnectionOAuthConfig
 					// Webhook configuration for this connection
 					webhook?: #ConnectionWebhookConfig
 				}

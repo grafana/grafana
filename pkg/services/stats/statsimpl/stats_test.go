@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -150,7 +151,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) org.Service {
 	t.Helper()
 
-	orgService, _ := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
+	orgService, _ := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotatest.New(false, nil))
 	userSvc, _ := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		&quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService(), nil,

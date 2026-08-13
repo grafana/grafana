@@ -78,7 +78,7 @@ func TestIntegrationDataSourceGetByUID(t *testing.T) {
 func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string, testEnv *server.TestEnv, store db.DB, cfg *setting.Cfg, modePrefix string) {
 	t.Run("GET - succeeds", func(t *testing.T) {
 		// make a unique-enough UID - all the tests in this file share the same grafana instance.
-		uid := fmt.Sprintf("%s-prometheus-get", modePrefix)
+		uid := fmt.Sprintf("%s-testdata-get", modePrefix)
 		jsonData := simplejson.NewFromAny(map[string]any{
 			"httpMethod": "POST",
 		})
@@ -88,8 +88,8 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 			&datasources.AddDataSourceCommand{
 				OrgID:         1,
 				Access:        datasources.DS_ACCESS_PROXY,
-				Name:          "Test Prometheus",
-				Type:          datasources.DS_PROMETHEUS,
+				Name:          "Test Data",
+				Type:          datasources.DS_TESTDATA,
 				UID:           uid,
 				URL:           "http://localhost:9090",
 				User:          "testuser",
@@ -115,8 +115,8 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 		require.NoError(t, resp.Body.Close())
 
 		assert.Equal(t, uid, dto.UID)
-		assert.Equal(t, "Test Prometheus", dto.Name)
-		assert.Equal(t, "prometheus", dto.Type)
+		assert.Equal(t, "Test Data", dto.Name)
+		assert.Equal(t, datasources.DS_TESTDATA, dto.Type)
 		assert.Equal(t, datasources.DsAccess(datasources.DS_ACCESS_PROXY), dto.Access)
 		assert.Equal(t, "http://localhost:9090", dto.Url)
 		assert.Equal(t, "testuser", dto.User)
@@ -165,7 +165,7 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 				OrgID:  1,
 				Access: datasources.DS_ACCESS_PROXY,
 				Name:   "Test DS for GET Permissions 1",
-				Type:   datasources.DS_PROMETHEUS,
+				Type:   datasources.DS_TESTDATA,
 				UID:    dsUID,
 				URL:    "http://localhost:9090",
 			})
@@ -197,7 +197,7 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 				OrgID:  1,
 				Access: datasources.DS_ACCESS_PROXY,
 				Name:   "Test DS for GET Permissions 2",
-				Type:   datasources.DS_PROMETHEUS,
+				Type:   datasources.DS_TESTDATA,
 				UID:    dsUID,
 				URL:    "http://localhost:9090",
 			})
@@ -229,7 +229,7 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 				OrgID:  1,
 				Access: datasources.DS_ACCESS_PROXY,
 				Name:   "Test DS for GET Permissions 3",
-				Type:   datasources.DS_PROMETHEUS,
+				Type:   datasources.DS_TESTDATA,
 				UID:    dsUID,
 				URL:    "http://localhost:9090",
 			})
@@ -1003,7 +1003,7 @@ func createTestDataSource(t *testing.T, ctx context.Context, dsService datasourc
 		OrgID:  1,
 		Access: datasources.DS_ACCESS_PROXY,
 		Name:   name,
-		Type:   datasources.DS_PROMETHEUS,
+		Type:   datasources.DS_TESTDATA,
 		UID:    uid,
 		URL:    "http://localhost:9090",
 	})

@@ -16,8 +16,8 @@ import {
 import { useStyles2 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
-import { ObjectsReorderedOnCanvasEvent, DashboardStateChangedEvent } from '../edit-pane/events';
-import { dashboardEditActions } from '../edit-pane/shared';
+import { ObjectsReorderedOnCanvasEvent, DashboardStateChangedEvent } from '../sidebar/events';
+import { dashboardEditActions } from '../sidebar/shared';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
@@ -447,7 +447,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
           currentTabSlug: tab.getSlug(),
         });
 
-        // Make sure outline is refreshed in DashboardEditPane
+        // Make sure outline is refreshed in DashboardSidebar
         source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
         destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
 
@@ -461,7 +461,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
         tab.clearParent();
         source.setState({ tabs: prevSourceTabs, currentTabSlug: prevSourceSlug });
 
-        // Make sure outline is refreshed in DashboardEditPane
+        // Make sure outline is refreshed in DashboardSidebar
         source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
         destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
 

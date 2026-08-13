@@ -13,10 +13,9 @@ interface EditableQueryNameProps {
   query: DataQuery;
   queries: DataQuery[];
   onQueryUpdate: (updatedQuery: DataQuery, originalRefId: string) => void;
-  readOnly?: boolean;
 }
 
-export function EditableQueryName({ query, queries, onQueryUpdate, readOnly }: EditableQueryNameProps) {
+export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQueryNameProps) {
   const styles = useStyles2(getStyles);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -103,16 +102,6 @@ export function EditableQueryName({ query, queries, onQueryUpdate, readOnly }: E
   const onFocus = (event: React.FocusEvent<HTMLInputElement>) => {
     event.target.select();
   };
-
-  if (readOnly) {
-    return (
-      <span className={styles.queryNameText}>
-        <Text color="primary" truncate variant="code">
-          {query.refId}
-        </Text>
-      </span>
-    );
-  }
 
   if (isEditing) {
     return (

@@ -5,8 +5,12 @@ import {
   getCacheKeyFromPromise,
   getCachedPromise,
   getCachedPromiseWithArgs,
+  getDataMessage,
+  getFetchErrorContext,
+  getOriginMessage,
   invalidateCachedPromise,
   invalidateCachedPromisesCache,
+  isHandledError,
   replaceCachedPromise,
   serializeArg,
 } from './getCachedPromise';
@@ -22,6 +26,28 @@ function simulateOkRequest(): Promise<{ ok: boolean; status: number; statusText:
 function simulateErrorRequest(): Promise<{ ok: boolean; status: number; statusText: string }> {
   return new Promise((_, reject) => {
     setTimeout(() => reject(new Error('Network Error')), TEST_ASYNC_DELAY);
+  });
+}
+
+function simulateHandledErrorRequest(): Promise<{ ok: boolean; status: number; statusText: string }> {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(Object.assign(new Error('Forbidden'), { isHandled: true })), TEST_ASYNC_DELAY);
+  });
+}
+
+function simulateHandledFetchErrorRequest(): Promise<{ ok: boolean; status: number; statusText: string }> {
+  return new Promise((_, reject) => {
+    setTimeout(
+      () =>
+        reject({
+          status: 403,
+          statusText: 'Forbidden',
+          traceId: 'abc123',
+          data: { message: 'Access denied' },
+          isHandled: true,
+        }),
+      TEST_ASYNC_DELAY
+    );
   });
 }
 
@@ -408,6 +434,51 @@ describe('cached promises', () => {
         const actual = await getCachedPromise(promise2);
         expect(actual).toStrictEqual({ ok: true, status: 200, statusText: 'ok' });
         expect(promise2).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('when the rejected error is handled (isHandled)', () => {
+      test('should log at debug (not error) with origin message and stack, and still propagate', async () => {
+        await expect(getCachedPromise(simulateHandledErrorRequest)).rejects.toThrow('Forbidden');
+
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        const logDebugMock = getLogger('grafana/runtime.utils.getCachedPromise').logDebug as jest.Mock;
+        expect(logErrorMock).not.toHaveBeenCalled();
+        expect(logDebugMock).toHaveBeenCalledTimes(1);
+        expect(logDebugMock).toHaveBeenCalledWith('getCachedPromise: Handled error while resolving a cached promise', {
+          key: expect.stringMatching(/^simulateHandledErrorRequest:-?\d+$/),
+          originMessage: 'Forbidden',
+          originStack: expect.stringContaining('Forbidden'),
+        });
+      });
+
+      test('should pick origin message from data.message and add FetchError keys to the context', async () => {
+        await expect(getCachedPromise(simulateHandledFetchErrorRequest)).rejects.toMatchObject({ status: 403 });
+
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        const logDebugMock = getLogger('grafana/runtime.utils.getCachedPromise').logDebug as jest.Mock;
+        expect(logErrorMock).not.toHaveBeenCalled();
+        expect(logDebugMock).toHaveBeenCalledTimes(1);
+        expect(logDebugMock).toHaveBeenCalledWith('getCachedPromise: Handled error while resolving a cached promise', {
+          key: expect.stringMatching(/^simulateHandledFetchErrorRequest:-?\d+$/),
+          originMessage: 'Access denied',
+          originStack: expect.any(String),
+          status: '403',
+          statusText: 'Forbidden',
+          traceId: 'abc123',
+        });
+      });
+
+      test('should log at debug (not error) for the defaultValue path too', async () => {
+        const actual = await getCachedPromise(simulateHandledErrorRequest, {
+          defaultValue: { ok: false, status: 403, statusText: 'Forbidden' },
+        });
+
+        expect(actual).toStrictEqual({ ok: false, status: 403, statusText: 'Forbidden' });
+        const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+        const logDebugMock = getLogger('grafana/runtime.utils.getCachedPromise').logDebug as jest.Mock;
+        expect(logErrorMock).not.toHaveBeenCalled();
+        expect(logDebugMock).toHaveBeenCalledTimes(1);
       });
     });
   });
@@ -816,6 +887,119 @@ describe('cached promises', () => {
       expect(loggedError.message).toBe('getCachedPromiseWithArgs: serializeArg failed');
       expect(loggedError.cause).toBeInstanceOf(Error);
       expect(context).toEqual({ baseKey: 'test', key: expect.stringMatching(/^uncacheable:/) });
+    });
+  });
+
+  describe('isHandledError', () => {
+    test('should return true for a plain object with isHandled === true', () => {
+      expect(isHandledError({ isHandled: true })).toBe(true);
+    });
+
+    test('should return true for an Error with isHandled === true', () => {
+      expect(isHandledError(Object.assign(new Error('boom'), { isHandled: true }))).toBe(true);
+    });
+
+    test('should return false when isHandled is false', () => {
+      expect(isHandledError({ isHandled: false })).toBe(false);
+    });
+
+    test('should return false when isHandled is missing', () => {
+      expect(isHandledError(new Error('boom'))).toBe(false);
+      expect(isHandledError({})).toBe(false);
+    });
+
+    test.each([null, undefined, 'error', 42, true])('should return false for primitive %p', (value) => {
+      expect(isHandledError(value)).toBe(false);
+    });
+  });
+
+  describe('getOriginMessage', () => {
+    test('should return the message of an Error', () => {
+      expect(getOriginMessage(new Error('boom'))).toBe('boom');
+    });
+
+    test('should return a string message from a plain object', () => {
+      expect(getOriginMessage({ message: 'plain boom' })).toBe('plain boom');
+    });
+
+    test('should fall back to data.message when there is no top-level message', () => {
+      expect(getOriginMessage({ status: 403, data: { message: 'Access denied' } })).toBe('Access denied');
+    });
+
+    test('should prefer the top-level message over data.message', () => {
+      expect(getOriginMessage({ message: 'top', data: { message: 'nested' } })).toBe('top');
+    });
+
+    test('should fall back to data.message when the top-level message is not a string', () => {
+      expect(getOriginMessage({ message: 123, data: { message: 'nested' } })).toBe('nested');
+    });
+
+    test('should return a string cause as-is', () => {
+      expect(getOriginMessage('string error')).toBe('string error');
+    });
+
+    test('should return an empty string for non-string primitives', () => {
+      expect(getOriginMessage(42)).toBe('');
+      expect(getOriginMessage(null)).toBe('');
+      expect(getOriginMessage(undefined)).toBe('');
+    });
+
+    test('should return an empty string for objects without any usable message', () => {
+      expect(getOriginMessage({ status: 500 })).toBe('');
+    });
+  });
+
+  describe('getDataMessage', () => {
+    test('should return data.message when present', () => {
+      expect(getDataMessage({ data: { message: 'Access denied' } })).toBe('Access denied');
+    });
+
+    test('should return undefined when data is missing', () => {
+      expect(getDataMessage({ status: 403 })).toBeUndefined();
+    });
+
+    test('should return undefined when data is not an object', () => {
+      expect(getDataMessage({ data: 'oops' })).toBeUndefined();
+    });
+
+    test('should return undefined when data.message is not a string', () => {
+      expect(getDataMessage({ data: { message: 500 } })).toBeUndefined();
+    });
+
+    test('should return undefined for primitives, null and undefined', () => {
+      expect(getDataMessage(null)).toBeUndefined();
+      expect(getDataMessage(undefined)).toBeUndefined();
+      expect(getDataMessage('error')).toBeUndefined();
+    });
+  });
+
+  describe('getFetchErrorContext', () => {
+    test('should extract status, statusText and traceId when present', () => {
+      expect(getFetchErrorContext({ status: 403, statusText: 'Forbidden', traceId: 'abc123' })).toEqual({
+        status: '403',
+        statusText: 'Forbidden',
+        traceId: 'abc123',
+      });
+    });
+
+    test('should only include the keys that are present', () => {
+      expect(getFetchErrorContext({ status: 401 })).toEqual({ status: '401' });
+      expect(getFetchErrorContext({ statusText: 'Forbidden' })).toEqual({ statusText: 'Forbidden' });
+      expect(getFetchErrorContext({ traceId: 'abc123' })).toEqual({ traceId: 'abc123' });
+    });
+
+    test('should String whatever the fields contain', () => {
+      expect(getFetchErrorContext({ status: '403', statusText: 42, traceId: null })).toEqual({
+        status: '403',
+        statusText: '42',
+        traceId: 'null',
+      });
+    });
+
+    test('should return an empty object for primitives, null and plain Errors', () => {
+      expect(getFetchErrorContext(null)).toEqual({});
+      expect(getFetchErrorContext('error')).toEqual({});
+      expect(getFetchErrorContext(new Error('boom'))).toEqual({});
     });
   });
 

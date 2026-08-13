@@ -6,6 +6,7 @@ import {
   FieldMatcherID,
   FieldType,
   type InterpolateFunction,
+  LoadingState,
   standardEditorsRegistry,
   toDataFrame,
 } from '@grafana/data';
@@ -93,6 +94,7 @@ describe('useExtractFields', () => {
       useExtractFields({
         rawTableFrame: testLogsDataFrame[0],
         timeZone: 'utc',
+        loadingState: LoadingState.Done,
         fieldConfig: {
           defaults: {},
           overrides: [],
@@ -109,11 +111,70 @@ describe('useExtractFields', () => {
     });
   });
 
+  test('does not extract while the query is loading', async () => {
+    const { result } = renderHook(() =>
+      useExtractFields({
+        rawTableFrame: testLogsDataFrame[0],
+        timeZone: 'utc',
+        loadingState: LoadingState.Loading,
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+      })
+    );
+
+    // Give any pending async extraction a chance to resolve before asserting nothing happened.
+    await Promise.resolve();
+    expect(result.current.extractedFrame).toBeNull();
+  });
+
+  test('re-extracts when a new frame arrives after loading completes', async () => {
+    const props = {
+      rawTableFrame: testLogsDataFrame[0],
+      timeZone: 'utc',
+      loadingState: LoadingState.Loading,
+      fieldConfig: {
+        defaults: {},
+        overrides: [],
+      },
+    };
+    const { result, rerender } = renderHook((p: typeof props) => useExtractFields(p), { initialProps: props });
+
+    // While loading, nothing is extracted.
+    await Promise.resolve();
+    expect(result.current.extractedFrame).toBeNull();
+
+    // Streaming/done emissions hand us a new frame reference with more rows; the hook must react to it.
+    const streamedFrame = toDataFrame({
+      meta: { type: DataFrameType.LogLines },
+      fields: [
+        { name: LOGS_DATAPLANE_TIMESTAMP_NAME, type: FieldType.time, values: [1, 2, 3] },
+        { name: LOGS_DATAPLANE_BODY_NAME, type: FieldType.string, values: ['log 1', 'log 2', 'log 3'] },
+        {
+          name: 'labels',
+          type: FieldType.other,
+          values: [
+            { service: 'frontend', level: 'info' },
+            { service: 'backend', level: 'info' },
+            { service: 'frontend', level: 'error' },
+          ],
+        },
+      ],
+    });
+    rerender({ ...props, rawTableFrame: streamedFrame, loadingState: LoadingState.Done });
+
+    await waitFor(() => {
+      expect(result.current.extractedFrame?.length).toBe(3);
+    });
+  });
+
   test('applies field override custom.width to extracted label columns', async () => {
     const { result } = renderHook(() =>
       useExtractFields({
         rawTableFrame: testLogsDataFrame[0],
         timeZone: 'utc',
+        loadingState: LoadingState.Done,
         fieldConfig: {
           defaults: {},
           overrides: [
@@ -159,6 +220,7 @@ describe('useExtractFields', () => {
       useExtractFields({
         rawTableFrame: traceLinkTestFrame,
         timeZone: 'utc',
+        loadingState: LoadingState.Done,
         fieldConfig: {
           defaults: {},
           overrides: [],

@@ -10,7 +10,7 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
 
-jest.mock('../../edit-pane/shared', () => ({
+jest.mock('../../sidebar/shared', () => ({
   dashboardEditActions: {
     addElement: jest.fn(({ perform }) => {
       perform();

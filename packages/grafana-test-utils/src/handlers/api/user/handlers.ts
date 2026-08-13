@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { type PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1';
 
 import { mockUserPreferences, setMockUserPreferences } from '../../../fixtures/preferences';
 import { mockStarredDashboardsMap } from '../../../fixtures/starred';
@@ -43,9 +43,9 @@ const patchPreferencesHandler = () =>
     return HttpResponse.json({ message: 'Preferences updated' });
   });
 
-const getSignedInUserTeamListHandler = () =>
+export const getSignedInUserTeamListHandler = (teams: Array<{ uid: string; name: string }> = []) =>
   http.get('/api/user/teams', async () => {
-    return HttpResponse.json([]);
+    return HttpResponse.json(teams);
   });
 
 const handlers = [

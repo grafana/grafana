@@ -31,8 +31,8 @@ jest.mock('@grafana/data', () => {
   };
 });
 
-jest.mock('../../edit-pane/shared', () => {
-  const actual = jest.requireActual('../../edit-pane/shared');
+jest.mock('../../sidebar/shared', () => {
+  const actual = jest.requireActual('../../sidebar/shared');
   return {
     ...actual,
     dashboardEditActions: {
@@ -102,7 +102,7 @@ function buildPanelScene(panels: VizPanel[] = [], elementMap: Record<string, num
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -134,7 +134,7 @@ function buildAutoGridPanelScene(panels: VizPanel[] = [], elementMap: Record<str
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	apiserverrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
@@ -73,6 +74,7 @@ func findLatestCheck(checkList []resource.Object, checkType string) *advisorv0al
 }
 
 func (s *Service) ReportSummary(ctx context.Context) (*ReportInfo, error) {
+	ctx = identity.WithServiceIdentityContext(ctx, 1)
 	client, err := s.clientGenerator(ctx)
 	if err != nil {
 		return nil, err

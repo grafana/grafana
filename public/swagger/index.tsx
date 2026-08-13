@@ -7,9 +7,10 @@ if (window.public_cdn_path) {
   __webpack_public_path__ = window.public_cdn_path;
 }
 
-// This is a path to the public folder without '/build'
+// This is a path to the public folder without '/build-swagger'
 window.__grafana_public_path__ =
-  __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) || __webpack_public_path__;
+  __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build-swagger/')) ||
+  __webpack_public_path__;
 
 if (window.nonce) {
   __webpack_nonce__ = window.nonce;

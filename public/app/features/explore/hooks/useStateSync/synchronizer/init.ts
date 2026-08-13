@@ -3,12 +3,12 @@ import { type MutableRefObject } from 'react';
 
 import { EventBusSrv } from '@grafana/data';
 import { type LocationService } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { initializeExplore } from 'app/features/explore/state/explorePane';
 import { clearPanes, syncTimesAction } from 'app/features/explore/state/main';
 import { fromURLRange } from 'app/features/explore/state/utils';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type ThunkDispatch } from 'app/types/store';
 
 import { getUrlStateFromPaneState } from '../external.utils';
@@ -32,6 +32,13 @@ export function initializeFromURL(
   // Clear all the panes in the store first to avoid stale data.
   dispatch(clearPanes());
 
+  // Seeded onto the first pane only so the "Adding a new saved query" banner shows; split-view URLs are unaffected.
+  const addingSavedQuery = location.getSearch().get('createSavedQuery') === 'true';
+
+  // Seeding it at init (rather than a post-navigation dispatch) is what lets the "Editing from saved queries" banner render
+  // on the first, cold Explore mount. First pane only, mirroring addingSavedQuery.
+  const editSavedQueryRef = location.getSearch().get('editSavedQueryRef') ?? undefined;
+
   Promise.all(
     Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState, compact }]) => {
       return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
@@ -48,10 +55,10 @@ export function initializeFromURL(
                       ? identity<DataQuery>
                       : (query) => ({ ...query, datasource: paneDatasource.getRef() })
                   )
-              : getDatasourceSrv()
-                  // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
-                  .get(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef())
-                  .then((ds) => [getDefaultQuery(ds)])
+              : // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
+                getDataSourceInstance(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef()).then(
+                  (ds) => [getDefaultQuery(ds)]
+                )
             : []
         ).then(async (queries) => {
           // we remove queries that have an invalid datasources
@@ -60,7 +67,7 @@ export function initializeFromURL(
           if (!validQueries.length && paneDatasource) {
             // and in case there's no query left we add a default one.
             validQueries = [
-              getDefaultQuery(isMixedDatasource(paneDatasource) ? await getDatasourceSrv().get() : paneDatasource),
+              getDefaultQuery(isMixedDatasource(paneDatasource) ? await getDataSourceInstance() : paneDatasource),
             ];
           }
 
@@ -70,7 +77,7 @@ export function initializeFromURL(
     })
   ).then(async (panes) => {
     const initializedPanes = await Promise.all(
-      panes.map(({ exploreId, range, panelsState, queries, datasource, compact }) => {
+      panes.map(({ exploreId, range, panelsState, queries, datasource, compact }, index) => {
         return dispatch(
           initializeExplore({
             exploreId,
@@ -80,6 +87,8 @@ export function initializeFromURL(
             panelsState,
             eventBridge: new EventBusSrv(),
             compact: !!compact,
+            addingSavedQuery: index === 0 ? addingSavedQuery : undefined,
+            editSavedQueryRef: index === 0 ? editSavedQueryRef : undefined,
           })
         ).unwrap();
       })
@@ -103,10 +112,10 @@ export function initializeFromURL(
     const oldQuery = location.getSearchObject();
 
     // we create the default query params from the current URL, omitting all the properties we know should be in the final url.
-    // This includes params from previous schema versions and 'schemaVersion', 'panes', 'orgId' as we want to replace those.
+    // This includes params from previous schema versions and 'schemaVersion', 'panes' as we want to replace those.
     let defaults: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(oldQuery).filter(
-      ([key]) => !['schemaVersion', 'panes', 'orgId', 'left', 'right'].includes(key)
+      ([key]) => !['schemaVersion', 'panes', 'left', 'right'].includes(key)
     )) {
       defaults[key] = value;
     }
@@ -115,7 +124,6 @@ export function initializeFromURL(
       // we set the schemaVersion as the first parameter so that when URLs are truncated the schemaVersion is more likely to be present.
       schemaVersion: `${urlState.schemaVersion}`,
       panes: JSON.stringify(panesObj),
-      orgId: `${orgId}`,
       ...defaults,
     });
 

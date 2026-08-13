@@ -101,9 +101,17 @@ func TestSearchHandler(t *testing.T) {
 			expectedNames: []string{"a-1", "a-2", "a-4"},
 		},
 		{
-			name: "Filter by multiple scopes without matchAny (AND - default)",
+			name: "Filter by multiple scopes without matchAny (OR - default)",
 			queryParams: url.Values{
 				"scope": []string{"scope1", "scope2"},
+			},
+			expectedNames: []string{"a-1", "a-2", "a-4"},
+		},
+		{
+			name: "Filter by multiple scopes with matchAny=false (AND)",
+			queryParams: url.Values{
+				"scope":          []string{"scope1", "scope2"},
+				"scopesMatchAny": []string{"false"},
 			},
 			expectedNames: []string{"a-4"},
 		},
@@ -116,11 +124,20 @@ func TestSearchHandler(t *testing.T) {
 			expectedNames: []string{"a-1", "a-4"},
 		},
 		{
-			name: "Filter by tags (OR) and scopes (AND)",
+			name: "Filter by tags (OR) and scopes (OR by default)",
 			queryParams: url.Values{
 				"tag":          []string{"tag1", "tag2"},
 				"tagsMatchAny": []string{"true"},
 				"scope":        []string{"scope1", "scope2"},
+			},
+			expectedNames: []string{"a-1", "a-2", "a-4"},
+		},
+		{
+			name: "Filter by tags (AND by default) and scopes (AND)",
+			queryParams: url.Values{
+				"tag":            []string{"tag1", "tag2"},
+				"scope":          []string{"scope1", "scope2"},
+				"scopesMatchAny": []string{"false"},
 			},
 			expectedNames: []string{"a-4"},
 		},
@@ -133,7 +150,7 @@ func TestSearchHandler(t *testing.T) {
 			expectedNames: []string{"a-1", "a-4"},
 		},
 		{
-			name: "Invalid scopesMatchAny value (should be ignored, defaults to false)",
+			name: "Invalid scopesMatchAny value (should be ignored, defaults to true)",
 			queryParams: url.Values{
 				"scope":          []string{"scope1"},
 				"scopesMatchAny": []string{"not-valid"},

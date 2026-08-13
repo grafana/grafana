@@ -140,9 +140,9 @@ export function GroupByVariableForm({
       {datasourceSupported && !inline && onAllowCustomValueChange && (
         <VariableCheckboxField
           value={allowCustomValue}
-          name={t('dashboard.edit-pane.variable.selection-options.allow-custom-values', 'Allow custom values')}
+          name={t('dashboard.sidebar.variable.selection-options.allow-custom-values', 'Allow custom values')}
           description={t(
-            'dashboard.edit-pane.variable.selection-options.allow-custom-values-description',
+            'dashboard.sidebar.variable.selection-options.allow-custom-values-description',
             'Enables users to enter values'
           )}
           onChange={onAllowCustomValueChange}

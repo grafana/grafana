@@ -1,6 +1,7 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { hasBackendDatasource } from './utils';
@@ -12,6 +13,27 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('hasBackendDatasource', () => {
   const mockGetDataSourceSrv = getDataSourceSrv as jest.Mock;
+
+  const prometheusSettings = {
+    uid: 'prometheus-uid',
+    type: 'prometheus',
+    name: 'Prometheus',
+    meta: { backend: true },
+  } as DataSourceInstanceSettings;
+
+  // The expression datasource resolves to settings without meta.backend - see ExpressionDatasource.ts
+  const expressionSettings = {
+    uid: ExpressionDatasourceUID,
+    type: ExpressionDatasourceUID,
+    name: 'Expression',
+    meta: {},
+  } as DataSourceInstanceSettings;
+
+  function mockInstanceSettings(...available: DataSourceInstanceSettings[]) {
+    mockGetDataSourceSrv.mockReturnValue({
+      getInstanceSettings: jest.fn((uid: string) => available.find((settings) => settings.uid === uid) ?? null),
+    });
+  }
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -104,5 +126,46 @@ describe('hasBackendDatasource', () => {
 
     const result = hasBackendDatasource({ datasourceUid: 'mixed-uid', queries });
     expect(result).toBe(true);
+  });
+
+  // V2 panels only carry a panel level datasource when their queries are mixed.
+  it('should fall back to the queries when there is no panel level datasource', () => {
+    mockInstanceSettings(prometheusSettings);
+
+    const queries: DataQuery[] = [{ refId: 'A', datasource: { uid: 'prometheus-uid', type: 'prometheus' } }];
+
+    const result = hasBackendDatasource({ datasourceUid: undefined, queries });
+    expect(result).toBe(true);
+  });
+
+  // Callers that infer the panel datasource from the first query land here when it is an expression.
+  it('should fall back to the queries when the panel level datasource is an expression', () => {
+    mockInstanceSettings(expressionSettings, prometheusSettings);
+
+    const queries: DataQuery[] = [
+      { refId: 'A', datasource: { uid: ExpressionDatasourceUID, type: ExpressionDatasourceUID } },
+      { refId: 'B', datasource: { uid: 'prometheus-uid', type: 'prometheus' } },
+    ];
+
+    const result = hasBackendDatasource({ datasourceUid: ExpressionDatasourceUID, queries });
+    expect(result).toBe(true);
+  });
+
+  it('should return false when the queries only use expressions', () => {
+    mockInstanceSettings(expressionSettings);
+
+    const queries: DataQuery[] = [
+      { refId: 'A', datasource: { uid: ExpressionDatasourceUID, type: ExpressionDatasourceUID } },
+    ];
+
+    const result = hasBackendDatasource({ datasourceUid: undefined, queries });
+    expect(result).toBe(false);
+  });
+
+  it('should return false when neither the panel nor its queries have a datasource', () => {
+    mockInstanceSettings(prometheusSettings);
+
+    const result = hasBackendDatasource({ datasourceUid: undefined, queries: [{ refId: 'A' }] });
+    expect(result).toBe(false);
   });
 });

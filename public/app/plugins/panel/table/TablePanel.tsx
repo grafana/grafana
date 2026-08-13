@@ -1,22 +1,16 @@
-import { css } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
-
-import {
-  DashboardCursorSync,
-  type DataFrame,
-  getFrameDisplayName,
-  type PanelProps,
-  type SelectableValue,
-  type Field,
-  cacheFieldDisplayNames,
-} from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
-import { useFlagTableRefactorNested } from '@grafana/runtime/internal';
+import { getFrameDisplayName, type PanelProps, type SelectableValue } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { type TableOptions } from '@grafana/schema';
-import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
+import { Combobox, Field, Stack, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
-import { getConfig } from 'app/core/config';
-import { getCellActions, getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
+import {
+  useCacheFieldDisplayNames,
+  useCellActions,
+  useCommonTableProps,
+  useTableSharedCrosshair,
+} from 'app/features/table/hooks';
+import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 
@@ -40,19 +34,13 @@ export function TablePanel(props: Props) {
     sortByBehavior = 'initial',
   } = props;
 
-  useMemo(() => {
-    cacheFieldDisplayNames(data.series);
-  }, [data.series]);
+  useCacheFieldDisplayNames(data.series);
 
-  const nestedRefactorEnabled = useFlagTableRefactorNested();
   const theme = useTheme2();
   const panelContext = usePanelContext();
-  const userCanExecuteActions = useMemo(() => panelContext.canExecuteActions?.() ?? false, [panelContext]);
-  const _getActions = useCallback(
-    (frame: DataFrame, field: Field, rowIndex: number) =>
-      userCanExecuteActions ? getCellActions(frame, field, rowIndex, replaceVariables) : [],
-    [replaceVariables, userCanExecuteActions]
-  );
+  const getActions = useCellActions(replaceVariables);
+  const commonTableProps = useCommonTableProps(options, fieldConfig);
+  const enableSharedCrosshair = useTableSharedCrosshair();
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
     : data.series;
@@ -74,40 +62,25 @@ export function TablePanel(props: Props) {
     tableHeight = height - inputHeight - padding;
   }
 
-  const enableSharedCrosshair = panelContext.sync && panelContext.sync() !== DashboardCursorSync.Off;
-
-  const disableSanitizeHtml = getConfig().disableSanitizeHtml;
-
   const tableElement = (
     <TableNG
+      {...commonTableProps}
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}
       data={main}
-      noHeader={!options.showHeader}
-      noValue={fieldConfig.defaults.noValue}
-      showTypeIcons={options.showTypeIcons}
-      resizable={true}
       sortByBehavior={sortByBehavior}
-      sortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, resizedWidth, fieldScope) =>
         onColumnResize(displayName, resizedWidth, fieldScope, props)
       }
       onCellFilterAdded={panelContext.onAddAdHocFilter}
-      frozenColumns={options.frozenColumns?.left}
-      enablePagination={options.enablePagination}
-      cellHeight={options.cellHeight}
-      maxRowHeight={options.maxRowHeight}
       timeRange={timeRange}
-      enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
+      enableSharedCrosshair={enableSharedCrosshair}
       fieldConfig={fieldConfig}
-      getActions={_getActions}
+      getActions={getActions}
       structureRev={data.structureRev}
       transparent={transparent}
-      disableSanitizeHtml={disableSanitizeHtml}
-      disableKeyboardEvents={options.disableKeyboardEvents}
-      nestedRefactorEnabled={nestedRefactorEnabled}
     />
   );
 
@@ -123,12 +96,17 @@ export function TablePanel(props: Props) {
   });
 
   return (
-    <div className={tableStyles.wrapper}>
+    <Stack direction="column" gap={1.5} justifyContent="space-between" height="100%">
       {tableElement}
-      <div className={tableStyles.selectWrapper}>
-        <Combobox options={names} value={names[currentIndex]} onChange={(val) => onChangeTableSelection(val, props)} />
-      </div>
-    </div>
+      <Field noMargin>
+        <Combobox
+          aria-label={t('table.frame-picker.label', 'Query')}
+          options={names}
+          value={names[currentIndex]}
+          onChange={(val) => onChangeTableSelection(val, props)}
+        />
+      </Field>
+    </Stack>
   );
 }
 
@@ -138,15 +116,3 @@ function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
     frameIndex: val.value || 0,
   });
 }
-
-const tableStyles = {
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    height: '100%',
-  }),
-  selectWrapper: css({
-    padding: '8px 8px 0px 8px',
-  }),
-};

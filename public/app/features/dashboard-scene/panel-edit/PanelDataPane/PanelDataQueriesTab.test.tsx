@@ -22,6 +22,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
@@ -392,6 +393,16 @@ describe('PanelDataQueriesTab', () => {
       expect(queriesTab.queryRunner.state.queries[1].refId).toBe('B');
       expect(queriesTab.queryRunner.state.queries[1].hide).toBe(false);
       expect(queriesTab.queryRunner.state.queries[1].datasource?.uid).toBe('gdev-testdata');
+    });
+
+    it('returns the refId of a newly added expression, so callers can scroll to it', async () => {
+      const { queriesTab } = await setupScene('panel-1');
+
+      const refId = queriesTab.onAddExpressionOfType(ExpressionQueryType.sql);
+
+      const queries = queriesTab.queryRunner.state.queries;
+      expect(refId).toBe('B');
+      expect(queries[queries.length - 1].refId).toBe('B');
     });
   });
 

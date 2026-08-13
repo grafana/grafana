@@ -65,11 +65,25 @@ userv0alpha1: userKind & {
 			emitZeroIfAbsent: true
 			description:      "Whether the user is disabled"
 		},
+		{
+			name:  "externalAuthModules"
+			path:  "spec.externalAuthInfo[*].module"
+			type:  "string"
+			array: true
+			capabilities: ["retrieve"]
+			description: "Auth module identifiers the user is externally synced with"
+		},
 	]
 	routes: {
 		"/teams": {
 			"GET": {
 				name: "getUserTeams"
+				request: {
+					query: {
+						limit:    int64 | *0
+						continue: string | *""
+					}
+				}
 				response: {
 					#UserTeam: {
 						user:       string

@@ -14,12 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 )
 
+const harCaptureHeader = "X-Grafana-HAR-Capture"
+
 // NewHTTPCaptureMiddleware creates a backend.HandlerMiddleware that captures HTTP traffic
 // for QueryData calls when a harcapture.Buffer is present in the context.
-//
-// For core (in-process) plugins it injects a capturing RoundTripper as contextual middleware, so the
-// existing ContextualMiddleware in the HTTP client chain picks it up. (External out-of-process gRPC
-// plugins will be captured separately, in a follow-up.)
 func NewHTTPCaptureMiddleware() backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &HTTPCaptureMiddleware{BaseHandler: backend.NewBaseHandler(next)}
@@ -35,6 +33,12 @@ func (m *HTTPCaptureMiddleware) QueryData(ctx context.Context, req *backend.Quer
 	if buf == nil {
 		return m.BaseHandler.QueryData(ctx, req)
 	}
+
+	// Signal external gRPC plugins via request header.
+	if req.Headers == nil {
+		req.Headers = map[string]string{}
+	}
+	req.Headers[harCaptureHeader] = "true"
 
 	// Inject capturing RoundTripper for core (in-process) plugins.
 	captureMW := sdkhttpclient.NamedMiddlewareFunc("http-capture", func(_ sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {

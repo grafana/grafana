@@ -456,10 +456,9 @@ func TestParseAppURLAndSubURL(t *testing.T) {
 		require.NoError(t, err)
 		_, err = s.NewKey("root_url", tc.rootURL)
 		require.NoError(t, err)
-		appURL, appSubURL, err := cfg.parseAppUrlAndSubUrl(s)
-		require.NoError(t, err)
-		require.Equal(t, tc.expectedAppURL, appURL)
-		require.Equal(t, tc.expectedAppSubURL, appSubURL)
+		require.NoError(t, readServerURLSettings(f, cfg))
+		require.Equal(t, tc.expectedAppURL, cfg.AppURL)
+		require.Equal(t, tc.expectedAppSubURL, cfg.AppSubURL)
 	}
 }
 
@@ -774,6 +773,20 @@ func TestNewCfgFromINIFile(t *testing.T) {
 	require.NotNil(t, cfg)
 	require.Equal(t, Prod, cfg.Env)
 	require.Equal(t, "test.com", cfg.Domain)
+}
+
+func TestDashboardDefaultPreload(t *testing.T) {
+	t.Run("defaults to false when unset", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(``))
+		require.NoError(t, err)
+		require.False(t, cfg.DashboardDefaultPreload)
+	})
+
+	t.Run("reads the configured value", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte("[dashboards]\ndefault_preload = true"))
+		require.NoError(t, err)
+		require.True(t, cfg.DashboardDefaultPreload)
+	})
 }
 
 func TestDynamicSection(t *testing.T) {

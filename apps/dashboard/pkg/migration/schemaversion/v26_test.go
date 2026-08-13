@@ -94,6 +94,54 @@ func TestV26(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "converts text2 to text for panels nested in collapsed rows",
+			input: map[string]interface{}{
+				"schemaVersion": 25,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":    3,
+								"type":  "text2",
+								"title": "React Text Panel from Angular Panel",
+								"options": map[string]interface{}{
+									"mode":    "markdown",
+									"content": "# React Text Panel from Angular Panel\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text\n\n",
+									"angular": map[string]interface{}{
+										"content": "# React Text Panel from Angular Panel\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text\n\n",
+										"mode":    "markdown",
+										"options": map[string]interface{}{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"schemaVersion": 26,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id":    3,
+								"type":  "text",
+								"title": "React Text Panel from Angular Panel",
+								"options": map[string]interface{}{
+									"mode":    "markdown",
+									"content": "# React Text Panel from Angular Panel\n# $constant\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)\n\n## $text\n\n",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	runMigrationTests(t, tests, schemaversion.V26)

@@ -411,6 +411,10 @@ func (*stubSearchClient) VectorSearch(_ context.Context, _ *resourcepb.VectorSea
 	return nil, nil
 }
 
+func (*stubSearchClient) HybridSearch(_ context.Context, _ *resourcepb.HybridSearchRequest, _ ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	return nil, nil
+}
+
 type fakeBackend struct {
 	UnimplementedStorageBackend
 	forbidden map[string]struct{}

@@ -20,6 +20,8 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
+	"k8s.io/utils/ptr"
 
 	authtypes "github.com/grafana/authlib/types"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
@@ -102,7 +104,7 @@ type k8sRESTAdapter struct {
 
 	// retentionTTL bounds how far in the past an annotation's time may be,
 	// matching the cleanup window so we don't accept data that would be
-	// immediately purged.
+	// immediately purged. A zero TTL disables this bound.
 	retentionTTL time.Duration
 
 	tracer  trace.Tracer
@@ -252,6 +254,10 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "create", start, err) }()
 
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
+
 	annotation, ok := obj.(*annotationV0.Annotation)
 	if !ok {
 		return nil, apierrors.NewInternalError(fmt.Errorf("expected *Annotation, got %T", obj))
@@ -311,6 +317,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "update", start, err) }()
 
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
+
 	// Fetch the existing annotation for patch merging and to verify authz on the pre-update resource.
 	existing, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
@@ -360,6 +370,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, goneError(name)
 	}
 
+	if err := validateUpdate(existing, resource); err != nil {
+		return nil, false, err
+	}
+
 	// Preserve legacy data when the caller omits it, mirroring the legacy API's behavior.
 	// An absent annotation keeps the stored value, while a present annotation overwrites or clears it.
 	if _, ok := GetLegacyData(resource); !ok {
@@ -384,6 +398,10 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 	defer span.End()
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "delete", start, err) }()
+
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
 
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
@@ -517,18 +535,41 @@ func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
 	return nil
 }
 
+// validateUpdate rejects updates that attempt to modify immutable fields
+func validateUpdate(existing, updated *annotationV0.Annotation) error {
+	if existing.Spec.Time != updated.Spec.Time {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is immutable", ErrInvalidInput))
+	}
+	if !ptr.Equal(existing.Spec.TimeEnd, updated.Spec.TimeEnd) {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: timeEnd is immutable", ErrInvalidInput))
+	}
+	if !ptr.Equal(existing.Spec.DashboardUID, updated.Spec.DashboardUID) {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: dashboardUID is immutable", ErrInvalidInput))
+	}
+	if !ptr.Equal(existing.Spec.PanelID, updated.Spec.PanelID) {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: panelID is immutable", ErrInvalidInput))
+	}
+	return nil
+}
+
 func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
+	if anno.Spec.Time <= 0 {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is required and must be positive", ErrInvalidInput))
+	}
+
 	now := time.Now().UTC()
 	maxFuture := now.Add(maxFutureWindow).UnixMilli()
-	maxPast := now.Add(-s.retentionTTL).UnixMilli()
 
 	if anno.Spec.Time > maxFuture {
 		return apierrors.NewBadRequest(
 			fmt.Sprintf("%v: time cannot be more than 1 week in the future", ErrInvalidInput))
 	}
-	if anno.Spec.Time < maxPast {
-		return apierrors.NewBadRequest(
-			fmt.Sprintf("%v: time cannot be older than retention TTL (%v)", ErrInvalidInput, s.retentionTTL))
+	if s.retentionTTL > 0 {
+		maxPast := now.Add(-s.retentionTTL).UnixMilli()
+		if anno.Spec.Time < maxPast {
+			return apierrors.NewBadRequest(
+				fmt.Sprintf("%v: time cannot be older than retention TTL (%v)", ErrInvalidInput, s.retentionTTL))
+		}
 	}
 
 	// If timeEnd is set, validate it's after time and within future bounds

@@ -29,7 +29,7 @@ import { SpanLinkType, type SpanLinkFunc } from '../types/links';
 import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getServiceDisplayName } from '../utils/service-name';
-import { getSummaryDurationStats } from '../utils/summary-span';
+import { getSummaryCountBadgeStyle, getSummaryDurationStats } from '../utils/summary-span';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
@@ -330,18 +330,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       width: '1em',
       verticalAlign: 'middle',
     }),
-    summaryCountBadge: css({
-      label: 'summaryCountBadge',
-      borderRadius: theme.shape.radius.pill,
-      display: 'inline-block',
-      fontSize: '0.85em',
-      fontWeight: 500,
-      lineHeight: 1.4,
-      marginInlineStart: '0.5rem',
-      marginInlineEnd: '0.25rem',
-      padding: '0 6px',
-      verticalAlign: 'middle',
-    }),
+    summaryCountBadge: cx(
+      getSummaryCountBadgeStyle(theme),
+      css({ label: 'summaryCountBadge', marginInlineStart: '0.5rem', marginInlineEnd: '0.25rem' })
+    ),
     // Summary-span label: a non-interactive flex wrapper holding the toggle button and the stats
     // sibling. Carries the row underline + horizontal scroll that styles.name provides for normal
     // spans, so the two look consistent.

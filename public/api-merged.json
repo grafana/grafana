@@ -9569,6 +9569,9 @@
           "404": {
             "$ref": "#/responses/notFoundError"
           },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }

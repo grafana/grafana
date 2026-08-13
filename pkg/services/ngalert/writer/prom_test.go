@@ -269,6 +269,24 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.ErrorIs(t, err, ErrRejectedWrite)
 		require.NotErrorIs(t, err, ErrNonRetryableWrite)
 	})
+
+	t.Run("a 429 response is classified as rate limited", func(t *testing.T) {
+		msg := "too many requests"
+		clientErr := testClientWriteError{
+			statusCode: http.StatusTooManyRequests,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRateLimited)
+		require.NotErrorIs(t, err, ErrUnexpectedWriteFailure)
+		require.NotErrorIs(t, err, ErrNonRetryableWrite)
+	})
 }
 
 func TestExtractActualError(t *testing.T) {

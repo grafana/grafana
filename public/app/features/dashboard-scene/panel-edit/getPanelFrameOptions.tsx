@@ -11,11 +11,11 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { dashboardEditActions } from '../edit-pane/shared';
 import { type VizPanelLinks } from '../scene/PanelLinks';
-import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
+import { useSidebarInputAutoFocus } from '../scene/layouts-shared/utils';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { dashboardEditActions } from '../sidebar/shared';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -178,7 +178,7 @@ export function PanelFrameTitleInput({
   const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
   const [prevTitle, setPrevTitle] = React.useState(panel.state.title);
 
-  let ref = useEditPaneInputAutoFocus({
+  let ref = useSidebarInputAutoFocus({
     autoFocus: notInPanelEdit && isNewElement,
   });
 

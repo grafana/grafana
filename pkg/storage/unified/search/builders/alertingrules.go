@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"sort"
 
-	"github.com/grafana/grafana-app-sdk/app"
-
 	rulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
-	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/searchencoding"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -25,31 +23,19 @@ const (
 	ruleSearchDatasourceUIDs = "datasourceUIDs"
 )
 
-// rulesManifests carries the rule kinds' manifest, the source of truth for
-// their searchFields (declared in CUE) and their selectable-field declarations.
-var rulesManifests = []app.Manifest{rulesmanifest.LocalManifest()}
-
-// rulesSearchFieldsProvider is the single manifest-backed provider covering
-// every rule kind. It drives both the declared-path extraction (via the
-// standard document builder) and the bleve mapping / column metadata (via
-// DocumentBuilderInfo.SearchFieldsProvider).
-var rulesSearchFieldsProvider = resource.NewManifestBackedProvider(rulesManifests)
-
-func GetAlertRuleSearchBuilder() (resource.DocumentBuilderInfo, error) {
+func GetAlertRuleSearchBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
 	gr := rulesv0alpha1.AlertRuleKind().GroupVersionResource().GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource:        gr,
-		Builder:              &alertRuleSearchBuilder{declared: resource.StandardDocumentBuilderWithFields(rulesManifests, rulesSearchFieldsProvider)},
-		SearchFieldsProvider: rulesSearchFieldsProvider,
+		GroupResource: gr,
+		Builder:       &alertRuleSearchBuilder{declared: resource.StandardDocumentBuilder(registry)},
 	}, nil
 }
 
-func GetRecordingRuleSearchBuilder() (resource.DocumentBuilderInfo, error) {
+func GetRecordingRuleSearchBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
 	gr := rulesv0alpha1.RecordingRuleKind().GroupVersionResource().GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource:        gr,
-		Builder:              &recordingRuleSearchBuilder{declared: resource.StandardDocumentBuilderWithFields(rulesManifests, rulesSearchFieldsProvider)},
-		SearchFieldsProvider: rulesSearchFieldsProvider,
+		GroupResource: gr,
+		Builder:       &recordingRuleSearchBuilder{declared: resource.StandardDocumentBuilder(registry)},
 	}, nil
 }
 
@@ -93,10 +79,10 @@ func (b *alertRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourc
 	if uids := alertRuleDatasourceUIDs(rule.Spec.Expressions); len(uids) > 0 {
 		doc.Fields[ruleSearchDatasourceUIDs] = uids
 	}
-	if a := annotationsJSON(rule.Spec.Annotations); a != "" {
+	if a := searchencoding.AnnotationsJSON(rule.Spec.Annotations); a != "" {
 		doc.Fields[ruleSearchAnnotations] = a
 	}
-	if terms := labelTerms(rule.Spec.Labels); len(terms) > 0 {
+	if terms := searchencoding.LabelTerms(rule.Spec.Labels); len(terms) > 0 {
 		doc.Fields[ruleSearchLabels] = terms
 	}
 	return doc, nil
@@ -129,7 +115,7 @@ func (b *recordingRuleSearchBuilder) BuildDocument(ctx context.Context, key *res
 	if uids := recordingRuleDatasourceUIDs(rule.Spec.Expressions); len(uids) > 0 {
 		doc.Fields[ruleSearchDatasourceUIDs] = uids
 	}
-	if terms := labelTerms(rule.Spec.Labels); len(terms) > 0 {
+	if terms := searchencoding.LabelTerms(rule.Spec.Labels); len(terms) > 0 {
 		doc.Fields[ruleSearchLabels] = terms
 	}
 	return doc, nil
@@ -182,39 +168,4 @@ func appendSourceUID(uids []string, uid string) []string {
 		}
 	}
 	return append(uids, uid)
-}
-
-// labelTerms flattens the rule's spec labels into searchable terms: a bare
-// "key" term (for existence matchers) and a "key=value" term (for equality).
-func labelTerms[T ~string](labels map[string]T) []string {
-	if len(labels) == 0 {
-		return nil
-	}
-	out := make([]string, 0, len(labels)*2)
-	for k, v := range labels {
-		out = append(out, k, k+"="+string(v))
-	}
-	return out
-}
-
-// annotationsJSON encodes rule annotations as a JSON object string for display,
-// or "" when there are none.
-func annotationsJSON[T ~string](annotations map[string]T) string {
-	if len(annotations) == 0 {
-		return ""
-	}
-	m := make(map[string]string, len(annotations))
-	for k, v := range annotations {
-		m[k] = string(v)
-	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		// json.Marshal on a map[string]string cannot fail: string keys and
-		// values are always encodable, there are no cycles, and no custom
-		// MarshalJSON is involved. The branch is unreachable defensively;
-		// returning "" degrades to "no annotations indexed" rather than
-		// failing the whole document build.
-		return ""
-	}
-	return string(b)
 }
