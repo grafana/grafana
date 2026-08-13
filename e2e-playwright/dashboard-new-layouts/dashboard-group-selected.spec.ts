@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { expectVisibleRow, importTestDashboard } from './utils';
+import { expectRowToBeVisible, flows } from './helpers';
 
 test.use({
   featureToggles: {
@@ -23,7 +23,7 @@ test.describe(
       rows,
       tabs,
     }) => {
-      await importTestDashboard(page, selectors, 'Group selected rows into tab');
+      await flows.dashboards.importTestDashboard(page, selectors, 'Group selected rows into tab');
       await controls.enterEditMode();
 
       // Start from three rows: "New row" (wraps the imported panels), then two empty rows.
@@ -56,7 +56,7 @@ test.describe(
       panels,
       rows,
     }) => {
-      await importTestDashboard(page, selectors, 'Group selected panels into row');
+      await flows.dashboards.importTestDashboard(page, selectors, 'Group selected panels into row');
       await controls.enterEditMode();
 
       // The fixture has three "New panel"s in a grid. Select the first and last by position
@@ -64,8 +64,8 @@ test.describe(
       await panels.selectByIndex([0, 2]);
       await sidebar.groupOptions.groupElementsInto('row');
 
-      const firstRowContent = await expectVisibleRow('New row', rows);
-      const secondRowContent = await expectVisibleRow('New row 1', rows);
+      const firstRowContent = await expectRowToBeVisible('New row', rows);
+      const secondRowContent = await expectRowToBeVisible('New row 1', rows);
 
       // Selected panels in the first row, the leftover panel in the second.
       await expect(panels.getPanels('New panel', firstRowContent)).toHaveCount(2);
@@ -80,7 +80,7 @@ test.describe(
       canvas,
       tabs,
     }) => {
-      await importTestDashboard(page, selectors, 'Group selected tabs');
+      await flows.dashboards.importTestDashboard(page, selectors, 'Group selected tabs');
       await controls.enterEditMode();
 
       // Start from two tabs.

@@ -4109,6 +4109,9 @@
           },
           "timeShift": {
             "type": "string"
+          },
+          "timeTo": {
+            "type": "string"
           }
         }
       },
@@ -6088,6 +6091,9 @@
             "type": "string"
           },
           "timeShift": {
+            "type": "string"
+          },
+          "timeTo": {
             "type": "string"
           }
         }

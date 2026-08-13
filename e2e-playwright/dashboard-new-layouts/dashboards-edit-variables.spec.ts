@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { flows, saveDashboardAndCloseToast, type Variable } from './utils';
+import { flows, type Variable } from './helpers';
 
 test.use({
   featureToggles: {
@@ -30,7 +30,7 @@ test.describe(
       await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
       const variable = variableWithDefaults({ type: 'constant' });
-      await flows.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.constant.setValue(variable.value);
 
@@ -45,7 +45,7 @@ test.describe(
       await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
       const variable = variableWithDefaults();
-      await flows.addNewTextBoxVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewTextBoxVariable(page, sidebar, controls, variable);
 
       const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();
@@ -69,7 +69,7 @@ test.describe(
       await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
       const variable = variableWithDefaults({ type: 'interval', value: '1m' });
-      await flows.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
 
       await sidebar.variableOptions.interval.toggleAuto();
 
@@ -88,11 +88,17 @@ test.describe(
       await expect(markdownContent).toContainText('VariableUnderTest: 10m');
     });
 
-    test('can make a hidden variable visible', async ({ dashboardPage, page, controls, sidebar }) => {
-      await saveDashboardAndCloseToast(page, controls, `can make a hidden variable visible (${Math.random()})`);
+    test('can make a hidden variable visible', async ({ gotoDashboardPage, page, controls, sidebar }) => {
+      await gotoDashboardPage({});
+
+      await flows.dashboards.saveDashboardAndCloseToast(
+        page,
+        controls,
+        `can make a hidden variable visible (${Math.random()})`
+      );
 
       const variable = variableWithDefaults({ display: 'Hidden' });
-      await flows.addNewTextBoxVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewTextBoxVariable(page, sidebar, controls, variable);
 
       // check the variable is hidden in the dashboard
       let variableLabel = controls.variables.getLabel(variable.label);
@@ -104,7 +110,7 @@ test.describe(
       await expect(variableLabel).toBeVisible();
 
       // save dashboard and exit edit mode and check variable is still visible
-      await saveDashboardAndCloseToast(page, controls);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
       await controls.exitEditMode();
       await expect(variableLabel).toBeVisible();
 
@@ -117,11 +123,17 @@ test.describe(
       await expect(variableLabel).toBeVisible();
     });
 
-    test('can hide variable under the controls menu', async ({ dashboardPage, page, controls, sidebar }) => {
-      await saveDashboardAndCloseToast(page, controls, `can hide a variable in controls menu - (${Math.random()})`);
+    test('can hide variable under the controls menu', async ({ gotoDashboardPage, page, controls, sidebar }) => {
+      await gotoDashboardPage({});
+
+      await flows.dashboards.saveDashboardAndCloseToast(
+        page,
+        controls,
+        `can hide a variable in controls menu - (${Math.random()})`
+      );
 
       const variable = variableWithDefaults();
-      await flows.addNewTextBoxVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewTextBoxVariable(page, sidebar, controls, variable);
 
       // check the variable is visible in the dashboard
       let variableLabel = controls.variables.getLabel(variable.label);
@@ -136,7 +148,7 @@ test.describe(
       await expect(variableLabel).toBeVisible();
 
       // save dashboard and reload the page
-      await saveDashboardAndCloseToast(page, controls);
+      await flows.dashboards.saveDashboardAndCloseToast(page, controls);
       await page.reload();
 
       //check that the variable is hidden under the controls menu
