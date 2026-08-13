@@ -3,11 +3,9 @@ import { FieldColorModeId } from '@grafana/schema';
 
 import { getEnumConfig } from './scatter';
 
-// Golden baseline for the value->color compiler that scatter currently builds via
-// `new Function`. The upcoming field.display.colors() migration must reproduce the
-// same resolved colors. We snapshot the deduped palette plus the resolved color per
-// representative value via getAll (the path the renderer uses), and assert getOne
-// agrees with getAll for the discrete compilers.
+// Golden baseline for the value-to-state compiler. We snapshot the deduped color
+// palette plus the resolved color per representative value via getAll (the path the
+// renderer uses), and assert getOne agrees with getAll for discrete compilers.
 const theme = createTheme();
 
 function makeColorField(config: Record<string, unknown>, values: unknown[], type: FieldType = FieldType.number) {
@@ -95,6 +93,33 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, [10, 50, 79, 80, 100])).toMatchSnapshot();
   });
 
+  it('percentage thresholds', () => {
+    const config = {
+      min: 0,
+      max: 200,
+      color: { mode: FieldColorModeId.Thresholds },
+      thresholds: {
+        mode: ThresholdsMode.Percentage,
+        steps: [
+          { value: 0, color: 'green' },
+          { value: 50, color: 'yellow' },
+          { value: 80, color: 'red' },
+        ],
+      },
+    };
+
+    const field = makeColorField(config, [0, 100, 159, 160, 200]);
+    const { index, getAll } = getEnumConfig(field, theme);
+
+    expect(index).toEqual({
+      color: ['#73bf69ff', '#fade2aff', '#f2495cff'],
+      text: ['0%+', '50%+', '80%+'],
+      icon: ['', '', ''],
+    });
+    expect(getAll(field.values)).toEqual([0, 1, 1, 2, 2]);
+    expect(getAll(field.values, 0, 100)).toEqual([0, 1, 1, 2, 2]);
+  });
+
   it('continuous gradient (needs min/max)', () => {
     const config = { color: { mode: FieldColorModeId.ContinuousGrYlRd } };
     expect(
@@ -102,13 +127,12 @@ describe('fieldValueColors (golden baseline)', () => {
     ).toMatchSnapshot();
   });
 
-  it('RegexToText is currently a no-op (documents pre-migration behavior)', () => {
+  it('RegexToText mapping', () => {
     const config = {
       mappings: [
         { type: MappingType.RegexToText, options: { pattern: '/^foo/', result: { text: 'm', color: 'orange' } } },
       ],
     };
-    // empty palette, all values fall through to the -1 fallback (null here)
     expect(resolve(config, ['foobar', 'baz'], { type: FieldType.string })).toMatchSnapshot();
   });
 
@@ -127,13 +151,13 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, ['a', 'b', 'c'], { type: FieldType.string })).toMatchSnapshot();
   });
 
-  it('ValueToText mapping entries without a color are skipped', () => {
+  it('ValueToText mapping entries without a color use the fallback color', () => {
     const config = {
       mappings: [
         {
           type: MappingType.ValueToText,
           options: {
-            '1': { text: 'one' }, // no color -> skipped, palette not advanced
+            '1': { text: 'one' },
             '2': { text: 'two', color: 'red' },
           },
         },
@@ -142,12 +166,12 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, [1, 2])).toMatchSnapshot();
   });
 
-  it('RangeToText with open-ended (from-only / to-only) and unbounded ranges', () => {
+  it('RangeToText with open-ended and unbounded ranges', () => {
     const config = {
       mappings: [
         { type: MappingType.RangeToText, options: { from: 10, result: { color: 'green' } } }, // v >= 10
         { type: MappingType.RangeToText, options: { to: 5, result: { color: 'blue' } } }, // v <= 5
-        { type: MappingType.RangeToText, options: { result: { color: 'red' } } }, // no bounds -> skipped
+        { type: MappingType.RangeToText, options: { result: { color: 'red' } } },
       ],
     };
     expect(resolve(config, [3, 7, 20])).toMatchSnapshot();
@@ -176,10 +200,10 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, [true, false], { type: FieldType.boolean })).toMatchSnapshot();
   });
 
-  it('SpecialValue mapping result without a color is skipped', () => {
+  it('SpecialValue mapping result without a color uses the fallback color', () => {
     const config = {
       mappings: [
-        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.NaN, result: {} } }, // no color -> skipped
+        { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.NaN, result: {} } },
         { type: MappingType.SpecialValue, options: { match: SpecialValueMatch.Null, result: { color: 'purple' } } },
       ],
     };

@@ -14,27 +14,30 @@ exports[`fieldValueColors (golden baseline) RangeToText mapping 1`] = `
 }
 `;
 
-exports[`fieldValueColors (golden baseline) RangeToText with open-ended (from-only / to-only) and unbounded ranges 1`] = `
+exports[`fieldValueColors (golden baseline) RangeToText with open-ended and unbounded ranges 1`] = `
 {
   "colors": [
     "#5794f2ff",
-    null,
+    "#f2495cff",
     "#73bf69ff",
   ],
   "palette": [
     "#73bf69ff",
     "#5794f2ff",
+    "#f2495cff",
   ],
 }
 `;
 
-exports[`fieldValueColors (golden baseline) RegexToText is currently a no-op (documents pre-migration behavior) 1`] = `
+exports[`fieldValueColors (golden baseline) RegexToText mapping 1`] = `
 {
   "colors": [
-    null,
+    "#ff9830ff",
     null,
   ],
-  "palette": [],
+  "palette": [
+    "#ff9830ff",
+  ],
 }
 `;
 
@@ -93,13 +96,14 @@ exports[`fieldValueColors (golden baseline) SpecialValue mapping (True / False) 
 }
 `;
 
-exports[`fieldValueColors (golden baseline) SpecialValue mapping result without a color is skipped 1`] = `
+exports[`fieldValueColors (golden baseline) SpecialValue mapping result without a color uses the fallback color 1`] = `
 {
   "colors": [
-    null,
+    "#808080ff",
     "#b877d9ff",
   ],
   "palette": [
+    "#808080ff",
     "#b877d9ff",
   ],
 }
@@ -121,13 +125,14 @@ exports[`fieldValueColors (golden baseline) ValueToText mapping 1`] = `
 }
 `;
 
-exports[`fieldValueColors (golden baseline) ValueToText mapping entries without a color are skipped 1`] = `
+exports[`fieldValueColors (golden baseline) ValueToText mapping entries without a color use the fallback color 1`] = `
 {
   "colors": [
-    null,
+    "#808080ff",
     "#f2495cff",
   ],
   "palette": [
+    "#808080ff",
     "#f2495cff",
   ],
 }

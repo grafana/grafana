@@ -24,9 +24,111 @@ import {
   mergeConsecutiveValues,
   prepareTimelineFields,
   prepareTimelineLegendItems,
+  toEnumField,
 } from './utils';
 
 const theme = createTheme();
+
+describe('toEnumField', () => {
+  it('converts percentage thresholds to enum states using the field range', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [0, 25, null, 50, 79, 80, 100],
+          config: {
+            min: 0,
+            max: 100,
+            color: { mode: FieldColorModeId.Thresholds },
+            thresholds: {
+              mode: ThresholdsMode.Percentage,
+              steps: [
+                { value: 0, color: 'green' },
+                { value: 50, color: 'yellow' },
+                { value: 80, color: 'red' },
+              ],
+            },
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme);
+
+    expect(result.type).toBe(FieldType.enum);
+    expect(result.config.type?.enum).toEqual({
+      color: ['#73bf69', '#fade2a', '#f2495c'],
+      text: ['0%+', '50%+', '80%+'],
+      icon: ['', '', ''],
+    });
+    expect(result.values).toEqual([0, 0, null, 1, 1, 2, 2]);
+  });
+
+  it('keeps colored, text-only, and regex mappings as distinct states', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'state',
+          type: FieldType.string,
+          values: ['OK', 'IDLE', 'ERR-42', 'UNKNOWN'],
+          config: {
+            mappings: [
+              {
+                type: MappingType.ValueToText,
+                options: {
+                  OK: { text: 'Healthy', color: 'green' },
+                  IDLE: { text: 'Idle' },
+                },
+              },
+              {
+                type: MappingType.RegexToText,
+                options: {
+                  pattern: '/^ERR-(\\d+)$/',
+                  result: { text: 'Error $1' },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme);
+
+    expect(result.config.type?.enum?.text).toEqual(['Healthy', 'Idle', 'Error 42', 'Other']);
+    expect(result.values).toEqual([0, 1, 2, 3]);
+    expect(result.config.mappings).toBeUndefined();
+  });
+
+  it('matches boolean ValueToText keys', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'enabled',
+          type: FieldType.boolean,
+          values: [true, false, true],
+          config: {
+            mappings: [
+              {
+                type: MappingType.ValueToText,
+                options: {
+                  true: { text: 'Enabled', color: 'green' },
+                  false: { text: 'Disabled', color: 'red' },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    }).fields[0];
+
+    const result = toEnumField(field, theme);
+
+    expect(result.config.type?.enum?.text).toEqual(['Enabled', 'Disabled']);
+    expect(result.values).toEqual([0, 1, 0]);
+  });
+});
 
 describe('prepare timeline graph', () => {
   const timeRange: TimeRange = {
@@ -640,81 +742,5 @@ describe('hasSpecialMappedValue', () => {
     const field = makeField(mappingsType, optionsMatch);
 
     expect(hasSpecialMappedValue(field, valueMatch)).toEqual(expected);
-  });
-});
-
-describe('prepareTimelineFields with percentage threshold merging', () => {
-  const timeRange: TimeRange = {
-    from: dateTime(1),
-    to: dateTime(3),
-    raw: { from: dateTime(1), to: dateTime(3) },
-  };
-
-  it('converts numeric values to threshold label strings using percentage thresholds', () => {
-    const frames = [
-      toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          {
-            name: 'value',
-            type: FieldType.number,
-            values: [0, 50, 100],
-            config: {
-              min: 0,
-              max: 100,
-              color: { mode: FieldColorModeId.Thresholds },
-              thresholds: {
-                mode: ThresholdsMode.Percentage,
-                steps: [
-                  { value: 0, color: 'green' },
-                  { value: 50, color: 'yellow' },
-                  { value: 80, color: 'red' },
-                ],
-              },
-            },
-          },
-        ],
-      }),
-    ];
-    const result = prepareTimelineFields(frames, true, timeRange, theme);
-    expect(result.warn).toBeUndefined();
-    const mergedField = result.frames![0].fields[1];
-    expect(mergedField.type).toBe(FieldType.string);
-    expect(mergedField.values[0]).toBe('0%+');
-    expect(mergedField.values[1]).toBe('50%+');
-    expect(mergedField.values[2]).toBe('80%+');
-  });
-
-  it('preserves null values when merging percentage thresholds', () => {
-    const frames = [
-      toDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-          {
-            name: 'value',
-            type: FieldType.number,
-            values: [0, null, 100],
-            config: {
-              min: 0,
-              max: 100,
-              color: { mode: FieldColorModeId.Thresholds },
-              thresholds: {
-                mode: ThresholdsMode.Percentage,
-                steps: [
-                  { value: 0, color: 'green' },
-                  { value: 80, color: 'red' },
-                ],
-              },
-            },
-          },
-        ],
-      }),
-    ];
-    const result = prepareTimelineFields(frames, true, timeRange, theme);
-    const mergedField = result.frames![0].fields[1];
-    expect(mergedField.type).toBe(FieldType.string);
-    expect(mergedField.values[0]).toBe('0%+');
-    expect(mergedField.values[1]).toBeNull();
-    expect(mergedField.values[2]).toBe('80%+');
   });
 });

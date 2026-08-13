@@ -6,11 +6,16 @@ import {
   type Field,
   FieldType,
   formattedValueToString,
+  getFieldConfigWithMinMax,
   getFieldColorModeForField,
+  getValueFormat,
   type GrafanaTheme2,
   MappingType,
   SpecialValueMatch,
+  stringToJsRegex,
   ThresholdsMode,
+  type ValueMapping,
+  type ValueMappingResult,
   colorManipulator,
   type EnumFieldConfig,
 } from '@grafana/data';
@@ -595,11 +600,74 @@ function getLabelForRange(from: number | null, to: number | null) {
   return text;
 }
 
-// percent enum configs can be combined, percent threasholds are global across multi frames and fields
-// classic palette by value
-// get and getAll, should accept shared min/max to scale percentage
-// merge enums for legend by combo of color+icon+text
-// auto-threshold by % into 10 bukkits?
+function getSpecialValueLabel(match: SpecialValueMatch) {
+  switch (match) {
+    case SpecialValueMatch.NaN:
+      return 'NaN';
+    case SpecialValueMatch.NullAndNaN:
+      return 'null/NaN';
+    case SpecialValueMatch.Empty:
+      return '""';
+    default:
+      return match;
+  }
+}
+
+function getMappingResult(mapping: ValueMapping, value: unknown): ValueMappingResult | undefined {
+  if (mapping.type === MappingType.ValueToText) {
+    return mapping.options[String(value)];
+  }
+
+  if (mapping.type === MappingType.RangeToText) {
+    if (value == null) {
+      return undefined;
+    }
+
+    const numeric = parseFloat(String(value));
+    if (
+      Number.isNaN(numeric) ||
+      (mapping.options.from != null && numeric < mapping.options.from) ||
+      (mapping.options.to != null && numeric > mapping.options.to)
+    ) {
+      return undefined;
+    }
+
+    return mapping.options.result;
+  }
+
+  if (mapping.type === MappingType.RegexToText) {
+    if (typeof value !== 'string') {
+      return undefined;
+    }
+
+    const regex = stringToJsRegex(mapping.options.pattern);
+    if (!value.match(regex)) {
+      return undefined;
+    }
+
+    const result = { ...mapping.options.result };
+    if (result.text != null) {
+      result.text = value.replace(regex, result.text);
+    }
+    return result;
+  }
+
+  const match = mapping.options.match;
+  const matches =
+    match === SpecialValueMatch.Null
+      ? value == null
+      : match === SpecialValueMatch.NaN
+        ? typeof value === 'number' && Number.isNaN(value)
+        : match === SpecialValueMatch.NullAndNaN
+          ? value == null || (typeof value === 'number' && Number.isNaN(value))
+          : match === SpecialValueMatch.True
+            ? value === true || value === 'true'
+            : match === SpecialValueMatch.False
+              ? value === false || value === 'false'
+              : value === '';
+
+  return matches ? mapping.options.result : undefined;
+}
 
 /** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
 export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues {
@@ -615,15 +683,16 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
   let conds = '';
 
   // if any mappings exist, use them regardless of other settings
-  if (f.config.mappings?.length ?? 0 > 0) {
-    let mappings = f.config.mappings!;
+  if ((f.config.mappings?.length ?? 0) > 0) {
+    const mappings = f.config.mappings!;
 
     // this is color+text+icon that deduplicates the index above
     // e.g. if multiple values + ranges map "OK"+"green", this ensures they map to same state by key
-    let keys: string[] = [];
+    const keys: string[] = [];
 
-    function indexOf(color = '', text = '', icon = '') {
-      let key = `${color}|${text}|${icon}`;
+    function indexOf(color = FALLBACK_COLOR, text = '', icon = '') {
+      const resolvedColor = getHex8Color(color, theme);
+      const key = `${resolvedColor}|${text}|${icon}`;
 
       let idx = keys.indexOf(key);
 
@@ -631,7 +700,7 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
         idx = keys.length;
         keys.push(key);
 
-        index.color!.push(getHex8Color(color, theme));
+        index.color!.push(resolvedColor);
         index.text!.push(text);
         index.icon!.push(icon);
       }
@@ -639,76 +708,57 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
       return idx;
     }
 
-    for (let i = 0; i < mappings.length; i++) {
-      let m = mappings[i];
-
+    for (const m of mappings) {
       if (m.type === MappingType.ValueToText) {
-        for (let k in m.options) {
-          let { color, text, icon } = m.options[k];
-
-          if (color != null) {
-            // mappings without display text show the matched value itself
-            let idx = indexOf(color, text ?? k, icon);
-            let rhs = k.toLowerCase() === 'null' ? 'null' : f.type === FieldType.string ? JSON.stringify(k) : Number(k);
-            conds += `v === ${rhs} ? ${idx} : `;
-          }
+        for (const [value, result] of Object.entries(m.options)) {
+          indexOf(result.color, result.text ?? value, result.icon);
         }
-      } else if (m.options.result.color != null) {
-        let { color, text, icon } = m.options.result;
-
-        if (m.type === MappingType.RangeToText) {
-          let { from, to } = m.options;
-          text ??= getLabelForRange(from, to);
-
-          let range = [];
-
-          if (from != null) {
-            range.push(`v >= ${Number(from)}`);
-          }
-
-          if (to != null) {
-            range.push(`v <= ${Number(to)}`);
-          }
-
-          if (range.length > 0) {
-            let idx = indexOf(color, text, icon);
-            conds += `${range.join(' && ')} ? ${idx} : `;
-          }
-        } else if (m.type === MappingType.SpecialValue) {
-          let spl = m.options.match;
-
-          if (spl === SpecialValueMatch.NaN) {
-            text ??= 'NaN';
-            conds += `isNaN(v)`;
-          } else if (spl === SpecialValueMatch.NullAndNaN) {
-            text ??= 'null/NaN';
-            conds += `v == null || isNaN(v)`;
-          } else {
-            let cond =
-              spl === SpecialValueMatch.True
-                ? '=== true'
-                : spl === SpecialValueMatch.False
-                  ? '=== false'
-                  : spl === SpecialValueMatch.Empty
-                    ? '=== ""'
-                    : '== null';
-
-            conds += `v ${cond}`;
-            text ??= cond.replace(/[= ]+/g, '');
-          }
-
-          let idx = indexOf(color, text, icon);
-          conds += ` ? ${idx} : `;
-        } else if (m.type === MappingType.RegexToText) {
-          // TODO
+      } else if (m.type === MappingType.RangeToText) {
+        const { from, to, result } = m.options;
+        if (from != null || to != null) {
+          indexOf(result.color, result.text ?? getLabelForRange(from, to), result.icon);
         }
+      } else if (m.type === MappingType.SpecialValue) {
+        const { match, result } = m.options;
+        indexOf(result.color, result.text ?? getSpecialValueLabel(match), result.icon);
       }
     }
 
-    conds += '-1'; // ?? what default here? null? FALLBACK_COLOR?
+    getOne = (value) => {
+      for (const mapping of mappings) {
+        const result = getMappingResult(mapping, value);
+
+        if (result == null) {
+          continue;
+        }
+
+        let text = result.text;
+        if (text == null) {
+          if (mapping.type === MappingType.ValueToText) {
+            text = String(value);
+          } else if (mapping.type === MappingType.RangeToText) {
+            text = getLabelForRange(mapping.options.from, mapping.options.to);
+          } else if (mapping.type === MappingType.SpecialValue) {
+            text = getSpecialValueLabel(mapping.options.match);
+          } else {
+            text = String(value);
+          }
+        }
+
+        return indexOf(result.color, text, result.icon);
+      }
+
+      return -1;
+    };
+    getAll = (values) => values.map((value) => getOne(value));
   } else if (f.config.color?.mode === FieldColorModeId.Thresholds && (f.config.thresholds?.steps.length ?? 0) > 1) {
-    if (f.config.thresholds?.mode === ThresholdsMode.Absolute) {
-      let steps = f.config.thresholds.steps;
+    const thresholds = f.config.thresholds!;
+    const steps = thresholds.steps;
+
+    index.color = steps.map((step) => getHex8Color(step.color, theme));
+    index.icon = Array(steps.length).fill('');
+
+    if (thresholds.mode === ThresholdsMode.Absolute) {
       let lasti = steps.length - 1;
 
       for (let i = lasti; i > 0; i--) {
@@ -718,11 +768,31 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
 
       conds += '0';
 
-      index.color = steps.map((s) => getHex8Color(s.color, theme));
       index.text = steps.map((s, i) => (i === 0 ? `< ${steps[i + 1].value}` : getLabelForRange(s.value, null)));
-      index.icon = Array(steps.length).fill('');
     } else {
-      // TODO: percent thresholds?
+      const { min: fieldMin = 0, max: fieldMax = 0 } = getFieldConfigWithMinMax(f);
+      const hasExplicitRange = typeof f.config.min === 'number' && typeof f.config.max === 'number';
+      const formatPercent = getValueFormat('percent');
+
+      index.text = steps.map(
+        (step) => `${formattedValueToString(formatPercent(step.value, f.config.decimals))}+`
+      );
+
+      getOne = (value, min = fieldMin, max = fieldMax) => {
+        const rangeMin = hasExplicitRange ? fieldMin : min;
+        const rangeMax = hasExplicitRange ? fieldMax : max;
+        const delta = rangeMax - rangeMin;
+        const percent = delta === 0 ? 0 : ((Number(value) - rangeMin) / delta) * 100;
+
+        for (let i = steps.length - 1; i > 0; i--) {
+          if (percent >= steps[i].value) {
+            return i;
+          }
+        }
+
+        return 0;
+      };
+      getAll = (values, min, max) => values.map((value) => getOne(value, min, max));
     }
   } else if (f.config.color?.mode?.startsWith('continuous')) {
     let calc = getFieldColorModeForField(f).getCalculator(f, theme);

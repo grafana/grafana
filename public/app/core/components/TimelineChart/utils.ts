@@ -274,7 +274,7 @@ const stripOpaqueAlpha = (color: string) => (color.length === 9 && color.endsWit
 /**
  * Converts a value field to an enum field whose values are state indices and whose
  * config.type.enum lookup holds each state's text/color/icon. States come from the field's
- * value mappings or absolute thresholds (via getEnumConfig); fields without either get one
+ * value mappings or thresholds (via getEnumConfig); fields without either get one
  * state per distinct raw value, formatted and colored by the field's display processor.
  */
 export function toEnumField(field: Field, theme: GrafanaTheme2): Field {
@@ -302,6 +302,7 @@ export function toEnumField(field: Field, theme: GrafanaTheme2): Field {
 
   // mappings compile to states for all field types, thresholds only for numeric values
   const { index, getAll } = hasMappings || field.type === FieldType.number ? getEnumConfig(field, theme) : noStates;
+  const idxs = getAll(field.values);
 
   const enumConfig: EnumFieldConfig = {
     color: (index.color ?? []).map((c) => stripOpaqueAlpha(String(c))),
@@ -312,8 +313,7 @@ export function toEnumField(field: Field, theme: GrafanaTheme2): Field {
   const values: Array<number | null | undefined> = Array(field.values.length);
 
   if (enumConfig.text!.length > 0) {
-    // states from mappings or absolute thresholds
-    const idxs = getAll(field.values);
+    // states from mappings or thresholds
     let otherIdx = -1;
 
     for (let i = 0; i < values.length; i++) {

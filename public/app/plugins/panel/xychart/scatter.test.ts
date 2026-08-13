@@ -3,12 +3,9 @@ import {
   createTheme,
   FieldType,
   getDisplayProcessor,
-  MappingType,
-  SpecialValueMatch,
-  ThresholdsMode,
   type Field,
 } from '@grafana/data';
-import { AxisPlacement, FieldColorModeId, VisibilityMode } from '@grafana/schema';
+import { AxisPlacement, VisibilityMode } from '@grafana/schema';
 
 import { PointShape } from './panelcfg.gen';
 import { prepConfig } from './scatter';
@@ -171,134 +168,5 @@ describe('prepData', () => {
     const diams2 = data[2]![2] as number[];
     expect(diams1[0]).toEqual(2);
     expect(diams2[1]).toEqual(10);
-  });
-});
-
-describe('color field compilation', () => {
-  function makeColorSeries(colorFieldConfig: Record<string, unknown>) {
-    const colorField = makeField({ name: 'clr', values: [10, 50, 90], config: colorFieldConfig });
-    return makeSeries({
-      color: { field: colorField, fixed: '#ff0000' },
-      x: { field: makeField({ name: 'x', values: [1, 2, 3] }) },
-      y: { field: makeField({ name: 'y', values: [10, 20, 30], config: { unit: 'y' } }) },
-    });
-  }
-  it('produces valid output with absolute threshold color config', () => {
-    const series = makeColorSeries({
-      color: { mode: FieldColorModeId.Thresholds },
-      thresholds: {
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          { value: -Infinity, color: 'green' },
-          { value: 30, color: 'yellow' },
-          { value: 70, color: 'red' },
-        ],
-      },
-    });
-
-    const { prepData } = prepConfig([series], theme);
-    const data = prepData!([series]);
-    expect(data).toEqual([
-      null,
-      [
-        [1, 2, 3],
-        [10, 20, 30],
-        [5, 5, 5],
-        ['#ff0000', '#ff0000', '#ff0000'],
-      ],
-    ]);
-  });
-
-  it('produces valid output with value-to-text color mapping', () => {
-    const series = makeColorSeries({
-      mappings: [
-        {
-          type: MappingType.ValueToText,
-          options: {
-            '1': { text: 'low', color: 'green' },
-            '2': { text: 'med', color: 'yellow' },
-            '3': { text: 'high', color: 'red' },
-          },
-        },
-      ],
-    });
-
-    const { prepData } = prepConfig([series], theme);
-    const data = prepData!([series]);
-    expect(data).toEqual([
-      null,
-      [
-        [1, 2, 3],
-        [10, 20, 30],
-        [5, 5, 5],
-        ['#ff0000', '#ff0000', '#ff0000'],
-      ],
-    ]);
-  });
-
-  it('produces valid output with range-to-text color mapping', () => {
-    const series = makeColorSeries({
-      mappings: [
-        {
-          type: MappingType.RangeToText,
-          options: { from: 0, to: 50, result: { text: 'low', color: 'blue' } },
-        },
-        {
-          type: MappingType.RangeToText,
-          options: { from: 51, to: 100, result: { text: 'high', color: 'red' } },
-        },
-      ],
-    });
-
-    const { prepData } = prepConfig([series], theme);
-    const data = prepData!([series]);
-    expect(data).toEqual([
-      null,
-      [
-        [1, 2, 3],
-        [10, 20, 30],
-        [5, 5, 5],
-        ['#ff0000', '#ff0000', '#ff0000'],
-      ],
-    ]);
-  });
-
-  it.each([
-    ['NaN', SpecialValueMatch.NaN],
-    ['Null', SpecialValueMatch.Null],
-  ])('produces valid output with special value %s color mapping', (_label, match) => {
-    const series = makeColorSeries({
-      mappings: [{ type: MappingType.SpecialValue, options: { match, result: { text: 'special', color: 'gray' } } }],
-    });
-
-    const { prepData } = prepConfig([series], theme);
-    const data = prepData!([series]);
-    expect(data).toEqual([
-      null,
-      [
-        [1, 2, 3],
-        [10, 20, 30],
-        [5, 5, 5],
-        ['#ff0000', '#ff0000', '#ff0000'],
-      ],
-    ]);
-  });
-
-  it('produces valid output with continuous gradient color mode', () => {
-    const series = makeColorSeries({
-      color: { mode: FieldColorModeId.ContinuousGrYlRd },
-    });
-
-    const { prepData } = prepConfig([series], theme);
-    const data = prepData!([series]);
-    expect(data).toEqual([
-      null,
-      [
-        [1, 2, 3],
-        [10, 20, 30],
-        [5, 5, 5],
-        ['#ff0000', '#ff0000', '#ff0000'],
-      ],
-    ]);
   });
 });
