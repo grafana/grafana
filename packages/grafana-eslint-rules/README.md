@@ -323,6 +323,23 @@ interface LoadedProperties extends EventProperty {
 }
 ```
 
+- **`stackedJSDocComment`** — Each event and interface property must be documented with a single JSDoc block. TypeScript allows stacking several blocks on one declaration, and the analytics report concatenates them into one description, which is rarely what the author intended. Merge the text, and move tags such as `@owner` into the same block.
+
+```ts
+// Bad ❌
+interface LoadedProperties extends EventProperty {
+  /** Total number of items visible in the library. */
+  /** Only counts the ones rendered at load time. */
+  numberOfItems: number;
+}
+
+// Good ✅
+interface LoadedProperties extends EventProperty {
+  /** Total number of items visible in the library, counting only the ones rendered at load time. */
+  numberOfItems: number;
+}
+```
+
 ### `no-direct-create-monitoring-logger`
 
 Disallow direct named imports of `createMonitoringLogger` from `@grafana/runtime`. New loggers must be registered in `packages/grafana-runtime/src/services/logging/loggers.ts` and retrieved via `getLogger` from `@grafana/runtime/unstable`.
