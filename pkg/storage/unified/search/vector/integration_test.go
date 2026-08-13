@@ -1411,3 +1411,43 @@ func TestIntegrationVectorFilterEdgeCases(t *testing.T) {
 	require.False(t, more)
 	require.EqualValues(t, 1, n) // only num (42); numstr skipped, not an error
 }
+
+func TestIntegrationVectorFilterNonStringIn(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+	_, err := backend.DeleteNamespace(ctx, "ns-nonstr")
+	require.NoError(t, err)
+
+	mk := func(uid, meta string) Vector {
+		return Vector{
+			Namespace: "ns-nonstr", Resource: testResource, UID: uid, Title: "T",
+			Content: "c", Embedding: makeEmbedding(0.7, 0.7), Model: testModel,
+			Metadata: json.RawMessage(meta),
+		}
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("num", `{"score":42}`),
+		mk("num2", `{"score":7}`),
+		mk("boolt", `{"flag":true}`),
+		mk("boolf", `{"flag":false}`),
+		mk("arr", `{"tags":["a","b"]}`),
+	}))
+
+	// $in with numeric values must not raise a text-vs-numeric type error and
+	// must match by JSONB value, not text formatting.
+	n, _, err := backend.DeleteRows(ctx, "ns-nonstr", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"score":{"$in":[42,99]}}`)})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n) // only score=42
+
+	// $in with a boolean value.
+	n, _, err = backend.DeleteRows(ctx, "ns-nonstr", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"flag":{"$in":[true]}}`)})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n) // only flag=true
+
+	// $in over a string array field matches by element membership.
+	n, _, err = backend.DeleteRows(ctx, "ns-nonstr", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"tags":{"$in":["b"]}}`)})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n) // arr contains "b"
+}
