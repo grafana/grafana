@@ -10,6 +10,11 @@ import { type Props, TextNGPanel } from './TextNGPanel';
 import { createData, createProps, renderPanel } from './test-utils';
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: () => ({ getBooleanValue: () => true }),
+}));
+
 jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
   // The stubbed editor never runs completions; the source itself is covered by

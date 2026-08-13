@@ -6,6 +6,17 @@ import { RenderMode, TextMode } from '../panelcfg.gen';
 
 import { hasRenderableData, interpolateTemplate, MAX_RENDERED_ROWS, renderContent } from './renderContent';
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: () => ({ getBooleanValue: () => mockNewFeatures }),
+}));
+
+let mockNewFeatures = true;
+
+beforeEach(() => {
+  mockNewFeatures = true;
+});
+
 const hosts = toDataFrame({
   name: 'frameA',
   refId: 'A',
@@ -114,6 +125,14 @@ describe('interpolateTemplate', () => {
   });
 
   describe('handlebars', () => {
+    it('leaves expressions alone when the text.newFeatures flag is off', () => {
+      mockNewFeatures = false;
+
+      expect(interpolate('{{#each data}}{{host}}{{/each}}', [hosts], RenderMode.Once)).toBe(
+        '{{#each data}}{{host}}{{/each}}'
+      );
+    });
+
     it('renders the whole result set for Once', () => {
       expect(interpolate('{{#each data}}- {{host}}\n{{/each}}', [hosts], RenderMode.Once)).toBe('- web-1\n- web-2\n');
     });

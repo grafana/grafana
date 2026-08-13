@@ -1,5 +1,6 @@
 import { type DataFrame, type InterpolateFunction, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
@@ -22,11 +23,17 @@ export function hasRenderableData(series?: DataFrame[]): series is DataFrame[] {
   return series?.some((frame) => frame.fields.length > 0 && frame.length > 0) ?? false;
 }
 
+// Not cached: the flag value can change after the providers settle.
+function handlebarsEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue('text.newFeatures', false);
+}
+
 export function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction): string {
   const { content, mode, series, renderMode, format } = template;
 
   // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
-  const compiled = mode !== TextMode.Code ? compileTemplate(content, replaceVariables) : undefined;
+  const compiled =
+    handlebarsEnabled() && mode !== TextMode.Code ? compileTemplate(content, replaceVariables) : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
     return interpolateEveryRow(template, series, replaceVariables, compiled);
