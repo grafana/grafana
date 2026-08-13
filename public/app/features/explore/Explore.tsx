@@ -185,9 +185,13 @@ export class Explore extends PureComponent<Props, ExploreState> {
   };
 
   onContentOutlineToogle = () => {
-    store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, !this.state.contentOutlineVisible);
-    this.setState((state) => {
-      const newContentOutlineVisible = this.props.compact ? true : !state.contentOutlineVisible;
+    // Base the flip on what's actually visible right now, not just the raw persisted state,
+    // since `outlineHiddenFromUrl` can be hiding the panel despite `contentOutlineVisible` being true.
+    const isVisible = this.state.contentOutlineVisible && !this.outlineHiddenFromUrl;
+    this.outlineHiddenFromUrl = false;
+    store.set(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.visible, !isVisible);
+    this.setState(() => {
+      const newContentOutlineVisible = this.props.compact ? true : !isVisible;
       reportInteraction('explore_toolbar_contentoutline_clicked', {
         item: 'outline',
         type: newContentOutlineVisible ? 'open' : 'close',
@@ -688,7 +692,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           exploreId={exploreId}
           onChangeTime={this.onChangeTime}
           onContentOutlineToogle={this.onContentOutlineToogle}
-          isContentOutlineOpen={contentOutlineVisible}
+          isContentOutlineOpen={contentOutlineVisible && !this.outlineHiddenFromUrl}
         />
         <div
           style={{
