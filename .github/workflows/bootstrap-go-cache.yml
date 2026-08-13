@@ -139,7 +139,7 @@ jobs:
             for dir in $(go list -m -f '{{.Dir}}'); do
               (
                 cd "$dir"
-                PACKAGES="$(go list -tags="$tags" ./... | grep -v '/scripts/' || true)"
+                PACKAGES="$(go list -tags="$tags" -f '{{if .GoFiles}}{{.ImportPath}}{{end}}' ./... | grep -v -e '^$' -e '/scripts/' || true)"
                 if [ -n "$PACKAGES" ]; then
                   echo "$PACKAGES" | xargs go build -tags="$tags"
                 fi
