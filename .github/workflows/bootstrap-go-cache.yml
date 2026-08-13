@@ -136,15 +136,14 @@ jobs:
             TAGSETS+=("enterprise")
           fi
           for tags in "${TAGSETS[@]}"; do
-            for dir in $(go list -m -f '{{.Dir}}'); do
-              (
-                cd "$dir"
-                PACKAGES="$(go list -tags="$tags" -f '{{if .GoFiles}}{{.ImportPath}}{{end}}' ./... | grep -v -e '^$' -e '/scripts/' || true)"
-                if [ -n "$PACKAGES" ]; then
-                  echo "::group::${dir} $(echo "$PACKAGES" | wc -l) packages${tags:+ (${tags})}"
-                  echo "$PACKAGES" | xargs go build -v -tags="$tags"
-                  echo "::endgroup::"
-                fi
-              )
-            done
+            PACKAGES="$(
+              for dir in $(go list -m -f '{{.Dir}}'); do
+                (cd "$dir" && go list -tags="$tags" -f '{{if .GoFiles}}{{.ImportPath}}{{end}}' ./...)
+              done | grep -v -e '^$' -e '/scripts/' || true
+            )"
+            if [ -n "$PACKAGES" ]; then
+              echo "::group::Building $(echo "$PACKAGES" | wc -l) packages${tags:+ (${tags})}"
+              echo "$PACKAGES" | xargs go build -v -tags="$tags"
+              echo "::endgroup::"
+            fi
           done
