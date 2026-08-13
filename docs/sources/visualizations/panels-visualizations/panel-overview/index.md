@@ -82,17 +82,15 @@ If an option is only available in view mode or edit mode, that's indicated:
 
 ## View mode panel controls
 
-When you open a panel in full-screen view mode, Grafana displays a **View panel** sidebar with some controls to adjust the panel.
+When you open a panel in full-screen view mode, Grafana displays a **View panel** sidebar with controls for adjusting the panel.
+You don't need edit permissions to use these controls, and the changes you make don't affect the saved dashboard.
 
-You don't need to have edit permissions for the dashboard to update the options in this panel and the changes you make don't affect the saved dashboard.
+The sidebar includes the following controls:
 
-The sidebar includes the following high-level controls:
+- **Quick toggles**: Adjust common visualization options, such as legend visibility and basic graph styles.
+- **Fan-out by series or label**: Split one graph into multiple graphs—one per series or label value. For example, if you see a latency spike across several series, fanning out by label helps you identify which services are causing it.
 
-- **Quick toggles**: Use these controls to adjust common visualization options, like legend visibility and graph basic graph styles.
-- **Fan-out by series or label**: Use this control to split one graph into multiple graphs, one per series or label value. For example, if you see a latency spike in a graph with several series, fanning out by label shows you which services are actually causing the graph line to spike.
-
-The available quick toggles and fan-out support are determined by each panel plugin, so the controls vary by visualization type.
-
+Available quick toggles and fan-out support depend on the visualization type.
 This feature is supported for time series visualizations.
 
 <!-- screenshot here: View panel mode with the View panel side pane open (Back to dashboard, Quick toggles, and Fan-out sections visible) -->
