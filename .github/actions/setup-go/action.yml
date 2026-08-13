@@ -69,7 +69,7 @@ runs:
       if: inputs.cache == 'true'
       shell: bash
       run: |
-        BASE="${RUNNER_OS}-${RUNNER_ARCH}-${{ steps.go.outputs.go-version }}"
+        BASE="${RUNNER_OS}-${RUNNER_ARCH}-${GO_TOOLCHAIN_VERSION}"
         {
           echo "GO_MOD_CACHE_KEY=gomod-${BASE}-${{ hashFiles('**/*.mod', '**/*.sum') }}"
           echo "GO_MOD_CACHE_RESTORE_KEY=gomod-${BASE}-"
