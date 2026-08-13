@@ -28,6 +28,7 @@ jobs:
           persist-credentials: false
           filter: blob:none
           sparse-checkout: |
+            .github/actions/go-cache-keys/
             **/*.mod
             **/*.sum
           sparse-checkout-cone-mode: false
