@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { useAsync, useDebounce } from 'react-use';
+import { useDebounce } from 'react-use';
 
 import { ConnectionConfig } from '@grafana/aws-sdk';
 import {
@@ -206,14 +206,19 @@ export const ConfigEditor = (props: Props) => {
 };
 
 function useDatasource(props: Props) {
-  const { name, version } = props.options;
-  const { value: datasource } = useAsync(async () => {
-    if (!version) {
-      return undefined;
+  const [datasource, setDatasource] = useState<CloudWatchDatasource>();
+
+  useEffect(() => {
+    if (props.options.version) {
+      getDataSourceInstance(props.options.name)
+        .then((ds) => {
+          if (ds instanceof CloudWatchDatasource) {
+            setDatasource(ds);
+          }
+        })
+        .catch((err) => console.error('Could not load CloudWatch data source instance', err));
     }
-    const ds = await getDataSourceInstance(name);
-    return ds instanceof CloudWatchDatasource ? ds : undefined;
-  }, [version, name]);
+  }, [props.options.version, props.options.name]);
 
   return datasource;
 }
