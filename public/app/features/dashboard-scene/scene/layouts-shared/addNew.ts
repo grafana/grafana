@@ -3,9 +3,9 @@ import { type SceneGridRow } from '@grafana/scenes';
 
 import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
-import { RowItem } from '../layout-rows/RowItem';
+import { type RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { TabItem } from '../layout-tabs/TabItem';
+import { type TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
@@ -23,6 +23,18 @@ function getDefaultLayoutForEmptyGrid(layout: DashboardLayoutManager): Dashboard
   return getDashboardSceneLike(layout).getDefaultLayout();
 }
 
+function createTabsLayoutContaining(layout: DashboardLayoutManager): TabsLayoutManager {
+  const tabsLayout = TabsLayoutManager.createEmpty();
+  tabsLayout.state.tabs[0].setState({ layout });
+  return tabsLayout;
+}
+
+function createRowsLayoutContaining(layout: DashboardLayoutManager): RowsLayoutManager {
+  const rowsLayout = RowsLayoutManager.createEmpty();
+  rowsLayout.state.rows[0].setState({ layout });
+  return rowsLayout;
+}
+
 export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
   const layoutParent = layout.parent!;
   if (!isLayoutParent(layoutParent)) {
@@ -34,14 +46,12 @@ export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
   }
 
   // Create new tabs layout and wrap the current layout in the first tab
-  const defaultLayout = getDefaultLayoutForEmptyGrid(layout);
-  const tabsLayout = new TabsLayoutManager({
-    tabs: [new TabItem({ layout: defaultLayout ?? layout.clone() })],
-  });
+  const layoutToWrap = getDefaultLayoutForEmptyGrid(layout) ?? layout.clone();
+  const tabsLayout = createTabsLayoutContaining(layoutToWrap);
+  const tab = tabsLayout.state.tabs[0];
 
   layoutParent.switchLayout(tabsLayout);
 
-  const tab = tabsLayout.state.tabs[0];
   layout.publishEvent(new NewObjectAddedToCanvasEvent(tab), true);
 
   return tab;
@@ -81,7 +91,7 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
 
   const defaultLayout = getDefaultLayoutForEmptyGrid(layout);
   const rowsLayout = defaultLayout
-    ? new RowsLayoutManager({ rows: [new RowItem({ layout: defaultLayout })] })
+    ? createRowsLayoutContaining(defaultLayout)
     : RowsLayoutManager.createFromLayout(layoutParent.getLayout());
   layoutParent.switchLayout(rowsLayout);
 
