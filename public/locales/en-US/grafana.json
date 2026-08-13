@@ -5659,6 +5659,7 @@
       "add-conditional-rule": "Add {{ruleDescription}} rule",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
+      "duplicate": "Duplicate {{typeName}}",
       "duplicate-panel": "Duplicate panel",
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
@@ -6370,7 +6371,7 @@
         "custom-options": {
           "apply": "Apply",
           "discard": "Discard",
-          "modal-title": "Custom options"
+          "modal-title": "Custom variable: {{name}}"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -6863,7 +6864,8 @@
         "change-annotation-enabled-state": "Change annotation enabled state",
         "change-annotation-name": "Change annotation name",
         "change-annotation-panel-filter": "Change annotation panel filter"
-      }
+      },
+      "edit-query": "Edit query"
     },
     "annotation-editable-element": {
       "delete-confirm": "Delete annotation query",
@@ -6939,13 +6941,9 @@
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Delete",
-      "aria-label-edit": "Edit",
-      "delete": {
-        "confirm": "Are you sure you want to delete: {{name}}?",
-        "text": "Delete {{type}}",
-        "title": "Delete {{type}}"
-      }
+      "delete-tooltip": "Delete",
+      "duplicate-tooltip": "Duplicate",
+      "settings": "Settings"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -7745,6 +7743,10 @@
     },
     "variable-controls": {
       "add-variable": "Add variable"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "Edit values",
+      "edit-query": "Edit query"
     },
     "variable-editable-element": {
       "delete-confirm": "Delete variable",
@@ -12654,6 +12656,7 @@
       "customise-saving": "Saving…",
       "dialog-label": "Navigation",
       "dock": "Dock menu",
+      "header-title": "Navigation",
       "list-label": "Navigation",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
@@ -12764,6 +12767,13 @@
       "title-zoom-out": "Zoom out"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "Notebook",
+      "failed-to-load": "Failed to load notebook",
+      "not-found-title": "Not found"
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "All authors",
@@ -12792,6 +12802,11 @@
         "updated": "Updated"
       },
       "unknown-author": "Anonymous"
+    },
+    "view": {
+      "copy-link": "Copy link",
+      "edit-mode": "Edit",
+      "editing": "Editing"
     }
   },
   "notifications": {
@@ -16059,6 +16074,7 @@
     "name-show-mini-map": "Show mini map"
   },
   "textng": {
+    "category-data": "Data",
     "category-text": "Text",
     "code-view": {
       "aria-label-code-content": "Code content"
@@ -16087,6 +16103,16 @@
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
+    },
+    "options": {
+      "render-mode": "Render mode"
+    },
+    "render": {
+      "truncated": "Showing the first {{maxRows}} rows."
+    },
+    "render-mode": {
+      "once": "Once",
+      "per-row": "Per row"
     }
   },
   "theme-playground": {

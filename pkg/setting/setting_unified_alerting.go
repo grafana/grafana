@@ -63,6 +63,8 @@ const (
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
 	DefaultRuleEvaluationInterval          = SchedulerBaseInterval * 6 // == 60 seconds
 	stateHistoryDefaultEnabled             = true
+	stateHistoryBackendLoki                = "loki"
+	stateHistoryBackendMultiple            = "multiple"
 	notificationHistoryDefaultEnabled      = false
 	lokiDefaultMaxQueryLength              = 721 * time.Hour // 30d1h, matches the default value in Loki
 	defaultRecordingRequestTimeout         = 10 * time.Second
@@ -243,6 +245,25 @@ type UnifiedAlertingNotificationHistorySettings struct {
 // It hides the implementation details of the Enabled and simplifies its usage.
 func (u *UnifiedAlertingSettings) IsEnabled() bool {
 	return u.Enabled == nil || *u.Enabled
+}
+
+// QueriesServedByLoki returns true if state history read queries are served by Loki, either as the
+// only backend or as the primary of the "multiple" backend. Loki is the only backend that can answer
+// queries which are not scoped to a single alert rule.
+func (u *UnifiedAlertingStateHistorySettings) QueriesServedByLoki() bool {
+	if !u.Enabled {
+		return false
+	}
+	if isStateHistoryBackend(u.Backend, stateHistoryBackendMultiple) {
+		return isStateHistoryBackend(u.MultiPrimary, stateHistoryBackendLoki)
+	}
+	return isStateHistoryBackend(u.Backend, stateHistoryBackendLoki)
+}
+
+// isStateHistoryBackend normalizes the configured value the same way historian.ParseBackendType does.
+// That function cannot be reused here because the historian package imports this one.
+func isStateHistoryBackend(value, backend string) bool {
+	return strings.EqualFold(strings.TrimSpace(value), backend)
 }
 
 // IsReservedLabelDisabled returns true if UnifiedAlertingReservedLabelSettings.DisabledLabels contains the given reserved label.

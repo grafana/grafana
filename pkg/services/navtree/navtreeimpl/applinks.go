@@ -591,7 +591,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-labelmanagement-app":      {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 5, Text: "Label management"},
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 6, Text: "Incident"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 7, Text: "OnCall"},
-		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "Assistant", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle"},
+		"grafana-assistant-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAssistant, Text: "AI", SubTitle: "AI-powered assistant for Grafana", Icon: "ai-sparkle"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAIAndML, Text: "Machine Learning", SubTitle: "Explore AI and machine learning features", Icon: "gf-ml-alt"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 1},

@@ -2,7 +2,6 @@ package navtreeimpl
 
 import (
 	"net/http"
-	"sync"
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -903,6 +902,14 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	})
 }
 
+func TestReadNavigationSettingsAssistantLabel(t *testing.T) {
+	service := ServiceImpl{cfg: setting.NewCfg()}
+
+	service.readNavigationSettings()
+
+	require.Equal(t, "AI", service.navigationAppConfig[assistantAppID].Text)
+}
+
 func TestProcessAssistantAppPlugin(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{
@@ -1061,10 +1068,9 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 	})
 }
 
-var openfeatureTestMutex sync.Mutex
-
 // setupOpenFeatureFlag sets a global OpenFeature provider for the duration of the
 // test, guarded by a mutex so flag-dependent tests don't race on the shared client.
+// The mutex is declared in navtree_test.go and shared across the package.
 func setupOpenFeatureFlag(t *testing.T, flag string, value bool) {
 	t.Helper()
 	openfeatureTestMutex.Lock()

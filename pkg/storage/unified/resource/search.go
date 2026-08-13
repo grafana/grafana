@@ -205,9 +205,16 @@ func RequiredIndexFeatures(postRankAuthz bool) []IndexFeature {
 // Features the index has and this binary does not require are ignored: an index
 // from a newer binary is the build version check's business.
 func MissingIndexFeatures(buildInfo IndexBuildInfo, requiredFeatures []IndexFeature) []IndexFeature {
+	return MissingFeatures(buildInfo.Features, requiredFeatures)
+}
+
+// MissingFeatures returns the required features absent from have. Takes the
+// feature list on its own, for callers holding a snapshot manifest rather than
+// an opened index.
+func MissingFeatures(have, requiredFeatures []IndexFeature) []IndexFeature {
 	var missing []IndexFeature
 	for _, feature := range requiredFeatures {
-		if !slices.Contains(buildInfo.Features, feature) {
+		if !slices.Contains(have, feature) {
 			missing = append(missing, feature)
 		}
 	}
