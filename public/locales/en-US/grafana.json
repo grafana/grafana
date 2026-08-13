@@ -12786,6 +12786,23 @@
     }
   },
   "notebook": {
+    "add-block": {
+      "code": "Code",
+      "heading": "Heading",
+      "label": "Add block",
+      "paragraph": "Paragraph",
+      "prompt": "Type to start writing — press / for blocks",
+      "visualization": "Visualization",
+      "visualization-placeholder": "Coming soon"
+    },
+    "cell": {
+      "delete": "Delete block",
+      "delete-confirm-text": "This removes the block and its content from the notebook. Are you sure you want to continue?",
+      "delete-confirm-title": "Delete block?",
+      "delete-confirm-yes": "Delete",
+      "drag-handle": "Drag to reorder",
+      "duplicate": "Duplicate block"
+    },
     "errors": {
       "entity": "Notebook",
       "failed-to-load": "Failed to load notebook",
@@ -12823,8 +12840,8 @@
     },
     "view": {
       "copy-link": "Copy link",
-      "edit-mode": "Edit",
-      "editing": "Editing"
+      "mode-edit": "Edit",
+      "mode-view": "View"
     }
   },
   "notifications": {
