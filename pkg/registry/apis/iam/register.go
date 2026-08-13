@@ -461,9 +461,21 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			if err != nil {
 				return err
 			}
-			storage[ssoResource.StoragePath()] = dw
+			// The legacy adapter returns the raw secret on Create so the dual-writer
+			// forwards it to MT-Settings; redact it back out of the client response.
+			redacted, err := sso.NewRedactingStore(dw)
+			if err != nil {
+				return err
+			}
+			storage[ssoResource.StoragePath()] = redacted
 		} else {
-			storage[ssoResource.StoragePath()] = b.ssoLegacyStore
+			// Legacy serves alone, but its Create still returns the raw input, so
+			// redact the response here too.
+			redacted, err := sso.NewRedactingStore(b.ssoLegacyStore)
+			if err != nil {
+				return err
+			}
+			storage[ssoResource.StoragePath()] = redacted
 		}
 	}
 
