@@ -19,6 +19,7 @@ import {
   applyNullInsertThreshold,
   nullToValue,
   SpecialValueMatch,
+  FieldColorModeId,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
