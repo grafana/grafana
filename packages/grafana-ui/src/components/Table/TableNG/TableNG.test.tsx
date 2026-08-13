@@ -1938,6 +1938,23 @@ describe('TableNG', () => {
       expect(jsonCellStyles.getPropertyValue('max-width')).toBe('600px');
     });
 
+    it('anchors a hover-expanded JSON cell to its top rather than centering the overflow', async () => {
+      // The cell root inherits `align-items: center` from the default cell styles. Left unset here,
+      // content taller than the max-height cap gets centered on the box's midpoint instead of pinned
+      // to the top — pushing the first several lines into the negative-scroll region above scrollTop
+      // 0, where they're unreachable no matter how far up you scroll.
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
+      );
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      await user.click(cells[1]);
+
+      const jsonCellStyles = window.getComputedStyle(cells[1]);
+      expect(jsonCellStyles.getPropertyValue('align-items')).toBe('flex-start');
+    });
+
     it('renders an unwrapped JSON cell with the indentation intact in the DOM', () => {
       // the collapsing happens in CSS, so the text node itself must still carry the newlines and
       // indentation for the hover expansion to have anything to reveal.

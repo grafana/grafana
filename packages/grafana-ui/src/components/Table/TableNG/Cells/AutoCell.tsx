@@ -54,6 +54,12 @@ function buildAutoCellStyles(
             maxWidth: TABLE.JSON_OVERFLOW_MAX_WIDTH,
             maxHeight: TABLE.JSON_OVERFLOW_MAX_HEIGHT,
             overflowY: 'auto',
+            // the cell root inherits `align-items: center` from the default cell styles. Centering an
+            // overflow-clipped box is "unsafe" by default: content taller than the cap gets centered
+            // on the box's midpoint, pushing the top of the content into the negative-scroll region
+            // above scrollTop 0 — unreachable, since scrolling up further isn't possible past 0. That
+            // reads as the cell opening already scrolled a few lines down with no way back to the top.
+            alignItems: 'flex-start',
           }),
       },
     }),
