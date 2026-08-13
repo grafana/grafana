@@ -94,44 +94,12 @@ The sidebar includes the following controls:
 Available quick toggles and fan-out support depend on the visualization type.
 This feature is supported for time series visualizations.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-view-panel-sidebar-v13.2.png" max-width="750px" caption="Panel in view mode with fan-out applied to series" >}}
 
-### Open the View panel controls
-
-1. Hover over a panel and open the panel menu.
-1. Select **View**.
-
-   You can also press `v` while hovering over a panel.
-
-On larger screens, the **View panel** side pane opens automatically.
-On smaller screens, open it from the dashboard sidebar by clicking the **View panel controls** button.
-
-To return to the dashboard, click **Back to dashboard** in the side pane, or use the dashboard breadcrumb.
-
-### Quick toggles
-
-The **Quick toggles** section exposes a subset of visualization options so you can change them while viewing the panel.
-
-Which options appear depends on the visualization.
-For **Time series**, the quick toggles include:
-
-- **Visibility**: Show or hide the legend.
-- **Placement**: Place the legend at the bottom or on the right.
-- **Stack series**: Stack series in the graph.
-- **Scale**: Change the axis scale (for example, linear or logarithmic).
-
-<!-- screenshot here: Quick toggles section in the View panel side pane for a Time series panel -->
-
-Other visualizations might not offer quick toggles yet.
-If a visualization doesn't support them, the **Quick toggles** section doesn't appear.
 
 ### Fan-out by series or label
 
 **Fan-out** splits one panel into multiple panels so you can compare series or label values side by side.
 This is useful when a single graph has many series and you need to spot which series or label share an anomaly.
-
-Fan-out is available for visualizations that enable it.
-**Time series** supports fan-out.
 
 In the **Fan-out by series or label** section, choose one of the following:
 
@@ -143,9 +111,7 @@ In the **Fan-out by series or label** section, choose one of the following:
 
 If the panel data has no labels, Grafana shows **Data has no labels** under **Labels**.
 
-<!-- screenshot here: Fan-out set to By series, with multiple panels rendered in view mode -->
-
-<!-- screenshot here: Fan-out set to a label (for example, method), with panels grouped by label value -->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-view-panel-sidebar-v13.2.png" max-width="750px" caption="Panel in view mode with fan-out applied to series" >}}
 
 When you select a fan-out mode, Grafana updates the dashboard URL with a `fanout` query parameter so you can share the split view.
 Leaving view mode removes that parameter.
