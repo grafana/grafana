@@ -59,7 +59,9 @@ const QueryAndCondition = ({ rule }: Props) => {
 
   const { allDataSourcesAvailable, isLoading: isDsLoading } = useAlertQueriesStatus(queries);
 
-  const [preparingQueryRuns, setPreparingQueryRuns] = useState(0);
+  // The runners can't report a run they haven't emitted for yet — see AlertingQueryRunner.run().
+  // A count rather than a boolean so overlapping runs don't clear each other's loading state.
+  const [unreportedRuns, setUnreportedRuns] = useState(0);
 
   const onRunQueries = useCallback(() => {
     if (queries.length === 0 || isDsLoading || !allDataSourcesAvailable) {
@@ -68,12 +70,12 @@ const QueryAndCondition = ({ rule }: Props) => {
 
     const condition = rulerRuleType.grafana.rule(rule.rulerRule) ? rule.rulerRule.grafana_alert.condition : 'A';
 
-    setPreparingQueryRuns((runs) => runs + 1);
+    setUnreportedRuns((runs) => runs + 1);
     void Promise.allSettled([
       runExpressionQueries(queries, condition),
       runVisualizationQueries(visualizationQueries, ''),
     ]).then(() => {
-      setPreparingQueryRuns((runs) => Math.max(0, runs - 1));
+      setUnreportedRuns((runs) => runs - 1);
     });
   }, [
     queries,
@@ -100,8 +102,8 @@ const QueryAndCondition = ({ rule }: Props) => {
   // the expression runner runs the original raw queries + expression DAG that yield the result data.
   // Both include isDsLoading because the runners can only start once the data source availability
   // check has resolved — without it there is a gap where nothing reports loading yet.
-  const queryGraphLoading = isDsLoading || preparingQueryRuns > 0 || isVisualizationLoading;
-  const queryDataLoading = isDsLoading || preparingQueryRuns > 0 || isExpressionLoading;
+  const queryGraphLoading = isDsLoading || unreportedRuns > 0 || isVisualizationLoading;
+  const queryDataLoading = isDsLoading || unreportedRuns > 0 || isExpressionLoading;
 
   return (
     <>
