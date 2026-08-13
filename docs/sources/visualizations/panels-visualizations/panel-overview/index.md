@@ -83,7 +83,8 @@ If an option is only available in view mode or edit mode, that's indicated:
 ## View mode panel controls
 
 When you open a panel in full-screen view mode, Grafana displays a **View panel** sidebar with controls for adjusting the panel.
-You don't need edit permissions to use these controls, and the changes you make don't affect the saved dashboard.
+These controls make it easier to view specific data or identify patterns and correlations.
+Because these controls exist in view mode, you don't need edit permissions to use these controls, and the changes you make don't affect the saved dashboard.
 
 The sidebar includes the following controls:
 
