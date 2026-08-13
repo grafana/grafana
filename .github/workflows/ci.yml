@@ -49,27 +49,7 @@ jobs:
     uses: ./.github/workflows/bootstrap-go-build-cache.yml
     with:
       runs-on: ubuntu-x64
-
-  go-mod-cache-enterprise:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true' && github.event.pull_request.head.repo.fork == false
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
-    with:
-      runs-on: ubuntu-x64
-      enterprise: true
-
-  go-build-cache-enterprise:
-    needs: go-mod-cache-enterprise
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/bootstrap-go-build-cache.yml
-    with:
-      runs-on: ubuntu-x64
-      enterprise: true
+      enterprise: ${{ github.event.pull_request.head.repo.fork == false }}
 
   go-remote-cache:
     needs: detect-changes
@@ -94,7 +74,7 @@ jobs:
       id-token: write
     uses: ./.github/workflows/go-lint.yml
 
-  # OSS build cache.
+  # Everything below compiles, so it waits for the build cache.
   govulncheck:
     needs: [detect-changes, go-build-cache]
     if: needs.detect-changes.outputs.backend == 'true'
@@ -112,9 +92,8 @@ jobs:
       id-token: write
     uses: ./.github/workflows/feature-toggles-ci.yml
 
-  # Enterprise build cache.
   backend-code-checks:
-    needs: [detect-changes, go-build-cache-enterprise]
+    needs: [detect-changes, go-build-cache]
     if: needs.detect-changes.outputs.docs != 'true' || needs.detect-changes.outputs.backend == 'true'
     permissions:
       contents: read
@@ -122,14 +101,14 @@ jobs:
     uses: ./.github/workflows/backend-code-checks.yml
 
   swagger-gen:
-    needs: go-build-cache-enterprise
+    needs: go-build-cache
     permissions:
       contents: read
       id-token: write
     uses: ./.github/workflows/swagger-gen.yml
 
   go-workspace-check:
-    needs: [detect-changes, go-build-cache-enterprise]
+    needs: [detect-changes, go-build-cache]
     if: github.event_name == 'pull_request'
     permissions:
       contents: read
@@ -173,7 +152,7 @@ jobs:
     uses: ./.github/workflows/pr-k8s-codegen-check.yml
 
   build-go-matrix:
-    needs: [detect-changes, go-build-cache, go-build-cache-enterprise]
+    needs: [detect-changes, go-build-cache]
     if: needs.detect-changes.outputs.backend == 'true'
     permissions:
       contents: read

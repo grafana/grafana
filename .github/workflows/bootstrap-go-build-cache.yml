@@ -1,12 +1,20 @@
 name: Bootstrap Go Build Cache
 
-# Makes sure the Go build cache exists for one bucket, so that jobs which build
-# the same tree restore the result instead of repeating it.
+# Makes sure the Go build cache exists, so that jobs which build the same tree
+# restore the result instead of repeating it.
 #
 # The usual outcome is that the entry is already there, so the job only asks
 # whether the key exists and stops, without downloading anything. On a miss it
 # restores the modules the sibling workflow saved, compiles every non-test
 # package and saves the result.
+#
+# One entry serves both OSS and enterprise jobs. The enterprise tree adds
+# packages but no module files, so the key is the same either way, and the
+# entry is only a superset if it holds both tag variants. A run that can reach
+# the enterprise tree therefore compiles untagged and tagged; a fork, which
+# cannot, compiles untagged and leaves the tagged half to the base branch.
+# Build tags and CGO_ENABLED both feed the cache key Go computes, so these have
+# to match what the consuming jobs pass or nothing they ask for is present.
 #
 # It compiles against the local build cache rather than the S3 one: the remote
 # cache replaces GOCACHE with its own store, which would leave nothing on disk
@@ -20,7 +28,7 @@ on:
         required: true
         type: string
       enterprise:
-        description: Check out the enterprise tree, which changes the cache keys.
+        description: Also compile the enterprise tree, so the entry is a superset.
         required: false
         default: false
         type: boolean
@@ -40,28 +48,17 @@ jobs:
           persist-credentials: false
           filter: blob:none
 
-      - name: Get GitHub App token
-        if: ${{ inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
-        id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
-        with:
-          github_app: grafana-ci-bot
-
-      - name: Setup Enterprise
-        if: ${{ inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
-        uses: ./.github/actions/setup-enterprise
-        with:
-          token: ${{ steps.get-github-app-token.outputs.token }}
-
       # The key has to match the one setup-go computes, so it is derived the
-      # same way: the pinned Go version and a hash of the module files, which
-      # for an enterprise run includes the enterprise tree checked out above.
+      # same way: the pinned Go version and a hash of the module files.
       - name: Compute the cache key
         id: key
         run: |
           set -euo pipefail
           GO_VERSION="$(awk '$1 == "go" { print $2; exit }' go.mod)"
-          echo "key=gobuild-${RUNNER_OS}-${RUNNER_ARCH}-${GO_VERSION}-${{ hashFiles('**/*.mod', '**/*.sum') }}" >> "$GITHUB_OUTPUT"
+          {
+            echo "key=gobuild-${RUNNER_OS}-${RUNNER_ARCH}-${GO_VERSION}-${{ hashFiles('**/*.mod', '**/*.sum') }}"
+            echo "prefix=gobuild-${RUNNER_OS}-${RUNNER_ARCH}-${GO_VERSION}-"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Is the cache already populated?
         id: probe
@@ -71,18 +68,54 @@ jobs:
           key: ${{ steps.key.outputs.key }}
           lookup-only: true
 
+      # Nothing below the probe runs on a hit, so the enterprise checkout is
+      # only paid for on the path that actually compiles.
+      - name: Get GitHub App token
+        if: ${{ steps.probe.outputs.cache-hit != 'true' && inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-ci-bot
+
+      - name: Setup Enterprise
+        id: setup-enterprise
+        if: ${{ steps.probe.outputs.cache-hit != 'true' && inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
+        uses: ./.github/actions/setup-enterprise
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+
       - name: Setup Go
         if: steps.probe.outputs.cache-hit != 'true'
         uses: ./.github/actions/setup-go
         with:
           build-cache: 'false'
 
+      # Compiling from nothing takes as long as the cache saves, so start from
+      # the newest entry for this toolchain. Go keys its build cache by content,
+      # so only the packages the module change touches are rebuilt.
+      - name: Restore the newest build cache for this toolchain
+        if: steps.probe.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/go-build
+          key: ${{ steps.key.outputs.key }}
+          restore-keys: ${{ steps.key.outputs.prefix }}
+
       - name: Build all packages
         if: steps.probe.outputs.cache-hit != 'true'
+        env:
+          CGO_ENABLED: '0'
+          ENTERPRISE: ${{ steps.setup-enterprise.outcome == 'success' }}
         run: |
           set -euo pipefail
-          for dir in $(go list -m -f '{{.Dir}}'); do
-            (cd "$dir" && go build ./...)
+          TAGSETS=("")
+          if [ "$ENTERPRISE" = "true" ]; then
+            TAGSETS+=("enterprise")
+          fi
+          for tags in "${TAGSETS[@]}"; do
+            for dir in $(go list -m -f '{{.Dir}}'); do
+              (cd "$dir" && go build -tags="$tags" ./...)
+            done
           done
 
       - name: Save the build cache

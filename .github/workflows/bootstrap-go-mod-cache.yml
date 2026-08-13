@@ -1,8 +1,8 @@
 name: Bootstrap Go Module Cache
 
-# Makes sure the Go module cache exists for one bucket. The cache keys carry the
-# runner arch and a hash of the module files, so an OSS job and an enterprise
-# job never share an entry and each needs its own run of this.
+# Makes sure the Go module cache exists. The enterprise tree adds packages but
+# no module files, so its module set is the one described by the modules here
+# and a single entry serves both.
 #
 # The usual outcome is that the entry is already there, so the job only asks
 # whether the key exists and stops. Nothing is downloaded on that path: the
@@ -22,11 +22,6 @@ on:
         description: Runner for the bucket being warmed.
         required: true
         type: string
-      enterprise:
-        description: Check out the enterprise tree, which changes the cache keys.
-        required: false
-        default: false
-        type: boolean
 
 permissions: {}
 
@@ -43,28 +38,17 @@ jobs:
           persist-credentials: false
           filter: blob:none
 
-      - name: Get GitHub App token
-        if: ${{ inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
-        id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
-        with:
-          github_app: grafana-ci-bot
-
-      - name: Setup Enterprise
-        if: ${{ inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
-        uses: ./.github/actions/setup-enterprise
-        with:
-          token: ${{ steps.get-github-app-token.outputs.token }}
-
       # The key has to match the one setup-go computes, so it is derived the
-      # same way: the pinned Go version and a hash of the module files, which
-      # for an enterprise run includes the enterprise tree checked out above.
+      # same way: the pinned Go version and a hash of the module files.
       - name: Compute the cache key
         id: key
         run: |
           set -euo pipefail
           GO_VERSION="$(awk '$1 == "go" { print $2; exit }' go.mod)"
-          echo "key=gomod-${RUNNER_OS}-${RUNNER_ARCH}-${GO_VERSION}-${{ hashFiles('**/*.mod', '**/*.sum') }}" >> "$GITHUB_OUTPUT"
+          {
+            echo "key=gomod-${RUNNER_OS}-${RUNNER_ARCH}-${GO_VERSION}-${{ hashFiles('**/*.mod', '**/*.sum') }}"
+            echo "prefix=gomod-${RUNNER_OS}-${RUNNER_ARCH}-${GO_VERSION}-"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Is the cache already populated?
         id: probe
@@ -98,6 +82,16 @@ jobs:
             echo "GOSUMDB="
             echo "GOCACHEPROG="
           } >> "$GITHUB_ENV"
+
+      # Most of the module set is unchanged between runs, so start from the
+      # newest entry and let the download fetch only what is missing.
+      - name: Restore the newest module cache for this toolchain
+        if: steps.probe.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ steps.key.outputs.key }}
+          restore-keys: ${{ steps.key.outputs.prefix }}
 
       - name: Download modules
         if: steps.probe.outputs.cache-hit != 'true'
