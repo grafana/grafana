@@ -353,15 +353,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "kubernetesSnapshots",
-			Description:     "Routes snapshot requests from /api to the /apis endpoint",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "externalSnapshotsK8SAPIPush",
 			Description:     "When kubernetesSnapshots is enabled, push/delete external snapshots via the K8s API. When off, the K8s snapshots handler falls back to the legacy /api/snapshots endpoint on the external instance.",
 			Stage:           FeatureStageExperimental,
@@ -1665,7 +1656,7 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "azureMonitorBatchAPI",
+			Name:        "datasources.azureMonitorBatchAPI",
 			Description: "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
 			Generate:    Generate{Go: true, React: true, LegacyFrontend: true},
 			Stage:       FeatureStageExperimental,
@@ -2433,6 +2424,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "kubernetesUsersRedirectNoFallback",
+			Description:  "Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:         "alertingPolicyRoutingSettings",
 			Description:  "Use notification settings policy field instead of labels for named policy routing in alert rules",
 			Stage:        FeatureStageExperimental,
@@ -2985,6 +2985,15 @@ var (
 		{
 			Name:         "table.autoColumnWidths",
 			Description:  "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "table.inspectDataTableNG",
+			Description:  "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,

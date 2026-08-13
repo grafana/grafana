@@ -3,6 +3,8 @@ import { type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 
 import { CodeLanguage, TextMode } from '../panelcfg.gen';
 
+export const EMPTY_CONTENT = ' ';
+
 export function getInterpolateFormat(codeLanguage?: CodeLanguage): 'json' | 'html' {
   return codeLanguage === CodeLanguage.Json ? 'json' : 'html';
 }
@@ -24,9 +26,7 @@ export function transformContent(mode: TextMode, content: string, disableSanitiz
       });
   }
 
-  // DangerouslySetHtmlContent throws on falsy html, and markdown renders blank
-  // lines or a lone comment to ''.
-  return content || ' ';
+  return content || EMPTY_CONTENT;
 }
 
 /** Maps the panel's CodeLanguage option to CodeMirrorEditor's lazy-loaded language names. */

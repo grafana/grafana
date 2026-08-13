@@ -22,14 +22,14 @@ export class RepeatOptions extends PageObject {
   /** Repeats the element by the given template variable */
   async repeatByVariable(variableName: string) {
     await test.step(`Repeat by variable "${variableName}"`, async () => {
-      await this.selectOption(variableName);
+      await this.selectRepeatByVariableOption(variableName);
     });
   }
 
   /** Disables the element's repetition */
   async disableRepeatByVariable() {
     await test.step('Disable repeat by variable', async () => {
-      await this.selectOption('Disable repeating');
+      await this.selectRepeatByVariableOption('Disable repeating');
     });
   }
 
@@ -86,7 +86,7 @@ export class RepeatOptions extends PageObject {
   }
 
   /** Selects an option in the "Repeat by variable" dropdown, expanding the options group first if collapsed */
-  private async selectOption(optionLabel: string) {
+  private async selectRepeatByVariableOption(optionLabel: string) {
     await this.ensureExpanded();
 
     await this.getByGrafanaSelector(

@@ -216,7 +216,7 @@ test.describe(
         // verify panel title change in panel editor UI
         await expect(panels.getPanel(`${NEW_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
 
-        await controls.clickBackToDashboard();
+        await controls.goBackToDashboard();
 
         await expect(canvas.getContainer()).toBeVisible(); // verifying that dashboard loaded
 
@@ -262,7 +262,7 @@ test.describe(
 
         await expect(panels.getPanel(`${NEW_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
 
-        await controls.clickBackToDashboard();
+        await controls.goBackToDashboard();
 
         await expect(canvas.getContainer()).toBeVisible(); // verifying that dashboard loaded
 
