@@ -59,6 +59,7 @@ type TestOption = sqlstore.TestOption
 var SetupTestDB = sqlstore.SetupTestDB
 var CleanupTestDB = sqlstore.CleanupTestDB
 var ProvideService = sqlstore.ProvideService
+var SeedDefaultOrgAndUser = sqlstore.SeedDefaultOrgAndUser
 
 // Options for NewTestStore, re-exported from sqlstore.
 var (

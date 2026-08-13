@@ -222,7 +222,7 @@ func configIdentity(cfg *setting.Cfg, featureFlags map[string]bool) string {
 	return hex.EncodeToString(h.Sum(nil)[:8])
 }
 
-// NewTestStore creates a new SQLStore with a test database. It is useful in parallel tests.
+// NewTestStore creates a new SQLStore with an empty test database. It is useful in parallel tests.
 // All cleanup is scheduled via the passed TestingTB; the caller does not need to do anything about it.
 // Temporary, clean databases are created for each test, and are destroyed when the test finishes.
 // When using subtests, create a new store for each subtest instead of sharing one across the entire test.
@@ -313,6 +313,33 @@ func NewTestStore(tb TestingTB, opts ...TestOption) *SQLStore {
 	}
 
 	return store
+}
+
+// SeedDefaultOrgAndUser seeds the state to match a default Grafana setup.
+// It is a no-op if any user already exists.
+func SeedDefaultOrgAndUser(tb TestingTB, store *SQLStore) {
+	tb.Helper()
+
+	applySeedConfigDefaults(store.cfg)
+	if err := store.ensureMainOrgAndAdminUser(false); err != nil {
+		tb.Fatalf("failed to seed default org and user: %v", err)
+		panic("unreachable")
+	}
+}
+
+// applySeedConfigDefaults sets the cfg fields seeding reads (defaults.ini values,
+// which test configs never load); without them seeding creates an unnamed extra org
+// and an admin with an empty login.
+func applySeedConfigDefaults(cfg *setting.Cfg) {
+	if cfg.AdminUser == "" {
+		cfg.AdminUser = "admin"
+		cfg.AdminEmail = "admin@localhost"
+		cfg.AdminPassword = "admin"
+	}
+	if !cfg.AutoAssignOrg {
+		cfg.AutoAssignOrg = true
+		cfg.AutoAssignOrgId = 1
+	}
 }
 
 func getTestDBType() string {

@@ -115,6 +115,34 @@ func TestIntegrationTruncateDatabase(t *testing.T) {
 	require.Empty(t, beans, "database should have no truncateBeans")
 }
 
+func columnValues(t *testing.T, store *sqlstore.SQLStore, table string, column string, orderBy string) []string {
+	t.Helper()
+	var rows []string
+	require.NoError(t, store.GetEngine().Table(table).Cols(column).OrderBy(orderBy).Find(&rows))
+	return rows
+}
+
+func TestIntegrationDefaultNoSeeding(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("by default nothing is seeded: no orgs, no users", func(t *testing.T) {
+		store := sqlstore.NewTestStore(t)
+		assert.Empty(t, columnValues(t, store, "org", "name", "id"))
+		assert.Empty(t, columnValues(t, store, "user", "login", "id"))
+	})
+}
+
+func TestIntegrationSeedDefaultOrgAndUser(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	store := sqlstore.NewTestStore(t)
+	sqlstore.SeedDefaultOrgAndUser(t, store)
+
+	// defaults should seed one named org, one "admin" user
+	assert.Equal(t, []string{"Main Org."}, columnValues(t, store, "org", "name", "id"))
+	assert.Equal(t, []string{"admin"}, columnValues(t, store, "user", "login", "id"))
+}
+
 var (
 	_ registry.DatabaseMigrator = (*truncateDatabaseSetup)(nil)
 	_ migrator.CodeMigration    = (*truncateDatabaseSetup)(nil)
