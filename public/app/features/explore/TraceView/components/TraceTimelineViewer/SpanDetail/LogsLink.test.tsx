@@ -30,6 +30,7 @@ import {
   lokiQueryMatchStorageKey,
   LogsLinkButton,
   LogsLinkMenuItem,
+  LogsPresence,
 } from './LogsLink';
 
 jest.mock('@grafana/runtime/unstable', () => ({
@@ -736,31 +737,31 @@ describe('getLogsButtonCTA', () => {
     {
       name: 'shows "Related logs" when the datasource has no settings',
       settings: undefined,
-      type: 'span' as const,
+      type: 'span',
       expected: 'Related logs',
     },
     {
       name: 'shows "Related logs" when neither filterBySpanID nor filterByTraceID is set',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false } } },
-      type: 'span' as const,
+      type: 'span',
       expected: 'Related logs',
     },
     {
       name: 'shows "Logs for this trace" when filterByTraceID is set',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterByTraceID: true } } },
-      type: 'span' as const,
+      type: 'span',
       expected: 'Logs for this trace',
     },
     {
       name: 'shows "Logs for this span" when filterBySpanID is set',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true } } },
-      type: 'span' as const,
+      type: 'span',
       expected: 'Logs for this span',
     },
     {
       name: 'prefers "Logs for this span" when both filters are set',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true, filterByTraceID: true } } },
-      type: 'span' as const,
+      type: 'span',
       expected: 'Logs for this span',
     },
   ])('$name', ({ settings, type, expected }) => {
@@ -796,86 +797,86 @@ describe('getLogsButtonTooltip', () => {
     {
       name: 'span filter, logs present',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true } } },
-      presence: 'present' as const,
-      type: 'span' as const,
+      presence: 'present',
+      type: 'span',
       expected: 'See logs related to this span using the trace data source configuration.',
     },
     {
       name: 'span filter, logs absent',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true } } },
-      presence: 'absent' as const,
-      type: 'span' as const,
+      presence: 'absent',
+      type: 'span',
       expected: 'No logs found for this span using the trace data source configuration.',
     },
     {
       name: 'trace filter, logs present',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterByTraceID: true } } },
-      presence: 'present' as const,
-      type: 'span' as const,
+      presence: 'present',
+      type: 'span',
       expected: 'See logs related to this trace using the trace data source configuration.',
     },
     {
       name: 'trace filter, logs absent',
       settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterByTraceID: true } } },
-      presence: 'absent' as const,
-      type: 'span' as const,
+      presence: 'absent',
+      type: 'span',
       expected: 'No logs found for this trace using the trace data source configuration.',
     },
     {
       name: 'explicit trace type, logs present',
       settings: { jsonData: {} },
-      presence: 'present' as const,
-      type: 'trace' as const,
+      presence: 'present',
+      type: 'trace',
       expected: 'See logs related to this trace using the trace data source configuration.',
     },
     {
       name: 'explicit trace type, logs absent',
       settings: { jsonData: {} },
-      presence: 'absent' as const,
-      type: 'trace' as const,
+      presence: 'absent',
+      type: 'trace',
       expected: 'No logs found for this trace using the trace data source configuration.',
     },
     {
       name: 'no filter, logs absent',
       settings: { jsonData: {} },
-      presence: 'absent' as const,
-      type: 'span' as const,
+      presence: 'absent',
+      type: 'span',
       expected: 'No related logs found using the trace data source configuration.',
     },
     {
       name: 'no filter, logs present',
       settings: { jsonData: {} },
-      presence: 'present' as const,
-      type: 'span' as const,
+      presence: 'present',
+      type: 'span',
       expected: 'View related logs using the trace data source configuration.',
     },
   ])('$name', ({ settings, presence, type, expected }) => {
-    expect(getLogsButtonTooltip(settings as DataSourceInstanceSettings, presence, type)).toBe(expected);
+    expect(getLogsButtonTooltip(settings as DataSourceInstanceSettings, presence as LogsPresence, type)).toBe(expected);
   });
 
   it.each([
     {
       name: 'span, logs present',
-      presence: 'present' as const,
-      type: 'span' as const,
+      presence: 'present',
+      type: 'span',
       expected: 'See related logs',
     },
     {
       name: 'trace, logs present',
-      presence: 'present' as const,
-      type: 'trace' as const,
+      presence: 'present',
+      type: 'trace',
       expected: 'See related logs',
     },
     {
       name: 'span, logs absent',
-      presence: 'absent' as const,
-      type: 'span' as const,
+      presence: 'absent',
+      type: 'span',
       expected: 'No matching logs found for this span',
     },
     {
       name: 'trace, logs absent',
-      presence: 'absent' as const,
-      type: 'trace' as const,
+      presence: 'absent',
+      type: 'trace',
       expected: 'No matching logs found for this trace',
     },
   ])('dynamic flag: $name', ({ presence, type, expected }) => {
@@ -954,7 +955,7 @@ describe('addNoSpanIdFallback', () => {
     const { query } = getTraceToLogsSpanQuery(createSpan(), lokiSettings, defaultOptions);
     const queries = query as LokiQuery[];
 
-    for (const refId of ['t2l:default:traceID', 't2l:default:otel_trace_id'] as const) {
+    for (const refId of ['t2l:default:traceID', 't2l:default:otel_trace_id']) {
       const structured = queries.find((q) => q.refId === refId);
       expect(structured).toBeDefined();
       const [, fallback] = addNoSpanIdFallback(structured!) as LokiQuery[];

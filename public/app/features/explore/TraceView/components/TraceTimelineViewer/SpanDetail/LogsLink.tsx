@@ -124,7 +124,7 @@ export const LogsLinkMenuItem = ({ linkModel, traceDatasourceUid }: Props) => {
   );
 };
 
-type LogsPresence = 'loading' | 'present' | 'absent';
+export type LogsPresence = 'loading' | 'present' | 'absent';
 
 type LogsCheckMatch = {
   datasourceUid: string;
@@ -507,8 +507,14 @@ export function getLogsButtonTooltip(
       return t('explore.span-detail-link-buttons.logs-for-this-trace.logs-found-tooltip', 'See related logs');
     }
     return type === 'trace'
-      ? t('explore.span-detail-link-buttons.logs-for-this-trace.no-logs-found-tooltip', 'No matching logs found for this trace')
-      : t('explore.span-detail-link-buttons.logs-for-this-span.no-logs-found-tooltip', 'No matching logs found for this span');
+      ? t(
+          'explore.span-detail-link-buttons.logs-for-this-trace.no-logs-found-tooltip',
+          'No matching logs found for this trace'
+        )
+      : t(
+          'explore.span-detail-link-buttons.logs-for-this-span.no-logs-found-tooltip',
+          'No matching logs found for this span'
+        );
   }
 
   const options = getTraceToLogsOptions(settings.jsonData);
