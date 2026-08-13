@@ -2476,7 +2476,8 @@
       "metadata": {
         "name": "faroInteractionEvents",
         "resourceVersion": "1785791208707",
-        "creationTimestamp": "2026-08-03T21:06:48Z"
+        "creationTimestamp": "2026-08-03T21:06:48Z",
+        "deletionTimestamp": "2026-08-13T22:01:20Z"
       },
       "spec": {
         "description": "Forward interaction events reported via reportInteraction to Faro",

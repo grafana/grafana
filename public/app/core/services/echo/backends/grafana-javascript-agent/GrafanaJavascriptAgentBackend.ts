@@ -58,10 +58,8 @@ export class GrafanaJavascriptAgentBackend
     }
 
     const sessionReplayEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.FaroSessionReplay, false);
-    const interactionEventsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.FaroInteractionEvents, false);
 
-    // when enabled, reportInteraction events are also delivered here and forwarded to faro (see addEvent)
-    if (interactionEventsEnabled) {
+    if (options.interactionEventsInstrumentalizationEnabled) {
       this.supportedEvents = [EchoEventType.GrafanaJavascriptAgent, EchoEventType.Interaction];
     }
 
@@ -181,11 +179,8 @@ export class GrafanaJavascriptAgentBackend
     observer.observe(reactRoot ?? document.body, { childList: true });
   }
 
-  // forward interaction events to faro; everything else is a noop because the EchoSrvTransport
-  // registered in faro will already broadcast all signals emitted by the faro API
   addEvent = (e: EchoEvent) => {
     if (isInteractionEvent(e)) {
-      // faro event attributes must be strings; stringifyObjectValues also survives circular refs
       this.faro?.api.pushEvent(e.payload.interactionName, stringifyObjectValues(e.payload.properties));
     }
   };

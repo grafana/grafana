@@ -12,7 +12,6 @@ declare module "@openfeature/core" {
   export type BooleanFlagKey =
     | "lokiShardSplitting"
     | "faroSessionReplay"
-    | "faroInteractionEvents"
     | "queryHistory.localOnly"
     | "queryHistory.recentQueriesUI"
     | "awsAssumeRolePerDatasourceExternalId"

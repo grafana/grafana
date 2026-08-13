@@ -13,6 +13,7 @@ export interface GrafanaJavascriptAgentBackendOptions {
   performanceInstrumentalizationEnabled: boolean;
   cspInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
+  interactionEventsInstrumentalizationEnabled: boolean;
 
   buildInfo: BuildInfo;
   userIdentifier: string;
