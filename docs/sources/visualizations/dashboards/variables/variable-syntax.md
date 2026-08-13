@@ -224,3 +224,21 @@ servers = ["test1", "test2"]
 String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
 ```
+
+### `xxhash`
+
+Hashes the interpolated value with [xxHash](https://xxhash.com/) (xxhash64) and returns the digest as zero-padded lowercase hex (16 characters). Useful when a downstream data source stores hashed identifiers - for example, a Loki label that holds an `xxhash64` of a serial number - and users want to query using the original, unhashed value.
+
+Multi-valued variables are hashed element-wise and joined with commas. An optional seed argument can be supplied in decimal (`${var:xxhash:1234}`) or hex (`${var:xxhash:0x1234}`) form; the default seed is `0`.
+
+```bash
+serial = 'SN-42'
+String to interpolate: '${serial:xxhash}'
+Interpolation result: '<16-hex-char xxhash64 digest>'
+```
+
+```bash
+serials = ['SN-1', 'SN-2']
+String to interpolate: '${serials:xxhash}'
+Interpolation result: '<digest-1>,<digest-2>'
+```
