@@ -139,8 +139,8 @@ jobs:
           for tags in "${TAGSETS[@]}"; do
             PACKAGES="$(
               for dir in $(go list -m -f '{{.Dir}}'); do
-                (cd "$dir" && go list ./...)
-              done
+                (cd "$dir" && go list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./...)
+              done | grep -v '^$'
             )"
             echo "::group::Compiling $(echo "$PACKAGES" | wc -l) packages${tags:+ (${tags})}"
             echo "$PACKAGES" | xargs go test -run='^$' -vet=off -tags="$tags"
