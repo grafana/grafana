@@ -22,7 +22,6 @@ jobs:
       contents: read
     outputs:
       hit: ${{ steps.probe.outputs.cache-hit }}
-      key: ${{ steps.key.outputs.key }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -33,30 +32,23 @@ jobs:
             **/*.sum
           sparse-checkout-cone-mode: false
 
-      # Has to match the key setup-go computes, or the jobs waiting on this one
-      # look up something that was never saved.
-      - name: Compute the cache key
-        id: key
-        env:
-          CACHE: ${{ inputs.cache }}
-        run: |
-          set -euo pipefail
-          GO_VERSION="$(awk '$1 == "go" { print $2; exit }' go.mod)"
-          echo "key=go${CACHE}-${RUNNER_OS}-${RUNNER_ARCH}-${GO_VERSION}-${{ hashFiles('**/*.mod', '**/*.sum') }}" >> "$GITHUB_OUTPUT"
+      - name: Compute Go cache keys
+        id: keys
+        uses: ./.github/actions/go-cache-keys
 
       - name: Is the cache already populated?
         id: probe
         uses: actions/cache/restore@v4
         with:
-          path: ${{ inputs.cache == 'mod' && '~/go/pkg/mod' || '~/.cache/go-build' }}
-          key: ${{ steps.key.outputs.key }}
+          path: ${{ steps.keys.outputs[format('{0}-path', inputs.cache)] }}
+          key: ${{ steps.keys.outputs[format('{0}-key', inputs.cache)] }}
           lookup-only: true
 
       - name: Report a miss
         if: steps.probe.outputs.cache-hit != 'true'
         env:
           CACHE: ${{ inputs.cache }}
-          KEY: ${{ steps.key.outputs.key }}
+          KEY: ${{ steps.keys.outputs[format('{0}-key', inputs.cache)] }}
         run: echo "::warning title=Go ${CACHE} cache miss::${KEY} is not cached, building it"
 
   populate:
