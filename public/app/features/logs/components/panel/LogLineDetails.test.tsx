@@ -769,7 +769,7 @@ describe('LogLineDetails', () => {
         expect(screen.getByText(/value2/)).toBeInTheDocument();
       });
 
-      test('Shows a prettify switch for JSON log lines', async () => {
+      test('Shows a prettify switch for JSON log lines when the log line section is open', async () => {
         const jsonEntry = '{"key":"value"}';
         const log = createLogLine({
           entry: jsonEntry,
@@ -781,11 +781,17 @@ describe('LogLineDetails', () => {
 
         await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
+        expect(screen.queryByRole('switch', { name: 'Prettify' })).not.toBeInTheDocument();
+
+        await userEvent.click(screen.getByText('Log line'));
+
         expect(screen.getByRole('switch', { name: 'Prettify' })).toBeInTheDocument();
       });
 
       test('Does not show a prettify switch for non-JSON log lines', async () => {
         await setup(undefined, { entry: 'plain log line', labels: { key1: 'label1' } });
+
+        await userEvent.click(screen.getByText('Log line'));
 
         expect(screen.queryByRole('switch', { name: 'Prettify' })).not.toBeInTheDocument();
       });
@@ -808,6 +814,7 @@ describe('LogLineDetails', () => {
           setPrettifyDetailsJSON,
         });
 
+        await userEvent.click(screen.getByText('Log line'));
         await userEvent.click(screen.getByRole('switch', { name: 'Prettify' }));
 
         expect(setPrettifyDetailsJSON).toHaveBeenCalledWith(false);
