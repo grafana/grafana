@@ -145,8 +145,9 @@ export class LogListModel implements LogRowModel {
 
   get body(): string {
     if (this._body === undefined) {
+      let raw = this.raw;
       try {
-        const parsed = parse(this.raw, undefined, {
+        const parsed = parse(raw, undefined, {
           onDuplicateKey: ({ newValue }) => newValue,
         });
         if (typeof parsed === 'object' && parsed !== null && !(parsed instanceof LosslessNumber)) {
@@ -154,15 +155,14 @@ export class LogListModel implements LogRowModel {
         }
         const reStringified = this._wrapLogMessage && this._prettifyJSON ? stringify(parsed, undefined, 2) : this.raw;
         if (reStringified) {
-          this.raw = reStringified;
+          raw = reStringified;
         }
       } catch (error) {}
 
       // always escape for literal \n, \t, \r sequences so "Escape newlines" works for all log types.
       if (this._escapeUnescapedString) {
-        this.raw = escapeUnescapedString(this.raw);
+        raw = escapeUnescapedString(raw);
       }
-      const raw = this.raw;
       this._body = this.collapsed
         ? raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)
         : raw;
