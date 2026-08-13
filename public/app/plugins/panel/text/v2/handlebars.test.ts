@@ -28,21 +28,37 @@ function render(content: string, context: TemplateContext = {}, replaceVariables
   return compileTemplate(content, replaceVariables)(context);
 }
 
+/** A frame whose display processor adds a unit, as applyFieldOverrides would. */
+function withUnit() {
+  const frame = toDataFrame({
+    fields: [{ name: 'cpu', type: FieldType.number, values: [0.84, 0.12], config: { unit: 'percentunit' } }],
+  });
+  frame.fields[0].display = (value) => ({ text: String(Number(value) * 100), numeric: Number(value), suffix: '%' });
+
+  return frame;
+}
+
 describe('buildRows', () => {
   it('builds one plain object per row, keyed by field name', () => {
     expect(buildRows(hosts, [hosts])).toEqual([
-      { host: 'web-1', cpu: 0.84 },
-      { host: 'web-2', cpu: 0.12 },
+      { host: 'web-1', cpu: 0.84, fmt: { host: 'web-1', cpu: '0.84' } },
+      { host: 'web-2', cpu: 0.12, fmt: { host: 'web-2', cpu: '0.12' } },
     ]);
   });
 
-  it('formats values for fields that carry a unit, matching ${__data.fields}', () => {
-    const frame = toDataFrame({
-      fields: [{ name: 'cpu', type: FieldType.number, values: [0.5], config: { unit: 'percentunit' } }],
-    });
-    frame.fields[0].display = () => ({ text: '50', numeric: 0.5, suffix: '%' });
+  it('keeps unit fields raw, with the formatted value under `fmt`', () => {
+    const frame = withUnit();
 
-    expect(buildRows(frame, [frame])).toEqual([{ cpu: '50%' }]);
+    expect(buildRows(frame, [frame])).toEqual([
+      { cpu: 0.84, fmt: { cpu: '84%' } },
+      { cpu: 0.12, fmt: { cpu: '12%' } },
+    ]);
+  });
+
+  it('lets a field named `fmt` shadow the namespace rather than being hidden by it', () => {
+    const frame = toDataFrame({ fields: [{ name: 'fmt', type: FieldType.string, values: ['mine'] }] });
+
+    expect(buildRows(frame, [frame])).toEqual([{ fmt: 'mine' }]);
   });
 
   it('returns an empty array for a frame with no rows', () => {
@@ -108,6 +124,13 @@ describe('compileTemplate', () => {
       ['json', '{{{json a}}}', { a: { b: 1 } }, '{\n  "b": 1\n}'],
     ])('%s', (_name, content, context, expected) => {
       expect(render(content, context)).toBe(expected);
+    });
+
+    it('compares unit fields, and prints them formatted through `fmt`', () => {
+      const frame = withUnit();
+      const context = buildAllRowsContext([frame]);
+
+      expect(render('{{#each data}}{{#if (gt cpu 0.5)}}[{{fmt.cpu}}]{{/if}}{{/each}}', context)).toBe('[84%]');
     });
 
     it('formats dates', () => {

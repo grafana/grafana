@@ -14,7 +14,7 @@ import { t } from '@grafana/i18n';
 /** One row of query data, keyed by field display name. */
 export type TemplateRow = Record<string, unknown>;
 
-export interface TemplateFrame {
+interface TemplateFrame {
   name?: string;
   refId?: string;
   data: TemplateRow[];
@@ -30,17 +30,19 @@ export type TemplateContext = TemplateRow | AllRowsContext;
 /** Resolves to the error text instead of throwing when the template is broken. */
 export type CompiledTemplate = (context: TemplateContext) => string;
 
-// Keys and formatting mirror ${__data.fields.<name>}, so both address fields the same way.
+// Values stay raw so the numeric helpers can compare them; `fmt` holds the
+// display strings. Fields are assigned last so a field named `fmt` wins.
 export function buildRows(frame: DataFrame, series: DataFrame[]): TemplateRow[] {
   const names = frame.fields.map((field) => getFieldDisplayName(field, frame, series));
 
   return Array.from({ length: frame.length }, (_, rowIndex) => {
-    const row: TemplateRow = {};
+    const formatted: TemplateRow = {};
+    const row: TemplateRow = { fmt: formatted };
 
     frame.fields.forEach((field, fieldIndex) => {
       const value = field.values[rowIndex];
-      row[names[fieldIndex]] =
-        field.config.unit && field.display ? formattedValueToString(field.display(value)) : value;
+      formatted[names[fieldIndex]] = field.display ? formattedValueToString(field.display(value)) : toText(value);
+      row[names[fieldIndex]] = value;
     });
 
     return row;
@@ -90,8 +92,7 @@ function templateError(error: unknown): string {
 const toNumber = (value: unknown): number => (typeof value === 'number' ? value : Number(value));
 const toText = (value: unknown): string => (typeof value === 'string' ? value : String(value ?? ''));
 
-// Non-dates fall back to now, which covers `{{date}}` with no argument: Handlebars
-// appends an options object to every helper call.
+// Non-dates fall back to now, covering `{{date}}` with no argument.
 const toDateTimeInput = (value: unknown): DateTimeInput =>
   typeof value === 'string' || typeof value === 'number' || value instanceof Date || isDateTime(value)
     ? value
