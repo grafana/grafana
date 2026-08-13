@@ -71,6 +71,17 @@ func Gziper() func(http.Handler) http.Handler {
 				return
 			}
 
+			// A HEAD response has no body, and the web.ResponseWriter below
+			// swallows writes with a (0, nil) short write. pgzip treats that
+			// as a write failure, skips the close path that releases its
+			// writer goroutine, and leaks one goroutine per request (gh #130649).
+			// Compressing a body that is discarded by definition is wasted
+			// work even when it does not leak, so skip the middleware entirely.
+			if req.Method == http.MethodHead {
+				next.ServeHTTP(rw, req)
+				return
+			}
+
 			grw := &gzipResponseWriter{gzip.NewWriter(rw), rw.(web.ResponseWriter)}
 			grw.Header().Set("Content-Encoding", "gzip")
 			grw.Header().Set("Vary", "Accept-Encoding")
