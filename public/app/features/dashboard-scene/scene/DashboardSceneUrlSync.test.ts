@@ -69,7 +69,8 @@ describe('DashboardSceneUrlSync', () => {
 
       scene.urlSync?.updateFromUrl({ srow: 'Traces-Instance-Stats' });
 
-      expect(locationPartialSpy).toHaveBeenCalledWith({ srow: null });
+      // replace: true so clearing srow does not push a history entry that Back would restore
+      expect(locationPartialSpy).toHaveBeenCalledWith({ srow: null }, true);
     });
 
     it('expands all collapsed ancestor rows of a nested row', () => {
@@ -177,7 +178,7 @@ describe('DashboardSceneUrlSync', () => {
       scene.urlSync?.updateFromUrl({ srow: 'Does-Not-Exist' });
 
       expect(scrollIntoViewSpy).not.toHaveBeenCalled();
-      expect(locationPartialSpy).toHaveBeenCalledWith({ srow: null });
+      expect(locationPartialSpy).toHaveBeenCalledWith({ srow: null }, true);
     });
   });
 

@@ -1415,7 +1415,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public scrollToRow(srow: string) {
-    locationService.partial({ srow: null });
+    locationService.partial({ srow: null }, true);
 
     scrollToRow(srow, this.state.body);
   }
