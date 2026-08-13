@@ -1,22 +1,15 @@
-import { type Completion, type CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { type Extension } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
 import { DataLinkBuiltInVars, type GrafanaTheme2, VariableOrigin, type VariableSuggestion } from '@grafana/data';
 
+import { type CodeMirrorCompletionContext, type CodeMirrorCompletionResult } from '../CodeMirror/types';
+import { createVariableCompletionSource } from '../CodeMirror/variableCompletion';
+
 // Matches a complete `${...}` variable reference anywhere in the document.
 const VARIABLE_PATTERN = /\$\{[^}]+\}/g;
 
 export type DataLinkInterpolationMode = 'url' | 'text';
-
-// Matches a variable being typed at the cursor: a trigger, an optional opening
-// brace, and the variable name typed so far.
-// - URL mode also treats `=` as a trigger: it's the query-param separator
-//   (`?key=`), so suggestions should open after it (the `=` itself is not part
-//   of the variable).
-// - Text mode (e.g. a link title) has no query params, so only `$` triggers.
-const URL_TRIGGER_PATTERN = /[$=]\{?[\w.]*$/;
-const TEXT_TRIGGER_PATTERN = /\$\{?[\w.]*$/;
 
 const VARIABLE_CLASS = 'cm-variable';
 
@@ -85,73 +78,23 @@ function getApplyText(suggestion: VariableSuggestion, mode: DataLinkInterpolatio
   return `\${${suggestion.value}:queryparam}`;
 }
 
-function createCompletionOption(suggestion: VariableSuggestion, mode: DataLinkInterpolationMode): Completion {
-  return {
-    label: suggestion.label,
-    detail: suggestion.origin,
-    info: suggestion.documentation ?? '',
-    apply: getApplyText(suggestion, mode),
-    type: 'variable',
-  };
-}
-
 /**
- * Autocompletion source for data link variables. Triggered by `$` — and, in `'url'` mode, also by `=` (the query-param separator) — or explicitly via Ctrl+Space.
+ * Autocompletion source for data link variables, triggered by `$` — and, in
+ * `'url'` mode, also by `=`, the query-param separator (`?key=`), which is
+ * preserved rather than replaced.
  *
- * The applied text is always a full `${...}` reference, so the replaced range
- * must start at the right place:
- * - `$`/`${` triggers are part of the variable syntax → replace from the `$`.
- * - `=` is a separator → replace from *after* the `=`, preserving it. (The old
- *   implementation replaced from the `=`, swallowing it for inputs like `=fo`.)
- *
- * Filtering is done here against the typed name (`filter: false`) so the `${`
- * prefix in the replaced range doesn't defeat CodeMirror's label matching.
- *
- * Pass `{ mode: 'text' }` for plain-text fields (e.g. a link title): `=` no
+ * Pass `{ mode: 'text' }` for plain-text fields such as a link title: `=` no
  * longer triggers and template variables are formatted as `${var}` without the
  * URL-only `:queryparam` encoding.
  */
 export function dataLinkAutocompletion(
   suggestions: VariableSuggestion[],
   options: { mode?: DataLinkInterpolationMode } = {}
-): (context: CompletionContext) => CompletionResult | null {
+): (context: CodeMirrorCompletionContext) => CodeMirrorCompletionResult | null {
   const { mode = 'url' } = options;
-  const triggerPattern = mode === 'url' ? URL_TRIGGER_PATTERN : TEXT_TRIGGER_PATTERN;
 
-  return (context: CompletionContext): CompletionResult | null => {
-    if (suggestions.length === 0) {
-      return null;
-    }
-
-    const word = context.matchBefore(triggerPattern);
-
-    // Outside a trigger, only respond when completion was explicitly requested
-    // (Ctrl+Space): insert a fresh `${...}` at the cursor.
-    if (!word) {
-      return context.explicit
-        ? { from: context.pos, options: suggestions.map((s) => createCompletionOption(s, mode)), filter: false }
-        : null;
-    }
-
-    const triggerChar = word.text.charAt(0);
-    // The variable name typed so far, after stripping the trigger and brace.
-    const typed = word.text.replace(/^[$=]\{?/, '');
-    // `=` is preserved (replace after it); `$`/`${` is replaced (it's re-inserted).
-    // Anchoring at the trigger (rather than the cursor) is what stops an explicit
-    // request after a typed `$` from producing `$${...}`.
-    const from = triggerChar === '=' ? word.from + 1 : word.from;
-
-    // An explicit request (Ctrl+Space) shows every variable; implicit triggering
-    // filters by the name typed so far.
-    const matches =
-      context.explicit || !typed
-        ? suggestions
-        : suggestions.filter((s) => s.label.toLowerCase().includes(typed.toLowerCase()));
-
-    return {
-      from,
-      options: matches.map((s) => createCompletionOption(s, mode)),
-      filter: false,
-    };
-  };
+  return createVariableCompletionSource(suggestions, {
+    separators: mode === 'url' ? ['='] : [],
+    getInsertText: (suggestion) => getApplyText(suggestion, mode),
+  });
 }

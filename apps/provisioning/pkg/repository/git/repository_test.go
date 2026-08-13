@@ -2252,6 +2252,76 @@ func TestGitRepository_createSignature(t *testing.T) {
 		require.Equal(t, "Bot Signer", committer.Name)
 		require.Equal(t, "signer@example.com", committer.Email)
 	})
+
+	t.Run("should override author and committer from spec", func(t *testing.T) {
+		repo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Commit: &provisioning.CommitOptions{
+						AuthorName:  "Sync Bot",
+						AuthorEmail: "bot@example.com",
+					},
+				},
+			},
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), repository.CommitSignature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+		})
+
+		author, committer := repo.createSignature(ctx)
+
+		require.Equal(t, "Sync Bot", author.Name)
+		require.Equal(t, "bot@example.com", author.Email)
+		require.Equal(t, "Sync Bot", committer.Name)
+		require.Equal(t, "bot@example.com", committer.Email)
+	})
+
+	t.Run("should default author name when only author email is overridden", func(t *testing.T) {
+		repo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:   provisioning.GitHubRepositoryType,
+					Commit: &provisioning.CommitOptions{AuthorEmail: "bot@example.com"},
+				},
+			},
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), repository.CommitSignature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+		})
+
+		author, committer := repo.createSignature(ctx)
+
+		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "bot@example.com", author.Email)
+		require.Equal(t, "Grafana", committer.Name)
+		require.Equal(t, "bot@example.com", committer.Email)
+	})
+
+	t.Run("should keep the signer as committer when the author is overridden", func(t *testing.T) {
+		repo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Commit: &provisioning.CommitOptions{
+						AuthorName:  "Sync Bot",
+						AuthorEmail: "bot@example.com",
+						SignerName:  "Bot Signer",
+						SignerEmail: "signer@example.com",
+					},
+				},
+			},
+		}
+
+		author, committer := repo.createSignature(context.Background())
+
+		require.Equal(t, "Sync Bot", author.Name)
+		require.Equal(t, "bot@example.com", author.Email)
+		require.Equal(t, "Bot Signer", committer.Name)
+		require.Equal(t, "signer@example.com", committer.Email)
+	})
 }
 
 func TestNewGitRepository(t *testing.T) {

@@ -185,6 +185,9 @@ func (st DBstore) getFolderFullpaths(ctx context.Context, orgID int64, folderUID
 		UIDs:         folderUIDs,
 		WithFullpath: true,
 		SignedInUser: bgUser,
+		// Only Fullpath is read below; serve from the search index rather than a
+		// full-object folder list.
+		MetadataOnly: true,
 	})
 	if err != nil {
 		return nil, err
@@ -1640,6 +1643,9 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 					UIDs:         slices.Collect(maps.Keys(uids)),
 					WithFullpath: true,
 					SignedInUser: schedulerUser,
+					// Only Fullpath is read below; serve from the search index rather than a
+					// full-object folder list.
+					MetadataOnly: true,
 				})
 				if err != nil {
 					return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)

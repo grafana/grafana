@@ -76,6 +76,43 @@ describe('DashboardSidebar', () => {
       expect(sidebar.getSelectedObject()).toBe(panel1);
     });
 
+    it('selects the newly created group after grouping panels', () => {
+      const panel1 = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+      const panel2 = new VizPanel({ key: 'panel-2', pluginId: 'text', title: 'P2' });
+      const layout = new AutoGridLayoutManager({
+        layout: new AutoGridLayout({
+          children: [new AutoGridItem({ body: panel1 }), new AutoGridItem({ body: panel2 })],
+        }),
+      });
+      const dashboard = new DashboardScene({ isEditing: true, body: layout });
+      config.featureToggles.dashboardNewLayouts = true;
+      activateFullSceneTree(dashboard);
+
+      const sidebar = dashboard.state.sidebar;
+      sidebar.selectObject(panel1, { force: true });
+      sidebar.selectObject(panel2, { multi: true });
+
+      layout.groupSelectionInto([panel1, panel2], 'tab');
+
+      const selectedObject = sidebar.getSelectedObject();
+      expect(selectedObject).toBeInstanceOf(TabItem);
+      expect(sidebar.state.selectionContext.selected).toHaveLength(1);
+      expect(sidebar.state.isNewElement).toBe(true);
+
+      if (!(selectedObject instanceof TabItem)) {
+        throw new Error('expected tab item');
+      }
+
+      // The selected group is the tab wrapping the grouped panels (the very instances).
+      const groupedPanels = selectedObject.getLayout().getVizPanels();
+      expect(groupedPanels[0] === panel1).toBe(true);
+      expect(groupedPanels[1] === panel2).toBe(true);
+
+      // Undoing the grouping clears the selection of the (now removed) group.
+      sidebar.undoAction();
+      expect(sidebar.state.selectionContext.selected).toHaveLength(0);
+    });
+
     it('Clear selection should select dashboard when docked', () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;

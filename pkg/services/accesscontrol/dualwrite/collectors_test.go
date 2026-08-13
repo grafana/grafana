@@ -61,7 +61,7 @@ func setupTestEnv(t *testing.T) *testEnv {
 	teamService, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
-	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	userService, err := userimpl.ProvideService(

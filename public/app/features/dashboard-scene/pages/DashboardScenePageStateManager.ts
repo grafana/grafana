@@ -70,8 +70,12 @@ import {
 } from '../serialization/transformSaveModelToScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
+import { DashboardInteractions } from '../utils/interactions';
 import {
+  countPredefinedVariableOrigins,
+  getGlobalVariablesMode,
   mayInjectAnyPredefinedVariables,
+  parseIgnorePredefinedVariables,
   resolvePredefinedVariablesForDashboard,
 } from '../utils/predefinedVariableDenyList';
 import { fetchPredefinedVariables } from '../utils/predefinedVariables';
@@ -1049,7 +1053,15 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         typeof denylistAnnotation === 'string' ? { [AnnoKeyIgnorePredefinedVariables]: denylistAnnotation } : undefined,
     };
 
+    const mode = getGlobalVariablesMode(parseIgnorePredefinedVariables(resolutionInput.annotations));
+
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
+      DashboardInteractions.globalVariablesLoaded({
+        global_count: 0,
+        folder_count: 0,
+        total_count: 0,
+        mode,
+      });
       return {
         ...options,
         defaultVariables: [...(options.defaultVariables ?? [])],
@@ -1059,6 +1071,12 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     // Fail open on initial load: a null fetch (error) is treated as no predefined variables.
     const candidates = (await fetchPredefinedVariables(folderUid)) ?? [];
     const predefinedVariables = resolvePredefinedVariablesForDashboard(candidates, resolutionInput);
+    const counts = countPredefinedVariableOrigins(predefinedVariables);
+
+    DashboardInteractions.globalVariablesLoaded({
+      ...counts,
+      mode,
+    });
 
     // Always attach (including []) so scene-cache hits can sync — including clearing
     // variables that were deleted after the scene was cached.

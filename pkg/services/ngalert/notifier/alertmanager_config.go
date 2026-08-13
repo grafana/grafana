@@ -291,7 +291,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	result := definitions.GettableUserConfig{
 		TemplateFiles: v1.TemplatesToTemplateFiles(cfg.Templates),
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
-			Config: PostableApiAlertingConfigToAPI(alertmanagerConfig).Config,
+			Config: PostableApiAlertingConfigToAPI(alertmanagerConfig, cfg.SortedTimeIntervals()).Config,
 		},
 		ExtraConfigs: ExtraConfigsToAPI(cfg.ExtraConfigs),
 	}
@@ -557,8 +557,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		config.TemplateFileProvenances[key] = definitions.Provenance(provenance)
 	}
 
-	mt := definitions.MuteTimeInterval{}
-	mtProvs, err := moa.ProvStore.GetProvenances(ctx, org, mt.ResourceType())
+	mtProvs, err := moa.ProvStore.GetProvenances(ctx, org, (&v1.TimeInterval{}).ResourceType())
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil
 	}
