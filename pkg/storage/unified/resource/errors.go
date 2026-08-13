@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	grpccodes "google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,6 +51,45 @@ func NewNotFoundError(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 			Name:  key.Name,
 		},
 	}
+}
+
+func NewResourceVersionExpiredError(rv int64) error {
+	result := &resourcepb.ErrorResult{
+		Message: fmt.Sprintf("too old resource version: %d", rv),
+		Code:    http.StatusGone,
+		Reason:  string(metav1.StatusReasonExpired),
+	}
+	st := grpcstatus.New(grpccodes.OutOfRange, result.Message)
+	if withDetails, err := st.WithDetails(result); err == nil {
+		st = withDetails
+	}
+	return st.Err()
+}
+
+func IsResourceVersionExpired(err error) bool {
+	if err == nil {
+		return false
+	}
+	if apierrors.IsResourceExpired(err) || apierrors.IsGone(err) {
+		return true
+	}
+	if res := errorResultFromGRPCDetails(err); res != nil {
+		return res.Code == http.StatusGone || res.Reason == string(metav1.StatusReasonExpired)
+	}
+	return false
+}
+
+func errorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
+	st, ok := grpcstatus.FromError(err)
+	if !ok || st == nil {
+		return nil
+	}
+	for _, detail := range st.Details() {
+		if res, ok := detail.(*resourcepb.ErrorResult); ok {
+			return res
+		}
+	}
+	return nil
 }
 
 func NewTooManyRequestsError(msg string) *resourcepb.ErrorResult {
@@ -123,6 +163,12 @@ func newRequiredFieldError(
 func AsErrorResult(err error) *resourcepb.ErrorResult {
 	if err == nil {
 		return nil
+	}
+
+	// Structured results attached to a gRPC error keep their reason/code across
+	// the wire, so prefer them over the generic mapping below.
+	if res := errorResultFromGRPCDetails(err); res != nil {
+		return res
 	}
 
 	var apistatus apierrors.APIStatus

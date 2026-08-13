@@ -1,9 +1,18 @@
 import { act, render } from '@testing-library/react';
+import { createMemoryHistory } from 'history';
 import { BehaviorSubject } from 'rxjs';
 
 import { CoreApp, type Scope } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, ScopesContext, type ScopesContextValue, setPluginImportUtils } from '@grafana/runtime';
+import {
+  config,
+  HistoryWrapper,
+  locationService,
+  ScopesContext,
+  type ScopesContextValue,
+  setLocationService,
+  setPluginImportUtils,
+} from '@grafana/runtime';
 import {
   sceneGraph,
   SceneRefreshPicker,
@@ -12,6 +21,7 @@ import {
   ScopesVariable,
   VizPanel,
 } from '@grafana/scenes';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { NotebookScene } from './NotebookScene';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
@@ -90,6 +100,58 @@ describe('NotebookScene', () => {
     activate(scene);
 
     expect(scene.state.refreshPicker.isActive).toBe(false);
+  });
+
+  describe('edit mode', () => {
+    const originalLocationService = locationService;
+
+    beforeEach(() => {
+      // A memory history keeps the url assertions independent of whatever jsdom's location is.
+      setLocationService(new HistoryWrapper(createMemoryHistory({ initialEntries: ['/notebooks/nb1'] })));
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      setLocationService(originalLocationService);
+      jest.restoreAllMocks();
+    });
+
+    it('starts in view mode', () => {
+      expect(buildScene(false).state.isEditing).toBeUndefined();
+    });
+
+    it('enters edit mode and tells the layout', () => {
+      const scene = buildScene(false);
+
+      scene.onEnterEditMode();
+
+      expect(scene.state.isEditing).toBe(true);
+      // Asserted through the layout's own state rather than a spy, so the propagation is real.
+      expect(scene.state.body.state.isEditing).toBe(true);
+    });
+
+    // Reflecting the mode in the url is NotebookSceneUrlSync's job, not these methods' — covered by
+    // its own tests and by the page test that mounts the sync provider.
+    it('refuses a user without edit permission, whatever the caller', () => {
+      // NotebookSceneUrlSync calls this directly, so the guard cannot live only in the toggle.
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      const scene = buildScene(false);
+
+      scene.onEnterEditMode();
+
+      expect(scene.state.isEditing).toBeUndefined();
+      expect(scene.state.body.state.isEditing).toBeUndefined();
+    });
+
+    it('leaves edit mode again, clearing the layout too', () => {
+      const scene = buildScene(false);
+      scene.onEnterEditMode();
+
+      scene.onExitEditMode();
+
+      expect(scene.state.isEditing).toBe(false);
+      expect(scene.state.body.state.isEditing).toBe(false);
+    });
   });
 
   describe('enrichDataRequest', () => {

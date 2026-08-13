@@ -163,6 +163,8 @@ export const FlagKeys = {
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
   /** Sizes TableNG auto-width columns to fit their content instead of distributing evenly */
   TableAutoColumnWidths: "table.autoColumnWidths",
+  /** Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT) */
+  TableInspectDataTableNG: "table.inspectDataTableNG",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
   /** Enables the new features in text panel */
@@ -994,6 +996,17 @@ export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEva
  */
 export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.autoColumnWidths", false, options).value;
+};
+
+/**
+ * Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)
+ *
+ * **Details:**
+ * - flag key: `table.inspectDataTableNG`
+ * - default value: `false`
+ */
+export const useFlagTableInspectDataTableNG = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.inspectDataTableNG", false, options).value;
 };
 
 /**

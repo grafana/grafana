@@ -5659,6 +5659,7 @@
       "add-conditional-rule": "Regel {{ruleDescription}} toevoegen",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "Paneel dupliceren",
       "edit-query-result-rule": "Regel voor queryresultaat wijzigen",
       "edit-template-variable-rule": "Regel voor sjabloonvariabele wijzigen",
@@ -6863,7 +6864,8 @@
         "change-annotation-enabled-state": "Inschakelstatus van annotatie wijzigen",
         "change-annotation-name": "Annotatienaam wijzigen",
         "change-annotation-panel-filter": "Annotatiepaneelfilter wijzigen"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "Annotatiequery verwijderen",
@@ -6939,13 +6941,9 @@
       "placeholder-your-metric-prefix": "Je metrisch voorvoegsel"
     },
     "control-edit-actions": {
-      "aria-label-delete": "Verwijderen",
-      "aria-label-edit": "Bewerken",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Regels tonen/verbergen werkt niet",
@@ -7745,6 +7743,10 @@
     },
     "variable-controls": {
       "add-variable": "Variabele toevoegen"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "Variabele verwijderen",
@@ -12654,6 +12656,7 @@
       "customise-saving": "",
       "dialog-label": "Navigatie",
       "dock": "Menu koppelen",
+      "header-title": "",
       "list-label": "Navigatie",
       "open": "Hoofdmenu",
       "pin-error": "",
@@ -12764,6 +12767,13 @@
       "title-zoom-out": "Uitzoomen"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12792,6 +12802,11 @@
       "count_other": "",
       "count-truncated_one": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
     }
   },
   "notifications": {
@@ -16059,6 +16074,7 @@
     "name-show-mini-map": "Minikaart weergeven"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -16087,6 +16103,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

@@ -5619,6 +5619,7 @@
       "add-conditional-rule": "{{ruleDescription}}ルールを追加",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "パネルを複製",
       "edit-query-result-rule": "クエリ結果ルールを変更",
       "edit-template-variable-rule": "テンプレート変数ルールを変更",
@@ -6809,7 +6810,8 @@
         "change-annotation-enabled-state": "注釈の有効状態を変更",
         "change-annotation-name": "注釈の名前を変更",
         "change-annotation-panel-filter": "注釈パネルのフィルターを変更"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "注釈クエリを削除",
@@ -6885,13 +6887,9 @@
       "placeholder-your-metric-prefix": "メトリックのプレフィックス"
     },
     "control-edit-actions": {
-      "aria-label-delete": "削除",
-      "aria-label-edit": "編集",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "ルールの表示/非表示は機能しません",
@@ -7689,6 +7687,10 @@
     },
     "variable-controls": {
       "add-variable": "変数を追加"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "変数を削除",
@@ -12559,6 +12561,7 @@
       "customise-saving": "",
       "dialog-label": "ナビゲーション",
       "dock": "メニューを固定",
+      "header-title": "",
       "list-label": "移動",
       "open": "メインメニュー",
       "pin-error": "",
@@ -12666,6 +12669,13 @@
       "title-zoom-out": "ズームアウト"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12692,6 +12702,11 @@
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
     }
   },
   "notifications": {
@@ -15929,6 +15944,7 @@
     "name-show-mini-map": "ミニマップを表示"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -15957,6 +15973,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {

@@ -387,7 +387,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				SubTitle: "Template variables shared across dashboards, globally or per folder",
 				Id:       "dashboards/variables",
 				Url:      s.cfg.AppSubURL + "/dashboards/variables",
-				Icon:     "brackets-curly",
+				Icon:     "gf-variable",
 			})
 		}
 
@@ -543,8 +543,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		}
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingCentralAlertHistory) {
+	if s.cfg.UnifiedAlerting.StateHistory.QueriesServedByLoki() {
 		if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead))) {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 				Text: "History",

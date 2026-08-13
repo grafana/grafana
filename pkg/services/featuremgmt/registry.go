@@ -1110,14 +1110,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "alertingCentralAlertHistory",
-			Description: "Enables the new central alert history.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true}, // changes navtree from backend
-			Expression:  "false",
-		},
-		{
 			Name:        "pluginProxyPreserveTrailingSlash",
 			Description: "Preserve plugin proxy trailing slash.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2424,6 +2416,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "kubernetesUsersRedirectNoFallback",
+			Description:  "Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:         "alertingPolicyRoutingSettings",
 			Description:  "Use notification settings policy field instead of labels for named policy routing in alert rules",
 			Stage:        FeatureStageExperimental,
@@ -2976,6 +2977,15 @@ var (
 		{
 			Name:         "table.autoColumnWidths",
 			Description:  "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "table.inspectDataTableNG",
+			Description:  "Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,
