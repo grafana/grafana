@@ -133,7 +133,9 @@ func (c *compiler) compileComparison(e *ComparisonExpression) error {
 		}
 		// Bind as string with an explicit ::jsonb cast (matching the $in path)
 		// rather than relying on the driver to infer jsonb from a []byte arg.
-		c.where.WriteString("(metadata @> ")
+		// COALESCE so a NULL metadata column reads as {} — otherwise NOT (NULL
+		// @> ...) is NULL and $ne would skip metadata-less rows.
+		c.where.WriteString("(COALESCE(metadata, '{}'::jsonb) @> ")
 		c.addArg(string(jsonArg))
 		c.where.WriteString("::jsonb)")
 		return nil

@@ -27,6 +27,11 @@ const maxWriteBatch = 500
 // maxMetadataBytes mirrors the proto contract (metadata ≤ 4 KiB JSON).
 const maxMetadataBytes = 4096
 
+// maxFilterValues caps total $in/$nin values in a filter. Each value expands
+// to a few SQL parameters, so this keeps a filter well under Postgres's 65535
+// parameter limit instead of failing as Internal at execution.
+const maxFilterValues = 1000
+
 // maxKeyFieldLen mirrors the VARCHAR(256) width of the uid and subresource
 // columns — reject before spending an embedding on a row Postgres will bounce.
 const maxKeyFieldLen = 256
@@ -169,6 +174,22 @@ func (s *VectorStoreServer) authorize(ctx context.Context, namespace, group, res
 		return status.Errorf(codes.NotFound, "collection %s/%s not found", group, resource)
 	}
 	return nil
+}
+
+// parseFilter parses, rejects an empty filter, and bounds the value count so a
+// huge $in can't exceed Postgres's parameter limit at execution time.
+func parseFilter(raw []byte) (*filter.Filter, error) {
+	f, err := filter.Parse(raw)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", err)
+	}
+	if f == nil {
+		return nil, status.Error(codes.InvalidArgument, "filter must not be empty")
+	}
+	if n := filter.ValueCount(f); n > maxFilterValues {
+		return nil, status.Errorf(codes.InvalidArgument, "filter has too many values: %d > %d", n, maxFilterValues)
+	}
+	return f, nil
 }
 
 // validateMetadataObject rejects metadata that is valid JSON but not a
@@ -417,12 +438,9 @@ func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDe
 		sel.All = true
 		sel.Limit = deleteAllPageSize
 	case *resourcepb.VectorDeleteRequest_Filter:
-		f, err := filter.Parse(sl.Filter)
+		f, err := parseFilter(sl.Filter)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", err)
-		}
-		if f == nil {
-			return nil, status.Error(codes.InvalidArgument, "filter must not be empty")
+			return nil, err
 		}
 		sel.Filter = f
 		sel.Limit = deleteAllPageSize
@@ -446,12 +464,9 @@ func (s *VectorStoreServer) UpdateMetadata(ctx context.Context, req *resourcepb.
 		return nil, err
 	}
 
-	f, err := filter.Parse(req.Filter)
+	f, err := parseFilter(req.Filter)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", err)
-	}
-	if f == nil {
-		return nil, status.Error(codes.InvalidArgument, "filter must not be empty")
+		return nil, err
 	}
 	if len(req.Set) == 0 && len(req.Unset) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "at least one of set or unset is required")

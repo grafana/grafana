@@ -564,6 +564,30 @@ func TestVectorStore_UpdateMetadataValidation(t *testing.T) {
 	}
 }
 
+func TestVectorStore_FilterTooManyValuesIsInvalidArgument(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true}
+	s := newTestVectorStoreServer(store)
+
+	vals := make([]string, maxFilterValues+1)
+	for i := range vals {
+		vals[i] = "v"
+	}
+	b, _ := json.Marshal(map[string]any{"uid": map[string]any{"$in": vals}})
+
+	_, err := s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Filter{Filter: b},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	_, err = s.UpdateMetadata(vsAuthedCtx(), &resourcepb.VectorUpdateMetadataRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Filter: b, Set: []byte(`{"a":1}`),
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
 func TestVectorStore_UpdateMetadataUnprovisionedIsNotFound(t *testing.T) {
 	store := &fakeWriteStore{resolveFound: false}
 	s := newTestVectorStoreServer(store)

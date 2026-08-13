@@ -1465,3 +1465,29 @@ func TestIntegrationVectorFilterNonStringIn(t *testing.T) {
 	require.NoError(t, err)
 	require.EqualValues(t, 1, n) // arr contains "b"
 }
+
+func TestIntegrationVectorNeMatchesNullMetadata(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+	_, err := backend.DeleteNamespace(ctx, "ns-null")
+	require.NoError(t, err)
+
+	mk := func(uid string, meta json.RawMessage) Vector {
+		return Vector{
+			Namespace: "ns-null", Resource: testResource, UID: uid, Title: "T",
+			Content: "c", Embedding: makeEmbedding(0.8, 0.8), Model: testModel,
+			Metadata: meta,
+		}
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("has", json.RawMessage(`{"env":"prod"}`)),
+		mk("other", json.RawMessage(`{"env":"dev"}`)),
+		mk("none", nil), // stored as SQL NULL
+	}))
+
+	// $ne "prod" must match the dev row AND the metadata-less row (Mongo: a
+	// missing field is "not equal"), i.e. everything except the prod row.
+	n, _, err := backend.DeleteRows(ctx, "ns-null", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"env":{"$ne":"prod"}}`)})
+	require.NoError(t, err)
+	require.EqualValues(t, 2, n) // other + none, not has
+}

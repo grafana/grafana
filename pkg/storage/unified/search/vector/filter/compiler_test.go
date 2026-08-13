@@ -24,7 +24,7 @@ func TestCompile(t *testing.T) {
 		{
 			name:      "simple equality uses containment",
 			filter:    &Filter{Comparison: &ComparisonExpression{Field: "genre", Operator: Eq, Value: "documentary"}},
-			wantQuery: "(metadata @> $1::jsonb)",
+			wantQuery: "(COALESCE(metadata, '{}'::jsonb) @> $1::jsonb)",
 			wantArgs:  []any{`{"genre":"documentary"}`},
 		},
 		{
@@ -36,7 +36,7 @@ func TestCompile(t *testing.T) {
 		{
 			name:      "not equal",
 			filter:    &Filter{Comparison: &ComparisonExpression{Field: "genre", Operator: Ne, Value: "documentary"}},
-			wantQuery: "NOT (metadata @> $1::jsonb)",
+			wantQuery: "NOT (COALESCE(metadata, '{}'::jsonb) @> $1::jsonb)",
 			wantArgs:  []any{`{"genre":"documentary"}`},
 		},
 		{
@@ -86,7 +86,7 @@ func TestCompile(t *testing.T) {
 				{Comparison: &ComparisonExpression{Field: "genre", Operator: Eq, Value: "drama"}},
 				{Comparison: &ComparisonExpression{Field: "year", Operator: Gte, Value: 2020}},
 			}}},
-			wantQuery: "((metadata @> $1::jsonb) AND (CASE WHEN jsonb_typeof(metadata -> $2) = 'number' THEN (metadata ->> $2)::numeric END >= $3))",
+			wantQuery: "((COALESCE(metadata, '{}'::jsonb) @> $1::jsonb) AND (CASE WHEN jsonb_typeof(metadata -> $2) = 'number' THEN (metadata ->> $2)::numeric END >= $3))",
 			wantArgs:  []any{`{"genre":"drama"}`, "year", 2020},
 		},
 		{
@@ -107,7 +107,7 @@ func TestCompile(t *testing.T) {
 					{Comparison: &ComparisonExpression{Field: "year", Operator: Lt, Value: 2000}},
 				}}},
 			}}},
-			wantQuery: "((metadata @> $1::jsonb) AND ((CASE WHEN jsonb_typeof(metadata -> $2) = 'number' THEN (metadata ->> $2)::numeric END > $3) OR (CASE WHEN jsonb_typeof(metadata -> $4) = 'number' THEN (metadata ->> $4)::numeric END < $5)))",
+			wantQuery: "((COALESCE(metadata, '{}'::jsonb) @> $1::jsonb) AND ((CASE WHEN jsonb_typeof(metadata -> $2) = 'number' THEN (metadata ->> $2)::numeric END > $3) OR (CASE WHEN jsonb_typeof(metadata -> $4) = 'number' THEN (metadata ->> $4)::numeric END < $5)))",
 			wantArgs:  []any{`{"genre":"action"}`, "year", 2010, "year", 2000},
 		},
 	}
