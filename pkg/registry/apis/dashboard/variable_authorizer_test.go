@@ -125,6 +125,22 @@ func TestVariableAuthorizer(t *testing.T) {
 	}
 }
 
+func TestVariableAuthorizer_NilAccessControl(t *testing.T) {
+	setGlobalVariablesToggle(t, true)
+	authz := newVariableAuthorizer(nil)
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1})
+
+	decision, reason, err := authz.Authorize(ctx, authorizer.AttributesRecord{
+		ResourceRequest: true,
+		Verb:            "list",
+		APIGroup:        "dashboard.grafana.app",
+		Resource:        "variables",
+	})
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionDeny, decision)
+	require.Equal(t, "access control is not configured", reason)
+}
+
 func TestVariableAuthorizer_OrphanedFolderScopedUpdate(t *testing.T) {
 	// Regression: scoped update/delete used to resolve variables:uid via
 	// GetInheritedScopes; when the parent folder was gone the resolver erred and
@@ -191,8 +207,7 @@ func setGlobalVariablesToggle(t *testing.T, enabled bool) {
 }
 
 // TestDashboardsAPIBuilderVariableAuthorizer verifies that the global variables
-// feature is gated per request in the authorizer: variable storage is always
-// registered, so enablement is enforced here rather than at route-registration time.
+// feature is gated per request in the authorizer when storage is registered.
 func TestDashboardsAPIBuilderVariableAuthorizer(t *testing.T) {
 	ctx := context.Background()
 	authz := (&DashboardsAPIBuilder{
@@ -227,4 +242,20 @@ func TestDashboardsAPIBuilderVariableAuthorizer(t *testing.T) {
 		_, _, err := authz.Authorize(ctx, authzAttributes(dashv0.DashboardResourceInfo.GetName(), "get"))
 		require.ErrorContains(t, err, "no identity found")
 	})
+}
+
+func TestDashboardsAPIBuilderVariableAuthorizer_StandaloneNilAccessControl(t *testing.T) {
+	// NewAPIService leaves accessControl unset. With the flag on, Authorize
+	// must deny rather than panic on Evaluate.
+	setGlobalVariablesToggle(t, true)
+	authz := (&DashboardsAPIBuilder{}).GetAuthorizer()
+
+	for _, verb := range []string{"get", "list", "watch", "create", "update", "delete", "deletecollection"} {
+		t.Run(verb, func(t *testing.T) {
+			decision, reason, err := authz.Authorize(context.Background(), authzAttributes(dashv2beta1.VariableResourceInfo.GetName(), verb))
+			require.NoError(t, err)
+			require.Equal(t, authorizer.DecisionDeny, decision)
+			require.Equal(t, "access control is not configured", reason)
+		})
+	}
 }

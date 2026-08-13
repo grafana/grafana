@@ -373,13 +373,11 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		return nil // OK for now
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
-	// Reachability invariant: Variable storage is always registered, but
-	// FlagGrafanaDashboardGlobalVariables is gated per request in GetAuthorizer. When
-	// the feature is disabled the authorizer denies the request (403) before
-	// admission runs, so this case only fires when global dashboard variables
-	// are enabled. If Variable is ever added to another version or moved to a
-	// subresource, update both the storage registration and this switch in
-	// lockstep.
+	// Reachability invariant: Variable storage is registered only when
+	// accessControl is set. The flag is gated per request in GetAuthorizer, so
+	// this case fires when the feature is enabled in embedded mode. Standalone
+	// skips storage. If Variable is added to another version or moved to a
+	// subresource, update storage registration and this switch in lockstep.
 	case dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource:
 		switch op {
 		case admission.Create:
@@ -1000,27 +998,31 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
-	// Variable storage is always registered so FlagGrafanaDashboardGlobalVariables can
-	// be evaluated per request (and targeted per tenant) via OpenFeature in the
-	// authorizer, without requiring a restart. See GetAuthorizer.
-	opts.StorageOptsRegister(dashv2beta1.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
-		EnableFolderSupport: true,
-	})
+	// Variable storage is registered when accessControl is wired (embedded Grafana)
+	// so FlagGrafanaDashboardGlobalVariables can be evaluated per request via
+	// OpenFeature in the authorizer. Standalone NewAPIService leaves accessControl
+	// nil — skip registration so the resource is not served (same idea as snapshots,
+	// which storageForVersion omits when isStandalone). See GetAuthorizer.
+	if b.accessControl != nil {
+		opts.StorageOptsRegister(dashv2beta1.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
+			EnableFolderSupport: true,
+		})
 
-	gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
-		opts.Scheme,
-		dashv2beta1.VariableResourceInfo,
-		opts.OptsGetter,
-		grafanaregistry.SelectableFieldsOptions{
-			GetAttrs: VariableGetAttrs,
-		},
-	)
-	if err != nil {
-		return err
+		gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+			opts.Scheme,
+			dashv2beta1.VariableResourceInfo,
+			opts.OptsGetter,
+			grafanaregistry.SelectableFieldsOptions{
+				GetAttrs: VariableGetAttrs,
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		variableStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
+		variableStorage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 	}
-
-	variableStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
-	variableStorage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 
 	// Notebook storage is always registered so FlagDashboardNotebooks can be
 	// evaluated per request (and targeted per tenant) via OpenFeature in the
