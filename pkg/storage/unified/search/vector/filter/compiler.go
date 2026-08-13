@@ -128,14 +128,15 @@ func (c *compiler) compileComparison(e *ComparisonExpression) error {
 		if err != nil {
 			return fmt.Errorf("failed to marshal json for @> operator: %w", err)
 		}
+		// $ne coalesces NULL metadata to {} so NOT (NULL @> ...) doesn't stay
+		// NULL and skip metadata-less rows. $eq needs no coalesce (NULL @> ...
+		// is already non-matching) and keeps the bare column so the GIN index
+		// applies. Bind as string with an explicit ::jsonb cast (like $in).
 		if e.Operator == Ne {
-			c.where.WriteString("NOT ")
+			c.where.WriteString("NOT (COALESCE(metadata, '{}'::jsonb) @> ")
+		} else {
+			c.where.WriteString("(metadata @> ")
 		}
-		// Bind as string with an explicit ::jsonb cast (matching the $in path)
-		// rather than relying on the driver to infer jsonb from a []byte arg.
-		// COALESCE so a NULL metadata column reads as {} — otherwise NOT (NULL
-		// @> ...) is NULL and $ne would skip metadata-less rows.
-		c.where.WriteString("(COALESCE(metadata, '{}'::jsonb) @> ")
 		c.addArg(string(jsonArg))
 		c.where.WriteString("::jsonb)")
 		return nil
