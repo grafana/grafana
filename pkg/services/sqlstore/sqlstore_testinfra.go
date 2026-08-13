@@ -160,6 +160,12 @@ func getDBTemplate(key string, build func() (string, error)) (string, error) {
 	v, _ := dbTemplates.LoadOrStore(key, &dbTemplate{})
 	t := v.(*dbTemplate)
 	t.once.Do(func() {
+		defer func() {
+			// A panicking build must not poison the sync.Once cache.
+			if r := recover(); r != nil {
+				t.err = fmt.Errorf("template build panicked: %v", r)
+			}
+		}()
 		t.ref, t.err = build()
 	})
 	return t.ref, t.err
@@ -588,132 +594,31 @@ func cloneSQLiteTemplate(tb TestingTB, tmpl *dbTemplateRequest, dst string) erro
 
 // buildPostgresTemplate migrates a fresh template database and closes every connection to
 // it (Postgres refuses to clone a template with live connections). The template DB is left behind (PoC: one per package run).
-func buildPostgresTemplate(tmpl *dbTemplateRequest) (name string, err error) {
-	defer func() {
-		// A panicking build must not poison the sync.Once cache.
-		if r := recover(); r != nil {
-			err = fmt.Errorf("template build panicked: %v", r)
-		}
-	}()
-
-	driver, adminConn := newPostgresConnString(env("POSTGRES_DB", "grafanatest"))
-	admin, err := xorm.NewEngine(driver, adminConn)
+func buildPostgresTemplate(tmpl *dbTemplateRequest) (string, error) {
+	name, dropTemplate, err := createTemplateDatabase(newPostgresConnString, env("POSTGRES_DB", "grafanatest"))
 	if err != nil {
-		return "", fmt.Errorf("template admin engine: %w", err)
+		return "", err
 	}
-	defer func() {
-		_ = admin.Close()
-	}()
 
-	name = "grafana_tmpl_" + randomLowerHex(10)
-	if _, err := admin.Exec("CREATE DATABASE " + name); err != nil {
-		return "", fmt.Errorf("template create database: %w", err)
-	}
-	dropTemplate := func() { _, _ = admin.Exec("DROP DATABASE " + name) }
-
-	tmplDriver, tmplConn := newPostgresConnString(name)
-	templateDB := &testDB{Driver: tmplDriver, Conn: tmplConn}
-
-	// The template must be migrated under the caller's config and features: both the registered
-	// migration set and the runtime behaviour of code migrations depend on them, and the copied
-	// migration_log prevents the clone from ever re-running them with the right values.
-	features := tmpl.features
-	cfg, err := newTestCfg(tmpl.cfg, features, templateDB)
-	if err != nil {
+	driver, conn := newPostgresConnString(name)
+	if err := migrateTemplateDB(tmpl, &testDB{Driver: driver, Conn: conn}); err != nil {
 		dropTemplate()
-		return "", fmt.Errorf("template cfg: %w", err)
-	}
-	// Deterministic template: never seed default org/user; callers apply their own setting per call, after the clone.
-	cfg.Raw.Section("database").Key("ensure_default_org_and_user").SetValue("false")
-
-	engine, err := xorm.NewEngine(templateDB.Driver, templateDB.Conn)
-	if err != nil {
-		dropTemplate()
-		return "", fmt.Errorf("template engine: %w", err)
-	}
-	engine.DatabaseTZ = time.UTC
-	engine.TZLocation = time.UTC
-
-	tracer := tracing.InitializeTracerForTest()
-	store, err := newStore(cfg, engine, features, tmpl.dbMigrator, bus.ProvideBus(tracer), tracer)
-	if err != nil {
-		_ = engine.Close()
-		dropTemplate()
-		return "", fmt.Errorf("template store: %w", err)
-	}
-	if err := store.Migrate(false); err != nil {
-		_ = engine.Close()
-		dropTemplate()
-		return "", fmt.Errorf("template migrate: %w", err)
-	}
-
-	if err := engine.Close(); err != nil {
-		dropTemplate()
-		return "", fmt.Errorf("template engine close: %w", err)
+		return "", err
 	}
 	return name, nil
 }
 
 // buildMySQLTemplate migrates a fresh template database; it is left behind (PoC: one per package run).
-func buildMySQLTemplate(tmpl *dbTemplateRequest) (name string, err error) {
-	defer func() {
-		// A panicking build must not poison the sync.Once cache.
-		if r := recover(); r != nil {
-			err = fmt.Errorf("template build panicked: %v", r)
-		}
-	}()
-
-	driver, adminConn := newMySQLConnString(env("MYSQL_DB", "grafana_tests"))
-	admin, err := xorm.NewEngine(driver, adminConn)
+func buildMySQLTemplate(tmpl *dbTemplateRequest) (string, error) {
+	name, dropTemplate, err := createTemplateDatabase(newMySQLConnString, env("MYSQL_DB", "grafana_tests"))
 	if err != nil {
-		return "", fmt.Errorf("template admin engine: %w", err)
+		return "", err
 	}
-	defer func() {
-		_ = admin.Close()
-	}()
 
-	name = "grafana_tmpl_" + randomLowerHex(10)
-	if _, err := admin.Exec("CREATE DATABASE " + name); err != nil {
-		return "", fmt.Errorf("template create database: %w", err)
-	}
-	dropTemplate := func() { _, _ = admin.Exec("DROP DATABASE " + name) }
-
-	tmplDriver, tmplConn := newMySQLConnString(name)
-	templateDB := &testDB{Driver: tmplDriver, Conn: tmplConn}
-
-	// See buildPostgresTemplate: the caller's config and features must shape the template.
-	features := tmpl.features
-	cfg, err := newTestCfg(tmpl.cfg, features, templateDB)
-	if err != nil {
+	driver, conn := newMySQLConnString(name)
+	if err := migrateTemplateDB(tmpl, &testDB{Driver: driver, Conn: conn}); err != nil {
 		dropTemplate()
-		return "", fmt.Errorf("template cfg: %w", err)
-	}
-	// Deterministic template: never seed default org/user; callers apply their own setting per call, after the clone.
-	cfg.Raw.Section("database").Key("ensure_default_org_and_user").SetValue("false")
-
-	engine, err := xorm.NewEngine(templateDB.Driver, templateDB.Conn)
-	if err != nil {
-		dropTemplate()
-		return "", fmt.Errorf("template engine: %w", err)
-	}
-	engine.DatabaseTZ = time.UTC
-	engine.TZLocation = time.UTC
-
-	tracer := tracing.InitializeTracerForTest()
-	store, err := newStore(cfg, engine, features, tmpl.dbMigrator, bus.ProvideBus(tracer), tracer)
-	if err != nil {
-		_ = engine.Close()
-		dropTemplate()
-		return "", fmt.Errorf("template store: %w", err)
-	}
-	if err := store.Migrate(false); err != nil {
-		_ = engine.Close()
-		dropTemplate()
-		return "", fmt.Errorf("template migrate: %w", err)
-	}
-	if err := engine.Close(); err != nil {
-		dropTemplate()
-		return "", fmt.Errorf("template engine close: %w", err)
+		return "", err
 	}
 	return name, nil
 }
@@ -752,14 +657,7 @@ func copyMySQLDatabase(admin *xorm.Engine, src, dst string) error {
 
 // buildSQLiteTemplate returns the content-addressed template file, building it if absent
 // (migrate → WAL checkpoint → close → atomic rename); partials never exist under the canonical name, so reuse needs no locking.
-func buildSQLiteTemplate(tmpl *dbTemplateRequest) (path string, err error) {
-	defer func() {
-		// A panicking build must not poison the sync.Once cache.
-		if r := recover(); r != nil {
-			err = fmt.Errorf("template build panicked: %v", r)
-		}
-	}()
-
+func buildSQLiteTemplate(tmpl *dbTemplateRequest) (string, error) {
 	canonical := filepath.Join(os.TempDir(), "grafana-test-sqlite-template-"+strings.ReplaceAll(tmpl.key, ":", "-")+".db")
 	if info, serr := os.Stat(canonical); serr == nil && info.Size() > 0 {
 		// Cross-process warm start: published templates are complete by construction.
@@ -782,46 +680,16 @@ func buildSQLiteTemplate(tmpl *dbTemplateRequest) (path string, err error) {
 		Conn:   fmt.Sprintf("file:%s?cache=private&mode=rwc&_journal_mode=WAL&_synchronous=OFF", tmp.Name()),
 	}
 
-	// See buildPostgresTemplate: the caller's config and features must shape the template.
-	features := tmpl.features
-	cfg, err := newTestCfg(tmpl.cfg, features, templateDB)
-	if err != nil {
-		removeTemplate()
-		return "", fmt.Errorf("template cfg: %w", err)
-	}
-	// Deterministic template: never seed default org/user; callers apply their own setting per call, after the copy.
-	cfg.Raw.Section("database").Key("ensure_default_org_and_user").SetValue("false")
-
-	engine, err := xorm.NewEngine(templateDB.Driver, templateDB.Conn)
-	if err != nil {
-		removeTemplate()
-		return "", fmt.Errorf("template engine: %w", err)
-	}
-	defer func() {
-		_ = engine.Close()
-	}()
-	engine.DatabaseTZ = time.UTC
-	engine.TZLocation = time.UTC
-
-	tracer := tracing.InitializeTracerForTest()
-	store, err := newStore(cfg, engine, features, tmpl.dbMigrator, bus.ProvideBus(tracer), tracer)
-	if err != nil {
-		removeTemplate()
-		return "", fmt.Errorf("template store: %w", err)
-	}
-	if err := store.Migrate(false); err != nil {
-		removeTemplate()
-		return "", fmt.Errorf("template migrate: %w", err)
-	}
-
 	// Fold the WAL into the main file so a single-file copy is a complete database.
-	if _, err := engine.Exec("PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
-		removeTemplate()
-		return "", fmt.Errorf("template WAL checkpoint: %w", err)
+	checkpointWAL := func(engine *xorm.Engine) error {
+		if _, err := engine.Exec("PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
+			return fmt.Errorf("template WAL checkpoint: %w", err)
+		}
+		return nil
 	}
-	if err := engine.Close(); err != nil {
+	if err := migrateTemplateDB(tmpl, templateDB, checkpointWAL); err != nil {
 		removeTemplate()
-		return "", fmt.Errorf("template engine close: %w", err)
+		return "", err
 	}
 
 	if rerr := os.Rename(tmp.Name(), canonical); rerr != nil {
@@ -833,6 +701,72 @@ func buildSQLiteTemplate(tmpl *dbTemplateRequest) (path string, err error) {
 		return "", fmt.Errorf("template publish: %w", rerr)
 	}
 	return canonical, nil
+}
+
+// migrateTemplateDB migrates templateDB under the caller's config and features (they shape
+// the migration set and its effects) and closes every connection, as Postgres cloning requires.
+func migrateTemplateDB(tmpl *dbTemplateRequest, templateDB *testDB, beforeClose ...func(*xorm.Engine) error) error {
+	cfg, err := newTestCfg(tmpl.cfg, tmpl.features, templateDB)
+	if err != nil {
+		return fmt.Errorf("template cfg: %w", err)
+	}
+	// Deterministic template: never seed default org/user; callers apply their own setting per call, after the clone.
+	cfg.Raw.Section("database").Key("ensure_default_org_and_user").SetValue("false")
+
+	engine, err := xorm.NewEngine(templateDB.Driver, templateDB.Conn)
+	if err != nil {
+		return fmt.Errorf("template engine: %w", err)
+	}
+	defer func() {
+		_ = engine.Close() // idempotent; covers error and panic paths
+	}()
+	engine.DatabaseTZ = time.UTC
+	engine.TZLocation = time.UTC
+
+	tracer := tracing.InitializeTracerForTest()
+	store, err := newStore(cfg, engine, tmpl.features, tmpl.dbMigrator, bus.ProvideBus(tracer), tracer)
+	if err != nil {
+		return fmt.Errorf("template store: %w", err)
+	}
+	if err := store.Migrate(false); err != nil {
+		return fmt.Errorf("template migrate: %w", err)
+	}
+
+	for _, f := range beforeClose {
+		if err := f(engine); err != nil {
+			return err
+		}
+	}
+	if err := engine.Close(); err != nil {
+		return fmt.Errorf("template engine close: %w", err)
+	}
+	return nil
+}
+
+// createTemplateDatabase creates an empty grafana_tmpl_* database and returns its name
+// plus a best-effort drop func.
+func createTemplateDatabase(connString func(dbname string) (driver, conn string), adminDB string) (string, func(), error) {
+	driver, adminConn := connString(adminDB)
+	admin, err := xorm.NewEngine(driver, adminConn)
+	if err != nil {
+		return "", nil, fmt.Errorf("template admin engine: %w", err)
+	}
+	defer func() {
+		_ = admin.Close()
+	}()
+
+	name := "grafana_tmpl_" + randomLowerHex(10)
+	if _, err := admin.Exec("CREATE DATABASE " + name); err != nil {
+		return "", nil, fmt.Errorf("template create database: %w", err)
+	}
+	drop := func() {
+		// The admin engine is already closed by the time drop runs; connect anew.
+		if e, derr := xorm.NewEngine(driver, adminConn); derr == nil {
+			_, _ = e.Exec("DROP DATABASE " + name)
+			_ = e.Close()
+		}
+	}
+	return name, drop, nil
 }
 
 func copyFile(src, dst string) error {
