@@ -29,6 +29,16 @@ describe('XrayLinkConfig', () => {
     expect(screen.queryByText(missingDataSourceText)).not.toBeInTheDocument();
   });
 
+  it('should not show the alert when the data source lookup fails', () => {
+    jest.mocked(useHasDataSourceInstance).mockReturnValue({
+      isLoading: false,
+      hasInstance: false,
+      error: new Error('lookup failed'),
+    });
+    render(<XrayLinkConfig onChange={jest.fn()} />);
+    expect(screen.queryByText(missingDataSourceText)).not.toBeInTheDocument();
+  });
+
   it('should not show the alert when an Application Signals data source exists', () => {
     jest.mocked(useHasDataSourceInstance).mockReturnValue({ isLoading: false, hasInstance: true });
     render(<XrayLinkConfig onChange={jest.fn()} />);
