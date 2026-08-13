@@ -59,6 +59,13 @@ function createLinkModel(overrides: Partial<LinkModel> = {}): LinkModel {
   };
 }
 
+/** Presence checks only run when both the configured query and alternativeQueries are set. */
+function createProbingLinkModel(query: DataQuery): LinkModel {
+  return createLinkModel({
+    interpolatedParams: { query, alternativeQueries: [query] },
+  });
+}
+
 /**
  * Builds a fake datasource whose `query` emits a single response containing the
  * given frames, so the presence check can resolve deterministically.
@@ -131,6 +138,19 @@ describe('LogsLinkButton', () => {
     expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
   });
 
+  it('does not query the datasource when the link has no alternativeQueries', () => {
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
+    );
+
+    expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
+  });
+
   it('does not check for logs when the dynamicTraceToLogs flag is disabled', async () => {
     await act(async () => {
       setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: false });
@@ -144,10 +164,7 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
-        traceDatasourceUid={TRACE_DATASOURCE_UID}
-      />
+      <LogsLinkButton linkModel={createProbingLinkModel(interpolatedQuery)} traceDatasourceUid={TRACE_DATASOURCE_UID} />
     );
 
     // The datasource is never queried, and the button stays enabled (present).
@@ -164,10 +181,7 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'elasticsearch' } };
 
     render(
-      <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
-        traceDatasourceUid={TRACE_DATASOURCE_UID}
-      />
+      <LogsLinkButton linkModel={createProbingLinkModel(interpolatedQuery)} traceDatasourceUid={TRACE_DATASOURCE_UID} />
     );
 
     await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalledWith(interpolatedQuery.datasource));
@@ -179,10 +193,7 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
-        traceDatasourceUid={TRACE_DATASOURCE_UID}
-      />
+      <LogsLinkButton linkModel={createProbingLinkModel(interpolatedQuery)} traceDatasourceUid={TRACE_DATASOURCE_UID} />
     );
 
     await waitFor(() => expect(query).toHaveBeenCalled());
@@ -196,10 +207,7 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'elasticsearch' } };
 
     render(
-      <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
-        traceDatasourceUid={TRACE_DATASOURCE_UID}
-      />
+      <LogsLinkButton linkModel={createProbingLinkModel(interpolatedQuery)} traceDatasourceUid={TRACE_DATASOURCE_UID} />
     );
 
     await waitFor(() => expect(query).toHaveBeenCalled());
@@ -219,10 +227,7 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
-        traceDatasourceUid={TRACE_DATASOURCE_UID}
-      />
+      <LogsLinkButton linkModel={createProbingLinkModel(interpolatedQuery)} traceDatasourceUid={TRACE_DATASOURCE_UID} />
     );
 
     await userEvent.hover(await screen.findByRole('button'));
@@ -240,7 +245,7 @@ describe('LogsLinkButton', () => {
 
     render(
       <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        linkModel={createProbingLinkModel(interpolatedQuery)}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
         forTrace
       />
@@ -260,10 +265,7 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
-        traceDatasourceUid={TRACE_DATASOURCE_UID}
-      />
+      <LogsLinkButton linkModel={createProbingLinkModel(interpolatedQuery)} traceDatasourceUid={TRACE_DATASOURCE_UID} />
     );
 
     await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalled());
@@ -283,10 +285,7 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
-        traceDatasourceUid={TRACE_DATASOURCE_UID}
-      />
+      <LogsLinkButton linkModel={createProbingLinkModel(interpolatedQuery)} traceDatasourceUid={TRACE_DATASOURCE_UID} />
     );
 
     await waitFor(() => expect(query).toHaveBeenCalled());
@@ -311,10 +310,7 @@ describe('LogsLinkButton', () => {
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
 
     render(
-      <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
-        traceDatasourceUid={TRACE_DATASOURCE_UID}
-      />
+      <LogsLinkButton linkModel={createProbingLinkModel(interpolatedQuery)} traceDatasourceUid={TRACE_DATASOURCE_UID} />
     );
 
     await waitFor(() => expect(query).toHaveBeenCalled());
@@ -618,6 +614,19 @@ describe('LogsLinkMenuItem', () => {
     expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
   });
 
+  it('does not query the datasource when the link has no alternativeQueries', () => {
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkMenuItem
+        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
+    );
+
+    expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
+  });
+
   it('does not check for logs when the dynamicTraceToLogs flag is disabled', async () => {
     await act(async () => {
       setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: false });
@@ -632,7 +641,7 @@ describe('LogsLinkMenuItem', () => {
 
     render(
       <LogsLinkMenuItem
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        linkModel={createProbingLinkModel(interpolatedQuery)}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );
@@ -648,7 +657,7 @@ describe('LogsLinkMenuItem', () => {
 
     render(
       <LogsLinkMenuItem
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        linkModel={createProbingLinkModel(interpolatedQuery)}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );
@@ -668,7 +677,7 @@ describe('LogsLinkMenuItem', () => {
 
     render(
       <LogsLinkMenuItem
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        linkModel={createProbingLinkModel(interpolatedQuery)}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );
@@ -687,7 +696,7 @@ describe('LogsLinkMenuItem', () => {
 
     render(
       <LogsLinkMenuItem
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        linkModel={createProbingLinkModel(interpolatedQuery)}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );
@@ -709,7 +718,7 @@ describe('LogsLinkMenuItem', () => {
 
     render(
       <LogsLinkMenuItem
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
+        linkModel={createProbingLinkModel(interpolatedQuery)}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );

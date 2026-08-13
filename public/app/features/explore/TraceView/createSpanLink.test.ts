@@ -91,8 +91,8 @@ describe('createSpanLinkFactory', () => {
       { trace: 'otel_trace_id', span: 'otel_span_id' },
     ] as const;
 
-    // Explore href includes every Loki query variation (default/job per id field + line-contains).
-    const lokiExploreHref = (
+    // The Explore href uses only the first query; remaining variations live on interpolatedParams.alternativeQueries.
+    const expectedLokiLink = (
       tagSelector: string,
       serviceNames: string[],
       range: { from: string; to: string } = defaultRange
@@ -101,37 +101,50 @@ describe('createSpanLinkFactory', () => {
         serviceNames.length > 0
           ? `{job=~"(.*/)?(${serviceNames.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})"}`
           : undefined;
-      const queries: Array<{ expr: string; refId: string; datasource: { uid: string } }> = [];
+      const alternativeQueries: Array<{ expr: string; refId: string }> = [];
 
       for (const { trace, span } of fieldVariants) {
         const pipeline = `| logfmt | json | drop __error__ | ${trace}="${traceId}" | ${span}="${spanId}"`;
-        queries.push({
+        alternativeQueries.push({
           expr: `{${tagSelector}} ${pipeline}`,
           refId: `t2l:default:${trace}`,
-          datasource: { uid: 'loki1_uid' },
         });
         if (jobSelector) {
-          queries.push({
+          alternativeQueries.push({
             expr: `${jobSelector} ${pipeline}`,
             refId: `t2l:job:${trace}`,
-            datasource: { uid: 'loki1_uid' },
           });
         }
       }
 
-      queries.push({
+      alternativeQueries.push({
         expr: `{${tagSelector}} |= "${traceId}" |= "${spanId}"`,
         refId: 't2l:line-contains',
-        datasource: { uid: 'loki1_uid' },
       });
 
-      return `/explore?left=${encodeURIComponent(
-        JSON.stringify({
-          range,
-          datasource: 'loki1_uid',
-          queries,
-        })
-      )}`;
+      return {
+        href: `/explore?left=${encodeURIComponent(
+          JSON.stringify({
+            range,
+            datasource: 'loki1_uid',
+            queries: [{ ...alternativeQueries[0], datasource: { uid: 'loki1_uid' } }],
+          })
+        )}`,
+        alternativeQueries,
+      };
+    };
+
+    const expectLokiLink = (
+      linkDef: { href: string; linkModel?: LinkModel } | undefined,
+      tagSelector: string,
+      serviceNames: string[],
+      range: { from: string; to: string } = defaultRange
+    ) => {
+      const expected = expectedLokiLink(tagSelector, serviceNames, range);
+      expect(linkDef!.href).toBe(expected.href);
+      expect(linkDef!.linkModel?.interpolatedParams?.alternativeQueries).toEqual(
+        expected.alternativeQueries.map((query) => expect.objectContaining(query))
+      );
     };
 
     beforeAll(() => {
@@ -160,9 +173,9 @@ describe('createSpanLinkFactory', () => {
       const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
-      expect(linkDef!.href).toBe(
-        lokiExploreHref('cluster="cluster1", hostname="hostname1", service_namespace="namespace1"', ['test service'])
-      );
+      expectLokiLink(linkDef, 'cluster="cluster1", hostname="hostname1", service_namespace="namespace1"', [
+        'test service',
+      ]);
     });
 
     it('with tags that passed in and without tags that are not in the span', () => {
@@ -184,7 +197,7 @@ describe('createSpanLinkFactory', () => {
       const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
-      expect(linkDef!.href).toBe(lokiExploreHref('ip="192.168.0.1"', ['service']));
+      expectLokiLink(linkDef, 'ip="192.168.0.1"', ['service']);
     });
 
     it('from tags and process tags as well', () => {
@@ -206,7 +219,7 @@ describe('createSpanLinkFactory', () => {
       const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
-      expect(linkDef!.href).toBe(lokiExploreHref('ip="192.168.0.1", host="host"', ['service']));
+      expectLokiLink(linkDef, 'ip="192.168.0.1", host="host"', ['service']);
     });
 
     it('with adjusted start and end time', () => {
@@ -228,12 +241,10 @@ describe('createSpanLinkFactory', () => {
       const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
-      expect(linkDef!.href).toBe(
-        lokiExploreHref('hostname="hostname1"', ['service'], {
-          from: String(span.startTime / 1000 - 60000),
-          to: String(span.startTime / 1000 + span.duration / 1000 + 60000),
-        })
-      );
+      expectLokiLink(linkDef, 'hostname="hostname1"', ['service'], {
+        from: String(span.startTime / 1000 - 60000),
+        to: String(span.startTime / 1000 + span.duration / 1000 + 60000),
+      });
     });
 
     it('filters by trace and span ID', () => {
@@ -247,9 +258,9 @@ describe('createSpanLinkFactory', () => {
       const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
-      expect(linkDef!.href).toBe(
-        lokiExploreHref('cluster="cluster1", hostname="hostname1", service_namespace="namespace1"', ['test service'])
-      );
+      expectLokiLink(linkDef, 'cluster="cluster1", hostname="hostname1", service_namespace="namespace1"', [
+        'test service',
+      ]);
     });
 
     it('creates link from dataFrame', () => {
@@ -300,7 +311,7 @@ describe('createSpanLinkFactory', () => {
       const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
-      expect(linkDef!.href).toBe(lokiExploreHref('service="serviceName", pod="podName"', ['serviceName', 'service']));
+      expectLokiLink(linkDef, 'service="serviceName", pod="podName"', ['serviceName', 'service']);
     });
 
     it('handles incomplete renamed tags', () => {
@@ -326,9 +337,7 @@ describe('createSpanLinkFactory', () => {
       const linkDef = links?.[0];
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
-      expect(linkDef!.href).toBe(
-        lokiExploreHref('service_name="serviceName", pod="podName"', ['serviceName', 'service'])
-      );
+      expectLokiLink(linkDef, 'service_name="serviceName", pod="podName"', ['serviceName', 'service']);
     });
 
     it('handles empty queries', () => {

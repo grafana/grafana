@@ -25,8 +25,8 @@ import {
   pyroscopeProfileIdTagKey,
   scopedVarsFromSpan,
   scopedVarsFromTags,
-  scopedVarsFromTrace,
 } from '../../../createSpanLink';
+import { scopedVarsFromTrace } from '../../../createTraceLink';
 import { getFormattedTags, getSpanTags } from '../../../crossSignalConfig';
 import { type TraceSpan } from '../../types/trace';
 
