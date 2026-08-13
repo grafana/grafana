@@ -165,6 +165,48 @@ func TestService_checkPermission(t *testing.T) {
 			expected: false,
 		},
 		{
+			name: "should not treat general as parent of root dashboards on get",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "some_dashboard",
+				ParentFolder: "",
+				Verb:         utils.VerbGet,
+			},
+			expected: false,
+		},
+		{
+			name: "should not treat general as parent of root folders on get",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "folders:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "folders:read",
+				Group:        "folder.grafana.app",
+				Resource:     "folders",
+				Name:         "admin-only",
+				ParentFolder: "",
+				Verb:         utils.VerbGet,
+			},
+			expected: false,
+		},
+		{
 			name: "should check general folder scope for root variable get with empty parent",
 			permissions: []accesscontrol.Permission{
 				{
@@ -1154,6 +1196,26 @@ func TestService_listPermission(t *testing.T) {
 				Options:  &ListRequestOptions{},
 			},
 			expectedFolders: []string{"folder-a"},
+		},
+		{
+			name: "should not alias empty parent for dashboard list with general grant",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			folders: []store.Folder{},
+			list: listRequest{
+				Action:   "dashboards:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Options:  &ListRequestOptions{},
+			},
+			expectedFolders: []string{accesscontrol.GeneralFolderUID},
 		},
 		{
 			name: "should return dashboards that user has annotation read access to via subresource",
