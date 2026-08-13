@@ -7,7 +7,7 @@ const MAX_LINES = 30;
 
 // Monaco needs an explicit height; approximate it from the line count so short
 // snippets stay compact and long ones cap out with an internal scroll.
-export function CodeCell({ content }: { content: CellContentKind }) {
+export function CodeCell({ content, isEditing }: { content: CellContentKind; isEditing: boolean }) {
   if (content.kind !== 'Code') {
     return null;
   }
@@ -21,7 +21,8 @@ export function CodeCell({ content }: { content: CellContentKind }) {
       language={content.spec.language}
       height={height}
       width="100%"
-      readOnly
+      // Edits are not persisted yet; this only stops the editor refusing input in edit mode.
+      readOnly={!isEditing}
       showLineNumbers
     />
   );

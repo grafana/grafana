@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 	"k8s.io/utils/ptr"
 
 	authtypes "github.com/grafana/authlib/types"
@@ -253,6 +254,10 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "create", start, err) }()
 
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
+
 	annotation, ok := obj.(*annotationV0.Annotation)
 	if !ok {
 		return nil, apierrors.NewInternalError(fmt.Errorf("expected *Annotation, got %T", obj))
@@ -311,6 +316,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	defer span.End()
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "update", start, err) }()
+
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
 
 	// Fetch the existing annotation for patch merging and to verify authz on the pre-update resource.
 	existing, err := s.store.Get(ctx, namespace, name)
@@ -389,6 +398,10 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 	defer span.End()
 	start := time.Now()
 	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "delete", start, err) }()
+
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
+	}
 
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
@@ -540,6 +553,10 @@ func validateUpdate(existing, updated *annotationV0.Annotation) error {
 }
 
 func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
+	if anno.Spec.Time <= 0 {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is required and must be positive", ErrInvalidInput))
+	}
+
 	now := time.Now().UTC()
 	maxFuture := now.Add(maxFutureWindow).UnixMilli()
 

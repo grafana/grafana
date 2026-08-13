@@ -199,6 +199,7 @@ describe('useCommonTableProps', () => {
       maxRowHeight: 100,
       disableKeyboardEvents: true,
       disableSanitizeHtml: false,
+      contentAwareWidthsEnabled: false,
     });
   });
 

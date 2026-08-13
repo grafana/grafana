@@ -393,10 +393,11 @@ type ResourceSearchResponse struct {
 	// The total hit count
 	TotalHits int64 `protobuf:"varint,4,opt,name=total_hits,json=totalHits,proto3" json:"total_hits,omitempty"`
 	// Whether total_hits is exact. When false, total_hits is a best-effort
-	// approximation because the exact count could not be determined cheaply. For
-	// example, a bounded post-ranking authz scan that does not run to exhaustion
-	// reports the pre-authorization match count, which over-counts the authorized
-	// total.
+	// approximation because the exact count could not be determined cheaply, and
+	// whether it over- or under-counts depends on the request. A bounded
+	// post-ranking authz scan that does not run to exhaustion reports the
+	// pre-authorization match count, which over-counts. A search of deleted
+	// resources counts only authorized hits.
 	TotalHitsExact bool `protobuf:"varint,9,opt,name=total_hits_exact,json=totalHitsExact,proto3" json:"total_hits_exact,omitempty"`
 	// indicates how expensive was the query with respect to bytes read
 	QueryCost float64 `protobuf:"fixed64,5,opt,name=query_cost,json=queryCost,proto3" json:"query_cost,omitempty"`
