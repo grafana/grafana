@@ -580,18 +580,22 @@ interface FieldColorValuesWithCache extends FieldColorValues {
 type GetAllValues = (values: unknown[], min?: number, max?: number) => number[];
 type GetOneValue = (value: unknown, min?: number, max?: number) => number;
 
-function getLabelForRange(from: number | null, to: number | null) {
+function getLabelForRange(
+  from: number | null,
+  to: number | null,
+  formatValue: (value: number) => string = String
+) {
   let text: string;
 
   if (from != null) {
     if (to != null) {
-      text = `${from} - ${to}`;
+      text = `${formatValue(from)} - ${formatValue(to)}`;
     } else {
-      text = `≥ ${from}`;
+      text = `≥ ${formatValue(from)}`;
     }
   } else {
     if (to != null) {
-      text = `≤ ${to}`;
+      text = `≤ ${formatValue(to)}`;
     } else {
       text = '';
     }
@@ -679,6 +683,8 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
 
   let getAll: GetAllValues = () => [];
   let getOne: GetOneValue = () => -1;
+  const formatValue = (value: number) =>
+    formattedValueToString(getValueFormat(f.config.unit ?? '')(value, f.config.decimals ?? undefined));
 
   let conds = '';
 
@@ -716,7 +722,7 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
       } else if (m.type === MappingType.RangeToText) {
         const { from, to, result } = m.options;
         if (from != null || to != null) {
-          indexOf(result.color, result.text ?? getLabelForRange(from, to), result.icon);
+          indexOf(result.color, result.text ?? getLabelForRange(from, to, formatValue), result.icon);
         }
       } else if (m.type === MappingType.SpecialValue) {
         const { match, result } = m.options;
@@ -737,7 +743,7 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
           if (mapping.type === MappingType.ValueToText) {
             text = String(value);
           } else if (mapping.type === MappingType.RangeToText) {
-            text = getLabelForRange(mapping.options.from, mapping.options.to);
+            text = getLabelForRange(mapping.options.from, mapping.options.to, formatValue);
           } else if (mapping.type === MappingType.SpecialValue) {
             text = getSpecialValueLabel(mapping.options.match);
           } else {
@@ -768,7 +774,9 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
 
       conds += '0';
 
-      index.text = steps.map((s, i) => (i === 0 ? `< ${steps[i + 1].value}` : getLabelForRange(s.value, null)));
+      index.text = steps.map((step, i) =>
+        i === 0 ? `< ${formatValue(steps[i + 1].value)}` : getLabelForRange(step.value, null, formatValue)
+      );
     } else {
       const fieldConfig = getFieldConfigWithMinMax(f);
       const fieldMin = fieldConfig.min ?? 0;

@@ -68,6 +68,23 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, [10, 75, 200])).toMatchSnapshot();
   });
 
+  it('formats generated range mapping labels with the field unit', () => {
+    const field = makeColorField(
+      {
+        unit: 'percent',
+        mappings: [
+          {
+            type: MappingType.RangeToText,
+            options: { from: 0, to: 50, result: { color: 'blue' } },
+          },
+        ],
+      },
+      [25]
+    );
+
+    expect(getEnumConfig(field, theme).index.text).toEqual(['0% - 50%']);
+  });
+
   it('SpecialValue mapping (NaN / Null)', () => {
     const config = {
       mappings: [
@@ -91,6 +108,25 @@ describe('fieldValueColors (golden baseline)', () => {
       },
     };
     expect(resolve(config, [10, 50, 79, 80, 100])).toMatchSnapshot();
+  });
+
+  it('formats absolute threshold labels with the field unit', () => {
+    const field = makeColorField(
+      {
+        unit: 'percent',
+        color: { mode: FieldColorModeId.Thresholds },
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: 50, color: 'red' },
+          ],
+        },
+      },
+      [25, 75]
+    );
+
+    expect(getEnumConfig(field, theme).index.text).toEqual(['< 50%', '≥ 50%']);
   });
 
   it('percentage thresholds', () => {
