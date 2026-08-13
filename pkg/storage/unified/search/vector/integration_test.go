@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -1296,4 +1297,73 @@ func TestIntegrationEnsureCollection_PartitionKeyConflict(t *testing.T) {
 	// The owning collection keeps working.
 	_, err = backend.EnsureCollection(ctx, "one.example.com", "clash-things", true)
 	require.NoError(t, err)
+}
+
+func mustFilter(t *testing.T, raw string) *filter.Filter {
+	t.Helper()
+	f, err := filter.Parse(json.RawMessage(raw))
+	require.NoError(t, err)
+	require.NotNil(t, f)
+	return f
+}
+
+func TestIntegrationVectorDeleteByFilter(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	mk := func(uid, status string) Vector {
+		return Vector{
+			Namespace: "ns-flt", Resource: testResource, UID: uid, Title: "T",
+			Subresource: "", Content: "c", Embedding: makeEmbedding(0.3, 0.3), Model: testModel,
+			Metadata: json.RawMessage(fmt.Sprintf(`{"status":%q}`, status)),
+		}
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("u1", "stale"), mk("u2", "stale"), mk("u3", "fresh"),
+	}))
+
+	n, more, err := backend.DeleteRows(ctx, "ns-flt", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"status":"stale"}`)})
+	require.NoError(t, err)
+	require.False(t, more)
+	require.EqualValues(t, 2, n)
+
+	// Only the fresh row survives.
+	n, _, err = backend.DeleteRows(ctx, "ns-flt", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"status":"fresh"}`)})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n)
+}
+
+func TestIntegrationVectorUpdateMetadata(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	mk := func(uid, status string) Vector {
+		return Vector{
+			Namespace: "ns-upd", Resource: testResource, UID: uid, Title: "T",
+			Subresource: "", Content: "c", Embedding: makeEmbedding(0.4, 0.4), Model: testModel,
+			Metadata: json.RawMessage(fmt.Sprintf(`{"status":%q,"owner":"u-old"}`, status)),
+		}
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("u1", "open"), mk("u2", "open"), mk("u3", "closed"),
+	}))
+
+	// Merge status, drop owner, only on open rows.
+	updated, err := backend.UpdateMetadata(ctx, "ns-upd", testResource,
+		mustFilter(t, `{"status":"open"}`),
+		json.RawMessage(`{"status":"resolved","note":"done"}`), []string{"owner"})
+	require.NoError(t, err)
+	require.EqualValues(t, 2, updated)
+
+	var meta string
+	require.NoError(t, engine.DB().QueryRowContext(ctx,
+		`SELECT metadata::text FROM embeddings WHERE resource=$1 AND namespace=$2 AND uid=$3`,
+		testResource, "ns-upd", "u1").Scan(&meta))
+	require.JSONEq(t, `{"status":"resolved","note":"done"}`, meta)
+
+	// The closed row is untouched.
+	require.NoError(t, engine.DB().QueryRowContext(ctx,
+		`SELECT metadata::text FROM embeddings WHERE resource=$1 AND namespace=$2 AND uid=$3`,
+		testResource, "ns-upd", "u3").Scan(&meta))
+	require.JSONEq(t, `{"status":"closed","owner":"u-old"}`, meta)
 }
