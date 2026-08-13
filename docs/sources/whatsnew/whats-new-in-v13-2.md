@@ -22,6 +22,8 @@ posts:
       - whats-new/2026-06-30-redesigned-query-variable-editor.md
       - whats-new/2026-07-08-organize-dashboards-faster-with-multi-select-grouping.md
       - whats-new/2026-07-18-saved-queries-is-now-generally-available-with-command-palette-and-provisioning-support.md
+      - whats-new/2026-07-23-revamped-homepage-for-grafana.md
+      - whats-new/2026-08-11-explore-busy-panels-with-the-new-view-panel-sidebar.md
   - title: Data sources
     items:
       - whats-new/2026-07-28-opensearch-added-index-browser-to-datasource-configuration-and-query.md
