@@ -121,7 +121,9 @@ func (f *FakeProvisioningStore) GetAllManagerProperties(ctx context.Context, org
 	result := make(map[string]utils.ManagerProperties)
 	if provenances, ok := f.Records[org]; ok {
 		for key, prov := range provenances {
-			result[strings.TrimSuffix(key, resourceType)] = models.ProvenanceToManagerProperties(prov)
+			if strings.HasSuffix(key, resourceType) {
+				result[strings.TrimSuffix(key, resourceType)] = models.ProvenanceToManagerProperties(prov)
+			}
 		}
 	}
 	return result, nil
