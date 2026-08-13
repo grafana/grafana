@@ -367,10 +367,6 @@ const (
 	// Enables possibility to preserve dashboard variables and time range when navigating between dashboards
 	FlagPreserveDashboardStateWhenNavigating = "preserveDashboardStateWhenNavigating"
 
-	// FlagAlertingCentralAlertHistory
-	// Enables the new central alert history.
-	FlagAlertingCentralAlertHistory = "alertingCentralAlertHistory"
-
 	// FlagPluginProxyPreserveTrailingSlash
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
@@ -550,9 +546,9 @@ const (
 	// Enables the logs builder mode for the Azure Monitor data source
 	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
 
-	// FlagAzureMonitorBatchAPI
+	// FlagDatasourcesAzureMonitorBatchAPI
 	// Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
-	FlagAzureMonitorBatchAPI = "azureMonitorBatchAPI"
+	FlagDatasourcesAzureMonitorBatchAPI = "datasources.azureMonitorBatchAPI"
 
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
@@ -793,6 +789,10 @@ const (
 	// FlagKubernetesUsersRedirect
 	// Redirects the requests of the user service to the app platform APIs
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
+
+	// FlagKubernetesUsersRedirectNoFallback
+	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
+	FlagKubernetesUsersRedirectNoFallback = "kubernetesUsersRedirectNoFallback"
 
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint

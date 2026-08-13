@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import { useState } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Box, Stack, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { isLocalDevEnv } from '../utils/misc';
@@ -14,6 +16,7 @@ import { PluginIntegrations } from './PluginIntegrations';
 import SyntheticMonitoringCard from './SyntheticMonitoringCard';
 
 function Home() {
+  const styles = useStyles2(getStyles);
   const insightsEnabled = insightsIsAvailable() || isLocalDevEnv();
 
   const [activeTab, setActiveTab] = useState<'insights' | 'overview'>(insightsEnabled ? 'insights' : 'overview');
@@ -24,14 +27,13 @@ function Home() {
       <Stack gap={2} direction="column">
         <WelcomeHeader />
         <PluginIntegrations />
-      </Stack>
-      <Box marginTop={{ lg: 2, md: 2, xs: 2 }}>
-        <Stack direction="row" gap={2}>
+        {/* both ad cards hide themselves on licensed builds and once dismissed, so collapse the row when it ends up empty */}
+        <div className={styles.adCards}>
           <SyntheticMonitoringCard />
           <IRMCard />
-        </Stack>
-      </Box>
-      <Box marginTop={{ lg: 2, md: 0, xs: 0 }}>
+        </div>
+      </Stack>
+      <Box marginTop={2}>
         <TabsBar>
           {insightsEnabled && (
             <Tab
@@ -48,7 +50,7 @@ function Home() {
             onChangeTab={() => setActiveTab('overview')}
           />
         </TabsBar>
-        <TabContent>
+        <TabContent className={styles.tabContent}>
           {activeTab === 'insights' && <insightsScene.Component model={insightsScene} />}
           {activeTab === 'overview' && <GettingStarted />}
         </TabContent>
@@ -56,5 +58,19 @@ function Home() {
     </AlertingPageWrapper>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  adCards: css({
+    display: 'flex',
+    gap: theme.spacing(2),
+
+    '&:empty': {
+      display: 'none',
+    },
+  }),
+  tabContent: css({
+    marginTop: theme.spacing(2),
+  }),
+});
 
 export default withPageErrorBoundary(Home);

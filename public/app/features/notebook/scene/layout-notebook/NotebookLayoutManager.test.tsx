@@ -1,8 +1,17 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type NotebookLayoutKind } from 'app/features/notebook/types';
+
+// Monaco does not run in jsdom; a textarea carries readOnly into the DOM so the edit-mode
+// propagation is observable end to end.
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  CodeEditor: ({ value, readOnly }: { value: string; readOnly?: boolean }) => (
+    <textarea aria-label="Code" defaultValue={value} readOnly={readOnly} />
+  ),
+}));
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
@@ -47,6 +56,45 @@ describe('NotebookLayoutManager', () => {
     expect(await screen.findByText('Hello notebook')).toBeInTheDocument();
     // The collapsed cell renders only its element name, not its content.
     expect(screen.getByText('hidden-panel')).toBeInTheDocument();
+  });
+
+  describe('editModeChanged', () => {
+    // The scene owns the mode; this is the channel it uses to hand the flag down, so the cells can
+    // react without the manager reaching back up to the scene.
+    it('records the mode so the cells can read it', () => {
+      const manager = new NotebookLayoutManager({ cells: [] });
+
+      expect(manager.state.isEditing).toBeUndefined();
+
+      manager.editModeChanged(true);
+      expect(manager.state.isEditing).toBe(true);
+
+      manager.editModeChanged(false);
+      expect(manager.state.isEditing).toBe(false);
+    });
+
+    it('reaches a code cell, which stops being read only', async () => {
+      const manager = new NotebookLayoutManager({
+        cells: [
+          new NotebookCellItem({
+            elementName: 'query',
+            source: 'user',
+            content: { kind: 'Code', spec: { code: 'select 1', language: 'sql' } },
+          }),
+        ],
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      });
+
+      render(<manager.Component model={manager} />);
+
+      const editor = await screen.findByLabelText('Code');
+      expect(editor).toHaveAttribute('readonly');
+
+      // act: the renderer subscribes to the manager, so this re-renders the cell.
+      act(() => manager.editModeChanged(true));
+
+      expect(screen.getByLabelText('Code')).not.toHaveAttribute('readonly');
+    });
   });
 
   it('serializes to the notebook layout kind, not a dashboard layout kind', () => {

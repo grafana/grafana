@@ -29,6 +29,8 @@ interface NotebookLayoutManagerState extends SceneObjectState {
   // or the two copies drift.
   title?: string;
   tags?: string[];
+  /** Mirrors the scene's edit mode, pushed down by editModeChanged. */
+  isEditing?: boolean;
 }
 
 export class NotebookLayoutManager
@@ -76,6 +78,14 @@ export class NotebookLayoutManager
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
   }
 
+  /**
+   * The scene calls this when the mode flips. Recording it here rather than reaching up to the
+   * NotebookScene keeps the import one-directional — the scene only type-imports this manager.
+   */
+  public editModeChanged(isEditing: boolean): void {
+    this.setState({ isEditing });
+  }
+
   // Editing (add/reorder/remove) is out of scope for the POC; these satisfy the
   // DashboardLayoutManager contract minimally.
   public addPanel(): void {}
@@ -114,7 +124,7 @@ export class NotebookLayoutManager
 
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { cells, title, tags } = model.useState();
+  const { cells, title, tags, isEditing } = model.useState();
 
   const timeRange = sceneGraph.getTimeRange(model).useState();
 
@@ -126,7 +136,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
 
       <div className={styles.column}>
         {cells.map((cell) => (
-          <NotebookCellRenderer cell={cell} key={cell.state.key} />
+          <NotebookCellRenderer cell={cell} isEditing={Boolean(isEditing)} key={cell.state.key} />
         ))}
       </div>
     </div>
