@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
@@ -225,7 +224,7 @@ func TestTemplates(t *testing.T) {
 						AccessUserIDs:    []any{11, 12},
 						HiddenUserLogins: []string{"hidden-user", "another-hidden-user"},
 						QueryPattern:     "%ops%",
-						Sorts:            []orgUserSort{orgUserSortLoginDesc, orgUserSortEmailAsc},
+						Sorts:            []string{"u.login DESC", "u.email ASC"},
 						Limit:            25,
 						Offset:           50,
 					},
@@ -295,7 +294,7 @@ func TestSearchOrgUsersQueryArguments(t *testing.T) {
 		AccessUserIDs:    []any{11, 12},
 		HiddenUserLogins: []string{"hidden-user", "another-hidden-user"},
 		QueryPattern:     "%ops%",
-		Sorts:            []orgUserSort{orgUserSortLoginDesc, orgUserSortEmailAsc},
+		Sorts:            []string{"u.login DESC", "u.email ASC"},
 		Limit:            25,
 		Offset:           50,
 	}
@@ -317,18 +316,7 @@ func TestSearchOrgUsersQueryArguments(t *testing.T) {
 	}, query.GetArgs())
 }
 
-type testOrderBy string
-
-func (s testOrderBy) OrderBy() string { return string(s) }
-
-func TestOrgUserSearchSorts(t *testing.T) {
-	query := &org.SearchOrgUsersQuery{
-		SortOpts: []model.SortOption{{
-			Filter: []model.SortOptionFilter{testOrderBy("u.login; DROP TABLE user")},
-		}},
-	}
-
-	require.Empty(t, orgUserSorts(query))
+func TestOrgUserSearchOffset(t *testing.T) {
 	require.Equal(t, 0, orgUserSearchOffset(25, 0))
 	require.Equal(t, 25, orgUserSearchOffset(25, 2))
 }

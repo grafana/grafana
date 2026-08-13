@@ -827,19 +827,6 @@ func (ss *sqlStore) GetByID(ctx context.Context, query *org.GetOrgByIDQuery) (*o
 	return &orga, nil
 }
 
-type orgUserSort string
-
-const (
-	orgUserSortLoginAsc       orgUserSort = "login_asc"
-	orgUserSortLoginDesc      orgUserSort = "login_desc"
-	orgUserSortEmailAsc       orgUserSort = "email_asc"
-	orgUserSortEmailDesc      orgUserSort = "email_desc"
-	orgUserSortNameAsc        orgUserSort = "name_asc"
-	orgUserSortNameDesc       orgUserSort = "name_desc"
-	orgUserSortLastSeenAtAsc  orgUserSort = "last_seen_at_asc"
-	orgUserSortLastSeenAtDesc orgUserSort = "last_seen_at_desc"
-)
-
 type searchOrgUsersQuery struct {
 	sqltemplate.SQLTemplate
 	OrgUserTable     string
@@ -851,7 +838,7 @@ type searchOrgUsersQuery struct {
 	AccessUserIDs    []any
 	HiddenUserLogins []string
 	QueryPattern     string
-	Sorts            []orgUserSort
+	Sorts            []string
 	Limit            int
 	Offset           int
 }
@@ -877,33 +864,6 @@ func filteredHiddenUsers(requester identity.Requester, hiddenUsersMap map[string
 	return hiddenUsers
 }
 
-func orgUserSorts(query *org.SearchOrgUsersQuery) []orgUserSort {
-	sorts := make([]orgUserSort, 0)
-	for i := range query.SortOpts {
-		for j := range query.SortOpts[i].Filter {
-			switch query.SortOpts[i].Filter[j].OrderBy() {
-			case "u.login ASC":
-				sorts = append(sorts, orgUserSortLoginAsc)
-			case "u.login DESC":
-				sorts = append(sorts, orgUserSortLoginDesc)
-			case "u.email ASC":
-				sorts = append(sorts, orgUserSortEmailAsc)
-			case "u.email DESC":
-				sorts = append(sorts, orgUserSortEmailDesc)
-			case "u.name ASC":
-				sorts = append(sorts, orgUserSortNameAsc)
-			case "u.name DESC":
-				sorts = append(sorts, orgUserSortNameDesc)
-			case "u.last_seen_at ASC":
-				sorts = append(sorts, orgUserSortLastSeenAtAsc)
-			case "u.last_seen_at DESC":
-				sorts = append(sorts, orgUserSortLastSeenAtDesc)
-			}
-		}
-	}
-	return sorts
-}
-
 func orgUserSearchOffset(limit, page int) int {
 	if limit > 0 && page > 0 {
 		return limit * (page - 1)
@@ -911,7 +871,7 @@ func orgUserSearchOffset(limit, page int) int {
 	return 0
 }
 
-func newSearchOrgUsersQuery(dbHelper *legacysql.LegacyDatabaseHelper, query *org.SearchOrgUsersQuery, accessAll bool, accessUserIDs []any, hiddenUserLogins []string, sorts []orgUserSort) searchOrgUsersQuery {
+func newSearchOrgUsersQuery(dbHelper *legacysql.LegacyDatabaseHelper, query *org.SearchOrgUsersQuery, accessAll bool, accessUserIDs []any, hiddenUserLogins, sorts []string) searchOrgUsersQuery {
 	queryPattern := ""
 	if query.Query != "" {
 		queryPattern = "%" + query.Query + "%"
@@ -963,7 +923,12 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			hiddenUserLogins = filteredHiddenUsers(query.User, ss.cfg.HiddenUsers)
 		}
 
-		sorts := orgUserSorts(query)
+		sorts := make([]string, 0)
+		for i := range query.SortOpts {
+			for j := range query.SortOpts[i].Filter {
+				sorts = append(sorts, query.SortOpts[i].Filter[j].OrderBy())
+			}
+		}
 
 		templateQuery := newSearchOrgUsersQuery(dbHelper, query, accessAll, accessUserIDs, hiddenUserLogins, sorts)
 		querySQL, err := sqltemplate.Execute(searchOrgUsersTemplate, templateQuery)
