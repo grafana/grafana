@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -18,6 +19,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -71,8 +73,16 @@ func (s *MTSettingsStore) ConvertToTable(ctx context.Context, object runtime.Obj
 	return resource.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
-// Get reassembles the provider's SSOSetting from its (source-resolved) rows.
 func (s *MTSettingsStore) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+	obj, err := s.get(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return redactSecrets(obj), nil
+}
+
+// get returns the SSOSetting with the stored values as is, without redaction.
+func (s *MTSettingsStore) get(ctx context.Context, name string) (*iamv0.SSOSetting, error) {
 	if s.reader == nil {
 		return nil, s.notImplemented("get", name)
 	}
@@ -132,7 +142,7 @@ func (s *MTSettingsStore) Update(ctx context.Context, name string, objInfo rest.
 	}
 
 	var oldObj runtime.Object
-	current, err := s.Get(ctx, name, &metav1.GetOptions{})
+	current, err := s.get(ctx, name)
 	switch {
 	case err == nil:
 		oldObj = current
@@ -301,4 +311,37 @@ func valueToString(v any) string {
 		return s
 	}
 	return fmt.Sprintf("%v", v)
+}
+
+var secretFieldPatterns = []string{"secret", "private", "certificate", "password", "client_key"}
+
+// secretExceptions holds fields that match a secret pattern.
+// TODO: add SAML attributes
+var secretExceptions = map[string]struct{}{}
+
+func isSecretField(key string) bool {
+	if _, ok := secretExceptions[key]; ok {
+		return false
+	}
+	lower := strings.ToLower(key)
+	for _, p := range secretFieldPatterns {
+		if strings.Contains(lower, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// redactSecrets is a copy of the ssosettings redaction (IsSecretField/removeSecrets in
+// ssosettingsimpl). Keep the two in sync until the legacy mechanism is removed.
+func redactSecrets(obj *iamv0.SSOSetting) *iamv0.SSOSetting {
+	out := obj.DeepCopy()
+	settings := out.Spec.Settings.UnstructuredContent()
+	for k, v := range settings {
+		if str, ok := v.(string); ok && str != "" && isSecretField(k) {
+			settings[k] = setting.RedactedPassword
+		}
+	}
+	out.Spec.Settings = common.Unstructured{Object: settings}
+	return out
 }
