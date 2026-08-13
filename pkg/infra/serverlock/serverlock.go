@@ -159,12 +159,6 @@ func (sl *ServerLockService) getLock(actionName string, dbHelper *legacysql.Lega
 	return lock, nil
 }
 
-// createRaceRetries bounds how many times getOrCreate starts a fresh transaction after losing the race
-// to create the lock row. A retry is needed rather than a re-read because under REPEATABLE READ this
-// transaction's snapshot predates the winner's commit, so it cannot see the row no matter how often we
-// select it. A new transaction gets a new snapshot and finds it.
-const createRaceRetries = 3
-
 func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string) (*serverLock, error) {
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.getOrCreate")
 	defer span.End()
@@ -174,16 +168,17 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 		return nil, fmt.Errorf("get legacy DB: %w", err)
 	}
 
-	for attempt := 0; ; attempt++ {
-		result, err := sl.getOrCreateOnce(ctx, dbHelper, actionName)
-		var existsErr *ServerLockExistsError
-		if !errors.As(err, &existsErr) || attempt == createRaceRetries {
-			return result, err
-		}
-
-		sl.log.FromContext(ctx).Debug("Another server created the lock first, re-reading",
-			"actionName", actionName, "attempt", attempt+1)
+	result, err := sl.getOrCreateOnce(ctx, dbHelper, actionName)
+	if _, lostRace := errors.AsType[*ServerLockExistsError](err); !lostRace {
+		return result, err
 	}
+
+	// Another server created the row between our select and our insert. A second transaction is needed
+	// rather than another select, because under REPEATABLE READ this snapshot predates their commit and
+	// will never see the row. One is enough: the conflict is only reported once the winner has committed,
+	// and LockAndExecute never deletes the row it creates.
+	sl.log.FromContext(ctx).Debug("Another server created the lock first, re-reading", "actionName", actionName)
+	return sl.getOrCreateOnce(ctx, dbHelper, actionName)
 }
 
 func (sl *ServerLockService) getOrCreateOnce(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper,
@@ -274,8 +269,7 @@ func (sl *ServerLockService) LockExecuteAndReleaseWithRetries(ctx context.Contex
 		err := sl.acquireForRelease(ctx, actionName, timeConfig.MaxInterval)
 		// could not get the lock
 		if err != nil {
-			var lockedErr *ServerLockExistsError
-			if errors.As(err, &lockedErr) || sl.isDeadlock(ctx, err) {
+			if _, locked := errors.AsType[*ServerLockExistsError](err); locked || sl.isDeadlock(ctx, err) {
 				// if the lock is already taken, wait and try again
 				if lockChecks == 1 { // only warn on first lock check
 					ctxLogger.Warn("another instance has the lock, waiting for it to be released", "actionName", actionName)

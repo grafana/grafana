@@ -187,6 +187,10 @@ func TestIntegrationServerLock_ConcurrentLockAndExecuteSameAction(t *testing.T) 
 
 	sl, _ := createTestableServerLock(t)
 
+	// every goroutine shares this context, mirroring the background services that all run off the same
+	// root context. Each acquisition must still get its own session and transaction.
+	ctx := context.Background()
+
 	// the window between the select and the insert is narrow, so a single round only provokes the race
 	// about half the time. Repeat over fresh action names to make this a reliable regression guard.
 	for round := range 8 {
@@ -204,7 +208,7 @@ func TestIntegrationServerLock_ConcurrentLockAndExecuteSameAction(t *testing.T) 
 			go func(i int) {
 				defer wg.Done()
 				<-start
-				errs[i] = sl.LockAndExecute(context.Background(), actionName, time.Hour, func(context.Context) {
+				errs[i] = sl.LockAndExecute(ctx, actionName, time.Hour, func(context.Context) {
 					mu.Lock()
 					defer mu.Unlock()
 					executed++
