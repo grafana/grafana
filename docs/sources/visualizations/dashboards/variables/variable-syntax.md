@@ -225,6 +225,28 @@ String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
 ```
 
+### `xxh3`
+
+Hashes the interpolated value with [xxHash](https://xxhash.com/) (xxh3 64-bit) and returns the digest as zero-padded lowercase hex (16 characters). Useful when a downstream data source stores xxh3-hashed identifiers - for example, a Loki label that holds an `xxh3-64` of a serial number - and users want to query using the original, unhashed value.
+
+Multi-valued variables are hashed element-wise and joined with commas. Seeds are not supported for `xxh3`; the seed is always `0`. If you need a seeded hash, use `xxhash` instead.
+
+```bash
+serial = 'SN-42'
+String to interpolate: '${serial:xxh3}'
+Interpolation result: '<16-hex-char xxh3-64 digest>'
+```
+
+```bash
+serials = ['SN-1', 'SN-2']
+String to interpolate: '${serials:xxh3}'
+Interpolation result: '<digest-1>,<digest-2>'
+```
+
+{{< admonition type="note" >}}
+The `xxh3` formatter loads its WebAssembly implementation asynchronously the first time a dashboard using it is opened. If a query is dispatched before the WebAssembly finishes loading (typically only on the very first render after a hard reload), the variable interpolates to the unhashed value and a warning is logged to the browser console; reloading the panel produces the correct hash.
+{{< /admonition >}}
+
 ### `xxhash`
 
 Hashes the interpolated value with [xxHash](https://xxhash.com/) (xxhash64) and returns the digest as zero-padded lowercase hex (16 characters). Useful when a downstream data source stores hashed identifiers - for example, a Loki label that holds an `xxhash64` of a serial number - and users want to query using the original, unhashed value.
