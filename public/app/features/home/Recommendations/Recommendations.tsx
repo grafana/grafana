@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { config } from '@grafana/runtime';
-import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
+import { useStoredBoolean } from 'app/core/hooks/useStored';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 

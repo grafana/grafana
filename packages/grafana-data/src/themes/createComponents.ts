@@ -68,6 +68,21 @@ export const ThemeComponentsInputSchema = z
       borderHover: z.string().optional(),
       text: z.string().optional(),
     }),
+    codeEditor: z.object({
+      keyword: z.string().optional(),
+      controlKeyword: z.string().optional(),
+      variable: z.string().optional(),
+      type: z.string().optional(),
+      function: z.string().optional(),
+      number: z.string().optional(),
+      string: z.string().optional(),
+      operator: z.string().optional(),
+      regexp: z.string().optional(),
+      comment: z.string().optional(),
+      heading: z.string().optional(),
+      link: z.string().optional(),
+      invalid: z.string().optional(),
+    }),
     checkbox: z.object({
       activeBackground: z.string().optional(),
       activeBackgroundHover: z.string().optional(),
@@ -121,6 +136,16 @@ export const ThemeComponentsInputSchema = z
     tag: z.object({
       colors: z.array(z.object({ background: z.string(), text: z.string() })).optional(),
     }),
+    home: z.object({
+      background: z
+        .object({
+          fade: z.string().optional(),
+          highlight: z.string().optional(),
+          right: z.string().optional(),
+          left: z.string().optional(),
+        })
+        .optional(),
+    }),
   })
   .partial();
 
@@ -150,6 +175,21 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       borderHover: colors.border.strong,
       text: colors.text.primary,
       background: colors.mode === 'dark' ? colors.background.canvas : colors.background.primary,
+    },
+    codeEditor: {
+      keyword: colors.primary.text,
+      controlKeyword: colors.tertiary.text,
+      variable: colors.text.primary,
+      type: colors.tertiary.text,
+      function: colors.primary.text,
+      number: colors.warning.text,
+      string: colors.success.text,
+      operator: colors.text.secondary,
+      regexp: colors.warning.text,
+      comment: colors.text.secondary,
+      heading: colors.primary.text,
+      link: colors.text.link,
+      invalid: colors.error.text,
     },
     checkbox: {
       activeBackground: colors.accent.main,
@@ -207,6 +247,23 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     },
     tag: {
       colors: DEFAULT_TAG_COLORS,
+    },
+    home: {
+      background: {
+        fade:
+          colors.mode === 'dark'
+            ? 'hsl(from #3a364c h calc(s * 1.5) calc(l * 1.1))'
+            : 'hsl(from #dedfee h calc(s * 1.05) calc(l * 0.9))',
+        highlight: 'transparent',
+        right:
+          colors.mode === 'dark'
+            ? 'hsl(from #722323 h calc(s * 1.1) calc(l * 0.9) / 80%)'
+            : 'hsl(from #ff9a9a h s l / 80%)',
+        left:
+          colors.mode === 'dark'
+            ? 'hsl(from #1b416d h calc(s * 0.9) calc(l * 0.9) / 60%)'
+            : 'hsl(from #a6e3df h s l / 60%)',
+      },
     },
   };
 

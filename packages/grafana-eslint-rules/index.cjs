@@ -1,13 +1,13 @@
+const consistentStoryTitles = require('./rules/consistent-story-titles.cjs');
+const defineFeatureEvents = require('./rules/define-feature-events.cjs');
 const noAriaLabelSelectors = require('./rules/no-aria-label-e2e-selectors.cjs');
 const noBorderRadiusLiteral = require('./rules/no-border-radius-literal.cjs');
+const noInvalidCssProperties = require('./rules/no-invalid-css-properties.cjs');
+const noPluginExternalImportPaths = require('./rules/no-plugin-external-import-paths.cjs');
+const noRestrictedImgSrcs = require('./rules/no-restricted-img-srcs.cjs');
+const noRestrictedSyntaxRules = require('./rules/no-restricted-syntax.cjs');
 const noUnreducedMotion = require('./rules/no-unreduced-motion.cjs');
 const themeTokenUsage = require('./rules/theme-token-usage.cjs');
-const noRestrictedImgSrcs = require('./rules/no-restricted-img-srcs.cjs');
-const consistentStoryTitles = require('./rules/consistent-story-titles.cjs');
-const noPluginExternalImportPaths = require('./rules/no-plugin-external-import-paths.cjs');
-const noInvalidCssProperties = require('./rules/no-invalid-css-properties.cjs');
-const defineFeatureEvents = require('./rules/define-feature-events.cjs');
-const noRestrictedSyntaxRules = require('./rules/no-restricted-syntax.cjs');
 
 /** @type {import('eslint').Linter.Plugin} */
 module.exports = {

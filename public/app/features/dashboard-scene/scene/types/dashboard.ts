@@ -9,7 +9,7 @@ import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
 
-import { type DashboardLayoutManager } from './DashboardLayoutManager';
+import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
 
 export interface DashboardSceneState extends SceneObjectState {
@@ -32,8 +32,11 @@ export interface DashboardSceneState extends SceneObjectState {
   uid?: string;
   /** @experimental */
   scopeMeta?: ScopeMeta;
-  /** Layout of panels */
-  body: DashboardLayoutManager;
+  /**
+   * Layout of panels. Any kind, because a sibling resource's layout manager (the notebook) also
+   * rides this scene and serializes its own kind rather than a dashboard layout kind.
+   */
+  body: AnyDashboardLayoutManager;
   /** NavToolbar actions */
   actions?: SceneObject[];
   /** Fixed row at the top of the canvas with for example variables and time range controls */

@@ -41,7 +41,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(ss), cfgProvider)
-	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(ss), cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
 	usrSvc, err := ProvideService(
@@ -558,7 +558,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
+		orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(ss), cfg, quotaService)
 		require.NoError(t, err)
 		usrSvc, err := ProvideService(
 			ss, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -1024,6 +1024,46 @@ func TestIntegrationUserUpdate(t *testing.T) {
 		require.Equal(t, "loginuser3", result.Login)
 		require.Equal(t, "user3@test.com", result.Email)
 	})
+
+	t.Run("Testing DB - update to a login taken by another user conflicts", func(t *testing.T) {
+		err := userStore.Update(context.Background(), &user.UpdateUserCommand{
+			Login:  "loginUSER0",
+			Email:  "USER1@test.com",
+			UserID: users[1].ID,
+		})
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+
+		result, err := userStore.GetByID(context.Background(), users[1].ID)
+		require.NoError(t, err)
+		require.Equal(t, "loginuser1", result.Login)
+	})
+
+	t.Run("Testing DB - update to an email taken by another user conflicts", func(t *testing.T) {
+		err := userStore.Update(context.Background(), &user.UpdateUserCommand{
+			Login:  "loginUSER1",
+			Email:  "USER0@test.com",
+			UserID: users[1].ID,
+		})
+		require.ErrorIs(t, err, user.ErrUserAlreadyExists)
+
+		result, err := userStore.GetByID(context.Background(), users[1].ID)
+		require.NoError(t, err)
+		require.Equal(t, "user1@test.com", result.Email)
+	})
+
+	t.Run("Testing DB - update keeping the user's own login and email succeeds", func(t *testing.T) {
+		err := userStore.Update(context.Background(), &user.UpdateUserCommand{
+			Login:  "loginUSER1",
+			Email:  "USER1@test.com",
+			Name:   "Renamed",
+			UserID: users[1].ID,
+		})
+		require.NoError(t, err)
+
+		result, err := userStore.GetByID(context.Background(), users[1].ID)
+		require.NoError(t, err)
+		require.Equal(t, "Renamed", result.Name)
+	})
 }
 
 func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.CreateUserCommand) []*user.User {
@@ -1048,7 +1088,7 @@ func TestIntegrationMetricsUsage(t *testing.T) {
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(ss), cfgProvider)
-	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(ss), cfg, quotaService)
 	require.NoError(t, err)
 
 	_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
@@ -1097,7 +1137,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider)
-	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := ProvideService(
 		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),

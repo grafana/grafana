@@ -3,7 +3,8 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { type DataSourceApi, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDatasourcePluginMetas } from '@grafana/runtime/internal';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
@@ -54,27 +55,52 @@ export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, t
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
   const [expandedRefIds, setExpandedRefIds] = useState<Set<string>>(new Set());
 
+  // The whole list once, rather than a lookup per ref: a card's datasource is resolved inside the
+  // memo below, and one hook per query would break the rules of hooks as queries come and go.
+  // `all` because a query can target any datasource, whatever capabilities its plugin reports, and
+  // `mixed` so a Mixed pane's own datasource resolves for a query that carries no ref of its own.
+  const { items: dataSourceItems } = useDataSourceInstanceList({ all: true, mixed: true });
+  // Logos come from the plugin metas keyed by type, not from the resolved instance, so a ref that
+  // matches no instance still shows its plugin's logo alongside the type it names.
+  const { value: pluginMetas } = useDatasourcePluginMetas();
+
+  const logosByType = useMemo(() => {
+    const logos = new Map<string, string | undefined>();
+
+    for (const meta of pluginMetas ?? []) {
+      logos.set(meta.id, meta.info.logos.small);
+      // A datasource instance's type can be the old id of a renamed plugin.
+      for (const aliasId of meta.aliasIDs ?? []) {
+        logos.set(aliasId, meta.info.logos.small);
+      }
+    }
+
+    return logos;
+  }, [pluginMetas]);
+
   const cards: CardDescriptor[] = useMemo(() => {
     const paneRef = paneDatasource?.uid ? { uid: paneDatasource.uid, type: paneDatasource.type } : undefined;
 
     return queries.map((query) => {
       const ref = query.datasource ?? paneRef;
-      const settings = ref ? getDataSourceSrv().getInstanceSettings(ref) : undefined;
-      const type = settings?.type ?? ref?.type;
+      // Matched on name as well as uid: a ref can name its datasource rather than carry its uid,
+      // and the settings lookup this replaced resolved either form.
+      const item = ref?.uid ? dataSourceItems.find((ds) => ds.uid === ref.uid || ds.name === ref.uid) : undefined;
+      const type = item?.type ?? ref?.type;
 
       return {
         refId: query.refId,
-        datasourceName: settings?.name ?? type ?? t('explore.signal-explorer.unknown-datasource', 'Unknown datasource'),
-        datasourceLogo: settings?.meta.info.logos.small,
+        datasourceName: item?.name ?? type ?? t('explore.signal-explorer.unknown-datasource', 'Unknown datasource'),
+        datasourceLogo: type ? logosByType.get(type) : undefined,
         // Prometheus is currently the only datasource with an explorer to open.
         isExpandable: isPrometheusType(type),
-        // The settings uid rather than the ref's: a ref naming a datasource by name resolves to the
+        // The resolved uid rather than the ref's: a ref naming a datasource by name resolves to the
         // uid here, and the uid is what the metric cache keys its entries on.
-        dsUid: settings?.uid ?? ref?.uid,
+        dsUid: item?.uid ?? ref?.uid,
         dsType: type,
       };
     });
-  }, [queries, paneDatasource]);
+  }, [queries, paneDatasource, dataSourceItems, logosByType]);
 
   // A card's expanded state has to go away with the card's ability to expand:
   // - a deleted query, because Explore hands out the lowest unused refId when a query is

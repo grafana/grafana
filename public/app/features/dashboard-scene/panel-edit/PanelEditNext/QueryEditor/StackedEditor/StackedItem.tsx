@@ -6,6 +6,7 @@ import { t, Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
 import { QueryEditorType } from '../../constants';
 import { EditableQueryName } from '../Header/EditableQueryName';
@@ -20,6 +21,7 @@ import { QueryEditorPanel } from '../QueryEditorRenderer';
 import { TransformationEditorPanel } from '../TransformationEditorRenderer';
 import { useQueryDatasource } from '../hooks/useQueryDatasource';
 import { type Transformation } from '../types';
+import { getExpressionSectionLabel } from '../utils';
 
 import { getStackedQueryEditorType } from './utils';
 
@@ -85,7 +87,7 @@ export function StackedQueryItem({ query, headingId }: StackedQueryItemProps) {
     <DataSourceLogo dataSource={queryDsData?.dsSettings} size={18} />
   );
 
-  const label = isExpression ? typeConfig[editorType].getLabel() : queryDsData?.dsSettings.name;
+  const label = isExpressionQuery(query) ? getExpressionSectionLabel(query) : queryDsData?.dsSettings.name;
 
   return (
     <>

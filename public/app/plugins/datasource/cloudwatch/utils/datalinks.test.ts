@@ -1,6 +1,5 @@
 import { type DataQueryRequest, type DataQueryResponse, dateMath, FieldType } from '@grafana/data';
-import { config, setDataSourceSrv } from '@grafana/runtime';
-import { type DatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { config, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
 
 import { type CloudWatchQuery } from '../types';
 
@@ -16,8 +15,8 @@ describe('addDataLinksToLogsResponse', () => {
   });
 
   const time = {
-    from: dateMath.toDateTime('2016-12-31 15:00:00Z', { roundUp: false })!,
-    to: dateMath.toDateTime('2016-12-31 16:00:00Z', { roundUp: false })!,
+    from: dateMath.toDateTime('2016-12-31T15:00:00Z', { roundUp: false })!,
+    to: dateMath.toDateTime('2016-12-31T16:00:00Z', { roundUp: false })!,
   };
   it('should add data links to response from log group names', async () => {
     // @ts-ignore ignore feature toggle type error
@@ -62,7 +61,7 @@ describe('addDataLinksToLogsResponse', () => {
           name: 'Xray',
         };
       },
-    } as DatasourceSrv);
+    } as DataSourceSrv);
 
     await addDataLinksToLogsResponse(
       mockResponse,

@@ -3,9 +3,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { useMergedPreferencesQuery } from '@grafana/api-clients/rtkq/preferences/v1';
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useFlagGrafanaUnifiedHomepage } from '@grafana/runtime/internal';
 import { PageLoader } from '@grafana/ui';
-import { SETUP_GUIDE_HOME_URL } from 'app/core/hooks/useHomeNav';
 import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 
 import { type DashboardPageProxyProps } from '../dashboard/containers/DashboardPageProxy';
@@ -16,16 +14,11 @@ const DashboardPageProxy = lazy(
 const HomePage = lazy(() => import(/* webpackChunkName: "HomePage" */ './HomePage'));
 
 function HomeRouteInner(props: DashboardPageProxyProps) {
-  const flagOn = useFlagGrafanaUnifiedHomepage({ suspend: true });
-  return flagOn ? <UnifiedHomeRoute {...props} /> : <DashboardPageProxy {...props} />;
-}
-
-function UnifiedHomeRoute(props: DashboardPageProxyProps) {
-  const { data, isLoading, isError } = useMergedPreferencesQuery();
+  const { data, isLoading } = useMergedPreferencesQuery();
   const redirectUri = data?.spec?.homeURL;
   const homeDashboardUID = data?.spec?.homeDashboardUID;
-  // homeDashboardUID takes precedence over homeURL; the setup guide redirect is superseded by the new homepage
-  const willRedirect = !!redirectUri && !homeDashboardUID && redirectUri !== SETUP_GUIDE_HOME_URL;
+  // homeDashboardUID takes precedence over homeURL
+  const willRedirect = !!redirectUri && !homeDashboardUID;
 
   useEffect(() => {
     if (!willRedirect) {
@@ -40,16 +33,13 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
     return <PageLoader />;
   }
 
-  // Probe failed: we cannot tell whether a home dashboard is configured.
-  // Fall back to the dashboard proxy so existing on-prem setups still work.
-  if (isError || !data) {
-    return <DashboardPageProxy {...props} />;
-  }
-
+  // Prefer a known home dashboard UID (including cached data after a failed refetch)
+  // over the error fallback so a transient prefs failure does not replace a configured home.
   if (homeDashboardUID) {
     return <DashboardPageProxy {...props} />;
   }
 
+  // Empty/absent UID, or prefs probe failed with no UID available → unified homepage
   return <HomePage />;
 }
 

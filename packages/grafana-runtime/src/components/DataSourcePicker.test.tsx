@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 
-import { DataSourcePicker } from './DataSourcePicker';
+import { DataSourcePicker, type DataSourcePickerProps, setDataSourcePicker } from './DataSourcePicker';
 
 const mockGetInstanceSettings = jest.fn();
 const mockGetList = jest.fn();
@@ -133,6 +133,32 @@ describe('DataSourcePicker', () => {
 
       const input = screen.getByLabelText('Select a data source');
       expect(input).toHaveProperty('disabled', true);
+    });
+  });
+
+  describe('setDataSourcePicker', () => {
+    afterEach(() => {
+      setDataSourcePicker(undefined);
+    });
+
+    it('should render the injected component with the provided props', () => {
+      const InjectedPicker = jest.fn((props: DataSourcePickerProps) => <div>injected picker</div>);
+      setDataSourcePicker(InjectedPicker);
+
+      render(<DataSourcePicker onChange={jest.fn()} current="some-uid" placeholder="pick one" />);
+
+      expect(screen.getByText('injected picker')).toBeInTheDocument();
+      expect(InjectedPicker.mock.lastCall?.[0]).toMatchObject({ current: 'some-uid', placeholder: 'pick one' });
+    });
+
+    it('should render the legacy picker again after the injected component is unset', () => {
+      setDataSourcePicker(() => <div>injected picker</div>);
+      setDataSourcePicker(undefined);
+
+      render(<DataSourcePicker onChange={jest.fn()} current={null} />);
+
+      expect(screen.queryByText('injected picker')).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Select a data source')).toBeInTheDocument();
     });
   });
 });

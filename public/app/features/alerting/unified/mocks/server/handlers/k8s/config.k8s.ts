@@ -2,9 +2,10 @@ import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 
 import { API_GROUP, API_VERSION, type Config } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 
-const CONFIG_URL = `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/configs/:name`;
+// Config is the one notifications resource that only exists in v0alpha1, so this route is built from
+// that version's own constants rather than the shared ALERTING_API_SERVER_BASE_URL, which points at v1beta1.
+const CONFIG_URL = `/apis/${API_GROUP}/${API_VERSION}/namespaces/:namespace/configs/:name`;
 
 interface AutoSyncConfigOptions {
   /**

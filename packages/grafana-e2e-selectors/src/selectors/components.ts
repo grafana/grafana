@@ -301,6 +301,9 @@ export const versionedComponents = {
         drop: {
           [MIN_GRAFANA_VERSION]: 'TestData drop values',
         },
+        exemplarCount: {
+          '13.2.0': 'data-testid TestData exemplar count',
+        },
       },
     },
     DataSourceHttpSettings: {
@@ -841,6 +844,7 @@ export const versionedComponents = {
       '10.2.0': 'Map controls Show zoom control field property editor',
     },
     showAttributionField: {
+      '13.2.0': 'data-testid Map controls Show optional attribution field property editor',
       '13.1.0': 'data-testid Map controls Show attribution field property editor',
       '10.2.0': 'Map controls Show attribution field property editor',
     },
@@ -987,6 +991,13 @@ export const versionedComponents = {
       '11.2.0': (title: string) => `data-testid Tab ${title}`,
     },
     active: { [MIN_GRAFANA_VERSION]: () => '[class*="-activeTabStyle"]' },
+  },
+  TabbedContainer: {
+    // Shared by every TabbedContainer, so scope it to the surrounding container
+    // (for example pages.Explore.QueryHistory.container) to address one panel's close button.
+    closeButton: {
+      '13.2.0': 'data-testid tabbed-container-close-button',
+    },
   },
   RefreshPicker: {
     runButtonV2: {

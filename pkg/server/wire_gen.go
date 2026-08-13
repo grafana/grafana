@@ -29,10 +29,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-import (
-	_ "github.com/grafana/grafana/pkg/extensions"
-)
-
 // Injectors from wire_subinject_oss.go:
 
 // InitializeModuleServer is a simplified set of dependencies for the CLI,

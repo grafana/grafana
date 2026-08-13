@@ -237,11 +237,11 @@ describe('SaveDashboardDrawer', () => {
 
   describe('When a dashboard is managed by an external system', () => {
     beforeEach(() => {
-      config.featureToggles.provisioning = true;
+      config.provisioningEnabled = true;
     });
 
     afterEach(() => {
-      config.featureToggles.provisioning = false;
+      config.provisioningEnabled = false;
     });
 
     it('It should show the changes tab if the resource can be edited', async () => {

@@ -1117,40 +1117,32 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-1",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "abc",
-									Name: "receiver-1",
-									Type: "slack",
-								},
+						Name: "receiver-1",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "abc",
+								Name: "receiver-1",
+								Type: "slack",
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-2",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "def",
-									Name: "receiver-2",
-									Type: "slack",
-								},
-								{
-									UID:  "ghi",
-									Name: "receiver-2",
-									Type: "teams",
-								},
-								{
-									UID:  "jkl",
-									Name: "receiver-2",
-									Type: "discord",
-								},
+						Name: "receiver-2",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "def",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "ghi",
+								Name: "receiver-2",
+								Type: "teams",
+							},
+							{
+								UID:  "jkl",
+								Name: "receiver-2",
+								Type: "discord",
 							},
 						},
 					},
@@ -1180,40 +1172,32 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "new-receiver",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "abc",
-									Name: "new-receiver",
-									Type: "slack",
-								},
+						Name: "new-receiver",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "abc",
+								Name: "new-receiver",
+								Type: "slack",
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-2",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "def",
-									Name: "receiver-2",
-									Type: "slack",
-								},
-								{
-									UID:  "ghi",
-									Name: "receiver-2",
-									Type: "email",
-								},
-								{
-									UID:  "jkl",
-									Name: "receiver-2",
-									Type: "discord",
-								},
+						Name: "receiver-2",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "def",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "ghi",
+								Name: "receiver-2",
+								Type: "email",
+							},
+							{
+								UID:  "jkl",
+								Name: "receiver-2",
+								Type: "discord",
 							},
 						},
 					},
@@ -1242,40 +1226,32 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-1",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "abc",
-									Name: "receiver-1",
-									Type: "slack",
-								},
-								{
-									UID:  "def",
-									Name: "receiver-1",
-									Type: "slack",
-								},
+						Name: "receiver-1",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "abc",
+								Name: "receiver-1",
+								Type: "slack",
+							},
+							{
+								UID:  "def",
+								Name: "receiver-1",
+								Type: "slack",
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-2",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "ghi",
-									Name: "receiver-2",
-									Type: "email",
-								},
-								{
-									UID:  "jkl",
-									Name: "receiver-2",
-									Type: "discord",
-								},
+						Name: "receiver-2",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "ghi",
+								Name: "receiver-2",
+								Type: "email",
+							},
+							{
+								UID:  "jkl",
+								Name: "receiver-2",
+								Type: "discord",
 							},
 						},
 					},
@@ -1298,45 +1274,37 @@ func TestStitchReceivers(t *testing.T) {
 					},
 					Receivers: []*v1.PostableApiReceiver{
 						{
-							Receiver: definitions.Receiver{
-								Name: "receiver-1",
-							},
-							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-									{
-										UID:  "1",
-										Name: "receiver-1",
-										Type: "slack",
-									},
-									{
-										UID:  "2",
-										Name: "receiver-1",
-										Type: "slack",
-									},
+							Name: "receiver-1",
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "1",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+								{
+									UID:  "2",
+									Name: "receiver-1",
+									Type: "slack",
 								},
 							},
 						},
 						{
-							Receiver: definitions.Receiver{
-								Name: "receiver-2",
-							},
-							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-									{
-										UID:  "3",
-										Name: "receiver-2",
-										Type: "slack",
-									},
-									{
-										UID:  "4",
-										Name: "receiver-2",
-										Type: "slack",
-									},
-									{
-										UID:  "5",
-										Name: "receiver-2",
-										Type: "slack",
-									},
+							Name: "receiver-2",
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "3",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "4",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "5",
+									Name: "receiver-2",
+									Type: "slack",
 								},
 							},
 						},
@@ -1363,45 +1331,37 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-1",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "1",
-									Name: "receiver-1",
-									Type: "slack",
-								},
+						Name: "receiver-1",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "1",
+								Name: "receiver-1",
+								Type: "slack",
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-2",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "3",
-									Name: "receiver-2",
-									Type: "slack",
-								},
-								{
-									UID:  "4",
-									Name: "receiver-2",
-									Type: "slack",
-								},
-								{
-									UID:  "5",
-									Name: "receiver-2",
-									Type: "slack",
-								},
-								{
-									UID:  "2",
-									Name: "receiver-2",
-									Type: "slack",
-								},
+						Name: "receiver-2",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "3",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "4",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "5",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "2",
+								Name: "receiver-2",
+								Type: "slack",
 							},
 						},
 					},
@@ -1424,63 +1384,47 @@ func TestStitchReceivers(t *testing.T) {
 					},
 					Receivers: []*v1.PostableApiReceiver{
 						{
-							Receiver: definitions.Receiver{
-								Name: "receiver-1",
-							},
-							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-									{
-										UID:  "1",
-										Name: "receiver-1",
-										Type: "slack",
-									},
-									{
-										UID:  "2",
-										Name: "receiver-1",
-										Type: "slack",
-									},
+							Name: "receiver-1",
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "1",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+								{
+									UID:  "2",
+									Name: "receiver-1",
+									Type: "slack",
 								},
 							},
 						},
 						{
-							Receiver: definitions.Receiver{
-								Name: "receiver-2",
-							},
-							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-									{
-										UID:  "3",
-										Name: "receiver-2",
-										Type: "slack",
-									},
+							Name: "receiver-2",
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "3",
+									Name: "receiver-2",
+									Type: "slack",
 								},
 							},
 						},
 						{
-							Receiver: definitions.Receiver{
-								Name: "receiver-3",
-							},
-							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-									{
-										UID:  "4",
-										Name: "receiver-4",
-										Type: "slack",
-									},
+							Name: "receiver-3",
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "4",
+									Name: "receiver-4",
+									Type: "slack",
 								},
 							},
 						},
 						{
-							Receiver: definitions.Receiver{
-								Name: "receiver-4",
-							},
-							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-									{
-										UID:  "5",
-										Name: "receiver-4",
-										Type: "slack",
-									},
+							Name: "receiver-4",
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "5",
+									Name: "receiver-4",
+									Type: "slack",
 								},
 							},
 						},
@@ -1507,63 +1451,47 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-1",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "1",
-									Name: "receiver-1",
-									Type: "slack",
-								},
+						Name: "receiver-1",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "1",
+								Name: "receiver-1",
+								Type: "slack",
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-2",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "3",
-									Name: "receiver-2",
-									Type: "slack",
-								},
+						Name: "receiver-2",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "3",
+								Name: "receiver-2",
+								Type: "slack",
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-3",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "4",
-									Name: "receiver-4",
-									Type: "slack",
-								},
+						Name: "receiver-3",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "4",
+								Name: "receiver-4",
+								Type: "slack",
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-4",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "5",
-									Name: "receiver-4",
-									Type: "slack",
-								},
-								{
-									UID:  "2",
-									Name: "receiver-4",
-									Type: "slack",
-								},
+						Name: "receiver-4",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "5",
+								Name: "receiver-4",
+								Type: "slack",
+							},
+							{
+								UID:  "2",
+								Name: "receiver-4",
+								Type: "slack",
 							},
 						},
 					},
@@ -1592,49 +1520,37 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-1",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "abc",
-									Name: "receiver-1",
-									Type: "slack",
-								},
+						Name: "receiver-1",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "abc",
+								Name: "receiver-1",
+								Type: "slack",
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-2",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "def",
-									Name: "receiver-2",
-									Type: "slack",
-								},
-								{
-									UID:  "ghi",
-									Name: "receiver-2",
-									Type: "email",
-								},
+						Name: "receiver-2",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "def",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "ghi",
+								Name: "receiver-2",
+								Type: "email",
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
-							Name: "brand-new-group",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "jkl",
-									Name: "brand-new-group",
-									Type: "opsgenie",
-								},
+						Name: "brand-new-group",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "jkl",
+								Name: "brand-new-group",
+								Type: "opsgenie",
 							},
 						},
 					},
@@ -1664,49 +1580,37 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-1",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "abc",
-									Name: "receiver-1",
-									Type: "slack",
-								},
+						Name: "receiver-1",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "abc",
+								Name: "receiver-1",
+								Type: "slack",
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-2",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "def",
-									Name: "receiver-2",
-									Type: "slack",
-								},
-								{
-									UID:  "jkl",
-									Name: "receiver-2",
-									Type: "discord",
-								},
+						Name: "receiver-2",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "def",
+								Name: "receiver-2",
+								Type: "slack",
+							},
+							{
+								UID:  "jkl",
+								Name: "receiver-2",
+								Type: "discord",
 							},
 						},
 					},
 					{
-						Receiver: definitions.Receiver{
-							Name: "brand-new-group",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "ghi",
-									Name: "brand-new-group",
-									Type: "opsgenie",
-								},
+						Name: "brand-new-group",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "ghi",
+								Name: "brand-new-group",
+								Type: "opsgenie",
 							},
 						},
 					},
@@ -1732,35 +1636,27 @@ func TestStitchReceivers(t *testing.T) {
 					},
 					Receivers: []*v1.PostableApiReceiver{
 						{
-							Receiver: definitions.Receiver{
-								Name: "receiver-1",
-							},
-							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-									{
-										UID:  "1",
-										Name: "receiver-1",
-										Type: "slack",
-									},
-									{
-										UID:  "2",
-										Name: "receiver-1",
-										Type: "slack",
-									},
+							Name: "receiver-1",
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "1",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+								{
+									UID:  "2",
+									Name: "receiver-1",
+									Type: "slack",
 								},
 							},
 						},
 						{
-							Receiver: definitions.Receiver{
-								Name: "receiver-2",
-							},
-							PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-								GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-									{
-										UID:  "3",
-										Name: "receiver-2",
-										Type: "slack",
-									},
+							Name: "receiver-2",
+							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+								{
+									UID:  "3",
+									Name: "receiver-2",
+									Type: "slack",
 								},
 							},
 						},
@@ -1791,26 +1687,22 @@ func TestStitchReceivers(t *testing.T) {
 				},
 				Receivers: []*v1.PostableApiReceiver{
 					{
-						Receiver: definitions.Receiver{
-							Name: "receiver-1",
-						},
-						PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-							GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-								{
-									UID:  "1",
-									Name: "receiver-1",
-									Type: "slack",
-								},
-								{
-									UID:  "2",
-									Name: "receiver-1",
-									Type: "slack",
-								},
-								{
-									UID:  "3",
-									Name: "receiver-1",
-									Type: "slack",
-								},
+						Name: "receiver-1",
+						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+							{
+								UID:  "1",
+								Name: "receiver-1",
+								Type: "slack",
+							},
+							{
+								UID:  "2",
+								Name: "receiver-1",
+								Type: "slack",
+							},
+							{
+								UID:  "3",
+								Name: "receiver-1",
+								Type: "slack",
 							},
 						},
 					},
@@ -1850,40 +1742,32 @@ func createTestConfigWithReceivers() *v1.AMConfigV1 {
 			},
 			Receivers: []*v1.PostableApiReceiver{
 				{
-					Receiver: definitions.Receiver{
-						Name: "receiver-1",
-					},
-					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-							{
-								UID:  "abc",
-								Name: "receiver-1",
-								Type: "slack",
-							},
+					Name: "receiver-1",
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+						{
+							UID:  "abc",
+							Name: "receiver-1",
+							Type: "slack",
 						},
 					},
 				},
 				{
-					Receiver: definitions.Receiver{
-						Name: "receiver-2",
-					},
-					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-							{
-								UID:  "def",
-								Name: "receiver-2",
-								Type: "slack",
-							},
-							{
-								UID:  "ghi",
-								Name: "receiver-2",
-								Type: "email",
-							},
-							{
-								UID:  "jkl",
-								Name: "receiver-2",
-								Type: "discord",
-							},
+					Name: "receiver-2",
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+						{
+							UID:  "def",
+							Name: "receiver-2",
+							Type: "slack",
+						},
+						{
+							UID:  "ghi",
+							Name: "receiver-2",
+							Type: "email",
+						},
+						{
+							UID:  "jkl",
+							Name: "receiver-2",
+							Type: "discord",
 						},
 					},
 				},
@@ -1908,40 +1792,32 @@ func createInconsistentTestConfigWithReceivers() *v1.AMConfigV1 {
 			},
 			Receivers: []*v1.PostableApiReceiver{
 				{
-					Receiver: definitions.Receiver{
-						Name: "receiver-1",
-					},
-					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-							{
-								UID:  "abc",
-								Name: "receiver-1",
-								Type: "slack",
-							},
+					Name: "receiver-1",
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+						{
+							UID:  "abc",
+							Name: "receiver-1",
+							Type: "slack",
 						},
 					},
 				},
 				{
-					Receiver: definitions.Receiver{
-						Name: "receiver-2",
-					},
-					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
-							{
-								UID:  "def",
-								Name: "receiver-2",
-								Type: "slack",
-							},
-							{
-								UID:  "ghi",
-								Name: "receiver-3",
-								Type: "email",
-							},
-							{
-								UID:  "jkl",
-								Name: "receiver-2",
-								Type: "discord",
-							},
+					Name: "receiver-2",
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
+						{
+							UID:  "def",
+							Name: "receiver-2",
+							Type: "slack",
+						},
+						{
+							UID:  "ghi",
+							Name: "receiver-3",
+							Type: "email",
+						},
+						{
+							UID:  "jkl",
+							Name: "receiver-2",
+							Type: "discord",
 						},
 					},
 				},

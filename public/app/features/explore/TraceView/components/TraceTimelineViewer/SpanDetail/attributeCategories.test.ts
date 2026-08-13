@@ -186,21 +186,37 @@ describe('groupAttributesByCategory', () => {
     expect(grouped.map(({ category }) => category.id)).toEqual(['kubernetes', SERVICE_CATEGORY_ID]);
   });
 
-  it('orders service first and alphabetizes remaining resource categories', () => {
+  it('orders resource categories by gravity', () => {
     const attributes = [
       { key: 'telemetry.sdk.language', value: 'go' },
       { key: 'k8s.namespace.name', value: 'default' },
       { key: 'service.name', value: 'api' },
       { key: 'cloud.provider', value: 'aws' },
+      { key: 'browser.name', value: 'Chrome' },
+      { key: 'deployment.environment', value: 'production' },
+      { key: 'db.system', value: 'postgres' },
+      { key: 'process.pid', value: '1' },
+      { key: 'jvm.memory.used', value: '512' },
+      { key: 'container.id', value: 'abc' },
+      { key: 'host.name', value: 'node-1' },
+      { key: 'custom.field', value: 'value' },
     ];
 
     const grouped = groupAttributesByCategory(attributes, 'resource');
 
     expect(grouped.map(({ category }) => category.id)).toEqual([
+      'frontend',
       SERVICE_CATEGORY_ID,
-      'cloud',
+      'deployment',
+      'database',
+      'process',
+      'runtime',
+      'container',
       'kubernetes',
+      'host-os',
+      'cloud',
       'telemetry-sdk',
+      'other',
     ]);
   });
 
