@@ -474,21 +474,21 @@ func collectNamespaceUIDsByOrg(rules []*ngmodels.AlertRule) []orgNamespaces {
 // deletedRuleFolderKeys returns the deduplicated parent folders of the given rules. It runs on the
 // caller's session so it must be invoked before the rules are deleted in the same transaction.
 func deletedRuleFolderKeys(sess *db.Session, orgID int64, ruleUIDs []string) ([]ngmodels.FolderKey, error) {
-	var rules []alertRule
-	if err := sess.Table(alertRule{}).Select("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&rules); err != nil {
+	var uids []string
+	if err := sess.Table(alertRule{}).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids); err != nil {
 		return nil, err
 	}
-	seen := make(map[string]struct{}, len(rules))
-	keys := make([]ngmodels.FolderKey, 0, len(rules))
-	for _, r := range rules {
-		if r.NamespaceUID == "" {
+	seen := make(map[string]struct{}, len(uids))
+	keys := make([]ngmodels.FolderKey, 0, len(uids))
+	for _, uid := range uids {
+		if uid == "" {
 			continue
 		}
-		if _, ok := seen[r.NamespaceUID]; ok {
+		if _, ok := seen[uid]; ok {
 			continue
 		}
-		seen[r.NamespaceUID] = struct{}{}
-		keys = append(keys, ngmodels.FolderKey{OrgID: orgID, UID: r.NamespaceUID})
+		seen[uid] = struct{}{}
+		keys = append(keys, ngmodels.FolderKey{OrgID: orgID, UID: uid})
 	}
 	return keys, nil
 }
