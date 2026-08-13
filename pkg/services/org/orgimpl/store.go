@@ -559,21 +559,23 @@ func orgUserExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, o
 
 type getUserByIDQuery struct {
 	sqltemplate.SQLTemplate
-	UserTable        string
-	UserID           int64
-	IsServiceAccount any
+	UserTable              string
+	UserID                 int64
+	ExcludeServiceAccounts bool
+	IsServiceAccount       any
 }
 
 func (q getUserByIDQuery) Validate() error {
 	return validateQueryFields(q.UserTable)
 }
 
-func getUserByID(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userID int64) (user.User, bool, error) {
+func getUserByID(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userID int64, excludeServiceAccounts bool) (user.User, bool, error) {
 	query := getUserByIDQuery{
-		SQLTemplate:      sqltemplate.New(dbHelper.DialectForDriver()),
-		UserTable:        dbHelper.Table("user"),
-		UserID:           userID,
-		IsServiceAccount: dbHelper.DB.GetDialect().BooleanValue(false),
+		SQLTemplate:            sqltemplate.New(dbHelper.DialectForDriver()),
+		UserTable:              dbHelper.Table("user"),
+		UserID:                 userID,
+		ExcludeServiceAccounts: excludeServiceAccounts,
+		IsServiceAccount:       dbHelper.DB.GetDialect().BooleanValue(false),
 	}
 	querySQL, err := sqltemplate.Execute(getUserByIDTemplate, query)
 	if err != nil {
@@ -593,27 +595,15 @@ func (ss *sqlStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) 
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// check if user exists
-		var usr user.User
-		if cmd.AllowAddingServiceAccount {
-			exists, err := sess.Table(dbHelper.Table("user")).ID(cmd.UserID).Get(&usr)
-			if err != nil {
-				return err
-			}
-			if !exists {
-				return user.ErrUserNotFound
-			}
-		} else {
-			var exists bool
-			usr, exists, err = getUserByID(dbHelper, sess, cmd.UserID)
-			if err != nil {
-				return err
-			}
-			if !exists {
-				return user.ErrUserNotFound
-			}
+		usr, exists, err := getUserByID(dbHelper, sess, cmd.UserID, !cmd.AllowAddingServiceAccount)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return user.ErrUserNotFound
 		}
 
-		exists, err := orgUserExists(dbHelper, sess, cmd.OrgID, usr.ID)
+		exists, err = orgUserExists(dbHelper, sess, cmd.OrgID, usr.ID)
 		if err != nil {
 			return err
 		} else if exists {
@@ -1171,7 +1161,7 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// check if user exists
-		usr, exists, err := getUserByID(dbHelper, sess, cmd.UserID)
+		usr, exists, err := getUserByID(dbHelper, sess, cmd.UserID, true)
 		if err != nil {
 			return err
 		} else if !exists {
@@ -1253,7 +1243,7 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 
 func (ss *sqlStore) deleteUserInTransaction(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, cmd *user.DeleteUserCommand) error {
 	// Check if user exists
-	_, has, err := getUserByID(dbHelper, sess, cmd.UserID)
+	_, has, err := getUserByID(dbHelper, sess, cmd.UserID, true)
 	if err != nil {
 		return err
 	}

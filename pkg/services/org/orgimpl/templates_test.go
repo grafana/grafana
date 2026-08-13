@@ -186,10 +186,19 @@ func TestTemplates(t *testing.T) {
 				{
 					Name: "get_user_by_id",
 					Data: getUserByIDQuery{
-						SQLTemplate:      queryTemplate(),
-						UserTable:        dbHelper.Table("user"),
-						UserID:           42,
-						IsServiceAccount: false,
+						SQLTemplate:            queryTemplate(),
+						UserTable:              dbHelper.Table("user"),
+						UserID:                 42,
+						ExcludeServiceAccounts: true,
+						IsServiceAccount:       false,
+					},
+				},
+				{
+					Name: "including_service_accounts",
+					Data: getUserByIDQuery{
+						SQLTemplate: queryTemplate(),
+						UserTable:   dbHelper.Table("user"),
+						UserID:      42,
 					},
 				},
 			},
