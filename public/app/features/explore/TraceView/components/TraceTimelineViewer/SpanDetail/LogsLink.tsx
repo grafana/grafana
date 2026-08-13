@@ -269,6 +269,7 @@ function getLokiDatasourcesToTry(
   traceDatasourceUid?: string
 ): string[] {
   const otherUids = dsList
+    .filter((ds) => ds.type === 'loki')
     .map((ds) => ds.uid)
     .filter((uid) => uid !== primaryUid)
     .slice(0, MAX_FALLBACK_LOKI_DATASOURCES);
