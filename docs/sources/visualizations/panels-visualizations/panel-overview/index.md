@@ -84,22 +84,24 @@ If an option is only available in view mode or edit mode, that's indicated:
 
 When you open a panel in full-screen view mode, Grafana displays a **View panel** sidebar with controls for adjusting the panel.
 These controls make it easier to view specific data or identify patterns and correlations.
-Because these controls exist in view mode, you don't need edit permissions to use these controls, and the changes you make don't affect the saved dashboard.
+Because these controls exist in view mode, you don't need edit permissions to use them, and the changes you make don't affect the saved dashboard.
 
 The sidebar includes the following controls:
 
 - **Quick toggles**: Adjust common visualization options, such as legend visibility and basic graph styles.
-- **Fan-out by series or label**: Split one graph into multiple graphs—one per series or label value. For example, if you see a latency spike across several series, fanning out by label helps you identify which services are causing it.
+- **Fan-out by series or label**: Split one graph into multiple graphs per series or label value. This is useful when a single graph has many series and you need to spot which series or labels share an anomaly.
 
-Available quick toggles and fan-out support depend on the visualization type.
+{{< figure src="/media/docs/grafana/dashboards/screenshot-view-panel-sidebar-2-v13.2.png" max-width="750px" alt="Panel in view mode with sidebar" >}}
+
+{{< admonition type="note" >}}
 This feature is supported for time series visualizations.
-
-
+If it's added to more visualizations, available quick toggles and fan-out support will depend on the visualization type.
+{{< /admonition >}}
 
 ### Fan-out by series or label
 
-**Fan-out** splits one panel into multiple panels so you can compare series or label values side by side.
-This is useful when a single graph has many series and you need to spot which series or label share an anomaly.
+Fan-out splits one panel into multiple panels so you can compare series or label values side by side.
+This is useful when a single graph has many series and you need to spot which series or labels share an anomaly.
 
 In the **Fan-out by series or label** section, choose one of the following:
 
@@ -107,7 +109,7 @@ In the **Fan-out by series or label** section, choose one of the following:
 | --- | --- |
 | **Disabled** | Show the original single panel. |
 | **By series** | Create one panel per series. |
-| A label name under **Labels** | Create one panel per value of that label (for example, `method` or `status`). |
+| **Labels** | Create one panel per value of the selected label (for example, `method` or `status`). |
 
 If the panel data has no labels, Grafana shows **Data has no labels** under **Labels**.
 
