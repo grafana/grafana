@@ -106,8 +106,18 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
         })}
         {isOpen && (
           <Portal>
-            <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
+            <div
+              ref={refs.setFloating}
+              style={floatingStyles}
+              data-testid={selectors.components.Tooltip.container}
+              id={tooltipId}
+              role="tooltip"
+              className={style.container}
+              {...getFloatingProps()}
+            >
               <FloatingArrow
+                strokeWidth={0.3}
+                stroke={style.borderColor}
                 width={8}
                 height={4}
                 tipRadius={2}
@@ -115,16 +125,9 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
                 ref={arrowRef}
                 context={context}
               />
-              <div
-                data-testid={selectors.components.Tooltip.container}
-                id={tooltipId}
-                role="tooltip"
-                className={style.container}
-              >
-                {typeof content === 'string' && content}
-                {isValidElement(content) && cloneElement(content)}
-                {contentIsFunction && content({})}
-              </div>
+              {typeof content === 'string' && content}
+              {isValidElement(content) && cloneElement(content)}
+              {contentIsFunction && content({})}
             </div>
           </Portal>
         )}
