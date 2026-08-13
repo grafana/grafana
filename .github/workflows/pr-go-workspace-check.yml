@@ -13,27 +13,36 @@ permissions: {}
 
 jobs:
   detect-changes:
-    name: Detect whether code changed
-    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
-    outputs:
-      changed: ${{ steps.detect-changes.outputs.backend }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 0
-          filter: blob:none
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/pr-go-workspace-check.yml
+    uses: ./.github/workflows/bootstrap-detect-changes.yml
+    with:
+      self: .github/workflows/pr-go-workspace-check.yml
+
+  go-mod-cache:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
+    with:
+      runs-on: ubuntu-arm64
+      enterprise: true
+
+  go-build-cache:
+    needs: go-mod-cache
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-build-cache.yml
+    with:
+      runs-on: ubuntu-arm64
+      enterprise: true
 
   check-workspace:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    needs: [detect-changes, go-build-cache]
+    if: needs.detect-changes.outputs.backend == 'true'
     name: Go Workspace Check
     runs-on: ubuntu-arm64
 
@@ -78,8 +87,8 @@ jobs:
         fi
 
   check-wire:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    needs: [detect-changes, go-build-cache]
+    if: needs.detect-changes.outputs.backend == 'true'
     name: Check Wire Changes
     runs-on: ubuntu-arm64
 
@@ -170,6 +179,9 @@ jobs:
   # Future work also allows us to start skipping some tests based on changed files.
   required-go-workspace-check:
     needs:
+      - detect-changes
+      - go-mod-cache
+      - go-build-cache
       - check-workspace
       - check-wire
     # always() is the best function here.

@@ -1,0 +1,62 @@
+name: Bootstrap Go Build Cache
+
+# Compiles every non-test package for one bucket so that jobs which build the
+# same tree restore the result instead of repeating it. Callers run this after
+# the module cache for the same bucket: it restores those modules read-only
+# rather than downloading its own, which would put a second writer on that key.
+#
+# This compiles against the local build cache rather than the S3 one. The remote
+# cache replaces GOCACHE with its own store, which leaves nothing on disk in the
+# layout the consuming jobs restore.
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: Runner for the bucket being warmed.
+        required: true
+        type: string
+      enterprise:
+        description: Check out the enterprise tree, which changes the cache keys.
+        required: false
+        default: false
+        type: boolean
+
+permissions: {}
+
+jobs:
+  go-build-cache:
+    name: Warm Go build cache
+    runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Get GitHub App token
+        if: ${{ inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-ci-bot
+
+      - name: Setup Enterprise
+        if: ${{ inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
+        uses: ./.github/actions/setup-enterprise
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-write: 'build'
+
+      - name: Build all packages
+        run: |
+          set -euo pipefail
+          for dir in $(go list -m -f '{{.Dir}}'); do
+            (cd "$dir" && go build ./...)
+          done

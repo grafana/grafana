@@ -1,0 +1,84 @@
+name: Bootstrap Go Module Cache
+
+# Populates the Go module cache for one bucket. The cache keys carry the runner
+# arch and a hash of the module files, so an arm64 job and an x64 job, or an OSS
+# job and an enterprise job, never share an entry. Callers request the bucket
+# their jobs run in; every other job restores read-only.
+#
+# Modules are fetched through the S3 module proxy, which is shared across
+# branches and so still serves a pull request whose module files are new to the
+# GitHub cache. Only this workflow needs the grafana-cicd role: the modules land
+# in GOMODCACHE either way, and the entry saved here is what everything else
+# restores. Fork pull requests cannot assume the role and use the public proxy.
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: Runner for the bucket being warmed.
+        required: true
+        type: string
+      enterprise:
+        description: Check out the enterprise tree, which changes the cache keys.
+        required: false
+        default: false
+        type: boolean
+
+permissions: {}
+
+jobs:
+  go-mod-cache:
+    name: Warm Go module cache
+    runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Get GitHub App token
+        if: ${{ inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-ci-bot
+
+      - name: Setup Enterprise
+        if: ${{ inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
+        uses: ./.github/actions/setup-enterprise
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+        with:
+          build-cache: 'false'
+          cache-write: 'mod'
+
+      - name: Use the S3 module proxy
+        id: s3-proxy
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
+        continue-on-error: true
+        uses: ./.github/actions/setup-go-remote-cache
+
+      # The proxy is an optimisation, so a job that cannot reach it downloads
+      # from the public proxy instead of failing. Clear the settings rather than
+      # leave them pointing at a server that never started.
+      - name: Fall back to the public proxy
+        if: ${{ steps.s3-proxy.outcome == 'failure' }}
+        run: |
+          set -euo pipefail
+          {
+            echo "GOPROXY="
+            echo "GOSUMDB="
+            echo "GOCACHEPROG="
+          } >> "$GITHUB_ENV"
+
+      - name: Download modules
+        run: |
+          set -euo pipefail
+          for dir in $(go list -m -f '{{.Dir}}'); do
+            (cd "$dir" && go mod download all)
+          done
