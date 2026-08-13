@@ -59,10 +59,10 @@ function createLinkModel(overrides: Partial<LinkModel> = {}): LinkModel {
   };
 }
 
-/** Presence checks only run when both the configured query and alternativeQueries are set. */
+/** Presence checks run when interpolatedParams.query is set. */
 function createProbingLinkModel(query: DataQuery): LinkModel {
   return createLinkModel({
-    interpolatedParams: { query, alternativeQueries: [query] },
+    interpolatedParams: { query },
   });
 }
 
@@ -134,19 +134,6 @@ describe('LogsLinkButton', () => {
 
   it('does not query the datasource when the link has no query', () => {
     render(<LogsLinkButton linkModel={createLinkModel()} traceDatasourceUid={TRACE_DATASOURCE_UID} />);
-
-    expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
-  });
-
-  it('does not query the datasource when the link has no alternativeQueries', () => {
-    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
-
-    render(
-      <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
-        traceDatasourceUid={TRACE_DATASOURCE_UID}
-      />
-    );
 
     expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
   });
@@ -610,19 +597,6 @@ describe('LogsLinkMenuItem', () => {
 
   it('does not query the datasource when the link has no query', () => {
     render(<LogsLinkMenuItem linkModel={createLinkModel()} traceDatasourceUid={TRACE_DATASOURCE_UID} />);
-
-    expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
-  });
-
-  it('does not query the datasource when the link has no alternativeQueries', () => {
-    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
-
-    render(
-      <LogsLinkMenuItem
-        linkModel={createLinkModel({ interpolatedParams: { query: interpolatedQuery } })}
-        traceDatasourceUid={TRACE_DATASOURCE_UID}
-      />
-    );
 
     expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
   });
