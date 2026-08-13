@@ -61,6 +61,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     }
   }, [filterable, displayName, filter, setFilter]);
 
+  if (hideHeader) {
+    return null;
+  }
+
   /* eslint-disable jsx-a11y/no-static-element-interactions */
   return (
     <Stack
@@ -102,8 +106,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       {showTypeIcons && (
         <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
       )}
-      <button tabIndex={0} className={styles.headerCellLabel} title={hideHeader ? undefined : displayName}>
-        {!hideHeader && displayName}
+      <button tabIndex={0} className={styles.headerCellLabel} title={displayName}>
+        {displayName}
         {direction && (
           <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
         )}
