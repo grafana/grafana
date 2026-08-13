@@ -249,18 +249,36 @@ You can also check the **Disable webhook integration**. When checked, Grafana do
 
 Git providers limit the amount of webhooks they allow in their repositories. Refer to [Webhook limits](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend#webhook-limits) for more information and to learn how to proceed if you reach these limits.
 
-### Signed commit option
+### Signed commit and authoring options
 
 Starting in Grafana 13.1.0, you can **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys.
+
+Starting in Grafana 13.2.0, you can **include authoring details** to your commits.
 
 For the moment, Git Sync doesn't support:
 
 - Passphrase-protected keys.
 - Verification of individual accounts.
 
-Follow the UI wizard to set up any of these options, and refer to the example below for more details.
+Follow the UI wizard to fill in the required fields to set up any of these options, and refer to the sections below for more details.
 
-#### Pre-requirements
+#### Unsigned commits
+
+If you don't enable commit signing:
+
+- If you add an author override, the `author` and `committer` fields will be the configured override.
+- If you don't select author override and the commit author is retrievable from the code, Git Sync will apply it in the `author` and `committer` fields.
+- Otherwise, the `author` and `committer` fields will be `noreply`.
+
+#### Signed commits
+
+If you enable commit signing:
+
+- If you enable the signer as the commit author, Git Sync will use the `author` and `committer` fields you fill in.
+- If you don't enable the signer as the commit author, and the commit author is retrievable from the code, Git Sync will use the user as `author` and the configured committer.
+- Otherwise, `author` will be `noreply`, and `committer` will be as configured.
+
+##### Pre-requirements
 
 In order to implement signed commits, make sure that you set up a specific verification account in your Git provider. You'll need your account's signing key, name and email to set up verification.
 
@@ -270,7 +288,7 @@ For more details on how to create your keys for Git authentication, refer to the
 - GitLab: [Signed commits](https://docs.gitlab.com/user/project/repository/signed_commits/)
 - Bitbucket: [Controlling access to code](https://confluence.atlassian.com/bitbucketserver/controlling-access-to-code-776639770.html)
 
-#### Example: Sign your commits with an SSH key
+##### Example: Sign your commits with an SSH key
 
 To enforce signed commits using an SSH key follow these steps:
 
