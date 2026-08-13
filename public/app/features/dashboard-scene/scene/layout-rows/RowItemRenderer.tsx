@@ -170,16 +170,18 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 {!isEditing && titleElement}
               </button>
               {isEditing && titleElement}
-              <ClipboardButton
-                icon="link"
-                size="sm"
-                fill="text"
-                variant="secondary"
-                className={cx(styles.copyLinkButton, 'dashboard-row-header-copy-link')}
-                aria-label={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
-                tooltip={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
-                getText={() => model.getUrl()}
-              />
+              {!isEditing && (
+                <ClipboardButton
+                  icon="link"
+                  size="sm"
+                  fill="text"
+                  variant="secondary"
+                  className={cx(styles.copyLinkButton, 'dashboard-row-header-copy-link')}
+                  aria-label={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
+                  tooltip={t('dashboard.rows-layout.row.copy-link', 'Copy link to row')}
+                  getText={() => model.getUrl()}
+                />
+              )}
               {isEditing && layoutType && <LayoutModeIndicator layoutType={layoutType} className="layout-indicator" />}
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>

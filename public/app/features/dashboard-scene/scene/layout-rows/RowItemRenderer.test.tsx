@@ -10,7 +10,7 @@ import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
-function renderRow({ collapse = false, title = 'My row' } = {}) {
+function renderRow({ collapse = false, title = 'My row', isEditing = false } = {}) {
   const row = new RowItem({
     key: 'row-1',
     title,
@@ -20,6 +20,7 @@ function renderRow({ collapse = false, title = 'My row' } = {}) {
   const scene = new DashboardScene({
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     body: new RowsLayoutManager({ rows: [row] }),
+    isEditing,
   });
   render(<scene.Component model={scene} />);
   return { row };
@@ -62,6 +63,12 @@ describe('RowItemRenderer', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Copy link to row' }));
 
     expect(await navigator.clipboard.readText()).toContain('srow=My-row');
+  });
+
+  it('hides the copy link button while editing', () => {
+    renderRow({ isEditing: true });
+
+    expect(screen.queryByRole('button', { name: 'Copy link to row' })).not.toBeInTheDocument();
   });
 
   it('copies a link with the full slug path for a nested row', async () => {

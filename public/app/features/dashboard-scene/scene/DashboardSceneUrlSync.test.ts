@@ -5,6 +5,8 @@ import { DashboardScene } from './DashboardScene';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
+import { TabItem } from './layout-tabs/TabItem';
+import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
 describe('DashboardSceneUrlSync', () => {
   describe('Given a standard scene', () => {
@@ -92,6 +94,26 @@ describe('DashboardSceneUrlSync', () => {
 
       expect(outerRow.state.collapse).toBe(false);
       expect(middleRow.state.collapse).toBe(false);
+    });
+
+    it('switches to a non-active tab containing the target row', () => {
+      const targetRow = new RowItem({ title: 'Target row' });
+      const activeTab = new TabItem({ title: 'Active tab' });
+      const targetTab = new TabItem({
+        title: 'Target tab',
+        layout: new RowsLayoutManager({ rows: [targetRow] }),
+      });
+      const tabsLayout = new TabsLayoutManager({ tabs: [activeTab, targetTab] });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: tabsLayout,
+      });
+      tabsLayout.setState({ currentTabSlug: activeTab.getSlug() });
+
+      scene.urlSync?.updateFromUrl({ srow: 'Target-tab/Target-row' });
+
+      expect(tabsLayout.getCurrentTab()).toBe(targetTab);
     });
 
     it('scrolls the correct row when a nested row shares its slug with a top-level row', () => {

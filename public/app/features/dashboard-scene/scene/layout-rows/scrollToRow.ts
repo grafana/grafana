@@ -1,4 +1,4 @@
-import { sceneGraph, type SceneObject } from '@grafana/scenes';
+import { sceneGraph } from '@grafana/scenes';
 
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isRowItem, isTabItem, type RowItemLike } from '../types/LayoutItemTypeGuards';
@@ -34,14 +34,8 @@ export function scrollToRow(srow: string, layout: DashboardLayoutManager) {
     return;
   }
 
-  // The row might be nested inside collapsed rows - expand them all so it can render
-  let ancestor: SceneObject | undefined = row;
-  while (ancestor && ancestor !== layout) {
-    if (isRowItem(ancestor) && ancestor.getCollapsedState()) {
-      ancestor.setCollapsedState(false);
-    }
-
-    ancestor = ancestor.parent!;
+  if (row.getCollapsedState()) {
+    row.setCollapsedState(false);
   }
 
   row.scrollIntoView();
