@@ -36,6 +36,9 @@ export function useStagedConfigDryRun(stagedConfig: StagedExtraConfig): StagedCo
       templateFiles: config.template_files,
       configIdentifier: config.identifier,
       promote: true,
+      // PromoteConfirmModal already renders an inline banner for every failure mode
+      // so a global toast would duplicate or contradict it.
+      notificationOptions: { showErrorAlert: false },
     });
   }, [dryRun]);
 

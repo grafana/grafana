@@ -2,6 +2,9 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
+import { AppEvents } from '@grafana/data';
+import { appEvents } from 'app/core/app_events';
+
 import { setupMswServer } from '../../mockApi';
 import { type AdminConfigPostState, setupAdminConfigPost } from '../../mocks/server/configure/admin_config';
 
@@ -48,8 +51,15 @@ function fullDryRunResponse() {
 }
 
 describe('PromoteConfirmModal', () => {
+  let appEventsEmitSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    appEventsEmitSpy = jest.spyOn(appEvents, 'emit').mockImplementation();
+  });
+
+  afterEach(() => {
+    appEventsEmitSpy.mockRestore();
   });
 
   it('previews the merge impact and renamed resources from the dry-run, then promotes on confirm', async () => {
@@ -175,6 +185,12 @@ describe('PromoteConfirmModal', () => {
     expect(await screen.findByText(/couldn.t preview the promotion impact/i)).toBeInTheDocument();
     expect(screen.queryByText(/couldn.t check the promotion impact/i)).not.toBeInTheDocument();
     await waitFor(() => expect(ui.confirm.get()).toBeEnabled());
+
+    // backendSrv schedules its global toast 50ms after a failed request settles, so give it a
+    // chance to fire before asserting it didn't.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(appEventsEmitSpy).not.toHaveBeenCalledWith(AppEvents.alertWarning, expect.anything());
+    expect(appEventsEmitSpy).not.toHaveBeenCalledWith(AppEvents.alertError, expect.anything());
 
     await user.click(ui.confirm.get());
     await waitFor(() => expect(onDismiss).toHaveBeenCalled());
