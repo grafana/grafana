@@ -6,17 +6,12 @@ import { describe, expect, it } from 'vitest';
 import { WebpackAssetsManifest } from 'webpack-assets-manifest';
 
 import FeatureFlaggedSRIPlugin from './FeatureFlaggedSriPlugin.ts';
-import { INTEGRITY_HASHES, assetsManifestOptions } from './assetsManifest.ts';
+import { assetsManifestOptions, type ManifestAssets, type ManifestEntrypoints } from './assetsManifest.ts';
 import { compile, readAssets } from './testUtils.ts';
 
 const OUTPUT_PATH = '/dist';
 const PUBLIC_PATH = 'public/build/';
 const MANIFEST_NAME = 'assets-manifest.json';
-
-interface ManifestEntry {
-  src: string;
-  integrity: string;
-}
 
 // Mirrors webpack.common.ts: multiple entries including a CSS-only theme pair, boot opting
 // out of the runtime chunk, content-hashed filenames and assets emitted to a subdirectory.
@@ -58,7 +53,7 @@ function createConfig(plugins: RspackPluginInstance[]): Configuration {
 }
 
 function sriPlugin(): RspackPluginInstance {
-  return new SubresourceIntegrityPlugin({ hashFuncNames: ['sha384', 'sha512'] });
+  return new SubresourceIntegrityPlugin({ hashFuncNames: ['sha384'] });
 }
 
 function manifestPlugin(): RspackPluginInstance {
@@ -66,15 +61,20 @@ function manifestPlugin(): RspackPluginInstance {
 }
 
 function expectedIntegrity(content: Buffer | string): string {
-  return INTEGRITY_HASHES.map((algo) => `${algo}-${createHash(algo).update(content).digest('base64')}`).join(' ');
+  return ['sha384'].map((algo) => `${algo}-${createHash(algo).update(content).digest('base64')}`).join(' ');
 }
 
-async function build(plugins: RspackPluginInstance[]) {
+interface BuildOutput {
+  assets: Record<string, string>;
+  entrypoints: ManifestEntrypoints;
+  entries: ManifestAssets;
+}
+
+async function build(plugins: RspackPluginInstance[]): Promise<BuildOutput> {
   const { outputFs } = await compile(createConfig(plugins));
   const assets = readAssets(outputFs, OUTPUT_PATH);
   const { entrypoints, ...entries } = JSON.parse(assets[MANIFEST_NAME]);
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return { assets, entrypoints, entries: entries as Record<string, ManifestEntry> };
+  return { assets, entrypoints, entries };
 }
 
 describe('assets manifest', () => {
@@ -98,26 +98,31 @@ describe('assets manifest', () => {
 
     expect(Object.keys(entries).length).toBeGreaterThan(0);
 
-    for (const [, entry] of Object.entries(entries)) {
+    for (const entry of Object.values(entries)) {
       expect(entry).toEqual({ src: expect.any(String), integrity: expect.any(String) });
       expect(entry.integrity).toBe(expectedIntegrity(assets[entry.src.replace(PUBLIC_PATH, '')]));
     }
   });
 
-  it('resolves integrity for every file the backend looks up', async () => {
+  it('skips integrity hashes when SRI plugin is not present', async () => {
+    const { assets, entries } = await build([manifestPlugin()]);
+
+    expect(Object.keys(entries).length).toBeGreaterThan(0);
+
+    for (const entry of Object.values(entries)) {
+      expect(entry).toEqual({ src: expect.any(String), integrity: undefined });
+    }
+  });
+
+  it('contains integrity hashes for every entrypoint asset', async () => {
     const { entrypoints, entries } = await build([sriPlugin(), manifestPlugin()]);
 
-    // Mirrors readWebAssets: build src -> integrity from the top-level entries, then resolve
-    // the entrypoint lists against it.
-    const integrity = new Map(Object.values(entries).map((entry) => [entry.src, entry.integrity]));
-    const looked = [
-      ...entrypoints.app.assets.js,
-      ...entrypoints.app.assets.css,
-      entrypoints.dark.assets.css[0],
-      entrypoints.light.assets.css[0],
-    ];
+    const integrityMap = new Map(Object.values(entries).map((entry) => [entry.src, entry.integrity]));
+    const entrypointFilePaths = Object.values(entrypoints).flatMap((v) => Object.values(v.assets).flat());
 
-    expect(looked.filter((src: string) => !integrity.get(src))).toEqual([]);
+    for (const entrypoint of entrypointFilePaths) {
+      expect(integrityMap.get(entrypoint), `${entrypoint} must have an integrity hash`).toBeDefined();
+    }
   });
 
   // SubresourceIntegrityPlugin injects an sriHashes map into the entry chunk and
@@ -178,61 +183,5 @@ describe('assets manifest', () => {
 
     expect(Object.keys(assets).some((name) => name.endsWith('.js.map'))).toBe(true);
     expect(entrypoints.app.assets.js.every((file: string) => !file.endsWith('.map'))).toBe(true);
-  });
-
-  // rspack.dev.ts registers this plugin with no SubresourceIntegrityPlugin and
-  // mode: 'development', where SRI disables itself anyway. Digests are computed here rather
-  // than read from FileDescriptor.integrity precisely so that build still produces a usable
-  // manifest — reading the SRI field would leave every digest blank.
-  it('produces full digests with no SubresourceIntegrityPlugin registered', async () => {
-    const { assets, entrypoints, entries } = await build([manifestPlugin()]);
-
-    expect(Object.keys(entries).length).toBeGreaterThan(0);
-    expect(entrypoints.app.assets.js.length).toBeGreaterThan(0);
-    for (const [key, entry] of Object.entries(entries)) {
-      expect(entry.integrity, `missing digest for ${key}`).toBe(
-        expectedIntegrity(assets[entry.src.replace(PUBLIC_PATH, '')])
-      );
-    }
-  });
-
-  // SubresourceIntegrityPlugin defaults to ['sha384'] alone. Computing locally keeps the
-  // manifest's digest set independent of that option, matching webpack-assets-manifest today.
-  it('keeps its digest set independent of the SRI plugin hashFuncNames', async () => {
-    const { assets, entries } = await build([new SubresourceIntegrityPlugin(), manifestPlugin()]);
-
-    for (const [key, entry] of Object.entries(entries)) {
-      expect(entry.integrity, `narrowed digest for ${key}`).toBe(
-        expectedIntegrity(assets[entry.src.replace(PUBLIC_PATH, '')])
-      );
-      expect(entry.integrity).toContain('sha512-');
-    }
-  });
-
-  it('records why webpack-assets-manifest is not used: it throws under rspack either way', async () => {
-    const legacyPlugin = (integrity: boolean): RspackPluginInstance => {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return new WebpackAssetsManifest({
-        entrypoints: true,
-        integrity,
-        integrityHashes: [...INTEGRITY_HASHES],
-        publicPath: true,
-        output: MANIFEST_NAME,
-      }) as unknown as RspackPluginInstance;
-    };
-
-    // With integrity on, recordSubresourceIntegrity writes through compilation.assetsInfo,
-    // which rspack doesn't expose.
-    await expect(compile(createConfig([legacyPlugin(true)]))).rejects.toThrow(
-      "Cannot read properties of undefined (reading 'set')"
-    );
-
-    // Turning integrity off only moves the failure: handleProcessAssetsAnalyse is tapped
-    // unconditionally and calls codeGenerationResults.get(module, chunk.runtime), which
-    // rspack's binding rejects because chunk.runtime is a Set. Any asset/resource module
-    // reaches it, so there is no configuration under which this library works.
-    await expect(compile(createConfig([legacyPlugin(false)]))).rejects.toThrow(
-      'Value is none of these types `String`, `Array<T>`'
-    );
   });
 });
