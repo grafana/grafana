@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -975,9 +976,10 @@ func (s *Service) checkPermissionWithMapping(ctx context.Context, scopeMap map[s
 		return scopeMap[""], nil
 	}
 
-	// If creating a resource that goes in a folder, but no folder is specified,
-	// assume parent folder is the general folder
-	if req.Verb == utils.VerbCreate && t.HasFolderSupport() && req.ParentFolder == "" {
+	// Empty parent is the legacy root sentinel. Folder-capable resources store
+	// root objects as ""; admission and RBAC grants use folders:uid:general.
+	// Map the object's own parent only — general is not an ancestor of nested folders.
+	if t.HasFolderSupport() && req.ParentFolder == "" {
 		req.ParentFolder = accesscontrol.GeneralFolderUID
 	}
 
@@ -1382,6 +1384,12 @@ func buildItemList(scopes map[string]bool, tree folderTree, prefix string) *auth
 				continue
 			}
 			folderSet[identifier] = struct{}{}
+			// Root objects are stored as "" or "general". A grant on either
+			// sentinel must match both until storage canonicalizes the annotation.
+			if folder.IsRootFolderUID(identifier) {
+				folderSet[accesscontrol.GeneralFolderUID] = struct{}{}
+				folderSet[""] = struct{}{}
+			}
 			for n := range tree.Children(identifier) {
 				folderSet[n.UID] = struct{}{}
 			}

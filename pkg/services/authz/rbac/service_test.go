@@ -165,6 +165,112 @@ func TestService_checkPermission(t *testing.T) {
 			expected: false,
 		},
 		{
+			name: "should check general folder scope for root variable get with empty parent",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "variables:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "variables",
+				Name:         "region",
+				ParentFolder: "",
+				Verb:         utils.VerbGet,
+			},
+			expected: true,
+		},
+		{
+			name: "should check general folder scope for root variable update with empty parent",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:write",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "variables:write",
+				Group:        "dashboard.grafana.app",
+				Resource:     "variables",
+				Name:         "region",
+				ParentFolder: "",
+				Verb:         utils.VerbUpdate,
+			},
+			expected: true,
+		},
+		{
+			name: "should check general folder scope for root variable delete with empty parent",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:delete",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "variables:delete",
+				Group:        "dashboard.grafana.app",
+				Resource:     "variables",
+				Name:         "region",
+				ParentFolder: "",
+				Verb:         utils.VerbDelete,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny root variable get when grant is on a different folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:read",
+					Scope:      "folders:uid:folder-a",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "folder-a",
+				},
+			},
+			folders: []store.Folder{{UID: "folder-a"}},
+			check: checkRequest{
+				Action:       "variables:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "variables",
+				Name:         "region",
+				ParentFolder: "",
+				Verb:         utils.VerbGet,
+			},
+			expected: false,
+		},
+		{
+			name: "should check general folder scope for root variable get stored as general",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "variables:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "variables",
+				Name:         "region",
+				ParentFolder: accesscontrol.GeneralFolderUID,
+				Verb:         utils.VerbGet,
+			},
+			expected: true,
+		},
+		{
 			name:        "should return false if user has no permissions on resource",
 			permissions: []accesscontrol.Permission{},
 			check: checkRequest{
@@ -1008,6 +1114,46 @@ func TestService_listPermission(t *testing.T) {
 			},
 			expectedItems:   []string{"some_dashboard"},
 			expectedFolders: []string{"some_folder_1", "some_folder_2"},
+		},
+		{
+			name: "should include both root sentinels when user has general folder access",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:read",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			folders: []store.Folder{},
+			list: listRequest{
+				Action:   "variables:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "variables",
+				Options:  &ListRequestOptions{},
+			},
+			expectedFolders: []string{accesscontrol.GeneralFolderUID, ""},
+		},
+		{
+			name: "should not include root sentinels for a non-root folder grant",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "variables:read",
+					Scope:      "folders:uid:folder-a",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "folder-a",
+				},
+			},
+			folders: []store.Folder{{UID: "folder-a"}},
+			list: listRequest{
+				Action:   "variables:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "variables",
+				Options:  &ListRequestOptions{},
+			},
+			expectedFolders: []string{"folder-a"},
 		},
 		{
 			name: "should return dashboards that user has annotation read access to via subresource",
