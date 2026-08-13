@@ -49,7 +49,7 @@ import (
 	"github.com/prometheus/prometheus/model/relabel"
 )
 
-const maxBatchSize = 256
+const maxBatchSize = 1024
 
 func TestPostPath(t *testing.T) {
 	cases := []struct {

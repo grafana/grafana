@@ -48,7 +48,7 @@ import (
 
 const (
 	// DefaultMaxBatchSize is the default maximum number of alerts to send in a single request to the alertmanager.
-	DefaultMaxBatchSize = 256
+	DefaultMaxBatchSize = 1024
 
 	contentTypeJSON = "application/json"
 )
@@ -128,6 +128,9 @@ type Options struct {
 
 	// MaxBatchSize determines the maximum number of alerts to send in a single request to the alertmanager.
 	MaxBatchSize int
+
+	// DispatcherWorkers determines the number of concurrent goroutines dispatching alerts.
+	DispatcherWorkers int
 }
 
 type alertMetrics struct {
@@ -150,6 +153,9 @@ func NewManager(o *Options, logger *slog.Logger) *Manager {
 	// Set default MaxBatchSize if not provided.
 	if o.MaxBatchSize <= 0 {
 		o.MaxBatchSize = DefaultMaxBatchSize
+	}
+	if o.DispatcherWorkers <= 0 {
+		o.DispatcherWorkers = 1
 	}
 	if logger == nil {
 		logger = promslog.NewNopLogger()
@@ -217,7 +223,17 @@ func (n *Manager) Run(tsets <-chan map[string][]*targetgroup.Group) {
 
 	go func() {
 		defer wg.Done()
-		n.sendLoop()
+
+		sendWg := sync.WaitGroup{}
+		sendWg.Add(n.opts.DispatcherWorkers)
+		for i := 0; i < n.opts.DispatcherWorkers; i++ {
+			go func() {
+				defer sendWg.Done()
+				n.sendLoop()
+			}()
+		}
+		sendWg.Wait()
+
 		n.drainQueue()
 	}()
 
@@ -240,11 +256,6 @@ func (n *Manager) sendLoop() {
 
 			case <-n.more:
 				n.sendOneBatch()
-
-				// If the queue still has items left, kick off the next iteration.
-				if n.queueLen() > 0 {
-					n.setMore()
-				}
 			}
 		}
 	}
@@ -271,8 +282,16 @@ func (n *Manager) targetUpdateLoop(tsets <-chan map[string][]*targetgroup.Group)
 func (n *Manager) sendOneBatch() {
 	alerts := n.nextBatch()
 
-	if !n.sendAll(alerts...) {
-		n.metrics.dropped.Add(float64(len(alerts)))
+	// If the queue still has items left, wake up another worker immediately
+	// before we block on sending this batch.
+	if n.queueLen() > 0 {
+		n.setMore()
+	}
+
+	if len(alerts) > 0 {
+		if !n.sendAll(alerts...) {
+			n.metrics.dropped.Add(float64(len(alerts)))
+		}
 	}
 }
 

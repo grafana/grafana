@@ -28,9 +28,10 @@ import (
 )
 
 const (
-	defaultMaxQueueCapacity = 10000
-	defaultTimeout          = 10 * time.Second
+	defaultMaxQueueCapacity = 50000
+	defaultTimeout          = 30 * time.Second
 	defaultDrainOnShutdown  = true
+	defaultDispatcherWorkers = 4
 
 	// DefaultMaxLabelStringSize is the default byte cap applied to any single
 	// label/annotation name or value forwarded to an Alertmanager. The
@@ -71,6 +72,7 @@ type ExternalAMOptions struct {
 	// MaxLabelStringSize caps the byte length of any single label/annotation
 	// name or value. A non-positive value disables the clamp.
 	MaxLabelStringSize int
+	Timeout            time.Duration
 }
 
 type Option func(*ExternalAMOptions)
@@ -110,14 +112,36 @@ func WithMaxLabelStringSize(size int) Option {
 // WithMaxQueueCapacity sets the maximum capacity of the queue used by the sender.
 func WithMaxQueueCapacity(capacity int) Option {
 	return func(opts *ExternalAMOptions) {
-		opts.QueueCapacity = capacity
+		if capacity > 0 {
+			opts.QueueCapacity = capacity
+		}
+	}
+}
+
+// WithTimeout sets the fallback timeout used when sending to external Alertmanagers.
+func WithTimeout(timeout time.Duration) Option {
+	return func(opts *ExternalAMOptions) {
+		if timeout > 0 {
+			opts.Timeout = timeout
+		}
 	}
 }
 
 // WithMaxBatchSize sets the maximum batch size for sending alerts to the external Alertmanager(s).
 func WithMaxBatchSize(size int) Option {
 	return func(opts *ExternalAMOptions) {
-		opts.MaxBatchSize = size
+		if size > 0 {
+			opts.MaxBatchSize = size
+		}
+	}
+}
+
+// WithDispatcherWorkers sets the number of concurrent goroutines dispatching alerts.
+func WithDispatcherWorkers(workers int) Option {
+	return func(opts *ExternalAMOptions) {
+		if workers > 0 {
+			opts.DispatcherWorkers = workers
+		}
 	}
 }
 
@@ -159,12 +183,14 @@ func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts
 
 	options := &ExternalAMOptions{
 		Options: Options{
-			QueueCapacity:   defaultMaxQueueCapacity,
-			MaxBatchSize:    DefaultMaxBatchSize,
-			Registerer:      reg,
-			DrainOnShutdown: defaultDrainOnShutdown,
+			QueueCapacity:     defaultMaxQueueCapacity,
+			MaxBatchSize:      DefaultMaxBatchSize,
+			DispatcherWorkers: defaultDispatcherWorkers,
+			Registerer:        reg,
+			DrainOnShutdown:   defaultDrainOnShutdown,
 		},
 		MaxLabelStringSize: DefaultMaxLabelStringSize,
+		Timeout:            defaultTimeout,
 	}
 
 	for _, opt := range opts {
@@ -205,7 +231,7 @@ func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts
 
 // ApplyConfig syncs a configuration with the sender.
 func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []ExternalAMcfg) error {
-	notifierCfg, headers, dataSourceUIDs, err := buildNotifierConfig(alertmanagers)
+	notifierCfg, headers, dataSourceUIDs, err := buildNotifierConfig(alertmanagers, s.options.Timeout)
 	if err != nil {
 		return err
 	}
@@ -285,12 +311,12 @@ func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 
-func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[string]http.Header, map[string]string, error) {
+func buildNotifierConfig(alertmanagers []ExternalAMcfg, fallbackTimeout time.Duration) (*config.Config, map[string]http.Header, map[string]string, error) {
 	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
 	headers := map[string]http.Header{}
 	dataSourceUIDs := map[string]string{}
 	for i, am := range alertmanagers {
-		amConfig, err := externalAMcfgToAlertmanagerConfig(am)
+		amConfig, err := externalAMcfgToAlertmanagerConfig(am, fallbackTimeout)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -320,7 +346,7 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 }
 
 // externalAMcfgToAlertmanagerConfig converts an ExternalAMcfg to a Prometheus AlertmanagerConfig.
-func externalAMcfgToAlertmanagerConfig(am ExternalAMcfg) (*config.AlertmanagerConfig, error) {
+func externalAMcfgToAlertmanagerConfig(am ExternalAMcfg, fallbackTimeout time.Duration) (*config.AlertmanagerConfig, error) {
 	u, err := url.Parse(am.URL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse alertmanager URL: %w", err)
@@ -336,7 +362,7 @@ func externalAMcfgToAlertmanagerConfig(am ExternalAMcfg) (*config.AlertmanagerCo
 
 	timeout := am.Timeout
 	if timeout == 0 {
-		timeout = defaultTimeout
+		timeout = fallbackTimeout
 	}
 
 	amConfig := &config.AlertmanagerConfig{

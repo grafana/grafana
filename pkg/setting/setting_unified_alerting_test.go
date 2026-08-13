@@ -110,6 +110,9 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				require.Equal(t, 90*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)
 				require.Equal(t, DefaultRuleEvaluationInterval, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)
+				require.Equal(t, 50000, cfg.UnifiedAlerting.SenderQueueCapacity)
+				require.Equal(t, 1024, cfg.UnifiedAlerting.SenderBatchSize)
+				require.Equal(t, 30*time.Second, cfg.UnifiedAlerting.SenderTimeout)
 			},
 		},
 		{
@@ -134,6 +137,10 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
 				require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.DefaultRuleEvaluationInterval)
+				require.Equal(t, 50000, cfg.UnifiedAlerting.SenderQueueCapacity)
+				require.Equal(t, 1024, cfg.UnifiedAlerting.SenderBatchSize)
+				require.Equal(t, 30*time.Second, cfg.UnifiedAlerting.SenderTimeout)
+				require.Equal(t, 4, cfg.UnifiedAlerting.SenderDispatcherWorkers)
 			},
 		},
 		{
