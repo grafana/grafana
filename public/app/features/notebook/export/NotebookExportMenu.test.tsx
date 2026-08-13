@@ -47,10 +47,17 @@ function setup(getSpec: () => Promise<NotebookSpec | undefined>) {
 
 describe('NotebookExportMenu', () => {
   const originalAppUrl = config.appUrl;
+  const originalClipboard = navigator.clipboard;
 
   beforeEach(() => {
     jest.clearAllMocks();
     Object.assign(window, { isSecureContext: true });
+    // One test swaps in a failing clipboard; put the real one back so the others are unaffected.
+    Object.defineProperty(navigator, 'clipboard', {
+      value: originalClipboard,
+      configurable: true,
+      writable: true,
+    });
     // notebookShareUrl resolves the share link against config.appUrl; jest leaves it unset, and
     // `new URL(path, undefined)` throws, which the menu would report as an export failure.
     config.appUrl = 'https://host/';
@@ -98,6 +105,24 @@ describe('NotebookExportMenu', () => {
       expect(mockOpenCursor).toHaveBeenCalledTimes(1);
     });
     expect(mockOpenCursor.mock.calls[0][0]).not.toContain('Open in Grafana');
+  });
+
+  it('reports a failed copy instead of claiming success', async () => {
+    // The clipboard write settles after the spec loads, so its outcome is the only thing that says
+    // whether anything reached the clipboard. Toasting success without it is a lie the user acts on.
+    const emit = jest.spyOn(appEvents, 'emit');
+    const { user } = setup(async () => buildSpec());
+
+    // After render: userEvent installs its own clipboard stub during setup, which would replace this.
+    const writeText = jest.fn().mockRejectedValue(new Error('NotAllowedError'));
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true, writable: true });
+
+    await user.click(screen.getByRole('menuitem', { name: 'Copy as Markdown' }));
+
+    await waitFor(() => {
+      expect(emit).toHaveBeenCalledWith(AppEvents.alertError, ['Failed to export notebook']);
+    });
+    expect(emit).not.toHaveBeenCalledWith(AppEvents.alertSuccess, expect.anything());
   });
 
   it('reports a failure instead of doing nothing', async () => {
