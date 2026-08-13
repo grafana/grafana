@@ -26,7 +26,7 @@ async function addPanelFromSidebar(sidebar: Sidebar, clickAddButton = true) {
     if (clickAddButton) {
       await sidebar.toolbar.clickButton('Add');
     }
-    await sidebar.addOptions.clickNewPanelButton();
+    await sidebar.addOptions.addPanel();
   });
 }
 
