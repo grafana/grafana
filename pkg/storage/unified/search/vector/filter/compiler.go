@@ -113,9 +113,11 @@ func (c *compiler) compileComparison(e *ComparisonExpression) error {
 		if e.Operator == Ne {
 			c.where.WriteString("NOT ")
 		}
+		// Bind as string with an explicit ::jsonb cast (matching the $in path)
+		// rather than relying on the driver to infer jsonb from a []byte arg.
 		c.where.WriteString("(metadata @> ")
-		c.addArg(jsonArg)
-		c.where.WriteString(")")
+		c.addArg(string(jsonArg))
+		c.where.WriteString("::jsonb)")
 		return nil
 	}
 
