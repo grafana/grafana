@@ -332,6 +332,15 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 		)
 	}
 
+	return r.writeClaimedResource(ctx, path, ref, parsed, folderOpts...)
+}
+
+// writeClaimedResource performs the actual write for a resource whose UID has
+// already been probed for cross-file duplicates and claimed for this run. It runs
+// NO duplicate guard of its own, so a caller that has destructively deleted an old
+// resource beforehand (an identity-changing rename) can call it without risking a
+// second fallible guard undoing the rename after the delete.
+func (r *ResourcesManager) writeClaimedResource(ctx context.Context, path, ref string, parsed *ParsedResource, folderOpts ...EnsurePathOption) (string, schema.GroupVersionKind, error) {
 	// For resources that exist in folders, set the header annotation
 	if supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
 		// Make sure the parent folders exist.
@@ -356,7 +365,7 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 	parsed.Meta.SetResourceVersion("")
 
 	runCtx, runSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.run_resource")
-	err = parsed.Run(runCtx)
+	err := parsed.Run(runCtx)
 	if err != nil {
 		runSpan.RecordError(err)
 		// Wrap resource validation errors (like dashboard refresh interval) as warnings
@@ -561,23 +570,30 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	// skippedOldDelete carries a managed-by-other warning when the old UID has been
 	// taken over by another file: the rename's new resource is still written and
 	// the skipped delete is surfaced as a non-fatal warning.
-	var skippedOldDelete error
+	var (
+		skippedOldDelete error
+		newName          string
+		gvk              schema.GroupVersionKind
+	)
 	if oldParsed.SameIdentity(newParsed) {
 		// Pure path/folder rename: writeResourceFromParsed updates the resource in
-		// place, so there is no old resource to delete. Byte-identical content skips
-		// strict validation so a path/folder change is not blocked by stricter rules
-		// introduced after the resource was first persisted (e.g. legacy dashboards).
+		// place (its probe re-homes it from the old path), so there is no old resource
+		// to delete. Byte-identical content skips strict validation so a path/folder
+		// change is not blocked by stricter rules introduced after the resource was
+		// first persisted (e.g. legacy dashboards).
 		if oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
 			newParsed.SkipStrictValidation = true
 		}
+		newName, gvk, err = r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
+		if err != nil {
+			return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
+		}
 	} else {
-		// Identity-changing rename. Reject up front if the new UID is a cross-file
-		// duplicate, leaving the old resource intact (no data loss, and no wasted
-		// quota slot). Otherwise delete the old resource FIRST so its quota slot is
-		// freed before the new one is created — a net-zero rename must not require a
-		// temporary extra slot. deleteOldResource re-reads the resource under the
-		// provisioning identity and, if another file has taken the UID over, skips
-		// the delete and returns a managed-by-other warning rather than destroying it.
+		// Identity-changing rename. Run BOTH fallible guards — the cross-file duplicate
+		// probe and the atomic claim — BEFORE the destructive delete, so nothing after
+		// the delete can reject and orphan the file. A duplicate is rejected here with
+		// the old resource left intact (no data loss, no wasted quota slot).
+		id := resourceID{Name: newParsed.Obj.GetName(), Resource: newParsed.GVR.Resource, Group: newParsed.GVK.Group}
 		owner, dup, derr := r.accidentalDuplicateOwner(ctx, newPath, newRef, newParsed)
 		if derr != nil {
 			return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, derr
@@ -587,6 +603,17 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 				fmt.Errorf("duplicate resource name: %s, %s and %s: %w", newParsed.Obj.GetName(), newPath, owner, ErrDuplicateName),
 			)
 		}
+		if existingOwner, ok := r.claimResource(id, newPath); !ok {
+			return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, NewResourceValidationError(
+				fmt.Errorf("duplicate resource name: %s, %s and %s: %w", newParsed.Obj.GetName(), newPath, existingOwner, ErrDuplicateName),
+			)
+		}
+
+		// Delete the old resource FIRST so its quota slot is freed before the new one
+		// is created — a net-zero rename must not require a temporary extra slot.
+		// deleteOldResource re-reads the resource under the provisioning identity and,
+		// if another file has taken the UID over, skips the delete and returns a
+		// managed-by-other warning rather than destroying it.
 		if derr := r.deleteOldResource(ctx, previousPath, oldParsed.Obj.GetName(), oldParsed.GVR, newParsed.Obj.GetName()); derr != nil {
 			if !errors.Is(derr, ErrResourceManagedByOtherFile) {
 				return oldParsed.Obj.GetName(), oldFolderName, newParsed.GVK, fmt.Errorf("failed to delete old resource: %w", derr)
@@ -598,11 +625,14 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 			// cleanup could delete the other file's folder.
 			oldFolderName = ""
 		}
-	}
 
-	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
-	if err != nil {
-		return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
+		// The UID is already probed and claimed, so this write carries no further
+		// duplicate guard — a transient failure here cannot reject the write and
+		// orphan the file now that the old resource is gone.
+		newName, gvk, err = r.writeClaimedResource(ctx, newPath, newRef, newParsed, folderOpts...)
+		if err != nil {
+			return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
+		}
 	}
 
 	// When the resource's parent folder didn't change (e.g. the entire directory
