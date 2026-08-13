@@ -103,7 +103,10 @@ function normalizeEmptyRef(ref: DataSourceRef | string | null | undefined): Data
     return undefined;
   }
   if (typeof ref === 'object' && ref !== null && ref.uid === '') {
-    return { ...ref, uid: undefined };
+    // Keep the object only when a type-only lookup is possible; otherwise this is a plain
+    // "default datasource" request (same as an empty string), and normalizing to undefined
+    // lets describeRef report 'default' instead of 'unknown' if resolution fails.
+    return ref.type ? { ...ref, uid: undefined } : undefined;
   }
   return ref;
 }
