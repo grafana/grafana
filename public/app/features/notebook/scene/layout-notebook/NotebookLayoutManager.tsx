@@ -20,11 +20,11 @@ import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/uti
 
 import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '../../types';
 
-import { NotebookAddBlockDivider } from './NotebookAddBlockDivider';
-import { NotebookAddBlockPrompt } from './NotebookAddBlockPrompt';
-import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './NotebookCellFrame';
 import { type NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
+import { NotebookAddBlockDivider } from './edition/NotebookAddBlockDivider';
+import { NotebookAddBlockPrompt } from './edition/NotebookAddBlockPrompt';
+import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edition/NotebookCellFrame';
 
 interface NotebookLayoutManagerState extends SceneObjectState {
   cells: NotebookCellItem[];
@@ -276,8 +276,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
 
         {/* The end of the document. Outside the droppable, like the leading divider, and always visible
             rather than hover-revealed. cells.length is the append position — the same one the last cell's
-            divider offers, deliberately: this is the affordance you reach for once you have finished
-            reading and want to keep writing. */}
+            divider offers */}
         {isEditing && <NotebookAddBlockPrompt index={cells.length} />}
       </div>
     </div>
@@ -288,11 +287,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   document: css({
     maxWidth: 900,
     margin: '0 auto',
-    // spacing(5) on the sides rather than spacing(3): the left padding is the gutter the cell drag
-    // handles are absolutely positioned into (see NotebookCellFrame), and 40px fits the 24px handle
-    // plus a spacing(1) gap on either side of it. Applied in both modes, so entering edit mode never
-    // shifts the content sideways, and symmetric, so the document stays centred.
-    padding: theme.spacing(3, 5, 6, 5),
+    // spacing(7) on the sides rather than spacing(3): the left padding is the gutter the cell drag
+    // handles are absolutely positioned into (see NotebookCellFrame), and 56px fits the 24px handle
+    // plus the spacing(4) gap it keeps from the cell. Applied in both modes, so entering edit mode
+    // never shifts the content sideways, and symmetric, so the document stays centred.
+    padding: theme.spacing(3, 7, 6, 7),
     width: '100%',
   }),
   header: css({

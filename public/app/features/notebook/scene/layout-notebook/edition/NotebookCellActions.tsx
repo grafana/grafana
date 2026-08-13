@@ -14,9 +14,6 @@ interface Props {
 /**
  * The per-cell actions, revealed with the rest of a cell's affordances on hover: a small elevated bar
  * above the cell carrying duplicate and delete.
- *
- * It floats above the cell rather than sitting in the flow so that revealing it never moves the document,
- * which is the same reason the drag handle and the drop line are positioned.
  */
 export function NotebookCellActions({ onDuplicate, onDelete, className }: Props) {
   const styles = useStyles2(getStyles);
@@ -37,8 +34,6 @@ export function NotebookCellActions({ onDuplicate, onDelete, className }: Props)
 const getStyles = (theme: GrafanaTheme2) => ({
   actions: css({
     position: 'absolute',
-    // Above the cell's own top edge, so it overlaps whatever sits above rather than displacing the cell.
-    // The cell keeps its position whether the bar is showing or not.
     bottom: '100%',
     left: 0,
     zIndex: 1,
@@ -50,8 +45,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
     boxShadow: theme.shadows.z2,
-    // The hidden state lives here, as it does for every other affordance: the frame's rule only ever
-    // reveals. See NOTEBOOK_CELL_AFFORDANCES_CLASS.
     opacity: 0,
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create('opacity'),

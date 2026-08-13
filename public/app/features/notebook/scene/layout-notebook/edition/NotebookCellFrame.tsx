@@ -6,18 +6,19 @@ import { t } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
+import { type NotebookCellItem } from '../NotebookCellItem';
+import { NotebookCellRenderer } from '../NotebookCellRenderer';
+
 import { NotebookAddBlockDivider } from './NotebookAddBlockDivider';
 import { type NotebookBlockType } from './NotebookBlockTypeMenu';
 import { NotebookCellActions } from './NotebookCellActions';
-import { type NotebookCellItem } from './NotebookCellItem';
-import { NotebookCellRenderer } from './NotebookCellRenderer';
 
 /**
  * Stable class name the frame's hover rule targets. Emotion class names are generated, so revealing a
  * child's style from a parent needs a hand-written class plus a descendant selector — the same
  * convention as `dashboard-canvas-controls` in the dashboard layouts.
  */
-export const NOTEBOOK_CELL_AFFORDANCES_CLASS = 'notebook-cell-affordances';
+const NOTEBOOK_CELL_AFFORDANCES_CLASS = 'notebook-cell-affordances';
 
 /** Which edge of a cell the drop line is drawn on while a drag is in flight. */
 export type NotebookCellDropIndicator = 'top' | 'bottom';
@@ -68,9 +69,6 @@ export function NotebookCellFrame({
   const styles = useStyles2(getStyles);
 
   return (
-    // Mounted in both modes and disabled rather than unmounted in view mode: branching the tree on
-    // isEditing would remount every cell on toggle, which means remounting the code editor in a code
-    // cell and re-activating every VizPanel.
     <Draggable draggableId={cell.state.key!} index={index} isDragDisabled={!isEditing}>
       {(dragProvided, dragSnapshot) => (
         <div
@@ -87,8 +85,6 @@ export function NotebookCellFrame({
         >
           {isEditing && (
             <div
-              // dragHandleProps brings role="button", tabIndex={0} and aria-describedby (dnd's own
-              // keyboard instructions) but no accessible name, so the label is mandatory, not decorative.
               {...dragProvided.dragHandleProps}
               aria-label={t('notebook.cell.drag-handle', 'Drag to reorder')}
               className={cx(styles.handle, NOTEBOOK_CELL_AFFORDANCES_CLASS)}
@@ -121,11 +117,7 @@ export function NotebookCellFrame({
 
 /**
  * Which edge of cell `index` the drop line goes on, for the drag currently in flight.
- *
- * Dragging down, the cells between source and destination shift up, so the gap opens below the cell
- * originally at `destination`; dragging up they shift down and it opens above it. Derived rather than
- * measured, so it is correct for a one-line markdown cell and a 300px panel alike — and unlike
- * highlighting a divider, it can mark a drop at the very top, where no cell owns a divider.
+ 
  */
 export function getCellDropIndicator(
   drag: NotebookDragState | null,
@@ -140,8 +132,6 @@ export function getCellDropIndicator(
 
 const getStyles = (theme: GrafanaTheme2) => ({
   frame: css({
-    // Anchors both the drag handle and the drop line. Neither is in the flow, so revealing them never
-    // moves the cell.
     position: 'relative',
   }),
   frameEditing: css({
@@ -154,10 +144,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   handle: css({
     position: 'absolute',
-    // Into the document's left padding (see NotebookLayoutManager), so the content box sits at the
-    // same x hovered or not, and in view mode or edit mode. -4 rather than -3 leaves a spacing(1) gap
-    // between the handle and the cell it belongs to, instead of the handle sitting flush against it.
-    left: theme.spacing(-4),
+    left: theme.spacing(-7),
     width: theme.spacing(3),
     height: theme.spacing(3),
     // Top-aligned rather than centred: spacing(1) lines up with the first line of a narrative cell and
@@ -186,18 +173,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   dragging: css({
-    // dnd translates the real element rather than a clone. renderClone is deliberately unused: it
-    // would mount a second copy of the cell, and for a panel cell that is a second VizPanel with its
-    // own query runner.
     opacity: 0.9,
     backgroundColor: theme.colors.background.primary,
     borderRadius: theme.shape.radius.default,
     boxShadow: theme.shadows.z3,
   }),
   affordancesHidden: css({
-    // visibility, not opacity: dnd only sets pointer-events: none on drag handles, so hovering another
-    // cell mid-drag still fires :hover and would pop its divider up under the dragged element. A
-    // different property sidesteps the specificity question rather than fighting it.
     [`& .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
       visibility: 'hidden',
     },

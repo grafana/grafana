@@ -1,8 +1,9 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { render, screen } from 'test/test-utils';
 
+import { NotebookCellItem } from '../NotebookCellItem';
+
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './NotebookCellFrame';
-import { NotebookCellItem } from './NotebookCellItem';
 
 function buildCell() {
   return new NotebookCellItem({

@@ -18,12 +18,6 @@ interface Props {
   onAdd?: (type: NotebookBlockType, index: number) => void;
 }
 
-/**
- * The block-type menu, shared by every add-block affordance. One definition, because the block types and
- * their icons are the notebook's vocabulary rather than a property of which control you clicked — two
- * copies would let the dividers' menu and the end-of-document prompt's menu drift apart, and only one of
- * them would be the one under test.
- */
 export function NotebookBlockTypeMenu({ index, onAdd }: Props) {
   return (
     <Menu>
@@ -45,8 +39,6 @@ export function NotebookBlockTypeMenu({ index, onAdd }: Props) {
       <Menu.Item
         icon="graph-bar"
         label={t('notebook.add-block.visualization', 'Visualization')}
-        // childItems is what renders the chevron and floats the submenu; a non-empty list is required
-        // for either. Placeholder until edit mode can offer real visualizations to pick from.
         childItems={[
           <Menu.Item
             key="placeholder"

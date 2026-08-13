@@ -28,14 +28,10 @@ interface Props {
 
 /**
  * An insertion point between two notebook cells, shown only in edit mode: a hairline that reveals an
- * "Add block" button on hover, opening the block-type menu. The hover target is the full-width strip
- * rather than the button, because a button-sized target on a hidden strip is close to impossible to hit.
+ * "Add block" button on hover, opening the block-type menu.
  */
 export function NotebookAddBlockDivider({ index, onAdd, className }: Props) {
   const styles = useStyles2(getStyles);
-  // The menu is portalled and FloatingFocusManager moves focus into it, so neither :hover nor
-  // :focus-within holds while it is open — without this the divider fades out from under the menu it
-  // just opened.
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -56,22 +52,12 @@ export function NotebookAddBlockDivider({ index, onAdd, className }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // The strip reserves its height whether revealed or not: it stands in for the list's gap (see
-  // NotebookLayoutManagerRenderer), so revealing a divider never shifts the cells around it. Its
-  // height comes from the button plus the padding rather than a fixed value, so it follows the
-  // button's size — the padding is what separates the hairline from the cells above and below.
-  //
-  // The hidden state lives here and nowhere else. The parent cell frame only ever reveals
-  // (opacity: 1), never hides: a hide rule up there would be a two-class selector and would beat
-  // `revealed` below, fading the divider out from under its own open menu.
   divider: css({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
     padding: theme.spacing(2, 0),
     opacity: 0,
-    // Opacity, not visibility/display: the button stays focusable, so :focus-within reveals the
-    // divider for keyboard users too.
     '&:hover, &:focus-within': {
       opacity: 1,
     },
@@ -79,13 +65,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       transition: theme.transitions.create('opacity'),
     },
   }),
-  // Same specificity as `divider`, so this only wins because emotion inserts it second. Keep it
-  // declared after `divider` in this object.
   revealed: css({
     opacity: 1,
   }),
-  // Button has no radius prop, and its own default radius is applied before the className, so this
-  // overrides it on insertion order.
   button: css({
     borderRadius: theme.shape.radius.pill,
   }),
