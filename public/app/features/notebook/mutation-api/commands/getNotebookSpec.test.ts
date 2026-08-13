@@ -1,4 +1,5 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { NotebookMutationClient } from '../NotebookMutationClient';
 import { NOTEBOOKS_FLAG, notebookScene, notebookSpec } from '../test-utils';
@@ -7,6 +8,7 @@ import { NOTEBOOKS_FLAG, notebookScene, notebookSpec } from '../test-utils';
 describe('GET_NOTEBOOK_SPEC', () => {
   beforeEach(() => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -85,5 +87,15 @@ describe('GET_NOTEBOOK_SPEC', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('dashboard.notebooks');
+  });
+
+  it('is refused when the user does not have permission to read notebooks', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    const client = new NotebookMutationClient(notebookScene());
+
+    const result = await client.execute({ type: 'GET_NOTEBOOK_SPEC', payload: {} });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Cannot read notebook: insufficient permissions.');
   });
 });
