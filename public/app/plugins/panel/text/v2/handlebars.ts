@@ -30,7 +30,7 @@ export type TemplateContext = TemplateRow | AllRowsContext;
 /** Resolves to the error text instead of throwing when the template is broken. */
 export type CompiledTemplate = (context: TemplateContext) => string;
 
-// Keys and formatting mirror the ${__data.fields.<name>} macro, so both address fields the same way.
+// Keys and formatting mirror ${__data.fields.<name>}, so both address fields the same way.
 export function buildRows(frame: DataFrame, series: DataFrame[]): TemplateRow[] {
   const names = frame.fields.map((field) => getFieldDisplayName(field, frame, series));
 
@@ -65,8 +65,7 @@ export function compileTemplate(content: string, replaceVariables: InterpolateFu
 
   try {
     const env = createEnvironment(replaceVariables);
-    // Parsing up front keeps a syntax error to a single message; compile() would
-    // defer it to the first render, which every row repeats.
+    // Parse up front so a syntax error is reported once, not once per rendered row.
     template = env.compile(env.parse(content));
   } catch (error) {
     const message = templateError(error);
@@ -91,14 +90,14 @@ function templateError(error: unknown): string {
 const toNumber = (value: unknown): number => (typeof value === 'number' ? value : Number(value));
 const toText = (value: unknown): string => (typeof value === 'string' ? value : String(value ?? ''));
 
-// Falls back to now for anything that isn't a date, including Handlebars' own options object,
-// which every helper call receives as a trailing argument — covering `{{date}}` with no argument.
+// Non-dates fall back to now, which covers `{{date}}` with no argument: Handlebars
+// appends an options object to every helper call.
 const toDateTimeInput = (value: unknown): DateTimeInput =>
   typeof value === 'string' || typeof value === 'number' || value instanceof Date || isDateTime(value)
     ? value
     : Date.now();
 
-// A fresh environment per render keeps one panel's helpers from leaking into another's.
+// Fresh per call: the variable helpers close over this panel's replaceVariables.
 function createEnvironment(replaceVariables: InterpolateFunction) {
   const env = Handlebars.create();
 
@@ -116,13 +115,13 @@ function createEnvironment(replaceVariables: InterpolateFunction) {
       Array.isArray(haystack) ? haystack.includes(value) : toText(haystack).includes(toText(value)),
     startsWith: (left: unknown, right: unknown) => toText(left).startsWith(toText(right)),
     endsWith: (left: unknown, right: unknown) => toText(left).endsWith(toText(right)),
-    match: (left: unknown, right: unknown) => toText(left).match(toText(right)) !== null,
+    match: (left: unknown, right: unknown) => new RegExp(toText(right)).test(toText(left)),
     split: (value: unknown, separator: unknown) => toText(value).split(toText(separator)),
     join: (value: unknown, separator: unknown) =>
       Array.isArray(value) ? value.join(toText(separator)) : toText(value),
     toFixed: (value: unknown, digits: unknown) => {
       const num = toNumber(value);
-      return Number.isFinite(num) && typeof digits === 'number' ? num.toFixed(digits) : 0;
+      return Number.isFinite(num) && typeof digits === 'number' ? num.toFixed(digits) : toText(value);
     },
     json: (value: unknown) => JSON.stringify(value, null, 2),
     date: (value: unknown, format: unknown) =>

@@ -60,7 +60,7 @@ function interpolateEveryRow(
       continue;
     }
 
-    const rows = compiled ? buildRows(frame, series) : undefined;
+    const rows = compiled ? buildRows(frame, series) : [];
 
     const rowCount = Math.min(frame.length, MAX_RENDERED_ROWS - blocks.length);
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
@@ -70,8 +70,7 @@ function interpolateEveryRow(
         __dataContext: { value: { data: series, frame, field, rowIndex, frameIndex } },
       };
 
-      const row = rows?.[rowIndex];
-      const templated = compiled && row ? compiled(row) : content;
+      const templated = compiled ? compiled(rows[rowIndex]) : content;
 
       blocks.push(replaceVariables(templated, scopedVars, format));
     }

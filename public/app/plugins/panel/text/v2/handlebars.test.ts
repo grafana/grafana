@@ -103,7 +103,8 @@ describe('compileTemplate', () => {
       ['match', '{{#if (match a "^web-")}}y{{/if}}', { a: 'web-1' }, 'y'],
       ['split + join', '{{join (split a ",") "|"}}', { a: 'a,b' }, 'a|b'],
       ['toFixed', '{{toFixed a 2}}', { a: 1.234 }, '1.23'],
-      ['toFixed without digits', '{{toFixed a}}', { a: 1.234 }, '0'],
+      ['toFixed without digits', '{{toFixed a}}', { a: 1.234 }, '1.234'],
+      ['toFixed on a non-number', '{{toFixed a 2}}', { a: 'n/a' }, 'n/a'],
       ['json', '{{{json a}}}', { a: { b: 1 } }, '{\n  "b": 1\n}'],
     ])('%s', (_name, content, context, expected) => {
       expect(render(content, context)).toBe(expected);

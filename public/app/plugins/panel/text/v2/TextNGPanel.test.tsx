@@ -4,17 +4,17 @@ import userEvent from '@testing-library/user-event';
 import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
-import { CodeLanguage, type Options, RenderMode, TextMode } from '../panelcfg.gen';
+import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { type Props, TextNGPanel } from './TextNGPanel';
 import { createData, createProps, renderPanel } from './test-utils';
 
-// Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   getFeatureFlagClient: () => ({ getBooleanValue: () => true }),
 }));
 
+// Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
   // The stubbed editor never runs completions; the source itself is covered by
@@ -356,30 +356,17 @@ describe('TextNGPanel', () => {
     });
   });
 
-  describe('handlebars', () => {
-    const series = [
-      toDataFrame({
-        fields: [{ name: 'host', values: ['web-1', 'web-2'] }],
-      }),
-    ];
-
-    const passThrough: InterpolateFunction = (target) => target;
-
-    function setupWithData(options: Partial<Options>) {
-      const props = createProps(passThrough, {
-        data: createData(series),
-        options: { content: '', mode: TextMode.Markdown, ...options },
-      });
-
-      setup(props, CoreApp.Dashboard);
-      return screen.getByTestId('TextNGPanel-converted-content').innerHTML;
-    }
-
-    it('evaluates expressions against the query data', () => {
-      const html = setupWithData({ content: '{{#each data}}- {{host}}\n{{/each}}' });
-
-      expect(html).toContain('web-1');
-      expect(html).toContain('web-2');
+  it('evaluates handlebars expressions against the query data', () => {
+    const series = [toDataFrame({ fields: [{ name: 'host', values: ['web-1', 'web-2'] }] })];
+    const props = createProps((target) => target, {
+      data: createData(series),
+      options: { content: '{{#each data}}- {{host}}\n{{/each}}', mode: TextMode.Markdown },
     });
+
+    setup(props, CoreApp.Dashboard);
+
+    const html = screen.getByTestId('TextNGPanel-converted-content').innerHTML;
+    expect(html).toContain('web-1');
+    expect(html).toContain('web-2');
   });
 });
