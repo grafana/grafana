@@ -209,15 +209,22 @@ function useDatasource(props: Props) {
   const [datasource, setDatasource] = useState<CloudWatchDatasource>();
 
   useEffect(() => {
-    if (props.options.version) {
-      getDataSourceInstance(props.options.name)
-        .then((ds) => {
-          if (ds instanceof CloudWatchDatasource) {
-            setDatasource(ds);
-          }
-        })
-        .catch((err) => console.error('Could not load CloudWatch data source instance', err));
+    if (!props.options.version) {
+      return;
     }
+
+    let cancelled = false;
+    getDataSourceInstance(props.options.name)
+      .then((ds) => {
+        if (!cancelled && ds instanceof CloudWatchDatasource) {
+          setDatasource(ds);
+        }
+      })
+      .catch((err) => console.error('Could not load CloudWatch data source instance', err));
+
+    return () => {
+      cancelled = true;
+    };
   }, [props.options.version, props.options.name]);
 
   return datasource;
