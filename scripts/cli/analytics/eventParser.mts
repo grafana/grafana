@@ -168,7 +168,7 @@ const resolveEventProperties = (
   const parameterType = parameter.getTypeAtLocation(declarations[0]);
 
   if (parameterType.isObject() || parameterType.isIntersection()) {
-    return describeObjectParameters(parameterType, location);
+    return requireDescriptions(describeObjectParameters(parameterType, location), location);
   } else if (parameterType.isVoid()) {
     return undefined;
   } else if (parameterType.isUnion()) {
@@ -180,7 +180,7 @@ const resolveEventProperties = (
       throw new Error(`Expected ${location} to declare its union properties as an explicit type argument`);
     }
 
-    return describeUnionParameters(typeArgument.getType(), location);
+    return requireDescriptions(describeUnionParameters(typeArgument.getType(), location), location);
   }
 
   throw new Error(
@@ -231,6 +231,19 @@ const describeObjectParameters = (objectType: Type, location: string): EventProp
       description,
     };
   });
+};
+
+// The report publishes one row per property, so an undescribed property ships as a blank cell.
+// Fail instead: ESLint only checks interfaces, and properties declared in type aliases slip past it.
+const requireDescriptions = (properties: EventPropertySchema[], location: string): EventPropertySchema[] => {
+  const undocumented = properties.filter((property) => !property.description).map((property) => property.name);
+  if (undocumented.length > 0) {
+    throw new Error(
+      `Expected every property of ${location} to have a JSDoc description, missing: ${undocumented.join(', ')}`
+    );
+  }
+
+  return properties;
 };
 
 // resolveType joins unions with ' | ', so splitting on the same separator keeps a merged type flat and duplicate-free.

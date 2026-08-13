@@ -38,6 +38,8 @@ export interface ThemeChanged extends EventProperty {
 }
 ```
 
+The report fails if any property reaches it without a description, so an undocumented property is a build error rather than a blank cell in the published table.
+
 #### Properties that vary by variant
 
 When one event's valid property combinations differ — a `surface` that only allows certain `action` values — use `EventVariants` to pair a documented base with the union of allowed shapes:
