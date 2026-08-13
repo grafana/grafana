@@ -43,6 +43,12 @@ pre-commit:
       stage_fixed: true
 
     jsonnet-gen-dev-dashboards:
-      glob: '*devenv/dev-dashboards/**/*.json'
+      # `**/*.json` needs at least one directory between dev-dashboards/ and the
+      # filename, so it misses top-level dashboards like home.json/all-panels.json;
+      # `**` alone matches those too. `files:` overrides lefthook's default
+      # staged-files command (which filters to --diff-filter=ACMR, excluding
+      # deletions) so a deleted dashboard also regenerates the manifest.
+      glob: '*devenv/dev-dashboards/**'
+      files: git diff --name-only --cached --diff-filter=ACMRD
       run: make gen-jsonnet && git add devenv/jsonnet/dev-dashboards.libsonnet
       stage_fixed: true
