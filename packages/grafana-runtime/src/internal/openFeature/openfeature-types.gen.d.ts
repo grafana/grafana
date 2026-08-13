@@ -90,7 +90,8 @@ declare module "@openfeature/core" {
     | "grafana.exploreMetricsSidebar"
     | "grafana.dynamicTraceToLogs"
     | "grafana.thresholdsInterpolation"
-    | "grafana.unifiedDataSourcePicker";
+    | "grafana.unifiedDataSourcePicker"
+    | "rawPrometheus.tableNg";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

@@ -3223,6 +3223,14 @@ var (
 			Expression:  "true", // enabled by default
 			Generate:    Generate{React: true},
 		},
+		{
+			Name:        "rawPrometheus.tableNg",
+			Description: "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataSourcesPlugins,
+			Generate:    Generate{React: true},
+			Expression:  "false",
+		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle
