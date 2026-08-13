@@ -58,7 +58,7 @@ Click the panel menu icon that appears and select **Edit**.
 The panel menu also gives you access to several actions.
 If an option is only available in view mode or edit mode, that's indicated:
 
-- **View**: View the panel in full screen.
+- **View**: View the panel in full screen. Opens the [View panel sidebar](#view-mode-panel-controls) and displays controls for supported visualizations.
 - **Edit**: Open the panel editor to edit panel and visualization options.
 - **Share**: Share the panel as a link, embed, or snapshot.
 - **Explore**: Open the panel in **Explore**, where you can focus on your query.
@@ -79,6 +79,77 @@ If an option is only available in view mode or edit mode, that's indicated:
   - **Hide/Show legend**: Hide or show the panel legend.
   - **Get help**: Send a snapshot or panel data to Grafana Labs Technical Support.
 - **Remove**: Edit mode only. Remove the panel from the dashboard.
+
+## View mode panel controls
+
+When you open a panel in full-screen view mode, Grafana displays a **View panel** sidebar with some controls to adjust the panel.
+
+You don't need to have edit permissions for the dashboard to update the options in this panel and the changes you make don't affect the saved dashboard.
+
+The sidebar includes the following high-level controls:
+
+- **Quick toggles**: Use these controls to adjust common visualization options, like legend visibility and graph basic graph styles.
+- **Fan-out by series or label**: Use this control to split one graph into multiple graphs, one per series or label value. For example, if you see a latency spike in a graph with several series, fanning out by label shows you which services are actually causing the graph line to spike.
+
+The available quick toggles and fan-out support are determined by each panel plugin, so the controls vary by visualization type.
+
+This feature is supported for time series visualizations.
+
+<!-- screenshot here: View panel mode with the View panel side pane open (Back to dashboard, Quick toggles, and Fan-out sections visible) -->
+
+### Open the View panel controls
+
+1. Hover over a panel and open the panel menu.
+1. Select **View**.
+
+   You can also press `v` while hovering over a panel.
+
+On larger screens, the **View panel** side pane opens automatically.
+On smaller screens, open it from the dashboard sidebar by clicking the **View panel controls** button.
+
+To return to the dashboard, click **Back to dashboard** in the side pane, or use the dashboard breadcrumb.
+
+### Quick toggles
+
+The **Quick toggles** section exposes a subset of visualization options so you can change them while viewing the panel.
+
+Which options appear depends on the visualization.
+For **Time series**, the quick toggles include:
+
+- **Visibility**: Show or hide the legend.
+- **Placement**: Place the legend at the bottom or on the right.
+- **Stack series**: Stack series in the graph.
+- **Scale**: Change the axis scale (for example, linear or logarithmic).
+
+<!-- screenshot here: Quick toggles section in the View panel side pane for a Time series panel -->
+
+Other visualizations might not offer quick toggles yet.
+If a visualization doesn't support them, the **Quick toggles** section doesn't appear.
+
+### Fan-out by series or label
+
+**Fan-out** splits one panel into multiple panels so you can compare series or label values side by side.
+This is useful when a single graph has many series and you need to spot which series or label share an anomaly.
+
+Fan-out is available for visualizations that enable it.
+**Time series** supports fan-out.
+
+In the **Fan-out by series or label** section, choose one of the following:
+
+| Option | Description |
+| --- | --- |
+| **Disabled** | Show the original single panel. |
+| **By series** | Create one panel per series. |
+| A label name under **Labels** | Create one panel per value of that label (for example, `method` or `status`). |
+
+If the panel data has no labels, Grafana shows **Data has no labels** under **Labels**.
+
+<!-- screenshot here: Fan-out set to By series, with multiple panels rendered in view mode -->
+
+<!-- screenshot here: Fan-out set to a label (for example, method), with panels grouped by label value -->
+
+When you select a fan-out mode, Grafana updates the dashboard URL with a `fanout` query parameter so you can share the split view.
+Leaving view mode removes that parameter.
 
 ## Keyboard shortcuts
 
