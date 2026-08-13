@@ -62,9 +62,10 @@ const (
 	// with intervals that are not exactly divided by this number not to be evaluated
 	SchedulerBaseInterval = 10 * time.Second
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
-	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
-	stateHistoryDefaultEnabled    = true
-	logzioDefaultAlertsRouterUrl  = "" // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add logzio notification route
+	DefaultRuleEvaluationInterval    = SchedulerBaseInterval * 6 // == 60 seconds
+	stateHistoryDefaultEnabled       = true
+	logzioDefaultAlertsRouterUrl     = ""   // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add logzio notification route
+	logzioDefaultAlertmanagerEnabled = true // LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Gate in-process Alertmanagers on alert_manager_enabled
 )
 
 type UnifiedAlertingSettings struct {
@@ -92,6 +93,7 @@ type UnifiedAlertingSettings struct {
 	DisableJitter                  bool
 	ExecuteAlerts                  bool
 	ScheduledEvalEnabled           bool // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add scheduled evaluation enabled config
+	AlertmanagerEnabled            bool // LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Gate the in-process Alertmanagers on alert_manager_enabled
 	DefaultConfiguration           string
 	Enabled                        *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
 	DisabledOrgs                   map[int64]struct{}
@@ -306,6 +308,18 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.ExecuteAlerts = uaExecuteAlerts
 
 	uaCfg.ScheduledEvalEnabled = ua.Key("scheduled_evaluation_enabled").MustBool(schedulerDefaultScheduledEvaluationEnabled) // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add scheduled evaluation enabled config
+
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Gate the in-process Alertmanagers on alert_manager_enabled.
+	// Until now this key was set in custom.ini but read nowhere, so it had no effect.
+	uaCfg.AlertmanagerEnabled = ua.Key("alert_manager_enabled").MustBool(logzioDefaultAlertmanagerEnabled)
+
+	// An instance that evaluates rules on its own schedule notifies through its local Alertmanagers.
+	// Disabling them in that mode silently drops every notification, so reject the combination outright.
+	if !uaCfg.AlertmanagerEnabled && uaCfg.ScheduledEvalEnabled {
+		return fmt.Errorf("invalid configuration: [unified_alerting] alert_manager_enabled=false requires scheduled_evaluation_enabled=false, " +
+			"otherwise evaluated alerts have no Alertmanager to notify")
+	}
+	// LOGZ.IO GRAFANA CHANGE :: End
 
 	uaCfg.LogzioAlertsRouterUrl = ua.Key("logzio_alerts_route_url").MustString(logzioDefaultAlertsRouterUrl) // LOGZ.IO GRAFANA CHANGE :: DEV-43744 Add logzio notification route
 

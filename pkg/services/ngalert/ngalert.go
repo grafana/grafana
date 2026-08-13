@@ -244,10 +244,16 @@ func (ng *AlertNG) init() error {
 	}
 	ng.ImageService = imageService
 
-	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
-	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(initCtx); err != nil {
-		return fmt.Errorf("failed to initialize alerting because multiorg alertmanager manager failed to warm up: %w", err)
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Skip the warm-up sync that parses and retains every org's templates.
+	if ng.Cfg.UnifiedAlerting.AlertmanagerEnabled {
+		// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
+		if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(initCtx); err != nil {
+			return fmt.Errorf("failed to initialize alerting because multiorg alertmanager manager failed to warm up: %w", err)
+		}
+	} else {
+		ng.Log.Info("In-process Alertmanagers are disabled, skipping the initial Alertmanager sync")
 	}
+	// LOGZ.IO GRAFANA CHANGE :: End
 
 	// LOGZ.IO GRAFANA CHANGE :: DEV-43657 - Set APP url to logzio grafana for alert notification URLs
 	//appUrl, err := url.Parse(ng.Cfg.AppURL)
@@ -436,9 +442,13 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 	children, subCtx := errgroup.WithContext(ctx)
 
-	children.Go(func() error {
-		return ng.MultiOrgAlertmanager.Run(subCtx)
-	})
+	// LOGZ.IO GRAFANA CHANGE :: APPZ-3027 Nothing to keep in sync when the Alertmanagers are disabled.
+	if ng.Cfg.UnifiedAlerting.AlertmanagerEnabled {
+		children.Go(func() error {
+			return ng.MultiOrgAlertmanager.Run(subCtx)
+		})
+	}
+	// LOGZ.IO GRAFANA CHANGE :: End
 	children.Go(func() error {
 		return ng.AlertsRouter.Run(subCtx)
 	})
