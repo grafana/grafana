@@ -113,6 +113,7 @@ jobs:
         if: ${{ steps.s3-proxy.outcome == 'failure' }}
         run: |
           set -euo pipefail
+          echo "::warning title=S3 module proxy unavailable::Downloading from the public proxy, which does not serve modules this branch has not published"
           {
             echo "GOPROXY="
             echo "GOSUMDB="

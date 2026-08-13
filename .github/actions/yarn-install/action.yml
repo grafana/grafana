@@ -75,8 +75,13 @@ runs:
       working-directory: ${{ inputs.cwd }}
       env:
         YARN_ENABLE_GLOBAL_CACHE: 'false'
+        CWD: ${{ inputs.cwd }}
       run: |
-        echo "CACHE_FOLDER=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+        # A cache entry is addressed by its paths as well as its key, so this
+        # has to be spelled the same way wherever the entry is looked up. With
+        # the global cache off, yarn puts archives here.
+        CACHE_FOLDER="${CWD}/.yarn/cache"
+        echo "CACHE_FOLDER=${CACHE_FOLDER#./}" >> $GITHUB_OUTPUT
         echo "CURRENT_NODE_VERSION="node-$(node --version)"" >> $GITHUB_OUTPUT
         echo "CURRENT_BRANCH=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's,/,-,g')" >> $GITHUB_OUTPUT
         echo "NPM_GLOBAL_CACHE_FOLDER=$(npm config get cache)" >> $GITHUB_OUTPUT

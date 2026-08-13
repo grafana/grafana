@@ -122,6 +122,13 @@ jobs:
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
 
+      # Saving half an entry under the key for a whole one is worth saying out
+      # loud: the enterprise jobs restore it, find their packages missing and
+      # compile them again, which looks like the cache simply not helping.
+      - name: Report a partial entry
+        if: ${{ inputs.enterprise && steps.setup-enterprise.outcome != 'success' }}
+        run: echo "::warning title=Enterprise build cache skipped::The enterprise tree was unreachable, so the entry holds untagged packages only"
+
       - name: Setup Go
         uses: ./.github/actions/setup-go
         with:
