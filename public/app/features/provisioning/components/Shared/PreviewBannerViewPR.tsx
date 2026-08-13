@@ -54,9 +54,11 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
   // PR/compare URL carries it. Returns prURL unchanged when no title was threaded through.
   const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
   const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
-  // Capability (can this provider open PRs?) vs whether we have a PR URL right now.
+  // Capability (can this provider open PRs?) vs whether we have a real PR/compare URL.
+  // Folder flows may put repository.url in prURL when newPullRequestURL is missing
+  // (Bitbucket / pure git) — don't label that as "Open pull request".
   const canOpenPullRequests = supportsPullRequests(repoType);
-  const hasPullRequestLink = canOpenPullRequests && Boolean(prLink);
+  const hasPullRequestLink = canOpenPullRequests && isPullRequestOrCompareUrl(prURL);
   // Only claim "cannot open pull requests" for known non-PR providers (git/local), not when
   // repoType is missing or the PR link simply isn't ready yet.
   const showNoPullRequestHint = isValidRepoType(repoType) && !canOpenPullRequests;
@@ -131,6 +133,14 @@ interface BannerText {
   title: string;
   body: string;
   button: string;
+}
+
+/** True when the URL path looks like a host PR/compare/create-MR link, not a repo root. */
+function isPullRequestOrCompareUrl(url: string | undefined): boolean {
+  if (!url) {
+    return false;
+  }
+  return /\/(compare|pull|pulls|pull-requests|merge_requests)(\/|\?|$)/i.test(url);
 }
 
 function noPullRequestSupportBody(): string {
