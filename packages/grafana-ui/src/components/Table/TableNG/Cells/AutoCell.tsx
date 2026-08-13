@@ -34,33 +34,36 @@ function buildAutoCellStyles(
   { textWrap, shouldOverflow, maxHeight }: TableCellStyleOptions,
   whiteSpace: CellWhiteSpace,
   // Bounds the hover expansion. Worth it where a single value can be arbitrarily large, since an
-  // unbounded cell grows past the panel and puts its own content out of reach. Only applies without
-  // a maxHeight, where these land on the cell root — the row-height clamp below already bounds the
-  // cell, and with it set these styles go to the inner content element instead.
+  // unbounded cell grows past the panel and puts its own content out of reach. Applies in both the
+  // no-maxHeight and maxHeight branches below — a row-height clamp still clears itself on hover
+  // (WebkitLineClamp: 'none', height: 'fit-content'), so without a cap here too a JSON cell in a
+  // fixed-height row would grow unbounded on hover, the exact overflow this option exists to stop.
   boundExpansion = false
 ) {
+  // never shrink below the column's own width — only grow past it, up to the cap. Without this, a
+  // cell in a column wider than the cap would visually shrink to the cap on hover: the cursor ends up
+  // past the now-narrower box, hover ends, the box snaps back under the cursor, hover re-fires, and
+  // it flickers between the two sizes.
+  //
+  // the cell root inherits `align-items: center` from the default cell styles. Centering an
+  // overflow-clipped box is "unsafe" by default: content taller than the cap gets centered on the
+  // box's midpoint, pushing the top of the content into the negative-scroll region above scrollTop 0
+  // — unreachable, since scrolling up further isn't possible past 0. That reads as the cell opening
+  // already scrolled a few lines down with no way back to the top.
+  const expansionBounds = {
+    minWidth: '100%',
+    maxWidth: TABLE.JSON_OVERFLOW_MAX_WIDTH,
+    maxHeight: TABLE.JSON_OVERFLOW_MAX_HEIGHT,
+    overflowY: 'auto' as const,
+    alignItems: 'flex-start' as const,
+  };
+
   return css({
     ...(textWrap && { whiteSpace }),
     ...(shouldOverflow && {
       [getActiveCellSelector(Boolean(maxHeight))]: {
         whiteSpace,
-        ...(boundExpansion &&
-          maxHeight == null && {
-            // never shrink below the column's own width — only grow past it, up to the cap. Without
-            // this, a cell in a column wider than the cap would visually shrink to the cap on hover:
-            // the cursor ends up past the now-narrower box, hover ends, the box snaps back under the
-            // cursor, hover re-fires, and it flickers between the two sizes.
-            minWidth: '100%',
-            maxWidth: TABLE.JSON_OVERFLOW_MAX_WIDTH,
-            maxHeight: TABLE.JSON_OVERFLOW_MAX_HEIGHT,
-            overflowY: 'auto',
-            // the cell root inherits `align-items: center` from the default cell styles. Centering an
-            // overflow-clipped box is "unsafe" by default: content taller than the cap gets centered
-            // on the box's midpoint, pushing the top of the content into the negative-scroll region
-            // above scrollTop 0 — unreachable, since scrolling up further isn't possible past 0. That
-            // reads as the cell opening already scrolled a few lines down with no way back to the top.
-            alignItems: 'flex-start',
-          }),
+        ...(boundExpansion && maxHeight == null && expansionBounds),
       },
     }),
     ...(maxHeight != null &&
@@ -76,6 +79,7 @@ function buildAutoCellStyles(
           WebkitBoxOrient: 'unset',
           overflowY: 'auto',
           height: 'fit-content',
+          ...(boundExpansion && expansionBounds),
         },
       }),
   });

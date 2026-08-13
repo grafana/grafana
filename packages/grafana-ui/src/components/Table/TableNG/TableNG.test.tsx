@@ -1955,6 +1955,34 @@ describe('TableNG', () => {
       expect(jsonCellStyles.getPropertyValue('align-items')).toBe('flex-start');
     });
 
+    it('still bounds a hover-expanded JSON cell when the row has a configured max height', async () => {
+      // A row-height clamp clears itself on hover regardless of cell type (WebkitLineClamp: 'none',
+      // height: 'fit-content') — that's how a long plain-text cell is meant to grow past the clamp.
+      // Without a JSON-specific cap layered on top of that, a JSON cell in a max-height row would
+      // grow unbounded on hover too, the exact panel-escaping overflow this option exists to stop.
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createJsonDataFrame(true)}
+          width={800}
+          height={600}
+          maxRowHeight={100}
+        />
+      );
+
+      const cells = container.querySelectorAll('[role="gridcell"]');
+      await user.click(cells[1]);
+
+      // With maxRowHeight set, the JSON-specific class lands on an inner wrapper div rather than the
+      // cell root itself (see render-hooks: `maxRowHeight != null` wraps cellResult), so the bound has
+      // to be read off that child, not the `[role="gridcell"]` element.
+      const jsonCellStyles = window.getComputedStyle(cells[1].firstElementChild!);
+      expect(jsonCellStyles.getPropertyValue('max-width')).toBe('600px');
+      expect(jsonCellStyles.getPropertyValue('max-height')).toBe('40vh');
+      expect(jsonCellStyles.getPropertyValue('align-items')).toBe('flex-start');
+    });
+
     it('renders an unwrapped JSON cell with the indentation intact in the DOM', () => {
       // the collapsing happens in CSS, so the text node itself must still carry the newlines and
       // indentation for the hover expansion to have anything to reveal.
