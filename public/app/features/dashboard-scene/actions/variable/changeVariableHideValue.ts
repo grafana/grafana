@@ -2,9 +2,14 @@ import { t } from '@grafana/i18n';
 import { type SceneVariable, SceneVariableSet } from '@grafana/scenes';
 
 import { edit } from '../utils/edit';
-import { type EditActionProps } from '../utils/types';
 
-export function changeVariableHideValue({ source, oldValue, newValue }: EditActionProps<SceneVariable, 'hide'>) {
+interface ChangeVariableHideValueActionProps {
+  source: SceneVariable;
+  oldValue: SceneVariable['state']['hide'];
+  newValue: SceneVariable['state']['hide'];
+}
+
+export function changeVariableHideValue({ source, oldValue, newValue }: ChangeVariableHideValueActionProps) {
   const variableSet = source.parent;
   const variablesBeforeChange =
     variableSet instanceof SceneVariableSet ? [...(variableSet.state.variables ?? [])] : undefined;

@@ -136,6 +136,16 @@ export const ThemeComponentsInputSchema = z
     tag: z.object({
       colors: z.array(z.object({ background: z.string(), text: z.string() })).optional(),
     }),
+    home: z.object({
+      background: z
+        .object({
+          fade: z.string().optional(),
+          highlight: z.string().optional(),
+          right: z.string().optional(),
+          left: z.string().optional(),
+        })
+        .optional(),
+    }),
   })
   .partial();
 
@@ -237,6 +247,23 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
     },
     tag: {
       colors: DEFAULT_TAG_COLORS,
+    },
+    home: {
+      background: {
+        fade:
+          colors.mode === 'dark'
+            ? 'hsl(from #3a364c h calc(s * 1.5) calc(l * 1.1))'
+            : 'hsl(from #dedfee h calc(s * 1.05) calc(l * 0.9))',
+        highlight: 'transparent',
+        right:
+          colors.mode === 'dark'
+            ? 'hsl(from #722323 h calc(s * 1.1) calc(l * 0.9) / 80%)'
+            : 'hsl(from #ff9a9a h s l / 80%)',
+        left:
+          colors.mode === 'dark'
+            ? 'hsl(from #1b416d h calc(s * 0.9) calc(l * 0.9) / 60%)'
+            : 'hsl(from #a6e3df h s l / 60%)',
+      },
     },
   };
 

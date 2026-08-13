@@ -1231,6 +1231,30 @@
             }
           },
           "additionalProperties": false
+        },
+        "home": {
+          "type": "object",
+          "properties": {
+            "background": {
+              "type": "object",
+              "properties": {
+                "fade": {
+                  "type": "string"
+                },
+                "highlight": {
+                  "type": "string"
+                },
+                "right": {
+                  "type": "string"
+                },
+                "left": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

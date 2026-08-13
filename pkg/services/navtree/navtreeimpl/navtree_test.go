@@ -2,12 +2,16 @@ package navtreeimpl
 
 import (
 	"net/http"
+	"sync"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -122,5 +126,74 @@ func TestBuildDashboardNavLinks(t *testing.T) {
 		navLinks := service.buildDashboardNavLinks(reqCtx)
 
 		require.False(t, hasPlaylistLink(navLinks), "expected unauthenticated user to not see the Playlists nav link")
+	})
+}
+
+// openfeatureTestMutex serializes tests that swap the global OpenFeature provider.
+var openfeatureTestMutex sync.Mutex
+
+func setOpenFeatureFlags(t *testing.T, flags map[string]bool) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+	// Registered before anything that can FailNow, so a failed assertion below cannot leave the
+	// mutex locked and deadlock the rest of the package.
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
+
+	inMem := make(map[string]memprovider.InMemoryFlag, len(flags))
+	for name, value := range flags {
+		inMem[name] = setting.NewInMemoryFlag(name, value)
+	}
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(inMem)
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+}
+
+func TestBuildNotebooksNavLink(t *testing.T) {
+	newService := func(canReadDashboards bool) *ServiceImpl {
+		return &ServiceImpl{
+			cfg:           setting.NewCfg(),
+			accessControl: actest.FakeAccessControl{ExpectedEvaluate: canReadDashboards},
+			features:      featuremgmt.WithFeatures(),
+		}
+	}
+
+	newReqCtx := func(isSignedIn bool) *contextmodel.ReqContext {
+		httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+		return &contextmodel.ReqContext{
+			SignedInUser: &user.SignedInUser{OrgRole: org.RoleViewer},
+			IsSignedIn:   isSignedIn,
+			Context:      &web.Context{Req: httpReq},
+		}
+	}
+
+	t.Run("Should show Notebooks for a signed-in user with dashboard read access when the flag is on", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagDashboardNotebooks: true})
+
+		link := newService(true).buildNotebooksNavLink(newReqCtx(true))
+
+		require.NotNil(t, link)
+		require.Equal(t, navtree.NavIDNotebooks, link.Id)
+		require.Equal(t, "/notebooks", link.Url)
+	})
+
+	t.Run("Should not show Notebooks when the flag is off", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagDashboardNotebooks: false})
+
+		require.Nil(t, newService(true).buildNotebooksNavLink(newReqCtx(true)))
+	})
+
+	t.Run("Should not show Notebooks without dashboard read access", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagDashboardNotebooks: true})
+
+		require.Nil(t, newService(false).buildNotebooksNavLink(newReqCtx(true)))
+	})
+
+	t.Run("Should not show Notebooks for an unauthenticated user", func(t *testing.T) {
+		setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagDashboardNotebooks: true})
+
+		require.Nil(t, newService(true).buildNotebooksNavLink(newReqCtx(false)))
 	})
 }

@@ -1,8 +1,15 @@
 import { t } from '@grafana/i18n';
+import { type SceneObject } from '@grafana/scenes';
 
 import { edit } from '../utils/edit';
 import { getEditableElementFor } from '../utils/getEditableElementFor';
-import { type RemoveElementActionHelperProps } from '../utils/types';
+
+interface RemoveElementActionHelperProps {
+  removedObject: SceneObject;
+  source: SceneObject;
+  perform: () => void;
+  undo: () => void;
+}
 
 export function removeElement(props: RemoveElementActionHelperProps) {
   const { removedObject, source, perform, undo } = props;

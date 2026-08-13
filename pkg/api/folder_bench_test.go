@@ -170,7 +170,7 @@ func setupDB(b testing.TB) benchScenario {
 
 	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(b, err)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(b, err)
 
 	cache := localcache.ProvideService()

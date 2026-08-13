@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { flows, type Variable } from './utils';
+import { flows, type Variable } from './helpers';
 
 test.use({
   featureToggles: {
@@ -29,7 +29,7 @@ test.describe(
         label: 'VariableUnderTest',
       };
 
-      await flows.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
       await sidebar.variableOptions.adhoc.selectDatasource('gdev-e2etestdatasource');
 
       // Assert the variable dropdown is visible with correct label

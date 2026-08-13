@@ -1,8 +1,15 @@
 import { t } from '@grafana/i18n';
+import { type SceneObject } from '@grafana/scenes';
 
 import { edit } from '../utils/edit';
 import { getEditableElementFor } from '../utils/getEditableElementFor';
-import { type AddElementActionHelperProps } from '../utils/types';
+
+interface AddElementActionHelperProps {
+  addedObject: SceneObject;
+  source: SceneObject;
+  perform: () => void;
+  undo: () => void;
+}
 
 /**
  * Helper for edit that adds elements

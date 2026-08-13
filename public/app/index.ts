@@ -4,6 +4,8 @@
 
 import type { Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
 
+import 'vendor/css/font_awesome.css';
+
 import { initPreferences } from './initPreferences';
 import { patchFetchForLegacyAPIMode } from './legacyAPIHandling';
 
