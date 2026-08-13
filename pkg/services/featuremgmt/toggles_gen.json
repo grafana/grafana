@@ -2190,13 +2190,17 @@
     {
       "metadata": {
         "name": "deletedFolderResourceCleanup",
-        "resourceVersion": "1783997108632",
-        "creationTimestamp": "2026-07-14T02:45:08Z"
+        "resourceVersion": "1786556486769",
+        "creationTimestamp": "2026-07-14T02:45:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-12 17:41:26.769183788 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server",
+        "description": "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -2675,6 +2679,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "flameGraph.tableNg",
+        "resourceVersion": "1786566030661",
+        "creationTimestamp": "2026-08-12T20:20:30Z"
+      },
+      "spec": {
+        "description": "Renders the flame graph's top table using TableNG instead of the legacy Table",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -4208,6 +4226,40 @@
     },
     {
       "metadata": {
+        "name": "libraryElementFolderUIDHeal",
+        "resourceVersion": "1786544808568",
+        "creationTimestamp": "2026-08-11T01:11:20Z",
+        "deletionTimestamp": "2026-08-12T17:41:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-12 14:26:48.568641559 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libraryElementFolderUIDRepair",
+        "resourceVersion": "1786556486769",
+        "creationTimestamp": "2026-08-12T17:41:26Z"
+      },
+      "spec": {
+        "description": "Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "libraryElements.folderTreeViaSearch",
         "resourceVersion": "1782273749340",
         "creationTimestamp": "2026-06-24T04:02:29Z"
@@ -5190,15 +5242,18 @@
     {
       "metadata": {
         "name": "provisioning.gitConventions",
-        "resourceVersion": "1780985056992",
-        "creationTimestamp": "2026-06-09T06:04:16Z"
+        "resourceVersion": "1786613642168",
+        "creationTimestamp": "2026-06-09T06:04:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-13 09:34:02.168032 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

@@ -264,10 +264,10 @@ var (
 		{
 			Name:            "provisioning.gitConventions",
 			Description:     "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
-			Expression:      "false",
+			Expression:      "true", // enabled by default
 			Generate:        Generate{Go: true, React: true},
 		},
 		{
@@ -2497,13 +2497,24 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "deletedFolderResourceCleanup",
-			Description:  "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true},
+			Name:            "deletedFolderResourceCleanup",
+			Description:     "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
+		},
+		{
+			Name:            "libraryElementFolderUIDRepair",
+			Description:     "Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaSearchAndStorageSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
 		},
 		{
 			Name:        "react19",
@@ -2600,6 +2611,14 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
+			Expression:  "false",
+		},
+		{
+			Name:        "flameGraph.tableNg",
+			Description: "Renders the flame graph's top table using TableNG instead of the legacy Table",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+			Generate:    Generate{React: true},
 			Expression:  "false",
 		},
 		{

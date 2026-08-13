@@ -3584,9 +3584,8 @@ func (q *permissionScopedQuery) Searcher(ctx context.Context, i index.IndexReade
 		return nil, err
 	}
 
-	s := newBatchAuthzSearcher(ctx, searcher, i, dvReader, q.access, q.namespace, q.group, q.resources, q.log.FromContext(ctx))
-	s.trash = q.trash
-	return s, nil
+	return newBatchAuthzSearcher(ctx, searcher, i, dvReader,
+		q.access, q.namespace, q.group, q.resources, q.trash, q.log.FromContext(ctx)), nil
 }
 
 // docInfo holds document information for authorization
@@ -3639,6 +3638,7 @@ func newBatchAuthzSearcher(
 	namespace string,
 	group string,
 	resources map[string]string,
+	trash *resource.TrashAuthorizer,
 	logger log.Logger,
 ) *batchAuthzSearcher {
 	ctx, span := tracer.Start(ctx, "search.batchAuthzSearcher", trace.WithAttributes(
@@ -3656,6 +3656,7 @@ func newBatchAuthzSearcher(
 		namespace:   namespace,
 		group:       group,
 		resources:   resources,
+		trash:       trash,
 		log:         logger,
 	}
 }
