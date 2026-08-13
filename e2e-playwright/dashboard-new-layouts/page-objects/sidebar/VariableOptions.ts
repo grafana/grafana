@@ -20,7 +20,6 @@ export class VariableOptions extends PageObject {
   async setName(variableName: string) {
     await test.step(`Set variable name to "${variableName}"`, async () => {
       const input = this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.variableNameInput);
-      await input.click();
       await input.fill(variableName);
       await input.blur();
     });
@@ -83,10 +82,10 @@ export class VariableOptions extends PageObject {
     /** Selects the values format in the editor modal */
     selectFormat: async (format: 'CSV' | 'JSON') => {
       await test.step(`Select "${format}" format`, async () => {
-        const modal = this.page.getByRole('dialog');
-        await this
-          // <RadioButtonGroup /> auto-applies the RadioGroup container testid; we scope it to the modal
-          .getByGrafanaSelector(this.selectors.components.RadioGroup.container, { root: modal })
+        // <RadioButtonGroup /> auto-applies the RadioGroup container testid; we scope it to the modal
+        await this.page
+          .getByRole('dialog')
+          .getByTestId(this.selectors.components.RadioGroup.container)
           .getByRole('radio', { name: format, exact: true })
           .check();
       });
@@ -106,7 +105,7 @@ export class VariableOptions extends PageObject {
     getPreviewTable: (): Locator =>
       this.getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.previewTable),
     /** Applies the variable changes */
-    clickApplyButton: async () => {
+    applyChanges: async () => {
       await test.step('Apply variable changes', async () => {
         await this.getByGrafanaSelector(
           this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton
@@ -188,7 +187,7 @@ export class VariableOptions extends PageObject {
     getPreviewOfValues: (): Locator =>
       this.getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption),
     /** Applies the variable changes */
-    clickApplyButton: async () => {
+    applyChanges: async () => {
       await test.step('Apply variable changes', async () => {
         await this.getByGrafanaSelector(
           this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.applyButton
