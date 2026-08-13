@@ -1,0 +1,24 @@
+name: Bootstrap Yarn Cache
+
+# yarn-install restores the download cache in every job that needs it. One
+# install here means the entry exists before those jobs start, instead of each
+# of them racing to create it.
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  yarn-cache:
+    name: Warm yarn cache
+    runs-on: ubuntu-x64
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-node
+      - name: Install JS dependencies
+        uses: ./.github/actions/yarn-install
