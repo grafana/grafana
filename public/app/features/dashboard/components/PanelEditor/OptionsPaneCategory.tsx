@@ -259,7 +259,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   header: css({
     display: 'flex',
     alignItems: 'center',
-    padding: theme.spacing(0.5, 1),
+    padding: theme.spacing(0.5, 1.5),
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
     cursor: 'pointer',
