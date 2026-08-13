@@ -153,16 +153,16 @@ function useHasLogs(
   const [presence, setPresence] = useState<LogsPresence>('loading');
   const [resolvedLinkModel, setResolvedLinkModel] = useState(linkModel);
 
-  const { query, timeRange } = linkModel.interpolatedParams ?? {};
+  const { query, alternativeQueries, timeRange } = linkModel.interpolatedParams ?? {};
 
-  const queryKey = query ? JSON.stringify(query) : undefined;
+  const queryKey = alternativeQueries || query ? JSON.stringify(alternativeQueries || query) : undefined;
   const timeRangeKey = timeRange ? `${timeRange.from.valueOf()}-${timeRange.to.valueOf()}` : undefined;
   const { isLoading: isLoadingDsList, items: dsList } = useDataSourceInstanceList({ type: 'loki' });
 
   useEffect(() => {
     // Without an interpolated query we can't check, so assume logs may exist and leave the link enabled.
     // Same when the feature flag is off — skip probing and keep the configured link.
-    if (!query || !dynamicTraceToLogsEnabled) {
+    if (!query || !alternativeQueries || !dynamicTraceToLogsEnabled) {
       setPresence('present');
       return;
     }
@@ -173,7 +173,7 @@ function useHasLogs(
     }
 
     const effectiveTimeRange = timeRange ?? getDefaultTimeRange();
-    const queries = Array.isArray(query) ? query : [query];
+    const queries = Array.isArray(alternativeQueries) ? alternativeQueries : [query];
 
     setPresence('loading');
     const subscription = checkForLogsInQueries(queries, effectiveTimeRange, dsList, traceDatasourceUid).subscribe({

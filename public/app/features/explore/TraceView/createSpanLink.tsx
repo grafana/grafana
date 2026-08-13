@@ -180,7 +180,10 @@ function legacyCreateSpanLinkFactory(
           internal: {
             datasourceUid: logsDataSourceSettings.uid,
             datasourceName: logsDataSourceSettings.name,
-            query,
+            // If multiple queries are returned, use the first query to respect the interface.
+            // LogsLink will then try to figure out which query to use and uppdate the link.
+            // Otherwise, non-array, will use the legacy behavior.
+            query: Array.isArray(query) ? query[0] : query,
             range: getTimeRangeFromSpan(
               span,
               {
@@ -234,6 +237,13 @@ function legacyCreateSpanLinkFactory(
                 linkModel: link,
               })) ||
             link;
+
+          if (Array.isArray(query)) {
+            link.interpolatedParams = {
+              ...link.interpolatedParams,
+              alternativeQueries: query,
+            };
+          }
 
           links.push({
             href: link.href,
