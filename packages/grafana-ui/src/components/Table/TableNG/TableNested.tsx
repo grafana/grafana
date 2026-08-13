@@ -143,12 +143,13 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const firstRowNestedData = nestedData[0];
   const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
-  // Row-height measurement must see the same rendered value column-building does: a JSON cell's
-  // `.display` is only JSON-aware on the prepared copy (see `prepareFieldsForDisplay`), so measuring
-  // against the raw visible fields would stringify its raw object value to "[object Object]" and
-  // never grow the row past a single line.
-  const rowHeightFields = useMemo(() => prepareFieldsForDisplay(visibleFields, theme), [visibleFields, theme]);
-  const nestedRowHeightFields = useMemo(
+  // Row-height and column-width measurement must both see the same rendered value column-building
+  // does: a JSON cell's `.display` is only JSON-aware on the prepared copy (see
+  // `prepareFieldsForDisplay`), so measuring against the raw visible fields would stringify its raw
+  // object value to "[object Object]" — a single short line that never grows the row past one line,
+  // and that content-aware width sizes no wider than a plain short string column.
+  const preparedFields = useMemo(() => prepareFieldsForDisplay(visibleFields, theme), [visibleFields, theme]);
+  const nestedPreparedFields = useMemo(
     () => prepareFieldsForDisplay(nestedVisibleFields, theme),
     [nestedVisibleFields, theme]
   );
@@ -244,7 +245,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     sortColumns,
   });
 
-  const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
+  const [widths] = useColWidths(preparedFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
@@ -261,7 +262,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   );
 
   const { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange } = useNestedColWidths({
-    nestedVisibleFields,
+    nestedVisibleFields: nestedPreparedFields,
     availableWidth,
     structureRev,
     contentAware: contentAwareWidths,
@@ -288,7 +289,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   const rowHeight = useRowHeight({
     columnWidths: widths,
-    fields: rowHeightFields,
+    fields: preparedFields,
     hasNestedFrames: true,
     defaultHeight: defaultRowHeight,
     defaultNestedHeight: defaultNestedRowHeight,
@@ -296,7 +297,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     typographyCtx,
     maxHeight: maxRowHeight,
     nestedColWidths: nestedFieldWidths,
-    nestedFields: nestedRowHeightFields,
+    nestedFields: nestedPreparedFields,
     nestedRows,
     nestedFooterHeight,
   });

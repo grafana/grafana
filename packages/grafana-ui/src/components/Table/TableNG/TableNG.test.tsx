@@ -2631,5 +2631,34 @@ describe('TableNG', () => {
       rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
       expect(columnTemplate(container)).not.toBe(initialTemplate);
     });
+
+    it('sizes a content-aware JSON (FieldType.other) column from its real rendered value, not a stringified raw object', () => {
+      // Column-width measurement must see the same prepared field column-building does:
+      // `prepareFieldsForDisplay` is what attaches the JSON-pretty-printing `.display`, so measuring
+      // against the field as originally passed in (before that pass runs) would fall through to a
+      // generic display processor and size the column off "[object Object]" — a short generic string
+      // no different from a plain short string column.
+      const data = frameWithFields([
+        { name: 'service', type: FieldType.string, values: ['gateway'], config: {} },
+        {
+          name: 'metadata',
+          type: FieldType.other,
+          values: [{ region: 'us-east-1', replicas: 3, healthy: true, lastError: 'connection timeout after 30s' }],
+          config: {},
+        },
+      ]);
+
+      // Narrow enough that available width can't cover both columns' content width, so there's no
+      // leftover to redistribute — each column's measured content width is what actually lands,
+      // rather than being masked by growth filling out the panel.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={data} width={250} height={300} contentAwareWidthsEnabled />
+      );
+
+      const [serviceWidth, metadataWidth] = columnTemplate(container)
+        .split(' ')
+        .map((w) => parseFloat(w));
+      expect(metadataWidth).toBeGreaterThan(serviceWidth * 2);
+    });
   });
 });
