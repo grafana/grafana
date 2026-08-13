@@ -262,7 +262,7 @@ Follow the UI wizard to fill in the required fields to set up any of these optio
 If you don't enable commit signing:
 
 - If you add an author override, the `author` and `committer` fields will be the configured override.
-- If you don't select author override and the commit author is retrievable from the code, Git Sync will apply it in the `author` and `committer` fields.
+- If you don't select author override, the signed in Grafana user name and email will be used as the commit author
 - Otherwise, the `author` and `committer` fields will be `noreply`.
 
 #### Signed commits
