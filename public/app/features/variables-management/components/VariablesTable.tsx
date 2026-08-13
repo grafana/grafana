@@ -197,12 +197,12 @@ function VariableRow({ variable, indented, selected, onSetSelected, onEdit, sele
             className={cx(styles.nameButton, indented && styles.indented)}
             onClick={() => onEdit(variable)}
           >
-            <Icon name="brackets-curly" />
+            <Icon name="gf-variable" />
             <span>{specName}</span>
           </button>
         ) : (
           <span className={cx(styles.namePlain, indented && styles.indented)}>
-            <Icon name="brackets-curly" />
+            <Icon name="gf-variable" />
             <span>{specName}</span>
           </span>
         )}
