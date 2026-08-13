@@ -222,7 +222,9 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
       <Sidebar.PaneHeader title={t('dashboard.sidebar.edit-schema.pane-header', 'Edit as code')} />
       <div className={styles.content}>
         {errorAlert}
-        <div className={styles.editorContainer}>{editorArea(styles.codeEditor)}</div>
+        {/* Render only one editor instance at a time: the expanded modal covers the pane, and two
+            live instances would race on the shared parse-error flag. */}
+        <div className={styles.editorContainer}>{!isExpanded && editorArea(styles.codeEditor)}</div>
         <div className={styles.toolbar}>
           <Stack gap={1} alignItems="center">
             {applyButton}

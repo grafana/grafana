@@ -137,6 +137,14 @@ describe('DashboardCodePane', () => {
     expect(screen.getByRole('switch', { name: 'Show diff' })).toBeDisabled();
   });
 
+  it('renders a single editor instance while the modal is expanded', async () => {
+    setup();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Expand editor' }));
+
+    expect(screen.getAllByTestId('schema-editor')).toHaveLength(1);
+  });
+
   it('shows a migration notice when the original was converted from v1', async () => {
     jest.mocked(getDashboardDiffTexts).mockReturnValue({ original: 'a', current: 'b', migratedFromV1: true });
     setup();
