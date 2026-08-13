@@ -47,4 +47,16 @@ describe('getParsedCounts', () => {
       librarypanels: 3,
     });
   });
+
+  it('passes recording rule counts through unchanged', () => {
+    const counts: ResourceStats[] = [
+      { group: 'rules.alerting.grafana.app', resource: 'alertrules', count: 2 },
+      { group: 'rules.alerting.grafana.app', resource: 'recordingrules', count: 5 },
+    ];
+
+    expect(getParsedCounts(counts)).toEqual({
+      alertrules: 2,
+      recordingrules: 5,
+    });
+  });
 });
