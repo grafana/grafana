@@ -456,6 +456,10 @@ func (s *VectorStoreServer) UpdateMetadata(ctx context.Context, req *resourcepb.
 	if len(req.Set) == 0 && len(req.Unset) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "at least one of set or unset is required")
 	}
+	// The 4 KiB cap is checked on the incoming patch only, not the merged
+	// result: it's a soft limit (search-response size), an oversized row is
+	// harmless, and unbounded growth needs a caller repeatedly adding distinct
+	// keys — not worth a per-row size guard that would silently skip updates.
 	if len(req.Set) > 0 {
 		if err := validateMetadataObject(req.Set); err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "set: %v", err)
