@@ -1,0 +1,44 @@
+import { CustomVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
+
+import { DashboardScene } from '../../scene/DashboardScene';
+import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
+import { activateFullSceneTree } from '../../utils/test-utils';
+
+import { addVariable } from './addVariable';
+
+function buildScene(variableSet: SceneVariableSet) {
+  const dashboard = new DashboardScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $variables: variableSet,
+    isEditing: true,
+    body: AutoGridLayoutManager.createEmpty(),
+  });
+
+  activateFullSceneTree(dashboard);
+
+  return dashboard;
+}
+
+describe('addVariable', () => {
+  it('adds a variable to the set and supports undo/redo', () => {
+    const existing = new CustomVariable({ name: 'existing', query: 'a,b' });
+    const variableSet = new SceneVariableSet({ variables: [existing] });
+    const dashboard = buildScene(variableSet);
+
+    const newVariable = new CustomVariable({ name: 'added', query: 'c,d' });
+    addVariable({ source: variableSet, addedObject: newVariable });
+
+    expect(variableSet.state.variables).toEqual([existing, newVariable]);
+    // Adding an element selects it so the user can edit it straight away
+    expect(dashboard.state.sidebar.getSelectedObject()).toBe(newVariable);
+
+    dashboard.state.sidebar.undoAction();
+
+    expect(variableSet.state.variables).toEqual([existing]);
+
+    dashboard.state.sidebar.redoAction();
+
+    expect(variableSet.state.variables).toEqual([existing, newVariable]);
+    expect(dashboard.state.sidebar.getSelectedObject()).toBe(newVariable);
+  });
+});
