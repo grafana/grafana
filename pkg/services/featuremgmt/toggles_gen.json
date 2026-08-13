@@ -337,7 +337,8 @@
       "metadata": {
         "name": "alertingCentralAlertHistory",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-05-29T15:01:38Z"
+        "creationTimestamp": "2024-05-29T15:01:38Z",
+        "deletionTimestamp": "2026-08-05T14:47:01Z"
       },
       "spec": {
         "description": "Enables the new central alert history.",
@@ -5239,17 +5240,17 @@
     {
       "metadata": {
         "name": "provisioning.userAttribution",
-        "resourceVersion": "1783717809512",
+        "resourceVersion": "1786613782023",
         "creationTimestamp": "2026-07-08T13:32:58Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-07-10 21:10:09.512157 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-08-13 09:36:22.023466 +0000 UTC"
         }
       },
       "spec": {
         "description": "Author Git Sync commits as the acting Grafana user",
         "stage": "preview",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
