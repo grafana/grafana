@@ -1393,7 +1393,8 @@ curl -s -u admin:admin -X POST \
 ```
 
 The `nats sub` window then shows a message on subject
-`playlist.grafana.app.default.playlists` (format: `{group}.{namespace}.{resource}`).
+`us.watch.v1.playlist.grafana.app.default.playlists` (format:
+`us.watch.v1.{group}.{namespace}.{resource}`).
 The payload is a protobuf `WatchNotification` (binary), so it renders as raw
 bytes — a message appearing on that subject with a non-empty body confirms the
 publish path.
@@ -1431,7 +1432,7 @@ Payloads are protobuf `WatchNotification` (see
 `UNKNOWN=0, ADDED=1, MODIFIED=2, DELETED=3`. A quick raw capture + hexdump:
 
 ```bash
-nats sub "playlist.grafana.app.>" --raw --count 1 > /tmp/n.bin & \
+nats sub "us.watch.v1.playlist.grafana.app.>" --raw --count 1 > /tmp/n.bin & \
   curl -s -u admin:admin -X POST \
   http://localhost:3000/apis/playlist.grafana.app/v0alpha1/namespaces/default/playlists \
   -H 'Content-Type: application/json' \
