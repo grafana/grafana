@@ -53,7 +53,7 @@ export function CustomVariableForm({
       <VariableTextAreaField
         // we don't use a controlled component so we make sure the textarea content is cleared when changing format by providing a key
         key={valuesFormat}
-        name=""
+        name={t('dashboard-scene.custom-variable-form.name-values', 'Values')}
         placeholder={
           valuesFormat === 'json'
             ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings

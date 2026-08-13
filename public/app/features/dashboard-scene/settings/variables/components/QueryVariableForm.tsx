@@ -129,6 +129,7 @@ export function QueryVariableEditorForm({
       <Field
         label={t('dashboard-scene.query-variable-editor-form.label-data-source', 'Data source')}
         htmlFor="data-source-picker"
+        required
       >
         <DataSourcePicker current={datasourceRef} onChange={datasourceChangeHandler} variables={true} width={30} />
       </Field>

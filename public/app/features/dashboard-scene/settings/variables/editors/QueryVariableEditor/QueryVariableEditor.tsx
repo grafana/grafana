@@ -217,6 +217,7 @@ export function Editor({ variable, hideRefresh, hideStaticOptions, hidePreview }
         label={t('dashboard-scene.query-variable-editor-form.label-target-data-source', 'Target data source')}
         htmlFor="data-source-picker"
         noMargin
+        required
       >
         <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} />
       </Field>
