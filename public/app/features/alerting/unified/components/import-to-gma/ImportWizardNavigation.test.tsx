@@ -2,12 +2,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
-
 import { setupMswServer } from '../../mockApi';
 import { grantUserRole } from '../../mocks';
-import { setupAdminConfigGet, setupAlertmanagersStatus } from '../../mocks/server/configure/admin_config';
+import { setupAlertmanagersStatus } from '../../mocks/server/configure/alertmanagers';
 import { mimirAlertmanagerDataSourcePayload, setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
+import { setupAutoSyncConfig } from '../../mocks/server/handlers/k8s/config.k8s';
 
 import { type ImportFormValues, ImportWizardGate } from './ImportToGMA';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
@@ -42,7 +41,7 @@ describe('Import wizard navigation — auto-sync path (real wizard)', () => {
   beforeEach(() => {
     grantUserRole('Admin');
     setupAlertmanagersStatus(server);
-    setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+    setupAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, [mimirAlertmanagerDataSourcePayload({ name: MIMIR_DS_NAME })]);
   });
 

@@ -4,15 +4,12 @@ import { byRole, byText } from 'testing-library-selector';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserRole } from 'app/features/alerting/unified/mocks';
-import {
-  setupAdminConfigGet,
-  setupAlertmanagersStatus,
-} from 'app/features/alerting/unified/mocks/server/configure/admin_config';
+import { setupAlertmanagersStatus } from 'app/features/alerting/unified/mocks/server/configure/alertmanagers';
 import {
   mimirAlertmanagerDataSourcePayload,
   setupDatasourcesEndpoint,
 } from 'app/features/alerting/unified/mocks/server/configure/datasources';
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { setupAutoSyncConfig } from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
 
 import { type ImportFormValues } from '../ImportToGMA';
 import { StepperStateProvider } from '../Wizard/StepperState';
@@ -119,7 +116,7 @@ describe('StepImportMethod — Auto-sync panel', () => {
   });
 
   it('lists only Mimir/Cortex data sources and blocks Next until one is selected', async () => {
-    setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+    setupAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, [mimirAlertmanagerDataSourcePayload({ name: MIMIR_DS_NAME })]);
 
     const { user } = renderStep('autosync');
@@ -134,7 +131,7 @@ describe('StepImportMethod — Auto-sync panel', () => {
   });
 
   it('shows an empty state when there are no Mimir/Cortex data sources', async () => {
-    setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+    setupAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, []);
 
     renderStep('autosync');
