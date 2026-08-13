@@ -29,7 +29,7 @@ jobs:
       contents: read
     uses: ./.github/workflows/bootstrap-detect-changes.yml
     with:
-      self: .github/workflows/ci.yml
+      self: .github/workflows/**
 
   go-mod-cache:
     needs: detect-changes
@@ -42,7 +42,7 @@ jobs:
       runs-on: ubuntu-x64
 
   go-build-cache:
-    needs: go-mod-cache
+    needs: [detect-changes, go-mod-cache]
     permissions:
       contents: read
       id-token: write
@@ -73,6 +73,8 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/go-lint.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
 
   # Everything below compiles, so it waits for the build cache.
   govulncheck:
@@ -85,12 +87,15 @@ jobs:
     uses: ./.github/workflows/govulncheck.yml
 
   feature-toggles:
-    needs: go-build-cache
+    needs: [detect-changes, go-build-cache]
     if: github.event_name == 'pull_request'
     permissions:
       contents: read
       id-token: write
     uses: ./.github/workflows/feature-toggles-ci.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
+      docs: ${{ needs.detect-changes.outputs.docs }}
 
   backend-code-checks:
     needs: [detect-changes, go-build-cache]
@@ -99,13 +104,18 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/backend-code-checks.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
+      dev-dashboards: ${{ needs.detect-changes.outputs.dev-dashboards }}
 
   swagger-gen:
-    needs: go-build-cache
+    needs: [detect-changes, go-build-cache]
     permissions:
       contents: read
       id-token: write
     uses: ./.github/workflows/swagger-gen.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
 
   go-workspace-check:
     needs: [detect-changes, go-build-cache]
@@ -126,6 +136,8 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/backend-unit-tests.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
 
   integration-tests:
     needs: [detect-changes, go-build-cache, go-remote-cache]
@@ -134,6 +146,8 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/pr-test-integration.yml
+    with:
+      backend: ${{ needs.detect-changes.outputs.backend }}
 
   integration-tests-pgvector:
     needs: [detect-changes, go-build-cache]
@@ -167,6 +181,8 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/pr-e2e-tests.yml
+    with:
+      e2e: ${{ needs.detect-changes.outputs.e2e }}
 
   frontend-unit-tests:
     needs: [detect-changes, go-build-cache, yarn-cache]
@@ -175,3 +191,6 @@ jobs:
       contents: read
       id-token: write
     uses: ./.github/workflows/pr-frontend-unit-tests.yml
+    with:
+      frontend: ${{ needs.detect-changes.outputs.frontend }}
+      devenv: ${{ needs.detect-changes.outputs.devenv }}

@@ -3,10 +3,9 @@ name: Bootstrap Go Build Cache
 # Makes sure the Go build cache exists, so that jobs which build the same tree
 # restore the result instead of repeating it.
 #
-# The usual outcome is that the entry is already there, so the job only asks
-# whether the key exists and stops, without downloading anything. On a miss it
-# restores the modules the sibling workflow saved, compiles every non-test
-# package and saves the result.
+# Asking whether the key exists costs one API call, so that question is its own
+# job on a small runner and the compile only claims a full one on a miss. The
+# usual outcome is a hit, and then nothing is downloaded or built.
 #
 # One entry serves both OSS and enterprise jobs. The enterprise tree adds
 # packages but no module files, so the key is the same either way, and the
@@ -24,8 +23,13 @@ on:
   workflow_call:
     inputs:
       runs-on:
-        description: Runner for the bucket being warmed.
+        description: Runner for the compile, which only happens on a miss.
         required: true
+        type: string
+      probe-runner:
+        description: Runner for the key lookup. Must match the arch of runs-on.
+        required: false
+        default: ubuntu-x64-small
         type: string
       enterprise:
         description: Also compile the enterprise tree, so the entry is a superset.
@@ -36,12 +40,15 @@ on:
 permissions: {}
 
 jobs:
-  go-build-cache:
+  probe:
     name: Warm Go build cache
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.probe-runner }}
     permissions:
       contents: read
-      id-token: write
+    outputs:
+      hit: ${{ steps.probe.outputs.cache-hit }}
+      key: ${{ steps.key.outputs.key }}
+      prefix: ${{ steps.key.outputs.prefix }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -68,24 +75,46 @@ jobs:
           key: ${{ steps.key.outputs.key }}
           lookup-only: true
 
-      # Nothing below the probe runs on a hit, so the enterprise checkout is
-      # only paid for on the path that actually compiles.
+      # A miss is slow rather than wrong, so it is reported without failing the
+      # run, which would block every workflow waiting on this one.
+      - name: Report a miss
+        if: steps.probe.outputs.cache-hit != 'true'
+        run: echo "::warning title=Go build cache miss::${{ steps.key.outputs.key }} is not cached, rebuilding it"
+
+  populate:
+    name: Populate Go build cache
+    needs: probe
+    if: needs.probe.outputs.hit != 'true'
+    runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          filter: blob:none
+
+      # The tagged half of the entry is an optimisation, so a run that cannot
+      # reach the enterprise tree saves the untagged half rather than failing
+      # and leaving every dependent workflow with no cache at all.
       - name: Get GitHub App token
-        if: ${{ steps.probe.outputs.cache-hit != 'true' && inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
+        if: ${{ inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
         id: get-github-app-token
+        continue-on-error: true
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
           github_app: grafana-ci-bot
 
       - name: Setup Enterprise
         id: setup-enterprise
-        if: ${{ steps.probe.outputs.cache-hit != 'true' && inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
+        if: steps.get-github-app-token.outcome == 'success'
+        continue-on-error: true
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
 
       - name: Setup Go
-        if: steps.probe.outputs.cache-hit != 'true'
         uses: ./.github/actions/setup-go
         with:
           build-cache: 'false'
@@ -94,15 +123,13 @@ jobs:
       # the newest entry for this toolchain. Go keys its build cache by content,
       # so only the packages the module change touches are rebuilt.
       - name: Restore the newest build cache for this toolchain
-        if: steps.probe.outputs.cache-hit != 'true'
         uses: actions/cache/restore@v4
         with:
           path: ~/.cache/go-build
-          key: ${{ steps.key.outputs.key }}
-          restore-keys: ${{ steps.key.outputs.prefix }}
+          key: ${{ needs.probe.outputs.key }}
+          restore-keys: ${{ needs.probe.outputs.prefix }}
 
       - name: Build all packages
-        if: steps.probe.outputs.cache-hit != 'true'
         env:
           CGO_ENABLED: '0'
           ENTERPRISE: ${{ steps.setup-enterprise.outcome == 'success' }}
@@ -119,8 +146,7 @@ jobs:
           done
 
       - name: Save the build cache
-        if: steps.probe.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: ~/.cache/go-build
-          key: ${{ steps.key.outputs.key }}
+          key: ${{ needs.probe.outputs.key }}

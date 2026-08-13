@@ -1,39 +1,19 @@
 name: golangci-lint
 on:
   workflow_call:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+    inputs:
+      backend:
+        description: Whether backend code changed.
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 jobs:
-  detect-changes:
-    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    name: Detect whether code changed
-    runs-on: ubuntu-arm64-small
-    permissions:
-      contents: read
-    outputs:
-      changed: ${{ steps.detect-changes.outputs.backend }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 0
-          filter: blob:none
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/go-lint.yml
 
   go-fmt:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: inputs.backend == 'true'
     runs-on: ubuntu-x64
     steps:
       - uses: actions/checkout@v5
@@ -52,8 +32,7 @@ jobs:
           fi
 
   lint-go:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: inputs.backend == 'true'
     runs-on: ubuntu-x64-xlarge
     steps:
       - uses: actions/checkout@v5

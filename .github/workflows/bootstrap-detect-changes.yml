@@ -12,6 +12,8 @@ on:
         value: ${{ jobs.detect-changes.outputs.self }}
       backend:
         value: ${{ jobs.detect-changes.outputs.backend }}
+      dev-dashboards:
+        value: ${{ jobs.detect-changes.outputs.dev-dashboards }}
       backend-src:
         value: ${{ jobs.detect-changes.outputs.backend-src }}
       frontend:
@@ -52,6 +54,7 @@ jobs:
     outputs:
       self: ${{ steps.detect-changes.outputs.self }}
       backend: ${{ steps.detect-changes.outputs.backend }}
+      dev-dashboards: ${{ steps.detect-changes.outputs.dev-dashboards }}
       backend-src: ${{ steps.detect-changes.outputs.backend-src }}
       frontend: ${{ steps.detect-changes.outputs.frontend }}
       frontend-src: ${{ steps.detect-changes.outputs.frontend-src }}

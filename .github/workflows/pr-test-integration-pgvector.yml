@@ -3,10 +3,6 @@ name: Integration Tests (pgvector)
 on:
   workflow_call:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
-
 permissions: {}
 
 jobs:

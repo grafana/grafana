@@ -2,38 +2,18 @@ name: End-to-end tests
 
 on:
   workflow_call:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+    inputs:
+      e2e:
+        description: Whether end-to-end tests or the code they cover changed.
+        required: true
+        type: string
 
 permissions: {}
 
 jobs:
-  detect-changes:
-    # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
-    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
-    name: Detect whether code changed
-    runs-on: ubuntu-arm64-small
-    permissions:
-      contents: read
-    outputs:
-      run-e2e-tests: ${{ steps.detect-changes.outputs.e2e == 'true' || github.event_name == 'push' }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 0
-          filter: blob:none
-      - name: Detect changes
-        id: detect-changes
-        uses: ./.github/actions/change-detection
-        with:
-          self: .github/workflows/pr-e2e-tests.yml
 
   build-backend:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.run-e2e-tests == 'true'
+    if: (inputs.e2e == 'true' || github.event_name == 'push')
     name: Build backend
     runs-on: ubuntu-x64-xlarge
     timeout-minutes: 15
@@ -68,8 +48,7 @@ jobs:
           retention-days: 1
 
   build-frontend:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.run-e2e-tests == 'true'
+    if: (inputs.e2e == 'true' || github.event_name == 'push')
     name: Build frontend
     runs-on: ubuntu-x64-xlarge
     timeout-minutes: 15
@@ -121,8 +100,7 @@ jobs:
     name: Verify Storybook (Playwright)
     runs-on: ubuntu-x64
     timeout-minutes: 15
-    needs: detect-changes
-    if: needs.detect-changes.outputs.run-e2e-tests == 'true'
+    if: (inputs.e2e == 'true' || github.event_name == 'push')
     permissions:
       contents: read
       id-token: write
