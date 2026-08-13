@@ -58,12 +58,20 @@ jobs:
       contents: read
     uses: ./.github/workflows/bootstrap-go-remote-cache.yml
 
+  # Workflows that diff against the base branch install from that tree as well
+  # as this one, so a pull request that changes the lock file needs both
+  # entries. An empty ref is the ref the run is already on.
   yarn-cache:
     needs: detect-changes
     if: needs.detect-changes.outputs.frontend == 'true'
+    strategy:
+      matrix:
+        ref: ${{ (github.event_name == 'pull_request' && needs.detect-changes.outputs.frontend-dependencies == 'true') && fromJSON(format('["", "{0}"]', github.base_ref)) || fromJSON('[""]') }}
     permissions:
       contents: read
     uses: ./.github/workflows/bootstrap-yarn-cache.yml
+    with:
+      ref: ${{ matrix.ref }}
 
   # Modules only: these compile nothing, so they do not wait for the build cache.
   go-lint:
@@ -195,3 +203,63 @@ jobs:
     with:
       frontend: ${{ needs.detect-changes.outputs.frontend }}
       devenv: ${{ needs.detect-changes.outputs.devenv }}
+
+  # Frontend suites, which restore what the yarn bootstrap saved.
+  lint-build-docs:
+    needs: [detect-changes, yarn-cache]
+    if: ${{ !cancelled() && needs.yarn-cache.result != 'failure' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/lint-build-docs.yml
+    with:
+      docs: ${{ needs.detect-changes.outputs.docs }}
+
+  storybook-a11y:
+    needs: [detect-changes, yarn-cache]
+    if: ${{ !cancelled() && needs.yarn-cache.result != 'failure' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/storybook-a11y.yml
+    with:
+      frontend: ${{ needs.detect-changes.outputs.frontend }}
+
+  schema-v2-e2e:
+    needs: [detect-changes, go-build-cache, yarn-cache]
+    if: ${{ !cancelled() && needs.go-build-cache.result != 'failure' && needs.yarn-cache.result != 'failure' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/run-schema-v2-e2e.yml
+
+  # These install from the base branch as well as the pull request, so they wait
+  # for both entries.
+  frontend-lint:
+    needs: [detect-changes, yarn-cache]
+    if: ${{ !cancelled() && needs.yarn-cache.result != 'failure' }}
+    permissions:
+      contents: read
+    uses: ./.github/workflows/frontend-lint.yml
+    with:
+      frontend: ${{ needs.detect-changes.outputs.frontend }}
+      docs: ${{ needs.detect-changes.outputs.docs }}
+      frontend-packages: ${{ needs.detect-changes.outputs.frontend-packages }}
+      frontend-dependencies: ${{ needs.detect-changes.outputs.frontend-dependencies }}
+
+  frontend-test-coverage:
+    needs: [detect-changes, yarn-cache]
+    if: ${{ !cancelled() && needs.yarn-cache.result != 'failure' && github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/check-frontend-test-coverage.yml
+    with:
+      frontend: ${{ needs.detect-changes.outputs.frontend }}
+
+  breaking-changes-levitate:
+    needs: [detect-changes, yarn-cache]
+    if: ${{ !cancelled() && needs.yarn-cache.result != 'failure' && github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: ./.github/workflows/detect-breaking-changes-levitate.yml
+    with:
+      frontend-packages: ${{ needs.detect-changes.outputs.frontend-packages }}
