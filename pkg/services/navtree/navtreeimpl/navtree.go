@@ -387,7 +387,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				SubTitle: "Template variables shared across dashboards, globally or per folder",
 				Id:       "dashboards/variables",
 				Url:      s.cfg.AppSubURL + "/dashboards/variables",
-				Icon:     "brackets-curly",
+				Icon:     "gf-variable",
 			})
 		}
 

@@ -9,7 +9,11 @@ const MARKDOWN_PANEL = '4';
 const HTML_PANEL = '6';
 const CODE_PANEL = '5';
 
-test.use({ openFeature: { flags: { 'grafana.newTextPanel': true } } });
+// Render mode needs query data, which text-options.json has none of.
+const DATA_DASHBOARD_UID = 'adssfc8';
+const EVERY_ROW_PANEL = '6';
+
+test.use({ openFeature: { flags: { 'grafana.newTextPanel': true, 'text.newFeatures': true } } });
 
 test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
   test('renders all panels on dashboard without errors', async ({ gotoDashboardPage, selectors, page }) => {
@@ -131,5 +135,41 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
     await modePicker.click();
     await page.getByRole('menuitemradio', { name: 'Markdown' }).click();
     await expect(preview).toBeVisible();
+  });
+
+  test.describe('render template', () => {
+    test('renders the content once per data row', async ({ gotoDashboardPage, selectors }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: DATA_DASHBOARD_UID });
+
+      const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content, {
+        root: dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Render mode: Per row')),
+      });
+
+      // One card per row of the panel's csv_content query.
+      await expect(panel.locator('.user-card')).toHaveCount(5);
+      await expect(panel).toContainText('Wei');
+      await expect(panel).toContainText('editor');
+      await expect(panel).toContainText('w.zhang@example.com');
+    });
+
+    test('switches back to a single render from the options pane', async ({ gotoDashboardPage, selectors, page }) => {
+      const dashboardPage = await gotoDashboardPage({
+        uid: DATA_DASHBOARD_UID,
+        queryParams: new URLSearchParams({ editPanel: EVERY_ROW_PANEL }),
+      });
+
+      const preview = page.getByTestId('TextNGEditor-preview');
+      await expect(preview.locator('.user-card')).toHaveCount(5);
+
+      // Unlike Mode, Render mode lives in the options pane, not the toolbar.
+      const renderMode = dashboardPage.getByGrafanaSelector(
+        selectors.components.PanelEditor.OptionsPane.fieldLabel('Data Render mode')
+      );
+      await renderMode.getByRole('radio', { name: 'Once' }).click();
+
+      // A single render cannot resolve per-row fields, so the macro stays literal.
+      await expect(preview.locator('.user-card')).toHaveCount(1);
+      await expect(preview).toContainText('${__data.fields.Id}');
+    });
   });
 });

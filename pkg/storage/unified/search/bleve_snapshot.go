@@ -324,12 +324,23 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderTh
 	minVersion := b.opts.Snapshot.MinBuildVersion
 	running := b.runningBuildVersion
 
-	var droppedAge, droppedUnparseable, droppedFormatUnsupported int
+	var droppedAge, droppedUnparseable, droppedFormatUnsupported, droppedUnknownRequirements int
 	candidates := make([]snapshotCandidate, 0, len(all))
 	for k, m := range all {
 		// Hard filter: age.
 		if !notOlderThan.IsZero() && m.UploadTimestamp.Before(notOlderThan) {
 			droppedAge++
+			continue
+		}
+		// Hard filter: needs a feature this instance cannot read. Dropped here rather
+		// than after download so an older snapshot can be used instead.
+		if unknown := resource.UnknownIndexRequirements(m.ReaderRequirements); len(unknown) > 0 {
+			droppedUnknownRequirements++
+			logger.Debug("index snapshot candidate dropped: unknown reader requirements",
+				"key", k.String(),
+				"unknown_requirements", unknown,
+				"version", m.BuildVersion,
+			)
 			continue
 		}
 		if !isSnapshotIndexFormatUnknownOrSupported(m.IndexFormat, b.maxSupportedIndexFormat) {
@@ -371,7 +382,7 @@ func (b *bleveBackend) pickBestSnapshot(all map[ulid.ULID]*IndexMeta, notOlderTh
 	}
 
 	if len(candidates) == 0 {
-		logger.Debug("no index snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable, "dropped_format_unsupported", droppedFormatUnsupported, "max_supported_format", b.maxSupportedIndexFormat)
+		logger.Debug("no index snapshot candidates", "total", len(all), "dropped_age", droppedAge, "dropped_unparseable", droppedUnparseable, "dropped_format_unsupported", droppedFormatUnsupported, "dropped_unknown_requirements", droppedUnknownRequirements, "max_supported_format", b.maxSupportedIndexFormat)
 		return snapshotCandidate{}, false
 	}
 
@@ -420,9 +431,9 @@ func snapshotTier(v, minVersion, running *semver.Version) int {
 // on success.
 //
 // Snapshot selection accepts an older Grafana version (see snapshotTier), so
-// this is where a snapshot that would answer incorrectly gets rejected. That
-// costs a download first; recording index features in the snapshot metadata
-// would let selection skip such a snapshot instead. Follow-up.
+// this is where a snapshot that would answer incorrectly gets rejected. Selection
+// already skips manifests declaring requirements we do not understand; this covers
+// snapshots uploaded before that field existed.
 func (b *bleveBackend) validateDownloadedIndex(idx bleve.Index) (int64, error) {
 	rv, err := getRV(idx)
 	if err != nil {
@@ -434,6 +445,9 @@ func (b *bleveBackend) validateDownloadedIndex(idx bleve.Index) (int64, error) {
 	bi, err := getBuildInfo(idx)
 	if err != nil {
 		return 0, fmt.Errorf("reading build info: %w", err)
+	}
+	if unknown := resource.UnknownIndexRequirements(bi.ReaderRequirements); len(unknown) > 0 {
+		return 0, fmt.Errorf("snapshot requires index features this instance does not understand %v", unknown)
 	}
 	if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
 		return 0, fmt.Errorf("snapshot is missing required index features %v", missing)

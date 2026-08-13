@@ -5,6 +5,7 @@ import { type ElementSelectionContextItem } from '@grafana/ui';
 import { changeDescription } from '../actions/dashboard/changeDescription';
 import { changeTitle } from '../actions/dashboard/changeTitle';
 import { addElement } from '../actions/element/addElement';
+import { duplicateElement } from '../actions/element/duplicateElement';
 import { moveElement } from '../actions/element/moveElement';
 import { removeElement } from '../actions/element/removeElement';
 import { edit } from '../actions/utils/edit';
@@ -15,6 +16,7 @@ import { changeVariableHideValue } from '../actions/variable/changeVariableHideV
 import { changeVariableLabel } from '../actions/variable/changeVariableLabel';
 import { changeVariableName } from '../actions/variable/changeVariableName';
 import { changeVariableType } from '../actions/variable/changeVariableType';
+import { duplicateVariable } from '../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
 import { type BulkActionElement, isBulkActionElement } from '../scene/types/BulkActionElement';
 import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
@@ -27,10 +29,12 @@ export const dashboardEditActions = {
   addElement,
   removeElement,
   moveElement,
+  duplicateElement,
   changeTitle,
   changeDescription,
   addVariable,
   removeVariable,
+  duplicateVariable,
   changeVariableType,
   changeVariableName,
   changeVariableLabel,

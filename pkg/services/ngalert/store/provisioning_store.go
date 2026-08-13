@@ -239,11 +239,13 @@ func managerFromRecord(record provenanceRecord) utils.ManagerProperties {
 // DeleteProvenance deletes the provenance record from the table
 func (st DBstore) DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Delete(provenanceRecord{
-			RecordKey:  o.ResourceID(),
-			RecordType: o.ResourceType(),
-			OrgID:      org,
-		})
+		// Explicit Where+Delete, not sess.Delete(&provenanceRecord{...}): xorm's struct-based
+		// Delete only conditions on non-zero fields, so a resource with ResourceID() == ""
+		// (e.g. the default alerting route) would drop record_key from the WHERE clause
+		// entirely and delete every record of that record_type/org.
+		_, err := sess.Table(provenanceRecord{}).
+			Where("record_key = ? AND record_type = ? AND org_id = ?", o.ResourceID(), o.ResourceType(), org).
+			Delete(&provenanceRecord{})
 		return err
 	})
 }

@@ -3,8 +3,8 @@ import { type Page } from '@playwright/test';
 import { type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { test, expect } from './fixtures';
+import { flows } from './helpers';
 import { type Controls, type Sidebar } from './page-objects';
-import { importTestDashboard } from './utils';
 
 test.use({
   featureToggles: {
@@ -82,7 +82,7 @@ async function setupAutoGridInEditMode(
   sidebar: Sidebar,
   title: string
 ) {
-  await importTestDashboard(page, selectors, title, undefined);
+  await flows.dashboards.importTestDashboard(page, selectors, title, undefined);
   await controls.enterEditMode();
 
   await sidebar.toolbar.clickButton('Options');

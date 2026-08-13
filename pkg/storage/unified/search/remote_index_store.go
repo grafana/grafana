@@ -90,6 +90,10 @@ type IndexMeta struct {
 	// IndexFormat identifies the Bleve segment format that wrote this snapshot
 	// (for example, "zap/16"). Empty on legacy snapshots means "unknown, assume compatible".
 	IndexFormat string `json:"index_format,omitempty"`
+	// ReaderRequirements are the features an instance must understand before using
+	// this snapshot. Selection skips a snapshot declaring one it does not recognise.
+	// Empty on snapshots uploaded before this field existed.
+	ReaderRequirements []resource.IndexFeature `json:"reader_requirements,omitempty"`
 	// LatestResourceVersion is the latest resource version included in the index.
 	LatestResourceVersion int64 `json:"latest_resource_version"`
 	// DocCount is the number of documents in the index at upload time. Recorded

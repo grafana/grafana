@@ -172,6 +172,7 @@ func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.N
 	meta := IndexMeta{
 		BuildVersion:          bi.BuildVersion,
 		IndexFormat:           indexFormat,
+		ReaderRequirements:    bi.ReaderRequirements,
 		LatestResourceVersion: rv,
 		DocCount:              docCount,
 	}
