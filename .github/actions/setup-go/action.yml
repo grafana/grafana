@@ -23,7 +23,7 @@ runs:
   steps:
     # When cache-build is enabled, use the built-in setup-go caching
     # which stores both GOMODCACHE and GOCACHE together.
-    - uses: actions/setup-go@v6.0.0
+    - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
       with:
         go-version-file: ${{ inputs.go-version-file }}
         cache: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' }}
@@ -34,7 +34,7 @@ runs:
     # do little or no compilation (lint, codegen, workspace checks).
     - name: Cache Go modules only
       if: inputs.cache == 'true' && inputs.cache-build != 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ~/go/pkg/mod
         key: gomod-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.mod') }}
