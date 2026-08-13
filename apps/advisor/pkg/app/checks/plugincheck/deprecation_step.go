@@ -65,10 +65,7 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 			p.Name,
 			p.ID,
 			[]advisor.CheckErrorLink{
-				{
-					Message: translations.LinkMessage("view-plugin"),
-					Url:     fmt.Sprintf("/plugins/%s", p.ID),
-				},
+				checks.NewErrorLink("view-plugin", fmt.Sprintf("/plugins/%s", p.ID)),
 			},
 		)}, nil
 	}

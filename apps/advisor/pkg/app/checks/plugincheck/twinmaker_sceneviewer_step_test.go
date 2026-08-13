@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/stretchr/testify/assert"
@@ -70,7 +71,7 @@ func TestTwinmakerSceneViewerStep_Run(t *testing.T) {
 				assert.Equal(t, advisor.CheckReportFailureSeverityLow, failures[0].Severity)
 				assert.Contains(t, failures[0].Item, tt.wantFailureMessage)
 				assert.Equal(t, []advisor.CheckErrorLink{
-					{Message: "View plugin", Url: "/plugins/" + twinmakerAppPluginID},
+					checks.NewErrorLink("view-plugin", "/plugins/"+twinmakerAppPluginID),
 				}, failures[0].Links)
 			} else {
 				assert.Len(t, failures, 0)

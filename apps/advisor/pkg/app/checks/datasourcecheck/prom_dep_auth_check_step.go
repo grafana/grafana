@@ -82,11 +82,8 @@ func (s *promDepAuthStep) checkUsingAWSAuth(ctx context.Context, dataSource *dat
 		}
 
 		errorLinks = append(errorLinks,
-			advisor.CheckErrorLink{
-				Message: translations.LinkMessage("view-sigv4-docs"),
-				Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/",
-			})
-		pluginLink := s.linkDataSource(ctx, datasources.DS_AMAZON_PROMETHEUS, translations.LinkMessage("install-amazon-managed-service-for-prometheus"))
+			checks.NewErrorLink("view-sigv4-docs", "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/"))
+		pluginLink := s.linkDataSource(ctx, datasources.DS_AMAZON_PROMETHEUS, "install-amazon-managed-service-for-prometheus")
 		if pluginLink != nil {
 			errorLinks = append(errorLinks, *pluginLink)
 		}
@@ -106,11 +103,8 @@ func (s *promDepAuthStep) checkUsingAzureAuth(ctx context.Context, dataSource *d
 			errorLinks = append(errorLinks, *readOnlyLink)
 		}
 		errorLinks = append(errorLinks,
-			advisor.CheckErrorLink{
-				Message: translations.LinkMessage("view-azure-auth-docs"),
-				Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/",
-			})
-		pluginLink := s.linkDataSource(ctx, datasources.DS_AZURE_PROMETHEUS, translations.LinkMessage("install-azure-monitor-managed-service-for-prometheus"))
+			checks.NewErrorLink("view-azure-auth-docs", "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/"))
+		pluginLink := s.linkDataSource(ctx, datasources.DS_AZURE_PROMETHEUS, "install-azure-monitor-managed-service-for-prometheus")
 		if pluginLink != nil {
 			errorLinks = append(errorLinks, *pluginLink)
 		}
@@ -124,25 +118,21 @@ func checkReadOnly(dataSource *datasources.DataSource) *advisor.CheckErrorLink {
 			// Disabled or not a valid boolean
 			return nil
 		}
-		return &advisor.CheckErrorLink{
-			Message: translations.LinkMessage("change-provisioning-file"),
-			Url:     "https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources",
-		}
+		link := checks.NewErrorLink("change-provisioning-file", "https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources")
+		return &link
 	}
 	return nil
 }
 
-func (s *promDepAuthStep) linkDataSource(ctx context.Context, pluginType string, message string) *advisor.CheckErrorLink {
+func (s *promDepAuthStep) linkDataSource(ctx context.Context, pluginType string, slug string) *advisor.CheckErrorLink {
 	canBeInstalled, err := s.canBeInstalled(ctx, pluginType)
 	if err != nil {
 		return nil
 	}
 	if canBeInstalled {
 		// Plugin is available in the repo
-		return &advisor.CheckErrorLink{
-			Message: message,
-			Url:     fmt.Sprintf("/plugins/%s", pluginType),
-		}
+		link := checks.NewErrorLink(slug, fmt.Sprintf("/plugins/%s", pluginType))
+		return &link
 	}
 	return nil
 }

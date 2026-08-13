@@ -107,9 +107,3 @@ func StepDescription(checkTypeID, stepID string) string {
 func StepResolution(checkTypeID, stepID string) string {
 	return EN("advisor." + checkTypeID + "." + stepID + ".resolution")
 }
-
-// LinkMessage returns the en-US label for a failure-link button, e.g.
-// LinkMessage("fix-me") == "Fix me".
-func LinkMessage(slug string) string {
-	return EN("advisor.link." + slug)
-}

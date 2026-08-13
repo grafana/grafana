@@ -61,10 +61,7 @@ func (s *securityConfigStep) Run(ctx context.Context, log logging.Logger, _ *adv
 				"secret_key",
 				itemPath,
 				[]advisor.CheckErrorLink{
-					{
-						Message: translations.LinkMessage("avoid-default-value"),
-						Url:     "https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/",
-					},
+					checks.NewErrorLink("avoid-default-value", "https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/"),
 				},
 			)}, nil
 		}

@@ -80,10 +80,7 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 			ds.Name,
 			ds.UID,
 			[]advisor.CheckErrorLink{
-				{
-					Message: translations.LinkMessage("fix-me"),
-					Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
-				},
+				checks.NewErrorLink("fix-me", fmt.Sprintf("/connections/datasources/edit/%s", ds.UID)),
 			},
 			moreInfo,
 		)}, nil
