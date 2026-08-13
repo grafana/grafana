@@ -7,19 +7,13 @@ name: Bootstrap Go Remote Cache
 
 on:
   workflow_call:
-    inputs:
-      runs-on:
-        description: Runner for the download. Must match the arch of the jobs it serves.
-        required: false
-        default: ubuntu-x64-small
-        type: string
 
 permissions: {}
 
 jobs:
   go-remote-cache:
     name: Warm Go remote cache tooling
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ubuntu-x64-small
     permissions:
       contents: read
     steps:
@@ -29,3 +23,4 @@ jobs:
       - uses: ./.github/actions/setup-go-remote-cache
         with:
           download-only: 'true'
+          cache-write: 'true'
