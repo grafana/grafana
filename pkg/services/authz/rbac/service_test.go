@@ -762,6 +762,29 @@ func TestService_mapping(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "should map variables create to folder edit action sets",
+			input: &authzv1.CheckRequest{
+				Group:    "dashboard.grafana.app",
+				Resource: "variables",
+				Name:     "region",
+				Verb:     utils.VerbCreate,
+				Folder:   "folder1",
+			},
+			output: &checkRequest{
+				Action:       "variables:create",
+				ActionSets:   []string{"folders:edit", "folders:admin"},
+				Group:        "dashboard.grafana.app",
+				Resource:     "variables",
+				Name:         "region",
+				Verb:         "create",
+				ParentFolder: "folder1",
+				Namespace: types.NamespaceInfo{
+					Value: ns,
+					OrgID: 1,
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1736,6 +1759,38 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should take into account folder action sets for variable access",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "variables",
+				Verb:      "create",
+				Name:      "region",
+				Folder:    "some_folder",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "folders:edit", Scope: "folders:uid:some_folder"},
+			},
+			expected: true,
+		},
+		{
+			name: "folder view action set should not grant variable create",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboard.grafana.app",
+				Resource:  "variables",
+				Verb:      "create",
+				Name:      "region",
+				Folder:    "some_folder",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "folders:view", Scope: "folders:uid:some_folder"},
+			},
+			expected: false,
+		},
+		{
 			name: "lower level action set or action set on a different resource should not grant higher level access",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
@@ -1834,6 +1889,18 @@ func TestService_Check(t *testing.T) {
 				}
 				if tc.req.Resource == "folders" {
 					expAction = "folders:delete"
+				}
+				if tc.req.Resource == "variables" {
+					switch tc.req.Verb {
+					case "create":
+						expAction = "variables:create"
+					case "get", "list", "watch":
+						expAction = "variables:read"
+					case "update", "patch":
+						expAction = "variables:write"
+					case "delete":
+						expAction = "variables:delete"
+					}
 				}
 				if tc.req.Subresource == "annotations" {
 					switch tc.req.Verb {
