@@ -30,14 +30,14 @@ func TestCompile(t *testing.T) {
 		{
 			name:      "numeric greater than casts to numeric",
 			filter:    &Filter{Comparison: &ComparisonExpression{Field: "year", Operator: Gt, Value: 2019}},
-			wantQuery: "((jsonb_extract_path_text(metadata, $1))::numeric > $2)",
+			wantQuery: "(CASE WHEN jsonb_typeof(metadata -> $1) = 'number' THEN (metadata ->> $1)::numeric END > $2)",
 			wantArgs:  []any{"year", 2019},
 		},
 		{
 			name:      "not equal",
 			filter:    &Filter{Comparison: &ComparisonExpression{Field: "genre", Operator: Ne, Value: "documentary"}},
-			wantQuery: "(jsonb_extract_path_text(metadata, $1) != $2)",
-			wantArgs:  []any{"genre", "documentary"},
+			wantQuery: "NOT (metadata @> $1)",
+			wantArgs:  []any{[]byte(`{"genre":"documentary"}`)},
 		},
 		{
 			name:      "exists",
@@ -86,7 +86,7 @@ func TestCompile(t *testing.T) {
 				{Comparison: &ComparisonExpression{Field: "genre", Operator: Eq, Value: "drama"}},
 				{Comparison: &ComparisonExpression{Field: "year", Operator: Gte, Value: 2020}},
 			}}},
-			wantQuery: "((metadata @> $1) AND ((jsonb_extract_path_text(metadata, $2))::numeric >= $3))",
+			wantQuery: "((metadata @> $1) AND (CASE WHEN jsonb_typeof(metadata -> $2) = 'number' THEN (metadata ->> $2)::numeric END >= $3))",
 			wantArgs:  []any{[]byte(`{"genre":"drama"}`), "year", 2020},
 		},
 		{
@@ -95,7 +95,7 @@ func TestCompile(t *testing.T) {
 				{Comparison: &ComparisonExpression{Field: "rating", Operator: Lte, Value: 2}},
 				{Existence: &ExistenceExpression{Field: "sequel", Exists: false}},
 			}}},
-			wantQuery: "(((jsonb_extract_path_text(metadata, $1))::numeric <= $2) OR NOT (metadata ? $3))",
+			wantQuery: "((CASE WHEN jsonb_typeof(metadata -> $1) = 'number' THEN (metadata ->> $1)::numeric END <= $2) OR NOT (metadata ? $3))",
 			wantArgs:  []any{"rating", 2, "sequel"},
 		},
 		{
@@ -107,7 +107,7 @@ func TestCompile(t *testing.T) {
 					{Comparison: &ComparisonExpression{Field: "year", Operator: Lt, Value: 2000}},
 				}}},
 			}}},
-			wantQuery: "((metadata @> $1) AND (((jsonb_extract_path_text(metadata, $2))::numeric > $3) OR ((jsonb_extract_path_text(metadata, $4))::numeric < $5)))",
+			wantQuery: "((metadata @> $1) AND ((CASE WHEN jsonb_typeof(metadata -> $2) = 'number' THEN (metadata ->> $2)::numeric END > $3) OR (CASE WHEN jsonb_typeof(metadata -> $4) = 'number' THEN (metadata ->> $4)::numeric END < $5)))",
 			wantArgs:  []any{[]byte(`{"genre":"action"}`), "year", 2010, "year", 2000},
 		},
 	}
@@ -133,7 +133,7 @@ func TestCompileOptions(t *testing.T) {
 	// fixed scope params (resource=$1, namespace=$2, model=$3).
 	query, args, err := Compile(f, FilterArgsOffset(4), FilterAnd())
 	require.NoError(t, err)
-	assert.Equal(t, " AND ((jsonb_extract_path_text(metadata, $4))::numeric > $5)", query)
+	assert.Equal(t, " AND (CASE WHEN jsonb_typeof(metadata -> $4) = 'number' THEN (metadata ->> $4)::numeric END > $5)", query)
 	assert.Equal(t, []any{"year", 2019}, args)
 
 	// FilterAnd on a nil filter stays empty (no dangling AND).

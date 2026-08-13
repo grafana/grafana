@@ -1367,3 +1367,47 @@ func TestIntegrationVectorUpdateMetadata(t *testing.T) {
 		testResource, "ns-upd", "u3").Scan(&meta))
 	require.JSONEq(t, `{"status":"closed","owner":"u-old"}`, meta)
 }
+
+func TestIntegrationVectorFilterEdgeCases(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+	// Isolate from any rows a prior run left in this namespace.
+	_, err := backend.DeleteNamespace(ctx, "ns-edge")
+	require.NoError(t, err)
+
+	mk := func(uid string, meta string) Vector {
+		return Vector{
+			Namespace: "ns-edge", Resource: testResource, UID: uid, Title: "T",
+			Content: "c", Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
+			Metadata: json.RawMessage(meta),
+		}
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("eq", `{"tag":"a"}`),          // scalar equal to "a"
+		mk("neq", `{"tag":"c"}`),         // scalar not "a"
+		mk("missing", `{"other":"x"}`),   // no tag field
+		mk("numstr", `{"score":"high"}`), // nonnumeric score
+		mk("num", `{"score":42}`),        // numeric score
+	}))
+
+	// $ne is the exact negation of $eq's containment: excludes the equal
+	// scalar, includes the unequal scalar and rows missing the field.
+	ne, err := backend.UpdateMetadata(ctx, "ns-edge", testResource,
+		mustFilter(t, `{"tag":{"$ne":"a"}}`),
+		json.RawMessage(`{"nematch":true}`), nil)
+	require.NoError(t, err)
+	require.EqualValues(t, 4, ne) // neq, missing, numstr, num — not eq
+
+	// $eq matches only the equal scalar.
+	n, _, err := backend.DeleteRows(ctx, "ns-edge", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"tag":"a"}`)})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n)
+
+	// A range filter over a key some rows store as a nonnumeric string must
+	// not abort; the nonnumeric row simply doesn't match.
+	n, more, err := backend.DeleteRows(ctx, "ns-edge", testModel, testResource,
+		DeleteSelector{Filter: mustFilter(t, `{"score":{"$gt":10}}`)})
+	require.NoError(t, err)
+	require.False(t, more)
+	require.EqualValues(t, 1, n) // only num (42); numstr skipped, not an error
+}

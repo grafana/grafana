@@ -101,16 +101,19 @@ func (c *compiler) compileLogical(e *LogicalExpression) error {
 }
 
 func (c *compiler) compileComparison(e *ComparisonExpression) error {
-	// For equality checks, use the JSONB containment operator @> which is highly
-	// efficient with a GIN index, especially for high-cardinality data.
-	if e.Operator == Eq {
-		c.where.WriteString("(metadata @> ")
-		// Construct a JSON object like {"field": "value"} for the argument.
+	// Eq and Ne use JSONB containment (@>): GIN-index friendly, and correct for
+	// array-valued fields — Ne is its exact negation, so it excludes rows whose
+	// array contains the value and includes rows missing the field (Mongo $ne).
+	if e.Operator == Eq || e.Operator == Ne {
 		arg := map[string]any{e.Field: e.Value}
 		jsonArg, err := json.Marshal(arg)
 		if err != nil {
 			return fmt.Errorf("failed to marshal json for @> operator: %w", err)
 		}
+		if e.Operator == Ne {
+			c.where.WriteString("NOT ")
+		}
+		c.where.WriteString("(metadata @> ")
 		c.addArg(jsonArg)
 		c.where.WriteString(")")
 		return nil
@@ -121,14 +124,18 @@ func (c *compiler) compileComparison(e *ComparisonExpression) error {
 		return c.compileIn(e)
 	}
 
-	path := c.jsonbPathParam(e.Field)
 	op, err := c.sqlOperator(e.Operator)
 	if err != nil {
 		return err
 	}
-	// For numeric comparisons, we need to cast the JSONB value to a numeric type.
+	// Range ops need a numeric value. A guarded cast: rows whose value isn't a
+	// JSON number yield NULL (never match) instead of aborting the whole
+	// statement on a nonnumeric row.
+	var path string
 	if isNumericOperator(e.Operator) {
-		path = fmt.Sprintf("(%s)::numeric", path)
+		path = c.numericPath(e.Field)
+	} else {
+		path = c.jsonbPathParam(e.Field)
 	}
 
 	c.where.WriteString("(")
@@ -224,6 +231,14 @@ func (c *compiler) addOnlyArg(v any) int {
 func (c *compiler) jsonbPathParam(field string) string {
 	idx := c.addOnlyArg(field)
 	return fmt.Sprintf("jsonb_extract_path_text(metadata, $%d)", idx)
+}
+
+// numericPath extracts a field as numeric only when its JSON value is a
+// number, yielding NULL otherwise so a nonnumeric row is skipped rather than
+// aborting the statement with a cast error. The field key is bound once.
+func (c *compiler) numericPath(field string) string {
+	idx := c.addOnlyArg(field)
+	return fmt.Sprintf("CASE WHEN jsonb_typeof(metadata -> $%d) = 'number' THEN (metadata ->> $%d)::numeric END", idx, idx)
 }
 
 func (c *compiler) sqlOperator(op ComparisonOperator) (string, error) {
