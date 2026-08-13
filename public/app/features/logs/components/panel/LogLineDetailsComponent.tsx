@@ -13,7 +13,7 @@ import {
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
-import { Box, ControlledCollapse, InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
+import { Box, ControlledCollapse, InlineField, InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
 import { createLogLineLinks } from '../logParser';
@@ -53,6 +53,9 @@ export const LogLineDetailsComponent = memo(
       useLogListContext();
 
     const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
+    const [logLineOpen, setLogLineOpen] = useState(
+      logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.log-details.logLineOpen`, false) : false
+    );
     const styles = useStyles2(getStyles);
 
     const extensionLinks = useAttributesExtensionLinks(log, timeRange);
@@ -110,9 +113,6 @@ export const LogLineDetailsComponent = memo(
 
     const labelGroups = useMemo(() => Object.keys(groupedLabels), [groupedLabels]);
 
-    const logLineOpen = logOptionsStorageKey
-      ? store.getBool(`${logOptionsStorageKey}.log-details.logLineOpen`, false)
-      : false;
     const linksOpen = logOptionsStorageKey
       ? store.getBool(`${logOptionsStorageKey}.log-details.linksOpen`, true)
       : true;
@@ -129,6 +129,9 @@ export const LogLineDetailsComponent = memo(
     const handleToggle = useCallback(
       (option: string, isOpen: boolean) => {
         store.set(`${logOptionsStorageKey}.log-details.${option}`, isOpen);
+        if (option === 'logLineOpen') {
+          setLogLineOpen(isOpen);
+        }
         if (!noInteractions) {
           reportInteraction('logs_log_line_details_section_toggled', {
             section: option.replace('Open', ''),
@@ -183,16 +186,16 @@ export const LogLineDetailsComponent = memo(
           label={
             <Stack justifyContent="space-between" flex={1} alignItems="center">
               {t('logs.log-line-details.log-line-section', 'Log line')}
-              {log.body && log.isJSON && (
+              {log.body && log.isJSON && logLineOpen && (
                 // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                <div onClick={(event) => event.stopPropagation()}>
-                  <InlineSwitch
-                    label={t('logs.log-line-details.prettify', 'Prettify')}
-                    showLabel
-                    value={prettifyDetailsJSON}
-                    onChange={(event) => setPrettifyDetailsJSON(event.currentTarget.checked)}
-                  />
-                </div>
+                <Stack alignItems="center" onClick={(event) => event.stopPropagation()}>
+                  <InlineField label={t('logs.log-line-details.prettify', 'Prettify')}>
+                    <InlineSwitch
+                      value={prettifyDetailsJSON}
+                      onChange={(event) => setPrettifyDetailsJSON(event.currentTarget.checked)}
+                    />
+                  </InlineField>
+                </Stack>
               )}
             </Stack>
           }
