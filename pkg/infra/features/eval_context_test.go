@@ -57,3 +57,10 @@ func TestEvaluationContextFromBaggage(t *testing.T) {
 		assert.Equal(t, "mystack", evalCtx.Attributes()["slug"])
 	})
 }
+
+func TestEvaluationContextFromNamespace(t *testing.T) {
+	evalCtx := EvaluationContextFromNamespace("stacks-42")
+
+	assert.Equal(t, "stacks-42", evalCtx.TargetingKey())
+	assert.Equal(t, "stacks-42", evalCtx.Attributes()[NamespaceKey])
+}
