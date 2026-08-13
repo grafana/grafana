@@ -40,7 +40,7 @@ func TestExtra_Build(t *testing.T) {
 			},
 			setup: func(m *connection.MockSecureValues) {
 				m.EXPECT().ClientSecret(mock.Anything).Return("client-secret", nil)
-				m.EXPECT().Token(mock.Anything).Return("token", nil)
+				m.EXPECT().Token(mock.Anything).Return(common.RawSecureValue(`{"access_token":"token"}`), nil)
 			},
 		},
 		{
@@ -105,6 +105,81 @@ func TestExtra_Build(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, result)
 		})
+	}
+}
+
+func TestExtra_Build_PassesAccessToken(t *testing.T) {
+	tests := []struct {
+		name      string
+		token     common.RawSecureValue
+		wantToken string
+	}{
+		{name: "stored token is passed to the provider", token: common.RawSecureValue(`{"access_token":"stored-token"}`), wantToken: "stored-token"},
+		{name: "missing token builds provider with empty token", token: "", wantToken: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			secure := connection.NewMockSecureValues(t)
+			secure.EXPECT().ClientSecret(mock.Anything).Return("client-secret", nil)
+			secure.EXPECT().Token(mock.Anything).Return(tt.token, nil)
+
+			var gotToken string
+			e := oauth.NewExtra(
+				func(*provisioning.Connection) connection.SecureValues { return secure },
+				provisioning.GitlabConnectionType,
+				provisioning.GitLabRepositoryType,
+				func(_ provisioning.ConnectionSpec, accessToken string) (oauth.Provider, error) {
+					gotToken = accessToken
+					return oauth.NewMockProvider(t), nil
+				},
+				nil,
+			)
+
+			_, err := e.Build(t.Context(), newBuildTestConnection())
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantToken, gotToken)
+		})
+	}
+}
+
+func TestExtra_Build_InvalidToken(t *testing.T) {
+	secure := connection.NewMockSecureValues(t)
+	secure.EXPECT().ClientSecret(mock.Anything).Return("client-secret", nil)
+	secure.EXPECT().Token(mock.Anything).Return("not-a-token", nil)
+
+	e := newTestExtra(t, secure, nil)
+
+	_, err := e.Build(t.Context(), newBuildTestConnection())
+	require.EqualError(t, err, "parse token: stored token is not a valid token payload")
+}
+
+func TestExtra_Build_ProviderError(t *testing.T) {
+	secure := connection.NewMockSecureValues(t)
+	secure.EXPECT().ClientSecret(mock.Anything).Return("client-secret", nil)
+	secure.EXPECT().Token(mock.Anything).Return("", nil)
+
+	e := oauth.NewExtra(
+		func(*provisioning.Connection) connection.SecureValues { return secure },
+		provisioning.GitlabConnectionType,
+		provisioning.GitLabRepositoryType,
+		func(_ provisioning.ConnectionSpec, _ string) (oauth.Provider, error) {
+			return nil, errors.New("boom")
+		},
+		nil,
+	)
+
+	_, err := e.Build(t.Context(), newBuildTestConnection())
+	require.EqualError(t, err, "build provider: boom")
+}
+
+func newBuildTestConnection() *provisioning.Connection {
+	return &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+		Spec: provisioning.ConnectionSpec{
+			Type:  provisioning.GitlabConnectionType,
+			OAuth: &provisioning.ConnectionOAuthConfig{ClientID: "client-id"},
+		},
 	}
 }
 
@@ -244,7 +319,9 @@ func newTestExtra(t *testing.T, secure *connection.MockSecureValues, validateSpe
 		func(*provisioning.Connection) connection.SecureValues { return secure },
 		provisioning.GitlabConnectionType,
 		provisioning.GitLabRepositoryType,
-		func(_ provisioning.ConnectionSpec) oauth.Provider { return oauth.NewMockProvider(t) },
+		func(_ provisioning.ConnectionSpec, _ string) (oauth.Provider, error) {
+			return oauth.NewMockProvider(t), nil
+		},
 		validateSpec,
 	)
 }

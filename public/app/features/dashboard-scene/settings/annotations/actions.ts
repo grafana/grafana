@@ -23,6 +23,22 @@ export const annotationEditActions = {
       },
     });
   },
+  duplicateAnnotation(layer: DataLayer) {
+    const dataLayerSet = layer.parent;
+    if (!(dataLayerSet instanceof DashboardDataLayerSet)) {
+      return;
+    }
+
+    const layersBefore = [...dataLayerSet.state.annotationLayers];
+
+    dashboardEditActions.duplicateElement({
+      duplicatedObject: layer,
+      source: dataLayerSet,
+      cloneState: { name: `${layer.state.name} - Copy` },
+      perform: (copy) => dataLayerSet.setState({ annotationLayers: [...layersBefore, copy] }),
+      undo: () => dataLayerSet.setState({ annotationLayers: layersBefore }),
+    });
+  },
   removeAnnotation({ source, removedObject }: { removedObject: DataLayer; source: DashboardDataLayerSet }) {
     const layersBeforeRemoval = [...source.state.annotationLayers];
 

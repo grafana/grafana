@@ -469,3 +469,48 @@ func TestReadAllowedIntegrations(t *testing.T) {
 		})
 	}
 }
+
+func TestQueriesServedByLoki(t *testing.T) {
+	testCases := []struct {
+		name         string
+		stateHistory UnifiedAlertingStateHistorySettings
+		want         bool
+	}{
+		{
+			name:         "disabled state history",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: false, Backend: "loki"},
+			want:         false,
+		},
+		{
+			name:         "loki backend",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki"},
+			want:         true,
+		},
+		{
+			name:         "non-loki backend",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "annotations"},
+			want:         false,
+		},
+		{
+			name:         "primary is ignored unless the backend is multiple",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "annotations", MultiPrimary: "loki"},
+			want:         false,
+		},
+		{
+			name:         "multiple backend with loki primary, with padding and mixed casing",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: " Multiple ", MultiPrimary: " Loki "},
+			want:         true,
+		},
+		{
+			name:         "multiple backend with loki as a secondary only",
+			stateHistory: UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "multiple", MultiPrimary: "annotations", MultiSecondaries: []string{"loki"}},
+			want:         false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, tc.stateHistory.QueriesServedByLoki())
+		})
+	}
+}

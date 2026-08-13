@@ -61,7 +61,7 @@ test.describe(
     }) => {
       await setupAutoGridInEditMode(page, selectors, controls, sidebar, 'Auto grid resize intercept - edit');
 
-      await sidebar.clickCloseButton();
+      await sidebar.closePane();
 
       await dragResizeCorner(page);
 
