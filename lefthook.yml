@@ -41,3 +41,8 @@ pre-commit:
       glob: '*public/app/plugins/**/**/*.cue'
       run: make fix-cue
       stage_fixed: true
+
+    jsonnet-gen-dev-dashboards:
+      glob: '*devenv/dev-dashboards/**/*.json'
+      run: make gen-jsonnet && git add devenv/jsonnet/dev-dashboards.libsonnet
+      stage_fixed: true
