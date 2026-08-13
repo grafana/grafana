@@ -1,3 +1,4 @@
+import { SceneObjectBase } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -14,6 +15,9 @@ import {
   notebookSpec,
   panelCell,
 } from '../test-utils';
+
+/** Concrete stand-in: SceneObjectBase is abstract, and overlay just needs a SceneObject. */
+class TestOverlay extends SceneObjectBase {}
 
 describe('APPLY_NOTEBOOK_SPEC', () => {
   beforeEach(() => {
@@ -235,6 +239,21 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(scene.state.refreshPicker.state.refresh).toBe('1m');
     expect(scene.state.refreshPicker.isActive).toBe(true);
     expect(before.isActive).toBe(false);
+  });
+
+  // setState merges, so an overlay opened against the old tree would stay mounted after the swap.
+  it('closes an open overlay so it cannot keep showing cells the apply discarded', async () => {
+    const scene = notebookScene();
+    scene.showModal(new TestOverlay({}));
+
+    const client = new NotebookMutationClient(scene);
+    const result = await client.execute({
+      type: 'APPLY_NOTEBOOK_SPEC',
+      payload: { spec: notebookSpec({ elements: { only: markdownCell('## After') }, cells: ['only'] }) },
+    });
+
+    expect(result.success).toBe(true);
+    expect(scene.state.overlay).toBeUndefined();
   });
 
   // setState merges, so the rebuild keeps `isEditing: true` on the scene while handing it a fresh body

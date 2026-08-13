@@ -94,8 +94,13 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       const rebuilt = transformNotebookToScene(notebookResourceFor(scene.state.uid, notebookSpec));
 
       // Reuse the live key so existing references (incl. the mutation client's `scene`) survive the
-      // swap.
-      scene.setState(sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key }));
+      // swap. `setState` merges, so an open overlay would stay mounted still pointing at cells of
+      // the tree we just discarded: the rebuilt spec has no overlay, and without clearing it here
+      // the modal would keep showing or acting on that discarded content.
+      scene.setState({
+        ...sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key }),
+        overlay: undefined,
+      });
 
       // Echo the re-serialized spec so the caller sees what landed, and check it for dropped cells. One
       // guard around both: the write has already landed, so nothing below may report `success: false`.
