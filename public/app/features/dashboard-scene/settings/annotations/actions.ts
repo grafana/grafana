@@ -3,6 +3,7 @@ import { type dataLayers } from '@grafana/scenes';
 import { type AnnotationPanelFilter } from '@grafana/schema/dist/esm/index.gen';
 
 import { addElement } from '../../actions/element/addElement';
+import { duplicateElement } from '../../actions/element/duplicateElement';
 import { removeElement } from '../../actions/element/removeElement';
 import { edit } from '../../actions/utils/edit';
 import { type DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
@@ -33,7 +34,7 @@ export const annotationEditActions = {
 
     const layersBefore = [...dataLayerSet.state.annotationLayers];
 
-    dashboardEditActions.duplicateElement({
+    duplicateElement({
       duplicatedObject: layer,
       source: dataLayerSet,
       cloneState: { name: `${layer.state.name} - Copy` },
