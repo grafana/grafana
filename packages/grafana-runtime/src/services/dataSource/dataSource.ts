@@ -37,6 +37,8 @@ export async function getDataSourceInstance(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
+  ref = normalizeEmptyRef(ref);
+
   if (isExpressionReference(ref)) {
     const expressionDs = getExpressionDataSourceInstance();
     if (!expressionDs) {
@@ -91,6 +93,19 @@ export async function getDataSourceInstance(
   } catch (err) {
     return getDataSourceInstanceFallback(ref, scopedVars, err);
   }
+}
+
+// Legacy DataSourceSrv.get() treats an empty ref ('' or { uid: '' }) as "default datasource"
+// (or a type-only lookup when ref.type is set). getDataSourceInstanceSettings only does this
+// for null/undefined, so normalize here to keep getDataSourceInstance in parity with get().
+function normalizeEmptyRef(ref: DataSourceRef | string | null | undefined): DataSourceRef | string | null | undefined {
+  if (ref === '') {
+    return undefined;
+  }
+  if (typeof ref === 'object' && ref !== null && ref.uid === '') {
+    return { ...ref, uid: undefined };
+  }
+  return ref;
 }
 
 async function loadDataSourceInstance(cacheUid: string, settings: DataSourceInstanceSettings): Promise<DataSourceApi> {
