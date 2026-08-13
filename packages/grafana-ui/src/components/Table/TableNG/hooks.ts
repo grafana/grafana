@@ -29,6 +29,7 @@ import {
 } from '@grafana/react-data-grid';
 import { type MatcherScope } from '@grafana/schema';
 
+import { useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
 import { CELL_HORIZONTAL_CHROME, HEADER_ICON_SPACE, TABLE } from './constants';
@@ -36,6 +37,7 @@ import { IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
   type FooterFieldState,
+  type GetActionsFunctionLocal,
   type NestedRowEntry,
   type SortByBehavior,
   type TableRow,
@@ -49,6 +51,7 @@ import {
   getColumnTypes,
   getRowHeight,
   computeColWidths,
+  computeContentAwareColWidths,
   buildNestedColumnWidthsMap,
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
@@ -718,6 +721,22 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
 }
 
 /**
+ * When present, columns without a configured width are sized to fit their content
+ * ({@link computeContentAwareColWidths}) rather than sharing the leftover space evenly. Gated by
+ * the `table.autoColumnWidths` feature toggle and threaded down as a prop.
+ */
+export interface ContentAwareWidths {
+  typographyCtx: TypographyCtx;
+  headerTypographyCtx: TypographyCtx;
+  showTypeIcons?: boolean;
+  getActions?: GetActionsFunctionLocal;
+  sortColumns?: SortColumn[];
+}
+
+const pickColWidths = (fields: Field[], availWidth: number, contentAware?: ContentAwareWidths): number[] =>
+  contentAware ? computeContentAwareColWidths(fields, availWidth, contentAware) : computeColWidths(fields, availWidth);
+
+/**
  * Builds the typography context the table uses to measure text (row heights, header heights). Shared
  * by the flat and nested tables so the memoization lives in one place.
  */
@@ -733,10 +752,57 @@ export function useTypographyCtx(theme: GrafanaTheme2): TypographyCtx {
   );
 }
 
+interface UseContentAwareWidthsOptions {
+  enabled: boolean;
+  typographyCtx: TypographyCtx;
+  showTypeIcons?: boolean;
+  getActions?: GetActionsFunctionLocal;
+  sortColumns?: SortColumn[];
+}
+
+/**
+ * Assembles the {@link ContentAwareWidths} options for the column width hooks, or `undefined` when
+ * content-aware widths are disabled. Header labels render at medium weight, so they are measured
+ * with a separate typography context.
+ */
+export function useContentAwareWidths({
+  enabled,
+  typographyCtx,
+  showTypeIcons = false,
+  getActions,
+  sortColumns,
+}: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
+  const theme = useTheme2();
+  const headerTypographyCtx = useMemo(
+    () =>
+      createTypographyContext(
+        theme.typography.fontSize,
+        theme.typography.fontFamily,
+        extractPixelValue(theme.typography.body.letterSpacing!) * theme.typography.fontSize,
+        theme.typography.fontWeightMedium
+      ),
+    [theme]
+  );
+  return useMemo(
+    () =>
+      enabled
+        ? {
+            typographyCtx,
+            headerTypographyCtx,
+            showTypeIcons,
+            getActions,
+            sortColumns,
+          }
+        : undefined,
+    [enabled, typographyCtx, headerTypographyCtx, showTypeIcons, getActions, sortColumns]
+  );
+}
+
 interface UseNestedColWidthsOptions {
   nestedVisibleFields: Field[];
   availableWidth: number;
   structureRev?: number;
+  contentAware?: ContentAwareWidths;
 }
 
 interface UseNestedColWidthsResult {
@@ -752,11 +818,12 @@ export function useNestedColWidths({
   nestedVisibleFields,
   availableWidth,
   structureRev,
+  contentAware,
 }: UseNestedColWidthsOptions): UseNestedColWidthsResult {
   // before we do anything, figure out what the widths are based on the panel configuration.
   const configuredWidths = useMemo(
-    () => computeColWidths(nestedVisibleFields, availableWidth),
-    [nestedVisibleFields, availableWidth]
+    () => pickColWidths(nestedVisibleFields, availableWidth, contentAware),
+    [nestedVisibleFields, availableWidth, contentAware]
   );
 
   const [nestedFieldWidths, setNestedFieldWidths] = useState(() => configuredWidths);
@@ -764,11 +831,10 @@ export function useNestedColWidths({
   const prevConfiguredWidths = useRef(configuredWidths);
 
   // Re-sync from config-derived widths whenever they change — structure changes and, crucially,
-  // panel resize (availableWidth feeds configuredWidths), so nested columns re-flow to the new
-  // width (previously this only ran on structureRev, so nested columns ignored panel resize). We
-  // adopt a column's new width only when its config-derived width actually changed; a column that
-  // changed only locally (an in-progress manual drag, which persists to field config later on
-  // pointer-up) keeps its local width, so an interleaved resize doesn't clobber the drag.
+  // panel resize (availableWidth feeds configuredWidths), so content-aware auto columns re-flow to
+  // the new width. We adopt a column's new width only when its *config-derived* width changed; a
+  // column that changed only locally (an in-progress manual drag, which persists to field config
+  // later on pointer-up) keeps its local width, so an interleaved resize doesn't clobber the drag.
   useEffect(() => {
     const prevConfigured = prevConfiguredWidths.current;
     prevConfiguredWidths.current = configuredWidths;
@@ -814,13 +880,14 @@ export function useColWidths(
   visibleFields: Field[],
   availableWidth: number,
   frozenColumns?: number,
-  resetKey?: Symbol
+  resetKey?: Symbol,
+  contentAware?: ContentAwareWidths
 ): [number[], number] {
   const widths = useMemo(
-    () => computeColWidths(visibleFields, availableWidth),
+    () => pickColWidths(visibleFields, availableWidth, contentAware),
     // Width override removals can mutate width config onto existing field objects.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [visibleFields, availableWidth, resetKey]
+    [visibleFields, availableWidth, resetKey, contentAware]
   );
 
   // this is to avoid buggy situations where all visible columns are frozen
