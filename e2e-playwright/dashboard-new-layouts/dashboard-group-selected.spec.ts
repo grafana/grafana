@@ -91,8 +91,8 @@ test.describe(
 
       // Tabs can be grouped into a row, but not into another tab (one level of tabs) — the
       // button is shown but disabled. A disabled Button with a tooltip renders aria-disabled.
-      await expect(sidebar.groupOptions.getGroupIntoButton('row')).toBeEnabled();
-      await expect(sidebar.groupOptions.getGroupIntoButton('tab')).toHaveAttribute('aria-disabled', 'true');
+      await expect(sidebar.groupOptions.getGroupElementsIntoButton('row')).toBeEnabled();
+      await expect(sidebar.groupOptions.getGroupElementsIntoButton('tab')).toHaveAttribute('aria-disabled', 'true');
     });
   }
 );

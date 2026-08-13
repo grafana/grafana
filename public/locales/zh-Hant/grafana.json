@@ -5619,6 +5619,7 @@
       "add-conditional-rule": "新增「{{ruleDescription}}」規則",
       "dashboard-description": "",
       "dashboard-title": "",
+      "duplicate": "",
       "duplicate-panel": "複製面板",
       "edit-query-result-rule": "變更查詢結果規則",
       "edit-template-variable-rule": "變更範本變數規則",
@@ -6809,7 +6810,8 @@
         "change-annotation-enabled-state": "變更註解啟用狀態",
         "change-annotation-name": "變更註解名稱",
         "change-annotation-panel-filter": "變更註解面板篩選條件"
-      }
+      },
+      "edit-query": ""
     },
     "annotation-editable-element": {
       "delete-confirm": "刪除註解查詢",
@@ -6885,13 +6887,9 @@
       "placeholder-your-metric-prefix": "您的指標前綴"
     },
     "control-edit-actions": {
-      "aria-label-delete": "刪除",
-      "aria-label-edit": "編輯",
-      "delete": {
-        "confirm": "",
-        "text": "",
-        "title": ""
-      }
+      "delete-tooltip": "",
+      "duplicate-tooltip": "",
+      "settings": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "顯示／隱藏規則將無法運作",
@@ -7689,6 +7687,10 @@
     },
     "variable-controls": {
       "add-variable": "新增變數"
+    },
+    "variable-edit-actions": {
+      "edit-custom-values": "",
+      "edit-query": ""
     },
     "variable-editable-element": {
       "delete-confirm": "刪除變數",
@@ -12559,6 +12561,7 @@
       "customise-saving": "",
       "dialog-label": "導覽",
       "dock": "快速存取功能表",
+      "header-title": "",
       "list-label": "導覽",
       "open": "主選單",
       "pin-error": "",
@@ -12666,6 +12669,13 @@
       "title-zoom-out": "縮小"
     }
   },
+  "notebook": {
+    "errors": {
+      "entity": "",
+      "failed-to-load": "",
+      "not-found-title": ""
+    }
+  },
   "notebooks": {
     "list": {
       "all-authors": "",
@@ -12692,6 +12702,11 @@
       "unknown-author": "",
       "count_other": "",
       "count-truncated_other": ""
+    },
+    "view": {
+      "copy-link": "",
+      "edit-mode": "",
+      "editing": ""
     }
   },
   "notifications": {
@@ -15929,6 +15944,7 @@
     "name-show-mini-map": "顯示迷你地圖"
   },
   "textng": {
+    "category-data": "",
     "category-text": "",
     "code-view": {
       "aria-label-code-content": ""
@@ -15957,6 +15973,16 @@
       "view-preview": "",
       "view-split": "",
       "view-write": ""
+    },
+    "options": {
+      "render-mode": ""
+    },
+    "render": {
+      "truncated": ""
+    },
+    "render-mode": {
+      "once": "",
+      "per-row": ""
     }
   },
   "theme-playground": {
