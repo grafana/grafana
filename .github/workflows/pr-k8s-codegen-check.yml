@@ -16,7 +16,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  go-mod-cache:
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
+  go-build-cache:
+    needs: go-mod-cache
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-build-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
   check:
+    needs: go-build-cache
     name: K8s Codegen Check
     runs-on: ubuntu-x64
     permissions:

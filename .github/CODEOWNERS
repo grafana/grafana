@@ -1371,6 +1371,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-k8s-codegen-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/go-lint.yml @grafana/grafana-backend-services-squad
 /.github/workflows/govulncheck.yml @grafana/grafana-backend-services-squad
+/.github/workflows/bootstrap-detect-changes.yml @grafana/grafana-backend-services-squad
+/.github/workflows/bootstrap-go-mod-cache.yml @grafana/grafana-backend-services-squad
+/.github/workflows/bootstrap-go-build-cache.yml @grafana/grafana-backend-services-squad
+/.github/workflows/bootstrap-go-remote-cache.yml @grafana/grafana-backend-services-squad
+/.github/workflows/bootstrap-yarn-cache.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trufflehog.yml @Proximyst
 /.github/workflows/changelog.yml @zserge
 /.github/workflows/shellcheck.yml @grafana/grafana-backend-services-squad

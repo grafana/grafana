@@ -35,10 +35,31 @@ jobs:
         with:
           self: .github/workflows/swagger-gen.yml
 
+  go-mod-cache:
+    needs: detect-changes
+    if: github.repository == 'grafana/grafana'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
+    with:
+      runs-on: ubuntu-x64
+      enterprise: true
+
+  go-build-cache:
+    needs: go-mod-cache
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-build-cache.yml
+    with:
+      runs-on: ubuntu-x64
+      enterprise: true
+
   verify:
     name: Verify committed API specs match
     runs-on: ubuntu-x64
-    needs: detect-changes
+    needs: [detect-changes, go-build-cache]
     if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.changed == 'true'
     permissions:
       contents: read # clone the repository

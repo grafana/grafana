@@ -34,7 +34,44 @@ concurrency:
 permissions: {}
 
 jobs:
+  go-mod-cache-oss:
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
+  go-build-cache-oss:
+    needs: go-mod-cache-oss
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-build-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
+  go-mod-cache-enterprise:
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
+    with:
+      runs-on: ubuntu-x64
+      enterprise: true
+
+  go-build-cache-enterprise:
+    needs: go-mod-cache-enterprise
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-build-cache.yml
+    with:
+      runs-on: ubuntu-x64
+      enterprise: true
+
   build-go:
+    needs: go-build-cache-oss
     # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: ${{ matrix.name }}
@@ -86,6 +123,7 @@ jobs:
         run: make build-go
 
   build-go-enterprise:
+    needs: go-build-cache-enterprise
     # Run on pushes to `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     name: ${{ matrix.name }} (enterprise)
@@ -148,6 +186,7 @@ jobs:
 
   # TODO: Build rpm in another workflow
   verify-rpm-stig:
+    needs: go-build-cache-oss
     # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: verify rpm stig (linux/amd64)

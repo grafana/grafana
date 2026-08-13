@@ -35,8 +35,27 @@ jobs:
         with:
           self: .github/workflows/pr-e2e-tests.yml
 
-  build-backend:
+  go-mod-cache:
     needs: detect-changes
+    if: needs.detect-changes.outputs.run-e2e-tests == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
+  go-build-cache:
+    needs: go-mod-cache
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/bootstrap-go-build-cache.yml
+    with:
+      runs-on: ubuntu-x64
+
+  build-backend:
+    needs: [detect-changes, go-build-cache]
     if: needs.detect-changes.outputs.run-e2e-tests == 'true'
     name: Build backend
     runs-on: ubuntu-x64-xlarge
