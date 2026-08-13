@@ -1,18 +1,67 @@
 name: Bootstrap Yarn Cache
 
-# yarn-install restores the download cache in every job that needs it. One
-# install here means the entry exists before those jobs start, instead of each
-# of them racing to create it.
+# yarn-install restores the download cache in every job that needs it, and only
+# this workflow saves it. One install here means the entry exists before those
+# jobs start, instead of each of them racing to create it.
+#
+# Asking whether the key exists needs nothing but the two files it is derived
+# from, so the probe checks those out and stops. The install only happens on a
+# miss.
 
 on:
   workflow_call:
+    inputs:
+      runs-on:
+        description: Runner for the install, which only happens on a miss.
+        required: false
+        default: ubuntu-x64
+        type: string
+      probe-runner:
+        description: Runner for the key lookup.
+        required: false
+        default: ubuntu-arm64-small
+        type: string
 
 permissions: {}
 
 jobs:
-  yarn-cache:
+  probe:
     name: Warm yarn cache
-    runs-on: ubuntu-x64
+    runs-on: ${{ inputs.probe-runner }}
+    permissions:
+      contents: read
+    outputs:
+      hit: ${{ steps.probe.outputs.cache-hit }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            yarn.lock
+            .yarnrc.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Is the cache already populated?
+        id: probe
+        uses: actions/cache/restore@v5
+        with:
+          path: .yarn/cache
+          key: yarn-download-cache-default-${{ hashFiles('yarn.lock', '.yarnrc.yml') }}
+          lookup-only: true
+
+      # A miss is slow rather than wrong, so it is reported without failing the
+      # run, which would block every workflow waiting on this one.
+      - name: Report a miss
+        if: steps.probe.outputs.cache-hit != 'true'
+        env:
+          KEY: yarn-download-cache-default-${{ hashFiles('yarn.lock', '.yarnrc.yml') }}
+        run: echo "::warning title=Yarn cache miss::${KEY} is not cached, installing it"
+
+  populate:
+    name: Populate yarn cache
+    needs: probe
+    if: needs.probe.outputs.hit != 'true'
+    runs-on: ${{ inputs.runs-on }}
     permissions:
       contents: read
     steps:
@@ -22,3 +71,5 @@ jobs:
       - uses: ./.github/actions/setup-node
       - name: Install JS dependencies
         uses: ./.github/actions/yarn-install
+        with:
+          cache-write: 'true'
