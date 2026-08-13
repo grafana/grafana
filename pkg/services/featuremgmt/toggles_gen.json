@@ -2684,6 +2684,20 @@
     },
     {
       "metadata": {
+        "name": "flameGraph.tableNg",
+        "resourceVersion": "1786566030661",
+        "creationTimestamp": "2026-08-12T20:20:30Z"
+      },
+      "spec": {
+        "description": "Renders the flame graph's top table using TableNG instead of the legacy Table",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "flameGraphWithCallTree",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
