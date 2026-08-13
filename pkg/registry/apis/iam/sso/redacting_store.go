@@ -11,9 +11,8 @@ import (
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 )
 
-// ssoStorage is the interface set shared by every store the SSOSetting kind rides on
-// (legacy, dual-writer, MT-Settings). The decorator embeds it so overriding Create drops
-// no capability the kind serves in any storage mode.
+// ssoStorage is the common interface set of every store the SSOSetting kind uses. The
+// decorator embeds it so overriding Create drops no capability.
 type ssoStorage interface {
 	rest.Storage
 	rest.Scoper
@@ -31,16 +30,13 @@ var (
 	_ ssoStorage = (*MTSettingsStore)(nil)
 )
 
-// redactingStore redacts the secrets in the Create response. The legacy adapter returns
-// the raw admin input on Create, so the dual-writer can send the real secret to
-// MT-Settings. That raw object is also the client response. In legacy-only mode it is the
-// response directly. The other verbs redact their own responses.
+// redactingStore redacts secrets in the Create response. LegacyStore.Create returns the raw
+// secret so the dual-writer forwards it to MT-Settings; this keeps it out of the response.
 type redactingStore struct {
 	ssoStorage
 }
 
-// NewRedactingStore wraps the SSOSetting dual-writer. It errors if the storage does not
-// expose the expected interface set, which would mean the wrapper drops a capability.
+// NewRedactingStore wraps the SSOSetting store, erroring if it lacks a required capability.
 func NewRedactingStore(storage rest.Storage) (rest.Storage, error) {
 	inner, ok := storage.(ssoStorage)
 	if !ok {

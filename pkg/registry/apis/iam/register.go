@@ -449,11 +449,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	// SSO settings apis
 	if enableSsoSettingsApi && b.ssoLegacyStore != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
-		// When the MT-Settings client is configured, the SSOSetting kind rides the
-		// standard dual-writer (legacy + MT-Settings), which routes reads and writes
-		// by the [unified_storage.ssosettings.iam.grafana.app] storage mode. Without
-		// it (e.g. on-prem, or when the builder is unavailable) the legacy store
-		// serves alone.
+		// With an MT-Settings client the SSOSetting kind rides the dual-writer (mode-gated
+		// reads/writes); without it (on-prem) the legacy store serves alone.
 		if b.ssoSettingsClient != nil && opts.DualWriteBuilder != nil {
 			writer, _ := b.ssoSettingsClient.(settingsvc.Writer)
 			mtStore := sso.NewMTSettingsStore(b.ssoSettingsClient, writer)
