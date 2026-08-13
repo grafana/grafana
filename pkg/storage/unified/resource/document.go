@@ -254,12 +254,17 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 		CreatedBy: obj.GetCreatedBy(),
 		UpdatedBy: obj.GetUpdatedBy(),
 	}
-	// Tags are read here rather than in a per-kind builder so that any kind
-	// declaring spec.tags is filterable and facetable without one. A kind with its
-	// own builder may still overwrite this: dashboards do, from their parsed summary.
+	// Tags and description are read here rather than in a per-kind builder, so any
+	// kind declaring them is searchable without needing one. Both are already
+	// declared standard fields and mapped for every kind; only the population was
+	// dashboard-specific. A kind with its own builder may still overwrite them:
+	// dashboards do, from their parsed summary.
 	if spec, err := obj.GetSpec(); err == nil {
 		if specValue, ok := spec.(map[string]any); ok {
 			doc.Tags = specTags(specValue["tags"])
+			if description, ok := specValue["description"].(string); ok {
+				doc.Description = description
+			}
 		}
 	}
 	m, ok := obj.GetManagerProperties()

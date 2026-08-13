@@ -42,6 +42,7 @@ func TestStandardDocumentBuilder(t *testing.T) {
 		"title": "Test Playlist from Unified Storage",
 		"title_ngram": "Test Playlist from Unified Storage",
 		"title_phrase": "test playlist from unified storage",
+		"description": "description for the test playlist",
 		"created": 1717236672000,
 		"createdBy": "user:ABC",
 		"updatedBy": "user:XYZ",
@@ -310,11 +311,11 @@ func TestStandardDocumentBuilder_ReloadThroughRegistry(t *testing.T) {
 	require.NotContains(t, doc.SelectableFields, "spec.x")
 }
 
-// Tags come from spec.tags via the standard builder, so a kind gets them without
-// registering its own document builder. Before this, doc.Tags was only ever set by
-// the dashboard builder, and every other kind indexed with no tags at all — the
-// field was declared and mapped, but never populated.
-func TestStandardDocumentBuilder_Tags(t *testing.T) {
+// Tags and description come from the spec via the standard builder, so a kind gets
+// them without registering its own document builder. Before this, doc.Tags and
+// doc.Description were only ever set by the dashboard builder, and every other kind
+// indexed without them — both fields were declared and mapped, but never populated.
+func TestStandardDocumentBuilder_SpecFields(t *testing.T) {
 	ctx := context.Background()
 	builder := StandardDocumentBuilder(nil)
 
@@ -357,5 +358,33 @@ func TestStandardDocumentBuilder_Tags(t *testing.T) {
 
 	t.Run("ignores a tags value that is not a list", func(t *testing.T) {
 		assert.Nil(t, build(t, `{"title": "Wrong shape", "tags": "incident"}`).Tags)
+	})
+
+	t.Run("reads spec.description", func(t *testing.T) {
+		doc := build(t, `{"title": "Checkout latency", "description": "Why checkout got slow"}`)
+		assert.Equal(t, "Why checkout got slow", doc.Description)
+	})
+
+	t.Run("leaves description empty when there is none", func(t *testing.T) {
+		assert.Empty(t, build(t, `{"title": "No description"}`).Description, "absent")
+		assert.Empty(t, build(t, `{"title": "Blank", "description": ""}`).Description, "empty string")
+	})
+
+	t.Run("ignores a description that is not a string", func(t *testing.T) {
+		assert.Empty(t, build(t, `{"title": "Wrong shape", "description": {"nested": true}}`).Description)
+	})
+
+	// The two are read from the same spec lookup, so a kind declaring both gets both.
+	t.Run("reads tags and description together", func(t *testing.T) {
+		doc := build(t, `{"title": "Both", "tags": ["incident"], "description": "Has both"}`)
+		assert.Equal(t, []string{"incident"}, doc.Tags)
+		assert.Equal(t, "Has both", doc.Description)
+	})
+
+	// The spec lookup must not displace what the constructor already resolves.
+	t.Run("still populates the standard fields", func(t *testing.T) {
+		doc := build(t, `{"title": "Checkout latency", "tags": ["incident"], "description": "d"}`)
+		assert.Equal(t, "Checkout latency", doc.Title)
+		assert.Equal(t, "nb1", doc.Name)
 	})
 }
