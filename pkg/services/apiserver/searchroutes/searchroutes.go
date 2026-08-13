@@ -28,6 +28,7 @@ const namespacedScope = "Namespaced"
 var allowed = map[groupResource]bool{
 	{group: "dashboard.grafana.app", resource: "dashboards"}: true,
 	{group: "folder.grafana.app", resource: "folders"}:       true,
+	{group: "dashboard.grafana.app", resource: "notebooks"}:  true,
 }
 
 type groupResource struct {
