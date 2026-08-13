@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	goffmodel "github.com/thomaspoignant/go-feature-flag/cmd/relayproxy/model"
+	k8smux "k8s.io/apiserver/pkg/server/mux"
 )
 
 func TestAPIBuilder_ValidateNamespace(t *testing.T) {
@@ -361,4 +362,21 @@ func TestGrafanaHTTPHandler_AuthenticatedInjectsIdentity(t *testing.T) {
 
 	handler(c)
 	assert.True(t, gotIsAuthed, "authenticated request should appear authenticated")
+}
+
+// TestSetup_RegistersRoutesOnStandaloneMux guards against PathRecorderMux.HandlePrefix's
+// requirement that the prefix end in a trailing slash — it panics otherwise — and verifies
+// the standalone-apiserver routes it registers actually dispatch to the OFREP handlers.
+func TestSetup_RegistersRoutesOnStandaloneMux(t *testing.T) {
+	b := newBulkEvalBuilder(t, []goffmodel.OFREPFlagBulkEvaluateSuccessResponse{
+		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{Key: "publicFlag", Metadata: map[string]any{"public": true}}},
+	}, http.StatusOK)
+
+	m := k8smux.NewPathRecorderMux("ofrep-test")
+	require.NotPanics(t, func() { b.Setup(m) })
+
+	req := httptest.NewRequest(http.MethodPost, "/ofrep/v1/evaluate/flags", bytes.NewBufferString(`{}`))
+	w := httptest.NewRecorder()
+	m.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
 }
