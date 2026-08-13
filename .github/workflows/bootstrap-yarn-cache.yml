@@ -33,11 +33,15 @@ jobs:
             .yarnrc.yml
           sparse-checkout-cone-mode: false
 
+      - name: Resolve the cache folder
+        id: folder
+        run: echo "path=${HOME}/.cache/yarn" >> "$GITHUB_OUTPUT"
+
       - name: Is the cache already populated?
         id: probe
         uses: actions/cache/restore@v5
         with:
-          path: .yarn/cache
+          path: ${{ steps.folder.outputs.path }}
           key: yarn-download-cache-default-${{ hashFiles('yarn.lock', '.yarnrc.yml') }}
           lookup-only: true
 

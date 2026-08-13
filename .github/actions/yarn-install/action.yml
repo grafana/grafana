@@ -75,13 +75,11 @@ runs:
       working-directory: ${{ inputs.cwd }}
       env:
         YARN_ENABLE_GLOBAL_CACHE: 'false'
-        CWD: ${{ inputs.cwd }}
       run: |
-        # A cache entry is addressed by its paths as well as its key, so this
-        # has to be spelled the same way wherever the entry is looked up. With
-        # the global cache off, yarn puts archives here.
-        CACHE_FOLDER="${CWD}/.yarn/cache"
-        echo "CACHE_FOLDER=${CACHE_FOLDER#./}" >> $GITHUB_OUTPUT
+        # A cache entry is addressed by its path as well as its key, so every
+        # install shares one folder. Deriving it from the working directory
+        # would give a tree checked out under a sub-directory its own entry.
+        echo "CACHE_FOLDER=${HOME}/.cache/yarn" >> $GITHUB_OUTPUT
         echo "CURRENT_NODE_VERSION="node-$(node --version)"" >> $GITHUB_OUTPUT
         echo "CURRENT_BRANCH=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's,/,-,g')" >> $GITHUB_OUTPUT
         echo "NPM_GLOBAL_CACHE_FOLDER=$(npm config get cache)" >> $GITHUB_OUTPUT
@@ -127,6 +125,7 @@ runs:
       working-directory: ${{ inputs.cwd }}
       run: yarn install --immutable --inline-builds
       env:
+        YARN_CACHE_FOLDER: ${{ steps.yarn-config.outputs.CACHE_FOLDER }}
         # Overrides/align yarnrc.yml options (v3, v4) for a CI context
         YARN_ENABLE_GLOBAL_CACHE: 'false' # Use local cache folder to keep downloaded archives
         YARN_ENABLE_MIRROR: 'false' # Prevent populating global cache for caches misses (local cache only)
