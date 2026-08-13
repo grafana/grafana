@@ -3,6 +3,7 @@ import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSet } from 'react-use';
 
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import { type GrafanaTheme2, type UrlQueryMap } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -239,10 +240,11 @@ function PolicyTreeTab() {
     if (selectedPolicyTreeNames.length === 0) {
       return sortedPolicies;
     }
-    return sortedPolicies.filter((policy) => {
-      const name = policy.name ?? ROOT_ROUTE_NAME;
-      return selectedPolicyTreeNames.includes(name);
-    });
+    // The filter selector stores the raw backend tree name (e.g. "default"), while listed policies carry the
+    // canonicalized name ("user-defined"). Canonicalize both sides so selecting the default tree matches it.
+    const canonicalize = (name?: string) => (isDefaultRoutingTreeName(name) ? ROOT_ROUTE_NAME : name);
+    const selectedCanonical = new Set(selectedPolicyTreeNames.map(canonicalize));
+    return sortedPolicies.filter((policy) => selectedCanonical.has(canonicalize(policy.name)));
   }, [sortedPolicies, selectedPolicyTreeNames]);
 
   const hasActiveFilters = Boolean(contactPointFilter) || labelMatchersFilter.length > 0;
@@ -374,13 +376,13 @@ interface QueryParamValues {
 /**
  * Sort policies so that the default policy (ROOT_ROUTE_NAME or unnamed) comes first
  */
-function sortPoliciesDefaultFirst<T extends { name?: string }>(policies: T[] | undefined): T[] {
+export function sortPoliciesDefaultFirst<T extends { name?: string }>(policies: T[] | undefined): T[] {
   if (!policies) {
     return [];
   }
   return [...policies].sort((a, b) => {
-    const aIsDefault = a.name === ROOT_ROUTE_NAME || !a.name;
-    const bIsDefault = b.name === ROOT_ROUTE_NAME || !b.name;
+    const aIsDefault = isDefaultRoutingTreeName(a.name);
+    const bIsDefault = isDefaultRoutingTreeName(b.name);
     if (aIsDefault && !bIsDefault) {
       return -1;
     }

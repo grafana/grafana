@@ -110,6 +110,14 @@ var appManifestData = app.ManifestData{
 							EmitZeroIfAbsent: true,
 							Description:      "Whether the user is disabled",
 						},
+						{
+							Name:         "externalAuthModules",
+							Path:         "spec.externalAuthInfo[*].module",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"retrieve"},
+							Description:  "Auth module identifiers the user is externally synced with",
+						},
 					},
 					Routes: map[string]spec3.PathProps{
 						"/teams": {
@@ -117,6 +125,35 @@ var appManifestData = app.ManifestData{
 								OperationProps: spec3.OperationProps{
 
 									OperationId: "getUserTeams",
+
+									Parameters: []*spec3.Parameter{
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:     "continue",
+												In:       "query",
+												Required: true,
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"string"},
+													},
+												},
+											},
+										},
+
+										{
+											ParameterProps: spec3.ParameterProps{
+												Name:     "limit",
+												In:       "query",
+												Required: true,
+												Schema: &spec.Schema{
+													SchemaProps: spec.SchemaProps{
+														Type: []string{"integer"},
+													},
+												},
+											},
+										},
+									},
 
 									Responses: &spec3.Responses{
 										ResponsesProps: spec3.ResponsesProps{
@@ -1371,6 +1408,18 @@ var appManifestData = app.ManifestData{
 										Type: []string{"string"},
 									},
 								},
+								"externalAuthModules": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"array"},
+										Description: "Auth module identifiers the user is externally synced with.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
+									},
+								},
 								"internalId": {
 									SchemaProps: spec.SchemaProps{
 										Type:        []string{"integer"},
@@ -1504,6 +1553,7 @@ func ManifestCustomRouteResponsesAssociator(kind, version, path, verb string) (g
 }
 
 var customRouteToGoParamsType = map[string]runtime.Object{
+	"v0alpha1|User|teams|GET": &v0alpha1.GetUserTeamsRequestParamsObject{},
 
 	"v0alpha1|ServiceAccount|tokens|GET": &v0alpha1.ListServiceAccountTokensRequestParamsObject{},
 }

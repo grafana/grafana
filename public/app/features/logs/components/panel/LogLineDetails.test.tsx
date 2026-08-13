@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
-import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
+import { createLokiDatasource } from 'app/features/loki-helpers/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
 import * as logsUtils from '../../utils';

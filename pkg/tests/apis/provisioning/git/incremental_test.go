@@ -1,7 +1,6 @@
 package git
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +15,6 @@ import (
 // sync imports a newly committed file without re-processing the full tree.
 func TestIntegrationProvisioning_IncrementalGitSync_Add(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-add"
 
@@ -25,7 +23,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Add(t *testing.T) {
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	require.NoError(t, local.CreateFile("dashboard2.json", string(common.DashboardJSON("incr-dash-002", "Dashboard Two", 1))))
 	_, err := local.Git("add", ".")
@@ -36,14 +34,13 @@ func TestIntegrationProvisioning_IncrementalGitSync_Add(t *testing.T) {
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
+	helper.RequireRepoDashboardCount(t, repoName, 2)
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_Update verifies that
 // incremental sync applies an in-place file modification.
 func TestIntegrationProvisioning_IncrementalGitSync_Update(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-update"
 
@@ -52,7 +49,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Update(t *testing.T) {
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	require.NoError(t, local.UpdateFile("dashboard1.json", string(common.DashboardJSON("incr-dash-001", "Dashboard One Updated", 2))))
 	_, err := local.Git("add", ".")
@@ -63,15 +60,14 @@ func TestIntegrationProvisioning_IncrementalGitSync_Update(t *testing.T) {
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
-	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "incr-dash-001", "Dashboard One Updated")
+	helper.RequireRepoDashboardCount(t, repoName, 1)
+	common.RequireDashboardTitle(t, helper.DashboardsV1, "incr-dash-001", "Dashboard One Updated")
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_Delete verifies that
 // incremental sync removes a dashboard whose file was deleted from the repo.
 func TestIntegrationProvisioning_IncrementalGitSync_Delete(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-delete"
 
@@ -81,7 +77,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Delete(t *testing.T) {
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
+	helper.RequireRepoDashboardCount(t, repoName, 2)
 
 	_, err := local.Git("rm", "dashboard2.json")
 	require.NoError(t, err)
@@ -91,10 +87,10 @@ func TestIntegrationProvisioning_IncrementalGitSync_Delete(t *testing.T) {
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		_, err := helper.DashboardsV1.Resource.Get(ctx, "incr-dash-002", metav1.GetOptions{})
+		_, err := helper.DashboardsV1.Resource.Get(t.Context(), "incr-dash-002", metav1.GetOptions{})
 		assert.True(c, apierrors.IsNotFound(err), "dashboard incr-dash-002 should be deleted")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "deleted dashboard should be removed from Grafana")
 }
@@ -103,7 +99,6 @@ func TestIntegrationProvisioning_IncrementalGitSync_Delete(t *testing.T) {
 // sync is a no-op when there are no new commits since the last sync.
 func TestIntegrationProvisioning_IncrementalGitSync_Noop(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-noop"
 
@@ -112,17 +107,16 @@ func TestIntegrationProvisioning_IncrementalGitSync_Noop(t *testing.T) {
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_Rename verifies that
 // incremental sync handles a file rename (git mv) without losing the dashboard.
 func TestIntegrationProvisioning_IncrementalGitSync_Rename(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-rename"
 
@@ -131,11 +125,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_Rename(t *testing.T) {
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"incr-dash-001": {Title: "Dashboard One", SourcePath: "dashboard1.json"},
 	})
 
-	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "incr-dash-001", metav1.GetOptions{})
+	dashBefore, err := helper.DashboardsV1.Resource.Get(t.Context(), "incr-dash-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	dashSnap := common.SnapshotObject(t, dashBefore)
 
@@ -147,11 +141,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_Rename(t *testing.T) {
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"incr-dash-001": {Title: "Dashboard One", SourcePath: "renamed-dashboard1.json"},
 	})
 
-	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "incr-dash-001", metav1.GetOptions{})
+	dashAfter, err := helper.DashboardsV1.Resource.Get(t.Context(), "incr-dash-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
@@ -160,7 +154,6 @@ func TestIntegrationProvisioning_IncrementalGitSync_Rename(t *testing.T) {
 // incremental sync handles moving a dashboard from root into a subfolder.
 func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-move-into-folder"
 
@@ -169,12 +162,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T)
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-in-001": {Title: "Dashboard One", SourcePath: "dashboard1.json"},
 	})
-	common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{})
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{})
 
-	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "move-in-001", metav1.GetOptions{})
+	dashBefore, err := helper.DashboardsV1.Resource.Get(t.Context(), "move-in-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	dashSnap := common.SnapshotObject(t, dashBefore)
 
@@ -187,12 +180,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T)
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-in-001": {Title: "Dashboard One", SourcePath: "team-a/dashboard1.json"},
 	})
-	common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"team-a"})
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{"team-a"})
 
-	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "move-in-001", metav1.GetOptions{})
+	dashAfter, err := helper.DashboardsV1.Resource.Get(t.Context(), "move-in-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
@@ -201,7 +194,6 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T)
 // that incremental sync handles moving a dashboard from one folder to another.
 func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-move-between"
 
@@ -211,12 +203,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-btwn-001": {Title: "Dashboard Between", SourcePath: "folder-a/dashboard1.json"},
 	})
-	common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"folder-a", "folder-b"})
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{"folder-a", "folder-b"})
 
-	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "move-btwn-001", metav1.GetOptions{})
+	dashBefore, err := helper.DashboardsV1.Resource.Get(t.Context(), "move-btwn-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	dashSnap := common.SnapshotObject(t, dashBefore)
 
@@ -228,12 +220,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-btwn-001": {Title: "Dashboard Between", SourcePath: "folder-b/dashboard1.json"},
 	})
-	common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"folder-b"})
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{"folder-b"})
 
-	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "move-btwn-001", metav1.GetOptions{})
+	dashAfter, err := helper.DashboardsV1.Resource.Get(t.Context(), "move-btwn-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
@@ -242,7 +234,6 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 // incremental sync handles moving a dashboard from a subfolder back to root.
 func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-move-to-root"
 
@@ -251,12 +242,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-root-001": {Title: "Dashboard Root", SourcePath: "team-x/dashboard1.json"},
 	})
-	common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"team-x"})
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{"team-x"})
 
-	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "move-root-001", metav1.GetOptions{})
+	dashBefore, err := helper.DashboardsV1.Resource.Get(t.Context(), "move-root-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	dashSnap := common.SnapshotObject(t, dashBefore)
 
@@ -268,12 +259,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-root-001": {Title: "Dashboard Root", SourcePath: "dashboard1.json"},
 	})
-	common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{})
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{})
 
-	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "move-root-001", metav1.GetOptions{})
+	dashAfter, err := helper.DashboardsV1.Resource.Get(t.Context(), "move-root-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
@@ -283,7 +274,6 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 // inside it. Git reports individual file renames for each file in the folder.
 func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-rename-folder"
 
@@ -293,17 +283,17 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"ren-fold-001": {Title: "Folder Dash One", SourcePath: "old-team/dashboard1.json"},
 		"ren-fold-002": {Title: "Folder Dash Two", SourcePath: "old-team/dashboard2.json"},
 	})
-	common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"old-team"})
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{"old-team"})
 
-	dash1Before, err := helper.DashboardsV1.Resource.Get(ctx, "ren-fold-001", metav1.GetOptions{})
+	dash1Before, err := helper.DashboardsV1.Resource.Get(t.Context(), "ren-fold-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	dash1Snap := common.SnapshotObject(t, dash1Before)
 
-	dash2Before, err := helper.DashboardsV1.Resource.Get(ctx, "ren-fold-002", metav1.GetOptions{})
+	dash2Before, err := helper.DashboardsV1.Resource.Get(t.Context(), "ren-fold-002", metav1.GetOptions{})
 	require.NoError(t, err)
 	dash2Snap := common.SnapshotObject(t, dash2Before)
 
@@ -315,17 +305,17 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"ren-fold-001": {Title: "Folder Dash One", SourcePath: "new-team/dashboard1.json"},
 		"ren-fold-002": {Title: "Folder Dash Two", SourcePath: "new-team/dashboard2.json"},
 	})
-	common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"new-team"})
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{"new-team"})
 
-	dash1After, err := helper.DashboardsV1.Resource.Get(ctx, "ren-fold-001", metav1.GetOptions{})
+	dash1After, err := helper.DashboardsV1.Resource.Get(t.Context(), "ren-fold-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	common.RequireUpdatedInPlace(t, "dashboard 1", dash1Snap, common.SnapshotObject(t, dash1After))
 
-	dash2After, err := helper.DashboardsV1.Resource.Get(ctx, "ren-fold-002", metav1.GetOptions{})
+	dash2After, err := helper.DashboardsV1.Resource.Get(t.Context(), "ren-fold-002", metav1.GetOptions{})
 	require.NoError(t, err)
 	common.RequireUpdatedInPlace(t, "dashboard 2", dash2Snap, common.SnapshotObject(t, dash2After))
 }
@@ -334,7 +324,6 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 // that incremental sync handles moving a dashboard between nested folder levels.
 func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-move-nested"
 
@@ -344,12 +333,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child-a/dashboard1.json"},
 	})
-	common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"parent", "parent/child-a", "parent/child-b"})
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{"parent", "parent/child-a", "parent/child-b"})
 
-	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "nested-001", metav1.GetOptions{})
+	dashBefore, err := helper.DashboardsV1.Resource.Get(t.Context(), "nested-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	dashSnap := common.SnapshotObject(t, dashBefore)
 
@@ -361,12 +350,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child-b/dashboard1.json"},
 	})
-	common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"parent", "parent/child-b"})
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{"parent", "parent/child-b"})
 
-	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "nested-001", metav1.GetOptions{})
+	dashAfter, err := helper.DashboardsV1.Resource.Get(t.Context(), "nested-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
@@ -375,7 +364,6 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 // that renaming a nested folder preserves all dashboards inside it.
 func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-rename-nested"
 
@@ -385,13 +373,13 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"ren-nest-001": {Title: "Nested Rename Dash", SourcePath: "parent/old-child/dashboard1.json"},
 		"ren-nest-002": {Title: "Sibling Dash", SourcePath: "parent/sibling/dashboard2.json"},
 	})
-	common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"parent", "parent/old-child", "parent/sibling"})
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{"parent", "parent/old-child", "parent/sibling"})
 
-	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "ren-nest-001", metav1.GetOptions{})
+	dashBefore, err := helper.DashboardsV1.Resource.Get(t.Context(), "ren-nest-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	dashSnap := common.SnapshotObject(t, dashBefore)
 
@@ -403,13 +391,13 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"ren-nest-001": {Title: "Nested Rename Dash", SourcePath: "parent/new-child/dashboard1.json"},
 		"ren-nest-002": {Title: "Sibling Dash", SourcePath: "parent/sibling/dashboard2.json"},
 	})
-	common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"parent", "parent/new-child", "parent/sibling"})
+	common.RequireRepoFolders(t, helper.Folders, repoName, []string{"parent", "parent/new-child", "parent/sibling"})
 
-	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "ren-nest-001", metav1.GetOptions{})
+	dashAfter, err := helper.DashboardsV1.Resource.Get(t.Context(), "ren-nest-001", metav1.GetOptions{})
 	require.NoError(t, err)
 	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
@@ -423,7 +411,6 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 // path completes without re-validating the unchanged spec.
 func TestIntegrationProvisioning_IncrementalGitSync_PureRename_PreservesContent(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-pure-rename"
 	const uid = "pure-rename-001"
@@ -434,11 +421,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_PureRename_PreservesContent(
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Pure Rename Dash", SourcePath: "old/dashboard.json"},
 	})
 
-	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, uid, metav1.GetOptions{})
+	dashBefore, err := helper.DashboardsV1.Resource.Get(t.Context(), uid, metav1.GetOptions{})
 	require.NoError(t, err)
 	dashSnap := common.SnapshotObject(t, dashBefore)
 
@@ -451,14 +438,14 @@ func TestIntegrationProvisioning_IncrementalGitSync_PureRename_PreservesContent(
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Pure Rename Dash", SourcePath: "new/dashboard.json"},
 	})
 
 	// The spec must be untouched: an in-place UPDATE was issued, but the body
 	// it carried was the same bytes the cluster already had, so RV bumps and
 	// folder annotation are the only mutations.
-	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, uid, metav1.GetOptions{})
+	dashAfter, err := helper.DashboardsV1.Resource.Get(t.Context(), uid, metav1.GetOptions{})
 	require.NoError(t, err)
 	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
@@ -470,7 +457,6 @@ func TestIntegrationProvisioning_IncrementalGitSync_PureRename_PreservesContent(
 // along with a path change.
 func TestIntegrationProvisioning_IncrementalGitSync_RenameWithEdit_AppliesNewContent(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-rename-with-edit"
 	const uid = "rename-edit-001"
@@ -480,7 +466,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameWithEdit_AppliesNewCon
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Original Title", SourcePath: "old/dashboard.json"},
 	})
 
@@ -501,8 +487,8 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameWithEdit_AppliesNewCon
 	require.NoError(t, err)
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Edited Title", SourcePath: "new/dashboard.json"},
 	})
-	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, uid, "Edited Title")
+	common.RequireDashboardTitle(t, helper.DashboardsV1, uid, "Edited Title")
 }

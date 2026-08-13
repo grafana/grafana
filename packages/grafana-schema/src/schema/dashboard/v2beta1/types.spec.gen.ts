@@ -112,7 +112,10 @@ export const defaultPanelKind = (): PanelKind => ({
 export interface PanelSpec {
 	id: number;
 	title: string;
-	description: string;
+	// Shown in a info icon tooltip next to panel title
+	description?: string;
+	// Shown in a sub header below the title.
+	subtitle?: string;
 	links: DataLink[];
 	data: QueryGroupKind;
 	vizConfig: VizConfigKind;
@@ -122,7 +125,6 @@ export interface PanelSpec {
 export const defaultPanelSpec = (): PanelSpec => ({
 	id: 0,
 	title: "",
-	description: "",
 	links: [],
 	data: defaultQueryGroupKind(),
 	vizConfig: defaultVizConfigKind(),
@@ -243,6 +245,7 @@ export const defaultDataTopic = (): DataTopic => ("series");
 
 export interface QueryOptionsSpec {
 	timeFrom?: string;
+	timeTo?: string;
 	maxDataPoints?: number;
 	timeShift?: string;
 	queryCachingTTL?: number;
@@ -496,6 +499,8 @@ export const defaultThresholdsMode = (): ThresholdsMode => ("absolute");
 export interface Threshold {
 	// Value null means -Infinity
 	value: number | null;
+	// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+	valueExpr?: string;
 	color: string;
 }
 

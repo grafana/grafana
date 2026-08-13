@@ -11,9 +11,9 @@
  * scroll position).
  */
 
-import { z } from 'zod';
+import * as z from 'zod';
 
-import { sceneUtils } from '@grafana/scenes';
+import { sceneUtils, type SceneObjectUrlValues } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
@@ -21,6 +21,7 @@ import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
+import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -28,6 +29,11 @@ const applySpecPayloadSchema = z.object({
   spec: z
     .record(z.string(), z.unknown())
     .describe('A complete v2 DashboardSpec to apply (same shape GET_SPEC returns).'),
+  validate: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('When true, validate the spec against the v2 schema and reject the mutation if it is invalid.'),
 });
 
 export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
@@ -104,6 +110,12 @@ type MutationContextScene = {
   setState: (state: unknown) => void;
 };
 
+// Same reason: the bits of DashboardSceneUrlSync the rebuild drives, without importing it.
+type DashboardUrlSync = {
+  retainEditPanelAcrossRebuild: (panelId: string) => void;
+  updateFromUrl: (values: SceneObjectUrlValues) => void;
+};
+
 export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   name: 'APPLY_SPEC',
   description:
@@ -118,10 +130,29 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     try {
+      // Opt-in structural validation (default off to avoid breaking existing
+      // callers). When enabled, reject an invalid spec before mutating anything.
+      // On success we apply the *parsed* spec: the schema normalizes Go's
+      // `null` slices to `[]`, `elements: null` to `{}`, and fills CUE `*`
+      // defaults, so the scene is rebuilt from the same shape validation saw.
+      let validatedSpec: DashboardV2Spec | undefined;
+      if (payload.validate) {
+        const parsed = dashboardV2SpecSchema.safeParse(payload.spec);
+        if (!parsed.success) {
+          const errorMessages = parsed.error.issues.map((issue) => {
+            const path = issue.path.join('.');
+            return path ? `${path}: ${issue.message}` : issue.message;
+          });
+          return { success: false, error: `Validation failed: ${errorMessages.join(', ')}`, changes: [] };
+        }
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- parsed output matches the v2 spec the transform expects
+        validatedSpec = parsed.data as unknown as DashboardV2Spec;
+      }
+
       enterEditModeIfNeeded(scene);
 
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- caller-supplied spec is validated by the transform
-      const spec = payload.spec as unknown as DashboardV2Spec;
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unvalidated path: caller-supplied spec is checked by the transform
+      const spec = validatedSpec ?? (payload.spec as unknown as DashboardV2Spec);
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow DashboardScene to the fields this command reads
       const dto = dtoFromScene(scene as unknown as MutationContextScene, spec);
 
@@ -130,7 +161,28 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
       // Reuse the live key so existing references (incl. the mutation client's
       // `scene`) survive the swap.
       const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key });
-      scene.setState(newState);
+      // `setState` merges, so an open panel editor would survive the swap still driving the
+      // VizPanel and layout item of the tree we just discarded: edits made through it never reach
+      // the new tree, and so are absent from a save or a read. Drop it and re-open through url
+      // sync, the same path `?editPanel=` takes, which resolves the id against the current tree,
+      // waits for a library panel to load, and leaves the pane closed when the applied spec no
+      // longer has the panel.
+      const editPanelKey = scene.state.editPanel?.getUrlKey();
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow the base handler to the dashboard's own, which owns the hold below
+      const urlSync = scene.urlSync as DashboardUrlSync | undefined;
+
+      if (editPanelKey) {
+        // Dropping the pane below writes `?editPanel=` out of the URL, and the re-open cannot
+        // always put it back in the same tick: a library panel has to load first. Hold the param
+        // so a reload during that window, or a load that never completes, still names the panel.
+        urlSync?.retainEditPanelAcrossRebuild(editPanelKey);
+      }
+
+      scene.setState({ ...newState, editPanel: undefined });
+
+      if (editPanelKey) {
+        urlSync?.updateFromUrl({ editPanel: editPanelKey });
+      }
 
       // Return the re-serialized spec so the caller gets the rekeyed element
       // names (rebuild rekeys to `panel-<id>`) without a follow-up GET_SPEC.

@@ -8,7 +8,7 @@ import { type FieldMatcherUIRegistryItem } from '@grafana/ui/internal';
 interface Props {
   isExpanded: boolean;
   registry: FieldConfigOptionsRegistry;
-  matcherUi: FieldMatcherUIRegistryItem<ConfigOverrideRule>;
+  matcherUi?: FieldMatcherUIRegistryItem<ConfigOverrideRule>;
   override: ConfigOverrideRule;
   overrideName: string;
   onOverrideRemove: () => void;
@@ -25,7 +25,8 @@ export const OverrideCategoryTitle = ({
 
   const properties = override.properties.map((p) => registry.getIfExists(p.id)).filter((prop) => !!prop);
   const propertyNames = properties.map((p) => p?.name).join(', ');
-  const matcherOptions = matcherUi.optionsToLabel(override.matcher.options);
+  // Fall back to the raw matcher id when the matcher type is unknown
+  const matcherOptions = matcherUi ? matcherUi.optionsToLabel(override.matcher.options) : override.matcher.id;
 
   return (
     <div>

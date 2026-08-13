@@ -2681,6 +2681,25 @@
           }
         }
       ]
+    },
+    "/users/~": {
+      "get": {
+        "tags": ["Display"],
+        "description": "Show display information for the currently authenticated identity",
+        "operationId": "getCurrentUserDisplay",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Display"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3174,6 +3193,14 @@
           "email": {
             "type": "string",
             "default": ""
+          },
+          "externalAuthModules": {
+            "description": "Auth module identifiers the user is externally synced with.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
           },
           "internalId": {
             "description": "Deprecated internal (legacy SQL) id of the user.",
@@ -4612,6 +4639,10 @@
             "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
             "type": "integer",
             "format": "int64"
+          },
+          "role": {
+            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           }
         }
       },
@@ -4768,6 +4799,10 @@
             "description": "Permission member has in team.\n\nPossible enum values:\n - `\"admin\"`\n - `\"member\"`",
             "type": "string",
             "enum": ["admin", "member"]
+          },
+          "role": {
+            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           }
         }
       },
@@ -4927,6 +4962,10 @@
             "description": "Permission member has in team.\n\nPossible enum values:\n - `\"admin\"`\n - `\"member\"`",
             "type": "string",
             "enum": ["admin", "member"]
+          },
+          "role": {
+            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           }
         }
       },

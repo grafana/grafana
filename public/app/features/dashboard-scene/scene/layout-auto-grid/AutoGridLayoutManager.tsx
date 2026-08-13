@@ -15,9 +15,9 @@ import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
-import { NewObjectAddedToCanvasEvent } from '../../edit-pane/events';
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
+import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import {
@@ -28,15 +28,16 @@ import {
   useDashboard,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayout } from './AutoGridLayout';
-import { getEditOptions } from './AutoGridLayoutManagerEditor';
+import { getSidebarOptions } from './AutoGridLayoutManagerEditor';
 
 interface AutoGridLayoutManagerState extends SceneObjectState {
   layout: AutoGridLayout;
@@ -297,12 +298,26 @@ export class AutoGridLayoutManager
     forceRenderChildren(this.state.layout, true);
   }
 
+  public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
+    return canGroupSelection(items, target);
+  }
+
+  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
+    const edit = buildGroupEdit(items, target);
+
+    if (!edit) {
+      return;
+    }
+
+    dashboardEditActions.edit({ ...edit, source: getDashboardSceneFor(this) });
+  }
+
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone({});
   }
 
   public getOptions(): OptionsPaneItemDescriptor[] {
-    return getEditOptions(this);
+    return getSidebarOptions(this);
   }
 
   public onMaxColumnCountChanged(maxColumnCount: number) {

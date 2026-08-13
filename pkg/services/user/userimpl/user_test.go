@@ -10,6 +10,8 @@ import (
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -328,6 +330,109 @@ func TestService_NoLegacyFallback(t *testing.T) {
 	})
 }
 
+func TestService_NoFallback_ServiceIdentityWithoutReqContext(t *testing.T) {
+	noReqCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+
+	t.Run("fallback disabled: k8s is used and its error is surfaced, not swallowed by legacy", func(t *testing.T) {
+		enableK8sUsersRedirectNoFallback(t)
+
+		k8sErr := errors.New("k8s error")
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: k8sErr},
+			&usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, Login: "from-legacy"}},
+		)
+
+		got, err := s.GetByID(noReqCtx, &user.GetUserByIDQuery{ID: 5})
+		require.ErrorIs(t, err, k8sErr)
+		require.Nil(t, got)
+	})
+
+	t.Run("fallback enabled (default): legacy is used, k8s is never consulted", func(t *testing.T) {
+		enableK8sUsersRedirect(t)
+
+		legacyUser := &user.User{ID: 1, Login: "from-legacy"}
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: errors.New("k8s should not be called")},
+			&usertest.FakeUserService{ExpectedUser: legacyUser},
+		)
+
+		got, err := s.GetByID(noReqCtx, &user.GetUserByIDQuery{ID: 5})
+		require.NoError(t, err)
+		require.Equal(t, "from-legacy", got.Login)
+	})
+}
+
+func TestService_GetSignedInUser_FallbackOnlyOnNotFound(t *testing.T) {
+	enableK8sUsersRedirect(t)
+
+	legacyUser := &user.SignedInUser{UserID: 1, Login: "from-legacy"}
+
+	t.Run("k8s hit is returned without falling back to legacy", func(t *testing.T) {
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedSignedInUser: &user.SignedInUser{UserID: 2, Login: "from-k8s"}},
+			&usertest.FakeUserService{ExpectedSignedInUser: legacyUser},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.NoError(t, err)
+		require.Equal(t, "from-k8s", got.Login)
+	})
+
+	t.Run("k8s not-found falls back to legacy", func(t *testing.T) {
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: user.ErrUserNotFound},
+			&usertest.FakeUserService{ExpectedSignedInUser: legacyUser},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.NoError(t, err)
+		require.Equal(t, "from-legacy", got.Login)
+	})
+
+	t.Run("k8s forbidden is surfaced, no fallback to legacy", func(t *testing.T) {
+		forbidden := apierrors.NewForbidden(schema.GroupResource{Group: "iam.grafana.app", Resource: "users"}, "u", errors.New("nope"))
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: forbidden},
+			&usertest.FakeUserService{ExpectedSignedInUser: legacyUser},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.True(t, apierrors.IsForbidden(err))
+		require.Nil(t, got)
+	})
+
+	t.Run("k8s generic error is surfaced, no fallback to legacy", func(t *testing.T) {
+		boom := errors.New("k8s boom")
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: boom},
+			&usertest.FakeUserService{ExpectedSignedInUser: legacyUser},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.ErrorIs(t, err, boom)
+		require.Nil(t, got)
+	})
+
+	t.Run("k8s lookup runs as the service identity, even for an end-user caller", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		caller := &identity.StaticRequester{Type: claims.TypeUser, UserID: 5, OrgID: 2}
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := s.GetSignedInUser(ctx, &user.GetSignedInUserQuery{OrgID: 2, UserID: 5})
+		require.NoError(t, err)
+		require.True(t, identity.IsServiceIdentity(k8s.gotCtx), "GetSignedInUser must resolve users as the service identity")
+	})
+
+	t.Run("fallback disabled: k8s not-found is surfaced, legacy is never consulted", func(t *testing.T) {
+		enableK8sUsersRedirectNoFallback(t)
+
+		s := newWrapperServiceForTest(
+			&usertest.FakeUserService{ExpectedError: user.ErrUserNotFound},
+			&usertest.FakeUserService{ExpectedError: errors.New("legacy should not be called")},
+		)
+		got, err := s.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{OrgID: 1, UserID: 5})
+		require.ErrorIs(t, err, user.ErrUserNotFound)
+		require.Nil(t, got)
+	})
+}
+
 // ctxCapturingUserService records the context passed to GetProfile so tests can
 // assert which identity the k8s lookup runs as.
 type ctxCapturingUserService struct {
@@ -343,6 +448,11 @@ func (f *ctxCapturingUserService) GetProfile(ctx context.Context, _ *user.GetUse
 func (f *ctxCapturingUserService) GetByID(ctx context.Context, _ *user.GetUserByIDQuery) (*user.User, error) {
 	f.gotCtx = ctx
 	return &user.User{}, nil
+}
+
+func (f *ctxCapturingUserService) GetSignedInUser(ctx context.Context, _ *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	f.gotCtx = ctx
+	return &user.SignedInUser{}, nil
 }
 
 func TestService_GetProfile_SelfReadElevatesToServiceIdentity(t *testing.T) {
@@ -431,6 +541,23 @@ func enableK8sUsersRedirect(t *testing.T) {
 	require.NoError(t, err)
 	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
 		featuremgmt.FlagKubernetesUsersRedirect: flag,
+	})
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(nil))
+	})
+}
+
+func enableK8sUsersRedirectNoFallback(t *testing.T) {
+	t.Helper()
+	redirectFlag, err := setting.ParseFlag(featuremgmt.FlagKubernetesUsersRedirect, "true")
+	require.NoError(t, err)
+	noFallbackFlag, err := setting.ParseFlag(featuremgmt.FlagKubernetesUsersRedirectNoFallback, "true")
+	require.NoError(t, err)
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesUsersRedirect:           redirectFlag,
+		featuremgmt.FlagKubernetesUsersRedirectNoFallback: noFallbackFlag,
 	})
 	require.NoError(t, err)
 	require.NoError(t, openfeature.SetProviderAndWait(provider))

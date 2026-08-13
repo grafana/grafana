@@ -2,8 +2,10 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"math/rand/v2"
 	"slices"
 	"strings"
@@ -17,6 +19,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -41,6 +46,12 @@ func withKV(kv KV) func(*KVBackendOptions) {
 func withSettleDelay(d time.Duration) func(*KVBackendOptions) {
 	return func(opts *KVBackendOptions) {
 		opts.WatchOptions.SettleDelay = d
+	}
+}
+
+func withLogger(l log.Logger) func(*KVBackendOptions) {
+	return func(opts *KVBackendOptions) {
+		opts.Log = l
 	}
 }
 
@@ -77,6 +88,137 @@ func TestNewKvStorageBackend(t *testing.T) {
 	assert.NotNil(t, backend.eventStore)
 	assert.NotNil(t, backend.notifier)
 	assert.NotNil(t, backend.snowflake)
+}
+
+func TestKVStorageBackendPendingDeleteStoreDefaultsToMainKV(t *testing.T) {
+	tests := []struct {
+		name           string
+		experimentalKV func(KV) *ExperimentalKVOptions
+	}{
+		{
+			name: "nil experimental options",
+		},
+		{
+			name: "tenant metadata disabled",
+			experimentalKV: func(kv KV) *ExperimentalKVOptions {
+				return &ExperimentalKVOptions{KV: kv}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mainKV := setupBadgerKV(t)
+			experimentalKV := setupBadgerKV(t)
+			backend := setupTestStorageBackend(t, withKV(mainKV), func(opts *KVBackendOptions) {
+				if tt.experimentalKV != nil {
+					opts.ExperimentalKV = tt.experimentalKV(experimentalKV)
+				}
+				opts.TenantDeleterConfig = &TenantDeleterConfig{
+					Interval: time.Hour,
+					Log:      log.NewNopLogger(),
+				}
+			})
+
+			require.Same(t, mainKV, backend.tenantDeleter.pendingDeleteStore.kv)
+		})
+	}
+}
+
+func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
+	mainKV := setupBadgerKV(t)
+	experimentalKV := setupBadgerKV(t)
+	backend := setupTestStorageBackend(t, withKV(mainKV), func(opts *KVBackendOptions) {
+		opts.ExperimentalKV = &ExperimentalKVOptions{
+			KV:             experimentalKV,
+			TenantMetadata: true,
+		}
+		opts.TenantWatcherConfig = &TenantWatcherConfig{
+			TenantAPIServerURL: "http://127.0.0.1:1",
+			Token:              "test-token",
+			TokenExchangeURL:   "http://127.0.0.1:1",
+			UsePolling:         true,
+			PollInterval:       time.Hour,
+			Log:                log.NewNopLogger(),
+		}
+		opts.TenantDeleterConfig = &TenantDeleterConfig{
+			Interval: time.Hour,
+			Log:      log.NewNopLogger(),
+			Gcom: &testGcomVerifier{
+				getInstance: func(context.Context, string, string) (gcom.Instance, error) {
+					return gcom.Instance{ID: 1, Slug: "test", Status: "deleted"}, nil
+				},
+			},
+		}
+	})
+
+	// The watcher and deleter must share the exact store so records cannot be
+	// written to one KV and scanned from another.
+	require.Same(t, experimentalKV, backend.tenantWatcher.pendingDeleteStore.kv)
+	require.Same(t, backend.tenantWatcher.pendingDeleteStore, backend.tenantDeleter.pendingDeleteStore)
+
+	// Reconciling a tenant writes its pending-delete record to the experimental
+	// KV while the resource label update goes through the main backend.
+	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", backend.snowflake.Generate().Int64(), nil)
+	backend.tenantWatcher.handleTenant(t.Context(), pendingDeleteTenant(testStacksNS1, pastTime()))
+
+	record, err := backend.tenantWatcher.pendingDeleteStore.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	require.True(t, record.LabelingComplete)
+	_, err = newPendingDeleteStore(mainKV).Get(t.Context(), testStacksNS1)
+	require.ErrorIs(t, err, kv.ErrNotFound)
+
+	latest, err := backend.dataStore.GetLatestResourceKey(t.Context(), GetRequestKey{
+		Namespace: testStacksNS1,
+		Group:     "apps",
+		Resource:  "dashboards",
+		Name:      "dash1",
+	})
+	require.NoError(t, err)
+	reader, err := backend.dataStore.Get(t.Context(), latest)
+	require.NoError(t, err)
+	value, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	require.NoError(t, reader.Close())
+	resource := &unstructured.Unstructured{}
+	require.NoError(t, resource.UnmarshalJSON(value))
+	require.Equal(t, "true", resource.GetLabels()[labelPendingDelete])
+
+	_, err = backend.eventStore.Get(t.Context(), EventKey{
+		Namespace:       latest.Namespace,
+		Group:           latest.Group,
+		Resource:        latest.Resource,
+		Name:            latest.Name,
+		ResourceVersion: latest.ResourceVersion,
+		Action:          latest.Action,
+	})
+	require.NoError(t, err)
+
+	// The experimental KV is metadata-only: resource data and events remain in
+	// the main KV even when tenant metadata routing is enabled.
+	for _, err := range experimentalKV.Keys(t.Context(), dataSection, ListOptions{}) {
+		require.NoError(t, err)
+		require.Fail(t, "resource data must not be written to the experimental KV")
+	}
+	for _, err := range experimentalKV.Keys(t.Context(), eventsSection, ListOptions{}) {
+		require.NoError(t, err)
+		require.Fail(t, "resource events must not be written to the experimental KV")
+	}
+
+	// The deleter finds the watcher's record in the shared experimental store
+	// and uses it to purge the resource from the main KV.
+	backend.tenantDeleter.runDeletionPass(t.Context())
+
+	_, err = backend.dataStore.GetLatestResourceKey(t.Context(), GetRequestKey{
+		Namespace: testStacksNS1,
+		Group:     "apps",
+		Resource:  "dashboards",
+		Name:      "dash1",
+	})
+	require.ErrorIs(t, err, ErrNotFound)
+	record, err = backend.tenantDeleter.pendingDeleteStore.Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	require.NotEmpty(t, record.DeletedAt)
 }
 
 // TestKvStorageBackend_Accessors verifies that KV() returns the configured
@@ -449,6 +591,312 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 			}
 		})
 	}
+}
+
+// countingKV wraps a KV and counts the reads issued against the data section,
+// so a test can tell how many storage round trips resolving a set of events
+// took, and how many keys those round trips covered.
+type countingKV struct {
+	KV
+	mu         sync.Mutex
+	roundTrips int
+	keysRead   int
+	keysListed int
+}
+
+func (k *countingKV) count(section string, keys int) {
+	if section != kv.DataSection {
+		return
+	}
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.roundTrips++
+	k.keysRead += keys
+}
+
+// stats returns the counters so a caller can diff them around an operation,
+// keeping unrelated reads (the write path) out of the measurement.
+func (k *countingKV) stats() (roundTrips, keysRead int) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.roundTrips, k.keysRead
+}
+
+func (k *countingKV) listed() int {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.keysListed
+}
+
+func (k *countingKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
+	keys := k.KV.Keys(ctx, section, opt)
+	if section != kv.DataSection {
+		return keys
+	}
+	return func(yield func(string, error) bool) {
+		for key, err := range keys {
+			if err == nil {
+				k.mu.Lock()
+				k.keysListed++
+				k.mu.Unlock()
+			}
+			if !yield(key, err) {
+				return
+			}
+		}
+	}
+}
+
+func (k *countingKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
+	k.count(section, 1)
+	return k.KV.Get(ctx, section, key)
+}
+
+func (k *countingKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	k.count(section, len(keys))
+	return k.KV.BatchGet(ctx, section, keys)
+}
+
+// TestKvStorageBackend_WatchWriteEvents_BatchesValueReads verifies that the
+// notifications backing a watch stream are resolved in one storage round trip
+// per batch rather than one per event, and that batching neither reorders the
+// stream nor lets a missing value shift the events around it.
+//
+// The whole stream is not exercised here on purpose: how many notifications land
+// in one batch depends on whether this goroutine wakes before the settle tick
+// has finished handing them over, which no assertion can pin down. Driving
+// emitWriteEvents directly makes the batch boundary explicit.
+func TestKvStorageBackend_WatchWriteEvents_BatchesValueReads(t *testing.T) {
+	const numEvents = 2 * dataBatchSize // spans more than one batched read
+
+	kvStore := &countingKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(kvStore))
+	ctx := t.Context()
+
+	writtenRVs := make([]int64, numEvents)
+	for i := range numEvents {
+		name := fmt.Sprintf("batched-%03d", i)
+		obj, err := createTestObjectWithName(name, appsNamespace, fmt.Sprintf("value-%d", i))
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		writtenRVs[i], err = backend.WriteEvent(ctx, WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: appsNamespace.Namespace,
+				Group:     appsNamespace.Group,
+				Resource:  appsNamespace.Resource,
+				Name:      name,
+			},
+			Value:      objectToJSONBytes(t, obj),
+			Object:     metaAccessor,
+			ObjectOld:  metaAccessor,
+			PreviousRV: 0,
+		})
+		require.NoError(t, err)
+	}
+
+	// Take the notifications from the event store rather than building them by
+	// hand: a DataKey carries the folder and action too, and guessing either makes
+	// the batched read silently miss.
+	batch := make([]Event, 0, numEvents)
+	for event, err := range backend.eventStore.ListSince(ctx, 0, SortOrderAsc) {
+		require.NoError(t, err)
+		batch = append(batch, event)
+	}
+	require.Len(t, batch, numEvents)
+
+	// BatchGet omits missing keys instead of erroring, so drop one value to prove
+	// the results are matched back by key rather than by position.
+	const missing = numEvents / 2
+	require.NoError(t, backend.dataStore.Delete(ctx, DataKey{
+		Group:           batch[missing].Group,
+		Resource:        batch[missing].Resource,
+		Namespace:       batch[missing].Namespace,
+		Name:            batch[missing].Name,
+		ResourceVersion: batch[missing].ResourceVersion,
+		Action:          batch[missing].Action,
+		Folder:          batch[missing].Folder,
+	}))
+
+	tripsBefore, keysBefore := kvStore.stats()
+
+	out := make(chan *WrittenEvent, numEvents)
+	require.True(t, backend.emitWriteEvents(ctx, batch, out))
+	close(out)
+
+	receivedRVs := make([]int64, 0, numEvents)
+	for event := range out {
+		receivedRVs = append(receivedRVs, event.ResourceVersion)
+	}
+	assert.Equal(t, slices.Delete(slices.Clone(writtenRVs), missing, missing+1), receivedRVs,
+		"events must be delivered in ascending resource version order, minus the one with no value")
+
+	// dataStore chunks at dataBatchSize, so the batch costs one read per chunk.
+	// Resolving one event at a time would cost numEvents reads.
+	tripsAfter, keysAfter := kvStore.stats()
+	assert.Equal(t, numEvents/dataBatchSize, tripsAfter-tripsBefore, "the batch should be resolved in one read per chunk")
+	assert.Equal(t, numEvents, keysAfter-keysBefore, "every event should be read exactly once")
+}
+
+// failingBatchGetKV wraps a KV and fails every batched read of the data section,
+// standing in for a storage outage.
+type failingBatchGetKV struct {
+	KV
+	err error
+}
+
+func (k *failingBatchGetKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	if section != kv.DataSection {
+		return k.KV.BatchGet(ctx, section, keys)
+	}
+	return func(yield func(kv.KeyValue, error) bool) {
+		yield(kv.KeyValue{}, k.err)
+	}
+}
+
+// unreadableValueKV wraps a KV and hands back a value whose Read fails for every
+// data key holding nameMatch, standing in for a truncated or corrupt blob.
+type unreadableValueKV struct {
+	KV
+	nameMatch string
+	err       error
+}
+
+func (k *unreadableValueKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	values := k.KV.BatchGet(ctx, section, keys)
+	if section != kv.DataSection {
+		return values
+	}
+	return func(yield func(kv.KeyValue, error) bool) {
+		for obj, err := range values {
+			if err == nil && strings.Contains(obj.Key, k.nameMatch) {
+				// The caller only closes the value it is handed, so close the real one here.
+				_ = obj.Value.Close()
+				obj.Value = failingReadCloser{err: k.err}
+			}
+			if !yield(obj, err) {
+				return
+			}
+		}
+	}
+}
+
+type failingReadCloser struct{ err error }
+
+func (f failingReadCloser) Read([]byte) (int, error) { return 0, f.err }
+func (f failingReadCloser) Close() error             { return nil }
+
+// TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing
+// guards the error paths of resolving a batch. A failed batch read returns no
+// keys at all, so every event in the batch is still pending afterwards —
+// reporting those as missing data would turn one storage error into a
+// batch-sized burst of false data-loss errors, and on shutdown into one such
+// burst per buffered batch. A single unreadable value must likewise be reported
+// once, as the read failure it is.
+func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t *testing.T) {
+	newBatch := func() []Event {
+		batch := make([]Event, 0, dataBatchSize)
+		for i := range dataBatchSize {
+			batch = append(batch, Event{
+				Namespace:       appsNamespace.Namespace,
+				Group:           appsNamespace.Group,
+				Resource:        appsNamespace.Resource,
+				Name:            fmt.Sprintf("failing-%03d", i),
+				ResourceVersion: int64(i + 1),
+				Action:          DataActionCreated,
+			})
+		}
+		return batch
+	}
+
+	t.Run("storage error is logged once and the stream continues", func(t *testing.T) {
+		logger := &logtest.Fake{}
+		kvStore := &failingBatchGetKV{KV: setupBadgerKV(t), err: errors.New("storage is down")}
+		backend := setupTestStorageBackend(t, withKV(kvStore), withLogger(logger))
+
+		out := make(chan *WrittenEvent, dataBatchSize)
+		assert.True(t, backend.emitWriteEvents(t.Context(), newBatch(), out),
+			"a storage error should not tear down the watch stream")
+
+		assert.Empty(t, out)
+		assert.Equal(t, 1, logger.ErrorLogs.Calls, "the read failure alone should be logged")
+		assert.Equal(t, "failed to get data for events", logger.ErrorLogs.Message)
+	})
+
+	t.Run("cancellation stops the stream without logging", func(t *testing.T) {
+		logger := &logtest.Fake{}
+		backend := setupTestStorageBackend(t, withLogger(logger))
+
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		out := make(chan *WrittenEvent, dataBatchSize)
+		assert.False(t, backend.emitWriteEvents(ctx, newBatch(), out),
+			"a cancelled context should stop the stream rather than drain the backlog")
+
+		assert.Empty(t, out)
+		assert.Zero(t, logger.ErrorLogs.Calls, "shutdown is not a data problem")
+	})
+
+	t.Run("an unreadable value is reported once, not also as missing data", func(t *testing.T) {
+		const numEvents = 3
+		logger := &logtest.Fake{}
+		kvStore := &unreadableValueKV{
+			KV:        setupBadgerKV(t),
+			nameMatch: "unreadable-1",
+			err:       errors.New("value is corrupt"),
+		}
+		backend := setupTestStorageBackend(t, withKV(kvStore), withLogger(logger))
+		ctx := t.Context()
+
+		for i := range numEvents {
+			name := fmt.Sprintf("unreadable-%d", i)
+			obj, err := createTestObjectWithName(name, appsNamespace, fmt.Sprintf("value-%d", i))
+			require.NoError(t, err)
+			metaAccessor, err := utils.MetaAccessor(obj)
+			require.NoError(t, err)
+
+			_, err = backend.WriteEvent(ctx, WriteEvent{
+				Type: resourcepb.WatchEvent_ADDED,
+				Key: &resourcepb.ResourceKey{
+					Namespace: appsNamespace.Namespace,
+					Group:     appsNamespace.Group,
+					Resource:  appsNamespace.Resource,
+					Name:      name,
+				},
+				Value:     objectToJSONBytes(t, obj),
+				Object:    metaAccessor,
+				ObjectOld: metaAccessor,
+			})
+			require.NoError(t, err)
+		}
+
+		batch := make([]Event, 0, numEvents)
+		for event, err := range backend.eventStore.ListSince(ctx, 0, SortOrderAsc) {
+			require.NoError(t, err)
+			batch = append(batch, event)
+		}
+		require.Len(t, batch, numEvents)
+
+		out := make(chan *WrittenEvent, numEvents)
+		require.True(t, backend.emitWriteEvents(ctx, batch, out),
+			"one unreadable value should not tear down the watch stream")
+		close(out)
+
+		delivered := make([]string, 0, numEvents)
+		for event := range out {
+			delivered = append(delivered, event.Key.Name)
+		}
+		assert.Equal(t, []string{"unreadable-0", "unreadable-2"}, delivered,
+			"the events around the unreadable one must still be delivered")
+
+		// The value was present, so also calling it missing data sends whoever reads
+		// the log looking for a write that was never lost.
+		assert.Equal(t, 1, logger.ErrorLogs.Calls, "the read failure alone should be logged")
+		assert.Equal(t, "failed to read data for event", logger.ErrorLogs.Message)
+	})
 }
 
 // TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites verifies that when many
@@ -889,6 +1337,68 @@ func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
 	require.Equal(t, []string{"resource-1", "resource-2"}, names)
 }
 
+func TestKvStorageBackend_ListIterator_StreamsKeysInBatches(t *testing.T) {
+	// Span more than one key page so the page-bounded scan is observable.
+	const numResources = keyPageSize + 2*dataBatchSize + 1
+
+	for name, setup := range map[string]func(*testing.T) KV{
+		"badger": setupBadgerKV,
+		"sql":    setupSqlKV,
+	} {
+		t.Run(name, func(t *testing.T) {
+			kvStore := &countingKV{KV: setup(t)}
+			backend := setupTestStorageBackend(t, withKV(kvStore))
+			ctx := t.Context()
+
+			for i := range numResources {
+				resourceName := fmt.Sprintf("resource-%03d", i)
+				testObj, err := createTestObjectWithName(resourceName, appsNamespace, fmt.Sprintf("data-%d", i))
+				require.NoError(t, err)
+				metaAccessor, err := utils.MetaAccessor(testObj)
+				require.NoError(t, err)
+
+				_, err = backend.WriteEvent(ctx, WriteEvent{
+					Type: resourcepb.WatchEvent_ADDED,
+					Key: &resourcepb.ResourceKey{
+						Namespace: appsNamespace.Namespace,
+						Group:     appsNamespace.Group,
+						Resource:  appsNamespace.Resource,
+						Name:      resourceName,
+					},
+					Value:      objectToJSONBytes(t, testObj),
+					Object:     metaAccessor,
+					PreviousRV: 0,
+				})
+				require.NoError(t, err)
+			}
+
+			listedBefore := kvStore.listed()
+			tripsBefore, keysReadBefore := kvStore.stats()
+
+			_, err := backend.ListIterator(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Namespace: appsNamespace.Namespace,
+					Group:     appsNamespace.Group,
+					Resource:  appsNamespace.Resource,
+				}},
+			}, func(iter ListIterator) error {
+				require.True(t, iter.Next())
+				return iter.Error()
+			})
+			require.NoError(t, err)
+
+			tripsAfter, keysReadAfter := kvStore.stats()
+			listedAfter := kvStore.listed()
+			assert.Equal(t, 1, tripsAfter-tripsBefore)
+			assert.Equal(t, dataBatchSize, keysReadAfter-keysReadBefore)
+			assert.Equal(t, keyPageSize, listedAfter-listedBefore,
+				"the key scan must materialize at most one page, not the whole list")
+			assert.Less(t, listedAfter-listedBefore, numResources,
+				"stopping the consumer must stop the key scan before all keys are materialized")
+		})
+	}
+}
+
 func TestKvStorageBackend_ListIterator_WithPagination(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -1007,7 +1517,20 @@ func TestKvStorageBackend_ListIterator_WithPagination(t *testing.T) {
 	require.Equal(t, 1, len(thirdPageItems))
 	require.Equal(t, []string{"resource-5"}, thirdPageItems)
 	require.Empty(t, continueToken3)
+
+	// Limit belongs to the consumer; the backend continues while it is being consumed.
+	listReq.NextPageToken = ""
+	var allItems []string
+	_, err = backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+		for iter.Next() {
+			allItems = append(allItems, iter.Name())
+		}
+		return iter.Error()
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{"resource-1", "resource-2", "resource-3", "resource-4", "resource-5"}, allItems)
 }
+
 func TestKvStorageBackend_ListIterator_EmptyResult(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -3406,4 +3929,35 @@ func collectHistory(t *testing.T, backend *kvStorageBackend, ctx context.Context
 	})
 	require.NoError(t, err)
 	return items
+}
+
+func TestKVStorageBackendDisableStorageServices(t *testing.T) {
+	gc := GarbageCollectionConfig{Enabled: true, Interval: 0, MaxAge: time.Hour}
+
+	// Garbage collection refuses a zero interval, so a backend that starts it with
+	// one fails to build. That is what makes "did it start" observable here without
+	// waiting on the loop.
+	t.Run("starts garbage collection when storage services are enabled", func(t *testing.T) {
+		_, err := NewKVStorageBackend(KVBackendOptions{
+			KvStore:           setupBadgerKV(t),
+			GarbageCollection: gc,
+		})
+		require.ErrorContains(t, err, "garbage collection")
+	})
+
+	t.Run("does not start garbage collection when storage services are disabled", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
+			o.GarbageCollection = gc
+			o.DisableStorageServices = true
+		})
+		require.NotNil(t, backend)
+	})
+
+	// Writes add to the pruner without checking whether it exists.
+	t.Run("the pruner is present but does nothing", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
+			o.DisableStorageServices = true
+		})
+		require.IsType(t, &NoopPruner{}, backend.historyPruner)
+	})
 }

@@ -11,6 +11,7 @@ import {
   type EventBus,
   EventBusSrv,
   type GrafanaTheme2,
+  type LoadingState,
   type LogLevel,
   type LogRowModel,
   LogsDedupStrategy,
@@ -58,7 +59,7 @@ export interface Props {
   infiniteScrollMode?: InfiniteScrollMode;
   initialScrollPosition?: 'top' | 'bottom';
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-  loading?: boolean;
+  loadingState?: LoadingState;
   loadMore?: LoadMoreLogsType;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logOptionsStorageKey?: string;
@@ -141,7 +142,7 @@ export const LogList = ({
   infiniteScrollMode,
   initialScrollPosition = 'top',
   isLabelFilterActive,
-  loading,
+  loadingState,
   loadMore,
   logLineMenuCustomItems,
   logs,
@@ -243,7 +244,7 @@ export const LogList = ({
             grammar={grammar}
             initialScrollPosition={initialScrollPosition}
             infiniteScrollMode={infiniteScrollMode}
-            loading={loading}
+            loadingState={loadingState}
             loadMore={loadMore}
             logs={logs}
             showControls={showControls}
@@ -265,7 +266,7 @@ const LogListComponent = ({
   grammar,
   initialScrollPosition = 'top',
   infiniteScrollMode = 'interval',
-  loading,
+  loadingState,
   loadMore,
   logs,
   showControls,
@@ -326,7 +327,7 @@ const LogListComponent = ({
       wrapLogMessage,
     ]
   );
-  const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns });
+  const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns }, listHeight);
   const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
@@ -548,7 +549,7 @@ const LogListComponent = ({
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
           infiniteScrollMode={infiniteScrollMode}
-          loading={loading}
+          loadingState={loadingState}
           logs={filteredLogs}
           loadMore={loadMore}
           onClick={handleLogLineClick}
@@ -598,7 +599,8 @@ function getStyles(
   theme: GrafanaTheme2,
   dimensions: LogFieldDimension[],
   displayedFields: string[] = [],
-  { unwrappedColumns }: { unwrappedColumns: boolean }
+  { unwrappedColumns }: { unwrappedColumns: boolean },
+  listHeight: number
 ) {
   return {
     logList: css({
@@ -613,6 +615,8 @@ function getStyles(
     logListContainer: css({
       display: 'flex',
       flexDirection: 'row-reverse',
+      // A definite height is required, otherwise the tallest child sets it and the controls never overflow.
+      height: listHeight,
       // Minimum width to prevent rendering issues and a sausage-like logs panel.
       minWidth: theme.spacing(35),
     }),

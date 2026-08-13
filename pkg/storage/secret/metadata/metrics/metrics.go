@@ -20,6 +20,10 @@ const (
 	decrypterLabel = "decrypter"
 )
 
+var (
+	histogramBuckets = []float64{.005, .01, .03, .05, .07, .09, .1, .13, .15, .17, .20, .25, .5, 1, 2.5, 5, 10, 25, 50, 100}
+)
+
 // StorageMetrics is a struct that contains all the metrics for all operations of secrets storage.
 type StorageMetrics struct {
 	KeeperMetadataCreateDuration          *prometheus.HistogramVec
@@ -190,7 +194,7 @@ func newStorageMetrics() *StorageMetrics {
 			Subsystem:                       subsystem,
 			Name:                            "decrypt_duration_seconds",
 			Help:                            "Duration of decrypt operations",
-			Buckets:                         instrument.DefBuckets,
+			Buckets:                         histogramBuckets,
 			NativeHistogramBucketFactor:     1.1, // enable native histograms
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,

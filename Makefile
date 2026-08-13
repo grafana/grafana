@@ -271,6 +271,7 @@ gen-enterprise-go: ## Generate Wire graph (Enterprise)
 endif
 gen-go: gen-enterprise-go ## Generate Wire graph
 	@echo "generating Wire graph"
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server/bootstrap/wire
 	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
 
 .PHONY: gen-app-manifests-unistore
@@ -841,6 +842,8 @@ GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1
 		.
 # We don't want the patch workflow to be run. This is exclusively useful for the security-mirror. It won't work in OSS.
 	sed -i.bak '/- Workflow \.github\/workflows\/create-security-patch-from-security-mirror/d' .policy.yml; rm -f .policy.yml.bak
+# The frontend preview deploy is opt-in and only triggers on `synchronize`, so a PR opened without a further push never produces a run for policy-bot to find.
+	sed -i.bak '/- Workflow \.github\/workflows\/deploy-frontend-preview/d' .policy.yml; rm -f .policy.yml.bak
 # Make govulncheck non-blocking - accept failure so it doesn't prevent merge
 	sed -i.bak '/name: Workflow \.github\/workflows\/govulncheck\.yml/,/workflows:/{s/- success/- success\n            - failure/;}' .policy.yml; rm -f .policy.yml.bak
 # Make check-frontend-test-coverage non-blocking - accept failure so it doesn't prevent merge

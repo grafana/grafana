@@ -78,6 +78,11 @@
       "description-basic-logs": "Als je deze functie inschakelt, worden Azure Monitor-kosten per query gemaakt op dashboardpanelen die tabellen opvragen die zijn geconfigureerd voor <2>Basislogboeken</2>.",
       "label-enable-basic-logs": "Basislogboeken inschakelen"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "Aanvullende instellingen zijn optioneel en geven je meer controle over je databron. Denk hierbij aan Secure Socks Proxy, request timeout en doorgestuurde cookies.",
       "title-additional-settings": "Aanvullende instellingen"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Metrische naamruimte"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "Laden..."
     },
@@ -204,6 +216,10 @@
       "label-by": "OP",
       "label-order-by": "Sorteren op",
       "tooltip-order-by": "Sorteer resultaten op basis van een of meer kolommen in oplopende of aflopende volgorde."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Er is een fout opgetreden bij het aanvragen van de metagegevens van Azure Monitor"

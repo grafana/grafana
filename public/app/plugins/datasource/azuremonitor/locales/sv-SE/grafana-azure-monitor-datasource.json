@@ -78,6 +78,11 @@
       "description-basic-logs": "Om den här funktionen aktiveras medför det Azure Monitor-kostnader per fråga för instrumentpanelspaneler som frågar tabeller konfigurerade för <2>basloggar</2>.",
       "label-enable-basic-logs": "Aktivera basloggar"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "Ytterligare inställningar är valfria inställningar som kan konfigureras för att få mer kontroll över din datakälla. Detta inkluderar Secure Socks Proxy, tidsgräns för begäran och vidarebefordrade cookies.",
       "title-additional-settings": "Ytterligare inställningar"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Mätvärdesnamnrymd"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "Laddar …"
     },
@@ -204,6 +216,10 @@
       "label-by": "AV",
       "label-order-by": "Ordnad efter",
       "tooltip-order-by": "Sortera resultat baserat på en eller flera kolumner i stigande eller fallande ordning."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Ett fel uppstod vid begäran av metadata från Azure Monitor"

@@ -593,6 +593,28 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(intervalSnapshot.state.isReadOnly).toBe(true);
     });
 
+    it('should not create annotation data layers for snapshots', () => {
+      // Snapshots embed annotation results in the per-panel snapshot query data, so annotation
+      // layers must not be created — they would fire live annotation queries (e.g. the authorized
+      // /api/annotations endpoint, which returns 401 for snapshots).
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
+      const dataLayers = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayers.state.annotationLayers).toHaveLength(0);
+    });
+
     it('should convert empty defaultKeys array to undefined for adhoc variables', () => {
       const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = cloneDeep({
         ...defaultDashboard,

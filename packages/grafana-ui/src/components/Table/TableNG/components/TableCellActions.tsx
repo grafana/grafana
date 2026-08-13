@@ -1,5 +1,6 @@
 import { memo } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { IconButton } from '../../../IconButton/IconButton';
@@ -19,6 +20,7 @@ export const TableCellActions = memo(
         {cellInspect && (
           <IconButton
             name="eye"
+            data-testid={selectors.components.Panels.Visualization.TableNG.cellActions.inspectButton}
             aria-label={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
             onClick={() => {
               const [inspectValue, mode] = buildInspectValue(value, field, formatGeometry);
@@ -30,6 +32,7 @@ export const TableCellActions = memo(
           <>
             <IconButton
               name={'filter-plus'}
+              data-testid={selectors.components.Panels.Visualization.TableNG.cellActions.filterForButton}
               aria-label={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
               onClick={() => {
                 onCellFilterAdded?.({
@@ -41,6 +44,7 @@ export const TableCellActions = memo(
             />
             <IconButton
               name={'filter-minus'}
+              data-testid={selectors.components.Panels.Visualization.TableNG.cellActions.filterOutButton}
               aria-label={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
               onClick={() => {
                 onCellFilterAdded?.({

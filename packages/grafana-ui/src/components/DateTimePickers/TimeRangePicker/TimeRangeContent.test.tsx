@@ -55,6 +55,12 @@ describe('TimeRangeForm', () => {
     expect(await findByLabelText('To')).toBeInTheDocument();
   });
 
+  it.each(['From', 'To'])('should disable autofill on the %s input', async (label) => {
+    const { findByLabelText } = setup();
+
+    expect(await findByLabelText(label)).toHaveAttribute('autocomplete', 'off');
+  });
+
   it('should display calendar when clicking the calendar icon', async () => {
     const user = userEvent.setup();
     setup();

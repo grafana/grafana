@@ -42,6 +42,7 @@ func TestStandardDocumentBuilder(t *testing.T) {
 		"title": "Test Playlist from Unified Storage",
 		"title_ngram": "Test Playlist from Unified Storage",
 		"title_phrase": "test playlist from unified storage",
+		"description": "description for the test playlist",
 		"created": 1717236672000,
 		"createdBy": "user:ABC",
 		"updatedBy": "user:XYZ",
@@ -59,6 +60,14 @@ func TestStandardDocumentBuilder(t *testing.T) {
 			"checksum": "xyz"
 		}
 	}`, string(jj))
+}
+
+// registryWithProvider seeds a registry so the standard builder finds the given
+// provider for the kind under test.
+func registryWithProvider(gvr schema.GroupVersionResource, provider SearchFieldsProvider) *SearchFieldsRegistry {
+	return NewSearchFieldsRegistry(nil, nil, map[LowerGroupResource]SearchFieldsProvider{
+		NewLowerGroupResource(gvr.Group, gvr.Resource): provider,
+	})
 }
 
 func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
@@ -96,7 +105,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				{Name: "member_names", Path: "spec.members[*].name", Type: SearchFieldTypeString, Array: true},
 			},
 		}, nil)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, body)
 		require.NoError(t, err)
 		require.Equal(t, "alice@example.com", doc.Fields["email"])
@@ -112,7 +121,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				{Name: "computed", Type: SearchFieldTypeString},
 			},
 		}, nil)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, body)
 		require.NoError(t, err)
 		_, present := doc.Fields["computed"]
@@ -125,7 +134,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				{Name: "email", Path: "spec.email", Type: SearchFieldTypeInt64},
 			},
 		}, nil)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, body)
 		require.NoError(t, err)
 		_, present := doc.Fields["email"]
@@ -138,7 +147,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				{Name: "absent", Path: "spec.not_there", Type: SearchFieldTypeString},
 			},
 		}, nil)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, body)
 		require.NoError(t, err)
 		assert.Empty(t, doc.Fields)
@@ -158,7 +167,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				{Group: gvr.Group, Resource: gvr.Resource}: "v2",
 			},
 		)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, body)
 		require.NoError(t, err)
 		assert.Empty(t, doc.Fields)
@@ -180,7 +189,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				{Group: gvr.Group, Resource: gvr.Resource}: gvr.Version,
 			},
 		)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, bodyNoVersion)
 		require.NoError(t, err)
 		assert.Equal(t, "alice@example.com", doc.Fields["email"])
@@ -209,7 +218,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				},
 			}, nil,
 		)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, bodyEmpty)
 		require.NoError(t, err)
 		assert.Equal(t, false, doc.Fields["flag"])
@@ -230,18 +239,152 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 		provider := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{
 			gvr: {{Name: "email", Path: "spec.email", Type: SearchFieldTypeString}},
 		}, nil)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, bodyNoVersion)
 		require.NoError(t, err)
 		assert.Empty(t, doc.Fields)
 	})
 
-	t.Run("nil provider preserves legacy behaviour", func(t *testing.T) {
-		// Constructor without a provider must produce the same shape as
-		// StandardDocumentBuilder(manifests).
-		builder := StandardDocumentBuilderWithFields(nil, nil)
+	t.Run("nil registry preserves base behaviour", func(t *testing.T) {
+		// Without a registry the builder still produces the base document,
+		// just no selectable or declared fields.
+		builder := StandardDocumentBuilder(nil)
 		doc, err := builder.BuildDocument(ctx, key, 1, body)
 		require.NoError(t, err)
 		assert.Empty(t, doc.Fields)
+	})
+}
+
+// TestStandardDocumentBuilder_ReloadThroughRegistry verifies the central
+// reload behavior: one builder, backed by a registry, reflects a Replace of the
+// registry's selectable fields and path-based definitions on the next document
+// without being rebuilt.
+func TestStandardDocumentBuilder_ReloadThroughRegistry(t *testing.T) {
+	ctx := t.Context()
+	gvr := schema.GroupVersionResource{Group: "example.grafana.app", Version: "v1", Resource: "things"}
+	gr := gvr.GroupResource()
+	sfKey := NewLowerGroupResource(gvr.Group, gvr.Resource)
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: gvr.Group, Resource: gvr.Resource, Name: "thing-1"}
+	body := []byte(`{
+		"apiVersion": "example.grafana.app/v1",
+		"kind": "Thing",
+		"metadata": {"name": "thing-1"},
+		"spec": {"a": "AAA", "b": "BBB", "x": "XXX", "y": "YYY"}
+	}`)
+
+	providerFor := func(name, path string) SearchFieldsProvider {
+		return NewMapProvider(
+			map[schema.GroupVersionResource][]SearchFieldDefinition{
+				gvr: {{Name: name, Path: path, Type: SearchFieldTypeString}},
+			},
+			map[schema.GroupResource]string{gr: gvr.Version},
+		)
+	}
+
+	registry := NewSearchFieldsRegistry(
+		map[LowerGroupResource][]string{sfKey: {"spec.x"}},
+		nil,
+		map[LowerGroupResource]SearchFieldsProvider{sfKey: providerFor("a", "spec.a")},
+	)
+	builder := StandardDocumentBuilder(registry)
+
+	doc, err := builder.BuildDocument(ctx, key, 1, body)
+	require.NoError(t, err)
+	require.Equal(t, "AAA", doc.Fields["a"])
+	require.NotContains(t, doc.Fields, "b")
+	require.Contains(t, doc.SelectableFields, "spec.x")
+	require.NotContains(t, doc.SelectableFields, "spec.y")
+
+	// Reload with different declared and selectable fields; the same builder
+	// must reflect them on the next document.
+	registry.Replace(
+		map[LowerGroupResource][]string{sfKey: {"spec.y"}},
+		nil,
+		map[LowerGroupResource]SearchFieldsProvider{sfKey: providerFor("b", "spec.b")},
+	)
+
+	doc, err = builder.BuildDocument(ctx, key, 1, body)
+	require.NoError(t, err)
+	require.Equal(t, "BBB", doc.Fields["b"])
+	require.NotContains(t, doc.Fields, "a")
+	require.Contains(t, doc.SelectableFields, "spec.y")
+	require.NotContains(t, doc.SelectableFields, "spec.x")
+}
+
+// Tags and description come from the spec via the standard builder, so a kind gets
+// them without registering its own document builder. Before this, doc.Tags and
+// doc.Description were only ever set by the dashboard builder, and every other kind
+// indexed without them — both fields were declared and mapped, but never populated.
+func TestStandardDocumentBuilder_SpecFields(t *testing.T) {
+	ctx := context.Background()
+	builder := StandardDocumentBuilder(nil)
+
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "notebooks",
+		Name:      "nb1",
+	}
+
+	build := func(t *testing.T, spec string) *IndexableDocument {
+		t.Helper()
+		body := []byte(`{
+			"apiVersion": "dashboard.grafana.app/v2beta1",
+			"kind": "Notebook",
+			"metadata": {"name": "nb1"},
+			"spec": ` + spec + `
+		}`)
+		doc, err := builder.BuildDocument(ctx, key, 1, body)
+		require.NoError(t, err)
+		return doc
+	}
+
+	t.Run("reads spec.tags", func(t *testing.T) {
+		doc := build(t, `{"title": "Checkout latency", "tags": ["incident", "checkout"]}`)
+		assert.Equal(t, []string{"incident", "checkout"}, doc.Tags)
+	})
+
+	t.Run("leaves tags unset when there are none", func(t *testing.T) {
+		assert.Nil(t, build(t, `{"title": "No tags"}`).Tags, "absent")
+		assert.Nil(t, build(t, `{"title": "Empty", "tags": []}`).Tags, "empty list")
+	})
+
+	// One malformed entry should not cost the resource its place in the index, nor
+	// the tags around it.
+	t.Run("skips entries that are not usable strings", func(t *testing.T) {
+		doc := build(t, `{"title": "Mixed", "tags": ["good", 42, null, "", "also-good"]}`)
+		assert.Equal(t, []string{"good", "also-good"}, doc.Tags)
+	})
+
+	t.Run("ignores a tags value that is not a list", func(t *testing.T) {
+		assert.Nil(t, build(t, `{"title": "Wrong shape", "tags": "incident"}`).Tags)
+	})
+
+	t.Run("reads spec.description", func(t *testing.T) {
+		doc := build(t, `{"title": "Checkout latency", "description": "Why checkout got slow"}`)
+		assert.Equal(t, "Why checkout got slow", doc.Description)
+	})
+
+	t.Run("leaves description empty when there is none", func(t *testing.T) {
+		assert.Empty(t, build(t, `{"title": "No description"}`).Description, "absent")
+		assert.Empty(t, build(t, `{"title": "Blank", "description": ""}`).Description, "empty string")
+	})
+
+	t.Run("ignores a description that is not a string", func(t *testing.T) {
+		assert.Empty(t, build(t, `{"title": "Wrong shape", "description": {"nested": true}}`).Description)
+	})
+
+	// The two are read from the same spec lookup, so a kind declaring both gets both.
+	t.Run("reads tags and description together", func(t *testing.T) {
+		doc := build(t, `{"title": "Both", "tags": ["incident"], "description": "Has both"}`)
+		assert.Equal(t, []string{"incident"}, doc.Tags)
+		assert.Equal(t, "Has both", doc.Description)
+	})
+
+	// The spec lookup must not displace what the constructor already resolves.
+	t.Run("still populates the standard fields", func(t *testing.T) {
+		doc := build(t, `{"title": "Checkout latency", "tags": ["incident"], "description": "d"}`)
+		assert.Equal(t, "Checkout latency", doc.Title)
+		assert.Equal(t, "nb1", doc.Name)
 	})
 }

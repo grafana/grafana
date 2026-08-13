@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Field, Switch, TextLink, useTheme2 } from '@grafana/ui';
+import { Field, Switch, TextLink, useStyles2 } from '@grafana/ui';
 
 import { type AzureMonitorDataSourceJsonData } from '../../types/types';
 
@@ -11,32 +12,30 @@ export interface Props {
   onBasicLogsEnabledChange: (basicLogsEnabled: boolean) => void;
 }
 
+const getStyles = (theme: GrafanaTheme2) => ({
+  description: css({
+    ...theme.typography.bodySmall,
+    color: theme.colors.text.secondary,
+    fontSize: '12px',
+    marginBottom: theme.spacing(1),
+  }),
+});
+
 export const BasicLogsToggle = (props: Props) => {
   const { options, onBasicLogsEnabledChange } = props;
 
-  const theme = useTheme2();
-  const styles = {
-    text: css({
-      ...theme.typography.body,
-      color: theme.colors.text.secondary,
-      fontSize: '11px',
-      a: css({
-        color: theme.colors.text.link,
-        textDecoration: 'underline',
-        '&:hover': {
-          textDecoration: 'none',
-        },
-      }),
-    }),
-  };
+  const styles = useStyles2(getStyles);
+
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => onBasicLogsEnabledChange(e.target.checked);
+
   const description = (
-    <p className={styles.text}>
+    <p className={styles.description}>
       <Trans i18nKey="components.basic-logs-toggle.description-basic-logs">
         Enabling this feature incurs Azure Monitor per-query costs on dashboard panels that query tables configured for{' '}
         <TextLink
           href="https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-configure?tabs=portal-1"
           external
+          variant="bodySmall"
         >
           Basic Logs
         </TextLink>
@@ -44,8 +43,10 @@ export const BasicLogsToggle = (props: Props) => {
       </Trans>
     </p>
   );
+
   return (
     <Field
+      noMargin
       description={description}
       label={t('components.basic-logs-toggle.label-enable-basic-logs', 'Enable Basic Logs')}
     >

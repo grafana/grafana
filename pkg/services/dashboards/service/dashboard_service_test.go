@@ -44,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -2212,7 +2213,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup test database and utilities
 			sqlStore, _ := sqlstore.InitTestDB(t)
-			lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
+			lockService := serverlock.ProvideService(legacysql.NewDatabaseProvider(sqlStore), tracing.InitializeTracerForTest())
 			kv := kvstore.NewFakeKVStore()
 
 			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
@@ -2249,7 +2250,7 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 	t.Run("Should start and stop background job correctly", func(t *testing.T) {
 		// Setup test database and utilities
 		sqlStore, _ := sqlstore.InitTestDB(t)
-		lockService := serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest())
+		lockService := serverlock.ProvideService(legacysql.NewDatabaseProvider(sqlStore), tracing.InitializeTracerForTest())
 
 		cfg := setting.NewCfg()
 		cfg.K8sDashboardCleanup = setting.K8sDashboardCleanupSettings{

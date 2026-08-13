@@ -138,6 +138,8 @@ type BitbucketRepositoryConfig struct {
 	Branch string `json:"branch"`
 	// TokenUser is the user that will be used to access the repository if it's a personal access token.
 	TokenUser string `json:"tokenUser,omitempty"`
+	// Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.
+	Email string `json:"email,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -349,6 +351,11 @@ func (r *Repository) ConnectionName() string {
 	return ""
 }
 
+// HasConnection reports whether this repository authenticates through a connection.
+func (r *Repository) HasConnection() bool {
+	return r.ConnectionName() != ""
+}
+
 type ConnectionInfo struct {
 	Name string `json:"name"`
 }
@@ -369,6 +376,15 @@ type CommitOptions struct {
 	// When true, the Comment field in Save drawers is pre-filled from
 	// SingleResourceMessageTemplate and rendered read-only.
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+
+	// Name used as the commit author instead of the user who triggered the
+	// commit. Only valid when signingMethod is unset.
+	AuthorName string `json:"authorName,omitempty"`
+
+	// Email used as the commit author instead of the user who triggered the
+	// commit. Only valid when signingMethod is unset.
+	AuthorEmail string `json:"authorEmail,omitempty"`
+
 	// Name used as the commit signer. Required for the signing key's identity
 	// to match the commit, which providers need to mark commits as Verified. When
 	// empty, defaults to "Grafana".
@@ -655,7 +671,10 @@ func (SyncStatus) OpenAPIModelName() string {
 }
 
 type WebhookStatus struct {
-	ID               int64    `json:"id,omitempty"`
+	// TODO: consolidate ID and UUID into a single string identifier in the next api version.
+	ID   int64  `json:"id,omitempty"`
+	UUID string `json:"uuid,omitempty"`
+
 	URL              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`

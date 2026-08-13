@@ -103,6 +103,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   const selectedConnection = connections.find((c) => c.metadata?.name === watchedConnectionName);
   const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);
+  const emailWebhookDisabled = type === 'bitbucket' && !watch('email')?.trim();
 
   useEffect(() => {
     if (connectionWebhookDisabled) {
@@ -264,6 +265,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                         id={'token'}
                         placeholder={gitFields.tokenConfig.placeholder}
                         isConfigured={tokenConfigured}
+                        revealable
                         onReset={() => {
                           setValue('token', '');
                           setTokenConfigured(false);
@@ -288,6 +290,25 @@ export function ConfigForm({ data }: ConfigFormProps) {
                     required: gitFields.tokenUserConfig.validation?.required,
                   })}
                   placeholder={gitFields.tokenUserConfig.placeholder}
+                />
+              </Field>
+            )}
+            {gitFields.emailConfig && (
+              <Field
+                noMargin
+                label={gitFields.emailConfig.label}
+                required={gitFields.emailConfig.required}
+                error={errors?.email?.message}
+                invalid={!!errors?.email}
+                description={gitFields.emailConfig.description}
+              >
+                <Input
+                  {...register('email', {
+                    required: gitFields.emailConfig.validation?.required,
+                    pattern: gitFields.emailConfig.validation?.pattern,
+                  })}
+                  type="email"
+                  placeholder={gitFields.emailConfig.placeholder}
                 />
               </Field>
             )}
@@ -436,6 +457,14 @@ export function ConfigForm({ data }: ConfigFormProps) {
             name="webhook.baseUrl"
             disabledName="webhook.disabled"
             connectionWebhookDisabled={connectionWebhookDisabled}
+            disabledReason={
+              emailWebhookDisabled
+                ? t(
+                    'provisioning.webhook-section.description-webhook-disabled-email',
+                    'Webhook integration is disabled because the Atlassian account email is not set. Set it above to enable webhooks.'
+                  )
+                : undefined
+            }
             disabledError={errors?.webhook?.disabled?.message}
           />
         )}
@@ -451,7 +480,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 label={t('provisioning.config-form.label-enabled', 'Enabled')}
                 description={t(
                   'provisioning.config-form.description-enabled',
-                  'Once automatic pulling is enabled, the target cannot be changed.'
+                  'Once automatic pulling is enabled, the target type below cannot be changed.'
                 )}
               >
                 <Switch {...register('sync.enabled')} id={'sync.enabled'} />

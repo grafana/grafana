@@ -1,6 +1,7 @@
 package nats
 
 import (
+	"context"
 	"encoding/base64"
 	"testing"
 
@@ -19,7 +20,6 @@ import (
 // notification.
 func TestIntegrationProvisioningNATS_ConnectionReconciledOverNATS(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := t.Context()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	const connName = "nats-connection"
@@ -45,10 +45,11 @@ func TestIntegrationProvisioningNATS_ConnectionReconciledOverNATS(t *testing.T) 
 		},
 	}}
 
-	created, err := helper.CreateGithubConnection(t, ctx, conn)
+	created, err := helper.CreateGithubConnection(t, conn)
 	require.NoError(t, err, "failed to create connection")
 	t.Cleanup(func() {
-		_ = helper.Connections.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		cleanupCtx := context.WithoutCancel(t.Context())
+		_ = helper.Connections.Resource.Delete(cleanupCtx, created.GetName(), metav1.DeleteOptions{})
 	})
 
 	helper.WaitForHealthyConnection(t, created.GetName())

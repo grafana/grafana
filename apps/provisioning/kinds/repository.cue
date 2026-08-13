@@ -71,6 +71,8 @@ repository: {
 					branch: string
 					// TokenUser is the user that will be used to access the repository if it's a personal access token.
 					tokenUser?: string
+					// Email is the Atlassian account email used to authenticate the Bitbucket REST API. Required to enable webhooks.
+					email?: string
 					// Token for accessing the repository. If set, it will be encrypted into encryptedToken, then set to an empty string again.
 					token?: string
 					// Token for accessing the repository, but encrypted. This is not possible to read back to a user decrypted.
@@ -119,6 +121,12 @@ repository: {
 					// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}.
 					// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
 					singleResourceMessageTemplate?: string
+					// Name used as the commit author instead of the user who triggered
+					// the commit. Only valid when signingMethod is unset.
+					authorName?: string
+					// Email used as the commit author instead of the user who triggered
+					// the commit. Only valid when signingMethod is unset.
+					authorEmail?: string
 					// Name used as the commit signer. Required for the signing key's
 					// identity to match the commit, which providers need to mark commits
 					// as Verified. When empty, defaults to "Grafana".
@@ -170,7 +178,9 @@ repository: {
 					count:    int
 				}
 				#WebhookStatus: {
-					id?:     int
+					id?: int
+					// TODO: consolidate id and uuid into a single string identifier in the next version.
+					uuid?:   string
 					url?:    string
 					secret?: string
 					encryptedSecret?: [...string]

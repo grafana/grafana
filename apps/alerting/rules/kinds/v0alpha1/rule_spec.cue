@@ -32,9 +32,11 @@ TemplateString: string
 }
 
 // TODO: validate that only one can specify source=true
+// & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
+
 #ExpressionMap: {
 	[string]: #Expression
-} // & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
+}
 
 #Expression: {
 	// The type of query if this is a query expression
