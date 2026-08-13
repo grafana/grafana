@@ -337,7 +337,8 @@
       "metadata": {
         "name": "alertingCentralAlertHistory",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-05-29T15:01:38Z"
+        "creationTimestamp": "2024-05-29T15:01:38Z",
+        "deletionTimestamp": "2026-08-05T14:47:01Z"
       },
       "spec": {
         "description": "Enables the new central alert history.",
@@ -2189,13 +2190,17 @@
     {
       "metadata": {
         "name": "deletedFolderResourceCleanup",
-        "resourceVersion": "1783997108632",
-        "creationTimestamp": "2026-07-14T02:45:08Z"
+        "resourceVersion": "1786556486769",
+        "creationTimestamp": "2026-07-14T02:45:08Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-12 17:41:26.769183788 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server",
+        "description": "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -4207,6 +4212,40 @@
     },
     {
       "metadata": {
+        "name": "libraryElementFolderUIDHeal",
+        "resourceVersion": "1786544808568",
+        "creationTimestamp": "2026-08-11T01:11:20Z",
+        "deletionTimestamp": "2026-08-12T17:41:26Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-12 14:26:48.568641559 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libraryElementFolderUIDRepair",
+        "resourceVersion": "1786556486769",
+        "creationTimestamp": "2026-08-12T17:41:26Z"
+      },
+      "spec": {
+        "description": "Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "libraryElements.folderTreeViaSearch",
         "resourceVersion": "1782273749340",
         "creationTimestamp": "2026-06-24T04:02:29Z"
@@ -5236,17 +5275,17 @@
     {
       "metadata": {
         "name": "provisioning.userAttribution",
-        "resourceVersion": "1783717809512",
+        "resourceVersion": "1786613782023",
         "creationTimestamp": "2026-07-08T13:32:58Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-07-10 21:10:09.512157 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-08-13 09:36:22.023466 +0000 UTC"
         }
       },
       "spec": {
         "description": "Author Git Sync commits as the acting Grafana user",
         "stage": "preview",
         "codeowner": "@grafana/grafana-app-platform-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

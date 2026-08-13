@@ -186,6 +186,55 @@ func TestPickBestSnapshot(t *testing.T) {
 		assert.Equal(t, key, c.key)
 	})
 
+	requiringFeatures := func(features ...resource.IndexFeature) *bleveBackend {
+		be := newBackend(minV)
+		be.requiredFeatures = features
+		return be
+	}
+	having := func(ver string, rv int64, age time.Duration, features ...resource.IndexFeature) *IndexMeta {
+		m := snap(ver, rv, age)
+		m.Features = features
+		m.FeaturesRecorded = true
+		return m
+	}
+
+	t.Run("dropped when missing a required feature", func(t *testing.T) {
+		all := map[ulid.ULID]*IndexMeta{makeULID(t, now): having("11.5.0", 100, time.Minute)}
+		_, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		assert.False(t, ok)
+	})
+
+	t.Run("kept when it has the required feature", func(t *testing.T) {
+		key := makeULID(t, now)
+		all := map[ulid.ULID]*IndexMeta{key: having("11.5.0", 100, time.Minute, "alpha")}
+		c, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, key, c.key)
+	})
+
+	// Snapshots uploaded before features were recorded are unknown, not known to be
+	// unusable, so they stay in the running as before.
+	t.Run("kept when features were not recorded", func(t *testing.T) {
+		key := makeULID(t, now)
+		all := map[ulid.ULID]*IndexMeta{key: snap("11.5.0", 100, time.Minute)}
+		c, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, key, c.key)
+	})
+
+	// What the filter is for: the newest snapshot lacks the feature, so an older one
+	// that has it is used instead of downloading, rejecting and rebuilding.
+	t.Run("falls back to an older snapshot that has the feature", func(t *testing.T) {
+		usable := makeULID(t, now.Add(-30*time.Second))
+		all := map[ulid.ULID]*IndexMeta{
+			usable:           having("11.4.5", 100, time.Minute, "alpha"),
+			makeULID(t, now): having("11.5.0", 999, time.Minute),
+		}
+		c, ok := requiringFeatures("alpha").pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, usable, c.key)
+	})
+
 	// Without the filter the newer one wins as tier 2 and its documents are misread.
 	t.Run("falls back to an older snapshot when the newest needs an unknown feature", func(t *testing.T) {
 		compatible := makeULID(t, now.Add(-30*time.Second))
