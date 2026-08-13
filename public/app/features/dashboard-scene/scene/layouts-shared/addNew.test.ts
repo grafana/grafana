@@ -2,6 +2,7 @@ import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../DashboardScene';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
@@ -47,6 +48,19 @@ describe('addNewTabTo', () => {
       const tabs = (newBody as TabsLayoutManager).state.tabs;
       expect(tabs).toHaveLength(1);
       expect(tabs[0].getLayout().getVizPanels()).toHaveLength(1);
+    });
+
+    it('should use the dashboard default layout when the existing layout is empty', () => {
+      const grid = AutoGridLayoutManager.createEmpty();
+      new DashboardScene({
+        body: grid,
+        preferences: { defaultLayoutTemplate: DefaultGridLayoutManager.createEmpty() },
+      });
+
+      addNewTabTo(grid);
+
+      const newBody = (grid.parent as DashboardScene).state.body as TabsLayoutManager;
+      expect(newBody.state.tabs[0].getLayout()).toBeInstanceOf(DefaultGridLayoutManager);
     });
   });
 
@@ -127,6 +141,19 @@ describe('addNewRowTo', () => {
       const rows = (newBody as RowsLayoutManager).state.rows;
       expect(rows).toHaveLength(1);
       expect(rows[0].getLayout().getVizPanels()).toHaveLength(1);
+    });
+
+    it('should use the dashboard default layout when the existing layout is empty', () => {
+      const grid = AutoGridLayoutManager.createEmpty();
+      new DashboardScene({
+        body: grid,
+        preferences: { defaultLayoutTemplate: DefaultGridLayoutManager.createEmpty() },
+      });
+
+      addNewRowTo(grid);
+
+      const newBody = (grid.parent as DashboardScene).state.body as RowsLayoutManager;
+      expect(newBody.state.rows[0].getLayout()).toBeInstanceOf(DefaultGridLayoutManager);
     });
   });
 

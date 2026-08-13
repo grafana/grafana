@@ -2,10 +2,11 @@ import { config } from '@grafana/runtime';
 import { type SceneGridRow } from '@grafana/scenes';
 
 import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
-import { type RowItem } from '../layout-rows/RowItem';
+import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
-import { type TabItem } from '../layout-tabs/TabItem';
+import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
@@ -21,8 +22,11 @@ export function addNewTabTo(layout: DashboardLayoutManager): TabItem {
   }
 
   // Create new tabs layout and wrap the current layout in the first tab
-  const tabsLayout = TabsLayoutManager.createEmpty();
-  tabsLayout.state.tabs[0].setState({ layout: layout.clone() });
+  const defaultLayout =
+    layout.getVizPanels().length === 0 ? getDashboardSceneFor(layout).getDefaultLayout() : undefined;
+  const tabsLayout = new TabsLayoutManager({
+    tabs: [new TabItem({ layout: defaultLayout ?? layout.clone() })],
+  });
 
   layoutParent.switchLayout(tabsLayout);
 
@@ -64,7 +68,11 @@ export function addNewRowTo(layout: DashboardLayoutManager): RowItem | SceneGrid
   // If we want to add a row and current layout is custom grid or auto we migrate to rows layout
   // And wrap current layout in a row
 
-  const rowsLayout = RowsLayoutManager.createFromLayout(layoutParent.getLayout());
+  const defaultLayout =
+    layout.getVizPanels().length === 0 ? getDashboardSceneFor(layout).getDefaultLayout() : undefined;
+  const rowsLayout = defaultLayout
+    ? new RowsLayoutManager({ rows: [new RowItem({ layout: defaultLayout })] })
+    : RowsLayoutManager.createFromLayout(layoutParent.getLayout());
   layoutParent.switchLayout(rowsLayout);
 
   const row = rowsLayout.state.rows[0];
