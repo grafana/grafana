@@ -74,15 +74,8 @@ export const v0alpha1AppMapper: AppPluginMetasMapper<PluginMetasResponse> = (res
       return acc;
     }
 
-    try {
-      const config = specMapper(curr.spec);
-      acc[config.id] = config;
-    } catch (error) {
-      logPluginMetaWarning('PluginMeta: skipping malformed app plugin meta', {
-        pluginId: curr.spec.pluginJson.id,
-        error: String(error),
-      });
-    }
+    const config = specMapper(curr.spec);
+    acc[config.id] = config;
     return acc;
   }, result);
 };
