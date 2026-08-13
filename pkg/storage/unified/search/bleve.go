@@ -129,7 +129,49 @@ type BleveOptions struct {
 	// PostRankAuthzEnabled is true. Zero values fall back to the defaults in
 	// PostRankAuthzConfig.effective().
 	PostRankAuthz PostRankAuthzConfig
+
+	// TrashRetention hides trash that garbage collection is about to remove.
+	TrashRetention TrashRetentionConfig
 }
+
+// TrashRetentionConfig is how long a deleted object stays restorable.
+//
+// The values come from the garbage collection settings rather than search's own, so
+// the two cannot disagree about what is expired. Search and storage can be separate
+// deployments, so these have to be set for this process too.
+type TrashRetentionConfig struct {
+	// Enabled reports whether garbage collection runs. With it off nothing is ever
+	// collected, so old trash is still restorable and must not be hidden.
+	Enabled bool
+	MaxAge  time.Duration
+	// DashboardsMaxAge is separate because dashboards keep trash far longer.
+	DashboardsMaxAge time.Duration
+}
+
+// expirationThreshold returns the deletion time, in unix milliseconds, that trash
+// for this resource must be at or after to still be offered.
+//
+// Mirrors kvStorageBackend.garbageCollectionCutoffTimestamp. A window of zero
+// applies none, which would otherwise expire everything at once.
+func (c TrashRetentionConfig) expirationThreshold(group, resource string, now time.Time) (int64, bool) {
+	if !c.Enabled {
+		return 0, false
+	}
+	window := c.MaxAge
+	if group == dashboardGroup && resource == dashboardResource {
+		window = c.DashboardsMaxAge
+	}
+	if window <= 0 {
+		return 0, false
+	}
+	return now.Add(-window).UnixMilli(), true
+}
+
+// The one kind with its own retention period, matching the storage backend.
+const (
+	dashboardGroup    = "dashboard.grafana.app"
+	dashboardResource = "dashboards"
+)
 
 // SnapshotOptions configures remote index snapshot handling in BuildIndex and
 // background upload scheduling.
@@ -1704,6 +1746,8 @@ type bleveIndex struct {
 	// the in-searcher permissionScopedQuery path is used.
 	postRankAuthzEnabled bool
 	postRankAuthz        PostRankAuthzConfig
+
+	trashRetention TrashRetentionConfig
 }
 
 func (b *bleveBackend) newBleveIndex(
@@ -1738,6 +1782,7 @@ func (b *bleveBackend) newBleveIndex(
 		indexMetrics:         b.indexMetrics,
 		postRankAuthzEnabled: b.opts.PostRankAuthzEnabled,
 		postRankAuthz:        b.opts.PostRankAuthz.effective(),
+		trashRetention:       b.opts.TrashRetention,
 	}
 	bi.updaterCond = sync.NewCond(&bi.updaterMu)
 	if b.indexMetrics != nil {
@@ -2008,7 +2053,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 	stats.AddResultsConversionTime(time.Since(start))
 
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: scopeQuery(q, false),
+		Query: scopeQuery(q, false, 0),
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
 			resource.SEARCH_FIELD_FOLDER,
@@ -2090,7 +2135,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 
 func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: scopeQuery(bleve.NewMatchAllQuery(), false),
+		Query: scopeQuery(bleve.NewMatchAllQuery(), false, 0),
 		Size:  0,
 		Facets: bleve.FacetsRequest{
 			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_MANAGED_BY, 1000), // typically less then 5
@@ -2301,7 +2346,7 @@ func (b *bleveIndex) DocCount(ctx context.Context, folder string, stats *resourc
 	req := &bleve.SearchRequest{
 		Size:   0, // we just need the count
 		Fields: []string{},
-		Query:  scopeQuery(q, false),
+		Query:  scopeQuery(q, false, 0),
 	}
 	rsp, err := b.index.SearchInContext(ctx, req)
 	if rsp == nil {
@@ -2442,7 +2487,13 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		return nil, errResult
 	}
 	textQuery := b.buildTextQuery(searchrequest, req)
-	searchrequest.Query = scopeQuery(combineFilterAndTextQueries(filters, textQuery), req.IsDeleted)
+	expirationThreshold := int64(0)
+	if req.IsDeleted {
+		if t, ok := b.trashRetention.expirationThreshold(b.key.Group, b.key.Resource, time.Now()); ok {
+			expirationThreshold = t
+		}
+	}
+	searchrequest.Query = scopeQuery(combineFilterAndTextQueries(filters, textQuery), req.IsDeleted, expirationThreshold)
 
 	// postFilter applies authorization after ranking in runPostFilterAuthz, so
 	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
@@ -2512,7 +2563,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 //
 // Live is "not marked deleted" rather than "marked not deleted", because
 // documents written before the marker carry no value for the field.
-func scopeQuery(q query.Query, deleted bool) query.Query {
+func scopeQuery(q query.Query, deleted bool, expirationThreshold int64) query.Query {
 	marked := bleve.NewBoolFieldQuery(true)
 	marked.SetField(resource.SEARCH_FIELD_IS_DELETED)
 
@@ -2528,6 +2579,16 @@ func scopeQuery(q query.Query, deleted bool) query.Query {
 	provisioned := bleve.NewBoolFieldQuery(true)
 	provisioned.SetField(resource.SEARCH_FIELD_IS_PROVISIONED)
 	scoped.AddMustNot(provisioned)
+
+	// Excluding what is too old, rather than requiring a recent enough deletion,
+	// keeps the markers that carry no deletion time at all.
+	if expirationThreshold > 0 {
+		cutoff := float64(expirationThreshold)
+		inclusive := false
+		expired := bleve.NewNumericRangeInclusiveQuery(nil, &cutoff, nil, &inclusive)
+		expired.SetField(resource.SEARCH_FIELD_DELETION_TIME)
+		scoped.AddMustNot(expired)
+	}
 
 	// Bleve drives iteration from the Must clause and uses Filter only to test the
 	// documents that clause produced. With nothing to match on, the marker becomes
