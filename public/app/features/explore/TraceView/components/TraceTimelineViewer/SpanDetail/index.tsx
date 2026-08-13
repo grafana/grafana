@@ -117,7 +117,7 @@ const useResourceAttributesExtensionLinks = ({
   const resourceLinksGetter = useCallback(
     (pairs: TraceKeyValuePair[], index: number) => {
       const { key } = pairs[index] ?? {};
-      return links.filter((link) => link.group?.name === key || link.category === key);
+      return links.filter((link) => link.category === key);
     },
     [links]
   );
