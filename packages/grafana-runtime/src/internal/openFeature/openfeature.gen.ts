@@ -51,6 +51,8 @@ export const FlagKeys = {
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the feedback button in the dashboard edit sidebar */
   FeedbackButton: "feedbackButton",
+  /** Renders the flame graph's top table using TableNG instead of the legacy Table */
+  FlameGraphTableNg: "flameGraph.tableNg",
   /** Enables the new Flame Graph UI containing the Call Tree view */
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
@@ -380,6 +382,17 @@ export const useFlagFaroSessionReplay = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagFeedbackButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("feedbackButton", true, options).value;
+};
+
+/**
+ * Renders the flame graph's top table using TableNG instead of the legacy Table
+ *
+ * **Details:**
+ * - flag key: `flameGraph.tableNg`
+ * - default value: `false`
+ */
+export const useFlagFlameGraphTableNg = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("flameGraph.tableNg", false, options).value;
 };
 
 /**
@@ -827,10 +840,10 @@ export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions)
  *
  * **Details:**
  * - flag key: `provisioning.gitConventions`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.gitConventions", false, options).value;
+  return useFlag("provisioning.gitConventions", true, options).value;
 };
 
 /**
@@ -849,10 +862,10 @@ export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions)
  *
  * **Details:**
  * - flag key: `provisioning.userAttribution`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagProvisioningUserAttribution = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.userAttribution", false, options).value;
+  return useFlag("provisioning.userAttribution", true, options).value;
 };
 
 /**

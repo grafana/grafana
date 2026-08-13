@@ -208,7 +208,9 @@ func NewStorageBackend(
 	kvBackendOpts.Log = log.New("storage-backend")
 	kvBackendOpts.DBKeepAlive = eDB
 	kvBackendOpts.GCGate = gcGate
-	kvBackendOpts.DisableStorageServices = disableStorageServices
+	// The KV backend has one switch for all background write jobs, so the older
+	// pruner-only setting maps onto it.
+	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
 
 	for _, opt := range opts {
 		opt(&kvBackendOpts)

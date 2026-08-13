@@ -617,11 +617,11 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 		require.NoError(t, err)
 
 		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-			KvStore:       kvStore,
-			RvManager:     rvMgr,
-			DBKeepAlive:   eDB,
-			DisablePruner: true,
-			Log:           log.New("test.kv.retry"),
+			KvStore:                kvStore,
+			RvManager:              rvMgr,
+			DBKeepAlive:            eDB,
+			DisableStorageServices: true,
+			Log:                    log.New("test.kv.retry"),
 		})
 		require.NoError(t, err)
 
@@ -715,7 +715,6 @@ func newRetryTestResourceServerWithSearch(t *testing.T, backend resource.Storage
 	cfg.EnableSearch = true
 	cfg.IndexFileThreshold = 1000
 	cfg.IndexPath = t.TempDir()
-	cfg.DisablePruner = true
 
 	docBuilders := &resource.TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
