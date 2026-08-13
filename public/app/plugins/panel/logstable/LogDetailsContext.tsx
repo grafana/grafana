@@ -67,9 +67,9 @@ export const LogDetailsContextProvider = ({
   useEffect(() => {
     if (currentLog) {
       // Call the body getter to trigger its logic.
-      void currentLog?.body;
+      void currentLog.body;
     }
-  }, [currentLog])
+  }, [currentLog]);
 
   // Sync prettifyDetailsJSON
   useEffect(() => {

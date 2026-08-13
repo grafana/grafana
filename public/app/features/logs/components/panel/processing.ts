@@ -130,7 +130,7 @@ export class LogListModel implements LogRowModel {
     }
   }
 
-  clone({ prettifyJSON }: { prettifyJSON?: boolean }) {
+  clone({ prettifyJSON }: { prettifyJSON?: boolean } = {}) {
     const clone = Object.assign(Object.create(Object.getPrototypeOf(this)), this);
     // Unless this function is required outside of <LogLineDetailsLog />, we create a wrapped clone, so new lines are not stripped.
     if (prettifyJSON !== undefined) {
