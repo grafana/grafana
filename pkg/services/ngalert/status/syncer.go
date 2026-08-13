@@ -255,7 +255,7 @@ func (s *Syncer) persist(ctx context.Context, key ngmodels.AlertRuleKey, status 
 		return
 	}
 	h := hashBytes(data)
-	if prev, seen := s.lastHash[key]; seen && prev == h {
+	if prev, ok := s.lastHash[key]; ok && prev == h {
 		return
 	}
 	if err := write(ctx); err != nil {
