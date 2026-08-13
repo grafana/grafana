@@ -127,7 +127,7 @@ describe('Render', () => {
     jest.resetAllMocks();
     putMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
     getMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
-    jest.mocked(getDataSourceInstance).mockResolvedValue(datasource as unknown as DataSourceApi);
+    jest.mocked(getDataSourceInstance).mockResolvedValue(datasource as DataSourceApi);
     datasource.resources.getRegions = jest.fn().mockResolvedValue([
       {
         label: 'ap-east-1',
