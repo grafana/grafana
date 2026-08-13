@@ -50,10 +50,16 @@ jobs:
       key: ${{ steps.key.outputs.key }}
       prefix: ${{ steps.key.outputs.prefix }}
     steps:
+      # The key is derived from the module files and nothing else, so only
+      # those are checked out.
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
           filter: blob:none
+          sparse-checkout: |
+            **/*.mod
+            **/*.sum
+          sparse-checkout-cone-mode: false
 
       # The key has to match the one setup-go computes, so it is derived the
       # same way: the pinned Go version and a hash of the module files.
@@ -79,7 +85,9 @@ jobs:
       # run, which would block every workflow waiting on this one.
       - name: Report a miss
         if: steps.probe.outputs.cache-hit != 'true'
-        run: echo "::warning title=Go build cache miss::${{ steps.key.outputs.key }} is not cached, rebuilding it"
+        env:
+          KEY: ${{ steps.key.outputs.key }}
+        run: echo "::warning title=Go build cache miss::${KEY} is not cached, rebuilding it"
 
   populate:
     name: Populate Go build cache
@@ -117,17 +125,7 @@ jobs:
       - name: Setup Go
         uses: ./.github/actions/setup-go
         with:
-          build-cache: 'false'
-
-      # Compiling from nothing takes as long as the cache saves, so start from
-      # the newest entry for this toolchain. Go keys its build cache by content,
-      # so only the packages the module change touches are rebuilt.
-      - name: Restore the newest build cache for this toolchain
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.cache/go-build
-          key: ${{ needs.probe.outputs.key }}
-          restore-keys: ${{ needs.probe.outputs.prefix }}
+          cache-write: 'build'
 
       - name: Build all packages
         env:
@@ -144,9 +142,3 @@ jobs:
               (cd "$dir" && go build -tags="$tags" ./...)
             done
           done
-
-      - name: Save the build cache
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.cache/go-build
-          key: ${{ needs.probe.outputs.key }}

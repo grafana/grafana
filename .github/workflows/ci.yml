@@ -88,7 +88,7 @@ jobs:
 
   feature-toggles:
     needs: [detect-changes, go-build-cache]
-    if: github.event_name == 'pull_request'
+    if: ${{ !cancelled() && needs.go-build-cache.result != 'failure' && github.event_name == 'pull_request' }}
     permissions:
       contents: read
       id-token: write
@@ -110,6 +110,7 @@ jobs:
 
   swagger-gen:
     needs: [detect-changes, go-build-cache]
+    if: ${{ !cancelled() && needs.go-build-cache.result != 'failure' }}
     permissions:
       contents: read
       id-token: write
@@ -176,7 +177,7 @@ jobs:
   # Backend and frontend both, so they wait on the Go and yarn caches.
   e2e-tests:
     needs: [detect-changes, go-build-cache, yarn-cache]
-    if: always() && needs.go-build-cache.result != 'failure' && needs.yarn-cache.result != 'failure'
+    if: ${{ !cancelled() && needs.go-build-cache.result != 'failure' && needs.yarn-cache.result != 'failure' }}
     permissions:
       contents: read
       id-token: write
@@ -186,7 +187,7 @@ jobs:
 
   frontend-unit-tests:
     needs: [detect-changes, go-build-cache, yarn-cache]
-    if: always() && needs.go-build-cache.result != 'failure' && needs.yarn-cache.result != 'failure'
+    if: ${{ !cancelled() && needs.go-build-cache.result != 'failure' && needs.yarn-cache.result != 'failure' }}
     permissions:
       contents: read
       id-token: write

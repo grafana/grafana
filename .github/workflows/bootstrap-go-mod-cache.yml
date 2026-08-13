@@ -41,10 +41,16 @@ jobs:
       key: ${{ steps.key.outputs.key }}
       prefix: ${{ steps.key.outputs.prefix }}
     steps:
+      # The key is derived from the module files and nothing else, so only
+      # those are checked out.
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
           filter: blob:none
+          sparse-checkout: |
+            **/*.mod
+            **/*.sum
+          sparse-checkout-cone-mode: false
 
       # The key has to match the one setup-go computes, so it is derived the
       # same way: the pinned Go version and a hash of the module files.
@@ -70,7 +76,9 @@ jobs:
       # run, which would block every workflow waiting on this one.
       - name: Report a miss
         if: steps.probe.outputs.cache-hit != 'true'
-        run: echo "::warning title=Go module cache miss::${{ steps.key.outputs.key }} is not cached, downloading it"
+        env:
+          KEY: ${{ steps.key.outputs.key }}
+        run: echo "::warning title=Go module cache miss::${KEY} is not cached, downloading it"
 
   populate:
     name: Populate Go module cache
@@ -89,7 +97,8 @@ jobs:
       - name: Setup Go
         uses: ./.github/actions/setup-go
         with:
-          cache: 'false'
+          build-cache: 'false'
+          cache-write: 'mod'
 
       - name: Use the S3 module proxy
         id: s3-proxy
@@ -110,24 +119,9 @@ jobs:
             echo "GOCACHEPROG="
           } >> "$GITHUB_ENV"
 
-      # Most of the module set is unchanged between runs, so start from the
-      # newest entry and let the download fetch only what is missing.
-      - name: Restore the newest module cache for this toolchain
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ needs.probe.outputs.key }}
-          restore-keys: ${{ needs.probe.outputs.prefix }}
-
       - name: Download modules
         run: |
           set -euo pipefail
           for dir in $(go list -m -f '{{.Dir}}'); do
             (cd "$dir" && go mod download all)
           done
-
-      - name: Save the module cache
-        uses: actions/cache/save@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ needs.probe.outputs.key }}
