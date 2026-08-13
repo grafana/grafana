@@ -1,4 +1,5 @@
-import { type performanceUtils } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { type SceneQueryControllerLike, type Unsubscribable, type performanceUtils } from '@grafana/scenes';
 
 import { registerPerformanceObserver } from './performanceUtils';
 
@@ -18,25 +19,80 @@ interface RenderBindingMessage<T extends MessageEventType> {
  * has finished rendering all panels for report capture.
  *
  * Sends a `REPORT_RENDER_COMPLETE` message via the `window.__grafanaImageRendererMessageChannel`
- * chromedp binding when a `dashboard_view` interaction completes, meaning all panels have gone
- * through the full lifecycle (queries, transforms, field config, rendering).
+ * chromedp binding once a `dashboard_view` interaction completes AND the query controller has then
+ * stayed idle for `config.reportRenderQueryGracePeriodMs` (see the `report_render_query_grace_period`
+ * setting) — the scenes profiler's own completion signal fires as soon as queries momentarily hit
+ * zero, which races with repeat panels that register their queries late (e.g. after a repeat
+ * variable's own query resolves). The grace window pauses while any query is running, however long
+ * it takes, and only counts down once the controller is genuinely idle.
  *
  * This observer is only registered for report routes to avoid any overhead on
  * normal dashboard usage.
  */
 export class ReportRenderReadinessObserver implements performanceUtils.ScenePerformanceObserver {
+  private graceTimer: ReturnType<typeof setTimeout> | null = null;
+  private stateSubscription: Unsubscribable | null = null;
+  // True from the first dashboard_view completion until we actually send the message — guards the
+  // subscription below so it only acts once we've entered the settle-and-verify phase.
+  private settling = false;
+
+  constructor(private queryController?: SceneQueryControllerLike) {}
+
   onDashboardInteractionComplete = (data: performanceUtils.DashboardInteractionCompleteData): void => {
-    if (data.interactionType === 'dashboard_view') {
+    if (data.interactionType !== 'dashboard_view') {
+      return;
+    }
+
+    if (!this.queryController) {
       sendMessageEvent('REPORT_RENDER_COMPLETE', { success: true });
+      return;
+    }
+
+    this.settling = true;
+
+    if (!this.stateSubscription) {
+      // Pause the grace timer for as long as any query is running, and only start it once the
+      // controller goes idle — a fixed delay from the *start* of a late query would fire while
+      // that query is still in flight if it takes longer than the grace window to complete.
+      this.stateSubscription = this.queryController.subscribeToState((newState) => {
+        if (!this.settling) {
+          return;
+        }
+        if (newState.isRunning) {
+          this.clearGraceTimer();
+        } else {
+          this.armGraceTimer();
+        }
+      });
+    }
+
+    if (!this.queryController.state.isRunning) {
+      this.armGraceTimer();
     }
   };
+
+  private armGraceTimer(): void {
+    this.clearGraceTimer();
+    this.graceTimer = setTimeout(() => {
+      this.graceTimer = null;
+      this.settling = false;
+      sendMessageEvent('REPORT_RENDER_COMPLETE', { success: true });
+    }, config.reportRenderQueryGracePeriodMs);
+  }
+
+  private clearGraceTimer(): void {
+    if (this.graceTimer) {
+      clearTimeout(this.graceTimer);
+      this.graceTimer = null;
+    }
+  }
 }
 
 let instance: ReportRenderReadinessObserver | null = null;
 
-export function initializeReportRenderReadinessObserver(): void {
+export function initializeReportRenderReadinessObserver(queryController?: SceneQueryControllerLike): void {
   if (!instance) {
-    instance = new ReportRenderReadinessObserver();
+    instance = new ReportRenderReadinessObserver(queryController);
     registerPerformanceObserver(instance, 'RRO');
   }
 }

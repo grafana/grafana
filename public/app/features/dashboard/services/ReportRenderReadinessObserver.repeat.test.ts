@@ -1,27 +1,31 @@
+import { config } from '@grafana/runtime';
 import { behaviors, performanceUtils } from '@grafana/scenes';
 
 import { ReportRenderReadinessObserver } from './ReportRenderReadinessObserver';
 
 /**
- * Deterministic reproduction of blank repeat panels on the report render page (`/d-report/`).
+ * Verifies the fix for blank repeat panels on the report render page (`/d-report/`).
  *
- * The image renderer waits for a single `REPORT_RENDER_COMPLETE` message, which is sent when the
- * `dashboard_view` interaction completes. The scenes profiler completes that interaction as soon as
- * `SceneQueryController.runningQueriesCount()` reaches 0 (after a ~2s post-storm tail window).
+ * The image renderer waits for a single `REPORT_RENDER_COMPLETE` message, which the scenes profiler
+ * used to send as soon as `SceneQueryController.runningQueriesCount()` reached 0 (after a ~2s
+ * post-storm tail window). With repeat panels, the running-query count momentarily hits 0 in the gap
+ * *after* the repeat variable's query completes but *before* the freshly-materialized repeat panels
+ * have registered their own queries — if nothing re-registered within that 2s tail, the profiler
+ * declared the dashboard done and the renderer captured a half-loaded page.
  *
- * With repeat panels, the running-query count momentarily hits 0 in the gap *after* the repeat
- * variable's query completes but *before* the freshly-materialized repeat panels have registered
- * their own queries. If nothing re-registers within the tail window, the profiler declares the
- * dashboard done and the renderer captures a half-loaded page — blank repeat panels.
+ * The fix layers a second, longer grace window (`config.reportRenderQueryGracePeriodMs`, backed by
+ * the `report_render_query_grace_period` ini setting) onto the observer itself: on `dashboard_view`
+ * completion it doesn't trust the signal immediately. It watches the query controller directly —
+ * pausing while any query is running (regardless of how long it takes) and only counting down once
+ * the controller is genuinely idle — and only sends `REPORT_RENDER_COMPLETE` once that quiet window
+ * elapses uninterrupted.
  *
  * This test drives the real SceneQueryController + SceneRenderProfiler + ReportRenderReadinessObserver
- * through that exact query timeline. Panel/variable queries are represented via the controller's real
- * `queryStarted`/`queryCompleted` API — the same calls SceneQueryRunner and TestVariable make internally —
+ * through that exact query timeline, using the controller's real `queryStarted`/`queryCompleted` API
  * so the timeline is deterministic instead of dependent on browser render timing.
  */
 
-// The profiler records a trailing-frame window after the running-query count reaches zero before it
-// declares the interaction complete. Keep in sync with POST_STORM_WINDOW in @grafana/scenes.
+// Keep in sync with POST_STORM_WINDOW in @grafana/scenes.
 const POST_STORM_WINDOW = 2000;
 
 type QueryEntry = Parameters<behaviors.SceneQueryController['queryStarted']>[0];
@@ -32,6 +36,7 @@ function makeQueryEntry(type = 'data-source-request'): QueryEntry {
 
 describe('ReportRenderReadinessObserver — repeat panel render readiness', () => {
   let channel: jest.Mock;
+  const originalGracePeriodMs = config.reportRenderQueryGracePeriodMs;
 
   beforeEach(() => {
     jest.useFakeTimers();
@@ -45,44 +50,86 @@ describe('ReportRenderReadinessObserver — repeat panel render readiness', () =
     perf.clearResourceTimings = () => {};
     channel = jest.fn();
     window.__grafanaImageRendererMessageChannel = channel;
-    performanceUtils.getScenePerformanceTracker().addObserver(new ReportRenderReadinessObserver());
   });
 
   afterEach(() => {
     performanceUtils.getScenePerformanceTracker().clearObservers();
     delete (window as Record<string, unknown>).__grafanaImageRendererMessageChannel;
+    config.reportRenderQueryGracePeriodMs = originalGracePeriodMs;
     jest.useRealTimers();
   });
 
   function setupProfiledDashboard() {
     const profiler = new performanceUtils.SceneRenderProfiler();
     const queryController = new behaviors.SceneQueryController({ enableProfiling: true }, profiler);
+    performanceUtils.getScenePerformanceTracker().addObserver(new ReportRenderReadinessObserver(queryController));
     queryController.startProfile('dashboard_view');
     return queryController;
   }
 
-  // Deterministic reproduction of the bug (documents CURRENT, incorrect behaviour): the profiler
-  // completes the dashboard_view interaction — and the renderer is told the report is done — as soon
-  // as running queries hit zero, even though the repeat panels created from the just-resolved variable
-  // have not registered their queries yet. This fires on every run, which is the intermittent
-  // "blank repeat panels on /d-report/" bug made deterministic.
-  //
-  // The fix (owned by the dashboards squad) should prevent REPORT_RENDER_COMPLETE from being sent
-  // during this gap; when it lands, this assertion should be inverted to `not.toHaveBeenCalled()`.
-  it('reproduces premature REPORT_RENDER_COMPLETE while repeat panels still owe queries (bug)', () => {
+  it('withholds REPORT_RENDER_COMPLETE while a late-registering repeat panel query is in flight, then sends it once settled', () => {
     const queryController = setupProfiledDashboard();
 
     // The repeat variable's query runs and completes.
     const variableQuery = makeQueryEntry('variable');
     queryController.queryStarted(variableQuery);
     queryController.queryCompleted(variableQuery);
-
-    // The repeat panels have not registered their queries yet, but the count is already 0.
     expect(queryController.runningQueriesCount()).toBe(0);
 
+    // Scenes' own post-storm tail elapses with nothing else registered — the exact gap the bug lived
+    // in. The profiler declares dashboard_view complete internally, but the observer now withholds.
     jest.advanceTimersByTime(POST_STORM_WINDOW + 500);
+    expect(channel).not.toHaveBeenCalled();
 
-    // BUG: render reported complete during the gap before repeat panel queries register.
+    // A repeat panel materializes late and registers its query, well after the profiler's own tail.
+    jest.advanceTimersByTime(1000);
+    const repeatPanelQuery = makeQueryEntry();
+    queryController.queryStarted(repeatPanelQuery);
+
+    // The grace timer is paused for as long as the query runs, no matter how long that takes.
+    jest.advanceTimersByTime(config.reportRenderQueryGracePeriodMs + 2000);
+    expect(channel).not.toHaveBeenCalled();
+
+    queryController.queryCompleted(repeatPanelQuery);
+
+    // Completion doesn't fire the instant the query finishes either — a fresh quiet window must
+    // elapse in case another panel is about to register.
+    expect(channel).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(config.reportRenderQueryGracePeriodMs - 100);
+    expect(channel).not.toHaveBeenCalled();
+
+    jest.advanceTimersByTime(200);
+    expect(channel).toHaveBeenCalledWith(JSON.stringify({ type: 'REPORT_RENDER_COMPLETE', data: { success: true } }));
+  });
+
+  it('still completes a genuinely idle report once the grace window elapses with nothing further registering', () => {
+    const queryController = setupProfiledDashboard();
+
+    const variableQuery = makeQueryEntry('variable');
+    queryController.queryStarted(variableQuery);
+    queryController.queryCompleted(variableQuery);
+
+    jest.advanceTimersByTime(POST_STORM_WINDOW + 500);
+    expect(channel).not.toHaveBeenCalled();
+
+    jest.advanceTimersByTime(config.reportRenderQueryGracePeriodMs);
+    expect(channel).toHaveBeenCalledWith(JSON.stringify({ type: 'REPORT_RENDER_COMPLETE', data: { success: true } }));
+  });
+
+  it('honors a configured grace period instead of a hardcoded one', () => {
+    config.reportRenderQueryGracePeriodMs = 500;
+    const queryController = setupProfiledDashboard();
+
+    const variableQuery = makeQueryEntry('variable');
+    queryController.queryStarted(variableQuery);
+    queryController.queryCompleted(variableQuery);
+
+    jest.advanceTimersByTime(POST_STORM_WINDOW + 500);
+    expect(channel).not.toHaveBeenCalled();
+
+    // Would still be pending at this point under the 3s default, but the configured 500ms grace
+    // period has already elapsed.
+    jest.advanceTimersByTime(500);
     expect(channel).toHaveBeenCalledWith(JSON.stringify({ type: 'REPORT_RENDER_COMPLETE', data: { success: true } }));
   });
 });
