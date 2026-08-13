@@ -162,18 +162,27 @@ describe('visualizationQueries transformation', () => {
 // ---------------------------------------------------------------------------
 
 describe('loading state', () => {
-  it('renders the rule definition immediately while eval is pending, then clears the loading bar', async () => {
+  /** Holds every /api/v1/eval response open so assertions can be made while requests are in flight. */
+  function blockEvalRequests() {
     let resolveEval!: () => void;
     const evalPending = new Promise<void>((resolve) => {
       resolveEval = resolve;
     });
+    let requestCount = 0;
 
     server.use(
       http.post('/api/v1/eval', async () => {
+        requestCount++;
         await evalPending;
         return HttpResponse.json<AlertingQueryResponse>({ results: {} });
       })
     );
+
+    return { evalRequests: () => requestCount, resolveEval };
+  }
+
+  it('renders the rule definition immediately while eval is pending, then clears the loading bar', async () => {
+    const { resolveEval } = blockEvalRequests();
 
     const rule = makeGrafanaRule([
       {
@@ -198,6 +207,9 @@ describe('loading state', () => {
   });
 
   it('keeps the loading bar visible while query preparation is pending', async () => {
+    const { evalRequests } = blockEvalRequests();
+
+    // AlertingQueryRunner.prepareQueries awaits dataSourceSrv.get before it can issue the request
     let resolveDataSource!: (dataSource: DataSourceApi) => void;
     const dataSourcePending = new Promise<DataSourceApi>((resolve) => {
       resolveDataSource = resolve;
@@ -219,6 +231,30 @@ describe('loading state', () => {
     expect(screen.getByTestId('eval-loading-bar')).toBeInTheDocument();
 
     resolveDataSource({ uid: DS_UID } as DataSourceApi);
+
+    await waitFor(() => expect(evalRequests()).toBe(2));
+    expect(screen.getByTestId('eval-loading-bar')).toBeInTheDocument();
+  });
+
+  // Deriving the loading state from a run being *started* is not enough: withLoadingIndicator
+  // delays the runner's first LoadingState.Loading by 200ms and drops it on a faster response.
+  it('keeps the loading bar visible while the eval request is in flight', async () => {
+    const { evalRequests, resolveEval } = blockEvalRequests();
+
+    const rule = makeGrafanaRule([
+      {
+        refId: 'A',
+        datasourceUid: DS_UID,
+        model: { refId: 'A' },
+      },
+    ]);
+
+    render(<QueryAndCondition rule={rule} />);
+
+    await waitFor(() => expect(evalRequests()).toBe(2));
+    expect(screen.getByTestId('eval-loading-bar')).toBeInTheDocument();
+
+    resolveEval();
     await waitFor(() => expect(screen.queryByTestId('eval-loading-bar')).not.toBeInTheDocument());
   });
 });

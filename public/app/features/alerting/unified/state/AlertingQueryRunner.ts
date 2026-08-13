@@ -1,6 +1,6 @@
 import { reject } from 'lodash';
 import { type Observable, type OperatorFunction, ReplaySubject, type Unsubscribable, of } from 'rxjs';
-import { catchError, map, share } from 'rxjs/operators';
+import { catchError, finalize, map, share } from 'rxjs/operators';
 
 import {
   type DataFrameJSON,
@@ -51,7 +51,12 @@ export class AlertingQueryRunner {
     return this.subject.asObservable();
   }
 
-  async run(queries: AlertQuery[], condition: string) {
+  /**
+   * Resolves on the first pushed result rather than on subscribe, because `withLoadingIndicator`
+   * delays the `LoadingState.Loading` value by 200ms and drops it when the response arrives first.
+   * Resolving on subscribe would leave callers unable to tell that a request is still in flight.
+   */
+  async run(queries: AlertQuery[], condition: string): Promise<void> {
     const queriesToRun = await this.prepareQueries(queries);
 
     // if we don't have any queries to run we just bail
@@ -64,28 +69,34 @@ export class AlertingQueryRunner {
     const isConditionAvailable = queriesToRun.some((query) => query.refId === condition);
     const ruleCondition = isConditionAvailable ? condition : '';
 
-    this.subscription = runRequest(this.backendSrv, queriesToRun, ruleCondition).subscribe({
-      next: (dataPerQuery) => {
-        const nextResult = applyChange(dataPerQuery, (refId, data) => {
-          const previous = this.lastResult[refId];
-          const preProcessed = preProcessPanelData(data, previous);
-          return setStructureRevision(preProcessed, previous);
+    return new Promise<void>((resolve) => {
+      this.subscription = runRequest(this.backendSrv, queriesToRun, ruleCondition)
+        // also covers error and cancellation, so the promise can never hang
+        .pipe(finalize(resolve))
+        .subscribe({
+          next: (dataPerQuery) => {
+            const nextResult = applyChange(dataPerQuery, (refId, data) => {
+              const previous = this.lastResult[refId];
+              const preProcessed = preProcessPanelData(data, previous);
+              return setStructureRevision(preProcessed, previous);
+            });
+
+            // add link errors to the panelData and mark them as errors
+            const [_, linkErrors] = createDAGFromQueriesSafe(queries);
+            linkErrors.forEach((linkError) => {
+              nextResult[linkError.source] = createLinkErrorPanelData(linkError);
+            });
+
+            this.lastResult = nextResult;
+            this.subject.next(this.lastResult);
+            resolve();
+          },
+
+          error: (error: Error) => {
+            this.lastResult = mapErrorToPanelData(this.lastResult, error);
+            this.subject.next(this.lastResult);
+          },
         });
-
-        // add link errors to the panelData and mark them as errors
-        const [_, linkErrors] = createDAGFromQueriesSafe(queries);
-        linkErrors.forEach((linkError) => {
-          nextResult[linkError.source] = createLinkErrorPanelData(linkError);
-        });
-
-        this.lastResult = nextResult;
-        this.subject.next(this.lastResult);
-      },
-
-      error: (error: Error) => {
-        this.lastResult = mapErrorToPanelData(this.lastResult, error);
-        this.subject.next(this.lastResult);
-      },
     });
   }
 

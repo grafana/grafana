@@ -1,6 +1,6 @@
 import { defaultsDeep } from 'lodash';
-import { type Observable, TimeoutError, lastValueFrom, of, throwError } from 'rxjs';
-import { delay, take, timeout } from 'rxjs/operators';
+import { NEVER, type Observable, TimeoutError, from, lastValueFrom, of, throwError } from 'rxjs';
+import { delay, map, take, timeout } from 'rxjs/operators';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
@@ -262,7 +262,78 @@ describe('AlertingQueryRunner', () => {
       expect(loading.C.state).toEqual(LoadingState.Done);
     });
   });
+
+  describe('run() promise', () => {
+    it('should not resolve before the first value has been pushed', async () => {
+      setupDataSources(...Object.values(mockDataSources));
+
+      let emitResponse!: () => void;
+      const responseGate = new Promise<void>((resolve) => {
+        emitResponse = resolve;
+      });
+
+      const runner = new AlertingQueryRunner(
+        mockBackendSrv({
+          fetch: () => from(responseGate).pipe(map(() => createFetchResponse<AlertingQueryResponse>({ results: {} }))),
+        })
+      );
+
+      const order: string[] = [];
+      runner.get().subscribe(() => order.push('pushed'));
+
+      const run = runner.run([createQuery('A')], 'A').then(() => order.push('resolved'));
+      await nextTick();
+      emitResponse();
+      await run;
+
+      expect(order).toEqual(['pushed', 'resolved']);
+    });
+
+    it('should resolve when there are no queries left to run', async () => {
+      const runner = new AlertingQueryRunner(
+        mockBackendSrv({
+          fetch: () => throwError(new Error("shouldn't happen")),
+        }),
+        mockDataSourceSrv({ filterQuery: () => false })
+      );
+
+      await expect(runner.run([createQuery('A')], 'A')).resolves.toBeUndefined();
+    });
+
+    it('should resolve when the request fails', async () => {
+      setupDataSources(...Object.values(mockDataSources));
+
+      const runner = new AlertingQueryRunner(
+        mockBackendSrv({
+          fetch: () => throwError(new Error('could not query data')),
+        })
+      );
+
+      await expect(runner.run([createQuery('A')], 'A')).resolves.toBeUndefined();
+    });
+
+    it('should resolve when the run is cancelled before any value is pushed', async () => {
+      setupDataSources(...Object.values(mockDataSources));
+
+      const runner = new AlertingQueryRunner(
+        mockBackendSrv({
+          fetch: () => NEVER,
+        })
+      );
+
+      const run = runner.run([createQuery('A')], 'A');
+      // let prepareQueries settle so there is a subscription for cancel() to tear down
+      await nextTick();
+      runner.cancel();
+
+      await expect(run).resolves.toBeUndefined();
+    });
+  });
 });
+
+function nextTick(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
 
 type MockBackendSrvConfig = {
   fetch: () => Observable<FetchResponse<AlertingQueryResponse>>;
