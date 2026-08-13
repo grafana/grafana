@@ -65,17 +65,19 @@ const QueryAndCondition = ({ rule }: Props) => {
   const [isRunning, setIsRunning] = useState(false);
 
   const onRunQueries = useCallback(() => {
-    if (queries.length > 0 && !isDsLoading && allDataSourcesAvailable) {
-      let condition;
-      if (rule && rulerRuleType.grafana.rule(rule.rulerRule)) {
-        condition = rule.rulerRule.grafana_alert.condition;
-      }
-      setIsRunning(true);
-      // Run original queries for expression evaluation
-      runExpressionQueries(queries, condition ?? 'A');
-      // Run range-converted data source queries for visualization
-      runVisualizationQueries(visualizationQueries, '');
+    if (queries.length === 0 || isDsLoading || !allDataSourcesAvailable) {
+      return;
     }
+
+    let condition;
+    if (rule && rulerRuleType.grafana.rule(rule.rulerRule)) {
+      condition = rule.rulerRule.grafana_alert.condition;
+    }
+    setIsRunning(true);
+    // Run original queries for expression evaluation
+    runExpressionQueries(queries, condition ?? 'A');
+    // Run range-converted data source queries for visualization
+    runVisualizationQueries(visualizationQueries, '');
   }, [
     queries,
     visualizationQueries,
