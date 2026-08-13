@@ -26,8 +26,7 @@ import { Icon } from '@grafana/ui';
 
 import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
-import { getLogsButtonCTA } from './components/TraceTimelineViewer/SpanDetail/LogsLink';
-import { getTraceToLogsSpanQuery, getTraceToLogsTraceQuery } from './components/logsLink';
+import { getTraceToLogsSpanQuery } from './components/logsLink';
 import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from './components/types/links';
 import { type Trace, type TraceSpan, type TraceSpanReference } from './components/types/trace';
 import { getDefaultMetricTags, getDefaultProfilingTags, getFormattedTags, getSpanTags } from './crossSignalConfig';
@@ -408,104 +407,6 @@ function getLinkForFeO11y(span: TraceSpan): string | undefined {
 }
 
 /**
- * Builds an Explore link model for related logs at the trace level (no span id filter).
- */
-export function createTraceLogsLink({
-  splitOpenFn,
-  traceToLogsOptions,
-  trace,
-  dataFrame,
-  dataLinkPostProcessor,
-  logsDataSourceSettings,
-  traceDataSourceSettings,
-}: {
-  splitOpenFn: SplitOpen | undefined;
-  traceToLogsOptions?: TraceToLogsOptionsV2;
-  trace: Trace;
-  dataFrame?: DataFrame;
-  dataLinkPostProcessor?: DataLinkPostProcessor;
-  logsDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>;
-  traceDataSourceSettings?: DataSourceInstanceSettings<DataSourceJsonData>;
-}): LinkModel | undefined {
-  if (!logsDataSourceSettings || !traceToLogsOptions) {
-    return undefined;
-  }
-
-  const { query, tags } = getTraceToLogsTraceQuery(trace, logsDataSourceSettings, traceToLogsOptions);
-  if (!query) {
-    return undefined;
-  }
-
-  const isSplunkDS = logsDataSourceSettings.type === 'grafana-splunk-datasource';
-  const dataLink: DataLink = {
-    title: logsDataSourceSettings.name,
-    url: '',
-    internal: {
-      datasourceUid: logsDataSourceSettings.uid,
-      datasourceName: logsDataSourceSettings.name,
-      query,
-      range: getTimeRangeFromTrace(
-        trace,
-        {
-          startMs: traceToLogsOptions.spanStartTimeShift
-            ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-            : 0,
-          endMs: traceToLogsOptions.spanEndTimeShift ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift) : 0,
-        },
-        isSplunkDS
-      ),
-    },
-  };
-
-  const scopedVars: ScopedVars = {
-    ...scopedVarsFromTrace(trace.duration, trace.traceName, trace.traceID),
-    __tags: {
-      text: t('explore.legacy-create-span-link-factory.text.tags', 'Tags'),
-      value: tags,
-    },
-  };
-
-  if (!getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
-    return undefined;
-  }
-
-  const field: Field = {
-    name: '',
-    type: FieldType.other,
-    config: {},
-    values: [],
-  };
-
-  let link = mapInternalLinkToExplore({
-    link: dataLink,
-    internalLink: dataLink.internal!,
-    scopedVars,
-    range: dataLink.internal!.range,
-    field,
-    onClickFn: splitOpenFn,
-    replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-  });
-
-  link =
-    (dataFrame &&
-      dataLinkPostProcessor?.({
-        frame: dataFrame,
-        field,
-        dataLinkScopedVars: scopedVars,
-        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-        config: {},
-        link: dataLink,
-        linkModel: link,
-      })) ||
-    link;
-
-  return {
-    ...link,
-    title: getLogsButtonCTA(traceDataSourceSettings, 'trace'),
-  };
-}
-
-/**
  * Gets a time range from the span.
  */
 function getTimeRangeFromSpan(
@@ -515,17 +416,6 @@ function getTimeRangeFromSpan(
   shouldCreatePyroscopeLink = false
 ): TimeRange {
   return getTimeRangeFromTimestamps(span.startTime, span.duration, timeShift, isSplunkDS, shouldCreatePyroscopeLink);
-}
-
-/**
- * Gets a time range covering the whole trace.
- */
-function getTimeRangeFromTrace(
-  trace: Trace,
-  timeShift: { startMs: number; endMs: number } = { startMs: 0, endMs: 0 },
-  isSplunkDS = false
-): TimeRange {
-  return getTimeRangeFromTimestamps(trace.startTime, trace.duration, timeShift, isSplunkDS);
 }
 
 function getTimeRangeFromTimestamps(
