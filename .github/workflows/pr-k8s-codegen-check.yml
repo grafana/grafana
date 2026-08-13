@@ -1,40 +1,14 @@
 name: "K8s Codegen Check"
 
 on:
-  workflow_dispatch:
-  pull_request:
-    branches: [main]
-    paths:
-      - "pkg/apis/**"
-      - "pkg/apimachinery/apis/**"
-      - "hack/**"
-      - "apps/**"
-      - "*.sum"
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  go-mod-cache:
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
-    with:
-      runs-on: ubuntu-x64
-
-  go-build-cache:
-    needs: go-mod-cache
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/bootstrap-go-build-cache.yml
-    with:
-      runs-on: ubuntu-x64
-
   check:
-    needs: go-build-cache
     name: K8s Codegen Check
     runs-on: ubuntu-x64
     permissions:

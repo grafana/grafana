@@ -1,9 +1,12 @@
 name: "Go Workspace Check"
 
 on:
-  workflow_dispatch:
-  pull_request:
-    branches: [main]
+  workflow_call:
+    inputs:
+      backend:
+        description: Whether backend code changed.
+        required: true
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,37 +15,9 @@ concurrency:
 permissions: {}
 
 jobs:
-  detect-changes:
-    permissions:
-      contents: read
-    uses: ./.github/workflows/bootstrap-detect-changes.yml
-    with:
-      self: .github/workflows/pr-go-workspace-check.yml
-
-  go-mod-cache:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true'
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
-    with:
-      runs-on: ubuntu-x64
-      enterprise: true
-
-  go-build-cache:
-    needs: go-mod-cache
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/bootstrap-go-build-cache.yml
-    with:
-      runs-on: ubuntu-x64
-      enterprise: true
 
   check-workspace:
-    needs: [detect-changes, go-build-cache]
-    if: needs.detect-changes.outputs.backend == 'true'
+    if: inputs.backend == 'true'
     name: Go Workspace Check
     runs-on: ubuntu-x64
 
@@ -87,8 +62,7 @@ jobs:
         fi
 
   check-wire:
-    needs: [detect-changes, go-build-cache]
-    if: needs.detect-changes.outputs.backend == 'true'
+    if: inputs.backend == 'true'
     name: Check Wire Changes
     runs-on: ubuntu-x64
 
@@ -179,9 +153,6 @@ jobs:
   # Future work also allows us to start skipping some tests based on changed files.
   required-go-workspace-check:
     needs:
-      - detect-changes
-      - go-mod-cache
-      - go-build-cache
       - check-workspace
       - check-wire
     # always() is the best function here.

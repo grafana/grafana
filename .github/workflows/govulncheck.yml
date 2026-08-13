@@ -1,20 +1,7 @@
 name: govulncheck
 
 on:
-  push:
-    paths:
-      - '**/*.go'
-      - .github/workflows/govulncheck.yml
-      - .citools/src/govulncheck/**
-      - go.*
-    branches:
-      - main
-  pull_request:
-    paths:
-      - '**/*.go'
-      - .github/workflows/govulncheck.yml
-      - .citools/src/govulncheck/**
-      - go.*
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,25 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  go-mod-cache:
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/bootstrap-go-mod-cache.yml
-    with:
-      runs-on: ubuntu-x64
-
-  go-build-cache:
-    needs: go-mod-cache
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/bootstrap-go-build-cache.yml
-    with:
-      runs-on: ubuntu-x64
-
   govulncheck:
-    needs: go-build-cache
     # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     runs-on: ubuntu-x64-large
