@@ -94,7 +94,7 @@ The sidebar includes the following controls:
 Available quick toggles and fan-out support depend on the visualization type.
 This feature is supported for time series visualizations.
 
-<!-- screenshot here: View panel mode with the View panel side pane open (Back to dashboard, Quick toggles, and Fan-out sections visible) -->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-view-panel-sidebar-v13.2.png" max-width="750px" caption="Panel in view mode with fan-out applied to series" >}}
 
 ### Open the View panel controls
 
