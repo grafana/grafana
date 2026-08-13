@@ -277,6 +277,18 @@ describe('plugin', () => {
         expect(logWarning).not.toHaveBeenCalled();
       });
 
+      it('loads the configured default datasource when ref has an empty uid and no type', async () => {
+        const { bravo } = seedAlphaBravo();
+        const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+        const MockClass = importerReturning(instance);
+
+        const result = await getDataSourceInstance({ uid: '' });
+
+        expect(MockClass).toHaveBeenCalledWith(bravo);
+        expect(result).toBe(instance);
+        expect(logWarning).not.toHaveBeenCalled();
+      });
+
       it('resolves a ref with an empty uid by its type', async () => {
         const { bravo } = seedAlphaBravo();
         const MockClass = importerReturning(Object.create(DataSourceApi.prototype));
