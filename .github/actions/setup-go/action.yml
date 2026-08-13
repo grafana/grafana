@@ -27,6 +27,34 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # The runner images cache a few Go releases, but not the one this repository
+    # pins, so setup-go downloads the toolchain on every job. Restoring it into
+    # the tool cache first means setup-go finds it and skips the download. The
+    # version has to be read here rather than taken from setup-go's output,
+    # because the cache is only useful before setup-go runs.
+    - name: Read the pinned Go version
+      if: inputs.cache == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        VERSION="$(awk '$1 == "go" { print $2; exit }' "${{ inputs.go-version-file }}")"
+        echo "GO_TOOLCHAIN_VERSION=${VERSION}" >> "$GITHUB_ENV"
+        echo "GO_TOOLCHAIN_KEY=gotoolchain-${RUNNER_OS}-${RUNNER_ARCH}-${VERSION}" >> "$GITHUB_ENV"
+
+    - name: Restore the Go toolchain
+      if: inputs.cache == 'true' && inputs.cache-write != 'mod'
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ runner.tool_cache }}/go/${{ env.GO_TOOLCHAIN_VERSION }}
+        key: ${{ env.GO_TOOLCHAIN_KEY }}
+
+    - name: Restore and save the Go toolchain
+      if: inputs.cache == 'true' && inputs.cache-write == 'mod'
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.tool_cache }}/go/${{ env.GO_TOOLCHAIN_VERSION }}
+        key: ${{ env.GO_TOOLCHAIN_KEY }}
+
     - uses: actions/setup-go@v6.5.0
       id: go
       with:
