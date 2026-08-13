@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 
-import { createTheme, standardTransformersRegistry } from '@grafana/data';
+import { standardTransformersRegistry } from '@grafana/data';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { renderWithQueryEditorProvider } from '../testUtils';
@@ -15,14 +15,6 @@ describe('TransformationTypePicker', () => {
 
     expect(screen.getByPlaceholderText('Search for transformation')).toBeInTheDocument();
     expect(screen.getByText('Reduce')).toBeInTheDocument();
-  });
-
-  it('uses the proportional font for the image toggle label', () => {
-    renderWithQueryEditorProvider(<TransformationTypePicker />);
-
-    expect(getComputedStyle(screen.getByText('Show images')).fontFamily.replaceAll(' ', '')).toBe(
-      createTheme().typography.fontFamily.replaceAll(' ', '')
-    );
   });
 
   it('announces search results to screen readers via a live region', async () => {

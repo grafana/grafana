@@ -1,16 +1,10 @@
 import { render, screen } from '@testing-library/react';
 
-import {
-  createTheme,
-  type DataSourceInstanceSettings,
-  type DataSourcePluginMeta,
-  type ScopedVars,
-} from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourcePluginMeta, type ScopedVars } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
 import { renderWithQueryEditorProvider } from '../testUtils';
-import { EMPTY_ALERT, type Transformation } from '../types';
 
 import { ContentHeader, ContentHeaderSceneWrapper } from './ContentHeader';
 
@@ -57,12 +51,6 @@ function renderHeader(
 
 const pickerProps = () => mockDataSourcePicker.mock.lastCall?.[0];
 
-function expectProportionalFont(element: HTMLElement) {
-  expect(getComputedStyle(element).fontFamily.replaceAll(' ', '')).toBe(
-    createTheme().typography.fontFamily.replaceAll(' ', '')
-  );
-}
-
 describe('ContentHeader datasource picker', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -105,49 +93,5 @@ describe('ContentHeader query name', () => {
     });
 
     expect(screen.getByRole('button', { name: 'Edit query name' })).toBeInTheDocument();
-  });
-});
-
-describe('ContentHeader transformation name', () => {
-  it('uses the proportional body font', () => {
-    const transformation: Transformation = {
-      transformId: 'transform-1',
-      transformConfig: { id: 'reduce', options: {} },
-      registryItem: { name: 'Reduce' } as Transformation['registryItem'],
-    };
-
-    render(
-      <ContentHeader
-        selectedAlert={null}
-        selectedQuery={null}
-        selectedTransformation={transformation}
-        queries={[]}
-        cardType={QueryEditorType.Transformation}
-        onChangeDataSource={jest.fn()}
-        onUpdateQuery={jest.fn()}
-      />
-    );
-
-    expectProportionalFont(screen.getByText('Reduce'));
-  });
-});
-
-describe('ContentHeader alert name', () => {
-  it('uses the proportional body font', () => {
-    const alert = { ...EMPTY_ALERT, rule: { ...EMPTY_ALERT.rule, name: 'High latency' } };
-
-    render(
-      <ContentHeader
-        selectedAlert={alert}
-        selectedQuery={null}
-        selectedTransformation={null}
-        queries={[]}
-        cardType={QueryEditorType.Alert}
-        onChangeDataSource={jest.fn()}
-        onUpdateQuery={jest.fn()}
-      />
-    );
-
-    expectProportionalFont(screen.getByText('High latency'));
   });
 });

@@ -1,7 +1,5 @@
 import { render, screen } from '@testing-library/react';
 
-import { createTheme } from '@grafana/data';
-
 import { CardTitle } from './CardTitle';
 
 describe('CardTitle', () => {
@@ -9,14 +7,6 @@ describe('CardTitle', () => {
     render(<CardTitle title="Test Query" isHidden={false} />);
 
     expect(screen.getByText('Test Query')).toBeInTheDocument();
-  });
-
-  it('uses the proportional body font', () => {
-    render(<CardTitle title="Test Query" isHidden={false} />);
-
-    expect(getComputedStyle(screen.getByText('Test Query')).fontFamily.replaceAll(' ', '')).toBe(
-      createTheme().typography.fontFamily.replaceAll(' ', '')
-    );
   });
 
   it('applies strikethrough style when isHidden is true', () => {

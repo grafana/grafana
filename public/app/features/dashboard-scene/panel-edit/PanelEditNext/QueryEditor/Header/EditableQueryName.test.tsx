@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { createTheme } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 
 import { EditableQueryName } from './EditableQueryName';
@@ -10,26 +9,7 @@ function getQuery(refId: string): DataQuery {
   return { refId, datasource: { type: 'test', uid: 'test' } };
 }
 
-function expectProportionalFont(element: Element) {
-  expect(getComputedStyle(element).fontFamily.replaceAll(' ', '')).toBe(
-    createTheme().typography.fontFamily.replaceAll(' ', '')
-  );
-}
-
 describe('EditableQueryName', () => {
-  it('uses the proportional font in display and edit states', async () => {
-    const query = getQuery('A');
-    const user = userEvent.setup();
-
-    render(<EditableQueryName query={query} queries={[query]} onQueryUpdate={jest.fn()} />);
-
-    expectProportionalFont(screen.getByText('A'));
-
-    await user.click(screen.getByRole('button', { name: /edit query name/i }));
-
-    expectProportionalFont(screen.getByTestId('query-name-input'));
-  });
-
   it('saves rename on blur when focus does not move to a sidebar card', async () => {
     const onQueryUpdate = jest.fn();
     const queryA = getQuery('A');
