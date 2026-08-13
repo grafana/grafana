@@ -30,7 +30,6 @@ import {
   lokiQueryMatchStorageKey,
   LogsLinkButton,
   LogsLinkMenuItem,
-  LogsPresence,
 } from './LogsLink';
 
 jest.mock('@grafana/runtime/unstable', () => ({
@@ -350,7 +349,7 @@ describe('LogsLinkButton', () => {
 
     render(
       <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: queries } })}
+        linkModel={createLinkModel({ interpolatedParams: { query: queries[0], alternativeQueries: queries } })}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );
@@ -378,7 +377,7 @@ describe('LogsLinkButton', () => {
 
     render(
       <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: queries } })}
+        linkModel={createLinkModel({ interpolatedParams: { query: queries[0], alternativeQueries: queries } })}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );
@@ -410,7 +409,7 @@ describe('LogsLinkButton', () => {
 
     render(
       <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: queries } })}
+        linkModel={createLinkModel({ interpolatedParams: { query: queries[0], alternativeQueries: queries } })}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );
@@ -438,7 +437,7 @@ describe('LogsLinkButton', () => {
 
     render(
       <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: queries } })}
+        linkModel={createLinkModel({ interpolatedParams: { query: queries[0], alternativeQueries: queries } })}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );
@@ -474,7 +473,7 @@ describe('LogsLinkButton', () => {
 
     render(
       <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: queries } })}
+        linkModel={createLinkModel({ interpolatedParams: { query: queries[0], alternativeQueries: queries } })}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );
@@ -513,7 +512,7 @@ describe('LogsLinkButton', () => {
 
     render(
       <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: queries } })}
+        linkModel={createLinkModel({ interpolatedParams: { query: queries[0], alternativeQueries: queries } })}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );
@@ -562,7 +561,7 @@ describe('LogsLinkButton', () => {
 
     render(
       <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query: queries } })}
+        linkModel={createLinkModel({ interpolatedParams: { query: queries[0], alternativeQueries: queries } })}
         traceDatasourceUid={TRACE_DATASOURCE_UID}
       />
     );
@@ -765,6 +764,7 @@ describe('getLogsButtonCTA', () => {
       expected: 'Logs for this span',
     },
   ])('$name', ({ settings, type, expected }) => {
+    // @ts-expect-error
     expect(getLogsButtonCTA(settings as DataSourceInstanceSettings | undefined, type)).toBe(expected);
   });
 
@@ -772,7 +772,7 @@ describe('getLogsButtonCTA', () => {
     setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
     const settings = {
       jsonData: { tracesToLogsV2: { customQuery: false, filterByTraceID: true } },
-    } as DataSourceInstanceSettings;
+    } as unknown as DataSourceInstanceSettings;
 
     expect(getLogsButtonCTA(settings, 'span')).toBe('Logs for this span');
     expect(getLogsButtonCTA(settings, 'trace')).toBe('Logs for this trace');
@@ -851,7 +851,8 @@ describe('getLogsButtonTooltip', () => {
       expected: 'View related logs using the trace data source configuration.',
     },
   ])('$name', ({ settings, presence, type, expected }) => {
-    expect(getLogsButtonTooltip(settings as DataSourceInstanceSettings, presence as LogsPresence, type)).toBe(expected);
+    // @ts-expect-error
+    expect(getLogsButtonTooltip(settings as DataSourceInstanceSettings, presence, type)).toBe(expected);
   });
 
   it.each([
@@ -883,6 +884,7 @@ describe('getLogsButtonTooltip', () => {
     setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
     const settings = { jsonData: {} } as DataSourceInstanceSettings;
 
+    // @ts-expect-error
     expect(getLogsButtonTooltip(settings, presence, type)).toBe(expected);
   });
 });

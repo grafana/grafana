@@ -124,7 +124,7 @@ export const LogsLinkMenuItem = ({ linkModel, traceDatasourceUid }: Props) => {
   );
 };
 
-export type LogsPresence = 'loading' | 'present' | 'absent';
+type LogsPresence = 'loading' | 'present' | 'absent';
 
 type LogsCheckMatch = {
   datasourceUid: string;
