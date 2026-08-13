@@ -113,6 +113,8 @@ export const FlagKeys = {
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
+  /** Enables team APIs in the app platform */
+  KubernetesTeamsApi: "kubernetesTeamsApi",
   /** Enables the logs tableNG panel to replace existing tableRT */
   LogsTablePanelNG: "logsTablePanelNG",
   /** Use stream shards to split queries into smaller subqueries */
@@ -721,6 +723,17 @@ export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationO
  */
 export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("inlineLogDetailsNoScrolls", false, options).value;
+};
+
+/**
+ * Enables team APIs in the app platform
+ *
+ * **Details:**
+ * - flag key: `kubernetesTeamsApi`
+ * - default value: `false`
+ */
+export const useFlagKubernetesTeamsApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("kubernetesTeamsApi", false, options).value;
 };
 
 /**
