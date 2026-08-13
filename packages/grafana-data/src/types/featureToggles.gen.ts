@@ -540,11 +540,6 @@ export interface FeatureToggles {
   */
   preserveDashboardStateWhenNavigating?: boolean;
   /**
-  * Enables the new central alert history.
-  * @default false
-  */
-  alertingCentralAlertHistory?: boolean;
-  /**
   * Preserve plugin proxy trailing slash.
   * @default false
   */
