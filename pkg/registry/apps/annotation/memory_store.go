@@ -251,7 +251,16 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 			continue
 		}
 		for _, tag := range anno.Spec.Tags {
-			if opts.Prefix == "" || strings.HasPrefix(tag, opts.Prefix) {
+			switch {
+			case opts.Prefix != "":
+				if strings.HasPrefix(tag, opts.Prefix) {
+					tagCounts[tag]++
+				}
+			case opts.Contains != "":
+				if strings.Contains(strings.ToLower(tag), strings.ToLower(opts.Contains)) {
+					tagCounts[tag]++
+				}
+			default:
 				tagCounts[tag]++
 			}
 		}

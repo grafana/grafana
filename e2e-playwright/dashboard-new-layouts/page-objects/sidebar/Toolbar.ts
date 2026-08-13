@@ -14,9 +14,10 @@ export class Toolbar extends PageObject {
    * @param buttonName the button's accessible name (aria-label), one of the `ButtonNames` union
    */
   getButton(buttonName: ButtonNames): Locator {
-    return this.dashboardPage
-      .getByGrafanaSelector(this.selectors.components.Sidebar.container)
-      .getByRole('button', { name: buttonName, exact: true });
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole('button', {
+      name: buttonName,
+      exact: true,
+    });
   }
 
   /**
@@ -34,6 +35,6 @@ export class Toolbar extends PageObject {
    * and the "Show" button renders outside the container when hidden, so it's keyed on its stable testid
    */
   getVisibilityToggle(): Locator {
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.showHideToggle);
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.showHideToggle);
   }
 }

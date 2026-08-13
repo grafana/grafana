@@ -1,7 +1,5 @@
-import { test, expect } from '@grafana/plugin-e2e';
-
-import { Controls, Panels, Sidebar } from './page-objects';
-import { flows, type Variable } from './utils';
+import { test, expect } from './fixtures';
+import { flows, type Variable } from './helpers';
 
 test.use({
   featureToggles: {
@@ -21,14 +19,9 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new adhoc variable', async ({ gotoDashboardPage, selectors, page, components }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
+    test('can add a new adhoc variable', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
+      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-
-      const controls = new Controls({ page, dashboardPage, selectors, components });
-      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-      const panels = new Panels({ page, dashboardPage, selectors, components });
-
       const variable: Variable & { label: string } = {
         type: 'adhoc',
         name: 'VariableUnderTest',
@@ -36,7 +29,7 @@ test.describe(
         label: 'VariableUnderTest',
       };
 
-      await flows.addNewGenericVariable(page, sidebar, controls, variable);
+      await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
       await sidebar.variableOptions.adhoc.selectDatasource('gdev-e2etestdatasource');
 
       // Assert the variable dropdown is visible with correct label
