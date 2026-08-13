@@ -95,7 +95,7 @@ export const flows = {
       }
 
       await sidebar.toolbar.clickButton('Add');
-      await sidebar.addOptions.clickNewVariableButton();
+      await sidebar.addOptions.addVariable();
 
       await sidebar.variableOptions.selectVariableType(variable.type);
 
