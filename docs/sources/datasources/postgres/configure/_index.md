@@ -303,25 +303,25 @@ datasources:
 
 The following table lists all `jsonData` and `secureJsonData` fields supported when provisioning the PostgreSQL data source:
 
-| Field                    | Location         | Description                                                                            |
-| ------------------------ | ---------------- | -------------------------------------------------------------------------------------- |
-| `database`               | `jsonData`       | The database name.                                                                     |
-| `sslmode`                | `jsonData`       | TLS/SSL mode: `disable`, `require`, `verify-ca`, or `verify-full`.                     |
-| `maxOpenConns`           | `jsonData`       | Maximum open connections. Default: `100`.                                              |
-| `maxIdleConns`           | `jsonData`       | Maximum idle connections. Default: `100`.                                              |
-| `maxIdleConnsAuto`       | `jsonData`       | Set max idle to max open automatically. Default: `true`.                               |
-| `connMaxLifetime`        | `jsonData`       | Connection max lifetime in seconds. Default: `14400`.                                  |
+| Field                    | Location         | Description                                                                                                                                                                                                   |
+| ------------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `database`               | `jsonData`       | The database name.                                                                                                                                                                                            |
+| `sslmode`                | `jsonData`       | TLS/SSL mode: `disable`, `require`, `verify-ca`, or `verify-full`.                                                                                                                                            |
+| `maxOpenConns`           | `jsonData`       | Maximum open connections. Default: `100`.                                                                                                                                                                     |
+| `maxIdleConns`           | `jsonData`       | Maximum idle connections. Default: `100`.                                                                                                                                                                     |
+| `maxIdleConnsAuto`       | `jsonData`       | Set max idle to max open automatically. Default: `true`.                                                                                                                                                      |
+| `connMaxLifetime`        | `jsonData`       | Connection max lifetime in seconds. Default: `14400`.                                                                                                                                                         |
 | `postgresVersion`        | `jsonData`       | Server version code for the query builder. Examples: `900` (9.0), `903` (9.3), `1000` (10), `1100` (11), `1200` (12), `1300` (13), `1400` (14), `1500` (15). Grafana auto-detects this on save when possible. |
-| `timescaledb`            | `jsonData`       | Enable TimescaleDB support. Default: `false`.                                          |
-| `timeInterval`           | `jsonData`       | Lower limit for `$__interval` and `$__interval_ms`. Same format as **Min time interval** (for example, `1m`). |
-| `tlsConfigurationMethod` | `jsonData`       | TLS cert method: `file-path` or `file-content`.                                        |
-| `sslRootCertFile`        | `jsonData`       | Path to root CA certificate (when using `file-path` method).                           |
-| `sslCertFile`            | `jsonData`       | Path to client certificate (when using `file-path` method).                            |
-| `sslKeyFile`             | `jsonData`       | Path to client key (when using `file-path` method).                                    |
-| `password`               | `secureJsonData` | Database password.                                                                     |
-| `tlsCACert`              | `secureJsonData` | Root CA certificate content (when using `file-content` method).                        |
-| `tlsClientCert`          | `secureJsonData` | Client certificate content (when using `file-content` method).                         |
-| `tlsClientKey`           | `secureJsonData` | Client key content (when using `file-content` method).                                 |
+| `timescaledb`            | `jsonData`       | Enable TimescaleDB support. Default: `false`.                                                                                                                                                                 |
+| `timeInterval`           | `jsonData`       | Lower limit for `$__interval` and `$__interval_ms`. Same format as **Min time interval** (for example, `1m`).                                                                                                 |
+| `tlsConfigurationMethod` | `jsonData`       | TLS cert method: `file-path` or `file-content`.                                                                                                                                                               |
+| `sslRootCertFile`        | `jsonData`       | Path to root CA certificate (when using `file-path` method).                                                                                                                                                  |
+| `sslCertFile`            | `jsonData`       | Path to client certificate (when using `file-path` method).                                                                                                                                                   |
+| `sslKeyFile`             | `jsonData`       | Path to client key (when using `file-path` method).                                                                                                                                                           |
+| `password`               | `secureJsonData` | Database password.                                                                                                                                                                                            |
+| `tlsCACert`              | `secureJsonData` | Root CA certificate content (when using `file-content` method).                                                                                                                                               |
+| `tlsClientCert`          | `secureJsonData` | Client certificate content (when using `file-content` method).                                                                                                                                                |
+| `tlsClientKey`           | `secureJsonData` | Client key content (when using `file-content` method).                                                                                                                                                        |
 
 #### Troubleshoot provisioning issues
 
