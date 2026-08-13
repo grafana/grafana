@@ -19,7 +19,6 @@ import { getLabelTypeFromRow } from '../../utils';
 import { createLogLineLinks } from '../logParser';
 import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
-import { useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
 import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsLinks } from './LogLineDetailsLinks';
@@ -33,16 +32,25 @@ import { type LogListModel } from './processing';
 interface LogLineDetailsComponentProps {
   log: LogListModel;
   logs: LogListModel[];
+  prettifyDetailsJSON: boolean;
   search?: string;
+  setPrettifyDetailsJSON: (prettifyDetailsJSON: boolean) => void;
   timeRange: TimeRange;
   timeZone: string;
 }
 
 export const LogLineDetailsComponent = memo(
-  ({ log, logs, search = '', timeRange, timeZone }: LogLineDetailsComponentProps) => {
+  ({
+    log,
+    logs,
+    prettifyDetailsJSON,
+    search = '',
+    setPrettifyDetailsJSON,
+    timeRange,
+    timeZone,
+  }: LogLineDetailsComponentProps) => {
     const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
       useLogListContext();
-    const { prettifyDetailsJSON, setPrettifyDetailsJSON } = useLogDetailsContext();
 
     const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
     const styles = useStyles2(getStyles);
@@ -191,7 +199,11 @@ export const LogLineDetailsComponent = memo(
           isOpen={logLineOpen}
           onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
         >
-          <LogLineDetailsLog log={log} syntaxHighlighting={syntaxHighlighting ?? true} prettifyJSON={prettifyDetailsJSON} />
+          <LogLineDetailsLog
+            log={log}
+            syntaxHighlighting={syntaxHighlighting ?? true}
+            prettifyJSON={prettifyDetailsJSON}
+          />
         </ControlledCollapse>
         {displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse
