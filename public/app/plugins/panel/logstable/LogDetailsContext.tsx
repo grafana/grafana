@@ -63,13 +63,6 @@ export const LogDetailsContextProvider = ({
       (logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.prettifyDetailsJSON`, true) : true)
   );
 
-  useEffect(() => {
-    if (currentLog) {
-      // Call the body getter to trigger its logic.
-      void currentLog.body;
-    }
-  }, [currentLog]);
-
   // Sync prettifyDetailsJSON
   useEffect(() => {
     if (prettifyDetailsJSONProp !== undefined) {
