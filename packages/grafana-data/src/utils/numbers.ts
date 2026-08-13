@@ -25,5 +25,18 @@ export function roundDecimals(val: number, dec = 0) {
  * bad  for arbitrary floats:     371.499999999999 -> 12
  */
 export function guessDecimals(num: number) {
-  return (('' + num).split('.')[1] || '').length;
+  const str = '' + num;
+  const eIdx = str.indexOf('e');
+
+  // JavaScript stringifies numbers below 1e-6 and at or above 1e21 in
+  // exponential notation, where the digits after the '.' are the mantissa's
+  // and not the decimal expansion, so splitting on '.' counts the wrong thing
+  // (1e-7 has no '.' at all and came back as 0 decimals).
+  if (eIdx > -1) {
+    const exp = Number(str.slice(eIdx + 1));
+    const mantissaDecimals = (str.slice(0, eIdx).split('.')[1] || '').length;
+    return Math.max(0, mantissaDecimals - exp);
+  }
+
+  return (str.split('.')[1] || '').length;
 }
