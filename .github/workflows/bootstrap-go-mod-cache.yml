@@ -102,7 +102,7 @@ jobs:
 
       - name: Use the S3 module proxy
         id: s3-proxy
-        if: ${{ github.event.pull_request.head.repo.fork == false }}
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
         continue-on-error: true
         uses: ./.github/actions/setup-go-remote-cache
 
