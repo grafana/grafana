@@ -124,7 +124,10 @@ export function createTraceLogsLink({
   if (Array.isArray(query)) {
     link.interpolatedParams = {
       ...link.interpolatedParams,
-      alternativeQueries: interpolateQueries(query, scopedVars, replaceVariables),
+      alternativeQueries: interpolateQueries(query, scopedVars, replaceVariables).map((query) => ({
+        ...query,
+        datasource: { uid: logsDataSourceSettings.uid },
+      })),
     };
   }
 

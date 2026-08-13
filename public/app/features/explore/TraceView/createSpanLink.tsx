@@ -26,7 +26,7 @@ import { Icon } from '@grafana/ui';
 
 import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
-import { getTraceToLogsSpanQuery } from './components/logsLink';
+import { getTraceToLogsSpanQuery, interpolateQueries } from './components/logsLink';
 import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from './components/types/links';
 import { type Trace, type TraceSpan, type TraceSpanReference } from './components/types/trace';
 import { scopedVarsFromTrace } from './createTraceLink';
@@ -208,6 +208,8 @@ function legacyCreateSpanLinkFactory(
           },
         };
 
+        const replaceVariables = getTemplateSrv().replace.bind(getTemplateSrv());
+
         // Check if all variables are defined and don't show if they aren't. This is usually handled by the
         // getQueryFor* functions but this is for case of custom query supplied by the user.
         if (getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
@@ -223,7 +225,7 @@ function legacyCreateSpanLinkFactory(
               values: [],
             },
             onClickFn: splitOpenFn,
-            replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+            replaceVariables,
           });
 
           link =
@@ -232,7 +234,7 @@ function legacyCreateSpanLinkFactory(
                 frame: dataFrame,
                 field: field,
                 dataLinkScopedVars: scopedVars,
-                replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+                replaceVariables,
                 config: {},
                 link: dataLink,
                 linkModel: link,
@@ -242,7 +244,10 @@ function legacyCreateSpanLinkFactory(
           if (Array.isArray(query)) {
             link.interpolatedParams = {
               ...link.interpolatedParams,
-              alternativeQueries: query,
+              alternativeQueries: interpolateQueries(query, scopedVars, replaceVariables).map((query) => ({
+                ...query,
+                datasource: { uid: logsDataSourceSettings.uid },
+              })),
             };
           }
 
