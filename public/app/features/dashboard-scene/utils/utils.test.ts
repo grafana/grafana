@@ -2,11 +2,13 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
   VizPanel,
+  ConstantVariable,
   SceneGridLayout,
   SceneFlexItem,
   SceneFlexLayout,
   SceneQueryRunner,
   SceneTimeRange,
+  SceneVariableSet,
 } from '@grafana/scenes';
 import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 
@@ -44,7 +46,15 @@ describe('utils', () => {
         queries: [{ refId: 'A' }],
         runQueriesMode: 'manual',
       });
-      const panel = new VizPanel({ pluginId: 'timeseries', $timeRange: panelTimeRange, $data: queryRunner });
+      const variableSet = new SceneVariableSet({
+        variables: [new ConstantVariable({ name: 'panelVar', value: 'a' })],
+      });
+      const panel = new VizPanel({
+        pluginId: 'timeseries',
+        $timeRange: panelTimeRange,
+        $data: queryRunner,
+        $variables: variableSet,
+      });
       const layout = new SceneFlexLayout({
         $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
         children: [new SceneFlexItem({ body: panel })],
@@ -52,7 +62,7 @@ describe('utils', () => {
 
       activateFullSceneTree(layout);
 
-      return { layout, panel, panelTimeRange, queryRunner };
+      return { layout, panel, panelTimeRange, queryRunner, variableSet };
     }
 
     it('force renders layout children', () => {
@@ -81,6 +91,15 @@ describe('utils', () => {
     it('leaves a panel data provider untouched', () => {
       const { layout, queryRunner } = buildPanelWithTimeOverride();
       const forceRender = jest.spyOn(queryRunner, 'forceRender');
+
+      forceRenderChildren(layout, true);
+
+      expect(forceRender).not.toHaveBeenCalled();
+    });
+
+    it('leaves a panel variable set untouched', () => {
+      const { layout, variableSet } = buildPanelWithTimeOverride();
+      const forceRender = jest.spyOn(variableSet, 'forceRender');
 
       forceRenderChildren(layout, true);
 
