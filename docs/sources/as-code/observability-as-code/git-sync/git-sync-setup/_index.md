@@ -249,34 +249,20 @@ You can also check the **Disable webhook integration**. When checked, Grafana do
 
 Git providers limit the amount of webhooks they allow in their repositories. Refer to [Webhook limits](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend#webhook-limits) for more information and to learn how to proceed if you reach these limits.
 
-### Signed commit and authoring options
+### Signed commit options
 
 Starting in Grafana 13.1.0, you can **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys.
 
-Starting in Grafana 13.2.0, you can **include authoring details** to your commits.
-
-Follow the UI wizard to fill in the required fields to set up any of these options, and refer to the sections below for more details.
-
-#### Unsigned commits
-
-If you don't enable commit signing:
-
-- If you add an author override, the `author` for every commit will be the configured override.
-- If you don't select author override, the signed in Grafana user name and email will be used as the commit author
-
-#### Signed commits
-
-If you enable commit signing:
-
-- If you enable the signer as the commit author, Git Sync will use the signer name & email to author all commits
-- If you don't enable the signer as the commit author, the signed in Grafana user name and email will be used as the commit `author` and the `committer` will be the configured signer.
+Starting in Grafana 13.2.0, by default all commits use the signed-in Grafana user as the commit author. For more details, refer to [Authoring options](#authoring-options).
 
 For the moment, Git Sync doesn't support:
 
 - Passphrase-protected keys.
 - Verification of individual accounts.
 
-##### Pre-requirements
+Follow the UI wizard to fill in the required fields to set up any of these options, and refer to the sections below for more details.
+
+#### Pre-requirements
 
 In order to implement signed commits, make sure that you set up a specific verification account in your Git provider. You'll need your account's signing key, name and email to set up verification.
 
@@ -286,7 +272,7 @@ For more details on how to create your keys for Git authentication, refer to the
 - GitLab: [Signed commits](https://docs.gitlab.com/user/project/repository/signed_commits/)
 - Bitbucket: [Controlling access to code](https://confluence.atlassian.com/bitbucketserver/controlling-access-to-code-776639770.html)
 
-##### Example: Sign your commits with an SSH key
+#### Example: Sign your commits with an SSH key
 
 To enforce signed commits using an SSH key follow these steps:
 
@@ -299,6 +285,24 @@ To enforce signed commits using an SSH key follow these steps:
 1. Click **Save**.
 
 After completing the key configuration, any commits your users make to the provisioned folder will appear as **Verified**.
+
+### Authoring options
+
+Starting in Grafana 13.2.0, you can **include authoring information** to your commits.
+
+#### Authoring in unsigned commits
+
+If you don't enable commit signing:
+
+- If you add an author override, the `author` for every commit will be the configured override.
+- If you don't select author override, the signed-in Grafana user name and email will be used as the commit author.
+
+#### Authoring in signed commits
+
+If you enable commit signing:
+
+- If you enable the signer as the commit author, Git Sync will use the signer name and email as the author to all commits.
+- If you don't enable the signer as the commit author, the signed-in Grafana user name and email will be used as the commit `author`, and the `committer` will be the configured signer.
 
 ## Check your dashboards in Grafana
 
