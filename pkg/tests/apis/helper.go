@@ -977,6 +977,9 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 		actions = ossaccesscontrol.TeamAdminActions
 	}
 
+	dbHelper, err := legacysql.NewDatabaseProvider(c.env.SQLStore)(context.Background())
+	require.NoError(c.t, err)
+
 	// The helper's seeded teams exist only in legacy SQL, so add membership through
 	// the legacy store instead of the redirect-aware TeamPermissionsService.
 	store := resourcepermissions.NewStore(c.env.Cfg, c.env.SQLStore, c.env.FeatureToggles)
@@ -987,7 +990,7 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 		ResourceID:        strconv.FormatInt(teamID, 10),
 		ResourceAttribute: "id",
 	}, func(session *db.Session, orgID int64, u accesscontrol.User, _, _ string) error {
-		return teamimpl.AddOrUpdateTeamMemberHook(session, u.ID, orgID, teamID, false, permission)
+		return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, u.ID, orgID, teamID, false, permission)
 	})
 	require.NoError(c.t, err)
 }
