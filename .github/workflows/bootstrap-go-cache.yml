@@ -121,10 +121,11 @@ jobs:
             (cd "$dir" && go mod download all)
           done
 
-      # Build tags and CGO_ENABLED feed the key Go computes per package, so
-      # these have to match what the consuming jobs pass. Nothing under scripts
-      # is compiled by those jobs, and one package there has no main.
-      - name: Build all packages
+      # The jobs that read this cache compile tests, which go build never does,
+      # so the warm-up runs them without running any test. Build tags and
+      # CGO_ENABLED feed the key Go computes per package, so they have to match
+      # what those jobs pass.
+      - name: Compile all packages and their tests
         if: inputs.cache == 'build'
         env:
           CGO_ENABLED: '0'
@@ -138,12 +139,10 @@ jobs:
           for tags in "${TAGSETS[@]}"; do
             PACKAGES="$(
               for dir in $(go list -m -f '{{.Dir}}'); do
-                (cd "$dir" && go list -tags="$tags" -f '{{if .GoFiles}}{{.ImportPath}}{{end}}' ./...)
-              done | grep -v -e '^$' -e '/scripts/' || true
+                (cd "$dir" && go list ./...)
+              done
             )"
-            if [ -n "$PACKAGES" ]; then
-              echo "::group::Building $(echo "$PACKAGES" | wc -l) packages${tags:+ (${tags})}"
-              echo "$PACKAGES" | xargs go build -v -tags="$tags"
-              echo "::endgroup::"
-            fi
+            echo "::group::Compiling $(echo "$PACKAGES" | wc -l) packages${tags:+ (${tags})}"
+            echo "$PACKAGES" | xargs go test -run='^$' -vet=off -tags="$tags"
+            echo "::endgroup::"
           done
