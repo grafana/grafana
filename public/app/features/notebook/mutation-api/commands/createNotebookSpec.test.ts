@@ -13,13 +13,12 @@ import { NotebookMutationClient } from '../NotebookMutationClient';
 import { NOTEBOOKS_FLAG, markdownCell, notebookScene, notebookSpec } from '../test-utils';
 
 // The create command dispatches its POST through the app store; route that dispatch to a test store
-// carrying the dashboard v2beta1 API so the RTK mutation actually runs, exactly as the notebook page
-// state manager's suite does.
+// carrying the dashboard v2beta1 API so the RTK mutation actually runs.
 const createTestStore = () =>
   configureStore({
     reducer: { [dashboardAPIv2beta1.reducerPath]: dashboardAPIv2beta1.reducer },
-    // The dev-only serializable/immutable checks log on the error path (the rejected RTK action
-    // carries an Error instance) and jest-fail-on-console turns that into a failure.
+    // The dev-only serializable/immutable checks log on the error path (the rejected RTK action carries an
+    // Error instance) and jest-fail-on-console turns that into a failure.
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(dashboardAPIv2beta1.middleware),
   });
@@ -43,8 +42,8 @@ describe('CREATE_NOTEBOOK_SPEC', () => {
     testStore = createTestStore();
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-    // locationService is shared across the file, so a test that navigated leaves the next one already
-    // standing where it expects to arrive — which is exactly what `opened` reads.
+    // locationService is shared across the file, and a test that navigated would leave the next one already
+    // standing where it expects to arrive, which is what `opened` reads.
     locationService.push('/d/where-the-user-was');
   });
 
@@ -61,8 +60,8 @@ describe('CREATE_NOTEBOOK_SPEC', () => {
 
     const result = await client.execute({ type: 'CREATE_NOTEBOOK_SPEC', payload: { spec: notebookSpec() } });
 
-    // Through the route's own helper, not a literal. A literal here agrees with whatever the command
-    // happens to build, which is how a create that navigated to a non-existent route stayed green.
+    // Through the route's own helper: a literal agrees with whatever the command happens to build, which is
+    // how a create that navigated to a non-existent route stayed green.
     expect(result).toMatchObject({
       success: true,
       data: { created: true, opened: true, uid: 'n-abc123', url: notebookViewUrl('n-abc123') },
@@ -94,15 +93,13 @@ describe('CREATE_NOTEBOOK_SPEC', () => {
     setBackendSrv({
       fetch: jest.fn().mockReturnValue(of(createFetchResponse(createdNotebook()))),
     } as unknown as BackendSrv);
-    // What a dirty dashboard's unsaved-changes prompt does: the push is issued and the location does
-    // not move.
+    // What a dirty dashboard's unsaved-changes prompt does: the push is issued, the location does not move.
     jest.spyOn(locationService, 'push').mockImplementation(() => {});
     const client = new NotebookMutationClient(notebookScene());
 
     const result = await client.execute({ type: 'CREATE_NOTEBOOK_SPEC', payload: { spec: notebookSpec() } });
 
-    // The notebook is saved, so this is a success — but GET_NOTEBOOK_SPEC and APPLY_NOTEBOOK_SPEC only
-    // reach it once its page is mounted, and `opened` is how the caller knows they cannot yet.
+    // The notebook is saved, so this is a success; `opened` is how the caller knows it cannot reach it yet.
     expect(result).toMatchObject({ success: true, data: { created: true, opened: false, uid: 'n-abc123' } });
   });
 
@@ -111,8 +108,7 @@ describe('CREATE_NOTEBOOK_SPEC', () => {
     setBackendSrv({ fetch } as unknown as BackendSrv);
     const client = new NotebookMutationClient(notebookScene());
 
-    // A layout naming an element that is not there. Unlike the other commands this one persists, so
-    // it must not reach the apiserver.
+    // A layout naming an element that is not there, on the one command here that persists.
     const result = await client.execute({
       type: 'CREATE_NOTEBOOK_SPEC',
       payload: { spec: notebookSpec({ elements: { intro: markdownCell('hi') }, cells: ['intro', 'ghost'] }) },
@@ -129,8 +125,7 @@ describe('CREATE_NOTEBOOK_SPEC', () => {
     const push = jest.spyOn(locationService, 'push');
     const client = new NotebookMutationClient(notebookScene());
 
-    // A mistyped `open` would otherwise be ignored and the create would navigate anyway. This is the
-    // one command here that persists, so an ignored key is a saved notebook.
+    // An ignored key here is a saved notebook.
     const result = await client.execute({
       type: 'CREATE_NOTEBOOK_SPEC',
       payload: { spec: notebookSpec(), opne: false },
@@ -152,7 +147,6 @@ describe('CREATE_NOTEBOOK_SPEC', () => {
 
     const result = await client.execute({ type: 'CREATE_NOTEBOOK_SPEC', payload: { spec: notebookSpec() } });
 
-    // Without this a caller only learns that something failed, and cannot correct the spec.
     expect(result).toMatchObject({ success: false, error: 'spec.layout: unsupported kind' });
   });
 

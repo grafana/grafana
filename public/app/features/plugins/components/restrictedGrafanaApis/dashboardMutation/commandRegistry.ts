@@ -1,13 +1,8 @@
 /**
- * Every Mutation API command, across every document type.
- *
- * Each resource owns its own list — which is what makes a command reachable exactly where it is
- * registered — but `getPayloadSchema` answers for commands that are not currently mounted, so it needs
- * the union. Composed here, at the app-level wiring for this API, because this is the one module that
- * already legitimately sees both features.
- *
- * Kept separate from `dashboardMutationApi.ts` so importing the list does not also run that module's
- * factory registration.
+ * Every Mutation API command, across every document type: `getPayloadSchema` answers for commands that
+ * are not currently mounted, so it needs the union of the per-resource lists. Composed here, the
+ * app-level wiring for this API, because this is the one module that already sees both features, and
+ * kept out of `dashboardMutationApi.ts` so importing the list does not run its factory registration.
  */
 
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -23,8 +18,7 @@ import { NOTEBOOK_COMMANDS } from 'app/features/notebook/mutation-api/registry';
  * module is evaluated, `DASHBOARD_COMMANDS` may still be mid-initialization and read as undefined.
  * Deferring the read to call time steps over the cycle instead of depending on module order.
  *
- * Notebook commands are gated on the flag for the same reason `DashboardMutationClient` gates them:
- * this list is a discovery surface, and an instance with notebooks off has no page to run them on.
+ * Notebook commands are flag-gated for the same reason `DashboardMutationClient` gates them.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- heterogeneous by construction: commands from every resource, each typed on its own scene
 export function allMutationCommands(): Array<MutationCommand<any, any>> {

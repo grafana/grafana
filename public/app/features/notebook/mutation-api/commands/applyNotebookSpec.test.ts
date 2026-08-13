@@ -56,8 +56,7 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next } });
 
     expect(scene.state.title).toBe('Postmortem');
-    // The rebuild replaces the layout manager, which holds the header on its own state. A swap that
-    // dropped it would render a titleless document.
+    // The rebuild replaces the layout manager, which holds the header on its own state.
     expect(scene.state.body.state.title).toBe('Postmortem');
     expect(scene.state.body.state.tags).toEqual(['resolved']);
   });
@@ -88,8 +87,8 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
   it('warns about a cell it silently dropped', async () => {
     const client = new NotebookMutationClient(notebookScene());
 
-    // 'ghost' is referenced by the layout but absent from elements. The deserializer skips it rather
-    // than failing, so without the warning this write would report plain success one cell short.
+    // 'ghost' is referenced by the layout but absent from elements: the deserializer skips it, so without
+    // the warning this write reports plain success one cell short.
     const next = notebookSpec({
       elements: { intro: markdownCell('## Intro') },
       cells: ['intro', 'ghost'],
@@ -125,9 +124,7 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
   it('passes the schema warnings through on a validated write', async () => {
     const client = new NotebookMutationClient(notebookScene());
 
-    // An element no cell references: it saves cleanly and renders nowhere, so the schema calls it a
-    // warning rather than an error. The caller is the one holding the spec that has it, so a write
-    // that swallowed this would leave the orphan to be discovered on a later read, or never.
+    // An element no cell references: a warning rather than an error.
     const next = notebookSpec({
       elements: { intro: markdownCell('## Intro'), orphan: markdownCell('unused') },
       cells: ['intro'],
@@ -144,10 +141,8 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
   it('says so when it cannot tell which cells survived', async () => {
     const scene = notebookScene();
     const client = new NotebookMutationClient(scene);
-    // The write lands and the read-back does not, which is the one case where the dropped-cell check
-    // cannot run. An empty warnings list here would read as "every cell survived". Spied on the
-    // prototype because the rebuild swaps in a new layout manager, so the instance the scene starts
-    // with is not the one that gets serialized.
+    // Spied on the prototype because the rebuild swaps in a new layout manager, so the instance the scene
+    // starts with is not the one that gets serialized.
     jest.spyOn(NotebookLayoutManager.prototype, 'serialize').mockImplementation(() => {
       throw new Error('cannot serialize');
     });
@@ -166,12 +161,9 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     const scene = notebookScene();
     const client = new NotebookMutationClient(scene);
 
-    // On the unvalidated path the spec is an unchecked cast, so `cells` is whatever the caller sent. A
-    // Set survives the dispatcher's structuredClone and is iterable, so the rebuild walks it and the
-    // write lands — and then the comparison calls .map on it and throws. That used to reach the
-    // handler's outer catch and report success: false for a write that had already replaced the
-    // document, which is the one answer a caller cannot act on: it says nothing happened to a notebook
-    // that has already changed.
+    // A Set survives the dispatcher's structuredClone and is iterable, so the rebuild walks it and the
+    // write lands, and then the comparison calls .map on it and throws. Reporting `success: false` there
+    // would say nothing happened to a notebook that has already changed.
     const spec = notebookSpec({ elements: { intro: markdownCell('## Intro') }, cells: ['intro'] });
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- exercising a payload shape only an unvalidated caller can produce
     spec.layout.spec.cells = new Set(spec.layout.spec.cells) as unknown as typeof spec.layout.spec.cells;
@@ -189,8 +181,7 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     const before = cellNamesOf(scene);
     const client = new NotebookMutationClient(scene);
 
-    // A mistyped `validate` would otherwise apply the spec with validation off, which is the path that
-    // loses a cell — the failure this command exists to catch.
+    // A mistyped `validate` would otherwise apply the spec with validation off, the path that loses a cell.
     const result = await client.execute({
       type: 'APPLY_NOTEBOOK_SPEC',
       payload: { spec: notebookSpec(), validat: true },
@@ -229,9 +220,7 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
   });
 
   it('keeps auto-refresh running after the rebuild swaps the refresh picker', async () => {
-    // With the time controls hidden nothing renders the refresh picker, so NotebookScene activates it
-    // itself. A rebuild-and-swap hands the scene a NEW picker, and a one-shot activation would leave
-    // auto-refresh silently stopped after an assistant edit.
+    // With the time controls hidden nothing renders the picker, so NotebookScene activates it itself.
     const scene = notebookScene(notebookSpec({ hideTimepicker: true, autoRefresh: '30s' }));
     const before = scene.state.refreshPicker;
     expect(before.isActive).toBe(true);
@@ -248,10 +237,8 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(before.isActive).toBe(false);
   });
 
-  // Edit mode lives on the scene (the header reads it) AND on the layout manager (the cells read
-  // it). setState merges, so the rebuild keeps `isEditing: true` on the scene while handing it a
-  // fresh body with no edit state: the header keeps saying Editing over cells that have silently
-  // gone read-only. Same class as the refresh-picker case above, different piece of state.
+  // setState merges, so the rebuild keeps `isEditing: true` on the scene while handing it a fresh body
+  // with no edit state.
   it('keeps the rebuilt body in edit mode when the notebook was being edited', async () => {
     const scene = notebookScene();
     scene.onEnterEditMode();

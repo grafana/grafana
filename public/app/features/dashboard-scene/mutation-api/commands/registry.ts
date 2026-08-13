@@ -3,9 +3,6 @@
  *
  * The commands that exist on a dashboard. DashboardMutationClient hands this to the dispatcher, which
  * iterates over it generically.
- *
- * Dashboard-only by construction: another document type has its own list, so a command is reachable
- * exactly where it is registered and nowhere else.
  */
 
 import { addAnnotationCommand } from './addAnnotation';

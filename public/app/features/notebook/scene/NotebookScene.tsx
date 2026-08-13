@@ -85,7 +85,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       };
       syncRefreshPickerActivation(this.state);
 
-      // Re-run it whenever the picker itself is replaced. A whole-state swap (APPLY_NOTEBOOK_SPEC
+      // Re-run it whenever the picker itself is replaced: a whole-state swap (APPLY_NOTEBOOK_SPEC
       // rebuilds the scene from a spec) hands us a new SceneRefreshPicker that nothing has activated,
       // so a one-shot activation above would leave auto-refresh silently stopped after an edit.
       const stateSub = this.subscribeToState((newState, prevState) => {
@@ -95,15 +95,12 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         ) {
           syncRefreshPickerActivation(newState);
         }
-        // Edit mode is held in two places: here, where the header reads it, and on the layout
-        // manager, where the cells do. `setState` MERGES, so a whole-state swap keeps this scene's
-        // `isEditing` while replacing `body` with a rebuilt one that has no edit state — the header
-        // would keep saying Editing over cells that had gone read-only. Pushing it down on every
-        // change to either makes the swap safe by construction, rather than leaving each caller that
-        // replaces `body` to remember.
-        //
-        // onEnterEditMode/onExitEditMode still push it themselves, so the mode also propagates
-        // before this scene is activated. Both paths land on the same idempotent setState.
+        // Edit mode is held in two places: here, where the header reads it, and on the layout manager,
+        // where the cells do. `setState` MERGES, so a whole-state swap keeps this scene's `isEditing`
+        // while replacing `body` with a rebuilt one that has no edit state, and the header would keep
+        // saying Editing over cells that had gone read-only. Pushing it down on every change to either
+        // makes the swap safe by construction. onEnterEditMode/onExitEditMode still push it themselves,
+        // so the mode also propagates before this scene is activated.
         if (newState.body !== prevState.body || newState.isEditing !== prevState.isEditing) {
           newState.body.editModeChanged?.(Boolean(newState.isEditing));
         }

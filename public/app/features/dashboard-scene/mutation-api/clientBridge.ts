@@ -1,11 +1,10 @@
 /**
  * Bridge between a document's scene root and the mutation client that serves it.
  *
- * A scene cannot construct its client directly: that would pull in the whole command registry and
- * create circular dependencies with scene components. So the app provides the implementation at init
- * (`dashboardMutationApi.ts`) and each scene calls this on activation without knowing the details.
- *
- * A leaf module on purpose — it imports nothing, so any scene root can depend on it.
+ * A scene cannot construct its client directly: that would pull in the whole command registry and create
+ * circular dependencies with scene components. So the app provides the implementation at init
+ * (`dashboardMutationApi.ts`) and each scene calls this on activation. A leaf module on purpose: it
+ * imports nothing, so any scene root can depend on it.
  */
 
 /** Which document is mounted, and therefore which commands its client is built with. */
@@ -20,11 +19,8 @@ export function provideMutationClientFactory(create: CreateMutationClient): void
 }
 
 /**
- * Mount the mutation client for the scene that is activating, returning its teardown.
- *
- * `resource` is passed rather than inferred from the scene, so the factory does not have to
- * `instanceof`-test scene classes owned by two different features to decide which commands to
- * register.
+ * `resource` is passed rather than inferred, so the factory does not have to `instanceof`-test scene
+ * classes owned by two different features.
  */
 export function createMutationClient(scene: unknown, resource: MutationResource): () => void {
   if (!_create) {

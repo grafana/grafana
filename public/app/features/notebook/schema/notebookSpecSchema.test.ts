@@ -80,9 +80,8 @@ describe('validateNotebookSpec', () => {
 
   it('rejects the retired v2beta1 transformation shape', () => {
     // `{ kind: <id>, spec: { id: <id> } }` is what a notebook carried before its panel chain was
-    // reparented onto the dashboard v2 shape. It is no longer describable, so it must not validate.
-    // Written as a plain object because it is deliberately not a NotebookSpec, and validateNotebookSpec
-    // takes `unknown`.
+    // reparented onto the dashboard v2 shape. Written as a plain object because it is deliberately not a
+    // NotebookSpec.
     const result = validateNotebookSpec({
       ...spec(),
       elements: {
@@ -134,8 +133,7 @@ describe('validateNotebookSpec', () => {
       })
     );
 
-    // Structurally valid and saves cleanly, but renders one cell short — the deserializer skips a
-    // reference it cannot resolve. So this one is fatal.
+    // Structurally valid and saves cleanly, but renders one cell short, so this one is fatal.
     expect(result.success).toBe(false);
     expect(result.errors).toEqual([
       'layout.spec.cells.0.spec.element.name: no element named "ghost" exists in elements',
@@ -152,8 +150,6 @@ describe('validateNotebookSpec', () => {
       })
     );
 
-    // An orphan costs the reader nothing, and it is what a spec looks like halfway through an edit
-    // that removes a cell. Failing on it would make a read of someone else's notebook unvalidatable.
     expect(result.success).toBe(true);
     expect(result.warnings).toEqual([
       'elements.orphan: not referenced by any cell in layout.spec.cells, so it will not render',

@@ -69,9 +69,8 @@ describe('dashboardMutationApi', () => {
     });
 
     it('answers for a notebook command only when notebooks are enabled', () => {
-      // Both this and getAvailableCommands() are discovery surfaces, and DashboardMutationClient
-      // already keeps CREATE_NOTEBOOK_SPEC out of the second one when the flag is off. A schema for a
-      // command that cannot run anywhere on this instance is a tool an agent builds and never uses.
+      // A schema for a command that cannot run anywhere on this instance is a tool an agent builds and
+      // never uses.
       expect(dashboardMutationApi.getPayloadSchema('GET_NOTEBOOK_SPEC')).toBeNull();
 
       setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
@@ -96,11 +95,9 @@ describe('dashboardMutationApi', () => {
     });
 
     it('answers for every command a real client exposes', () => {
-      // There are two notions of "all commands": this union, and what each client actually registers.
-      // They can drift, because a client may add a command at its own seam rather than through a
-      // resource registry — DashboardMutationClient does exactly that with CREATE_NOTEBOOK_SPEC. A name
-      // a caller can see on `getAvailableCommands()` but cannot get a schema for is the failure, so
-      // check against the clients rather than against the union that is being verified.
+      // This union and what each client registers can drift, because a client may add a command at its
+      // own seam rather than through a resource registry, as DashboardMutationClient does with
+      // CREATE_NOTEBOOK_SPEC. So check against the clients, not against the union being verified.
       setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
 
       const exposed = [
@@ -112,8 +109,8 @@ describe('dashboardMutationApi', () => {
             body: DefaultGridLayoutManager.fromVizPanels([]),
           })
         ).getAvailableCommands(),
-        // getAvailableCommands reads nothing off the scene — the command list is fixed at construction
-        // — so a notebook does not have to be built to ask a notebook client what it offers.
+        // The command list is fixed at construction, so a notebook does not have to be built to ask a
+        // notebook client what it offers.
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the client only stores the scene; nothing here touches it
         ...new NotebookMutationClient({} as NotebookScene).getAvailableCommands(),
       ];

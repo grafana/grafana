@@ -1,19 +1,11 @@
 /**
- * CREATE_NOTEBOOK_SPEC — create a NEW notebook from a complete `NotebookSpec` and open it.
+ * CREATE_NOTEBOOK_SPEC, create a NEW notebook from a complete `NotebookSpec` and open it.
  *
- * The odd one out on this surface, and for one reason: there is no blank notebook to write into.
- * `create_dashboard_spec` on the assistant side navigates to `/dashboard/new`, which mounts a scene,
- * and then applies a spec onto it; a notebook has no such route, so the create IS the write. The spec
- * is POSTed to the notebooks resource, the apiserver assigns the uid, and the browser navigates to the
- * notebook page — where GET_NOTEBOOK_SPEC and APPLY_NOTEBOOK_SPEC take over for every further edit.
- *
- * Two consequences worth stating rather than discovering:
- * - It persists. Every other command on this surface mutates a scene and leaves saving to the user;
- *   this one writes a resource. So it validates by default, where the others do not.
- * - It reads nothing off the open document, which is why it is the one notebook command also registered
- *   on a dashboard's client. It still needs SOME document open, because the mutation API is only
- *   mounted on a scene — creating the first notebook from a page with no scene at all is not reachable
- *   here and stays with the caller's own REST path.
+ * The odd one out on this surface: a notebook has no blank-editor route the way `/dashboard/new` is one
+ * for a dashboard, so the create IS the write. It therefore persists, which is why it validates by
+ * default where the others do not, and it reads nothing off the open document, which is why it is the one
+ * notebook command also registered on a dashboard's client (it still needs SOME document open, the
+ * mutation API being mounted only on a scene).
  */
 
 import * as z from 'zod';
@@ -27,9 +19,8 @@ import { type Spec as NotebookSpec } from '../../types';
 
 import { requiresNotebookCreate } from './permissions';
 
-// Strict, like GET and APPLY. The argument for it is strongest here: this is the only command on the
-// surface that persists, so an ignored key is a saved notebook. A mistyped `open` navigates anyway and
-// a mistyped `validate` is harmless only because it defaults to on.
+// Strict, like GET and APPLY, and most of all here: this is the only command on the surface that
+// persists, so an ignored key is a saved notebook.
 const createNotebookSpecPayloadSchema = z
   .object({
     spec: z
@@ -59,11 +50,6 @@ const createNotebookSpecPayloadSchema = z
 
 export type CreateNotebookSpecPayload = z.infer<typeof createNotebookSpecPayloadSchema>;
 
-/**
- * Typed on `unknown` rather than NotebookScene, which is what makes it registrable on both the notebook
- * and the dashboard command list: a parameter position is contravariant, so a check that accepts any
- * scene satisfies a list that supplies a specific one.
- */
 export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayload, unknown> = {
   name: 'CREATE_NOTEBOOK_SPEC',
   description:
@@ -75,14 +61,13 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
   payloadSchema: createNotebookSpecPayloadSchema,
   permission: requiresNotebookCreate,
   // Not `readOnly: true`: that would skip the payload clone, and this handler hands the spec to a
-  // request. It costs a forceRender on the open document, which nothing here changed — the two effects
-  // of the flag only come apart on this command. See `readOnly` in the dashboard command types.
+  // request. It costs a forceRender on the open document, which nothing here changed. The two effects of
+  // the flag only come apart on this command. See `readOnly` in the dashboard command types.
   readOnly: false,
 
   handler: async (payload) => {
     try {
       let spec: NotebookSpec;
-      // Surfaced above all here: a create persists, so an orphaned element is in a saved notebook.
       let warnings: string[] = [];
       if (payload.validate) {
         const result = validateNotebookSpec(payload.spec);
@@ -90,8 +75,8 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
           return { success: false, error: `Validation failed: ${result.errors.join(', ')}`, changes: [] };
         }
         warnings = result.warnings;
-        // Write the PARSED spec: the schema fills the CUE `*` defaults and normalizes absent
-        // collections, so what is persisted is the shape validation saw.
+        // The PARSED spec: the schema fills CUE `*` defaults and normalizes absent collections, so what is
+        // persisted is the shape validation saw.
         spec = result.data;
       } else {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unvalidated path: caller-supplied spec is checked by the apiserver
@@ -103,12 +88,8 @@ export const createNotebookSpecCommand: MutationCommand<CreateNotebookSpecPayloa
       let opened = false;
       if (payload.open) {
         locationService.push(created.url);
-        // Report whether the navigation was accepted, not that it was asked for. A dirty dashboard's
-        // unsaved-changes prompt blocks the push, and the notebook the caller now holds a uid for is
-        // not the mounted document — so GET_NOTEBOOK_SPEC and APPLY_NOTEBOOK_SPEC are still out of
-        // reach. The create itself is saved either way, hence success.
-        //
-        // See the `open` field's description for why `true` is weaker than "mounted".
+        // Whether the navigation was accepted, not that it was asked for: a dirty dashboard's
+        // unsaved-changes prompt blocks the push. The create itself is saved either way, hence success.
         opened = locationService.getLocation().pathname === created.url;
       }
 

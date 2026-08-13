@@ -1,17 +1,13 @@
 /**
- * Fixtures for the notebook mutation command suites.
- *
- * Builds real notebook scenes through the real transform, so the tests exercise the same path the page
- * loader takes. Nothing here mocks a serializer or a layout manager: the bugs this surface exists to
- * prevent are precisely losses in serialization, so a test that stubs it would pass while the thing
- * being tested is broken.
+ * Fixtures for the notebook mutation command suites. Real scenes through the real transform, mocking no
+ * serializer or layout manager: the bugs this surface exists to prevent are losses in serialization, so a
+ * test that stubbed one would pass while what is being tested is broken.
  *
  * The spec is written in the serializer's canonical form (explicit datasource per query, `description`
  * present on panels, `version: ''`) so spec -> scene -> spec is an exact round-trip.
  */
 
-// defaultDataQueryKind is not re-exported by ../types (that seam covers the notebook-specific and
-// forked names); it is a shared leaf type, so it comes straight from the generated module.
+// A shared leaf type, so it comes straight from the generated module rather than through ../types.
 import { defaultDataQueryKind } from '@grafana/schema/apis/notebook/v2beta1';
 
 import { notebookResourceFor } from '../api/notebookResource';
@@ -50,8 +46,8 @@ export function panelCell(id: number, title: string): NotebookElement {
                   kind: 'DataQuery',
                   version: defaultDataQueryKind().version,
                   group: 'prometheus',
-                  // Explicit datasource: without a DSReferencesMapping the serializer writes the
-                  // runtime-resolved datasource back, so only explicit refs round-trip exactly.
+                  // Without a DSReferencesMapping the serializer writes the runtime-resolved datasource
+                  // back, so only an explicit ref round-trips exactly.
                   datasource: { name: 'gdev-prometheus' },
                   spec: { expr: 'up' },
                 },
@@ -83,11 +79,7 @@ interface NotebookSpecOverrides {
   autoRefresh?: string;
 }
 
-/**
- * A three-cell notebook: a markdown intro, a panel, and a code cell. The mix matters — a markdown or
- * code cell is not a viz panel, so a serializer that only walks panels drops them, which is the
- * regression these suites exist to catch.
- */
+/** Markdown intro, panel, code cell: the mix matters, a serializer that only walks viz panels drops two. */
 export function notebookSpec(overrides: NotebookSpecOverrides = {}): NotebookSpec {
   const elements =
     overrides.elements ??

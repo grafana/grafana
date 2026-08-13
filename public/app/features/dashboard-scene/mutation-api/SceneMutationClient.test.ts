@@ -3,14 +3,8 @@ import * as z from 'zod';
 import { SceneMutationClient, type MutationTargetScene } from './SceneMutationClient';
 import type { MutationCommand } from './commands/types';
 
-/**
- * The dispatcher on synthetic commands rather than real ones.
- *
- * Its behaviour is what every document type inherits — dispatch order, the payload clone, the
- * post-write re-render, the handler-throw path — and testing it through a dashboard or notebook command
- * only covers whichever combination that command happens to be. Fake commands let each rule be aimed at
- * directly, and mean a new resource does not have to re-prove the pipeline.
- */
+// Synthetic commands rather than real ones: testing the dispatcher through a dashboard or notebook
+// command only covers whichever combination that command happens to be.
 
 function scene(): MutationTargetScene & { forceRender: jest.Mock } {
   return { forceRender: jest.fn() };
@@ -70,8 +64,8 @@ describe('SceneMutationClient', () => {
         }),
       ]);
 
-      // A payload that would also fail validation: the permission error is the one that has to come
-      // back, or a caller without access learns the shape of a command it may not run.
+      // The payload would also fail validation, but a caller without access must not learn the shape of a
+      // command it may not run.
       const result = await client.execute({ type: 'TEST_COMMAND', payload: {} });
 
       expect(result).toEqual({
@@ -100,10 +94,9 @@ describe('SceneMutationClient', () => {
   describe('payload clone', () => {
     it('gives a write command a payload it can mutate without touching the caller', async () => {
       const client = new SceneMutationClient(scene(), [
-        // `z.unknown()` is what makes the aliasing visible, and it is what the full-spec commands use
-        // for the spec they carry. A `z.object` or `z.record` builds a fresh object as it parses, which
-        // hides the aliasing rather than being safe from it — write this schema either of those ways
-        // and the test passes with the clone taken out.
+        // `z.unknown()` is what makes the aliasing visible, and what the full-spec commands use. A
+        // `z.object` or `z.record` builds a fresh object as it parses, hiding the aliasing rather than
+        // being safe from it: write it either of those ways and the test passes with the clone taken out.
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the payload shape is the test's own; z.unknown() cannot express it
         command<{ spec: Record<string, unknown> }>({
           payloadSchema: z.object({ spec: z.unknown() }) as unknown as z.ZodType<{ spec: Record<string, unknown> }>,
@@ -184,8 +177,7 @@ describe('SceneMutationClient', () => {
         }),
       ]);
 
-      // The API is a plugin surface: a rejected promise crosses the boundary as an opaque failure,
-      // where a result carries the reason.
+      // A rejected promise crosses the plugin boundary as an opaque failure; a result carries the reason.
       const result = await client.execute({ type: 'TEST_COMMAND', payload: {} });
 
       expect(result).toEqual({

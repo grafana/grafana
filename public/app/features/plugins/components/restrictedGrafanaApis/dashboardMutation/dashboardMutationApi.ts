@@ -5,9 +5,8 @@
  * the API object that is exposed to plugins via RestrictedGrafanaApis.
  *
  * The mutation client is created/destroyed automatically when a document's scene
- * activates/deactivates, via the clientBridge. Which client it is depends on what
- * is mounted -- a dashboard and a notebook expose different commands -- and only
- * one document is ever mounted at a time, so there is one slot.
+ * activates/deactivates, via the clientBridge. Only one document is ever mounted at
+ * a time, so there is one slot.
  * Plugins access it through RestrictedGrafanaApis context -- they cannot
  * import this module directly because it lives inside the core bundle.
  */
@@ -56,8 +55,8 @@ export const dashboardMutationApi: DashboardMutationAPI = {
   },
   getPayloadSchema: (commandId: string) => {
     const normalized = commandId.toUpperCase();
-    // Every command, not just the ones the mounted document exposes: a caller may fetch a schema to
-    // decide whether to navigate somewhere it applies. `execute` is what enforces where it can run.
+    // Every command, not just the ones the mounted document exposes: `execute` is what enforces where a
+    // command can run.
     const cmd = allMutationCommands().find((c) => c.name === normalized);
     return cmd?.payloadSchema ?? null;
   },

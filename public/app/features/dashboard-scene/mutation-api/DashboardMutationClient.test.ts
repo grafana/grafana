@@ -34,15 +34,12 @@ describe('DashboardMutationClient', () => {
 
     const available = new DashboardMutationClient(dashboardScene()).getAvailableCommands();
 
-    // Creating a notebook reads nothing off the open document and there is no blank notebook to open
-    // first, so it has to be reachable from where the user already is — a dashboard.
     expect(available).toContain('CREATE_NOTEBOOK_SPEC');
   });
 
   it('hides CREATE_NOTEBOOK_SPEC when notebooks are off', () => {
-    // The command list is how a caller discovers what it can do here, so on an instance without
-    // notebooks it must not name one. Refusing the execute is not enough: an agent builds its tool list
-    // from this and would offer a create that can only ever fail.
+    // Refusing the execute is not enough: an agent builds its tool list from this and would offer a
+    // create that can only ever fail.
     const available = new DashboardMutationClient(dashboardScene()).getAvailableCommands();
 
     expect(available).not.toContain('CREATE_NOTEBOOK_SPEC');

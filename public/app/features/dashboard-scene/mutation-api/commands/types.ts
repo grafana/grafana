@@ -12,10 +12,7 @@ import { config } from '@grafana/runtime';
 import type { DashboardScene } from '../../scene/DashboardScene';
 import type { MutationResult } from '../types';
 
-/**
- * The scene a command operates on. Defaults to DashboardScene so a dashboard command file names
- * neither type parameter; a notebook command sets it to NotebookScene.
- */
+/** The scene a command operates on. Defaults to DashboardScene so a dashboard command names no type parameter. */
 export interface MutationContext<TScene = DashboardScene> {
   scene: TScene;
 }
@@ -30,10 +27,10 @@ type PermissionCheck<TScene = DashboardScene> = (scene: TScene) => PermissionChe
  * Each command file exports a single MutationCommand. A registry collects the commands for one
  * resource and SceneMutationClient iterates over them generically.
  *
- * `TScene` is what makes one client able to serve two document types: a command is only ever
- * dispatched by a client holding the scene it was typed for, so a dashboard handler cannot be
- * handed a notebook. A command that reads nothing off the scene (CREATE_NOTEBOOK_SPEC) types it
- * `unknown`, which — parameters being contravariant — makes it assignable to both registries.
+ * `TScene` is what lets one client serve two document types: a command is only ever dispatched by a
+ * client holding the scene it was typed for, so a dashboard handler cannot be handed a notebook. A
+ * command that reads nothing off the scene (CREATE_NOTEBOOK_SPEC) types it `unknown`, which, parameters
+ * being contravariant, makes it assignable to both registries.
  */
 export interface MutationCommand<T = unknown, TScene = DashboardScene> {
   /** Command name -- must be UPPER_CASE. Used as the MutationType value. */
@@ -48,11 +45,10 @@ export interface MutationCommand<T = unknown, TScene = DashboardScene> {
    * When true, the command only reads state: the payload is passed through as-is and no forceRender
    * follows.
    *
-   * Two effects, deliberately on one flag. A write payload is deep-cloned because Zod hands back frozen
-   * or shared default objects that downstream code mutates in place, and a write is followed by a
+   * Two effects on one flag, deliberately: a write payload is deep-cloned (Zod hands back frozen or
+   * shared default objects that downstream code mutates in place) and a write is followed by a
    * re-render. They coincide for every command that changes the open scene. CREATE_NOTEBOOK_SPEC is the
-   * one that does not — it needs the clone but changes nothing here — and pays a spare forceRender for
-   * it. Split the flag if a second such command appears.
+   * one that does not, needing the clone but changing nothing here, and pays a spare forceRender for it.
    */
   readOnly?: boolean;
   /** The handler function. */

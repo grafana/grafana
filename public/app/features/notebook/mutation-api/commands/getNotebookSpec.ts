@@ -1,11 +1,6 @@
 /**
- * GET_NOTEBOOK_SPEC — return the whole notebook as a single `NotebookSpec`, the read half of the
- * notebook full-spec surface (paired with APPLY_NOTEBOOK_SPEC).
- *
- * One command, one spec. There is no dashboard command that also answers here: a notebook's client is
- * built from the notebook command list, so GET_SPEC is not registered on this page at all. That is
- * what lets this command be described to a model without naming two schemas and a rule for choosing
- * between them.
+ * GET_NOTEBOOK_SPEC, the read half of the notebook full-spec surface (paired with
+ * APPLY_NOTEBOOK_SPEC): return the whole notebook as a single `NotebookSpec`.
  */
 
 import * as z from 'zod';
@@ -46,9 +41,8 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
     try {
       const notebook = transformNotebookSceneToSaveModel(scene);
 
-      // Opt-in structural + referential validation (default off to avoid breaking reads). Worth
-      // requesting on a notebook: a read that comes back with dangling cell references means the
-      // scene lost elements on the way out.
+      // Opt-in, default off so a read never fails on someone else's notebook. Worth requesting: a read
+      // with dangling cell references means the scene lost elements on the way out.
       let warnings: string[] = [];
       if (payload.validate) {
         const result = validateNotebookSpec(notebook);

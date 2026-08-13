@@ -3,8 +3,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { NotebookMutationClient } from '../NotebookMutationClient';
 import { NOTEBOOKS_FLAG, notebookScene, notebookSpec } from '../test-utils';
 
-// Driven through the client rather than by calling the handler, because the client is where the
-// permission rule and the payload schema actually run.
+// Driven through the client, which is where the permission rule and the payload schema actually run.
 describe('GET_NOTEBOOK_SPEC', () => {
   beforeEach(() => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
@@ -51,8 +50,8 @@ describe('GET_NOTEBOOK_SPEC', () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrowing the command's own result shape
     const spec = (result.data as { spec: ReturnType<typeof notebookSpec> }).spec;
 
-    // A panel cell named 'latency-panel' must not be rekeyed to 'panel-1' on the way out, and every
-    // layout reference must resolve — a dangling reference is a silently missing cell.
+    // A panel cell named 'latency-panel' must not be rekeyed to 'panel-1' on the way out, and a dangling
+    // layout reference is a silently missing cell.
     expect(spec.elements['latency-panel']).toBeDefined();
     const referenced = spec.layout.spec.cells.map((cell) => cell.spec.element.name);
     expect(referenced).toEqual(['intro', 'latency-panel', 'query']);
