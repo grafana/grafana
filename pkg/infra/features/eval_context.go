@@ -30,8 +30,8 @@ func EvaluationContextFromBaggage(ctx context.Context) openfeature.EvaluationCon
 	return openfeature.NewEvaluationContext(targetingKey, contextAtributes)
 }
 
-func EvaluationContextFromNamespace(namespace string) openfeature.EvaluationContext {
-	return openfeature.NewEvaluationContext(namespace, map[string]any{
-		NamespaceKey: namespace,
-	})
+// EvaluationContextFromTargetingKey builds an evaluation context with no
+// attributes, using targetingKey as the sole subject identifier.
+func EvaluationContextFromTargetingKey(targetingKey string) openfeature.EvaluationContext {
+	return openfeature.NewEvaluationContext(targetingKey, make(map[string]any))
 }
