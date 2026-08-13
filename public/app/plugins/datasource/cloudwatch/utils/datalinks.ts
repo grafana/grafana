@@ -68,11 +68,14 @@ async function createInternalXrayLink(datasourceUid: string, region: string): Pr
   try {
     ds = await getDataSourceInstanceSettings(datasourceUid);
   } catch (e) {
-    console.error('Could not load linked xray data source, it was probably deleted after it was linked', e);
+    console.error('Could not load linked X-Ray data source', e);
     return undefined;
   }
 
   if (!ds) {
+    console.error(
+      `Could not find linked X-Ray data source with uid: ${datasourceUid}, it was probably deleted after it was linked`
+    );
     return undefined;
   }
 
