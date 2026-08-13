@@ -107,7 +107,7 @@ jobs:
       # reach the enterprise tree saves the untagged half rather than failing
       # and leaving every dependent workflow with no cache at all.
       - name: Get GitHub App token
-        if: ${{ inputs.enterprise && github.event.pull_request.head.repo.fork == false }}
+        if: ${{ inputs.enterprise && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
         id: get-github-app-token
         continue-on-error: true
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
@@ -127,6 +127,8 @@ jobs:
         with:
           cache-write: 'build'
 
+      # Nothing under scripts is compiled by the jobs this cache serves, so
+      # warming it buys nothing and one of them does not build at all.
       - name: Build all packages
         env:
           CGO_ENABLED: '0'
@@ -139,6 +141,12 @@ jobs:
           fi
           for tags in "${TAGSETS[@]}"; do
             for dir in $(go list -m -f '{{.Dir}}'); do
-              (cd "$dir" && go build -tags="$tags" ./...)
+              (
+                cd "$dir"
+                PACKAGES="$(go list -tags="$tags" ./... | grep -v '/scripts/' || true)"
+                if [ -n "$PACKAGES" ]; then
+                  echo "$PACKAGES" | xargs go build -tags="$tags"
+                fi
+              )
             done
           done
