@@ -273,8 +273,14 @@ describe('NotebookLayoutManager', () => {
       manager.duplicateCell(manager.state.cells[0]);
 
       const [original, copy] = manager.state.cells;
-      expect(copy).not.toBe(original);
-      expect(copy.state.content).toEqual(original.state.content);
+      expect(copy.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Cell a' } });
+      expect(copy.state.content).not.toBe(original.state.content);
+
+      // In-place edits (or a setState that reuses spec) must not leak across the pair.
+      if (original.state.content?.kind === 'Markdown') {
+        original.state.content.spec.text = 'changed';
+      }
+      expect(copy.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Cell a' } });
     });
 
     // serialize() writes elementName as the key into the notebook's `elements` map, so a shared name
@@ -499,11 +505,15 @@ describe('NotebookLayoutManager', () => {
     });
 
     it('clones narrative cells unchanged', () => {
-      const clone = buildManager().duplicate();
+      const manager = buildManager();
+      const original = manager.state.cells[0];
+
+      const clone = manager.duplicate();
 
       expect(clone.state.cells).toHaveLength(3);
       expect(clone.state.cells[0].state.body).toBeUndefined();
       expect(clone.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+      expect(clone.state.cells[0].state.content).not.toBe(original.state.content);
     });
   });
 });

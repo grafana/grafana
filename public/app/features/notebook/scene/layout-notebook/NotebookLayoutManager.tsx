@@ -113,7 +113,8 @@ export class NotebookLayoutManager
    * The copy needs a fresh element name, not the original's: serialize() writes those names as the keys
    * of the notebook's `elements` map, so two cells sharing one would collapse into a single element on
    * the next round-trip — the duplicate would silently become an alias rather than a copy. A panel cell
-   * also needs a fresh panel key, for the same reasons duplicate() rekeys.
+   * also needs a fresh panel key, for the same reasons duplicate() rekeys. Narrative content is cloned
+   * rather than reused, so editing the copy cannot change the original.
    */
   public duplicateCell(cell: NotebookCellItem): void {
     const index = this.state.cells.indexOf(cell);
@@ -126,6 +127,7 @@ export class NotebookLayoutManager
       key: undefined,
       elementName: this.nextElementName(cell.state.elementName),
       body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
+      ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
     });
 
     const cells = [...this.state.cells];
@@ -172,6 +174,7 @@ export class NotebookLayoutManager
       cell.clone({
         key: undefined,
         body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
+        ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
       })
     );
 
