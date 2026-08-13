@@ -168,10 +168,10 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 		wantErrMsg string
 	}{
 		{
-			name:       "migrate job fails when disabled by configuration",
+			name:       "migrate job fails when feature flag is disabled",
 			enabled:    false,
 			wantErr:    true,
-			wantErrMsg: "migrate functionality is disabled by configuration",
+			wantErrMsg: "migrate functionality is disabled",
 		},
 		{
 			name:    "migrate job proceeds when enabled",
@@ -229,7 +229,7 @@ func TestMigrationWorker_ConfigurationDisabled(t *testing.T) {
 				// It may fail later due to minimal mocks, but the configuration check passed
 				if err != nil {
 					// Job failed due to mocking, not configuration - that's okay
-					assert.NotContains(t, err.Error(), "disabled by configuration")
+					assert.NotContains(t, err.Error(), "functionality is disabled")
 				}
 			}
 		})

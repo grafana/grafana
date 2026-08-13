@@ -1291,10 +1291,10 @@ func TestExportWorker_ConfigurationDisabled(t *testing.T) {
 		wantErrMsg string
 	}{
 		{
-			name:       "export job fails when disabled by configuration",
+			name:       "export job fails when feature flag is disabled",
 			enabled:    false,
 			wantErr:    true,
-			wantErrMsg: "export functionality is disabled by feature flag",
+			wantErrMsg: "export functionality is disabled",
 		},
 		{
 			name:    "export job proceeds when enabled",
@@ -1364,7 +1364,7 @@ func TestExportWorker_ConfigurationDisabled(t *testing.T) {
 				// It may fail later due to minimal mocks, but the configuration check passed
 				if err != nil {
 					// Job failed due to mocking, not configuration - that's okay
-					assert.NotContains(t, err.Error(), "disabled by feature flag")
+					assert.NotContains(t, err.Error(), "functionality is disabled")
 				}
 			}
 		})
