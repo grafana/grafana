@@ -827,10 +827,10 @@ export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions)
  *
  * **Details:**
  * - flag key: `provisioning.gitConventions`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.gitConventions", false, options).value;
+  return useFlag("provisioning.gitConventions", true, options).value;
 };
 
 /**

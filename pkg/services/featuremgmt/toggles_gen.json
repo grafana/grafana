@@ -5189,15 +5189,18 @@
     {
       "metadata": {
         "name": "provisioning.gitConventions",
-        "resourceVersion": "1780985056992",
-        "creationTimestamp": "2026-06-09T06:04:16Z"
+        "resourceVersion": "1786613642168",
+        "creationTimestamp": "2026-06-09T06:04:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-08-13 09:34:02.168032 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
