@@ -336,10 +336,12 @@ func applySeedConfigDefaults(cfg *setting.Cfg) {
 		cfg.AdminEmail = "admin@localhost"
 		cfg.AdminPassword = "admin"
 	}
-	if !cfg.AutoAssignOrg {
-		cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrg = true
+	if cfg.AutoAssignOrgId == 0 {
 		cfg.AutoAssignOrgId = 1
 	}
+	// do not silently skip the admin user
+	cfg.DisableInitAdminCreation = false
 }
 
 func getTestDBType() string {
