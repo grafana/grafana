@@ -17,7 +17,7 @@ import { logError, logWarning } from '../../Analytics';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { type MuteTimingFields } from '../../types/mute-timing-form';
 import { isImportedResource, isProvisionedResource } from '../../utils/k8s/utils';
-import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
+import { isClientFetchError, makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { createMuteTiming, defaultTimeInterval, isTimeIntervalDisabled } from '../../utils/mute-timings';
 import { ALERTING_PATHS } from '../../utils/navigation';
 import { ImportedTimeIntervalAlert, ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -101,8 +101,6 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance, editMode }
         const message = stringifyErrorLike(error);
         notifyApp.error(title, message);
 
-const isClientFetchError = (error: unknown): error is FetchError =>
-     isFetchError(error) && error.status >= 400 && error.status < 500;
         if (isClientFetchError(error)) {
           logWarning(title, { status: String(error.status), message });
         } else {
