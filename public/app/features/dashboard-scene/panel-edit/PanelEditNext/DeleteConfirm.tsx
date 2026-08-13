@@ -85,7 +85,7 @@ export function DeleteConfirm({ confirmStyle, description, onConfirm, onCancel }
         size="sm"
         fill="text"
         variant="secondary"
-        icon="trash-alt"
+        icon="times"
         className={confirmStyle === ConfirmationStyle.compact ? styles.iconButton : undefined}
         aria-label={cancelDeleteAria}
         onClick={handleCancelClick}
