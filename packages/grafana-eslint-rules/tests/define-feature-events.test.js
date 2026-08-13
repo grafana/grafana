@@ -1,3 +1,4 @@
+import * as tsParser from '@typescript-eslint/parser';
 import { RuleTester } from 'eslint';
 
 import defineFeatureEventsRule from '../rules/define-feature-events.cjs';
@@ -6,7 +7,8 @@ RuleTester.setDefaultConfig({
   languageOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
-    parser: require('@typescript-eslint/parser'),
+    // Imported rather than required: this package is an ES module, so `require` is not defined here.
+    parser: tsParser,
   },
 });
 
