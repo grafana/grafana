@@ -13,12 +13,13 @@ import {
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
-import { Box, ControlledCollapse, useStyles2 } from '@grafana/ui';
+import { Box, ControlledCollapse, InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
 import { createLogLineLinks } from '../logParser';
 import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
+import { useLogDetailsContext } from './LogDetailsContext';
 import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
 import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsLinks } from './LogLineDetailsLinks';
@@ -41,6 +42,7 @@ export const LogLineDetailsComponent = memo(
   ({ log, logs, search = '', timeRange, timeZone }: LogLineDetailsComponentProps) => {
     const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
       useLogListContext();
+    const { prettifyDetailsJSON, setPrettifyDetailsJSON } = useLogDetailsContext();
 
     const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
     const styles = useStyles2(getStyles);
@@ -170,11 +172,26 @@ export const LogLineDetailsComponent = memo(
       <div className={styles.componentWrapper}>
         <ControlledCollapse
           className={styles.collapsable}
-          label={t('logs.log-line-details.log-line-section', 'Log line')}
+          label={
+            <Stack justifyContent="space-between" flex={1} alignItems="center">
+              {t('logs.log-line-details.log-line-section', 'Log line')}
+              {log.isJSON && (
+                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+                <div onClick={(event) => event.stopPropagation()}>
+                  <InlineSwitch
+                    label={t('logs.log-line-details.prettify', 'Prettify')}
+                    showLabel
+                    value={prettifyDetailsJSON}
+                    onChange={(event) => setPrettifyDetailsJSON(event.currentTarget.checked)}
+                  />
+                </div>
+              )}
+            </Stack>
+          }
           isOpen={logLineOpen}
           onToggle={(isOpen: boolean) => handleToggle('logLineOpen', isOpen)}
         >
-          <LogLineDetailsLog log={log} syntaxHighlighting={syntaxHighlighting ?? true} />
+          <LogLineDetailsLog log={log} syntaxHighlighting={syntaxHighlighting ?? true} prettifyJSON={prettifyDetailsJSON} />
         </ControlledCollapse>
         {displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse
