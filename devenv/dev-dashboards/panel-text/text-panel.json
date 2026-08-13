@@ -201,7 +201,7 @@
         "kind": "Panel",
         "spec": {
           "id": 5,
-          "title": "Handlebars",
+          "title": "Handlebars support",
           "description": "",
           "links": [],
           "data": {
@@ -216,10 +216,10 @@
                       "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "datasource": {
-                        "name": "gdev-testdata"
+                        "name": "PD8C576611E62080A"
                       },
                       "spec": {
-                        "csvContent": "host,cpu\nweb-1,84\nweb-2,12\ndb-1,37",
+                        "csvContent": "Id,first_name,last_name,login,last_login_date,status,role,email,photo\n1,John,Smith,j.smith,2022-11-02,active,admin,j.smith@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n2,Jessica,Johnson,j.johnson,2022-10-31,not active,analyst,j.johnson@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n3,Wei,Zhang,w.zhang,2026-08-10,Active,editor,w.zhang@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n4,Priya,Raman,p.raman,2026-08-09,pending,viewer,p.raman@example.com,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg\n5,\"Anne-Marie \"\"Annie\"\"\",\"van der Berg, Johannes\",a.vdberg,2026-07-04,active,admin,a.vdberg+test@example.co.uk,https://pbs.twimg.com/media/HBHQeSeWMAAR1AZ.jpg",
                         "scenarioId": "csv_content"
                       }
                     },
@@ -243,7 +243,7 @@
                   "showLineNumbers": false,
                   "showMiniMap": false
                 },
-                "content": "{{#each data}}\n- **{{host}}** \u2014 {{toFixed cpu 1}}%{{#if (gt cpu 50)}} \u26a0\ufe0f{{/if}}\n{{/each}}",
+                "content": "## User accounts ({{data.length}})\n\n| User | Role | Last login | Status |\n| --- | --- | --- | --- |\n{{#each data}}| **{{first_name}} {{last_name}}** | {{role}} | {{last_login_date}} | {{#if (match status \"^[Aa]ctive$\")}}\ud83d\udfe2 Active{{else}}\ud83d\udd34 {{status}}{{/if}} |\n{{/each}}\n\n### Needs attention\n\n{{#each data}}{{#unless (match status \"^[Aa]ctive$\")}}- **{{first_name}} {{last_name}}** ({{role}}) - {{status}}, last seen {{last_login_date}}\n{{/unless}}{{/each}}",
                 "mode": "markdown",
                 "renderMode": "once"
               },

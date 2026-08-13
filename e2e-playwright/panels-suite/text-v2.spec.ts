@@ -185,11 +185,14 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       // Below the fold, so the panel doesn't query until it scrolls into view.
       await panel.scrollIntoViewIfNeeded();
 
-      // {{#each data}} over the panel's csv_content query.
-      await expect(panel.locator('li')).toHaveCount(3);
-      await expect(panel).toContainText('84.0%');
-      // The rows are 84, 12 and 37, so only the first takes the {{#if (gt cpu 50)}} branch.
-      await expect(panel.locator('li').filter({ hasText: '⚠️' })).toHaveCount(1);
+      // One table built from the whole result set: a header the per-row mode
+      // cannot render once, plus a row per user of the panel's csv_content query.
+      await expect(panel.locator('tbody tr')).toHaveCount(5);
+      await expect(panel).toContainText('John Smith');
+
+      // {{#unless}} filters the list down to the two users who are not active.
+      await expect(panel.locator('li')).toHaveCount(2);
+      await expect(panel.locator('li')).toContainText(['Jessica Johnson', 'Priya Raman']);
     });
 
     test('evaluates expressions in the edit preview', async ({ gotoDashboardPage, page }) => {
@@ -199,7 +202,7 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
       });
 
       const preview = page.getByTestId('TextNGEditor-preview');
-      await expect(preview).toContainText('84.0%');
+      await expect(preview).toContainText('John Smith');
       await expect(preview).not.toContainText('{{#each data}}');
     });
   });
