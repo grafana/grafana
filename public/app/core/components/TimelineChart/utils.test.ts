@@ -565,6 +565,7 @@ describe('prepareTimelineLegendItems', () => {
                   options: {
                     OK: { color: 'green', index: 0 },
                     ERROR: { color: 'red', index: 1 },
+                    UNUSED: { color: 'blue', index: 2 },
                   },
                 },
               ],
@@ -592,7 +593,7 @@ describe('prepareTimelineLegendItems', () => {
           {
             name: 'load',
             type: FieldType.number,
-            values: [10, 40, 20],
+            values: [10, 20, 20],
             config: {
               color: { mode: FieldColorModeId.Thresholds },
               thresholds: {
