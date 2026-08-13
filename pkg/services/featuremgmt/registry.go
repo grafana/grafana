@@ -264,10 +264,10 @@ var (
 		{
 			Name:            "provisioning.gitConventions",
 			Description:     "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
-			Expression:      "false",
+			Expression:      "true", // enabled by default
 			Generate:        Generate{Go: true, React: true},
 		},
 		{
