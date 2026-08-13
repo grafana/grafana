@@ -7,7 +7,7 @@ import { Button, Field, Modal, Stack } from '@grafana/ui';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { edit } from '../../actions/edit';
+import { edit } from '../../actions/utils/edit';
 
 import { type AnnotationLayer } from './AnnotationEditableElement';
 
