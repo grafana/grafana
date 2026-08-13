@@ -56,6 +56,9 @@ type CheckErrorLink struct {
 	Url string `json:"url"`
 	// Human readable error message
 	Message string `json:"message"`
+	// i18n key for the message (e.g. "advisor.link.fix-me"), so the
+	// frontend can translate without deriving the key from the text
+	MessageKey *string `json:"messageKey,omitempty"`
 }
 
 // NewCheckErrorLink creates a new CheckErrorLink object.
