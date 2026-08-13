@@ -29,8 +29,6 @@ export const FlagKeys = {
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
-  /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
-  AzureMonitorBatchAPI: "azureMonitorBatchAPI",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -39,6 +37,8 @@ export const FlagKeys = {
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
+  /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
+  DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
   /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
@@ -163,6 +163,8 @@ export const FlagKeys = {
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
   /** Sizes TableNG auto-width columns to fit their content instead of distributing evenly */
   TableAutoColumnWidths: "table.autoColumnWidths",
+  /** Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT) */
+  TableInspectDataTableNG: "table.inspectDataTableNG",
   /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
   TablePaginationPageSize: "table.paginationPageSize",
   /** Enables the new features in text panel */
@@ -260,17 +262,6 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
 };
 
 /**
- * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
- *
- * **Details:**
- * - flag key: `azureMonitorBatchAPI`
- * - default value: `false`
- */
-export const useFlagAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("azureMonitorBatchAPI", false, options).value;
-};
-
-/**
  * Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
  *
  * **Details:**
@@ -312,6 +303,17 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
  */
 export const useFlagDatasourcesApiserverUseNewAPIsForDatasourceResources = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.apiserver.useNewAPIsForDatasourceResources", false, options).value;
+};
+
+/**
+ * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+ *
+ * **Details:**
+ * - flag key: `datasources.azureMonitorBatchAPI`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.azureMonitorBatchAPI", false, options).value;
 };
 
 /**
@@ -994,6 +996,17 @@ export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEva
  */
 export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.autoColumnWidths", false, options).value;
+};
+
+/**
+ * Enables TableNG in the panel inspector's Data tab, replacing the legacy Table (TableRT)
+ *
+ * **Details:**
+ * - flag key: `table.inspectDataTableNG`
+ * - default value: `false`
+ */
+export const useFlagTableInspectDataTableNG = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.inspectDataTableNG", false, options).value;
 };
 
 /**

@@ -1100,6 +1100,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
   inspect: boolean;
   minWidth?: number;
   /**
+   * Controls whether the column can be sorted. Every column is sortable by default; set to false to disable sorting for this column.
+   */
+  sortable?: boolean;
+  /**
    * The name of the field which contains styling overrides for this cell
    */
   styleField?: string;
