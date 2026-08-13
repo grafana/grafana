@@ -343,13 +343,19 @@ describe('value mapping function', () => {
                 index: 3,
                 text: 'Production',
               },
-              null: {
+            },
+            type: MappingType.ValueToText,
+          },
+          {
+            options: {
+              match: SpecialValueMatch.Null,
+              result: {
                 color: '#808080',
                 index: 2,
                 text: 'N/A',
               },
             },
-            type: MappingType.ValueToText,
+            type: MappingType.SpecialValue,
           },
           {
             options: {

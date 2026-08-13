@@ -172,6 +172,24 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, ['foobar', 'baz'], { type: FieldType.string })).toMatchSnapshot();
   });
 
+  it('ignores RegexToText mappings for non-string fields', () => {
+    const field = makeColorField(
+      {
+        mappings: [
+          { type: MappingType.RegexToText, options: { pattern: '/^foo/', result: { text: 'm', color: 'orange' } } },
+        ],
+      },
+      ['foobar'],
+      FieldType.number
+    );
+
+    const { getOne, getAll, index } = getEnumConfig(field, theme);
+
+    expect(getOne('foobar')).toBe(-1);
+    expect(getAll(field.values)).toEqual([-1]);
+    expect(index).toEqual({ color: [], text: [], icon: [] });
+  });
+
   it('ValueToText mapping on a string field (compares against quoted keys)', () => {
     const config = {
       mappings: [

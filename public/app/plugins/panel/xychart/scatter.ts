@@ -14,8 +14,6 @@ import {
   SpecialValueMatch,
   stringToJsRegex,
   ThresholdsMode,
-  type ValueMapping,
-  type ValueMappingResult,
   colorManipulator,
   type EnumFieldConfig,
 } from '@grafana/data';
@@ -474,6 +472,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
     xySeries.forEach((s, i) => {
       dispColors[i].values = dispColors[i].getAll(s.color.field?.values ?? [], colorRange.min, colorRange.max);
+      dispColors[i].hasAlpha = dispColors[i].index.color!.some((color) => !String(color).endsWith('ff'));
     });
 
     return [
@@ -617,62 +616,6 @@ function getSpecialValueLabel(match: SpecialValueMatch) {
   }
 }
 
-function getMappingResult(mapping: ValueMapping, value: unknown): ValueMappingResult | undefined {
-  if (mapping.type === MappingType.ValueToText) {
-    return mapping.options[String(value)];
-  }
-
-  if (mapping.type === MappingType.RangeToText) {
-    if (value == null) {
-      return undefined;
-    }
-
-    const numeric = parseFloat(String(value));
-    if (
-      Number.isNaN(numeric) ||
-      (mapping.options.from != null && numeric < mapping.options.from) ||
-      (mapping.options.to != null && numeric > mapping.options.to)
-    ) {
-      return undefined;
-    }
-
-    return mapping.options.result;
-  }
-
-  if (mapping.type === MappingType.RegexToText) {
-    if (typeof value !== 'string') {
-      return undefined;
-    }
-
-    const regex = stringToJsRegex(mapping.options.pattern);
-    if (!value.match(regex)) {
-      return undefined;
-    }
-
-    const result = { ...mapping.options.result };
-    if (result.text != null) {
-      result.text = value.replace(regex, result.text);
-    }
-    return result;
-  }
-
-  const match = mapping.options.match;
-  const matches =
-    match === SpecialValueMatch.Null
-      ? value == null
-      : match === SpecialValueMatch.NaN
-        ? typeof value === 'number' && Number.isNaN(value)
-        : match === SpecialValueMatch.NullAndNaN
-          ? value == null || (typeof value === 'number' && Number.isNaN(value))
-          : match === SpecialValueMatch.True
-            ? value === true || value === 'true'
-            : match === SpecialValueMatch.False
-              ? value === false || value === 'false'
-              : value === '';
-
-  return matches ? mapping.options.result : undefined;
-}
-
 /** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
 export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues {
   const index: EnumFieldConfig = {
@@ -691,6 +634,7 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
   // if any mappings exist, use them regardless of other settings
   if ((f.config.mappings?.length ?? 0) > 0) {
     const mappings = f.config.mappings!;
+    const regexStates: Array<{ regex: RegExp; color?: string; text?: string; icon?: string }> = [];
 
     // this is color+text+icon that deduplicates the index above
     // e.g. if multiple values + ranges map "OK"+"green", this ensures they map to same state by key
@@ -714,49 +658,105 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
       return idx;
     }
 
-    for (const m of mappings) {
-      if (m.type === MappingType.ValueToText) {
-        for (const [value, result] of Object.entries(m.options)) {
-          indexOf(result.color, result.text ?? value, result.icon);
+    for (const mapping of mappings) {
+      if (mapping.type === MappingType.ValueToText) {
+        for (const [value, result] of Object.entries(mapping.options)) {
+          const state = indexOf(result.color, result.text ?? value, result.icon);
+          const rhs =
+            f.type === FieldType.string
+              ? JSON.stringify(value)
+              : f.type === FieldType.boolean && (value === 'true' || value === 'false')
+                ? value
+                : Number(value);
+          conds += `v === ${rhs} ? ${state} : `;
         }
-      } else if (m.type === MappingType.RangeToText) {
-        const { from, to, result } = m.options;
-        if (from != null || to != null) {
-          indexOf(result.color, result.text ?? getLabelForRange(from, to, formatValue), result.icon);
+      } else if (mapping.type === MappingType.RangeToText) {
+        const { from, to, result } = mapping.options;
+        const state = indexOf(result.color, result.text ?? getLabelForRange(from, to, formatValue), result.icon);
+        const range = ['v != null', '!isNaN(parseFloat(v))'];
+        if (from != null) {
+          range.push(`parseFloat(v) >= ${Number(from)}`);
         }
-      } else if (m.type === MappingType.SpecialValue) {
-        const { match, result } = m.options;
-        indexOf(result.color, result.text ?? getSpecialValueLabel(match), result.icon);
-      }
-    }
-
-    getOne = (value) => {
-      for (const mapping of mappings) {
-        const result = getMappingResult(mapping, value);
-
-        if (result == null) {
+        if (to != null) {
+          range.push(`parseFloat(v) <= ${Number(to)}`);
+        }
+        conds += `${range.join(' && ')} ? ${state} : `;
+      } else if (mapping.type === MappingType.RegexToText) {
+        if (f.type !== FieldType.string) {
           continue;
         }
 
-        let text = result.text;
-        if (text == null) {
-          if (mapping.type === MappingType.ValueToText) {
-            text = String(value);
-          } else if (mapping.type === MappingType.RangeToText) {
-            text = getLabelForRange(mapping.options.from, mapping.options.to, formatValue);
-          } else if (mapping.type === MappingType.SpecialValue) {
-            text = getSpecialValueLabel(mapping.options.match);
-          } else {
-            text = String(value);
-          }
-        }
+        const result = mapping.options.result;
+        const regexIdx = regexStates.push({
+          regex: stringToJsRegex(mapping.options.pattern),
+          color: result.color,
+          text: result.text,
+          icon: result.icon,
+        }) - 1;
+        conds += `(s = regexState(${regexIdx}, v)) !== -1 ? s : `;
+      } else {
+        const { match, result } = mapping.options;
+        const state = indexOf(result.color, result.text ?? getSpecialValueLabel(match), result.icon);
+        const condition =
+          match === SpecialValueMatch.NaN
+            ? 'typeof v === "number" && isNaN(v)'
+            : match === SpecialValueMatch.NullAndNaN
+              ? 'v == null || (typeof v === "number" && isNaN(v))'
+              : match === SpecialValueMatch.True
+                ? 'v === true || v === "true"'
+                : match === SpecialValueMatch.False
+                  ? 'v === false || v === "false"'
+                  : match === SpecialValueMatch.Empty
+                    ? 'v === ""'
+                    : 'v == null';
+        conds += `(${condition}) ? ${state} : `;
+      }
+    }
 
-        return indexOf(result.color, text, result.icon);
+    const regexState = (regexIdx: number, value: string | null | undefined) => {
+      if (value == null) {
+        return -1;
       }
 
-      return -1;
+      const state = regexStates[regexIdx];
+      state.regex.lastIndex = 0;
+      if (!value.match(state.regex)) {
+        return -1;
+      }
+
+      state.regex.lastIndex = 0;
+      const text = state.text == null ? value : value.replace(state.regex, state.text);
+      return indexOf(state.color, text, state.icon);
     };
-    getAll = (values) => values.map((value) => getOne(value));
+
+    conds += '-1';
+    const getOneFactory = new Function(
+      'regexState',
+      `
+        return function(v) {
+          let s;
+          return ${conds};
+        };
+      `
+    ) as (regexState: (regexIdx: number, value: string | null | undefined) => number) => GetOneValue;
+    const getAllFactory = new Function(
+      'regexState',
+      `
+        return function(values) {
+          const idxs = Array(values.length);
+          let s;
+          for (let i = 0; i < values.length; i++) {
+            const v = values[i];
+            idxs[i] = ${conds};
+          }
+          return idxs;
+        };
+      `
+    ) as (regexState: (regexIdx: number, value: string | null | undefined) => number) => GetAllValues;
+
+    getOne = getOneFactory(regexState);
+    getAll = getAllFactory(regexState);
+    conds = '';
   } else if (f.config.color?.mode === FieldColorModeId.Thresholds && (f.config.thresholds?.steps.length ?? 0) > 1) {
     const thresholds = f.config.thresholds!;
     const steps = thresholds.steps;
@@ -783,24 +783,46 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
       const fieldMax = fieldConfig.max ?? 0;
       const hasExplicitRange = typeof f.config.min === 'number' && typeof f.config.max === 'number';
       const formatPercent = getValueFormat('percent');
+      let percentConds = '';
 
       index.text = steps.map((step) => `${formattedValueToString(formatPercent(step.value, f.config.decimals))}+`);
 
-      getOne = (value, min = fieldMin, max = fieldMax) => {
-        const rangeMin = hasExplicitRange ? fieldMin : min;
-        const rangeMax = hasExplicitRange ? fieldMax : max;
-        const delta = rangeMax - rangeMin;
-        const percent = delta === 0 ? 0 : ((Number(value) - rangeMin) / delta) * 100;
+      for (let i = steps.length - 1; i > 0; i--) {
+        percentConds += `percent >= ${Number(steps[i].value)} ? ${i} : `;
+      }
+      percentConds += '0';
 
-        for (let i = steps.length - 1; i > 0; i--) {
-          if (percent >= steps[i].value) {
-            return i;
+      const minExpr = hasExplicitRange ? String(fieldMin) : `min ?? ${fieldMin}`;
+      const maxExpr = hasExplicitRange ? String(fieldMax) : `max ?? ${fieldMax}`;
+
+      getOne = new Function(
+        'v',
+        'min',
+        'max',
+        `
+          const rangeMin = ${minExpr};
+          const rangeMax = ${maxExpr};
+          const delta = rangeMax - rangeMin;
+          const percent = delta === 0 ? 0 : ((Number(v) - rangeMin) / delta) * 100;
+          return ${percentConds};
+        `
+      ) as GetOneValue;
+      getAll = new Function(
+        'values',
+        'min',
+        'max',
+        `
+          const idxs = Array(values.length);
+          const rangeMin = ${minExpr};
+          const rangeMax = ${maxExpr};
+          const delta = rangeMax - rangeMin;
+          for (let i = 0; i < values.length; i++) {
+            const percent = delta === 0 ? 0 : ((Number(values[i]) - rangeMin) / delta) * 100;
+            idxs[i] = ${percentConds};
           }
-        }
-
-        return 0;
-      };
-      getAll = (values, min, max) => values.map((value) => getOne(value, min, max));
+          return idxs;
+        `
+      ) as GetAllValues;
     }
   } else if (f.config.color?.mode?.startsWith('continuous')) {
     let calc = getFieldColorModeForField(f).getCalculator(f, theme);
