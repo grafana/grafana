@@ -42,6 +42,7 @@ runs:
       with:
         path: ${{ steps.keys.outputs.toolchain-path }}
         key: ${{ steps.keys.outputs.toolchain-key }}
+        fail-on-cache-miss: true
 
     - name: Restore and save the Go toolchain
       if: inputs.cache == 'true' && inputs.cache-write == 'mod'
@@ -63,6 +64,7 @@ runs:
         path: ${{ steps.keys.outputs.mod-path }}
         key: ${{ steps.keys.outputs.mod-key }}
         restore-keys: ${{ steps.keys.outputs.mod-restore-key }}
+        fail-on-cache-miss: true
 
     - name: Restore and save module cache
       if: inputs.cache == 'true' && inputs.cache-write == 'mod'
@@ -79,6 +81,7 @@ runs:
         path: ${{ steps.keys.outputs.build-path }}
         key: ${{ steps.keys.outputs.build-key }}
         restore-keys: ${{ steps.keys.outputs.build-restore-key }}
+        fail-on-cache-miss: true
 
     - name: Restore and save build cache
       if: inputs.cache == 'true' && inputs.cache-write == 'build'
