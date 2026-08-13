@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -354,7 +355,10 @@ func (moa *MultiOrgAlertmanager) setExtraConfigOrigin(ctx context.Context, orgID
 	}
 
 	var syncUID string
-	if moa.externalAMSyncer != nil { // nil in tests that bypass NewMultiOrgAlertmanager
+	// Same flag gate as FetchExtraConfig: a stale UID match must not read as auto-sync once sync is off.
+	client := openfeature.NewDefaultClient()
+	syncEnabled := client.Boolean(ctx, featuremgmt.FlagAlertingSyncExternalAlertmanager, false, openfeature.TransactionContext(ctx))
+	if syncEnabled && moa.externalAMSyncer != nil { // nil in tests that bypass NewMultiOrgAlertmanager
 		uid, _, err := moa.externalAMSyncer.resolveExternalAMUIDForOrg(ctx, orgID)
 		if err != nil {
 			// Degrade to "manual" rather than fail a config read that worked before this field existed.

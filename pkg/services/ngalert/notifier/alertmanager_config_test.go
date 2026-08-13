@@ -7,10 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -644,6 +647,12 @@ receivers:
 			},
 		}
 	}
+	enableSyncFlag := func(t *testing.T) {
+		require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagAlertingSyncExternalAlertmanager: {DefaultVariant: "on", Variants: map[string]any{"on": true}},
+		})))
+		t.Cleanup(func() { _ = openfeature.SetProvider(openfeature.NoopProvider{}) })
+	}
 
 	t.Run("no staged config", func(t *testing.T) {
 		mam := setupMam(t, nil)
@@ -656,7 +665,22 @@ receivers:
 	})
 
 	t.Run("manual import with no active sync is manual", func(t *testing.T) {
-		// setupMam's syncer has no clientGenerator, so this also exercises the resolution-error path.
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("manual-import"), false, false, false)
+		require.NoError(t, err)
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+		require.Equal(t, "manual", gettableConfig.ExtraConfigs[0].ManagedBy)
+	})
+
+	t.Run("resolution error degrades to manual and does not fail the read", func(t *testing.T) {
+		// Flag on but setupMam's syncer has no clientGenerator, so resolution errors.
+		enableSyncFlag(t)
 		mam := setupMam(t, nil)
 		ctx := context.Background()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
@@ -671,6 +695,7 @@ receivers:
 	})
 
 	t.Run("identifier matching the ini-configured sync datasource is auto-sync", func(t *testing.T) {
+		enableSyncFlag(t)
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
 		ctx := context.Background()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
@@ -685,11 +710,28 @@ receivers:
 	})
 
 	t.Run("manual import staged alongside an unrelated active sync is still manual", func(t *testing.T) {
+		enableSyncFlag(t)
 		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
 		ctx := context.Background()
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
 		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("manual-import"), false, false, false)
+		require.NoError(t, err)
+
+		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
+		require.NoError(t, err)
+		require.Len(t, gettableConfig.ExtraConfigs, 1)
+		require.Equal(t, "manual", gettableConfig.ExtraConfigs[0].ManagedBy)
+	})
+
+	t.Run("matching identifier stays manual when the sync flag is off", func(t *testing.T) {
+		// Regression: a leftover config from before a flag rollback must not read as
+		// auto-sync-owned once the syncer has stopped touching it.
+		mam := setupMam(t, cfgWithSyncUID(t, "mimir-ds-uid"))
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, newStagedConfig("mimir-ds-uid"), false, false, false)
 		require.NoError(t, err)
 
 		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
