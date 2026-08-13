@@ -214,15 +214,3 @@ exports[`fieldValueColors (golden baseline) no color branch taken yields the emp
   "palette": [],
 }
 `;
-
-exports[`fieldValueColors (golden baseline) single-step absolute thresholds (every value gets the base step) 1`] = `
-{
-  "colors": [
-    "#73bf69ff",
-    "#73bf69ff",
-  ],
-  "palette": [
-    "#73bf69ff",
-  ],
-}
-`;

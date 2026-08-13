@@ -113,7 +113,9 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
           let sizes = opts.disp.size.values(u, seriesIdx);
           // let pointColors = opts.disp.color.values(u, seriesIdx);
           let pointColors = dispColors[seriesIdx - 1].values; // idxs
-          let pointPalette = dispColors[seriesIdx - 1].index as Array<CanvasRenderingContext2D['fillStyle']>;
+          let pointPalette = (dispColors[seriesIdx - 1].index.color ?? []) as Array<
+            CanvasRenderingContext2D['fillStyle']
+          >;
           let paletteHasAlpha = dispColors[seriesIdx - 1].hasAlpha;
 
           let isSquare = scatterInfo.pointShape === PointShape.Square;
@@ -686,7 +688,7 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
               spl === SpecialValueMatch.True
                 ? '=== true'
                 : spl === SpecialValueMatch.False
-                  ? '== null'
+                  ? '=== false'
                   : spl === SpecialValueMatch.Empty
                     ? '=== ""'
                     : '== null';
@@ -732,7 +734,7 @@ export function getEnumConfig(f: Field, theme: GrafanaTheme2): FieldColorValues 
       index.color[i] = getHex8Color(calc(pct, pct), theme);
     }
 
-    getAll = (vals, min, max) => valuesToFills(vals as number[], index as string[], min!, max!);
+    getAll = (vals, min, max) => valuesToFills(vals as number[], index.color!, min!, max!);
   }
 
   if (conds !== '') {

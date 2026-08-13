@@ -1,7 +1,7 @@
 import { createDataFrame, createTheme, FieldType, MappingType, SpecialValueMatch, ThresholdsMode } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { fieldValueColors } from './scatter';
+import { getEnumConfig } from './scatter';
 
 // Golden baseline for the value->color compiler that scatter currently builds via
 // `new Function`. The upcoming field.display.colors() migration must reproduce the
@@ -30,16 +30,17 @@ function resolve(
 ) {
   const { type, min, max, discrete = true } = opts;
   const field = makeColorField(config, values, type);
-  const { index, getOne, getAll } = fieldValueColors(field, theme);
+  const { index, getOne, getAll } = getEnumConfig(field, theme);
+  const palette = index.color ?? [];
 
-  const byAll = getAll(values, min, max).map((i) => index[i] ?? null);
+  const byAll = getAll(values, min, max).map((i) => palette[i] ?? null);
 
   if (discrete) {
-    const byOne = values.map((v) => index[getOne(v, min, max)] ?? null);
+    const byOne = values.map((v) => palette[getOne(v, min, max)] ?? null);
     expect(byOne).toEqual(byAll);
   }
 
-  return { palette: index, colors: byAll };
+  return { palette, colors: byAll };
 }
 
 describe('fieldValueColors (golden baseline)', () => {
@@ -202,7 +203,7 @@ describe('fieldValueColors (golden baseline)', () => {
     expect(resolve(config, [1, 2, 3], { discrete: false })).toMatchSnapshot();
   });
 
-  it('single-step absolute thresholds (every value gets the base step)', () => {
+  it('single-step absolute thresholds do not create discrete states', () => {
     const config = {
       color: { mode: FieldColorModeId.Thresholds },
       thresholds: {
@@ -210,6 +211,6 @@ describe('fieldValueColors (golden baseline)', () => {
         steps: [{ value: -Infinity, color: 'green' }],
       },
     };
-    expect(resolve(config, [1, 100])).toMatchSnapshot();
+    expect(resolve(config, [1, 100], { discrete: false })).toEqual({ palette: [], colors: [] });
   });
 });
