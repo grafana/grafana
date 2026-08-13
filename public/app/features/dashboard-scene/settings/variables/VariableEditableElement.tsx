@@ -21,12 +21,11 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { addVariable } from '../../actions/variable/addVariable';
 import { changeVariableDescription } from '../../actions/variable/changeVariableDescription';
 import { changeVariableHideValue } from '../../actions/variable/changeVariableHideValue';
 import { changeVariableLabel } from '../../actions/variable/changeVariableLabel';
 import { changeVariableName } from '../../actions/variable/changeVariableName';
-import { removeVariable } from '../../actions/variable/removeVariable';
+import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { type BulkActionElement } from '../../scene/types/BulkActionElement';
@@ -160,7 +159,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onDuplicate() {
-    dashboardEditActions.duplicateVariable(this.variable);
+    duplicateVariable(this.variable);
   }
 
   public onConfirmDelete() {

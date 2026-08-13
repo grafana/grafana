@@ -17,6 +17,7 @@ import {
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
 import { SourceIcon } from '../settings/ProvisionedControlsSection';
 import { VariableEditorModal } from '../settings/variables/editors/VariableEditorModal';
@@ -97,7 +98,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   }, [variable]);
 
   const onClickDuplicateVariable = useCallback(() => {
-    dashboardEditActions.duplicateVariable(variable);
+    duplicateVariable(variable);
   }, [variable]);
 
   const editActions = useMemo(
