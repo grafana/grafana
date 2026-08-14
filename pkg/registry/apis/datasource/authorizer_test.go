@@ -98,41 +98,55 @@ func TestGetAuthorizer_CRUDVerbDenied(t *testing.T) {
 
 // TestGetAuthorizer_SubresourceForcesQueryCheck proves that any subresource
 // request is still authorized as a "query" subresource create, regardless of
-// the actual k8s verb or subresource name.
+// the actual k8s verb or subresource name. "query", "resources", and "health"
+// are the subresources register.go actually installs (see StoragePath calls
+// in register.go), so all three must collapse to the same query check.
 func TestGetAuthorizer_SubresourceForcesQueryCheck(t *testing.T) {
-	client := &recordingAccessClient{resp: authlib.CheckResponse{Allowed: true}}
-	b := newAuthorizerTestBuilder(client)
+	subresources := []string{"query", "resources", "health"}
 
-	decision, _, err := b.GetAuthorizer().Authorize(authorizerTestContext(), authorizer.AttributesRecord{
-		ResourceRequest: true,
-		Verb:            "get",
-		Subresource:     "query",
-		Namespace:       "default",
-		Name:            "some-uid",
-	})
+	for _, sub := range subresources {
+		t.Run(sub, func(t *testing.T) {
+			client := &recordingAccessClient{resp: authlib.CheckResponse{Allowed: true}}
+			b := newAuthorizerTestBuilder(client)
 
-	require.NoError(t, err)
-	require.Equal(t, authorizer.DecisionAllow, decision)
-	require.Equal(t, utils.VerbCreate, client.lastReq.Verb)
-	require.Equal(t, "query", client.lastReq.Subresource)
-	require.Equal(t, "datasources", client.lastReq.Resource)
+			decision, _, err := b.GetAuthorizer().Authorize(authorizerTestContext(), authorizer.AttributesRecord{
+				ResourceRequest: true,
+				Verb:            "get",
+				Subresource:     sub,
+				Namespace:       "default",
+				Name:            "some-uid",
+			})
+
+			require.NoError(t, err)
+			require.Equal(t, authorizer.DecisionAllow, decision)
+			require.Equal(t, utils.VerbCreate, client.lastReq.Verb)
+			require.Equal(t, "query", client.lastReq.Subresource)
+			require.Equal(t, "datasources", client.lastReq.Resource)
+		})
+	}
 }
 
 func TestGetAuthorizer_SubresourceDenied(t *testing.T) {
-	client := &recordingAccessClient{resp: authlib.CheckResponse{Allowed: false}}
-	b := newAuthorizerTestBuilder(client)
+	subresources := []string{"query", "resources", "health"}
 
-	decision, reason, err := b.GetAuthorizer().Authorize(authorizerTestContext(), authorizer.AttributesRecord{
-		ResourceRequest: true,
-		Verb:            "get",
-		Subresource:     "query",
-		Namespace:       "default",
-		Name:            "some-uid",
-	})
+	for _, sub := range subresources {
+		t.Run(sub, func(t *testing.T) {
+			client := &recordingAccessClient{resp: authlib.CheckResponse{Allowed: false}}
+			b := newAuthorizerTestBuilder(client)
 
-	require.NoError(t, err)
-	require.Equal(t, authorizer.DecisionDeny, decision)
-	require.Equal(t, "missing `query` subresource permission", reason)
+			decision, reason, err := b.GetAuthorizer().Authorize(authorizerTestContext(), authorizer.AttributesRecord{
+				ResourceRequest: true,
+				Verb:            "get",
+				Subresource:     sub,
+				Namespace:       "default",
+				Name:            "some-uid",
+			})
+
+			require.NoError(t, err)
+			require.Equal(t, authorizer.DecisionDeny, decision)
+			require.Equal(t, "missing `query` subresource permission", reason)
+		})
+	}
 }
 
 func TestGetAuthorizer_NonResourceRequest(t *testing.T) {
