@@ -154,7 +154,7 @@ jobs:
       # workspace (the release-branch checkout). That subtree may lag main and miss the action,
       # failing the step. Mirror cache-build:false behavior (no GOCACHE; modules via actions/cache).
       - name: Setup Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v6.5.0
         with:
           go-version-file: .grafana-main/go.mod
           cache: false

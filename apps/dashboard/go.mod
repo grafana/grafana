@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/dashboard
 
-go 1.26.5
+go 1.26.6
 
 require (
 	cuelang.org/go v0.11.1
