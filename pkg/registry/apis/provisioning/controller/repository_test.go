@@ -931,10 +931,12 @@ func (c *capturePatcher) Patch(_ context.Context, _ *provisioning.Repository, pa
 	return nil
 }
 
+// findPatchOp returns the last captured op for path, matching JSON Patch's
+// sequential-apply semantics
 func (c *capturePatcher) findPatchOp(path string) (map[string]interface{}, bool) {
-	for _, op := range c.ops {
-		if op["path"] == path {
-			return op, true
+	for i := len(c.ops) - 1; i >= 0; i-- {
+		if c.ops[i]["path"] == path {
+			return c.ops[i], true
 		}
 	}
 	return nil, false
@@ -1691,6 +1693,8 @@ func TestShouldRotateWebhookSecret(t *testing.T) {
 // hookErr controls what the webhook client returns — when nil the call is
 // considered successful. The default zero-value preserves the historical
 // behaviour of always failing with assert.AnError.
+//
+// testResults overrides what Test returns; when nil, Test reports success.
 type hookRepoStub struct {
 	cfg           *provisioning.Repository
 	testCalls     atomic.Int32
@@ -1698,6 +1702,7 @@ type hookRepoStub struct {
 	onCreateCalls atomic.Int32
 	hookErr       error
 	hookErrSet    bool
+	testResults   *provisioning.TestResults
 }
 
 var _ repository.WebhookRepository = (*hookRepoStub)(nil)
@@ -1706,6 +1711,9 @@ func (s *hookRepoStub) Config() *provisioning.Repository { return s.cfg }
 
 func (s *hookRepoStub) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	s.testCalls.Add(1)
+	if s.testResults != nil {
+		return s.testResults, nil
+	}
 	return &provisioning.TestResults{Success: true, Code: http.StatusOK}, nil
 }
 
@@ -1966,6 +1974,58 @@ func newRecoveryController(t *testing.T, repo *provisioning.Repository, stub *ho
 		tracer:        tracing.InitializeTracerForTest(),
 	}
 	return rc, patcher
+}
+
+// TestRepositoryController_process_UnhealthyRepositorySkipsHooks verifies that
+// when the repository's own health check fails (e.g. GitHub returning 403
+// because the token can no longer access the repo), the controller does not
+// even attempt to create/update the webhook. The health check runs before
+// hooks specifically so this doomed create/update call is never made.
+func TestRepositoryController_process_UnhealthyRepositorySkipsHooks(t *testing.T) {
+	namespace := "default"
+	repoName := "test-repo"
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
+		},
+		Spec: provisioning.RepositorySpec{
+			Type:      provisioning.GitHubRepositoryType,
+			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			Sync:      provisioning.SyncOptions{Enabled: false},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 0, // first sync -> would otherwise run webhookOnCreate
+		},
+	}
+
+	stub := &hookRepoStub{
+		cfg: repo,
+		testResults: &provisioning.TestResults{
+			Success: false,
+			Code:    http.StatusForbidden,
+			Errors: []provisioning.ErrorDetails{
+				{Detail: "403 Forbidden: authentication failed"},
+			},
+		},
+	}
+	rc, patcher := newRecoveryController(t, repo, stub)
+
+	err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err, "an unhealthy repository must not surface as a controller error")
+
+	assert.Equal(t, int32(1), stub.testCalls.Load(), "the health check itself should still run")
+	assert.Equal(t, int32(0), stub.onCreateCalls.Load(), "hooks must not run against an unhealthy repository")
+	assert.Equal(t, int32(0), stub.onUpdateCalls.Load(), "hooks must not run against an unhealthy repository")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "the health check failure must be recorded on /status/health")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok, "expected /status/health value to be HealthStatus")
+	assert.False(t, healthStatus.Healthy)
+	assert.Equal(t, provisioning.HealthFailureHealth, healthStatus.Error)
 }
 
 // TestRepositoryController_process_HookFailureRecoveryAfterWorkflowsRemoved
