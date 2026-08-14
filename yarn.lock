@@ -2340,9 +2340,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/assistant@npm:0.1.30, @grafana/assistant@npm:^0.1.24":
-  version: 0.1.30
-  resolution: "@grafana/assistant@npm:0.1.30"
+"@grafana/assistant@npm:0.1.34, @grafana/assistant@npm:^0.1.24":
+  version: 0.1.34
+  resolution: "@grafana/assistant@npm:0.1.34"
   dependencies:
     json-schema-to-ts: "npm:^3.1.1"
   peerDependencies:
@@ -2353,7 +2353,7 @@ __metadata:
     "@grafana/ui": ">=12.1.0"
     react: ">=18.0.0"
     rxjs: ">=7.0.0"
-  checksum: 10/33cdbdce962d54cd71d185312b4c862b562b61d55a6ca3817b96f7e3cdf20f9b9c0d82168c8da7023bb972c7f070fb663c40137e50b23fd384dabc7f56e82351
+  checksum: 10/254717cab1c2cf6d9559cb4b84c63714e3ce795a965a349bb926a5806a4f67026f6a71d831a4f9642243846fe9cb6b630d48dc6fbb1ec284bdad9e8225d7799f
   languageName: node
   linkType: hard
 
@@ -19559,7 +19559,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.7.0"
     "@grafana/alerting": "workspace:*"
     "@grafana/api-clients": "workspace:*"
-    "@grafana/assistant": "npm:0.1.30"
+    "@grafana/assistant": "npm:0.1.34"
     "@grafana/aws-sdk": "npm:^0.12.0"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
