@@ -1,4 +1,6 @@
+import { ViewPlugin } from '@codemirror/view';
 import { css } from '@emotion/css';
+import { useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -32,14 +34,49 @@ const EDIT_SETUP = {
   foldGutter: false,
 };
 
+/**
+ * An extension that puts the caret in the editor.
+ *
+ * CodeMirrorEditor exposes no ref, no autoFocus and no onCreateEditor, so a view plugin is the only
+ * hook into an editor that arrives with a lazily loaded chunk — it runs whenever CodeMirror builds
+ * the view, however many frames later that is.
+ *
+ * The focus is deferred a frame for two reasons, both races it would otherwise lose: a plugin is
+ * constructed before the view's DOM is appended to its parent, and focusing a detached node does
+ * nothing; and the controls that ask for this — the add-block menu, the language picker — hand focus
+ * back to themselves as they close, which floating-ui does in a microtask.
+ *
+ * A fresh plugin per request, because CodeMirror rebuilds its plugins exactly when the extensions
+ * array stops being shallow-equal. That makes a new one the way to ask for the caret again.
+ */
+function buildFocusExtension() {
+  return [
+    ViewPlugin.define((view) => {
+      requestAnimationFrame(() => view.focus());
+      return {};
+    }),
+  ];
+}
+
 interface Props {
   content: CellContentKind;
   isEditing: boolean;
+  /** Set on a cell the reader just inserted, so they can type into it without clicking it first. */
+  autoFocus?: boolean;
   onChange: (content: CellContentKind) => void;
 }
 
-export function CodeCell({ content, isEditing, onChange }: Props) {
+export function CodeCell({ content, isEditing, autoFocus, onChange }: Props) {
   const styles = useStyles2(getStyles);
+
+  // Counts requests for the caret rather than holding a boolean, so a second request after the reader
+  // has clicked away is still a change. Zero means nobody has asked, which is the usual case — and the
+  // mode is read once, at mount, rather than tracked: a read-only editor must not pull focus, but
+  // making that a live condition would re-fire every request each time the reader re-enters edit mode.
+  const [focusRequests, setFocusRequests] = useState(autoFocus && isEditing ? 1 : 0);
+  const requestFocus = useCallback(() => setFocusRequests((count) => count + 1), []);
+
+  const focusExtension = useMemo(() => (focusRequests > 0 ? buildFocusExtension() : undefined), [focusRequests]);
 
   if (content.kind !== 'Code') {
     return null;
@@ -64,7 +101,12 @@ export function CodeCell({ content, isEditing, onChange }: Props) {
             width="auto"
             minWidth={12}
             aria-label={t('notebooks.cell.code.aria-label-language', 'Code language')}
-            onChange={(option: ComboboxOption<string>) => changeSpec({ language: option.value })}
+            onChange={(option: ComboboxOption<string>) => {
+              changeSpec({ language: option.value });
+              // The picker is part of the cell, not a stop on the way out of it: choosing a language is
+              // something you do in order to write code, so the caret goes back where it was typing.
+              requestFocus();
+            }}
           />
         ) : (
           <Text variant="bodySmall" color="secondary">
@@ -83,6 +125,7 @@ export function CodeCell({ content, isEditing, onChange }: Props) {
           readOnly={!isEditing}
           lineWrapping
           basicSetup={isEditing ? EDIT_SETUP : VIEW_SETUP}
+          extensions={focusExtension}
           aria-label={t('notebooks.cell.code.aria-label-editor', 'Code')}
           // The editor is a lazily loaded chunk; without this the cell is a blank gap mid-document
           // until it arrives.

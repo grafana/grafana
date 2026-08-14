@@ -1,4 +1,5 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { type ComponentProps } from 'react';
 import { render, screen } from 'test/test-utils';
 
 import { NotebookCellItem } from '../NotebookCellItem';
@@ -20,12 +21,14 @@ function renderFrame({
   onAdd,
   onDuplicate,
   onDelete,
+  onContentChange = jest.fn(),
 }: {
   index?: number;
   isEditing?: boolean;
   onAdd?: (type: string, index: number) => void;
   onDuplicate?: () => void;
   onDelete?: () => void;
+  onContentChange?: ComponentProps<typeof NotebookCellFrame>['onContentChange'];
 } = {}) {
   return render(
     <DragDropContext onDragEnd={() => {}}>
@@ -39,6 +42,7 @@ function renderFrame({
               onAdd={onAdd}
               onDuplicate={onDuplicate}
               onDelete={onDelete}
+              onContentChange={onContentChange}
             />
             {dropProvided.placeholder}
           </div>

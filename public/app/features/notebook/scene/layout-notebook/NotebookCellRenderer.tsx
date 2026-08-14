@@ -18,10 +18,12 @@ const PANEL_HEIGHT = 300;
 export function NotebookCellRenderer({
   cell,
   isEditing,
+  autoFocus,
   onContentChange,
 }: {
   cell: NotebookCellItem;
   isEditing: boolean;
+  autoFocus?: boolean;
   onContentChange: (cell: NotebookCellItem, content: CellContentKind) => void;
 }) {
   const { body: panel, content: narrative, collapsed, elementName } = cell.useState();
@@ -35,7 +37,15 @@ export function NotebookCellRenderer({
   }
 
   if (narrative) {
-    return <NarrativeCell cell={cell} content={narrative} isEditing={isEditing} onContentChange={onContentChange} />;
+    return (
+      <NarrativeCell
+        cell={cell}
+        content={narrative}
+        isEditing={isEditing}
+        autoFocus={autoFocus}
+        onContentChange={onContentChange}
+      />
+    );
   }
 
   return null;
@@ -62,11 +72,13 @@ function NarrativeCell({
   cell,
   content,
   isEditing,
+  autoFocus,
   onContentChange,
 }: {
   cell: NotebookCellItem;
   content: CellContentKind;
   isEditing: boolean;
+  autoFocus?: boolean;
   onContentChange: (cell: NotebookCellItem, content: CellContentKind) => void;
 }) {
   const styles = useStyles2(getStyles);
@@ -79,7 +91,12 @@ function NarrativeCell({
   const Renderer = registered.render;
   return (
     <div className={styles.content}>
-      <Renderer content={content} isEditing={isEditing} onChange={(updated) => onContentChange(cell, updated)} />
+      <Renderer
+        content={content}
+        isEditing={isEditing}
+        autoFocus={autoFocus}
+        onChange={(updated) => onContentChange(cell, updated)}
+      />
     </div>
   );
 }
