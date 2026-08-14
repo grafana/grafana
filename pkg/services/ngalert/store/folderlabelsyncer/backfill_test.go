@@ -156,6 +156,6 @@ func TestBackfill(t *testing.T) {
 		require.NoError(t, s.Backfill(context.Background(), map[int64]struct{}{
 			3: {},
 		}))
-		require.Equal(t, []models.FolderKey{{OrgID: 1, UID: "folder-a"}, {OrgID: 2, UID: "folder-a"}}, s.take())
+		require.ElementsMatch(t, []models.FolderKey{{OrgID: 1, UID: "folder-a"}, {OrgID: 2, UID: "folder-a"}}, s.take())
 	})
 }

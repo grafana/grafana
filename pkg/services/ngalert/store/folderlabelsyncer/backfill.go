@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/resource"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -23,6 +24,7 @@ import (
 func (s *Service) Backfill(ctx context.Context, disabledOrgs map[int64]struct{}) error {
 	orgIDs, err := s.store.FetchOrgIds(ctx)
 	if err != nil {
+		s.backfillFailed(metrics.ReasonFetchOrgs)
 		return fmt.Errorf("fetch orgs: %w", err)
 	}
 
@@ -42,6 +44,9 @@ func (s *Service) Backfill(ctx context.Context, disabledOrgs map[int64]struct{})
 			s.log.Error("Failed to backfill folder rules labels", "org_id", orgID, "error", err)
 			continue
 		}
+		// Counted whether or not anything was queued: finding nothing to do is the healthy outcome on
+		// an already-correct install, and is still evidence the pass ran.
+		s.backfillSucceeded()
 		if n > 0 {
 			s.log.Info("Queued folder rules label backfill", "org_id", orgID, "folder_count", n)
 			total += n
@@ -58,11 +63,13 @@ func (s *Service) Backfill(ctx context.Context, disabledOrgs map[int64]struct{})
 func (s *Service) backfillOrg(ctx context.Context, orgID int64) (int, error) {
 	withRules, err := s.store.GetAllFoldersWithRules(ctx, orgID)
 	if err != nil {
+		s.backfillFailed(metrics.ReasonListFoldersWithRule)
 		return 0, fmt.Errorf("list folders with rules: %w", err)
 	}
 
 	labeled, err := s.labeledFolders(ctx, orgID)
 	if err != nil {
+		s.backfillFailed(metrics.ReasonListLabeledFolders)
 		return 0, fmt.Errorf("list labeled folders: %w", err)
 	}
 

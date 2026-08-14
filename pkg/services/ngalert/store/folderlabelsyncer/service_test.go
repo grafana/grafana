@@ -3,11 +3,13 @@ package folderlabelsyncer
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +18,7 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -122,8 +125,10 @@ func (f *fakeFolderClient) ListAll(_ context.Context, ns string, opts resource.L
 // generator that needs a live apiserver.
 func newTestService(store reconcilerStore, folders folderPatcher) *Service {
 	return &Service{
-		store:      store,
-		namespacer: func(int64) string { return "default" },
+		store: store,
+		// One namespace per org, so tests can target a single org's folder calls (see
+		// fakeFolderClient.failNamespaces).
+		namespacer: func(orgID int64) string { return fmt.Sprintf("org-%d", orgID) },
 		log:        log.NewNopLogger(),
 		dirty:      make(map[models.FolderKey]struct{}),
 		wake:       make(chan struct{}, 1),
@@ -364,4 +369,177 @@ func TestRunStopsOnContextCancellation(t *testing.T) {
 	cancel()
 
 	require.NoError(t, s.Run(ctx))
+}
+
+func TestFailureMetrics(t *testing.T) {
+	// A real registry, so the assertions cover the metric names and labels actually exported.
+	newMetered := func(store reconcilerStore, folders folderPatcher) (*Service, prometheus.Gatherer) {
+		reg := prometheus.NewPedanticRegistry()
+		s := newTestService(store, folders)
+		s.metrics = metrics.NewFolderLabelSyncerMetrics(reg)
+		return s, reg
+	}
+
+	t.Run("reconcile failures are counted by stage", func(t *testing.T) {
+		for _, tc := range []struct {
+			name   string
+			store  reconcilerStore
+			folder folderPatcher
+			reason string
+		}{
+			{
+				name:   "counting rules",
+				store:  &fakeReconcilerStore{err: errors.New("boom")},
+				folder: &fakeFolderClient{},
+				reason: metrics.ReasonCountRules,
+			},
+			{
+				name:   "getting the folder",
+				store:  &fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}},
+				folder: &fakeFolderClient{getErr: errors.New("boom")},
+				reason: metrics.ReasonGetFolder,
+			},
+			{
+				name:  "patching the folder",
+				store: &fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}},
+				folder: &fakeFolderClient{
+					folders:  map[string]*folderv1.Folder{"folder-1": folderWithLabels("folder-1", nil)},
+					patchErr: errors.New("boom"),
+				},
+				reason: metrics.ReasonPatchFolder,
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				s, reg := newMetered(tc.store, tc.folder)
+
+				require.Error(t, s.reconcile(context.Background(), models.FolderKey{OrgID: 1, UID: "folder-1"}))
+
+				require.Equal(t, float64(1), counterValue(t, reg,
+					"grafana_alerting_folder_label_syncer_reconcile_failures_total", tc.reason))
+			})
+		}
+	})
+
+	t.Run("a deleted folder is not counted as a failure", func(t *testing.T) {
+		// Get returns NotFound for unknown folders, which reconcile treats as a no-op.
+		s, reg := newMetered(&fakeReconcilerStore{counts: map[string]int64{"folder-1": 1}}, &fakeFolderClient{})
+
+		require.NoError(t, s.reconcile(context.Background(), models.FolderKey{OrgID: 1, UID: "folder-1"}))
+		require.Zero(t, counterValue(t, reg,
+			"grafana_alerting_folder_label_syncer_reconcile_failures_total", metrics.ReasonGetFolder))
+	})
+
+	t.Run("backfill failures are counted by stage", func(t *testing.T) {
+		t.Run("fetching orgs", func(t *testing.T) {
+			s, reg := newMetered(&fakeReconcilerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
+
+			require.Error(t, s.Backfill(context.Background(), nil))
+			require.Equal(t, float64(1), counterValue(t, reg,
+				"grafana_alerting_folder_label_syncer_backfill_failures_total", metrics.ReasonFetchOrgs))
+		})
+
+		t.Run("listing folders with rules", func(t *testing.T) {
+			store := &fakeReconcilerStore{orgs: []int64{1}, folderUIDsErr: errors.New("boom")}
+			s, reg := newMetered(store, &fakeFolderClient{})
+
+			// Per-org failures are tolerated, so Backfill itself succeeds.
+			require.NoError(t, s.Backfill(context.Background(), nil))
+			require.Equal(t, float64(1), counterValue(t, reg,
+				"grafana_alerting_folder_label_syncer_backfill_failures_total", metrics.ReasonListFoldersWithRule))
+		})
+
+		t.Run("listing labeled folders", func(t *testing.T) {
+			store := &fakeReconcilerStore{orgs: []int64{1}}
+			s, reg := newMetered(store, &fakeFolderClient{listErr: errors.New("boom")})
+
+			require.NoError(t, s.Backfill(context.Background(), nil))
+			require.Equal(t, float64(1), counterValue(t, reg,
+				"grafana_alerting_folder_label_syncer_backfill_failures_total", metrics.ReasonListLabeledFolders))
+		})
+	})
+
+	t.Run("backfill successes are counted per org", func(t *testing.T) {
+		t.Run("including orgs with nothing to do", func(t *testing.T) {
+			// Both orgs already agree, so nothing is queued -- but the pass still ran.
+			store := &fakeReconcilerStore{orgs: []int64{1, 2}}
+			s, reg := newMetered(store, &fakeFolderClient{})
+
+			require.NoError(t, s.Backfill(context.Background(), nil))
+			require.Equal(t, float64(2), gaugeOrCounter(t, reg,
+				"grafana_alerting_folder_label_syncer_backfill_successes_total"))
+		})
+
+		t.Run("counting only the orgs that did not fail", func(t *testing.T) {
+			store := &fakeReconcilerStore{orgs: []int64{1, 2}, folderUIDs: set("folder-a")}
+			// org-1's folder calls fail, so only org 2 succeeds.
+			folders := &fakeFolderClient{failNamespaces: map[string]struct{}{"org-1": {}}}
+			s, reg := newMetered(store, folders)
+
+			require.NoError(t, s.Backfill(context.Background(), nil))
+			require.Equal(t, float64(1), gaugeOrCounter(t, reg,
+				"grafana_alerting_folder_label_syncer_backfill_successes_total"))
+			require.Equal(t, float64(1), counterValue(t, reg,
+				"grafana_alerting_folder_label_syncer_backfill_failures_total", metrics.ReasonListLabeledFolders))
+		})
+
+		t.Run("skipped orgs are counted as neither", func(t *testing.T) {
+			store := &fakeReconcilerStore{orgs: []int64{1, 2}}
+			s, reg := newMetered(store, &fakeFolderClient{})
+
+			require.NoError(t, s.Backfill(context.Background(), map[int64]struct{}{2: {}}))
+			require.Equal(t, float64(1), gaugeOrCounter(t, reg,
+				"grafana_alerting_folder_label_syncer_backfill_successes_total"))
+		})
+
+		t.Run("not counted when org enumeration fails", func(t *testing.T) {
+			s, reg := newMetered(&fakeReconcilerStore{orgsErr: errors.New("boom")}, &fakeFolderClient{})
+
+			require.Error(t, s.Backfill(context.Background(), nil))
+			require.Zero(t, gaugeOrCounter(t, reg,
+				"grafana_alerting_folder_label_syncer_backfill_successes_total"))
+		})
+	})
+
+	t.Run("nil metrics do not panic", func(t *testing.T) {
+		s := newTestService(&fakeReconcilerStore{err: errors.New("boom")}, &fakeFolderClient{})
+		require.Nil(t, s.metrics)
+
+		require.Error(t, s.reconcile(context.Background(), models.FolderKey{OrgID: 1, UID: "folder-1"}))
+	})
+}
+
+// counterValue returns the value of the named counter carrying reason, or 0 if absent.
+func counterValue(t *testing.T, g prometheus.Gatherer, name, reason string) float64 {
+	t.Helper()
+	families, err := g.Gather()
+	require.NoError(t, err)
+	for _, f := range families {
+		if f.GetName() != name {
+			continue
+		}
+		for _, m := range f.GetMetric() {
+			for _, l := range m.GetLabel() {
+				if l.GetName() == "reason" && l.GetValue() == reason {
+					return m.GetCounter().GetValue()
+				}
+			}
+		}
+	}
+	return 0
+}
+
+// gaugeOrCounter returns the value of the named unlabelled metric, or 0 if absent.
+func gaugeOrCounter(t *testing.T, g prometheus.Gatherer, name string) float64 {
+	t.Helper()
+	families, err := g.Gather()
+	require.NoError(t, err)
+	for _, f := range families {
+		if f.GetName() != name {
+			continue
+		}
+		for _, m := range f.GetMetric() {
+			return m.GetCounter().GetValue()
+		}
+	}
+	return 0
 }

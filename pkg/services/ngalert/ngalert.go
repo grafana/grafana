@@ -670,7 +670,8 @@ func (ng *AlertNG) init() error {
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
-		ng.folderLabelReconciler = folderlabelsyncer.NewService(ng.Cfg, ng.bus, ng.store, ng.clientGenerator)
+		ng.folderLabelReconciler = folderlabelsyncer.NewService(ng.Cfg, ng.bus, ng.store, ng.clientGenerator,
+			ng.Metrics.GetFolderLabelSyncerMetrics())
 	}
 
 	return ac.DeclareFixedRoles(ng.AccesscontrolService)

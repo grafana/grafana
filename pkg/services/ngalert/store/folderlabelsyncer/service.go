@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
@@ -58,6 +59,7 @@ type Service struct {
 	clients    resource.ClientGenerator
 	namespacer request.NamespaceMapper
 	log        log.Logger
+	metrics    *metrics.FolderLabelSyncer
 
 	mu    sync.Mutex
 	dirty map[models.FolderKey]struct{}
@@ -67,12 +69,13 @@ type Service struct {
 	folders  folderPatcher
 }
 
-func NewService(cfg *setting.Cfg, b bus.Bus, store reconcilerStore, clients resource.ClientGenerator) *Service {
+func NewService(cfg *setting.Cfg, b bus.Bus, store reconcilerStore, clients resource.ClientGenerator, m *metrics.FolderLabelSyncer) *Service {
 	s := &Service{
 		store:      store,
 		clients:    clients,
 		namespacer: request.GetNamespaceMapper(cfg),
 		log:        log.New("ngalert.folderlabelsyncer"),
+		metrics:    m,
 		dirty:      make(map[models.FolderKey]struct{}),
 		wake:       make(chan struct{}, 1),
 	}
@@ -157,17 +160,39 @@ func (s *Service) take() []models.FolderKey {
 	return keys
 }
 
+// reconcileFailed and backfillFailed record a failure against its stage. Both tolerate nil metrics so
+// a Service can be constructed without them.
+func (s *Service) reconcileFailed(reason string) {
+	if s.metrics != nil {
+		s.metrics.ReconcileFailures.WithLabelValues(reason).Inc()
+	}
+}
+
+func (s *Service) backfillFailed(reason string) {
+	if s.metrics != nil {
+		s.metrics.BackfillFailures.WithLabelValues(reason).Inc()
+	}
+}
+
+func (s *Service) backfillSucceeded() {
+	if s.metrics != nil {
+		s.metrics.BackfillSuccesses.Inc()
+	}
+}
+
 func (s *Service) reconcile(ctx context.Context, key models.FolderKey) error {
 	namespace := s.namespacer(key.OrgID)
 	ctx, user := serviceIdentity(ctx, key.OrgID)
 
 	count, err := s.store.CountInFolders(ctx, key.OrgID, []string{key.UID}, user)
 	if err != nil {
+		s.reconcileFailed(metrics.ReasonCountRules)
 		return fmt.Errorf("count rules in folder: %w", err)
 	}
 
 	folders, err := s.folderClient()
 	if err != nil {
+		s.reconcileFailed(metrics.ReasonGetFolder)
 		return err
 	}
 
@@ -175,9 +200,11 @@ func (s *Service) reconcile(ctx context.Context, key models.FolderKey) error {
 	folder, err := folders.Get(ctx, id)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			// The folder is already gone; nothing left to mark.
+			// The folder is already gone; nothing left to mark. Not counted as a failure: this is the
+			// expected outcome when a folder is deleted between the event and the reconcile.
 			return nil
 		}
+		s.reconcileFailed(metrics.ReasonGetFolder)
 		return fmt.Errorf("get folder: %w", err)
 	}
 
@@ -197,6 +224,7 @@ func (s *Service) reconcile(ctx context.Context, key models.FolderKey) error {
 		Operations: []resource.PatchOperation{patchOperation},
 	}, resource.PatchOptions{})
 	if err != nil {
+		s.reconcileFailed(metrics.ReasonPatchFolder)
 		return fmt.Errorf("patch folder label: %w", err)
 	}
 
