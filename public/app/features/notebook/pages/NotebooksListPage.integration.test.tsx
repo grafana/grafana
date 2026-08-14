@@ -8,7 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { __resetSearchAvailabilityForTests } from '../list/useNotebooksList';
+import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
 
 import { NotebooksListPage } from './NotebooksListPage';
 
@@ -126,7 +126,7 @@ describe('NotebooksListPage (integration)', () => {
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'SearchQuery',
       fields: ['title', 'tags', 'createdBy', 'created', 'updated'],
-      limit: 500,
+      limit: NOTEBOOKS_PAGE_LIMIT,
     });
   });
 
@@ -146,6 +146,42 @@ describe('NotebooksListPage (integration)', () => {
       expect(api.getSearchRequests()).toBeGreaterThan(searchRequestsBefore);
     });
     expect(await screen.findByRole('link', { name: 'New notebook' })).toBeInTheDocument();
+  });
+
+  // The endpoint pages with an opaque cursor, and the list is only honest once the walk finishes:
+  // the table sorts what it holds, so stopping at page one would order a window, not the library.
+  it('walks the continue token to the end and shows every page as one list', async () => {
+    const pages = [
+      { items: [hit('nb1', 'Page one notebook')], token: 'cursor-2' },
+      { items: [hit('nb2', 'Page two notebook')], token: 'cursor-3' },
+      { items: [hit('nb3', 'Page three notebook')], token: '' },
+    ];
+    const cursors: Array<string | undefined> = [];
+
+    server.use(
+      http.post(NOTEBOOKS_SEARCH_URL, async ({ request }) => {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- test-local shape
+        const body = (await request.json()) as { continue?: string };
+        cursors.push(body.continue);
+        // Tokens are named for the page they lead to, so the cursor doubles as the index.
+        const page = body.continue ? pages[Number(body.continue.replace('cursor-', '')) - 1] : pages[0];
+        return HttpResponse.json({
+          metadata: { totalHits: 3, totalHitsRelation: 'eq', continue: page.token },
+          items: page.items,
+        });
+      })
+    );
+
+    render(<NotebooksListPage />);
+
+    // All three rows, from three separate requests.
+    expect(await screen.findByText('Page three notebook')).toBeInTheDocument();
+    expect(screen.getByText('Page one notebook')).toBeInTheDocument();
+    expect(screen.getByText('Page two notebook')).toBeInTheDocument();
+    expect(screen.getByText('3 notebooks')).toBeInTheDocument();
+
+    // The first request carries no cursor; each one after it carries the previous page's token.
+    expect(cursors).toEqual([undefined, 'cursor-2', 'cursor-3']);
   });
 
   it('falls back to LIST where the search endpoint is not served', async () => {

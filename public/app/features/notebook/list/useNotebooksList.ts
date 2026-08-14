@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { compact, uniq } from 'lodash';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { t } from '@grafana/i18n';
@@ -11,7 +11,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyCreatedBy, AnnoKeyUpdatedTimestamp } from 'app/features/apiserver/types';
 
 import {
-  useSearchNotebooksQuery,
+  useSearchNotebooksInfiniteQuery,
   type NotebookSearchQuery,
   type ResultItem,
   type WhereNode,
@@ -30,8 +30,13 @@ const SearchField = {
 } as const;
 
 /**
- * The endpoint clamps to this, and it is what LIST asked for before the migration, so the
- * window on screen is the same size either way.
+ * Rows per request, not the size of the list: pages are followed until the server runs out or the
+ * accumulation ceiling is reached, so this only decides how many round trips that takes.
+ *
+ * The endpoint's own maximum, because the pages come back sequentially — each one needs the previous
+ * cursor — so a smaller page multiplies latency rather than spreading it. The projection makes the
+ * size side cheap either way, at roughly 280 bytes a row. Asking for more is pointless: the server
+ * clamps to this.
  */
 export const NOTEBOOKS_PAGE_LIMIT = 500;
 
@@ -99,7 +104,19 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     [debouncedSearch, filterByAuthor, currentUserUid]
   );
 
-  const search = useSearchNotebooksQuery(enabled && !usingFallback ? searchBody : skipToken);
+  const search = useSearchNotebooksInfiniteQuery(enabled && !usingFallback ? searchBody : skipToken);
+
+  const { hasNextPage, isFetching, isError, fetchNextPage } = search;
+  // Walk the cursor to the end. The table sorts what it holds, so a partial set would order the
+  // window rather than the library — "most recent first" has to mean the whole match set.
+  //
+  // Guarded on isError as much as on isFetching: a page that fails leaves hasNextPage true, and
+  // retrying it on every render would be an unbroken loop of failing requests.
+  useEffect(() => {
+    if (hasNextPage && !isFetching && !isError) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetching, isError, fetchNextPage]);
 
   // Latch on the first "no such route" answer, so we stop asking for the rest of the session.
   if (search.error && isRouteMissing(search.error) && !usingFallback) {
@@ -118,31 +135,52 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     if (usingFallback) {
       return (list.data?.items ?? []).map(listRow);
     }
-    return (search.data?.items ?? []).map(searchRow);
+    return (search.data?.pages ?? []).flatMap((page) => page.items.map(searchRow));
   }, [usingFallback, list.data, search.data]);
 
   const authorUids = useMemo(() => uniq(compact(rows.map((row) => row.authorUid))), [rows]);
 
-  // The display-mapping endpoint rejects an empty key list with a 400, so skip it when there is
-  // nobody to resolve (e.g. an empty library).
-  const { data: displayMapping } = useGetDisplayMappingQuery(authorUids.length > 0 ? { key: authorUids } : skipToken);
+  /**
+   * Names resolved so far, accumulated rather than derived from the latest response. Filtering
+   * changes which authors are on screen, and re-deriving would blank the whole column back to
+   * Anonymous until the next answer arrived — a second render pass over every row, for names
+   * already known.
+   */
+  const [authorNames, setAuthorNames] = useState<ReadonlyMap<string, string>>(new Map());
 
-  const authorNames = useMemo(() => {
-    const map = new Map<string, string>();
-    // Keyed by identity rather than by position: the server builds `display` from its query
-    // results and appends constants, so it is neither in `keys` order nor the same length.
-    // Both key forms are indexed because a createdBy annotation may carry either the UID
-    // (`user:abc`) or the legacy numeric id (`user:1`), and only the UID form comes back as
-    // identity.name.
-    for (const entry of displayMapping?.display ?? []) {
-      if (entry.identity.name) {
-        map.set(`${entry.identity.type}:${entry.identity.name}`, entry.displayName);
-      }
-      if (entry.internalId) {
-        map.set(`${entry.identity.type}:${entry.internalId}`, entry.displayName);
-      }
+  // Only the ones still unknown: the endpoint rejects an empty key list with a 400, and asking
+  // again for a name already held would buy nothing.
+  const displayArg = useMemo(() => {
+    const missing = authorUids.filter((uid) => !authorNames.has(uid));
+    return missing.length > 0 ? { key: missing } : skipToken;
+  }, [authorUids, authorNames]);
+
+  const { data: displayMapping } = useGetDisplayMappingQuery(displayArg);
+
+  useEffect(() => {
+    const entries = displayMapping?.display;
+    if (!entries?.length) {
+      return;
     }
-    return map;
+    setAuthorNames((previous) => {
+      const next = new Map(previous);
+      // Keyed by identity rather than by position: the server builds `display` from its query
+      // results and appends constants, so it is neither in `keys` order nor the same length.
+      // Both key forms are indexed because a createdBy annotation may carry either the UID
+      // (`user:abc`) or the legacy numeric id (`user:1`), and only the UID form comes back as
+      // identity.name.
+      for (const entry of entries) {
+        if (entry.identity.name) {
+          next.set(`${entry.identity.type}:${entry.identity.name}`, entry.displayName);
+        }
+        if (entry.internalId) {
+          next.set(`${entry.identity.type}:${entry.internalId}`, entry.displayName);
+        }
+      }
+      // A response that told us nothing new must not produce a new Map, or the rows below would be
+      // rebuilt for nothing.
+      return next.size === previous.size ? previous : next;
+    });
   }, [displayMapping]);
 
   const namedRows = useMemo(
@@ -165,6 +203,10 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
 
   const isFiltered = Boolean(debouncedSearch.trim()) || filterByAuthor;
 
+  // Every page carries the same total for the query, so the first one answers for all of them.
+  const searchMetadata = search.data?.pages[0]?.metadata;
+  const lastPageMetadata = search.data?.pages[search.data.pages.length - 1]?.metadata;
+
   return {
     rows: filteredRows,
     /**
@@ -173,19 +215,21 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
      * here with `isTotalExact`: the server falls back to an upper bound when counting exactly
      * would cost too much.
      */
-    totalCount: usingFallback ? undefined : (search.data?.metadata.totalHits ?? 0),
-    isTotalExact: search.data?.metadata.totalHitsRelation !== 'lte',
-    /** How many rows the request brought back, before any client-side filtering. */
+    totalCount: usingFallback ? undefined : (searchMetadata?.totalHits ?? 0),
+    isTotalExact: searchMetadata?.totalHitsRelation !== 'lte',
+    /** How many rows were loaded across every page taken, before any client-side filtering. */
     loadedCount: namedRows.length,
     /**
-     * More matches exist than the page on screen. Search offers a continue token on a short page
-     * too, whenever its total is inexact, so a cursor alone does not mean there is more — a full
-     * page does. LIST is the other way around: it stops at its own byte limit before reaching the
-     * requested count, so a short page with a token there is real truncation.
+     * Matches exist that were never fetched. On the search path that only happens at the
+     * accumulation ceiling: the cursor is followed to the end otherwise, so a token still on offer
+     * with nothing left to fetch means we stopped early. LIST cannot page at all, so there a
+     * continue token is truncation on its own.
      */
     isTruncated: usingFallback
       ? Boolean(list.data?.metadata?.continue)
-      : Boolean(search.data?.metadata.continue) && namedRows.length >= NOTEBOOKS_PAGE_LIMIT,
+      : Boolean(lastPageMetadata?.continue) && !hasNextPage,
+    /** More pages are still on the way, so the rows and counts are still filling in. */
+    isLoadingMore: !usingFallback && (hasNextPage || search.isFetchingNextPage),
     /** Distinguishes "no notebooks at all" from "none matched the filters". */
     isFiltered,
     searchQuery,

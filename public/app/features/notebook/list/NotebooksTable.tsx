@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -75,7 +75,7 @@ export function NotebooksTable({ notebooks }: Props) {
         id: 'actions',
         header: '',
         disableGrow: true,
-        cell: ({ row: { original } }) => <NotebookRowActions notebook={original} />,
+        cell: ({ row: { original } }) => <NotebookRowActions uid={original.uid} />,
       },
     ],
     // styles is memoized per theme, so this stays referentially stable and the table doesn't remount.
@@ -88,12 +88,32 @@ export function NotebooksTable({ notebooks }: Props) {
       data={notebooks}
       getRowId={(notebook) => notebook.uid}
       initialSortBy={[{ id: 'updated', desc: true }]}
+      pageSize={ROWS_PER_PAGE}
+      // Filtering replaces the data. Without this the table keeps the page index it was on, so
+      // narrowing the set from page 3 renders an empty page that no empty state covers.
+      autoResetPage
     />
   );
 }
 
-/** timestamp is unix millis; zero means the index has no value for it. */
-function RelativeTime({ timestamp }: { timestamp: number }) {
+/**
+ * The table renders every row it is given — no virtualization — and each row carries a link, a tag
+ * list, two tooltipped timestamps and three buttons. At a full page from the server that is thousands
+ * of elements rebuilt whenever a filter changes, which is felt as a delay on the click. Sorting and
+ * the row counts still run over the whole set: react-table paginates after sorting.
+ *
+ * 25 to match the other page-level resource tables (team folders, the provisioning resource tree).
+ */
+export const ROWS_PER_PAGE = 25;
+
+/**
+ * timestamp is unix millis; zero means the index has no value for it.
+ *
+ * Memoized on the timestamp alone, not on the row: filtering hands the table a fresh array of fresh
+ * row objects, so a cell that took the row would rebuild its tooltip for every notebook still on
+ * screen. There are two of these per row, and they are the reason this matters.
+ */
+const RelativeTime = memo(function RelativeTime({ timestamp }: { timestamp: number }) {
   const styles = useStyles2(getStyles);
 
   if (!timestamp) {
@@ -105,9 +125,10 @@ function RelativeTime({ timestamp }: { timestamp: number }) {
       <span className={styles.nowrap}>{dateTimeFormatTimeAgo(timestamp)}</span>
     </Tooltip>
   );
-}
+});
 
-function NotebookRowActions({ notebook }: { notebook: NotebookRow }) {
+/** Takes the uid rather than the row for the same reason as RelativeTime: three buttons per row. */
+const NotebookRowActions = memo(function NotebookRowActions({ uid }: { uid: string }) {
   // Omitted rather than disabled for a user who cannot edit, matching the create button on the page
   // around this table.
   const canEdit = canEditNotebooks();
@@ -115,11 +136,11 @@ function NotebookRowActions({ notebook }: { notebook: NotebookRow }) {
   return (
     <Stack alignItems="center" justifyContent="flex-end" gap={1}>
       {canEdit && (
-        <LinkButton variant="secondary" size="sm" icon="pen" href={notebookEditHref(notebook.uid)}>
+        <LinkButton variant="secondary" size="sm" icon="pen" href={notebookEditHref(uid)}>
           {t('notebooks.list.table.edit', 'Edit')}
         </LinkButton>
       )}
-      <ClipboardButton variant="secondary" size="sm" icon="link" getText={() => notebookShareUrl(notebook.uid)}>
+      <ClipboardButton variant="secondary" size="sm" icon="link" getText={() => notebookShareUrl(uid)}>
         {t('notebooks.list.table.copy-link', 'Copy link')}
       </ClipboardButton>
       {/* Row-level actions land in a follow-up; the menu is a disabled placeholder for now. */}
@@ -131,7 +152,7 @@ function NotebookRowActions({ notebook }: { notebook: NotebookRow }) {
       />
     </Stack>
   );
-}
+});
 
 // Module scope so useStyles2 can memoize — it keys its cache on the function's identity, so an
 // inline arrow would rebuild the styles on every render of every row.

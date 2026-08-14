@@ -12814,6 +12814,7 @@
     "list": {
       "count_one": "{{count}} notebook",
       "count_other": "{{count}} notebooks",
+      "count-loading": "Loading {{shown}} of {{total}}...",
       "count-of-total": "Showing {{shown}} of {{total}}",
       "count-of-total-approx": "Showing {{shown}} of up to {{total}}",
       "count-truncated_one": "First {{count}} notebook loaded",

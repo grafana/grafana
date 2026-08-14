@@ -32,6 +32,7 @@ export function NotebooksListPage() {
     isTotalExact,
     loadedCount,
     isTruncated,
+    isLoadingMore,
     isFiltered,
     searchQuery,
     setSearchQuery,
@@ -152,6 +153,7 @@ export function NotebooksListPage() {
                     totalCount={totalCount}
                     isTotalExact={isTotalExact}
                     isTruncated={isTruncated}
+                    isLoadingMore={isLoadingMore}
                   />
                 </Stack>
               </Stack>
@@ -180,6 +182,8 @@ interface CountSummaryProps {
   totalCount: number | undefined;
   isTotalExact: boolean;
   isTruncated: boolean;
+  /** Pages are still arriving, so every number here is still climbing. */
+  isLoadingMore: boolean;
 }
 
 /**
@@ -187,7 +191,7 @@ interface CountSummaryProps {
  * Nothing here invents a total: when the server does not report one, the size of the window it
  * returned is all there is to say.
  */
-function CountSummary({ shown, loadedCount, totalCount, isTotalExact, isTruncated }: CountSummaryProps) {
+function CountSummary({ shown, loadedCount, totalCount, isTotalExact, isTruncated, isLoadingMore }: CountSummaryProps) {
   const matches = (
     <Text variant="bodySmall" color="secondary">
       {t('notebooks.list.count', '', {
@@ -197,6 +201,15 @@ function CountSummary({ shown, loadedCount, totalCount, isTotalExact, isTruncate
       })}
     </Text>
   );
+
+  // Say so rather than letting the count climb on its own, which reads as a miscount.
+  if (isLoadingMore && totalCount !== undefined) {
+    return (
+      <Text variant="bodySmall" color="secondary">
+        {t('notebooks.list.count-loading', 'Loading {{shown}} of {{total}}...', { shown, total: totalCount })}
+      </Text>
+    );
+  }
 
   if (!isTruncated) {
     return matches;

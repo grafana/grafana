@@ -6,7 +6,7 @@ import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { defaultSpec as defaultNotebookSpec } from 'app/features/notebook/types';
 
-import { type ResultItem, type SearchResults, useSearchNotebooksQuery } from './notebookSearchApi';
+import { type ResultItem, type SearchResults, useSearchNotebooksInfiniteQuery } from './notebookSearchApi';
 import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT, useNotebooksList } from './useNotebooksList';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
@@ -18,12 +18,12 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
 }));
 
 jest.mock('./notebookSearchApi', () => ({
-  useSearchNotebooksQuery: jest.fn(),
+  useSearchNotebooksInfiniteQuery: jest.fn(),
 }));
 
 const mockUseGetDisplayMappingQuery = jest.mocked(useGetDisplayMappingQuery);
 const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
-const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksQuery);
+const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksInfiniteQuery);
 
 const CREATED_MS = Date.UTC(2026, 0, 1);
 const UPDATED_MS = Date.UTC(2026, 1, 1);
@@ -48,31 +48,63 @@ function makeHit(overrides: {
   };
 }
 
-function setSearch(
-  items: ResultItem[],
-  extra: {
-    isLoading?: boolean;
-    error?: unknown;
-    continueToken?: string;
-    totalHits?: number;
-    totalHitsRelation?: SearchResults['metadata']['totalHitsRelation'];
-  } = {}
-) {
+interface SearchExtras {
+  isLoading?: boolean;
+  error?: unknown;
+  continueToken?: string;
+  totalHits?: number;
+  totalHitsRelation?: SearchResults['metadata']['totalHitsRelation'];
+  /** Whether the endpoint would offer another page — false with a token still set means the ceiling. */
+  hasNextPage?: boolean;
+  isFetching?: boolean;
+  isError?: boolean;
+}
+
+const mockFetchNextPage = jest.fn();
+
+/** One page of results, as the endpoint returns it. */
+function searchPage(items: ResultItem[], extra: SearchExtras = {}): SearchResults {
+  return {
+    items,
+    metadata: {
+      continue: extra.continueToken,
+      totalHits: extra.totalHits ?? items.length,
+      totalHitsRelation: extra.totalHitsRelation ?? 'eq',
+    },
+  };
+}
+
+/** Stands in for the infinite query: the pages accumulated so far, plus the paging controls. */
+function setSearchPages(pages: SearchResults[], extra: SearchExtras = {}) {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
   mockUseSearchNotebooksQuery.mockReturnValue({
-    data: extra.error
-      ? undefined
-      : {
-          items,
-          metadata: {
-            continue: extra.continueToken,
-            totalHits: extra.totalHits ?? items.length,
-            totalHitsRelation: extra.totalHitsRelation ?? 'eq',
-          },
-        },
+    data: extra.error ? undefined : { pages, pageParams: pages.map((_, i) => (i === 0 ? undefined : `cursor-${i}`)) },
     isLoading: extra.isLoading ?? false,
+    isFetching: extra.isFetching ?? false,
+    isFetchingNextPage: false,
+    isError: extra.isError ?? Boolean(extra.error),
+    hasNextPage: extra.hasNextPage ?? false,
+    fetchNextPage: mockFetchNextPage,
     error: extra.error,
-  } as unknown as ReturnType<typeof useSearchNotebooksQuery>);
+  } as unknown as ReturnType<typeof useSearchNotebooksInfiniteQuery>);
+}
+
+function setSearch(items: ResultItem[], extra: SearchExtras = {}) {
+  setSearchPages([searchPage(items, extra)], extra);
+}
+
+/** Resolves the given uids to display names, as the iam endpoint would. */
+function setDisplayNames(names: Record<string, string>) {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
+  mockUseGetDisplayMappingQuery.mockReturnValue({
+    data: {
+      keys: Object.keys(names).map((uid) => `user:${uid}`),
+      display: Object.entries(names).map(([uid, displayName]) => ({
+        identity: { type: 'user', name: uid },
+        displayName,
+      })),
+    },
+  } as unknown as ReturnType<typeof useGetDisplayMappingQuery>);
 }
 
 /** A page the server filled to the limit, which is what truncation looks like on the wire. */
@@ -350,8 +382,10 @@ describe('useNotebooksList', () => {
       expect(result.current.rows[0]).toEqual(expect.objectContaining({ title: '', tags: ['ok'], created: 0 }));
     });
 
-    it('reports truncation and the server-side total', () => {
-      setSearch(fullPage(), { continueToken: 'next-page', totalHits: 870 });
+    // Truncation is now only what the client refused to fetch: a token still on offer with no next
+    // page left to ask for means the accumulation ceiling stopped the walk.
+    it('reports truncation once the ceiling stops the walk', () => {
+      setSearch(fullPage(), { continueToken: 'next-page', hasNextPage: false, totalHits: 870 });
 
       const { result } = setupHook();
 
@@ -360,12 +394,12 @@ describe('useNotebooksList', () => {
       expect(result.current.isTotalExact).toBe(true);
     });
 
-    // The endpoint hands back a cursor on a short page too, whenever its total is inexact, so that
-    // matches its scan never reached stay reachable. Reading that as "there is more" would tell the
-    // user their complete list is a window onto something bigger.
-    it('does not call a short page truncated, even when offered a continue token', () => {
+    // A token means the next page is still coming, not that the list is cut short — including on a
+    // short page, which the endpoint offers a cursor for whenever its total is inexact.
+    it('is not truncated while pages are still being followed', () => {
       setSearch([makeHit({ name: 'nb1', title: 'One' })], {
         continueToken: 'next-page',
+        hasNextPage: true,
         totalHits: 12,
         totalHitsRelation: 'lte',
       });
@@ -373,6 +407,7 @@ describe('useNotebooksList', () => {
       const { result } = setupHook();
 
       expect(result.current.isTruncated).toBe(false);
+      expect(result.current.isLoadingMore).toBe(true);
     });
 
     it('flags an inexact total so it is not printed as a precise number', () => {
@@ -388,6 +423,7 @@ describe('useNotebooksList', () => {
 
       const { result } = setupHook();
 
+      expect(result.current.isLoadingMore).toBe(false);
       expect(result.current.isTruncated).toBe(false);
     });
   });
@@ -421,6 +457,70 @@ describe('useNotebooksList', () => {
         expect(lastSearchArg()).not.toHaveProperty('where');
       });
       expect(result.current.isFiltered).toBe(false);
+    });
+  });
+
+  // The table sorts and counts whatever it holds, so a half-walked cursor would order a window
+  // rather than the library.
+  describe('following the cursor', () => {
+    it('reads every page as one list', () => {
+      setSearchPages([
+        searchPage([makeHit({ name: 'nb1', title: 'One' })], { totalHits: 3 }),
+        searchPage([makeHit({ name: 'nb2', title: 'Two' }), makeHit({ name: 'nb3', title: 'Three' })], {
+          totalHits: 3,
+        }),
+      ]);
+
+      const { result } = setupHook();
+
+      expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1', 'nb2', 'nb3']);
+      expect(result.current.loadedCount).toBe(3);
+      // The total comes from the first page, which counts the whole match set, not the page.
+      expect(result.current.totalCount).toBe(3);
+    });
+
+    it('asks for the next page while one is on offer', () => {
+      setSearch([makeHit({ name: 'nb1', title: 'One' })], { continueToken: 'next-page', hasNextPage: true });
+
+      setupHook();
+
+      expect(mockFetchNextPage).toHaveBeenCalled();
+    });
+
+    it('waits for the page in flight rather than stacking requests', () => {
+      setSearch([makeHit({ name: 'nb1', title: 'One' })], {
+        continueToken: 'next-page',
+        hasNextPage: true,
+        isFetching: true,
+      });
+
+      setupHook();
+
+      expect(mockFetchNextPage).not.toHaveBeenCalled();
+    });
+
+    // A failed page leaves a cursor on offer. Retrying it from an effect would be an unbroken loop
+    // of failing requests, so the walk has to stop at the first failure.
+    it('stops walking after a page fails', () => {
+      setSearch([makeHit({ name: 'nb1', title: 'One' })], {
+        continueToken: 'next-page',
+        hasNextPage: true,
+        isError: true,
+      });
+
+      setupHook();
+
+      expect(mockFetchNextPage).not.toHaveBeenCalled();
+    });
+
+    it('does not walk on the fallback path, where LIST cannot page', async () => {
+      setSearchRouteMissing();
+      setList([makeNotebook({ name: 'nb1', title: 'From list' })], { continueToken: 'next-page' });
+
+      const { result } = setupHook();
+
+      await waitFor(() => expect(result.current.rows).toHaveLength(1));
+      expect(result.current.isLoadingMore).toBe(false);
     });
   });
 
@@ -507,6 +607,42 @@ describe('useNotebooksList', () => {
       const { result } = setupHook();
 
       expect(result.current.rows[0].authorName).toBe('Anonymous');
+    });
+
+    it('stops asking once every author on screen is resolved', () => {
+      setSearch([makeHit({ name: 'nb1', title: 'One', createdBy: 'user:abc' })]);
+      setDisplayNames({ abc: 'Marcus Chen' });
+
+      const { result } = setupHook();
+
+      expect(result.current.rows[0].authorName).toBe('Marcus Chen');
+      expect(mockUseGetDisplayMappingQuery).toHaveBeenLastCalledWith(skipToken);
+    });
+
+    // Filtering changes which authors are on screen. Re-deriving names from the latest response
+    // would blank the column back to Anonymous until the next one arrived, and rebuild every row to
+    // do it — so what is already known has to survive a narrowing.
+    it('keeps names it already resolved when the author set narrows', async () => {
+      setSearch([
+        makeHit({ name: 'nb1', title: 'One', createdBy: 'user:abc' }),
+        makeHit({ name: 'nb2', title: 'Two', createdBy: 'user:xyz' }),
+      ]);
+      setDisplayNames({ abc: 'Marcus Chen', xyz: 'Priya Mehta' });
+
+      const { result, rerender } = setupHook();
+
+      expect(result.current.rows[0].authorName).toBe('Marcus Chen');
+
+      // What a narrowed filter looks like: fewer rows, and a display response not yet in hand.
+      setSearch([makeHit({ name: 'nb1', title: 'One', createdBy: 'user:abc' })]);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
+      mockUseGetDisplayMappingQuery.mockReturnValue({ data: undefined } as unknown as ReturnType<
+        typeof useGetDisplayMappingQuery
+      >);
+      rerender();
+
+      expect(result.current.rows).toHaveLength(1);
+      expect(result.current.rows[0].authorName).toBe('Marcus Chen');
     });
 
     it('skips the display lookup when no notebook has an author', () => {

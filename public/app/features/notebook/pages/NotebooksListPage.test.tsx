@@ -9,11 +9,12 @@ import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { ROWS_PER_PAGE } from '../list/NotebooksTable';
 import {
   type NotebookSearchQuery,
   type ResultItem,
   type WhereNode,
-  useSearchNotebooksQuery,
+  useSearchNotebooksInfiniteQuery,
 } from '../list/notebookSearchApi';
 import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
 
@@ -34,10 +35,10 @@ jest.mock('app/api/clients/dashboard/v2beta1', () => ({
 }));
 
 jest.mock('../list/notebookSearchApi', () => ({
-  useSearchNotebooksQuery: jest.fn(),
+  useSearchNotebooksInfiniteQuery: jest.fn(),
 }));
 
-const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksQuery);
+const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksInfiniteQuery);
 const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
 const mockUseGetDisplayMappingQuery = jest.mocked(useGetDisplayMappingQuery);
 
@@ -56,10 +57,6 @@ function leavesOf(where: WhereNode | undefined): WhereNode[] {
   return where.and ?? [where];
 }
 
-/**
- * Stands in for the endpoint, applying the predicates the page sent. Filtering is server-side
- * now, so a fake that ignored the request body would let a wrong query pass unnoticed.
- */
 /** A notebook as LIST returns it, for the cases that exercise the fallback path. */
 function makeNotebook(name: string, title: string): Notebook {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal fixture standing in for a full k8s resource
@@ -83,6 +80,10 @@ function makeFullPage(): ResultItem[] {
   return Array.from({ length: NOTEBOOKS_PAGE_LIMIT }, (_, i) => makeHit(`nb${i}`, `Notebook ${i}`));
 }
 
+/**
+ * Stands in for the endpoint, applying the predicates the page sent. Filtering is server-side
+ * now, so a fake that ignored the request body would let a wrong query pass unnoticed.
+ */
 function setNotebooks(
   items: ResultItem[],
   extra: {
@@ -91,6 +92,8 @@ function setNotebooks(
     continueToken?: string;
     totalHits?: number;
     totalHitsRelation?: 'eq' | 'lte';
+    /** A token with no next page on offer is what the accumulation ceiling looks like. */
+    hasNextPage?: boolean;
   } = {}
 ) {
   mockUseSearchNotebooksQuery.mockImplementation((arg) => {
@@ -99,8 +102,12 @@ function setNotebooks(
       return {
         data: undefined,
         isLoading: extra.isLoading ?? false,
+        isFetching: false,
+        isError: Boolean(extra.error),
+        hasNextPage: false,
+        fetchNextPage: jest.fn(),
         error: arg === skipToken ? undefined : extra.error,
-      } as unknown as ReturnType<typeof useSearchNotebooksQuery>;
+      } as unknown as ReturnType<typeof useSearchNotebooksInfiniteQuery>;
     }
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the hook only ever passes a body or skipToken
@@ -117,17 +124,29 @@ function setNotebooks(
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
     return {
+      // One page: what the walk looks like once it has finished, which is every case here bar the
+      // ones that set hasNextPage.
       data: {
-        items: matched,
-        metadata: {
-          continue: extra.continueToken,
-          totalHits: extra.totalHits ?? matched.length,
-          totalHitsRelation: extra.totalHitsRelation ?? 'eq',
-        },
+        pages: [
+          {
+            items: matched,
+            metadata: {
+              continue: extra.continueToken,
+              totalHits: extra.totalHits ?? matched.length,
+              totalHitsRelation: extra.totalHitsRelation ?? 'eq',
+            },
+          },
+        ],
+        pageParams: [undefined],
       },
       isLoading: extra.isLoading ?? false,
+      isFetching: false,
+      isFetchingNextPage: false,
+      isError: false,
+      hasNextPage: extra.hasNextPage ?? false,
+      fetchNextPage: jest.fn(),
       error: undefined,
-    } as unknown as ReturnType<typeof useSearchNotebooksQuery>;
+    } as unknown as ReturnType<typeof useSearchNotebooksInfiniteQuery>;
   });
 }
 
@@ -295,6 +314,41 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     expect(await screen.findByText(`Showing ${NOTEBOOKS_PAGE_LIMIT} of 870`)).toBeInTheDocument();
+  });
+
+  // The table renders every row it is handed, and each one carries a link, a tag list, two
+  // tooltipped timestamps and three buttons — so a full result set has to be paged, or every filter
+  // change rebuilds thousands of elements before the click feels answered.
+  it('renders one page of rows at a time, and still counts the whole set', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks(makeFullPage());
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText(`${NOTEBOOKS_PAGE_LIMIT} notebooks`)).toBeInTheDocument();
+    // One header row plus a page of notebooks.
+    expect(screen.getAllByRole('row')).toHaveLength(ROWS_PER_PAGE + 1);
+  });
+
+  // Filtering replaces the table's data. A page index kept across that change lands past the end of
+  // the narrowed set, and the result is an empty table that no empty state covers — the count in the
+  // corner would say one thing and the rows another.
+  it('returns to the first page when a filter narrows the set', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    // Three pages, with the only match for "needle" outside the last one.
+    setNotebooks(
+      Array.from({ length: ROWS_PER_PAGE * 3 }, (_, i) => makeHit(`nb${i}`, i === 0 ? 'needle' : `Filler ${i}`))
+    );
+
+    render(<NotebooksListPage />);
+
+    expect(await screen.findByText(`${ROWS_PER_PAGE * 3} notebooks`)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: '3' }));
+
+    await userEvent.type(screen.getByPlaceholderText('Search notebooks by title...'), 'needle');
+
+    expect(await screen.findByText('1 notebook')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'needle' })).toBeInTheDocument();
   });
 
   // On the fallback path the loaded window and the matches within it are different facts, and LIST

@@ -48,6 +48,9 @@ export interface SortField {
  * The request body, minus the envelope's apiVersion/kind — those are constant and the
  * endpoint adds them, so callers cannot get them wrong.
  *
+ * `continue` is absent on purpose: it is the page cursor, supplied per page by the endpoint below,
+ * and including it here would make every page a separate cache entry rather than one paged list.
+ *
  * The server decodes with DisallowUnknownFields, so anything not declared here is a 400.
  * Never spread UI state into this.
  */
@@ -58,7 +61,6 @@ export interface NotebookSearchQuery {
   facets?: string[];
   facetLimit?: number;
   limit?: number;
-  continue?: string;
 }
 
 export interface ResourceRef {
@@ -98,12 +100,43 @@ export interface SearchResults {
 
 const notebookListTag = { type: 'Notebook' as const, id: 'LIST' };
 
+/**
+ * Ceiling on how many notebooks one filter will accumulate. The pages are followed for the caller,
+ * so without a stop a broad query would walk the whole library a page at a time.
+ *
+ * Counted in rows rather than pages, so it does not silently change meaning when the page size
+ * does — though a smaller page size does mean more requests to reach the same ceiling.
+ */
+export const MAX_ACCUMULATED_NOTEBOOKS = 2000;
+
+/** The cursor for the next page: absent on the first request, opaque afterwards. */
+type PageCursor = string | undefined;
+
 const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
   endpoints: (build) => ({
-    searchNotebooks: build.query<SearchResults, NotebookSearchQuery>({
+    /**
+     * One cache entry per filter, holding however many cursor pages have been taken for it. The
+     * caller reads `data.pages` and asks for the next one; the endpoint decides when there is none
+     * left to ask for.
+     */
+    searchNotebooks: build.infiniteQuery<SearchResults, NotebookSearchQuery, PageCursor>({
+      infiniteQueryOptions: {
+        initialPageParam: undefined,
+        getNextPageParam: (lastPage, allPages) => {
+          const loaded = allPages.reduce((total, page) => total + page.items.length, 0);
+          if (loaded >= MAX_ACCUMULATED_NOTEBOOKS) {
+            return undefined;
+          }
+          // An empty token means the server has nothing after this page. It also offers a token on
+          // a short page when its total is inexact, so the only reliable end is the token itself.
+          return lastPage.metadata.continue || undefined;
+        },
+        // maxPages is deliberately unset: it is a sliding window that evicts the pages already
+        // taken, which is the opposite of accumulating them.
+      },
       // A POST, because the query travels as a body. It is still a read, hence a query
       // rather than a mutation.
-      query: (body) => ({
+      query: ({ queryArg, pageParam }) => ({
         url: '/notebooks/search',
         method: 'POST',
         // The namespace-scoped base URL comes from the slice's baseQuery, so the path is
@@ -111,17 +144,23 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
         body: {
           apiVersion: SEARCH_API_VERSION,
           kind: SEARCH_QUERY_KIND,
-          ...body,
+          ...queryArg,
+          ...(pageParam ? { continue: pageParam } : {}),
         },
       }),
       // Tagged as Notebook, not Search: the generated notebook mutations invalidate
       // 'Notebook', and this is the list they have to refresh.
       providesTags: (result) =>
         result
-          ? [notebookListTag, ...result.items.map((item) => ({ type: 'Notebook' as const, id: item.resource.name }))]
+          ? [
+              notebookListTag,
+              ...result.pages.flatMap((page) =>
+                page.items.map((item) => ({ type: 'Notebook' as const, id: item.resource.name }))
+              ),
+            ]
           : [notebookListTag],
     }),
   }),
 });
 
-export const { useSearchNotebooksQuery } = notebookSearchAPI;
+export const { useSearchNotebooksInfiniteQuery } = notebookSearchAPI;
