@@ -1,6 +1,6 @@
 ## This is a self-documented Makefile. For usage information, run `make help`:
 ##
-## For more information, refer to https://suva.sh/posts/well-documented-makefiles/
+## For more information, refer to https://www.thapaliya.com/en/writings/well-documented-makefiles/
 
 WIRE_TAGS = "oss"
 
