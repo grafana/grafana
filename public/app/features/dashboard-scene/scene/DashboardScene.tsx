@@ -1,4 +1,5 @@
 import type * as H from 'history';
+import { type Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
@@ -28,6 +29,7 @@ import {
   type SceneVariable,
   type SceneVariableDependencyConfigLike,
   MultiValueVariable,
+  NewSceneObjectAddedEvent,
   type VizPanel,
 } from '@grafana/scenes';
 import { type Dashboard, type DashboardLink, type LibraryPanel } from '@grafana/schema';
@@ -193,6 +195,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
+  /** Row slug path from the url that did not match any row yet (e.g. a repeated row not created yet) */
+  private _pendingRowScroll?: string;
+  private _pendingRowScrollSub?: Unsubscribable;
+
   /**
    * What initiated the current edit session, e.g. the assistant building a dashboard for the user
    */
@@ -284,6 +290,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.deactivateSidebar();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
+      this._pendingRowScrollSub?.unsubscribe();
+      this._pendingRowScrollSub = undefined;
+      this._pendingRowScroll = undefined;
     };
   }
 
@@ -1417,7 +1426,21 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public scrollToRow(srow: string) {
     locationService.partial({ srow: null }, true);
 
-    scrollToRow(srow, this.state.body);
+    if (scrollToRow(srow, this.state.body)) {
+      this._pendingRowScroll = undefined;
+      return;
+    }
+
+    // The target row may not exist yet: repeated rows/tabs are only created (and their
+    // repeat-local slugs only interpolate correctly) once the repeat variable resolves and
+    // the repeater runs, which happens after url sync. The repeaters publish
+    // NewSceneObjectAddedEvent when done, so keep the slug pending and retry on that event.
+    this._pendingRowScroll = srow;
+    this._pendingRowScrollSub ??= this.subscribeToEvent(NewSceneObjectAddedEvent, () => {
+      if (this._pendingRowScroll && scrollToRow(this._pendingRowScroll, this.state.body)) {
+        this._pendingRowScroll = undefined;
+      }
+    });
   }
 
   getSaveModel(): Dashboard | DashboardV2Spec {

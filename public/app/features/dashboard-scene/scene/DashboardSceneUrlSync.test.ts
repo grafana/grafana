@@ -1,5 +1,5 @@
 import { locationService } from '@grafana/runtime';
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from './DashboardScene';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
@@ -179,6 +179,82 @@ describe('DashboardSceneUrlSync', () => {
 
       expect(scrollIntoViewSpy).not.toHaveBeenCalled();
       expect(locationPartialSpy).toHaveBeenCalledWith({ srow: null }, true);
+    });
+
+    it('matches a repeated row clone by its own slug, without the source row as a path segment', () => {
+      const sourceRow = new RowItem({ title: 'Web A' });
+      // Repeat clones live in the source row's repeatedRows state, so their scene graph
+      // parent is the source row even though they render as its siblings
+      const cloneRow = new RowItem({ title: 'Web B', repeatSourceKey: sourceRow.state.key });
+      sourceRow.setState({ repeatedRows: [cloneRow] });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: new RowsLayoutManager({ rows: [sourceRow] }),
+      });
+
+      const cloneElement = document.createElement('div');
+      document.body.appendChild(cloneElement);
+      cloneRow.containerRef.current = cloneElement;
+
+      scene.urlSync?.updateFromUrl({ srow: 'Web-B' });
+
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      expect(scrollIntoViewSpy.mock.instances[0]).toBe(cloneElement);
+    });
+
+    it('scrolls to a repeated row that is created after url sync, when the repeater announces it', () => {
+      const sourceRow = new RowItem({ title: 'Web A' });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: new RowsLayoutManager({ rows: [sourceRow] }),
+      });
+
+      // On load the repeat variable has not resolved yet, so the clone does not exist
+      scene.urlSync?.updateFromUrl({ srow: 'Web-B' });
+      expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+
+      // Simulate the repeater performing repeats: it creates the clones and publishes
+      // NewSceneObjectAddedEvent when done
+      const cloneRow = new RowItem({ title: 'Web B', repeatSourceKey: sourceRow.state.key });
+      sourceRow.setState({ repeatedRows: [cloneRow] });
+      const cloneElement = document.createElement('div');
+      document.body.appendChild(cloneElement);
+      cloneRow.containerRef.current = cloneElement;
+      sourceRow.publishEvent(new NewSceneObjectAddedEvent(sourceRow), true);
+
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      expect(scrollIntoViewSpy.mock.instances[0]).toBe(cloneElement);
+
+      // The retry is one-shot: later additions must not scroll again
+      sourceRow.publishEvent(new NewSceneObjectAddedEvent(sourceRow), true);
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('replaces a pending scroll target when a new srow arrives before the old one matched', () => {
+      const sourceRow = new RowItem({ title: 'Web A' });
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        body: new RowsLayoutManager({ rows: [sourceRow] }),
+      });
+
+      scene.urlSync?.updateFromUrl({ srow: 'Web-B' });
+      scene.urlSync?.updateFromUrl({ srow: 'Web-C' });
+
+      const cloneB = new RowItem({ title: 'Web B', repeatSourceKey: sourceRow.state.key });
+      const cloneC = new RowItem({ title: 'Web C', repeatSourceKey: sourceRow.state.key });
+      sourceRow.setState({ repeatedRows: [cloneB, cloneC] });
+      for (const clone of [cloneB, cloneC]) {
+        const element = document.createElement('div');
+        document.body.appendChild(element);
+        clone.containerRef.current = element;
+      }
+      sourceRow.publishEvent(new NewSceneObjectAddedEvent(sourceRow), true);
+
+      expect(scrollIntoViewSpy).toHaveBeenCalledTimes(1);
+      expect(scrollIntoViewSpy.mock.instances[0]).toBe(cloneC.containerRef.current);
     });
   });
 
