@@ -50,7 +50,7 @@ func (s *Service) Backfill(ctx context.Context, disabledOrgs map[int64]struct{})
 
 	// Logged unconditionally: "0 folders" is the useful signal that an already-correct install did no
 	// work, rather than that the pass never ran.
-	s.log.Info("Folder rules label backfill queued", "folder_count", total, "org_count", len(orgIDs))
+	s.log.Info("Folder label syncer backfill check finished", "folder_count", total, "org_count", len(orgIDs))
 	return nil
 }
 
