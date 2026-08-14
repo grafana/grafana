@@ -23,11 +23,19 @@ posts:
       - whats-new/2026-07-08-organize-dashboards-faster-with-multi-select-grouping.md
       - whats-new/2026-07-18-saved-queries-is-now-generally-available-with-command-palette-and-provisioning-support.md
       - whats-new/2026-07-23-revamped-homepage-for-grafana.md
+      - whats-new/2026-07-29-panel-thresholds-interpolation.md
+      - whats-new/2026-07-30-new-panel-query-errors-and-notices-ui.md
       - whats-new/2026-08-11-explore-busy-panels-with-the-new-view-panel-sidebar.md
   - title: Data sources
     items:
       - whats-new/2026-07-28-opensearch-added-index-browser-to-datasource-configuration-and-query.md
       - whats-new/2026-08-03-oracle-easy-connect-plus-support.md
+  - title: Git Sync
+    items:
+      - whats-new/2026-08-13-git-sync-support-for-github-enterprise.md
+      - whats-new/2026-08-14-authoring-commits-in-git-sync-1.md
+      - whats-new/2026-08-14-authoring-commits-in-git-sync.md
+      - whats-new/2026-08-14-webhooks-available-for-gitlab-and-bitbucket.md
 whats_new_grafana_version: 13.2
 weight: -56
 ---
