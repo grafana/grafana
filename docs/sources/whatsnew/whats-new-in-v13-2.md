@@ -36,6 +36,9 @@ posts:
       - whats-new/2026-08-14-authoring-commits-in-git-sync-1.md
       - whats-new/2026-08-14-authoring-commits-in-git-sync.md
       - whats-new/2026-08-14-webhooks-available-for-gitlab-and-bitbucket.md
+  - title: Other
+    items:
+      - whats-new/2026-08-13-export-traces-of-grafana-to-a-file-for-easier-troubleshooting.md
 whats_new_grafana_version: 13.2
 weight: -56
 ---
