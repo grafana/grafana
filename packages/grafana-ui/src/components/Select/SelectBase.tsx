@@ -170,8 +170,6 @@ export function SelectBase<T, Rest = {}>({
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
   // local state to track when menu is open - used to stop Escape key from propagating to parent overlays when menu is open
   const [open, setOpen] = useState(!!isOpen);
-  // react-select focuses an option as soon as the menu opens, so only draw a focus ring on it
-  // once the user has actually pressed a key
   const [showFocusRing, setShowFocusRing] = useState(false);
 
   useImperativeHandle(selectRef, () => reactSelectRef.current!, []);

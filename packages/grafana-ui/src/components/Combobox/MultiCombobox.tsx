@@ -24,7 +24,7 @@ import { useComboboxFloat } from './useComboboxFloat';
 import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
 import { useMultiInputAutoSize } from './useMultiInputAutoSize';
 import { useOptions } from './useOptions';
-import { isPointerStateChange } from './utils';
+import { isKeyboardEvent } from './utils';
 
 interface MultiComboboxBaseProps<T extends string | number>
   extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange' | 'isClearable'> {
@@ -224,7 +224,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     },
 
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
-      setShowFocusRing(!isPointerStateChange(type));
+      setShowFocusRing(isKeyboardEvent(type));
 
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:

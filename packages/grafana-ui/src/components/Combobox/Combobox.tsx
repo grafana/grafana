@@ -19,7 +19,7 @@ import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION }
 import { type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
-import { isNewGroup, isPointerStateChange } from './utils';
+import { isNewGroup, isKeyboardEvent } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -340,7 +340,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
     },
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
-      setShowFocusRing(!isPointerStateChange(type));
+      setShowFocusRing(isKeyboardEvent(type));
 
       switch (type) {
         case useCombobox.stateChangeTypes.InputChange:
