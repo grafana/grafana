@@ -1,3 +1,5 @@
+import { UseComboboxStateChangeTypes } from 'downshift';
+
 import { isIconName, type SelectableValue } from '@grafana/data';
 
 import { type ComboboxOption } from './types';
@@ -16,7 +18,18 @@ export const isNewGroup = <T extends string | number>(option: ComboboxOption<T>,
   return prevOption.group !== currentGroup;
 };
 
-export const isKeyboardEvent = (type: string) => type.includes('keydown');
+const KEYBOARD_STATE_CHANGE_TYPES: UseComboboxStateChangeTypes[] = [
+  UseComboboxStateChangeTypes.InputKeyDownArrowDown,
+  UseComboboxStateChangeTypes.InputKeyDownArrowUp,
+  UseComboboxStateChangeTypes.InputKeyDownEnd,
+  UseComboboxStateChangeTypes.InputKeyDownEnter,
+  UseComboboxStateChangeTypes.InputKeyDownEscape,
+  UseComboboxStateChangeTypes.InputKeyDownHome,
+  UseComboboxStateChangeTypes.InputKeyDownPageDown,
+  UseComboboxStateChangeTypes.InputKeyDownPageUp,
+];
+
+export const isKeyboardEvent = (type: UseComboboxStateChangeTypes) => KEYBOARD_STATE_CHANGE_TYPES.includes(type);
 
 /**
  * returns a ComboboxOption from a SelectableValue, or undefined if it could not be converted.

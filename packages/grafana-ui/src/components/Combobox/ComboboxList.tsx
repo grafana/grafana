@@ -10,7 +10,12 @@ import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { AsyncError, LoadingOptions, NotFoundError } from './MessageRows';
-import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
+import {
+  getComboboxStyles,
+  MENU_OPTION_HEIGHT,
+  MENU_OPTION_HEIGHT_DESCRIPTION,
+  MENU_PADDING,
+} from './getComboboxStyles';
 import { ALL_OPTION_VALUE, type ComboboxOption } from './types';
 import { isNewGroup } from './utils';
 
@@ -70,6 +75,11 @@ export const ComboboxList = <T extends string | number>({
     estimateSize,
     getItemKey: (index: number) => options[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
+    // Vertical padding belongs to the virtualizer rather than CSS so that row offsets, the total
+    // size and scrollToIndex all account for it. Padding it in CSS instead would shift every row
+    // down without the virtualizer knowing, and scrolling would stop short of the focus ring.
+    paddingStart: MENU_PADDING,
+    paddingEnd: MENU_PADDING,
   });
 
   const isOptionSelected = useCallback(

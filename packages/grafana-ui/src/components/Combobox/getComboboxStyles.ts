@@ -10,6 +10,8 @@ export const MENU_ITEM_FONT_SIZE = 14;
 export const MENU_ITEM_DESCRIPTION_FONT_SIZE = 12;
 export const MENU_ITEM_FONT_WEIGHT = 500;
 export const MENU_ITEM_PADDING = 8;
+// Padding around the option list, so the focused option's focus ring isn't clipped by the menu.
+export const MENU_PADDING = 4;
 const MENU_ITEM_GAP = 2;
 const MENU_ITEM_LINE_HEIGHT = 1.5;
 
@@ -20,7 +22,6 @@ export const MENU_OPTION_HEIGHT_DESCRIPTION =
 export const POPOVER_MAX_HEIGHT = MENU_OPTION_HEIGHT * 8.5;
 
 export const getComboboxStyles = (theme: GrafanaTheme2) => {
-  const menuPadding = theme.spacing(0.5);
   return {
     menuClosed: css({
       display: 'none',
@@ -37,7 +38,8 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     menuUlContainer: css({
       label: 'combobox-menu-ul-container',
       listStyle: 'none',
-      padding: menuPadding,
+      // Horizontal only - the vertical padding comes from the virtualizer's paddingStart/paddingEnd
+      padding: `0 ${MENU_PADDING}px`,
     }),
 
     // The wrapper around the group header and option, not the option itself.
@@ -45,7 +47,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     listItem: css({
       label: 'list-item',
       position: 'absolute',
-      width: `calc(100% - ${menuPadding} * 2)`, // account for padding on the menu container
+      width: `calc(100% - ${MENU_PADDING * 2}px)`, // account for padding on the menu container
     }),
 
     optionGroupHeader: css({
