@@ -65,6 +65,44 @@ func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {
 	}
 }
 
+// TestCodecPathResourcesRegisterOneVersionPerType guards apimachinery's LegacyCodec version-order
+// fallback: it only lets preferred_api_version reorder the persisted version when a type has no
+// exact-match GVK. It runs InstallSchema for real (all gates on), so any future version reusing an
+// existing struct fails here too. See the dashboard package's test of the same name for the other
+// codec-path group.
+func TestCodecPathResourcesRegisterOneVersionPerType(t *testing.T) {
+	allOn := map[string]memprovider.InMemoryFlag{}
+	for _, flag := range []string{
+		featuremgmt.FlagKubernetesAuthzRolesApi,
+		featuremgmt.FlagKubernetesAuthzRoleBindingsApi,
+		featuremgmt.FlagKubernetesAuthzGlobalRolesApi,
+		featuremgmt.FlagKubernetesAuthzTeamLBACRuleApi,
+		featuremgmt.FlagKubernetesAuthzResourcePermissionApis,
+	} {
+		allOn[flag] = memprovider.InMemoryFlag{Key: flag, DefaultVariant: "default", Variants: map[string]any{"default": true}}
+	}
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(allOn)))
+
+	scheme := runtime.NewScheme()
+	b := &IdentityAccessManagementAPIBuilder{ofClient: openfeature.NewDefaultClient()}
+	require.NoError(t, b.InstallSchema(scheme))
+
+	for _, obj := range []runtime.Object{
+		iamv0.TeamResourceInfo.NewFunc(),
+		iamv0.UserResourceInfo.NewFunc(),
+		iamv0.ServiceAccountResourceInfo.NewFunc(),
+		iamv0.RoleInfo.NewFunc(),
+		iamv0.GlobalRoleInfo.NewFunc(),
+	} {
+		gvks, _, err := scheme.ObjectKinds(obj)
+		require.NoError(t, err)
+		require.Lenf(t, gvks, 1,
+			"%T is registered at %v - a Go type shared across group versions activates the LegacyCodec "+
+				"order-fallback, so preferred_api_version would now pick the persisted version for this "+
+				"resource instead of only ordering API discovery", obj, gvks)
+	}
+}
+
 // fixedVersionCodec always encodes to a fixed apiVersion, standing in for a real versioning codec
 // (e.g. a LegacyCodec after ReorderGroupVersionsForLegacyCodec) that persists a different version
 // than the caller declared. Decode/Identifier are unused on the create path this test exercises.
