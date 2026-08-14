@@ -27,6 +27,14 @@ func (p *mutableConfigProvider) Get(context.Context) (*setting.Cfg, error) {
 	return p.cfg, nil
 }
 
+func (p *mutableConfigProvider) GetSections(ctx context.Context, sections ...string) (*ini.File, error) {
+	provider, err := configprovider.ProvideService(p.cfg)
+	if err != nil {
+		return nil, err
+	}
+	return provider.GetSections(ctx, sections...)
+}
+
 var (
 	iniContent = `
 	[auth.generic_oauth]
